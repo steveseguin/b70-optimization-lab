@@ -279,6 +279,10 @@ def main():
 
  for name in ('wrapper-merge-tests.json','context-window-gates.json'):
   if 'sources' in gates[name]:bound_sources(gates[name]['sources'])
+  audit=read('evidence/storage-admission-fix/admission-audit.json')
+  assert audit['passed'] and audit['device_executed'] is False
+  assert gates[name]['admission_audit_sha256']==sha(P/'evidence/storage-admission-fix/admission-audit.json')
+  gate_sources(audit)
   chain=gates[name]['coordinator_chains']
   assert chain['passed'] and chain['device_executed'] is False
   gate_sources(chain);archive_bound(chain['archive'])
@@ -287,6 +291,13 @@ def main():
   for run in chain['rows']:
    assert run['passed'] and [r['window'] for r in run['windows']]==['K0','K1a','K1b','K2','W0p','KD','W2m','WS','WSs']
    assert all(r['passed'] and r['device_executed'] is False for r in run['windows'])
+   from storage import budget, projected_write_bytes
+   for item in run['windows']:
+    admission=item['storage_admission']
+    expected=projected_write_bytes(item['window'],13 if item['window'] in ('WS','WSs') else 1,run['context'],8)
+    assert admission['admitted_write_bytes']==admission['projected_build_write_bytes']==expected,'rehearsal storage projection differs'
+    assert admission==budget(admission['root_free_bytes'],admission['build_bytes'],expected,expected),'rehearsal storage budget differs'
+
  draft=gates['capacity-draft-gates.json'];draft_bindings(draft,artifacts)
  native_bindings(gates)
  for row in gates['owner-gates.json']['rows']:

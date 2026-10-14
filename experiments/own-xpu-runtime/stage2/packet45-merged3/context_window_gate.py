@@ -66,7 +66,7 @@ class ContextWindows(unittest.TestCase):
    stack.enter_context(patch.object(w,'memory_snapshot',return_value={'MemAvailable':128*1024**3}))
    stack.enter_context(patch.object(w,'admit',return_value={}))
    original_projection=w.projected_write_bytes
-   stack.enter_context(patch.object(w,'projected_write_bytes',side_effect=lambda window,count:write_requests.append(count) or original_projection(window,count)))
+   stack.enter_context(patch.object(w,'projected_write_bytes',side_effect=lambda window,count,*rest:write_requests.append(count) or original_projection(window,count,*rest)))
    stack.enter_context(patch.object(w,'foreign_engines',return_value={}))
    stack.enter_context(patch.object(w,'journal',return_value=('', 'cursor')))
    stack.enter_context(patch.object(w.Watch,'postflight'))
@@ -194,10 +194,11 @@ class ContextWindows(unittest.TestCase):
      self.assertEqual(argv[argv.index('--context')+1],str(context));self.assertEqual(argv[argv.index('--card')+1],str(1+draft_rank));self.assertEqual(kw['env'],env)
     for i in (0,1):
      self.assertTrue((out/f'owner{i}.log').exists());self.assertTrue((out/f'owner{i}-retention-errors.json').exists())
- def test_storage_floor_and_three_gb_cap(self):
+ def test_storage_floor_and_structural_cap(self):
   import storage
   from types import SimpleNamespace
-  with patch.object(storage,'build_size',return_value=2_999_999_999),patch.object(storage.subprocess,'run',return_value=SimpleNamespace(stdout='Filesystem Size Used Avail\nx 1 1 9000000000\n')):
+  free=storage.FREE_FLOOR+storage.CHAIN_RESERVE+storage.BUILD_LIMIT
+  with patch.object(storage,'build_size',return_value=storage.BUILD_LIMIT-1),patch.object(storage.subprocess,'run',return_value=SimpleNamespace(stdout=f'Filesystem Size Used Avail\nx 1 1 {free}\n')):
    storage.admit(0)
    with self.assertRaises(RuntimeError):storage.admit(1)
   with patch.object(storage,'build_size',return_value=0),patch.object(storage.subprocess,'run',return_value=SimpleNamespace(stdout='Filesystem Size Used Avail\nx 1 1 7999999999\n')):

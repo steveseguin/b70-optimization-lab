@@ -8,7 +8,8 @@ concurrent heavy job, leaving at least 1 GB below the user's 10 GB ceiling.
 Transport also retains its stricter 8 GiB combined-child guard; each process has
 an 8 GB address-space limit. The first guard reached ends the CPU case. Do not run model gates alongside
 a memory-heavy compile. Each producer checks root free space before writing,
-refuses below8GB plus its reserve, and keeps this packet's build below3GB.
+reserves the 8 GB free floor plus another full chain and applies the finite
+merged build budget documented in CAPACITY.md.
 
 Use `nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B` for every Python
 command below, with `P=experiments/own-xpu-runtime/stage2/packet45-merged3` as a
@@ -108,3 +109,17 @@ its inherited packet40 harness is no longer an alternative way to qualify the
 merged wrapper. After final sealing, `sequential_owner_summary.py` verifies all
 41 artifacts, all source/gate bindings, the three-chain archive, the detached
 admission binding and the preserved coordinator history.
+
+
+## Storage admission follow-up 2
+
+`storage_admission_campaign.py all` runs the same complete serial CPU suite,
+with storage boundary tests, twelve-prompt miniature coordinator suites at
+4096/dr0, 4096/dr1 and 32768/dr0, and final sealing/admission. The real storage
+formulas run even for miniature inputs. Logs and previous seals are retained
+under `evidence/storage-admission-fix/`. `storage_admission_summary.py` verifies
+the final bindings, every artifact, the chain archive and all protected device
+and incident bytes. `admission_audit.py` reads packet44 receipts and state
+retention metadata without modifying those directories; its result is bound
+through the wrapper receipt. Run it before the wrapper gates, not after the
+seal, if the input evidence or audit source changes.

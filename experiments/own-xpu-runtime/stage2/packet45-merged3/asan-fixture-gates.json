@@ -7,7 +7,7 @@
       "compiler": "asan",
       "kind": "nongemv",
       "context": 32768,
-      "identity_key": "8a74c7cef2fd6eeb242b221119684d63d608b035ec8cf3b5e914ec0695d7e13f",
+      "identity_key": "804a281face9e729bc01a773a697ddbe295cb284434cb7a8d3ae5514ea7601c9",
       "binary_sha256": "f6ec023591f6171662df72d69454d7f597ef71b3ff8c99082b4d07b4ee299d2d",
       "passed": true,
       "device_executed": false,
@@ -875,7 +875,7 @@
             ]
           ],
           "driver_sha256": "4e1800240fa0603c5ec15ea8775e214b0f9896e1d4b8cdcc64c0e90c31b4f766",
-          "storage_sha256": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3"
+          "storage_sha256": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39"
         },
         "fixtures_sha256": {
           "cases.txt": "a831d408cab6033a9bad00ae3ff3c33be2001934a2d6463b7a1182aa736f5f33",
@@ -957,9 +957,14 @@
         "rope_sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
       },
       "storage_admission": {
-        "root_free_bytes": 31612309504,
-        "build_bytes": 1553034065,
-        "admitted_write_bytes": 100000000
+        "root_free_bytes": 31524233216,
+        "build_bytes": 1552906002,
+        "admitted_write_bytes": 100000000,
+        "projected_build_write_bytes": 100000000,
+        "build_limit_bytes": 13590952466,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
       },
       "command": [
         "nice",
@@ -970,7 +975,7 @@
         "3",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/asan/nongemv-fixtures",
         "--output",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-asan-nongemv-32768-1791956783717137833/run",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-asan-nongemv-32768-1791978340211527887/run",
         "--context",
         "32768",
         "--fixtures",
@@ -978,8 +983,8 @@
         "--dispatch",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/dispatch-p45.json"
       ],
-      "seconds": 234.9060313749942,
-      "peak_aggregate_rss_anon_bytes": 3006595072,
+      "seconds": 234.80403768096585,
+      "peak_aggregate_rss_anon_bytes": 3008638976,
       "output_sha256": "f8eda7dcc17d14ff14ff194a20486ddc195c906fb05cd4227b2ceeeb8e8494a8",
       "checks": 3657,
       "fixture_checks": 230,
@@ -1082,14 +1087,14 @@
         32767
       ],
       "output_archive": {
-        "path": "evidence/capacity-fixtures/8a74c7cef2fd6eeb242b221119684d63d608b035ec8cf3b5e914ec0695d7e13f-output.bin.gz",
-        "sha256": "b685bd5d4431112972b5fb0fa28eb495c8657b520672002b24d5d130ffd90292",
+        "path": "evidence/capacity-fixtures/804a281face9e729bc01a773a697ddbe295cb284434cb7a8d3ae5514ea7601c9-output.bin.gz",
+        "sha256": "dc9e21e6e0feff18e593a2124a49d589bf0274d1e69f3d83d8f4da82cd9ad0c1",
         "raw_sha256": "f8eda7dcc17d14ff14ff194a20486ddc195c906fb05cd4227b2ceeeb8e8494a8",
         "raw_bytes": 23397496
       },
       "scratch_archive": {
-        "path": "evidence/scratch-capacity-fixture-asan-nongemv-32768-1791956783717137833.jsonl.gz",
-        "sha256": "756ef85d7adfd8ae7fb06f0e821bf1d873e387061622b1c6cd4453814a3f513a",
+        "path": "evidence/scratch-capacity-fixture-asan-nongemv-32768-1791978340211527887.jsonl.gz",
+        "sha256": "547c8da01560a377b3476beeebf1264ca8ac0fa57f04b8bc5082dd40318dc49a",
         "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
         "files": 3,
         "retained_files": 3,

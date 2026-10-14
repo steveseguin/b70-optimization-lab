@@ -30,8 +30,10 @@ reference files; no raw CPU fixture directory is left in the ignored build tree.
 `evidence/build-object-retirement.json.gz` inventories compiler object hashes
 removed after every linked artifact matched its mode build receipt. Binaries,
 compile commands, link commands and source files remain. Rebuild the object files
-with the documented compiler modes and at most two jobs. The ignored build tree
-must stay below 3 GB; this retirement made room for maximum-context CPU fixtures.
+with the documented compiler modes and at most two jobs. This retirement made
+room for maximum-context CPU fixtures under the original 3 GB build cap. The
+current aggregate cap and reserved disk headroom are defined in
+[CAPACITY.md](CAPACITY.md); private CPU fixture limits remain documented there.
 
 `dense-fourparts-device-failure.jsonl.gz` preserves the original failure
 record byte-for-byte. Its retention receipt binds compressed and uncompressed
@@ -87,3 +89,28 @@ chunks, or regenerate hash-only model fixtures with `cpu_real_gate.py` and the
 recorded approved local input files. Do not remove earlier qualification or
 failure archives. `protected-inputs.json` covers all 49 existing fault/incident
 files; none is a cleanup target.
+
+
+## October 14 storage admission follow-up 2
+
+`evidence/storage-admission-fix/` preserves the input seals, all intermediate
+failures/logs, protected-file hashes, predecessor size audit, complete final
+three-chain CPU archive and final verification. The coordinator archive retains
+exact JSON/text/log bytes and hashes of disposable miniature binary outputs;
+reproduce with `storage_admission_campaign.py all` under the documented limits.
+New `evidence/capacity-fixtures/` and `scratch-*` artifacts retain the fresh CPU
+qualification outputs. Large receipts/archives are intentional reproducibility
+and negative-result evidence, not generated caches. Keep their original bytes;
+the seal and nested archive hashes depend on them. Current gate receipts are
+mutable pointers to the new run; prior ones are retained in the follow-up
+folder, existing history and the capacity-before receipts. No device-produced
+window or `build/incident-20261013-k1a-case54/` is a cleanup target.
+
+
+The new coordinator archive is 28,656,821 bytes. It retains 2,712 exact text,
+JSON and nested-gzip members (478,698,494 original bytes), with hashes for all
+8,367 members. The twelve-prompt matrix is necessary to exercise the real
+request-count reserve and cannot be replaced by a two-prompt miniature run.
+Its SHA256 is `949c14270db0abb7faebdca9db4b0bbc2ead274bcb0b8616e98ab472eb9e4bc8`.
+This is intentional retention above the 1 MiB hygiene threshold. The final
+qualification summary verifies its framing, member bytes and window hashes.

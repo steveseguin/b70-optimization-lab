@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/wrapper_cpu_gate.py", line 24, in <module>
+    if __name__=='__main__':raise SystemExit(main())
+                                             ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/wrapper_cpu_gate.py", line 17, in main
+    from coordinator_cpu_gate import run
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/coordinator_cpu_gate.py", line 78
+    manifest=case/'suite.json';save(manifest,dict(arithmetic='iq3-p17-detmath-v2',token_cap=128,context=context,complete=False,prompts=[dict(prompt_id=name,input_bundle='mini-unused',mini_tokens=tokens,mini_count=128) for name,tokens in [(f'mini-{i}',[2,5,3,7,1] if i%2==0 else [1,2,1]) for i in range(12)]]]))
+                                                                                                                                                                                                                                                                                                                   ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '('

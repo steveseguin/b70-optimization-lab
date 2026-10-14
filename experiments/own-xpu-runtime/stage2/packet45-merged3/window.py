@@ -8,7 +8,7 @@ from window_safety import environment_gate,memory_snapshot
 from fixture_support import journal,ldd_preflight,oracle_gate,fixture_receipt_gate,k1_gate,sequential_teardown
 from k2_summary import summarize, estimated_seconds
 from merge_dispatch import validate
-from storage import admit
+from storage import admit, projected_write_bytes
 from suite_metrics import admit_cap
 B=P/'build';ROOT=P.parents[3]
 CONFIG={'K0':(30,600),'K1a':(120,10800),'K1b':(120,10800),'K2':(1800,14400),'W0p':(30,600),
@@ -196,15 +196,6 @@ def retained_hash(root,name,record):
     require(digest==item['uncompressed_sha256'],'compressed prerequisite bytes changed')
     return digest
 
-def projected_write_bytes(name,requests=1):
-    # K2: measured six-length output979339200 +60*1600*12292 extra
-    # output bytes for the full66 grid =2159371200; reserve logs/metadata too.
-    # Oversized fixture outputs are hash-disposed, never duplicated for gzip.
-    if name=='K2':return 2_500_000_000
-    if name in ('K1a','K1b'):return 1_100_000_000
-    if name in ('K0','W0p'):return 32_000_000
-    return 550_000_000+requests*16_000_000
-
 def prerequisites(path,name,identity,*,cpu_rehearsal=False):
     require(path is not None,'missing prerequisite '+name)
     row=json.loads(path.read_text());require(row.get('device_executed') is True or (cpu_rehearsal and row.get('cpu_rehearsal') is True),'CPU rehearsal cannot authorize device work');require(row.get('passed') is True and row.get('window')==name,'failed prerequisite '+name)
@@ -248,7 +239,7 @@ def run_fixtures(a,out,env,watch):
         save(out/'children.json',dict(pids=[],entries=[],signals_sent=0))
         return {f'run{rank}/receipt.json':sha(out/f'run{rank}/receipt.json') for rank in (0,1)}
     binary_group='gnu-host' if cpu_rehearsal else 'device'
-    admit_output(out,64_000_000 if cpu_rehearsal else projected_write_bytes(a.window))
+    admit_output(out,projected_write_bytes(a.window,context=a.context))
     receipts={};children=[];entries=[];logs=[];stop_r,stop_w=os.pipe()
     def check_child_failures():
         for entry, child in zip(entries, children):
@@ -264,7 +255,7 @@ def run_fixtures(a,out,env,watch):
         # second sequential K1 program and the second K0 card process.
         for name,_,_ in jobs:watch.check();ldd_preflight(B/binary_group/name)
         for index,(name,card,directory) in enumerate(jobs):
-            watch.check();admit_output(out,64_000_000 if cpu_rehearsal else projected_write_bytes('K2') if a.window=='K2' else 550_000_000 if a.window!='K0' else 16_000_000);binary=B/binary_group/name
+            watch.check();admit_output(out,projected_write_bytes('K2',context=a.context) if a.window=='K2' else 550_000_000 if a.window!='K0' else 16_000_000);binary=B/binary_group/name
             dest=out/directory;log=(out/f'fixture{index}.log').open('w');logs.append(log)
             cmd=[str(binary),*([] if cpu_rehearsal else ['--authorized-device-window']),'--card',str(card),'--output',str(dest)]
             if name in ('nongemv-fixtures','k2-fixtures'):cmd+=['--context',str(a.context)]
@@ -437,7 +428,7 @@ def main(*,cpu_rehearsal=False):
         record['exactness_companion']=dict(path=str(a.exactness_window.resolve()),sha256=sha(a.exactness_window),window=companion['window'],boot_id=boot)
     if a.dispatch:validate(json.loads(a.dispatch.read_text()))
     request_count=(1+len(manifest.get('requests',manifest.get('prompts',[])))*a.repeat) if a.window in SUITE_WINDOWS else 1
-    record['storage_admission']=admit_output(out,64_000_000 if cpu_rehearsal else projected_write_bytes(a.window,request_count))
+    record['storage_admission']=admit_output(out,projected_write_bytes(a.window,request_count,a.context,len(retained_steps)))
     record['foreign_engine_admission']=foreign_engines();out.mkdir(parents=True);save(out/'window.json',record)
     watch=Watch(out,boot,seconds);old={s:signal.signal(s,lambda n,f:watch.cancelled.append(n)) for s in (signal.SIGTERM,signal.SIGINT)}
     try:

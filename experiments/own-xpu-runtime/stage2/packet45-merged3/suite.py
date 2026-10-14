@@ -183,7 +183,7 @@ def reset(transport,destination,oracle=None):
     pipeline.require(not any(transport.pending),'reset with pending commands')
     # RESET writes the previous request's state before opening the next output.
     # At most one such raw snapshot survives, and no retained fixture is removed.
-    storage.admit(8_000_000 if transport.a.mini else (550_000_000+13*2368*max(0,transport.a.context-256)))
+    storage.admit(storage.state_write_bytes(transport.a.context))
     previous=getattr(transport,'request_output',transport.out)
     destination=destination.resolve();destination.mkdir(parents=True,exist_ok=True)
     for rank in (0,1):
@@ -274,7 +274,7 @@ def collect_request_fixtures(output,result,mini,retain_steps):
     return result
 
 def run_request(transport,args,prompt,count,*,kernel_warmup=False):
-    storage.admit(8_000_000 if args.mini else 32_000_000)
+    storage.admit(storage.request_write_bytes(len(pipeline.retention_steps(args.retain_steps,count))))
     provider=pipeline.Draft(args.draft,list(map(int,args.script.read_text().split())) if args.script else [])
     # EOS termination is disabled only for the excluded synthetic warmup. Two
     # outputs must run even if its first target token happens to be EOS, so the

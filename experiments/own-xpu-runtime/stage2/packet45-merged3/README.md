@@ -26,7 +26,7 @@ The CPU checks include 79 fresh pipeline executions, 854,164 selection checks,
 22,326 arithmetic checks across GNU/Intel and all capacities, 6,899 dispatch
 validation checks, 3,657 maximum-capacity ASAN/UBSAN checks, six captured draft
 arms with 378 frozen-reference matches, 18 owner/lifetime suites, 72 kernel/K2
-tests, 115 wrapper tests (78 mocked combinations plus 27 actual coordinator
+tests, 124 wrapper tests (78 mocked combinations plus 27 actual coordinator
 CPU rehearsal windows), and 65 memory-plan
 checks. Normal/ASAN/TSAN controller mocks cover 1,123 cases each; mailbox tests
 cover five gates each. Counts overlap where a helper is included in a larger
@@ -47,7 +47,7 @@ complete draft-state hashes. All six runs share the same guesses and decision
 counts; 17 fixed-size semantic draft buffers match across capacities. Full cache
 hashes across capacities are deliberately not compared because their allocated
 tails differ. The observed aggregate CPU anonymous-memory peak was
-7,964,266,496 bytes. No model process remains from this CPU campaign.
+7,942,639,616 bytes. No model process remains from this CPU campaign.
 
 The final [build receipt](build-receipt.json) binds the implementation, 41 linked
 artifacts, parent/source pins and all required CPU receipts. The detached
@@ -71,3 +71,12 @@ the host gate then rejected its healthy fifth owner. The [sibling audit](SIBLING
 and all three complete coordinator CPU rehearsals now pass. The full CPU suite
 was rerun and resealed; all 41 build artifacts, including all five device binaries,
 are unchanged. Fresh device chains still need the new host seal.
+
+
+The [October 14 storage follow-up](STORAGE-ADMISSION-CLOSEOUT.md) removes the
+packet38 aggregate 3 GB limit from the merged retention plan without weakening
+the 8 GB free-space floor. The new finite ceiling is the 3 GB base allowance
+plus a worst-context chain, bounded again by live disk headroom with another
+chain reserved. It also fixes context-dependent model-state projections and
+makes CPU rehearsal validate the real reserves. [Capacity arithmetic](CAPACITY.md)
+and the [whole admission audit](ADMISSION-AUDIT.md) give the exact limits.

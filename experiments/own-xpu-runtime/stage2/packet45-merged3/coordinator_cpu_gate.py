@@ -51,7 +51,7 @@ def run():
  storage.admit(100_000_000)
  sources={n:pp.sha(P/n) for n in SOURCES};binary=B/'gnu-host/own-rt-iq3';assert_host_build(binary)
  original=json.loads((P/'build-receipt.json').read_text())
- rows=[];root=Path(tempfile.mkdtemp(prefix='coordinator-cpu-',dir=B));archive=P/'evidence/sequential-owner-fix/coordinator-chains.jsonl.gz';archive.parent.mkdir(parents=True,exist_ok=True)
+ rows=[];root=Path(tempfile.mkdtemp(prefix='coordinator-cpu-',dir=B));archive=P/'evidence/storage-admission-fix/coordinator-chains.jsonl.gz';archive.parent.mkdir(parents=True,exist_ok=True)
  for context,rank in MATRIX:
   storage.admit(100_000_000);case=root/f'c{context}-dr{rank}';case.mkdir();private=case/'seal';private.mkdir();build=case/'build';build.mkdir()
   for name in ('gnu-host','fusion-fixtures'):(build/name).symlink_to(B/name,target_is_directory=True)
@@ -75,7 +75,7 @@ def run():
    input_sha256=pp.sha(inp/'input.json'),draft_capture_fixture_sha256_by_context={str(context):inspect(reference)},
    draft_capture_input_sha256={'incident-retrospective':pp.sha(private/'capture-input-incident-retrospective.json')})
   save(private/'build-receipt.json',receipt)
-  manifest=case/'suite.json';save(manifest,dict(arithmetic='iq3-p17-detmath-v2',token_cap=128,context=context,complete=False,prompts=[dict(prompt_id=name,input_bundle='mini-unused',mini_tokens=tokens,mini_count=128) for name,tokens in [('code-review',[2,5,3,7,1]),('customer-email',[1,2,1])]]))
+  manifest=case/'suite.json';save(manifest,dict(arithmetic='iq3-p17-detmath-v2',token_cap=128,context=context,complete=False,prompts=[dict(prompt_id=name,input_bundle='mini-unused',mini_tokens=tokens,mini_count=128) for name,tokens in [(f'mini-{i}',[2,5,3,7,1] if i%2==0 else [1,2,1]) for i in range(12)]]))
   bootstrap=case/'bash-env'
   bootstrap.write_text('nice() { [[ "$1 $2" == "-n 19" ]] || return 92; shift 2; "$@"; }\nionice() { [[ "$1 $2" == "-c 3" ]] || return 93; shift 2; "$@"; }\nenv() { [[ "$1" == "-i" ]] || return 94; shift; [[ "$1" == "PATH=/usr/bin:/bin" ]] || return 95; shift; [[ "$1" == LD_LIBRARY_PATH=* ]] || return 96; local packet45_ld="$1"; shift; [[ "$1" == python3 ]] || return 97; shift; command /usr/bin/env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 "$packet45_ld" /usr/bin/python3 -B '+shlex.quote(str(P/'coordinator_cpu_gate.py'))+' --entry '+shlex.quote(str(case))+' "$@"; }\n')
   output=build/'chain';command=['bash',str(P/'coordinator_windows.sh'),'0',str(context),str(rank),str(manifest),str(output)]
@@ -89,7 +89,7 @@ def run():
    try:w.prerequisites(path,name,row)
    except ValueError as error:assert 'CPU rehearsal cannot authorize device work' in str(error)
    else:raise AssertionError('CPU chain admitted device prerequisite')
-   windows.append(dict(window=name,sha256=pp.sha(path),passed=True,device_executed=False))
+   windows.append(dict(window=name,sha256=pp.sha(path),passed=True,device_executed=False,storage_admission=row['storage_admission']))
   assert not (build/'FAULT.json').exists()
   rows.append(dict(context=context,draft_rank=rank,passed=True,windows=windows,command=command))
   print('PASS coordinator',context,rank,','.join(WINDOWS),flush=True)

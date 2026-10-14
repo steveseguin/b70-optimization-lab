@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "tests": 115,
+  "tests": 124,
   "failures": 0,
   "errors": 0,
   "device_executed": false,
@@ -10,23 +10,27 @@
     "test_window.Gate.test_class_diagnostic_contract: separately qualified host binary required"
   ],
   "sources": {
-    "window.py": "9bc57a2b5455395535e4f888aad8c3a68eef95375077a815d07728e9d90cb887",
+    "admission_audit.py": "26ec1318ad733a90b280ce4f945df9f113adbd5b6b91c4176dbb98bf03a4ee27",
+    "storage.py": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39",
+    "test_admission_budget.py": "ab38e7ec3e081509252eb52b7b2b7b618b6efe8e3e808a220013f9e5a407a990",
+    "window.py": "57b0efedbc901b19bcca183ec4aa31b6db174bc2f367c0040ca2fb81347dd2e1",
     "draft_window.py": "e219111807cd8e71f598b3d8edbac0d65c1c88b004c8952304760e31162e1d95",
-    "suite.py": "3fb15dde919405e9c6df771fd294679026dc40e5f177aabe5accd4aabce9d6bc",
+    "suite.py": "d8d0a373ba5fbc3e70605ea61b970694a1b837d0bcd5ac1e0087221333e546d1",
     "suite_metrics.py": "8e2d28774beb05606cbc04797abecb3fa9d880e97f4c2c3b64e774f06253c9f2",
-    "context_window_gate.py": "f40b7035631dc19274453cc01d3eac8e7b16c2eb493d89a8f45c57b22e7c85dc",
+    "context_window_gate.py": "bf26b19adaa4268640d9b6fc6cc8e43cb07c7de1b4e1d4350c53c5f805b84031",
     "test_window.py": "3b5b417dfcb31359179ebab82ef6ca49f5ea9f3b5d4130e7af4a80ace17804ef",
     "test_suite_long.py": "461516c24ec8179c8471140bf8447ad1492b2085c1ec6f528c8b56a1d4e0bce8",
     "test_suite_metrics.py": "76ae80a09b2779a1f9f62f444c3c0e22a1b1194a6b3f802fc32edc3560e2a7fe",
     "test_draft_window_cleanup.py": "b5cf113be806fa6c0c9785418b63ed3247152b269f35f59cd648122fbd15ef5e",
-    "wrapper_cpu_gate.py": "87ac3e89c95cabcbfa96038f85ce515efcc60838bd44977cea47d925dfa81643",
+    "wrapper_cpu_gate.py": "f84a93223052beb32fa232e38e938e54d400ec3485928778993867ea677491d3",
     "k2_summary.py": "12f63116ad718bc3a4a0ba9c0c4904181f0f1bc1e7583d8b663ae61f228e38fa",
     "fixture_support.py": "6edd9de92f1d1446cf66d875c716e3e33bcfbf4c88a640b3e9b63b5a74359790",
     "test_fixture_owners.py": "ec0427632ca3f02e9cf09b012d4f58584b22670e90c459cd733ab523ec1c9d4b",
     "test_k2_structure.py": "0e84ac8f0deec835e549b04aa530d55f43b66b8b3fc8920aed02aa033c3ba4f8",
-    "coordinator_cpu_gate.py": "04783116113d200d6c0b8e9220e71d9965f18412f5a2e6ae21138fd58613f909",
+    "coordinator_cpu_gate.py": "60fa1ab478cdfe367bf5277f381453245e452615e0b8f6b9774306d04338b298",
     "coordinator_windows.sh": "82d5d165e586f7fcae0eaf8d5f87e1783e7271ded57a3e25aff5d1293ee303fd"
   },
+  "admission_audit_sha256": "ede34339f0c7984ab051a539cd8887c9156f5ff80fd5f3f246e5762c6b82e64b",
   "coordinator_chains": {
     "passed": true,
     "device_executed": false,
@@ -38,57 +42,147 @@
         "windows": [
           {
             "window": "K0",
-            "sha256": "7eca93f25fbcca3ebce282162c3e60554f5c2eb6a54311bd39d01fc5d5a2bc4f",
+            "sha256": "08ff6b4855df7dc48fc588b4ec9bb1b8b5ffe6ef5c5071fdb69c4ffbbcd1254c",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31519830016,
+              "build_bytes": 1554684874,
+              "admitted_write_bytes": 32000000,
+              "projected_build_write_bytes": 32000000,
+              "build_limit_bytes": 13588328138,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "K1a",
-            "sha256": "2249391b0f2e093530b2891f79d7d45b8ef4ff8ca39ff5cc8a7f00ead48cfe48",
+            "sha256": "cec2d5c56a3a1983fa1815da6f3b5d000bfcb324f715b6b1631282836f78aca1",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31519797248,
+              "build_bytes": 1554688502,
+              "admitted_write_bytes": 1100000000,
+              "projected_build_write_bytes": 1100000000,
+              "build_limit_bytes": 13588298998,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "K1b",
-            "sha256": "6defced5e5b10ded71415046bbd8e8368d8befaeb2fd144e16eb5e7fccab420d",
+            "sha256": "2a435a1bbedbc749bead9204700abed459a8b74ccc84894887d7fc605a7eeeb0",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31495315456,
+              "build_bytes": 1579092328,
+              "admitted_write_bytes": 1100000000,
+              "projected_build_write_bytes": 1100000000,
+              "build_limit_bytes": 13588221032,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "K2",
-            "sha256": "d266f14c678ee2cbf415b95fde2d2703770ab82dae503c007a260d9c583d8eea",
+            "sha256": "2ff6c8b003eee4c2351d64532944c406c3241fb9afc09dd004c4d35341baaece",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31470866432,
+              "build_bytes": 1603496153,
+              "admitted_write_bytes": 2500000000,
+              "projected_build_write_bytes": 2500000000,
+              "build_limit_bytes": 13588175833,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "W0p",
-            "sha256": "0ba3c71a4d0b8055bda3f16beb1a3c7b4dd4a78ffd9022437a68e8c051ec72dd",
+            "sha256": "a570d3866d2913a024658e8ef6c047cb97fdfa4034f5788389c2f223b56ab3a0",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31468736512,
+              "build_bytes": 1605573437,
+              "admitted_write_bytes": 32000000,
+              "projected_build_write_bytes": 32000000,
+              "build_limit_bytes": 13588123197,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "KD",
-            "sha256": "1197321f0a6f28ee941a5d6b608ab9c1d1976f39316fb76fa4981a5e69260e53",
+            "sha256": "0caff0f7481bcab4e4fcc1ceb833d930af96b4ddb5ec9143f9b6063c78c1ff03",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31468666880,
+              "build_bytes": 1605584988,
+              "admitted_write_bytes": 577279360,
+              "projected_build_write_bytes": 577279360,
+              "build_limit_bytes": 13588065116,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "W2m",
-            "sha256": "8fa69c25c46aa0c8645989c9dac1f2a0f90150dd79e522e6111a494054a037e3",
+            "sha256": "3233613cc7f6aee74efaf3b03b2840888dca9f87e0692df39ef8f22d7856e7c3",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31468109824,
+              "build_bytes": 1605846080,
+              "admitted_write_bytes": 700210560,
+              "projected_build_write_bytes": 700210560,
+              "build_limit_bytes": 13587769152,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "WS",
-            "sha256": "fde10f0f44159058fd4d266fc759077cfa72fc62816ad7d36c346f4a3017003a",
+            "sha256": "652329426d992ff964109a1db1c015bad79844cf1116d33ba3cdb0eb72ded614",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31463096320,
+              "build_bytes": 1609718107,
+              "admitted_write_bytes": 1084210560,
+              "projected_build_write_bytes": 1084210560,
+              "build_limit_bytes": 13586627675,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "WSs",
-            "sha256": "ac2fc1c0f15f2cc46019e41b0b0643b4f71ffa50358e9ec824f55df860db2521",
+            "sha256": "0c35a32814e8b3d8954dfc37f5c09efae4d82c395abf996f10ceb826feacb91d",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31381823488,
+              "build_bytes": 1686800992,
+              "admitted_write_bytes": 1084210560,
+              "projected_build_write_bytes": 1084210560,
+              "build_limit_bytes": 13582437728,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           }
         ],
         "command": [
@@ -97,8 +191,8 @@
           "0",
           "4096",
           "0",
-          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/coordinator-cpu-gxx914gb/c4096-dr0/suite.json",
-          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/coordinator-cpu-gxx914gb/c4096-dr0/build/chain"
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/coordinator-cpu-cetwia2j/c4096-dr0/suite.json",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/coordinator-cpu-cetwia2j/c4096-dr0/build/chain"
         ]
       },
       {
@@ -108,57 +202,147 @@
         "windows": [
           {
             "window": "K0",
-            "sha256": "c65a991391cfdc8d99d22fba09acd29ab7ca6e80c3913268d430f3bdc0f93cb4",
+            "sha256": "55f87c4fe2f57577a96aa87c43577b49b877e9970e713beb5c8c20154cc2c965",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31302774784,
+              "build_bytes": 1761467030,
+              "admitted_write_bytes": 32000000,
+              "projected_build_write_bytes": 32000000,
+              "build_limit_bytes": 13578055062,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "K1a",
-            "sha256": "8468a6418e4b0ca27a3aa09c16c793407f73019010afc88350683be664b68df9",
+            "sha256": "8aaf6aab5999fc17c363a4ddf337b140a6af70db20655346a1ad6228870978e2",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31302742016,
+              "build_bytes": 1761470662,
+              "admitted_write_bytes": 1100000000,
+              "projected_build_write_bytes": 1100000000,
+              "build_limit_bytes": 13578025926,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "K1b",
-            "sha256": "fc5e3e9bb413bbb03849e3ada55101659b7394f476f0f6b1046c03d50b57db65",
+            "sha256": "a70142188993f545d865035516abffd427cb58f3288be28d139926d73ba690ec",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31278292992,
+              "build_bytes": 1785874492,
+              "admitted_write_bytes": 1100000000,
+              "projected_build_write_bytes": 1100000000,
+              "build_limit_bytes": 13577980732,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "K2",
-            "sha256": "91cb2d1321081d8aa7f466b4b9adcae92bb653bf724e0c55e8a74c9943df0ac5",
+            "sha256": "5ec6694f74124cacf23eecf76f9d44700d179ff3e544279f9ef36905143121cb",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31253843968,
+              "build_bytes": 1810278322,
+              "admitted_write_bytes": 2500000000,
+              "projected_build_write_bytes": 2500000000,
+              "build_limit_bytes": 13577935538,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "W0p",
-            "sha256": "a93446be03c89808cad42fc81f44325e14edb36d920754514cf454a56e9c04d2",
+            "sha256": "e8a3f13161a0da703ae4ae84c98ba3df45ca60dc0bb3be8c23c46bc805005cdc",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31251722240,
+              "build_bytes": 1812355610,
+              "admitted_write_bytes": 32000000,
+              "projected_build_write_bytes": 32000000,
+              "build_limit_bytes": 13577891098,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "KD",
-            "sha256": "ab88d2a5fca75c2122b6621e9609537015e32089b747f6ea4ff211202666eb37",
+            "sha256": "6200218fc5c20e80c003885da935140ce9197c036dbb2ece232c17bd01446334",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31251652608,
+              "build_bytes": 1812367165,
+              "admitted_write_bytes": 577279360,
+              "projected_build_write_bytes": 577279360,
+              "build_limit_bytes": 13577833021,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "W2m",
-            "sha256": "f89c7a0996d237304e1f3830c5a6ffcf5a37b436fcb155dcc79b6aeabea3dcce",
+            "sha256": "996f69993cbbbdc52c47024aac7987c38d88a171619f1c85d37fba7710ab87b4",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31251095552,
+              "build_bytes": 1812628301,
+              "admitted_write_bytes": 700210560,
+              "projected_build_write_bytes": 700210560,
+              "build_limit_bytes": 13577537101,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "WS",
-            "sha256": "18b10e2679816cc718a0c3451a9cfb30560db8546bb684e6f6c2d739cce53a1e",
+            "sha256": "861ff1dd0604d7b91d5128698c3b25faaaa1dce1b3e81ef3b308fa96a7af17ea",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31246082048,
+              "build_bytes": 1816500270,
+              "admitted_write_bytes": 1084210560,
+              "projected_build_write_bytes": 1084210560,
+              "build_limit_bytes": 13576395566,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "WSs",
-            "sha256": "0cb846e17d510edc9ec0729c59c7636a0c4ce8fe7f750a3815dd67d4f12b8ea4",
+            "sha256": "16c30c0149cecac36d8e09928dd2a3e09c7cbb86418d87aabdda0839716c6689",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31164547072,
+              "build_bytes": 1893864866,
+              "admitted_write_bytes": 1084210560,
+              "projected_build_write_bytes": 1084210560,
+              "build_limit_bytes": 13572225186,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           }
         ],
         "command": [
@@ -167,8 +351,8 @@
           "0",
           "4096",
           "1",
-          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/coordinator-cpu-gxx914gb/c4096-dr1/suite.json",
-          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/coordinator-cpu-gxx914gb/c4096-dr1/build/chain"
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/coordinator-cpu-cetwia2j/c4096-dr1/suite.json",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/coordinator-cpu-cetwia2j/c4096-dr1/build/chain"
         ]
       },
       {
@@ -178,57 +362,147 @@
         "windows": [
           {
             "window": "K0",
-            "sha256": "ea9ec82160ce27da8e78dda93ee72a18f8a0d4829dcde4e85f83ade52870e22c",
+            "sha256": "af1a28426e43ef3028c7fc678fce4ea8c882a653b447138055a4a3bad9fcf9fa",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31084736512,
+              "build_bytes": 1969276993,
+              "admitted_write_bytes": 32000000,
+              "projected_build_write_bytes": 32000000,
+              "build_limit_bytes": 13567826753,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "K1a",
-            "sha256": "feb68f334db4a4529de022d0d97c8db6e25338f85f4fc7d1879791aa1377bf1e",
+            "sha256": "733693ceac15b5572915d7ef2bddfd9b3d2fad1781f184a99838dcbb46369d89",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31084703744,
+              "build_bytes": 1969280626,
+              "admitted_write_bytes": 1100000000,
+              "projected_build_write_bytes": 1100000000,
+              "build_limit_bytes": 13567797618,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "K1b",
-            "sha256": "ae7e0f619daed8825611275e93ea53231dae8a2a350e6caafcf50bc13512519d",
+            "sha256": "1db06b9a4dc5baa21cbf69232b710576cac4ff6bfd0722b2c553bd30e9dfeec6",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31060221952,
+              "build_bytes": 1993705757,
+              "admitted_write_bytes": 1100000000,
+              "projected_build_write_bytes": 1100000000,
+              "build_limit_bytes": 13567740957,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "K2",
-            "sha256": "76299a3ca56da2002bdca9b02b744bdd4f86d1fd88a819bea250ff2d04fe0431",
+            "sha256": "7f3d15d1474884325151e7d3fda80a6742588cad435b9be497d9bfb62d608233",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31035707392,
+              "build_bytes": 2018130886,
+              "admitted_write_bytes": 2500000000,
+              "projected_build_write_bytes": 2500000000,
+              "build_limit_bytes": 13567651526,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "W0p",
-            "sha256": "368fb76cf2c813e1730138de11c1139f9bed1f551cbf1d37850be57dcc803031",
+            "sha256": "8b988d6396615fbfa78a1ec707b82a492a6d73f1d771ab03c384b735516e8885",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31033544704,
+              "build_bytes": 2020249986,
+              "admitted_write_bytes": 32000000,
+              "projected_build_write_bytes": 32000000,
+              "build_limit_bytes": 13567607938,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "KD",
-            "sha256": "e92cb996a391c7eb17ced7fbc0f41e5ce11b4edcaa401b9f339782f4b584e898",
+            "sha256": "2e53acff69b5c66226fd5929619ed53652300b3e23b182008869b2e00244eab0",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31033475072,
+              "build_bytes": 2020261552,
+              "admitted_write_bytes": 780965248,
+              "projected_build_write_bytes": 780965248,
+              "build_limit_bytes": 13567549872,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "W2m",
-            "sha256": "a21edc3997b27a3cb27461db2cb55d0e2c6f152852ff3fcfa4bbac696e098a09",
+            "sha256": "22ccd30e8c711d3219c3098838050bd510fb43766b9de0322e0ebac64e39e87a",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31031414784,
+              "build_bytes": 2022013631,
+              "admitted_write_bytes": 1582849408,
+              "projected_build_write_bytes": 1582849408,
+              "build_limit_bytes": 13567241663,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "WS",
-            "sha256": "1600285d4b0ade9e8fb270a8a404e21e638212e21214408a739eb75de1e6a979",
+            "sha256": "666a04baeeedc613891fc75c1dfde39d387d0352cfc5c6a4cb8c08ee5a1a341c",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 31024160768,
+              "build_bytes": 2028122435,
+              "admitted_write_bytes": 1966849408,
+              "projected_build_write_bytes": 1966849408,
+              "build_limit_bytes": 13566096451,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           },
           {
             "window": "WSs",
-            "sha256": "51fd024178f91ca7ddb8a764f5e67f5b23ccdb38d1522a6b25f1ff53447a68ca",
+            "sha256": "b6f6d7260a0d9e563e229c7853336b1ed7f1ef6bfaff5ad415c9769954f8f0b8",
             "passed": true,
-            "device_executed": false
+            "device_executed": false,
+            "storage_admission": {
+              "root_free_bytes": 30942101504,
+              "build_bytes": 2106014447,
+              "admitted_write_bytes": 1966849408,
+              "projected_build_write_bytes": 1966849408,
+              "build_limit_bytes": 13561929199,
+              "structural_build_limit_bytes": 14486186752,
+              "free_floor_bytes": 8000000000,
+              "remaining_chain_reserve_bytes": 11486186752
+            }
           }
         ],
         "command": [
@@ -237,32 +511,32 @@
           "0",
           "32768",
           "0",
-          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/coordinator-cpu-gxx914gb/c32768-dr0/suite.json",
-          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/coordinator-cpu-gxx914gb/c32768-dr0/build/chain"
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/coordinator-cpu-cetwia2j/c32768-dr0/suite.json",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/coordinator-cpu-cetwia2j/c32768-dr0/build/chain"
         ]
       }
     ],
     "source_sha256": {
-      "coordinator_cpu_gate.py": "04783116113d200d6c0b8e9220e71d9965f18412f5a2e6ae21138fd58613f909",
+      "coordinator_cpu_gate.py": "60fa1ab478cdfe367bf5277f381453245e452615e0b8f6b9774306d04338b298",
       "coordinator_windows.sh": "82d5d165e586f7fcae0eaf8d5f87e1783e7271ded57a3e25aff5d1293ee303fd",
       "fixture_support.py": "6edd9de92f1d1446cf66d875c716e3e33bcfbf4c88a640b3e9b63b5a74359790",
-      "window.py": "9bc57a2b5455395535e4f888aad8c3a68eef95375077a815d07728e9d90cb887",
+      "window.py": "57b0efedbc901b19bcca183ec4aa31b6db174bc2f367c0040ca2fb81347dd2e1",
       "draft_window.py": "e219111807cd8e71f598b3d8edbac0d65c1c88b004c8952304760e31162e1d95",
       "pipeline.py": "61251db33bc2da7bba36ed18ca29c1bff29cda296c74d3f51da2ea7069160ff8",
-      "suite.py": "3fb15dde919405e9c6df771fd294679026dc40e5f177aabe5accd4aabce9d6bc",
+      "suite.py": "d8d0a373ba5fbc3e70605ea61b970694a1b837d0bcd5ac1e0087221333e546d1",
       "suite_metrics.py": "8e2d28774beb05606cbc04797abecb3fa9d880e97f4c2c3b64e774f06253c9f2",
       "k2_summary.py": "12f63116ad718bc3a4a0ba9c0c4904181f0f1bc1e7583d8b663ae61f228e38fa",
-      "storage.py": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3",
+      "storage.py": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39",
       "window_safety.py": "353ce418d0570d3b85d23dc63dc91f7e005e528e91057d7a7ee620d390d02264",
       "merge_dispatch.py": "29497efa3d2090aa69f0985db384a3252a64d12e9314ec5c77099a2238827e6c"
     },
     "archive": {
-      "path": "evidence/sequential-owner-fix/coordinator-chains.jsonl.gz",
-      "sha256": "591783589e6d7632ccd7c187c41c61557d52a2fedca2896e867605c00826d231",
+      "path": "evidence/storage-admission-fix/coordinator-chains.jsonl.gz",
+      "sha256": "949c14270db0abb7faebdca9db4b0bbc2ead274bcb0b8616e98ab472eb9e4bc8",
       "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
-      "files": 3057,
-      "retained_files": 1242,
-      "retained_bytes": 107189372
+      "files": 8367,
+      "retained_files": 2712,
+      "retained_bytes": 478698494
     },
     "host_binary_sha256": "2416ec9c53c48d50b6fac450950162fdb480bac8c81c6f42d42177cb103d2ac4",
     "scope": "exact coordinator_windows.sh; real host children and unmocked receipt/prerequisite/summary gates",

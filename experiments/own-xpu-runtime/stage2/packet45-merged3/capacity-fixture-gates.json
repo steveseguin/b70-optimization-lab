@@ -7,7 +7,7 @@
       "compiler": "gnu-host",
       "kind": "nongemv",
       "context": 256,
-      "identity_key": "63150ffed9c0bb5da3fba488248e9709739c03fecac501b395645e63425e7ba1",
+      "identity_key": "8737f715dd67309621701f920b01a3bc8ed38481389f9700d237d7e11377dc17",
       "binary_sha256": "7db4dc81ee166e60c1f35308f48032b3cfb0a1374080ddf78967487ca545cd74",
       "passed": true,
       "device_executed": false,
@@ -759,7 +759,7 @@
             ]
           ],
           "driver_sha256": "4e1800240fa0603c5ec15ea8775e214b0f9896e1d4b8cdcc64c0e90c31b4f766",
-          "storage_sha256": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3"
+          "storage_sha256": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39"
         },
         "fixtures_sha256": {
           "cases.txt": "a831d408cab6033a9bad00ae3ff3c33be2001934a2d6463b7a1182aa736f5f33",
@@ -841,9 +841,14 @@
         "rope_sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
       },
       "storage_admission": {
-        "root_free_bytes": 31615279104,
-        "build_bytes": 1553034065,
-        "admitted_write_bytes": 100000000
+        "root_free_bytes": 31530070016,
+        "build_bytes": 1552906002,
+        "admitted_write_bytes": 100000000,
+        "projected_build_write_bytes": 100000000,
+        "build_limit_bytes": 13596789266,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
       },
       "command": [
         "nice",
@@ -854,7 +859,7 @@
         "3",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/gnu-host/nongemv-fixtures",
         "--output",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-nongemv-256-1791956481099238968/run",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-nongemv-256-1791978066902766087/run",
         "--context",
         "256",
         "--fixtures",
@@ -862,8 +867,8 @@
         "--dispatch",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/dispatch-p45.json"
       ],
-      "seconds": 35.790035253041424,
-      "peak_aggregate_rss_anon_bytes": 1770688512,
+      "seconds": 35.68928865500493,
+      "peak_aggregate_rss_anon_bytes": 1794416640,
       "output_sha256": "04df21b1bd823e2e5a6007ca63eada4c7afdff3073bc6df0faa3888cf2e77729",
       "checks": 3645,
       "fixture_checks": 218,
@@ -965,14 +970,14 @@
         256
       ],
       "output_archive": {
-        "path": "evidence/capacity-fixtures/63150ffed9c0bb5da3fba488248e9709739c03fecac501b395645e63425e7ba1-output.bin.gz",
-        "sha256": "dd71f04a90c1beb82dc15631025814acfdecae5da660da4429b670d83786dc27",
+        "path": "evidence/capacity-fixtures/8737f715dd67309621701f920b01a3bc8ed38481389f9700d237d7e11377dc17-output.bin.gz",
+        "sha256": "008e5c6002f350ee8b1d1bb21c70518b957981ecf57d2a4027490dd6331b3d9b",
         "raw_sha256": "04df21b1bd823e2e5a6007ca63eada4c7afdff3073bc6df0faa3888cf2e77729",
         "raw_bytes": 23393176
       },
       "scratch_archive": {
-        "path": "evidence/scratch-capacity-fixture-gnu-host-nongemv-256-1791956481099238968.jsonl.gz",
-        "sha256": "e6dd9c0fe0e6fa7bd076f5f4f4ca6d8e5fa340d3c82d68ecbb90ecd6b83ece76",
+        "path": "evidence/scratch-capacity-fixture-gnu-host-nongemv-256-1791978066902766087.jsonl.gz",
+        "sha256": "81343d178096fa3663a85820bc1343f7b1c54a959ac6af0a6f793119f4dcfa7c",
         "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
         "files": 3,
         "retained_files": 3,
@@ -983,7 +988,7 @@
       "compiler": "gnu-host",
       "kind": "nongemv",
       "context": 4096,
-      "identity_key": "731c45794bcab4a63eb49c47738610739a0cecc2ad0495f4ee80236a5b05e581",
+      "identity_key": "aa15be764046000f9266767931f0c0e16e79fe29a9e1e90c23ff18f5374882ff",
       "binary_sha256": "7db4dc81ee166e60c1f35308f48032b3cfb0a1374080ddf78967487ca545cd74",
       "passed": true,
       "device_executed": false,
@@ -1735,7 +1740,7 @@
             ]
           ],
           "driver_sha256": "4e1800240fa0603c5ec15ea8775e214b0f9896e1d4b8cdcc64c0e90c31b4f766",
-          "storage_sha256": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3"
+          "storage_sha256": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39"
         },
         "fixtures_sha256": {
           "cases.txt": "a831d408cab6033a9bad00ae3ff3c33be2001934a2d6463b7a1182aa736f5f33",
@@ -1817,9 +1822,14 @@
         "rope_sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
       },
       "storage_admission": {
-        "root_free_bytes": 31616999424,
-        "build_bytes": 1553034065,
-        "admitted_write_bytes": 100000000
+        "root_free_bytes": 31529275392,
+        "build_bytes": 1552906002,
+        "admitted_write_bytes": 100000000,
+        "projected_build_write_bytes": 100000000,
+        "build_limit_bytes": 13595994642,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
       },
       "command": [
         "nice",
@@ -1830,7 +1840,7 @@
         "3",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/gnu-host/nongemv-fixtures",
         "--output",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-nongemv-4096-1791956517525158546/run",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-nongemv-4096-1791978103238161007/run",
         "--context",
         "4096",
         "--fixtures",
@@ -1838,8 +1848,8 @@
         "--dispatch",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/dispatch-p45.json"
       ],
-      "seconds": 40.70648934901692,
-      "peak_aggregate_rss_anon_bytes": 1896869888,
+      "seconds": 40.5022029329557,
+      "peak_aggregate_rss_anon_bytes": 1899360256,
       "output_sha256": "1cfee3af6682dd3b601a59a58e17bc7f9ee1d94a184f85a4c7c7baad83af3452",
       "checks": 3645,
       "fixture_checks": 218,
@@ -1941,14 +1951,14 @@
         4096
       ],
       "output_archive": {
-        "path": "evidence/capacity-fixtures/731c45794bcab4a63eb49c47738610739a0cecc2ad0495f4ee80236a5b05e581-output.bin.gz",
-        "sha256": "1ebc676930e2ad0bfc17253cf40a2e470c419800bf2979de9fef539e6bbada6b",
+        "path": "evidence/capacity-fixtures/aa15be764046000f9266767931f0c0e16e79fe29a9e1e90c23ff18f5374882ff-output.bin.gz",
+        "sha256": "ed89e27a19c7987eda400b6db10df029700487c2e95edf8cf9c3ea2dc858b51b",
         "raw_sha256": "1cfee3af6682dd3b601a59a58e17bc7f9ee1d94a184f85a4c7c7baad83af3452",
         "raw_bytes": 23393176
       },
       "scratch_archive": {
-        "path": "evidence/scratch-capacity-fixture-gnu-host-nongemv-4096-1791956517525158546.jsonl.gz",
-        "sha256": "dd63759d9e78756ab508a21e16420042294b65fefaf4f139cd158172484ba67c",
+        "path": "evidence/scratch-capacity-fixture-gnu-host-nongemv-4096-1791978103238161007.jsonl.gz",
+        "sha256": "50308cc81f60c772ad1f9e5c86efb25c24a4829cf64e6572b08af13a4f3d9eaf",
         "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
         "files": 3,
         "retained_files": 3,
@@ -1959,7 +1969,7 @@
       "compiler": "gnu-host",
       "kind": "nongemv",
       "context": 32768,
-      "identity_key": "a10ea851ae380a12686973a045f172217fcfa7e217ed2d0f111bc05b8f19a0e1",
+      "identity_key": "3a6e22fa1eb09fde0551d2bf4d25fef53f3e9a6ae0eb428566184e41774737f8",
       "binary_sha256": "7db4dc81ee166e60c1f35308f48032b3cfb0a1374080ddf78967487ca545cd74",
       "passed": true,
       "device_executed": false,
@@ -2711,7 +2721,7 @@
             ]
           ],
           "driver_sha256": "4e1800240fa0603c5ec15ea8775e214b0f9896e1d4b8cdcc64c0e90c31b4f766",
-          "storage_sha256": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3"
+          "storage_sha256": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39"
         },
         "fixtures_sha256": {
           "cases.txt": "a831d408cab6033a9bad00ae3ff3c33be2001934a2d6463b7a1182aa736f5f33",
@@ -2793,9 +2803,14 @@
         "rope_sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
       },
       "storage_admission": {
-        "root_free_bytes": 31616372736,
-        "build_bytes": 1553034065,
-        "admitted_write_bytes": 100000000
+        "root_free_bytes": 31528648704,
+        "build_bytes": 1552906002,
+        "admitted_write_bytes": 100000000,
+        "projected_build_write_bytes": 100000000,
+        "build_limit_bytes": 13595367954,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
       },
       "command": [
         "nice",
@@ -2806,7 +2821,7 @@
         "3",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/gnu-host/nongemv-fixtures",
         "--output",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-nongemv-32768-1791956558869967748/run",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-nongemv-32768-1791978144351143033/run",
         "--context",
         "32768",
         "--fixtures",
@@ -2814,8 +2829,8 @@
         "--dispatch",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/dispatch-p45.json"
       ],
-      "seconds": 52.94231576600578,
-      "peak_aggregate_rss_anon_bytes": 2830274560,
+      "seconds": 52.837869859009515,
+      "peak_aggregate_rss_anon_bytes": 2850869248,
       "output_sha256": "f8eda7dcc17d14ff14ff194a20486ddc195c906fb05cd4227b2ceeeb8e8494a8",
       "checks": 3657,
       "fixture_checks": 230,
@@ -2918,14 +2933,14 @@
         32767
       ],
       "output_archive": {
-        "path": "evidence/capacity-fixtures/a10ea851ae380a12686973a045f172217fcfa7e217ed2d0f111bc05b8f19a0e1-output.bin.gz",
-        "sha256": "483923f76911f0cdddd6a0ce67a762b7cb60160b4a42484a9d5e9a93c041af8b",
+        "path": "evidence/capacity-fixtures/3a6e22fa1eb09fde0551d2bf4d25fef53f3e9a6ae0eb428566184e41774737f8-output.bin.gz",
+        "sha256": "c356d42f0c74f6dfcc0e10e8f358df12d3221c69b98f179a0904a4f5424e485d",
         "raw_sha256": "f8eda7dcc17d14ff14ff194a20486ddc195c906fb05cd4227b2ceeeb8e8494a8",
         "raw_bytes": 23397496
       },
       "scratch_archive": {
-        "path": "evidence/scratch-capacity-fixture-gnu-host-nongemv-32768-1791956558869967748.jsonl.gz",
-        "sha256": "d02def99c4496a2192555ee08332861a313c971671a3cc2b05b2539f99beaad2",
+        "path": "evidence/scratch-capacity-fixture-gnu-host-nongemv-32768-1791978144351143033.jsonl.gz",
+        "sha256": "52cd1c97063ae0321e16b1c335b1d583ddf77c30dbb4d28a2c6b846b38680e3b",
         "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
         "files": 3,
         "retained_files": 3,
@@ -2936,7 +2951,7 @@
       "compiler": "icpx-host",
       "kind": "nongemv",
       "context": 256,
-      "identity_key": "0939d31a74dff2aeca40ffb6f5d2ffea1cc6e3d115e0b5602fdaeabc4a019f95",
+      "identity_key": "3ab63b53eba1eabd5b36c3f90c97ac98eff618ebd8f0f042e9336d812d6cc5c1",
       "binary_sha256": "52f751ee5ce55001d3de5f606a29da8908fa1cfb00d0b9881f8e3c9f034b2327",
       "passed": true,
       "device_executed": false,
@@ -3688,7 +3703,7 @@
             ]
           ],
           "driver_sha256": "4e1800240fa0603c5ec15ea8775e214b0f9896e1d4b8cdcc64c0e90c31b4f766",
-          "storage_sha256": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3"
+          "storage_sha256": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39"
         },
         "fixtures_sha256": {
           "cases.txt": "a831d408cab6033a9bad00ae3ff3c33be2001934a2d6463b7a1182aa736f5f33",
@@ -3770,9 +3785,14 @@
         "rope_sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
       },
       "storage_admission": {
-        "root_free_bytes": 31615774720,
-        "build_bytes": 1553034065,
-        "admitted_write_bytes": 100000000
+        "root_free_bytes": 31527866368,
+        "build_bytes": 1552906002,
+        "admitted_write_bytes": 100000000,
+        "projected_build_write_bytes": 100000000,
+        "build_limit_bytes": 13594585618,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
       },
       "command": [
         "nice",
@@ -3783,7 +3803,7 @@
         "3",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/icpx-host/nongemv-fixtures",
         "--output",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-icpx-host-nongemv-256-1791956612439372091/run",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-icpx-host-nongemv-256-1791978197815032259/run",
         "--context",
         "256",
         "--fixtures",
@@ -3791,8 +3811,8 @@
         "--dispatch",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/dispatch-p45.json"
       ],
-      "seconds": 31.384934185014572,
-      "peak_aggregate_rss_anon_bytes": 1668083712,
+      "seconds": 30.98069256800227,
+      "peak_aggregate_rss_anon_bytes": 1654312960,
       "output_sha256": "04df21b1bd823e2e5a6007ca63eada4c7afdff3073bc6df0faa3888cf2e77729",
       "checks": 3645,
       "fixture_checks": 218,
@@ -3894,14 +3914,14 @@
         256
       ],
       "output_archive": {
-        "path": "evidence/capacity-fixtures/0939d31a74dff2aeca40ffb6f5d2ffea1cc6e3d115e0b5602fdaeabc4a019f95-output.bin.gz",
-        "sha256": "11c402f24dce14fb66e6c7ee2956238444453251889bf23a6916c2693227be59",
+        "path": "evidence/capacity-fixtures/3ab63b53eba1eabd5b36c3f90c97ac98eff618ebd8f0f042e9336d812d6cc5c1-output.bin.gz",
+        "sha256": "f1b55f45bcc3829fb3eedabd2e8befa4d73b5fd6244c9a6712e3c9b6d4dfb2f8",
         "raw_sha256": "04df21b1bd823e2e5a6007ca63eada4c7afdff3073bc6df0faa3888cf2e77729",
         "raw_bytes": 23393176
       },
       "scratch_archive": {
-        "path": "evidence/scratch-capacity-fixture-icpx-host-nongemv-256-1791956612439372091.jsonl.gz",
-        "sha256": "b710bc7851f061cbb10fe424ed3ed47308b8c96308692920557e0d58fb0406ca",
+        "path": "evidence/scratch-capacity-fixture-icpx-host-nongemv-256-1791978197815032259.jsonl.gz",
+        "sha256": "b227731569a0cf5919ee774ba00f5cde890de2831eb6ab84373f81cdde68c295",
         "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
         "files": 3,
         "retained_files": 3,
@@ -3912,7 +3932,7 @@
       "compiler": "icpx-host",
       "kind": "nongemv",
       "context": 4096,
-      "identity_key": "cc1a3c8d1ae399df8a604ae304ce43fecd93a2684541e05bd8defc809de21a14",
+      "identity_key": "f57c87e4afef61d5dcf9f8722d8fac963a259ddba24172048bd1c9d7b7542509",
       "binary_sha256": "52f751ee5ce55001d3de5f606a29da8908fa1cfb00d0b9881f8e3c9f034b2327",
       "passed": true,
       "device_executed": false,
@@ -4664,7 +4684,7 @@
             ]
           ],
           "driver_sha256": "4e1800240fa0603c5ec15ea8775e214b0f9896e1d4b8cdcc64c0e90c31b4f766",
-          "storage_sha256": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3"
+          "storage_sha256": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39"
         },
         "fixtures_sha256": {
           "cases.txt": "a831d408cab6033a9bad00ae3ff3c33be2001934a2d6463b7a1182aa736f5f33",
@@ -4746,9 +4766,14 @@
         "rope_sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
       },
       "storage_admission": {
-        "root_free_bytes": 31615143936,
-        "build_bytes": 1553034065,
-        "admitted_write_bytes": 100000000
+        "root_free_bytes": 31527174144,
+        "build_bytes": 1552906002,
+        "admitted_write_bytes": 100000000,
+        "projected_build_write_bytes": 100000000,
+        "build_limit_bytes": 13593893394,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
       },
       "command": [
         "nice",
@@ -4759,7 +4784,7 @@
         "3",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/icpx-host/nongemv-fixtures",
         "--output",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-icpx-host-nongemv-4096-1791956644447255249/run",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-icpx-host-nongemv-4096-1791978229409296147/run",
         "--context",
         "4096",
         "--fixtures",
@@ -4767,8 +4792,8 @@
         "--dispatch",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/dispatch-p45.json"
       ],
-      "seconds": 35.597223557997495,
-      "peak_aggregate_rss_anon_bytes": 1909673984,
+      "seconds": 35.491996642027516,
+      "peak_aggregate_rss_anon_bytes": 1890148352,
       "output_sha256": "1cfee3af6682dd3b601a59a58e17bc7f9ee1d94a184f85a4c7c7baad83af3452",
       "checks": 3645,
       "fixture_checks": 218,
@@ -4870,14 +4895,14 @@
         4096
       ],
       "output_archive": {
-        "path": "evidence/capacity-fixtures/cc1a3c8d1ae399df8a604ae304ce43fecd93a2684541e05bd8defc809de21a14-output.bin.gz",
-        "sha256": "e5bb48d1135e9e31d135de3a3df022aa03a53d34b9418205ed70e91890e4ffb0",
+        "path": "evidence/capacity-fixtures/f57c87e4afef61d5dcf9f8722d8fac963a259ddba24172048bd1c9d7b7542509-output.bin.gz",
+        "sha256": "b77ad610e07831ccdac3ccd5d51ac4e1e11c193ca603aded295ca39ca4436a0c",
         "raw_sha256": "1cfee3af6682dd3b601a59a58e17bc7f9ee1d94a184f85a4c7c7baad83af3452",
         "raw_bytes": 23393176
       },
       "scratch_archive": {
-        "path": "evidence/scratch-capacity-fixture-icpx-host-nongemv-4096-1791956644447255249.jsonl.gz",
-        "sha256": "996a8c27e3c8fe28fa03bda6c0e3e9cd9c98d00ed62970246b3c81a77eb01bd2",
+        "path": "evidence/scratch-capacity-fixture-icpx-host-nongemv-4096-1791978229409296147.jsonl.gz",
+        "sha256": "e4e2dd1e4ce0fa18362c03abb1228f6ff0cc0640778766009d501792fdff7b8e",
         "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
         "files": 3,
         "retained_files": 3,
@@ -4888,7 +4913,7 @@
       "compiler": "icpx-host",
       "kind": "nongemv",
       "context": 32768,
-      "identity_key": "17f6ba23b5588f2697f47c6e87179c3d3ddf9e38353dff3010142d13b8734d03",
+      "identity_key": "413eb2927783459615105fdec131c70913056322135b7eb2f127cde80d86a3fa",
       "binary_sha256": "52f751ee5ce55001d3de5f606a29da8908fa1cfb00d0b9881f8e3c9f034b2327",
       "passed": true,
       "device_executed": false,
@@ -5640,7 +5665,7 @@
             ]
           ],
           "driver_sha256": "4e1800240fa0603c5ec15ea8775e214b0f9896e1d4b8cdcc64c0e90c31b4f766",
-          "storage_sha256": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3"
+          "storage_sha256": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39"
         },
         "fixtures_sha256": {
           "cases.txt": "a831d408cab6033a9bad00ae3ff3c33be2001934a2d6463b7a1182aa736f5f33",
@@ -5722,9 +5747,14 @@
         "rope_sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
       },
       "storage_admission": {
-        "root_free_bytes": 31614541824,
-        "build_bytes": 1553034065,
-        "admitted_write_bytes": 100000000
+        "root_free_bytes": 31526535168,
+        "build_bytes": 1552906002,
+        "admitted_write_bytes": 100000000,
+        "projected_build_write_bytes": 100000000,
+        "build_limit_bytes": 13593254418,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
       },
       "command": [
         "nice",
@@ -5735,7 +5765,7 @@
         "3",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/icpx-host/nongemv-fixtures",
         "--output",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-icpx-host-nongemv-32768-1791956680683368666/run",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-icpx-host-nongemv-32768-1791978265516238698/run",
         "--context",
         "32768",
         "--fixtures",
@@ -5743,8 +5773,8 @@
         "--dispatch",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/dispatch-p45.json"
       ],
-      "seconds": 47.83271796698682,
-      "peak_aggregate_rss_anon_bytes": 2680446976,
+      "seconds": 47.42105020501185,
+      "peak_aggregate_rss_anon_bytes": 2734006272,
       "output_sha256": "f8eda7dcc17d14ff14ff194a20486ddc195c906fb05cd4227b2ceeeb8e8494a8",
       "checks": 3657,
       "fixture_checks": 230,
@@ -5847,14 +5877,14 @@
         32767
       ],
       "output_archive": {
-        "path": "evidence/capacity-fixtures/17f6ba23b5588f2697f47c6e87179c3d3ddf9e38353dff3010142d13b8734d03-output.bin.gz",
-        "sha256": "c5a9c6bf88f9b59940bebea725658f164918b7a938e648fe4b96f5cbc9c540f2",
+        "path": "evidence/capacity-fixtures/413eb2927783459615105fdec131c70913056322135b7eb2f127cde80d86a3fa-output.bin.gz",
+        "sha256": "c01342972d77de48161b80141a9c7fe9f57864b24a5d5fb62fc37ec2fa6842ea",
         "raw_sha256": "f8eda7dcc17d14ff14ff194a20486ddc195c906fb05cd4227b2ceeeb8e8494a8",
         "raw_bytes": 23397496
       },
       "scratch_archive": {
-        "path": "evidence/scratch-capacity-fixture-icpx-host-nongemv-32768-1791956680683368666.jsonl.gz",
-        "sha256": "7cb2fe5700716aafb5c42c7ce43347f7621b066fd484bd8aea42e9e0b4ce95e4",
+        "path": "evidence/scratch-capacity-fixture-icpx-host-nongemv-32768-1791978265516238698.jsonl.gz",
+        "sha256": "430155232f83bcbea1a2099964ea2867d7e98a32f8c1ff0d77aa1e33044de848",
         "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
         "files": 3,
         "retained_files": 3,
@@ -5865,7 +5895,7 @@
       "compiler": "gnu-host",
       "kind": "linked",
       "context": null,
-      "identity_key": "65fae32ee695ef08a7843d08e701b06c7205e9a6f65ab9b6b2e2700eacd1f908",
+      "identity_key": "c21cb5a8fe77a9b53d53a0765d1000807ff0139f2e90991e08002f94259de5c3",
       "binary_sha256": "ce2ae9fb6ac8246fe91ce24bedb8ec45c1a4418f4fb07a634f1efadf5e47d33f",
       "passed": true,
       "device_executed": false,
@@ -6572,16 +6602,21 @@
             ]
           ],
           "driver_sha256": "4e1800240fa0603c5ec15ea8775e214b0f9896e1d4b8cdcc64c0e90c31b4f766",
-          "storage_sha256": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3"
+          "storage_sha256": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39"
         },
         "fixtures_sha256": {},
         "dispatch_sha256": "8d696e7f9cc7853dfdcc1e8774a50ce69b3afd94d1dc7dfa49fa804a125dd1c6",
         "rope_sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
       },
       "storage_admission": {
-        "root_free_bytes": 31613919232,
-        "build_bytes": 1553034065,
-        "admitted_write_bytes": 100000000
+        "root_free_bytes": 31525867520,
+        "build_bytes": 1552906002,
+        "admitted_write_bytes": 100000000,
+        "projected_build_write_bytes": 100000000,
+        "build_limit_bytes": 13592586770,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
       },
       "command": [
         "nice",
@@ -6592,12 +6627,12 @@
         "3",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/gnu-host/p33-linked-fixtures",
         "--output",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-linked-None-1791956729032426115/run",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-linked-None-1791978313444739576/run",
         "--seconds",
         "1800"
       ],
-      "seconds": 0.10071919596521184,
-      "peak_aggregate_rss_anon_bytes": 20606976,
+      "seconds": 0.10057307995157316,
+      "peak_aggregate_rss_anon_bytes": 20529152,
       "output_sha256": "691a9ad3760a339b8334daef5d822e8743663c82eba92d05d002633e07f3f8ff",
       "checks": 216,
       "fixture_checks": 216,
@@ -6636,14 +6671,14 @@
       "arithmetic": true,
       "registered_lengths": [],
       "output_archive": {
-        "path": "evidence/capacity-fixtures/65fae32ee695ef08a7843d08e701b06c7205e9a6f65ab9b6b2e2700eacd1f908-output.bin.gz",
-        "sha256": "b704f9e4e19ef8cbae6dd8a4e33d81dfaa53f3322198a6e3aff749bc05a7ffab",
+        "path": "evidence/capacity-fixtures/c21cb5a8fe77a9b53d53a0765d1000807ff0139f2e90991e08002f94259de5c3-output.bin.gz",
+        "sha256": "a134f9283e0d3cc45d08099019c025602cb616cba88d47449994c8156fd919ca",
         "raw_sha256": "691a9ad3760a339b8334daef5d822e8743663c82eba92d05d002633e07f3f8ff",
         "raw_bytes": 3024
       },
       "scratch_archive": {
-        "path": "evidence/scratch-capacity-fixture-gnu-host-linked-None-1791956729032426115.jsonl.gz",
-        "sha256": "6f7963bdc13a0a0c6e4db95d776a01f9a5ddfdfce28a74a9c70f9b59bc2e6a18",
+        "path": "evidence/scratch-capacity-fixture-gnu-host-linked-None-1791978313444739576.jsonl.gz",
+        "sha256": "9ddc57fb06602b4cfc37592ce05c2baef944b4ba91717c514dda620be01844b3",
         "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
         "files": 3,
         "retained_files": 3,
@@ -6654,7 +6689,7 @@
       "compiler": "icpx-host",
       "kind": "linked",
       "context": null,
-      "identity_key": "adc000eac9a3847e44548632144c618ad065e6db1ecd72350f1d49d21d217ede",
+      "identity_key": "cf9bbad4975ec096c54f38d89d5c676c5bb965bfedbe2495159aea384b14095d",
       "binary_sha256": "2607c4cddc6a726d8995a6e7b962774e2f27e6e228027a1c2175ccd631b9aa83",
       "passed": true,
       "device_executed": false,
@@ -7361,16 +7396,21 @@
             ]
           ],
           "driver_sha256": "4e1800240fa0603c5ec15ea8775e214b0f9896e1d4b8cdcc64c0e90c31b4f766",
-          "storage_sha256": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3"
+          "storage_sha256": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39"
         },
         "fixtures_sha256": {},
         "dispatch_sha256": "8d696e7f9cc7853dfdcc1e8774a50ce69b3afd94d1dc7dfa49fa804a125dd1c6",
         "rope_sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
       },
       "storage_admission": {
-        "root_free_bytes": 31613771776,
-        "build_bytes": 1553034065,
-        "admitted_write_bytes": 100000000
+        "root_free_bytes": 31525720064,
+        "build_bytes": 1552906002,
+        "admitted_write_bytes": 100000000,
+        "projected_build_write_bytes": 100000000,
+        "build_limit_bytes": 13592439314,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
       },
       "command": [
         "nice",
@@ -7381,12 +7421,12 @@
         "3",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/icpx-host/p33-linked-fixtures",
         "--output",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-icpx-host-linked-None-1791956729384670918/run",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-icpx-host-linked-None-1791978313780936293/run",
         "--seconds",
         "1800"
       ],
-      "seconds": 0.10061098297592252,
-      "peak_aggregate_rss_anon_bytes": 20594688,
+      "seconds": 0.10066494299098849,
+      "peak_aggregate_rss_anon_bytes": 20287488,
       "output_sha256": "691a9ad3760a339b8334daef5d822e8743663c82eba92d05d002633e07f3f8ff",
       "checks": 216,
       "fixture_checks": 216,
@@ -7425,14 +7465,14 @@
       "arithmetic": true,
       "registered_lengths": [],
       "output_archive": {
-        "path": "evidence/capacity-fixtures/adc000eac9a3847e44548632144c618ad065e6db1ecd72350f1d49d21d217ede-output.bin.gz",
-        "sha256": "4c63a930c2c1d7dfcecb8b0229b6406cbf0a5380e2743b28f3bb1a445a93fd47",
+        "path": "evidence/capacity-fixtures/cf9bbad4975ec096c54f38d89d5c676c5bb965bfedbe2495159aea384b14095d-output.bin.gz",
+        "sha256": "4c10a2b4a7c076efc9f88410fb67cb92302e644de970636772240c3ccd84b3e4",
         "raw_sha256": "691a9ad3760a339b8334daef5d822e8743663c82eba92d05d002633e07f3f8ff",
         "raw_bytes": 3024
       },
       "scratch_archive": {
-        "path": "evidence/scratch-capacity-fixture-icpx-host-linked-None-1791956729384670918.jsonl.gz",
-        "sha256": "d201cefd73b94f02a5fe7239f59881cbd8202bbf2780c12fd55a89f96a89c418",
+        "path": "evidence/scratch-capacity-fixture-icpx-host-linked-None-1791978313780936293.jsonl.gz",
+        "sha256": "a4afdcb6de6974d4418fd5c659d587704484610b073838332cf324f3909c0f65",
         "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
         "files": 3,
         "retained_files": 3,
@@ -7443,7 +7483,7 @@
       "compiler": "gnu-host",
       "kind": "k2-validation",
       "context": 256,
-      "identity_key": "c90e7d7c40b444a9b060ff33a5577f46ecd60ccd719484395e7e0b812a20f9a2",
+      "identity_key": "b03a460fe8b5bdbbcfe666c689e80156d7d548b208991c67ec894e0c006d5662",
       "binary_sha256": "85cc4f0deb23f7668c9aa7068c87b5c0f539f6861bf0cf2b35734e921541ccff",
       "passed": true,
       "device_executed": false,
@@ -8195,7 +8235,7 @@
             ]
           ],
           "driver_sha256": "4e1800240fa0603c5ec15ea8775e214b0f9896e1d4b8cdcc64c0e90c31b4f766",
-          "storage_sha256": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3"
+          "storage_sha256": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39"
         },
         "fixtures_sha256": {
           "cases.txt": "a831d408cab6033a9bad00ae3ff3c33be2001934a2d6463b7a1182aa736f5f33",
@@ -8277,9 +8317,14 @@
         "rope_sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
       },
       "storage_admission": {
-        "root_free_bytes": 31613620224,
-        "build_bytes": 1553034065,
-        "admitted_write_bytes": 100000000
+        "root_free_bytes": 31525564416,
+        "build_bytes": 1552906002,
+        "admitted_write_bytes": 100000000,
+        "projected_build_write_bytes": 100000000,
+        "build_limit_bytes": 13592283666,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
       },
       "command": [
         "nice",
@@ -8290,7 +8335,7 @@
         "3",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/gnu-host/k2-fixtures",
         "--output",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-k2-validation-256-1791956729843543049/run",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-k2-validation-256-1791978314230736557/run",
         "--context",
         "256",
         "--fixtures",
@@ -8299,8 +8344,8 @@
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/dispatch-p45.json",
         "--validate-only"
       ],
-      "seconds": 2.306645472999662,
-      "peak_aggregate_rss_anon_bytes": 873906176,
+      "seconds": 2.3071005399688147,
+      "peak_aggregate_rss_anon_bytes": 873979904,
       "output_sha256": "9a9a90ac23eee29f330b179f51355fc67b0fd9af1c0887f5559d1bd4d98d34f4",
       "checks": 1078,
       "fixture_checks": 144,
@@ -8415,14 +8460,14 @@
         "arithmetic_evidence": "nongemv arithmetic arms at identical registered lengths; this K2 arm checks bindings only"
       },
       "output_archive": {
-        "path": "evidence/capacity-fixtures/c90e7d7c40b444a9b060ff33a5577f46ecd60ccd719484395e7e0b812a20f9a2-output.bin.gz",
-        "sha256": "00906bc8ff60c54895dfba91aaa6493dc3765427ab9b532906c27c208afeca80",
+        "path": "evidence/capacity-fixtures/b03a460fe8b5bdbbcfe666c689e80156d7d548b208991c67ec894e0c006d5662-output.bin.gz",
+        "sha256": "80631f16472f30cf3fcbcd35578f3e297d901728cedd8f6379cda291682b5555",
         "raw_sha256": "9a9a90ac23eee29f330b179f51355fc67b0fd9af1c0887f5559d1bd4d98d34f4",
         "raw_bytes": 2240
       },
       "scratch_archive": {
-        "path": "evidence/scratch-capacity-fixture-gnu-host-k2-validation-256-1791956729843543049.jsonl.gz",
-        "sha256": "8bf39a15667705a2651a54be6c381bbf55ec60df7f81c9fd5c15c1e848975991",
+        "path": "evidence/scratch-capacity-fixture-gnu-host-k2-validation-256-1791978314230736557.jsonl.gz",
+        "sha256": "c886df06e6fbf09993076096d98bed67aeefc263c656c7ac08d81d7fdf47618f",
         "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
         "files": 4,
         "retained_files": 4,
@@ -8433,7 +8478,7 @@
       "compiler": "gnu-host",
       "kind": "k2-validation",
       "context": 4096,
-      "identity_key": "8cf00c2e952c82c8a0e574919e65a380d004a6ac9662a3b66d4a80276951b8af",
+      "identity_key": "6fd450c03147f5f5da3ce30ff05cfd21bf4394f7ba83161f1080c38b0ed41ca5",
       "binary_sha256": "85cc4f0deb23f7668c9aa7068c87b5c0f539f6861bf0cf2b35734e921541ccff",
       "passed": true,
       "device_executed": false,
@@ -9185,7 +9230,7 @@
             ]
           ],
           "driver_sha256": "4e1800240fa0603c5ec15ea8775e214b0f9896e1d4b8cdcc64c0e90c31b4f766",
-          "storage_sha256": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3"
+          "storage_sha256": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39"
         },
         "fixtures_sha256": {
           "cases.txt": "a831d408cab6033a9bad00ae3ff3c33be2001934a2d6463b7a1182aa736f5f33",
@@ -9267,9 +9312,14 @@
         "rope_sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
       },
       "storage_admission": {
-        "root_free_bytes": 31613394944,
-        "build_bytes": 1553034065,
-        "admitted_write_bytes": 100000000
+        "root_free_bytes": 31525351424,
+        "build_bytes": 1552906002,
+        "admitted_write_bytes": 100000000,
+        "projected_build_write_bytes": 100000000,
+        "build_limit_bytes": 13592070674,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
       },
       "command": [
         "nice",
@@ -9280,7 +9330,7 @@
         "3",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/gnu-host/k2-fixtures",
         "--output",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-k2-validation-4096-1791956732589170996/run",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-k2-validation-4096-1791978316975117763/run",
         "--context",
         "4096",
         "--fixtures",
@@ -9289,8 +9339,8 @@
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/dispatch-p45.json",
         "--validate-only"
       ],
-      "seconds": 3.4099165940424427,
-      "peak_aggregate_rss_anon_bytes": 989388800,
+      "seconds": 3.410197375982534,
+      "peak_aggregate_rss_anon_bytes": 994111488,
       "output_sha256": "9a9a90ac23eee29f330b179f51355fc67b0fd9af1c0887f5559d1bd4d98d34f4",
       "checks": 1078,
       "fixture_checks": 144,
@@ -9405,14 +9455,14 @@
         "arithmetic_evidence": "nongemv arithmetic arms at identical registered lengths; this K2 arm checks bindings only"
       },
       "output_archive": {
-        "path": "evidence/capacity-fixtures/8cf00c2e952c82c8a0e574919e65a380d004a6ac9662a3b66d4a80276951b8af-output.bin.gz",
-        "sha256": "72317d3f1a9b74a8136b2f675cd7ea509a7a4ae4de4cfcd99af81b32d5815c09",
+        "path": "evidence/capacity-fixtures/6fd450c03147f5f5da3ce30ff05cfd21bf4394f7ba83161f1080c38b0ed41ca5-output.bin.gz",
+        "sha256": "d7e45af197c1cb698eee014e300409da33089671bf1bdb2e21c34afaf8986a02",
         "raw_sha256": "9a9a90ac23eee29f330b179f51355fc67b0fd9af1c0887f5559d1bd4d98d34f4",
         "raw_bytes": 2240
       },
       "scratch_archive": {
-        "path": "evidence/scratch-capacity-fixture-gnu-host-k2-validation-4096-1791956732589170996.jsonl.gz",
-        "sha256": "0f6fc9af5bd7eb6e6afb2f6b43cae23f9ef4a62076cb4124e94c9a08a97366a9",
+        "path": "evidence/scratch-capacity-fixture-gnu-host-k2-validation-4096-1791978316975117763.jsonl.gz",
+        "sha256": "04649331f9286aa4281a6cf00eba7a8ca0fd7917f92d326df7b2dce62345fd51",
         "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
         "files": 4,
         "retained_files": 4,
@@ -9423,7 +9473,7 @@
       "compiler": "gnu-host",
       "kind": "k2-validation",
       "context": 32768,
-      "identity_key": "f1f3027f3922441ce8f132c36527d73989e00064d8ff6421c1e5bc227701e807",
+      "identity_key": "3f0046211768d21cb8d06b7c01e4d20e475bdcbc183eab62b12f6c5c48d3cc12",
       "binary_sha256": "85cc4f0deb23f7668c9aa7068c87b5c0f539f6861bf0cf2b35734e921541ccff",
       "passed": true,
       "device_executed": false,
@@ -10175,7 +10225,7 @@
             ]
           ],
           "driver_sha256": "4e1800240fa0603c5ec15ea8775e214b0f9896e1d4b8cdcc64c0e90c31b4f766",
-          "storage_sha256": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3"
+          "storage_sha256": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39"
         },
         "fixtures_sha256": {
           "cases.txt": "a831d408cab6033a9bad00ae3ff3c33be2001934a2d6463b7a1182aa736f5f33",
@@ -10257,9 +10307,14 @@
         "rope_sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
       },
       "storage_admission": {
-        "root_free_bytes": 31613173760,
-        "build_bytes": 1553034065,
-        "admitted_write_bytes": 100000000
+        "root_free_bytes": 31525122048,
+        "build_bytes": 1552906002,
+        "admitted_write_bytes": 100000000,
+        "projected_build_write_bytes": 100000000,
+        "build_limit_bytes": 13591841298,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
       },
       "command": [
         "nice",
@@ -10270,7 +10325,7 @@
         "3",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/gnu-host/k2-fixtures",
         "--output",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-k2-validation-32768-1791956736455740128/run",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-k2-validation-32768-1791978320838486095/run",
         "--context",
         "32768",
         "--fixtures",
@@ -10279,8 +10334,8 @@
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/dispatch-p45.json",
         "--validate-only"
       ],
-      "seconds": 13.337401491997298,
-      "peak_aggregate_rss_anon_bytes": 2257948672,
+      "seconds": 13.233781040005852,
+      "peak_aggregate_rss_anon_bytes": 2260639744,
       "output_sha256": "9a9a90ac23eee29f330b179f51355fc67b0fd9af1c0887f5559d1bd4d98d34f4",
       "checks": 1098,
       "fixture_checks": 164,
@@ -10397,14 +10452,14 @@
         "arithmetic_evidence": "nongemv arithmetic arms at identical registered lengths; this K2 arm checks bindings only"
       },
       "output_archive": {
-        "path": "evidence/capacity-fixtures/f1f3027f3922441ce8f132c36527d73989e00064d8ff6421c1e5bc227701e807-output.bin.gz",
-        "sha256": "9e9193b06453770a367e1ff444d9fb9f7b223e152d8003237b469bb33ad92d35",
+        "path": "evidence/capacity-fixtures/3f0046211768d21cb8d06b7c01e4d20e475bdcbc183eab62b12f6c5c48d3cc12-output.bin.gz",
+        "sha256": "c33dc104e1637bd4241bda34707b05f513fa5fb62a30e78ef5bbfbced2c5cdb7",
         "raw_sha256": "9a9a90ac23eee29f330b179f51355fc67b0fd9af1c0887f5559d1bd4d98d34f4",
         "raw_bytes": 2240
       },
       "scratch_archive": {
-        "path": "evidence/scratch-capacity-fixture-gnu-host-k2-validation-32768-1791956736455740128.jsonl.gz",
-        "sha256": "d78ef49b99abc091e7290f5b8c230ce8160b09945b3da7036d18a0ccc4739185",
+        "path": "evidence/scratch-capacity-fixture-gnu-host-k2-validation-32768-1791978320838486095.jsonl.gz",
+        "sha256": "4a9a3801ff31033cbb5ccad1417de78d016b842df78f87e49108f6ec36e48259",
         "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
         "files": 4,
         "retained_files": 4,
@@ -10415,7 +10470,7 @@
       "compiler": "gnu-host",
       "kind": "nongemv-validation",
       "context": 256,
-      "identity_key": "cb889f043bfb4b223e6c6df3a1bcc85d4b912263a0969f680f59664dc6a6f87f",
+      "identity_key": "9e15fed34eff49e5c58941236f778b5e3d20d63fb7abc3d41cd77c04488742e6",
       "binary_sha256": "7db4dc81ee166e60c1f35308f48032b3cfb0a1374080ddf78967487ca545cd74",
       "passed": true,
       "device_executed": false,
@@ -11167,7 +11222,7 @@
             ]
           ],
           "driver_sha256": "4e1800240fa0603c5ec15ea8775e214b0f9896e1d4b8cdcc64c0e90c31b4f766",
-          "storage_sha256": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3"
+          "storage_sha256": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39"
         },
         "fixtures_sha256": {
           "cases.txt": "a831d408cab6033a9bad00ae3ff3c33be2001934a2d6463b7a1182aa736f5f33",
@@ -11249,9 +11304,14 @@
         "rope_sha256": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
       },
       "storage_admission": {
-        "root_free_bytes": 31612944384,
-        "build_bytes": 1553034065,
-        "admitted_write_bytes": 100000000
+        "root_free_bytes": 31524864000,
+        "build_bytes": 1552906002,
+        "admitted_write_bytes": 100000000,
+        "projected_build_write_bytes": 100000000,
+        "build_limit_bytes": 13591583250,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
       },
       "command": [
         "nice",
@@ -11262,7 +11322,7 @@
         "3",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/gnu-host/nongemv-fixtures",
         "--output",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-nongemv-validation-256-1791956750239423408/run",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/capacity-fixture-gnu-host-nongemv-validation-256-1791978334515116120/run",
         "--context",
         "256",
         "--fixtures",
@@ -11271,12 +11331,12 @@
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/dispatch-p45.json",
         "--validate-only"
       ],
-      "seconds": 3.8119848369969986,
-      "peak_aggregate_rss_anon_bytes": 1186177024,
-      "output_sha256": "b969bbf200622e2eae57c484d549e02d90b624712fc953e31b25ad7be81daf1c",
+      "seconds": 3.811429958033841,
+      "peak_aggregate_rss_anon_bytes": 1193918464,
+      "output_sha256": "d143e7ff754b97df76a3883a7d1cf4f0f46b74346192b7e3cba5c68fae91246e",
       "checks": 3645,
       "fixture_checks": 218,
-      "receipt_sha256": "91f8c1ee148938de46b7bf42d0ddbaa61cf3de8a3751a3e8a880ac0c91ca3b94",
+      "receipt_sha256": "ceda9a1994c64b6ac18fb02717b481863bc4f41b65d505f0034f3ab48254ca24",
       "receipt": {
         "schema": "packet26.fixtures.v1",
         "context": 256,
@@ -11299,7 +11359,7 @@
         "ties": 1,
         "nan_routes": 1,
         "repetitions": 200,
-        "output_sha256": "b969bbf200622e2eae57c484d549e02d90b624712fc953e31b25ad7be81daf1c",
+        "output_sha256": "d143e7ff754b97df76a3883a7d1cf4f0f46b74346192b7e3cba5c68fae91246e",
         "max_submission_ns": 0
       },
       "teardown_summary": [
@@ -11374,14 +11434,14 @@
         256
       ],
       "output_archive": {
-        "path": "evidence/capacity-fixtures/cb889f043bfb4b223e6c6df3a1bcc85d4b912263a0969f680f59664dc6a6f87f-output.bin.gz",
-        "sha256": "8acea01430b50d4915d301477631b97c9565a2d47ac9aa7aa6997895a83c04da",
-        "raw_sha256": "b969bbf200622e2eae57c484d549e02d90b624712fc953e31b25ad7be81daf1c",
+        "path": "evidence/capacity-fixtures/9e15fed34eff49e5c58941236f778b5e3d20d63fb7abc3d41cd77c04488742e6-output.bin.gz",
+        "sha256": "93a784d450ab67a60df1386ca975a37c4553427e6ee922814d251f6d24d37b11",
+        "raw_sha256": "d143e7ff754b97df76a3883a7d1cf4f0f46b74346192b7e3cba5c68fae91246e",
         "raw_bytes": 23193648
       },
       "scratch_archive": {
-        "path": "evidence/scratch-capacity-fixture-gnu-host-nongemv-validation-256-1791956750239423408.jsonl.gz",
-        "sha256": "663a69e59a38c57fd5f190d041bd9988c47943735d1f1147da12cd438c5872e9",
+        "path": "evidence/scratch-capacity-fixture-gnu-host-nongemv-validation-256-1791978334515116120.jsonl.gz",
+        "sha256": "fb3f27b7910aca9e3e900264fb16bffdbf31f62e0dda486c16412ebef61b2cbf",
         "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
         "files": 4,
         "retained_files": 4,
@@ -11419,8 +11479,8 @@
       "test_k2_admission": "3474170b4d2746faca9803617aa73608f48f05d4860e92e29feed78d384a6e78",
       "k2_summary.py": "12f63116ad718bc3a4a0ba9c0c4904181f0f1bc1e7583d8b663ae61f228e38fa",
       "merge_dispatch.py": "29497efa3d2090aa69f0985db384a3252a64d12e9314ec5c77099a2238827e6c",
-      "window.py": "9bc57a2b5455395535e4f888aad8c3a68eef95375077a815d07728e9d90cb887",
-      "storage.py": "53787deddc760e89f4d3bb9b25e96b2b9bdf3cc54bcc96a99df3286e19badbe3",
+      "window.py": "57b0efedbc901b19bcca183ec4aa31b6db174bc2f367c0040ca2fb81347dd2e1",
+      "storage.py": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39",
       "test_storage_race.py": "4633a0f7df6a7e70c4ed416b38a13ba509b59f7cd4c72e06d5fa78b6d36474a6",
       "test_window_storage.py": "57bf4150d9873dd4cb2b8c8eb2fd9d7f3b2eda64d384ea168f8aeeaf12bb3b8c",
       "dispatch-p45.json": "8d696e7f9cc7853dfdcc1e8774a50ce69b3afd94d1dc7dfa49fa804a125dd1c6",
@@ -11428,23 +11488,23 @@
       "k2-class-registry.json": "794638d3e7ef0c4d9f627601b7092f3b59f8910139f2e4ef9264fa303bfe94aa"
     },
     "device_executed": false,
-    "seconds": 0.6023430310306139,
-    "peak_aggregate_rss_anon_bytes": 30322688,
+    "seconds": 0.601540308969561,
+    "peak_aggregate_rss_anon_bytes": 48214016,
     "tests": 58,
     "storage_race_execution": {
-      "seconds": 0.10077482799533755,
-      "peak_aggregate_rss_anon_bytes": 13791232
+      "seconds": 0.10118766402592883,
+      "peak_aggregate_rss_anon_bytes": 31784960
     },
     "storage_race_checks": 3,
     "window_storage_execution": {
-      "seconds": 0.3015973610454239,
-      "peak_aggregate_rss_anon_bytes": 34316288
+      "seconds": 0.30168506799964234,
+      "peak_aggregate_rss_anon_bytes": 55975936
     },
     "window_storage_checks": 8,
     "passed": true,
     "archive": {
-      "path": "evidence/scratch-capacity-fixture-light-1791956782213705651.jsonl.gz",
-      "sha256": "17db5de62a19aa6688cf0d2e6bd3ba87362499001e97c8bf6c27ddfcff6828f0",
+      "path": "evidence/scratch-capacity-fixture-light-1791978338703273947.jsonl.gz",
+      "sha256": "6e1519723a420597077b499c5291bb6415c6bf452fa9c09ac23330c911bff0a0",
       "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
       "files": 4,
       "retained_files": 4,

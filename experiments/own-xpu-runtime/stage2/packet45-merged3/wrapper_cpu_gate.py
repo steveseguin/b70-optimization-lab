@@ -1,19 +1,22 @@
 """CPU mock tests plus the real host-only coordinator chain; no device execution."""
 import gzip,hashlib,json,unittest
 from pathlib import Path
-import test_fixture_owners,test_k2_structure
+import test_fixture_owners,test_k2_structure,test_admission_budget
 import test_window,test_suite_long,test_suite_metrics,test_draft_window_cleanup,context_window_gate
 P=Path(__file__).resolve().parent
 
 def main():
  (P/'build').mkdir(exist_ok=True)
  suite=unittest.TestSuite(test_window.Gate(n) for n in unittest.defaultTestLoader.getTestCaseNames(test_window.Gate) if n!='test_class_diagnostic_contract')
- for cls in (test_suite_long.LongSuite,test_suite_long.LongPrerequisites,test_suite_metrics.Metrics,test_draft_window_cleanup.CleanupTests,test_draft_window_cleanup.TeardownTests,test_draft_window_cleanup.CompactionTests,context_window_gate.ContextWindows,test_fixture_owners.Owners,test_k2_structure.Structure):
+ for cls in (test_admission_budget.Budget,test_suite_long.LongSuite,test_suite_long.LongPrerequisites,test_suite_metrics.Metrics,test_draft_window_cleanup.CleanupTests,test_draft_window_cleanup.TeardownTests,test_draft_window_cleanup.CompactionTests,context_window_gate.ContextWindows,test_fixture_owners.Owners,test_k2_structure.Structure):
   suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(cls))
  with gzip.open(P/'wrapper-merge-tests.log.gz','wt') as log:r=unittest.TextTestRunner(stream=log,verbosity=2).run(suite)
- names=['window.py','draft_window.py','suite.py','suite_metrics.py','context_window_gate.py','test_window.py','test_suite_long.py','test_suite_metrics.py','test_draft_window_cleanup.py','wrapper_cpu_gate.py','k2_summary.py','fixture_support.py','test_fixture_owners.py','test_k2_structure.py','coordinator_cpu_gate.py','coordinator_windows.sh']
+ names=['admission_audit.py','storage.py','test_admission_budget.py','window.py','draft_window.py','suite.py','suite_metrics.py','context_window_gate.py','test_window.py','test_suite_long.py','test_suite_metrics.py','test_draft_window_cleanup.py','wrapper_cpu_gate.py','k2_summary.py','fixture_support.py','test_fixture_owners.py','test_k2_structure.py','coordinator_cpu_gate.py','coordinator_windows.sh']
  row=dict(passed=r.wasSuccessful(),tests=r.testsRun,failures=len(r.failures),errors=len(r.errors),device_executed=False,mock_rank_processes_started=0,window_cases=78,excluded=['test_window.Gate.test_class_diagnostic_contract: separately qualified host binary required'],sources={n:hashlib.sha256((P/n).read_bytes()).hexdigest() for n in names})
  if r.wasSuccessful():
+  import admission_audit
+  admission_audit.main()
+  row['admission_audit_sha256']=hashlib.sha256((P/'evidence/storage-admission-fix/admission-audit.json').read_bytes()).hexdigest()
   from coordinator_cpu_gate import run
   row['coordinator_chains']=run()
   row['coordinator_windows']=sum(len(r['windows']) for r in row['coordinator_chains']['rows'])

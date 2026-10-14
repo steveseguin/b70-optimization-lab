@@ -55,3 +55,52 @@ Moving one predicts a 0.9667 ms imbalance; moving two reduces it to 0.4167 ms;
 moving three increases it to 1.8 ms. These are placement estimates, not new
 measurements. New half times and driver residency require coordinator windows.
 See [independent review](review-memory.md) for the exact allocation derivation.
+
+
+## Packet45 storage admission, October 14 follow-up 2
+
+The old 3,000,000,000-byte aggregate build limit is retained as the **base
+build allowance**, not as the limit for binaries plus every device window.
+All existing sealed artifacts and device-produced directories stay in place.
+The merged chain needs a larger finite envelope; deletion is not its admission plan.
+
+`storage.py` computes a worst-context nine-window chain at capacity 32,768,
+13 requests (warm-up plus twelve prompts), and sixteen retained steps. Its
+reservation is **11,486,186,752 bytes**. This deliberately sums each window's
+peak reservation without credit for earlier cleanup. The structural build
+ceiling is base allowance plus that chain: **14,486,186,752 bytes**.
+Every admission rechecks `df -B1 /` and the actual aggregate build-tree size:
+
+```
+F = current filesystem free bytes; U = current build bytes; E = next write
+R = 11,486,186,752; floor = 8,000,000,000
+cap = min(14,486,186,752, U + F - floor - R)
+require F - E >= floor + R
+require U + projected_build_write < cap
+```
+
+An output outside `build/` has zero projected build growth, but reserves its
+full filesystem write. Repeats, extra windows, and old retained chains never
+raise the ceiling. Another complete chain remains reserved on disk even at
+the end of a run. This is deliberately conservative; admission can refuse
+when other work consumes space. It never lowers the 8 GB free floor.
+At the reported failure, U=1,552,906,002 and F=31,558,537,216: the live cap is
+13,625,256,466, and U+2,500,000,000=4,052,906,002 fits. The retained disk
+headroom after that write is 29,058,537,216, above floor+R=19,486,186,752.
+
+Model state reservation is `550,000,000 + 13*2368*(context-256)` bytes.
+The thirteen full BF16 caches are the target's twelve plus the draft's one.
+Strict rollback images are hashed in place by the inventory, not written as
+another full cache dump. Per request reserve is 32,000,000 bytes for eight
+retained steps, plus `2*48*20480` bytes (rank output and collected checker copy) for each additional retained step.
+K0/W0p reserve 32 MB; K1a/K1b 1.1 GB; K2 2.5 GB. KD reserves
+`550,000,000 + 3*2368*(context-256)` for the host reference plus two owners.
+Suite RESET uses the same full state projection, including during rehearsal.
+All three window admission sites use real projections in CPU rehearsal;
+there is no 64 MB substitution, including for the filesystem check.
+
+[Admission audit](ADMISSION-AUDIT.md) compares all twenty packet44 window
+receipts and enumerates the remaining limits. The current 97 GiB host-memory
+threshold exceeds the largest merged combined allocation/table bound by
+13,774,577,010 bytes after pinned/IPC allowances. This is conservative planning,
+not a measured claim about merged device residency.

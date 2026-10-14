@@ -2,6 +2,7 @@
 
 | Finding | Evidence | Next condition |
 |---|---|---|
+| Packet38 3 GB aggregate cap rejected merged retention; 64 MB rehearsal substitution hid the failure; model-window state reservation omitted context growth | [Storage closeout](STORAGE-ADMISSION-CLOSEOUT.md), [admission audit](ADMISSION-AUDIT.md) | Real projections in all rehearsals, finite structural/live-headroom limits, source-bound per-window admission receipts |
 | Packet44 four-owner gate rejected the merged p39 owner; mocked fixture gates hid it | [Sequential-owner repair](SEQUENTIAL-OWNER-CLOSEOUT.md), [complete sibling audit](SIBLING-AUDIT.md), 27 real coordinator CPU windows | Require the exact named owner set and source-bound full coordinator rehearsal before every seal |
 | Same-build host agreement hid HC NaN payload selection; case 54 is NaN, while error=7 is case 53 | [HC repair](HC-ACTIVATION-CLOSEOUT.md), six compiler before/after arms | Preserve quieted unary payload explicitly and keep the new hash-bound compiler matrix |
 | p42.dense.fourparts used a shortened expanded row stride; row0-only CPU arithmetic hid multirow misaddressing | [KERNELS.md](KERNELS.md), retained device failure JSONL | No related candidate until actual expanded multirow/native addressing has a CPU gate |

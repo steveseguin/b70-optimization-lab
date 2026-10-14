@@ -1,0 +1,5074 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "source_sha256": {
+    "storage.py": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39",
+    "window.py": "57b0efedbc901b19bcca183ec4aa31b6db174bc2f367c0040ca2fb81347dd2e1",
+    "draft_window.py": "e219111807cd8e71f598b3d8edbac0d65c1c88b004c8952304760e31162e1d95",
+    "suite.py": "d8d0a373ba5fbc3e70605ea61b970694a1b837d0bcd5ac1e0087221333e546d1",
+    "window_safety.py": "353ce418d0570d3b85d23dc63dc91f7e005e528e91057d7a7ee620d390d02264",
+    "memory_gate.py": "463105fb7fe10c598d318c6169df263be7d26b35c7fd2e4bb05196191046630d",
+    "memory_plan.py": "ec9e50a4ba33b1b935dfd0fd57dd348c4c7417c367df3ad9b649b46fbd8f304c",
+    "pipeline.py": "61251db33bc2da7bba36ed18ca29c1bff29cda296c74d3f51da2ea7069160ff8",
+    "fixture_support.py": "6edd9de92f1d1446cf66d875c716e3e33bcfbf4c88a640b3e9b63b5a74359790",
+    "cpu_merged_gate.py": "3a3366c5b63385573f55b31cca258c85abf024e769213718749f37f7485df700",
+    "capacity_cpu_gate.py": "d4708b464b18ec643790caab8f9af62398979ace0dfece7dad873624f4b75d5f",
+    "capacity_fixture_gate.py": "4e1800240fa0603c5ec15ea8775e214b0f9896e1d4b8cdcc64c0e90c31b4f766",
+    "capacity_draft_gate.py": "93cacd7dd35ff1f36877bdb6fffbb117fde092f4c6537e9e883269ca455fb5b8",
+    "capacity_selection_gate.py": "22dde3b8596fd3ca832e21d951ef86eded742173df08a19cc8059157430fe36d",
+    "hc_activation_gate.py": "eb657f2abd68b282f836aebddbac16cfbd16cd8b41e63d8cfdc67c2b61e25d3c",
+    "build.py": "92d461c5fdc742ff0f04d92e2a6913d7a66162a735c118c3cfa186303ad3f85e",
+    "k2_summary.py": "12f63116ad718bc3a4a0ba9c0c4904181f0f1bc1e7583d8b663ae61f228e38fa"
+  },
+  "predecessor_windows": [
+    {
+      "path": "packet44-context/receipts-cards01-20261013-c4096/K0/window.json",
+      "sha256": "b82eea369e7725b9edbbaa900a6b37413b5f040c77ae8498f0b2c02459a172a2",
+      "local_receipt_matches": true,
+      "context": 4096,
+      "window": "K0",
+      "old_admission": {
+        "root_free_bytes": 32920322048,
+        "build_bytes": 1395794863,
+        "admitted_write_bytes": 32000000
+      },
+      "current_retained_bytes": 41963,
+      "recorded_raw_log_fixture_bytes": 0,
+      "state_receipts": [],
+      "recorded_total_state_write_bytes": 0,
+      "reconstructed_peak_upper_bytes": 41963,
+      "new_projected_bytes": 32000000,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards01-20261013-c4096/K1a/window.json",
+      "sha256": "091429028a952bae4981278849063a72a36620cca9e760d2a2b0b431655bc929",
+      "local_receipt_matches": true,
+      "context": 4096,
+      "window": "K1a",
+      "old_admission": {
+        "root_free_bytes": 32885313536,
+        "build_bytes": 1395878860,
+        "admitted_write_bytes": 1100000000
+      },
+      "current_retained_bytes": 1072299,
+      "recorded_raw_log_fixture_bytes": 23362307,
+      "state_receipts": [],
+      "recorded_total_state_write_bytes": 0,
+      "reconstructed_peak_upper_bytes": 24434606,
+      "new_projected_bytes": 1100000000,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards01-20261013-c4096/K1b/window.json",
+      "sha256": "17023e09a1a9735d5232030993cde3187c83fe32cd2aa53e71e7ad3c76ea4049",
+      "local_receipt_matches": true,
+      "context": 4096,
+      "window": "K1b",
+      "old_admission": {
+        "root_free_bytes": 33018089472,
+        "build_bytes": 1398041537,
+        "admitted_write_bytes": 1100000000
+      },
+      "current_retained_bytes": 1072309,
+      "recorded_raw_log_fixture_bytes": 23362307,
+      "state_receipts": [],
+      "recorded_total_state_write_bytes": 0,
+      "reconstructed_peak_upper_bytes": 24434616,
+      "new_projected_bytes": 1100000000,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards01-20261013-c4096/K2/window.json",
+      "sha256": "86397ad446234222c956e8f0812f3b1dffc31faa51dbbe161e7ba824c00ea7bc",
+      "local_receipt_matches": true,
+      "context": 4096,
+      "window": "K2",
+      "old_admission": {
+        "root_free_bytes": 33002647552,
+        "build_bytes": 1400204234,
+        "admitted_write_bytes": 1100000000
+      },
+      "current_retained_bytes": 13453885,
+      "recorded_raw_log_fixture_bytes": 122949650,
+      "state_receipts": [],
+      "recorded_total_state_write_bytes": 0,
+      "reconstructed_peak_upper_bytes": 136403535,
+      "new_projected_bytes": 2500000000,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards01-20261013-c4096/KD/window.json",
+      "sha256": "29727ae5ff1f3817153c9b09fe710f0ed492408f02fef566e32a4e72ac9498bb",
+      "local_receipt_matches": true,
+      "context": 4096,
+      "window": "KD",
+      "old_admission": {
+        "root_free_bytes": 32948375552,
+        "build_bytes": 1413704064,
+        "admitted_write_bytes": 566000000
+      },
+      "current_retained_bytes": 33168510,
+      "recorded_raw_log_fixture_bytes": 0,
+      "state_receipts": [],
+      "recorded_total_state_write_bytes": 0,
+      "reconstructed_peak_upper_bytes": 33168510,
+      "new_projected_bytes": 577279360,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards01-20261013-c4096/W0p/window.json",
+      "sha256": "5ccf6ee946d6ac5719c6a3601ed7d66245955041fd83adc5d78513d3195e0c23",
+      "local_receipt_matches": true,
+      "context": 4096,
+      "window": "W0p",
+      "old_admission": {
+        "root_free_bytes": 32969895936,
+        "build_bytes": 1413658119,
+        "admitted_write_bytes": 32000000
+      },
+      "current_retained_bytes": 45945,
+      "recorded_raw_log_fixture_bytes": 0,
+      "state_receipts": [],
+      "recorded_total_state_write_bytes": 0,
+      "reconstructed_peak_upper_bytes": 45945,
+      "new_projected_bytes": 32000000,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards01-20261013-c4096/W2m/window.json",
+      "sha256": "5373090d0956c863c1eac4408b860517796ae4fa6efddd4317efc75c0f0ae04d",
+      "local_receipt_matches": true,
+      "context": 4096,
+      "window": "W2m",
+      "old_admission": {
+        "root_free_bytes": 32957636608,
+        "build_bytes": 1446872574,
+        "admitted_write_bytes": 566000000
+      },
+      "current_retained_bytes": 242479026,
+      "recorded_raw_log_fixture_bytes": 126,
+      "state_receipts": [],
+      "recorded_total_state_write_bytes": 0,
+      "reconstructed_peak_upper_bytes": 242479152,
+      "new_projected_bytes": 700210560,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards01-20261013-c4096/WL/window.json",
+      "sha256": "2950c5a0cf92ffb31a3bc5719e033a3ca29da99ee3c5125ff55f387f31020d36",
+      "local_receipt_matches": true,
+      "context": 4096,
+      "window": "WL",
+      "old_admission": {
+        "root_free_bytes": 31415013376,
+        "build_bytes": 3756713723,
+        "admitted_write_bytes": 598000000
+      },
+      "current_retained_bytes": 66879595,
+      "recorded_raw_log_fixture_bytes": 126,
+      "state_receipts": [
+        {
+          "path": "build/c4096b/WL/run/ranks/state-retention.json",
+          "receipt_sha256": "8b5f4f3e4a475ed2bcdaf0e1cd05c746fc09f41e4da96b46b47335f3e1cf94bb",
+          "files": 2070,
+          "original_bytes": 229169993,
+          "retained_bytes": 19373,
+          "sha256": "db6c6416b1a879dd44f2b4ac4ce59f3c96583929045464a45d35baf4c26d2a85"
+        },
+        {
+          "path": "build/c4096b/WL/run/warmup/state-retention.json",
+          "receipt_sha256": "24499e1b65f6112974d7f8bde2fbc985385fa458ee5fd32aa284d95ebe58b702",
+          "files": 2070,
+          "original_bytes": 229170151,
+          "retained_bytes": 173537,
+          "sha256": "471c1975986cd101582e9b6a7c9481cc2be587422933fb0de05986504682459c"
+        },
+        {
+          "path": "build/c4096b/WL/run/repeat-1/LONG-A/state-retention.json",
+          "receipt_sha256": "083d3c8b25812ab391c7b70d14191dd939bfd5ef40f1efcea6e6aab40c32171b",
+          "files": 2070,
+          "original_bytes": 229170166,
+          "retained_bytes": 174401,
+          "sha256": "753f702674e36606f4bd64ec2422b17d3e3fdf47d7dbc2668251447a0aed7fa9"
+        },
+        {
+          "path": "build/c4096b/WL/run/repeat-1/LONG-B/state-retention.json",
+          "receipt_sha256": "16a9204017819623936decb21f7b6eeed2e46fb9237830a9b92c4da70b3864c9",
+          "files": 2070,
+          "original_bytes": 229170166,
+          "retained_bytes": 174409,
+          "sha256": "31b3d3229546c79ffcbd73412889b9cbb8d93741db79125e5f4640118cc0c2ca"
+        }
+      ],
+      "recorded_total_state_write_bytes": 916680476,
+      "reconstructed_peak_upper_bytes": 296049887,
+      "new_projected_bytes": 764210560,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards01-20261013-c4096/WS128/window.json",
+      "sha256": "1afbdd3a284a7a97b4429925ed4df2585b7afb270737865d5159fc33f9b05495",
+      "local_receipt_matches": true,
+      "context": 4096,
+      "window": "WS128",
+      "old_admission": {
+        "root_free_bytes": 32671461376,
+        "build_bytes": 1705211696,
+        "admitted_write_bytes": 758000000
+      },
+      "current_retained_bytes": 253316242,
+      "recorded_raw_log_fixture_bytes": 126,
+      "state_receipts": [
+        {
+          "path": "build/c4096b/WS128/run/ranks/state-retention.json",
+          "receipt_sha256": "8b5f4f3e4a475ed2bcdaf0e1cd05c746fc09f41e4da96b46b47335f3e1cf94bb",
+          "files": 2070,
+          "original_bytes": 229169993,
+          "retained_bytes": 19373,
+          "sha256": "db6c6416b1a879dd44f2b4ac4ce59f3c96583929045464a45d35baf4c26d2a85"
+        },
+        {
+          "path": "build/c4096b/WS128/run/warmup/state-retention.json",
+          "receipt_sha256": "24499e1b65f6112974d7f8bde2fbc985385fa458ee5fd32aa284d95ebe58b702",
+          "files": 2070,
+          "original_bytes": 229170151,
+          "retained_bytes": 173537,
+          "sha256": "471c1975986cd101582e9b6a7c9481cc2be587422933fb0de05986504682459c"
+        },
+        {
+          "path": "build/c4096b/WS128/run/repeat-1/decision-memo/state-retention.json",
+          "receipt_sha256": "1689cd67d3127cb6d54117a903be9cf3350a0ef2511dd21d1a8e0897f3594596",
+          "files": 2070,
+          "original_bytes": 229170160,
+          "retained_bytes": 174029,
+          "sha256": "183fa87ce899539b2d7a6d5c8e97fdcc0a03c794e3324d285dc4c2c4f564d3fe"
+        },
+        {
+          "path": "build/c4096b/WS128/run/repeat-1/risk-register/state-retention.json",
+          "receipt_sha256": "62b007a577b6c814a7a18e063d152d6b7ce03ce665eea2eccfca2b1921cfcc6c",
+          "files": 2070,
+          "original_bytes": 229170156,
+          "retained_bytes": 174547,
+          "sha256": "ae5ae8838a830a5eea293cbead7a85ab92b38b738607240a5f2ab74768407234"
+        },
+        {
+          "path": "build/c4096b/WS128/run/repeat-1/technical-guide/state-retention.json",
+          "receipt_sha256": "cc54e4d5f2eb1eb99bf936efc5eab731d651164d39398377c92f84e6dc6b00ee",
+          "files": 2070,
+          "original_bytes": 229170164,
+          "retained_bytes": 174201,
+          "sha256": "ed6d5f18f94005affc00be7f3784c7cd9fac00436b8cccc92749ccebfb27326d"
+        },
+        {
+          "path": "build/c4096b/WS128/run/repeat-1/performance-hypotheses/state-retention.json",
+          "receipt_sha256": "ae2f02fe47824a8d866555b08f16721b08e9dc6a361b1a8829c5d124a2350519",
+          "files": 2070,
+          "original_bytes": 229170164,
+          "retained_bytes": 174400,
+          "sha256": "7401644ddcc4166cc1c78090385eb18c9ed3941c06d53199d3ed63d929794f57"
+        },
+        {
+          "path": "build/c4096b/WS128/run/repeat-1/architecture-tradeoff/state-retention.json",
+          "receipt_sha256": "85771954454d20f420ddf895ae8758666fbe91564d06077e9597296571766a1b",
+          "files": 2070,
+          "original_bytes": 229170162,
+          "retained_bytes": 174322,
+          "sha256": "4809b090cda19317bc535e744bd6906b6d31bf874394e119be2c7345e6cb09ee"
+        },
+        {
+          "path": "build/c4096b/WS128/run/repeat-1/code-review/state-retention.json",
+          "receipt_sha256": "608c3d6dec74b14d401f6f33cb15cf952d2cd4c7c4ecad871fa827a59dee9a76",
+          "files": 2070,
+          "original_bytes": 229170168,
+          "retained_bytes": 174314,
+          "sha256": "170400a449af32b1b226d24802308289abf3ea3b50e38db4009578995b7ca933"
+        },
+        {
+          "path": "build/c4096b/WS128/run/repeat-1/customer-email/state-retention.json",
+          "receipt_sha256": "4aee023fafc0cd94d6131088e159bedacd25078aaf024c6322e34127f620a696",
+          "files": 2070,
+          "original_bytes": 229170160,
+          "retained_bytes": 174341,
+          "sha256": "9a08a6d0d1c96c0e913f5ace430883d75884a1d1ec898f4f18b38f5e5ba7d991"
+        },
+        {
+          "path": "build/c4096b/WS128/run/repeat-1/incident-retrospective/state-retention.json",
+          "receipt_sha256": "631b26d1bd7516bd047168096b81316e691fc9a2504a581c295db90d0c4708d5",
+          "files": 2070,
+          "original_bytes": 229170164,
+          "retained_bytes": 174470,
+          "sha256": "4b3dce947058ec99597d89b1983c8323c35f7b516b7926c793817623e78a904f"
+        },
+        {
+          "path": "build/c4096b/WS128/run/repeat-1/benchmark-analysis/state-retention.json",
+          "receipt_sha256": "35d24dc0fa86807cf9d16d9e265f735a39d9f69813fef55ad73a566afd68eff5",
+          "files": 2070,
+          "original_bytes": 229170160,
+          "retained_bytes": 174279,
+          "sha256": "3ba5099395ef523f7e0fbd391725c0958ba283eaf8378a3e0a5ab8986f9af54f"
+        },
+        {
+          "path": "build/c4096b/WS128/run/repeat-1/release-plan/state-retention.json",
+          "receipt_sha256": "7959b07d2f7388c0ebbb9f62443707983d0bf33f79cd46f44ed24dd76ad15fa8",
+          "files": 2070,
+          "original_bytes": 229170166,
+          "retained_bytes": 174497,
+          "sha256": "f08f54b6d187a0625f411aaa150212e3175b54fdcc00836d6c47223a0886b197"
+        },
+        {
+          "path": "build/c4096b/WS128/run/repeat-1/sql-debugging/state-retention.json",
+          "receipt_sha256": "73aa0cda82e0e6b9cf530b7c085dc2969022420daa01d1a96fcf5310c03ec649",
+          "files": 2070,
+          "original_bytes": 229170166,
+          "retained_bytes": 174271,
+          "sha256": "e2b8f4d15eece26971d683e10db77ecfb46157e8f27ead5bc0b814eb4db475f9"
+        },
+        {
+          "path": "build/c4096b/WS128/run/repeat-1/bug-report-synthesis/state-retention.json",
+          "receipt_sha256": "e60a1cc688350efeadfd41b0ff51415475bcff348d2649a527d845293e3e6569",
+          "files": 2070,
+          "original_bytes": 229170168,
+          "retained_bytes": 174418,
+          "sha256": "412ae9cbab649691a987fa3b948be1c6ffd9cb929c9e121ed395ba216bb251fd"
+        }
+      ],
+      "recorded_total_state_write_bytes": 3208382102,
+      "reconstructed_peak_upper_bytes": 482486536,
+      "new_projected_bytes": 1084210560,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards01-20261013-c4096/WS64/window.json",
+      "sha256": "f667dd9800c340ba01dc62b23059faab1721a0dfec8ac7776c7e24499636d1d3",
+      "local_receipt_matches": true,
+      "context": 4096,
+      "window": "WS64",
+      "old_admission": {
+        "root_free_bytes": 32221937664,
+        "build_bytes": 1958527938,
+        "admitted_write_bytes": 950000000
+      },
+      "current_retained_bytes": 447391273,
+      "recorded_raw_log_fixture_bytes": 126,
+      "state_receipts": [
+        {
+          "path": "build/c4096b/WS64/run/ranks/state-retention.json",
+          "receipt_sha256": "8b5f4f3e4a475ed2bcdaf0e1cd05c746fc09f41e4da96b46b47335f3e1cf94bb",
+          "files": 2070,
+          "original_bytes": 229169993,
+          "retained_bytes": 19373,
+          "sha256": "db6c6416b1a879dd44f2b4ac4ce59f3c96583929045464a45d35baf4c26d2a85"
+        },
+        {
+          "path": "build/c4096b/WS64/run/warmup/state-retention.json",
+          "receipt_sha256": "24499e1b65f6112974d7f8bde2fbc985385fa458ee5fd32aa284d95ebe58b702",
+          "files": 2070,
+          "original_bytes": 229170151,
+          "retained_bytes": 173537,
+          "sha256": "471c1975986cd101582e9b6a7c9481cc2be587422933fb0de05986504682459c"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-1/decision-memo/state-retention.json",
+          "receipt_sha256": "f869af2c164c4bf9092c8dbea8cb994d87ce207956268f3cebcb12c1cfdea5b8",
+          "files": 2070,
+          "original_bytes": 229170164,
+          "retained_bytes": 174625,
+          "sha256": "c617e576acdc67b3dfcd15c596025df71e221973c502c0d4efd38a89e6098802"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-1/risk-register/state-retention.json",
+          "receipt_sha256": "aebd1278707ad0d96807a856560d4ee50978c8e021af21165bcf2c59ead97d06",
+          "files": 2070,
+          "original_bytes": 229170164,
+          "retained_bytes": 174212,
+          "sha256": "e6784b5bb14650a02c55318959039afbd38bbe00dc1a8a27c84138fb9d7cf664"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-1/technical-guide/state-retention.json",
+          "receipt_sha256": "e8f5843991903374b82846d7caad522d5cc1554a928f39830aef272af5c1bbfd",
+          "files": 2070,
+          "original_bytes": 229170166,
+          "retained_bytes": 174408,
+          "sha256": "a626c453e2f91d0e3beef522496b120f9f8e45c0d1beb22440cbb87076a818ec"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-1/performance-hypotheses/state-retention.json",
+          "receipt_sha256": "4ef5db5889526c40868d22460fcaf012ceba09709c490368b1a0c23ead7719d1",
+          "files": 2070,
+          "original_bytes": 229170166,
+          "retained_bytes": 174314,
+          "sha256": "ee40c64398ff71d550a94f3fad55d86d8f4a9a37b994262cc0466e7d39744271"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-1/architecture-tradeoff/state-retention.json",
+          "receipt_sha256": "863ccc73585ddcb9d6f65a40bf1872ca7c7c0ff953935e936cd3300a49f0ba40",
+          "files": 2070,
+          "original_bytes": 229170164,
+          "retained_bytes": 174217,
+          "sha256": "eae93658f5c1d3e98c931256d456bc48b7b4950b05551838329c42d1b2ccc213"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-1/code-review/state-retention.json",
+          "receipt_sha256": "07ec94c3a310e1d69b35e671c0447f15278762c95dffb004906799fe9c7c233e",
+          "files": 2070,
+          "original_bytes": 229170166,
+          "retained_bytes": 174411,
+          "sha256": "2626a3eaebc16471c4959f8322408c2f1f374e8db878f198d3bd9a8928fc3524"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-1/customer-email/state-retention.json",
+          "receipt_sha256": "5ee7438fdea39124f504ae51a1fbf3b082979fc5c8c3c20e73629b8adc71befc",
+          "files": 2070,
+          "original_bytes": 229170160,
+          "retained_bytes": 174499,
+          "sha256": "854962274dc701c6b34f6b245932271a4c51cf34f761f113f50fe22240b5e5e4"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-1/incident-retrospective/state-retention.json",
+          "receipt_sha256": "abaa2514160a964a795bb1b497a540d7f8f6d91ed8460f003746012f3b6e0b36",
+          "files": 2070,
+          "original_bytes": 229170160,
+          "retained_bytes": 174310,
+          "sha256": "eb5a662f64f83fbeb7b675932c6001785c7041e1a38cd1d11bde16bdd00b369f"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-1/benchmark-analysis/state-retention.json",
+          "receipt_sha256": "8be5333701e34b68fbfa7605da003ce9e73b61ef07c485e5d7acff2fee2b5d75",
+          "files": 2070,
+          "original_bytes": 229170162,
+          "retained_bytes": 174380,
+          "sha256": "c8ab9166612d5413ffe48ad07b5cfcf8f8c55cb4a61b3f6c76e6e1cfbf0b35a0"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-1/release-plan/state-retention.json",
+          "receipt_sha256": "aae962e709332eaa0120c494f14cf69932f6389b93751c183783c1d81e4a6287",
+          "files": 2070,
+          "original_bytes": 229170156,
+          "retained_bytes": 174271,
+          "sha256": "8e623125876b94a68928872aff9fc48fcfcf0950899f2ae42013f0f5e497074c"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-1/sql-debugging/state-retention.json",
+          "receipt_sha256": "6acb7e9aa63aa868966cc1865eab5d838e078af42d7f9bed59e4db0e705aab25",
+          "files": 2070,
+          "original_bytes": 229170158,
+          "retained_bytes": 174398,
+          "sha256": "0c31c0f919cdb979a8f3f4b61f170beb6db52273664fba54eac0523ec6b321eb"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-1/bug-report-synthesis/state-retention.json",
+          "receipt_sha256": "3bcc4d94b52289d403f38babe01755cd3929150d4b55f7b02d04061b9edc6949",
+          "files": 2070,
+          "original_bytes": 229170158,
+          "retained_bytes": 174306,
+          "sha256": "4555fdf28f1f96dbacf487460afc79708d088716d70dd5b0a1bf02d7e566edf0"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-2/decision-memo/state-retention.json",
+          "receipt_sha256": "f869af2c164c4bf9092c8dbea8cb994d87ce207956268f3cebcb12c1cfdea5b8",
+          "files": 2070,
+          "original_bytes": 229170164,
+          "retained_bytes": 174625,
+          "sha256": "c617e576acdc67b3dfcd15c596025df71e221973c502c0d4efd38a89e6098802"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-2/risk-register/state-retention.json",
+          "receipt_sha256": "aebd1278707ad0d96807a856560d4ee50978c8e021af21165bcf2c59ead97d06",
+          "files": 2070,
+          "original_bytes": 229170164,
+          "retained_bytes": 174212,
+          "sha256": "e6784b5bb14650a02c55318959039afbd38bbe00dc1a8a27c84138fb9d7cf664"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-2/technical-guide/state-retention.json",
+          "receipt_sha256": "e8f5843991903374b82846d7caad522d5cc1554a928f39830aef272af5c1bbfd",
+          "files": 2070,
+          "original_bytes": 229170166,
+          "retained_bytes": 174408,
+          "sha256": "a626c453e2f91d0e3beef522496b120f9f8e45c0d1beb22440cbb87076a818ec"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-2/performance-hypotheses/state-retention.json",
+          "receipt_sha256": "4ef5db5889526c40868d22460fcaf012ceba09709c490368b1a0c23ead7719d1",
+          "files": 2070,
+          "original_bytes": 229170166,
+          "retained_bytes": 174314,
+          "sha256": "ee40c64398ff71d550a94f3fad55d86d8f4a9a37b994262cc0466e7d39744271"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-2/architecture-tradeoff/state-retention.json",
+          "receipt_sha256": "863ccc73585ddcb9d6f65a40bf1872ca7c7c0ff953935e936cd3300a49f0ba40",
+          "files": 2070,
+          "original_bytes": 229170164,
+          "retained_bytes": 174217,
+          "sha256": "eae93658f5c1d3e98c931256d456bc48b7b4950b05551838329c42d1b2ccc213"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-2/code-review/state-retention.json",
+          "receipt_sha256": "07ec94c3a310e1d69b35e671c0447f15278762c95dffb004906799fe9c7c233e",
+          "files": 2070,
+          "original_bytes": 229170166,
+          "retained_bytes": 174411,
+          "sha256": "2626a3eaebc16471c4959f8322408c2f1f374e8db878f198d3bd9a8928fc3524"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-2/customer-email/state-retention.json",
+          "receipt_sha256": "5ee7438fdea39124f504ae51a1fbf3b082979fc5c8c3c20e73629b8adc71befc",
+          "files": 2070,
+          "original_bytes": 229170160,
+          "retained_bytes": 174499,
+          "sha256": "854962274dc701c6b34f6b245932271a4c51cf34f761f113f50fe22240b5e5e4"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-2/incident-retrospective/state-retention.json",
+          "receipt_sha256": "abaa2514160a964a795bb1b497a540d7f8f6d91ed8460f003746012f3b6e0b36",
+          "files": 2070,
+          "original_bytes": 229170160,
+          "retained_bytes": 174310,
+          "sha256": "eb5a662f64f83fbeb7b675932c6001785c7041e1a38cd1d11bde16bdd00b369f"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-2/benchmark-analysis/state-retention.json",
+          "receipt_sha256": "8be5333701e34b68fbfa7605da003ce9e73b61ef07c485e5d7acff2fee2b5d75",
+          "files": 2070,
+          "original_bytes": 229170162,
+          "retained_bytes": 174380,
+          "sha256": "c8ab9166612d5413ffe48ad07b5cfcf8f8c55cb4a61b3f6c76e6e1cfbf0b35a0"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-2/release-plan/state-retention.json",
+          "receipt_sha256": "aae962e709332eaa0120c494f14cf69932f6389b93751c183783c1d81e4a6287",
+          "files": 2070,
+          "original_bytes": 229170156,
+          "retained_bytes": 174271,
+          "sha256": "8e623125876b94a68928872aff9fc48fcfcf0950899f2ae42013f0f5e497074c"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-2/sql-debugging/state-retention.json",
+          "receipt_sha256": "6acb7e9aa63aa868966cc1865eab5d838e078af42d7f9bed59e4db0e705aab25",
+          "files": 2070,
+          "original_bytes": 229170158,
+          "retained_bytes": 174398,
+          "sha256": "0c31c0f919cdb979a8f3f4b61f170beb6db52273664fba54eac0523ec6b321eb"
+        },
+        {
+          "path": "build/c4096b/WS64/run/repeat-2/bug-report-synthesis/state-retention.json",
+          "receipt_sha256": "3bcc4d94b52289d403f38babe01755cd3929150d4b55f7b02d04061b9edc6949",
+          "files": 2070,
+          "original_bytes": 229170158,
+          "retained_bytes": 174306,
+          "sha256": "4555fdf28f1f96dbacf487460afc79708d088716d70dd5b0a1bf02d7e566edf0"
+        }
+      ],
+      "recorded_total_state_write_bytes": 5958424032,
+      "reconstructed_peak_upper_bytes": 676561565,
+      "new_projected_bytes": 1468210560,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards01-20261013-c4096/WSs128/window.json",
+      "sha256": "2c5d80cad8d781ee3ac9ce09be7995b1ceb5cb506a9e1c0fbd22470673e901cb",
+      "local_receipt_matches": true,
+      "context": 4096,
+      "window": "WSs128",
+      "old_admission": {
+        "root_free_bytes": 31853391872,
+        "build_bytes": 3001094702,
+        "admitted_write_bytes": 758000000
+      },
+      "current_retained_bytes": 240330385,
+      "recorded_raw_log_fixture_bytes": 126,
+      "state_receipts": [
+        {
+          "path": "build/c4096b/WSs128/run/ranks/state-retention.json",
+          "receipt_sha256": "c49617ef45b381d3a7d7d49207fa52c3798b27cbfdece83e17d61afddeda0957",
+          "files": 2064,
+          "original_bytes": 219463885,
+          "retained_bytes": 18894,
+          "sha256": "3d304f228278943be343b13b14d8a371c9ec0a15b521458ca7e276dadd4308c8"
+        },
+        {
+          "path": "build/c4096b/WSs128/run/warmup/state-retention.json",
+          "receipt_sha256": "dace841a9856c266113d3cf4d0f1e4a570fdef975e0aa0d32f607358bce9a8a5",
+          "files": 2064,
+          "original_bytes": 219464043,
+          "retained_bytes": 170564,
+          "sha256": "2ba1848809aac402ece6bb3c874ebcd740f74ac8ee1b1f5e1205d27cf18cdc52"
+        },
+        {
+          "path": "build/c4096b/WSs128/run/repeat-1/decision-memo/state-retention.json",
+          "receipt_sha256": "cdf78c349c1bf62ff96e31c13bdbdaf49d6cb9956931be2ee46ca0ba0d2fa83d",
+          "files": 2064,
+          "original_bytes": 219464050,
+          "retained_bytes": 171031,
+          "sha256": "b8829d1830758cfe74e0870c7ae6e625cc4bcc0789c05c6ceb77e8ad75a8fc1a"
+        },
+        {
+          "path": "build/c4096b/WSs128/run/repeat-1/risk-register/state-retention.json",
+          "receipt_sha256": "91f123a3389d450bd937fcc7d789b29f0c0899ef439a1e02838340ded8b58409",
+          "files": 2064,
+          "original_bytes": 219464046,
+          "retained_bytes": 171558,
+          "sha256": "0c067766ff08ef6513e48820605c028f50f8fdd4bef1c8d78cd6fdba7e6842ee"
+        },
+        {
+          "path": "build/c4096b/WSs128/run/repeat-1/technical-guide/state-retention.json",
+          "receipt_sha256": "c9f362e352b044e5989ee20024f421bca1bab02ec8c57100c5beca4bae81c245",
+          "files": 2064,
+          "original_bytes": 219464054,
+          "retained_bytes": 171188,
+          "sha256": "5737931cc5233a8de13db86e01fd670896f8062f09c14c61580c14a6d74bcf5e"
+        },
+        {
+          "path": "build/c4096b/WSs128/run/repeat-1/performance-hypotheses/state-retention.json",
+          "receipt_sha256": "4fed42c3725b8b672c41a2c4edfe31b076faca8c7a91610b2512534d234388d1",
+          "files": 2064,
+          "original_bytes": 219464054,
+          "retained_bytes": 171397,
+          "sha256": "d1b98ede163ae541641676c7b512fffcd20083abfe52f0354327d84481c4ce0f"
+        },
+        {
+          "path": "build/c4096b/WSs128/run/repeat-1/architecture-tradeoff/state-retention.json",
+          "receipt_sha256": "8bd2ffa633d9435c2e07bce4a547333ca5291ea81b8f91b8bea177358bc76fd1",
+          "files": 2064,
+          "original_bytes": 219464052,
+          "retained_bytes": 171321,
+          "sha256": "21de5f71441743b871fad155ed88b7dfbd3b455dea732491ede81cdd4c753ee2"
+        },
+        {
+          "path": "build/c4096b/WSs128/run/repeat-1/code-review/state-retention.json",
+          "receipt_sha256": "d208cd12687916528d25501127788383c8d886e7d252ab9b37a92e1ea63a7703",
+          "files": 2064,
+          "original_bytes": 219464058,
+          "retained_bytes": 171301,
+          "sha256": "7a9a9c4c334d0530a9db9e030031b3239c66ba938be63fe56a5a1c7ba2b57998"
+        },
+        {
+          "path": "build/c4096b/WSs128/run/repeat-1/customer-email/state-retention.json",
+          "receipt_sha256": "b0076f4c95e3a688384818e31133b8a944415dd0f503653a6a1dbcd44447ff78",
+          "files": 2064,
+          "original_bytes": 219464050,
+          "retained_bytes": 171368,
+          "sha256": "44cf395eb0785946aa35592f405d8f8e31a5c2c12c9d55a1bc1bc27d3282ee77"
+        },
+        {
+          "path": "build/c4096b/WSs128/run/repeat-1/incident-retrospective/state-retention.json",
+          "receipt_sha256": "47281bad532ae45e1a776c3c941837372e3b7ff6dc335bfce6ecf988557af297",
+          "files": 2064,
+          "original_bytes": 219464054,
+          "retained_bytes": 171433,
+          "sha256": "a2fa1784777a2cd29020d483db1ea8aa8010a09255a753b2dc7bf7647cbc3657"
+        },
+        {
+          "path": "build/c4096b/WSs128/run/repeat-1/benchmark-analysis/state-retention.json",
+          "receipt_sha256": "56059fa9991a4212b6aab548a03324bee276d5162e55b26270914207f53bcf5f",
+          "files": 2064,
+          "original_bytes": 219464050,
+          "retained_bytes": 171255,
+          "sha256": "1980c2f7a2aa73b1d7558b9fe8a4b865f5d15da4662dd49451cbb7daf9838626"
+        },
+        {
+          "path": "build/c4096b/WSs128/run/repeat-1/release-plan/state-retention.json",
+          "receipt_sha256": "385a0ffde77bb61fad1d8f78135921c231ec2cbe46ca1f9b338783d0b1df7a88",
+          "files": 2064,
+          "original_bytes": 219464056,
+          "retained_bytes": 171573,
+          "sha256": "d96c563dc3ddcd81e2b5b7a76b7298e4278aec43b607549c08da4c06deb40022"
+        },
+        {
+          "path": "build/c4096b/WSs128/run/repeat-1/sql-debugging/state-retention.json",
+          "receipt_sha256": "2f21093118ef6a1127f4649d69d0d5516f7bf72a5c586903e43d06cf3638b236",
+          "files": 2064,
+          "original_bytes": 219464056,
+          "retained_bytes": 171294,
+          "sha256": "84045d91c5d33ef151f5d66c2740964107685f10c7525b19827333bbc883e150"
+        },
+        {
+          "path": "build/c4096b/WSs128/run/repeat-1/bug-report-synthesis/state-retention.json",
+          "receipt_sha256": "e1dcd7475c233846b26f4bd5dc7192dd66e3321947775b48e3de73a827614065",
+          "files": 2064,
+          "original_bytes": 219464058,
+          "retained_bytes": 171429,
+          "sha256": "2f294c2a0b73e5b420f5c0480e915e5df5e1f3a8fe5f9710f1ef278ec38e4b00"
+        }
+      ],
+      "recorded_total_state_write_bytes": 3072496566,
+      "reconstructed_peak_upper_bytes": 459794569,
+      "new_projected_bytes": 1084210560,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards23-20261013-c32768/K0/window.json",
+      "sha256": "c584465e0c1d0306a7ced7547a185a7e9ccab7e468e650c5270763f13f10bf33",
+      "local_receipt_matches": true,
+      "context": 32768,
+      "window": "K0",
+      "old_admission": {
+        "root_free_bytes": 32920322048,
+        "build_bytes": 1395794863,
+        "admitted_write_bytes": 32000000
+      },
+      "current_retained_bytes": 42034,
+      "recorded_raw_log_fixture_bytes": 0,
+      "state_receipts": [],
+      "recorded_total_state_write_bytes": 0,
+      "reconstructed_peak_upper_bytes": 42034,
+      "new_projected_bytes": 32000000,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards23-20261013-c32768/K1a/window.json",
+      "sha256": "156d9719b1275fa69eb1c75217b5865a58142028da8e3091730056a1cef7fd5a",
+      "local_receipt_matches": true,
+      "context": 32768,
+      "window": "K1a",
+      "old_admission": {
+        "root_free_bytes": 32885313536,
+        "build_bytes": 1395878860,
+        "admitted_write_bytes": 1100000000
+      },
+      "current_retained_bytes": 1090378,
+      "recorded_raw_log_fixture_bytes": 23365667,
+      "state_receipts": [],
+      "recorded_total_state_write_bytes": 0,
+      "reconstructed_peak_upper_bytes": 24456045,
+      "new_projected_bytes": 1100000000,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards23-20261013-c32768/K1b/window.json",
+      "sha256": "b99c3c9c070a59cb9969b98ef633d95c7407afc36da0b1a494f975bf225ecd0f",
+      "local_receipt_matches": true,
+      "context": 32768,
+      "window": "K1b",
+      "old_admission": {
+        "root_free_bytes": 33018089472,
+        "build_bytes": 1398041537,
+        "admitted_write_bytes": 1100000000
+      },
+      "current_retained_bytes": 1090388,
+      "recorded_raw_log_fixture_bytes": 23365667,
+      "state_receipts": [],
+      "recorded_total_state_write_bytes": 0,
+      "reconstructed_peak_upper_bytes": 24456055,
+      "new_projected_bytes": 1100000000,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards23-20261013-c32768/K2/window.json",
+      "sha256": "ed62ac8921d89efeea6cbd9681e1fb2f2ed0122c228402724dc51744864b6edf",
+      "local_receipt_matches": true,
+      "context": 32768,
+      "window": "K2",
+      "old_admission": {
+        "root_free_bytes": 32018980864,
+        "build_bytes": 2405919211,
+        "admitted_write_bytes": 1100000000
+      },
+      "current_retained_bytes": 14047231,
+      "recorded_raw_log_fixture_bytes": 125368597,
+      "state_receipts": [],
+      "recorded_total_state_write_bytes": 0,
+      "reconstructed_peak_upper_bytes": 139415828,
+      "new_projected_bytes": 2500000000,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards23-20261013-c32768/KD/window.json",
+      "sha256": "2ef4477cdcec30b45c4fd8c7db47d917c4b73d727c2d1bcd5af42968a6cd2ae5",
+      "local_receipt_matches": true,
+      "context": 32768,
+      "window": "KD",
+      "old_admission": {
+        "root_free_bytes": 32312451072,
+        "build_bytes": 2420012396,
+        "admitted_write_bytes": 566000000
+      },
+      "current_retained_bytes": 168958989,
+      "recorded_raw_log_fixture_bytes": 0,
+      "state_receipts": [],
+      "recorded_total_state_write_bytes": 0,
+      "reconstructed_peak_upper_bytes": 168958989,
+      "new_projected_bytes": 780965248,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards23-20261013-c32768/W0p/window.json",
+      "sha256": "e643a3365b9177de4d1ac154b2dd7dcec33b8a9ad472f5cf6ee82d8797a61665",
+      "local_receipt_matches": true,
+      "context": 32768,
+      "window": "W0p",
+      "old_admission": {
+        "root_free_bytes": 31964143616,
+        "build_bytes": 2419966442,
+        "admitted_write_bytes": 32000000
+      },
+      "current_retained_bytes": 45954,
+      "recorded_raw_log_fixture_bytes": 0,
+      "state_receipts": [],
+      "recorded_total_state_write_bytes": 0,
+      "reconstructed_peak_upper_bytes": 45954,
+      "new_projected_bytes": 32000000,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards23-20261013-c32768/W2m/window.json",
+      "sha256": "846404bb9a339dd66022a10c1fa51f5f944d5b82619d597bc8fd460da9211940",
+      "local_receipt_matches": true,
+      "context": 32768,
+      "window": "W2m",
+      "old_admission": {
+        "root_free_bytes": 32134156288,
+        "build_bytes": 2588971385,
+        "admitted_write_bytes": 566000000
+      },
+      "current_retained_bytes": 90910913,
+      "recorded_raw_log_fixture_bytes": 126,
+      "state_receipts": [],
+      "recorded_total_state_write_bytes": 0,
+      "reconstructed_peak_upper_bytes": 90911039,
+      "new_projected_bytes": 1582849408,
+      "caveat": "W2m 32768 raw states were deleted by packet44 coordinator; current size is incomplete"
+    },
+    {
+      "path": "packet44-context/receipts-cards23-20261013-c32768/WS128/window.json",
+      "sha256": "8f7f37f2c8c1039160f25af787aa30c1e7a8fd77b8061ba65bc93bb1204d1e36",
+      "local_receipt_matches": true,
+      "context": 32768,
+      "window": "WS128",
+      "old_admission": {
+        "root_free_bytes": 31039205376,
+        "build_bytes": 3714086839,
+        "admitted_write_bytes": 758000000
+      },
+      "current_retained_bytes": 321212404,
+      "recorded_raw_log_fixture_bytes": 126,
+      "state_receipts": [
+        {
+          "path": "build/c32768b/WS128/run/ranks/state-retention.json",
+          "receipt_sha256": "99aa518ab6576bdcce4b6635fcb45c6026a57c2b0c496b912d6882d9ade2c363",
+          "files": 2070,
+          "original_bytes": 1111808841,
+          "retained_bytes": 19288,
+          "sha256": "3d13048b9b77f7e5a13e5684a31847d16bf5d6e5c6c8104cd194aec322edea5e"
+        },
+        {
+          "path": "build/c32768b/WS128/run/warmup/state-retention.json",
+          "receipt_sha256": "f0624300fedaebc454c79f06d864b7622b337c9a15cc8bcecb5f10e5e85d1e26",
+          "files": 2070,
+          "original_bytes": 1111808999,
+          "retained_bytes": 173514,
+          "sha256": "b3c6a1dbed346ff2b12a87830b5e6e3a6865f2ded9626d84492fde7808876aa2"
+        },
+        {
+          "path": "build/c32768b/WS128/run/repeat-1/decision-memo/state-retention.json",
+          "receipt_sha256": "dd4003740bff382b22f304e76f33ee3e217f36d9a946b3c7e8bc16719c400958",
+          "files": 2070,
+          "original_bytes": 1111809008,
+          "retained_bytes": 174028,
+          "sha256": "fb9313839c9be17b0cc062ea03d1522f9c1f932a959bbd6764ee1062a3683f8c"
+        },
+        {
+          "path": "build/c32768b/WS128/run/repeat-1/risk-register/state-retention.json",
+          "receipt_sha256": "b97748de8e5022e97311a221f8f9be05460f4f699b254b720667c64667e2857c",
+          "files": 2070,
+          "original_bytes": 1111809004,
+          "retained_bytes": 174507,
+          "sha256": "bd9786f62ed067943ac6a1520bdc3e7fa991c6b19732f80431a24fd167b0b4ed"
+        },
+        {
+          "path": "build/c32768b/WS128/run/repeat-1/technical-guide/state-retention.json",
+          "receipt_sha256": "270ee34f95e6c00baa7cf1d4792c4dd7c29591ec73c326d4c50ed1f02a3481ab",
+          "files": 2070,
+          "original_bytes": 1111809012,
+          "retained_bytes": 174254,
+          "sha256": "6a51710a729b786d5cb7acfbcc0137d184da7d712a59f0b46de063603c556542"
+        },
+        {
+          "path": "build/c32768b/WS128/run/repeat-1/performance-hypotheses/state-retention.json",
+          "receipt_sha256": "36bc8d685067757a85384502d2638a0db0e1bdcbe7171c4eac035ae21d42c689",
+          "files": 2070,
+          "original_bytes": 1111809012,
+          "retained_bytes": 174382,
+          "sha256": "c3321018c69ba9ad03ee676b21579b3bb2318167d04fcda9060d9aaf4f4d2123"
+        },
+        {
+          "path": "build/c32768b/WS128/run/repeat-1/architecture-tradeoff/state-retention.json",
+          "receipt_sha256": "8378826117fa923f471c9281ecdbc02badda6f3988e7fb1689b088ce73570b19",
+          "files": 2070,
+          "original_bytes": 1111809010,
+          "retained_bytes": 174312,
+          "sha256": "7c56da7e0026b202c3e380acf7105eef7fcfa7d7f281fe88c28de88c9f399e83"
+        },
+        {
+          "path": "build/c32768b/WS128/run/repeat-1/code-review/state-retention.json",
+          "receipt_sha256": "36ed7c97be21e08538df27a6978235349b4618347efb404f18f54d9173fe17a9",
+          "files": 2070,
+          "original_bytes": 1111809016,
+          "retained_bytes": 174301,
+          "sha256": "9a05a38fd7c0058396a2a9213561f93f733e611c61016550d41979fe09d11a00"
+        },
+        {
+          "path": "build/c32768b/WS128/run/repeat-1/customer-email/state-retention.json",
+          "receipt_sha256": "e2b25c541fee682513b08b5fa06b77c926c6f2b6bd7259951a9c84dd023a1dad",
+          "files": 2070,
+          "original_bytes": 1111809008,
+          "retained_bytes": 174353,
+          "sha256": "a4b6bbd4abd4c2c21c94eaa27056877006f2676b32497f7bf9bd514250ee03c6"
+        },
+        {
+          "path": "build/c32768b/WS128/run/repeat-1/incident-retrospective/state-retention.json",
+          "receipt_sha256": "a0cf6912d275db952b3f402a5bd1635764dbbddfb11a3c0e81f165c4144d2d38",
+          "files": 2070,
+          "original_bytes": 1111809012,
+          "retained_bytes": 174489,
+          "sha256": "0005c94ef75960fe4e7ade00a799732f2616ed4b1091b0836540d84c1136c756"
+        },
+        {
+          "path": "build/c32768b/WS128/run/repeat-1/benchmark-analysis/state-retention.json",
+          "receipt_sha256": "910137ed5bdfe91ccd51d3e77195686dea0d4c1d54650874ccbc57b4cf2fb0d9",
+          "files": 2070,
+          "original_bytes": 1111809008,
+          "retained_bytes": 174273,
+          "sha256": "cc8be69382ab0ee113efab035d899b81223ece9cb7b64b1e141b3c928120e5be"
+        },
+        {
+          "path": "build/c32768b/WS128/run/repeat-1/release-plan/state-retention.json",
+          "receipt_sha256": "e53dcff07026ef9478467cc2aad00996ec2d74adf932669d90f18974398705ed",
+          "files": 2070,
+          "original_bytes": 1111809014,
+          "retained_bytes": 174507,
+          "sha256": "784ca8d898a256063ebb0516c47ba89de261efa7ce0ceeb270e29a7895f0b57f"
+        },
+        {
+          "path": "build/c32768b/WS128/run/repeat-1/sql-debugging/state-retention.json",
+          "receipt_sha256": "0439ab041d9385fe7b28e74cbb2c7c0bf6d4d027c905c62bd40390f6c99537c8",
+          "files": 2070,
+          "original_bytes": 1111809014,
+          "retained_bytes": 174282,
+          "sha256": "42620b6ab64994fbbe3dc00a33b101b7eede2203f6f8221559465847ada615f7"
+        },
+        {
+          "path": "build/c32768b/WS128/run/repeat-1/bug-report-synthesis/state-retention.json",
+          "receipt_sha256": "759535541f2ec3a708527f461a81bdcf08a78ac7723ce2c9f722660d7895799a",
+          "files": 2070,
+          "original_bytes": 1111809016,
+          "retained_bytes": 174416,
+          "sha256": "439f52e58cdb9010b833ef1941e205194bde4098f0b91f67f47bc50baf860f71"
+        }
+      ],
+      "recorded_total_state_write_bytes": 15565325974,
+      "reconstructed_peak_upper_bytes": 1433021546,
+      "new_projected_bytes": 1966849408,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    },
+    {
+      "path": "packet44-context/receipts-cards23-20261013-c32768/WS64/window.json",
+      "sha256": "b2098cf9a8b60d95568c040999d01df3993eb44ee786915e3dfcc23f01409033",
+      "local_receipt_matches": true,
+      "context": 32768,
+      "window": "WS64",
+      "old_admission": {
+        "root_free_bytes": 31680884736,
+        "build_bytes": 3241425087,
+        "admitted_write_bytes": 950000000
+      },
+      "current_retained_bytes": 515288636,
+      "recorded_raw_log_fixture_bytes": 126,
+      "state_receipts": [
+        {
+          "path": "build/c32768b/WS64/run/ranks/state-retention.json",
+          "receipt_sha256": "99aa518ab6576bdcce4b6635fcb45c6026a57c2b0c496b912d6882d9ade2c363",
+          "files": 2070,
+          "original_bytes": 1111808841,
+          "retained_bytes": 19288,
+          "sha256": "3d13048b9b77f7e5a13e5684a31847d16bf5d6e5c6c8104cd194aec322edea5e"
+        },
+        {
+          "path": "build/c32768b/WS64/run/warmup/state-retention.json",
+          "receipt_sha256": "f0624300fedaebc454c79f06d864b7622b337c9a15cc8bcecb5f10e5e85d1e26",
+          "files": 2070,
+          "original_bytes": 1111808999,
+          "retained_bytes": 173514,
+          "sha256": "b3c6a1dbed346ff2b12a87830b5e6e3a6865f2ded9626d84492fde7808876aa2"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-1/decision-memo/state-retention.json",
+          "receipt_sha256": "7b31bf73b85e978c0aa046e4f881b95ad25ebb9cfd630f75af5fdae5cd533bd7",
+          "files": 2070,
+          "original_bytes": 1111809012,
+          "retained_bytes": 174613,
+          "sha256": "c4789faf65f1ac4fbc73968418305e66a62b0ed799e954b83075275d4c0875ff"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-1/risk-register/state-retention.json",
+          "receipt_sha256": "9f9071674aed619ba18db03580bf8da6fb9955e929b5a26486d5448f6591ad50",
+          "files": 2070,
+          "original_bytes": 1111809012,
+          "retained_bytes": 174221,
+          "sha256": "1138923d5f566394a480a686bb48d50444b1983cc22cbf990d09699eb0aff66b"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-1/technical-guide/state-retention.json",
+          "receipt_sha256": "f70da62ef2f8f55f7307707e1863376df2946b20e47b095b5a352ddf01228924",
+          "files": 2070,
+          "original_bytes": 1111809014,
+          "retained_bytes": 174403,
+          "sha256": "fc1a42807279396c3bbae58dc3b4b2baa42b2cb232596cf228559747473e5458"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-1/performance-hypotheses/state-retention.json",
+          "receipt_sha256": "ad615881b649a16d3fbb4e94caebe3aa5a88e538ca6e7a9937c1cb761d759cb4",
+          "files": 2070,
+          "original_bytes": 1111809014,
+          "retained_bytes": 174287,
+          "sha256": "b096e88ecd8c69899b031b19f12248055909fdfd01ba9d7b44c632b60adc5c7e"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-1/architecture-tradeoff/state-retention.json",
+          "receipt_sha256": "31e0e7462aa7ec14b4b4e8e78df42038175513c3583184b28bba64cb17eb1d23",
+          "files": 2070,
+          "original_bytes": 1111809012,
+          "retained_bytes": 174227,
+          "sha256": "7fbe52c1328605aeda4418ae8be42a114f2dd2f228104d585294645bf544d1bf"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-1/code-review/state-retention.json",
+          "receipt_sha256": "415bca1a8046da749674a631c81469880bd10652f556f946d262b595d883892e",
+          "files": 2070,
+          "original_bytes": 1111809014,
+          "retained_bytes": 174443,
+          "sha256": "32e4e8cce23ec3bb640026beffed5b9f359c2ab52d91195af0350956e4ab8957"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-1/customer-email/state-retention.json",
+          "receipt_sha256": "34618c5b7f084fe0fa3ac8a6ffc78aa0bc02609d2463ad7c516af13e63d868ee",
+          "files": 2070,
+          "original_bytes": 1111809008,
+          "retained_bytes": 174480,
+          "sha256": "ad5671dac2dc4509849cba2caa3c4160730bf67b74791a337beca622bffc79c1"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-1/incident-retrospective/state-retention.json",
+          "receipt_sha256": "98bb92013cf44adb625d5d522a2b3d58bc2f776b881450162fce05dc2cc1f7b4",
+          "files": 2070,
+          "original_bytes": 1111809008,
+          "retained_bytes": 174302,
+          "sha256": "f1f5c03f90c629443825dde40550886217804cf202d679d137b1ec84d8d26462"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-1/benchmark-analysis/state-retention.json",
+          "receipt_sha256": "20dafdb2a2f0f1f50e3120fd76dc1d46bd42ed8c4dca14eb6e0937daa7895e87",
+          "files": 2070,
+          "original_bytes": 1111809010,
+          "retained_bytes": 174318,
+          "sha256": "c89385c6198ac601d7c7b914c5d1344d1be73c2f2c2a7c93ca3b59b92b136caf"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-1/release-plan/state-retention.json",
+          "receipt_sha256": "e7f64844a2831a5f63e01722f54ecb79e9c10cf91828fe9f99fae4d976a3f760",
+          "files": 2070,
+          "original_bytes": 1111809004,
+          "retained_bytes": 174253,
+          "sha256": "6e93ac2d97bc28085a60349209716315bf2942c8c48b149984310e4314d2557f"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-1/sql-debugging/state-retention.json",
+          "receipt_sha256": "2945f32c7d7d5bc9374c370c31ba52761ada9a83554cd0a8983160ac6bb3da07",
+          "files": 2070,
+          "original_bytes": 1111809006,
+          "retained_bytes": 174399,
+          "sha256": "5567dd1be283a2b8154afb6a5ed97fa9d37f469a011a056e86425fc064346c3c"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-1/bug-report-synthesis/state-retention.json",
+          "receipt_sha256": "0d5bc4907c4cdc380171b36c1dbfafbde8601167aec4fd6d1c7a739ea0d4abbb",
+          "files": 2070,
+          "original_bytes": 1111809006,
+          "retained_bytes": 174303,
+          "sha256": "e2863963a6ee27940619a4040a35bb8a0643d458a9d54e1233024a3aef0f6ebd"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-2/decision-memo/state-retention.json",
+          "receipt_sha256": "7b31bf73b85e978c0aa046e4f881b95ad25ebb9cfd630f75af5fdae5cd533bd7",
+          "files": 2070,
+          "original_bytes": 1111809012,
+          "retained_bytes": 174613,
+          "sha256": "c4789faf65f1ac4fbc73968418305e66a62b0ed799e954b83075275d4c0875ff"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-2/risk-register/state-retention.json",
+          "receipt_sha256": "9f9071674aed619ba18db03580bf8da6fb9955e929b5a26486d5448f6591ad50",
+          "files": 2070,
+          "original_bytes": 1111809012,
+          "retained_bytes": 174221,
+          "sha256": "1138923d5f566394a480a686bb48d50444b1983cc22cbf990d09699eb0aff66b"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-2/technical-guide/state-retention.json",
+          "receipt_sha256": "f70da62ef2f8f55f7307707e1863376df2946b20e47b095b5a352ddf01228924",
+          "files": 2070,
+          "original_bytes": 1111809014,
+          "retained_bytes": 174403,
+          "sha256": "fc1a42807279396c3bbae58dc3b4b2baa42b2cb232596cf228559747473e5458"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-2/performance-hypotheses/state-retention.json",
+          "receipt_sha256": "ad615881b649a16d3fbb4e94caebe3aa5a88e538ca6e7a9937c1cb761d759cb4",
+          "files": 2070,
+          "original_bytes": 1111809014,
+          "retained_bytes": 174287,
+          "sha256": "b096e88ecd8c69899b031b19f12248055909fdfd01ba9d7b44c632b60adc5c7e"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-2/architecture-tradeoff/state-retention.json",
+          "receipt_sha256": "31e0e7462aa7ec14b4b4e8e78df42038175513c3583184b28bba64cb17eb1d23",
+          "files": 2070,
+          "original_bytes": 1111809012,
+          "retained_bytes": 174227,
+          "sha256": "7fbe52c1328605aeda4418ae8be42a114f2dd2f228104d585294645bf544d1bf"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-2/code-review/state-retention.json",
+          "receipt_sha256": "415bca1a8046da749674a631c81469880bd10652f556f946d262b595d883892e",
+          "files": 2070,
+          "original_bytes": 1111809014,
+          "retained_bytes": 174443,
+          "sha256": "32e4e8cce23ec3bb640026beffed5b9f359c2ab52d91195af0350956e4ab8957"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-2/customer-email/state-retention.json",
+          "receipt_sha256": "34618c5b7f084fe0fa3ac8a6ffc78aa0bc02609d2463ad7c516af13e63d868ee",
+          "files": 2070,
+          "original_bytes": 1111809008,
+          "retained_bytes": 174480,
+          "sha256": "ad5671dac2dc4509849cba2caa3c4160730bf67b74791a337beca622bffc79c1"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-2/incident-retrospective/state-retention.json",
+          "receipt_sha256": "98bb92013cf44adb625d5d522a2b3d58bc2f776b881450162fce05dc2cc1f7b4",
+          "files": 2070,
+          "original_bytes": 1111809008,
+          "retained_bytes": 174302,
+          "sha256": "f1f5c03f90c629443825dde40550886217804cf202d679d137b1ec84d8d26462"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-2/benchmark-analysis/state-retention.json",
+          "receipt_sha256": "20dafdb2a2f0f1f50e3120fd76dc1d46bd42ed8c4dca14eb6e0937daa7895e87",
+          "files": 2070,
+          "original_bytes": 1111809010,
+          "retained_bytes": 174318,
+          "sha256": "c89385c6198ac601d7c7b914c5d1344d1be73c2f2c2a7c93ca3b59b92b136caf"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-2/release-plan/state-retention.json",
+          "receipt_sha256": "e7f64844a2831a5f63e01722f54ecb79e9c10cf91828fe9f99fae4d976a3f760",
+          "files": 2070,
+          "original_bytes": 1111809004,
+          "retained_bytes": 174253,
+          "sha256": "6e93ac2d97bc28085a60349209716315bf2942c8c48b149984310e4314d2557f"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-2/sql-debugging/state-retention.json",
+          "receipt_sha256": "2945f32c7d7d5bc9374c370c31ba52761ada9a83554cd0a8983160ac6bb3da07",
+          "files": 2070,
+          "original_bytes": 1111809006,
+          "retained_bytes": 174399,
+          "sha256": "5567dd1be283a2b8154afb6a5ed97fa9d37f469a011a056e86425fc064346c3c"
+        },
+        {
+          "path": "build/c32768b/WS64/run/repeat-2/bug-report-synthesis/state-retention.json",
+          "receipt_sha256": "0d5bc4907c4cdc380171b36c1dbfafbde8601167aec4fd6d1c7a739ea0d4abbb",
+          "files": 2070,
+          "original_bytes": 1111809006,
+          "retained_bytes": 174303,
+          "sha256": "e2863963a6ee27940619a4040a35bb8a0643d458a9d54e1233024a3aef0f6ebd"
+        }
+      ],
+      "recorded_total_state_write_bytes": 28907034080,
+      "reconstructed_peak_upper_bytes": 1627097776,
+      "new_projected_bytes": 2350849408,
+      "caveat": "Cumulative build_bytes deltas include other windows; admitted_write_bytes is a reservation, not measured I/O"
+    }
+  ],
+  "memory": [
+    {
+      "draft_rank": 0,
+      "context": 256,
+      "planned_device_bytes": 59662368386,
+      "host_table_bytes": 29321610240,
+      "pinned_ipc_bytes": 8609804,
+      "bounded_combined_bytes": 88992588430,
+      "required_MemAvailable": 104152956928,
+      "margin_bytes": 15160368498
+    },
+    {
+      "draft_rank": 0,
+      "context": 4096,
+      "planned_device_bytes": 59826044546,
+      "host_table_bytes": 29321610240,
+      "pinned_ipc_bytes": 8609804,
+      "bounded_combined_bytes": 89156264590,
+      "required_MemAvailable": 104152956928,
+      "margin_bytes": 14996692338
+    },
+    {
+      "draft_rank": 0,
+      "context": 32768,
+      "planned_device_bytes": 61048159874,
+      "host_table_bytes": 29321610240,
+      "pinned_ipc_bytes": 8609804,
+      "bounded_combined_bytes": 90378379918,
+      "required_MemAvailable": 104152956928,
+      "margin_bytes": 13774577010
+    },
+    {
+      "draft_rank": 1,
+      "context": 256,
+      "planned_device_bytes": 58827484642,
+      "host_table_bytes": 29321610240,
+      "pinned_ipc_bytes": 8609804,
+      "bounded_combined_bytes": 88157704686,
+      "required_MemAvailable": 104152956928,
+      "margin_bytes": 15995252242
+    },
+    {
+      "draft_rank": 1,
+      "context": 4096,
+      "planned_device_bytes": 59000253922,
+      "host_table_bytes": 29321610240,
+      "pinned_ipc_bytes": 8609804,
+      "bounded_combined_bytes": 88330473966,
+      "required_MemAvailable": 104152956928,
+      "margin_bytes": 15822482962
+    },
+    {
+      "draft_rank": 1,
+      "context": 32768,
+      "planned_device_bytes": 60290264546,
+      "host_table_bytes": 29321610240,
+      "pinned_ipc_bytes": 8609804,
+      "bounded_combined_bytes": 89620484590,
+      "required_MemAvailable": 104152956928,
+      "margin_bytes": 14532472338
+    }
+  ],
+  "projections": [
+    {
+      "context": 256,
+      "window": "K0",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 32000000,
+      "watchdog_seconds": 600
+    },
+    {
+      "context": 256,
+      "window": "K1a",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 1100000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 256,
+      "window": "K1b",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 1100000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 256,
+      "window": "K2",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 2500000000,
+      "watchdog_seconds": 14400
+    },
+    {
+      "context": 256,
+      "window": "W0p",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 32000000,
+      "watchdog_seconds": 600
+    },
+    {
+      "context": 256,
+      "window": "W2s",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 582000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 256,
+      "window": "W2n",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 582000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 256,
+      "window": "W2x",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 582000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 256,
+      "window": "W2d",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 582000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 256,
+      "window": "W2c",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 582000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 256,
+      "window": "KD",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 550000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 256,
+      "window": "W2m",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 582000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 256,
+      "window": "W2mc",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 582000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 256,
+      "window": "WS",
+      "requests": 13,
+      "retained_steps": 8,
+      "projected_bytes": 966000000,
+      "watchdog_seconds": 30000
+    },
+    {
+      "context": 256,
+      "window": "WSs",
+      "requests": 13,
+      "retained_steps": 8,
+      "projected_bytes": 966000000,
+      "watchdog_seconds": 30000
+    },
+    {
+      "context": 256,
+      "window": "W2m-speed",
+      "requests": 1,
+      "retained_steps": 0,
+      "projected_bytes": 582000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 256,
+      "window": "W2m-exact",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 582000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 256,
+      "window": "WS64",
+      "requests": 13,
+      "retained_steps": 0,
+      "projected_bytes": 966000000,
+      "watchdog_seconds": 30000
+    },
+    {
+      "context": 256,
+      "window": "WS64x",
+      "requests": 13,
+      "retained_steps": 8,
+      "projected_bytes": 966000000,
+      "watchdog_seconds": 30000
+    },
+    {
+      "context": 256,
+      "window": "WS128",
+      "requests": 13,
+      "retained_steps": 0,
+      "projected_bytes": 966000000,
+      "watchdog_seconds": 60000
+    },
+    {
+      "context": 256,
+      "window": "WS128x",
+      "requests": 13,
+      "retained_steps": 16,
+      "projected_bytes": 1170472320,
+      "watchdog_seconds": 60000
+    },
+    {
+      "context": 4096,
+      "window": "K0",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 32000000,
+      "watchdog_seconds": 600
+    },
+    {
+      "context": 4096,
+      "window": "K1a",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 1100000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 4096,
+      "window": "K1b",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 1100000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 4096,
+      "window": "K2",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 2500000000,
+      "watchdog_seconds": 14400
+    },
+    {
+      "context": 4096,
+      "window": "W0p",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 32000000,
+      "watchdog_seconds": 600
+    },
+    {
+      "context": 4096,
+      "window": "W2s",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 700210560,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 4096,
+      "window": "W2n",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 700210560,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 4096,
+      "window": "W2x",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 700210560,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 4096,
+      "window": "W2d",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 700210560,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 4096,
+      "window": "W2c",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 700210560,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 4096,
+      "window": "KD",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 577279360,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 4096,
+      "window": "W2m",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 700210560,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 4096,
+      "window": "W2mc",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 700210560,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 4096,
+      "window": "WS",
+      "requests": 13,
+      "retained_steps": 8,
+      "projected_bytes": 1084210560,
+      "watchdog_seconds": 30000
+    },
+    {
+      "context": 4096,
+      "window": "WSs",
+      "requests": 13,
+      "retained_steps": 8,
+      "projected_bytes": 1084210560,
+      "watchdog_seconds": 30000
+    },
+    {
+      "context": 4096,
+      "window": "W2m-speed",
+      "requests": 1,
+      "retained_steps": 0,
+      "projected_bytes": 700210560,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 4096,
+      "window": "W2m-exact",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 700210560,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 4096,
+      "window": "WS64",
+      "requests": 13,
+      "retained_steps": 0,
+      "projected_bytes": 1084210560,
+      "watchdog_seconds": 30000
+    },
+    {
+      "context": 4096,
+      "window": "WS64x",
+      "requests": 13,
+      "retained_steps": 8,
+      "projected_bytes": 1084210560,
+      "watchdog_seconds": 30000
+    },
+    {
+      "context": 4096,
+      "window": "WS128",
+      "requests": 13,
+      "retained_steps": 0,
+      "projected_bytes": 1084210560,
+      "watchdog_seconds": 60000
+    },
+    {
+      "context": 4096,
+      "window": "WS128x",
+      "requests": 13,
+      "retained_steps": 16,
+      "projected_bytes": 1288682880,
+      "watchdog_seconds": 60000
+    },
+    {
+      "context": 32768,
+      "window": "K0",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 32000000,
+      "watchdog_seconds": 600
+    },
+    {
+      "context": 32768,
+      "window": "K1a",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 1100000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 32768,
+      "window": "K1b",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 1100000000,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 32768,
+      "window": "K2",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 2500000000,
+      "watchdog_seconds": 14400
+    },
+    {
+      "context": 32768,
+      "window": "W0p",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 32000000,
+      "watchdog_seconds": 600
+    },
+    {
+      "context": 32768,
+      "window": "W2s",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 1582849408,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 32768,
+      "window": "W2n",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 1582849408,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 32768,
+      "window": "W2x",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 1582849408,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 32768,
+      "window": "W2d",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 1582849408,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 32768,
+      "window": "W2c",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 1582849408,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 32768,
+      "window": "KD",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 780965248,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 32768,
+      "window": "W2m",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 1582849408,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 32768,
+      "window": "W2mc",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 1582849408,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 32768,
+      "window": "WS",
+      "requests": 13,
+      "retained_steps": 8,
+      "projected_bytes": 1966849408,
+      "watchdog_seconds": 30000
+    },
+    {
+      "context": 32768,
+      "window": "WSs",
+      "requests": 13,
+      "retained_steps": 8,
+      "projected_bytes": 1966849408,
+      "watchdog_seconds": 30000
+    },
+    {
+      "context": 32768,
+      "window": "W2m-speed",
+      "requests": 1,
+      "retained_steps": 0,
+      "projected_bytes": 1582849408,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 32768,
+      "window": "W2m-exact",
+      "requests": 1,
+      "retained_steps": 8,
+      "projected_bytes": 1582849408,
+      "watchdog_seconds": 10800
+    },
+    {
+      "context": 32768,
+      "window": "WS64",
+      "requests": 13,
+      "retained_steps": 0,
+      "projected_bytes": 1966849408,
+      "watchdog_seconds": 30000
+    },
+    {
+      "context": 32768,
+      "window": "WS64x",
+      "requests": 13,
+      "retained_steps": 8,
+      "projected_bytes": 1966849408,
+      "watchdog_seconds": 30000
+    },
+    {
+      "context": 32768,
+      "window": "WS128",
+      "requests": 13,
+      "retained_steps": 0,
+      "projected_bytes": 1966849408,
+      "watchdog_seconds": 60000
+    },
+    {
+      "context": 32768,
+      "window": "WS128x",
+      "requests": 13,
+      "retained_steps": 16,
+      "projected_bytes": 2171321728,
+      "watchdog_seconds": 60000
+    }
+  ],
+  "literal_inventory": [
+    {
+      "source": "storage.py",
+      "line": 13,
+      "value": 8000000000
+    },
+    {
+      "source": "storage.py",
+      "line": 14,
+      "value": 3000000000
+    },
+    {
+      "source": "storage.py",
+      "line": 30,
+      "value": 32768
+    },
+    {
+      "source": "storage.py",
+      "line": 30,
+      "value": 16
+    },
+    {
+      "source": "storage.py",
+      "line": 21,
+      "value": 550000000
+    },
+    {
+      "source": "storage.py",
+      "line": 28,
+      "value": 32000000
+    },
+    {
+      "source": "storage.py",
+      "line": 33,
+      "value": 2500000000
+    },
+    {
+      "source": "storage.py",
+      "line": 34,
+      "value": 1100000000
+    },
+    {
+      "source": "storage.py",
+      "line": 35,
+      "value": 32000000
+    },
+    {
+      "source": "storage.py",
+      "line": 131,
+      "value": 1000000
+    },
+    {
+      "source": "storage.py",
+      "line": 18,
+      "value": 256
+    },
+    {
+      "source": "storage.py",
+      "line": 18,
+      "value": 4096
+    },
+    {
+      "source": "storage.py",
+      "line": 18,
+      "value": 32768
+    },
+    {
+      "source": "storage.py",
+      "line": 38,
+      "value": 550000000
+    },
+    {
+      "source": "storage.py",
+      "line": 21,
+      "value": 13
+    },
+    {
+      "source": "storage.py",
+      "line": 21,
+      "value": 2368
+    },
+    {
+      "source": "storage.py",
+      "line": 21,
+      "value": 256
+    },
+    {
+      "source": "storage.py",
+      "line": 28,
+      "value": 20480
+    },
+    {
+      "source": "storage.py",
+      "line": 46,
+      "value": 13
+    },
+    {
+      "source": "storage.py",
+      "line": 131,
+      "value": 1024
+    },
+    {
+      "source": "storage.py",
+      "line": 28,
+      "value": 48
+    },
+    {
+      "source": "storage.py",
+      "line": 28,
+      "value": 8
+    },
+    {
+      "source": "storage.py",
+      "line": 38,
+      "value": 2368
+    },
+    {
+      "source": "storage.py",
+      "line": 38,
+      "value": 256
+    },
+    {
+      "source": "storage.py",
+      "line": 87,
+      "value": 1024
+    },
+    {
+      "source": "storage.py",
+      "line": 87,
+      "value": 1024
+    },
+    {
+      "source": "storage.py",
+      "line": 131,
+      "value": 4096
+    },
+    {
+      "source": "storage.py",
+      "line": 148,
+      "value": 1024
+    },
+    {
+      "source": "storage.py",
+      "line": 148,
+      "value": 1024
+    },
+    {
+      "source": "window.py",
+      "line": 21,
+      "value": 256
+    },
+    {
+      "source": "window.py",
+      "line": 14,
+      "value": 30
+    },
+    {
+      "source": "window.py",
+      "line": 14,
+      "value": 600
+    },
+    {
+      "source": "window.py",
+      "line": 14,
+      "value": 120
+    },
+    {
+      "source": "window.py",
+      "line": 14,
+      "value": 10800
+    },
+    {
+      "source": "window.py",
+      "line": 14,
+      "value": 120
+    },
+    {
+      "source": "window.py",
+      "line": 14,
+      "value": 10800
+    },
+    {
+      "source": "window.py",
+      "line": 14,
+      "value": 1800
+    },
+    {
+      "source": "window.py",
+      "line": 14,
+      "value": 14400
+    },
+    {
+      "source": "window.py",
+      "line": 14,
+      "value": 30
+    },
+    {
+      "source": "window.py",
+      "line": 14,
+      "value": 600
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 1900
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 10800
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 1900
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 10800
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 1900
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 10800
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 1900
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 10800
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 1900
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 10800
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 1800
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 10800
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 2100
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 10800
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 2100
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 10800
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 7200
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 30000
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 7200
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 30000
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 2100
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 10800
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 2100
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 10800
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 7200
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 30000
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 7200
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 30000
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 14400
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 60000
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 14400
+    },
+    {
+      "source": "window.py",
+      "line": 15,
+      "value": 60000
+    },
+    {
+      "source": "window.py",
+      "line": 361,
+      "value": 19
+    },
+    {
+      "source": "window.py",
+      "line": 363,
+      "value": 17
+    },
+    {
+      "source": "window.py",
+      "line": 24,
+      "value": 172800
+    },
+    {
+      "source": "window.py",
+      "line": 214,
+      "value": 216
+    },
+    {
+      "source": "window.py",
+      "line": 214,
+      "value": 18
+    },
+    {
+      "source": "window.py",
+      "line": 214,
+      "value": 36
+    },
+    {
+      "source": "window.py",
+      "line": 214,
+      "value": 1512
+    },
+    {
+      "source": "window.py",
+      "line": 214,
+      "value": 1024
+    },
+    {
+      "source": "window.py",
+      "line": 308,
+      "value": 1000
+    },
+    {
+      "source": "window.py",
+      "line": 351,
+      "value": 64
+    },
+    {
+      "source": "window.py",
+      "line": 24,
+      "value": 300
+    },
+    {
+      "source": "window.py",
+      "line": 123,
+      "value": 20000000
+    },
+    {
+      "source": "window.py",
+      "line": 145,
+      "value": 20000000
+    },
+    {
+      "source": "window.py",
+      "line": 167,
+      "value": 2000000
+    },
+    {
+      "source": "window.py",
+      "line": 289,
+      "value": 65
+    },
+    {
+      "source": "window.py",
+      "line": 318,
+      "value": 1000
+    },
+    {
+      "source": "window.py",
+      "line": 318,
+      "value": 1000
+    },
+    {
+      "source": "window.py",
+      "line": 318,
+      "value": 1000
+    },
+    {
+      "source": "window.py",
+      "line": 333,
+      "value": 48
+    },
+    {
+      "source": "window.py",
+      "line": 341,
+      "value": 256
+    },
+    {
+      "source": "window.py",
+      "line": 341,
+      "value": 4096
+    },
+    {
+      "source": "window.py",
+      "line": 341,
+      "value": 32768
+    },
+    {
+      "source": "window.py",
+      "line": 365,
+      "value": 300
+    },
+    {
+      "source": "window.py",
+      "line": 469,
+      "value": 600
+    },
+    {
+      "source": "window.py",
+      "line": 23,
+      "value": 17
+    },
+    {
+      "source": "window.py",
+      "line": 206,
+      "value": 216
+    },
+    {
+      "source": "window.py",
+      "line": 206,
+      "value": 36
+    },
+    {
+      "source": "window.py",
+      "line": 396,
+      "value": 16
+    },
+    {
+      "source": "window.py",
+      "line": 397,
+      "value": 16
+    },
+    {
+      "source": "window.py",
+      "line": 407,
+      "value": 97
+    },
+    {
+      "source": "window.py",
+      "line": 408,
+      "value": 97
+    },
+    {
+      "source": "window.py",
+      "line": 415,
+      "value": 97
+    },
+    {
+      "source": "window.py",
+      "line": 416,
+      "value": 97
+    },
+    {
+      "source": "window.py",
+      "line": 468,
+      "value": 19
+    },
+    {
+      "source": "window.py",
+      "line": 167,
+      "value": 1000
+    },
+    {
+      "source": "window.py",
+      "line": 184,
+      "value": 1024
+    },
+    {
+      "source": "window.py",
+      "line": 184,
+      "value": 1024
+    },
+    {
+      "source": "window.py",
+      "line": 258,
+      "value": 550000000
+    },
+    {
+      "source": "window.py",
+      "line": 258,
+      "value": 16000000
+    },
+    {
+      "source": "window.py",
+      "line": 396,
+      "value": 1024
+    },
+    {
+      "source": "window.py",
+      "line": 397,
+      "value": 1024
+    },
+    {
+      "source": "window.py",
+      "line": 407,
+      "value": 1024
+    },
+    {
+      "source": "window.py",
+      "line": 408,
+      "value": 1024
+    },
+    {
+      "source": "window.py",
+      "line": 415,
+      "value": 1024
+    },
+    {
+      "source": "window.py",
+      "line": 416,
+      "value": 1024
+    },
+    {
+      "source": "window.py",
+      "line": 24,
+      "value": 17
+    },
+    {
+      "source": "window.py",
+      "line": 310,
+      "value": 256
+    },
+    {
+      "source": "window.py",
+      "line": 310,
+      "value": 64
+    },
+    {
+      "source": "window.py",
+      "line": 172,
+      "value": 1024
+    },
+    {
+      "source": "window.py",
+      "line": 172,
+      "value": 1024
+    },
+    {
+      "source": "window.py",
+      "line": 314,
+      "value": 256
+    },
+    {
+      "source": "window.py",
+      "line": 314,
+      "value": 64
+    },
+    {
+      "source": "window.py",
+      "line": 481,
+      "value": 63
+    },
+    {
+      "source": "window.py",
+      "line": 481,
+      "value": 248320
+    },
+    {
+      "source": "window.py",
+      "line": 481,
+      "value": 63
+    },
+    {
+      "source": "draft_window.py",
+      "line": 18,
+      "value": 65
+    },
+    {
+      "source": "draft_window.py",
+      "line": 206,
+      "value": 2000000
+    },
+    {
+      "source": "draft_window.py",
+      "line": 112,
+      "value": 1024
+    },
+    {
+      "source": "draft_window.py",
+      "line": 112,
+      "value": 32
+    },
+    {
+      "source": "draft_window.py",
+      "line": 112,
+      "value": 1024
+    },
+    {
+      "source": "draft_window.py",
+      "line": 143,
+      "value": 1024
+    },
+    {
+      "source": "draft_window.py",
+      "line": 209,
+      "value": 1024
+    },
+    {
+      "source": "draft_window.py",
+      "line": 209,
+      "value": 1024
+    },
+    {
+      "source": "draft_window.py",
+      "line": 212,
+      "value": 1024
+    },
+    {
+      "source": "draft_window.py",
+      "line": 212,
+      "value": 1024
+    },
+    {
+      "source": "draft_window.py",
+      "line": 143,
+      "value": 16
+    },
+    {
+      "source": "draft_window.py",
+      "line": 143,
+      "value": 1024
+    },
+    {
+      "source": "draft_window.py",
+      "line": 123,
+      "value": 1024
+    },
+    {
+      "source": "draft_window.py",
+      "line": 158,
+      "value": 1024
+    },
+    {
+      "source": "draft_window.py",
+      "line": 124,
+      "value": 8
+    },
+    {
+      "source": "draft_window.py",
+      "line": 124,
+      "value": 1024
+    },
+    {
+      "source": "draft_window.py",
+      "line": 159,
+      "value": 8
+    },
+    {
+      "source": "draft_window.py",
+      "line": 159,
+      "value": 1024
+    },
+    {
+      "source": "suite.py",
+      "line": 10,
+      "value": 11
+    },
+    {
+      "source": "suite.py",
+      "line": 12,
+      "value": 248044
+    },
+    {
+      "source": "suite.py",
+      "line": 12,
+      "value": 248046
+    },
+    {
+      "source": "suite.py",
+      "line": 18,
+      "value": 256
+    },
+    {
+      "source": "suite.py",
+      "line": 102,
+      "value": 15
+    },
+    {
+      "source": "suite.py",
+      "line": 240,
+      "value": 12
+    },
+    {
+      "source": "suite.py",
+      "line": 38,
+      "value": 128
+    },
+    {
+      "source": "suite.py",
+      "line": 89,
+      "value": 32
+    },
+    {
+      "source": "suite.py",
+      "line": 90,
+      "value": 128
+    },
+    {
+      "source": "suite.py",
+      "line": 224,
+      "value": 1000
+    },
+    {
+      "source": "suite.py",
+      "line": 255,
+      "value": 48
+    },
+    {
+      "source": "suite.py",
+      "line": 91,
+      "value": 64
+    },
+    {
+      "source": "suite.py",
+      "line": 173,
+      "value": 1000000
+    },
+    {
+      "source": "suite.py",
+      "line": 207,
+      "value": 64
+    },
+    {
+      "source": "suite.py",
+      "line": 215,
+      "value": 64
+    },
+    {
+      "source": "suite.py",
+      "line": 219,
+      "value": 1000
+    },
+    {
+      "source": "suite.py",
+      "line": 45,
+      "value": 9
+    },
+    {
+      "source": "suite.py",
+      "line": 58,
+      "value": 48
+    },
+    {
+      "source": "suite.py",
+      "line": 354,
+      "value": 100
+    },
+    {
+      "source": "suite.py",
+      "line": 378,
+      "value": 16
+    },
+    {
+      "source": "suite.py",
+      "line": 378,
+      "value": 248320
+    },
+    {
+      "source": "suite.py",
+      "line": 20,
+      "value": 32
+    },
+    {
+      "source": "suite.py",
+      "line": 20,
+      "value": 64
+    },
+    {
+      "source": "suite.py",
+      "line": 20,
+      "value": 128
+    },
+    {
+      "source": "suite.py",
+      "line": 43,
+      "value": 8
+    },
+    {
+      "source": "suite.py",
+      "line": 43,
+      "value": 48
+    },
+    {
+      "source": "suite.py",
+      "line": 137,
+      "value": 64
+    },
+    {
+      "source": "suite.py",
+      "line": 362,
+      "value": 32
+    },
+    {
+      "source": "suite.py",
+      "line": 362,
+      "value": 64
+    },
+    {
+      "source": "suite.py",
+      "line": 362,
+      "value": 128
+    },
+    {
+      "source": "suite.py",
+      "line": 21,
+      "value": 256
+    },
+    {
+      "source": "suite.py",
+      "line": 21,
+      "value": 4096
+    },
+    {
+      "source": "suite.py",
+      "line": 21,
+      "value": 32768
+    },
+    {
+      "source": "suite.py",
+      "line": 232,
+      "value": 1000
+    },
+    {
+      "source": "suite.py",
+      "line": 50,
+      "value": 48
+    },
+    {
+      "source": "suite.py",
+      "line": 56,
+      "value": 20480
+    },
+    {
+      "source": "suite.py",
+      "line": 158,
+      "value": 1024
+    },
+    {
+      "source": "suite.py",
+      "line": 158,
+      "value": 1024
+    },
+    {
+      "source": "suite.py",
+      "line": 51,
+      "value": 48
+    },
+    {
+      "source": "suite.py",
+      "line": 55,
+      "value": 2560
+    },
+    {
+      "source": "suite.py",
+      "line": 267,
+      "value": 16
+    },
+    {
+      "source": "suite.py",
+      "line": 267,
+      "value": 2560
+    },
+    {
+      "source": "suite.py",
+      "line": 311,
+      "value": 48
+    },
+    {
+      "source": "suite.py",
+      "line": 314,
+      "value": 20480
+    },
+    {
+      "source": "window_safety.py",
+      "line": 46,
+      "value": 29321610240
+    },
+    {
+      "source": "window_safety.py",
+      "line": 37,
+      "value": 1024
+    },
+    {
+      "source": "memory_gate.py",
+      "line": 2,
+      "value": 256
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 8,
+      "value": 34242297856
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 9,
+      "value": 1500000000
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 91,
+      "value": 3345271094
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 133,
+      "value": 839321600
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 136,
+      "value": 1117597962
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 137,
+      "value": 1115963658
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 138,
+      "value": 1106681302
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 10,
+      "value": 256
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 10,
+      "value": 4096
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 10,
+      "value": 32768
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 12,
+      "value": 27253499452
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 12,
+      "value": 27854569876
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 13,
+      "value": 46500548
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 13,
+      "value": 1228800
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 92,
+      "value": 128
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 139,
+      "value": 22
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 139,
+      "value": 24
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 139,
+      "value": 316271288
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 139,
+      "value": 319074840
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 233502
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 1675
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 27253499452
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 4194304
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 29601792
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 256
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 242210
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 1733
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 31199840970
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 4194304
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 3345271094
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 256
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 233502
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 1675
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 27253499452
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 4194304
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 29601792
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 256
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 242210
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 1733
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 31199840970
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 4194304
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 3345271094
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 256
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 233502
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 1675
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 27253499452
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 4194304
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 29601792
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 256
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 227318
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 1629
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 27854569876
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 4194304
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 256
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 19,
+      "value": 73142
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 24,
+      "value": 2437
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 29,
+      "value": 21365
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 34,
+      "value": 2402
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 39,
+      "value": 233502
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 44,
+      "value": 74998
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 49,
+      "value": 46408
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 54,
+      "value": 227318
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 59,
+      "value": 2402
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 64,
+      "value": 242210
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 69,
+      "value": 2402
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 74,
+      "value": 2385
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 79,
+      "value": 2454
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 84,
+      "value": 78132
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 89,
+      "value": 46406
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 92,
+      "value": 32768
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 92,
+      "value": 4096
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 134,
+      "value": 2560
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 135,
+      "value": 8
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 151,
+      "value": 22
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 151,
+      "value": 24
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 285836076
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 26904822528
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 59203600
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 3637248
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 303952842
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 30862227200
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 29417472
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 4243456
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 285836076
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 26904822528
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 59203600
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 3637248
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 303952842
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 30862227200
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 29417472
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 4243456
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 285836076
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 26904822528
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 59203600
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 3637248
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 286241428
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 27535273728
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 29417472
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 14,
+      "value": 3637248
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 192,
+      "value": 22
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 192,
+      "value": 24
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 96,
+      "value": 1024
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 96,
+      "value": 1024
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 97,
+      "value": 256
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 98,
+      "value": 256
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 243,
+      "value": 32768
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 243,
+      "value": 128
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 245,
+      "value": 27967488
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 245,
+      "value": 29601792
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 250,
+      "value": 4096
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 189,
+      "value": 256
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 250,
+      "value": 65536
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 235,
+      "value": 12
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 236,
+      "value": 13
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 224,
+      "value": 3326953472
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 225,
+      "value": 17711414
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 214,
+      "value": 48
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 231,
+      "value": 1024
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 231,
+      "value": 1024
+    },
+    {
+      "source": "pipeline.py",
+      "line": 6,
+      "value": 65536
+    },
+    {
+      "source": "pipeline.py",
+      "line": 31,
+      "value": 9
+    },
+    {
+      "source": "pipeline.py",
+      "line": 139,
+      "value": 10
+    },
+    {
+      "source": "pipeline.py",
+      "line": 6,
+      "value": 4096
+    },
+    {
+      "source": "pipeline.py",
+      "line": 8,
+      "value": 9
+    },
+    {
+      "source": "pipeline.py",
+      "line": 173,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 201,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 235,
+      "value": 64
+    },
+    {
+      "source": "pipeline.py",
+      "line": 238,
+      "value": 100
+    },
+    {
+      "source": "pipeline.py",
+      "line": 275,
+      "value": 384
+    },
+    {
+      "source": "pipeline.py",
+      "line": 388,
+      "value": 16
+    },
+    {
+      "source": "pipeline.py",
+      "line": 388,
+      "value": 248320
+    },
+    {
+      "source": "pipeline.py",
+      "line": 413,
+      "value": 65
+    },
+    {
+      "source": "pipeline.py",
+      "line": 488,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 503,
+      "value": 64
+    },
+    {
+      "source": "pipeline.py",
+      "line": 506,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 569,
+      "value": 8
+    },
+    {
+      "source": "pipeline.py",
+      "line": 569,
+      "value": 256
+    },
+    {
+      "source": "pipeline.py",
+      "line": 570,
+      "value": 10800
+    },
+    {
+      "source": "pipeline.py",
+      "line": 570,
+      "value": 3600
+    },
+    {
+      "source": "pipeline.py",
+      "line": 570,
+      "value": 19
+    },
+    {
+      "source": "pipeline.py",
+      "line": 130,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 184,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 189,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 238,
+      "value": 99
+    },
+    {
+      "source": "pipeline.py",
+      "line": 245,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 248,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 253,
+      "value": 100
+    },
+    {
+      "source": "pipeline.py",
+      "line": 254,
+      "value": 99
+    },
+    {
+      "source": "pipeline.py",
+      "line": 255,
+      "value": 99
+    },
+    {
+      "source": "pipeline.py",
+      "line": 365,
+      "value": 8
+    },
+    {
+      "source": "pipeline.py",
+      "line": 365,
+      "value": 9
+    },
+    {
+      "source": "pipeline.py",
+      "line": 367,
+      "value": 11
+    },
+    {
+      "source": "pipeline.py",
+      "line": 502,
+      "value": 248044
+    },
+    {
+      "source": "pipeline.py",
+      "line": 502,
+      "value": 248046
+    },
+    {
+      "source": "pipeline.py",
+      "line": 529,
+      "value": 2147483647
+    },
+    {
+      "source": "pipeline.py",
+      "line": 72,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 76,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 127,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 234,
+      "value": 248044
+    },
+    {
+      "source": "pipeline.py",
+      "line": 234,
+      "value": 248046
+    },
+    {
+      "source": "pipeline.py",
+      "line": 242,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 251,
+      "value": 99
+    },
+    {
+      "source": "pipeline.py",
+      "line": 257,
+      "value": 99
+    },
+    {
+      "source": "pipeline.py",
+      "line": 258,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 335,
+      "value": 8
+    },
+    {
+      "source": "pipeline.py",
+      "line": 372,
+      "value": 8
+    },
+    {
+      "source": "pipeline.py",
+      "line": 391,
+      "value": 1000000.0
+    },
+    {
+      "source": "pipeline.py",
+      "line": 465,
+      "value": 2147483647
+    },
+    {
+      "source": "pipeline.py",
+      "line": 98,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 335,
+      "value": 1024
+    },
+    {
+      "source": "pipeline.py",
+      "line": 366,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 366,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 370,
+      "value": 128
+    },
+    {
+      "source": "pipeline.py",
+      "line": 370,
+      "value": 20480
+    },
+    {
+      "source": "pipeline.py",
+      "line": 461,
+      "value": 248044
+    },
+    {
+      "source": "pipeline.py",
+      "line": 461,
+      "value": 248046
+    },
+    {
+      "source": "pipeline.py",
+      "line": 508,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 94,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 125,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 138,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 333,
+      "value": 1024
+    },
+    {
+      "source": "pipeline.py",
+      "line": 366,
+      "value": 10
+    },
+    {
+      "source": "pipeline.py",
+      "line": 368,
+      "value": 8
+    },
+    {
+      "source": "pipeline.py",
+      "line": 368,
+      "value": 9
+    },
+    {
+      "source": "pipeline.py",
+      "line": 368,
+      "value": 10
+    },
+    {
+      "source": "pipeline.py",
+      "line": 368,
+      "value": 11
+    },
+    {
+      "source": "pipeline.py",
+      "line": 136,
+      "value": 1000
+    },
+    {
+      "source": "pipeline.py",
+      "line": 161,
+      "value": 1000
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 57,
+      "value": 17.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 56,
+      "value": 30.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 56,
+      "value": 1800.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 56,
+      "value": 1800.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 56,
+      "value": 1800.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 56,
+      "value": 30.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 56,
+      "value": 1900.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 56,
+      "value": 1900.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 56,
+      "value": 1900.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 56,
+      "value": 1900.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 56,
+      "value": 1900.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 108,
+      "value": 60
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 301,
+      "value": 19
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 68,
+      "value": 300
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 40,
+      "value": 19
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 50,
+      "value": 8
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 50,
+      "value": 8
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 50,
+      "value": 256
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 51,
+      "value": 64
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 51,
+      "value": 8
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 51,
+      "value": 256
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 52,
+      "value": 64
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 52,
+      "value": 8
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 52,
+      "value": 256
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 53,
+      "value": 64
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 53,
+      "value": 8
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 53,
+      "value": 256
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 54,
+      "value": 64
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 54,
+      "value": 8
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 54,
+      "value": 256
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 65,
+      "value": 60.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 69,
+      "value": 600
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 69,
+      "value": 10800
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 88,
+      "value": 48
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 190,
+      "value": 10
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 370,
+      "value": 19
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 38,
+      "value": 19
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 70,
+      "value": 1800
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 70,
+      "value": 10800
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 204,
+      "value": 100
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 204,
+      "value": 1000
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 209,
+      "value": 100000000
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 222,
+      "value": 384
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 222,
+      "value": 384
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 222,
+      "value": 8
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 222,
+      "value": 8
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 274,
+      "value": 72
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 370,
+      "value": 20
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 207,
+      "value": 16
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 276,
+      "value": 4000000000.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 276,
+      "value": 4000000000.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 330,
+      "value": 4000000000
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 330,
+      "value": 4000000000.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 25,
+      "value": 120
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 70,
+      "value": 1800
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 70,
+      "value": 10800
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 91,
+      "value": 20480
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 160,
+      "value": 16
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 207,
+      "value": 1024
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 327,
+      "value": 1000
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 439,
+      "value": 200
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 441,
+      "value": 4000000000.0
+    },
+    {
+      "source": "fixture_support.py",
+      "line": 460,
+      "value": 8
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 24,
+      "value": 256
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 24,
+      "value": 4096
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 24,
+      "value": 32768
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 232,
+      "value": 32768
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 25,
+      "value": 31
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 104,
+      "value": 8000000000
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 162,
+      "value": 8
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 259,
+      "value": 32
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 259,
+      "value": 64
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 111,
+      "value": 100000000
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 141,
+      "value": 150000000
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 158,
+      "value": 8
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 300,
+      "value": 8
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 329,
+      "value": 19
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 330,
+      "value": 8000000000
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 330,
+      "value": 8000000000
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 106,
+      "value": 8000000000
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 106,
+      "value": 9000000000
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 164,
+      "value": 1300000000
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 164,
+      "value": 250000000
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 244,
+      "value": 16
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 260,
+      "value": 13
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 263,
+      "value": 32768
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 273,
+      "value": 32
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 307,
+      "value": 384
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 31,
+      "value": 1024
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 31,
+      "value": 1024
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 61,
+      "value": 1024
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 180,
+      "value": 2147483647
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 283,
+      "value": 32768
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 313,
+      "value": 8
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 313,
+      "value": 384
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 154,
+      "value": 65
+    },
+    {
+      "source": "cpu_merged_gate.py",
+      "line": 284,
+      "value": 16
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 31,
+      "value": 20000000
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 31,
+      "value": 550000000
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 33,
+      "value": 4000000000
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 72,
+      "value": 8
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 99,
+      "value": 8
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 186,
+      "value": 256
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 186,
+      "value": 4096
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 186,
+      "value": 32768
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 49,
+      "value": 8000000000
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 52,
+      "value": 9
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 73,
+      "value": 8
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 74,
+      "value": 9
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 74,
+      "value": 48
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 136,
+      "value": 16
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 139,
+      "value": 248320
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 140,
+      "value": 48
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 142,
+      "value": 8
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 159,
+      "value": 8
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 195,
+      "value": 19
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 31,
+      "value": 26
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 31,
+      "value": 2368
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 100,
+      "value": 2147483647
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 187,
+      "value": 4096
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 212,
+      "value": 38
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 31,
+      "value": 256
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 47,
+      "value": 1024
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 125,
+      "value": 12
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 137,
+      "value": 31
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 151,
+      "value": 32
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 189,
+      "value": 4096
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 156,
+      "value": 32
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 211,
+      "value": 8
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 211,
+      "value": 384
+    },
+    {
+      "source": "capacity_cpu_gate.py",
+      "line": 157,
+      "value": 64
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 256
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 4096
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 32768
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 47,
+      "value": 100000000
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 88
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 104
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 120
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 136
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 152
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 256
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 88
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 152
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 1024
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 2048
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 2049
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 4096
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 88
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 152
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 1024
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 2048
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 4096
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 8192
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 10,
+      "value": 32767
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 186,
+      "value": 5000000
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 49,
+      "value": 3000000000
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 83,
+      "value": 1000000
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 139,
+      "value": 216
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 209,
+      "value": 1800
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 212,
+      "value": 256
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 212,
+      "value": 4096
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 212,
+      "value": 32768
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 59,
+      "value": 1024
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 209,
+      "value": 256
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 209,
+      "value": 4096
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 209,
+      "value": 32768
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 219,
+      "value": 256
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 222,
+      "value": 19
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 69,
+      "value": 8000000000
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 142,
+      "value": 56
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 148,
+      "value": 24
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 240,
+      "value": 12
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 90,
+      "value": 1024
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 90,
+      "value": 1024
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 139,
+      "value": 216
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 139,
+      "value": 36
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 148,
+      "value": 20
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 148,
+      "value": 116
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 74,
+      "value": 30
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 87,
+      "value": 1024
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 87,
+      "value": 1024
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 145,
+      "value": 72
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 145,
+      "value": 93
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 146,
+      "value": 8
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 148,
+      "value": 9
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 147,
+      "value": 8
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 147,
+      "value": 9
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 147,
+      "value": 10
+    },
+    {
+      "source": "capacity_fixture_gate.py",
+      "line": 147,
+      "value": 11
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 13,
+      "value": 8000000000
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 14,
+      "value": 3000000000
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 15,
+      "value": 8000000000
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 16,
+      "value": 8
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 11,
+      "value": 256
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 11,
+      "value": 4096
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 11,
+      "value": 32768
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 112,
+      "value": 150000000
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 57,
+      "value": 1000000
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 97,
+      "value": 1000000
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 159,
+      "value": 19
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 52,
+      "value": 87
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 52,
+      "value": 94
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 57,
+      "value": 20480
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 89,
+      "value": 1024
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 190,
+      "value": 300000000
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 61,
+      "value": 20480
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 100,
+      "value": 1024
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 100,
+      "value": 1024
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 26,
+      "value": 1024
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 26,
+      "value": 1024
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 103,
+      "value": 1024
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 103,
+      "value": 1024
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 127,
+      "value": 7200
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 134,
+      "value": 60
+    },
+    {
+      "source": "capacity_draft_gate.py",
+      "line": 136,
+      "value": 10
+    },
+    {
+      "source": "capacity_selection_gate.py",
+      "line": 14,
+      "value": 19
+    },
+    {
+      "source": "capacity_selection_gate.py",
+      "line": 10,
+      "value": 600
+    },
+    {
+      "source": "capacity_selection_gate.py",
+      "line": 18,
+      "value": 8000000000
+    },
+    {
+      "source": "hc_activation_gate.py",
+      "line": 13,
+      "value": 20000000
+    },
+    {
+      "source": "hc_activation_gate.py",
+      "line": 11,
+      "value": 19
+    },
+    {
+      "source": "hc_activation_gate.py",
+      "line": 21,
+      "value": 20000000
+    },
+    {
+      "source": "build.py",
+      "line": 18,
+      "value": 350000000
+    },
+    {
+      "source": "build.py",
+      "line": 43,
+      "value": 100000000
+    },
+    {
+      "source": "build.py",
+      "line": 51,
+      "value": 19
+    },
+    {
+      "source": "build.py",
+      "line": 11,
+      "value": 8
+    },
+    {
+      "source": "build.py",
+      "line": 11,
+      "value": 8
+    },
+    {
+      "source": "build.py",
+      "line": 11,
+      "value": 1024
+    },
+    {
+      "source": "build.py",
+      "line": 11,
+      "value": 1024
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 256
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 4096
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 32768
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 55,
+      "value": 200
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 88
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 104
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 120
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 136
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 152
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 256
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 88
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 152
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 1024
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 2048
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 2049
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 4096
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 88
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 152
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 1024
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 2048
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 4096
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 8192
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 11,
+      "value": 32767
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 32,
+      "value": 474792
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 32,
+      "value": 300625
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 32,
+      "value": 474479.1
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 32,
+      "value": 246771
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 32,
+      "value": 474583
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 32,
+      "value": 483542
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 32,
+      "value": 474592.6
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 32,
+      "value": 607187.1
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 37,
+      "value": 480
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 334,
+      "value": 200
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 365,
+      "value": 8
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 19,
+      "value": 2048
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 31,
+      "value": 200
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 33,
+      "value": 200
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 34,
+      "value": 200
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 78,
+      "value": 4000000000.0
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 231,
+      "value": 256
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 34,
+      "value": 22615.3
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 35,
+      "value": 480
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 39,
+      "value": 17
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 126,
+      "value": 2000000.0
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 33,
+      "value": 256
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 34,
+      "value": 7510.4
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 31,
+      "value": 16
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 34,
+      "value": 7708
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 34,
+      "value": 15416
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 258,
+      "value": 8
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 299,
+      "value": 1000
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 33,
+      "value": 512
+    },
+    {
+      "source": "k2_summary.py",
+      "line": 258,
+      "value": 8
+    }
+  ],
+  "free_floor_bytes": 8000000000,
+  "remaining_chain_reserve_bytes": 11486186752,
+  "structural_build_limit_bytes": 14486186752,
+  "measurements_note": "Current file sizes and authenticated retention sizes; reservations are never relabeled as actual writes. Deleted packet44 state bytes are not reconstructed as measurements."
+}
