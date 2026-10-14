@@ -255,6 +255,8 @@ ARMS["X32g"] = ("plain", "memory", 0)                 # X32q with the proxy code
 ARMS["X32p"] = ("plain", "memory", 0)                 # X32n2 with the proxy code of 2026-10-12 09:00 (see the header); the proxy is started by hand with --recall-label
 ARMS["X32n2"] = ("plain", "memory", 0)                # X32n after the fix of 2026-10-12 06:55: what the kept message says about a result already noted is not noted twice
 ARMS["X32ir"] = ("plain", "memory", 0)                # the same with retrieval in the proxy as well, once it has that (reserved)
+ARMS["N2M"] = ("truncate", "memory", 32768)           # campaign 18: the keeper on the 2M adversarial stream
+ARMS["X2M"] = ("plain", "memory", 0)                  # campaign 18: the winning repair recipe through the proxy on the 2M stream
 for a in ("A", "B32", "C32", "E32"):  # same arm with earlier thinking dropped from every call
     ARMS[a + "t"] = ARMS[a]
 bad = [a for a in arms if a not in ARMS]

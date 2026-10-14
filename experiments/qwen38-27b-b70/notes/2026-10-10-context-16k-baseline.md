@@ -2400,4 +2400,7 @@ campaign 17's gate, one server, the memory floor and room check standing.
 quiet set to the end of the stream, so the final query reads the decoy value; four regression tests in
 `test_make_sparse_roundtrips.py`, neighbouring generator tests green), and the stream itself is generated and in
 place (`client-1m/tasks/sparse-memory/sparse-memory-t2000k-s0`: 993 batches, 2,000,864 tokens, 343 probes, 2,933
-changes, all 12 decoys placed with windows of 123-176 batches and present in the final query).
+changes, all 12 decoys placed with windows of 123-176 batches and present in the final query). The campaign is
+staged (`longrun-campaign18.sh`, `QUEUE18.txt`, `collect.sh`; arms N2M/X2M registered in the planner, which
+validates both — its time estimates, 12.6 h and 23.9 h, come from the 2026-10-05 measurements and overstate: the
+1M actuals ran about 50 minutes; the 4-hour caps stand).
