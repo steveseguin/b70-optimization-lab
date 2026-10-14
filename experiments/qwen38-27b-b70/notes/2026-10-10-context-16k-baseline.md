@@ -2381,3 +2381,9 @@ Arms (the repair gate recipe — XR7 or XR6 — denoted BASE; proxy at 32K windo
 
 Generation happens after the `--roundtrips` switch lands with its unit tests; the campaign launches only after
 campaign 17's gate, one server, the memory floor and room check standing.
+
+**Landed the same night:** the switch is in `make_sparse_prose_tasks.py` (decoy counters are reserved from the
+quiet set to the end of the stream, so the final query reads the decoy value; four regression tests in
+`test_make_sparse_roundtrips.py`, neighbouring generator tests green), and the stream itself is generated and in
+place (`client-1m/tasks/sparse-memory/sparse-memory-t2000k-s0`: 993 batches, 2,000,864 tokens, 343 probes, 2,933
+changes, all 12 decoys placed with windows of 123-176 batches and present in the final query).
