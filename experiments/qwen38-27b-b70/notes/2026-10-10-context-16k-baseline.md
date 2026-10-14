@@ -2396,6 +2396,10 @@ skipped by the runner: their results stand). Lesson recorded for the runner: an 
 stopped at the queue level between arms, never by removing its container; and the room check's blind spot is
 end-of-run client bookkeeping — the third time this class bites (campaign 12's summariser, 13c's cap, tonight).
 
+**X24 on s2x (04:16, XR4's recipe at a 24,576-token window): the curve's middle point holds full quality** —
+40/40 fixed, **40/40 clean**, audit 7/7, **13 min 5 s** (faster than the 32K run's 15:38; the smaller window
+shortens every prompt), notes cache 90.2%, 6 cuts, notes written 4,399.
+
 **XR7 on s1x (22:11): the gate holds on the second seed too** — 40/40 fixed, **40/40 clean**, audit 7/7, 36 min 4 s
 (bound: 44; XR3: 47.1). Notes calls read 175,572 prompt tokens, 160,576 of them cached (**91.5%**; XR3's notes
 ran 81%), and wrote 28,286 (9 cuts). Both seeds: the change stands.
