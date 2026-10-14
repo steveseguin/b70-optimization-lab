@@ -2158,10 +2158,12 @@ the new room check (refuse an arm under 512 MiB of room) never came close to fir
 explicit cap (the repair task then carried 384 MiB; 256 MiB applies from campaign 14); its peak use beside the server stayed inside the room.
 Gemma was restored at 23:22, no fault lines logged since 21:16.
 
-Owed, in this order: a graded sliding-window row on the second seed; a task without the `*_index` functions and
-`peekable`, or with leave to give a ticket up; the skindeep rows for the controls above (the repair marathon
-itself is published: skindeep.ai commit e5ae534, section "Real code: the repair marathon"); the proxy under a real
-agent program.
+Owed, in this order: the campaign-16 results (XR7's gate, C32's seed-2x row, the W200 plain-window control —
+running) and staged campaign 17 (XR8's cut-depth gate, then the X24/X16 window curve); a task without the
+`*_index` functions and `peekable`, or with leave to give a ticket up; the skindeep rows for the controls above
+(the repair marathon itself is published: skindeep.ai commit e5ae534, section "Real code: the repair marathon");
+the proxy under a real agent program. (The graded sliding-window row on the second seed was delivered: W32g,
+campaign 14.)
 
 ### Campaign 14, registered 2026-10-13 before any run: the window's missing grade, and the task without its trap tickets
 
