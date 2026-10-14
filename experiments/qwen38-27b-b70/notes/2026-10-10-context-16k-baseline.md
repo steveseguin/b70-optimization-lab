@@ -2400,6 +2400,16 @@ end-of-run client bookkeeping — the third time this class bites (campaign 12's
 40/40 fixed, **40/40 clean**, audit 7/7, **13 min 5 s** (faster than the 32K run's 15:38; the smaller window
 shortens every prompt), notes cache 90.2%, 6 cuts, notes written 4,399.
 
+**X16 on s2x (04:46, XR4's recipe at a 16,384-token window): the starvation end, and the first imperfect proxy
+row** — 40/40 fixed, **39/40 clean** (one rule-1 line wrong; R2/R3 intact), audit **7/7**, 29 min 48 s. The
+registered failure mode is the one observed: **notes-call starvation** — 29 cuts (24K/32K: 6) with **zero**
+in-place notes written (the 16K window never leaves the 15K-token gather threshold room), one full-rewrite
+fallback failed, 2 recalls. The one clean-ticket loss is t20: the fix landed and its tests pass (6 run, 0 bad),
+but one of its three changed lines missed the maintainer's marker — the standing rule from the first tickets
+slipped exactly once, mid-run, while the archive still answered the audit 7/7 at the end. The curve on s2x: 32K →
+40/40 in 15:38, 24K → 40/40 in 13:05, 16K → 39/40 in 29:48 — flat quality down to 24K, one-ticket degradation
+with an honest signature at 16K.
+
 **XR7 on s1x (22:11): the gate holds on the second seed too** — 40/40 fixed, **40/40 clean**, audit 7/7, 36 min 4 s
 (bound: 44; XR3: 47.1). Notes calls read 175,572 prompt tokens, 160,576 of them cached (**91.5%**; XR3's notes
 ran 81%), and wrote 28,286 (9 cuts). Both seeds: the change stands.
@@ -2454,3 +2464,19 @@ changes, all 12 decoys placed with windows of 123-176 batches and present in the
 staged (`longrun-campaign18.sh`, `QUEUE18.txt`, `collect.sh`; arms N2M/X2M registered in the planner, which
 validates both — its time estimates, 12.6 h and 23.9 h, come from the 2026-10-05 measurements and overstate: the
 1M actuals ran about 50 minutes; the 4-hour caps stand).
+
+**Attempt 1 invalid; relaunched 10:07.** The first N2M and X2M runs do not count: both were misrouted by
+`second-comparison.sh`. Its proxy routing listed the X32* names one by one, so X2M's agent got the direct server
+port and grew its window until the server refused a request at item ~97 (`ended_by=server_window`, 21/382); its
+keeper-agent list likewise lacks N2M, which therefore ran as the plain truncating window (its 4-hour cut and the
+259-answer snapshot were graded as designed, but the row is a window row, not the keeper row). The proxy itself
+came up and served zero requests (its state directory is created on the first request, which is why none exists
+for attempt 1). The campaign's own planning dry-run could not catch this: it checks the arm registry, not the two
+routing lists. Fixed in `second-comparison.sh` (X2M joins the proxy-routed arms; N2M gets the current keeper
+recipe) and checked against the resolved code paths; the invalid job directories were deleted and both arms
+re-queued. Process lesson, now standing for any new arm: within the first minutes of an arm, read the job's
+`config.json` and check the agent class and `api_base` against the design. The relaunch runs as the systemd unit
+`ctx-campaign18.service` (the plain `nohup &` runner died with its launching shell at 10:03; the orphaned server
+was stopped and the state directory set aside). One more `xe` fault line was logged during the 09:49 teardown
+(e3:00.0, 09:59:26); the cards came back and the fault gate, scoped to the campaign's own start, is clear. N2M
+starts after the standing gate (~10:35), X2M after it.

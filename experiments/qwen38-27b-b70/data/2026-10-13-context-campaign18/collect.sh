@@ -36,7 +36,7 @@ for d in glob.glob(os.path.join(sys.argv[1], "*/")):
 print(best or "")
 PY
 )
-  [[ -n $s ]] && { mkdir -p "$out/proxy"; cp "$s/notes-history.jsonl" "$s/events.jsonl" "$s/state.json" "$out/proxy/" 2>/dev/null; }
+  [[ -n $s ]] && { mkdir -p "$out/proxy"; cp "$s/notes-history.jsonl" "$s/events.jsonl" "$s/state.json" "$s/archive.jsonl" "$out/proxy/" 2>/dev/null; }
 done
 
 # the comparison table with the 2M rows added
