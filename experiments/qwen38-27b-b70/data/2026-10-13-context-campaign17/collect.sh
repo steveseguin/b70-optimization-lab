@@ -43,4 +43,8 @@ done
 SRV=$O/server/tp2-w262144-c17
 [[ -e $SRV/state.json ]] && cp "$SRV/state.json" "$D/server-state-c17.json"
 [[ -e $SRV/MEMORY-GUARD.json ]] && cp "$SRV/MEMORY-GUARD.json" "$D/server-MEMORY-GUARD-c17.json"
+# the first launch's server (stopped by its memory guard after the killed X24 attempt) is evidence too
+SRV1=$O/server/tp2-w262144-c17-first
+[[ -e $SRV1/state.json ]] && cp "$SRV1/state.json" "$D/server-state-c17-first.json"
+[[ -e $SRV1/MEMORY-GUARD.json ]] && cp "$SRV1/MEMORY-GUARD.json" "$D/server-MEMORY-GUARD-c17-first.json"
 du -sh "$D"; find "$D" -type f | wc -l

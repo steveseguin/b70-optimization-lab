@@ -2380,6 +2380,22 @@ at once. **Change to the curve (registered as it happens):** X24 and X16 run on 
 X24/X16 mapping is edited, and the campaign relaunches (completed arms are skipped by the runner). XR8 is
 unaffected: it runs on XR7's recipe as registered.
 
+**XR8 on s2x (03:36): the cut-depth gate passes — and its mechanism is refuted.** 40/40 fixed, **40/40 clean**,
+audit 7/7, 28 min 53 s. But the cuts numbered **9** (XR7-s2x: 10), not the registered 5-7: the notes-call cadence
+is driven by the 15K-token gather threshold, not by how deep each cut lands. The deeper cut is safe (the gate
+says so) and buys nothing measurable; the read:write lever that remains is the gather threshold itself
+(`--inplace-tokens`), not the target ratio.
+
+**Incident, 03:40-03:57:** X24's first attempt was killed by hand four minutes in (to switch X24/X16 onto XR4's
+recipe, as registered above). The kill removed the task's container but not the job: the agent's commands failed
+instantly and it produced 1,732 archived turns in 21 minutes (XR8: 428 in 29), and the end-of-run bookkeeping
+over that trajectory, beside the server, took host memory to 1.42 GiB — the server's memory guard stopped it
+(graceful; exit 137; kernel log clean; Gemma restored at 03:58). The run was invalid anyway (no verifier result)
+and its partials were deleted. The campaign relaunched at 04:00 with X24/X16 on XR4's recipe (XR4 and XR8 are
+skipped by the runner: their results stand). Lesson recorded for the runner: an arm to be replaced must be
+stopped at the queue level between arms, never by removing its container; and the room check's blind spot is
+end-of-run client bookkeeping — the third time this class bites (campaign 12's summariser, 13c's cap, tonight).
+
 **XR7 on s1x (22:11): the gate holds on the second seed too** — 40/40 fixed, **40/40 clean**, audit 7/7, 36 min 4 s
 (bound: 44; XR3: 47.1). Notes calls read 175,572 prompt tokens, 160,576 of them cached (**91.5%**; XR3's notes
 ran 81%), and wrote 28,286 (9 cuts). Both seeds: the change stands.
