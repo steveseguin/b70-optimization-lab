@@ -2308,6 +2308,19 @@ notes-call cache share 85% or more of notes prompt tokens (the diagnostic's 89.5
 own tail cannot be warm); the trade registered: notes calls will think again (bounded by the 8,192-token notes cap
 and the retry ladder), which is what `off` had been bought with — at 19K uncached tokens per cut it was a bad buy.
 
+**Read:write follow-ons ranked (same evening, analysis only):** the notes path reads ~37 tokens per token written
+(FAp: 233,674 / 6,264). With XR7's alignment the read is ~89% cache-warm; what remains is the count of calls.
+Measured constraints: (1) **no cut is skippable** — across all 709 saved in-place notes replies (every proxy
+session on disk), zero carried an empty RULES+CHANGES delta, so a "skip cuts that change nothing" heuristic would
+have saved nothing on any run to date; (2) **fewer, deeper cuts are proven safe one layer down** — N32j35 (cut to
+35% instead of 60%) halved the keeper's notes calls (23 to 14), kept 39/39 with one counter wrong for a stretch,
+19% faster; the proxy equivalent is `--target-ratio 0.35`, registered here as **XR8 = XR7 at target-ratio 0.35**,
+to run only if XR7 passes its gate (expected: notes calls per repair run 8-13 → 5-7, the same 40/40 clean and 7/7
+audit, another minute or two less); (3) per-call keyword differences between call kinds are forbidden by the
+cache finding — a notes-only effort flag would re-break the very alignment XR7 tests; (4) delegating notes to the
+INT4 draft is parked: the stored values are checkable but the prose rules are not, and the gate is the whole
+point.
+
 **Arms** (repair task, thinking on, in-place notes, checks off, recite on tickets; server recipe unchanged):
 
 - **XR7** = XR6 plus `--notes-continuation`, on `repair-n40-s2x`: expected fixed 40/40, clean 40/40, audit 7/7
