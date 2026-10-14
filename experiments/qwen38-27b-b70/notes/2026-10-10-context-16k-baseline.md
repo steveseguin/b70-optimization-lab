@@ -2323,7 +2323,7 @@ point.
 
 **Arms** (repair task, thinking on, in-place notes, checks off, recite on tickets; server recipe unchanged):
 
-- **XR7** = XR6 plus `--notes-continuation`, on `repair-n40-s2x`: expected fixed 40/40, clean 40/40, audit 7/7
+- **XR7** = XR6 with `--notes-thinking unset`, on `repair-n40-s2x`: expected fixed 40/40, clean 40/40, audit 7/7
   (the gate; a clean-ticket loss rejects the change), notes_cached/notes_prompt 85% or more (XR6: 2.2%), 18.5
   minutes or less (XR6: 20.1).
 - **XR7** on `repair-n40-s1x` at default effort: expected the same gate, 44 minutes or less (XR3: 47.1).
@@ -2336,3 +2336,21 @@ point.
 
 Order: XR7-s2x, XR7-s1x, C32-s2x, W200. Each repair arm's containers at 256 MiB; the memory-guard floor and the
 room check stand. If XR7-s2x loses a clean ticket the change is reverted and XR7-s1x does not run.
+
+### Campaign 17, registered 2026-10-13 evening before campaign 16 has finished: the window curve and the cut depth
+
+Base recipe: XR7 if it passes its gate, else XR6 (denoted BASE below). All arms on `repair-n40-s2x`, thinking on,
+in-place notes, checks off, recite on tickets, 256 MiB containers, the memory-guard floor and room check stand;
+one run each; the server recipe unchanged.
+
+- **XR8** = BASE at `--target-ratio 0.35` (cuts land deeper, about half as many notes calls; the harness-level
+  precedent N32j35 halved them at full score). Runs only if XR7 passed its gate. Expected: fixed 40/40, clean
+  40/40, audit 7/7, notes calls 5-7 (XR7 expects 8-13), one to three minutes faster than XR7-s2x.
+- **X24** = BASE at context budget 24,576: expected fixed 40/40, clean 40/40, audit 7/7, more cuts than at 32K,
+  runtime at most XR7-s2x + 5 min.
+- **X16** = BASE at 16,384: the starvation end of the curve (the ledger harness refused `next` 121 times at 16K
+  and self-edit read collapsed there). No quality bar is registered; the deliverable is the curve point and, if
+  it fails, the failure mode read from the events (notes-call starvation vs. recall loss). Runtime cap 60 min.
+
+Gate for the campaign: XR8 first (it changes the recipe); X24 and X16 are measurements and run regardless of
+XR8's result, but against the recipe that won the gate.
