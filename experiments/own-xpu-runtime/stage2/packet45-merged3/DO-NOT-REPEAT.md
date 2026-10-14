@@ -2,6 +2,7 @@
 
 | Finding | Evidence | Next condition |
 |---|---|---|
+| Same-build host agreement hid HC NaN payload selection; case 54 is NaN, while error=7 is case 53 | [HC repair](HC-ACTIVATION-CLOSEOUT.md), six compiler before/after arms | Preserve quieted unary payload explicitly and keep the new hash-bound compiler matrix |
 | p42.dense.fourparts used a shortened expanded row stride; row0-only CPU arithmetic hid multirow misaddressing | [KERNELS.md](KERNELS.md), retained device failure JSONL | No related candidate until actual expanded multirow/native addressing has a CPU gate |
 | Packet40's fixed capacity assumptions cannot overwrite packet44 bounds | [INTEGRATE.md](INTEGRATE.md) | Keep all three allocation capacities and valid-prefix selection |
 | p42 pool used a full-capacity append index; even extent/4 missed packet44's newly completed-pool launch count | capacity-fixture-gates.json, KERNELS.md | Use append_pools(s) and position-relative pool mapping |

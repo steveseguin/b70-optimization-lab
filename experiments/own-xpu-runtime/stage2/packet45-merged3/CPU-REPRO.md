@@ -10,7 +10,7 @@ an 8 GB address-space limit. The first guard reached ends the CPU case. Do not r
 a memory-heavy compile. Each producer checks root free space before writing,
 refuses below8GB plus its reserve, and keeps this packet's build below3GB.
 
-Use `nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python -B` for every Python
+Use `nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B` for every Python
 command below, with `P=experiments/own-xpu-runtime/stage2/packet45-merged3` as a
 shell variable. All native children inherit the same priority and affinity.
 
@@ -45,7 +45,7 @@ shell variable. All native children inherit the same priority and affinity.
    After real6 completes, `$P/real_cross_placement_gate.py` compares draft guesses,
    same-capacity state and 17 fixed-size semantic outputs across capacities.
    It makes no cross-capacity raw cache-prefix claim.
-   `$P/test_seal45_bindings.py` checks 41 seal binding and tamper cases.
+   `$P/test_seal45_bindings.py` checks 45 seal binding and tamper cases.
    `$P/build.py seal` calls `seal45.py`. It requires the current binary/source
    identities and every declared gate; a partial campaign cannot pass. It writes
    `build-receipt.json`, `cpu-tests.json` and `BINARY-HASHES.md`.
@@ -65,3 +65,18 @@ all launchers blocked. Run `seal45.verify_window_admission()` from the packet
 Python import directory to create `window-seal-binding.json`. It binds the exact
 unchanged build receipt to the successful rehearsal; it does not rewrite the
 seal it tested. Finally run `merge_inventory.py` to bind the complete packet.
+
+
+## HC repair qualification
+
+Run `$P/hc_activation_gate.py --label after` before sealing. It compiles only
+host executables and checks all four real HC adapter scenarios plus every BF16
+NaN payload under six compiler settings. The frozen `before.json` is negative
+evidence, not a current gate. Case 53 is error=7; case 54 is payload `0x7fc1`.
+
+`$P/hc_fix_campaign.py builds`, `gates`, `models`, then `final` reproduce the
+repair campaign serially (two compile jobs maximum). Device mode only compiles
+and links. The final phase seals and rehearses admission with launchers blocked.
+Logs and stage receipts live in `evidence/hc-activation-fix/`. Commands in
+`WINDOW.md` and `coordinator_windows.sh` remain unchanged, but a new seal needs
+fresh device chains.

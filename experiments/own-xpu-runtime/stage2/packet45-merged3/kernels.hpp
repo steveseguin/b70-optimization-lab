@@ -152,7 +152,7 @@ template<class Team> void group(Shape s,Args a,int group,Team t){
    a.put(s.op==combine_norm?5:s.op==gated_norm?3:2,base+k,y);if(s.op==combine_norm)a.put(4,base+k,x);});
  }else if(s.op==activation||s.op==mix||s.op==moe_combine){
   t.each(128,[&](int lane){int idx=group*128+lane;if(idx>=s.tokens*s.width)return;int r=idx/s.width,k=idx%s.width;
-   if(s.op==activation){float v=a.b(0,idx);a.put(2,idx,s.extra?silu(v)*a.b(1,idx):silu(v/4.f));}
+   if(s.op==activation){float v=a.b(0,idx);a.put(2,idx,s.extra?silu(v)*a.b(1,idx):detmath::silu_div4(v));}
    else if(s.op==mix){float sum=0;for(int h=0;h<4;++h)sum=sum+sigmoid(a.b(1,(r*4+h)*s.width+k))*a.b(0,(r*4+h)*s.width+k);a.put(2,idx,sum/4.f);}
    else{float sum=0;for(int e=0;e<s.extra;++e)sum=sum+a.b(0,(r*s.extra+e)*s.width+k)*a.f(1)[r*s.extra+e];a.put(4,idx,Args::bf(sum)+Args::bf(a.b(2,idx)*sigmoid(a.b(3,r))));}
   });

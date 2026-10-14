@@ -54,3 +54,11 @@ artifacts, parent/source pins and all required CPU receipts. The detached
 the no-launch rehearsal. [Binary hashes](BINARY-HASHES.md) identify the exact
 compiled artifacts. Neither the CPU seal nor the rehearsal qualifies device
 speed, device residency or the full manifest-bound model suites.
+
+
+The [October 13 HC repair](HC-ACTIVATION-CLOSEOUT.md) explains the first device
+chain failure: case 54 is the NaN scenario, not the pre-seeded error scenario
+(case 53). A deterministic unary NaN payload rule and six compiler regression
+arms close the CPU code-generation gap. The repaired seal supersedes the old
+binary identities and requires new coordinator chains. The historical failure
+latch and commands are retained unchanged; device qualification is pending.

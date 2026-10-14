@@ -46,7 +46,12 @@ def main():
     assert a.build_receipt.resolve() in {(P/'build-receipt.json').resolve(),(P/'build-admission-candidate.json').resolve()},'only packet final/candidate seal may be rehearsed'
     supplied=a.build_receipt.read_text();supplied_sha=hashlib.sha256(supplied.encode()).hexdigest()
     original_read_text=Path.read_text;original_sha=window.sha
+    latch=B/'FAULT.json'
+    latch_before=latch.read_bytes() if latch.exists() else None
     def seal_read(path,*args,**kwargs):
+        # Rehearse post-recovery admission without touching a real boot latch.
+        # All launchers remain blocked and all health inputs remain CPU mocks.
+        if path==Path('/proc/sys/kernel/random/boot_id'):return 'cpu-no-launch-rehearsal'
         return supplied if path.resolve()==(P/'build-receipt.json').resolve() else original_read_text(path,*args,**kwargs)
     def seal_sha(path):
         return supplied_sha if Path(path).resolve()==(P/'build-receipt.json').resolve() else original_sha(path)
@@ -138,7 +143,8 @@ def main():
                 rows.append(dict(window=name,context=context,draft_rank=draft_rank,controller=controller,token_cap=cap,admission_reached_blocked_launcher=True,device_executed=False,window_passed=False,
                                  prerequisite_and_host_health_inputs='explicit CPU mocks',retained_capture_admission_exercised=name=='KD'))
         assert source_before=={name:pp.sha(P/name) for name in source_before},'source changed during admission test'
-        result=dict(passed=True,device_executed=False,gates=len(rows)+len(input_rows)+1,input_admissions=input_rows,real_capacity_refusals=sum(r.get('expected_capacity_refusal',False) for r in rows),rehearsed_seal=str(a.build_receipt.resolve().relative_to(P)),seal_fields=list(consumed),consumed_seal_sha256=consumed_hash,
+        assert (latch.read_bytes() if latch.exists() else None)==latch_before,'real fault latch changed during rehearsal'
+        result=dict(simulated_boot='cpu-no-launch-rehearsal',real_fault_latch_unchanged=True,real_fault_latch_sha256=hashlib.sha256(latch_before).hexdigest() if latch_before is not None else None,passed=True,device_executed=False,gates=len(rows)+len(input_rows)+1,input_admissions=input_rows,real_capacity_refusals=sum(r.get('expected_capacity_refusal',False) for r in rows),rehearsed_seal=str(a.build_receipt.resolve().relative_to(P)),seal_fields=list(consumed),consumed_seal_sha256=consumed_hash,
                     source_sha256=source_before,rows=rows,meaning='CPU admission/field-contract test passed; every window remained failed and no launch executed')
         pp.save(P/'window-seal-admission-gates.json',result);print(json.dumps(result))
     finally:shutil.rmtree(root)

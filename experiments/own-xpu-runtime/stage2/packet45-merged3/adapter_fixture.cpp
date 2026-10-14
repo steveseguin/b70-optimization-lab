@@ -96,8 +96,8 @@ struct Runner {
  std::vector<Allocation> binding(const Site& s,const Case& c,const std::vector<Allocation>& buffers){std::vector<Allocation> out;for(auto id:s.ids)out.push_back(buffers[id]);out.insert(out.end(),{scratch,buffers[c.error],buffers[c.position],buffers[c.active],buffers[c.rope]});return out;}
 };
 }
-AdapterFixtureReceipt adapter_fixture_gate(unsigned card,const std::filesystem::path& output){
- Runner runner(card);try {runner.initialize();size_t base_owned=runner.owned.size();std::ofstream bytes(output,std::ios::binary|std::ios::app);std::vector<float> scratch(64ull*1024*1024);unsigned checks=0;
+// Shared case construction lets the CPU regression gate use the exact K1a inputs.
+static std::vector<Case> adapter_cases(){
  std::vector<Case> cases;for(unsigned kind=0;kind<4;++kind)cases.push_back(make_case(kind));cases.push_back(make_flat(true));cases.push_back(make_flat(false));
  for(int unit:{0,1}){auto c=make_case(0);c.sites[1].spec.site.parameter=unit;fold_pair(c);cases.push_back(std::move(c));}
  for(int mode=0;mode<3;++mode){auto c=make_case(3);auto id=c.sites[0].ids[0];
@@ -124,12 +124,17 @@ AdapterFixtureReceipt adapter_fixture_gate(unsigned card,const std::filesystem::
  {auto c=make_case(3);int input=c.sites[0].ids[0];c.sites[0]=c.site(Op::route,{input,c.active,c.error},{c.rank_ids,c.rank_prob},{},{512,10});fold_pair(c);c.new_sites[0]=c.site(Op::route,{input,c.active,c.error},{c.rank_ids,c.rank_prob,c.rank_gate,c.rank_down},{},{512,10});cases.push_back(std::move(c));}
  {Case c;int input=c.add(32),output=c.add(1,Scalar::i32,0,0);c.sites={c.site(Op::argmax,{input,c.active,c.error},{output,c.error})};c.outputs.insert(c.error);cases.push_back(std::move(c));}
  for(int scenario=0;scenario<4;++scenario){auto c=make_hc_activation();if(scenario==1)*reinterpret_cast<uint32_t*>(c.buffers[c.active].data.data())=0;if(scenario==2)*reinterpret_cast<uint32_t*>(c.buffers[c.error].data.data())=7;if(scenario==3)*reinterpret_cast<uint16_t*>(c.buffers[c.sites[0].ids[0]].data.data())=0x7fc1;cases.push_back(std::move(c));}
+ return cases;
+}
+AdapterFixtureReceipt adapter_fixture_gate(unsigned card,const std::filesystem::path& output){
+ Runner runner(card);try {runner.initialize();size_t base_owned=runner.owned.size();std::ofstream bytes(output,std::ios::binary|std::ios::app);std::vector<float> scratch(64ull*1024*1024);unsigned checks=0;
+ auto cases=adapter_cases();
  for(auto& c:cases){auto host=c.buffers;uint32_t position=3;std::memcpy(host[c.position].data.data(),&position,4);
   for(auto& site:c.sites){std::vector<void*> ptr;for(auto id:site.ids)ptr.push_back(host[id].data.data());ptr.insert(ptr.end(),{scratch.data(),host[c.error].data.data(),host[c.position].data.data(),host[c.active].data.data(),host[c.rope].data.data()});integrated::evaluate(site.spec,ptr.data());}
   std::vector<std::vector<uint8_t>> old_bytes;
   for(int version:c.sites.size()==1&&c.sites[0].spec.op==Op::silu_div4?std::vector<int>{0,1,9}:std::vector<int>{0,1,2}){std::vector<Allocation> allocated;for(auto& b:c.buffers)allocated.push_back(runner.upload(b.data));runner.put(allocated[c.position],position);
    for(auto site:(version&&!c.new_sites.empty()?c.new_sites:c.sites)){site.spec.implementation=version;runner.finish(packet18::submit_parallel(runner.d,site.spec,runner.binding(site,c,allocated),runner.control,runner.score,runner.probability));}
-   size_t j=0;for(int id:c.outputs){auto actual=runner.get(allocated[id],host[id].data.size());if(!fixture_validation::only&&actual!=host[id].data)throw std::runtime_error("actual adapter core mismatch case="+std::to_string(checks)+" version="+std::to_string(version)+" buffer="+std::to_string(id));if(!version)old_bytes.push_back(actual);else if(!fixture_validation::only&&actual!=old_bytes[j])throw std::runtime_error("actual adapter p18/new mismatch");++j;bytes.write(reinterpret_cast<const char*>(actual.data()),actual.size());}
+   size_t j=0;for(int id:c.outputs){auto actual=runner.get(allocated[id],host[id].data.size());if(!fixture_validation::only&&actual!=host[id].data){auto offset=std::mismatch(actual.begin(),actual.end(),host[id].data.begin()).first-actual.begin();throw std::runtime_error("actual adapter core mismatch case="+std::to_string(checks)+" version="+std::to_string(version)+" buffer="+std::to_string(id)+" byte="+std::to_string(offset)+" actual="+std::to_string(actual[offset])+" expected="+std::to_string(host[id].data[offset]));}if(!version)old_bytes.push_back(actual);else if(!fixture_validation::only&&actual!=old_bytes[j])throw std::runtime_error("actual adapter p18/new mismatch");++j;bytes.write(reinterpret_cast<const char*>(actual.data()),actual.size());}
    runner.d.retire_completed_events();while(runner.owned.size()>base_owned){runner.d.arena.release(runner.owned.back());runner.owned.pop_back();}
   }++checks;
  }

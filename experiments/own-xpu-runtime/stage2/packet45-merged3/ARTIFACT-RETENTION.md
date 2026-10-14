@@ -42,3 +42,30 @@ Every producer checks `df -B1 /` before a large write and refuses when the plann
 write would leave less than 8 GB free. No weights, build binaries or model caches
 are committed. The parent packet trees and unrelated workspace artifacts are
 preserved.
+
+
+The October 13 HC repair retains `evidence/hc-activation-fix/`: the six negative
+and six passing compiler logs, source-bound gate receipts, hashes of the original
+device failure inputs and binaries, and a verified archive of the prior CPU seal
+receipts. `prior-seal-retention.json` identifies that archive; Markdown members
+are hash-only there and retain their bytes in Git at `7b0ec5bb5`.
+
+The new `scratch-merged-gate-*-real-*.jsonl.gz` archives may again exceed 1 MiB.
+They retain exact request/events/receipt text and original disposable fixture
+hashes for the repaired runtime, and are bound by `cpu-real-gates.json`.
+Regenerate them with `hc_fix_campaign.py models`, using the pinned local inputs.
+New capacity fixture records and output archives preserve the same source,
+compiler, capacity and output binding as the earlier rows. Do not remove old
+rows or conflate their binaries with the repaired ones.
+
+`cleanup-*-objects.json` in the repair evidence folder records each mode's
+regenerable object retirement. The linked artifacts and build commands remain;
+`hc_fix_campaign.py builds` rebuilds them with at most two compiler jobs.
+The coordinator's original `build/FAULT.json` and failed K1a directories are
+excluded from all cleanup and remain byte-identical to `protected-inputs.json`.
+
+`original-device-failures.jsonl.gz` retains exact copies of the coordinator's
+nine failure-evidence files (base64 members, individually hashed), including the
+latch. Its retention receipt records verified restoration. The original files
+and both partial binary outputs remain untouched; all 13 protected input hashes
+were checked against the initial snapshot.

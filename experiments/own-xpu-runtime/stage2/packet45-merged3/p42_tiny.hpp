@@ -16,7 +16,7 @@ template<ng::Op Code,class Guard> inline void element(ng::Shape s,ng::Args a,int
     a.put(3,r*s.width+ch,silu(dilation==3?Args::bf(acc):acc));for(int k=0;k<hist-1;++k)history[k]=history[k+1];history[hist-1]=x;}
    for(int j=0;j<hist;++j)a.put(4,ch*hist+j,history[j]);}
  else {int idx=index;if(idx>=s.tokens*s.width)return;int r=idx/s.width,k=idx%s.width;
-   if(s.op==activation){float v=a.b(0,idx);a.put(2,idx,s.extra?silu(v)*a.b(1,idx):silu(v/4.f));}
+   if(s.op==activation){float v=a.b(0,idx);a.put(2,idx,s.extra?silu(v)*a.b(1,idx):detmath::silu_div4(v));}
    else if(s.op==mix){float sum=0;for(int h=0;h<4;++h)sum=sum+sigmoid(a.b(1,(r*4+h)*s.width+k))*a.b(0,(r*4+h)*s.width+k);a.put(2,idx,sum/4.f);}
    else{float sum=0;for(int e=0;e<s.extra;++e)sum=sum+a.b(0,(r*s.extra+e)*s.width+k)*a.f(1)[r*s.extra+e];a.put(4,idx,Args::bf(sum)+Args::bf(a.b(2,idx)*sigmoid(a.b(3,r))));}
   }

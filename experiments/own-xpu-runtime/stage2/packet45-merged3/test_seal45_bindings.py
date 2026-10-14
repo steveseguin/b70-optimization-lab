@@ -13,6 +13,16 @@ class SealBindings(unittest.TestCase):
   cls.artifacts={'gnu-host/nongemv-fixtures':cls.fixture['binary_sha256']}
   cls.selection=seal.read('capacity-selection-gates.json')
   cls.native={n:seal.read(n) for n in seal.GATES if n.startswith('native-')}
+ def test_hc_current(self):seal.hc_bindings(seal.read('hc-activation-gates.json'))
+ def test_hc_sources(self):
+  row=seal.read('hc-activation-gates.json');row['compiled_sources_sha256'][str((seal.P/'detmath.hpp').relative_to(seal.ROOT))]='0'*64
+  with self.assertRaisesRegex(AssertionError,'stale source'):seal.hc_bindings(row)
+ def test_hc_case_mapping(self):
+  row=seal.read('hc-activation-gates.json');row['rows'][0]['result']['hc_cases'][2]['case']=54
+  with self.assertRaisesRegex(AssertionError,'fixture cases'):seal.hc_bindings(row)
+ def test_hc_binary(self):
+  row=seal.read('hc-activation-gates.json');row['rows'][0]['binary_sha256']='0'*64
+  with self.assertRaisesRegex(AssertionError,'binary changed'):seal.hc_bindings(row)
  def fixture_check(self,row):
   with patch('capacity_fixture_gate.source_identity',return_value=self.fixture['identity']['sources']):
    return seal.fixture_bindings(row,self.artifacts)

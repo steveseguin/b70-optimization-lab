@@ -238,7 +238,7 @@ struct Core {
     else if (op == Op::silu_div4) {
       V y = clone(in(0));
       for (auto &v : y)
-        v = bf(silu(v / 4.f));
+        v = bf(detmath::silu_div4(v));
       out(0) = y;
     } else if (op == Op::silu_product) {
       V y = clone(in(0));

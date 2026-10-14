@@ -56,7 +56,7 @@ inline float round(float x){return widen(iq3::bf16_bits(x));}
 // Public scalar API for the copied host-token-plan adapter. Inputs are finished
 // GEMV BF16 bytes (not unrounded accumulators). No model math is approximated.
 inline uint16_t activation(uint16_t gate,uint16_t up){return iq3::bf16_bits(ng::silu(widen(gate))*widen(up));}
-inline uint16_t hc_activation(uint16_t low){return iq3::bf16_bits(ng::silu(widen(low)/4.f));}
+inline uint16_t hc_activation(uint16_t low){return iq3::bf16_bits(detmath::silu_div4(widen(low)));}
 inline uint16_t combine(uint16_t residual,uint16_t branch,uint16_t inject){return iq3::bf16_bits(widen(residual)+widen(branch)*(2.f*ng::sigmoid(widen(inject)/4.f)));}
 inline uint16_t shared_blend(uint16_t mixture,uint16_t down,uint16_t gate){
  // Packet29's mixture already stores BF16, then moe uses extra=1 and one=1.f.
