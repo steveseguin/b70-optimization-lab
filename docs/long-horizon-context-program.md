@@ -12,6 +12,30 @@ https://skindeep.ai/context.html (public page, stale as of 10-08: landing page l
 
 ---
 
+## 0. The standing goal (owner-approved 2026-10-13)
+
+**Make context length a number nobody has to think about — any agent, any history, flat cost, same answers — and prove it.**
+
+Each clause is a standing work queue, not a milestone:
+
+- **any agent** — the method must work for clients that share no code with this lab's harness. Done once (the lab's
+  own stand-alone agent, campaign 15); open for every third-party program, starting with the owner's pick.
+- **any history** — longer, harder and hostile histories, without end. Done to 1M tokens twice; open at 2M-10M+ and
+  for adversarial, contradictory and poisoned streams.
+- **flat cost** — wall time and tokens per 100K of history stay flat and then fall. Flat to 1M is measured
+  (8.3-9.5 min/100K, no trend); the measured wastes of 2026-10-13 (notes path reading 37 tokens per token written,
+  cache-hit rates of 2-90% on the same code path) are the current targets, after which the next most expensive
+  token is the next target.
+- **same answers** — the no-cheating rule applied to memory: no speed or space win counts unless accuracy and
+  rule-keeping are unchanged (repair marathon 40/40 clean, audit 7/7, both seeds, is the standing gate), with the
+  evidence kept and published — including the runs that hurt.
+
+Opening evidence: campaigns 1-15 in `experiments/qwen38-27b-b70/notes/2026-10-10-context-16k-baseline.md` —
+flat accuracy and flat speed at 31 times the live window, a real-code repair marathon passed at the maximum score
+through the proxy by two unrelated clients, and the first measured cost map of what remains to optimize.
+
+---
+
 ## 1. The problem in one paragraph
 
 A transformer agent's working memory is its KV cache. It is exact, fast to read, and bounded by VRAM. Once the history
