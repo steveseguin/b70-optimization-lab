@@ -373,7 +373,7 @@ run_one() {  # arm agent budget task_dir job_name drop_old_thinking
   fi
   local fb=${FOLD_BATCHES:-}
   local api=$API_BASE
-  if [[ "$arm" == X32 || "$arm" == X32b || "$arm" == X32i || "$arm" == X32m || "$arm" == X32n || "$arm" == X32n2 || "$arm" == X32p || "$arm" == X32q || "$arm" == X32g || "$arm" == X32ir ]] || "$arm" == X2M ]]; then   # the keeper policy as a proxy: the agent sends everything, the proxy keeps the window
+  if [[ "$arm" == X32 || "$arm" == X32b || "$arm" == X32i || "$arm" == X32m || "$arm" == X32n || "$arm" == X32n2 || "$arm" == X32p || "$arm" == X32q || "$arm" == X32g || "$arm" == X32ir || "$arm" == X2M ]]; then   # the keeper policy as a proxy: the agent sends everything, the proxy keeps the window
     api=${CTXKEEPER_BASE:?arm X32 needs CTXKEEPER_BASE, the URL of a running tools/ctxkeeper proxy (http://host:port/v1)}
   fi
   if [[ "$arm" == B32iraR || "$arm" == B32iraR4 || "$arm" == B32iraRH ]]; then   # B32ira + pinned RULE lines (standing rules and methods stay in view)

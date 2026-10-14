@@ -2480,3 +2480,21 @@ re-queued. Process lesson, now standing for any new arm: within the first minute
 was stopped and the state directory set aside). One more `xe` fault line was logged during the 09:49 teardown
 (e3:00.0, 09:59:26); the cards came back and the fault gate, scoped to the campaign's own start, is clear. N2M
 starts after the standing gate (~10:35), X2M after it.
+
+**N2M (13:04): the keeper finishes the 2M adversarial stream at 360/382 (94.2%)** in 173 min 41 s, run to the end
+(no cap cut). By type: final lists 38/39, current values 89/98, old values 95/98, who 47/49, **rule 49/49**,
+procedure 42/49; by rule condition 33/34 of the "overdrawn" questions and 327/348 of the rest. 1,737 calls
+(1,407 main loop), 241K tokens written, 19.1M prompt tokens (77% from cache); 126 cuts, 330 notes calls (2
+failed, 15 delta fallbacks, one sum corrected), the standing rules recited 50 times and every one kept. The
+errors concentrate exactly where the stream's new teeth are: 9 current-value and 7 procedure answers wrong (the
+correction/plan-switch items) against a perfect standing-rule score — the notes hold the invariants across two
+million tokens; what slips is the most adversarial value tracking. Against the kinder 1M stream (228/228 for the
+same keeper code) the 2M stream is the harder test by design, and the keeper's registered bar for it — set
+before generation — was a finished run with the rule kept.
+
+**X2M, second false start (13:04-13:09):** the routing fix of 10:05 was malformed — the edit produced
+`[[ ... ]] || "$arm" == X2M ]]` (a command, always failing) instead of adding X2M inside the condition; the
+syntax check passed and a grep count looked plausible, so X2M started direct again. The standing arm-start check
+(read the job's `config.json`) caught it five minutes in; the run was killed, the line fixed and functionally
+tested (X2M and the X32 arms route to the proxy, N2M/W200 stay direct), and X2M re-queued on the live campaign
+at 13:09.
