@@ -2454,3 +2454,9 @@ changes, all 12 decoys placed with windows of 123-176 batches and present in the
 staged (`longrun-campaign18.sh`, `QUEUE18.txt`, `collect.sh`; arms N2M/X2M registered in the planner, which
 validates both — its time estimates, 12.6 h and 23.9 h, come from the 2026-10-05 measurements and overstate: the
 1M actuals ran about 50 minutes; the 4-hour caps stand).
+
+**Running (05:05-09:08):** N2M reached probe 37 of 49 (259 answers snapshotted) in 240 min 41 s and was cut at
+the cap; the runner grades the snapshot as the registered partial row. The keeper's pace on the adversarial 2M
+stream was ~6.2 min per 100K tokens (probe 37 of 49 ≈ 1.49M tokens in 241 min) against ~4.4 on the kinder 1M
+rules stream — the difficulty switches cost keeper time per item, and at 2M that ends at the cap. X2M (XR4's
+recipe) started 09:08.
