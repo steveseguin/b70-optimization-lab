@@ -2256,3 +2256,36 @@ Process notes: the first launch aborted on a corrupted sed rename in the runner 
 `r315`, the window `262144` became `262154`; fixed by hand and re-checked against the campaign 14 script). On the
 second launch FAp was skipped without running — the runner smoked the proxy's port before starting the proxy;
 the order is fixed in the runner and FAp ran on the third launch. Both faults are recorded in QUEUE15.txt.
+
+### Campaign 16, registered 2026-10-13 evening before any run: cache-aligned notes, and the missing controls
+
+**The finding that motivates it** (measured 2026-10-13 from the saved proxy states, no GPU): the notes call is a
+separate conversation (`head` + one user message holding the notes text and the turns being cut), so its only
+cacheable prefix is the part of the notes text that stayed block-identical since the previous cut. Where the edits
+land decides the hit rate: XR4 84% and XR5 90% against XR6 2.2% and FAp 3.9% — same code, same server flags,
+edit-position luck. The notes path read 154K-234K prompt tokens per repair run to write 2-6K (XR3-s1x 227K, XR6
+154K, FAp 234K): at campaign 10's 2,640 tokens/s cold-read rate that is 60-90 s of cold reading per run that a
+warm prefix turns into seconds.
+
+**The fix under test** (`--notes-continuation`): issue the notes call as a continuation of the conversation the
+proxy has just served — the client's pre-cut history plus the notes request as the next user message — so the
+whole window (up to ~30K tokens) is a deterministic prefix-cache hit from the main call moments before, whatever
+the notes text does. The notes reply stays proxy-side; the cut happens after the notes update, as now. Trade-off
+registered: the model sees the whole window instead of only the cut turns when it updates the notes; that is a
+prompt change, so quality must re-pass the gate in full.
+
+**Arms** (repair task, thinking on, in-place notes, checks off, recite on tickets; server recipe unchanged):
+
+- **XR7** = XR6 plus `--notes-continuation`, on `repair-n40-s2x`: expected fixed 40/40, clean 40/40, audit 7/7
+  (the gate; a clean-ticket loss rejects the change), notes_cached/notes_prompt 85% or more (XR6: 2.2%), 18.5
+  minutes or less (XR6: 20.1).
+- **XR7** on `repair-n40-s1x` at default effort: expected the same gate, 44 minutes or less (XR3: 47.1).
+- **C32** on `repair-n40-s2x` (the summariser's missing seed-2x row, at its s1x settings): expected fixed 40/40,
+  clean 33 or more (its s1x run lost the three notices once; seed 2x keeps the audit ticket), audit 0-7, 60-minute
+  cap.
+- **W200** on the 1M rules stream seed 0 (the charter's missing plain-window control at the 200K cap a dedicated
+  card allows): expected to fall behind the proxy's 226/228, strongest in the last third; the measured size of the
+  gap is the deliverable. 4-hour cap.
+
+Order: XR7-s2x, XR7-s1x, C32-s2x, W200. Each repair arm's containers at 256 MiB; the memory-guard floor and the
+room check stand. If XR7-s2x loses a clean ticket the change is reverted and XR7-s1x does not run.
