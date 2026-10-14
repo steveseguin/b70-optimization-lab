@@ -2498,3 +2498,45 @@ syntax check passed and a grep count looked plausible, so X2M started direct aga
 (read the job's `config.json`) caught it five minutes in; the run was killed, the line fixed and functionally
 tested (X2M and the X32 arms route to the proxy, N2M/W200 stay direct), and X2M re-queued on the live campaign
 at 13:09.
+
+**X2M (15:59): the proxy finishes the 2M adversarial stream at 351/382 (91.9%)** in 169 min 9 s, registered cap
+4 h. Against the registered card: overall score ≥ 90% — **met** (91.9%); the 12 round-trip decoys read from the
+scorer's accepted-and-wrong lines — **met, 0 of 12** (none of the 14 accepted-wrong lines is a decoy counter,
+and in the final query every asked decoy got its true value); surprise audit ≥ 7/8 — **met, exactly 7** (s5, one
+old value, wrong); runtime — met. **Missed:** silent-wrong notes at or under the 1M rate — 14 accepted-wrong of
+1,825 note lines (1 in 130; the 1M bar was 1 in 1,435). The 14 are all arithmetic slips on the adversarial
+constructs — thirds, fractions, cross-counter references ("received what gupe37 stood at") — the class the
+provenance checks do not see; none is a planted trap. Per the standing loop, the next check rule is fitted
+against these lines and validated on a following campaign. One extra observation from a mid-window pass over the
+notes history (not the registered metric): 4 of the 12 decoys sat at their decoy (pre-minus) value for three to
+five consecutive notes versions before catching up — lag, not capture: by the final query every decoy carried
+the truth.
+
+By type, keeper (N2M) against proxy (X2M) on the same stream: final 38/39 both; current 89 vs 91; old value 95
+vs 87; who 47 vs 48; rule 49 vs 48; procedure 42 vs 39. The proxy's 9-answer gap concentrates in old values —
+recall quality at 2M, not rules (48/49 both ways on the standing rule; 33/34 of the "overdrawn" condition both).
+X2M's cost: 1,211 calls, 125K tokens written in the main loop, 131 cuts (129 in place), 870 recalls, notes calls
+read 6.34M tokens of which 89.2% came from the prefix cache — the XR4 recipe's alignment holds at 2M. Host
+memory never went under 1.98 GiB; the kernel log is clean from campaign start to teardown; the runner's Gemma
+restore at 16:10 found a clean kernel log but the service is a system unit and the runner has no sudo password —
+the Gemma LAN service is down until the owner starts it (`sudo systemctl start
+gemma4-26b-q8-quad-backends.service gemma4-26b-q8-quad-frontdoor.service`).
+
+### The next check rule, fitted offline (2026-10-14, CPU-only; no GPU job ran)
+
+Per the standing loop the first rule against campaign 18's 14 accepted-wrong lines is fitted and regression-checked
+against every saved session. Of the 14, five are one class: **a third lost from a negative value, moved away from
+zero** — `-129 - 43 = -172` for "lost a third of its value" (true `-129 + 43 = -86`; the generator's `third` op is
+`state -= state // 3`, which always moves toward zero for negatives). The amounts check passes the 43 fairly (a
+third of the start); the direction was never checked. The new rule (`third_loss_away_from_zero` in
+`tools/ctxkeeper/notesdelta.py`) fires only when the NOTES hold a negative start, the line's own remark names the
+fraction ("a third"), and the working subtracts `|start|/3`; the reply is then asked about with the toward-zero
+rule spelled out. A stated-amount loss ("lost 15") does not match the phrase and stays untouched.
+
+On X2M's saved replies (the fitting ground): accepted-and-WRONG **14 → 9** (all five fraction-direction lines now
+asked about), accepted-and-right 1,376 unchanged, asked-about-and-right 393 unchanged, left-out 130 unchanged.
+Regression on every other saved proxy session is byte-identical to HEAD: the 240k fitting pair (454 right, 0 wrong,
+both seeds) and both 1M streams, X32n2-s0 and X32g-s1 (2,043 right, 2 wrong, 18 asked-right combined). The nine
+remaining accepted-wrong at 2M are the cross-counter staleness class ("received what gupe37 stood at", read stale)
+and singletons (a "no change" claim against prose that states a number in words; a fraction-sum slip). Those need
+value-at-time alignment, not another arithmetic rule, and stay open for the following campaign.
