@@ -2371,6 +2371,15 @@ every call, notes thinking off — the cache alignment that does not think). Gat
 passes it is the recipe the window curve is read against; XR8 stays as registered (BASE = XR7, whose gate passed
 tonight).
 
+**XR4 on s2x (03:07): every bound met, and it is the fastest repair run on record** — 40/40 fixed, **40/40
+clean**, audit 7/7, **15 min 38 s** (XR6: 20.1; XR7: 38.1), notes cache **90.1%** (99,008 of 109,869), notes
+written **4,549** tokens (6 cuts; XR7's thinking notes wrote 70,138 on the same task). Effort medium aligns the
+notes calls with the mains (same request fields) and keeps them from thinking: both halves of the problem solved
+at once. **Change to the curve (registered as it happens):** X24 and X16 run on XR4's recipe (notes-thinking off,
+`--effort medium`), not XR7's — after XR8 completes, the campaign pauses on its stop marker, the runner's
+X24/X16 mapping is edited, and the campaign relaunches (completed arms are skipped by the runner). XR8 is
+unaffected: it runs on XR7's recipe as registered.
+
 **XR7 on s1x (22:11): the gate holds on the second seed too** — 40/40 fixed, **40/40 clean**, audit 7/7, 36 min 4 s
 (bound: 44; XR3: 47.1). Notes calls read 175,572 prompt tokens, 160,576 of them cached (**91.5%**; XR3's notes
 ran 81%), and wrote 28,286 (9 cuts). Both seeds: the change stands.

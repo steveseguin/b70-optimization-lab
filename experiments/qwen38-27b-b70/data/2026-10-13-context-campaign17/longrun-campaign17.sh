@@ -255,7 +255,7 @@ start_proxy_effort() {  # state tag: the proxy as a pass-through that only adds 
 start_proxy_repair() {  # state tag, arm
   local nt=${BASE_NT:-unset} eff=() bud=32768 tr=0.6
   # BASE_NT: the notes-thinking of the recipe that won the campaign-16 gate (unset = XR7, off = XR6)
-  case "${2:-}" in XR4*) nt=off; eff=(--effort medium) ;; XR8*) tr=0.35 ;; X24*) bud=24576 ;; X16*) bud=16384 ;; esac
+  case "${2:-}" in XR4*) nt=off; eff=(--effort medium) ;; XR8*) tr=0.35 ;; X24*) nt=off; eff=(--effort medium); bud=24576 ;; X16*) nt=off; eff=(--effort medium); bud=16384 ;; esac
   systemctl --user reset-failed ctx-keeper-proxy 2>/dev/null
   systemd-run --user --unit=ctx-keeper-proxy --collect -p WorkingDirectory=$LAB python3 tools/ctxkeeper/ctxkeeper.py \
     --upstream "http://127.0.0.1:$PORT" --port $PPORT --budget $bud --reply-reserve 2048 --headroom 1024 --target-ratio $tr \
