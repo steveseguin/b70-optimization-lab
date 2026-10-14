@@ -2,6 +2,8 @@
 
 | Finding | Evidence | Next condition |
 |---|---|---|
+| CPU pre-seal rehearsal copied stale host hashes from the previous final seal after a kernel rebuild | [Route+gather closeout](ROUTE-GATHER-CLOSEOUT.md), archived refused CPU chain, seven identity tests | Read current source-verified mode-build identities; retain strict per-binary hash checks |
+| K2 folded implementation 0 omitted route descriptors; K1a used it unfused, HC matrix selected only 51–54, and CPU K2 skipped arithmetic | [Route+gather repair](ROUTE-GATHER-CLOSEOUT.md), six-arm actual owner matrix before/after | Fold both arms, require versions 0/1/2/6 and all outputs; retain full fusion matrix in seal |
 | Packet38 3 GB aggregate cap rejected merged retention; 64 MB rehearsal substitution hid the failure; model-window state reservation omitted context growth | [Storage closeout](STORAGE-ADMISSION-CLOSEOUT.md), [admission audit](ADMISSION-AUDIT.md) | Real projections in all rehearsals, finite structural/live-headroom limits, source-bound per-window admission receipts |
 | Packet44 four-owner gate rejected the merged p39 owner; mocked fixture gates hid it | [Sequential-owner repair](SEQUENTIAL-OWNER-CLOSEOUT.md), [complete sibling audit](SIBLING-AUDIT.md), 27 real coordinator CPU windows | Require the exact named owner set and source-bound full coordinator rehearsal before every seal |
 | Same-build host agreement hid HC NaN payload selection; case 54 is NaN, while error=7 is case 53 | [HC repair](HC-ACTIVATION-CLOSEOUT.md), six compiler before/after arms | Preserve quieted unary payload explicitly and keep the new hash-bound compiler matrix |

@@ -1,0 +1,35 @@
+START hc-activation
+PASS hc-activation 54.4
+START legacy-entry-validation
+PASS legacy-entry-validation 28.94
+START capacity-fixtures-fresh
+PASS capacity-fixtures-fresh 274.29
+START fusion-seal-tests
+PASS fusion-seal-tests 0.18
+START capacity_selection_gate
+PASS capacity_selection_gate 23.57
+START capacity_fixture_gate
+PASS capacity_fixture_gate 4.0
+START asan_fixture_gate
+PASS asan_fixture_gate 236.24
+START p39_merged_fixture_gate
+PASS p39_merged_fixture_gate 2.23
+START cpu_gates
+PASS cpu_gates 0.34
+START wrapper_cpu_gate
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/route_gather_campaign.py", line 23, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/route_gather_campaign.py", line 19, in main
+    sys.argv=[sys.argv[0],phase];campaign.main()
+                                 ^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/hc_fix_campaign.py", line 33, in main
+    py(script[:-3],script)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/hc_fix_campaign.py", line 16, in py
+    def py(name,*args):run(name,[sys.executable,'-B',*args])
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/hc_fix_campaign.py", line 14, in run
+    if r.returncode:raise RuntimeError('CPU stage failed: '+str(log))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: CPU stage failed: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/evidence/route-gather-fix/wrapper_cpu_gate.log

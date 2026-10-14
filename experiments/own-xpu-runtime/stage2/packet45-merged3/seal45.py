@@ -3,7 +3,7 @@
 import hashlib,json
 from pathlib import Path
 P=Path(__file__).resolve().parent;B=P/'build';ROOT=P.parents[3]
-GATES=('hc-activation-gates.json','cpu-merged-gates.json','cpu-real-gates.json','real-cross-placement-gates.json','real-cross-placement-tests.json','capacity-selection-gates.json',
+GATES=('fusion-matrix-gates.json','hc-activation-gates.json','cpu-merged-gates.json','cpu-real-gates.json','real-cross-placement-gates.json','real-cross-placement-tests.json','capacity-selection-gates.json',
  'capacity-draft-gates.json','capacity-fixture-gates.json','asan-fixture-gates.json','p33-linked-fixture-gates.json',
  'p39-merged-fixture-gates.json','p45-kernel-tests.json','seal45-binding-tests.json','wrapper-merge-tests.json',
  'context-window-gates.json','memory-plan-gates.json','owner-gates.json','merged-campaign-completion-gates.json',
@@ -49,6 +49,28 @@ def hc_bindings(gate):
   assert sha(B/'hc-activation-gate'/(row['compiler']+'-'+row['optimization']))==row['binary_sha256'],'HC binary changed'
   assert sha(P/row['log'])==row['log_sha256'],'HC log changed'
   assert json.loads((P/row['log']).read_text().splitlines()[0])==result,'HC raw result differs'
+
+def fusion_bindings(gate):
+ assert gate['passed'] and gate['device_executed'] is False
+ bound_sources(gate['compiled_sources_sha256'],ROOT)
+ from fusion_matrix import SOURCES
+ required={str((P/n).relative_to(ROOT)) for n in (*SOURCES,'fusion_matrix.py','adapter_fixture.cpp','dispatch_registry.hpp')}
+ assert required<=set(gate['compiled_sources_sha256']),'fusion source closure incomplete'
+ assert len(gate['rows'])==6 and {(r['compiler'],r['optimization']) for r in gate['rows']}=={(c,o) for c in ('gnu','icpx') for o in ('O0','O2','O3-native')},'fusion compiler matrix incomplete'
+ expected={(i,v) for i in (6,7,8,9,10,49) for v in (0,1,2,6) if i>=8 or v<=1}
+ for row in gate['rows']:
+  result=row['result']
+  assert row['exit_code']==0 and result['passed'] and result['device_executed'] is False and result['failures']==0
+  assert len(result['adapter_rows'])==len(expected) and {(r['case'],r['version']) for r in result['adapter_rows']}==expected,'fusion adapter coverage incomplete'
+  for r in result['adapter_rows']:
+   assert r['mismatches']==0
+   if r['case']>=8:assert r['passes']=={0:1,1:5,2:3,6:4}[r['version']],'fusion dispatch path changed'
+  assert result['p39_checks']==56 and result['small_checks']==220 and result['checks']==372,'fusion sibling coverage incomplete'
+  assert sha(B/'fusion-matrix'/(row['compiler']+'-'+row['optimization']))==row['binary_sha256'],'fusion binary changed'
+  assert sha(P/row['log'])==row['log_sha256'],'fusion log changed'
+  assert json.loads((P/row['log']).read_text().splitlines()[0])==result,'fusion raw result differs'
+  archive_bound(row['archive'])
+ assert gate['checks']==sum(r['result']['checks'] for r in gate['rows'])==2232
 
 def fixture_bindings(row,artifacts,identity=None):
  """Validate one retained CPU fixture arm, including inputs and output evidence."""
@@ -236,6 +258,7 @@ def main():
   assert row.get('passed') is True and row.get('device_executed',False) is False,'incomplete CPU gate '+name
   gate_sources(row)
  hc_bindings(gates['hc-activation-gates.json'])
+ fusion_bindings(gates['fusion-matrix-gates.json'])
  selection_bindings(gates['capacity-selection-gates.json'])
  assert gates['seal45-binding-tests.json']['checks']==45 and gates['seal45-binding-tests.json']['errors']==gates['seal45-binding-tests.json']['failures']==0
  assert gates['p45-kernel-tests.json']['checks']>=72 and gates['p45-kernel-tests.json']['errors']==gates['p45-kernel-tests.json']['failures']==0
@@ -314,7 +337,7 @@ def main():
  source_hashes=sources()
  for path in (P/'coordinator_windows.sh',P/'memory-plan.json',P/'merge-start.json',P/'draft-baseline-oracle.json',official_path):source_hashes[str(path.relative_to(ROOT))]=sha(path)
  review_hashes={n:sha(P/n) for n in ('review-draft-rank0.md','review-memory.md')}
- counts=dict(hc_activation_checks=4752,hc_compiler_arms=6,merged_fresh_cases=79,real_native_cases=6,real_token_matches=48,real_layer_fixture_matches=2304,
+ counts=dict(fusion_matrix_checks=gates['fusion-matrix-gates.json']['checks'],fusion_compiler_arms=6,hc_activation_checks=4752,hc_compiler_arms=6,merged_fresh_cases=79,real_native_cases=6,real_token_matches=48,real_layer_fixture_matches=2304,
    real_cross_placement_pairs=3,real_draft_semantic_buffers=17,
    selection_checks=sum(r['result']['checks'] for r in gates['capacity-selection-gates.json']['rows']),
    draft_capture_arms=6,draft_valid_fixture_matches=378,

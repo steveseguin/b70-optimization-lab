@@ -146,7 +146,11 @@ template<class Team> void simple(Bound b,int group,Team t) {
   if(!finite){t.each(1,[&](int){b.fail();});return;}
   t.each(n,[&](int j){t.x[j]=detmath::exp(b.in(0).get(j)-maximum);t.x[n+j]=t.x[j];});t.barrier();float den=t.sum(n);t.barrier();
   t.each(n,[&](int j){t.x[n+j]=t.x[n+j]/den;});t.barrier();
-  t.each(n,[&](int j){int rank=0;float v=t.x[n+j];for(int k=0;k<n;++k)rank+=t.x[n+k]>v||(t.x[n+k]==v&&k<j);if(rank<top){b.out(0).put(rank,j);t.x[2*n+rank]=v;t.x[2*n+top+rank]=v;}});t.barrier();
+  t.each(n,[&](int j){int rank=0;float v=t.x[n+j];for(int k=0;k<n;++k)rank+=t.x[n+k]>v||(t.x[n+k]==v&&k<j);if(rank<top){b.out(0).put(rank,j);t.x[2*n+rank]=v;t.x[2*n+top+rank]=v;
+   // The folded route ABI also owns the gather descriptors. Preserve the
+   // two-output reference arithmetic and emit the unfused gather's layout.
+   if(s.no>=4)for(int k=0;k<3;++k){b.out(2).put(rank*3+k,k==0?j:k==1?0:s.g.mid);b.out(3).put(rank*3+k,k==0?j:k==1?0:s.g.h);}
+  }});t.barrier();
   float selected=t.sum(top,2*n);t.barrier();t.each(top,[&](int j){b.out(1).put(j,t.x[2*n+top+j]/selected);});
  }else if(s.op==Op::ple_gate){
   int width=s.g.h;float sum=ng::tree(t,width,[&](int k){return bf(b.in(0).get(group*width+k)*b.in(1).get(group*width+k));});t.barrier();

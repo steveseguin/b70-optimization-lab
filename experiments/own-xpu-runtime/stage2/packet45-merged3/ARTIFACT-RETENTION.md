@@ -114,3 +114,44 @@ request-count reserve and cannot be replaced by a two-prompt miniature run.
 Its SHA256 is `949c14270db0abb7faebdca9db4b0bbc2ead274bcb0b8616e98ab472eb9e4bc8`.
 This is intentional retention above the 1 MiB hygiene threshold. The final
 qualification summary verifies its framing, member bytes and window hashes.
+# Route+gather repair evidence
+
+`prior-seal-receipts.jsonl.gz` and `prior-seal-retention.json` in the repair
+evidence directory retain all 24 replaced gate receipts and the prior fixed-name
+CPU coordinator archive. Each original byte stream was recovered from commit
+`7ae6129ac`, checked against the pre-repair seal/receipt hash, then archived and
+verified. Archive members use the prefix `build/route-gather-prior-seal/`;
+strip that prefix when extracting into a separate review directory and verify
+against `original_paths_sha256` before use. Do not restore these historical
+receipts over the current seal.
+
+Large-artifact retention review for this repair:
+
+| Artifact (at least 1 MiB) | Why retained / restoration |
+|---|---|
+| `cpu-merged-gates.json` | Complete signatures and source/binary bindings for 79 fresh cases; consumed by the seal. Restore the committed bytes and verify the seal hash. A new `cpu_merged_gate.py` run creates a new receipt. |
+| `cpu-real-gates.json` | All six fresh real-model signatures, token/layer hashes and source bindings; required by the seal and cross-placement comparison. Restore the committed blob and check its seal hash. |
+| Six `evidence/scratch-merged-gate-1792002344040840508-real-c*-r*-native.jsonl.gz` files | Per-case exact text/receipt bytes and hashes for large model-state outputs. `cpu-real-gates.json` binds each archive. Verify/extract with `storage.py`; source inputs and the CPU gate reproduce state bytes, while historical timestamps require the committed archive. |
+| `evidence/storage-admission-fix/coordinator-chains.jsonl.gz` | Exact receipts and text logs for all 27 coordinator windows; the wrapper binds its hash. Verify/extract with the scratch-stream format in `storage.py`. A new rehearsal has new identities and cannot recreate the old timestamps. |
+| `evidence/route-gather-fix/prior-seal-receipts.jsonl.gz` | Verified original gate receipts and the replaced coordinator archive, including its exact compressed bytes. The retention manifest gives every original SHA256 and extraction prefix. |
+| `merge-inventory.json` | Full file-level comparison with both immutable merge parents. Regenerate with `merge_inventory.py` only after all evidence/docs are settled; restore historical bytes from the corresponding commit. |
+
+These artifacts are retained as evidence, not caches. For byte-exact Git
+restoration, extract the repair commit's blob into a review directory and check
+SHA256 against the associated receipt before replacing any local copy.
+
+The previous fixed-name draft archives (`scratch-draft-icpx-c*.jsonl.gz` and
+`scratch-draft-reference-c*.jsonl.gz`) remain recoverable byte-for-byte from
+commit `7ae6129ac`. Use that commit's complete receipt/archive set when reviewing
+the preceding seal; do not mix those historical receipts with the new archives.
+
+`evidence/route-gather-fix/` retains the original seal, protected-file inventory,
+read-only incident attribution, all six compiler before/after logs and source
+pins, complete CPU campaign logs and the final qualification summary. The
+matrix scratch manifests retain original output hashes; fixture outputs are
+deterministically reproducible with `fusion_matrix.py`. Its host binaries live
+under ignored `build/fusion-matrix/` and are bound by the after gate. The before
+adapter is recoverable from the retained `adapter-fix.patch` in reverse and the
+recorded original source hash. No incident/device directory is modified or
+removed by this repair. Full CPU fixture blobs use the existing hash-verified
+gzip retention path. Prior evidence is historical and is not a current gate.

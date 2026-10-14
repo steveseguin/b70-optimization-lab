@@ -26,7 +26,7 @@ The CPU checks include 79 fresh pipeline executions, 854,164 selection checks,
 22,326 arithmetic checks across GNU/Intel and all capacities, 6,899 dispatch
 validation checks, 3,657 maximum-capacity ASAN/UBSAN checks, six captured draft
 arms with 378 frozen-reference matches, 18 owner/lifetime suites, 72 kernel/K2
-tests, 124 wrapper tests (78 mocked combinations plus 27 actual coordinator
+tests, 131 wrapper tests (78 mocked combinations plus 27 actual coordinator
 CPU rehearsal windows), and 65 memory-plan
 checks. Normal/ASAN/TSAN controller mocks cover 1,123 cases each; mailbox tests
 cover five gates each. Counts overlap where a helper is included in a larger
@@ -47,7 +47,7 @@ complete draft-state hashes. All six runs share the same guesses and decision
 counts; 17 fixed-size semantic draft buffers match across capacities. Full cache
 hashes across capacities are deliberately not compared because their allocated
 tails differ. The observed aggregate CPU anonymous-memory peak was
-7,942,639,616 bytes. No model process remains from this CPU campaign.
+7,942,635,520 bytes. No model process remains from this CPU campaign.
 
 The final [build receipt](build-receipt.json) binds the implementation, 41 linked
 artifacts, parent/source pins and all required CPU receipts. The detached
@@ -80,3 +80,20 @@ plus a worst-context chain, bounded again by live disk headroom with another
 chain reserved. It also fixes context-dependent model-state projections and
 makes CPU rehearsal validate the real reserves. [Capacity arithmetic](CAPACITY.md)
 and the [whole admission audit](ADMISSION-AUDIT.md) give the exact limits.
+
+The [October 14 route+gather repair](ROUTE-GATHER-CLOSEOUT.md) reproduces K2's
+failure on CPU: folded incumbent implementation 0 omitted both gather descriptor
+outputs. The retained K2 events stop before rank32 is reached. The repair adds
+those stores without changing the unfused reference, route arithmetic or ABI.
+The new six-setting compiler matrix executes every registered fusion through
+its actual owner submission: 36 failures before, 2,232/2,232 checks after.
+The previous HC matrix covered only cases 51–54; the ordinary adapter fixture
+never folded implementation 0. The closeout gives the complete fusion audit.
+The host rehearsal also now binds rebuilt binaries from the current mode-build
+receipt instead of copying stale hashes from the preceding final seal.
+
+The route+gather repair passed the complete CPU suite and all three 9/9
+rehearsal chains (4,096 draft ranks 0/1; 32,768 draft rank 0). The new seal
+binds 25 gate receipts and 41 primary build artifacts. All five device binary
+hashes changed; the ABI is unchanged. All 150 protected incident/device files
+are unchanged. No device binary ran; fresh device qualification is required.

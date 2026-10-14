@@ -123,3 +123,17 @@ and incident bytes. `admission_audit.py` reads packet44 receipts and state
 retention metadata without modifying those directories; its result is bound
 through the wrapper receipt. Run it before the wrapper gates, not after the
 seal, if the input evidence or audit source changes.
+
+## Route+gather repair 3
+
+On a clean checkout, create this packet's `build/` directory before starting
+the compiler matrix (`mkdir -p build` from this packet directory).
+`fusion_matrix.py --label before` records the six host compiler arms against the
+original adapter. `route_gather_campaign.py all` runs the repaired matrix,
+all four builds (device is compile/link only), the full CPU suite, the three
+nine-window coordinator rehearsals and resealing. Run `route_gather_summary.py`
+last to verify the new seal, unchanged packet18 reference/old fixture hashes,
+changed device identities and every protected incident/device file. All commands
+use the same nice/ionice/OMP prefix above. Evidence is under
+`evidence/route-gather-fix/`; [the closeout](ROUTE-GATHER-CLOSEOUT.md) gives the
+failure attribution and every registry fusion's actual CPU coverage.

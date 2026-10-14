@@ -45,12 +45,26 @@ def host(binary,args,log):
  assert binary.parent.name=='gnu-host'
  with log.open('w') as out:r=subprocess.run([str(binary),*map(str,args)],stdout=out,stderr=subprocess.STDOUT,env={**os.environ,'OMP_NUM_THREADS':'2'},timeout=600)
  assert r.returncode==0,(log,log.read_text()[-2000:])
+def current_host_artifacts():
+ # Rehearsal precedes the new final seal. A kernel rebuild necessarily makes
+ # the old seal's binaries stale; use the source-verified current mode build.
+ assert_host_build(B/'gnu-host/own-rt-iq3')
+ mode=json.loads((P/'build-gnu-host-receipt.json').read_text())
+ assert mode['passed'] and mode['device_executed'] is False and mode['mode']=='gnu-host'
+ artifacts=mode['artifacts_sha256']
+ required={'gnu-host/'+n for n in ('own-rt-iq3','nongemv-fixtures','k2-fixtures','p33-linked-fixtures','p39-merged-fixtures')}
+ assert required<=set(artifacts),'current rehearsal host artifacts incomplete'
+ for name,digest in artifacts.items():
+  assert Path(name).parts[0]=='gnu-host' and len(Path(name).parts)==2,'non-host rehearsal artifact'
+  assert pp.sha(B/name)==digest,'current host artifact changed: '+name
+ return dict(artifacts)
 def run():
  sys.addaudithook(prohibit_device)
  assert os.getpriority(os.PRIO_PROCESS,0)==19 and os.environ['OMP_NUM_THREADS']=='2'
  storage.admit(100_000_000)
  sources={n:pp.sha(P/n) for n in SOURCES};binary=B/'gnu-host/own-rt-iq3';assert_host_build(binary)
  original=json.loads((P/'build-receipt.json').read_text())
+ artifacts=current_host_artifacts()
  rows=[];root=Path(tempfile.mkdtemp(prefix='coordinator-cpu-',dir=B));archive=P/'evidence/storage-admission-fix/coordinator-chains.jsonl.gz';archive.parent.mkdir(parents=True,exist_ok=True)
  for context,rank in MATRIX:
   storage.admit(100_000_000);case=root/f'c{context}-dr{rank}';case.mkdir();private=case/'seal';private.mkdir();build=case/'build';build.mkdir()
@@ -71,7 +85,7 @@ def run():
   # Private pre-seal identity: real current host binaries and current harness
   # sources, with miniature inputs only. It cannot authorize a device window.
   receipt=dict(original,sources={str((P/n).relative_to(ROOT)):v for n,v in sources.items()},
-   artifacts_sha256={n:h for n,h in original['artifacts_sha256'].items() if n.startswith('gnu-host/')},
+   artifacts_sha256=artifacts,
    input_sha256=pp.sha(inp/'input.json'),draft_capture_fixture_sha256_by_context={str(context):inspect(reference)},
    draft_capture_input_sha256={'incident-retrospective':pp.sha(private/'capture-input-incident-retrospective.json')})
   save(private/'build-receipt.json',receipt)

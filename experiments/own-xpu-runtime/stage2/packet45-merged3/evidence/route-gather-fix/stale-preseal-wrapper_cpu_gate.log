@@ -1,0 +1,12 @@
+{"passed": true, "predecessor_windows": 20, "memory_rows": 6, "projection_rows": 63, "numeric_literals": 661}
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/wrapper_cpu_gate.py", line 27, in <module>
+    if __name__=='__main__':raise SystemExit(main())
+                                             ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/wrapper_cpu_gate.py", line 21, in main
+    row['coordinator_chains']=run()
+                              ^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/coordinator_cpu_gate.py", line 83, in run
+    assert r.returncode==0,(case,(case/'coordinator.log').read_text()[-3000:])
+           ^^^^^^^^^^^^^^^
+AssertionError: (PosixPath('/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/coordinator-cpu-kmjpv3z0/c4096-dr0'), 'Traceback (most recent call last):\n  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/coordinator_cpu_gate.py", line 106, in <module>\n    if len(sys.argv)>1 and sys.argv[1]==\'--entry\':raise SystemExit(entry(sys.argv[2],sys.argv[3:]))\n                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/coordinator_cpu_gate.py", line 43, in entry\n    return w.main(cpu_rehearsal=True)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/window.py", line 373, in main\n    for name,digest in artifacts.items():require(sha(B/name)==digest,\'binary changed \'+name)\n                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/pipeline.py", line 30, in require\n    if not test:raise ValueError(message)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^\nValueError: binary changed gnu-host/k2-fixtures\n')
