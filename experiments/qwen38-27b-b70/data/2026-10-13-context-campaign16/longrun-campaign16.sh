@@ -5,8 +5,66 @@
 # repair-n40-s2x then repair-n40-s1x; C32 on repair-n40-s2x (the summariser's missing seed-2x row); W200 on the 1M
 # rules stream seed 0 (the charter's missing plain-window control at a dedicated card's 200K cap). The quality gate
 # is immovable: 40/40 clean and audit 7/7 or the change is reverted. Server recipe unchanged from campaigns 14/15.
+set -uo pipefail
+LAB=/home/steve/b70-optimization-lab
+CTX=$LAB/experiments/qwen38-27b-b70/scripts/context
+O=/mnt/fast-ai/bench-results/context-longrun-20261012
+O11=/mnt/fast-ai/bench-results/context-longrun-20261011
+SRV=$O/server/tp2-w262144-c16
+O10=/mnt/fast-ai/bench-results/context-longrun-20261010
+OD1M=$O11/client-1m
+ODC=$O11/client-crule
+ODR=$O10/client-rules
+ODH=$O11/client-hard
+Q=${QUEUE:-$O/QUEUE16.txt}
+PORT=18196
+PY=/mnt/fast-ai/venvs/clm/bin/python
+export SUDO_ASKPASS=${SUDO_ASKPASS:?set SUDO_ASKPASS}
+GEMMA_RECIPE=${GEMMA_RECIPE:-throughput}
+IDLE_MAX=${IDLE_MAX:-600}
+ODX=$O/client-repair2
+MAX_STEPS_REPAIR=${MAX_STEPS_REPAIR:-900}
+RECITE_RE_REPAIR='(?m)^TICKET \d+/\d+ \((BUG|NOTICE)\)'
+PPORT=18200
+THINK_RE='(?m)^(?:ASK \S+?:|QUERY \S+|GET \S+)|^PROBE:|STREAM END|NOT RUN|Traceback|\(exit_code=[1-9-]'
+RECITE_RE='(?m)^(?:ASK \S+?:|QUERY \S+|GET \S+)'
+UNTIL_RE='(?m)^ITEM \d+/\d+ \(UPDATE\)'
+SCAN_RE='(?m)^ITEM \d+/\d+ \(UPDATE\)'
+LABEL_RE='(?m)^ITEM (\d+)/'
+SP240="--density 3 --words --probes-every 25 --probes-k 3 --rules"
+SPHARD="--density 3 --words --pronouns --relative --probes-every 25 --probes-k 3 --rules"
+SP1M="--density 3 --words --probes-every 20 --probes-k 5 --rules"
+SPCR="--density 3 --words --probes-every 25 --probes-k 3 --rules --class-rule"
+START=$(date '+%F %T')
+FAULT_RE='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|wedged|device lost)|soft lockup'
+say() { echo "### $(date +%H:%M:%S) $*"; }
+avail() { awk '/^MemAvailable:/ {printf "%d", $2/1024}' /proc/meminfo; }
+faults() { journalctl -k --since "$START" --no-pager -o short-iso 2>/dev/null | grep -Ei "$FAULT_RE"; }
+server_up() { curl -fsS -m 10 "http://127.0.0.1:$PORT/v1/models" >/dev/null 2>&1; }
+wait_idle() {  # no request running on the server for two polls in a row (at most 3 min)
+  local r quiet=0
+  for i in $(seq 1 60); do
+    r=$(curl -fsS -m 5 "http://127.0.0.1:$PORT/metrics" 2>/dev/null | awk '/^vllm:num_requests_(running|waiting)/ {s+=$NF} END {print s+0}')
+    if [[ $r == 0 ]]; then quiet=$((quiet+1)); (( quiet >= 2 )) && return 0; else quiet=0; fi
+    sleep 3
+  done
+  return 1
+}
+mline() {  # server totals so far: prompt tokens, of which served from the prefix cache, and generated tokens
+  curl -fsS -m 5 "http://127.0.0.1:$PORT/metrics" 2>/dev/null | awk '/^vllm:prefix_cache_queries_total/ {q=$NF} /^vllm:prefix_cache_hits_total/ {h=$NF} /^vllm:generation_tokens_total/ {g=$NF} END {printf "server totals: prompt %d cached %d generated %d", q, h, g}'
+}
+stream_of() {  # stream name -> "out_dir size" and the generator options in SP
+  case "$1" in
+    rules) SP=$SP240;  echo "$ODR 240000" ;;
+    hard)  SP=$SPHARD; echo "$ODH 240000" ;;
+    crule) SP=$SPCR;   echo "$ODC 240000" ;;
+    1m)    SP=$SP1M;   echo "$OD1M 1000000" ;;
+    *) return 1 ;;
+  esac
+}
+task_dir() { ls -d "$1"/tasks/sparse-memory/sparse-memory-t*k-s"$3" 2>/dev/null | head -1; }   # out_dir size seed
 
-say "campaign 15 start; queue $Q ($(grep -cvE '^\s*(#|$)' "$Q" 2>/dev/null || echo 0) lines); MemAvailable $(avail) MiB"
+say "campaign 16 start; queue $Q ($(grep -cvE '^\s*(#|$)' "$Q" 2>/dev/null || echo 0) lines); MemAvailable $(avail) MiB"
 [[ -s $Q ]] || { say "ABORT: the queue file is missing or empty"; exit 2; }
 [[ -e $SRV ]] && { say "ABORT: $SRV already exists"; exit 2; }
 ss -tln | grep -q ":$PORT " && { say "ABORT: port $PORT is in use"; exit 2; }
@@ -68,6 +126,7 @@ for i in $(seq 1 120); do
   systemctl --user is-active --quiet ctx-fp8-tp2-server || { say "server unit ended before ready"; break; }
   sleep 15
 done
+
 
 keep_best() {  # snap_dir tag: the new copy becomes the current one unless it lost probe answers the current one has
   python3 - "$1/$2-answers.tmp" "$1/$2-answers.json" <<'PY'
@@ -329,4 +388,4 @@ else
   say "kernel log clean since $START; restoring Gemma ($GEMMA_RECIPE)"
   cd "$LAB" && timeout 900 scripts/gemma4-26b-two-b70-recipe.sh "$GEMMA_RECIPE" 2>&1 | grep -E '^backend|^frontdoor|timed out|died'
 fi
-say "campaign 15 complete"
+say "campaign 16 complete"
