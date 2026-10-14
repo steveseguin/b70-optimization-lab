@@ -2371,6 +2371,10 @@ every call, notes thinking off — the cache alignment that does not think). Gat
 passes it is the recipe the window curve is read against; XR8 stays as registered (BASE = XR7, whose gate passed
 tonight).
 
+**XR7 on s1x (22:11): the gate holds on the second seed too** — 40/40 fixed, **40/40 clean**, audit 7/7, 36 min 4 s
+(bound: 44; XR3: 47.1). Notes calls read 175,572 prompt tokens, 160,576 of them cached (**91.5%**; XR3's notes
+ran 81%), and wrote 28,286 (9 cuts). Both seeds: the change stands.
+
 ### Campaign 18, design registered 2026-10-13 night before any generation: the 2M adversarial stream
 
 The next ledger stream doubles the length and turns on every difficulty the generator has, plus one new one aimed
