@@ -163,6 +163,8 @@ The owner authorized the same 128-token scope as 2026-10-13. The payload declare
 
 Next levers: miss cycles are still about 2 ms above p44 (restore plus rank-0 redo); a memory reduction would let the 24/24-dr0 configuration run at 32K; combine draft rank 1's lower miss cost with the 24/24 split's faster hits.
 
+9. **Results parked inside `build/` exhausted the storage admission budget (2026-10-15 13:29).** The first SPEED4 launch (`eabc13242`) passed K0-K1b on both pairs, then K2 admission refused it: build 12.3 GB counted plus a 2.5 GB projection exceeded the 14.2 GB build limit. No device contact for K2. Cause: the coordinator had kept `results-f912fdaf6`, `results-65c5eb22b` and `results-9b91d3270` (about 5 GB) inside `build/`. They were moved with a same-filesystem rename to `/home/steve/own-xpu-runtime-results/packet45/`, outside the repo; that move is the authoritative location for the WS128 receipts quoted above for p45, SPEED1 and SPEED2. The refused attempt is in `.../speed4-attempt1-storage-refused/`. `incident-*` (seal-protected) and `speed3-*` (the record's evidence paths) stay in `build/`. Rule: keep finished result trees outside the packet's `build/`.
+
 ## Relaunch procedure (after fix 5, and audit 6 if it reseals)
 
 1. Confirm that the runner is not running and that `queue/STOP` holds the halt reason.
