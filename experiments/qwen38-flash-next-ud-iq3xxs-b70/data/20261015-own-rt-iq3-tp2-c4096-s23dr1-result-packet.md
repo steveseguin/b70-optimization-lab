@@ -166,9 +166,9 @@ was written during preparation, including build outputs and Python caches.
 It is a summary, not the full executable command. `commandSnippetFullInEvidence`
 points to the actual coordinator scripts:
 
-- [Headline WS128](../../../../data/own-xpu-runtime-packet45-device-rounds-20261014/chains/1013-p51a-WS128.sh).
-- [Chain](../../../../data/own-xpu-runtime-packet45-device-rounds-20261014/chains/1010-p51a-chain.sh).
-- [OMP=2 chain runner](../../../../data/own-xpu-runtime-packet45-device-rounds-20261014/runner/coordinator_windows_speed5_omp2.sh).
+- Headline WS128: `data/own-xpu-runtime-packet45-device-rounds-20261014/chains/1013-p51a-WS128.sh` (kept outside this repository).
+- Chain: `data/own-xpu-runtime-packet45-device-rounds-20261014/chains/1010-p51a-chain.sh` (kept outside this repository).
+- OMP=2 chain runner: `data/own-xpu-runtime-packet45-device-rounds-20261014/runner/coordinator_windows_speed5_omp2.sh` (kept outside this repository).
 
 These retain affinity, environment and prerequisite paths. They are evidence,
 not commands executed by preparation. No historical 1,754-character literal

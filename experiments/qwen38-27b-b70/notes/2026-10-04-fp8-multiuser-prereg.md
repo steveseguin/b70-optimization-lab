@@ -390,3 +390,21 @@ drafting off at 2, 4 and 8 users (16, 32, 64 are done on R310).
 
 **Rule.** Each run must be 64/64 on long and short prompts in both passes and exact against the frozen reference,
 or it is reported as not exact and not used. The table then says, per user count, the faster exact mode.
+
+## Addendum, 2026-10-15 14:40 EDT: second fresh server for every sweep arm (written before it runs)
+
+The 23:30 sweep ran one fresh server per arm; the state-of-optimization pin
+(`2026-10-05-state-of-optimization-pin.md`, item 4) owes a second. Same image (R314 state-stride,
+`sha256:8b78916004ca...`), runner (`run-20261004-fp8-multiuser-campaign.py`, `MU_MODE=longsweep`), settings
+(pure steps, per-sequence attention, prompt batch 8, state-width and resume-accepted fixes on) and clients as the first
+sweep. Two changes, both stated in advance: the host-memory guard floor is the owner-approved 1.6 GiB (the first sweep
+ran at the 2.0 default), and two arms are added: drafting on at 4 users with prompt batching (the first 4-user
+drafting run had no prompt batch), and drafting off at 16 users on R314 (the first was on R310).
+
+**Arms, in order:** drafting on at 2, 8, 16 and 4 users; drafting off at 2, 4, 8 and 16 users. About 2 h 20 min.
+Gemma's LAN service is stopped first and put back on its throughput recipe at the end if the kernel log has no GPU
+fault line. Wrapper: `scripts/run-20261015-fp8-r314-sweep-repeat.sh`.
+
+**Rule.** An arm passes if it is 64/64 equal to solo on long and short prompts in both passes and exact against the
+frozen reference. Its speed is reported next to the first server's. A failing arm is reported as not exact, the sweep
+stops there, and the first-server table is marked unconfirmed for that arm.
