@@ -82,6 +82,19 @@
       "evidence": "families/lfm-2-5.json"
     },
     {
+      "family_id": "lfm-2-5-24b-a2b",
+      "base_model": "LiquidAI/LFM2.5-24B-A2B",
+      "popularity": 3,
+      "recency_capability": 4,
+      "optimization": 4,
+      "score": 75,
+      "release": "not independently verified",
+      "release_source": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B",
+      "repository_created": "2026-10-12",
+      "basis": "24B / about 2B active MoE released 2026-10-12 (6.3K downloads, 351 likes by 2026-10-15); no independent capability comparison here. Exact fast path 2.7x the plain SYCL path, rebuilt from public files and fresh-server checked.",
+      "evidence": "families/lfm-2-5-24b-a2b.json"
+    },
+    {
       "family_id": "minimax-m2-7",
       "base_model": "MiniMaxAI/MiniMax-M2.7",
       "popularity": 4,
@@ -342,6 +355,24 @@
       },
       "guide": "repro/lfm25-26b-q8-b70/README.md",
       "decision": "Under 9B: collapsed small and quick section."
+    },
+    {
+      "package_id": "lfm25-24b-a2b-q8-b70",
+      "family_id": "lfm-2-5-24b-a2b",
+      "cards": 1,
+      "popularity": 3,
+      "recency_capability": 4,
+      "optimization": 4,
+      "score": 75,
+      "metric": {
+        "value": 111.32374032604358,
+        "unit": "tok/s",
+        "label": "strict class-balanced decode",
+        "scope": "Median of two fresh-server class-balanced medians over the complete 12-prompt/six-class, 512-cap, cache-zero native HTTP suite; one B70, one user, F16 KV, 32K context. Every token array identical to the plain SYCL reference path (12/12 on both servers); canaries passed.",
+        "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check/summary.json"
+      },
+      "guide": "repro/lfm25-24b-a2b-q8-b70/README.md",
+      "decision": "Not featured yet: new model without an independent quality comparison; the main roles are covered. Listed with its exact-output package."
     },
     {
       "package_id": "ltx25-continuation-stream-b70-145f-20261010",
