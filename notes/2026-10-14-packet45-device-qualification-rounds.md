@@ -126,6 +126,8 @@ relaunch. That way, the remaining size defects are found in one CPU pass instead
    0.5 ms per token (about 2%) at most. Also, `pgrep -af "codex exec" | wc -l` counted unrelated processes;
    the log mtime is the liveness signal.
 
+7. **Queue reset under a live runner (2026-10-15 04:12).** `queue-runner4.py` idles and polls for up to 6 hours after its last item. The coordinator cleared the packet-45 `.done` markers to prepare the speed-repair-1 relaunch while the control runner was still alive. It launched 947/948 at 04:12:22, before the coordinator had verified the seal. The run was valid only because Codex had written the speed-repair-1 `build-receipt.json` (`a199dffa…`) at 04:11:48, and every window re-checks the sealed sources and artifact hashes. Rule: write `queue/STOP` (or confirm no runner is alive) before touching queue markers. Reset markers only at the moment of launch.
+
 ## Relaunch procedure (after fix 5, and audit 6 if it reseals)
 
 1. Confirm that the runner is not running and that `queue/STOP` holds the halt reason.
