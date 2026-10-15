@@ -182,6 +182,14 @@ Storage relocation. The full `results-{f912fdaf6,65c5eb22b,9b91d3270}` trees and
 
 A first plain copy of the 231k small files to the USB NTFS volume exhausted its file table ("No space left on device" with 111 GB free). The partial copy was deleted, and a single archive was written instead. `/mnt/raid-models` (`/dev/sdb2`) still shows Buffer I/O errors and was not used.
 
+## Speed repair 5 (`887a0bbbe`, 23/25 split with draft rank 1): refused at the per-card arena, latch recovered (2026-10-15)
+
+The split design (`36e59bd10`) forecast 39.6 tok/s for 23/25 with draft rank 1 at 4K, but it checked only the 1.5 GB card reserve. Chains on both pairs passed K0-KD, then W2m failed on both pairs after device contact, which wrote the boot fault latch. Rank 1 refused at "30 GiB per-card arena admission": its weights plus owned memory came to 29.03 GB before cache and scratch. Rank 0 stopped cooperatively. Every teardown was complete, with safe_to_exit=true, in_flight=0 and live_bytes=0. The kernel log had no xe/GuC lines. The coordinator recovered the latch after the runner had halted. Evidence: `build/incident-20261015-speed5-split23-arena/`.
+
+Conclusion: under the current memory plan the split lever is closed. 25/23 with draft rank 0 fails the 4K reserve, and 23/25 with draft rank 1 fails the 30 GiB arena. A future split needs a memory reduction first, and the window admission should apply the arena cap before device contact (follow-up for Codex).
+
+Fallback launched 15:56: 24/24 with draft rank 1 (SPEED4 measured 38.3661 on cards 2-3) on the SPEED5 build, on both pairs (`build/speed5-c4096-dr1-s0-cards{01,23}-gpu`), queue items 1000-1005.
+
 ## Relaunch procedure (after fix 5, and audit 6 if it reseals)
 
 1. Confirm that the runner is not running and that `queue/STOP` holds the halt reason.
