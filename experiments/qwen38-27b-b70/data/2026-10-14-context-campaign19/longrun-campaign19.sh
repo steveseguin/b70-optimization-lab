@@ -6,11 +6,13 @@
 #   G3 the README's OpenAI SDK snippet (plain, tool call, streaming) through the pip-installed proxy
 #   G4 after the FP8 server is down: long_chat.py through `--recipe agent` against Gemma 4 26B on llama.cpp
 #      (the LAN service on its `balanced` recipe, 16K per request); then Gemma back on `throughput`.
+# Rerun (c19b, after the first G1 was voided by the server's memory guard): RUN=c19b G1JOB=G1b__repair-n40-s2x SKIP_G4=1
 set -uo pipefail
 LAB=/home/steve/b70-optimization-lab
 O=/mnt/fast-ai/bench-results/context-longrun-20261012
-OUT=$O/c19
-SRV=$O/server/tp2-w262144-c19
+RUN=${RUN:-c19}
+OUT=$O/$RUN
+SRV=$O/server/tp2-w262144-$RUN
 ODX=$O/client-repair2
 VENV=${VENV:-/mnt/fast-ai/venvs/ctxkeeper-1.0.0}
 IMG=ctxkeeper:1.0.0
@@ -18,6 +20,8 @@ PORT=18196
 PPORT=18200
 DPORT=18201
 TASK=repair-n40-s2x
+G1JOB=${G1JOB:-G1__$TASK}
+SKIP_G4=${SKIP_G4:-0}
 export SUDO_ASKPASS=${SUDO_ASKPASS:?set SUDO_ASKPASS}
 START=$(date '+%F %T')
 FAULT_RE='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|wedged|device lost)|soft lockup'
@@ -83,6 +87,8 @@ docker image inspect $IMG >/dev/null 2>&1 || { say "ABORT: no image $IMG"; exit 
 [[ -e $SRV ]] && { say "ABORT: $SRV already exists"; exit 2; }
 for p in $PORT $PPORT $DPORT; do ss -tln | grep -q ":$p " && { say "ABORT: port $p is in use"; exit 2; }; done
 [[ -n $(docker ps -q --filter name=fp8-tp) ]] && { say "ABORT: an fp8 container is already running"; exit 2; }
+# the full-window server leaves ~2-3 GiB of host memory; a download beside it tripped the guard on the first try
+[[ -n $(systemctl --user list-units --state=active --no-legend 'dl-*' 2>/dev/null) ]] && { say "ABORT: a download unit is running"; exit 2; }
 
 # ---- Gemma off (wait for an idle front door, at most 10 min)
 st="down down"
@@ -124,7 +130,7 @@ done
 
 if (( ready )); then
   # ---- G1: freeagent + the pip-installed proxy, --recipe qwen and nothing else
-  job="G1__$TASK"
+  job=$G1JOB
   if start_pip_proxy G1 --upstream "http://127.0.0.1:$PORT" --recipe qwen; then
     t0=$SECONDS
     say "[G1] freeagent on $TASK through ctxkeeper --recipe qwen; MemAvailable $(avail) MiB"
@@ -212,6 +218,12 @@ if [[ -n $F ]]; then
   say "GPU FAULT LINES since $START; cards left empty, Gemma NOT restored:"; echo "$F" | head -10 | cut -c1-220
   exit 1
 fi
+if (( SKIP_G4 )); then
+  say "kernel log clean since $START; G4 skipped (SKIP_G4=1); Gemma back on its throughput recipe"
+  cd "$LAB" && timeout 900 scripts/gemma4-26b-two-b70-recipe.sh throughput 2>&1 | grep -E '^backend|^frontdoor|timed out|died'
+  F=$(faults); [[ -n $F ]] && { say "GPU FAULT LINES after the Gemma restart:"; echo "$F" | head -10 | cut -c1-220; }
+  say "campaign $RUN complete"; exit 0
+fi
 say "kernel log clean since $START; Gemma on its balanced recipe for G4"
 cd "$LAB" && timeout 900 scripts/gemma4-26b-two-b70-recipe.sh balanced 2>&1 | grep -E '^backend|^frontdoor|timed out|died'
 if up "http://127.0.0.1:8000" && start_pip_proxy G4 --upstream http://127.0.0.1:8000 --recipe agent --budget 15360 --inplace-tokens 6000; then
@@ -230,4 +242,4 @@ say "Gemma back on its throughput recipe"
 cd "$LAB" && timeout 900 scripts/gemma4-26b-two-b70-recipe.sh throughput 2>&1 | grep -E '^backend|^frontdoor|timed out|died'
 F=$(faults)
 [[ -n $F ]] && { say "GPU FAULT LINES after the Gemma restarts:"; echo "$F" | head -10 | cut -c1-220; }
-say "campaign 19 complete"
+say "campaign $RUN complete"

@@ -1,0 +1,1218 @@
+[
+ {
+  "cmd": "cd /app && ls && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def split_at\" -A 40 more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '1440s/if maxsplit != 1:/if maxsplit == 1:/' more_itertools/more.py && sed -n '1436,1448p' more_itertools/more.py && t SplitAtTests",
+  "seconds": 0.3
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def sample\" -A 40 more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '3798,3860p' more_itertools/more.py",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"_sample_unweighted\\|_sample_weighted\\|_sample_counted\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '3666,3760p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t SampleTests 2>&1 | tail -40",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -n '4195,4230p' tests/test_more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '3800s/if k <= 0:/if k < 0:/' more_itertools/more.py && sed -n '3798,3805p' more_itertools/more.py && t SampleTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def substrings_indexes\" -A 40 more_itertools/more.py",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -i '1010s/r = range(1, len(seq) - 1)/r = range(1, len(seq) + 1)  # fixed/' more_itertools/more.py && sed -n '1010,1015p' more_itertools/more.py && t SubstringsIndexesTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def ichunked\" -A 40 more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"_ichunk\" more_itertools/more.py | head && grep -n \"def _ichunk\" -A 40 more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t IchunkedTests 2>&1 | tail -40",
+  "seconds": 1.7
+ },
+ {
+  "cmd": "cd /app && sed -n '3995,4030p' tests/test_more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '4024,4070p' tests/test_more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '3530s/if materialize_next():/if not materialize_next():  # fixed/' more_itertools/more.py && sed -n '3524,3537p' more_itertools/more.py && t IchunkedTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"class time_limited\" more_itertools/more.py && sed -n \"$(grep -n 'class time_limited' more_itertools/more.py | cut -d: -f1),+40p\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '3426,3450p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"class TimeLimitedTests\" -A 40 tests/test_more.py | head -60",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '3430s/self.timed_out = False/self.timed_out = True  # fixed/' more_itertools/more.py && sed -n '3428,3433p' more_itertools/more.py && t TimeLimitedTests",
+  "seconds": 0.3
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"class numeric_range\" more_itertools/more.py && sed -n \"$(grep -n 'class numeric_range' more_itertools/more.py | cut -d: -f1),+60p\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '2191,2280p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '2280,2330p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '2330,2360p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t NumericRangeTests 2>&1 | tail -40",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -n '2740,2760p' tests/test_more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"if i < 0 and i >= self._len:\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '2338s/if i < 0 and i >= self._len:/if i < 0 or i >= self._len:  # fixed/' more_itertools/more.py && sed -n '2336,2341p' more_itertools/more.py && t NumericRangeTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def classify_unique\" more_itertools/more.py && sed -n \"$(grep -n 'def classify_unique' more_itertools/more.py | cut -d: -f1),+30p\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '4614,4635p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"is_unique_justseen = not i or previous == k\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '4612s/is_unique_justseen = not i or previous == k/is_unique_justseen = not i or previous != k  # fixed/' more_itertools/more.py && sed -n '4610,4614p' more_itertools/more.py && t ClassifyUniqueTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && ls -la FIXES.md 2>&1; cat FIXES.md 2>&1",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def strictly_n\" more_itertools/more.py && sed -n \"$(grep -n 'def strictly_n' more_itertools/more.py | cut -d: -f1),+30p\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '646,680p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '680,700p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"class StrictlyNTests\" -A 40 tests/test_more.py | head -50",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"too_long(n - 1)\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '687s/too_long(n - 1)/too_long(n + 1)  # fixed/' more_itertools/more.py && sed -n '685,689p' more_itertools/more.py && t StrictlyNTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"10 | strictly_n | too_long was called with n - 1 instead of n + 1\" >> FIXES.md && cat FIXES.md && next",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"def adjacent\" more_itertools/more.py && sed -n \"$(grep -n 'def adjacent' more_itertools/more.py | cut -d: -f1),+40p\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"padding = \\[True\\] \\* distance\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '2080s/padding = \\[True\\] \\* distance/padding = [False] * distance  # fixed/' more_itertools/more.py && sed -n '2078,2083p' more_itertools/more.py && t AdjacentTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"11 | adjacent | padding was [True] * distance instead of [False] * distance\" >> FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def chunked_even\" more_itertools/more.py",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -n '4395,4440p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '4440,4450p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t ChunkedEvenTests 2>&1 | tail -40",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -n '4855,4915p' tests/test_more.py",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nimport more_itertools as mi\n# test n=2,3,4 for evenness\nfor N in range(1, 50):\n    for n in range(2, N + 2):\n        lengths = []\n        items = []\n        for l in mi.chunked_even(range(N), n):\n            L = len(l)\n            assert 1 <= L <= n, (N, n, L)\n            lengths.append(L)\n            items.extend(l)\n        assert items == list(range(N)), (N, n)\n        assert max(lengths) - min(lengths) <= 1, (N, n, lengths)\nprint('n>=2 OK')\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nimport more_itertools as mi\n# check look-ahead for n=2..4 with current formula\nfrom itertools import count\nfor n in range(2, 5):\n    k = 0\n    max_i = [0]\n    def gen():\n        for i in count():\n            max_i[0] = max(max_i[0], i)\n            yield i\n    ls = mi.chunked_even(gen(), n)\n    while k < 2:\n        assert next(ls) == list(range(k*n, (k+1)*n)), (n, k)\n        k += 1\n    print(n, 'max look-ahead', max_i[0], 'limit', n*n)\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nimport more_itertools as mi\nfrom itertools import count\nfor n in range(2, 5):\n    k = 0\n    def count_with_assert():\n        for i in count():\n            assert i <= n * k + n * n, (n, k, i)\n            yield i\n    ls = mi.chunked_even(count_with_assert(), n)\n    while k < 2:\n        assert next(ls) == list(range(k * n, (k + 1) * n)), (n, k)\n        k += 1\n    print(n, 'infinite OK')\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom itertools import count, islice\n\ndef chunked_even(iterable, n, min_buffer):\n    iterable = iter(iterable)\n    buffer = list(islice(iterable, min_buffer))\n    for _ in islice(map(buffer.append, iterable), n, None, n):\n        yield buffer[:n]\n        del buffer[:n]\n    if not buffer:\n        return\n    length = len(buffer)\n    q, r = divmod(length, n)\n    num_lists = q + (1 if r > 0 else 0)\n    q, r = divmod(length, num_lists)\n    full_size = q + (1 if r > 0 else 0)\n    partial_size = full_size - 1\n    num_full = length - partial_size * num_lists\n    partial_start_idx = num_full * full_size\n    if full_size > 0:\n        for i in range(0, partial_start_idx, full_size):\n            yield buffer[i : i + full_size]\n    if partial_size > 0:\n        for i in range(partial_start_idx, length, partial_size):\n            yield buffer[i : i + partial_size]\n\ndef check(mb_fn, name):\n    for N in range(1, 60):\n        for n in range(1, N + 2):\n            mb = mb_fn(n)\n            assert mb >= 0, (name, n, mb)\n            lengths, items = [], []\n            for l in chunked_even(range(N), n, mb):\n                L = len(l)\n                assert 1 <= L <= n, (name, N, n, L)\n                lengths.append(L); items.extend(l)\n            assert items == list(range(N)), (name, N, n)\n            assert max(lengths) - min(lengths) <= 1, (name, N, n, lengths)\n    # look-ahead\n    for n in range(1, 6):\n        k = 0\n        def gen():\n            for i in count():\n                assert i <= n * k + n * n, (name, n, k, i)\n                yield i\n        ls = chunked_even(gen(), n, mb_fn(n))\n        while k < 3:\n            assert next(ls) == list(range(k*n, (k+1)*n)), (name, n, k)\n            k += 1\n    print(name, 'OK')\n\ncheck(lambda n: max(0, (n+1)*(n-2)), 'max0')\ncheck(lambda n: (n-1)*(n-2), '(n-1)(n-2)')\ncheck(lambda n: (n-1)**2, '(n-1)^2')\ncheck(lambda n: n*(n-2), 'n(n-2)')\ncheck(lambda n: (n+1)*(n-2) if n>1 else 0, 'cond')\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom itertools import islice, count\n# verify islice step behavior\nprint(list(islice(count(), 3, None, 3)))  # expect [3,6,9,...]\n\"",
+  "seconds": 0.2
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom itertools import islice, count\nprint(list(islice(islice(count(), 3, None, 3), 5)))  # first 5 of [3,6,9,...]\n\"",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nimport more_itertools as mi\nfrom itertools import islice\n# check chunk sizes for infinite iterable, n=3\ngen = mi.chunked_even(iter(range(1000)), 3)\nsizes = [len(c) for c in islice(gen, 30)]\nprint('n=3 sizes:', sizes)\ngen = mi.chunked_even(iter(range(1000)), 4)\nsizes = [len(c) for c in islice(gen, 30)]\nprint('n=4 sizes:', sizes)\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -n '4400,4440p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom itertools import islice\nn = 3\nmin_buffer = (n+1)*(n-2)\nprint('min_buffer', min_buffer)\nbuffer = list(islice(iter(range(100)), min_buffer))\nprint('init', buffer)\nfor i, _ in enumerate(islice(map(buffer.append, iter(range(100))), n, None, n)):\n    chunk = buffer[:n]\n    print(f'iter {i}: yield {chunk} (len {len(chunk)}), buffer before del: {buffer}')\n    del buffer[:n]\n    if i > 8: break\n\"",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom itertools import islice\nn = 3\nmin_buffer = (n+1)*(n-2)\nit = iter(range(100))\nbuffer = list(islice(it, min_buffer))\nprint('init', buffer)\nfor i, _ in enumerate(islice(map(buffer.append, it), n, None, n)):\n    chunk = buffer[:n]\n    print(f'iter {i}: yield {chunk} (len {len(chunk)}), buffer before del: {buffer}')\n    del buffer[:n]\n    if i > 8: break\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom itertools import islice\nbuf = []\nit = iter(range(10))\nfor i, _ in enumerate(islice(map(buf.append, it), 3, None, 3)):\n    print(f'yield {i}: buf={buf}')\n    if i >= 3: break\n\"",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom itertools import islice, count\n\ndef chunked_even(iterable, n, min_buffer):\n    iterable = iter(iterable)\n    buffer = list(islice(iterable, min_buffer))\n    for _ in islice(map(buffer.append, iterable), n, None, n):\n        yield buffer[:n]\n        del buffer[:n]\n    if not buffer:\n        return\n    length = len(buffer)\n    q, r = divmod(length, n)\n    num_lists = q + (1 if r > 0 else 0)\n    q, r = divmod(length, num_lists)\n    full_size = q + (1 if r > 0 else 0)\n    partial_size = full_size - 1\n    num_full = length - partial_size * num_lists\n    partial_start_idx = num_full * full_size\n    if full_size > 0:\n        for i in range(0, partial_start_idx, full_size):\n            yield buffer[i : i + full_size]\n    if partial_size > 0:\n        for i in range(partial_start_idx, length, partial_size):\n            yield buffer[i : i + partial_size]\n\ndef check(mb_fn, name):\n    for N in range(1, 60):\n        for n in range(1, N + 2):\n            mb = mb_fn(n)\n            assert mb >= 0, (name, n, mb)\n            lengths, items = [], []\n            for l in chunked_even(range(N), n, mb):\n                L = len(l)\n                assert 1 <= L <= n, (name, N, n, L)\n                lengths.append(L); items.extend(l)\n            assert items == list(range(N)), (name, N, n)\n            assert max(lengths) - min(lengths) <= 1, (name, N, n, lengths)\n    # look-ahead: read no more than n^2 ahead\n    for n in range(1, 6):\n        k = 0\n        def gen():\n            for i in count():\n                # when yielding chunk k (0-indexed), we've read up to (k+1)*n items\n                # look-ahead = i - (k+1)*n must be < n^2\n                assert i <= (k + 1) * n + n * n, (name, n, k, i)\n                yield i\n        ls = chunked_even(gen(), n, mb_fn(n))\n        while k < 5:\n            assert next(ls) == list(range(k*n, (k+1)*n)), (name, n, k)\n            k += 1\n    print(name, 'OK')\n\ncheck(lambda n: 0, 'zero')\ncheck(lambda n: (n-1)*(n-2), '(n-1)(n-2)')\ncheck(lambda n: max(0,(n+1)*(n-2)), 'max0')\n\"",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom itertools import islice, count\n\ndef chunked_even(iterable, n, min_buffer):\n    iterable = iter(iterable)\n    buffer = list(islice(iterable, min_buffer))\n    for _ in islice(map(buffer.append, iterable), n, None, n):\n        yield buffer[:n]\n        del buffer[:n]\n    if not buffer:\n        return\n    length = len(buffer)\n    q, r = divmod(length, n)\n    num_lists = q + (1 if r > 0 else 0)\n    q, r = divmod(length, num_lists)\n    full_size = q + (1 if r > 0 else 0)\n    partial_size = full_size - 1\n    num_full = length - partial_size * num_lists\n    partial_start_idx = num_full * full_size\n    if full_size > 0:\n        for i in range(0, partial_start_idx, full_size):\n            yield buffer[i : i + full_size]\n    if partial_size > 0:\n        for i in range(partial_start_idx, length, partial_size):\n            yield buffer[i : i + partial_size]\n\ndef check(mb_fn, name):\n    for N in range(1, 60):\n        for n in range(1, N + 2):\n            mb = mb_fn(n)\n            assert mb >= 0, (name, n, mb)\n            lengths, items = [], []\n            for l in chunked_even(range(N), n, mb):\n                L = len(l)\n                assert 1 <= L <= n, (name, N, n, L)\n                lengths.append(L); items.extend(l)\n            assert items == list(range(N)), (name, N, n)\n            assert max(lengths) - min(lengths) <= 1, (name, N, n, lengths)\n    for n in range(1, 6):\n        k = 0\n        def gen():\n            for i in count():\n                assert i <= (k + 1) * n + n * n, (name, n, k, i)\n                yield i\n        ls = chunked_even(gen(), n, mb_fn(n))\n        while k < 5:\n            assert next(ls) == list(range(k*n, (k+1)*n)), (name, n, k)\n            k += 1\n    print(name, 'OK')\n\ncheck(lambda n: (n-1)*(n-2), '(n-1)(n-2)')\ncheck(lambda n: max(0,(n+1)*(n-2)), 'max0')\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -n 4395,4425p more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 - <<'EOF'\nimport re\np = 'more_itertools/more.py'\ns = open(p).read()\nold = '    min_buffer = (n + 1) * (n - 2)\\n'\nnew = '    min_buffer = max(0, (n + 1) * (n - 2))  # fixed\\n'\nassert s.count(old) == 1\nopen(p, 'w').write(s.replace(old, new))\nEOF\nsed -n 4410,4414p more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t ChunkedEvenTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo '12 | chunked_even | min_buffer went negative for n=1; clamped with max(0, ...)' >> FIXES.md && cat FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def only\" more_itertools/more.py && t OnlyTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -n 3436,3475p more_itertools/more.py",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python3 - <<'EOF'\np = 'more_itertools/more.py'\ns = open(p).read()\nold = '            raise too_long and ValueError(msg)\\n'\nnew = '            raise (too_long or ValueError)(msg)  # fixed\\n'\nassert s.count(old) == 1\nopen(p, 'w').write(s.replace(old, new))\nEOF\nt OnlyTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo '13 | only | raise used \"too_long and ValueError(msg)\" instead of (too_long or ValueError)(msg)' >> FIXES.md && next",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t ConstrainedBatchesTests 2>&1 | head -60",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def constrained_batches\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n 4697,4800p more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 - <<'EOF'\np = 'more_itertools/more.py'\ns = open(p).read()\nold = '        if batch_count and (reached_size and reached_count):\\n'\nnew = '        if batch_count and (reached_size or reached_count):  # fixed\\n'\nassert s.count(old) == 1\nopen(p, 'w').write(s.replace(old, new))\nEOF\nt ConstrainedBatchesTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo '14 | constrained_batches | flush condition used \"and\" instead of \"or\" for reached_size/reached_count' >> FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && t SetPartitionsTests 2>&1 | head -40",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -n 3900,3920p tests/test_more.py && grep -n \"def set_partitions\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n 3305,3400p more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 - <<'EOF'\np = 'more_itertools/more.py'\ns = open(p).read()\nold = '''    if k is not None:\n        if k <= 1:\n            raise ValueError(\n                \"Can't partition in a negative or zero number of groups\"\n            )\n'''\nnew = '''    if k is not None:\n        if k <= 0:  # fixed\n            raise ValueError(\n                \"Can't partition in a negative or zero number of groups\"\n            )\n'''\nassert s.count(old) == 1\nopen(p, 'w').write(s.replace(old, new))\nEOF\nt SetPartitionsTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo '15 | set_partitions | k<=1 raised for k=1; should be k<=0' >> FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && t AllEqualTests 2>&1 | head -40 && grep -n \"def all_equal\" more_itertools/recipes.py",
+  "seconds": 0.2
+ },
+ {
+  "cmd": "cd /app && sed -n 213,240p more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 - <<'EOF'\np = 'more_itertools/recipes.py'\ns = open(p).read()\nold = '''    iterator = groupby(iterable, key)\n    for first in iterator:\n        for second in iterator:\n            return False\n        return True\n    return False\n'''\nnew = '''    iterator = groupby(iterable, key)\n    for first in iterator:\n        for second in iterator:\n            return False\n        return True\n    return True  # fixed\n'''\nassert s.count(old) == 1\nopen(p, 'w').write(s.replace(old, new))\nEOF\nt AllEqualTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo '17 | all_equal | empty iterable returned False instead of True' >> FIXES.md && echo 'all_equal' >> RECIPES.txt && cat RECIPES.txt && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"class CallbackIter\" more_itertools/more.py && sed -n \"$(grep -n 'class CallbackIter' more_itertools/more.py | cut -d: -f1),+40p\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -rn \"callback_iter\\|CallbackIter\" more_itertools/ | head -20",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '3857,3910p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '3910,3960p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '3960,3985p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t CallbackIterTests 2>&1 | tail -40",
+  "seconds": 0.5
+ },
+ {
+  "cmd": "cd /app && sed -n '4390,4470p' tests/test_more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nimport more_itertools as mi\nfrom time import sleep\n\ndef target(cb=None, wait=0):\n    total = 0\n    for i, c in enumerate('abc', 1):\n        total += i\n        if wait:\n            sleep(wait)\n        if cb:\n            cb(i, c, intermediate_total=total)\n    return total\n\nfunc = lambda callback=None: target(cb=callback, wait=0.02)\nwith mi.callback_iter(func, wait_seconds=0.01) as it:\n    print('done before:', it.done)\n    print('list:', list(it))\n    print('done after:', it.done)\n    print('result:', it.result)\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"_aborted\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '3908,3913p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '3911s/self._aborted = True/self._aborted = False  # fixed/' more_itertools/more.py && sed -n '3908,3913p' more_itertools/more.py && echo \"---exit---\" && sed -n '3922,3926p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t CallbackIterTests 2>&1 | tail -15",
+  "seconds": 0.4
+ },
+ {
+  "cmd": "cd /app && echo '18 | callback_iter | __init__ set self._aborted = True instead of False, so the callback raised AbortThread immediately' >> FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def subslices\" more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '887,930p' more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i 's/    slices = starmap(slice, combinations(range(len(seq) - 1), 2))/    slices = starmap(slice, combinations(range(len(seq) + 1), 2))  # fixed/' more_itertools/recipes.py && sed -n '895,897p' more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t SubslicesTests 2>&1 | tail -15",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo '19 | subslices | combinations used range(len(seq) - 1) instead of range(len(seq) + 1), missing most subslices' >> FIXES.md && echo 'subslices' >> RECIPES.txt && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def grouper\" more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '389,430p' more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"incomplete == 'fill'\\|incomplete != 'strict'\\|incomplete == 'ignore'\\|return _zip_equal\\|return zip(\\*iterators)\\|Expected fill, strict\" more_itertools/recipes.py | sed -n '1,10p'",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i \\\n  -e \"421s/.*/    if incomplete == 'ignore':  # fixed/\" \\\n  -e \"422s/.*/        return zip(*iterators)  # fixed/\" \\\n  -e \"423s/.*/    if incomplete == 'strict':  # fixed/\" \\\n  -e \"424s/.*/        return _zip_equal(*iterators)  # fixed/\" \\\n  more_itertools/recipes.py && sed -n '419,426p' more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t GrouperTests 2>&1 | tail -15",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo '20 | grouper | ignore/strict branches were scrambled: ignore used _zip_equal and strict fell through to ValueError' >> FIXES.md && echo 'grouper' >> RECIPES.txt && next",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"def mark_ends\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '2359,2395p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"yield i == 0\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '2393s/yield i == 0, False, a/yield i == 0, True, a  # fixed/' more_itertools/more.py && sed -n '2388,2393p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t MarkEndsTests 2>&1 | tail -15",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo '21 | mark_ends | last item was yielded with is_last=False instead of True in the StopIteration handler' >> FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def rlocate\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '3181,3230p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"len_iter - i\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '3217s/len_iter - i + 1/len_iter - i - 1  # fixed/' more_itertools/more.py && sed -n '3217p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '3217s/.*/        return (len_iter - i - 1 for i in locate(reversed(iterable), pred))  # fixed/' more_itertools/more.py && sed -n '3215,3218p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t RlocateTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -n '3200,3235p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '3217s/.*/            return (len_iter - i - 1 for i in locate(reversed(iterable), pred))  # fixed/' more_itertools/more.py && sed -n '3214,3220p' more_itertools/more.py && t RlocateTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo '22 | rlocate | index computed as len_iter - i + 1 instead of len_iter - i - 1' >> FIXES.md && next",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"def nth_combination\" -A 25 more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '721,745p' more_itertools/recipes.py",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom itertools import combinations\ndef ref(iterable, r, index):\n    return list(combinations(iterable, r))[index]\nimport more_itertools as mi\nfor idx in range(10):\n    a = mi.nth_combination(range(5), 3, idx)\n    b = ref(range(5), 3, idx)\n    print(idx, a, b, a == b)\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -i '729s/r + 1/r - 1  # fixed/' more_itertools/recipes.py && sed -n '729p' more_itertools/recipes.py && t NthCombinationTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo '23 | nth_combination | loop decremented r as r + 1 instead of r - 1' >> FIXES.md && echo 'nth_combination' >> RECIPES.txt && next",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"def intersperse\" -A 40 more_itertools/more.py | head -60",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t IntersperseTest 2>&1 | tail -30",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && git log --oneline 2>/dev/null | head; git diff HEAD -- more_itertools/more.py 2>/dev/null | head -50",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom itertools import repeat\nfrom more_itertools import interleave, chunked, flatten, islice\n# candidate fix for n != 1 branch\ndef intersperse(e, iterable, n=1):\n    if n == 0:\n        raise ValueError\n    elif n != 1:\n        return flatten(islice(interleave(repeat(e), chunked(iterable, n)), 1, None))\n    else:\n        filler = repeat([e])\n        chunks = chunked(iterable, n)\n        return flatten(islice(interleave(filler, chunks), 1, None))\nprint(list(intersperse('_', range(6), n=2)))\nprint(list(intersperse('!', [1,2,3,4,5])))\nprint(list(intersperse(None, [1,2,3,4,5], n=2)))\nprint(list(intersperse('x', range(7), n=3)))\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom itertools import repeat, islice\nfrom more_itertools import interleave, chunked, flatten\ndef intersperse(e, iterable, n=1):\n    if n == 0:\n        raise ValueError\n    elif n != 1:\n        return flatten(islice(interleave(repeat(e), chunked(iterable, n)), 1, None))\n    else:\n        filler = repeat([e])\n        chunks = chunked(iterable, n)\n        return flatten(islice(interleave(filler, chunks), 1, None))\nprint(list(intersperse('_', range(6), n=2)))\nprint(list(intersperse('!', [1,2,3,4,5])))\nprint(list(intersperse(None, [1,2,3,4,5], n=2)))\nprint(list(intersperse('x', range(7), n=3)))\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom itertools import repeat, islice\nfrom more_itertools import interleave, chunked, flatten\nprint(list(islice(interleave(repeat(None), chunked([1,2,3,4,5], 2)), 1, None)))\n\"",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom itertools import repeat, islice\nfrom more_itertools import interleave, chunked, flatten\nprint(list(flatten(islice(interleave(repeat(None), chunked([1,2,3,4,5], 2)), 1, None))))\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def flatten\" -A 20 more_itertools/more.py | head -30",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -rn \"def flatten\" more_itertools/ && grep -n \"def flatten\" -A 25 more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"class IntersperseTest\" -A 40 tests/test_more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom itertools import repeat, islice\nfrom more_itertools import interleave, chunked, flatten\ndef f(e, iterable, n):\n    return list(flatten(islice(interleave(repeat([e]), chunked(iterable, n)), 1, None)))\nprint(f('_', '012345', 2))\nprint(f('_', '012345', 3))\nprint(f('_', '012345', 4))\nprint(f('_', '012345', 5))\nprint(f('_', '012345', 6))\nprint(f('_', '012345', 7))\nprint(f(['a','b'], '012345', 3))\nprint(f(None, [1,2,3,4,5], 2))\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -n '845,870p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 - <<'EOF'\nimport io\np = 'more_itertools/more.py'\nlines = open(p).read().split('\\n')\n# find the exact line\nfor i, l in enumerate(lines):\n    if l == '        return islice(interleave(repeat(e), iterable), 1, None)':\n        lines[i] = '        return flatten(islice(interleave(repeat([e]), chunked(iterable, n)), 1, None))  # fixed'\n        print('replaced line', i+1)\n        break\nopen(p, 'w').write('\\n'.join(lines))\nEOF\nsed -n '852,866p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t IntersperseTest",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"24 | intersperse | n!=1 branch ignored n (did n=1 behavior); now chunks iterable by n and interleaves [e] between chunks\" >> FIXES.md && tail -3 FIXES.md",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"def divide\" more_itertools/more.py && grep -n \"class DivideTest\" tests/test_more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '1943,1990p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '1990,1995p' more_itertools/more.py && echo \"=== TESTS ===\" && sed -n '2182,2230p' tests/test_more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"if n <= 1:\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '1700,1717p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '1972s/if n <= 1:/if n < 1:  # fixed/' more_itertools/more.py && sed -n '1972,1973p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '1970,1974p' more_itertools/more.py | cat -A | head",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t DivideTest",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"25 | divide | guard was n <= 1 (raised for n=1); should be n < 1 so n=1 returns the whole iterable\" >> FIXES.md && tail -2 FIXES.md",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def nth_combination_with_replacement\" more_itertools/more.py && grep -n \"class NthCombinationWithReplacementTests\" tests/test_more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '4134,4200p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"c = comb(n + r + 1, r)\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom math import comb\nfrom itertools import combinations_with_replacement\ndef nth(iterable, r, index):\n    pool = tuple(iterable); n = len(pool)\n    c = comb(n + r - 1, r)\n    if index < 0: index += c\n    if index < 0 or index >= c: raise IndexError\n    result = []; i = 0\n    while r:\n        r -= 1\n        while n >= 0:\n            num_combs = comb(n + r - 1, r)\n            if index < num_combs: break\n            n -= 1; i += 1; index -= num_combs\n        result.append(pool[i])\n    return tuple(result)\n# docstring\nprint(nth(range(5), 3, 5))\n# brute force\nok = True\nfor n in range(1, 6):\n    for r in range(0, n+1):\n        ref = list(combinations_with_replacement(range(n), r))\n        for idx in range(len(ref)):\n            if nth(range(n), r, idx) != ref[idx]:\n                ok = False; print('MISMATCH', n, r, idx)\nprint('all match:', ok)\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -i '4156s/c = comb(n + r + 1, r)/c = comb(n + r - 1, r)  # fixed/' more_itertools/more.py && sed -n '4156p' more_itertools/more.py && t NthCombinationWithReplacementTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"26 | nth_combination_with_replacement | total count c used comb(n + r + 1, r) instead of comb(n + r - 1, r)\" >> FIXES.md && tail -2 FIXES.md",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"def iter_except\" more_itertools/recipes.py && grep -n \"class IterExceptTests\" tests/test_more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"IterExcept\\|iter_except\" tests/test_more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && ls tests/ && grep -rn \"IterExcept\\|iter_except\" tests/",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '576,610p' more_itertools/recipes.py && echo \"=== TESTS ===\" && sed -n '465,520p' tests/test_recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"while False:\" more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '590,605p' more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '601s/while False:/while True:  # fixed/' more_itertools/recipes.py && sed -n '597,602p' more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t IterExceptTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"27 | iter_except | loop was 'while False' so func() was never called; changed to 'while True'\" >> FIXES.md && echo \"iter_except\" >> RECIPES.txt && tail -3 FIXES.md && echo --- && tail -3 RECIPES.txt",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"def sliding_window\" more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '862,895p' more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"elif n != 2:\" more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '879s/elif n != 2:/elif n == 2:  # fixed/' more_itertools/recipes.py && sed -n '876,884p' more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t SlidingWindowTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"28 | sliding_window | branch was 'elif n != 2' (sent n=1 to pairwise, n=2 to ValueError); should be 'elif n == 2'\" >> FIXES.md && echo \"sliding_window\" >> RECIPES.txt && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def circular_shifts\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '3018,3060p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t CircularShiftsTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"if steps != 0:\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '3035s/if steps != 0:/if steps == 0:  # fixed/' more_itertools/more.py && sed -n '3034,3037p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '3034,3037p' more_itertools/more.py | cat -A",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && awk 'NR>=3030 && NR<=3045 {printf \"%d: %s\\n\", NR, $0}' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t CircularShiftsTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"29 | circular_shifts | guard was 'if steps != 0' (raised for valid non-zero steps, allowed steps=0); should be 'if steps == 0'\" >> FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def gray_product\" more_itertools/more.py",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -n '4747,4800p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"if a\\[j\\] == 0 and a\\[j\\] == len\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '4783s/if a\\[j\\] == 0 and a\\[j\\] == len/if a[j] == 0 or a[j] == len/' more_itertools/more.py && sed -n '4783p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '4783s/if a\\[j\\] == 0 or a\\[j\\] == len(all_iterables\\[j\\]) - 1:/if a[j] == 0 or a[j] == len(all_iterables[j]) - 1:  # fixed/' more_itertools/more.py && sed -n '4783p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && awk 'NR>=4780 && NR<=4787 {printf \"%d: %s\\n\", NR, $0}' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t GrayProductTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"30 | gray_product | end-of-range check used 'and' (never true); should be 'or' so direction/focus advance at either end\" >> FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def unzip\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '1894,1930p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '1930,1950p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"if head:\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && awk 'NR>=1913 && NR<=1918 {printf \"%d: %s\\n\", NR, $0}' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '1915s/if head:/if not head:  # fixed/' more_itertools/more.py && awk 'NR>=1914 && NR<=1918 {printf \"%d: %s\\n\", NR, $0}' more_itertools/more.py && t UnzipTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo '31 | unzip | guard was \"if head\" (inverted); empty iterable has head=() so it should be \"if not head\"' >> FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def sieve\" more_itertools/recipes.py && awk 'NR>=1 && /def sieve/{found=NR} END{}' more_itertools/recipes.py; grep -n \"def sieve\" -A 25 more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t SieveTests 2>&1 | tail -30",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -n '1020,1045p' tests/test_recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"def iter_index\" -A 15 more_itertools/recipes.py && python3 -c \"\nimport more_itertools as mi\nprint(list(mi.sieve(30)))\nprint(list(mi.sieve(5)))\n\"",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '934,960p' more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '960,978p' more_itertools/recipes.py | cat -A | head -20",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom more_itertools.recipes import iter_index\nfrom math import isqrt\nn = 5\ndata = bytearray((0, 1)) * (n // 2)\nprint('data', data)\nprint('loop p:', list(iter_index(data, 1, 3, stop=isqrt(n) + 1)))\nprint('tail:', list(iter_index(data, 1, 3)))\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nimport more_itertools as mi\nprint(list(mi.sieve(5)))\nprint(list(mi.sieve(6)))\nprint(list(mi.sieve(7)))\nprint(list(mi.sieve(8)))\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"\" more_itertools/recipes.py | sed -n '960,979p'",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nimport more_itertools.recipes as r\nimport inspect\nsrc = inspect.getsource(r.sieve)\nprint(src)\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nimport more_itertools as mi\nprint(mi.sieve)\nimport more_itertools.recipes as r\nprint(r.sieve)\nprint(mi.sieve is r.sieve)\n\" && grep -rn \"def sieve\" more_itertools/",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom more_itertools.recipes import iter_index\nfrom math import isqrt\nn = 30\nstart = 3\ndata = bytearray((0, 1)) * (n // 2)\nprint('initial data:', list(data))\nprint('index->num: i represents 2i+1')\nfor i in range(len(data)):\n    print(i, 2*i+1, data[i])\n\"",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python3 -c \"\nfrom more_itertools.recipes import iter_index\nfrom math import isqrt\nn = 30\nstart = 3\ndata = bytearray((0, 1)) * (n // 2)\nprint('len data', len(data))\nout = [2]\nfor p in iter_index(data, 1, start, stop=isqrt(n) + 1):\n    inner = list(iter_index(data, 1, start, p * p))\n    print('p=',p,'inner idx',inner,'-> nums',[2*i+1 for i in inner])\n    out += [2*i+1 for i in inner]\n    data[p * p : n : p + p] = bytes(len(range(p * p, n, p + p)))\n    start = p * p\ntail = list(iter_index(data, 1, start))\nprint('tail idx', tail, '-> nums', [2*i+1 for i in tail])\nout += [2*i+1 for i in tail]\nprint('RESULT', out)\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -i '970s/if n >= 2:/if n > 2:  # fixed/' more_itertools/recipes.py && sed -n '970,971p' more_itertools/recipes.py && t SieveTests 2>&1 | tail -8",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo '32 | sieve | guard was \"if n >= 2\" (yielded 2 for n=2); should be \"if n > 2\" since sieve yields primes less than n' >> FIXES.md && echo 'sieve' >> RECIPES.txt && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def factor\" -A 30 more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && t FactorTests 2>&1 | tail -30",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"todo = \\[n\\]\" more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '1070,1100p' more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '1093s/todo = \\[n\\] if n >= 1 else \\[\\]/todo = [n] if n > 1 else []  # fixed/' more_itertools/recipes.py && sed -n '1093p' more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '1093p' more_itertools/recipes.py | cat -A | head -1",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '1090,1096p' more_itertools/recipes.py | cat -A",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python -c \"import ast; ast.parse(open('more_itertools/recipes.py').read()); print('syntax OK')\" && t FactorTests",
+  "seconds": 0.2
+ },
+ {
+  "cmd": "cd /app && python -c \"\nfrom more_itertools import factor\nfor n in [1, 2, 3, 360, 211, 211**2, 999999937, 100, 12, 17, 211*211*2]:\n    print(n, list(factor(n)))\n\"",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"33 | factor | todo list included n=1 after trial division, so 1 was appended to the prime factors\" >> FIXES.md && echo \"factor\" >> RECIPES.txt && tail -2 FIXES.md && tail -3 RECIPES.txt",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def is_sorted\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '3821,3870p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"from operator import\\|import operator\\|from operator\" more_itertools/more.py | head; grep -n \"    le\\b\\| le,\\|, le\\b\\| le)\" more_itertools/more.py | head",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"return all(map(lt, a, b)) if strict else any(map(lt, b, a))\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '28s/from operator import itemgetter, mul, sub, gt, lt$/from operator import itemgetter, mul, sub, gt, lt, le  # fixed/' more_itertools/more.py && sed -i '3850s/return all(map(lt, a, b)) if strict else any(map(lt, b, a))/return all(map(lt, a, b)) if strict else all(map(le, a, b))  # fixed/' more_itertools/more.py && sed -n '28p;3850p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python -c \"import ast; ast.parse(open('more_itertools/more.py').read()); print('syntax OK')\" && t IsSortedTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -i '28s/from operator import itemgetter, mul, sub, gt, lt, le  # fixed/from operator import itemgetter, mul, sub, gt, lt/' more_itertools/more.py && sed -i '3850s/return all(map(lt, a, b)) if strict else all(map(le, a, b))  # fixed/return all(map(lt, a, b)) if strict else not any(map(lt, b, a))  # fixed/' more_itertools/more.py && sed -n '28p;3850p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && python -c \"import ast; ast.parse(open('more_itertools/more.py').read()); print('syntax OK')\" && t IsSortedTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python -c \"\nfrom more_itertools import is_sorted\nprint(is_sorted([1,2,3,4,5]))            # True\nprint(is_sorted([5,4,3,1,2]))            # False\nprint(is_sorted([5,4,3,2,1], reverse=True))  # True\nprint(is_sorted([1,2,2]))                 # True\nprint(is_sorted([1,2,2], strict=True))    # False\nprint(is_sorted([1,2,3], strict=True))    # True\nprint(is_sorted([]))                      # True\nprint(is_sorted([1]))                     # True\nprint(is_sorted([2,1]))                   # False\nprint(is_sorted([3,2,1], reverse=True, strict=True))  # True\n\"",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && echo \"34 | is_sorted | non-strict branch was 'any(map(lt, b, a))' (True when NOT sorted); missing 'not', should be 'not any(map(lt, b, a))'\" >> FIXES.md && tail -1 FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def windowed_complete\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '3984,4030p' more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"for i in range(size - n - 1):\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '4017s/for i in range(size - n - 1):/for i in range(size - n + 1):  # fixed/' more_itertools/more.py && sed -n '4017p' more_itertools/more.py && python -c \"import ast; ast.parse(open('more_itertools/more.py').read()); print('syntax OK')\" && t WindowedCompleteTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python -c \"\nfrom more_itertools import windowed_complete\nfor b, m, e in windowed_complete(range(7), 3):\n    print(b, m, e)\nprint('---n=0---')\nprint(list(windowed_complete([1,2], 0)))\nprint('---n=size---')\nprint(list(windowed_complete([1,2,3], 3)))\n\"",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && echo \"35 | windowed_complete | loop was range(size - n - 1) (dropped last two windows); should be range(size - n + 1)\" >> FIXES.md && tail -1 FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def convolve\" more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '753,790p' more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n '790,815p' more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"repeat(0, n + 1)\" more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '791s/for x in chain(signal, repeat(0, n + 1)):/for x in chain(signal, repeat(0, n - 1)):  # fixed/' more_itertools/recipes.py && sed -n '791p' more_itertools/recipes.py && python -c \"import ast; ast.parse(open('more_itertools/recipes.py').read()); print('syntax OK')\" && t Convolvetests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && python -c \"\nfrom more_itertools import convolve\nprint(list(convolve([1, -1, -20], [1, -3])))  # [1, -4, -17, 60]\nprint(list(convolve([1, 2, 3], [1, 1])))      # [1, 3, 5, 3]\nprint(list(convolve([1], [1])))               # [1]\nprint(list(convolve([1, 2], [1, 2, 3])))      # [1, 4, 7, 6]\n\"",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && echo \"36 | convolve | trailing zeros were repeat(0, n + 1) (extra zero outputs); should be repeat(0, n - 1)\" >> FIXES.md && echo \"convolve\" >> RECIPES.txt && tail -1 FIXES.md && tail -1 RECIPES.txt && next",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"def replace\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n 3224,3300p more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '3249s/if window_size <= 1:/if window_size < 1:  # fixed/' more_itertools/more.py && sed -n 3249p more_itertools/more.py && t ReplaceTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -i '3254s/if window_size <= 1:/if window_size < 1:  # fixed/' more_itertools/more.py && sed -n 3254p more_itertools/more.py && t ReplaceTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"window_size <= 1\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '3253s/if window_size <= 1:/if window_size < 1:  # fixed/' more_itertools/more.py && sed -n 3253p more_itertools/more.py && t ReplaceTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"37 | replace | guard was 'if window_size <= 1' (raised for the default window_size=1); should be 'if window_size < 1'\" >> FIXES.md && next",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"def polynomial_eval\" more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n 1103,1130p more_itertools/recipes.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '1117s/if n != 0:/if n == 0:  # fixed/' more_itertools/recipes.py && sed -n 1117p more_itertools/recipes.py && t PolynomialEvalTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"if n != 0:\" more_itertools/recipes.py && sed -i '1118s/if n != 0:/if n == 0:  # fixed/' more_itertools/recipes.py && sed -n 1118p more_itertools/recipes.py && t PolynomialEvalTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"38 | polynomial_eval | guard was 'if n != 0' (returned 0 for any non-empty coefficient list); should be 'if n == 0'\" >> FIXES.md && echo \"polynomial_eval\" >> RECIPES.txt && next",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"def distribute\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n 1686,1730p more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '1716s/if n <= 1:/if n < 1:  # fixed/' more_itertools/more.py && sed -n 1716p more_itertools/more.py && t DistributeTest",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"39 | distribute | guard was 'if n <= 1' (raised for n=1); should be 'if n < 1' so n=1 returns the whole iterable\" >> FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def unique_in_window\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n 4501,4560p more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"if len(window) != n:\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '4526s/if len(window) != n:/if len(window) == n:  # fixed/' more_itertools/more.py && sed -n 4526p more_itertools/more.py && t UniqueInWindowTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"40 | unique_in_window | discard guard was 'if len(window) != n' (decremented count when window not full, crashed on empty); should be 'if len(window) == n' to mirror deque eviction\" >> FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def nth_or_last\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n 282,320p more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"islice(iterable, n - 1)\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '296s/islice(iterable, n - 1)/islice(iterable, n + 1)  # fixed/' more_itertools/more.py && sed -n 296p more_itertools/more.py && t NthOrLastTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -i '296s/.*/    return last(islice(iterable, n + 1), default=default)  # fixed/' more_itertools/more.py && sed -n 296p more_itertools/more.py && t NthOrLastTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"41 | nth_or_last | islice used n - 1 (returned index n-1); should be n + 1 to return the item at index n or the last\" >> FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def split_after\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n 1485,1540p more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"if pred(item) or buf:\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '1510s/if pred(item) or buf:/if pred(item):  # fixed/' more_itertools/more.py && sed -n 1510p more_itertools/more.py && t SplitAfterTest",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"42 | split_after | condition was 'if pred(item) or buf' (buf always truthy, yielded after every item); should be 'if pred(item)'\" >> FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def unique_to_each\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -n 867,905p more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && grep -n \"counts\\[element\\] != 1\" more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '896s/counts\\[element\\] != 1/counts[element] == 1  # fixed/' more_itertools/more.py && sed -n 896p more_itertools/more.py && t UniqueToEachTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && sed -i '896s/.*/    uniques = {element for element in counts if counts[element] == 1}  # fixed/' more_itertools/more.py && sed -n 896p more_itertools/more.py && t UniqueToEachTests",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"43 | unique_to_each | uniques set used counts[element] != 1 (selected shared elements); should be == 1 (elements in exactly one iterable)\" >> FIXES.md && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && printf '1 | split_at\\n2 | sample\\n4 | substrings_indexes\\n5 | ichunked\\n6 | time_limited\\n7 | numeric_range\\n8 | classify_unique\\n' > AUDIT.md && cat AUDIT.md",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && echo \"=== FIXES.md ===\" && cat FIXES.md && echo \"\" && echo \"=== RECIPES.txt ===\" && cat RECIPES.txt && echo \"\" && echo \"=== AUDIT.md ===\" && cat AUDIT.md",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && echo \"=== more.py # fixed lines ===\" && grep -n \"# fixed\" more_itertools/more.py && echo \"\" && echo \"=== recipes.py # fixed lines ===\" && grep -n \"# fixed\" more_itertools/recipes.py",
+  "seconds": 0.0
+ }
+]

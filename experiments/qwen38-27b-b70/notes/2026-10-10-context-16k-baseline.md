@@ -2599,3 +2599,52 @@ recipe unchanged). Gemma is stopped for it and restored after.
   --budget 16384 --inplace-tokens 6000` at 100,000 tokens. No quality bar is registered (a first smoke test of a
   second model); the result decides whether the README may say "smoke-tested on llama.cpp". Gemma returns to its
   `throughput` recipe afterwards.
+
+#### Campaign 19 run log
+
+- **First attempt (c19), 2026-10-14 20:39: G1 void, not a result.** The server came up at 20:42:01 with 1.83 GiB of
+  host memory free; a model download running beside it (`hf download`, about 1 GB resident) took the rest, and the
+  server's memory guard stopped it at 1.50 GiB (floor 1.6) as G1 began. The agent's requests failed and it ended
+  after 4 calls (1/40 fixed); the proxy had made no cut. G2 and G3 were skipped by the runner (server down); the
+  kernel log was clean, so G4 ran on Gemma as registered. The runner now refuses to start while a `dl-*` download
+  unit is active, and takes `RUN`, `G1JOB` and `SKIP_G4` so G1-G3 rerun unchanged as **c19b** once the download
+  has finished.
+- **G4 (c19), Gemma 4 26B Q8 on llama.cpp, `--recipe agent --budget 15360 --inplace-tokens 6000`: 4/4 in 4 min 28 s.**
+  The runner passed `--budget 15360`, 1,024 under the registered 16,384, so a request plus the size estimate's error
+  stays inside the 16K slot. `long_chat.py` at 100,000 tokens (50 reports; the history reached 101,671 tokens, 6.6
+  times the view): codename VIOLET BEACON, current budget 7,812 ending in ROGER, starting budget 7,942 (said only in
+  the first message, before 16 cuts). Proxy: 16 cuts, all in place, none failed or asked again, 97 messages
+  archived, 0 recalls (the notes held the starting budget), notes read 132,140 prompt tokens of which 85,666 came
+  from the server's cache, 422 tokens of notes written, 3.23 characters per token. The README may say
+  "smoke-tested with Gemma 4 26B on llama.cpp": one run, one seed, an easy check, not a measurement.
+- **Second attempt (c19b), 20:54: void, my error.** 44 s into the server's start, a one-off script of mine reading a
+  GGUF file's header (beside the server) misparsed it and allocated without bound; host memory fell 0.5 GiB per
+  half second and the guard stopped the server at 1.48 GiB before it was ready. Nothing ran. The rule already in
+  force (nothing beside a starting or running research server) applies to one-off reads too. Rerun as **c19c**.
+- **Third attempt (c19c), 21:03-21:46: G1, G2 and G3 pass; the gate is met.** Server ready at 21:05:44 with 3.25 GiB
+  free (min 2.51, median 2.58 GiB over the run; nothing else on the host); kernel log clean; Gemma back on
+  `throughput` at 21:46 (health check passed).
+
+| Check | Registered | Result |
+| --- | --- | --- |
+| G1 freeagent + `ctxkeeper --recipe qwen`, no `--recite-when` | fixed 40, clean >= 38, audit >= 6, <= 45 min | **fixed 40/40, clean 40/40 (R1 38/38, R2 33/33, R3 27/27), audit 7/7, 30 min 54 s** |
+| G2 `long_chat.py` 300K through the Docker image | 4/4 | **4/4**, history 304,552 tokens (more than the server's 262K window), 4 min 19 s |
+| G3 README OpenAI SDK snippet | plain + tool call | **plain `ChatCompletion` (stop), tool call `shell {"command": "echo ok"}`, streaming in 1 chunk** (as the README says) |
+| G4 (c19) Gemma 4 26B on llama.cpp, 100K | no bar | **4/4**, 4 min 28 s (above) |
+
+  G1 detail: 305 model calls, 3,358,370 prompt tokens (FAp: 2.9M), 130,009 written, 44 ticket fetches, 33 FIXES
+  lines. Proxy: 11 cuts, all in place; 524 messages archived; 0 recalls; 0 rules put back; 2 empty replies retried;
+  notes read 224,647 prompt tokens, 203,840 of them from the server's cache (91%), 6,949 written. One notes reply
+  was not applied (the 12th, 2 minutes before the end: "NOTES over twice the cap after the changes"); the proxy held
+  the cut and carried on, as designed. G2: 24 cuts, all in place, 291 messages archived, 0 recalls; starting budget
+  7,942 and codename VIOLET BEACON from the first message, current budget 6,289 ending in ROGER.
+
+  **What this settles.** Installed the way the README says, with only `--recipe qwen`, the proxy matched the best
+  hand-tuned repair runs. The tickets, and the three house rules they announce, reach the model inside tool
+  results (the agent runs `next`), so without `--recite-when` the proxy never repeated the rules after a ticket;
+  they sat only in the notes the model sees on every turn, and that was enough on this task (R1-R3 kept on every
+  ticket they applied to). 30.9 min against FAp's 33.3 (recite on tickets, XR6 settings) and XR4's 15.6 (the
+  harness client with thinking capped). The README keeps `--recite-when` as an option for instructions that arrive
+  inside tool results, and says it was not needed here. Data:
+  [`data/2026-10-14-context-campaign19/`](../data/2026-10-14-context-campaign19/) (`repair/G1c__repair-n40-s2x` is
+  the result; `repair/G1__repair-n40-s2x` is the voided first try; proxy archives left out as in earlier campaigns).

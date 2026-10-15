@@ -1,0 +1,41 @@
+### 21:03:07 campaign 19 (ctxkeeper 1.0.0 release gate) start; MemAvailable 13369 MiB
+### 21:03:07 stopping the Gemma service (front door state: 0 0)
+### 21:03:14 cards free; MemAvailable 13702 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: 58c590ef932f4b1ea29b9dcaa2f1d445
+### 21:05:44 server ready after ~165 s; MemAvailable 3252 MiB
+Running as unit: ctx-keeper-proxy.service; invocation ID: 4509666df2dd4e75baaf68f8e9f40408
+   ctxkeeper 1.0.0 (recipe qwen): http://127.0.0.1:18200/v1 -> http://127.0.0.1:18196/v1, live window 32768 tokens, notes inplace every 15000 tokens, checks off, state in /mnt/fast-ai/bench-results/context-longrun-20261012/c19c/proxy-state/G1
+### 21:05:45 [G1] freeagent on repair-n40-s2x through ctxkeeper --recipe qwen; MemAvailable 3239 MiB
+### 21:36:39 [G1] done rc=0 in 30 min 54 s; MemAvailable 2625 MiB
+   RESULT fixed 40/40  clean 40/40  rules R1 38/38  R2 33/33  R3 27/27  tickets fetched 44  FIXES lines 33
+   AUDIT 7/7 right
+   calls 305, prompt tokens 3358370, cached 0, written 130009
+   proxy: cuts 11 (in place 11, failed 1, asked again 0), messages archived 524, recalls 0, notes read 224647 cached 203840, written 6949, chars per token 3.0359
+   ctxkeeper 1.0.0 (recipe qwen): http://0.0.0.0:18201/v1 -> http://127.0.0.1:18196/v1, live window 32768 tokens, notes inplace every 15000 tokens, checks off, state in /state
+### 21:36:43 [G2] long_chat.py, 300K tokens, through the Docker image
+### 21:41:02 [G2] done rc=0 in 4 min 19 s
+   report 150/150: history about 304,468 tokens, 257 s
+   
+   [PASS] codename said at the start: VIOLET BEACON
+   [PASS] current budget: The project budget is now 6,289 credits. ROGER
+   [PASS] standing rule kept (ends with ROGER): The project budget is now 6,289 credits. ROGER
+   [PASS] starting budget: The project budget at the very start of this session was 7,942 credits. ROGER
+   
+   4/4 checks passed; history about 304,552 tokens in 259 s
+   ctxkeeper: 24 cuts, 291 messages archived, 0 recalls, 0 rules put back
+   proxy: cuts 24 (in place 24, failed 0, asked again 0), messages archived 291, recalls 0, notes read 384426 cached 341952, written 2428, chars per token 3.1991
+Running as unit: ctx-keeper-proxy.service; invocation ID: fb10716bb0154e13825713a30a63165a
+   ctxkeeper 1.0.0 (recipe qwen): http://127.0.0.1:18200/v1 -> http://127.0.0.1:18196/v1, live window 32768 tokens, notes inplace every 15000 tokens, checks off, state in /mnt/fast-ai/bench-results/context-longrun-20261012/c19c/proxy-state/G3
+### 21:41:07 [G3] OpenAI SDK: plain reply, tool call, streaming
+### 21:41:08 [G3] done rc=0
+   plain: ChatCompletion stop 'Hello there, friend!'
+   tool call: tool_calls [('shell', '{"command": "echo ok"}')]
+   stream: 1 chunks 'One, two, three, four, five.'
+### 21:41:08 stopping the server; MemAvailable 2616 MiB
+server state: stopped None stop_confirmed True
+host memory available while the server ran: min 2.51  median 2.58 GiB  (4581 samples)
+### 21:41:36 kernel log clean since 2026-10-14 21:03:07; G4 skipped (SKIP_G4=1); Gemma back on its throughput recipe
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 21:46:08 campaign c19c complete
