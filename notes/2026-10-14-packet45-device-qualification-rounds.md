@@ -128,6 +128,12 @@ relaunch. That way, the remaining size defects are found in one CPU pass instead
 
 7. **Queue reset under a live runner (2026-10-15 04:12).** `queue-runner4.py` idles and polls for up to 6 hours after its last item. The coordinator cleared the packet-45 `.done` markers to prepare the speed-repair-1 relaunch while the control runner was still alive. It launched 947/948 at 04:12:22, before the coordinator had verified the seal. The run was valid only because Codex had written the speed-repair-1 `build-receipt.json` (`a199dffa…`) at 04:11:48, and every window re-checks the sealed sources and artifact hashes. Rule: write `queue/STOP` (or confirm no runner is alive) before touching queue markers. Reset markers only at the moment of launch.
 
+8. **Source edits under a queued device window (2026-10-15 04:59).** The speed-repair-2 brief allowed Codex to start source work at 04:55, while pair B's WS128x/WS128 were still queued. Codex edited `strict_snapshot.hpp`, and WS128x admission refused before device contact with "source changed experiments/own-xpu-runtime/stage2/packet45-merged3/strict_snapshot.hpp" (no latch). Pair B's speed-repair-1 WS128 number was lost; its chain K0-WSs had passed. Rule: no edits under a packet tree while any window of that packet is running or queued. Codex works on a copy, or waits until the queue has drained.
+
+## Speed repair 1 (`65c5eb22b`, 2026-10-15)
+
+Snapshot copies were batched (936 → 32 submissions on rank 0, 1,022 → 34 on rank 1; bytes unchanged at 343.85/354.97 MiB), and the P39 `shared-up-act-q6/q8` fusion was disabled so the measured `p30.small.rows4` small.ffn group runs (192 commands removed). Chains K0-WSs passed on both pairs. Pair A (draft rank 0, cards 0-1) WS128 measured a class-balanced **35.481** tok/s, decode 35.485, 12/12 exact, qualifying. That is up from 33.835 but below the 37.856 record, so it was not submitted. Medians: rank 0 busy 23.69 ms, rank 1 21.22 ms, hit cycle 24.74 ms, miss cycle 43.05 ms (p44: 23.49/22.59/23.19/39.33). Rank busy is back to p44 level; the remaining +1.55 ms per hit and +3.7 ms per miss point at capture and restore on the critical path. Results: `build/results-65c5eb22b/`. Next: speed repair 2 (write-set-exact capture and restore).
+
 ## Relaunch procedure (after fix 5, and audit 6 if it reseals)
 
 1. Confirm that the runner is not running and that `queue/STOP` holds the halt reason.
