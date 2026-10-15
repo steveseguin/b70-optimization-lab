@@ -117,7 +117,7 @@
       "state": "lab-measured",
       "revision": "lfm2.5-24b-a2b",
       "variant": "Q8_0",
-      "runtime": "llama.cpp SYCL c926ad09857517978575d6a74d225b463f7417a0 + lab patch ab8b7bc8 (exact fusions)",
+      "runtime": "llama.cpp SYCL c926ad09857517978575d6a74d225b463f7417a0 + lab patch 4b1a4cd0 (exact fusions, steadier prompt-path conversion)",
       "config": {
         "tp": 1,
         "mtp": 0,
@@ -128,12 +128,12 @@
       "workload": "two fresh servers; complete 12-prompt/six-class suite; 512-token cap; median within prompt class then median across class medians; 100-event/99-interval decode window; target-only; cache-zero",
       "metrics": {
         "decode_tok_s": [
-          138.14791922217887,
-          138.28514818525144
+          136.3184889657721,
+          138.04152894168826
         ]
       },
       "quality": "both suite gates and the canaries passed; cached_tokens=0 for every request; every token array identical to the plain SYCL reference path (12/12 on both servers) and across servers; top-8 log-probabilities bit-identical on 12/12 probe prompts and 3/3 long prompts",
-      "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-fused/summary.json"
+      "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/summary.json"
     }
   ],
   "series_measurements": [
@@ -142,43 +142,43 @@
       "state": "lab-measured",
       "revision": "lfm2.5-24b-a2b",
       "variant": "Q8_0",
-      "runtime": "llama.cpp bench c926ad0 + lab patch (fast path with exact fusions)",
+      "runtime": "llama.cpp bench c926ad0 + lab patch (fast path with exact fusions and the steadier prompt-path conversion)",
       "config": {
         "tp": 1,
         "mtp": 0,
         "graph": "not separately varied",
         "kv": "f16"
       },
-      "workload": "raw llama-bench tg128 at each existing-context depth (combined run) and pp2048 at each depth (separate pp-only run); FlashAttention on; three repetitions",
+      "workload": "raw llama-bench pp2048 and tg128 at each existing-context depth in one run (each pp2048 after depth 0 runs on the weight layout a running server uses); FlashAttention on; three repetitions",
       "points": [
         {
           "x": 2048,
-          "prefill_tok_s": 1939.396864,
-          "decode_tok_s": 146.433038
+          "prefill_tok_s": 1992.776035,
+          "decode_tok_s": 145.982967
         },
         {
           "x": 4096,
-          "prefill_tok_s": 1806.736413,
-          "decode_tok_s": 140.06748
+          "prefill_tok_s": 1874.994536,
+          "decode_tok_s": 139.557435
         },
         {
           "x": 8192,
-          "prefill_tok_s": 1581.141635,
-          "decode_tok_s": 129.99611
+          "prefill_tok_s": 1636.254515,
+          "decode_tok_s": 130.069625
         },
         {
           "x": 16384,
-          "prefill_tok_s": 1202.003593,
-          "decode_tok_s": 113.30303
+          "prefill_tok_s": 1228.712397,
+          "decode_tok_s": 113.380492
         },
         {
           "x": 32768,
-          "prefill_tok_s": 787.60845,
-          "decode_tok_s": 90.617495
+          "prefill_tok_s": 800.749299,
+          "decode_tok_s": 90.719512
         }
       ],
       "quality": "raw engine shape characterization, not a language-quality gate or HTTP serving result",
-      "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-fused/sweep-fast.json"
+      "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/sweep-fast.json"
     }
   ],
   "views": [

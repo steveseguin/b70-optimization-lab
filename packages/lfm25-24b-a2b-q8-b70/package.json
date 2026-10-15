@@ -10,7 +10,7 @@
   "model_family": "LFM2.5",
   "publisher": "Liquid AI",
   "variant": "24B A2B",
-  "summary": "Liquid AI's LFM2.5 24B mixture-of-experts (about 2B active) on one Arc Pro B70 in 8-bit form, 3.3x faster than llama.cpp's plain SYCL path with every token and log-probability identical to it.",
+  "summary": "Liquid AI's LFM2.5 24B mixture-of-experts (about 2B active) on one Arc Pro B70 in 8-bit form, 3.3x faster than llama.cpp's plain SYCL path with every token and log-probability identical to it, and prompts read at about 1,700 tokens a second.",
   "quantization": "Q8_0",
   "runtime_label": "llama.cpp SYCL + lab patch",
   "operating_systems": [
@@ -36,13 +36,13 @@
   ],
   "published_at": "2026-10-15",
   "featured_metric": {
-   "value": 138.21653370371516,
+   "value": 137.18000895373018,
    "unit": "tok/s",
    "label": "strict class-balanced decode",
    "scope": "Median of two fresh-server class-balanced medians over the complete 12-prompt/six-class, 512-cap, cache-zero native HTTP suite; one B70, one user, F16 KV, 32K context. Every token array identical to the plain SYCL reference path (12/12 on both servers), top-8 log-probabilities bit-identical on the 12-prompt probe and three long prompts; canaries passed.",
-   "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-fused/summary.json"
+   "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/summary.json"
   },
-  "benchmark_status": "Package check 2026-10-15: built from this folder by build.sh and run by serve.sh; reference 41.7 tok/s and the unfused fast path 112.2 tok/s on the same build."
+  "benchmark_status": "Package check 2026-10-15 (v3): built from this folder by build.sh and run by serve.sh; reference 41.7 tok/s and the unfused fast path 111.7 tok/s on the same build. The server reads prompts at 1,709 / 1,652 / 1,247 tok/s (1,775 / 7,314 / 26,138 tokens), where the previous build read 1,124 / 1,119 / 924."
  },
  "contributors": [
   {
@@ -50,10 +50,10 @@
    "name": "neural.download lab",
    "kind": "lab",
    "profile": "https://github.com/steveseguin/b70-optimization-lab",
-   "contribution": "Bring-up, exact reordered-layout kernels (DMMV and expert MMVQ in the reference order), twelve exact kernel fusions, identity gates, package.",
+   "contribution": "Bring-up, exact reordered-layout kernels (DMMV and expert MMVQ in the reference order), twelve exact kernel fusions, a steadier prompt-path weight conversion, identity gates, package.",
    "status": "integrated",
-   "validated_effect": "41.7 -> 138.2 tok/s with identical output",
-   "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-fused/summary.json"
+   "validated_effect": "41.7 -> 137.2 tok/s with identical output; prompts read 35-52% faster than the previous build",
+   "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/summary.json"
   }
  ],
  "performance_profiles": [
@@ -64,31 +64,31 @@
    "unit": "tok/s",
    "x_label": "Existing context depth before tg128",
    "scope": "llama-bench raw engine rate on the fast path (tg128, fa on, F16 KV, 3 reps each); not the HTTP suite metric. Measured points only.",
-   "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-fused/sweep-fast.json",
+   "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/sweep-fast.json",
    "points": [
     {
      "context_tokens": 2048,
-     "value": 146.433038,
+     "value": 145.982967,
      "samples": 3
     },
     {
      "context_tokens": 4096,
-     "value": 140.06748,
+     "value": 139.557435,
      "samples": 3
     },
     {
      "context_tokens": 8192,
-     "value": 129.99611,
+     "value": 130.069625,
      "samples": 3
     },
     {
      "context_tokens": 16384,
-     "value": 113.30303,
+     "value": 113.380492,
      "samples": 3
     },
     {
      "context_tokens": 32768,
-     "value": 90.617495,
+     "value": 90.719512,
      "samples": 3
     }
    ]
@@ -99,33 +99,66 @@
    "metric": "prefill",
    "unit": "tok/s",
    "x_label": "Existing context depth before pp2048",
-   "scope": "llama-bench raw engine rate on the fast path (pp2048 alone, -n 0, fa on, F16 KV, 3 reps each). Measured points only.",
-   "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-fused/sweep-prefill.json",
+   "scope": "llama-bench raw engine rate on the fast path (pp2048, each measured right after a tg128 run, so on the weight layout a running server uses; fa on, F16 KV, 3 reps each). Measured points only.",
+   "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/sweep-fast.json",
    "points": [
     {
      "context_tokens": 2048,
-     "value": 1939.396864,
+     "value": 1992.776035,
      "samples": 3
     },
     {
      "context_tokens": 4096,
-     "value": 1806.736413,
+     "value": 1874.994536,
      "samples": 3
     },
     {
      "context_tokens": 8192,
-     "value": 1581.141635,
+     "value": 1636.254515,
      "samples": 3
     },
     {
      "context_tokens": 16384,
-     "value": 1202.003593,
+     "value": 1228.712397,
      "samples": 3
     },
     {
      "context_tokens": 32768,
-     "value": 787.60845,
+     "value": 800.749299,
      "samples": 3
+    }
+   ]
+  },
+  {
+   "id": "server-prompt-reading",
+   "label": "Prompt reading speed as the server reports it",
+   "metric": "prefill",
+   "unit": "tok/s",
+   "public_label": "Reading speed (prefill) · one user · server counters",
+   "public_scope": "How fast the server reads a whole prompt before the answer starts, by the server's own counters, one user, prompt cache off, after it has answered other requests.",
+   "x_metric": "context_tokens",
+   "x_label": "Prompt length (tokens)",
+   "measurement_kind": "server_prefill",
+   "scope": "serve.sh fast, server B of the package check; three long prompts (lab text), each twice; mean of the two.",
+   "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/prompt-rate-fast-b.json",
+   "points": [
+    {
+     "context_tokens": 1775,
+     "value": 1708.65,
+     "samples": 2,
+     "measured_prompt_tokens": 1775
+    },
+    {
+     "context_tokens": 7314,
+     "value": 1651.75,
+     "samples": 2,
+     "measured_prompt_tokens": 7314
+    },
+    {
+     "context_tokens": 26138,
+     "value": 1246.55,
+     "samples": 2,
+     "measured_prompt_tokens": 26138
     }
    ]
   }
@@ -154,9 +187,9 @@
  "project_patches": {
   "required": true,
   "items": [
-   "patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-fused-20261015.diff.gz.b64"
+   "patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-fused-prefill-20261015.diff.gz.b64"
   ],
-  "decoded_sha256": "ab8b7bc86ecd60ea2244fd4be9ee30dd2baf212fcb7430373c4e51e64d18843c"
+  "decoded_sha256": "4b1a4cd014daafb74e2e44d2fc9c19e49d9d9e2626d1a29b998d919ce8d7af07"
  },
  "commands": {
   "preflight": "python3 scripts/verify-neural-download-model.py repro/lfm25-24b-a2b-q8-b70/model-manifest.json \"$MODEL_DIR\" && SOURCE_DIR=\"$SOURCE_DIR\" repro/lfm25-24b-a2b-q8-b70/build.sh",
@@ -171,7 +204,7 @@
   "repro/lfm25-24b-a2b-q8-b70/serve.sh",
   "repro/lfm25-24b-a2b-q8-b70/check.sh",
   "repro/lfm25-24b-a2b-q8-b70/model-manifest.json",
-  "patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-fused-20261015.diff.gz.b64",
+  "patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-fused-prefill-20261015.diff.gz.b64",
   "scripts/verify-neural-download-model.py",
   "scripts/bench-openai-realistic-suite.py",
   "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
@@ -179,23 +212,26 @@
   "experiments/lfm25-24b-a2b-b70/data/r0-suite-a.json",
   "experiments/lfm25-24b-a2b-b70/scripts/compare_arrays.py",
   "experiments/lfm25-24b-a2b-b70/notes/2026-10-14-lfm25-24b-a2b-bringup.md",
-  "data/2026-10-15-lfm25-24b-a2b-package-check-fused/summary.json",
-  "data/2026-10-15-lfm25-24b-a2b-package-check-fused/sweep-fast.json",
-  "data/2026-10-15-lfm25-24b-a2b-package-check-fused/sweep-prefill.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/summary.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/sweep-fast.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/prompt-rate-fast-b.json",
   "docs/neural-download-packet-standard.md"
  ],
  "evidence": [
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/summary.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/ref.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/unfused.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/fast-a.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/fast-b.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/canaries-fast-b.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/probe-fast-b.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/probe-reference-r0.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/build-receipt.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/sweep-fast.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/prompt-rate-fast-b.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/prompt-rate-v2-build-a.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/prompt-rate-v2-build-b.json",
   "data/2026-10-15-lfm25-24b-a2b-package-check-fused/summary.json",
-  "data/2026-10-15-lfm25-24b-a2b-package-check-fused/ref.json",
-  "data/2026-10-15-lfm25-24b-a2b-package-check-fused/unfused.json",
-  "data/2026-10-15-lfm25-24b-a2b-package-check-fused/fast-a.json",
-  "data/2026-10-15-lfm25-24b-a2b-package-check-fused/fast-b.json",
-  "data/2026-10-15-lfm25-24b-a2b-package-check-fused/canaries-fast-b.json",
-  "data/2026-10-15-lfm25-24b-a2b-package-check-fused/probe-fast-b.json",
-  "data/2026-10-15-lfm25-24b-a2b-package-check-fused/probe-reference-r0.json",
-  "data/2026-10-15-lfm25-24b-a2b-package-check-fused/build-receipt.json",
-  "data/2026-10-15-lfm25-24b-a2b-package-check-fused/sweep-fast.json",
-  "data/2026-10-15-lfm25-24b-a2b-package-check-fused/sweep-prefill.json",
   "data/2026-10-15-lfm25-24b-a2b-package-check/summary.json",
   "experiments/lfm25-24b-a2b-b70/data/x1final-suite-a.json",
   "experiments/lfm25-24b-a2b-b70/data/x1final-suite-b.json"

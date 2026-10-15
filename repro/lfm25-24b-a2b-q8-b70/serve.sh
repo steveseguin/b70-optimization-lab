@@ -48,6 +48,8 @@ case ${mode} in
       export LLAMA_SYCL_FUSE_NORM_Q8=1             # the norm before the experts writes their 8-bit input
       export LLAMA_SYCL_FUSE_MOE_DOWN_SUM=1        # the experts' down product and their weighted sum
       export LLAMA_SYCL_FUSE_CONV_STATE_ROWS=1     # short-convolution state read straight from its cache
+      export LLAMA_SYCL_Q8_0_REORDER_DEQ_COALESCED=1  # prompt reading: weights converted in memory order (same
+                                                     # values; the old order ran up to ~35 % slower on some builds)
     fi
     ;;
   reference)

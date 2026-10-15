@@ -1,0 +1,162 @@
+{
+ "format": "lfm25-24b-a2b-package-check-v3",
+ "date": "2026-10-15",
+ "what": "repro/lfm25-24b-a2b-q8-b70 (v3: exact fusions + the steadier prompt-path conversion) built by its build.sh (fresh upstream clone + the aggregate patch) and run by its serve.sh/check.sh on card 1 of the lab host, Gemma on card 0; registered in experiments/lfm25-24b-a2b-b70/notes/2026-10-14-lfm25-24b-a2b-bringup.md before running",
+ "build_receipt": {
+  "base_commit": "c926ad09857517978575d6a74d225b463f7417a0",
+  "aggregate_patch_sha256": "4b1a4cd014daafb74e2e44d2fc9c19e49d9d9e2626d1a29b998d919ce8d7af07",
+  "icpx_version": "Intel(R) oneAPI DPC++/C++ Compiler 2026.1.1 (2026.1.1.20260724)",
+  "llama_server_sha256": "9f6fb6639dc255d5b06eaa77f7d2d109026cff3f51aa268efd980664da387dfb"
+ },
+ "runs": {
+  "ref": {
+   "mode": "reference",
+   "class_balanced_tok_s": 41.75140344638591,
+   "completed_prompts": 12,
+   "suite_checks_passed": true,
+   "token_arrays_identical_to_lab_reference_r0": 12,
+   "evidence": "ref.json"
+  },
+  "unfused": {
+   "mode": "unfused",
+   "class_balanced_tok_s": 111.68538680241846,
+   "completed_prompts": 12,
+   "suite_checks_passed": true,
+   "token_arrays_identical_to_lab_reference_r0": 12,
+   "evidence": "unfused.json"
+  },
+  "fast-a": {
+   "mode": "fast",
+   "class_balanced_tok_s": 136.3184889657721,
+   "completed_prompts": 12,
+   "suite_checks_passed": true,
+   "token_arrays_identical_to_lab_reference_r0": 12,
+   "evidence": "fast-a.json"
+  },
+  "fast-b": {
+   "mode": "fast",
+   "class_balanced_tok_s": 138.04152894168826,
+   "completed_prompts": 12,
+   "suite_checks_passed": true,
+   "token_arrays_identical_to_lab_reference_r0": 12,
+   "evidence": "fast-b.json"
+  }
+ },
+ "fast_a_vs_fast_b_identical": 12,
+ "reference_vs_fast_b_identical": 12,
+ "fast_class_balanced_tok_s_median_of_two_servers": 137.18000895373018,
+ "logprob_probe_fast_b_vs_r0": {
+  "bit_exact": 12,
+  "prompts": 12,
+  "what": "top-8 log-probabilities of every step, 12 suite prompts x 96 tokens, bit-identical to the lab reference R0 (probe-reference-r0.json)",
+  "evidence": "probe-fast-b.json"
+ },
+ "long_prompt_probe_fast_b_vs_r0": {
+  "bit_exact": 3,
+  "prompts": 3,
+  "what": "same check on three long prompts of about 2K, 8K and 24K tokens (lab text, not published), 128 tokens each"
+ },
+ "canaries_fast_b_pass_all": true,
+ "suite": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json (12 prompts, six classes, 512 tokens, greedy, seed 42, cache_prompt false); metric = median over the six classes of each class median tok/s for tokens 1-100 after TTFT",
+ "server_prompt_rate": {
+  "what": "prompt reading speed as llama-server reports it (timings.prompt_per_second), one user, prompt cache off, after the server has answered other requests; the three long prompts (lab text, not published) each twice",
+  "v3_fast_b": {
+   "long-2k": {
+    "prompt_tokens": 1775,
+    "tok_s_rep1_rep2": [
+     1705.6,
+     1711.7
+    ]
+   },
+   "long-8k": {
+    "prompt_tokens": 7314,
+    "tok_s_rep1_rep2": [
+     1649.8,
+     1653.7
+    ]
+   },
+   "long-24k": {
+    "prompt_tokens": 26138,
+    "tok_s_rep1_rep2": [
+     1246.8,
+     1246.3
+    ]
+   }
+  },
+  "v2_published_build_two_servers": {
+   "a": {
+    "long-2k": {
+     "prompt_tokens": 1775,
+     "tok_s_rep1_rep2": [
+      1027.4,
+      1124.2
+     ]
+    },
+    "long-8k": {
+     "prompt_tokens": 7314,
+     "tok_s_rep1_rep2": [
+      1101.5,
+      1119.1
+     ]
+    },
+    "long-24k": {
+     "prompt_tokens": 26138,
+     "tok_s_rep1_rep2": [
+      917.8,
+      924.2
+     ]
+    }
+   },
+   "b": {
+    "long-2k": {
+     "prompt_tokens": 1775,
+     "tok_s_rep1_rep2": [
+      1026.8,
+      1124.3
+     ]
+    },
+    "long-8k": {
+     "prompt_tokens": 7314,
+     "tok_s_rep1_rep2": [
+      1100.3,
+      1118.7
+     ]
+    },
+    "long-24k": {
+     "prompt_tokens": 26138,
+     "tok_s_rep1_rep2": [
+      917.3,
+      924.3
+     ]
+    }
+   }
+  },
+  "why_v2_is_slower": "after the first decode step the Q8_0 weights are in the reordered layout; the prompt path converts them to FP16 per step, and the v2 conversion kernel (one 32-value block per lane) ran ~35% slower on the published build (its speed depends on the build). v3 converts 8 consecutive values per lane with the same arithmetic (same bytes; verified call by call) and gives the same speed on every build tried",
+  "evidence": [
+   "prompt-rate-fast-b.json",
+   "prompt-rate-v2-build-a.json",
+   "prompt-rate-v2-build-b.json"
+  ]
+ },
+ "sweep": {
+  "command": "llama-bench -ngl 99 -fa 1 -ctk f16 -ctv f16 -b 2048 -ub 512 -t 8 --poll 50 -p 2048 -n 128 -d 0,2048,4096,8192,16384,32768 -r 3 -o json, environment of serve.sh fast",
+  "note": "pp and tg alternate, so every pp point after depth 0 runs on weights a decode step has reordered, as in a server",
+  "pp2048_tok_s": {
+   "0": 2072.4,
+   "2048": 1992.8,
+   "4096": 1875.0,
+   "8192": 1636.3,
+   "16384": 1228.7,
+   "32768": 800.7
+  },
+  "tg128_tok_s": {
+   "0": 150.7,
+   "2048": 146.0,
+   "4096": 139.6,
+   "8192": 130.1,
+   "16384": 113.4,
+   "32768": 90.7
+  },
+  "evidence": "sweep-fast.json"
+ }
+}
