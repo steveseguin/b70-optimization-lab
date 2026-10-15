@@ -47,7 +47,7 @@ while True:
         open(os.path.join(Q,'companion-'+cname+('.done' if cok else '.fail')),'w').write(ctail+'\n')
         if not cok: open(os.path.join(Q,'GROUPFAIL-'+(cname.split('-')[1] if '-' in cname else cname)),'w').write(cname+'\n')
     last=time.time(); idle_deadline=time.time()+6*3600
-    gap=GAP_W if ('-W' in name or '-W' in cname) else GAP_K
+    gap=GAP_W if any(t in n for n in (name,cname) for t in ('-W','-chain')) else GAP_K  # chains end in model windows
     tail=''
     # p45 scripts log to S/<number>-<name>.log; p44 scripts used S/<name>.log. Read whichever exists.
     for lp in [os.path.join(S,name+'.log')]+([os.path.join(S,name.split('-',1)[1]+'.log')] if '-' in name else []):

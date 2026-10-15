@@ -147,6 +147,22 @@ Draft rank 1 is at parity with p44: the same-card control's all-prompt median is
 
 The hit-gap analysis (`notes/2026-10-15-p45-hit-cycle-gap.md`, `6ce93b038`) found that the rank-0-draft hit gap is mostly rank 1's longer half (the 22/26 split), plus about 0.49 ms of draft publication including a duplicate synchronous profiling pass. Speed repair 3 (packet-46 changes): remove the duplicate profiling for both placements, and a sealed 24/24-split rank-0-draft configuration at 4K only (32K is below the memory reserve).
 
+## Speed repair 3 (`75d2c459d`): NEW RECORD, submitted 2026-10-15
+
+Changes: draft publication with no duplicate synchronous profiling (both placements), and a sealed 24/24-split, draft-rank-0 configuration at 4K only (32K is refused because it would fall below the memory reserve). Chains K0-WSs passed on both pairs. WS128 results, all qualifying, 12/12 exact, acceptance 0.791:
+
+| Run | Cards | Class-balanced | All-prompt | Hit | Miss |
+|---|---|---:|---:|---:|---:|
+| 24/24 split, draft rank 0, run 1 (headline) | 0-1 | **38.157157** | 38.004151 | 22.73 | 41.28 |
+| 24/24 split, draft rank 0, run 2 | 0-1 | 38.2169 | 38.0306 | | |
+| 24/24 split, draft rank 0, run 3 | 0-1 | 38.2143 | 38.0431 | | |
+| Packet-44 control (interleaved) | 0-1 | | 37.7938 | | |
+| Draft rank 1 | 2-3 | 38.1312 | 37.8663 | 22.87 | 40.43 |
+
+The owner authorized the same 128-token scope as 2026-10-13. The payload declares the strict 512-cap gate as false. Submitted run 1: localmaxxing `cmv9j70v100v1le01q9jxyx2r`, APPROVED. It supersedes `cmv6pugme0020oa01fjrho6nx` (37.856264). Two earlier attempts returned HTTP 400 because the literal 1,754-character `commandSnippet` overflowed the server's parsed `extraFlags` limit; the snippet was compacted to the 2026-10-13 placeholder style. Full queue scripts are in `chains/970-978`.
+
+Next levers: miss cycles are still about 2 ms above p44 (restore plus rank-0 redo); a memory reduction would let the 24/24-dr0 configuration run at 32K; combine draft rank 1's lower miss cost with the 24/24 split's faster hits.
+
 ## Relaunch procedure (after fix 5, and audit 6 if it reseals)
 
 1. Confirm that the runner is not running and that `queue/STOP` holds the halt reason.
