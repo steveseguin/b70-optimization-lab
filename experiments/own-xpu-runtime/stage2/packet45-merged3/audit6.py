@@ -37,7 +37,9 @@ def verify(row=None):
  assert all(source_matches(P/n,h) for n,h in row['sources'].items()) and set(row['sources'])==set(SOURCES),'audit6 sources changed'
  assert maps_match(row['compiled_sources_sha256'],compiled_sources()),'audit6 compiled sources changed'
  # Fix6 inserts grouping validation lines; every copy expression stays identical.
- assert [{k:v for k,v in x.items() if k!='line'} for x in row['copy_sites']]==[{k:v for k,v in x.items() if k!='line'} for x in inventory()],'audit6 copy inventory changed'
+ if [{k:v for k,v in x.items() if k!='line'} for x in row['copy_sites']]!=[{k:v for k,v in x.items() if k!='line'} for x in inventory()]:
+  from speed1_qualification import audit_inventory_allowed
+  assert audit_inventory_allowed(row['copy_sites'],inventory()),'audit6 copy inventory changed'
  if row['rule_inventory']!=rules():
   gate_unchanged('audit6-gates.json')
   assert row['rule_inventory']==json.loads((P/'audit6-gates.json').read_text())['rule_inventory'],'audit6 rule inventory changed'

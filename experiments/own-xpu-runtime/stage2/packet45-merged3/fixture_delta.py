@@ -31,6 +31,11 @@ def verify_sources(old,current):
   assert old[main]==OLD_MAIN and current[main]==NEW_MAIN,'change outside fixture/fix6 repair'
   assert all(current[n]==baseline()['sources'][n] for n in expected),'change outside fixture/fix6 repair'
   expected.add(main)
+ from speed1_qualification import PINS,before
+ for n,h in PINS.items():
+  key=str((P/n).relative_to(ROOT))
+  assert old[key]==before()['sources'][key] and current[key]==h,'change outside fixture/SPEED1 repair'
+  expected.add(key)
  assert changed==expected,'change outside fixture-only repair'
  # Both are translation units, never included by production decode sources.
  for n in set(current)-expected:
@@ -68,6 +73,6 @@ def verify(artifacts):
   linked_into_model_binary=True,called_by_production_decode=True,
   seal_amendment=__import__('seal6_amendment').verify(),
   historical_real_cases=6,fresh_real_cases=0,
-  reuse_authorization='SEAL6 owner directive 2026-10-15: exact fix6 grouping change; device suite oracle is real-model authority; no pre-device real-model CPU rerun',
+  reuse_authorization='SEAL6 owner directive 2026-10-15: exact fix6 grouping and SPEED1 snapshot transport/small-FFN repair; device suite oracle is real-model authority; no pre-device real-model CPU rerun',
   historical_model_artifacts_sha256={n:h for n,h in before['artifacts_sha256'].items() if n.endswith('/own-rt-iq3')},
   baseline_seal_sha256=digest(P/'evidence/copy-extent-fix/before-build-receipt.json'))

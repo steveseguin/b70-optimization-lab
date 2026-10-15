@@ -8,7 +8,7 @@ def block(text,start):
  while depth:
   depth+=(text[end]=='{')-(text[end]=='}');end+=1
  return text[begin:end]
-def generate(label):
+def generate(label, transform=None):
  source=E/'before-main.cpp.txt' if label=='before' else P/'main.cpp'
  main=source.read_text();rank=(P/'rank.hpp').read_text();mtp=(P/'mtp.hpp').read_text()
  group=main[main.index('    // Only move sibling projections'):main.index('\n  void guard()')].rsplit('\n  }',1)[0]
@@ -54,6 +54,7 @@ int main(int argc,char**argv){try{
  return 0;
  }catch(const std::exception&e){std::cout<<"{\\"passed\\":false,\\"error\\":\\""<<e.what()<<"\\"}\\n";return 1;}}
 '''
+ if transform is not None:code=transform(code)
  path=B/(label+'.cpp');path.write_text(code)
  cmd=['g++','-std=c++20','-O0','-DOWN_RT_HOST_ONLY','-ffunction-sections','-fdata-sections','-Wl,--gc-sections','-fno-fast-math','-ffp-contract=off','-I'+str(P),'-I'+str(P.parent/'packet2/kernels'),'-I'+str(P.parents[1]/'stage1/packet3-prep/src'),str(path),str(P/'small_gemv.cpp'),str(P.parent/'packet2/loader/gguf.cpp'),'-o',str(B/label)]
  with (E/(label+'-compile.log')).open('w') as out:r=subprocess.run(cmd,stdout=out,stderr=subprocess.STDOUT)
@@ -62,7 +63,8 @@ int main(int argc,char**argv){try{
 def verify():
  row=json.loads((P/'fix6-plan-gates.json').read_text())
  assert row['passed'] and row['device_executed'] is False and row['weight_bytes_read']==0
- for n,h in row['sources_sha256'].items():assert digest(P/n)==h,'stale fix6 plan source '+n
+ from seal6_amendment import source_matches
+ for n,h in row['sources_sha256'].items():assert source_matches(P/n,h),'stale fix6 plan source '+n
  for n,h in row['evidence_sha256'].items():assert digest(P/n)==h,'stale fix6 plan evidence '+n
  assert digest(P/'build/input/plan.tsv')==row['metadata_sha256'],'plan metadata changed'
  assert digest(B/'after')==row['binary_sha256'],'plan gate binary changed'

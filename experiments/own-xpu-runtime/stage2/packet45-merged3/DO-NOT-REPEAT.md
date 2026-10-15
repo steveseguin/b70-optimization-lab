@@ -2,6 +2,8 @@
 
 | Finding | Evidence | Next condition |
 |---|---|---|
+| Write-before-read was proposed as sufficient to exclude overwritten snapshot outputs; terminal full-state rollback still observes the old bytes | [SPEED1](SPEED1-CLOSEOUT.md), four deliberately omitted streams extents rejected by the full-state comparator; standalone scratch coverage is incomplete | Use private speculative storage or proved modified-range backups; never mask output/scratch state hashes |
+| P39 shared-up/activation prevents the selected small-FFN tuple and adds 192 target commands | [SPEED1 plan sweep](speed1-plan-gates.json), 48 plan/dispatch rows | Keep only this epilogue disabled until a complete composition wins an end-to-end A/B |
 | A P39 shared-up activation changed the small-FFN member inputs; the grouper treated the rewritten tuple as a malformed primitive group | [Fix 6](FIX6-CLOSEOUT.md), both measured dispatches reproduce at blk.24.shexpup | Rehearse actual measured combinations and forced all-fusion plans; skip absent/rewritten tuples while keeping malformed primitive groups fatal |
 | Full-bank P39 upload exceeded the 128 MiB CopyEngine limit; validation-only K2 shrank geometry and never selected measured winners | [Copy-extent closeout](COPY-EXTENT-CLOSEOUT.md), exact CPU reproduction and full registry adoption sweep | Keep bounded staging, full production bank/rotation coverage and source-bound adoption proof in every rehearsal/seal |
 | CPU pre-seal rehearsal copied stale host hashes from the previous final seal after a kernel rebuild | [Route+gather closeout](ROUTE-GATHER-CLOSEOUT.md), archived refused CPU chain, seven identity tests | Read current source-verified mode-build identities; retain strict per-binary hash checks |

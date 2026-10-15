@@ -1,0 +1,78 @@
+-- Configuring done (0.6s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/asan
+[  3%] Building CXX object CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet45-merged3/p39_fixture.cpp.o
+[  7%] Building CXX object CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet45-merged3/small_gemv_fixture.cpp.o
+[ 10%] Building CXX object CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet45-merged3/gemv_timing.cpp.o
+[ 14%] Building CXX object CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet45-merged3/adapter_fixture.cpp.o
+[ 17%] Building CXX object CMakeFiles/programs.dir/entry-main.cpp.o
+[ 21%] Building CXX object CMakeFiles/programs.dir/entry-nongemv_fixture.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/nongemv_fixture.cpp:1,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/asan/entry-nongemv_fixture.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp: In function ‘int packet26_fixture_entry(int, char**)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp:277:84: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  277 | #endif
+      |                                                                                    ^      
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/failure.hpp:6,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp:21:
+/usr/include/openssl/sha.h:73:27: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                           ^~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp:277:185: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  277 | #endif
+      |                                                                                                                                                                                         ^                                  
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp:277:259: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  277 | #endif
+      |                                                                                                                                                                                                                                                                   ^             
+/usr/include/openssl/sha.h:76:27: note: declared here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      |                           ^~~~~~~~~~~~
+[ 25%] Building CXX object CMakeFiles/programs.dir/entry-k2_fixture.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/k2_fixture.cpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/asan/entry-k2_fixture.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp: In function ‘int packet26_k2_entry(int, char**)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp:277:84: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  277 | #endif
+      |                                                                                    ^      
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/failure.hpp:6,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp:21:
+/usr/include/openssl/sha.h:73:27: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                           ^~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp:277:185: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  277 | #endif
+      |                                                                                                                                                                                         ^                                  
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp:277:259: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  277 | #endif
+      |                                                                                                                                                                                                                                                                   ^             
+/usr/include/openssl/sha.h:76:27: note: declared here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      |                           ^~~~~~~~~~~~
+[ 92%] Built target programs
+[ 96%] Building CXX object CMakeFiles/own-rt-iq3.dir/own-rt-iq3-entry.cpp.o
+[100%] Linking CXX executable own-rt-iq3
+[100%] Built target own-rt-iq3
+[  3%] Building CXX object CMakeFiles/fixture_validation.dir/validation/adapter.cpp.o
+[ 90%] Built target programs
+[ 93%] Building CXX object CMakeFiles/fixture_validation.dir/validation/performance.cpp.o
+[ 93%] Built target fixture_validation
+[ 96%] Building CXX object CMakeFiles/nongemv-fixtures.dir/nongemv-fixtures-entry.cpp.o
+[100%] Linking CXX executable nongemv-fixtures
+[100%] Built target nongemv-fixtures
+[  6%] Built target fixture_validation
+[ 93%] Built target programs
+[ 96%] Building CXX object CMakeFiles/k2-fixtures.dir/k2-fixtures-entry.cpp.o
+[100%] Linking CXX executable k2-fixtures
+[100%] Built target k2-fixtures
+[ 92%] Built target programs
+[ 96%] Linking CXX executable p33-linked-fixtures
+[100%] Built target p33-linked-fixtures
+[ 92%] Built target programs
+[ 96%] Linking CXX executable p39-merged-fixtures
+[100%] Built target p39-merged-fixtures

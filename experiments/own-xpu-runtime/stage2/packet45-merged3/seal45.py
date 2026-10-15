@@ -3,7 +3,7 @@
 import hashlib,json
 from pathlib import Path
 P=Path(__file__).resolve().parent;B=P/'build';ROOT=P.parents[3]
-GATES=('seal6-amendment-tests.json','fix6-plan-gates.json','diagnostic-unsealed-tests.json','diagnostic-coordinator-gates.json','audit6-tests.json','fixture-delta-tests.json','audit6-gates.json','copy-adoption-gates.json','fusion-matrix-gates.json','hc-activation-gates.json','cpu-merged-gates.json','cpu-real-gates.json','real-cross-placement-gates.json','real-cross-placement-tests.json','capacity-selection-gates.json',
+GATES=('speed1-plan-gates.json','speed1-snapshot-gates.json','speed1-snapshot-inventory.json','seal6-amendment-tests.json','fix6-plan-gates.json','diagnostic-unsealed-tests.json','diagnostic-coordinator-gates.json','audit6-tests.json','fixture-delta-tests.json','audit6-gates.json','copy-adoption-gates.json','fusion-matrix-gates.json','hc-activation-gates.json','cpu-merged-gates.json','cpu-real-gates.json','real-cross-placement-gates.json','real-cross-placement-tests.json','capacity-selection-gates.json',
  'capacity-draft-gates.json','capacity-fixture-gates.json','asan-fixture-gates.json','p33-linked-fixture-gates.json',
  'p39-merged-fixture-gates.json','p45-kernel-tests.json','seal45-binding-tests.json','wrapper-merge-tests.json',
  'context-window-gates.json','memory-plan-gates.json','owner-gates.json','merged-campaign-completion-gates.json',
@@ -354,7 +354,7 @@ def main():
  source_hashes=sources()
  for path in (P/'coordinator_windows.sh',P/'memory-plan.json',P/'merge-start.json',P/'draft-baseline-oracle.json',P/'seal6-amendment.json',ROOT/'scripts/promotion_evidence.py',official_path):source_hashes[str(path.relative_to(ROOT))]=sha(path)
  review_hashes={n:sha(P/n) for n in ('review-draft-rank0.md','review-memory.md')}
- counts=dict(audit6_windows=28,audit6_mutation_tests=8,fixture_delta_tests=gates['fixture-delta-tests.json']['checks'],fresh_real_sentinel_cases=0,historical_real_cases_reused=6,fusion_matrix_checks=gates['fusion-matrix-gates.json']['checks'],fusion_compiler_arms=6,hc_activation_checks=4752,hc_compiler_arms=6,merged_historical_cases=79,real_native_cases=6,real_token_matches=48,real_layer_fixture_matches=2304,
+ counts=dict(speed1_plan_dispatch_rows=48,speed1_mini_cases=42,speed1_full_state_checks=36,speed1_required_extent_negative_controls=4,audit6_windows=28,audit6_mutation_tests=8,fixture_delta_tests=gates['fixture-delta-tests.json']['checks'],fresh_real_sentinel_cases=0,historical_real_cases_reused=6,fusion_matrix_checks=gates['fusion-matrix-gates.json']['checks'],fusion_compiler_arms=6,hc_activation_checks=4752,hc_compiler_arms=6,merged_historical_cases=79,real_native_cases=6,real_token_matches=48,real_layer_fixture_matches=2304,
    fix6_plan_dispatch_rows=48,fix6_group_mutation_checks=9,seal6_amendment_tests=gates['seal6-amendment-tests.json']['checks'],real_cross_placement_pairs=3,real_draft_semantic_buffers=17,
    selection_checks=sum(r['result']['checks'] for r in gates['capacity-selection-gates.json']['rows']),
    draft_capture_arms=6,draft_valid_fixture_matches=378,
@@ -383,7 +383,7 @@ def main():
   pending=['coordinator device chain at each capacity and draft placement','merged per-class and full-model speed',
     'measured 22/26 balance and reverse-handoff overlap','actual card allocation/driver overhead',
     'complete manifest-bound 32/64/128-token model suites on merged device binary'],
-  real_cpu_scope='six historical pre-fix6 native first-eight-token checks of the first fixed suite prompt; not full suite or speed evidence')
+  real_cpu_scope='six historical pre-fix6/pre-SPEED1 native first-eight-token checks of the first fixed suite prompt; not full suite or speed evidence')
  save('build-receipt.json',receipt)
  (P/'BINARY-HASHES.md').write_text('# Binary SHA256\n\nBuilt on the CPU; no device program executed.\n\n| Binary | SHA256 |\n|---|---|\n'+''.join(f'| {n} | `{h}` |\n' for n,h in sorted(actual_artifacts.items())))
  print(json.dumps(dict(passed=True,gate_receipts=len(GATES),binary_hashes=len(artifacts),counts=counts)))

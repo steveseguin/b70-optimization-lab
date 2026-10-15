@@ -7,6 +7,12 @@ sys.path.insert(0,str(a.ROOT/'scripts'))
 from promotion_evidence import validate_packet45_device_evidence
 class Amendment(unittest.TestCase):
  def test_current(self):self.assertEqual(a.verify()['plan_dispatch_rows'],48)
+ def test_speed1_scope(self):
+  from speed1_qualification import PINS,before
+  for n,h in PINS.items():
+   self.assertTrue(a.source_matches(a.P/n,before()['sources'][str((a.P/n).relative_to(a.ROOT))]))
+   self.assertFalse(a.source_matches(a.P/n,'0'*64))
+  self.assertEqual(a.verify()['speed1_extension']['mini_checks'],36)
  def test_main_tamper(self):
   from build import compiled_sources
   now=compiled_sources();now[str((a.P/'main.cpp').relative_to(a.ROOT))]='0'*64

@@ -20,7 +20,11 @@ template<class TypeOf>void fuse_plan(flash::Plan&p,TypeOf type_of){
    if(*key&&enabled(key)&&packet26::dispatch.gemv_for(l.label)!="p42.gate.packed"){absorb(prefix+"expsgate.check");absorb(prefix+"expsup.check");tag(Kind::expert_checks);}
   }else if(cls=="expsdown"&&enabled("down-status")){absorb(prefix+"expsdown.check");tag(Kind::down_status);}
   else if((cls=="hc.a.low"||cls=="hc.f.low"||cls=="final.low")&&enabled("hc-low-act")){absorb(l.label.substr(0,l.label.size()-3)+"act");tag(Kind::silu_div4);}
-  else if(cls=="shexpup") {auto key=type_of(l.weights[0])==iq3::Type::Q6_K?"shared-up-act-q6":"shared-up-act-q8";if(enabled(key)){absorb(prefix+"shexpact");tag(Kind::shared_act);}}
+  // SPEED1: keep the primitive shared-up site and activation separate. The
+  // selected small.ffn tuple owns router/gate/up/shared_gate together; absorbing
+  // only shared-up made that tuple unavailable and stranded its siblings on r5.
+  // Both shared-up epilogues remain available as isolated K2 fixtures, but are
+  // disabled in production plans until the complete composition is measured.
   else if(cls=="attention"&&l.op=="gemv"&&type_of(l.weights[0])==iq3::Type::Q6_K&&enabled("attention-combine")){absorb(prefix+"attn.combine");tag(Kind::attention_combine);}
   else if(cls=="shexpdown"&&enabled("shared-down-combine")){
    // The gate and existing ten-expert mixture precede this GEMV; the latter

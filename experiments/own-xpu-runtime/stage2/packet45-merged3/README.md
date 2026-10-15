@@ -108,3 +108,9 @@ The full-size/adoption receipt is required by the coordinator rehearsal and seal
 The [October 15 fix 6 closeout](FIX6-CLOSEOUT.md) records the measured-dispatch P39/small-GEMV composition failure, the plan-local fallback and the 48-row metadata-only plan sweep. Qualification status and build identities are recorded there; prior seals do not qualify changed binaries.
 
 Seal 6: [owner-directed ASAN rebuild and exact fix6 device-oracle amendment](SEAL6-CLOSEOUT.md). Historical CPU results are retained; speed publication requires passing device suite windows.
+
+The [October 15 SPEED1 repair](SPEED1-CLOSEOUT.md) batches the same strict snapshot
+bytes into 32/34 submissions and restores small-FFN composition, removing 192
+extra target commands. Whole-buffer writer exclusions failed the full-state proof
+and remain unimplemented; byte traffic is unchanged. Fresh mini/plan gates and
+the named seal-6 extension precede coordinator device qualification.
