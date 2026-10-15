@@ -249,6 +249,20 @@ Read-only studies after SPEED7:
 
 Remaining structural candidate: k=2 drafting with the official MTP head. Its second-draft acceptance is unmeasured, and consecutive one-step acceptance is not equivalent. A diagnostic-only acceptance probe is the decisive cheap experiment.
 
+## k=2 MTP acceptance probe (diagnostic, never qualifying; 2026-10-15 21:28-21:53)
+
+Probe build `646a22972`. It adds a diagnostic-only second autoregressive step of the official MTP head, gated behind `--diagnostic-unsealed`; tokens, guesses and state are unchanged. It ran the full chain plus the 128-token WS suite on cards 0-1, 23/25 with draft rank 1 (`build/k2probe-c4096-dr1-s23-cards01-gpu/`, analysis `k2-acceptance.json`). Results over 12 prompts × 128 tokens:
+
+| Measure | Value |
+|---|---|
+| p(g1) | 0.787 |
+| p(g2 \| g1) | 0.714 (code 0.651, structured writing 0.782) |
+| p(g2) unconditional | 0.593 |
+| Expected tokens per k=2 cycle | 2.348 |
+| Extra drafter time | 3.23 ms (D1 + D2 = 6.67 ms) |
+
+k=2 beats 39.422 only if three-position target verification T3 < 52.90 ms. T3 is not measured yet; a read-only estimate from the prefill timings and kernel M-scaling is in progress (`notes/2026-10-15-p45-k2-t3-estimate.md`).
+
 ## Relaunch procedure (after fix 5, and audit 6 if it reseals)
 
 1. Confirm that the runner is not running and that `queue/STOP` holds the halt reason.
