@@ -1,5 +1,7 @@
 # Current Workspace State
 
+**October 15, fix 6:** The coordinator reports K0, K1a, K1b, K2 and W0p passed both pairs; KD then failed in host-only grouping before device contact, with no fault latch. The plan-local repair passes 48 metadata-only rows and nine strictness checks. GNU/device binaries are rebuilt; qualifying reseal is held at the owner's sanitizer/source-provenance stop rule. No model CPU suite or device binary ran in this repair session. [Evidence and status](experiments/own-xpu-runtime/stage2/packet45-merged3/FIX6-CLOSEOUT.md).
+
 **October 15, packet45 CPU handoff:** Fix 5 and the production-size audit are committed. The diagnostic mode and minimum CPU reseal are complete. Diagnostic runs remain nonqualifying; fresh qualifying chains can use the new seal. No device work was run by this repair session. The source/build tree is frozen after the diagnostic commit; device ownership stays with the coordinator. [Commands and evidence](experiments/own-xpu-runtime/stage2/packet45-merged3/DIAGNOSTIC-UNSEALED.md).
 
 Consolidated **2026-10-10** from the recorded ledger; this summary does not establish freshly verified host state.

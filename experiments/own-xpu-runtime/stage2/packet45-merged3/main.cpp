@@ -652,9 +652,16 @@ public:
       }else if(cls=="router"&&enabled("small.ffn")){
         key="small.ffn";auto prefix=first.label.substr(0,first.label.size()-6);labels={first.label,prefix+"shexpgate",prefix+"shexpup",prefix+"shared_gate"};
       }else continue;
-      SmallGroup group;for(const auto& label:labels){const flash::Launch* found=nullptr;for(const auto& member:p.launches)if(member.label==label){require(!found,"duplicate small GEMV site");found=&member;}
-        require(found&&found->op=="gemv"&&found->card==first.card&&found->inputs==first.inputs,"small GEMV sibling schedule/input");group.members.push_back(found);
+      SmallGroup group;bool available=true;
+      for(const auto& label:labels){const flash::Launch* found=nullptr;for(const auto& member:p.launches)if(member.label==label){require(!found,"duplicate small GEMV site");found=&member;}
+        // A partial plan or an earlier P39 epilogue rewrite has no complete
+        // primitive GEMV tuple here. Keep its existing schedule and arithmetic.
+        if(!found||p39::tagged(*found))available=false;
+        group.members.push_back(found);
       }
+      if(!available)continue;
+      for(const auto* found:group.members)
+        require(found->op=="gemv"&&found->card==first.card&&found->inputs==first.inputs,"small GEMV sibling schedule/input");
       // Reordering is legal only while inputs remain unchanged, outputs are not
       // overwritten, and no intervening site reads the not-yet-original output.
       // Builder appends active/error control labels to every GEMV's metadata.

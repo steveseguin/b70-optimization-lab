@@ -1,0 +1,36 @@
+[
+  {
+    "draft_rank": 0,
+    "command": [
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/fix6/before",
+      "KD",
+      "4096",
+      "0",
+      "1",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/evidence/fix6/dispatch-dr0.json"
+    ],
+    "exit_code": 1,
+    "diagnosis": "group=small.ffn first=blk.24.router label=blk.24.shexpup missing=0 op=gemv other_card=0 different_inputs=1 p39_tag=1\n",
+    "result": {
+      "passed": false,
+      "error": "small GEMV sibling schedule/input"
+    }
+  },
+  {
+    "draft_rank": 1,
+    "command": [
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/fix6/before",
+      "KD",
+      "4096",
+      "1",
+      "1",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/evidence/fix6/dispatch-dr1.json"
+    ],
+    "exit_code": 1,
+    "diagnosis": "group=small.ffn first=blk.24.router label=blk.24.shexpup missing=0 op=gemv other_card=0 different_inputs=1 p39_tag=1\n",
+    "result": {
+      "passed": false,
+      "error": "small GEMV sibling schedule/input"
+    }
+  }
+]

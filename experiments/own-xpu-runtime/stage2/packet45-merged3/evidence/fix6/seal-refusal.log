@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/seal45.py", line 255, in main
+    artifacts,build_receipts=build_provenance();precision,links=precision_audit()
+                             ^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/seal_context.py", line 82, in build_provenance
+    require(row['compiled_sources_sha256']==current,'compiled source identity changed after '+mode+' build')
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/seal_context.py", line 29, in require
+    if not ok:raise ValueError(message)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: compiled source identity changed after icpx-host build

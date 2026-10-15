@@ -104,3 +104,5 @@ setup failure: P39 tried to upload a complete 268.7 MB expert bank in one
 eight P39 classes at full production geometry, and a registry-driven sweep
 loads every selectable GEMV/attention choice through the actual K2 owners.
 The full-size/adoption receipt is required by the coordinator rehearsal and seal.
+
+The [October 15 fix 6 closeout](FIX6-CLOSEOUT.md) records the measured-dispatch P39/small-GEMV composition failure, the plan-local fallback and the 48-row metadata-only plan sweep. Qualification status and build identities are recorded there; prior seals do not qualify changed binaries.
