@@ -268,6 +268,28 @@ def with_memory_note(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [{"role": "system", "content": MEMORY_NOTE.strip()}] + messages
 
 
+def one_system_message(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The leading system messages joined into one. Some agents send two (ForgeCode: its instructions, then the
+    system information); Qwen's chat template takes a system message only at the very start, so the server refused
+    such a request outright. A conversation with one system message (or none) is returned unchanged."""
+    n = 0
+    while n < len(messages) and messages[n].get("role") in ("system", "developer"):
+        n += 1
+    if n < 2:
+        return messages
+    parts = []
+    for m in messages[:n]:
+        c = m.get("content")
+        if isinstance(c, list):
+            if not all(isinstance(p, dict) and p.get("type") == "text" for p in c):
+                return messages
+            c = "\n".join(str(p.get("text", "")) for p in c)
+        if not isinstance(c, str):
+            return messages
+        parts.append(c)
+    return [{"role": messages[0]["role"], "content": "\n\n".join(parts)}] + messages[n:]
+
+
 def text_of(message: dict[str, Any]) -> str:
     """Everything in a message that the model reads, as text (for counting, the archive and the notes call)."""
     c = message.get("content")
@@ -962,7 +984,7 @@ class Keeper:
         began, self.clock.spent, self.clock.calls = time.monotonic(), 0.0, 0
         s = self.session(body, header)
         with s.lock:
-            messages = list(body.get("messages") or [])
+            messages = one_system_message(list(body.get("messages") or []))
             if self.memory_note:
                 messages = with_memory_note(messages)
             if messages:

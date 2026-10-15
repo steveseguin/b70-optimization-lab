@@ -9,6 +9,10 @@
 # (--max-num-seqs 1), so one agent's 16-minute runaway reply (no max_tokens, 0% draft acceptance) starved the others
 # (freeagent hit its 900 s client timeout). Now one slot, every request body kept (TAP=full), a 60 min limit, and a
 # runaway stop: an agent whose reply has had zero accepted draft tokens for RUNAWAY_S seconds is stopped and recorded.
+# 20c (04:05): the six agents 20b skipped for memory (estimates now from the ~1 MB-history column) and ForgeCode again,
+# through the final 1.0.1 code (leading system messages joined: ForgeCode and OpenHands send two, which Qwen's chat
+# template refuses):  RUN=c20c VENV=/mnt/fast-ai/venvs/ctxkeeper-1.0.1-final AGENTS="openhands hermes-agent kimi-code
+# mistral-vibe cline forgecode opencode"
 #   AGENTS="freeagent goose" RUN=c20x ./longrun-campaign20.sh     (subset / rerun)
 #   DRY=1 PORT=18390 SLOTS="18391 18392" RUN=dry ...            (scheduler test against tools/agentbench/fake_agent_server.py
 #                                                                  already listening on PORT: no Gemma, no GPU server)
@@ -28,13 +32,15 @@ TIME_LIMIT=${TIME_LIMIT:-3600}
 export TAP=${TAP:-full}               # keep every request body (run-agent-job.sh)
 RUNAWAY_S=${RUNAWAY_S:-300}
 GUARD_MIB=${GUARD_MIB:-1639}          # the server's B70_GUARD_MIN_AVAILABLE_GIB=1.6
-MARGIN_MIB=${MARGIN_MIB:-300}          # kept free above the guard when an agent starts
+MARGIN_MIB=${MARGIN_MIB:-100}          # kept free above the guard when an agent starts (300 in c20/c20b)
 WATCH_MIB=${WATCH_MIB:-1800}          # below this the newest agent is stopped
 AGENTS=${AGENTS:-"freeagent goose mini-swe-agent qwen-code pi forgecode open-interpreter openhands hermes-agent kimi-code mistral-vibe cline opencode"}
-# host memory each run may take (agent container non-file peak at a 4M history from the plumbing tests, rounded up,
-# plus ~80 MiB for its ctxkeeper and bridge), and the container cap the agentbench README asks for
-declare -A NEED=([freeagent]=180 [goose]=300 [mini-swe-agent]=400 [qwen-code]=450 [pi]=300 [forgecode]=200
-  [open-interpreter]=260 [openhands]=500 [hermes-agent]=520 [kimi-code]=520 [mistral-vibe]=650 [cline]=850 [opencode]=1000)
+# host memory each run may take: the agent container's non-file memory at a ~1 MB history in the plumbing tests (this
+# task's histories end below 1 MB; 20b used the 4M-history peaks and skipped six agents), plus ~80 MiB for its
+# ctxkeeper and bridge and ~50 MiB slack; MARGIN_MIB more is kept free when it starts, and the watchdog still stops
+# an agent below WATCH_MIB (161 MiB above the server's guard)
+declare -A NEED=([freeagent]=180 [goose]=300 [mini-swe-agent]=400 [qwen-code]=450 [pi]=300 [forgecode]=170
+  [open-interpreter]=260 [openhands]=430 [hermes-agent]=500 [kimi-code]=490 [mistral-vibe]=330 [cline]=540 [opencode]=840)
 declare -A CAP=([mistral-vibe]=1g [cline]=1g [opencode]=1536m)
 (( DRY )) || export SUDO_ASKPASS=${SUDO_ASKPASS:?set SUDO_ASKPASS}
 START=$(date '+%F %T')

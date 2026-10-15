@@ -2714,3 +2714,47 @@ logged drafting with zero accepted draft tokens for 300 s, the running agent is 
 `runaway-stops.txt` (its score stands as graded, marked "runaway stop"). Same agents, order, proxy, server settings
 and expectations as registered above, except that a 40/40 control is expected in about 30 min. Output
 `c20b/`. Worst case 13 h; expected ~5-7 h (agents that stop early take minutes).
+
+### Campaign 20b results (01:37-04:00) and 20c registered 2026-10-15 04:06 before its run
+
+20b ran seven agents one at a time; the other six were skipped by the runner's start rule (each agent's 4M-history
+memory peak plus 300 MiB above the server guard; 2.37-2.46 GiB was free beside the server, OpenHands needed 2.44).
+No runaway, no watchdog stop, no GPU fault line. Per agent (fixed / clean of 40, audit of 7, wall time, requests,
+proxy cuts):
+
+| Agent | Fixed | Clean | Rules R1 / R2 / R3 | Audit | Time | Requests | Cuts (failed) | Recalls |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| freeagent (control) | 40 | 39 | 38/38, 32/33, 27/27 | 7/7 | 21.0 min | 271 | 8 (0) | 4 |
+| Goose 1.54.0 | 40 | 40 | 38/38, 33/33, 27/27 | 7/7 | 24.0 min | 264 | 9 (0) | 22 |
+| mini-swe-agent 2.4.6 | 40 | 40 | 38/38, 33/33, 27/27 | 7/7 | 13.8 min | 194 | 7 (0) | 0 |
+| Qwen Code 0.25.1 | 40 | 39 | 37/38, 33/33, 27/27 | 7/7 | 33.1 min | 243 | 14 (0) | 2 |
+| pi 1.2.0 | 39 | 39 | 37/37, 32/32, 26/26 | **0/7** | 27.8 min | 259 | 9 (0) | 8 |
+| ForgeCode 2.14.0 | 0 | 0 | - | 0/7 | 1 min | 2 | - | - |
+| Open Interpreter rust-v0.0.56 | 40 | 39 | 37/38, 33/33, 27/27 | 7/7 | 17.8 min | 185 | 5 (0) | 1 |
+
+
+- **pi, audit 0/7: a wrong notes line, then the model deleted its own answer.** pi wrote `/app/AUDIT.md` with seven
+  lines (message 492, after ticket 44 arrived at message 487), then went back for the two tickets it had skipped.
+  The next in-place notes reply (covering messages 478-502, thinking off) said "no ticket 43 or 44 was ever printed",
+  "no AUDIT ticket was ever received; file written on assumption, may be spurious", and under OPEN "consider removing
+  spurious AUDIT.md". The model, seeing those notes and not the cut turns, tidied up: `rm -f AUDIT.md`. A silent-wrong
+  notes line (the failure counted in the 2M stream, 1 in 130 lines) turned into a destructive action. pi's own
+  ticket order was unusual (it fixed 40 after receiving 41, took 42 and 44 out of order), which may have made the
+  stretch hard to summarize. Candidate follow-ups, not done: a notes check that a ticket or message the notes say
+  never arrived is not in the cut material; notes should not propose deleting files.
+- **ForgeCode: refused at the first request.** It sends two system messages (its instructions, then the system
+  information); Qwen's chat template accepts a system message only at the start, so vLLM answered 400 "System
+  message must be at the beginning" and ForgeCode stopped. It would fail the same way talking to the server
+  directly. OpenHands' first request has the same shape. Fix in ctxkeeper (final 1.0.1, not in the build 20b ran):
+  leading system messages are joined into one before the request goes upstream (`one_system_message`, new test;
+  fails on the old code). Every other agent sends one system message, so for them the final code sends the same
+  requests as the build they ran with.
+
+**Campaign 20c, registered before its run:** the six skipped agents and ForgeCode, through the final 1.0.1
+(`/mnt/fast-ai/venvs/ctxkeeper-1.0.1-final`, ctxkeeper.py sha256 df65d5c9ffaea3a0...), same server settings, one
+at a time, 60 min limit, runaway stop, full request capture. Memory: an agent's need is now its plumbing non-file
+memory at a ~1 MB history (this task's histories end below 1 MB) + 130 MiB; it starts with 100 MiB to spare above
+the guard; the watchdog still stops it below 1.80 GiB (void). Order: OpenHands, Hermes Agent, Kimi Code, Mistral
+Vibe, Cline, ForgeCode, OpenCode. Expectations: OpenCode (~0.84 GiB) cannot start beside this server on this
+15.5 GiB host (recorded as not run); ForgeCode and OpenHands now get past their first request; Kimi Code (~20,800
+fixed prompt tokens) leaves the least room in the 32K window and does worst; the rest 30 or more fixed.
