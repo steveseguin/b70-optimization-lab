@@ -2,9 +2,13 @@
 # Campaign 20 (2026-10-15): well-known open-source coding agents on repair-n40-s2x through ctxkeeper 1.0.1
 # (--recipe qwen), registered in the lab note before launch. Agents from tools/agentbench (pinned, as shipped, each in
 # its own locked-down container); freeagent in the same harness is the control. One research server (the campaign-19
-# settings); up to three agents at a time, each with its own fresh ctxkeeper; an agent starts only when host memory
-# leaves room for it above the server's 1.6 GiB guard, and a watchdog stops the newest agent before the guard can
-# fire. Gemma is stopped first and put back on its throughput recipe at the end.
+# settings); one agent at a time by default (SLOTS), each with its own fresh ctxkeeper; an agent starts only when host
+# memory leaves room for it above the server's 1.6 GiB guard, and a watchdog stops the newest agent before the guard
+# can fire. Gemma is stopped first and put back on its throughput recipe at the end.
+# 20b (01:37): the first launch ran three slots and was stopped after 20 min: the server serves one sequence at a time
+# (--max-num-seqs 1), so one agent's 16-minute runaway reply (no max_tokens, 0% draft acceptance) starved the others
+# (freeagent hit its 900 s client timeout). Now one slot, every request body kept (TAP=full), a 60 min limit, and a
+# runaway stop: an agent whose reply has had zero accepted draft tokens for RUNAWAY_S seconds is stopped and recorded.
 #   AGENTS="freeagent goose" RUN=c20x ./longrun-campaign20.sh     (subset / rerun)
 #   DRY=1 PORT=18390 SLOTS="18391 18392" RUN=dry ...            (scheduler test against tools/agentbench/fake_agent_server.py
 #                                                                  already listening on PORT: no Gemma, no GPU server)
@@ -19,8 +23,10 @@ TASKDIR=$O/client-repair2/tasks/repair-n40-s2x
 VENV=${VENV:-/mnt/fast-ai/venvs/ctxkeeper-1.0.1}
 DRY=${DRY:-0}
 PORT=${PORT:-18196}
-read -ra SLOTS <<< "${SLOTS:-18200 18202 18204}"
-TIME_LIMIT=${TIME_LIMIT:-5400}
+read -ra SLOTS <<< "${SLOTS:-18200}"
+TIME_LIMIT=${TIME_LIMIT:-3600}
+export TAP=${TAP:-full}               # keep every request body (run-agent-job.sh)
+RUNAWAY_S=${RUNAWAY_S:-300}
 GUARD_MIB=${GUARD_MIB:-1639}          # the server's B70_GUARD_MIN_AVAILABLE_GIB=1.6
 MARGIN_MIB=${MARGIN_MIB:-300}          # kept free above the guard when an agent starts
 WATCH_MIB=${WATCH_MIB:-1800}          # below this the newest agent is stopped
@@ -36,6 +42,11 @@ FAULT_RE='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt rese
 say() { echo "### $(date +%H:%M:%S) $*"; }
 avail() { awk '/^MemAvailable:/ {printf "%d", $2/1024}' /proc/meminfo; }
 faults() { (( DRY )) && return 0; sudo -A journalctl -k --since "$START" --no-pager -o short-iso 2>/dev/null | grep -Ei "$FAULT_RE"; }
+# trailing run of 10 s server intervals with drafting but no accepted draft token (a reply drifting into tokens the
+# 65K draft shortlist never predicts), in seconds
+zero_accept_s() { tail -n 400 "$SRV/server.log" 2>/dev/null | grep "SpecDecoding metrics" | awk '{a=-1; d=0
+  for (i=1;i<=NF;i++) { if ($i=="Accepted:") a=$(i+1); if ($i=="Drafted:") d=$(i+1) }
+  if (a==0 && d>=200) n++; else n=0 } END {print (n+0)*10}'; }
 server_up() { curl -fsS -m 10 "http://127.0.0.1:$PORT/v1/models" >/dev/null 2>&1; }
 up() { for i in $(seq 1 60); do curl -fsS -m 3 "$1/v1/models" >/dev/null 2>&1 && return 0; sleep 1; done; return 1; }
 wait_idle() {
@@ -162,6 +173,17 @@ if (( ready )); then
       (( stopping )) || say "server down or GPU fault line: no new agents; stopping the running ones"
       stopping=1; queue=()
       for p in "${!SLOT_JOB[@]}"; do docker stop -t 20 "agentbench-${SLOT_JOB[$p]}" >/dev/null 2>&1; done
+    fi
+    if (( ! DRY && ${#SLOT_JOB[@]} > 0 )); then
+      z=$(zero_accept_s)
+      if (( z >= RUNAWAY_S )); then
+        for p in "${!SLOT_JOB[@]}"; do
+          say "RUNAWAY: ${z} s of replies with no accepted draft token; stopping ${SLOT_AGENT[$p]} (recorded, not a memory void)"
+          echo "${SLOT_AGENT[$p]} $(date +%T) zero-acceptance ${z} s" >> "$OUT/runaway-stops.txt"
+          docker stop -t 20 "agentbench-${SLOT_JOB[$p]}" >/dev/null 2>&1
+        done
+        sleep 30; continue
+      fi
     fi
     m=$(avail)
     if (( m < WATCH_MIB && ${#SLOT_JOB[@]} > 0 )); then
