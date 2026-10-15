@@ -27,7 +27,8 @@ All times are UTC.
 | 2 | 10-14 05:25 | K1a gate | `sequential_teardown(row,4)` still expected packet 44's four owners; the merge adds a fifth, `p39-fixture-*`, all clean | `fd650dd1c` | yes, round 3 |
 | 3 | 10-14 11:24 | K1b admission, before device contact | 2.5 GB K1b retention reserve + 1.55 GB seal-bound build tree > packet-38-era 3 GB build cap; the CPU rehearsal admitted a fake 64 MB | `7244b704d` | yes, round 4 (K1b passed) |
 | 4 | 10-14 17:21 | K2, first line | fused route+gather (`p42.route.production_rank32`) adapter mismatch, all three versions, both ranks | `13cb290b0` | yes, round 5 (K2 ran 400 lines past it) |
-| 5 | 10-14 23:24 | K2, P39 gate | P39's first expert-bank upload of 268,697,600 B exceeds CopyEngine's 134,217,728 B per-copy limit (`owner.cpp:310`, "copy extent/lifetime") | in progress (fix 5, `COPY-EXTENT-CLOSEOUT.md`) | pending |
+| 5 | 10-14 23:24 | K2, P39 gate | P39's first expert-bank upload of 268,697,600 B exceeds CopyEngine's 134,217,728 B per-copy limit (`owner.cpp:310`, "copy extent/lifetime") | `4bd493a72`, sealed `8a84cf7a0` | yes, round 6 (K2 passed) |
+| 6 | 10-15 01:24 | KD host reference, before device contact | K2 enabled `small.gdn.ab=round2` and `small.ffn=p30.small.rows4` on both pairs; the KD plan has a sibling group that fails `main.cpp:656` ("small GEMV sibling schedule/input") instead of running unfused | fix 6 in progress | pending |
 
 Every failure was identical on both card pairs. The kernel log has no xe/GuC reset, hang or fault line after
 2026-10-12; the last ones are the known 10-10/10-11 incidents. In every incident, the failing rank's teardown
@@ -50,6 +51,21 @@ Coordinator records are in `data/own-xpu-runtime-packet45-device-rounds-20261014
 - runners v3 and v4;
 - every Codex brief;
 - the tail of each Codex log.
+
+## Round 5 to 6 turnaround (2026-10-15)
+
+On the owner's directive (no long CPU runs), the coordinator stopped the fix-5 reseal at 01:05 UTC. Codex
+then did three things:
+- committed fix 5 (`4bd493a72`);
+- added a never-qualifying `--diagnostic-unsealed` window mode (`c726c601d`), which publication and submission
+  helpers refuse;
+- resealed by rebinding the existing real-model evidence (`8a84cf7a0`), with no real-model, compiler-matrix or
+  sanitizer rerun.
+
+Fix 5 reached the sealed device chains 19 minutes after the directive. Before that, each fix round had cost
+3-6 h. Round 6's KD defect depends on which kernels the device chose: it exists only after K2's measured
+dispatch enables the small-GEMV fusions. It reproduces exactly on CPU from the saved
+`K2/run0/dispatch-measured.json`. Evidence: `build/incident-20261015-kd-smallgemv/`.
 
 ## The common cause of defects 3 and 5
 
