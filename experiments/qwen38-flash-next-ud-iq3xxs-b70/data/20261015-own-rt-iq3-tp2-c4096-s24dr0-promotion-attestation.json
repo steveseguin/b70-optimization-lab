@@ -1,0 +1,93 @@
+{
+ "schema": "lab.promotion-attestation.v1",
+ "label": "qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-mtp1-c4096-s24dr0-realistic-20261015",
+ "date": "2026-10-15",
+ "gates": {
+  "fixed_realistic_suite_each_prompt_once_cold": true,
+  "cached_tokens_zero_equivalent": "complete rank state reset before every request; runtime retains no cross-request cache",
+  "no_prompt_kv_history_response_reuse": true,
+  "target_model_and_quantization_unchanged": "UD-IQ3_XXS GGUF revision 766911a6b7369840a91dbcd95f9f997acaab6cd6, weights untouched",
+  "speculative_decoding_target_verified": true,
+  "output_identical_to_sequential_decode": true,
+  "every_row_has_100_generated_token_events": true,
+  "metric_window": "99 inter-token intervals between generated-token completion timestamps 1 and 100, per prompt; median of prompt-class medians",
+  "bit_exact_vs_cpu_oracles": "12/12 requests, 1536/1536 tokens in WS128; 9216/9216 retained layer fixtures in separate WS128x, byte equality",
+  "kernel_log_clean": true,
+  "fresh_process_repeated_token_equality": "All 12 token sequences identical across independent WS, WSs, WS128x and WS128 rank-process launches; speed repeats are not pooled",
+  "strict_512_token_final_gate_passed": false,
+  "kernel_log_scope": "No new signatures in each window journal tail; preflight includes historical October 11 faults, so not a clean-boot claim"
+ },
+ "evidence": [
+  "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-W2m-window.json",
+  "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-WS-window.json",
+  "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-WSs-window.json",
+  "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-WS128x-window.json",
+  "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-WS128-window.json",
+  "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-realistic-suite-v1-result.json"
+ ],
+ "reference_median_tok_s_same_suite_llamacpp_sycl_2card": 28.49,
+ "identity": {
+  "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+  "runtime_revision": "75d2c459d",
+  "optimization_identity": "packet45-merged3-SPEED3-tp2-c4096-target24-24-draft-rank0-write-set-snapshot-K2-selected-kernels-native-controller-single-pass-draft-profiling",
+  "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812"
+ },
+ "performance_evidence": {
+  "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-realistic-suite-v1-result.json",
+  "sha256": "534e96ce79a9ac5b8ba9ff02d23aaa301e6f9f5b35de4796484f11e3a4e076ba"
+ },
+ "quality_evidence": [
+  {
+   "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-W2m-window.json",
+   "sha256": "c440ada3b60646968dfb07f6f00ccb14e1490b7cd8e2c67ba1907512c940ce30",
+   "source_path": "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed3-c4096-dr0-s24-gpu/W2m/window.json",
+   "window": "W2m"
+  },
+  {
+   "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-WS-window.json",
+   "sha256": "fea739ab0ac4ce9987d6b9112e185eb39f9a15abd8d066471d31a67ba621e2ac",
+   "source_path": "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed3-c4096-dr0-s24-gpu/WS/window.json",
+   "window": "WS"
+  },
+  {
+   "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-WSs-window.json",
+   "sha256": "97682bc481b83d0ad0690b79b48423046a8eb276702ea57816e7e3083a1e1d74",
+   "source_path": "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed3-c4096-dr0-s24-gpu/WSs/window.json",
+   "window": "WSs"
+  },
+  {
+   "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-WS128x-window.json",
+   "sha256": "5d8cf284aa5cb939ff0e8f170893e50bd86e0fc2fdeb3c1b8efb3965ef2ac25e",
+   "source_path": "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed3-c4096-dr0-s24-gpu/WS128x/window.json",
+   "window": "WS128x"
+  },
+  {
+   "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-WS128-window.json",
+   "sha256": "09a3f409d3f8d6cdbcd7e2140878b499503c41fa01555b0aab79688d1d71908f",
+   "source_path": "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed3-c4096-dr0-s24-gpu/WS128/window.json",
+   "window": "WS128"
+  }
+ ],
+ "submission_scope": {
+  "scope": "Historical 2026-10-13 128-token-cap submission; not the strict 512-token final gate",
+  "owner_exception_authorized": false,
+  "raw_realistic_final_gate": {
+   "passed": false,
+   "reason": "measurement preparation only; cap below fixed 512 and no promotion attestation; repeats/partial suites never qualify"
+  },
+  "strict_512_gate_passed": false,
+  "prepared_only": true,
+  "real_submission_performed": false
+ },
+ "seal6_amendment": {
+  "rule": "packet45.fix6.device-oracle-authority.2026-10-15",
+  "build_receipt_sha256": "8460585fe53879223066a5d54799c9f105c73002adfc09fc9a743ceaee7e3fa8",
+  "required_device_windows": [
+   "W2m",
+   "WS",
+   "WSs",
+   "WS128x"
+  ],
+  "all_present_passing_same_artifacts": true
+ }
+}
