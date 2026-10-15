@@ -134,6 +134,19 @@ relaunch. That way, the remaining size defects are found in one CPU pass instead
 
 Snapshot copies were batched (936 → 32 submissions on rank 0, 1,022 → 34 on rank 1; bytes unchanged at 343.85/354.97 MiB), and the P39 `shared-up-act-q6/q8` fusion was disabled so the measured `p30.small.rows4` small.ffn group runs (192 commands removed). Chains K0-WSs passed on both pairs. Pair A (draft rank 0, cards 0-1) WS128 measured a class-balanced **35.481** tok/s, decode 35.485, 12/12 exact, qualifying. That is up from 33.835 but below the 37.856 record, so it was not submitted. Medians: rank 0 busy 23.69 ms, rank 1 21.22 ms, hit cycle 24.74 ms, miss cycle 43.05 ms (p44: 23.49/22.59/23.19/39.33). Rank busy is back to p44 level; the remaining +1.55 ms per hit and +3.7 ms per miss point at capture and restore on the critical path. Results: `build/results-65c5eb22b/`. Next: speed repair 2 (write-set-exact capture and restore).
 
+## Speed repair 2 (`9b91d3270`, 2026-10-15)
+
+The snapshot became write-set-exact: capture and restore copy only the bytes each speculative half writes, 44.27 MiB (rank-0 draft) and 46.36 MiB (rank-1 draft) instead of 343.85/354.97 MiB, with the full-state contract kept. Chains K0-WSs passed on both pairs. WS128, qualifying, 12/12 exact, acceptance 0.791:
+
+| Run | Class-balanced | Decode | Rank 0 busy | Rank 1 busy | Hit | Miss |
+|---|---:|---:|---:|---:|---:|---:|
+| Draft rank 0, cards 0-1 | 35.901 | 35.962 | 22.10 | 21.21 | 24.77 | 41.73 |
+| Draft rank 1, cards 2-3 | **37.693** | 37.948 | 23.37 | 20.70 | 23.31 | 40.32 |
+
+Draft rank 1 is at parity with p44: the same-card control's all-prompt median is 37.672, against 37.693 here. It is 0.43% below the 37.856 record, so it was not submitted, and repeat runs or a card-pair change to clear the record would be noise-mining. Results: `build/results-9b91d3270/`.
+
+The hit-gap analysis (`notes/2026-10-15-p45-hit-cycle-gap.md`, `6ce93b038`) found that the rank-0-draft hit gap is mostly rank 1's longer half (the 22/26 split), plus about 0.49 ms of draft publication including a duplicate synchronous profiling pass. Speed repair 3 (packet-46 changes): remove the duplicate profiling for both placements, and a sealed 24/24-split rank-0-draft configuration at 4K only (32K is below the memory reserve).
+
 ## Relaunch procedure (after fix 5, and audit 6 if it reseals)
 
 1. Confirm that the runner is not running and that `queue/STOP` holds the halt reason.
