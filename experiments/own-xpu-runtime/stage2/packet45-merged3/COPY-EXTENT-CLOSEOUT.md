@@ -113,3 +113,5 @@ Fresh device chains remain necessary to qualify the new sealed executable identi
 Repair and audit committed before resealing. The existing seal is not current. All four build modes match the current compiled-source closure and all program binaries were linked after the last P39/GEMV source change; no rebuild is needed. Production decode does not call either changed fixture translation unit, although the common object linkage includes them in the executable. All five device executable hashes changed; ABI and kernel arithmetic are unchanged. Real-model CPU repetition was stopped by the owner; existing exactness evidence will be explicitly rebound. See [audit 6](COPY-AUDIT-6.md).
 
 The owner superseded full reruns at 01:10 UTC. Follow [diagnostic handoff](DIAGNOSTIC-UNSEALED.md), then `taskset -c 4-15,20-31 nice -n 19 ionice -c 3 env OMP_NUM_THREADS=2 python3 -B minimal_reseal.py` from this packet. This performs no model execution or rebuild.
+
+Owner-directed minimal reseal completed: [qualification and explicit evidence reuse](MINIMAL-RESEAL-CLOSEOUT.md). The diagnostic source/build freeze is intact.

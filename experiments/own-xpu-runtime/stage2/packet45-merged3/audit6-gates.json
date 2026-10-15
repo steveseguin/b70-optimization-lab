@@ -18,8 +18,8 @@
     "owner.cpp": "8e82affd2c119ef2ef13df14c11063f60ec8ba641ed643b7f2c652e7c256e94b",
     "owner_api.hpp": "1c712169fca15d34319ab082701a054a4a1fc63caccdfd7515a00067f4843608",
     "storage.py": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39",
-    "window.py": "57b0efedbc901b19bcca183ec4aa31b6db174bc2f367c0040ca2fb81347dd2e1",
-    "draft_window.py": "aebbbe66d39d556f782124afdea5d2518ad8810329f2e279834c360bec456cd6",
+    "window.py": "eb9329864a9a2fbc3d28cf4fe88cbf630a962d488c6d1e69a434a17646bb2c01",
+    "draft_window.py": "fe763815f73248cf93c6d73d213c0bbf4171113f50764188c2ab064f419b3ac2",
     "pipeline.py": "61251db33bc2da7bba36ed18ca29c1bff29cda296c74d3f51da2ea7069160ff8",
     "suite.py": "d8d0a373ba5fbc3e70605ea61b970694a1b837d0bcd5ac1e0087221333e546d1",
     "memory_plan.py": "ec9e50a4ba33b1b935dfd0fd57dd348c4c7417c367df3ad9b649b46fbd8f304c",
@@ -1520,217 +1520,217 @@
     },
     {
       "source": "window.py",
-      "line": 22,
+      "line": 23,
       "code": "expected,default=CONFIG[name];expected=estimated_seconds(context) if name=='K2' else expected;seconds=default if seconds is None else seconds"
     },
     {
       "source": "window.py",
-      "line": 46,
+      "line": 47,
       "code": "if key.startswith('drm-engine-') and not key.startswith(('drm-engine-capacity','drm-engine-cycles')):"
     },
     {
       "source": "window.py",
-      "line": 87,
+      "line": 88,
       "code": "# Remember the fresh signature even if saving its text runs out of space."
     },
     {
       "source": "window.py",
-      "line": 107,
+      "line": 108,
       "code": "out=Path(path).resolve();boundary=B.resolve() if cpu_rehearsal else P.resolve()"
     },
     {
       "source": "window.py",
-      "line": 108,
+      "line": 109,
       "code": "require(boundary in out.parents and not out.exists(),'new output beneath packet40 required')"
     },
     {
       "source": "window.py",
-      "line": 113,
+      "line": 114,
       "code": "return admit(extra,build_extra=extra if destination==B.resolve() or B.resolve() in destination.parents else 0)"
     },
     {
       "source": "window.py",
-      "line": 117,
+      "line": 118,
       "code": "require(not rel.is_absolute() and '..' not in rel.parts,'unsafe retained evidence path')"
     },
     {
       "source": "window.py",
-      "line": 119,
+      "line": 120,
       "code": "require(root.resolve() in path.parents,'retained evidence escapes window')"
     },
     {
       "source": "window.py",
-      "line": 123,
+      "line": 124,
       "code": "require(Path(name).name=='output.bin' and item.get('uncompressed_bytes',0)>20_000_000,'hash-only retention is oversized fixture only')"
     },
     {
       "source": "window.py",
-      "line": 135,
+      "line": 136,
       "code": "require(bound.get('path')==str(dispatch) and bound.get('sha256')==sha(dispatch),'fixture restoration dispatch changed')"
     },
     {
       "source": "window.py",
-      "line": 154,
+      "line": 155,
       "code": "require(len(entries)==1,'oversized fixture needs exactly one authenticated launcher')"
     },
     {
       "source": "window.py",
-      "line": 196,
+      "line": 197,
       "code": "require(digest==item['uncompressed_sha256'],'compressed prerequisite bytes changed')"
     },
     {
       "source": "window.py",
-      "line": 208,
+      "line": 214,
       "code": "for filename,digest in row.get('receipts',{}).items():require(retained_hash(path.parent,filename,row)==digest,'prerequisite receipt changed')"
     },
     {
       "source": "window.py",
-      "line": 216,
+      "line": 222,
       "code": "require(type(row.get('card')) is int and row['card']==card,'linked p33 fixture card differs from admitted first card')"
     },
     {
       "source": "window.py",
-      "line": 218,
+      "line": 224,
       "code": "require(isinstance(teardown,dict) and teardown.get('safe_to_exit') is True and type(teardown.get('exit_code')) is int and teardown['exit_code']==0 and type(teardown.get('live_bytes')) is int and teardown['live_bytes']==0 and type(teardown.get('in_flight')) is int and teardown['in_flight']==0,'linked p33 owner teardown incomplete')"
     },
     {
       "source": "window.py",
-      "line": 220,
+      "line": 226,
       "code": "require(digest==row.get('output_sha256')==build.get('p33_linked_fixture_host_sha256'),'linked p33 bytes differ from sealed host fixture')"
     },
     {
       "source": "window.py",
-      "line": 258,
+      "line": 264,
       "code": "watch.check();admit_output(out,projected_write_bytes('K2',context=a.context) if a.window=='K2' else 550_000_000 if a.window!='K0' else 16_000_000);binary=B/binary_group/name"
     },
     {
       "source": "window.py",
-      "line": 261,
+      "line": 267,
       "code": "if name in ('nongemv-fixtures','k2-fixtures'):cmd+=['--context',str(a.context)]"
     },
     {
       "source": "window.py",
-      "line": 265,
+      "line": 271,
       "code": "if name=='p33-linked-fixtures':cmd+=['--seconds',str(watchdog(a.window,a.seconds,a.context))]"
     },
     {
       "source": "window.py",
-      "line": 294,
+      "line": 300,
       "code": "pp.failure_attempt('fixture retained receipt',lambda:save(out/'retained.json',dict(pids=[child.pid for child in children if child.poll() is None],signals_sent=0,stop_requested=True,diagnostic_errors=errors)),errors)"
     },
     {
       "source": "window.py",
-      "line": 312,
+      "line": 318,
       "code": "require(all(p.poll() is None for p in t.children),'canary ranks not simultaneously alive')"
     },
     {
       "source": "window.py",
-      "line": 314,
+      "line": 320,
       "code": "for rank in (0,1):require(t.mapping[rank*SLOT:rank*SLOT+256]==pp.struct.pack('<64I',*([i+1]*64)),'shared handover bytes')"
     },
     {
       "source": "window.py",
-      "line": 331,
+      "line": 337,
       "code": "require(len(inp['tokens'])+a.max_new<=a.context,'prompt plus --max-new exceeds context capacity')"
     },
     {
       "source": "window.py",
-      "line": 341,
+      "line": 347,
       "code": "p.add_argument('--context',type=int,choices=(256,4096,32768),required=True);p.add_argument('--draft-rank',type=int,choices=(0,1),default=0);p.add_argument('--window',choices=CONFIG,required=True);p.add_argument('--card',type=int,required=True);p.add_argument('--prompt-overlap',choices=('on','off'),default='on');p.add_argument('--seconds',type=int);p.add_argument('--controller',choices=('python','native'),default='native');p.add_argument('--suite-manifest',type=Path);p.add_argument('--repeat',type=int,default=1)"
     },
     {
       "source": "window.py",
-      "line": 352,
+      "line": 358,
       "code": "require(1<=a.max_new<=a.context,'--max-new must fit context capacity')"
     },
     {
       "source": "window.py",
-      "line": 354,
+      "line": 360,
       "code": "if a.retain_steps is None:a.retain_steps='none' if a.window in SPEED_WINDOWS else '1-8,97-104' if a.window=='WS128x' else '1-8'"
     },
     {
       "source": "window.py",
-      "line": 357,
+      "line": 363,
       "code": "if a.window in SPEED_WINDOWS and a.window!='WSs':require(not retained_steps,'speed windows require --retain-steps none')"
     },
     {
       "source": "window.py",
-      "line": 358,
+      "line": 364,
       "code": "if a.window in ('W2m-exact','WS64x'):require(set(pp.retention_steps('1-8',a.max_new))<=set(retained_steps),'exactness needs available steps1-8')"
     },
     {
       "source": "window.py",
-      "line": 359,
+      "line": 365,
       "code": "if a.window=='WS128x':require(set(pp.retention_steps('1-8,97-104',a.max_new))<=set(retained_steps),'exactness needs available steps1-8,97-104')"
     },
     {
       "source": "window.py",
-      "line": 363,
+      "line": 369,
       "code": "expected=(estimated_seconds(a.context) if a.window=='K2' else CONFIG[a.window][0])*scale+17"
     },
     {
       "source": "window.py",
-      "line": 370,
+      "line": 382,
       "code": "require(json.loads((P/'memory-plan.json').read_text())==build['memory_plan'],'memory plan changed')"
     },
     {
       "source": "window.py",
-      "line": 396,
+      "line": 408,
       "code": "sample=memory_snapshot();require(sample['MemAvailable']>=16*1024**3,'KD needs16GiB host memory available')"
     },
     {
       "source": "window.py",
-      "line": 397,
+      "line": 409,
       "code": "record['memory_admission']=dict(sample,required_MemAvailable=16*1024**3)"
     },
     {
       "source": "window.py",
-      "line": 407,
+      "line": 419,
       "code": "sample=memory_snapshot();require(sample['MemAvailable']>=97*1024**3,'model window needs 97 GiB available before ranks load')"
     },
     {
       "source": "window.py",
-      "line": 408,
+      "line": 420,
       "code": "record['memory_admission']=dict(sample,required_MemAvailable=97*1024**3,shadow_removal='unmeasured; no assumption')"
     },
     {
       "source": "window.py",
-      "line": 415,
+      "line": 427,
       "code": "sample=memory_snapshot();require(sample['MemAvailable']>=97*1024**3,'suite needs97GiB available before ranks load')"
     },
     {
       "source": "window.py",
-      "line": 416,
+      "line": 428,
       "code": "record['memory_admission']=dict(sample,required_MemAvailable=97*1024**3)"
     },
     {
       "source": "window.py",
-      "line": 418,
+      "line": 430,
       "code": "if a.window in SPEED_WINDOWS and not retained_steps:"
     },
     {
       "source": "window.py",
-      "line": 423,
+      "line": 435,
       "code": "require(companion.get('retained_steps')==companion_steps,'exactness companion retention metadata differs')"
     },
     {
       "source": "window.py",
-      "line": 425,
+      "line": 437,
       "code": "require(companion_steps and set(required)<=set(companion_steps) and companion.get('diagnostic_for_speed') is True,'exactness companion has no retained fixture gate')"
     },
     {
       "source": "window.py",
-      "line": 469,
+      "line": 485,
       "code": "args.controller=a.controller;args.prompt_overlap=a.prompt_overlap;args.card=a.card;args.seconds=seconds;args.wait_seconds=600;args.context=a.context;args.draft_rank=a.draft_rank;args.tokens=a.max_new;args.retain_steps=a.retain_steps;args.input=a.input;args.oracle=None if cpu_rehearsal else a.oracle;args.dispatch=a.dispatch;args.timing='class' if a.window in ('W2c','W2mc') else 'token'"
     },
     {
       "source": "window.py",
-      "line": 488,
+      "line": 504,
       "code": "require(observed==hashes,'retained fixtures differ/missing');record.update(token_matches=len(expected),layer_matches=len(hashes),diagnostic=r['diagnostic'],decode_tok_s=r['decode_tok_s'])"
     },
     {
       "source": "window.py",
-      "line": 501,
+      "line": 517,
       "code": "if not alive:"
     },
     {
@@ -2253,11 +2253,11 @@
       "state_payload_upper_bytes": 512,
       "projected_write_bytes": 32000000,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 32000000,
         "projected_build_write_bytes": 32000000,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2285,11 +2285,11 @@
       "state_payload_upper_bytes": 29097984,
       "projected_write_bytes": 577279360,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 577279360,
         "projected_build_write_bytes": 577279360,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2317,11 +2317,11 @@
       "state_payload_upper_bytes": 227350596,
       "projected_write_bytes": 700210560,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 700210560,
         "projected_build_write_bytes": 700210560,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2350,11 +2350,11 @@
       "state_payload_upper_bytes": 227350596,
       "projected_write_bytes": 1084210560,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1084210560,
         "projected_build_write_bytes": 1084210560,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2383,11 +2383,11 @@
       "state_payload_upper_bytes": 217651264,
       "projected_write_bytes": 1084210560,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1084210560,
         "projected_build_write_bytes": 1084210560,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2416,11 +2416,11 @@
       "state_payload_upper_bytes": 227350596,
       "projected_write_bytes": 1288682880,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1288682880,
         "projected_build_write_bytes": 1288682880,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2449,11 +2449,11 @@
       "state_payload_upper_bytes": 227350596,
       "projected_write_bytes": 1084210560,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1084210560,
         "projected_build_write_bytes": 1084210560,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2482,11 +2482,11 @@
       "state_payload_upper_bytes": 512,
       "projected_write_bytes": 32000000,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 32000000,
         "projected_build_write_bytes": 32000000,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2514,11 +2514,11 @@
       "state_payload_upper_bytes": 29097984,
       "projected_write_bytes": 577279360,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 577279360,
         "projected_build_write_bytes": 577279360,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2546,11 +2546,11 @@
       "state_payload_upper_bytes": 228984900,
       "projected_write_bytes": 700210560,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 700210560,
         "projected_build_write_bytes": 700210560,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2579,11 +2579,11 @@
       "state_payload_upper_bytes": 228984900,
       "projected_write_bytes": 1084210560,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1084210560,
         "projected_build_write_bytes": 1084210560,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2612,11 +2612,11 @@
       "state_payload_upper_bytes": 219285568,
       "projected_write_bytes": 1084210560,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1084210560,
         "projected_build_write_bytes": 1084210560,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2645,11 +2645,11 @@
       "state_payload_upper_bytes": 228984900,
       "projected_write_bytes": 1288682880,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1288682880,
         "projected_build_write_bytes": 1288682880,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2678,11 +2678,11 @@
       "state_payload_upper_bytes": 228984900,
       "projected_write_bytes": 1084210560,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1084210560,
         "projected_build_write_bytes": 1084210560,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2711,11 +2711,11 @@
       "state_payload_upper_bytes": 512,
       "projected_write_bytes": 32000000,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 32000000,
         "projected_build_write_bytes": 32000000,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2743,11 +2743,11 @@
       "state_payload_upper_bytes": 232783872,
       "projected_write_bytes": 780965248,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 780965248,
         "projected_build_write_bytes": 780965248,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2775,11 +2775,11 @@
       "state_payload_upper_bytes": 1109989444,
       "projected_write_bytes": 1582849408,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1582849408,
         "projected_build_write_bytes": 1582849408,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2808,11 +2808,11 @@
       "state_payload_upper_bytes": 1109989444,
       "projected_write_bytes": 1966849408,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1966849408,
         "projected_build_write_bytes": 1966849408,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2841,11 +2841,11 @@
       "state_payload_upper_bytes": 1032394816,
       "projected_write_bytes": 1966849408,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1966849408,
         "projected_build_write_bytes": 1966849408,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2874,11 +2874,11 @@
       "state_payload_upper_bytes": 1109989444,
       "projected_write_bytes": 2171321728,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 2171321728,
         "projected_build_write_bytes": 2171321728,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2907,11 +2907,11 @@
       "state_payload_upper_bytes": 1109989444,
       "projected_write_bytes": 1966849408,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1966849408,
         "projected_build_write_bytes": 1966849408,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2940,11 +2940,11 @@
       "state_payload_upper_bytes": 512,
       "projected_write_bytes": 32000000,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 32000000,
         "projected_build_write_bytes": 32000000,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -2972,11 +2972,11 @@
       "state_payload_upper_bytes": 232783872,
       "projected_write_bytes": 780965248,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 780965248,
         "projected_build_write_bytes": 780965248,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -3004,11 +3004,11 @@
       "state_payload_upper_bytes": 1111623748,
       "projected_write_bytes": 1582849408,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1582849408,
         "projected_build_write_bytes": 1582849408,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -3037,11 +3037,11 @@
       "state_payload_upper_bytes": 1111623748,
       "projected_write_bytes": 1966849408,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1966849408,
         "projected_build_write_bytes": 1966849408,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -3070,11 +3070,11 @@
       "state_payload_upper_bytes": 1034029120,
       "projected_write_bytes": 1966849408,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1966849408,
         "projected_build_write_bytes": 1966849408,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -3103,11 +3103,11 @@
       "state_payload_upper_bytes": 1111623748,
       "projected_write_bytes": 2171321728,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 2171321728,
         "projected_build_write_bytes": 2171321728,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
@@ -3136,11 +3136,11 @@
       "state_payload_upper_bytes": 1111623748,
       "projected_write_bytes": 1966849408,
       "storage_admission": {
-        "root_free_bytes": 30771167232,
-        "build_bytes": 1656308577,
+        "root_free_bytes": 30639435776,
+        "build_bytes": 1708471915,
         "admitted_write_bytes": 1966849408,
         "projected_build_write_bytes": 1966849408,
-        "build_limit_bytes": 12941289057,
+        "build_limit_bytes": 12861720939,
         "structural_build_limit_bytes": 14486186752,
         "free_floor_bytes": 8000000000,
         "remaining_chain_reserve_bytes": 11486186752
