@@ -263,6 +263,23 @@ Probe build `646a22972`. It adds a diagnostic-only second autoregressive step of
 
 k=2 beats 39.422 only if three-position target verification T3 < 52.90 ms. T3 is not measured yet; a read-only estimate from the prefill timings and kernel M-scaling is in progress (`notes/2026-10-15-p45-k2-t3-estimate.md`).
 
+## CLOSEOUT: packet 45 at its practical ceiling under exact output (2026-10-15 22:05)
+
+The final record is **39.422009 tok/s** class-balanced (localmaxxing `cmv9wjmtj013gle01v8k1yg4v`, SPEED6 `34c62b433`, 23/25 split with draft rank 1). That is +4.1% over the day's starting record (37.856264), with every token bit-exact against the arithmetic-v2 oracles.
+
+Closed levers, each with evidence:
+
+| Lever | Result |
+|---|---|
+| Snapshot batching (SPEED7) | Measured parity (39.37 / 39.38) |
+| Exact expert-kernel variants | At most about 0.1-0.16 ms per half (`c76a5e110`) |
+| Within-layer split | Rejected, 25.64 ms against a 23.5-24 ms budget (`97667ab14`) |
+| Further layer splits | Halves already balanced; 22/26 forecast worse and needs 979 MiB more arena (`03e9cb17d`) |
+| Draft rank 1 vs 0 at 24/24 | Parity |
+| k=2 MTP drafting | Measured acceptance q2\|g1 = 0.714 (2.35 tokens/cycle) needs T3 < 52.9 ms, but T3 is estimated at about 76 ms (72-95), forecasting 23-33 tok/s; dropped (`4d023e7d1`) |
+
+Remaining directions all need an owner decision: a different or stronger draft model (provenance rules apply), a non-identical approximation (it would be labelled separately and never as lossless), or a different runtime architecture. Unapplied patch kept for reference: `patches/packet45-speed8-expert-kernels.patch`.
+
 ## Relaunch procedure (after fix 5, and audit 6 if it reseals)
 
 1. Confirm that the runner is not running and that `queue/STOP` holds the halt reason.
