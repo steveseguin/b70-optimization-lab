@@ -16,7 +16,7 @@ your agent / app  --->  ctxkeeper (:18200)  --->  any OpenAI-compatible server (
 ```
 
 Version 1.0.0 · public domain ([Unlicense](LICENSE)) · Python 3.10 or newer, standard library only (two files:
-`ctxkeeper.py`, `notesdelta.py`) · write-up for non-specialists: <https://skindeep.ai/context.html>
+`ctxkeeper.py`, `notesdelta.py`) · in plain words: <https://skindeep.ai/context-use.html>
 
 ## Does it work?
 
@@ -25,9 +25,24 @@ Measured on Qwen3.8-27B (FP8, served by vLLM on two Intel Arc Pro B70 cards), wi
 | Test | With ctxkeeper | Without it |
 | --- | --- | --- |
 | **Real code repair**: 40 bugs to fix in a real Python library, handed out one ticket at a time, with three house rules announced along the way, then questions about the earliest fixes | **40/40 fixed, 40/40 following every rule, 7/7 questions right**, in 16 min (`--recipe qwen`); 36-38 min (`--recipe agent`); both with `--recite-when` for the tickets | Sliding 32K window: 22 to 35 of 40 clean, 0/7 questions. Summarizing the history: 33 to 40 of 40, 0 to 7 of 7 |
-| **The same task with a separate agent program** that manages nothing itself ([freeagent](../freeagent/freeagent.py)) | **40/40, 40/40, 7/7 in 33 min**, reading 2.9M prompt tokens | The same agent sending everything into a 262K window: same score, 55 min, 29.9M prompt tokens |
+| **The same task with a separate agent program** that manages nothing itself ([freeagent](../freeagent/freeagent.py)) | **40/40, 40/40, 7/7 in 33 min**, reading 2.9M prompt tokens; at release, with `--recipe qwen` and no other option: **40/40, 40/40, 7/7 in 31 min** | The same agent sending everything into a 262K window: same score, 55 min, 29.9M prompt tokens |
 | **Memory over 1M tokens**: 228 questions about things said up to a million tokens earlier | **226/228 (99%)** in 50 min | A 200K window: 166/228 (73%), every one of 29 standing-rule questions wrong, 228 min |
 | **2M tokens with planted traps** (values that change and change back, corrections, pronouns) | **351/382 (92%)**, 0 of 12 traps fell for | (not run: no window holds it) |
+
+## Tested before release
+
+Version 1.0.0 was installed the way a user installs it (pip into a fresh environment; the Docker image built from
+the source archive; the program files are byte-identical to this release's) and run as written, against the same
+Qwen server unless noted:
+
+| Check | Result |
+| --- | --- |
+| The code-repair task above through freeagent, `--recipe qwen`, nothing else | 40/40 fixed, 40/40 following every rule, 7/7 questions, 31 min |
+| [`long_chat.py`](examples/long_chat.py) through the Docker image, 300K tokens (more than the server's own 262K window) | 4/4, 4 min |
+| The OpenAI SDK snippet below | plain reply, tool call and streaming all came back in the SDK's types |
+| **Another model and server:** `long_chat.py` through `--recipe agent --budget 15360` to Gemma 4 26B (Q8) on llama.cpp, 100K tokens | 4/4, 4.5 min (a smoke test: one run) |
+
+Records: [`data/2026-10-14-context-campaign19/`](../../experiments/qwen38-27b-b70/data/2026-10-14-context-campaign19/).
 
 Full record, every run and what went wrong: the lab note
 [`2026-10-10-context-16k-baseline.md`](../../experiments/qwen38-27b-b70/notes/2026-10-10-context-16k-baseline.md)
@@ -35,19 +50,25 @@ Full record, every run and what went wrong: the lab note
 
 ## Install
 
-Pick one:
+Pick one. All three come from the [1.0.0 release](https://github.com/steveseguin/b70-optimization-lab/releases/tag/ctxkeeper-v1.0.0)
+(small files; nothing clones the lab's large repository):
 
 ```bash
+R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.0.0
+
 # 1. pip (gives you the `ctxkeeper` command)
-pip install "git+https://github.com/steveseguin/b70-optimization-lab.git#subdirectory=tools/ctxkeeper"
+pip install $R/ctxkeeper-1.0.0-py3-none-any.whl
 
-# 2. just the two files (run with python3 ctxkeeper.py ...)
-curl -LO https://raw.githubusercontent.com/steveseguin/b70-optimization-lab/main/tools/ctxkeeper/ctxkeeper.py
-curl -LO https://raw.githubusercontent.com/steveseguin/b70-optimization-lab/main/tools/ctxkeeper/notesdelta.py
+# 2. Docker (builds the image from the 80 KB source archive)
+docker build -t ctxkeeper $R/ctxkeeper-1.0.0.tar.gz
 
-# 3. Docker
-docker build -t ctxkeeper https://github.com/steveseguin/b70-optimization-lab.git#main:tools/ctxkeeper
+# 3. just the two files (run with python3 ctxkeeper.py ...)
+curl -LO $R/ctxkeeper.py
+curl -LO $R/notesdelta.py
 ```
+
+The source archive `ctxkeeper-1.0.0.tar.gz` also holds the demo below, the tests and this README; the release page
+lists every file's SHA-256.
 
 ## Quick start
 
@@ -66,7 +87,8 @@ docker build -t ctxkeeper https://github.com/steveseguin/b70-optimization-lab.gi
    codename, a budget and a standing rule at the start, and asks about them at the end.
 
    ```bash
-   python3 examples/long_chat.py --base-url http://127.0.0.1:18200/v1
+   curl -LO $R/long_chat.py      # or examples/long_chat.py in the source archive
+   python3 long_chat.py --base-url http://127.0.0.1:18200/v1
    ```
 
 ## Use it with your agent or app
@@ -97,6 +119,9 @@ messages, tell the proxy what they look like, so it repeats the standing rules r
 ```bash
 ctxkeeper --upstream http://127.0.0.1:8000 --recipe qwen --recite-when '(?m)^TICKET \d+'
 ```
+
+On the code-repair task it was not needed: its tickets arrive in tool results, and in the release test the rules
+held from the notes alone (40/40). The fastest runs used it.
 
 ## Recipes
 
@@ -154,8 +179,9 @@ Everything else: `ctxkeeper --help`.
 
 ## Limits
 
-- **Measured with one model family on one machine** (Qwen3.8-27B FP8, vLLM, Intel Arc Pro B70). Other models
-  should work if they call tools reliably and can follow the notes format; that has not been measured.
+- **Measured with one model family on one machine** (Qwen3.8-27B FP8, vLLM, Intel Arc Pro B70). Gemma 4 26B on
+  llama.cpp passed one smoke test (the demo, 4/4). Other models should work if they call tools reliably and can
+  follow the notes format; that has not been measured.
 - **The notes are written by the model, so they can be wrong.** On the hardest test (2M tokens with traps) about
   1 in 130 notes lines was silently wrong; on the 1M test, 1 in 1,435. The archive keeps the original text, so a
   wrong note can be found and fixed by a search, but nothing guarantees the model looks.

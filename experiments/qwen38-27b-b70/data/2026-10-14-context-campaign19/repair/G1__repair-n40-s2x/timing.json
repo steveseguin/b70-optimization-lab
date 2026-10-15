@@ -1,0 +1,21 @@
+[
+ {
+  "cmd": "cd /app && ls && next",
+  "seconds": 0.1
+ },
+ {
+  "cmd": "cd /app && grep -n \"def split_at\" -A 40 more_itertools/more.py",
+  "seconds": 0.0
+ },
+ {
+  "cmd": "cd /app && sed -i '1440s/if maxsplit != 1:/if maxsplit == 1:/' more_itertools/more.py && sed -n '1436,1448p' more_itertools/more.py && t SplitAtTests",
+  "seconds": 0.3
+ },
+ {
+  "cmd": "cd /app && next",
+  "seconds": 0.1
+ },
+ {
+  "error": "HTTP 502: {\"error\": {\"message\": \"ctxkeeper: RemoteDisconnected: Remote end closed connection without response\"}}"
+ }
+]

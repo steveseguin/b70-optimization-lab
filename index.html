@@ -263,6 +263,8 @@ Style genome (duotone-hixffp):
   #small-quick { margin-top: 28px; }
   #small-quick > summary { cursor: pointer; font-weight: 700; padding: 14px 0; }
   .pick-val a { text-decoration: underline; text-underline-offset: 3px; }
+  .long-task-bars { max-width: 640px; margin: 14px 0; }
+  .long-task-bars .pick-note { margin: 8px 0 0; }
   @media (max-width: 420px) { .pick-bar-row { grid-template-columns: 90px minmax(12px, 1fr) 125px; } }
   .pick-note { margin: 2px 0 0; font-size: 11.5px; color: var(--muted); grid-column: 1 / -1; }
   .pick-links { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding-top: 2px; }
@@ -1336,6 +1338,23 @@ Style genome (duotone-hixffp):
       <strong>875 tok/s combined</strong> &mdash; two Arc Pro B70 cards serving 64 people at once with Qwen3.8-27B FP8, with no speculative decoding and short prompts. All tested token arrays matched their sequential references; two passes used one server, so this is not a fresh-server speed certification.
       <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/qwen38-27b-b70/data/2026-10-07-fp8-two-card-multi-user/summary.json">Read the test receipt</a> &middot; <a href="learn/multi-user.html">How serving many users works</a>
     </p>
+  </div>
+</section>
+
+<section id="long-tasks">
+  <div class="wrap">
+    <h2 id="t-long-tasks">Long agent tasks past the context limit <span class="key"><span class="dot" aria-hidden="true">&#9679;</span> measured &middot; free download</span></h2>
+    <p><strong>ctxkeeper</strong> is a small proxy you put between an agent and any OpenAI-compatible server (vLLM, llama.cpp and others). The model is shown a 32K view: its standing rules, notes it keeps up to date and the newest turns. Everything older is archived word for word and searchable, so a long task keeps going after its history has outgrown the window. Measured with Qwen3.8-27B FP8 on two B70s:</p>
+    <div class="pick-bars long-task-bars">
+      <p class="pick-note">Questions answered about a million-token history (more is better)</p>
+      <div class="pick-bar-row"><span class="pick-bar-label">ctxkeeper</span><div class="pick-track" aria-hidden="true"><div class="pick-fill spot" style="width:99.12%"></div></div><span class="pick-val">226 / 228<small>50 minutes</small></span></div>
+      <div class="pick-bar-row"><span class="pick-bar-label">200K window</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:72.81%"></div></div><span class="pick-val">166 / 228<small>every rule question wrong; 228 minutes</small></span></div>
+      <p class="pick-note">Minutes to fix 40 real bugs, same score both ways: 40/40 fixed, every rule kept, 7/7 follow-up questions (less is better)</p>
+      <div class="pick-bar-row"><span class="pick-bar-label">ctxkeeper</span><div class="pick-track" aria-hidden="true"><div class="pick-fill spot" style="width:60.55%"></div></div><span class="pick-val">33 min<small>2.9M prompt tokens read</small></span></div>
+      <div class="pick-bar-row"><span class="pick-bar-label">262K window</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:100%"></div></div><span class="pick-val">55 min<small>29.9M prompt tokens read</small></span></div>
+    </div>
+    <p>Public domain, Python standard library only; install with pip or Docker. One model on one machine so far: other models should work if they call tools reliably, but have not been measured.</p>
+    <p><a class="button" href="https://github.com/steveseguin/b70-optimization-lab/releases/tag/ctxkeeper-v1.0.0">Download ctxkeeper 1.0.0</a> <a class="button secondary" href="https://skindeep.ai/context-use.html">How it works, in plain words</a> <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/tools/ctxkeeper/README.md">Full instructions</a></p>
   </div>
 </section>
 
