@@ -31,6 +31,90 @@ API_STRING_LIMITS = {
     "notes": 2000,
 }
 
+# Owner decision, 2026-10-15: this one result may use the October 13 scope.
+# This is an eligibility exception, never a pass of the strict 512-cap gate.
+OWNER_128_RULE = "packet45.speed3.owner-authorized-128-token-scope.2026-10-15"
+OWNER_128_AUTHORIZATION = {
+    "rule": OWNER_128_RULE,
+    "date": "2026-10-15",
+    "authorization_text": "authorized: submit under the same 128-token scope as the October 13 record.",
+    "reference_submission": "cmv6pugme0020oa01fjrho6nx",
+    "requested_max_new": 128,
+    "scope": "same fixed realistic 12-prompt suite; cold; cached_tokens=0; 128 generated tokens per prompt; primary metric over 99 intervals between events 1 and 100",
+}
+OWNER_128_RAW_GATE = {
+    "passed": False,
+    "reason": "measurement preparation only; cap below fixed 512 and no promotion attestation; repeats/partial suites never qualify",
+}
+
+
+def owner_128_scope_problems(item: dict) -> list[str]:
+    """Fail closed outside the single owner-authorized SPEED3 headline."""
+    payload = item.get("payload") or {}
+    engine = payload.get("engineFlags") or {}
+    problem = "invalid owner-authorized 128-token scope exception"
+    if engine.get("realisticSuiteScopeException") != OWNER_128_AUTHORIZATION:
+        return [problem + ": missing or different owner authorization"]
+    identity = engine.get("promotionIdentity") or {}
+    expected = {
+        "realisticSuiteGatePassed": False,
+        "strict512TokenFinalGatePassed": False,
+        "rawRealisticFinalGate": OWNER_128_RAW_GATE,
+        "requestedMaxNew": 128,
+        "realisticOutputTokenCounts": [128] * 12,
+        "targetSplit": [24, 24], "draftRank": 0, "deviceCards": [0, 1],
+        "realisticSuiteId": "rapid-model-snapshots-b70-realistic-v1",
+        "prefixCaching": False, "responseReuse": False, "contextCheckpoints": 0,
+        "historyAccelerated": False, "targetModelVerifiedAcceptedTokens": True,
+        "buildReceiptSha256": "8460585fe53879223066a5d54799c9f105c73002adfc09fc9a743ceaee7e3fa8",
+    }
+    if any(engine.get(k) != v for k, v in expected.items()) or (
+        identity.get("runtime_revision") != "75d2c459d"
+        or identity.get("model_revision") != "766911a6b7369840a91dbcd95f9f997acaab6cd6"
+        or identity.get("suite_sha256") != "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812"
+        or payload.get("tokSOut") != 38.15715689731613
+        or payload.get("outputTokens") != 128
+        or payload.get("modelRevision") != identity.get("model_revision")
+        or payload.get("hfId") != "unsloth/Qwen3.8-Flash-Next-GGUF"
+        or payload.get("quantization") != "UD-IQ3_XXS (GGUF)"
+        or payload.get("contextLength") != 4096
+    ):
+        return [problem + ": result identity, raw gate or measurement scope differs"]
+    try:
+        def bound_json(relative, digest):
+            path = (REPO_ROOT / relative).resolve()
+            if not path.is_relative_to(REPO_ROOT):
+                raise ValueError("evidence outside repository")
+            raw = path.read_bytes()
+            if hashlib.sha256(raw).hexdigest() != digest:
+                raise ValueError("evidence digest mismatch")
+            return json.loads(raw)
+        att = bound_json(engine["promotionAttestation"], engine["promotionAttestationSha256"])
+        perf = att["performance_evidence"]
+        if perf["path"] != engine["benchmarkJson"]:
+            raise ValueError("performance evidence path mismatch")
+        result = bound_json(perf["path"], perf["sha256"])
+        for evidence in (att, result):
+            require_qualifying(evidence)
+            scope = evidence["submission_scope"]
+            if (scope["owner_authorization"] != OWNER_128_AUTHORIZATION
+                or scope["raw_realistic_final_gate"] != OWNER_128_RAW_GATE
+                or scope["strict_512_gate_passed"] is not False
+                or scope["owner_exception_authorized"] is not True):
+                raise ValueError("evidence authorization/raw gate mismatch")
+        rows = result["rows"]
+        if (result["promotionIdentity"] != identity or att["identity"] != identity
+            or result["primary_metric"]["value_tok_s"] != payload["tokSOut"]
+            or len(rows) != 12 or len({r["prompt_id"] for r in rows}) != 12
+            or any(r["output_tokens"] != 128 or r["requested_max_new"] != 128
+                   or r["cached_tokens"] != 0 for r in rows)
+            or [r["prompt_sha256"] for r in rows] != engine["promptSha256"]
+            or [r["output_sha256"] for r in rows] != engine["outputSha256"]):
+            raise ValueError("performance rows/identity mismatch")
+    except (KeyError, TypeError, ValueError, OSError) as error:
+        return [problem + ": " + str(error)]
+    return []
+
 
 def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[str]:
     try:
@@ -85,6 +169,13 @@ def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[s
         engine.get("realisticSuiteGatePassed") is True
         or engine.get("freshRealisticSuiteGatePassed") is True
     )
+    if "realisticSuiteScopeException" in engine or (
+        (engine.get("promotionIdentity") or {}).get("runtime_revision") == "75d2c459d"
+        and engine.get("requestedMaxNew") == 128
+    ):
+        exception_problems = owner_128_scope_problems(item)
+        problems.extend(exception_problems)
+        gate_passed = not exception_problems
     metric_name = str(engine.get("primaryMetricName", ""))
     if not gate_passed:
         problems.append("missing realistic-suite final gate pass marker")
@@ -224,6 +315,14 @@ def api_engine_flags(engine_flags: dict) -> dict:
         "attentionBackendActual": engine_flags.get("attentionBackend"),
         "requestPolicy": "cache_prompt=false; no prefix/KV/history/response reuse",
     }
+    if isinstance(engine_flags.get("realisticSuiteScopeException"), dict):
+        # This early sorted entry survives the API's 1000-character cap.
+        extra["authorizedScopeException"] = {
+            "rule": engine_flags["realisticSuiteScopeException"].get("rule"),
+            "date": engine_flags["realisticSuiteScopeException"].get("date"),
+            "requestedCap": engine_flags.get("requestedMaxNew"),
+            "strict512GatePassed": False,
+        }
     extra_text = json.dumps(
         {k: v for k, v in extra.items() if v is not None},
         sort_keys=True,

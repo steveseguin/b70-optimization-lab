@@ -89,7 +89,12 @@
   "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed3-c4096-dr0-s24-gpu/WS128/run/repeat-1/technical-guide/receipt.json": "0756e5eaccf687d031f18d375b2a997d5675e579dcf580b017e9fe5f2bed5605",
   "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed3-c4096-dr0-s24-gpu/WS128/run/repeat-1/risk-register/receipt.json": "0d914254d18e1a095d2267df63bd7c54ec15abab9436802d1c256d7e876ab678",
   "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed3-c4096-dr0-s24-gpu/WS128/run/repeat-1/performance-hypotheses/receipt.json": "c06960b3550753017511c38ccc05cc409a1986e26b45655e632bed2ca38c77e0",
-  "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed3-c4096-dr0-s24-gpu/WS128/run/repeat-1/decision-memo/receipt.json": "ee9de6fbb429e22a08bd43ad94c2e297add2b33b7a8fa10da30ef10ff87b1181"
+  "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed3-c4096-dr0-s24-gpu/WS128/run/repeat-1/decision-memo/receipt.json": "ee9de6fbb429e22a08bd43ad94c2e297add2b33b7a8fa10da30ef10ff87b1181",
+  "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed3-c4096-dr0-s24-gpu/WS128-r2/window.json": "324668243d4bd2748c0a322d5d5dac3832fc20fdbe274ee089cef8a5339adbc5",
+  "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed3-c4096-dr0-s24-gpu/WS128-r3/window.json": "6dd7f1d5a5e85f1e3af5823274768f41b429782a71a9513fe21949bad93f3b14",
+  "experiments/own-xpu-runtime/stage2/packet44-context/build/c4096ctl15a/WS128-r2/window.json": "f1eaf28f28cf804b4a45bd1e58be6a004590081541830859775288972ae79bdd",
+  "experiments/own-xpu-runtime/stage2/packet44-context/build/c4096ctl15a/WS128/window.json": "e9bf3994b5ed38348351536a2de3bc7658fb98c0dde26fbbaf1bac1db462e2d5",
+  "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed3-c4096-dr1-gpu/WS128/window.json": "47ce725229af82ffc773bd26229ee1cbe8f7cb6aaa8e19afe05e59f3c24f2679"
  },
  "device_window_fixture_counts": {
   "WS": 4608,
@@ -187,18 +192,34 @@
   1186382,
   1186383
  ],
- "preflight_problems": [
-  "missing realistic-suite final gate pass marker"
- ],
+ "preflight_problems": [],
  "submission_scope": {
   "scope": "Historical 2026-10-13 128-token-cap submission; not the strict 512-token final gate",
-  "owner_exception_authorized": false,
+  "owner_exception_authorized": true,
   "raw_realistic_final_gate": {
    "passed": false,
    "reason": "measurement preparation only; cap below fixed 512 and no promotion attestation; repeats/partial suites never qualify"
   },
   "strict_512_gate_passed": false,
   "prepared_only": true,
-  "real_submission_performed": false
+  "real_submission_performed": false,
+  "owner_authorization": {
+   "rule": "packet45.speed3.owner-authorized-128-token-scope.2026-10-15",
+   "date": "2026-10-15",
+   "authorization_text": "authorized: submit under the same 128-token scope as the October 13 record.",
+   "reference_submission": "cmv6pugme0020oa01fjrho6nx",
+   "requested_max_new": 128,
+   "scope": "same fixed realistic 12-prompt suite; cold; cached_tokens=0; 128 generated tokens per prompt; primary metric over 99 intervals between events 1 and 100"
+  },
+  "reference_submission": "cmv6pugme0020oa01fjrho6nx",
+  "requested_max_new": 128
+ },
+ "submission_helper_tests": {
+  "command": "nice -n 19 ionice -c 3 taskset -c 4-15,20-31 env OMP_NUM_THREADS=2 PYTHONPATH=scripts python3 -B -m unittest discover -s scripts/tests -p 'test_localmaxxing*.py'",
+  "passed": 13,
+  "failed": 0,
+  "new_exception_tests": 9,
+  "helper_sha256": "c8802ba71cde7577c5b3b2aa70b52d1579b3819f39318a9d401f8e57b720f644",
+  "exception_test_sha256": "e7f74e2334ca30e3e96303949624692da4d7b8e5d42c22c8932f9b511f1244cc"
  }
 }

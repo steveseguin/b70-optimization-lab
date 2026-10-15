@@ -34,7 +34,7 @@
  },
  "performance_evidence": {
   "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-realistic-suite-v1-result.json",
-  "sha256": "534e96ce79a9ac5b8ba9ff02d23aaa301e6f9f5b35de4796484f11e3a4e076ba"
+  "sha256": "b7085330e8df0402aed8e5202830c7e132c21881a57b62ac3d14f754f8dd01f8"
  },
  "quality_evidence": [
   {
@@ -70,14 +70,29 @@
  ],
  "submission_scope": {
   "scope": "Historical 2026-10-13 128-token-cap submission; not the strict 512-token final gate",
-  "owner_exception_authorized": false,
+  "owner_exception_authorized": true,
   "raw_realistic_final_gate": {
    "passed": false,
    "reason": "measurement preparation only; cap below fixed 512 and no promotion attestation; repeats/partial suites never qualify"
   },
   "strict_512_gate_passed": false,
   "prepared_only": true,
-  "real_submission_performed": false
+  "real_submission_performed": false,
+  "owner_authorization": {
+   "rule": "packet45.speed3.owner-authorized-128-token-scope.2026-10-15",
+   "date": "2026-10-15",
+   "authorization_text": "authorized: submit under the same 128-token scope as the October 13 record.",
+   "reference_submission": "cmv6pugme0020oa01fjrho6nx",
+   "requested_max_new": 128,
+   "scope": "same fixed realistic 12-prompt suite; cold; cached_tokens=0; 128 generated tokens per prompt; primary metric over 99 intervals between events 1 and 100"
+  },
+  "reference_submission": "cmv6pugme0020oa01fjrho6nx",
+  "requested_max_new": 128
+ },
+ "confirmation_evidence": {
+  "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-confirmation-evidence.json",
+  "sha256": "1fc2c4318e298ce51769a849a573ad28c13bdfdeeac4110a4497239fe5d38384",
+  "headline_selection": "Run 1 pre-registered; repeats and controls are never pooled or substituted"
  },
  "seal6_amendment": {
   "rule": "packet45.fix6.device-oracle-authority.2026-10-15",

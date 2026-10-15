@@ -13,7 +13,7 @@ REV='75d2c459d'
 SEAL='8460585fe53879223066a5d54799c9f105c73002adfc09fc9a743ceaee7e3fa8'
 sys.path.insert(0,str(ROOT/'scripts'))
 from promotion_evidence import validate_packet45_device_evidence
-from submit_localmaxxing_results import preflight_payload
+from submit_localmaxxing_results import preflight_payload, OWNER_128_AUTHORIZATION, OWNER_128_RAW_GATE
 
 def sha(data):return hashlib.sha256(data).hexdigest()
 def rel(p):return str(p.relative_to(ROOT))
@@ -22,6 +22,46 @@ def dest(suffix):return D/(PREFIX+suffix)
 def save(suffix,value):
  p=dest(suffix);assert not p.is_relative_to(P)
  p.write_text(json.dumps(value,indent=1)+'\n');return p
+
+def confirmation_evidence(headline, headline_requests, input_hashes):
+ configs=[
+  ('run1-headline',RUN/'WS128',True),
+  ('run2-confirmation',RUN/'WS128-r2',False),
+  ('run3-confirmation',RUN/'WS128-r3',False),
+  ('p44-interleaved-control',ROOT/'experiments/own-xpu-runtime/stage2/packet44-context/build/c4096ctl15a/WS128-r2',False),
+  ('p44-earlier-control',ROOT/'experiments/own-xpu-runtime/stage2/packet44-context/build/c4096ctl15a/WS128',False),
+  ('draft-rank1-confirmation',P/'build/speed3-c4096-dr1-gpu/WS128',False)]
+ records=[]
+ for label,directory,submitted in configs:
+  raw=(directory/'window.json').read_bytes();w=json.loads(raw);s=w['summary']
+  assert w['passed'] and w['device_executed'] and not w.get('cpu_rehearsal',False)
+  assert w['boot_id']==headline['boot_id'] and s['complete'] and len(s['rows'])==12
+  assert w.get('qualifying',True) and not w.get('diagnostic_unsealed',False)
+  is_p45=directory.is_relative_to(P)
+  if is_p45:
+   assert w['qualifying'] and w['build_receipt_sha256']==SEAL and w['artifacts_sha256']==headline['artifacts_sha256']
+   if w['draft_rank']==0:assert w['dispatch_sha256']==headline['dispatch_sha256']
+  out=dest(label+'-confirmation-window.json');out.write_bytes(raw)
+  input_hashes[rel(directory/'window.json')]=sha(raw)
+  rates=[];classes={};timestamps=[];members=[]
+  for row in s['rows']:
+   f=directory/'run'/row['receipt'];b=f.read_bytes();r=json.loads(b)
+   assert w['receipts'][str(f.relative_to(directory))]==sha(b)
+   assert r['passed'] and len(r['tokens'])==128
+   assert r['tokens']==headline_requests[row['prompt_id']]['tokens']
+   stamps=row['token_timestamps'] if is_p45 else row['generated_token_completion_timestamps']
+   assert len(stamps)==128
+   rate=99/(stamps[99]-stamps[0]);rates.append(rate);timestamps.extend(stamps)
+   declared=row['tok_s_1_100_intervals_after_ttft'] if is_p45 else row['submission_tok_s']
+   assert abs(rate-declared)<1e-8
+   if is_p45:
+    assert row['cached_tokens']==0 and row['requested_max_new']==128 and row['repeat']==1
+    classes.setdefault(row['prompt_class'],[]).append(rate)
+   members.append(dict(path=rel(f),sha256=sha(b),raw_base64=base64.b64encode(b).decode()))
+  archive=dest(label+'-confirmation-requests.json.gz')
+  archive.write_bytes(gzip.compress(json.dumps(members,separators=(',',':')).encode(),mtime=0))
+  records.append(dict(run=label,submitted_headline=submitted,source_path=rel(directory),window_path=rel(out),window_sha256=sha(raw),request_archive=dict(path=rel(archive),sha256=sha(archive.read_bytes())),passed=w['passed'],qualifying=w.get('qualifying'),qualification_note='Explicit qualifying receipt' if is_p45 else 'Legacy p44 schema: no qualifying field; passing device control, described as qualifying by owner',boot_id=w['boot_id'],build_receipt_sha256=w['build_receipt_sha256'],cards=[w['card'],w['card']+1],draft_rank=w.get('draft_rank',0),target_split=w.get('target_split'),all_prompt_median=statistics.median(rates),class_balanced=statistics.median(statistics.median(v) for v in classes.values()) if classes else None,first_token_monotonic=min(timestamps),last_token_monotonic=max(timestamps),tokens_equal_headline=True,requests=12,output_tokens_per_request=128))
+ return dict(schema='lab.speed3-confirmation.v1',headline='run1-headline',selection_policy='Pre-registered run 1 only; no pooling, selection of higher repeats, or substitution',runs=records,chronological_order=sorted([dict(run=r['run'],first_token_monotonic=r['first_token_monotonic'],last_token_monotonic=r['last_token_monotonic']) for r in records],key=lambda r:r['first_token_monotonic']),controls_class_balanced_note='Not reported in the legacy p44 summary; all-prompt conventional 99-interval medians shown')
 
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--owner-128-exception',action='store_true');a=ap.parse_args()
@@ -104,7 +144,14 @@ def main():
  command=' '.join(command)
  notes='Same Unsloth UD-IQ3_XXS model and quantization as record cmv6pugme0020oa01fjrho6nx, on new runtime revision 75d2c459d (SPEED3). Two rank processes on two B70 cards, 24/24 target layers, official one-token MTP draft on rank 0, native controller and K2-selected kernels. Every accepted token is target-verified. Checked write-set rollback preserves full state; draft events are profiled once. Twelve fixed realistic prompts, one cold response each, 128-token cap, zero cached tokens and complete request resets; no prompt/KV/response reuse. All 1536 output tokens match immutable arithmetic-v2-detmath oracles and sequential WSs. Separate WS128x checks 9216 retained layer fixtures at steps 1-8 and 97-104. Speed window retains no fixtures. Primary rate is the median of six prompt-class medians over 99 intervals between tokens 1 and 100. This is the historical 128-token submission scope, not a 512-token natural-completion gate. Context capacity 4096 only for this split/draft placement.'
  payload.update(engineVersion=f'own-xpu-runtime packet45-merged3 SPEED3 {REV}; device binary sha256 '+artifacts['device/own-rt-iq3'],promptTokens=s['promptTokens'],outputTokens=s['outputTokens'],tokSOut=headline,tokSTotal=s['wall_rate_statistics']['median'],ttftMs=s['ttft_statistics']['median'],notes=notes)
- flags.update(benchmarkJson=rel(dest('realistic-suite-v1-result.json')),commandSnippet=command,githubResultPacket='https://github.com/steveseguin/b70-optimization-lab/blob/main/'+rel(dest('result-packet.md')),promotionIdentity=identity,promotionAttestation=rel(dest('promotion-attestation.json')),outputSha256=[r['output_token_sha256'] for r in rows],promptSha256=[r['prompt_token_sha256'] for r in rows],outputTokens=[r['output_tokens'] for r in rows],realisticPromptTokenCounts=[r['prompt_tokens'] for r in rows],realisticOutputTokenCounts=[r['output_tokens'] for r in rows],realisticSuiteGatePassed=a.owner_128_exception,localmaxxingSubmissionAllowedUnderCurrentPolicy=a.owner_128_exception,kvCacheDtype='bf16',apiKvCacheDtype='auto',hashEncoding='SHA256 of compact JSON integer token arrays, as recorded in WS128 request receipts',targetSplit=[24,24],draftRank=0,deviceCards=[0,1],bootId=performance['boot_id'],buildReceiptSha256=SEAL,dispatchSha256=performance['dispatch_sha256'],environment={'OMP_NUM_THREADS':'2'},requestedMaxNew=128,strict512TokenFinalGatePassed=False)
+ flags.update(benchmarkJson=rel(dest('realistic-suite-v1-result.json')),commandSnippet=command,githubResultPacket='https://github.com/steveseguin/b70-optimization-lab/blob/main/'+rel(dest('result-packet.md')),promotionIdentity=identity,promotionAttestation=rel(dest('promotion-attestation.json')),outputSha256=[r['output_token_sha256'] for r in rows],promptSha256=[r['prompt_token_sha256'] for r in rows],outputTokens=[r['output_tokens'] for r in rows],realisticPromptTokenCounts=[r['prompt_tokens'] for r in rows],realisticOutputTokenCounts=[r['output_tokens'] for r in rows],realisticSuiteGatePassed=False,localmaxxingSubmissionAllowedUnderCurrentPolicy=a.owner_128_exception,kvCacheDtype='bf16',apiKvCacheDtype='auto',hashEncoding='SHA256 of compact JSON integer token arrays, as recorded in WS128 request receipts',targetSplit=[24,24],draftRank=0,deviceCards=[0,1],bootId=performance['boot_id'],buildReceiptSha256=SEAL,dispatchSha256=performance['dispatch_sha256'],environment={'OMP_NUM_THREADS':'2'},requestedMaxNew=128,strict512TokenFinalGatePassed=False)
+ flags['rawRealisticFinalGate']=s['realistic_final_gate']
+ assert flags['rawRealisticFinalGate']==OWNER_128_RAW_GATE
+ if a.owner_128_exception:
+  flags['realisticSuiteScopeException']=copy.deepcopy(OWNER_128_AUTHORIZATION)
+  payload['notes']+=' Owner authorization 2026-10-15: "'+OWNER_128_AUTHORIZATION['authorization_text']+'" Strict 512-cap gate remains false: '+OWNER_128_RAW_GATE['reason']+'. Requested cap: 128. Run 1 is the registered headline; higher repeats are confirmation only.'
+ confirmation=confirmation_evidence(performance,requests['WS128'],input_hashes)
+ confirmation_path=save('confirmation-evidence.json',confirmation)
  result=copy.deepcopy(read(D/(OLD+'realistic-suite-v1-result.json')))
  result.update(label=LABEL,generated_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),engine='own-xpu-runtime (stage2/packet45-merged3 SPEED3 75d2c459d, native controller, two rank processes, target24/24, draft rank0)',artifacts_sha256=artifacts,promotionIdentity=identity,receipts=rel(dest('result-packet.md')))
  result['exactness'].update(retained_layer_fixtures_exact='9216/9216 in separate WS128x; none retained by WS128 speed window',authority='passing W2m, WS, WSs, WS128x device windows against immutable arithmetic-v2-detmath per-prompt oracles; byte equality, no tolerance',speculation='official one-token MTP draft head on rank 0; accepted tokens target-verified; identical tokens to fresh sequential WSs')
@@ -112,11 +159,16 @@ def main():
  result['secondary'].update(decode_63_interval_median_tok_s=s['decode_median_tok_s'],wall_median_tok_s=payload['tokSTotal'],ttft_median_ms=payload['ttftMs'],prompt_tokens_median=payload['promptTokens'],output_tokens_median=payload['outputTokens'],submission100_all_prompt_statistics=s['submission100_statistics'],acceptance_statistics=s['acceptance_statistics'],ttft_statistics=s['ttft_statistics'],wall_rate_statistics=s['wall_rate_statistics'])
  result['rows']=[dict(prompt_id=r['prompt_id'],prompt_class=r['prompt_class'],prompt_tokens=r['prompt_tokens'],output_tokens=r['output_tokens'],ttft_ms=r['ttft_ms'],decode_tok_s=r['decode_tok_s'],submission_tok_s=r['tok_s_1_100_intervals_after_ttft'],wall_tok_s=r['wall_tok_s'],prompt_sha256=r['prompt_token_sha256'],output_sha256=r['output_token_sha256'],acceptance=r['acceptance'],ended_early=r['ended_early'],cached_tokens=r['cached_tokens'],finish_reason=r['finish_reason'],requested_max_new=128,full_natural_completion_tok_s=r['full_natural_completion_tok_s'],full_cap_limited_tok_s=r['full_cap_limited_tok_s'],submission100=r['submission100']) for r in rows]
  scope=dict(scope='Historical 2026-10-13 128-token-cap submission; not the strict 512-token final gate',owner_exception_authorized=a.owner_128_exception,raw_realistic_final_gate=s['realistic_final_gate'],strict_512_gate_passed=False,prepared_only=True,real_submission_performed=False)
+ scope['owner_authorization']=copy.deepcopy(OWNER_128_AUTHORIZATION) if a.owner_128_exception else None
+ scope['reference_submission']='cmv6pugme0020oa01fjrho6nx'
+ scope['requested_max_new']=128
+ result['confirmation_evidence']=dict(path=rel(confirmation_path),sha256=sha(confirmation_path.read_bytes()),headline_selection='Run 1 pre-registered; repeats and controls are never pooled or substituted')
  result.update(submission_scope=scope,hash_encoding=flags['hashEncoding'],quality_evidence=evidence,source_request_archives=archives)
  result_path=save('realistic-suite-v1-result.json',result)
  att=copy.deepcopy(read(D/(OLD+'promotion-attestation.json')));att.update(label=LABEL,date='2026-10-15',identity=identity,performance_evidence=dict(path=rel(result_path),sha256=sha(result_path.read_bytes())),quality_evidence=evidence,evidence=[e['path'] for e in evidence]+[rel(result_path)],submission_scope=scope)
  att['gates']['bit_exact_vs_cpu_oracles']='12/12 requests, 1536/1536 tokens in WS128; 9216/9216 retained layer fixtures in separate WS128x, byte equality'
  att['gates']['fresh_process_repeated_token_equality']='All 12 token sequences identical across independent WS, WSs, WS128x and WS128 rank-process launches; speed repeats are not pooled'
+ att['confirmation_evidence']=result['confirmation_evidence']
  att['gates']['strict_512_token_final_gate_passed']=False
  att['gates']['kernel_log_scope']='No new signatures in each window journal tail; preflight includes historical October 11 faults, so not a clean-boot claim'
  att['seal6_amendment']=dict(rule='packet45.fix6.device-oracle-authority.2026-10-15',build_receipt_sha256=SEAL,required_device_windows=['W2m','WS','WSs','WS128x'],all_present_passing_same_artifacts=True)

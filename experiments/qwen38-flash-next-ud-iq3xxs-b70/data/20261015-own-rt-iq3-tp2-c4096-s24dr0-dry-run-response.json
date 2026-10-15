@@ -1,19 +1,50 @@
 {
- "prepared_only": true,
- "real_submission_performed": false,
- "attempts": [
-  {
-   "utc": "2026-10-15T08:16:22.612782+00:00",
-   "mode": "--server-dry-run",
-   "exit_code": 2,
-   "server_contacted": false,
-   "http_status": null,
-   "response": null,
-   "payload_queue_sha256": "1baa4eeac743791b1ae73d82bf012c9b700711595c8b989051ec58dd91cca518",
-   "local_preflight_errors": [
-    "missing realistic-suite final gate pass marker"
-   ],
-   "reason": "Awaiting owner decision on explicit historical 128-token submission exception; strict 512-token final gate remains false."
-  }
- ]
+  "prepared_only": true,
+  "real_submission_performed": false,
+  "attempts": [
+    {
+      "utc": "2026-10-15T08:16:22.612782+00:00",
+      "mode": "--server-dry-run",
+      "exit_code": 2,
+      "server_contacted": false,
+      "http_status": null,
+      "response": null,
+      "payload_queue_sha256": "1baa4eeac743791b1ae73d82bf012c9b700711595c8b989051ec58dd91cca518",
+      "local_preflight_errors": [
+        "missing realistic-suite final gate pass marker"
+      ],
+      "reason": "Awaiting owner decision on explicit historical 128-token submission exception; strict 512-token final gate remains false."
+    },
+    {
+      "utc": "2026-10-15T12:40:08.503021+00:00",
+      "mode": "--server-dry-run",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "scripts/submit_localmaxxing_results.py",
+        "--payloads",
+        "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-localmaxxing-payload-queue.json",
+        "--label",
+        "qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-mtp1-c4096-s24dr0-realistic-20261015",
+        "--server-dry-run"
+      ],
+      "exit_code": 0,
+      "server_contacted": true,
+      "stdout": "1/1 qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-mtp1-c4096-s24dr0-realistic-20261015: HTTP 200\n{\"valid\": true}\n",
+      "stderr": "",
+      "payload_queue_sha256": "fae9f94db331354b5791a530cf6014ad47618a868122f15b314b764b7dfcc335",
+      "owner_scope_exception": {
+        "rule": "packet45.speed3.owner-authorized-128-token-scope.2026-10-15",
+        "date": "2026-10-15",
+        "authorization_text": "authorized: submit under the same 128-token scope as the October 13 record.",
+        "reference_submission": "cmv6pugme0020oa01fjrho6nx",
+        "requested_max_new": 128,
+        "scope": "same fixed realistic 12-prompt suite; cold; cached_tokens=0; 128 generated tokens per prompt; primary metric over 99 intervals between events 1 and 100"
+      },
+      "http_status": 200,
+      "response": {
+        "valid": true
+      }
+    }
+  ]
 }

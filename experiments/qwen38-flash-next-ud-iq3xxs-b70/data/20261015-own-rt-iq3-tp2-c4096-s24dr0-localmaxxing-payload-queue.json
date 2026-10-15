@@ -24,7 +24,7 @@
    "tokSOut": 38.15715689731613,
    "tokSTotal": 26.933965381469946,
    "ttftMs": 1358.4201005287468,
-   "notes": "Same Unsloth UD-IQ3_XXS model and quantization as record cmv6pugme0020oa01fjrho6nx, on new runtime revision 75d2c459d (SPEED3). Two rank processes on two B70 cards, 24/24 target layers, official one-token MTP draft on rank 0, native controller and K2-selected kernels. Every accepted token is target-verified. Checked write-set rollback preserves full state; draft events are profiled once. Twelve fixed realistic prompts, one cold response each, 128-token cap, zero cached tokens and complete request resets; no prompt/KV/response reuse. All 1536 output tokens match immutable arithmetic-v2-detmath oracles and sequential WSs. Separate WS128x checks 9216 retained layer fixtures at steps 1-8 and 97-104. Speed window retains no fixtures. Primary rate is the median of six prompt-class medians over 99 intervals between tokens 1 and 100. This is the historical 128-token submission scope, not a 512-token natural-completion gate. Context capacity 4096 only for this split/draft placement.",
+   "notes": "Same Unsloth UD-IQ3_XXS model and quantization as record cmv6pugme0020oa01fjrho6nx, on new runtime revision 75d2c459d (SPEED3). Two rank processes on two B70 cards, 24/24 target layers, official one-token MTP draft on rank 0, native controller and K2-selected kernels. Every accepted token is target-verified. Checked write-set rollback preserves full state; draft events are profiled once. Twelve fixed realistic prompts, one cold response each, 128-token cap, zero cached tokens and complete request resets; no prompt/KV/response reuse. All 1536 output tokens match immutable arithmetic-v2-detmath oracles and sequential WSs. Separate WS128x checks 9216 retained layer fixtures at steps 1-8 and 97-104. Speed window retains no fixtures. Primary rate is the median of six prompt-class medians over 99 intervals between tokens 1 and 100. This is the historical 128-token submission scope, not a 512-token natural-completion gate. Context capacity 4096 only for this split/draft placement. Owner authorization 2026-10-15: \"authorized: submit under the same 128-token scope as the October 13 record.\" Strict 512-cap gate remains false: measurement preparation only; cap below fixed 512 and no promotion attestation; repeats/partial suites never qualify. Requested cap: 128. Run 1 is the registered headline; higher repeats are confirmation only.",
    "engineFlags": {
     "apiMode": "offline-cli",
     "attentionBackend": "own SYCL QSA sparse attention + GDN kernels (own-xpu-runtime)",
@@ -42,7 +42,7 @@
     "historyAccelerated": false,
     "responseReuse": false,
     "prefixCaching": false,
-    "localmaxxingSubmissionAllowedUnderCurrentPolicy": false,
+    "localmaxxingSubmissionAllowedUnderCurrentPolicy": true,
     "metricWindowGeneratedTokens": 100,
     "metricWindowIntervals": 99,
     "modelPath": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
@@ -120,7 +120,7 @@
     "primaryMetricAggregation": "median-of-prompt-class-medians",
     "primaryMetricAccounting": "inter-token-intervals",
     "promotionAttestation": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-promotion-attestation.json",
-    "promotionAttestationSha256": "8338d5760c95db1bd17758159e3192aa240c5e0108e657521caef55985c0bc29",
+    "promotionAttestationSha256": "5c5ba450ad50292f854b8c378f51cf6de88fca6e77f0c7e33ddb03f743b33a01",
     "promotionIdentity": {
      "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
      "runtime_revision": "75d2c459d",
@@ -152,7 +152,19 @@
      "OMP_NUM_THREADS": "2"
     },
     "requestedMaxNew": 128,
-    "strict512TokenFinalGatePassed": false
+    "strict512TokenFinalGatePassed": false,
+    "rawRealisticFinalGate": {
+     "passed": false,
+     "reason": "measurement preparation only; cap below fixed 512 and no promotion attestation; repeats/partial suites never qualify"
+    },
+    "realisticSuiteScopeException": {
+     "rule": "packet45.speed3.owner-authorized-128-token-scope.2026-10-15",
+     "date": "2026-10-15",
+     "authorization_text": "authorized: submit under the same 128-token scope as the October 13 record.",
+     "reference_submission": "cmv6pugme0020oa01fjrho6nx",
+     "requested_max_new": 128,
+     "scope": "same fixed realistic 12-prompt suite; cold; cached_tokens=0; 128 generated tokens per prompt; primary metric over 99 intervals between events 1 and 100"
+    }
    }
   }
  }

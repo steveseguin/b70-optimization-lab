@@ -2,7 +2,7 @@
  "schema": "lab.realistic-suite-result.v1",
  "label": "qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-mtp1-c4096-s24dr0-realistic-20261015",
  "suite_id": "rapid-model-snapshots-b70-realistic-v1",
- "generated_utc": "2026-10-15T08:16:09.301598+00:00",
+ "generated_utc": "2026-10-15T12:38:59.497367+00:00",
  "engine": "own-xpu-runtime (stage2/packet45-merged3 SPEED3 75d2c459d, native controller, two rank processes, target24/24, draft rank0)",
  "model": {
   "hf_id": "unsloth/Qwen3.8-Flash-Next-GGUF",
@@ -459,16 +459,31 @@
   "optimization_identity": "packet45-merged3-SPEED3-tp2-c4096-target24-24-draft-rank0-write-set-snapshot-K2-selected-kernels-native-controller-single-pass-draft-profiling",
   "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812"
  },
+ "confirmation_evidence": {
+  "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-confirmation-evidence.json",
+  "sha256": "1fc2c4318e298ce51769a849a573ad28c13bdfdeeac4110a4497239fe5d38384",
+  "headline_selection": "Run 1 pre-registered; repeats and controls are never pooled or substituted"
+ },
  "submission_scope": {
   "scope": "Historical 2026-10-13 128-token-cap submission; not the strict 512-token final gate",
-  "owner_exception_authorized": false,
+  "owner_exception_authorized": true,
   "raw_realistic_final_gate": {
    "passed": false,
    "reason": "measurement preparation only; cap below fixed 512 and no promotion attestation; repeats/partial suites never qualify"
   },
   "strict_512_gate_passed": false,
   "prepared_only": true,
-  "real_submission_performed": false
+  "real_submission_performed": false,
+  "owner_authorization": {
+   "rule": "packet45.speed3.owner-authorized-128-token-scope.2026-10-15",
+   "date": "2026-10-15",
+   "authorization_text": "authorized: submit under the same 128-token scope as the October 13 record.",
+   "reference_submission": "cmv6pugme0020oa01fjrho6nx",
+   "requested_max_new": 128,
+   "scope": "same fixed realistic 12-prompt suite; cold; cached_tokens=0; 128 generated tokens per prompt; primary metric over 99 intervals between events 1 and 100"
+  },
+  "reference_submission": "cmv6pugme0020oa01fjrho6nx",
+  "requested_max_new": 128
  },
  "hash_encoding": "SHA256 of compact JSON integer token arrays, as recorded in WS128 request receipts",
  "quality_evidence": [

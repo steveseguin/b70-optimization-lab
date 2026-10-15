@@ -135,6 +135,27 @@ realistic-suite gate pass marker,
 and 99 intervals. The historical `median_tok_s_1_100_after_ttft` field remains
 in old receipts for compatibility but is not eligible for a new submission.
 
+### Named SPEED3 scope exception (owner, 2026-10-15)
+
+The owner authorized: "authorized: submit under the same 128-token scope as
+the October 13 record." This refers to `cmv6pugme0020oa01fjrho6nx`: the same
+fixed twelve realistic prompts, cold responses, cached_tokens=0, 128 generated
+tokens each, and 99 intervals between events 1 and 100. It authorizes the
+pre-registered packet45 SPEED3 `75d2c459d` run 1, target split 24/24, draft
+rank 0, cards 0–1, context 4096; higher repeat values are confirmation only.
+
+The explicit `engineFlags.realisticSuiteScopeException` object carries rule
+`packet45.speed3.owner-authorized-128-token-scope.2026-10-15`, the dated owner
+text and reference submission. The helper checks that exact authorization,
+the result identity and scope, and hash-bound result/attestation evidence.
+`realisticSuiteGatePassed` stays false, as does the source strict 512-cap
+gate; its complete reason remains in `rawRealisticFinalGate` and the result
+packet. Missing authorization, changing the measurement or merely flipping
+the pass marker is refused. Every other safety and accounting check remains.
+This does not authorize other runtimes, scopes, configurations or results.
+See the [prepared evidence packet](../experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-result-packet.md)
+and `scripts/tests/test_localmaxxing_owner_scope.py`.
+
 The public API expects `engineFlags` as a typed object and requires a
 `commandSnippet` when the object is supplied. The local queue files may retain
 richer typed audit metadata for preflight; `scripts/submit_localmaxxing_results.py`

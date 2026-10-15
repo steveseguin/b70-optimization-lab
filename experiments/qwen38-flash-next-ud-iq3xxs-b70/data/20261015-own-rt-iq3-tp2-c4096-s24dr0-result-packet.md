@@ -2,7 +2,8 @@
 
 2026-10-15. This packet prepares the same submission schema and 128-token
 measurement scope as the October 13 record. It does not record a real
-submission, change the public record or authorize a later submission.
+submission or change the public record. The owner has authorized this scope;
+the coordinator retains the real submission step.
 
 The target is the same Unsloth Qwen3.8 Flash-Next UD-IQ3_XXS GGUF, revision
 `766911a6b7369840a91dbcd95f9f997acaab6cd6`, on a new lab runtime revision.
@@ -71,24 +72,69 @@ new runtime's speed. Window journal tails contain no new fault signatures.
 Preflight logs include the previously recorded October 11 faults; this is not
 a claim that the entire boot had no historical fault.
 
-**Strict final gate:** the source summary explicitly records
-`realistic_final_gate.passed=false`: it is measurement preparation at a
-128-token cap, below the repository's fixed 512-token final gate, with no
-promotion attestation at runtime. The source marker is retained verbatim in
-the prepared result and attestation. A legacy 128-token submission exception
-must be explicitly authorized before setting the submission helper's pass
-marker. It does not turn the strict 512-token gate into a pass. The attestation
-keeps the October 13 `lab.promotion-attestation.v1` schema requested by the
-owner; it does not claim to be the newer strict neural.download attestation.
-The owner-exception decision is pending. The prepared queue currently keeps
-`realisticSuiteGatePassed=false`. The requested `--server-dry-run` command was
-invoked; the helper stopped at local preflight with exit 2 and
-`missing realistic-suite final gate pass marker`. No HTTP request was sent.
-See [dry-run response](20261015-own-rt-iq3-tp2-c4096-s24dr0-dry-run-response.json).
-After a written exception for this historical scope, rerun the preparation
-script with `--owner-128-exception`, rerun server dry-run, and retain its
-response before any real submission. Neither an exception nor a submission
-has been inferred from elapsed time or a successful schema check.
+**Owner authorization, 2026-10-15:** "authorized: submit under the same
+128-token scope as the October 13 record." The authorized scope is identical
+to submission `cmv6pugme0020oa01fjrho6nx`: the same fixed realistic twelve
+prompts, cold responses, cached_tokens=0, 128 generated tokens per prompt,
+and the primary metric over 99 intervals between events 1 and 100.
+The requested cap is **128**, not 512.
+
+The packet's own strict gate remains **false**, with its unedited reason:
+
+> measurement preparation only; cap below fixed 512 and no promotion attestation; repeats/partial suites never qualify
+
+This is the original runtime summary's reason; the separate preparation now
+provides a hash-bound promotion attestation. It does not rewrite that summary
+or claim a strict 512-cap pass. The attestation keeps the October 13
+`lab.promotion-attestation.v1` schema, not the newer strict neural.download
+attestation schema.
+
+The named eligibility exception is
+`packet45.speed3.owner-authorized-128-token-scope.2026-10-15`, stored in
+`engineFlags.realisticSuiteScopeException`. The helper checks its dated owner
+text, prior submission, 12 × 128 scope, runtime/model/suite/seal identity,
+24/24 split, rank-0 draft, cards 0–1 and run 1's headline. It also verifies the
+attestation and performance JSON hashes, matching authorization and raw gate,
+and per-row token counts and hashes. The helper still refuses without this
+authorization, even if somebody flips the ordinary pass marker. Both
+`realisticSuiteGatePassed` and `strict512TokenFinalGatePassed` stay false.
+All other qualification, caching, history and metric checks remain active.
+
+Thirteen focused helper tests passed, including nine exception tests with
+negative controls for absent/malformed authorization, changed scope, changed
+runtime, changed hashes, a substituted higher repeat, diagnostic receipts and
+incorrect interval accounting. The authenticated `--server-dry-run` returned
+**HTTP 200, `{"valid": true}`**. No real submission was performed. The
+[response archive](20261015-own-rt-iq3-tp2-c4096-s24dr0-dry-run-response.json)
+also preserves the earlier local refusal while authorization was pending.
+
+## A-B-A confirmation; run 1 remains the headline
+
+| Run | Cards / draft rank | All-prompt median tok/s | Class-balanced tok/s | Use |
+|---|---|---:|---:|---|
+| SPEED3 run 1, WS128 | 0–1 / 0 | 38.00415100384534 | **38.15715689731613** | Pre-registered submitted value |
+| SPEED3 run 2, WS128-r2 | 0–1 / 0 | 38.03062796232048 | 38.21692500912173 | Confirmation only |
+| Interleaved packet44, c4096ctl15a/WS128-r2 | 0–1 / 0 | 37.79376800760946 | Not recorded in legacy summary | Control |
+| SPEED3 run 3, WS128-r3 | 0–1 / 0 | 38.043132779622724 | 38.21434624879848 | Confirmation only |
+| Earlier packet44, c4096ctl15a/WS128 | 0–1 / 0 | 37.74977984928242 | Not recorded in legacy summary | Control |
+| SPEED3 other configuration, speed3-c4096-dr1-gpu/WS128 | 2–3 / 1 | 37.866263682541074 | 38.131238029183585 | Separate configuration; not submitted |
+
+All run paths, raw window hashes, original request archives and exact metrics
+are in the [confirmation evidence](20261015-own-rt-iq3-tp2-c4096-s24dr0-confirmation-evidence.json).
+The three rank-0 SPEED3 runs share boot `13858eef`, seal receipt `8460585f…`,
+revision `75d2c459d`, artifact hashes, dispatch, target split and chain. Each
+explicitly records qualifying=true. The packet44 controls have the older
+schema without a qualifying field: their passing device receipts are retained
+verbatim, alongside the owner's designation as qualifying controls.
+
+Monotonic token timestamps establish the A-B-A order: SPEED3 run 2
+(370157.352886–370371.183696), packet44 control
+(370776.239777–370915.412943), SPEED3 run 3
+(371331.351312–371545.563204). They do not overlap. The preparation recomputes
+all six suites' conventional 99-interval medians from timestamps and verifies
+all 128 output tokens per prompt against run 1. The rank-0 repeats preserve
+the same dispatch; the other card pair has its own measured dispatch.
+Higher repeat values are neither substituted nor pooled into the headline.
 
 ## Files and reproducibility
 
@@ -107,7 +153,9 @@ with source paths and SHA256 values. Decompress the JSON array and decode
 `raw_base64`; the decoded bytes must hash to each member's `sha256`. This keeps
 the evidence reviewable after the coordinator archives the active build path.
 No model weights, binaries or state dumps are copied. No file under
-packet45-merged3 was created, modified or deleted during preparation.
+packet45-merged3 or packet44-context was created, modified or deleted during
+preparation. The confirmation archives add six original window receipts and
+six compressed archives of twelve original request receipts each.
 
 `promptSha256` and `outputSha256` are taken from the WS128 receipt's compact
 JSON integer-token-array hashes. Their encoding is explicit; they are not
