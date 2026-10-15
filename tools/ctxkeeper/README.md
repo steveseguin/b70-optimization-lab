@@ -1,173 +1,179 @@
 # ctxkeeper
 
-A small OpenAI-compatible proxy that lets an agent work on one task far past the model's live window without losing
-what it was told. Standard library only; it sits between any client and the model server.
+**Let an AI agent keep working on one long task after its conversation has grown far past what the model can read
+at once, without forgetting what it was told.**
+
+ctxkeeper is a small proxy that sits between your agent (or chat app) and your model server. Your agent keeps
+sending its whole history, as agents do. The proxy shows the model a short, current view of it: the opening
+instructions, a set of **notes** it keeps up to date (standing rules, current facts, open questions), and the most
+recent turns. Everything older goes to an **archive** on disk, and the model gets a `recall` tool to search it. The
+model and the server are not changed in any way; only what the model is shown each time changes.
 
 ```
-agent / client  --->  ctxkeeper (:18200)  --->  model server (:18196)
+your agent / app  --->  ctxkeeper (:18200)  --->  any OpenAI-compatible server (vLLM, llama.cpp, SGLang, ...)
+  sends everything        keeps notes + archive,       sees a short, current view
+                          shows a bounded view
 ```
 
-The client keeps sending its whole history. The proxy shows the model a bounded view of it:
+Version 1.0.0 · public domain ([Unlicense](LICENSE)) · Python 3.10 or newer, standard library only (two files:
+`ctxkeeper.py`, `notesdelta.py`) · write-up for non-specialists: <https://skindeep.ai/context.html>
 
-```
-[system messages] [first user message]  [NOTES, kept by the proxy]  [the recent turns, verbatim]
-```
+## Does it work?
 
-When the view would outgrow the window, the oldest turns are cut. Before they go the proxy writes them verbatim to an
-archive on disk, asks the model once (no tools) to rewrite its NOTES from the old notes and the turns being cut, and
-puts the notes where the cut turns were. NOTES has three parts: RULES (standing rules and methods; a rule the model
-drops is put back), STATE (what later work depends on) and OPEN. The model gets one extra tool, `recall`, which the
-proxy answers from the archive without the client seeing it, and the RULES are repeated after each new user message.
+Measured on Qwen3.8-27B (FP8, served by vLLM on two Intel Arc Pro B70 cards), with a 32K-token live window:
 
-Nothing about the model's arithmetic changes. Only what it is shown changes, and what is not shown is kept and
-searchable.
+| Test | With ctxkeeper | Without it |
+| --- | --- | --- |
+| **Real code repair**: 40 bugs to fix in a real Python library, handed out one ticket at a time, with three house rules announced along the way, then questions about the earliest fixes | **40/40 fixed, 40/40 following every rule, 7/7 questions right**, in 16 min (`--recipe qwen`); 36-38 min (`--recipe agent`); both with `--recite-when` for the tickets | Sliding 32K window: 22 to 35 of 40 clean, 0/7 questions. Summarizing the history: 33 to 40 of 40, 0 to 7 of 7 |
+| **The same task with a separate agent program** that manages nothing itself ([freeagent](../freeagent/freeagent.py)) | **40/40, 40/40, 7/7 in 33 min**, reading 2.9M prompt tokens | The same agent sending everything into a 262K window: same score, 55 min, 29.9M prompt tokens |
+| **Memory over 1M tokens**: 228 questions about things said up to a million tokens earlier | **226/228 (99%)** in 50 min | A 200K window: 166/228 (73%), every one of 29 standing-rule questions wrong, 228 min |
+| **2M tokens with planted traps** (values that change and change back, corrections, pronouns) | **351/382 (92%)**, 0 of 12 traps fell for | (not run: no window holds it) |
 
-## Why this shape
+Full record, every run and what went wrong: the lab note
+[`2026-10-10-context-16k-baseline.md`](../../experiments/qwen38-27b-b70/notes/2026-10-10-context-16k-baseline.md)
+(campaigns 10 to 18) and [HISTORY.md](HISTORY.md). One model, one machine: see [Limits](#limits).
 
-It is the policy measured as arm N32j in
-[`experiments/qwen38-27b-b70/notes/2026-10-10-context-16k-baseline.md`](../../experiments/qwen38-27b-b70/notes/2026-10-10-context-16k-baseline.md)
-on Qwen3.8-27B FP8 with a 32K live window and a 240K-token task: 39/39 and 46/46 on two streams that plant a
-standing rule and a method at the start and ask about them, and about old and current values and small details, up
-to 130 items later. A plain sliding window scored 23/39 on the first of those; the best method that makes the agent
-manage its own context scored 35/39 with twice the model calls. Three things in that record shaped the code:
+## Install
 
-- A rule needs a place that is never cut **and** a reminder where it is used. With neither, no method kept a rule
-  stated at the start (0 of 20 questions across four methods).
-- The request for notes must come **after** the turns being cut. Asked first, the model reads 8K tokens of its own
-  turns last and writes one more of them instead of notes.
-- The cut must happen while there is still room for the next large message, or that message arrives truncated.
-
-## Use
+Pick one:
 
 ```bash
-python3 tools/ctxkeeper/ctxkeeper.py --upstream http://127.0.0.1:18196 --port 18200 --budget 32768
-# then point the client at http://127.0.0.1:18200/v1
+# 1. pip (gives you the `ctxkeeper` command)
+pip install "git+https://github.com/steveseguin/b70-optimization-lab.git#subdirectory=tools/ctxkeeper"
+
+# 2. just the two files (run with python3 ctxkeeper.py ...)
+curl -LO https://raw.githubusercontent.com/steveseguin/b70-optimization-lab/main/tools/ctxkeeper/ctxkeeper.py
+curl -LO https://raw.githubusercontent.com/steveseguin/b70-optimization-lab/main/tools/ctxkeeper/notesdelta.py
+
+# 3. Docker
+docker build -t ctxkeeper https://github.com/steveseguin/b70-optimization-lab.git#main:tools/ctxkeeper
 ```
 
-- `--budget` is the live window in tokens, reply included; `--reply-reserve` (4096) is the room kept for the reply.
-  Decoding slows as the live context grows (on two B70s about 90 tok/s under 30K, 41 at 137K, 26 at 246K), so a small
-  window with notes and an archive is both faster and, in the measurements above, more accurate than a full one.
-- Turn off the client's own compaction or truncation and let it send everything: a history that no longer contains
-  what the proxy archived is treated as a new conversation (notes start over; the old archive is set aside).
-- One conversation is recognised by its model name, system messages and first user message, or by the header
-  `X-Ctx-Session`. State is under `--state-dir` (default `~/.cache/ctxkeeper/<key>/`): `archive.jsonl`, `state.json`.
-- `GET /ctxkeeper/status` shows cuts, recalls, rules put back and the token ratio learned from the server. A notes
-  call whose reply is empty, too long or not in the RULES / STATE layout is asked for once more (without thinking, and
-  with the correction); each rejection and its reason is written to `events.jsonl` in the conversation's folder.
-- `--notes-thinking on|off|unset` sets `chat_template_kwargs.enable_thinking` for the notes call (a vLLM/Qwen
-  field; `unset` sends nothing). Thinking notes were the measured setting.
-- The proxy adds a short Memory paragraph to the system message (always the same text) so the model knows about
-  NOTES and `recall`; `--no-memory-note` leaves the system message alone.
-- Two optional settings for tasks where questions arrive in tool results rather than from the user, or where thinking
-  on every call is too slow: `--recite-when REGEX` also repeats the RULES when the newest message matches, and
-  `--think-when REGEX` turns thinking on only for a user message or a matching newest message (with `--effort medium`
-  on Qwen, so that switching thinking does not change the system message and the prefix cache survives).
-- Streaming clients get the finished reply as one server-sent event (the proxy has to see whether the model called
-  `recall` before anything is sent on).
+## Quick start
 
-## In-place notes (`--notes-mode inplace`)
+1. Run a model server that speaks the OpenAI API and accepts at least 32K tokens per request (more is fine; the
+   proxy keeps each request under its window). For example vLLM on port 8000.
+2. Start the proxy in front of it:
 
-The first form above reads the cut turns a second time (as text in the notes call), rewrites the whole NOTES each
-time, and reads the kept turns again at their new place after every cut. In the lab's 1M-token run that was half the
-time. In-place notes avoid all three:
+   ```bash
+   ctxkeeper --upstream http://127.0.0.1:8000 --recipe agent    # any OpenAI-compatible server
+   ctxkeeper --upstream http://127.0.0.1:8000 --recipe qwen     # Qwen3.x behind vLLM: the fastest measured settings
+   # Docker: docker run --rm --network host -v ctxkeeper-state:/state ctxkeeper --recipe agent --upstream http://127.0.0.1:8000
+   ```
 
-- When the turns before the newest exchange hold more than `--inplace-tokens` (15,000), the notes call is **the
-  request the server has just read, plus one message** (same tool list, `tool_choice` none), so the server's prefix
-  cache serves nearly all of it.
-- The reply is **only what changed**: `NEW RULES`, `CHANGES` (one `name: value` line per fact, with the working when
-  a value follows from the old one: `stock: 120 + 49 = 169`), `OPEN`. The proxy applies it: a line not mentioned is
-  kept, a sum is recomputed, working must start from the value held. A reply that fails a check is asked for once
-  more with the lines named; rules named in either reply are kept.
-- Then **every turn it covered is moved out**. The view is the opening messages, NOTES and the newest exchange
-  (the assistant's last tool calls with their results, or the newest user message). Nothing is read back.
-- Two things stay in view on purpose: a question that arrived in a tool result and is still open (with
-  `--think-when` / `--think-until`; no in-place cut is made until it is closed), and the latest user message if it
-  has been moved out while the model is still working on it.
-- If an in-place attempt fails (no usable reply twice), nothing changes and the ordinary cut handles those turns
-  when the window fills. A cut is all or nothing: if saving it fails, the state is as before and the archive takes
-  no message twice when the cut is made again.
-- The cache only helps if the start of the prompt is the same in the notes call as in the call before it. On Qwen
-  pass `--effort medium` (as for `--think-when`): without it, thinking in the notes call changes the system message
-  and the server reads the whole request again. The notes are still right; the call is just slower.
-- `--notes-checks count|near` adds two checks for ledger-like state whose things have names like `abcd12`: every
-  mention of such a name in the noted turns must be accounted for by a change (or a `name: (no change)` line), and
-  a value written without working must be one the turns state (`near`: in a sentence that names the thing, or the
-  next one). Leave it `off` for ordinary agent work: tool output is full of such words that are not state.
+3. Point your agent or app at `http://127.0.0.1:18200/v1` instead of the server.
+4. See it work: [`examples/long_chat.py`](examples/long_chat.py) holds a conversation several windows long, says a
+   codename, a budget and a standing rule at the start, and asks about them at the end.
 
-Measured in the test harness (the same policy inside the lab's agent harness, lab note campaigns 10 and 10b):
-39/39 and 46/46 at 240K in 10 minutes against 16 for the full rewrite, and 228/228 on the 1M-token stream in 50
-minutes against 226/228 in 83, with NOTES that an audit against the true ledger found right in all 63 versions at
-1M. `notesdelta.py` holds the parsing, applying and checks; its core is copied unchanged from that harness
-(`sync_notesdelta.py` checks or renews the copy).
+   ```bash
+   python3 examples/long_chat.py --base-url http://127.0.0.1:18200/v1
+   ```
 
-As this proxy (campaign 11, a plain agent that sends its whole history, `--notes-checks near`): 39/39 in 10 minutes
-and 46/46 in 13 on the two 240K streams, against 39 in 17 and 44 in 18 for the full rewrite, with no value wrong in
-any saved NOTES version (`proxy_notes_audit.py`). Its first run on the second stream scored 40/46: an asked-for
-second reply had replaced the first and lost nine items' changes; replies are merged now, and every notes reply is
-written to `events.jsonl`.
+## Use it with your agent or app
 
-On the 1M-token stream the same build scored **216/228 in 76 minutes**: below the full rewrite's 222 (in 95) and
-below the bar set for it (220 in under 70). Six answers were blank because the searches of one turn were lost when
-that turn ended with an empty reply; six were questions about a numbered item, answered from search hits that
-showed message numbers only; two NOTES values were wrong for a while (a value set in words, written as made-up
-working that added up). What changed after that run:
+Anything that can be given an OpenAI-compatible base URL works, if it:
 
-- A search hit shows the first line of its message (`message 105 (tool, "ITEM 50/617 (UPDATE)"): ...`), so a
-  sentence can be placed by item, file or command.
-- The searches of a turn that ended with nothing for the client are shown once more in the next request (only to a
-  history that continues the one they were made in, and only as far as the window has room). An empty reply is
-  asked for once more with thinking off before it is handed to the client.
-- `--max-recalls N` (8). A search result is cut to the room left beside the reply; once there is none, no further
-  search is made in that turn.
-- `--notes-scan REGEX`: with `--notes-checks`, only tool results and user messages that match are read as facts
-  (so a question that names a thing is not counted as a mention of it).
-- The checks follow a line that packs several changes part by part (`opened at 117, set to -190, +46 = -144`),
-  take a line that repeats a change noted at the last call as no change, and (with `near`) want every amount in a
-  line's working to be stated for that thing. On the saved replies of that run this would have asked again 9 times
-  instead of 33.
+- uses the **Chat Completions** API (`/v1/chat/completions`). Other endpoints (`/v1/responses`, `/v1/completions`,
+  `/v1/models`, ...) are passed through untouched, without any context management;
+- **sends its whole history** every time (most agents do) and has **its own truncation or summarizing turned
+  off**: a history from which something the proxy archived has vanished is treated as a new conversation;
+- asks for one reply per request (`n` = 1). Streaming works, but the reply arrives in one piece at the end (the
+  proxy must first see whether the model wanted to search its archive).
 
-With these (campaign 12, build X32n2): **39/39 in 8.8 minutes and 46/46 in 9.7 at 240K** (the harness arm it was
-built from: 9.9 and 10.0), no value wrong in any saved NOTES version, and **220/228 on the 1M-token stream in 53
-minutes** (the bar was 220 in under 70; the harness arm: 228 in 50). Of 53 minutes, 15 are the server reading (the
-1.06M-token stream once, and 1.4M tokens more in turns re-read after cuts, search results and notes calls), 31 are
-the server writing (119K tokens of notes, 43K in the agent's own turns, 29K in search rounds), the proxy itself adds
-24 seconds, and the client and its shell commands the rest.
+Python with the official SDK:
 
-Seven of that run's eight misses were one confusion: `recall` counted messages, the task counts items, and a search
-"before 332" meant as item 332 stopped at message 332. Hence:
+```python
+from openai import OpenAI
+client = OpenAI(base_url="http://127.0.0.1:18200/v1", api_key="unused")   # the key is passed on to your server
+reply = client.chat.completions.create(model="your-model", messages=history)
+```
 
-- `--recall-label REGEX` (first group: the content's own number, for example `'(?m)^ITEM (\d+)/'`) and
-  `--recall-unit WORD` (what that number counts, default `item`): `recall` then shows and takes that number and
-  nothing else. Without the option it counts archived messages, as before.
-- When there are more matches than fit, the ones nearest to where the search was anchored are shown (`before`: the
-  last ones before it; `after`: the first ones after it; neither: the newest) and the line that says how many were
-  left out comes first.
-- A notes line for a name that the noted turns never mention, a letter or two from a mentioned name that has no
-  line, is taken as that name misspelled.
+Several conversations can share one proxy. Each is recognized by its model name, system messages and first user
+message; to name one yourself, send the header `X-Ctx-Session: <any id>`.
 
-With `--recall-label` (build X32p): **39/39 in 8.5 minutes, 46/46 in 9.4, and 226/228 on the 1M-token stream in 50
-minutes**, every earlier-value question right, with fewer searches (112 against 161). After that run two more
-things were changed and have not been run yet: a question that arrived in a tool result and is still open is never
-cut out of view (it is shown after NOTES until a message matching `--think-until` closes it), and a notes line is
-left out only when the turns contradict its number, never because the checker could not follow how it was written.
+If your task delivers new instructions inside **tool results** (tickets, emails, files) rather than as user
+messages, tell the proxy what they look like, so it repeats the standing rules right after each one:
+
+```bash
+ctxkeeper --upstream http://127.0.0.1:8000 --recipe qwen --recite-when '(?m)^TICKET \d+'
+```
+
+## Recipes
+
+A recipe is a set of options that were measured together. Any option given on the command line still wins.
+
+| | `--recipe agent` | `--recipe qwen` |
+| --- | --- | --- |
+| For | any OpenAI-compatible server and model | Qwen3.x behind vLLM (sends `chat_template_kwargs`) |
+| Live window | 32,768 tokens (`--budget`) | 32,768 |
+| Notes | in place, every 15,000 tokens of new turns, changes only | same, written without thinking |
+| Extra per request | nothing | `reasoning_effort: medium`, which keeps the prompt identical with thinking on or off so the server's prefix cache serves the notes calls |
+| Measured (code repair) | 40/40 clean, 7/7, 36-38 min | 40/40 clean, 7/7, 16 min |
+
+Window size: on the code-repair task 24K worked as well as 32K (13 min); at 16K one rule slipped once (39/40) and
+the notes no longer had room to be written in place. Bigger windows are slower: the model reads more every turn.
+
+## Watching it
+
+- `GET http://127.0.0.1:18200/ctxkeeper/status`: per conversation, how many cuts, messages archived, archive
+  searches, rules put back, and the token ratio learned from the server.
+- State per conversation under `--state-dir` (default `~/.cache/ctxkeeper/<id>/`): `archive.jsonl` (every message
+  moved out of view, verbatim), `state.json` (the current notes), `notes-history.jsonl` (every version of the
+  notes), `events.jsonl` (every notes reply, and why any was rejected).
+
+## Options you may want
+
+| Option | What it does |
+| --- | --- |
+| `--upstream URL` | the model server, without `/v1` |
+| `--host`, `--port` | where the proxy listens (default `127.0.0.1:18200`) |
+| `--budget N` | live window in tokens, reply included |
+| `--recite-when REGEX` | also repeat the rules when the newest message matches (instructions arriving in tool results) |
+| `--think-when REGEX`, `--think-until REGEX` | turn thinking on only around matching messages (Qwen-style `enable_thinking`) |
+| `--notes-checks near` | extra checks for ledger-like state with names such as `abcd12` (the lab's memory streams); leave it off for ordinary agent work |
+| `--recall-label REGEX` | let `recall` use your content's own numbering (e.g. `'(?m)^ITEM (\d+)/'`) instead of message numbers |
+| `--state-dir DIR` | where archives and notes are kept |
+| `--no-memory-note` | do not add the short paragraph that tells the model about its notes and `recall` |
+
+Everything else: `ctxkeeper --help`.
+
+## How it works
+
+1. **Notes, kept in place.** When enough new turns have gathered (15,000 tokens), the proxy sends the model the
+   request it has just answered plus one message: "write what changed". Because the start of that request is the
+   same as before, the server's prefix cache serves almost all of it. The reply is only the changes: new rules,
+   changed facts (with the working: `stock: 120 + 49 = 169`), open items. The proxy applies them, checks them
+   (a sum is recomputed, a value must start from the one held, a rule can never be dropped) and asks once more if
+   a line does not hold up.
+2. **Then the old turns move out.** Every turn the notes now cover goes to the archive verbatim. The model sees: the
+   opening messages, the notes, and the newest exchange.
+3. **Recall.** The model gets one extra tool, `recall`, a text search over the archive (and over every saved
+   version of the notes). The proxy answers it itself; your agent never sees that call.
+4. **Rules stay in force.** Standing rules sit in the notes, can not be dropped, and are repeated right after each
+   new user message (and after messages matching `--recite-when`).
 
 ## Limits
 
-- Measured on one synthetic task family, one model and one machine. As a harness policy: 39/39 and 46/46 at 240K,
-  226/228 on a 1M-token stream. As this proxy, with a plain agent that sends its whole history: 37/39 and 42/46 at
-  240K on its first two runs against the real server; the second exposed a defect in the notes call (fixed, not yet
-  re-run; after the fixes 39/39, 44/46 and 222/228 on the 1M stream in 95 minutes; with in-place notes 39/39 in 9
-  minutes, 46/46 in 9 and 226/228 in 50, see above). Not yet run under a real coding or research agent. Tests against a scripted model: `python3 -m unittest test_ctxkeeper test_notesdelta`.
-- Token counts are characters over a ratio learned from the server's `usage.prompt_tokens`, with margins. A server
-  that reports no usage keeps the starting guess of 3.6 characters per token.
-- `recall` is a text and regular-expression search over archived sentences with message numbers: it answers "what
-  was said". For "what was true at message N" every saved version of NOTES is kept, and `recall` with `notes_at`
-  returns the one saved at or before N; what happened between that save and N still has to be read from the archive.
-- If the model answers with `recall` and one of the client's tools in the same turn, the client's call is passed on
-  and the recall is dropped. A turn gets at most `--max-recalls` searches (8) and no more than fit the window;
-  after that the model is asked once more without the tool, and the client is never handed a `recall` call.
-- A value set in words can still be noted as a change by the same number ("recorded at sixty-four" as `208 - 64 =
-  144`), and a change can be noted with the wrong sign ("+35" as `-46 - 35 = -81`): the working adds up and the
-  amount is in the sentence, so no check sees it. One such line in 77 notes calls at 1M, and one in 76.
-- One choice per request (`n` = 1). A conversation is recognised as the same one by what was said (roles, text, tool
-  calls), not by thinking the client may have dropped or by how text parts were split.
+- **Measured with one model family on one machine** (Qwen3.8-27B FP8, vLLM, Intel Arc Pro B70). Other models
+  should work if they call tools reliably and can follow the notes format; that has not been measured.
+- **The notes are written by the model, so they can be wrong.** On the hardest test (2M tokens with traps) about
+  1 in 130 notes lines was silently wrong; on the 1M test, 1 in 1,435. The archive keeps the original text, so a
+  wrong note can be found and fixed by a search, but nothing guarantees the model looks.
+- **The opening messages are always kept**, so the system prompt and the first user message must fit well inside
+  the window.
+- Token counts are estimated (characters over a ratio learned from the server's reported usage), with margins.
+- **No authentication, and everything is stored in plain text** under `--state-dir`. The proxy listens on
+  `127.0.0.1` by default; the Docker image listens on all interfaces, so publish its port only where you mean to.
+- Tested with one conversation at a time. Separate conversations have separate state and locks.
+
+## Development
+
+```bash
+cd tools/ctxkeeper
+python3 -m unittest test_ctxkeeper test_notesdelta     # against a scripted model; no server needed
+python3 sync_notesdelta.py                             # the checks are a copy of the lab harness's: must match
+```
+
+`check_score.py` replays saved notes replies through the checks against a task's true ledger (how each check rule
+was fitted and regression-tested); `replay_diff.py` compares two versions of the checks on saved replies.
+[HISTORY.md](HISTORY.md) is the build-by-build record.

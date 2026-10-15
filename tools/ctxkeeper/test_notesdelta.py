@@ -62,6 +62,13 @@ class Delta(unittest.TestCase):
         self.assertIsNone(nd.number_of("286 -> removed (item 86)"))
         self.assertEqual(nd.work_out("40 x 2 = 81"), (40, 80, 81))
 
+    def test_a_third_lost_from_a_negative_value_moves_toward_zero(self):
+        self.assertTrue(nd.third_loss_away_from_zero("-129 - 43 = -172 (item 274, 'lost a third of its value')", -129))
+        self.assertTrue(nd.third_loss_away_from_zero("-51 - 17 (a third) = -68", -51))
+        self.assertFalse(nd.third_loss_away_from_zero("-129 + 43 = -86 (item 274, 'lost a third of its value')", -129))
+        self.assertFalse(nd.third_loss_away_from_zero("966 - 322 = 644 (lost a third, item 604)", 966))
+        self.assertFalse(nd.third_loss_away_from_zero("-45 - 15 = -60 (item 20, 'lost 15')", -45))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -643,7 +643,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
                                             start if name in near.get(LOOSE, ()) else None):
                     info["mismatch"].append(f"{name}: `{value}` adds or takes an amount the turns do not state for it; read the item again")
             if near is not None and strict and len(info["mismatch"]) == asked and third_loss_away_from_zero(value, start):
-                info["mismatch"].append(f"{name}: `{value}` moves a negative value away from zero for a third lost; it moves toward zero (a third of {start} is {start // 3}: add it); read the item again")
+                info["mismatch"].append(f"{name}: `{value}` moves a negative value away from zero for a third lost; it moves toward zero ({start} + {-(start // 3)} = {start - start // 3}); read the item again")
             sum_text = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", flat).replace("\u2212", "-").replace("\u00f7", "/").split("=")[-2]
             if total != stated and one_sign(sum_text, stated):
                 total = stated                           # one sign written the wrong way round: the result is what was meant

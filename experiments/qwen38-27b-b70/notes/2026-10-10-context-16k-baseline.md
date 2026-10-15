@@ -2525,7 +2525,7 @@ gemma4-26b-q8-quad-backends.service gemma4-26b-q8-quad-frontdoor.service`).
 ### The next check rule, fitted offline (2026-10-14, CPU-only; no GPU job ran)
 
 Per the standing loop the first rule against campaign 18's 14 accepted-wrong lines is fitted and regression-checked
-against every saved session. Of the 14, five are one class: **a third lost from a negative value, moved away from
+against the saved sessions. Of the 14, five are one class: **a third lost from a negative value, moved away from
 zero** — `-129 - 43 = -172` for "lost a third of its value" (true `-129 + 43 = -86`; the generator's `third` op is
 `state -= state // 3`, which always moves toward zero for negatives). The amounts check passes the 43 fairly (a
 third of the start); the direction was never checked. The new rule (`third_loss_away_from_zero` in
@@ -2535,8 +2535,67 @@ rule spelled out. A stated-amount loss ("lost 15") does not match the phrase and
 
 On X2M's saved replies (the fitting ground): accepted-and-WRONG **14 → 9** (all five fraction-direction lines now
 asked about), accepted-and-right 1,376 unchanged, asked-about-and-right 393 unchanged, left-out 130 unchanged.
-Regression on every other saved proxy session is byte-identical to HEAD: the 240k fitting pair (454 right, 0 wrong,
-both seeds) and both 1M streams, X32n2-s0 and X32g-s1 (2,043 right, 2 wrong, 18 asked-right combined). The nine
+Against the code before the rule (1a60d6efd), every other saved proxy session the scorer can read gives identical
+counts — nine sessions: the 240k pairs of X32n, X32n2 and X32q, X32g's 240k seed 1, and both 1M streams (X32n2-s0
+and X32g-s1: 2,043 right, 2 wrong, 18 asked-right combined). The campaign 8-9 sessions predate the proxy's event log
+and campaign 11's give the scorer no lines, so those cannot be checked this way. (The first version of this
+paragraph said "every other saved session" after four had been run; the other five were run in the same day's
+review.) The same review fixed the question the rule sends back: it read "a third of -129 is -43: add it", which
+invites the very mistake; it now spells out the toward-zero sum (`-129 + 43 = -86`). The first commit also broke
+the copy check: `notesdelta.py`'s checks are copied from the harness keeper (`clm_keeper.py`, tool
+`sync_notesdelta.py`) and the rule had been added to the copy only. It now lives in the harness and is synced, so
+the keeper arms get it too; one harness test whose example was this very mistake (`-93 - 31 (a third) = -124`,
+accepted) now expects a question, and the remark-parsing it was written for is tested on a positive value. Proxy and
+harness tests: 69 and 54, all passing. The nine
 remaining accepted-wrong at 2M are the cross-counter staleness class ("received what gupe37 stood at", read stale)
 and singletons (a "no change" claim against prose that states a number in words; a fraction-sum slip). Those need
 value-at-time alignment, not another arithmetic rule, and stay open for the following campaign.
+
+### Record correction and the Gemma restart (2026-10-14 evening)
+
+The campaign 18 record above names one fault line at the attempt-1 teardown (e3:00.0, 09:59:26). The kernel log
+holds more: at 09:59:26 both cards logged engine-memory CAT errors with fault responses (03:00.0 a compute-engine
+reset, e3:00.0 a copy-engine reset), and at 10:05:48, when the orphaned server was stopped, 03:00.0 logged
+"Schedule disable failed to respond", a GT reset and a devcoredump. The coredump was not copied before it expired,
+so no evidence folder exists for it. Nothing followed: N2M and X2M ran about six hours afterwards with a clean
+log, and the log is still clean. The owner then gave sudo for the Gemma system units; the LAN service was started
+at 19:51 with the installed throughput recipe (8 x 4K slots per card), both cards loaded in about 25 s each, the
+production health check passed and http://192.168.2.45:8000 answers. No fault line during or after the load.
+
+### The cross-counter check: tried offline and closed (2026-10-14 evening, CPU-only)
+
+Four of the nine silent-wrong lines left at 2M took another counter's value ("received exactly what gupe37 stood
+at then") with the wrong amount. The check tried: when the turns or the line's remark say a thing took another
+thing's value, the amount must be one that other thing held in the NOTES (before or during the reply) or one the
+turns state for either. Replayed on X2M against the committed code: **0 of the 9 caught, 5 right lines newly
+questioned** (accepted-and-right 1,376 → 1,371); the nine other readable sessions unchanged. Why: in the wrong
+lines the NOTES already held the stale value of the source, so the copy agrees with the NOTES; in the questioned
+lines the model had read the source's value at that moment from the turns, which the NOTES did not hold. A check
+against the NOTES cannot separate the two. Reverted; the attempt is kept as
+`patches/ctxkeeper-took-value-check-rejected-20261014.patch` with a DO-NOT-REPEAT row. What would catch this class
+is the source's value at the item where it is taken, i.e. a per-item value history the notes do not keep; that is
+a design change, not a check, and is not worth building for 4 lines in 1,825 on a synthetic construct.
+
+### Campaign 19, registered 2026-10-14 before any run: the release gate for ctxkeeper 1.0.0
+
+The proxy is packaged for others (`tools/ctxkeeper`: version 1.0.0, `pip install` from the public repository, a
+Dockerfile, `--recipe agent|qwen`, a user README, `examples/long_chat.py`). The gate runs **what the README tells a
+user to run**, installed the way a user installs it (pip from the public GitHub URL into a fresh venv; the Docker
+image built from the same commit), against the research server of the campaigns (two-card FP8, 262K window,
+recipe unchanged). Gemma is stopped for it and restored after.
+
+- **G1, freeagent + `ctxkeeper --recipe qwen`, nothing else** (no `--recite-when`: a user does not know a task's
+  ticket pattern), on `repair-n40-s2x`. Closest measured rows: XR4 (harness client, recite on tickets) 40/40 clean,
+  7/7, 15.6 min; FAp (freeagent, XR6 configuration, recite on tickets) 40/40, 7/7, 33.3 min. Expected: fixed 40/40,
+  clean 38 or more, audit 6 or more, 45 minutes or less. If clean falls under 38, the README recommends
+  `--recite-when` for tasks whose instructions arrive in tool results, and says what was lost without it.
+- **G2, `examples/long_chat.py` through the Docker image** (`--recipe qwen`, client thinking off), 300,000 tokens:
+  more than the server's own 262K window. Expected 4/4 checks (codename and starting budget from the first
+  message, current budget, standing rule kept).
+- **G3, the README's OpenAI SDK snippet** through the pip-installed proxy: one plain reply and one tool call come
+  back in the SDK's types.
+- **G4, after the server is down: another model and server family.** Gemma 4 26B Q8 on llama.cpp (the LAN
+  service, switched to its `balanced` recipe, 16K per request), `long_chat.py` through `ctxkeeper --recipe agent
+  --budget 16384 --inplace-tokens 6000` at 100,000 tokens. No quality bar is registered (a first smoke test of a
+  second model); the result decides whether the README may say "smoke-tested on llama.cpp". Gemma returns to its
+  `throughput` recipe afterwards.

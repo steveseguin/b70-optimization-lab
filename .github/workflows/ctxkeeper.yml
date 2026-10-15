@@ -1,0 +1,36 @@
+name: ctxkeeper
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/ctxkeeper/**'
+      - 'experiments/qwen38-27b-b70/scripts/context/clm_keeper.py'
+      - '.github/workflows/ctxkeeper.yml'
+  pull_request:
+    paths:
+      - 'tools/ctxkeeper/**'
+      - 'experiments/qwen38-27b-b70/scripts/context/clm_keeper.py'
+      - '.github/workflows/ctxkeeper.yml'
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.10', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      # the proxy's checks are a copy of the lab harness's: the copy must match
+      - run: python3 tools/ctxkeeper/sync_notesdelta.py
+      - run: python3 -m unittest test_ctxkeeper test_notesdelta
+        working-directory: tools/ctxkeeper
+      # what a user installs: the package builds, the command runs, the version agrees with the code
+      - run: |
+          python3 -m venv /tmp/v && /tmp/v/bin/pip install -q ./tools/ctxkeeper
+          test "$(/tmp/v/bin/ctxkeeper --version)" = "ctxkeeper $(grep -oP '^version = "\K[^"]+' tools/ctxkeeper/pyproject.toml)"
+      - run: docker build -q -t ctxkeeper tools/ctxkeeper && docker run --rm ctxkeeper --version
+        if: matrix.python == '3.12'
