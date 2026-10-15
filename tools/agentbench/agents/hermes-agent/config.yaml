@@ -1,0 +1,82 @@
+# Hermes Agent v0.22.1 config for agentbench (~/.hermes/config.yaml; run.sh fills in @URL@ and @MODEL@).
+# Only what the campaign needs is set; everything else keeps Hermes' defaults (hermes_cli/config_defaults.py).
+_config_version: 51
+
+# One OpenAI-compatible endpoint (the ctxkeeper proxy), Chat Completions pinned, no /models discovery.
+model:
+  provider: agentbench
+  default: "@MODEL@"
+  base_url: "@URL@"
+  context_length: 10000000
+providers:
+  agentbench:
+    name: agentbench
+    base_url: "@URL@"
+    api_key: sk-agentbench-dummy
+    api_mode: chat_completions
+    default_model: "@MODEL@"
+    context_length: 10000000
+    discover_models: false
+    request_timeout_seconds: 7200
+    stale_timeout_seconds: 7200
+    models:
+      "@MODEL@":
+        context_length: 10000000
+fallback_providers: []
+
+agent:
+  max_turns: 100000              # default is already unlimited; explicit so a CLI/env default cannot cap it
+  api_max_retries: 3
+  auto_recovery_cycles: 5
+  gateway_timeout: 0             # gateway inactivity kill: off
+  gateway_timeout_warning: 0
+  local_stream_stale_timeout: 7200
+  turn_liveness:
+    timeout_s: 0                 # no-progress watchdog off (one long reply arrives as one chunk)
+    poll_s: 15.0
+  verify_on_stop: false
+
+# No compaction of any kind: automatic compression, micro-compaction, proactive tool-output pruning,
+# idle compaction (agent/agent_init.py _parse_compression_config / _build_context_engine).
+compression:
+  enabled: false
+  micro_compact: false
+  proactive_prune_tokens: 0
+  idle_compact_after_seconds: 0
+  hygiene_hard_message_limit: 1000000
+
+# No persistent memory, no skill self-editing or curation, no background self-review.
+memory:
+  memory_enabled: false
+  user_profile_enabled: false
+  provider: ""
+curator:
+  enabled: false
+
+# No side LLM calls that can be switched off.
+auxiliary:
+  title_generation:
+    enabled: false
+    model_upgrade_enabled: false
+  background_review:
+    enabled: false
+
+# Every command approved, no approval-classifier calls.
+approvals:
+  mode: "off"
+  single_query_mode: approve
+  unattended_mode: approve
+
+# Nothing fetched from the network: no update checks, no model catalog, no telemetry, no LSP installs.
+updates:
+  check: false
+model_catalog:
+  enabled: false
+telemetry:
+  shared_metrics:
+    enabled: false
+    send: false
+lsp:
+  install_strategy: manual
+security:
+  allow_lazy_installs: false

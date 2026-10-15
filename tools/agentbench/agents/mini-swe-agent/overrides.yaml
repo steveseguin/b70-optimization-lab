@@ -1,0 +1,19 @@
+# Merged over mini-swe-agent's own mini.yaml (`mini -c mini.yaml -c this`). Only what this setup needs is changed;
+# the prompts, the observation template (outputs over 10,000 characters keep head + tail 5,000) and the per-command
+# timeout (30 s) stay as shipped. mini-swe-agent never trims or summarizes its history.
+agent:
+  mode: yolo                       # never ask before a command (also --yolo)
+  confirm_exit: false              # also --exit-immediately
+  step_limit: 0                    # unlimited model calls (stock value too)
+  cost_limit: 0                    # stock 3.0 would stop the run: the cost of an unknown model is not known
+environment:
+  environment_class: local         # commands run in this container, `/bin/sh -c`, a new subshell each
+  cwd: /app
+model:
+  model_class: litellm             # native tool calling: sends tools=[bash]
+  model_name: openai/@MODEL@
+  cost_tracking: ignore_errors     # unknown model: cost 0 instead of a RuntimeError
+  model_kwargs:
+    api_base: "@URL@"
+    api_key: sk-agentbench-dummy
+    timeout: 3600                  # per-request HTTP timeout, seconds

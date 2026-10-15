@@ -1,0 +1,5 @@
+#!/bin/sh
+# freeagent runs `docker exec CONTAINER bash -lc CMD`; inside the agent container that is just `bash -lc CMD`.
+[ "$1" = exec ] || { echo "docker shim: only 'exec' is available here" >&2; exit 2; }
+shift 2
+exec "$@"

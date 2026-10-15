@@ -1,0 +1,56 @@
+# ForgeCode v2.14.0 config for agentbench (~/.forge/.forge.toml; run.sh fills in @URL@ and @MODEL@). Layered over
+# the binary's embedded defaults (crates/forge_config/.forge.toml), so only what the campaign needs is set here.
+
+# One run = one turn in `forge -p` mode, so the per-turn request cap (default 100) is the run's step cap.
+max_requests_per_turn = 100000
+# Default 3: the turn is forced to end after 3 consecutive failures of one tool (a test command that keeps failing
+# while the model fixes code counts). Raised so only the model or the time limit ends the run.
+max_tool_failure_per_turn = 100000
+# No sub-agents (removes the `task` and `sage` tools), no IDE extension install.
+subagents = false
+research_subagent = false
+auto_install_vscode_extension = false
+# ForgeCode's cloud services (default https://api.forgecode.dev/): every file write and patch sends the file's content
+# there for syntax checking, and a patch whose search text does not match exactly asks it for a fuzzy match
+# (crates/forge_services/src/tool_services/fs_write.rs, fs_patch.rs; crates/forge_repo/src/validation.rs,
+# fuzzy_search.rs). With no network each call stalled the agent ~5 s before failing; a closed local port makes the
+# same failure immediate (both fall back gracefully: no syntax report, no fuzzy match).
+services_url = "http://127.0.0.1:9/"
+
+# Long-context replies can take many minutes and arrive in one SSE chunk (default read timeout 900 s).
+[http]
+read_timeout_secs = 7200
+
+# No compaction. Compaction runs only when one of these triggers fires (crates/forge_domain/src/compact/
+# compact_config.rs should_compact); the effective token trigger is the lower of token_threshold and
+# token_threshold_percentage x the model's context_length (crates/forge_domain/src/agent.rs), and the model below
+# declares 10,000,000 tokens. Defaults were 100,000 tokens / 200 messages.
+[compact]
+token_threshold = 1000000000
+token_threshold_percentage = 1.0
+message_threshold = 1000000000
+turn_threshold = 1000000000
+on_turn_end = false
+
+# No update check, no self-update (which would run `curl -fsSL https://forgecode.dev/cli | sh`).
+[updates]
+frequency = "never"
+auto_update = false
+
+# The ctxkeeper proxy as an OpenAI Chat Completions provider with a static model list (no /models fetch).
+[[providers]]
+id = "agentbench"
+api_key_var = "AGENTBENCH_API_KEY"
+url = "@URL@/chat/completions"
+response_type = "OpenAI"
+
+[[providers.models]]
+id = "@MODEL@"
+name = "@MODEL@"
+context_length = 10000000
+tools_supported = true
+input_modalities = ["text"]
+
+[session]
+provider_id = "agentbench"
+model_id = "@MODEL@"

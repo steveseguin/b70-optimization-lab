@@ -1,0 +1,50 @@
+# Open Interpreter rust-v0.0.56 config for agentbench (~/.openinterpreter/config.toml; run.sh fills in @URL@ and
+# @MODEL@). Only what the campaign needs is set; everything else keeps Open Interpreter's defaults.
+
+# The ctxkeeper proxy as an OpenAI-compatible Chat Completions provider (table below).
+model_provider = "agentbench"
+model = "@MODEL@"
+# Open Interpreter's own (native) agent surface. Unset, a model id containing "qwen" switches to the `qwen-code`
+# harness, an emulation of Qwen Code's prompt and tools (codex-rs/model-provider-info/src/lib.rs
+# default_harness_for_provider_model); "" selects native (codex-rs/tools/src/harness.rs from_config_name).
+harness = ""
+
+# No compaction before 9M tokens. Compaction fires at 90% of the model's context window (95% hard cap)
+# (codex-rs/protocol/src/openai_models.rs auto_compact_token_limit; codex-rs/core/src/session/context_window.rs).
+# An unknown model gets fallback metadata whose window is capped at 272,000 tokens, which model_context_window
+# cannot raise (codex-rs/models-manager/src/model_info.rs). model-catalog.json is that same fallback entry with a
+# 10,000,000-token window (and nothing else changed).
+model_catalog_json = "/home/agent/.openinterpreter/model-catalog.json"
+model_context_window = 10000000
+
+# Every command runs without asking, outside any sandbox (the container is the sandbox).
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+# No web search, no update check.
+web_search = "disabled"
+check_for_update_on_startup = false
+
+# No sub-agents, no persistent memory (memories is already off by default), no browser or computer-use tools, no
+# plugin marketplace (at startup it would try to sync the curated plugin repo from github.com / chatgpt.com).
+[features]
+multi_agent = false
+memories = false
+browser_use = false
+in_app_browser = false
+computer_use = false
+plugins = false
+
+# No analytics, no feedback upload.
+[analytics]
+enabled = false
+[feedback]
+enabled = false
+
+[model_providers.agentbench]
+name = "agentbench"
+base_url = "@URL@"
+env_key = "AGENTBENCH_API_KEY"
+wire_api = "chat"
+# A long-context reply arrives in one piece after minutes of silence (default idle limit 300000 ms = 5 min).
+stream_idle_timeout_ms = 7200000

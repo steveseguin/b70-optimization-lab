@@ -1,0 +1,30 @@
+# Kimi Code 2.2.0 config template for agentbench (run.sh fills @URL@ and @MODEL@ and writes ~/.kimi-code/config.toml).
+# Only the settings the bench needs are set; everything else keeps the release default.
+default_model = "agentbench"
+# No anonymous telemetry (also KIMI_DISABLE_TELEMETRY=1 in the image).
+telemetry = false
+# No session-title requests (titles only ever go to the Kimi managed service, never to this provider).
+auto_session_title = false
+
+[providers.agentbench]
+# "openai" = OpenAI Chat Completions (POST {base_url}/chat/completions).
+type = "openai"
+base_url = "@URL@"
+api_key = "sk-agentbench-dummy"
+
+[models.agentbench]
+provider = "agentbench"
+model = "@MODEL@"
+# Automatic compaction cannot be switched off; it fires at 85% of this size (or when fewer than
+# reserved_context_size tokens remain), so 10M tokens puts it far past the ~1M-token history of the run.
+max_context_size = 10000000
+# The model name is not one Kimi knows, so declare tool calling explicitly.
+capabilities = ["tool_use"]
+
+[loop_control]
+# 0 = unlimited steps per turn (print mode's own default, set here so the run does not depend on it).
+max_steps_per_turn = 0
+
+[tools]
+# No sub-agents and no web tools.
+disabled = ["Agent", "AgentSwarm", "WebSearch", "FetchURL"]

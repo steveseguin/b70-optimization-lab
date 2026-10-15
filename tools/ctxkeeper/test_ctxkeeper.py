@@ -1040,6 +1040,14 @@ class Loops(unittest.TestCase):
 
 
 class Pure(unittest.TestCase):
+    def test_a_streamed_reply_keeps_the_thinking_under_either_name(self):
+        for key in ("reasoning", "reasoning_content"):
+            resp = reply("done")
+            resp["choices"][0]["message"][key] = "I thought about it."
+            chunk = json.loads(ck.as_stream(resp).decode().split("\n\n")[0][len("data: "):])
+            self.assertEqual(chunk["choices"][0]["delta"][key], "I thought about it.")
+            self.assertEqual(chunk["choices"][0]["delta"]["content"], "done")
+
     def test_cut_points_never_start_at_a_tool_result(self):
         body = conversation(4)[2:]
         pts = ck.cut_points(body)
