@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ctxkeeper"
+version = "1.0.0"
+description = "An OpenAI-compatible proxy that lets an agent keep working far past the model's context window: notes, an archive and a recall tool"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Unlicense"}
+dependencies = []
+
+[project.scripts]
+ctxkeeper = "ctxkeeper:main"
+
+[project.urls]
+Source = "https://github.com/steveseguin/b70-optimization-lab/tree/main/tools/ctxkeeper"
+
+[tool.setuptools]
+py-modules = ["ctxkeeper", "notesdelta"]

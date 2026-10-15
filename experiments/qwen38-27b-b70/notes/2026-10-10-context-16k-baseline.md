@@ -2575,3 +2575,27 @@ against the NOTES cannot separate the two. Reverted; the attempt is kept as
 `patches/ctxkeeper-took-value-check-rejected-20261014.patch` with a DO-NOT-REPEAT row. What would catch this class
 is the source's value at the item where it is taken, i.e. a per-item value history the notes do not keep; that is
 a design change, not a check, and is not worth building for 4 lines in 1,825 on a synthetic construct.
+
+### Campaign 19, registered 2026-10-14 before any run: the release gate for ctxkeeper 1.0.0
+
+The proxy is packaged for others (`tools/ctxkeeper`: version 1.0.0, `pip install` from the public repository, a
+Dockerfile, `--recipe agent|qwen`, a user README, `examples/long_chat.py`). The gate runs **what the README tells a
+user to run**, installed the way a user installs it (pip from the public GitHub URL into a fresh venv; the Docker
+image built from the same commit), against the research server of the campaigns (two-card FP8, 262K window,
+recipe unchanged). Gemma is stopped for it and restored after.
+
+- **G1, freeagent + `ctxkeeper --recipe qwen`, nothing else** (no `--recite-when`: a user does not know a task's
+  ticket pattern), on `repair-n40-s2x`. Closest measured rows: XR4 (harness client, recite on tickets) 40/40 clean,
+  7/7, 15.6 min; FAp (freeagent, XR6 configuration, recite on tickets) 40/40, 7/7, 33.3 min. Expected: fixed 40/40,
+  clean 38 or more, audit 6 or more, 45 minutes or less. If clean falls under 38, the README recommends
+  `--recite-when` for tasks whose instructions arrive in tool results, and says what was lost without it.
+- **G2, `examples/long_chat.py` through the Docker image** (`--recipe qwen`, client thinking off), 300,000 tokens:
+  more than the server's own 262K window. Expected 4/4 checks (codename and starting budget from the first
+  message, current budget, standing rule kept).
+- **G3, the README's OpenAI SDK snippet** through the pip-installed proxy: one plain reply and one tool call come
+  back in the SDK's types.
+- **G4, after the server is down: another model and server family.** Gemma 4 26B Q8 on llama.cpp (the LAN
+  service, switched to its `balanced` recipe, 16K per request), `long_chat.py` through `ctxkeeper --recipe agent
+  --budget 16384 --inplace-tokens 6000` at 100,000 tokens. No quality bar is registered (a first smoke test of a
+  second model); the result decides whether the README may say "smoke-tested on llama.cpp". Gemma returns to its
+  `throughput` recipe afterwards.

@@ -29,8 +29,9 @@ moved out, leaving the opening messages, NOTES and the newest exchange (see INPL
 
 Everything else (`/v1/models`, `/health`, `/v1/completions`, ...) is passed through untouched.
 
-  ctxkeeper.py --upstream http://127.0.0.1:18196 --port 18200 --budget 32768
-  ctxkeeper.py --upstream http://127.0.0.1:18196 --port 18200 --budget 32768 --notes-mode inplace
+  ctxkeeper.py --upstream http://127.0.0.1:8000 --recipe agent     # any OpenAI-compatible server
+  ctxkeeper.py --upstream http://127.0.0.1:8000 --recipe qwen      # Qwen3.x on vLLM: the fastest measured settings
+  ctxkeeper.py --upstream http://127.0.0.1:18196 --port 18200 --budget 32768 --notes-mode inplace   # by hand
 
 Standard library only (this file and notesdelta.py). State (archive, notes) is kept per conversation under --state-dir.
 """
@@ -51,6 +52,21 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
+
+__version__ = "1.0.0"
+
+# --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
+# campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
+# the command line still wins over the recipe's value.
+#   agent: sends nothing model-specific (the notes call reuses the client's own chat_template_kwargs): 38 min.
+#   qwen:  thinking off for notes calls and reasoning_effort=medium on every call, which keeps Qwen's system prompt
+#          the same with thinking on or off, so the server's prefix cache serves the notes calls: 16 min.
+RECIPES = {
+    "agent": dict(budget=32768, reply_reserve=2048, headroom=1024, target_ratio=0.6, notes_mode="inplace",
+                  inplace_tokens=15000, notes_thinking="unset", max_recalls=16),
+    "qwen": dict(budget=32768, reply_reserve=2048, headroom=1024, target_ratio=0.6, notes_mode="inplace",
+                 inplace_tokens=15000, notes_thinking="off", effort="medium", max_recalls=16),
+}
 
 OPEN_HEAD = "[[Still open, kept in view by the context keeper while you work on it]]"
 OPEN_CHARS = 12000                                   # of a kept question that is shown; the rest is in the archive
@@ -1228,6 +1244,13 @@ def main() -> None:
                          "(with in-place notes little is in view, and a turn with several questions needs more: 24)")
     ap.add_argument("--state-dir", type=Path, default=Path.home() / ".cache" / "ctxkeeper")
     ap.add_argument("--timeout", type=float, default=1800)
+    ap.add_argument("--recipe", choices=sorted(RECIPES),
+                    help="measured settings to start from (agent: any OpenAI-compatible server; qwen: Qwen3.x on vLLM, "
+                         "fastest); options given on the command line still win")
+    ap.add_argument("--version", action="version", version=f"ctxkeeper {__version__}")
+    first, _ = ap.parse_known_args()
+    if first.recipe:
+        ap.set_defaults(**RECIPES[first.recipe])
     a = ap.parse_args()
     upstream = a.upstream.rstrip("/")
     keeper = Keeper(lambda body: post_json(upstream + "/v1/chat/completions", body, a.timeout), a.state_dir,
@@ -1241,7 +1264,8 @@ def main() -> None:
                     max_recalls=a.max_recalls, recall_label=a.recall_label, recall_unit=a.recall_unit,
                     empty_retry=not a.no_empty_retry, think_cap=a.think_cap)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
-    print(f"ctxkeeper: http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"
+    print(f"ctxkeeper {__version__}" + (f" (recipe {a.recipe})" if a.recipe else "")
+          + f": http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"
           + (f" every {a.inplace_tokens} tokens, checks {a.notes_checks}" if a.notes_mode == "inplace" else "")
           + f", state in {a.state_dir}", flush=True)
     try:
