@@ -6,6 +6,8 @@ The owner asked to put a pin in this work and turn to context length. This is th
 
 Speed in tokens a second, all users together, short prompts; every run identical to a lone user on long and short
 prompts and to the frozen single-user reference.
+Rows 2 to 16 were repeated on a second fresh server on 2026-10-15, all exact again, speed within 3 %
+(`data/2026-10-15-r314-sweep-repeat/`).
 
 | Users at once | Drafting on | Drafting off | Run this |
 | ---: | ---: | ---: | --- |
@@ -13,7 +15,7 @@ prompts and to the frozen single-user reference.
 | 2 | **138** | 65 | drafting on |
 | 4 | **227** | 125 | drafting on |
 | 8 | **336** | 236 | drafting on |
-| 16 | 414 to 434 | 419 | either |
+| 16 | 414 to 434 (428 on the second server) | 419 | either |
 | 32 | not run | **657** | drafting off |
 | 64 | not run | **874** | drafting off |
 
@@ -54,7 +56,9 @@ copy drafts at depth 5 (no gain), reading two long prompts in one step (not exac
 2. **No many-users package profile exists.** The table above is from research servers.
 3. **The out-of-range state read exists in the published recipe at the very end of the context window** (rare; fixed
    by R314 + `b70-gdn-state-width`).
-4. Second fresh servers are owed for: drafting at 2, 8 and 16 users; drafting off at 2, 4 and 8.
+4. ~~Second fresh servers are owed for: drafting at 2, 8 and 16 users; drafting off at 2, 4 and 8.~~ Done
+   2026-10-15: all eight arms (plus drafting at 4 users with prompt batching and drafting off at 16 on R314) exact
+   on a second server; see the 2026-10-15 addendum in `notes/2026-10-04-fp8-multiuser-prereg.md`.
 5. Returning requests lose their drafts for one step (speed only). Longer copy drafts want a larger long-context
    suite to choose the depth, and a port to the asynchronous pipeline to recover 2.3 %.
 6. Upstream: the two engine bugs found here (state-table read past its end; accepted count lost when a request sits

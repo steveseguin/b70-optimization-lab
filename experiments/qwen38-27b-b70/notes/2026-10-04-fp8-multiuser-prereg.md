@@ -408,3 +408,23 @@ fault line. Wrapper: `scripts/run-20261015-fp8-r314-sweep-repeat.sh`.
 **Rule.** An arm passes if it is 64/64 equal to solo on long and short prompts in both passes and exact against the
 frozen reference. Its speed is reported next to the first server's. A failing arm is reported as not exact, the sweep
 stops there, and the first-server table is marked unconfirmed for that arm.
+
+### Result (14:35-16:56 EDT): every arm exact on the second server
+
+Each arm on its own fresh server, long suite and short ladder, two passes each, all exact against solo and against
+the frozen single-user reference (sequential, batch r1, batch r2: 64/64 each). Kernel log clean; Gemma restored.
+
+| Users | Drafting | Short ladder, second server (pass 1 / 2) | First server | Long prompts together |
+| ---: | --- | ---: | ---: | ---: |
+| 2 | on | 137.10 / 137.05 | 138.10 / 137.29 | 49.4 / 49.8 |
+| 4 | on (prompt batch 8) | 227.04 / 232.51 | 225.78 / 227.89 (no prompt batch) | 54.5 / 55.4 |
+| 8 | on | 334.88 / 338.35 | 333.65 / 338.91 | 57.5 / 58.1 |
+| 16 | on | 427.50 / 428.64 | 434.36 / 413.62 | 56.4 / 56.7 |
+| 2 | off | 65.11 / 65.27 | 65.20 / 65.26 | 34.5 / 34.4 |
+| 4 | off | 125.33 / 125.22 | 125.10 / 125.08 | 46.4 / 46.3 |
+| 8 | off | 235.91 / 235.56 | 235.68 / 235.90 | 55.7 / 55.8 |
+| 16 | off (R314) | 418.85 / 418.84 | 419.36 / 419.01 (R310) | 62.5 / 62.4 |
+
+So the table stands: drafting is faster up to 8 users, the two tie at 16 (428 vs 419), and drafting off
+wins from 32 up. Data: `data/2026-10-15-r314-sweep-repeat/` (campaign log and results per arm, the wrapper log, the
+image id).
