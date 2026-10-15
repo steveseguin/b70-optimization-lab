@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "mode": "asan",
+  "targets": [
+    "own-rt-iq3",
+    "nongemv-fixtures",
+    "k2-fixtures",
+    "p33-linked-fixtures",
+    "p39-merged-fixtures"
+  ],
+  "commands": [
+    [
+      "cmake",
+      "-S",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/asan",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+      "-DOWN_RT_HOST_ONLY=ON",
+      "-DOWN_RT_SANITIZE=ON"
+    ],
+    [
+      "cmake",
+      "--build",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/asan",
+      "--target",
+      "own-rt-iq3",
+      "nongemv-fixtures",
+      "k2-fixtures",
+      "p33-linked-fixtures",
+      "p39-merged-fixtures",
+      "-j2"
+    ]
+  ],
+  "seconds": 106.71297352097463,
+  "device_executed": false,
+  "receipt_sha256": "2f4e8749f4137fe305e978b2f02b967017c036ed32b31640cabb991165ddb9d5"
+}

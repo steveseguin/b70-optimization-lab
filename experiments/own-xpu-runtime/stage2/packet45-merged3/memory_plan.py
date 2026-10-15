@@ -188,9 +188,8 @@ def plan():
     snapshot_evidence = strict_image_evidence()
     baseline_cache = sum(cache(256).values())
     placements = {}
-    for draft_rank in (0, 1):
-        boundary = 22 if draft_rank == 0 else 24
-        qsa_counts = (5, 7) if draft_rank == 0 else (6, 6)
+    for key,draft_rank,boundary in (("0",0,22),("1",1,24),("0-split24",0,24)):
+        qsa_counts = (5, 7) if boundary == 22 else (6, 6)
         capacities = {}
         for context in CONTEXTS:
             components = cache(context)
@@ -201,7 +200,7 @@ def plan():
             for rank in range(2):
                 modeled = TARGET_BASE[rank] + 6 * growth + ROPE_GROWTH
                 transfer = 0
-                if draft_rank == 0:
+                if boundary == 22:
                     transfer = (-(LAYER22_RANK0_BYTES + LAYER23_BYTES + growth)
                                 if rank == 0 else LAYER22_RANK1_BYTES + LAYER23_BYTES + growth)
                 snapshot = STRICT_IMAGE_256[boundary] + qsa_counts[0] * growth if rank == 0 else 0
@@ -234,7 +233,7 @@ def plan():
                 per_qsa_layer_cache=components, per_qsa_layer_cache_bytes=per_layer,
                 target_all_12_layers_cache_bytes=12*per_layer,
                 target_plus_draft_13_layers_cache_bytes=13*per_layer, ranks=rows)
-        placements[str(draft_rank)] = dict(draft_rank=draft_rank,
+        placements[key] = dict(draft_rank=draft_rank,
             layer_boundary=boundary, capacities=capacities)
     return dict(schema='own-runtime.packet45.memory-plan.v1',
         capacity_bytes=CAPACITY_BYTES, minimum_free_bytes=MINIMUM_FREE_BYTES,
@@ -257,5 +256,7 @@ def plan():
 if __name__ == '__main__':
     output = plan()
     assert all(r['allocation_margin_passed'] for p in output['placements'].values()
-               for c in p['capacities'].values() for r in c['ranks'])
+               for c in p['capacities'].values() for r in c['ranks'] if p is not output['placements']['0-split24'])
+    assert all(r['allocation_margin_passed'] for r in output['placements']['0-split24']['capacities']['4096']['ranks'])
+    assert not output['placements']['0-split24']['capacities']['32768']['ranks'][0]['allocation_margin_passed']
     Path(__file__).with_name('memory-plan.json').write_text(json.dumps(output, indent=2)+'\n')

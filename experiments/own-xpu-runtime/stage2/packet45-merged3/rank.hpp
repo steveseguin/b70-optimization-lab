@@ -35,8 +35,9 @@ static void transfer(int fd,void* ptr,size_t n,bool send,int seconds) {
   require(count>0,"short/closed channel");done+=size_t(count);
  }
 }
-static flash::Plan split(flash::Plan p,int rank,bool mini,int draft_rank=1) {
- const int boundary=mini?2:(draft_rank==0?22:24);
+static flash::Plan split(flash::Plan p,int rank,bool mini,int draft_rank=1,int target_split=0) {
+ require(target_split==0||target_split==24,"unsupported target split");
+ const int boundary=mini?2:(target_split?target_split:(draft_rank==0?22:24));
  std::vector<flash::Launch> launches;
  for(auto l:p.launches) {
   if(l.op=="handoff"||l.op=="handoff_result")throw std::logic_error("split requires flattened local plan");
@@ -141,9 +142,9 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
   if(cancel_at_boundary()){candidate.cancelled=true;break;}
   const auto* ready=e.prepared_path?&e.issue_sites[size_t(&l-e.p.launches.data())]:nullptr;
   if(request.fixture==0&&(ready?ready->prefill_skip:(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax")))continue;
-  if(e.progress_callback)e.progress_callback();
+  if(e.progress_pending&&e.progress_callback)e.progress_callback();
   e.enqueue(l,e.logical);
-  if(e.progress_callback)e.progress_callback();
+  if(e.progress_pending&&e.progress_callback)e.progress_callback();
   if(ready?ready->layer_end:ends(l.label,".ffn.combine")) {
    int layer=ready?ready->layer:std::stoi(l.label.substr(4));
    if(e.a.rank==1&&e.a.draft_rank==0&&layer==(e.a.mini?3:47)){
@@ -213,7 +214,7 @@ static int run_rank(const Options& a) {
   fd=::open(a.shared.c_str(),O_RDWR|O_NOFOLLOW);require(fd>=0,"shared open");struct stat st{};
   require(!fstat(fd,&st)&&st.st_size==shared_bytes,"shared extent");mapping=mmap(nullptr,shared_bytes,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);require(mapping!=MAP_FAILED,"shared mmap");
   if(a.pipeline_canary){int rc=run_pipe_canary(a,static_cast<uint8_t*>(mapping));munmap(mapping,shared_bytes);::close(fd);return rc;}
-  weights=std::make_unique<Weights>(a);auto p=split(plan(*weights,a),a.rank,a.mini,a.draft_rank);
+  weights=std::make_unique<Weights>(a);auto p=split(plan(*weights,a),a.rank,a.mini,a.draft_rank,a.target_split);
   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,a);
   engine=std::make_unique<Engine>(*weights,a,p);record_host_memory(a.output,"before_load");engine->initialize();
   if(a.rank==0)banks(*engine);else {engine->prepare_plan();engine->prepare_commands();}
@@ -248,7 +249,7 @@ static int run_rank(const Options& a) {
      require(!async_half_ready,"duplicate asynchronous draft");
      async_half_ready=a.rank==1;async_half_position=r.position;async_half_token=r.token;
      if(provider->begin(r.token,r.position,r.fixture!=0)){
-      engine->progress_callback=[&,publish_draft](){if(auto completed=provider->poll_result())publish_draft(completed->token,completed->wall_ms,completed->gpu_ms);};
+      engine->progress_callback=[&,publish_draft](){if(provider->submitting())if(auto completed=provider->poll_result())publish_draft(completed->token,completed->wall_ms,completed->gpu_ms);};
      }else {engine->progress_callback={};publish_draft(-1,Engine::ms(before),0);}
     }else {int token=provider->run(r.token,r.position,r.fixture!=0);publish_draft(token,Engine::ms(before),engine->gemv_ms+engine->nongemv_ms-gpu);}
     response.busy_ms=Engine::ms(before);response.gpu_ms=engine->gemv_ms+engine->nongemv_ms-gpu;
@@ -278,7 +279,7 @@ static int run_rank(const Options& a) {
    if(r.op==10){
     require(!c.pending,"native entry unresolved candidate");
     auto* bytes=static_cast<uint8_t*>(mapping);auto& mailbox=*reinterpret_cast<native38::Mailbox*>(bytes+2*slot_bytes+256);
-    auto cancel=[&](){pipeline_cancel_check();if(engine->progress_callback)engine->progress_callback();};
+    auto cancel=[&](){pipeline_cancel_check();if(engine->progress_pending&&engine->progress_callback)engine->progress_callback();};
     try {
      if(a.rank==1)native38::worker(mailbox,a.seconds,execute,cancel);
      else {

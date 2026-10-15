@@ -69,7 +69,7 @@ def verify():
  assert digest(P/'build/input/plan.tsv')==row['metadata_sha256'],'plan metadata changed'
  assert digest(B/'after')==row['binary_sha256'],'plan gate binary changed'
  compiled=json.loads((E/'after-compile.json').read_text())
- assert compiled['main_sha256']==digest(P/'main.cpp') and compiled['generated_sha256']==digest(B/'after.cpp'),'grouping mirror changed'
+ assert source_matches(P/'main.cpp',compiled['main_sha256']) and compiled['generated_sha256']==digest(B/'after.cpp'),'grouping mirror changed'
  rows=json.loads((E/'plan-sweep.json').read_text())
  expected={(kind,c,dr,rank,d) for c in (4096,32768) for dr in (0,1) for kind,rank in [('target',0),('target',1),('KD',1),('draft',dr)] for d in ('dr0','dr1','forced')}
  assert len(rows)==48 and {(r['plan'],r['context'],r['draft_rank'],r['rank'],r['dispatch']) for r in rows}==expected

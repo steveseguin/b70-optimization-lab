@@ -57,7 +57,7 @@ def main():
         return supplied_sha if Path(path).resolve()==(P/'build-receipt.json').resolve() else original_sha(path)
     build=json.loads(a.build_receipt.read_text());consumed=contract(build)
     consumed_hash=hashlib.sha256(json.dumps(consumed,sort_keys=True).encode()).hexdigest()
-    source_before={name:pp.sha(P/name) for name in ('window.py','fixture_support.py','draft_window.py','suite.py','pipeline.py','suite_metrics.py','test_window_seal_admission.py')}
+    source_before={name:pp.sha(P/name) for name in ('window.py','fixture_support.py','draft_window.py','suite.py','pipeline.py','suite_metrics.py','memory_gate.py','test_window_seal_admission.py')}
     storage.admit(256_000_000)
     root=Path(tempfile.mkdtemp(prefix='seal-admission-',dir=P/'evidence'));rows=[];input_rows=[]
     manifests={cap:P.parent/bundle/'suite-manifest.json' for cap,bundle in ((32,'long-inputs-20261012'),(64,'suite-inputs-20261012'),(128,'suite-inputs-20261012-cap128'))}
@@ -92,11 +92,16 @@ def main():
                 configurations.extend((context,draft_rank,name,'python',64) for name in ('K0','K1a','K1b','K2','W0p','KD'))
                 configurations.extend((context,draft_rank,'W2m',controller,64) for controller in ('python','native'))
                 configurations.extend((context,draft_rank,name,'native',cap) for name in ('WS','WSs') for cap in (32,64,128))
-        for context,draft_rank,name,controller,cap in configurations:
-                out=root/(f'{context}-dr{draft_rank}-{name}-{controller}-cap{cap}');seen.clear()
+        configurations=[(*row,0) for row in configurations]
+        configurations.extend((4096,0,name,'python',64,24) for name in ('K0','K1a','K1b','K2','W0p','KD'))
+        configurations.extend((4096,0,'W2m',controller,64,24) for controller in ('python','native'))
+        configurations.extend((4096,0,name,'native',cap,24) for name in ('WS','WSs') for cap in (32,64,128))
+        configurations.extend((4096,dr,name,'native',128,split) for dr,split in ((0,0),(1,0),(0,24)) for name in ('WS128x','WS128'))
+        for context,draft_rank,name,controller,cap,target_split in configurations:
+                out=root/(f'{context}-dr{draft_rank}-s{target_split}-{name}-{controller}-cap{cap}');seen.clear()
                 manifest=manifests[cap]
                 companion=root/'mock-exactness';companion.write_text('{}')
-                argv=['window.py','--authorized-device-window','--window',name,'--card','0','--context',str(context),'--draft-rank',str(draft_rank),'--retain-steps','1-8','--output',str(out),
+                argv=['window.py','--authorized-device-window','--window',name,'--card','0','--context',str(context),'--draft-rank',str(draft_rank),'--target-split',str(target_split),'--retain-steps',('none' if name=='WS128' else '1-8,97-104' if name=='WS128x' else '1-8'),'--output',str(out),
                       '--controller',controller,'--input',str(B/'input'),'--oracle',str(oracle),
                       '--dispatch',str(P/'dispatch-p45.json'),'--suite-manifest',str(manifest),'--max-new',str(cap)]
                 if name in window.SPEED_WINDOWS:argv.extend(['--exactness-window',str(companion)])
@@ -133,14 +138,14 @@ def main():
                             assert 'suite capacity must cover oracle capacity' in str(error),str(error)
                         else:raise AssertionError('long32 must refuse context256')
                         assert not seen and not out.exists()
-                        rows.append(dict(window=name,context=context,draft_rank=draft_rank,controller=controller,token_cap=cap,
+                        rows.append(dict(window=name,context=context,draft_rank=draft_rank,target_split=target_split,controller=controller,token_cap=cap,
                                          expected_capacity_refusal=True,device_executed=False,window_passed=False))
                         continue
                     rc=window.main()
                 record=json.loads((out/'window.json').read_text())
                 assert seen==[True] and rc==1 and record['passed'] is False and record['device_executed'] is False,(name,controller,record)
                 assert 'launch intentionally blocked' in record['error'] and not record['launched_pids']
-                rows.append(dict(window=name,context=context,draft_rank=draft_rank,controller=controller,token_cap=cap,admission_reached_blocked_launcher=True,device_executed=False,window_passed=False,
+                rows.append(dict(window=name,context=context,draft_rank=draft_rank,target_split=target_split,controller=controller,token_cap=cap,admission_reached_blocked_launcher=True,device_executed=False,window_passed=False,
                                  prerequisite_and_host_health_inputs='explicit CPU mocks',retained_capture_admission_exercised=name=='KD'))
         assert source_before=={name:pp.sha(P/name) for name in source_before},'source changed during admission test'
         assert (latch.read_bytes() if latch.exists() else None)==latch_before,'real fault latch changed during rehearsal'

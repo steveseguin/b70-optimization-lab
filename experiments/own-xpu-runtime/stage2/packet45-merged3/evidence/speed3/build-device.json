@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "mode": "device",
+  "targets": [
+    "own-rt-iq3",
+    "nongemv-fixtures",
+    "k2-fixtures",
+    "p33-linked-fixtures",
+    "jit-smoke"
+  ],
+  "commands": [
+    [
+      "cmake",
+      "-S",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/device",
+      "-DCMAKE_CXX_COMPILER=/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-DOWN_RT_HOST_ONLY=OFF",
+      "-DOWN_RT_SANITIZE=OFF"
+    ],
+    [
+      "cmake",
+      "--build",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/device",
+      "--target",
+      "own-rt-iq3",
+      "nongemv-fixtures",
+      "k2-fixtures",
+      "p33-linked-fixtures",
+      "jit-smoke",
+      "-j2"
+    ]
+  ],
+  "seconds": 40.311158830008935,
+  "device_executed": false,
+  "receipt_sha256": "8ca6edcad1b594a6d6a80d81b9138e9bcac913866f247f76e5c020123fee586c"
+}

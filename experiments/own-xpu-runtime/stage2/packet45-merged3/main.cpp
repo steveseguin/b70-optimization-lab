@@ -119,7 +119,7 @@ struct RetainSteps {
 struct Options {
   RetainSteps retain_steps;
   int cancel_launch=-1;
-  int draft_rank=0; bool mtp=false; fs::path draft_capture;
+  int draft_rank=0,target_split=0; bool mtp=false; fs::path draft_capture;
   fs::path draft_manifest=fs::path(__FILE__).parent_path()/"mtp-manifest.tsv";
   fs::path draft_model="/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8";
   std::string draft_fault="none",draft_head="full";
@@ -149,6 +149,7 @@ static Options parse(int argc, char **argv) {
     if (k == "--retain-steps") a.retain_steps.parse(value());
     else if (k == "--cancel-launch") a.cancel_launch=std::stoi(value());
     else if (k == "--draft-rank") a.draft_rank=std::stoi(value());
+    else if (k == "--target-split") a.target_split=std::stoi(value());
     else if (k == "--draft-mtp") a.mtp=true;
     else if (k == "--draft-head") a.draft_head=value();
     else if (k == "--draft-fault") a.draft_fault=value();
@@ -215,6 +216,8 @@ static Options parse(int argc, char **argv) {
   require(a.cancel_launch==-1,"forced cancellation is CPU diagnostic only");
 #endif
   require(a.draft_rank==0||a.draft_rank==1,"draft rank must be0 or1");
+  require(a.target_split==0||a.target_split==24,"target split must be0 (placement default) or24");
+  require(a.target_split!=24||a.draft_rank!=0||a.mini||a.context==4096,"24/24 rank0 draft admitted at context4096 only");
   require(a.draft_head=="full","draft shortlist head not qualified; use full");
   require(a.cards >= 1 && a.cards <= 2 && a.card >= 0 && a.card + a.cards <= 4,
           "card range");
@@ -701,13 +704,14 @@ public:
     if(c!=0)throw std::logic_error("rank-local device only");
     return *devices.at(0);
   }
+  bool progress_pending=false;
   std::function<void()> progress_callback; // same-thread draft readback publication
   void wait(int c, ownrt::Event e) {
     ++host_waits;auto t0=std::chrono::steady_clock::now();
     if(progress_callback) {
       auto end=std::chrono::steady_clock::now()+std::chrono::seconds(a.wait_seconds);
-      while(!dev(c).complete(e)){progress_callback();guard();require(std::chrono::steady_clock::now()<end,"operation drain timeout; retain owner");std::this_thread::yield();}
-      progress_callback();
+      while(!dev(c).complete(e)){if(progress_pending)progress_callback();guard();require(std::chrono::steady_clock::now()<end,"operation drain timeout; retain owner");std::this_thread::yield();}
+      if(progress_pending)progress_callback();
     }
     require(dev(c).wait(e, std::chrono::seconds(a.wait_seconds)),
             "operation drain timeout; retain owner");

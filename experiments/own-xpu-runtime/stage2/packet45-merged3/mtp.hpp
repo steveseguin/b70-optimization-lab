@@ -50,7 +50,7 @@ class DraftRuntime {
  Allocation publication{},half_staging{};ownrt::Event publication_event=0;
  bool async_pending=false,pending_head=false;int pending_confirmed=0;
  std::chrono::steady_clock::time_point pending_start;
- std::vector<Engine::Pending> pending_profile;
+ // Profiling remains owned by Engine::pending and is consumed once by drain().
 
  void direct(const flash::Launch& l) {
   if(l.op=="merge_hidden_norm") {e.finish(0,norm_hidden(e.dev(0),id("merge.hidden"),weights.at("mtp.pre_fc_norm_hidden.weight").id,id("merge.norm"),scratch,4*p.g.h),false);return;}
@@ -215,7 +215,7 @@ public:
    // No host access occurs until the final copy event reports completion.
    ownrt::CopyEngine copy(e.dev(0));copy.copy(publication,0,id("error"),0,4,{});
    publication_event=copy.copy(publication,4,id("next_token"),0,4,{});e.tail=publication_event;
-   pending_profile=e.pending;pending_start=start;pending_head=head;pending_confirmed=confirmed;async_pending=true;
+   pending_start=start;pending_head=head;pending_confirmed=confirmed;async_pending=true;e.progress_pending=true;
    return -1;
   }
   e.drain();auto error=e.readback(0,id("error"),4);int status;std::memcpy(&status,error.data(),4);if(status){disabled=true;return -1;}
@@ -234,10 +234,11 @@ public:
   int status=0,token=-1;auto* bytes=static_cast<const uint8_t*>(e.dev(0).arena.row(publication).pointer);
   std::memcpy(&status,bytes,4);if(pending_head)std::memcpy(&token,bytes+4,4);
   Completion done;done.wall_ms=Engine::ms(pending_start);
-#ifndef OWN_RT_HOST_ONLY
-  for(const auto& item:pending_profile)for(auto event=item.launch.first;event<=item.launch.last;++event){auto timing=e.dev(0).timing(event);done.gpu_ms+=double(timing.end_ns-timing.start_ns)/1e6;}
-#endif
-  async_pending=false;publication_event=0;pending_profile.clear();
+  // Publish as soon as the ordered readback is complete. Do not synchronously
+  // query all draft event timestamps here, or duplicate Engine::drain's checks.
+  // Negative timing means deferred, not a zero-duration GPU measurement.
+  done.gpu_ms=-1;
+  async_pending=false;e.progress_pending=false;publication_event=0;
   if(status){disabled=true;token=-1;}else ++position;
   if(e.a.draft_fault=="late-error"){disabled=true;token=-1;}
   if(e.a.draft_fault=="suppress")token=-1;
@@ -261,7 +262,7 @@ public:
    for(size_t off=0;off<bytes;off+=zero.size())e.upload(0,allocation,off,zero.data(),std::min(zero.size(),bytes-off));}
   uint32_t active=1;e.upload(0,id("active"),0,&active,4);e.drain();position=0;disabled=false;reverse_hidden=nullptr;
   std::memset(e.dev(0).arena.row(publication).pointer,0,8);std::memset(e.dev(0).arena.row(half_staging).pointer,0,4+4*p.g.h*2);
-  publication_event=0;pending_profile.clear();e.progress_callback={};
+  publication_event=0;e.progress_pending=false;e.progress_callback={};
   trace.close();trace.open(output/"draft-rows.jsonl");require(bool(trace),"draft reset trace");
  }
  void dump_all_state(const fs::path& path) {

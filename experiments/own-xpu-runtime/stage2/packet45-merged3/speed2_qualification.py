@@ -18,7 +18,8 @@ def mirror_allowed(path,old,new):
 
 def verify():
  from build import compiled_sources
- old=before();now=compiled_sources()
+ from speed3_qualification import historical_compiled_sources
+ old=before();now=historical_compiled_sources(compiled_sources())
  expected={str((P/n).relative_to(ROOT)) for n in PINS}
  assert {k for k in now if old['sources'].get(k)!=now[k]}==expected,'outside fixture/SPEED2 repair'
  assert all(now[str((P/n).relative_to(ROOT))]==h for n,h in PINS.items()),'outside fixture/SPEED2 repair'
@@ -26,7 +27,7 @@ def verify():
  for row in (plan,mini,inventory):
   assert row['passed'] and row['device_executed'] is False
   for field in ('sources_sha256','source_sha256'):
-   for n,h in row.get(field,{}).items():assert sha(P/n)==h,'SPEED2 source changed '+n
+   for n,h in row.get(field,{}).items():assert sha(P/n)==h or __import__('speed3_qualification').source_allowed(P/n,h),'SPEED2 source changed '+n
  assert plan['plan_dispatch_rows']==len(plan['rows'])==48 and plan['removed_target_commands']==192
  assert sha(P/'build/speed2-plan/after')==plan['binary_sha256'] and sha(P/'build/speed2-plan/after.cpp')==plan['generated_sha256']
  assert sha(P/'build/input/plan.tsv')==plan['metadata_sha256']
@@ -40,7 +41,7 @@ def verify():
   assert r['result']['passed'] and sha(P/('evidence/fix6/dispatch-'+r['dispatch']+'.json'))==r['dispatch_sha256']
   if r['plan']!='draft':assert r['group_census']['shared']==0 and r['group_census']['ffn']>0
  assert mini['cases']==42 and mini['gate_count']==36 and len(mini['negative_controls'])==4
- assert mini['build']['binary_sha256']==sha(P/'build/gnu-host/own-rt-iq3')
+ assert mini['build']['binary_sha256']==__import__('speed3_qualification').before()['artifacts_sha256']['gnu-host/own-rt-iq3']
  assert mini['build']['compiled_sources_sha256']==now
  historical=json.loads((P/'speed1-snapshot-gates.json').read_text())
  assert len(mini['owners'])==len(historical['owners'])

@@ -263,6 +263,10 @@ def request_run(transport,provider,prompt,count,eos=(),overlap=True,dumps=False)
     cls=NativeController if getattr(transport.a,"controller","python")=="native" else Controller
     result=cls(transport,provider,overlap,dumps).run(prompt,count,eos)
     result["controller"]=getattr(transport.a,"controller","python")
+    result["target_split"]=getattr(transport.a,"target_split",0)
+    for row in result.get("draft_rows",[]):
+        if row.get("draft_gpu_ms") is not None and row["draft_gpu_ms"]<0:
+            row["draft_gpu_ms"]=None;row["draft_gpu_timing_deferred"]=True
     return request_timing_metadata(enrich_result(result,transport),transport,prompt,count)
 
 class Transport:
@@ -271,6 +275,9 @@ class Transport:
         self.children=[];self.sockets=[];self.logs=[];self.seq=[0,0];self.pending=[False,False];self.started=[0.,0.];self.commands=[{},{}]
         self.metrics=[dict(busy_ms=0.,handover_ms=0.,calls=0,gpu_ms=0.) for _ in range(2)]
         self.trace=[];self.stop_sent=False;self.retained=[];self.failure_hook=lambda reason:None;self.closed=False;self.finishing=set();self.last_complete=[0.,0.]
+        if getattr(args,"target_split",0) and not args.mini:
+            from memory_gate import configuration
+            configuration(json.loads((P/"memory-plan.json").read_text()),args.context,args.draft_rank,args.target_split)
         self.shared_path=out/"shared.bin"
         fd=os.open(self.shared_path,os.O_RDWR|os.O_CREAT|os.O_EXCL,0o600);os.ftruncate(fd,SHARED)
         self.mapping=mmap.mmap(fd,SHARED);os.close(fd)
@@ -293,7 +300,7 @@ class Transport:
                  "--memory","resident" if self.device else getattr(args,"host_memory","layer-streaming"),"--context",str(args.context),"--seconds",str(args.seconds),
                  "--native-nice",str(args.native_nice),"--timing",args.timing,"--max-new",str(args.tokens),"--retain-steps",getattr(args,"retain_steps","1-8")]
             if getattr(args,"cancel_launch",-1)>=0:cmd += ["--cancel-launch",str(args.cancel_launch)]
-            cmd += ["--draft-rank",str(getattr(args,"draft_rank",0))]
+            cmd += ["--draft-rank",str(getattr(args,"draft_rank",0)),"--target-split",str(getattr(args,"target_split",0))]
             if args.draft=="mtp" and rank==getattr(args,"draft_rank",0):cmd += ["--draft-mtp","--draft-fault",getattr(args,"draft_fault","none")]
             if getattr(args,"canary",False):cmd += ["--pipeline-canary"]
             if args.mini or getattr(args,"canary",False):cmd += ["--mini","--pipeline-mini"]
@@ -315,7 +322,7 @@ class Transport:
             from memory_gate import check as admit, snapshot
             ledger=json.loads((P/"memory-plan.json").read_text())
             census=[json.loads((out/f"rank{rank}/census.json").read_text()) for rank in range(2)]
-            save(out/"device-memory-admission.json",dict(passed=True,ranks=[dict(admit(c,ledger,r,args.draft=="mtp",args.context,args.draft_rank),process=snapshot(self.children[r].pid)) for r,c in enumerate(census)]))
+            save(out/"device-memory-admission.json",dict(passed=True,ranks=[dict(admit(c,ledger,r,args.draft=="mtp",args.context,args.draft_rank,getattr(args,"target_split",0)),process=snapshot(self.children[r].pid)) for r,c in enumerate(census)]))
     def check_alive(self):
         self.check()
         require(time.monotonic()-self.start_time<self.a.seconds,"pipeline total deadline")
@@ -563,6 +570,7 @@ def parser():
     p.add_argument("--output",type=Path,required=True);p.add_argument("--input",type=Path);p.add_argument("--oracle",type=Path);p.add_argument("--dispatch",type=Path)
     p.add_argument("--mini",action="store_true");p.add_argument("--device",action="store_true");p.add_argument("--draft",nargs="+",default="none")
     p.add_argument("--draft-rank",type=int,choices=(0,1),default=0)
+    p.add_argument("--target-split",type=int,choices=(0,24),default=0)
     p.add_argument("--draft-head",choices=("full",),default="full")
     p.add_argument("--draft-fault",choices=("none","wrong","error","stall","suppress","garbage","late-error"),default="none")
     p.add_argument("--script",type=Path);p.add_argument("--prompt-overlap",choices=("on","off"),default="on");p.add_argument("--dump-state",action="store_true")

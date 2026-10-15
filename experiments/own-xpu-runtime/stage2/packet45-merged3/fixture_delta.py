@@ -23,6 +23,9 @@ def baseline_builds(archive):
  return result
 def verify_sources(old,current):
  assert set(old)==set(current),'compiled source closure changed'
+ actual_changed={n for n in current if old[n]!=current[n]}
+ from speed3_qualification import historical_compiled_sources
+ current=historical_compiled_sources(current)
  changed={n for n in current if old[n]!=current[n]}
  expected={str((P/n).relative_to(ROOT)) for n in FIXTURE_ONLY}
  main=str((P/'main.cpp').relative_to(ROOT))
@@ -42,7 +45,7 @@ def verify_sources(old,current):
   f=ROOT/n
   if f.suffix in ('.cpp','.hpp'):
    assert all(('#include "'+name+'"') not in f.read_text() for name in FIXTURE_ONLY),'fixture included by decode'
- return sorted(changed)
+ return sorted(actual_changed)
 def verify(artifacts):
  from seal45 import bound_sources,archive_bound
  from copy_adoption_gate import verify as copy_verify
@@ -73,6 +76,6 @@ def verify(artifacts):
   linked_into_model_binary=True,called_by_production_decode=True,
   seal_amendment=__import__('seal6_amendment').verify(),
   historical_real_cases=6,fresh_real_cases=0,
-  reuse_authorization='SEAL6 owner directive 2026-10-15: exact fix6 grouping and SPEED1/SPEED2 snapshot transport/write-set and small-FFN repair; device suite oracle is real-model authority; no pre-device real-model CPU rerun',
+  reuse_authorization='SEAL6 owner directive 2026-10-15: exact fix6 grouping and SPEED1/SPEED2/SPEED3 profiling, split and snapshot transport/write-set and small-FFN repair; device suite oracle is real-model authority; no pre-device real-model CPU rerun',
   historical_model_artifacts_sha256={n:h for n,h in before['artifacts_sha256'].items() if n.endswith('/own-rt-iq3')},
   baseline_seal_sha256=digest(P/'evidence/copy-extent-fix/before-build-receipt.json'))

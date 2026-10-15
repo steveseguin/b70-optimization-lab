@@ -25,7 +25,8 @@ def mirror_allowed(path,old,new):
 
 def verify():
  from build import compiled_sources
- old=before();now=compiled_sources()
+ from speed3_qualification import historical_compiled_sources
+ old=before();now=historical_compiled_sources(compiled_sources())
  expected={str((P/n).relative_to(ROOT)) for n in PINS}
  assert {k for k in now if old['sources'].get(k)!=now[k]}==expected,'outside fixture/SPEED1 repair'
  assert all(now[str((P/n).relative_to(ROOT))]==current_pin(n) for n in PINS),'outside fixture/SPEED1 repair'
@@ -35,7 +36,7 @@ def verify():
   for field in ('sources_sha256','source_sha256'):
    for n,h in row.get(field,{}).items():
     from speed2_qualification import source_allowed as later
-    assert sha(P/n)==h or later(P/n,h),'SPEED1 source changed '+n
+    assert sha(P/n)==h or later(P/n,h) or __import__('speed3_qualification').source_allowed(P/n,h),'SPEED1 source changed '+n
  assert plan['plan_dispatch_rows']==len(plan['rows'])==48 and plan['removed_target_commands']==192
  assert sha(P/'build/speed1-plan/after')==plan['binary_sha256'] and sha(P/'build/speed1-plan/after.cpp')==plan['generated_sha256']
  assert sha(P/'build/input/plan.tsv')==plan['metadata_sha256']

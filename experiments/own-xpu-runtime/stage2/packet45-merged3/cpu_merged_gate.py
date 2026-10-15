@@ -160,11 +160,11 @@ class Campaign:
         return signature
 
     def case(self, name, context, rank, controller, mode='mtp', fault='none', count=8,
-             eos=(), guesses=(), cancel=-1, real=None, prompt_tokens=None):
+             eos=(), guesses=(), cancel=-1, real=None, prompt_tokens=None, target_split=0):
         assert_host_build(self.binary); admit(1_300_000_000 if real else 250_000_000)
         out = self.root / name; out.mkdir()
         argv = ['--binary', str(self.binary), '--output', str(out), '--context', str(context),
-            '--tokens', str(count), '--draft', mode, '--draft-rank', str(rank), '--controller', controller,
+            '--tokens', str(count), '--draft', mode, '--draft-rank', str(rank), '--target-split',str(target_split),'--controller', controller,
             '--draft-fault', fault, '--dispatch', str(self.dispatch), '--seconds', '1800', '--wait-seconds', '1800',
             '--retain-steps', '1-8', '--cancel-launch', str(cancel)]
         argv += ['--input', str(real['input'])] if real else ['--mini']

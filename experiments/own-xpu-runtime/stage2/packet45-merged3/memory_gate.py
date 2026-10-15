@@ -1,5 +1,18 @@
 """Allocation admission only; driver residency is a separate device receipt."""
-def check(census, ledger, rank, mtp=False, context=256, draft_rank=0):
+def configuration(ledger, context, draft_rank=0, target_split=0):
+    if draft_rank not in (0,1) or target_split not in (0,24):
+        raise ValueError('invalid draft placement/target split')
+    key='0-split24' if draft_rank==0 and target_split==24 else str(draft_rank)
+    if key=='0-split24' and context!=4096:
+        raise ValueError('24/24 rank0 draft admitted at context4096 only; 32K reserve is insufficient')
+    try: row=ledger['placements'][key]['capacities'][str(context)]
+    except KeyError as exc: raise ValueError('context is not admitted by memory plan') from exc
+    if key=='0-split24' and not all(r['allocation_margin_passed'] and r['free_with_mtp_bytes']>=ledger['minimum_free_bytes'] for r in row['ranks']):
+        raise ValueError('planned device allocation margin below 1.5 GB')
+    return row
+
+
+def check(census, ledger, rank, mtp=False, context=256, draft_rank=0, target_split=0):
     if rank not in (0, 1) or draft_rank not in (0, 1):
         raise ValueError('invalid rank')
     total = census['totals']['device']
@@ -9,7 +22,7 @@ def check(census, ledger, rank, mtp=False, context=256, draft_rank=0):
     if total <= 0:
         raise ValueError('empty device allocation census')
     try:
-        planned = ledger['placements'][str(draft_rank)]['capacities'][str(context)]['ranks'][rank]
+        planned = configuration(ledger,context,draft_rank,target_split)['ranks'][rank]
     except KeyError as exc:
         raise ValueError('context is not admitted by memory plan') from exc
     limit = planned['total_with_mtp_bytes'] if mtp else planned['target_total_bytes']
@@ -18,10 +31,12 @@ def check(census, ledger, rank, mtp=False, context=256, draft_rank=0):
     free = ledger['capacity_bytes'] - total
     if free < ledger['minimum_free_bytes']:
         raise ValueError('device allocation margin below 1.5 GB')
-    return dict(rank=rank, draft_rank=draft_rank, context_capacity=context, device_allocation_bytes=total,
+    result=dict(rank=rank, draft_rank=draft_rank, context_capacity=context, device_allocation_bytes=total,
                 capacity_bytes=ledger['capacity_bytes'], planned_maximum_bytes=limit,
                 planned_free_bytes=free, minimum_free_bytes=ledger['minimum_free_bytes'],
                 passed=True, scope='allocation admission; driver overhead/residency unmeasured')
+    if target_split:result['target_split']=target_split
+    return result
 
 
 def snapshot(pid, proc=None):

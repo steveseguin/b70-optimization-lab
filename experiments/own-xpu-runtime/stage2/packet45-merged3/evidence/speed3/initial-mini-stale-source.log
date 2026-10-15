@@ -1,0 +1,23 @@
+{"name": "r0s0-control", "passed": true}
+{"name": "r0s0-python-hit", "passed": true}
+{"name": "r0s0-python-miss", "passed": true}
+{"name": "r0s0-python-mtp", "passed": true}
+{"name": "r0s0-python-mtp-wrong", "passed": true}
+{"name": "r0s0-native-hit", "passed": true}
+{"name": "r0s0-native-miss", "passed": true}
+{"name": "r0s0-native-mtp", "passed": true}
+{"name": "r0s0-native-mtp-wrong", "passed": true}
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/speed3_snapshot_gate.py", line 79, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/speed3_snapshot_gate.py", line 45, in main
+    out,row=c.case(f'r{rank}s{split}-control',256,rank,'python',mode='none',count=3,prompt_tokens=prompt,target_split=split)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/cpu_merged_gate.py", line 164, in case
+    assert_host_build(self.binary); admit(1_300_000_000 if real else 250_000_000)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/cpu_merged_gate.py", line 45, in assert_host_build
+    assert hash_file(ROOT / name) == expected, 'stale binary source: ' + name
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: stale binary source: experiments/own-xpu-runtime/stage2/packet45-merged3/main.cpp

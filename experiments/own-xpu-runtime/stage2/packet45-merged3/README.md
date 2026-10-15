@@ -118,3 +118,8 @@ bytes into 32/34 submissions and restores small-FFN composition, removing 192
 extra target commands. Whole-buffer writer exclusions failed the full-state proof
 and remain unimplemented; byte traffic is unchanged. Fresh mini/plan gates and
 the named seal-6 extension precede coordinator device qualification.
+
+The [SPEED3 closeout](SPEED3-CLOSEOUT.md) removes duplicate draft profiling and
+admits an independent 24/24 target split with drafting on rank 0 at 4K only.
+It includes exact coordinator commands, fresh mini/plan/event/admission gates,
+forecasts and the new seal hashes. The 32K version of that split is refused.

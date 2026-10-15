@@ -23,3 +23,5 @@
 
 These close individual implementation errors, not the optimization lane. All
 historical negative evidence stays in its source packet or this packet's archives.
+
+- 2026-10-15 SPEED3: do not profile the same draft events before publication and again at drain. The engine drain is the single accounting/retirement owner. Do not admit 24/24 with rank-0 draft at 32K: it is 65,889,102 bytes below the unchanged reserve. [Closeout and 4K selection commands](SPEED3-CLOSEOUT.md).
