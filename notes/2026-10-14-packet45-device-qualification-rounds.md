@@ -42,7 +42,7 @@ Device evidence:
 - Round 3's chain directories (K0/K1a pass, K1b refusal) were deleted at the round-4 relaunch. Rounds 4 and 5
   re-prove those windows.
 
-Coordinator records are in `data/own-xpu-runtime-packet45-device-rounds-20261014/`. They had lived only in
+Coordinator records are in `data/own-xpu-runtime-packet45-device-rounds-20261014/` (logs stored as `.txt`, since `data/**/*.log` is ignored). They had lived only in
 `/tmp`, which a reboot wipes. The folder holds:
 - the queue log;
 - each chain's last log;
