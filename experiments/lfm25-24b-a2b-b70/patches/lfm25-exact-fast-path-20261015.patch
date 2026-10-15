@@ -1,0 +1,679 @@
+diff --git a/ggml/src/ggml-sycl/dmmv.cpp b/ggml/src/ggml-sycl/dmmv.cpp
+index fb8a175..778aca6 100644
+--- a/ggml/src/ggml-sycl/dmmv.cpp
++++ b/ggml/src/ggml-sycl/dmmv.cpp
+@@ -1,4 +1,5 @@
+ #include "convert.hpp"
++#include <cstdlib>
+ #include "dmmv.hpp"
+ #include "dequantize.hpp"
+ #include "presets.hpp"
+@@ -1627,6 +1628,200 @@ static void dequantize_mul_mat_vec_q8_0_sycl_reorder(const void *vx, const dfloa
+     }
+ }
+ 
++#ifdef GGML_SYCL_F16
++// Q8_0 on the reordered layout ([all qs][all d]) with exactly the arithmetic of the plain-layout
++// dequantize_mul_mat_vec<QK8_0, QR8_0, dequantize_q8_0> kernel: lane tid owns columns i + 4*tid .. +3 for
++// i = 0, 64, 128, ..., accumulates (q*d) * y as half2 in that order, then the same xor butterfly and
++// x + y. Only the memory access changes (one aligned 32-bit load per lane per step, several rows per
++// work-group), so dst is bit-identical to the plain kernel. Needs ncols % 64 == 0.
++// NR == 1 keeps the first version of the kernel (one row per subgroup); it measured faster than the
++// multi-row template instantiated with NR = 1.
++template <int rows_per_wg>
++static void dequantize_mul_mat_vec_q8_0_reorder_exact_1row(const void * __restrict__ vx, const dfloat * __restrict__ y,
++                                                           float * __restrict__ dst, const int ncols, const int nrows,
++                                                           const sycl::nd_item<3> & item_ct1) {
++    const int row = item_ct1.get_group(2) * rows_per_wg + item_ct1.get_local_id(1);
++    if (row >= nrows) {
++        return;
++    }
++    const int tid = item_ct1.get_local_id(2);
++
++    const int8_t *     qs_row = (const int8_t *) vx + (size_t) row * ncols;
++    const sycl::half * d_row  = (const sycl::half *) ((const char *) vx + (size_t) ncols * nrows) + (size_t) row * (ncols / QK8_0);
++
++    sycl::half2 tmp = {0.0f, 0.0f};
++#pragma unroll 4
++    for (int i = 0; i < ncols; i += 2*GGML_SYCL_DMMV_X) {
++        const int col = i + 4*tid;
++        const int packed = *(const int *) (qs_row + col);
++        const dfloat d = d_row[col / QK8_0];
++
++        dfloat2 v;
++        v.x() = (int8_t) (packed & 0xff);
++        v.y() = (int8_t) ((packed >> 8) & 0xff);
++        v.s0() *= d;
++        v.s1() *= d;
++        dfloat2 t1{y[col + 0], y[col + 1]};
++        tmp += v * t1;
++
++        v.x() = (int8_t) ((packed >> 16) & 0xff);
++        v.y() = (int8_t) ((packed >> 24) & 0xff);
++        v.s0() *= d;
++        v.s1() *= d;
++        dfloat2 t2{y[col + 2], y[col + 3]};
++        tmp += v * t2;
++    }
++
++    const int mask_start = ncols > GGML_SYCL_DMMV_X ? WARP_SIZE >> 1 : WARP_SIZE >> 2;
++    for (int mask = mask_start; mask > 0; mask >>= 1) {
++        tmp += dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
++    }
++
++    if (tid == 0) {
++        dst[row] = tmp.x() + tmp.y();
++    }
++}
++
++template <int rows_per_wg, int NR>
++static void dequantize_mul_mat_vec_q8_0_reorder_exact(const void * __restrict__ vx, const dfloat * __restrict__ y,
++                                                      float * __restrict__ dst, const int ncols, const int nrows,
++                                                      const sycl::nd_item<3> & item_ct1) {
++    const int row0 = (item_ct1.get_group(2) * rows_per_wg + item_ct1.get_local_id(1)) * NR;
++    if (row0 >= nrows) {
++        return;
++    }
++    const int tid = item_ct1.get_local_id(2);
++
++    const int8_t *     qs_base = (const int8_t *) vx;
++    const sycl::half * d_base  = (const sycl::half *) ((const char *) vx + (size_t) ncols * nrows);
++    const int          bpr     = ncols / QK8_0;
++
++    sycl::half2 tmp[NR];
++#pragma unroll
++    for (int r = 0; r < NR; ++r) {
++        tmp[r] = {0.0f, 0.0f};
++    }
++#pragma unroll 4
++    for (int i = 0; i < ncols; i += 2*GGML_SYCL_DMMV_X) {
++        const int col = i + 4*tid;
++        dfloat2 t1{y[col + 0], y[col + 1]};
++        dfloat2 t2{y[col + 2], y[col + 3]};
++#pragma unroll
++        for (int r = 0; r < NR; ++r) {
++            const int row = row0 + r < nrows ? row0 + r : nrows - 1;  // clamp; result discarded below
++            const int packed = *(const int *) (qs_base + (size_t) row * ncols + col);
++            const dfloat d = d_base[(size_t) row * bpr + col / QK8_0];
++
++            dfloat2 v;
++            v.x() = (int8_t) (packed & 0xff);
++            v.y() = (int8_t) ((packed >> 8) & 0xff);
++            v.s0() *= d;
++            v.s1() *= d;
++            tmp[r] += v * t1;
++
++            v.x() = (int8_t) ((packed >> 16) & 0xff);
++            v.y() = (int8_t) ((packed >> 24) & 0xff);
++            v.s0() *= d;
++            v.s1() *= d;
++            tmp[r] += v * t2;
++        }
++    }
++
++    const int mask_start = ncols > GGML_SYCL_DMMV_X ? WARP_SIZE >> 1 : WARP_SIZE >> 2;
++#pragma unroll
++    for (int r = 0; r < NR; ++r) {
++        for (int mask = mask_start; mask > 0; mask >>= 1) {
++            tmp[r] += dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp[r], mask);
++        }
++    }
++
++    if (tid == 0) {
++#pragma unroll
++        for (int r = 0; r < NR; ++r) {
++            if (row0 + r < nrows) {
++                dst[row0 + r] = tmp[r].x() + tmp[r].y();
++            }
++        }
++    }
++}
++
++static int ggml_sycl_dmmv_q8_0_exact_nr() {
++    static const int nr = [] {
++        const char * env = std::getenv("LLAMA_SYCL_DMMV_Q8_0_EXACT_NR");
++        const int v = env ? std::atoi(env) : 1;
++        return (v == 1 || v == 2 || v == 4) ? v : 1;
++    }();
++    return nr;
++}
++
++static int ggml_sycl_dmmv_q8_0_exact_rows() {
++    // 0 = off (stock reorder DMMV kernel); otherwise rows per work-group (1, 2, 4 or 8)
++    static const int rows = [] {
++        const char * env = std::getenv("LLAMA_SYCL_DMMV_Q8_0_REORDER_EXACT");
++        if (env == nullptr || env[0] == '\0') {
++            return 0;
++        }
++        const int v = std::atoi(env);
++        return (v == 1 || v == 2 || v == 4 || v == 8) ? v : 0;
++    }();
++    return rows;
++}
++
++template <int rows_per_wg, int NR>
++static void launch_dequantize_mul_mat_vec_q8_0_reorder_exact_nr(const void * vx, const dfloat * y, float * dst,
++                                                               const int ncols, const int nrows,
++                                                               dpct::queue_ptr stream) {
++    static_assert(WARP_SIZE == 16, "the exact mapping assumes 16-lane subgroups (4 values per lane per step)");
++    const int            nsg         = (nrows + NR - 1) / NR;
++    const int            block_num_y = (nsg + rows_per_wg - 1) / rows_per_wg;
++    const sycl::range<3> block_nums(1, 1, block_num_y);
++    const sycl::range<3> block_dims(1, rows_per_wg, WARP_SIZE);
++    stream->parallel_for(
++        sycl::nd_range<3>(block_nums * block_dims, block_dims),
++        [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++            dequantize_mul_mat_vec_q8_0_reorder_exact<rows_per_wg, NR>(vx, y, dst, ncols, nrows, item_ct1);
++        });
++}
++
++template <int rows_per_wg>
++static void launch_dequantize_mul_mat_vec_q8_0_reorder_exact(const void * vx, const dfloat * y, float * dst,
++                                                            const int ncols, const int nrows,
++                                                            dpct::queue_ptr stream) {
++    switch (ggml_sycl_dmmv_q8_0_exact_nr()) {
++        case 2:  launch_dequantize_mul_mat_vec_q8_0_reorder_exact_nr<rows_per_wg, 2>(vx, y, dst, ncols, nrows, stream); break;
++        case 4:  launch_dequantize_mul_mat_vec_q8_0_reorder_exact_nr<rows_per_wg, 4>(vx, y, dst, ncols, nrows, stream); break;
++        default: {
++            static_assert(WARP_SIZE == 16, "the exact mapping assumes 16-lane subgroups (4 values per lane per step)");
++            const int            block_num_y = (nrows + rows_per_wg - 1) / rows_per_wg;
++            const sycl::range<3> block_nums(1, 1, block_num_y);
++            const sycl::range<3> block_dims(1, rows_per_wg, WARP_SIZE);
++            stream->parallel_for(
++                sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                    dequantize_mul_mat_vec_q8_0_reorder_exact_1row<rows_per_wg>(vx, y, dst, ncols, nrows, item_ct1);
++                });
++            break;
++        }
++    }
++}
++
++static bool dequantize_mul_mat_vec_q8_0_sycl_reorder_exact(const void * vx, const dfloat * y, float * dst,
++                                                           const int ncols, const int nrows,
++                                                           dpct::queue_ptr stream) {
++    const int rows = ggml_sycl_dmmv_q8_0_exact_rows();
++    if (rows == 0 || ncols % (2*GGML_SYCL_DMMV_X) != 0) {
++        return false;
++    }
++    switch (rows) {
++        case 1: launch_dequantize_mul_mat_vec_q8_0_reorder_exact<1>(vx, y, dst, ncols, nrows, stream); break;
++        case 2: launch_dequantize_mul_mat_vec_q8_0_reorder_exact<2>(vx, y, dst, ncols, nrows, stream); break;
++        case 4: launch_dequantize_mul_mat_vec_q8_0_reorder_exact<4>(vx, y, dst, ncols, nrows, stream); break;
++        default: launch_dequantize_mul_mat_vec_q8_0_reorder_exact<8>(vx, y, dst, ncols, nrows, stream); break;
++    }
++    return true;
++}
++#endif // GGML_SYCL_F16
++
+ static void dequantize_mul_mat_vec_q8_0_sycl(const void *vx, const dfloat *y,
+                                              float *dst, const int ncols,
+                                              const int nrows,
+@@ -1850,6 +2045,11 @@ void ggml_sycl_op_dequantize_mul_mat_vec(
+         case GGML_TYPE_Q8_0:
+             if ((ggml_tensor_extra_gpu *) dst->src[0]->extra &&
+                 ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
++#ifdef GGML_SYCL_F16
++                if (dequantize_mul_mat_vec_q8_0_sycl_reorder_exact(src0_dd_i, src1_dfloat, dst_dd_i, ne00, row_diff, stream)) {
++                    break;
++                }
++#endif
+                 dequantize_mul_mat_vec_q8_0_sycl_reorder(src0_dd_i, src1_dfloat, dst_dd_i, ne00, row_diff, stream);
+             } else {
+                 dequantize_mul_mat_vec_q8_0_sycl(src0_dd_i, src1_dfloat, dst_dd_i, ne00, row_diff, stream);
+diff --git a/ggml/src/ggml-sycl/ggml-sycl.cpp b/ggml/src/ggml-sycl/ggml-sycl.cpp
+index 3089fb6..1b49612 100644
+--- a/ggml/src/ggml-sycl/ggml-sycl.cpp
++++ b/ggml/src/ggml-sycl/ggml-sycl.cpp
+@@ -14,6 +14,7 @@
+ #include <assert.h>
+ #include <atomic>
+ #include <cinttypes>
++#include <unordered_map>
+ #include <cstddef>
+ #include <cstdint>
+ #include <cstdlib>
+@@ -5801,8 +5802,19 @@ static bool reorder_qw(const ggml_tensor * src0, dpct::queue_ptr stream) {
+     }
+ }
+ 
++// LFM2.5 exact lane: keep plain MUL_MAT weights in their original layout (DMMV path) while
++// MUL_MAT_ID expert weights may still be reordered.
++static bool ggml_sycl_mul_mat_no_reorder_enabled() {
++    static const bool enabled = [] {
++        const char * env = std::getenv("LLAMA_SYCL_MUL_MAT_NO_REORDER");
++        return env && (std::strcmp(env, "1") == 0 || std::strcmp(env, "on") == 0);
++    }();
++    return enabled;
++}
++
+ static bool should_reorder_tensor(ggml_backend_sycl_context& ctx, const ggml_tensor * dst) {
+     return !g_ggml_sycl_disable_optimize && //allow optimize, controlled by $GGML_SYCL_DISABLE_OPT
++            !ggml_sycl_mul_mat_no_reorder_enabled() &&
+             ctx.opt_feature.reorder &&      //allow this device due to good perf, skip the devices with bad perf.
+             (dst->op == GGML_OP_MUL_MAT || dst->op == GGML_OP_MUL_MAT_ARGMAX) &&
+             // ne[1] <= 8 so multi-column decode (spec / MTP verify) also bootstraps the reorder;
+@@ -8707,7 +8719,11 @@ static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * syc
+                         return a.second.us > b.second.us;
+                     });
+ 
+-            const int top_n = std::min<int>(30, entries.size());
++            static const int node_profile_top = [] {
++                const char * value = std::getenv("GGML_SYCL_NODE_PROFILE_TOP");
++                return value == nullptr || value[0] == '\0' ? 30 : std::max(1, std::atoi(value));
++            }();
++            const int top_n = std::min<int>(node_profile_top, entries.size());
+             GGML_LOG_WARN("sycl node profile: graphs=%" PRId64 ", unique_nodes=%zu, top=%d\n",
+                     node_profile_graphs, entries.size(), top_n);
+             for (int i = 0; i < top_n; ++i) {
+@@ -8885,7 +8901,79 @@ static bool ggml_sycl_mul_mat_id_multi_token_graph_eligible(const ggml_tensor *
+     return true;
+ }
+ 
++static bool ggml_sycl_graph_extra_ops_enabled() {
++    static const bool enabled = [] {
++        const char * env = std::getenv("LLAMA_SYCL_GRAPH_LFM2_OPS");
++        return env && (std::strcmp(env, "1") == 0 || std::strcmp(env, "on") == 0);
++    }();
++    return enabled;
++}
++
++static bool ggml_sycl_graph_concat_kernel_only(const ggml_tensor * dst) {
++    if (!ggml_sycl_graph_extra_ops_enabled()) {
++        return false;
++    }
++    const int32_t dim = ((const int32_t *) dst->op_params)[0];
++    return dim != 3 || !ggml_is_contiguous(dst->src[0]) || !ggml_is_contiguous(dst->src[1]);
++}
++
++// Single-token MUL_MAT_ID takes ggml_sycl_mul_mat_id_mmvq_fused (no host wait) when these hold; the
++// expert weights must already be in their final layout, because the lazy reorder allocates and waits.
++static bool ggml_sycl_mul_mat_id_single_token_graph_eligible(const ggml_tensor * dst) {
++    if (!ggml_sycl_graph_extra_ops_enabled() || !g_ggml_sycl_use_async_mem_op) {
++        return false;
++    }
++    const ggml_tensor * src0 = dst->src[0];
++    const ggml_tensor * src1 = dst->src[1];
++    const ggml_tensor * ids  = dst->src[2];
++    if (src0 == nullptr || src1 == nullptr || ids == nullptr) {
++        return false;
++    }
++    if (src0->type != GGML_TYPE_Q8_0) {
++        return false;
++    }
++    if (src1->ne[2] != 1 || src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
++        return false;
++    }
++    if (src1->ne[0] != src0->ne[0] || src1->ne[0] % QK8_1 != 0 || !ggml_is_contiguous(src1)) {
++        return false;
++    }
++    if (ids->ne[1] != 1 || (src1->ne[1] != 1 && src1->ne[1] != ids->ne[0])) {
++        return false;
++    }
++    const ggml_tensor_extra_gpu * extra = static_cast<const ggml_tensor_extra_gpu *>(src0->extra);
++    const bool reordered     = extra && extra->optimized_feature.reorder;
++    const bool wants_reorder = !g_ggml_sycl_disable_optimize && ggml_sycl_mul_mat_id_q8_0_reorder_enabled();
++    return reordered == wants_reorder;
++}
++
++static bool check_graph_compatibility_impl(ggml_cgraph * cgraph);
+ static bool check_graph_compatibility(ggml_cgraph * cgraph) {
++    const bool ok = check_graph_compatibility_impl(cgraph);
++    if (!ok && std::getenv("LLAMA_SYCL_GRAPH_REUSE_LOG_EVERY")) {
++        static int64_t n_incompatible = 0;
++        if ((n_incompatible++ % 256) == 0) {
++            for (int i = 0; i < cgraph->n_nodes; i++) {
++                const ggml_tensor * node = cgraph->nodes[i];
++                if (node->op == GGML_OP_CONCAT || node->op == GGML_OP_MUL_MAT_ID || node->op == GGML_OP_MUL_MAT) {
++                    // report the first node that blocks graphs
++                    ggml_cgraph one = *cgraph;
++                    one.nodes = cgraph->nodes + i;
++                    one.n_nodes = 1;
++                    if (!check_graph_compatibility_impl(&one)) {
++                        GGML_LOG_WARN("[SYCL-GRAPH] incompatible (%" PRId64 "x): node %d %s %s ne=[%" PRId64 ",%" PRId64 ",%" PRId64 "] src1 ne2=%" PRId64 "\n",
++                                      n_incompatible, i, ggml_op_name(node->op), node->name, node->ne[0], node->ne[1], node->ne[2],
++                                      node->src[1] ? node->src[1]->ne[2] : -1);
++                        break;
++                    }
++                }
++            }
++        }
++    }
++    return ok;
++}
++
++static bool check_graph_compatibility_impl(ggml_cgraph * cgraph) {
+     if (ggml_sycl_info().device_count > 1) {
+         // A sycl_ex::command_graph object can only be created for a single device
+         GGML_LOG_INFO("%s: disabling SYCL graphs due to multiple devices\n", __func__);
+@@ -8900,7 +8988,11 @@ static bool check_graph_compatibility(ggml_cgraph * cgraph) {
+             case GGML_OP_CONCAT:
+                 // ggml_sycl_op_concat() does a blocking host wait after memcpy operations,
+                 // but wait() can't be called on the events returned by a queue recording
+-                // to a graph.
++                // to a graph. Only the dim == 3 contiguous branch does that; the other
++                // branches are plain kernels (LFM2 short-conv concatenates along dim 0).
++                if (ggml_sycl_graph_concat_kernel_only(cgraph->nodes[i])) {
++                    break;
++                }
+                 GGML_LOG_INFO("%s: disabling SYCL graphs due to unsupported node type %s\n", __func__,
+                               ggml_op_name(node_op));
+                 return false;
+@@ -8911,6 +9003,9 @@ static bool check_graph_compatibility(ggml_cgraph * cgraph) {
+                 if (ggml_sycl_mul_mat_id_multi_token_graph_eligible(cgraph->nodes[i])) {
+                     break;
+                 }
++                if (ggml_sycl_mul_mat_id_single_token_graph_eligible(cgraph->nodes[i])) {
++                    break;
++                }
+                 GGML_LOG_INFO("%s: disabling SYCL graphs due to unsupported node type %s\n", __func__,
+                               ggml_op_name(node_op));
+                 return false;
+@@ -8948,6 +9043,62 @@ static bool check_graph_compatibility(ggml_cgraph * cgraph) {
+ }
+ #endif
+ 
++#ifdef GGML_SYCL_GRAPH
++// Replay a recorded SYCL graph without re-recording while the ggml graph is unchanged (same nodes, same
++// data pointers, shapes, strides and op params), as the CUDA backend does. Re-recording and updating
++// every step costs more than it saves. A changed graph runs eagerly; two unchanged calls in a row
++// record a fresh executable graph. Kernels and arguments are the same as the eager path, so results
++// are bit-identical.
++static bool ggml_sycl_graph_reuse_enabled() {
++    static const bool enabled = [] {
++        const char * env = std::getenv("LLAMA_SYCL_GRAPH_REUSE");
++        return env && (std::strcmp(env, "1") == 0 || std::strcmp(env, "on") == 0);
++    }();
++    return enabled;
++}
++
++struct ggml_sycl_graph_node_props {
++    ggml_tensor node;
++    void *      src_data[GGML_MAX_SRC];
++    int64_t     src_ne[GGML_MAX_SRC][GGML_MAX_DIMS];
++    size_t      src_nb[GGML_MAX_SRC][GGML_MAX_DIMS];
++};
++
++struct ggml_sycl_graph_reuse_state {
++    std::vector<ggml_sycl_graph_node_props> props;
++    std::unique_ptr<sycl_ex::command_graph<sycl_ex::graph_state::executable>> exec;
++    int64_t n_replays = 0;
++    int64_t n_records = 0;
++    int64_t n_eager   = 0;
++};
++
++static bool ggml_sycl_graph_props_changed(ggml_sycl_graph_reuse_state & st, const ggml_cgraph * cgraph) {
++    bool changed = false;
++    if ((int) st.props.size() != cgraph->n_nodes) {
++        st.props.resize(cgraph->n_nodes);
++        changed = true;
++    }
++    for (int i = 0; i < cgraph->n_nodes; i++) {
++        ggml_sycl_graph_node_props prop;
++        std::memset(&prop, 0, sizeof(prop));
++        std::memcpy(&prop.node, cgraph->nodes[i], sizeof(ggml_tensor));
++        for (int j = 0; j < GGML_MAX_SRC; ++j) {
++            const ggml_tensor * src = cgraph->nodes[i]->src[j];
++            if (src) {
++                prop.src_data[j] = src->data;
++                std::memcpy(prop.src_ne[j], src->ne, sizeof(prop.src_ne[j]));
++                std::memcpy(prop.src_nb[j], src->nb, sizeof(prop.src_nb[j]));
++            }
++        }
++        if (changed || std::memcmp(&st.props[i], &prop, sizeof(prop)) != 0) {
++            st.props[i] = prop;
++            changed = true;
++        }
++    }
++    return changed;
++}
++#endif
++
+ static ggml_status ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
+     auto * sycl_ctx = static_cast<ggml_backend_sycl_context *>(backend->context);
+ 
+@@ -8962,6 +9113,41 @@ static ggml_status ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_
+             return GGML_STATUS_SUCCESS;
+         }
+ 
++        if (ggml_sycl_graph_reuse_enabled()) {
++            static std::unordered_map<const ggml_backend_sycl_context *, ggml_sycl_graph_reuse_state> reuse_states;
++            ggml_sycl_graph_reuse_state & st = reuse_states[sycl_ctx];
++            if (ggml_sycl_graph_props_changed(st, cgraph)) {
++                st.exec.reset();
++                st.n_eager++;
++                if (std::getenv("LLAMA_SYCL_GRAPH_REUSE_LOG_EVERY")) {
++                    GGML_LOG_WARN("[SYCL-GRAPH] eager: graph changed (%d nodes), totals %" PRId64 " replays, %" PRId64 " records, %" PRId64 " eager\n",
++                                  cgraph->n_nodes, st.n_replays, st.n_records, st.n_eager);
++                }
++                ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
++                return GGML_STATUS_SUCCESS;
++            }
++            if (!st.exec) {
++                sycl_ex::command_graph rec_graph(*(sycl_ctx->stream()), {sycl_ex::property::graph::assume_buffer_outlives_graph{}});
++                rec_graph.begin_recording(*(sycl_ctx->stream()));
++                ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
++                rec_graph.end_recording();
++                st.exec = std::make_unique<sycl_ex::command_graph<sycl_ex::graph_state::executable>>(rec_graph.finalize());
++                st.n_records++;
++            } else {
++                st.n_replays++;
++            }
++            sycl_ctx->stream()->ext_oneapi_graph(*st.exec);
++            static const int64_t log_every = [] {
++                const char * env = std::getenv("LLAMA_SYCL_GRAPH_REUSE_LOG_EVERY");
++                return env ? std::max<int64_t>(1, std::atoll(env)) : (int64_t) 4096;
++            }();
++            if (((st.n_records + st.n_replays + st.n_eager) % log_every) == 0) {
++                GGML_LOG_WARN("[SYCL-GRAPH] reuse: %" PRId64 " replays, %" PRId64 " records, %" PRId64 " eager\n",
++                              st.n_replays, st.n_records, st.n_eager);
++            }
++            return GGML_STATUS_SUCCESS;
++        }
++
+         sycl_ex::command_graph model_sycl_graph(*(sycl_ctx->stream()), {sycl_ex::property::graph::assume_buffer_outlives_graph{}});
+ 
+         model_sycl_graph.begin_recording(*(sycl_ctx->stream()));
+diff --git a/ggml/src/ggml-sycl/mmvq.cpp b/ggml/src/ggml-sycl/mmvq.cpp
+index 851100e..1942314 100644
+--- a/ggml/src/ggml-sycl/mmvq.cpp
++++ b/ggml/src/ggml-sycl/mmvq.cpp
+@@ -5129,7 +5129,7 @@ bool ggml_sycl_mul_mat_vec_q_id_multi_token(
+ // Reorder (SoA) MoE expert GEMV: MoE expert/row/lane indexing (from mul_mat_vec_q_moe) with the
+ // dense-reorder per-block reads (from mul_mat_vec_q_reorder). Each expert slice in vx_base is a
+ // self-contained SoA, so nblocks = nrows*(ncols/qk) per expert and the constant expert stride holds.
+-template <typename reorder_vec_dot_q_sycl>
++template <typename reorder_vec_dot_q_sycl, bool xor_reduce = false>
+ static void mul_mat_vec_q_moe_reorder(
+     const void * __restrict__ vx_base, const void * __restrict__ vy_base,
+     float * __restrict__ dst_base, const int32_t * __restrict__ ids_dev,
+@@ -5180,12 +5180,134 @@ static void mul_mat_vec_q_moe_reorder(
+         }
+     }
+ 
+-    auto sum = sycl::reduce_over_group(sg, partial_sum, std::plus<>());
++    if constexpr (xor_reduce) {
++        // same butterfly as mul_mat_vec_q_moe, so the result is bit-identical to the plain layout
++#pragma unroll
++        for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++            partial_sum += dpct::permute_sub_group_by_xor(sg, partial_sum, mask);
++        }
++        if (sg.leader()) {
++            dst[row] = partial_sum;
++        }
++    } else {
++        auto sum = sycl::reduce_over_group(sg, partial_sum, std::plus<>());
++        if (sg.leader()) {
++            dst[row] = sum;
++        }
++    }
++}
++
++static bool ggml_sycl_mmvq_id_xor_reduce_enabled() {
++    static const bool enabled = [] {
++        const char * env = std::getenv("LLAMA_SYCL_MMVQ_ID_XOR_REDUCE");
++        return env && (std::strcmp(env, "1") == 0 || std::strcmp(env, "on") == 0);
++    }();
++    return enabled;
++}
++
++// Q8_0 experts, reordered layout, several rows per subgroup: each row's partial sums use exactly the lane
++// mapping, dot-product arithmetic and accumulation order of mul_mat_vec_q_moe_reorder (VDR 2) and end with the
++// same xor butterfly, so every output is bit-identical; the rows only share the activation loads and keep more
++// weight loads in flight.
++template <int NR>
++static void mul_mat_vec_q8_0_moe_reorder_exact_nr(
++    const void * __restrict__ vx_base, const void * __restrict__ vy_base,
++    float * __restrict__ dst_base, const int32_t * __restrict__ ids_dev,
++    const int ncols, const int nrows,
++    const size_t expert_weight_stride, const size_t dst_row_stride,
++    const size_t src1_row_stride,
++    const sycl::nd_item<3> & item_ct1) {
++    using block_type   = ggml_sycl_reordered::block_q_t<GGML_TYPE_Q8_0>;
++    using block_traits = typename block_type::traits;
++    static_assert(block_traits::vdr_mmvq == 2 && WARP_SIZE == 16, "exact multi-row kernel assumes VDR 2, 16 lanes");
++
++    const int expert_idx = item_ct1.get_group(1);
++    const int i02        = ids_dev[expert_idx];
++
++    const char * vx  = (const char *) vx_base + (size_t) i02 * expert_weight_stride;
++    const char * vy  = (const char *) vy_base + (size_t) expert_idx * src1_row_stride;
++    float *      dst = (float *) ((char *) dst_base + (size_t) expert_idx * dst_row_stride);
++
++    const int row0 = (item_ct1.get_group(2) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1)) * NR;
++    if (row0 >= nrows) {
++        return;
++    }
++
++    const auto sg   = item_ct1.get_sub_group();
++    const int  lane = sg.get_local_linear_id();
++
++    constexpr int block_elements_per_subgroup = block_traits::qi / block_traits::vdr_mmvq;          // 4
++    constexpr int blocks_per_subgroup         = WARP_SIZE / block_elements_per_subgroup;            // 4
++    const int     blocks_per_row              = ncols / block_traits::qk;
++    const int     nblocks                     = nrows * blocks_per_row;
++    const int     iqs                         = block_traits::vdr_mmvq * (lane % block_elements_per_subgroup);
++
++    float partial[NR];
++#pragma unroll
++    for (int r = 0; r < NR; ++r) {
++        partial[r] = 0.0f;
++    }
++
++    for (int i = lane / block_elements_per_subgroup; i < blocks_per_row; i += blocks_per_subgroup) {
++        const int8_t *      q8_1_quant_ptr = (const int8_t *) vy + i * QK8_1;
++        const sycl::half2 * q8_1_ds_ptr    = (const sycl::half2 *) ((const char *) vy + ncols + i * sizeof(sycl::half2));
++#pragma unroll
++        for (int r = 0; r < NR; ++r) {
++            if (row0 + r < nrows) {
++                const int ibx = (row0 + r) * blocks_per_row + i;
++                partial[r] += reorder_vec_dot_q_sycl<GGML_TYPE_Q8_0>()(
++                    vx, block_type::get_block_offset(ibx, nblocks), block_type::get_d_offset(nrows, ncols, ibx),
++                    q8_1_quant_ptr, q8_1_ds_ptr, iqs);
++            }
++        }
++    }
++
++#pragma unroll
++    for (int r = 0; r < NR; ++r) {
++#pragma unroll
++        for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
++            partial[r] += dpct::permute_sub_group_by_xor(sg, partial[r], mask);
++        }
++    }
+     if (sg.leader()) {
+-        dst[row] = sum;
++#pragma unroll
++        for (int r = 0; r < NR; ++r) {
++            if (row0 + r < nrows) {
++                dst[row0 + r] = partial[r];
++            }
++        }
+     }
+ }
+ 
++static int ggml_sycl_mmvq_id_q8_0_exact_nr() {
++    static const int nr = [] {
++        const char * env = std::getenv("LLAMA_SYCL_MMVQ_ID_Q8_0_EXACT_NR");
++        const int v = env ? std::atoi(env) : 0;
++        return (v == 1 || v == 2 || v == 4 || v == 8) ? v : 0;
++    }();
++    return nr;
++}
++
++template <int NR>
++static void launch_mul_mat_vec_q8_0_moe_reorder_exact_nr(
++    const void * vx_base, const void * vy, const int32_t * ids_dev,
++    float * dst_base, const int ncols, const int nrows, const int n_experts_used,
++    const size_t expert_weight_stride, const size_t dst_row_stride,
++    const size_t src1_row_stride, dpct::queue_ptr stream) {
++    const int            block_num_y = (nrows + NR - 1) / NR;
++    const sycl::range<3> block_nums(1, (unsigned) n_experts_used, (unsigned) block_num_y);
++    const sycl::range<3> block_dims(1, 1, WARP_SIZE);
++    stream->submit([&](sycl::handler & cgh) {
++        cgh.parallel_for(
++            sycl::nd_range<3>(block_nums * block_dims, block_dims),
++            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                mul_mat_vec_q8_0_moe_reorder_exact_nr<NR>(
++                    vx_base, vy, dst_base, ids_dev, ncols, nrows,
++                    expert_weight_stride, dst_row_stride, src1_row_stride, item);
++            });
++    });
++}
++
+ template <typename reorder_vec_dot_q_sycl>
+ static void launch_mul_mat_vec_q_moe_reorder(
+     const void * vx_base, const void * vy, const int32_t * ids_dev,
+@@ -5196,6 +5318,32 @@ static void launch_mul_mat_vec_q_moe_reorder(
+     const int            block_num_y = (nrows + GGML_SYCL_MMV_Y - 1) / GGML_SYCL_MMV_Y;
+     const sycl::range<3> block_nums(1, (unsigned) n_experts_used, (unsigned) block_num_y);
+     const sycl::range<3> block_dims(1, GGML_SYCL_MMV_Y, WARP_SIZE);
++    if (ggml_sycl_mmvq_id_xor_reduce_enabled() && reorder_vec_dot_q_sycl::gtype == GGML_TYPE_Q8_0 &&
++            ggml_sycl_mmvq_id_q8_0_exact_nr() > 0) {
++        switch (ggml_sycl_mmvq_id_q8_0_exact_nr()) {
++            case 1: launch_mul_mat_vec_q8_0_moe_reorder_exact_nr<1>(vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
++                        expert_weight_stride, dst_row_stride, src1_row_stride, stream); break;
++            case 2: launch_mul_mat_vec_q8_0_moe_reorder_exact_nr<2>(vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
++                        expert_weight_stride, dst_row_stride, src1_row_stride, stream); break;
++            case 4: launch_mul_mat_vec_q8_0_moe_reorder_exact_nr<4>(vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
++                        expert_weight_stride, dst_row_stride, src1_row_stride, stream); break;
++            default: launch_mul_mat_vec_q8_0_moe_reorder_exact_nr<8>(vx_base, vy, ids_dev, dst_base, ncols, nrows, n_experts_used,
++                        expert_weight_stride, dst_row_stride, src1_row_stride, stream); break;
++        }
++        return;
++    }
++    if (ggml_sycl_mmvq_id_xor_reduce_enabled()) {
++        stream->submit([&](sycl::handler & cgh) {
++            cgh.parallel_for(
++                sycl::nd_range<3>(block_nums * block_dims, block_dims),
++                [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
++                    mul_mat_vec_q_moe_reorder<reorder_vec_dot_q_sycl, true>(
++                        vx_base, vy, dst_base, ids_dev, ncols, nrows,
++                        expert_weight_stride, dst_row_stride, src1_row_stride, item);
++                });
++        });
++        return;
++    }
+     stream->submit([&](sycl::handler & cgh) {
+         cgh.parallel_for(
+             sycl::nd_range<3>(block_nums * block_dims, block_dims),
+diff --git a/tests/test-backend-ops.cpp b/tests/test-backend-ops.cpp
+index 127c463..2875c9a 100644
+--- a/tests/test-backend-ops.cpp
++++ b/tests/test-backend-ops.cpp
+@@ -9230,6 +9230,15 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
+ static std::vector<std::unique_ptr<test_case>> make_test_cases_perf() {
+     std::vector<std::unique_ptr<test_case>> test_cases;
+ 
++    // LFM2.5-24B-A2B single-token decode shapes (Q8_0), first so `-p` can pick them out
++    test_cases.emplace_back(new test_mul_mat_id(GGML_TYPE_Q8_0, GGML_TYPE_F32, 64, 4, false, 1536, 1, 2048)); // expert gate/up
++    test_cases.emplace_back(new test_mul_mat_id(GGML_TYPE_Q8_0, GGML_TYPE_F32, 64, 4, false, 2048, 1, 1536)); // expert down
++    for (int64_t m : {512, 2048, 6144, 11776, 128000}) {
++        test_cases.emplace_back(new test_mul_mat(GGML_TYPE_Q8_0, GGML_TYPE_F32, m, 1, 2048, {1, 1}, {1, 1}));
++    }
++    test_cases.emplace_back(new test_mul_mat(GGML_TYPE_Q8_0, GGML_TYPE_F32, 2048, 1, 11776, {1, 1}, {1, 1})); // dense down
++    test_cases.emplace_back(new test_mul_mat(GGML_TYPE_F32, GGML_TYPE_F32, 64, 1, 2048, {1, 1}, {1, 1}));     // router
++
+     // Conv2d: K=CRS=NPQ=4096 matmul performance
+     uint32_t                        iwh_idx  = 0;
+     uint32_t                        kwh_idx  = 1;

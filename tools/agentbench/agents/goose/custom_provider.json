@@ -1,0 +1,13 @@
+{
+  "name": "custom_ctxkeeper",
+  "engine": "openai",
+  "display_name": "ctxkeeper proxy",
+  "api_key_env": "CTXKEEPER_API_KEY",
+  "base_url": "@URL@/chat/completions",
+  "models": [ { "name": "@MODEL@", "context_limit": 10000000 } ],
+  "supports_streaming": false,
+  "requires_auth": true,
+  "dynamic_models": false,
+  "skip_canonical_filtering": true,
+  "timeout_seconds": 3600
+}

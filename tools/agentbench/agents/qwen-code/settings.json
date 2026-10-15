@@ -1,0 +1,100 @@
+{
+ "$version": 4,
+ "env": {
+  "OPENAI_API_KEY": "sk-agentbench-dummy"
+ },
+ "security": {
+  "auth": {
+   "selectedType": "openai"
+  },
+  "folderTrust": {
+   "enabled": false
+  }
+ },
+ "model": {
+  "name": "@MODEL@",
+  "baseUrl": "@URL@",
+  "maxSessionTurns": -1,
+  "maxWallTimeSeconds": -1,
+  "maxToolCalls": -1,
+  "maxToolCallsPerTurn": -1,
+  "skipLoopDetection": true,
+  "skipNextSpeakerCheck": true,
+  "enableOpenAILogging": false
+ },
+ "modelProviders": {
+  "openai": [
+   {
+    "id": "@MODEL@",
+    "name": "@MODEL@ via ctxkeeper",
+    "envKey": "OPENAI_API_KEY",
+    "baseUrl": "@URL@",
+    "wireApi": "chat-completions",
+    "generationConfig": {
+     "contextWindowSize": 10000000,
+     "timeout": 3600000,
+     "streamIdleTimeoutMs": 0,
+     "maxRetries": 3,
+     "enableCacheControl": false,
+     "toolResultContentFormat": "string"
+    }
+   }
+  ]
+ },
+ "context": {
+  "autoCompactThreshold": 1,
+  "clearContextOnIdle": {
+   "toolResultsThresholdMinutes": -1,
+   "toolResultsTotalCharsThreshold": -1
+  }
+ },
+ "tools": {
+  "approvalMode": "yolo",
+  "shell": {
+   "enableInteractiveShell": false
+  },
+  "webSearch": {
+   "enabled": false
+  },
+  "disabled": [
+   "agent",
+   "cron_create",
+   "cron_list",
+   "cron_delete",
+   "loop_wakeup",
+   "web_fetch",
+   "web_search",
+   "advisor",
+   "workflow",
+   "ask_user_question"
+  ]
+ },
+ "privacy": {
+  "usageStatisticsEnabled": false
+ },
+ "telemetry": {
+  "enabled": false
+ },
+ "general": {
+  "enableAutoUpdate": false,
+  "chatRecording": true,
+  "preventSystemSleep": false
+ },
+ "memory": {
+  "enableManagedAutoMemory": false,
+  "enableManagedAutoDream": false,
+  "enableAutoSkill": false
+ },
+ "ui": {
+  "enableFollowupSuggestions": false,
+  "enableCacheSharing": false,
+  "enableSpeculation": false
+ },
+ "experimental": {
+  "cron": false,
+  "emitToolUseSummaries": false
+ },
+ "agents": {
+  "crossSessionMessaging": false
+ }
+}

@@ -2648,3 +2648,43 @@ recipe unchanged). Gemma is stopped for it and restored after.
   inside tool results, and says it was not needed here. Data:
   [`data/2026-10-14-context-campaign19/`](../data/2026-10-14-context-campaign19/) (`repair/G1c__repair-n40-s2x` is
   the result; `repair/G1__repair-n40-s2x` is the voided first try; proxy archives left out as in earlier campaigns).
+
+### Campaign 20, registered 2026-10-15 01:10 before any run: well-known open-source agents through ctxkeeper
+
+Owner, 2026-10-14: "you can test all the open source safe agents". `tools/agentbench` (built and plumbing-tested on
+the CPU 2026-10-14/15, see its README) runs 12 open-source coding agents, pinned and as shipped, each in its own
+container (task image, `--network none`, non-root, no capabilities, memory cap, one read-only socket to its proxy),
+graded by the task's own verifier exactly as freeagent is. freeagent in the same harness is the control.
+
+- **Task and server:** `repair-n40-s2x` (40 bugs, 44 tickets via `next`, 3 house rules, final audit of 7); the
+  campaign-19 research server unchanged (two-card FP8, 262K, MTP 5, the lossless multi-user overlays).
+- **Proxy: ctxkeeper 1.0.1** (`--recipe qwen` and nothing else, fresh state directory per run). 1.0.1 = 1.0.0 plus one
+  fix found by the adapter work: a streamed reply was re-sent without vLLM's `reasoning` field, so streaming clients
+  (9 of the 12 agents) never saw the model's thinking; it now passes `reasoning` and `reasoning_content` (new test;
+  the old code fails it). The release follows this campaign.
+- **Agents, in queue order:** freeagent (control), Goose 1.54.0, mini-swe-agent 2.4.6, Qwen Code 0.25.1, pi 1.2.0,
+  ForgeCode 2.14.0, Open Interpreter rust-v0.0.56, OpenHands SDK 1.54.0, Hermes Agent 0.22.1, Kimi Code 2.2.0,
+  Mistral Vibe 2.26.1, Cline CLI 3.0.71, OpenCode 1.19.0.
+- **Decisions taken for this run (owner may change them; all in the agentbench README):** each agent as shipped
+  (its own system prompt, tools and sampling; nobody's own compaction is on); one 32K proxy window for all (a heavy
+  fixed prompt, up to ~20,800 tokens for Kimi Code, is part of that agent's result); Kimi Code keeps its one-line
+  request-timeout patch (10 min to 1 h); ForgeCode runs although its usage tracking cannot be switched off (no network
+  in the container, so nothing leaves); Open Interpreter as shipped (its task message is not the first user
+  message, so ctxkeeper's kept head does not hold it; recorded, not patched); Codex CLI left out (Responses API only).
+- **Concurrency and memory:** up to three agents at a time on one server (multi-user output identity was shown to
+  64 users), so a run's wall time is not comparable to campaign 19's single-user 31 min; every agent, the control
+  included, runs under the same conditions. An agent starts only while host memory leaves its plumbing-measured
+  need plus 300 MiB above the server guard (1.6 GiB); a watchdog stops the newest agent below 1.80 GiB (that run is
+  void, not a result). OpenCode needs ~1 GiB and runs only if that is ever free. Time limit 90 min per run (55 in
+  campaign 19) because of the sharing.
+- **Measured per agent:** fixed/clean of 40, rules R1-R3, audit of 7, tickets fetched, wall time, requests, whether
+  every request carried the whole history (no compaction of its own), proxy cuts/recalls/rules put back, peak memory.
+- **Expectations, written down now:** the control repeats campaign 19 (40/40, audit 6 or more). Agents with small
+  fixed prompts that keep working until done (Goose, mini-swe-agent, pi, Qwen Code) reach 30 or more fixed; agents
+  that stop at the first text-only reply may stop early on a 44-ticket task (scored as is, no "keep going" loop is
+  added); Kimi Code and ForgeCode, with the heaviest fixed prompts, do worst. No agent is expected to break the
+  proxy (every request answered, no restart).
+- **Runner:** [`data/2026-10-15-context-campaign20/longrun-campaign20.sh`](../data/2026-10-15-context-campaign20/longrun-campaign20.sh)
+  (stops Gemma, starts the server, schedules the queue, stops the server, puts Gemma back on `throughput`). Its
+  scheduler, result lines and watchdog were dry-run on the CPU against the scripted model (`DRY=1`, 2026-10-15
+  00:53-01:06): sequential runs, two at once, and a forced watchdog stop all behaved.

@@ -1,0 +1,32 @@
+# Mistral Vibe user config (~/.vibe/config.toml), written by run.sh with the proxy URL and model filled in.
+active_model = "agentbench"
+# Compaction off: 0 is "never compact" (vibe/core/config/_defaults.py); per model it is the value that counts.
+auto_compact_threshold = 0
+enable_telemetry = false
+enable_update_checks = false
+enable_auto_update = false
+enable_connectors = false
+enable_subagents = false
+# One request may take many minutes and arrives in one chunk (default 720 s).
+api_timeout = 3600.0
+disabled_tools = ["task", "web_fetch", "web_search"]
+
+[session_logging]
+generate_titles = false
+
+[[providers]]
+name = "agentbench"
+api_base = "@URL@"
+api_key_env_var = "AGENTBENCH_API_KEY"
+api_style = "openai"
+backend = "generic"
+
+[[models]]
+name = "@MODEL@"
+provider = "agentbench"
+alias = "agentbench"
+auto_compact_threshold = 0
+
+# GrowthBook remote experiments (already off while enable_telemetry is false).
+[experiments]
+enable = false

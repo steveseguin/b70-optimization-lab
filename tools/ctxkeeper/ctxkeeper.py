@@ -53,7 +53,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -1117,7 +1117,8 @@ def as_stream(resp: dict[str, Any]) -> bytes:
     choices = []
     for c in resp.get("choices") or []:
         m = c.get("message") or {}
-        delta = {k: m[k] for k in ("role", "content", "reasoning_content") if m.get(k) is not None}
+        # vLLM names the thinking `reasoning` (older servers: `reasoning_content`); pass on whichever is there
+        delta = {k: m[k] for k in ("role", "content", "reasoning_content", "reasoning") if m.get(k) is not None}
         if m.get("tool_calls"):
             delta["tool_calls"] = [dict(t, index=i) for i, t in enumerate(m["tool_calls"])]
         choices.append({"index": c.get("index", 0), "delta": delta, "finish_reason": c.get("finish_reason")})

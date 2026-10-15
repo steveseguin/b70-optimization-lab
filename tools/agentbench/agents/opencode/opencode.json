@@ -1,0 +1,61 @@
+{
+ "$schema": "https://opencode.ai/config.json",
+ "model": "ctxkeeper/@MODEL@",
+ "small_model": "ctxkeeper/@MODEL@",
+ "enabled_providers": [
+  "ctxkeeper"
+ ],
+ "provider": {
+  "ctxkeeper": {
+   "npm": "@ai-sdk/openai-compatible",
+   "name": "ctxkeeper",
+   "options": {
+    "baseURL": "@URL@",
+    "apiKey": "sk-agentbench-dummy",
+    "timeout": false,
+    "headerTimeout": false,
+    "chunkTimeout": false
+   },
+   "models": {
+    "@MODEL@": {
+     "name": "@MODEL@",
+     "tool_call": true,
+     "reasoning": true,
+     "attachment": false,
+     "limit": {
+      "context": 10000000,
+      "output": 32000
+     }
+    }
+   }
+  }
+ },
+ "compaction": {
+  "auto": false,
+  "prune": false
+ },
+ "share": "disabled",
+ "autoupdate": false,
+ "snapshot": false,
+ "lsp": false,
+ "formatter": false,
+ "shell": "/bin/bash",
+ "permission": {
+  "*": "allow",
+  "doom_loop": "allow",
+  "external_directory": "allow",
+  "task": "deny",
+  "webfetch": "deny",
+  "websearch": "deny",
+  "skill": "deny",
+  "question": "deny"
+ },
+ "agent": {
+  "title": {
+   "disable": true
+  }
+ },
+ "experimental": {
+  "continue_loop_on_deny": true
+ }
+}
