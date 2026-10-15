@@ -58,21 +58,22 @@ def current_host_artifacts():
   assert Path(name).parts[0]=='gnu-host' and len(Path(name).parts)==2,'non-host rehearsal artifact'
   assert pp.sha(B/name)==digest,'current host artifact changed: '+name
  return dict(artifacts)
-def run():
+def run(*,diagnostic=False):
  sys.addaudithook(prohibit_device)
  assert os.getpriority(os.PRIO_PROCESS,0)==19 and os.environ['OMP_NUM_THREADS']=='2'
  storage.admit(100_000_000)
- from copy_adoption_gate import verify as verify_copy_adoption
- verify_copy_adoption()
- from audit6 import verify as verify_audit6
- verify_audit6()
+ if not diagnostic:
+  from copy_adoption_gate import verify as verify_copy_adoption
+  verify_copy_adoption()
+  from audit6 import verify as verify_audit6
+  verify_audit6()
  audit6_sha256=pp.sha(P/'audit6-gates.json')
  copy_gate_sha256=pp.sha(P/'copy-adoption-gates.json')
  sources={n:pp.sha(P/n) for n in SOURCES};binary=B/'gnu-host/own-rt-iq3';assert_host_build(binary)
  original=json.loads((P/'build-receipt.json').read_text())
  artifacts=current_host_artifacts()
- rows=[];root=Path(tempfile.mkdtemp(prefix='coordinator-cpu-',dir=B));archive=P/'evidence/storage-admission-fix/coordinator-chains.jsonl.gz';archive.parent.mkdir(parents=True,exist_ok=True)
- for context,rank in MATRIX:
+ rows=[];root=Path(tempfile.mkdtemp(prefix='coordinator-cpu-',dir=B));archive=P/'evidence/storage-admission-fix/coordinator-chains.jsonl.gz';archive=P/'evidence/diagnostic-unsealed/coordinator-chain.jsonl.gz' if diagnostic else archive;archive.parent.mkdir(parents=True,exist_ok=True)
+ for context,rank in (((4096,0),) if diagnostic else MATRIX):
   storage.admit(100_000_000);case=root/f'c{context}-dr{rank}';case.mkdir();private=case/'seal';private.mkdir();build=case/'build';build.mkdir()
   for name in ('gnu-host','fusion-fixtures'):(build/name).symlink_to(B/name,target_is_directory=True)
   for name in ('mtp-manifest.tsv','memory-plan.json'):(private/name).write_bytes((P/name).read_bytes())
@@ -94,16 +95,18 @@ def run():
    artifacts_sha256=artifacts,
    input_sha256=pp.sha(inp/'input.json'),draft_capture_fixture_sha256_by_context={str(context):inspect(reference)},
    draft_capture_input_sha256={'incident-retrospective':pp.sha(private/'capture-input-incident-retrospective.json')})
+  if diagnostic:receipt.update(passed=False,sources={'intentionally-stale': '0'*64},official_manifest_sha256='0'*64,memory_plan={})
   save(private/'build-receipt.json',receipt)
   manifest=case/'suite.json';save(manifest,dict(arithmetic='iq3-p17-detmath-v2',token_cap=128,context=context,complete=False,prompts=[dict(prompt_id=name,input_bundle='mini-unused',mini_tokens=tokens,mini_count=128) for name,tokens in [(f'mini-{i}',[2,5,3,7,1] if i%2==0 else [1,2,1]) for i in range(12)]]))
   bootstrap=case/'bash-env'
   bootstrap.write_text('nice() { [[ "$1 $2" == "-n 19" ]] || return 92; shift 2; "$@"; }\nionice() { [[ "$1 $2" == "-c 3" ]] || return 93; shift 2; "$@"; }\nenv() { [[ "$1" == "-i" ]] || return 94; shift; [[ "$1" == "PATH=/usr/bin:/bin" ]] || return 95; shift; [[ "$1" == LD_LIBRARY_PATH=* ]] || return 96; local packet45_ld="$1"; shift; [[ "$1" == python3 ]] || return 97; shift; command /usr/bin/env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 "$packet45_ld" /usr/bin/python3 -B '+shlex.quote(str(P/'coordinator_cpu_gate.py'))+' --entry '+shlex.quote(str(case))+' "$@"; }\n')
   output=build/'chain';command=['bash',str(P/'coordinator_windows.sh'),'0',str(context),str(rank),str(manifest),str(output)]
-  with (case/'coordinator.log').open('w') as log:r=subprocess.run(command,cwd=ROOT,env={**os.environ,'BASH_ENV':str(bootstrap),'LD_LIBRARY_PATH':os.environ.get('LD_LIBRARY_PATH','')},stdout=log,stderr=subprocess.STDOUT)
+  with (case/'coordinator.log').open('w') as log:r=subprocess.run(command,cwd=ROOT,env={**os.environ,'BASH_ENV':str(bootstrap),'LD_LIBRARY_PATH':os.environ.get('LD_LIBRARY_PATH',''),'PACKET45_DIAGNOSTIC_UNSEALED':'1' if diagnostic else '0'},stdout=log,stderr=subprocess.STDOUT)
   assert r.returncode==0,(case,(case/'coordinator.log').read_text()[-3000:])
   windows=[]
   for name in WINDOWS:
    path=output/name/'window.json';row=json.loads(path.read_text());assert row['passed'] and row['cpu_rehearsal'] and row['device_executed'] is False,(name,row.get('error'))
+   assert bool(row.get('diagnostic_unsealed'))==diagnostic and row.get('qualifying') is (not diagnostic)
    assert (row['context'],row['draft_rank'])==(context,rank)
    if name=='K2':assert row['device_timing_qualified'] is False
    try:w.prerequisites(path,name,row)
@@ -117,11 +120,11 @@ def run():
  # only this newly-created scratch. Binary outputs remain hash-bound in archive.
  retained=storage.archive_files([f for f in root.rglob('*') if f.is_file() and not f.is_symlink()],archive)
  assert sources=={n:pp.sha(P/n) for n in SOURCES}
- report=dict(passed=True,device_executed=False,rows=rows,source_sha256=sources,archive=retained,
+ report=dict(passed=True,device_executed=False,diagnostic_unsealed=diagnostic,qualifying=not diagnostic,rows=rows,source_sha256=sources,archive=retained,
   copy_adoption_gate_sha256=copy_gate_sha256,audit6_gate_sha256=audit6_sha256,
   host_binary_sha256=pp.sha(binary),scope='exact coordinator_windows.sh; real host children and unmocked receipt/prerequisite/summary gates',
   limitations=['Hardware admission mocks and private miniature input/seal','K0 structural shim; no JIT executed','K1/K2 validate-only; arithmetic gates separate','CPU K2 zero timestamps must fail device timing','Miniature model suites; no device quality or speed claim'])
- save(P/'coordinator-chain-gates.json',report);shutil.rmtree(root)
+ save(P/('diagnostic-coordinator-gates.json' if diagnostic else 'coordinator-chain-gates.json'),report);shutil.rmtree(root)
  return report
 if __name__=='__main__':
  if len(sys.argv)>1 and sys.argv[1]=='--entry':raise SystemExit(entry(sys.argv[2],sys.argv[3:]))

@@ -7,6 +7,7 @@ import hashlib
 import json
 from pathlib import Path
 from typing import Any
+from receipt_qualification import require_qualifying, require_qualifying_file
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -48,6 +49,8 @@ def validate_promotion_attestation(
 ) -> dict[str, Any]:
     """Validate an evidence-bound promotion decision or raise ``ValueError``."""
     data = json.loads(attestation_path.read_text(encoding="utf-8"))
+    require_qualifying(data)
+    require_qualifying_file(performance_path)
     failures: list[str] = []
     if data.get("schema") != SCHEMA:
         failures.append("schema_mismatch")
@@ -115,6 +118,8 @@ def validate_promotion_attestation(
                 failures.append(f"quality_evidence_{index}_missing")
             elif sha256_file(path) != expected_hash:
                 failures.append(f"quality_evidence_{index}_hash_mismatch")
+            if path.is_file():
+                require_qualifying_file(path)
         for gate in REQUIRED_GATES:
             if gate not in supported_gates:
                 failures.append(f"gate_{gate}_has_no_bound_evidence")

@@ -114,7 +114,9 @@ def main() -> int:
             "only for a clearly labeled diagnostic/non-headline artifact."
         )
 
+    from receipt_qualification import require_qualifying
     summary = json.loads(args.summary_json.read_text())
+    require_qualifying(summary)
     template = json.loads(args.template.read_text())[0]
     item = json.loads(json.dumps(template))
 

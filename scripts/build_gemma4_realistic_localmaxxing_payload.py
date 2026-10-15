@@ -44,7 +44,9 @@ def median(values: list[float]) -> float:
 
 
 def load_summary(path: Path) -> dict:
+    from receipt_qualification import require_qualifying
     summary = json.loads(path.read_text())
+    require_qualifying(summary)
     bench_path = Path(str(summary.get("bench_path") or ""))
     if not bench_path.is_absolute():
         bench_path = path.parent / bench_path

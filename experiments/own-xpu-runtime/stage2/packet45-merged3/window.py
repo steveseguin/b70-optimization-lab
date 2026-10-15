@@ -9,6 +9,7 @@ from fixture_support import journal,ldd_preflight,oracle_gate,fixture_receipt_ga
 from k2_summary import summarize, estimated_seconds
 from merge_dispatch import validate
 from storage import admit, projected_write_bytes
+from diagnostic_mode import actual_artifacts, label_outputs, MARKERS
 from suite_metrics import admit_cap
 B=P/'build';ROOT=P.parents[3]
 CONFIG={'K0':(30,600),'K1a':(120,10800),'K1b':(120,10800),'K2':(1800,14400),'W0p':(30,600),
@@ -199,7 +200,12 @@ def retained_hash(root,name,record):
 def prerequisites(path,name,identity,*,cpu_rehearsal=False):
     require(path is not None,'missing prerequisite '+name)
     row=json.loads(path.read_text());require(row.get('device_executed') is True or (cpu_rehearsal and row.get('cpu_rehearsal') is True),'CPU rehearsal cannot authorize device work');require(row.get('passed') is True and row.get('window')==name,'failed prerequisite '+name)
-    for field in ('boot_id','artifacts_sha256','environment','card','build_receipt_sha256','context','draft_rank'):
+    diagnostic=bool(identity.get('diagnostic_unsealed'))
+    require(bool(row.get('diagnostic_unsealed'))==diagnostic,'diagnostic prerequisite mode differs')
+    require(row.get('qualifying') is False if diagnostic else row.get('qualifying') is not False,'prerequisite qualification mode differs')
+    fields=('boot_id','artifacts_sha256','environment','card','context','draft_rank')
+    if not diagnostic:fields+=('build_receipt_sha256',)
+    for field in fields:
         require(row.get(field)==identity.get(field),'prerequisite identity changed: '+name+' '+field)
     if name in ('K1a','K1b'):
         linked=row.get('linked_p33',{})
@@ -337,7 +343,7 @@ def main(*,cpu_rehearsal=False):
     # Internal test seam only: no CLI switch can authorize or select this path.
     from functools import partial
     prerequisite=partial(prerequisites,cpu_rehearsal=cpu_rehearsal)
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--authorized-device-window',action='store_true',required=True)
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--authorized-device-window',action='store_true',required=True);p.add_argument('--diagnostic-unsealed',action='store_true')
     p.add_argument('--context',type=int,choices=(256,4096,32768),required=True);p.add_argument('--draft-rank',type=int,choices=(0,1),default=0);p.add_argument('--window',choices=CONFIG,required=True);p.add_argument('--card',type=int,required=True);p.add_argument('--prompt-overlap',choices=('on','off'),default='on');p.add_argument('--seconds',type=int);p.add_argument('--controller',choices=('python','native'),default='native');p.add_argument('--suite-manifest',type=Path);p.add_argument('--repeat',type=int,default=1)
     p.add_argument('--max-new',type=int);p.add_argument('--retain-steps');p.add_argument('--exactness-window',type=Path)
     for name in ('output','input','oracle','dispatch','k0','k1a','k1b','k2','w0p','kd'):p.add_argument('--'+name,type=Path,required=name=='output')
@@ -364,16 +370,22 @@ def main(*,cpu_rehearsal=False):
     seconds=watchdog(a.window,a.seconds or CONFIG[a.window][1]*scale,a.context)
     require(seconds>=max(300,math.ceil(4*expected)),'repeat watchdog below four times estimate')
     out=output_path(a.output,cpu_rehearsal=cpu_rehearsal)
-    build=json.loads((P/'build-receipt.json').read_text());require(build.get('passed') is True,'CPU/build gates incomplete')
-    for name,digest in build['sources'].items():require(sha(ROOT/name)==digest,'source changed '+name)
-    require(sha(P/'mtp-manifest.tsv')==build['official_manifest_sha256'],'official draft manifest changed')
-    require(json.loads((P/'memory-plan.json').read_text())==build['memory_plan'],'memory plan changed')
-    artifacts=build['artifacts_sha256']
+    build=json.loads((P/'build-receipt.json').read_text())
+    if a.diagnostic_unsealed:
+        # Skip only sealed provenance. All runtime and oracle admissions below run.
+        artifacts=actual_artifacts(build,B,sha)
+        build=dict(build,artifacts_sha256=artifacts)
+    else:
+        require(build.get('passed') is True,'CPU/build gates incomplete')
+        for name,digest in build['sources'].items():require(sha(ROOT/name)==digest,'source changed '+name)
+        require(sha(P/'mtp-manifest.tsv')==build['official_manifest_sha256'],'official draft manifest changed')
+        require(json.loads((P/'memory-plan.json').read_text())==build['memory_plan'],'memory plan changed')
+        artifacts=build['artifacts_sha256']
+        for name,digest in artifacts.items():require(sha(B/name)==digest,'binary changed '+name)
     require((('gnu-host' if cpu_rehearsal else 'device')+'/p33-linked-fixtures') in artifacts and isinstance(build.get('p33_linked_fixture_host_sha256'),str),'linked p33 fixture binary/host gate missing from seal')
-    for name,digest in artifacts.items():require(sha(B/name)==digest,'binary changed '+name)
     boot=Path('/proc/sys/kernel/random/boot_id').read_text().strip()
     if (B/'FAULT.json').exists():require(json.loads((B/'FAULT.json').read_text()).get('boot_id')!=boot,'boot fault latch requires coordinator recovery')
-    identity=dict(schema='packet45.window.v1',window=a.window,card=a.card,context=a.context,draft_rank=a.draft_rank,boot_id=boot,artifacts_sha256=artifacts,environment=environment,build_receipt_sha256=sha(P/'build-receipt.json'))
+    identity=dict(diagnostic_unsealed=a.diagnostic_unsealed,qualifying=not a.diagnostic_unsealed,schema='packet45.window.v1',window=a.window,card=a.card,context=a.context,draft_rank=a.draft_rank,boot_id=boot,artifacts_sha256=artifacts,environment=environment,build_receipt_sha256=sha(P/'build-receipt.json'))
     record=dict(identity,cpu_rehearsal=cpu_rehearsal,prompt_overlap=a.prompt_overlap,controller=a.controller,max_new=a.max_new,retain_steps=a.retain_steps,retained_steps=retained_steps,diagnostic_for_speed=bool(retained_steps) or a.window=='W2mc',passed=False,device_executed=False,expected_seconds=expected,expectation_enforced=True,expectation_policy='prelaunch expected+17s <= watchdog/4; no early runtime stop',watchdog_seconds=seconds,cpu_affinity=sorted(os.sched_getaffinity(0)),load_average=list(os.getloadavg()))
     if a.window!='K0':prerequisite(a.k0,'K0',identity)
     if a.window=='K1b':prerequisite(a.k1a,'K1a',identity)
@@ -429,7 +441,11 @@ def main(*,cpu_rehearsal=False):
     if a.dispatch:validate(json.loads(a.dispatch.read_text()))
     request_count=(1+len(manifest.get('requests',manifest.get('prompts',[])))*a.repeat) if a.window in SUITE_WINDOWS else 1
     record['storage_admission']=admit_output(out,projected_write_bytes(a.window,request_count,a.context,len(retained_steps)))
-    record['foreign_engine_admission']=foreign_engines();out.mkdir(parents=True);save(out/'window.json',record)
+    record['foreign_engine_admission']=foreign_engines();out.mkdir(parents=True)
+    if a.diagnostic_unsealed:
+        record.update(MARKERS,diagnostic=True,diagnostic_for_speed=True)
+        save(out/'DIAGNOSTIC-UNSEALED.json',dict(MARKERS,reason='Unsealed diagnostic; never submission, publication or promotion evidence',artifacts_sha256=artifacts))
+    save(out/'window.json',record)
     watch=Watch(out,boot,seconds);old={s:signal.signal(s,lambda n,f:watch.cancelled.append(n)) for s in (signal.SIGTERM,signal.SIGINT)}
     try:
         save(out/'window.json',record)
@@ -499,7 +515,11 @@ def main(*,cpu_rehearsal=False):
     record['cpu_owned_pids']=[child.pid for child in watch.cpu_children]
     record['retained_owner_pids']=alive
     if not alive:
+        if a.diagnostic_unsealed:
+            try:label_outputs(out,record,sha)
+            except Exception as error:record.update(passed=False,diagnostic_label_error=str(error))
         try:compress_evidence(out,record)
         except Exception as error:record.update(retention_error=str(error),raw_evidence_retained=True)
+    if a.diagnostic_unsealed:record.update(MARKERS,diagnostic=True,diagnostic_for_speed=True)
     save(out/'window.json',record);return 0 if record['passed'] else 1
 if __name__=='__main__':raise SystemExit(main())

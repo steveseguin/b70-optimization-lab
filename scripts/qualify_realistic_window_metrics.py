@@ -116,6 +116,8 @@ def class_balanced_stats(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def qualify(data: dict[str, Any]) -> dict[str, Any]:
+    from receipt_qualification import require_qualifying
+    require_qualifying(data)
     gate = data.get("realistic_final_gate") or {}
     fresh = data.get("fresh_response_validity") or {}
     rows = data.get("rows")

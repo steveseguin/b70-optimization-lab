@@ -59,7 +59,7 @@ def main():
     consumed_hash=hashlib.sha256(json.dumps(consumed,sort_keys=True).encode()).hexdigest()
     source_before={name:pp.sha(P/name) for name in ('window.py','fixture_support.py','draft_window.py','suite.py','pipeline.py','suite_metrics.py','test_window_seal_admission.py')}
     storage.admit(256_000_000)
-    root=Path(tempfile.mkdtemp(prefix='seal-admission-',dir=B));rows=[];input_rows=[]
+    root=Path(tempfile.mkdtemp(prefix='seal-admission-',dir=P/'evidence'));rows=[];input_rows=[]
     manifests={cap:P.parent/bundle/'suite-manifest.json' for cap,bundle in ((32,'long-inputs-20261012'),(64,'suite-inputs-20261012'),(128,'suite-inputs-20261012-cap128'))}
     oracle=suite.ROOT/'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261011/incident-retrospective'
     ld=os.environ.get('LD_LIBRARY_PATH')

@@ -1,5 +1,7 @@
 # Current Workspace State
 
+**October 15, packet45 CPU handoff:** Fix 5 and the production-size audit are committed. An explicitly nonqualifying diagnostic mode lets the coordinator run the current binaries while the seal is completed. No device work was run by this repair session. The source/build tree is frozen after the diagnostic commit; device ownership stays with the coordinator. [Commands and evidence](experiments/own-xpu-runtime/stage2/packet45-merged3/DIAGNOSTIC-UNSEALED.md).
+
 Consolidated **2026-10-10** from the recorded ledger; this summary does not establish freshly verified host state.
 
 The full 5,077-line source is preserved byte-for-byte in [CURRENT-history-20261010.md](CURRENT-history-20261010.md), at the same directory level so its relative links retain their meaning.

@@ -9,8 +9,10 @@ packet45_suite=${4:-experiments/own-xpu-runtime/stage2/suite-inputs-20261012-cap
 packet45_out="${5:-$packet45/build/c${packet45_context}-dr${packet45_draft_rank}}"
 packet45_input="$packet45/build/input"
 packet45_oracle=experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261011/incident-retrospective
-packet45_k=(nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet45/window.py" --authorized-device-window --card "$packet45_card" --context "$packet45_context" --draft-rank "$packet45_draft_rank")
-packet45_w=(ionice -c 3 env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet45/window.py" --authorized-device-window --card "$packet45_card" --context "$packet45_context" --draft-rank "$packet45_draft_rank")
+packet45_diagnostic=()
+if [[ ${PACKET45_DIAGNOSTIC_UNSEALED:-0} == 1 ]]; then packet45_diagnostic=(--diagnostic-unsealed); fi
+packet45_k=(nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet45/window.py" --authorized-device-window --card "$packet45_card" --context "$packet45_context" --draft-rank "$packet45_draft_rank" "${packet45_diagnostic[@]}")
+packet45_w=(ionice -c 3 env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH="$LD_LIBRARY_PATH" python3 -B "$packet45/window.py" --authorized-device-window --card "$packet45_card" --context "$packet45_context" --draft-rank "$packet45_draft_rank" "${packet45_diagnostic[@]}")
 "${packet45_k[@]}" --window K0 --output "$packet45_out/K0"
 "${packet45_k[@]}" --window K1a --output "$packet45_out/K1a" --k0 "$packet45_out/K0/window.json" --dispatch "$packet45/dispatch-p45.json"
 "${packet45_k[@]}" --window K1b --output "$packet45_out/K1b" --k0 "$packet45_out/K0/window.json" --k1a "$packet45_out/K1a/window.json" --dispatch "$packet45/dispatch-p45.json"

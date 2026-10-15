@@ -9,6 +9,7 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
+from receipt_qualification import require_qualifying
 
 
 API_URL = "https://www.localmaxxing.com/api/speed-tests"
@@ -32,6 +33,10 @@ API_STRING_LIMITS = {
 
 
 def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[str]:
+    try:
+        require_qualifying(item)
+    except ValueError as error:
+        return [str(error)]
     label = str(item.get("label", ""))
     payload = item.get("payload") or {}
     engine = payload.get("engineFlags") or {}

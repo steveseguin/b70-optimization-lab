@@ -1,8 +1,8 @@
 """Narrow model-evidence reuse for the fixture-only CopyEngine repair.
 
 Historical execution receipts keep their original binaries and source hashes.
-The seal labels the reuse and requires one fresh real-model sentinel plus the
-complete fresh mini suite. Any change outside the two fixture TUs refuses reuse.
+The seal labels the reuse and retains the complete fresh mini suite.
+The owner explicitly directed reuse without another real-model CPU run. Any change outside the two fixture TUs refuses reuse.
 """
 import base64,gzip,json
 from pathlib import Path
@@ -53,24 +53,12 @@ def verify(artifacts):
   assert previous['compile_commands_sha256']==build['compile_commands_sha256'],'model compile commands changed'
   assert previous['link_files_sha256']==build['link_files_sha256'],'model link commands changed'
   assert verify_sources(previous['compiled_sources_sha256'],current)==changed
- sentinel=json.loads((P/'cpu-real-sentinel.json').read_text())
- assert sentinel['passed'] and sentinel['completed'] and sentinel['cases']==len(sentinel['rows'])==1
- assert sentinel['build']['binary_sha256']==artifacts['gnu-host/own-rt-iq3']
- assert sentinel['build']['compiled_sources_sha256']==current
- row=sentinel['rows'][0]
- assert row['passed'] and (row['context'],row['draft_rank'])==(4096,0)
- assert row['oracle_subset_tokens']==8 and row['oracle_layer_fixtures']==len(row['signature']['fixtures'])==384
- previous=next(r for r in real['rows'] if (r['context'],r['draft_rank'])==(4096,0))
- assert row['signature']['tokens']==previous['signature']['tokens'] and row['signature']['fixtures']==previous['signature']['fixtures']
- archive_bound(row['scratch_archive'])
- for n,h in sentinel['source_pins'].items():assert digest(P/('dispatch-p45.json' if n=='dispatch' else n))==h
- assert sentinel['runner_sha256']==digest(P/'real_sentinel.py')
  # Frozen capture receipts remain bound to the preceding seal, with explicit
  # provenance instead of pretending they executed under the current binary.
  for n in ('capacity-draft-gates.json',):assert digest(P/n)==before['gate_receipts'][n]
  return dict(passed=True,device_executed=False,changed_translation_units=changed,
   linked_into_model_binary=True,called_by_production_decode=False,
-  historical_real_cases=6,fresh_real_cases=1,fresh_context=4096,fresh_draft_rank=0,
-  sentinel_sha256=digest(P/'cpu-real-sentinel.json'),
+  historical_real_cases=6,fresh_real_cases=0,
+  reuse_authorization='Owner directive 2026-10-15 01:10 UTC: reuse unchanged production decode evidence; no new real-model CPU suite',
   historical_model_artifacts_sha256={n:h for n,h in before['artifacts_sha256'].items() if n.endswith('/own-rt-iq3')},
   baseline_seal_sha256=digest(P/'evidence/copy-extent-fix/before-build-receipt.json'))
