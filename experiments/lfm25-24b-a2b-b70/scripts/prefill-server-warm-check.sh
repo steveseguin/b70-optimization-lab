@@ -4,6 +4,7 @@
 # weights were never reordered. Here each server first answers one short request with 32 generated tokens (as any
 # chat reply does), then the 2K/8K/24K prompts are timed (each twice), old dequant vs new, two fresh servers each.
 #   prefill-server-warm-check.sh      (SUDO_ASKPASS set; under systemd-run --user; card 1, Gemma on card 0, restored)
+#   BUILD_DIR, OUT and RUNS (default "old-a:0 new-a:1 old-b:0 new-b:1") may be overridden
 set -uo pipefail
 LAB=/home/steve/b70-optimization-lab
 PKG=$LAB/repro/lfm25-24b-a2b-q8-b70
@@ -74,7 +75,7 @@ EOF
 
 log "moving Gemma to card 0 (throughput-card0)"
 "$LAB/scripts/gemma4-26b-two-b70-recipe.sh" throughput-card0 2>&1 | grep -v "JSONDecode\|raise " | tail -2
-for run in old-a:0 new-a:1 old-b:0 new-b:1; do
+for run in ${RUNS:-old-a:0 new-a:1 old-b:0 new-b:1}; do   # NAME:FLAG_VALUE pairs
   name=${run%%:*}; val=${run#*:}
   serve "warm-$name" $FLAG=$val || exit 1
   timed "$name"

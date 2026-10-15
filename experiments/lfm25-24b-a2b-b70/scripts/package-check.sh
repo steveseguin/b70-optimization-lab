@@ -72,6 +72,22 @@ for run in reference:ref unfused:unfused fast:fast-a fast:fast-b; do
     python3 "$E/scripts/identity_probe.py" run --out "$OUT/probe-fast-b.json" 2>&1 | tail -1
     python3 "$E/scripts/identity_probe.py" run --prompts "$PROBE/long-prompts.json" --tokens 128 \
       --out "$OUT/long-fast-b.json" 2>&1 | tail -1
+    log "fast-b: prompt reading as the server reports it (after the replies above), 2K / 8K / 24K prompts twice"
+    python3 - "$PROBE/long-prompts.json" "http://127.0.0.1:$PORT" "$OUT/prompt-rate-fast-b.json" <<'PYEOF'
+import json, sys, urllib.request
+prompts, base, out = json.load(open(sys.argv[1]))["prompts"], sys.argv[2], sys.argv[3]
+rows = []
+for rep in (1, 2):
+    for p in sorted(prompts, key=lambda p: len(p["prompt"])):
+        req = urllib.request.Request(base + "/completion", data=json.dumps({
+            "prompt": p["prompt"], "n_predict": 1, "temperature": 0, "cache_prompt": False}).encode(),
+            headers={"Content-Type": "application/json"})
+        t = json.load(urllib.request.urlopen(req, timeout=900))["timings"]
+        rows.append({"id": p["id"], "rep": rep, "prompt_n": t["prompt_n"], "prompt_ms": t["prompt_ms"],
+                     "prompt_per_second": t["prompt_per_second"]})
+        print(f'{p["id"]} rep {rep}: {t["prompt_n"]} tokens, {t["prompt_per_second"]:.1f} tok/s', flush=True)
+json.dump(rows, open(out, "w"), indent=1)
+PYEOF
   fi
   stop_server
 done
@@ -82,6 +98,7 @@ log "logprob identity vs R0: probe, long prompts"
 python3 "$E/scripts/identity_probe.py" diff "$PROBE/r0-prod.json" "$OUT/probe-fast-b.json" 2>&1 | tail -2
 python3 "$E/scripts/identity_probe.py" diff "$PROBE/long-r0.json" "$OUT/long-fast-b.json" 2>&1 | tail -2
 
+# pp and tg alternate: every pp point after the first runs on weights a decode step has reordered, as a server does
 log "llama-bench depth sweep, fast path (pp2048 + tg128 at depths 0-32K, 3 reps)"
 wait_port_free
 (
@@ -93,7 +110,7 @@ wait_port_free
   export LLAMA_SYCL_FUSE_RMS_NORM_MUL=1 LLAMA_SYCL_FUSE_ADD_RMS_NORM_MUL=1 LLAMA_SYCL_FUSE_MOE_SUM=1 \
     LLAMA_SYCL_FUSE_MOE_ROUTE=1 LLAMA_SYCL_FUSE_SHORTCONV=1 LLAMA_SYCL_FUSE_F16_SHADOW=1 LLAMA_SYCL_FUSE_Q8_SHADOW=1 \
     LLAMA_SYCL_FUSE_MOE_GATE_UP=1 LLAMA_SYCL_FUSE_NORM_ROPE=1 LLAMA_SYCL_FUSE_NORM_Q8=1 LLAMA_SYCL_FUSE_MOE_DOWN_SUM=1 \
-    LLAMA_SYCL_FUSE_CONV_STATE_ROWS=1
+    LLAMA_SYCL_FUSE_CONV_STATE_ROWS=1 LLAMA_SYCL_Q8_0_REORDER_DEQ_COALESCED=1
   timeout 1800 "$BUILD_DIR/bin/llama-bench" -m "$MODEL_DIR/LFM2.5-24B-A2B-Q8_0.gguf" -ngl 99 -fa 1 -ctk f16 -ctv f16 \
     -b 2048 -ub 512 -t 8 --poll 50 -p 2048 -n 128 -d 0,2048,4096,8192,16384,32768 -r 3 -o json \
     > "$OUT/sweep-fast.json" 2> "$OUT/sweep-fast.err"
