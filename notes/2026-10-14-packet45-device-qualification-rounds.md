@@ -224,6 +224,19 @@ SPEED7 is lever 1 of `notes/2026-10-15-p45-after-speed6-levers.md`: size-aware 8
 
 Root headroom: the unreferenced SPEED4/SPEED5 chain directories (4 × 896 MB, 166,760 files) were archived to `/mnt/usb-models/own-xpu-runtime-results/packet45-speed4-speed5-chains-20261015.tar.gz` (1,983,366,722 bytes, sha256 `fbc7362e564207e33aba7c2245b0f97620bd4649384b2a0c69106900834ae661`, member count verified) and removed from `build/`. Root free went from 23.14 to 26.90 GB. SPEED3 and SPEED6 chain directories (the evidence for the two submissions) stay in place.
 
+## Speed repair 7 results: parity, not submitted; lever 2 deferred (2026-10-15 20:50)
+
+SPEED7 (`4af439d0e`, 8:1 size-aware snapshot batching), 23/25 with draft rank 1. WS128 runs were qualifying and 12/12 exact:
+
+| Run | Class-balanced | All-prompt |
+|---|---:|---:|
+| Cards 0-1 | 39.3677 | 39.1673 |
+| Cards 2-3 | 39.3803 | 39.1608 |
+
+This is parity with SPEED6 (39.422 / 39.386 / 39.378). The instrumented WS hit and miss cycles were also unchanged, so it was not submitted. Codex's calibration (`0ce267ede`): the padding reduction removed memory traffic, but capture and the synchronous restore were not on the critical path.
+
+Lever 2 (expert kernels, `patches/packet45-speed8-expert-kernels.patch`, unapplied) has a calibrated forecast of +0.08 ms per hit, about 39.57, and zero is plausible. It was deferred as noise-level for a roughly 1.5 h GPU round. A read-only roofline and structural-lever study is in progress (`notes/2026-10-15-p45-roofline-and-structural-levers.md`).
+
 ## Relaunch procedure (after fix 5, and audit 6 if it reseals)
 
 1. Confirm that the runner is not running and that `queue/STOP` holds the halt reason.
