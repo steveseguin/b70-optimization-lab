@@ -2,11 +2,14 @@
 # Package check for repro/lfm25-24b-a2b-q8-b70 (registered in notes/2026-10-14-lfm25-24b-a2b-bringup.md, 2026-10-15):
 # the package's own serve.sh/check.sh on a build made by its build.sh, card 1, Gemma moved to card 0 meanwhile.
 #   BUILD_DIR=... package-check.sh        (run under systemd-run --user; SUDO_ASKPASS for the Gemma recipe switch)
-# Runs: reference, fast a, fast b (+ canaries), then a llama-bench depth sweep on the fast path. Gemma's two-card
-# throughput recipe is restored on exit, whatever happens.
+# Runs: reference, unfused (the first version's fast path), fast a, fast b (+ canaries, + the top-8 logprob probe and
+# the long prompts vs R0), then a llama-bench depth sweep on the fast path. Gemma's two-card throughput recipe is
+# restored on exit, whatever happens.
 set -uo pipefail
 LAB=/home/steve/b70-optimization-lab
 PKG=$LAB/repro/lfm25-24b-a2b-q8-b70
+E=$LAB/experiments/lfm25-24b-a2b-b70
+PROBE=/mnt/fast-ai/bench-results/lfm25-24b-a2b/probe
 BUILD_DIR=${BUILD_DIR:?}
 MODEL_DIR=${MODEL_DIR:-/mnt/fast-ai/llm-models/lfm25-24b-a2b-q8-gguf}
 OUT=${OUT:-/mnt/fast-ai/bench-results/lfm25-24b-a2b/pkgcheck}
@@ -56,7 +59,7 @@ log "moving Gemma to card 0 (throughput-card0)"
 "$LAB/scripts/gemma4-26b-two-b70-recipe.sh" throughput-card0 2>&1 | tail -4
 sleep 5
 
-for run in reference:ref fast:fast-a fast:fast-b; do
+for run in reference:ref unfused:unfused fast:fast-a fast:fast-b; do
   mode=${run%%:*}; name=${run#*:}
   serve "$mode" "$name" || exit 1
   log "$name: suite"
@@ -65,22 +68,34 @@ for run in reference:ref fast:fast-a fast:fast-b; do
     log "fast-b: canaries"
     python3 "$LAB/scripts/neural-download-canaries.py" --base-url "http://127.0.0.1:$PORT" --model lfm25-24b-a2b \
       --out "$OUT/canaries-fast-b.json" 2>&1 | tail -3
+    log "fast-b: logprob probe (12 x 96 tokens) and long prompts (2K/8K/24K x 128 tokens)"
+    python3 "$E/scripts/identity_probe.py" run --out "$OUT/probe-fast-b.json" 2>&1 | tail -1
+    python3 "$E/scripts/identity_probe.py" run --prompts "$PROBE/long-prompts.json" --tokens 128 \
+      --out "$OUT/long-fast-b.json" 2>&1 | tail -1
   fi
   stop_server
 done
 log "fast a vs fast b, and the reference vs fast b"
 "$PKG/check.sh" compare "$OUT/fast-a.json" "$OUT/fast-b.json" 2>&1
 "$PKG/check.sh" compare "$OUT/ref.json" "$OUT/fast-b.json" 2>&1
+log "logprob identity vs R0: probe, long prompts"
+python3 "$E/scripts/identity_probe.py" diff "$PROBE/r0-prod.json" "$OUT/probe-fast-b.json" 2>&1 | tail -2
+python3 "$E/scripts/identity_probe.py" diff "$PROBE/long-r0.json" "$OUT/long-fast-b.json" 2>&1 | tail -2
 
-log "llama-bench depth sweep, fast path (pp2048 + tg128 at depths 2K-32K, 3 reps)"
+log "llama-bench depth sweep, fast path (pp2048 + tg128 at depths 0-32K, 3 reps)"
 wait_port_free
 (
   set +u; source /opt/intel/oneapi/setvars.sh --force >/dev/null; set -u
   export ONEAPI_DEVICE_SELECTOR=level_zero:1 ZES_ENABLE_SYSMAN=1 UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS=1 \
     GGML_SYCL_DNNL_DETERMINISTIC=1 GGML_SYCL_DISABLE_OPT=0 GGML_SYCL_PRIORITIZE_DMMV=1 \
     LLAMA_SYCL_DMMV_Q8_0_REORDER_EXACT=4 LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1 LLAMA_SYCL_MMVQ_ID_XOR_REDUCE=1
+  # the fusions serve.sh fast turns on
+  export LLAMA_SYCL_FUSE_RMS_NORM_MUL=1 LLAMA_SYCL_FUSE_ADD_RMS_NORM_MUL=1 LLAMA_SYCL_FUSE_MOE_SUM=1 \
+    LLAMA_SYCL_FUSE_MOE_ROUTE=1 LLAMA_SYCL_FUSE_SHORTCONV=1 LLAMA_SYCL_FUSE_F16_SHADOW=1 LLAMA_SYCL_FUSE_Q8_SHADOW=1 \
+    LLAMA_SYCL_FUSE_MOE_GATE_UP=1 LLAMA_SYCL_FUSE_NORM_ROPE=1 LLAMA_SYCL_FUSE_NORM_Q8=1 LLAMA_SYCL_FUSE_MOE_DOWN_SUM=1 \
+    LLAMA_SYCL_FUSE_CONV_STATE_ROWS=1
   timeout 1800 "$BUILD_DIR/bin/llama-bench" -m "$MODEL_DIR/LFM2.5-24B-A2B-Q8_0.gguf" -ngl 99 -fa 1 -ctk f16 -ctv f16 \
-    -b 2048 -ub 512 -t 8 --poll 50 -p 2048 -n 128 -d 2048,4096,8192,16384,32768 -r 3 -o json \
+    -b 2048 -ub 512 -t 8 --poll 50 -p 2048 -n 128 -d 0,2048,4096,8192,16384,32768 -r 3 -o json \
     > "$OUT/sweep-fast.json" 2> "$OUT/sweep-fast.err"
   echo "llama-bench rc=$?"
 )

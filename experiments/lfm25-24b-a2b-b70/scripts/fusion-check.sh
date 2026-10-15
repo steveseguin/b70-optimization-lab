@@ -69,7 +69,9 @@ stop_server
 echo "verify mismatches: $(grep -c 'FUSE_VERIFY mismatch' "$OUT/server-verify.log")"
 grep 'FUSE_VERIFY' "$OUT/server-verify.log" | tail -3
 
-for name in a b; do
+servers="a b"
+[[ ${VERIFY_ONLY:-0} == 1 ]] && servers=""   # VERIFY_ONLY=1: the verify server only (diagnosis)
+for name in $servers; do
   serve "$name" || exit 1
   log "$name: suite"
   RESULTS_DIR=$OUT PORT=$PORT "$PKG/check.sh" run "suite-$name" 2>&1 | grep -v "^Against\|^compiler"
@@ -85,20 +87,25 @@ if [[ -n ${BENCH_SETS:-} ]]; then
   log "llama-bench per set"
   set +u; source /opt/intel/oneapi/setvars.sh --force >/dev/null; set -u
   IFS=';' read -ra sets <<< "$BENCH_SETS"
+  k=0
   for set in "${sets[@]}"; do
+    k=$((k + 1))
     env_args=()
     [[ $set != none ]] && read -ra env_args <<< "$set"
     env ONEAPI_DEVICE_SELECTOR=level_zero:1 ZES_ENABLE_SYSMAN=1 UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS=1 \
       GGML_SYCL_DNNL_DETERMINISTIC=1 GGML_SYCL_DISABLE_OPT=0 GGML_SYCL_PRIORITIZE_DMMV=1 \
       LLAMA_SYCL_DMMV_Q8_0_REORDER_EXACT=4 LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1 LLAMA_SYCL_MMVQ_ID_XOR_REDUCE=1 \
       "${env_args[@]}" "$BUILD_DIR/bin/llama-bench" -m "$MODEL_DIR/LFM2.5-24B-A2B-Q8_0.gguf" -ngl 99 -fa 1 \
-      -ctk f16 -ctv f16 -b 2048 -ub 512 -t 8 --poll 50 -p 0 -n 128 -r 3 -o json > "$OUT/bench-${set// /+}.json" 2>/dev/null
+      -ctk f16 -ctv f16 -b 2048 -ub 512 -t 8 --poll 50 -p 0 -n 128 -r 3 -o json > "$OUT/bench-$k.json" 2>/dev/null
     python3 -c "
-import json; r=json.load(open('$OUT/bench-${set// /+}.json'))[0]
-print(f'bench [$set]: {r[\"avg_ts\"]:.2f} tok/s (sd {r[\"stddev_ts\"]:.2f}), {1000/r[\"avg_ts\"]:.3f} ms/token')" \
-      || echo "bench [$set]: FAILED"
+import json; r=json.load(open('$OUT/bench-$k.json'))[0]
+print(f'bench $k [$set]: {r[\"avg_ts\"]:.2f} tok/s (sd {r[\"stddev_ts\"]:.2f}), {1000/r[\"avg_ts\"]:.3f} ms/token')" \
+      || echo "bench $k [$set]: FAILED"
   done
 fi
 log "logprob identity vs R0 (probe), and long prompts vs R0"
-python3 "$E/scripts/identity_probe.py" diff "$PROBE/r0-prod.json" "$OUT/probe-verify.json" "$OUT/probe-b.json" 2>&1 | tail -3
-python3 "$E/scripts/identity_probe.py" diff "$PROBE/long-r0.json" "$OUT/long-verify.json" "$OUT/long-b.json" 2>&1 | tail -3
+b_probe=() b_long=()
+[[ -f $OUT/probe-b.json ]] && b_probe=("$OUT/probe-b.json")
+[[ -f $OUT/long-b.json ]] && b_long=("$OUT/long-b.json")
+python3 "$E/scripts/identity_probe.py" diff "$PROBE/r0-prod.json" "$OUT/probe-verify.json" "${b_probe[@]}" 2>&1 | tail -3
+python3 "$E/scripts/identity_probe.py" diff "$PROBE/long-r0.json" "$OUT/long-verify.json" "${b_long[@]}" 2>&1 | tail -3
