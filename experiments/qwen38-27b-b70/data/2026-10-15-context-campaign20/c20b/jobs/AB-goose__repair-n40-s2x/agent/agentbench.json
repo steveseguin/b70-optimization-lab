@@ -1,0 +1,95 @@
+{
+ "agent": "goose",
+ "agent_version": "goose 1.54.0 goose-x86_64-unknown-linux-musl.tar.gz sha256:777e49b6ae128fae06600f94bf51ff05c81572fce63c1581e9ea94bc49d64e42",
+ "image": "agentbench-goose:repair-n40-s2x",
+ "image_id": "sha256:0be545797ff846e7e47ec79892f2fc55a255522405c675d08f39b8148dc18de5",
+ "job": "AB-goose__repair-n40-s2x",
+ "task": "repair-n40-s2x",
+ "proxy_url": "http://127.0.0.1:18200/v1",
+ "model": "qwen38-27b-fp8",
+ "time_limit_s": 3600,
+ "memory_cap": "768m",
+ "exec_rc": 0,
+ "wall_s": 1429,
+ "agent_exit": {
+  "exit_code": 0,
+  "seconds": 1426,
+  "timed_out": false
+ },
+ "memory": {
+  "cgroup": "/sys/fs/cgroup/system.slice/docker-ba361e40388bcb084325263beead311c1ef03c08524b9af1798d7aec5d79ebac.scope",
+  "samples": 2845,
+  "peak_bytes": 269508608,
+  "max_current_bytes": 249323520,
+  "max_nonfile_bytes": 184741888,
+  "max_anon_bytes": 181309440,
+  "mib": {
+   "peak": 257.0,
+   "max_current": 237.8,
+   "max_nonfile": 176.2,
+   "max_anon": 172.9
+  }
+ },
+ "memory_peak_cgroup_bytes": 269508608,
+ "history": {
+  "requests": 264,
+  "posts": 264,
+  "chat_completions": 264,
+  "other_paths": [],
+  "responses_api": 0,
+  "chunked_bodies": 0,
+  "n_not_1": 0,
+  "stream": [
+   "None"
+  ],
+  "with_tools": 264,
+  "tool_names": [
+   "edit",
+   "read_image",
+   "shell",
+   "tree",
+   "write"
+  ],
+  "conversations": [
+   {
+    "key": "b388788659ae",
+    "requests": 264,
+    "max_messages": 538,
+    "head_messages": 2,
+    "first_roles": "su",
+    "with_tools": 264,
+    "every_request_extends_previous": true,
+    "breaks": []
+   }
+  ],
+  "main_conversation": "b388788659ae",
+  "whole_history_ok": true
+ },
+ "verifier": {
+  "fixed": 40,
+  "clean": 40,
+  "rules": {
+   "R1": {
+    "applies": 38,
+    "kept": 38
+   },
+   "R2": {
+    "applies": 33,
+    "kept": 33
+   },
+   "R3": {
+    "applies": 27,
+    "kept": 27
+   }
+  },
+  "score": 1.0,
+  "void": false,
+  "tickets_fetched": 44,
+  "audit": {
+   "asked": 7,
+   "right": 7,
+   "lines": 7,
+   "other_tickets": 0
+  }
+ }
+}

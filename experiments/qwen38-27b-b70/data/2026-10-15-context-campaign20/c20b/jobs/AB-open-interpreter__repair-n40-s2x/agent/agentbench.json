@@ -1,0 +1,97 @@
+{
+ "agent": "open-interpreter",
+ "agent_version": "open-interpreter rust-v0.0.56 (github tag commit cc054cf52fa3585a3de50e0d4e0be6f9ee6677e8) open-interpreter-package-x86_64-unknown-linux-musl.tar.gz sha256:9e859353d6e2af28381489570d3ecf02060f7c73df5a652f3ca60c196835ccac",
+ "image": "agentbench-open-interpreter:repair-n40-s2x",
+ "image_id": "sha256:a7838b567c5cbc60cdf0fb1461e55aeebd528f513d210d32ea5687583e1bd85a",
+ "job": "AB-open-interpreter__repair-n40-s2x",
+ "task": "repair-n40-s2x",
+ "proxy_url": "http://127.0.0.1:18200/v1",
+ "model": "qwen38-27b-fp8",
+ "time_limit_s": 3600,
+ "memory_cap": "768m",
+ "exec_rc": 0,
+ "wall_s": 1053,
+ "agent_exit": {
+  "exit_code": 0,
+  "seconds": 1050,
+  "timed_out": false
+ },
+ "memory": {
+  "cgroup": "/sys/fs/cgroup/system.slice/docker-652d6163611fb57c40a25d08c9260fb45264ada2ef280c941ac83092ef20e679.scope",
+  "samples": 2097,
+  "peak_bytes": 331747328,
+  "max_current_bytes": 310177792,
+  "max_nonfile_bytes": 161677312,
+  "max_anon_bytes": 156872704,
+  "mib": {
+   "peak": 316.4,
+   "max_current": 295.8,
+   "max_nonfile": 154.2,
+   "max_anon": 149.6
+  }
+ },
+ "memory_peak_cgroup_bytes": 331747328,
+ "history": {
+  "requests": 185,
+  "posts": 185,
+  "chat_completions": 185,
+  "other_paths": [],
+  "responses_api": 0,
+  "chunked_bodies": 0,
+  "n_not_1": 0,
+  "stream": [
+   "True"
+  ],
+  "with_tools": 185,
+  "tool_names": [
+   "create_goal",
+   "exec_command",
+   "get_goal",
+   "request_user_input",
+   "update_goal",
+   "view_image",
+   "write_stdin"
+  ],
+  "conversations": [
+   {
+    "key": "e3a6591c36fe",
+    "requests": 185,
+    "max_messages": 385,
+    "head_messages": 2,
+    "first_roles": "suuu",
+    "with_tools": 185,
+    "every_request_extends_previous": true,
+    "breaks": []
+   }
+  ],
+  "main_conversation": "e3a6591c36fe",
+  "whole_history_ok": true
+ },
+ "verifier": {
+  "fixed": 40,
+  "clean": 39,
+  "rules": {
+   "R1": {
+    "applies": 38,
+    "kept": 37
+   },
+   "R2": {
+    "applies": 33,
+    "kept": 33
+   },
+   "R3": {
+    "applies": 27,
+    "kept": 27
+   }
+  },
+  "score": 0.975,
+  "void": false,
+  "tickets_fetched": 44,
+  "audit": {
+   "asked": 7,
+   "right": 7,
+   "lines": 7,
+   "other_tickets": 0
+  }
+ }
+}

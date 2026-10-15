@@ -1,0 +1,100 @@
+{
+ "agent": "qwen-code",
+ "agent_version": "@qwen-code/qwen-code 0.25.1 (npm sha512-6cEbtfx4Ugl1d3FdFLa8fcsG6knHuUUHqvDseLxGY06Xan8p7Fcd7+g5KlX694zX4mo/+Vh56AHxT/4R15zpYA==)",
+ "image": "agentbench-qwen-code:repair-n40-s2x",
+ "image_id": "sha256:c1a28086d166e3b0759f854a540efd7d68873cc18134445d01a5aa885f96ec5b",
+ "job": "AB-qwen-code__repair-n40-s2x",
+ "task": "repair-n40-s2x",
+ "proxy_url": "http://127.0.0.1:18200/v1",
+ "model": "qwen38-27b-fp8",
+ "time_limit_s": 3600,
+ "memory_cap": "768m",
+ "exec_rc": 0,
+ "wall_s": 1971,
+ "agent_exit": {
+  "exit_code": 0,
+  "seconds": 1966,
+  "timed_out": false
+ },
+ "memory": {
+  "cgroup": "/sys/fs/cgroup/system.slice/docker-4325deceb8c3a67d4176b38a51d8b33bda60de033e50d054852134dd760f61d7.scope",
+  "samples": 3924,
+  "peak_bytes": 474243072,
+  "max_current_bytes": 473456640,
+  "max_nonfile_bytes": 382803968,
+  "max_anon_bytes": 374681600,
+  "mib": {
+   "peak": 452.3,
+   "max_current": 451.5,
+   "max_nonfile": 365.1,
+   "max_anon": 357.3
+  }
+ },
+ "memory_peak_cgroup_bytes": 474243072,
+ "history": {
+  "requests": 243,
+  "posts": 243,
+  "chat_completions": 243,
+  "other_paths": [],
+  "responses_api": 0,
+  "chunked_bodies": 0,
+  "n_not_1": 0,
+  "stream": [
+   "True"
+  ],
+  "with_tools": 243,
+  "tool_names": [
+   "edit",
+   "glob",
+   "grep_search",
+   "notebook_edit",
+   "read_file",
+   "run_shell_command",
+   "skill",
+   "tool_call",
+   "tool_search",
+   "write_file"
+  ],
+  "conversations": [
+   {
+    "key": "bfa50a89097f",
+    "requests": 243,
+    "max_messages": 528,
+    "head_messages": 2,
+    "first_roles": "su",
+    "with_tools": 243,
+    "every_request_extends_previous": true,
+    "breaks": []
+   }
+  ],
+  "main_conversation": "bfa50a89097f",
+  "whole_history_ok": true
+ },
+ "verifier": {
+  "fixed": 40,
+  "clean": 39,
+  "rules": {
+   "R1": {
+    "applies": 38,
+    "kept": 37
+   },
+   "R2": {
+    "applies": 33,
+    "kept": 33
+   },
+   "R3": {
+    "applies": 27,
+    "kept": 27
+   }
+  },
+  "score": 0.975,
+  "void": false,
+  "tickets_fetched": 44,
+  "audit": {
+   "asked": 7,
+   "right": 7,
+   "lines": 7,
+   "other_tickets": 0
+  }
+ }
+}

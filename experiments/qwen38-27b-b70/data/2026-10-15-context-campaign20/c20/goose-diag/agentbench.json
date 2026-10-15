@@ -1,0 +1,95 @@
+{
+ "agent": "goose",
+ "agent_version": "goose 1.54.0 goose-x86_64-unknown-linux-musl.tar.gz sha256:777e49b6ae128fae06600f94bf51ff05c81572fce63c1581e9ea94bc49d64e42",
+ "image": "agentbench-goose:repair-n40-s2x",
+ "image_id": "sha256:0be545797ff846e7e47ec79892f2fc55a255522405c675d08f39b8148dc18de5",
+ "job": "AB-goose-diag",
+ "task": "repair-n40-s2x",
+ "proxy_url": "http://127.0.0.1:18200/v1",
+ "model": "qwen38-27b-fp8",
+ "time_limit_s": 240,
+ "memory_cap": "768m",
+ "exec_rc": 124,
+ "wall_s": 244,
+ "agent_exit": {
+  "exit_code": 124,
+  "seconds": 240,
+  "timed_out": true
+ },
+ "memory": {
+  "cgroup": "/sys/fs/cgroup/system.slice/docker-640dda2d25c583e4292e350426f296e12e7993ee9b1eb03d3bcd947e78cebb77.scope",
+  "samples": 480,
+  "peak_bytes": 222146560,
+  "max_current_bytes": 205631488,
+  "max_nonfile_bytes": 189276160,
+  "max_anon_bytes": 185757696,
+  "mib": {
+   "peak": 211.9,
+   "max_current": 196.1,
+   "max_nonfile": 180.5,
+   "max_anon": 177.2
+  }
+ },
+ "memory_peak_cgroup_bytes": 222146560,
+ "history": {
+  "requests": 74,
+  "posts": 74,
+  "chat_completions": 74,
+  "other_paths": [],
+  "responses_api": 0,
+  "chunked_bodies": 0,
+  "n_not_1": 0,
+  "stream": [
+   "None"
+  ],
+  "with_tools": 74,
+  "tool_names": [
+   "edit",
+   "read_image",
+   "shell",
+   "tree",
+   "write"
+  ],
+  "conversations": [
+   {
+    "key": "8901b93aa054",
+    "requests": 74,
+    "max_messages": 156,
+    "head_messages": 2,
+    "first_roles": "su",
+    "with_tools": 74,
+    "every_request_extends_previous": true,
+    "breaks": []
+   }
+  ],
+  "main_conversation": "8901b93aa054",
+  "whole_history_ok": true
+ },
+ "verifier": {
+  "fixed": 9,
+  "clean": 8,
+  "rules": {
+   "R1": {
+    "applies": 7,
+    "kept": 7
+   },
+   "R2": {
+    "applies": 2,
+    "kept": 1
+   },
+   "R3": {
+    "applies": 0,
+    "kept": 0
+   }
+  },
+  "score": 0.2,
+  "void": false,
+  "tickets_fetched": 11,
+  "audit": {
+   "asked": 7,
+   "right": 0,
+   "lines": 0,
+   "other_tickets": 0
+  }
+ }
+}

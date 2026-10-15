@@ -1,0 +1,91 @@
+{
+ "agent": "mini-swe-agent",
+ "agent_version": "mini-swe-agent 2.4.6 + litellm 1.105.1 (PyPI, hash-pinned closure in requirements.txt)",
+ "image": "agentbench-mini-swe-agent:repair-n40-s2x",
+ "image_id": "sha256:9396e7dbe7f3c325759713f8ed582cd4cdc5ef52218303aeb0e1eb0716a354c9",
+ "job": "AB-mini-swe-agent__repair-n40-s2x",
+ "task": "repair-n40-s2x",
+ "proxy_url": "http://127.0.0.1:18200/v1",
+ "model": "qwen38-27b-fp8",
+ "time_limit_s": 3600,
+ "memory_cap": "768m",
+ "exec_rc": 0,
+ "wall_s": 811,
+ "agent_exit": {
+  "exit_code": 0,
+  "seconds": 807,
+  "timed_out": false
+ },
+ "memory": {
+  "cgroup": "/sys/fs/cgroup/system.slice/docker-b61e587f80d48d9d4d56577dbed1f40fb10d9c07be194ca1c93b6b83a00fccf6.scope",
+  "samples": 1612,
+  "peak_bytes": 452112384,
+  "max_current_bytes": 430022656,
+  "max_nonfile_bytes": 352346112,
+  "max_anon_bytes": 331169792,
+  "mib": {
+   "peak": 431.2,
+   "max_current": 410.1,
+   "max_nonfile": 336.0,
+   "max_anon": 315.8
+  }
+ },
+ "memory_peak_cgroup_bytes": 452112384,
+ "history": {
+  "requests": 194,
+  "posts": 194,
+  "chat_completions": 194,
+  "other_paths": [],
+  "responses_api": 0,
+  "chunked_bodies": 0,
+  "n_not_1": 0,
+  "stream": [
+   "None"
+  ],
+  "with_tools": 194,
+  "tool_names": [
+   "bash"
+  ],
+  "conversations": [
+   {
+    "key": "204a5427d6f2",
+    "requests": 194,
+    "max_messages": 395,
+    "head_messages": 2,
+    "first_roles": "su",
+    "with_tools": 194,
+    "every_request_extends_previous": true,
+    "breaks": []
+   }
+  ],
+  "main_conversation": "204a5427d6f2",
+  "whole_history_ok": true
+ },
+ "verifier": {
+  "fixed": 40,
+  "clean": 40,
+  "rules": {
+   "R1": {
+    "applies": 38,
+    "kept": 38
+   },
+   "R2": {
+    "applies": 33,
+    "kept": 33
+   },
+   "R3": {
+    "applies": 27,
+    "kept": 27
+   }
+  },
+  "score": 1.0,
+  "void": false,
+  "tickets_fetched": 44,
+  "audit": {
+   "asked": 7,
+   "right": 7,
+   "lines": 7,
+   "other_tickets": 0
+  }
+ }
+}

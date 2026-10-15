@@ -6,8 +6,31 @@ a time with `next`, three house rules, a final audit) behind the [ctxkeeper](../
 agent gets the task's `instruction.md` word for word, runs in its own locked-down container, and is graded by the
 task's own verifier exactly like [freeagent](../freeagent/run-freeagent-job.sh), so the scores compare.
 
-**Status (2026-10-15): plumbing only.** Every agent below was run against a scripted fake model through a real
-ctxkeeper 1.0.0 instance, on the CPU. None has been run on a real model yet.
+**Status (2026-10-15): run on a real model (campaign 20).** Every agent was run on the 40-bug repair task through
+ctxkeeper 1.0.1 (`--recipe qwen`, 32K window) on Qwen3.8-27B FP8 (vLLM, two Intel Arc Pro B70), one at a time, 60
+minutes at most:
+
+| Agent | Fixed (of 40) | Fixed with every house rule kept | Audit (of 7) | Time |
+| --- | --- | --- | --- | --- |
+| mini-swe-agent | 40 | 40 | 7 | 14 min |
+| Open Interpreter | 40 | 39 | 7 | 18 min |
+| freeagent (control) | 40 | 39 | 7 | 21 min |
+| Cline CLI | 40 | 40 | 7 | 24 min |
+| Goose | 40 | 40 | 7 | 24 min |
+| OpenHands SDK | 40 | 40 | 6 | 24 min |
+| Mistral Vibe | 40 | 40 | 7 | 26 min |
+| Hermes Agent | 40 | 40 | 7 | 26 min |
+| pi | 39 | 39 | 0 | 28 min |
+| Qwen Code | 40 | 39 | 7 | 33 min |
+| Kimi Code | 40 | 40 | 7 | 38 min |
+| ForgeCode | 25 | 25 | not reached | 60 min (limit) |
+| OpenCode | not run: needs ~0.8 GiB more host memory than was free beside the server | | | |
+
+One run each. pi wrote its audit answers and then deleted the file, after a wrong line in ctxkeeper's notes said
+the audit had never been asked for. ForgeCode and OpenHands need ctxkeeper 1.0.1 (requests that Qwen3.8's chat
+template refuses). The whole record, including the failed first attempts and the harness bugs they exposed, is in
+the lab note ([campaign 20](../../experiments/qwen38-27b-b70/notes/2026-10-10-context-16k-baseline.md#campaign-20e-result-and-campaign-20-summary-2026-10-15-0800))
+and its data in [`data/2026-10-15-context-campaign20/`](../../experiments/qwen38-27b-b70/data/2026-10-15-context-campaign20/).
 
 ## Run one agent
 
@@ -16,7 +39,7 @@ conversation by its system prompt and first message, so a second run of the same
 would land on the first run's archive):
 
 ```bash
-/mnt/fast-ai/venvs/ctxkeeper-1.0.0/bin/ctxkeeper --upstream http://127.0.0.1:8000 --recipe qwen --port 18200 \
+/mnt/fast-ai/venvs/ctxkeeper-1.0.1-final/bin/ctxkeeper --upstream http://127.0.0.1:8000 --recipe qwen --port 18200 \
   --state-dir /mnt/fast-ai/bench-results/<campaign>/ctxkeeper-<job>
 ```
 
@@ -300,7 +323,7 @@ Settings (`agents/kimi-code/config.toml`, `tui.toml`):
 - `[tools] disabled = Agent, AgentSwarm, WebSearch, FetchURL`; `capabilities = ["tool_use"]` (the model name is
   unknown to it).
 Streams; sends `prompt_cache_key`, no `max_tokens`; adds `reasoning_effort medium` once its history holds thinking
-(not the case through ctxkeeper 1.0.0's streaming). **Its fixed prompt is the largest here: ~20,800 tokens** (22
+(through ctxkeeper 1.0.0's streaming it never did; 1.0.1 passes the thinking on). **Its fixed prompt is the largest here: ~20,800 tokens** (22
 tools, 66K characters of tool definitions, plus two reminder messages after the prompt), about two thirds of
 ctxkeeper's 32K window. A command runs 60 s in the foreground, then moves to the background (default, kept).
 
@@ -385,18 +408,15 @@ only where the host has room (`BUN_OPTIONS=--smol` did not help).
 | Amazon Q Developer CLI | Unmaintained (replaced by Kiro). |
 | Kiro, GitHub Copilot CLI, Claude Code, Cursor CLI, Amp, Factory Droid, Junie, Augment Auggie | Not open source. |
 
-## Needs the owner's decision
+## Choices made for campaign 20 (the owner can change any of them)
 
-1. **Which agents run beside the two-card server.** OpenCode cannot (memory, above); Cline and Mistral Vibe only at
-   this task's history size. Run OpenCode only when the cards are not serving, or leave it out.
-2. **Thinking is lost for streaming agents.** vLLM returns the model's thinking in a `reasoning` field. ctxkeeper
-   1.0.0 passes a non-streamed reply through whole, but when a client streams it re-sends the finished reply as one
-   event carrying only `content`, `reasoning_content` and tool calls (`as_stream`, ctxkeeper.py:1120). So the
-   streaming agents (Qwen Code, OpenCode, Cline, pi, ForgeCode, Open Interpreter, Hermes, Kimi Code, Mistral Vibe)
-   never see the thinking. The non-streaming ones get it, and freeagent, Goose and mini-swe-agent send it back on
-   every request (OpenHands does not), which makes their histories larger and their model calls different. Options:
-   accept it as how ctxkeeper 1.0.0 behaves, or a one-line ctxkeeper fix (also copy `reasoning`), which would be a
-   new ctxkeeper release.
+Campaign 20 ran every agent as shipped, with the defaults recommended below; nothing here blocked a run.
+
+1. **Which agents run beside the two-card server.** OpenCode could not (2.29 GiB free, about 2.5 GiB needed, even
+   at a ~1 MB history); every other agent fit, one at a time. Run OpenCode only when the cards are not serving.
+2. **Thinking lost for streaming agents: fixed in ctxkeeper 1.0.1.** 1.0.0 re-sent a finished reply to a streaming
+   client without vLLM's `reasoning` field, so streaming agents never saw the model's thinking. 1.0.1 copies it, and
+   campaign 20 ran on 1.0.1.
 3. **Sampling differs by agent, as shipped.** freeagent sends `temperature 0`, `max_tokens 8192`, thinking on;
    Qwen Code `max_tokens 32768`; OpenCode and Cline `max_tokens 32000`; ForgeCode `max_completion_tokens 20480`; pi
    `max_completion_tokens 16384`; Mistral Vibe `temperature 0.2`; Hermes `reasoning_effort medium`; OpenHands

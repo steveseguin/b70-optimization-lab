@@ -15,7 +15,7 @@ your agent / app  --->  ctxkeeper (:18200)  --->  any OpenAI-compatible server (
                           shows a bounded view
 ```
 
-Version 1.0.0 · public domain ([Unlicense](LICENSE)) · Python 3.10 or newer, standard library only (two files:
+Version 1.0.1 · public domain ([Unlicense](LICENSE)) · Python 3.10 or newer, standard library only (two files:
 `ctxkeeper.py`, `notesdelta.py`) · in plain words: <https://skindeep.ai/context-use.html>
 
 ## Does it work?
@@ -44,30 +44,61 @@ Qwen server unless noted:
 
 Records: [`data/2026-10-14-context-campaign19/`](../../experiments/qwen38-27b-b70/data/2026-10-14-context-campaign19/).
 
+Version 1.0.1 changes only how requests and replies are passed on ([Changes](#changes)); its program files are
+byte-identical to the ones the twelve-agent test below ran.
+
+## Tested with 12 open-source coding agents
+
+The same code-repair task, through `--recipe qwen` and the same Qwen server, with each agent as shipped except
+that its own history trimming or summarizing was turned off (set-ups:
+[agentbench](../agentbench/README.md)). One run each, 60 minutes at most, sorted by time:
+
+| Agent | Fixed (of 40) | Following every rule | Questions (of 7) | Time |
+| --- | --- | --- | --- | --- |
+| [mini-swe-agent](https://github.com/SWE-agent/mini-swe-agent) 2.4.6 | 40 | 40 | 7 | 14 min |
+| [Open Interpreter](https://github.com/openinterpreter/openinterpreter) 0.0.56 | 40 | 39 | 7 | 18 min |
+| [freeagent](../freeagent/freeagent.py) (the lab's own, for comparison) | 40 | 39 | 7 | 21 min |
+| [Cline CLI](https://github.com/cline/cline) 3.0.71 | 40 | 40 | 7 | 24 min |
+| [Goose](https://github.com/aaif-goose/goose) 1.54.0 | 40 | 40 | 7 | 24 min |
+| [OpenHands SDK](https://github.com/OpenHands/software-agent-sdk) 1.54.0 | 40 | 40 | 6 | 24 min |
+| [Mistral Vibe](https://github.com/mistralai/mistral-vibe) 2.26.1 | 40 | 40 | 7 | 26 min |
+| [Hermes Agent](https://github.com/NousResearch/hermes-agent) 0.22.1 | 40 | 40 | 7 | 26 min |
+| [pi](https://github.com/earendil-works/pi) 1.2.0 | 39 | 39 | 0 | 28 min |
+| [Qwen Code](https://github.com/QwenLM/qwen-code) 0.25.1 | 40 | 39 | 7 | 33 min |
+| [Kimi Code](https://github.com/MoonshotAI/kimi-code) 2.2.0 | 40 | 40 | 7 | 38 min |
+| [ForgeCode](https://github.com/tailcallhq/forgecode) 2.14.0 | 25 | 25 | not reached | 60 min (time limit) |
+| [OpenCode](https://github.com/anomalyco/opencode) 1.19.0 | not run: it needed more memory than the test machine had free beside the server | | | |
+
+Ten of the eleven agents that ran fixed 39 or 40 bugs. pi wrote its answers to the seven questions and then
+deleted them, after a wrong line in the notes said the questions had never been asked (see [Limits](#limits)).
+ForgeCode was still working, correctly, when its hour ran out. ForgeCode and OpenHands only work from 1.0.1 on.
+
 Full record, every run and what went wrong: the lab note
 [`2026-10-10-context-16k-baseline.md`](../../experiments/qwen38-27b-b70/notes/2026-10-10-context-16k-baseline.md)
-(campaigns 10 to 18) and [HISTORY.md](HISTORY.md). One model, one machine: see [Limits](#limits).
+(campaigns 10 to 20, the agents in campaign 20, data in
+[`data/2026-10-15-context-campaign20/`](../../experiments/qwen38-27b-b70/data/2026-10-15-context-campaign20/)) and
+[HISTORY.md](HISTORY.md). One model, one machine: see [Limits](#limits).
 
 ## Install
 
-Pick one. All three come from the [1.0.0 release](https://github.com/steveseguin/b70-optimization-lab/releases/tag/ctxkeeper-v1.0.0)
+Pick one. All three come from the [1.0.1 release](https://github.com/steveseguin/b70-optimization-lab/releases/tag/ctxkeeper-v1.0.1)
 (small files; nothing clones the lab's large repository):
 
 ```bash
-R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.0.0
+R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.0.1
 
 # 1. pip (gives you the `ctxkeeper` command)
-pip install $R/ctxkeeper-1.0.0-py3-none-any.whl
+pip install $R/ctxkeeper-1.0.1-py3-none-any.whl
 
 # 2. Docker (builds the image from the 80 KB source archive)
-docker build -t ctxkeeper $R/ctxkeeper-1.0.0.tar.gz
+docker build -t ctxkeeper $R/ctxkeeper-1.0.1.tar.gz
 
 # 3. just the two files (run with python3 ctxkeeper.py ...)
 curl -LO $R/ctxkeeper.py
 curl -LO $R/notesdelta.py
 ```
 
-The source archive `ctxkeeper-1.0.0.tar.gz` also holds the demo below, the tests and this README; the release page
+The source archive `ctxkeeper-1.0.1.tar.gz` also holds the demo below, the tests and this README; the release page
 lists every file's SHA-256.
 
 ## Quick start
@@ -184,13 +215,29 @@ Everything else: `ctxkeeper --help`.
   follow the notes format; that has not been measured.
 - **The notes are written by the model, so they can be wrong.** On the hardest test (2M tokens with traps) about
   1 in 130 notes lines was silently wrong; on the 1M test, 1 in 1,435. The archive keeps the original text, so a
-  wrong note can be found and fixed by a search, but nothing guarantees the model looks.
+  wrong note can be found and fixed by a search, but nothing guarantees the model looks. In the twelve-agent test,
+  one notes line wrongly said seven questions had never been asked; the agent (pi) believed it and deleted the
+  answers it had already written.
 - **The opening messages are always kept**, so the system prompt and the first user message must fit well inside
   the window.
 - Token counts are estimated (characters over a ratio learned from the server's reported usage), with margins.
 - **No authentication, and everything is stored in plain text** under `--state-dir`. The proxy listens on
   `127.0.0.1` by default; the Docker image listens on all interfaces, so publish its port only where you mean to.
 - Tested with one conversation at a time. Separate conversations have separate state and locks.
+
+## Changes
+
+**1.0.1** (2026-10-15), found by running twelve agents through it:
+
+- Streamed replies keep the model's thinking (vLLM's `reasoning` field); 1.0.0 dropped it when the client streamed.
+- Several system messages at the start of a request are joined into one (ForgeCode sends two; Qwen's chat template
+  refuses that).
+- A system message sent as a list of text parts keeps its form, and the memory note goes inside it instead of into
+  a second system message (OpenHands).
+- With `--effort` (part of `--recipe qwen`), the proxy's value replaces a `reasoning_effort` the client sent
+  (OpenHands sends `high`, which Qwen3.8's template refuses).
+
+**1.0.0** (2026-10-14): first release.
 
 ## Development
 

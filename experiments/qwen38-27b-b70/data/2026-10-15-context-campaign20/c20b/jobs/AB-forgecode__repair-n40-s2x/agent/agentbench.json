@@ -1,0 +1,111 @@
+{
+ "agent": "forgecode",
+ "agent_version": "forgecode v2.14.0 (github tag commit 6ab58df3d8f11ce52c8d182359f4c76e74f29c0f) forge-x86_64-unknown-linux-musl sha256:64832f828bf08961322e302243f352ee7c27e88d76f972574a3628c7b70cb1be",
+ "image": "agentbench-forgecode:repair-n40-s2x",
+ "image_id": "sha256:249166215dfe054e7638a6bd4e0be63f76657037a68cbe7a6533565386a68645",
+ "job": "AB-forgecode__repair-n40-s2x",
+ "task": "repair-n40-s2x",
+ "proxy_url": "http://127.0.0.1:18200/v1",
+ "model": "qwen38-27b-fp8",
+ "time_limit_s": 3600,
+ "memory_cap": "768m",
+ "exec_rc": 0,
+ "wall_s": 6,
+ "agent_exit": {
+  "exit_code": 0,
+  "seconds": 0,
+  "timed_out": false
+ },
+ "memory": {
+  "cgroup": "/sys/fs/cgroup/system.slice/docker-ac04749cd332b86e8b2325abcee9a7c5d92d6b3feb013d19cce4ee055a863c74.scope",
+  "samples": 2,
+  "peak_bytes": 57696256,
+  "max_current_bytes": 57303040,
+  "max_nonfile_bytes": 28659712,
+  "max_anon_bytes": 26554368,
+  "mib": {
+   "peak": 55.0,
+   "max_current": 54.6,
+   "max_nonfile": 27.3,
+   "max_anon": 25.3
+  }
+ },
+ "memory_peak_cgroup_bytes": 57696256,
+ "history": {
+  "requests": 2,
+  "posts": 2,
+  "chat_completions": 2,
+  "other_paths": [],
+  "responses_api": 0,
+  "chunked_bodies": 0,
+  "n_not_1": 0,
+  "stream": [
+   "True"
+  ],
+  "with_tools": 1,
+  "tool_names": [
+   "fs_search",
+   "multi_patch",
+   "patch",
+   "read",
+   "remove",
+   "shell",
+   "skill",
+   "todo_read",
+   "todo_write",
+   "undo",
+   "write"
+  ],
+  "conversations": [
+   {
+    "key": "e6241bb4e3d6",
+    "requests": 1,
+    "max_messages": 3,
+    "head_messages": 3,
+    "first_roles": "ssu",
+    "with_tools": 1,
+    "every_request_extends_previous": true,
+    "breaks": []
+   },
+   {
+    "key": "b65789c22faf",
+    "requests": 1,
+    "max_messages": 2,
+    "head_messages": 2,
+    "first_roles": "su",
+    "with_tools": 0,
+    "every_request_extends_previous": true,
+    "breaks": []
+   }
+  ],
+  "main_conversation": "e6241bb4e3d6",
+  "whole_history_ok": false
+ },
+ "verifier": {
+  "fixed": 0,
+  "clean": 0,
+  "rules": {
+   "R1": {
+    "applies": 0,
+    "kept": 0
+   },
+   "R2": {
+    "applies": 0,
+    "kept": 0
+   },
+   "R3": {
+    "applies": 0,
+    "kept": 0
+   }
+  },
+  "score": 0.0,
+  "void": false,
+  "tickets_fetched": 0,
+  "audit": {
+   "asked": 7,
+   "right": 0,
+   "lines": 0,
+   "other_tickets": 0
+  }
+ }
+}

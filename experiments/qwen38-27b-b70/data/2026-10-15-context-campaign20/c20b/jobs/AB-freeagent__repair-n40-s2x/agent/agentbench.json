@@ -1,0 +1,91 @@
+{
+ "agent": "freeagent",
+ "agent_version": "lab tools/freeagent/freeagent.py (sha256 in /opt/agent/VERSION)",
+ "image": "agentbench-freeagent:repair-n40-s2x",
+ "image_id": "sha256:39072279fe5cef8fd0292a5f98a13dcc7539935bdadf9acb914a28765f1c67a6",
+ "job": "AB-freeagent__repair-n40-s2x",
+ "task": "repair-n40-s2x",
+ "proxy_url": "http://127.0.0.1:18200/v1",
+ "model": "qwen38-27b-fp8",
+ "time_limit_s": 3600,
+ "memory_cap": "768m",
+ "exec_rc": 0,
+ "wall_s": 1257,
+ "agent_exit": {
+  "exit_code": 0,
+  "seconds": 1253,
+  "timed_out": false
+ },
+ "memory": {
+  "cgroup": "/sys/fs/cgroup/system.slice/docker-b550a29fea2b3c9a814bb98c28c7cdd7c99c6ec2ae5b07a42045e46365ad3fe6.scope",
+  "samples": 2502,
+  "peak_bytes": 194502656,
+  "max_current_bytes": 175104000,
+  "max_nonfile_bytes": 149159936,
+  "max_anon_bytes": 146714624,
+  "mib": {
+   "peak": 185.5,
+   "max_current": 167.0,
+   "max_nonfile": 142.2,
+   "max_anon": 139.9
+  }
+ },
+ "memory_peak_cgroup_bytes": 194502656,
+ "history": {
+  "requests": 271,
+  "posts": 271,
+  "chat_completions": 271,
+  "other_paths": [],
+  "responses_api": 0,
+  "chunked_bodies": 0,
+  "n_not_1": 0,
+  "stream": [
+   "None"
+  ],
+  "with_tools": 271,
+  "tool_names": [
+   "shell"
+  ],
+  "conversations": [
+   {
+    "key": "375eb6de9447",
+    "requests": 271,
+    "max_messages": 542,
+    "head_messages": 2,
+    "first_roles": "su",
+    "with_tools": 271,
+    "every_request_extends_previous": true,
+    "breaks": []
+   }
+  ],
+  "main_conversation": "375eb6de9447",
+  "whole_history_ok": true
+ },
+ "verifier": {
+  "fixed": 40,
+  "clean": 39,
+  "rules": {
+   "R1": {
+    "applies": 38,
+    "kept": 38
+   },
+   "R2": {
+    "applies": 33,
+    "kept": 32
+   },
+   "R3": {
+    "applies": 27,
+    "kept": 27
+   }
+  },
+  "score": 0.975,
+  "void": false,
+  "tickets_fetched": 44,
+  "audit": {
+   "asked": 7,
+   "right": 7,
+   "lines": 7,
+   "other_tickets": 0
+  }
+ }
+}
