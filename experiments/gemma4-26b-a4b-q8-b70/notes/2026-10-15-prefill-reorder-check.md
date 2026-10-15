@@ -40,7 +40,7 @@ binary to 0.2 %), but the new kernel still reads prompts faster: +16 % (2K), +13
 servers. That passes the reading rule, so the new kernel goes to an identity check before any change to the service.
 No kernel fault lines; the LAN service was restored to its throughput recipe at 19:14.
 
-### Identity check (registered 2026-10-15 19:20, before any run)
+### Identity check (registered 2026-10-15 19:15, before any run)
 
 `scripts/gemma-identity-check.sh`, same setup (test servers on card 1 through the production launcher, service
 profile, one user, 32K; the LAN service on card 0 meanwhile):
@@ -54,3 +54,22 @@ profile, one user, 32K; the LAN service on card 0 meanwhile):
 
 If both pass, the service change (the test build's binary and the flag in the production launcher) is offered to the
 owner with the numbers; it is not made by this check.
+
+### Identity check, first attempt (19:16-19:25): conversion identical; the token comparison was not set up right
+
+- **verify** passed: 16,384 conversion calls compared byte by byte, 0 mismatched, 0 mismatch lines.
+- The token comparison could not be read. All three servers differed from one another on all 12 prompts (prod vs new
+  0/12, verify vs new 0/12, at different places), so the servers were not run-to-run deterministic. The test servers
+  lacked the LAN service's `GGML_SYCL_DNNL_DETERMINISTIC=1` (set in the recipe drop-ins, not the launcher), and they
+  ran the launcher's default MTP speculation and prompt micro-batch 2048, where the LAN throughput recipe runs no
+  speculation and 1024.
+- The top-8 logprob requests aborted every server ("get_logits_ith: invalid logits id 86, reason: no logits"). This is
+  the reason the LAN frontdoor rejects logprob requests; it is an abort in this build's logits path, not memory.
+- The speed check above was also run without deterministic oneDNN and at micro-batch 2048, so it is repeated.
+
+**Second attempt (registered 19:30, before it runs).** Same script, test servers now on the LAN service's settings
+(`GGML_SYCL_DNNL_DETERMINISTIC=1`, `LLAMA_PREFILL_UBATCH_SIZE=1024`, no speculation, one slot): verify, prod-a, new-a,
+prod-b, new-b. Each: the suite (512 tokens), the 2K / 8K / 24K prompts (128 tokens, token ids, no logprobs), then the
+prompt rate twice. **Pass:** verify 0 mismatched calls; prod-a = prod-b (the control; if the control fails, the token
+comparison is unreadable again and nothing is concluded from it); new-a, new-b and verify 12/12 suite and 3/3 long
+token-identical to prod-a.
