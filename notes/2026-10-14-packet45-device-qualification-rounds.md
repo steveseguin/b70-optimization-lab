@@ -28,7 +28,8 @@ All times are UTC.
 | 3 | 10-14 11:24 | K1b admission, before device contact | 2.5 GB K1b retention reserve + 1.55 GB seal-bound build tree > packet-38-era 3 GB build cap; the CPU rehearsal admitted a fake 64 MB | `7244b704d` | yes, round 4 (K1b passed) |
 | 4 | 10-14 17:21 | K2, first line | fused route+gather (`p42.route.production_rank32`) adapter mismatch, all three versions, both ranks | `13cb290b0` | yes, round 5 (K2 ran 400 lines past it) |
 | 5 | 10-14 23:24 | K2, P39 gate | P39's first expert-bank upload of 268,697,600 B exceeds CopyEngine's 134,217,728 B per-copy limit (`owner.cpp:310`, "copy extent/lifetime") | `4bd493a72`, sealed `8a84cf7a0` | yes, round 6 (K2 passed) |
-| 6 | 10-15 01:24 | KD host reference, before device contact | K2 enabled `small.gdn.ab=round2` and `small.ffn=p30.small.rows4` on both pairs; the KD plan has a sibling group that fails `main.cpp:656` ("small GEMV sibling schedule/input") instead of running unfused | fix 6 in progress | pending |
+| 6 | 10-15 01:24 | KD host reference, before device contact | K2 enabled `small.gdn.ab=round2` and `small.ffn=p30.small.rows4` on both pairs; the KD plan has a sibling group that fails `main.cpp:656` ("small GEMV sibling schedule/input") instead of running unfused | `564b356a1`, sealed `f912fdaf6` | yes, round 7 (KD passed both pairs) |
+| 7 | 10-15 02:03 | W2m admission, before device contact | `pipeline.py:442` requires `OMP_NUM_THREADS=2` in the window process, but the sealed `coordinator_windows.sh` launches with `env -i PATH LD_LIBRARY_PATH` only. WINDOW.md says the wrapper supplies it, and packet 44 did. The identity records the present env keys, so a resume from W2m is impossible; the chain restarts from K0 | coordinator launcher copy `runner/coordinator_windows_omp2.sh` (sealed script + `OMP_NUM_THREADS=2` in both `env -i` lists); WS128 queue scripts patched the same way; no code change or reseal | pending (relaunched 02:21) |
 
 Every failure was identical on both card pairs. The kernel log has no xe/GuC reset, hang or fault line after
 2026-10-12; the last ones are the known 10-10/10-11 incidents. In every incident, the failing rank's teardown
@@ -66,6 +67,10 @@ Fix 5 reached the sealed device chains 19 minutes after the directive. Before th
 3-6 h. Round 6's KD defect depends on which kernels the device chose: it exists only after K2's measured
 dispatch enables the small-GEMV fusions. It reproduces exactly on CPU from the saved
 `K2/run0/dispatch-measured.json`. Evidence: `build/incident-20261015-kd-smallgemv/`.
+Fix 6 went from the KD failure to a relaunch in 29 minutes. Seal 6 (`f912fdaf6`) records a named amendment: for fix 6's
+`main.cpp` change, the device suite windows (every emitted token compared with the oracle) replace the pre-device
+real-model CPU suite. Any publication must cite those windows. Round 7's W2m evidence:
+`build/incident-20261015-w2m-omp-env/`.
 
 ## The common cause of defects 3 and 5
 
