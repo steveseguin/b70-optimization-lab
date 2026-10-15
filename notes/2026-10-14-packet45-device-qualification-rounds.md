@@ -167,6 +167,21 @@ Next levers: miss cycles are still about 2 ms above p44 (restore plus rank-0 red
 
 10. **Moved results broke a packet input path (2026-10-15 13:55).** SPEED4's third attempt passed K0-W0p on both pairs (K2 included). KD then refused before device contact: "No such file or directory: .../build/results-f912fdaf6/c4096-dr0-gpu/WS128/run/ranks/rank0/census.json". The packet's memory census and inventory code read the earlier result trees by their `build/` paths. Fix: symlinks at `build/results-{f912fdaf6,65c5eb22b,9b91d3270}` pointing to `/home/steve/own-xpu-runtime-results/packet45/`. `storage.build_size` (`rglob`, which skips symlinked directories in Python 3.12) now counts 5.09 GB. The raid disk (`/dev/sdb2`) shows Buffer I/O errors and was left untouched (`DISK-CLEANUP-20261015.md`); 2.4 GB of regenerable ASAN/fixture build output was removed from finished packets 36/38/40 to restore root headroom. The refused attempts are under `.../packet45/speed4-attempt{1,2,2b,3}*`.
 
+## Speed repair 4 (`eabc13242`) and the storage relocation (2026-10-15)
+
+On a confirmed redo, the restore drops from 46.36 to 18.13 MiB. Both chains passed K0-WSs; WS128 runs were qualifying, 12/12 exact, acceptance 0.791:
+
+| Run | Cards | Class-balanced | All-prompt | Hit | Miss |
+|---|---|---:|---:|---:|---:|
+| 24/24 split, draft rank 0 | 0-1 | 38.1185 | 37.9718 | 22.74 | 40.98 |
+| Draft rank 1 | 2-3 | **38.3661** | 38.1137 | 22.81 | 40.34 |
+
+The draft-rank-1 result is +0.55% over the 38.157157 record but not yet confirmed or submitted, because SPEED5 (23/25 split, draft rank 1, forecast 39.6) comes first.
+
+Storage relocation. The full `results-{f912fdaf6,65c5eb22b,9b91d3270}` trees and the four refused SPEED4 attempts (230,978 files) are archived as `/mnt/usb-models/own-xpu-runtime-results/packet45-results-20261015.tar.gz` (2,791,621,371 bytes, sha256 `712621138f72bc7e9d5cd9285ae03a0e5c315c729877c6499f41df4ba4ce89f2`; member count verified). Root keeps only the 78 files referenced by the packet's snapshot inventories and evidence (hash-verified) under `/home/steve/own-xpu-runtime-results/packet45/`, reached through the `build/results-*` symlinks. Root free went from 21.97 to 27.32 GB.
+
+A first plain copy of the 231k small files to the USB NTFS volume exhausted its file table ("No space left on device" with 111 GB free). The partial copy was deleted, and a single archive was written instead. `/mnt/raid-models` (`/dev/sdb2`) still shows Buffer I/O errors and was not used.
+
 ## Relaunch procedure (after fix 5, and audit 6 if it reseals)
 
 1. Confirm that the runner is not running and that `queue/STOP` holds the halt reason.
