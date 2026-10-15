@@ -6,7 +6,7 @@ RULE='packet45.speed2.parallel-write-set-union.2026-10-15'
 BEFORE='a199dffa53d9f31e30c1b805ffa251694829bc0beb57d7f7322dc998eccc8c28'
 PINS={'strict_snapshot.hpp':'a199ce9ce73004e408a474d63c3c3d22da25b5c5d498e293e0e3fe4a7f874c04'}
 MIRROR='78820f2338872bf5f0d17f44885a66d47e0448e3ede7739fdf02090630319018'
-def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def sha(p):return __import__('speed4_qualification').prior_sha(p)
 def before():
  p=P/'evidence/speed2/before-build-receipt.json';assert sha(p)==BEFORE,'SPEED2 baseline changed';return json.loads(p.read_text())
 def source_allowed(path,old):

@@ -6,6 +6,7 @@ a reason to delete a failed run. The full file inventory and hashes are in
 
 | Artifact | Why retained | Reproduction or restoration |
 |---|---|---|
+| `speed4-snapshot-gates.json` (about 3.0 MB), `evidence/speed4/mini-cases.json` (about 1.5 MB) | Complete state signatures, per-case decisions, source/binary identity and archive bindings for 93 mini executions, including required-extent negative controls and abandoned-redo fallback. | Run `speed4_snapshot_gate.py` against the sealed GNU host binary; inspect or verify each bound scratch archive with `storage.verify_archive`. Initial failed harness evidence is retained separately and does not qualify the final build. |
 | `merge-inventory.json` | Complete per-file comparison against both immutable parents, including omitted historical evidence and current file hashes. | Run `merge_inventory.py` after final artifacts are written. |
 | `rope.bf16` (4 MiB) | Frozen host-generated RoPE arithmetic is part of identity v2; regenerating with another math library could change output. | Copied byte-for-byte from the pinned packet44 parent; hash is in the source seal. |
 | `evidence/draft-baseline-rows.jsonl.gz` (5.84 MB) | Exact historical draft reference bytes, not an inherited pass. | `draft_baseline.py --prepare` rebuilds the compressed reference from the pinned baseline; the oracle receipt lists input/member hashes. |

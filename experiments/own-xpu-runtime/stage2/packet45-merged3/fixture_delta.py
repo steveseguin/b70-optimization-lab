@@ -76,6 +76,6 @@ def verify(artifacts):
   linked_into_model_binary=True,called_by_production_decode=True,
   seal_amendment=__import__('seal6_amendment').verify(),
   historical_real_cases=6,fresh_real_cases=0,
-  reuse_authorization='SEAL6 owner directive 2026-10-15: exact fix6 grouping and SPEED1/SPEED2/SPEED3 profiling, split and snapshot transport/write-set and small-FFN repair; device suite oracle is real-model authority; no pre-device real-model CPU rerun',
+  reuse_authorization='SEAL6 owner directive 2026-10-15: exact fix6 grouping and SPEED1/SPEED2/SPEED3/SPEED4 profiling, split, snapshot transport/write-set, confirmed-redo spare-bank overwrite and small-FFN repair; device suite oracle is real-model authority; no pre-device real-model CPU rerun',
   historical_model_artifacts_sha256={n:h for n,h in before['artifacts_sha256'].items() if n.endswith('/own-rt-iq3')},
   baseline_seal_sha256=digest(P/'evidence/copy-extent-fix/before-build-receipt.json'))

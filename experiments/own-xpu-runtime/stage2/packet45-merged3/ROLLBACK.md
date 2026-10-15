@@ -13,7 +13,7 @@ the confirmed draft prefix. All draft allocations remain in request reset and
 final inventories. Both target recurrent-bank launch extents follow their banks.
 
 A target half checks cancellation before every compute launch. A mismatch drains
-all submitted work, restores its exact snapshot (including invalid cache tails),
+all submitted work, restores its snapshot (including invalid cache tails),
 restores history and bank selection, and repeats using the target token. The
 snapshot precedes context admission. Rollback restores both launch extents and
 rebuilds both banks' QSA command bindings through that same admission path.
@@ -38,3 +38,20 @@ proved prefix; QSA append needs the current K/V/raw row and the current pooled
 row. Bytes outside these ranges stay untouched and remain fully hashed. Every
 other protected extent and all host metadata retain their existing coverage.
 See [SPEED2-CLOSEOUT.md](SPEED2-CLOSEOUT.md) and the checked write-set artifact.
+
+SPEED4 preserves the complete end-state contract across rollback plus confirmed
+redo. A same-position, target-verified redo can defer restoring only physical
+spare GDN/conv banks whose sole writer covers the entire allocation. Inputs
+bind a distinct active bank. The redo therefore never reads the deferred bytes
+and replaces every one before committing. Capture remains the full SPEED2
+write set; all other bytes, bank selection, launch metadata and shared ownership
+are restored normally. Unknown, partial or multiple writers receive full restore.
+
+The explicit redo command binds the candidate position, fixture and the target's
+release-published verified token. Only the matching non-speculative HALF can
+consume it. Any other command first restores the deferred banks; FINISH and
+request boundaries do the same before state can be observed. Cancel, terminal
+EOS and ordinary ROLLBACK keep full write-set restore. A confirmed redo must
+finish and swap successfully; a sticky failure remains fatal. No intermediate
+reduced-restore state is published as a completed model state. See
+[SPEED4-CLOSEOUT.md](SPEED4-CLOSEOUT.md) for the checked proof and full-state gates.

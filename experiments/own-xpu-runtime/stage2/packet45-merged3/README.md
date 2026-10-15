@@ -1,5 +1,9 @@
 # Packet 45: merged runtime, CPU qualified
 
+[SPEED4 miss-path repair](SPEED4-CLOSEOUT.md) restores 18.13 MiB before a
+confirmed 24/24 redo, while retaining the complete 46.36 MiB restore for
+terminal rollback. Its new artifact identity needs coordinator qualification.
+
 [SPEED2 write-set repair](SPEED2-CLOSEOUT.md) preserves full-state rollback while
 avoiding copies of untouched scratch and QSA tails. Device qualification remains
 the coordinator's exact-token responsibility under the named seal amendment.

@@ -121,7 +121,7 @@ class Controller:
                         self.stats["hits"]+=1
                         if not early_accept:accept(0)
                     else:
-                        self.stats["misses"]+=1;start=time.monotonic();b.call(0,ROLLBACK)
+                        self.stats["misses"]+=1;start=time.monotonic();b.call(0,ROLLBACK,token=actual,position=p+1,fixture=fixture(p+1),speculative=1)
                         half(0,actual,p+1);b.wait(0);accept(0);self.stats["redo_ms"]+=(time.monotonic()-start)*1000
                 else:half(0,actual,p+1);b.wait(0);accept(0)
             if guess_rows and guess_rows[-1]["position"]==p+1:guess_rows[-1]["cycle_ms"]=(time.monotonic()-cycle_start)*1000

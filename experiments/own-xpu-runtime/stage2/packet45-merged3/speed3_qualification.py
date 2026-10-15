@@ -7,10 +7,11 @@ BEFORE='9e0b3ce4ff13f20c2ec55e2580ae2716bdf6c8ab09aec1297534f9a9cb2aa29e'
 PINS={'main.cpp': '6861b569fcff10e8515d1ead9ec2fd4176f273ff00a07e6fc699ac804007738c', 'rank.hpp': '821a0c74403df98de7b6608cac9e9556e257b84ac29e68451482ebbe4e9b2f9b', 'mtp.hpp': 'e9587829d78c599270983ce450755c9fe1aae0b7e98c2ba25a6a5b897a69fd0b', 'pipeline.py': 'b331b810f0ce4025510760c61458b1e0b05551126ab312c4e69d6bc5e019c08b', 'window.py': '6446b7e6abb35f333f8354de35fab6f4ebc66af1703d43bbe1779fd6bf828545', 'memory_gate.py': '76910a7670dcc7db81ba9dea5a2fb717b05e8b5fc945ec852bd7229fab55b07b', 'memory_plan.py': '59305e748f848bdba02d61385c54e95426c752c07ef0a6b1e9dcfe325976318f', 'coordinator_windows.sh': '15e4ca0cb27de2539ee494b18c22c537bdd6618aa1efb997f291f08bb1c37a33', 'cpu_merged_gate.py': '08198b2dd77c2fcd63ed1fdc09576dbf96e1a528da56953f966dcfa0026a029b', 'memory-plan.json': '8c30ff3787b0fe9473d021aff18e70465b6452a5f6b65524d4b8f63336a8de9a', 'plan_group_gate.py': '3f0828e218e6085e190ad1387c29f30a4cfd6919297b305cee4d9c3acb1bff2b'}
 COMPILED=('main.cpp','rank.hpp','mtp.hpp')
 MIRRORS={'main.cpp': {'old': ['11afd06931951be3f9c5d2ffe3c077960ce1bd430962391c70c8e729fc2daa1b'], 'new': '4ffe0ee8ec6442bed197458dd1ce0da804645227396da9323b44b12dc7ce7859'}, 'rank.hpp': {'old': ['c24f08a558840b32831785d47e2514c7df03e2ce75775e5a848aa13e38d87136'], 'new': '4eef587666b52f9f8d2e8dfcbfef3228e0d4633efc53b76b42b82dab5c127c10'}, 'mtp.hpp': {'old': ['3a87e739de35c7f2e69b5e1393a8e7445097c6a8096bf651219b20daf8959515'], 'new': 'a00b881301da407d85472e6829f2e6493f6585cb504ea58a6de3edb2adca5184'}}
-def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def sha(p):return __import__('speed4_qualification').prior_sha(p)
 def before():
  p=P/'evidence/speed3/before-build-receipt.json';assert sha(p)==BEFORE,'SPEED3 baseline changed';return json.loads(p.read_text())
 def historical_compiled_sources(current):
+ current=__import__('speed4_qualification').historical_compiled_sources(current)
  old=before()['sources'];expected={str((P/n).relative_to(ROOT)) for n in COMPILED}
  assert all(k in old for k in current),'compiled source closure changed'
  assert {k for k in current if current[k]!=old[k]}==expected,'outside fixture/SPEED3 repair'
@@ -29,7 +30,7 @@ def mirror_allowed(path,old,new):
  return n in MIRRORS and str(path)==str((P/'build/checked'/P.relative_to(ROOT)/n).relative_to(ROOT)) and old in MIRRORS[n]['old'] and new==MIRRORS[n]['new']==sha(ROOT/path) and sha(P/n)==PINS[n]
 def verify():
  from build import compiled_sources
- current=compiled_sources();historical_compiled_sources(current)
+ current=compiled_sources();historical_compiled_sources(current);current=__import__('speed4_qualification').historical_compiled_sources(current)
  assert all(sha(P/n)==h for n,h in PINS.items()),'SPEED3 runtime source changed'
  gates={n:json.loads((P/n).read_text()) for n in ('speed3-plan-gates.json','speed3-snapshot-gates.json','speed3-event-gates.json','speed3-admission-gates.json')}
  for name,row in gates.items():
@@ -50,7 +51,7 @@ def verify():
   assert row['write_set']['sites_count']==len(site['sites'])
   assert row['write_set']['sites_sha256']==hashlib.sha256(json.dumps(site['sites'],sort_keys=True).encode()).hexdigest()
  assert mini['cases']==63 and mini['gate_count']==54 and len(mini['negative_controls'])==6
- assert mini['build']['compiled_sources_sha256']==current and mini['build']['binary_sha256']==sha(P/'build/gnu-host/own-rt-iq3')
+ assert mini['build']['compiled_sources_sha256']==current and mini['build']['binary_sha256']==__import__('speed4_qualification').before()['artifacts_sha256']['gnu-host/own-rt-iq3']
  assert all(r['full_state_equal'] for r in mini['rows']) and all(r['rejected'] for r in mini['negative_controls'])
  from seal45 import archive_bound
  for row in mini['owners']:archive_bound(row['archive'])

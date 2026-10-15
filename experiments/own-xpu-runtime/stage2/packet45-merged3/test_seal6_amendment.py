@@ -19,6 +19,30 @@ class Amendment(unittest.TestCase):
    self.assertTrue(a.source_matches(a.P/n,before()['sources'][str((a.P/n).relative_to(a.ROOT))]))
    self.assertFalse(a.source_matches(a.P/n,'0'*64))
   self.assertEqual(a.verify()['speed2_extension']['mini_checks'],36)
+ def test_speed4_scope(self):
+  from speed4_qualification import PINS,before
+  for n in PINS:
+   self.assertTrue(a.source_matches(a.P/n,before()['sources'][str((a.P/n).relative_to(a.ROOT))]))
+   self.assertFalse(a.source_matches(a.P/n,'0'*64))
+  self.assertEqual(a.verify()['speed4_extension']['mini_checks'],78)
+ def test_speed4_wrong_writer(self):
+  import speed4_qualification as s
+  original=s.json.loads
+  def mutated(raw,*args,**kwargs):
+   row=original(raw,*args,**kwargs)
+   if isinstance(row,list) and len(row)==18 and isinstance(row[0],dict) and 'extents' in row[0]:
+    next(x for x in row[0]['extents'] if x['redo_overwritten'])['redo_first_writer']='unproved.writer'
+   return row
+  with patch.object(s.json,'loads',side_effect=mutated),self.assertRaises(AssertionError):s.verify()
+ def test_speed4_partial_coverage(self):
+  import speed4_qualification as s
+  original=s.json.loads
+  def mutated(raw,*args,**kwargs):
+   row=original(raw,*args,**kwargs)
+   if isinstance(row,list) and len(row)==18 and isinstance(row[0],dict) and 'extents' in row[0]:
+    next(x for x in row[0]['extents'] if x['redo_overwritten'])['redo_covered_bytes']-=1
+   return row
+  with patch.object(s.json,'loads',side_effect=mutated),self.assertRaises(AssertionError):s.verify()
  def test_unproved_snapshot_exclusion(self):
   import speed2_qualification as s
   original=s.json.loads

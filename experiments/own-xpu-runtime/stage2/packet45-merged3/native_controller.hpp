@@ -93,7 +93,7 @@ inline Result run(Backend& b,const Config& c){
    if(c.draft_rank==0&&pending){b.wait(0);if(known||guess==confirmed){b.call(0,accept);early_accept=true;}}
    b.start(c.draft_rank,draft,confirmed,p+1,int(p+2>=length),1);issued_draft_at=b.sent[c.draft_rank];if(c.draft_rank==0)b.wait(0);draft_pending=true;}
   if(known){if(!pending)half_start(0,c.prompt[p+1],p+1);if(b.pending[0])b.wait(0);if(!early_accept)b.call(0,accept);}
-  else{int actual=out.tokens.back();if(pending){if(b.pending[0])b.wait(0);bool hit=guess==actual;if(hit){++out.hits;if(!early_accept)b.call(0,accept);}else{++out.misses;double redo=clock_now();b.call(0,rollback);half_start(0,actual,p+1);b.wait(0);b.call(0,accept);out.redo_ms+=(clock_now()-redo)*1000;}out.guesses.push_back({p+1,guess,actual,hit,(clock_now()-cycle)*1000});}
+  else{int actual=out.tokens.back();if(pending){if(b.pending[0])b.wait(0);bool hit=guess==actual;if(hit){++out.hits;if(!early_accept)b.call(0,accept);}else{++out.misses;double redo=clock_now();b.call(0,rollback,actual,p+1,fixture(p+1),1);half_start(0,actual,p+1);b.wait(0);b.call(0,accept);out.redo_ms+=(clock_now()-redo)*1000;}out.guesses.push_back({p+1,guess,actual,hit,(clock_now()-cycle)*1000});}
    else{half_start(0,actual,p+1);b.wait(0);b.call(0,accept);}}
   if(c.dumps)b.call(0,dump,0,p+1);
  }

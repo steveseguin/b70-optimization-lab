@@ -2,6 +2,7 @@
 
 | Finding | Evidence | Next condition |
 |---|---|---|
+| A terminal rollback and a rollback followed by a verified redo have different restore needs | [SPEED4](SPEED4-CLOSEOUT.md), complete spare-bank overwrite proof and abandoned-redo fallback | Skip only proved physical spare banks for the matching confirmed HALF; keep full restore for every observable terminal state and reject incomplete coverage |
 | Whole-allocation scratch and invalid QSA tails dominate snapshot bytes even after batching | [SPEED2](SPEED2-CLOSEOUT.md), checked per-site write union and complete-state comparisons | Save a proved superset of writes; unknown writers fall back to full coverage; never infer hit-cycle savings from overlapped capture cost |
 | Write-before-read was proposed as sufficient to exclude overwritten snapshot outputs; terminal full-state rollback still observes the old bytes | [SPEED1](SPEED1-CLOSEOUT.md), four deliberately omitted streams extents rejected by the full-state comparator; standalone scratch coverage is incomplete | Use private speculative storage or proved modified-range backups; never mask output/scratch state hashes |
 | P39 shared-up/activation prevents the selected small-FFN tuple and adds 192 target commands | [SPEED1 plan sweep](speed1-plan-gates.json), 48 plan/dispatch rows | Keep only this epilogue disabled until a complete composition wins an end-to-end A/B |

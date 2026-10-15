@@ -8,7 +8,7 @@ PINS={'p39_plan.hpp':'fec70f9aa95dfd71fea8dac927419373ce3172c73e76d4a3510d52b595
       'strict_snapshot.hpp':'c0f1d3e795798de4679aa13a6d872306e7bdbb8a916266c2f125995e2cc655ce'}
 MIRRORS={'p39_plan.hpp':('13870730098c4b5f515c7e80f82d7a1316d6a12520f4e532f099aa981f74fcda','9f8d2457fb65caad4c47aabf2e02352571a5da2832604047369938d4b4c1b75a'),
  'strict_snapshot.hpp':('42a26f4aa254eab1b52edc2ea115d9082770d2a691d0b8eb0ac1e342d98ee885','60957654a6a418782f7b1cd7930d4e3bc499784f157d25a64d02f5220c078ad7')}
-def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def sha(p):return __import__('speed4_qualification').prior_sha(p)
 def before():
  p=P/'evidence/speed1/before-build-receipt.json';assert sha(p)==BEFORE,'SPEED1 baseline changed';return json.loads(p.read_text())
 def current_pin(n):

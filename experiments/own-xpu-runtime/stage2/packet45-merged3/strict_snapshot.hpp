@@ -73,14 +73,44 @@ struct SnapshotWriteSet {
  }
 };
 // SPEED2_WRITE_SET_END
+// SPEED4_REDO_PROOF_BEGIN
+// Only physical spare banks qualify. All plan inputs bind the active bank;
+// outputs[1] binds the distinct spare bank (Engine::prepare_plan and banks()).
+// GDN writes vh*d rows of d BF16 elements; conv writes width*3*dilation.
+// A complete, non-speculative redo therefore replaces EVERY skipped byte.
+struct RedoBankProof {
+ size_t bytes=0;std::string writer;
+ static RedoBankProof derive(const flash::Plan& p,const std::string& name) {
+  const flash::Buffer* buffer=nullptr;const flash::Launch* writer=nullptr;
+  for(const auto& b:p.buffers)if(b.name==name){if(buffer)return {};buffer=&b;}
+  for(const auto& l:p.launches)if(std::find(l.outputs.begin(),l.outputs.end(),name)!=l.outputs.end()){
+   if(writer)return {};writer=&l;
+  }
+  if(!buffer||!writer||buffer->type!=flash::Scalar::bf16||writer->outputs.size()!=2||writer->outputs[1]!=name)return {};
+  size_t elements=0;
+  if(writer->op=="gdn"){
+   if(writer->inputs.size()<4||writer->inputs[3]!=name||p.g.vh<=0||p.g.d<=0||
+      writer->shape!=std::vector<int>{p.g.kh,p.g.vh,p.g.d}||buffer->shape!=std::vector<int>{p.g.vh,p.g.d,p.g.d})return {};
+   elements=size_t(p.g.vh)*p.g.d*p.g.d;
+  }else if(writer->op=="conv"){
+   int dilation=writer->parameter;
+   if(writer->inputs.size()<2||writer->inputs[1]!=name||writer->shape.size()!=1||writer->shape[0]<=0||
+      (dilation!=1&&dilation!=3)||buffer->shape!=std::vector<int>{writer->shape[0],3*dilation})return {};
+   elements=size_t(writer->shape[0])*3*dilation;
+  }else return {};
+  return {elements*flash::scalar_bytes(buffer->type),writer->label};
+ }
+};
+// SPEED4_REDO_PROOF_END
 class SpeculativeImage {
  Engine& e;
- struct Source {std::string name;Allocation standalone=0;size_t bytes=0;bool bank=false,kv=false,pooled=false;size_t write_bytes=0;bool single_row=false;};
- struct Extent {Allocation id;size_t offset,bytes,backup_offset;};
+ struct Source {std::string name;Allocation standalone=0;size_t bytes=0;bool bank=false,kv=false,pooled=false;size_t write_bytes=0;bool single_row=false,redo_overwrite=false;};
+ struct Extent {Allocation id;size_t offset,bytes,backup_offset;bool redo_overwrite=false;};
  std::vector<Source> sources;
  std::vector<Extent> saved;
  std::vector<std::pair<Allocation,size_t>> protected_active,protected_qsa;
  Allocation backup=0;size_t capacity=0;bool valid=false,dirty=false;
+ bool redo_pending=false;int redo_position=-1,redo_token=-1;
  std::array<uint8_t,65536> shared_before{};uint8_t* shared_slot=nullptr;
  unsigned parity=0;int64_t history0=0,history1=0;
  int launch_extent=32,alternate_launch_extent=32;
@@ -90,13 +120,14 @@ class SpeculativeImage {
  std::vector<Allocation> fp32_sources;
  std::vector<size_t> fp32_extents;
  uint64_t captures=0,restores=0,saved_bytes=0,capture_submissions=0,restore_submissions=0;
+ uint64_t restored_bytes=0,redo_omitted_bytes=0,redo_restores=0,redo_fallbacks=0,completed_redos=0;
  void zero_private() {
   if(!backup)return;
   std::vector<uint8_t> zeros(std::min(capacity,size_t(4*1024*1024)),0);
   for(size_t off=0;off<capacity;off+=zeros.size())e.upload(0,backup,off,zeros.data(),std::min(zeros.size(),capacity-off));
   dirty=false;
  }
- void copy(bool restore) {
+ void copy(bool restore,bool for_redo=false,bool deferred_only=false) {
   ownrt::CopyEngine engine(e.dev(0));
   std::vector<ownrt::PreparedCompute> checked;std::vector<size_t> lengths;
   std::set<Allocation> distinct;
@@ -105,6 +136,9 @@ class SpeculativeImage {
   e.dev(0).begin_capture(checked);
   try {
    for(const auto& x:saved){require(distinct.insert(x.id).second,"overlapping snapshot source allocation");
+    if(restore&&for_redo&&x.redo_overwrite){redo_omitted_bytes+=x.bytes;continue;}
+    if(deferred_only&&!x.redo_overwrite)continue;
+    if(restore)restored_bytes+=x.bytes;
     for(size_t off=0;off<x.bytes;off+=SnapshotBatch::limit){
      size_t count=std::min(x.bytes-off,SnapshotBatch::limit);
      if(restore)engine.copy(x.id,x.offset+off,backup,x.backup_offset+off,count,{});
@@ -149,6 +183,7 @@ public:
    Source row{name,0,slot.n*flash::scalar_bytes(slot.type),e.state_spares.count(name)!=0,kv.count(name)!=0,ends(name,".pooled")};
    row.write_bytes=row.bytes;row.kv=row.kv&&SnapshotWriteSet::single_row(e.p,name,true);
    row.single_row=row.kv&&e.a.nongemv=="parallel";
+   if(row.bank){auto proof=RedoBankProof::derive(e.p,name);row.redo_overwrite=proof.bytes==row.bytes&&proof.bytes>0;}
    capacity+=row.bytes;sources.push_back(std::move(row));
   }
   for(const auto& [name,id]:e.state_spares)represented.insert(id);
@@ -163,7 +198,7 @@ public:
   zero_private();
  }
  void begin(uint8_t* shared) {
-  require(e.a.rank==0&&backup&&!valid,"snapshot begin ownership");e.drain();
+  require(e.a.rank==0&&backup&&!valid&&!redo_pending,"snapshot begin ownership");e.drain();
   require(!e.poisoned&&!e.integer(0,"error"),"snapshot cannot erase target failure");
   // Host layer streaming releases its weights at every completed half. Restoring
   // metadata never revives an allocation freed by a later layer transition.
@@ -188,18 +223,20 @@ public:
    // Active recurrent banks and already-committed QSA prefixes are not saved:
    // illegal mutation there must remain visible to the full-state gate.
    require(skip<=source.bytes&&bytes<=source.bytes-skip,"snapshot writer range");
-   if(bytes)saved.push_back({id,skip,bytes,offset});offset+=bytes;
+   if(source.redo_overwrite){require(source.bank&&id==e.state_spares.at(source.name)&&id!=e.buffers[0].at(source.name).id&&skip==0&&bytes==source.bytes,"redo spare bank binding/coverage");}
+   if(bytes)saved.push_back({id,skip,bytes,offset,source.redo_overwrite});offset+=bytes;
   }
   require(offset<=capacity,"snapshot extent overflow");valid=true;dirty=true;
   copy(false);++captures;saved_bytes+=offset;
  }
  void accept(){require(valid,"snapshot accept without speculation");e.drain();valid=false;}
- void restore(){
+ void restore(bool for_redo=false,int position=-1,int token=-1){
   require(valid,"snapshot restore without speculation");e.drain();
   require(!e.poisoned&&!e.integer(0,"error"),"snapshot cannot roll back sticky failure");
   require(e.bank_parity==parity,"snapshot restore bank selection");
   if(!e.resident)for(int layer:e.loaded_layer)require(layer==-1,"snapshot restore streaming layer retained");
-  copy(true);e.drain();
+  require(!redo_pending,"nested redo restore");
+  copy(true,for_redo);e.drain();
   require(shared_slot!=nullptr,"restore shared slot lifetime");std::memcpy(shared_slot,shared_before.data(),shared_before.size());
   // Restore both prepared-command banks as well as their launch metadata.
   // Rebuild only QSA sites through the same admission path. Do this before
@@ -213,14 +250,25 @@ public:
   e.loaded_layer=std::move(loaded);e.fp32_sources=std::move(fp32_sources);e.fp32_extents=std::move(fp32_extents);
   for(size_t card=0;card<e.fp32_sources.size();++card)if(e.fp32_sources[card])require(e.dev(int(card)).arena.row(e.fp32_sources[card]).live,"snapshot resurrected dead FP32 source");
   valid=false;++restores;
+  if(for_redo){redo_pending=true;redo_position=position;redo_token=token;++redo_restores;}
  }
+ bool before_command(bool confirmed_half,int position,int token){
+  if(!redo_pending)return false;
+  if(confirmed_half&&position==redo_position&&token==redo_token)return true;
+  // A promised redo may be abandoned by cancel/end/reset/dump. Restore its
+  // deferred banks before any other command can observe or reuse the state.
+  e.drain();require(!e.poisoned&&!e.integer(0,"error"),"deferred restore cannot erase failure");
+  copy(true,false,true);e.drain();redo_pending=false;redo_position=redo_token=-1;++redo_fallbacks;return false;
+ }
+ void finish_redo(){require(redo_pending&&!valid,"redo completion without pending restore");redo_pending=false;redo_position=redo_token=-1;++completed_redos;}
  void boundary(){
-  require(!valid,"snapshot boundary with unresolved speculation");e.drain();if(dirty)zero_private();
+  before_command(false,-1,-1);
+  require(!valid&&!redo_pending,"snapshot boundary with unresolved speculation");e.drain();if(dirty)zero_private();
   lookup.clear();selected.clear();loaded.clear();fp32_sources.clear();fp32_extents.clear();saved.clear();
   protected_active.clear();protected_qsa.clear();history0=history1=0;parity=0;launch_extent=alternate_launch_extent=32;
   shared_before.fill(0);shared_slot=nullptr;
   require(lookup.empty()&&selected.empty()&&loaded.empty()&&fp32_sources.empty()&&fp32_extents.empty()&&saved.empty(),"private host snapshot retirement");
-  if(backup)save(e.a.output/"speculative-snapshot.json","{\"passed\":true,\"capacity_bytes\":"+std::to_string(capacity)+",\"captures\":"+std::to_string(captures)+",\"restores\":"+std::to_string(restores)+",\"snapshot_payload_bytes\":"+std::to_string(saved_bytes)+",\"capture_submissions\":"+std::to_string(capture_submissions)+",\"restore_submissions\":"+std::to_string(restore_submissions)+",\"copy_extent_guard_unchanged\":true,\"private_backup_zeroed\":true,\"committed_state_scrubbed\":false,\"private_host_backup_empty\":true,\"snapshot_valid\":false,\"counters_are_telemetry\":true,\"rank0_shared_slot_bytes\":65536,\"rank1_shared_regions_untouched\":true}");
+  if(backup)save(e.a.output/"speculative-snapshot.json","{\"passed\":true,\"capacity_bytes\":"+std::to_string(capacity)+",\"captures\":"+std::to_string(captures)+",\"restores\":"+std::to_string(restores)+",\"snapshot_payload_bytes\":"+std::to_string(saved_bytes)+",\"capture_submissions\":"+std::to_string(capture_submissions)+",\"restore_submissions\":"+std::to_string(restore_submissions)+",\"restored_bytes\":"+std::to_string(restored_bytes)+",\"redo_omitted_bytes\":"+std::to_string(redo_omitted_bytes)+",\"redo_restores\":"+std::to_string(redo_restores)+",\"completed_redos\":"+std::to_string(completed_redos)+",\"redo_fallbacks\":"+std::to_string(redo_fallbacks)+",\"copy_extent_guard_unchanged\":true,\"private_backup_zeroed\":true,\"committed_state_scrubbed\":false,\"private_host_backup_empty\":true,\"snapshot_valid\":false,\"counters_are_telemetry\":true,\"rank0_shared_slot_bytes\":65536,\"rank1_shared_regions_untouched\":true}");
  }
 #ifdef OWN_RT_HOST_ONLY
  // CPU-only negative control: write a byte excluded from the rollback image.

@@ -180,10 +180,10 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  if(!e.class_timing)e.timings<<"null";else {e.timings<<'{';for(size_t j=0;j<e.families.size();++j)e.timings<<(j?",":"")<<ownrt::quote(e.families[j])<<':'<<e.family_ms[j];e.timings<<'}';}e.timings<<"}\n";
  return {0,token,error,int32_t(bytes),request.sequence,e.a.rank,{int32_t(candidate.cancelled),int32_t(issued)},Engine::ms(start),e.gemv_ms+e.nongemv_ms-gpu,0,0};
 }
-static void undo(Engine& e,Candidate& c,SpeculativeImage& image) {
+static void undo(Engine& e,Candidate& c,SpeculativeImage& image,bool redo=false,int position=-1,int token=-1) {
  require(e.a.rank==0&&c.pending&&c.speculative,"rollback outside rank0 speculation");
  e.drain();require(!e.integer(0,"error"),"sticky error cannot be rolled back");
- if(c.swapped)e.swap_state_banks();image.restore();c={};
+ if(c.swapped)e.swap_state_banks();image.restore(redo,position,token);c={};
 }
 static void state_dump(Engine& e,int sequence) {
  std::ostringstream o;o<<"{\"history0\":"<<e.history0<<",\"history1\":"<<e.history1<<",\"buffers\":{";bool comma=false;
@@ -232,6 +232,7 @@ static int run_rank(const Options& a) {
   auto execute=[&](const Request& r)->Reply {
    auto received=std::chrono::steady_clock::now();
    Reply response{};response.sequence=r.sequence;response.rank=a.rank;
+   bool completing_redo=image.before_command(r.op==half&&!r.speculative,r.position,r.token);
    if(r.op==draft){
     require(a.rank==a.draft_rank&&provider&&r.position>0,"draft command ownership/confirmation");
     if(a.rank==1){require(!c.pending&&engine->integer(0,"position")==r.position,"draft target not confirmed");}
@@ -258,9 +259,16 @@ static int run_rank(const Options& a) {
     bool prepared_inputs=async_half_ready;
     if(prepared_inputs){require(r.position==async_half_position&&r.token==async_half_token,"asynchronous draft/half confirmed identity");provider->queue_half_inputs(r.token,static_cast<uint8_t*>(mapping)+slot_bytes);async_half_ready=false;}
     response=half_step(*engine,c,r,static_cast<uint8_t*>(mapping),image,prepared_inputs);
+    if(completing_redo){require(!c.cancelled&&c.swapped,"incomplete confirmed redo");image.finish_redo();}
    }
    else if(r.op==pipeline::accept){require(c.pending,"accept without candidate");publish(*engine,c);if(c.speculative)image.accept();if(c.fixture>0)++accepted;c={};}
-   else if(r.op==rollback)undo(*engine,c,image);
+   else if(r.op==rollback){
+    bool redo=r.speculative==1;require(r.speculative==0||redo,"rollback mode");
+    if(redo){auto& v=verification(static_cast<uint8_t*>(mapping));
+     require(c.pending&&c.speculative&&r.position==c.position&&r.fixture==c.fixture&&r.token>=0&&r.token<engine->p.g.vocab,"redo identity");
+     require(__atomic_load_n(&v.position_plus_one,__ATOMIC_ACQUIRE)==uint32_t(r.position)&&v.token==r.token,"redo requires verified target token");}
+    undo(*engine,c,image,redo,r.position,r.token);
+   }
    else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();state_dump(*engine,r.position);if(r.position==2147483647)request_state_inventory(*engine);}
    else if(r.op==11){image.boundary();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
    #ifdef OWN_RT_HOST_ONLY

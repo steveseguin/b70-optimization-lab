@@ -1,0 +1,21 @@
+{"name": "r0s0-control", "passed": true}
+{"name": "r0s0-python-hit", "passed": true}
+{"name": "r0s0-python-miss", "passed": true}
+{"name": "r0s0-python-mtp", "passed": true}
+{"name": "r0s0-python-mtp-wrong", "passed": true}
+{"name": "r0s0-python-boundary-reference", "passed": true}
+{"name": "r0s0-python-partial-redo-0", "passed": true}
+{"name": "r0s0-python-partial-redo-49", "passed": true}
+{"name": "r0s0-python-partial-redo-99", "passed": true}
+{"name": "r0s0-python-partial-redo-100", "passed": false}
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/speed4_snapshot_gate.py", line 92, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/speed4_snapshot_gate.py", line 77, in main
+    out,row=c.case(f'r{rank}s{split}-{controller}-partial-redo-{cut}',256,rank,controller,mode='script',guesses=[(t+1)%16 for t in boundary_reference['tokens']],count=3,prompt_tokens=boundary_prompt,target_split=split,cancel=cut)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/cpu_merged_gate.py", line 191, in case
+    assert any(row.get('cancelled') for row in timing_rows), 'cancellation injection did not exercise a cancelled half'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: cancellation injection did not exercise a cancelled half

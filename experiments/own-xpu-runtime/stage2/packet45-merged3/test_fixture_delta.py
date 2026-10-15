@@ -5,7 +5,9 @@ from fixture_delta import verify_sources,compiled_sources,P
 class Delta(unittest.TestCase):
  def setUp(self):
   self.old=json.loads((P/'cpu-real-gates.json').read_text())['build']['compiled_sources_sha256'];self.now=compiled_sources()
- def test_current(self):self.assertEqual(len(verify_sources(self.old,self.now)),7)
+ def test_current(self):
+  self.assertEqual({Path(n).name for n in verify_sources(self.old,self.now)},
+   {'gemv_timing.cpp','p39_fixture.cpp','main.cpp','p39_plan.hpp','strict_snapshot.hpp','mtp.hpp','rank.hpp','native_controller.hpp'})
  def test_snapshot_tamper(self):
   k=next(n for n in self.now if n.endswith('/strict_snapshot.hpp'));self.now[k]='0'*64
   with self.assertRaisesRegex(AssertionError,'outside fixture'):verify_sources(self.old,self.now)
