@@ -16,6 +16,11 @@
 # 20d (04:07): 20c stopped at OpenHands' first request (it sends reasoning_effort "high", which Qwen3.8's template
 # refuses, and its system message as text parts, which made the memory note a second system message); both fixed in
 # the final 1.0.1 (ctxkeeper.py sha256 38879dde...); same queue, RUN=c20d
+# 20f (2026-10-15 afternoon): OpenCode alone, the one agent never run for memory (2.29 GiB free beside the server,
+# 2.52 needed): its container capped at 400 MiB of RAM with swap behind it (AGENT_MEM_SWAP), so it pages out instead
+# of taking host memory; the watchdog line moves to 1720 MiB (still 81 above the server's guard):
+#   RUN=c20f VENV=/mnt/fast-ai/venvs/ctxkeeper-1.0.1-final AGENTS=opencode CAP_SET=opencode=400m
+#   SWAP_SET=opencode=2g NEED_SET=opencode=530 WATCH_MIB=1720 ./longrun-campaign20.sh
 #   AGENTS="freeagent goose" RUN=c20x ./longrun-campaign20.sh     (subset / rerun)
 #   DRY=1 PORT=18390 SLOTS="18391 18392" RUN=dry ...            (scheduler test against tools/agentbench/fake_agent_server.py
 #                                                                  already listening on PORT: no Gemma, no GPU server)
@@ -45,6 +50,11 @@ AGENTS=${AGENTS:-"freeagent goose mini-swe-agent qwen-code pi forgecode open-int
 declare -A NEED=([freeagent]=180 [goose]=300 [mini-swe-agent]=400 [qwen-code]=450 [pi]=300 [forgecode]=170
   [open-interpreter]=260 [openhands]=430 [hermes-agent]=500 [kimi-code]=490 [mistral-vibe]=330 [cline]=540 [opencode]=840)
 declare -A CAP=([mistral-vibe]=1g [cline]=1g [opencode]=1536m)
+declare -A SWAP=()
+# per-agent overrides for a rerun (20f): CAP_SET="opencode=400m" SWAP_SET="opencode=2g" NEED_SET="opencode=530"
+for kv in ${CAP_SET:-}; do CAP[${kv%%=*}]=${kv#*=}; done
+for kv in ${SWAP_SET:-}; do SWAP[${kv%%=*}]=${kv#*=}; done
+for kv in ${NEED_SET:-}; do NEED[${kv%%=*}]=${kv#*=}; done
 (( DRY )) || export SUDO_ASKPASS=${SUDO_ASKPASS:?set SUDO_ASKPASS}
 START=$(date '+%F %T')
 FAULT_RE='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|wedged|device lost)|soft lockup'
@@ -217,8 +227,8 @@ if (( ready )); then
           systemd-run --user --unit="ctxk-$free_port" --collect "$VENV/bin/ctxkeeper" --upstream "http://127.0.0.1:$PORT" \
             --recipe qwen --port "$free_port" --state-dir "$OUT/proxy-state/$job" >/dev/null 2>&1
           if up "http://127.0.0.1:$free_port"; then
-            say "[$a] start on proxy :$free_port (cap ${CAP[$a]:-768m}, time limit $TIME_LIMIT s); MemAvailable $m MiB"
-            AGENT_MEM=${CAP[$a]:-768m} MODEL_NAME=qwen38-27b-fp8 timeout -s INT -k 300 $((TIME_LIMIT + 900)) \
+            say "[$a] start on proxy :$free_port (cap ${CAP[$a]:-768m}, swap ${SWAP[$a]:-none}, time limit $TIME_LIMIT s); MemAvailable $m MiB"
+            AGENT_MEM=${CAP[$a]:-768m} AGENT_MEM_SWAP=${SWAP[$a]:-${CAP[$a]:-768m}} MODEL_NAME=qwen38-27b-fp8 timeout -s INT -k 300 $((TIME_LIMIT + 900)) \
               "$AB/run-agent-job.sh" "$a" "$TASKDIR" "$OUT/runs" "$job" "http://127.0.0.1:$free_port/v1" "$TIME_LIMIT" \
               > "$OUT/$job.out" 2>&1 &
             SLOT_PID[$free_port]=$!; SLOT_JOB[$free_port]=$job; SLOT_AGENT[$free_port]=$a; SLOT_T0[$free_port]=$SECONDS

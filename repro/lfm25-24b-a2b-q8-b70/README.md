@@ -1,19 +1,20 @@
-# LFM2.5-24B-A2B Q8_0 on one Intel Arc Pro B70: 2.7x faster, same output
+# LFM2.5-24B-A2B Q8_0 on one Intel Arc Pro B70: 3.3x faster, same output
 
-**One B70 runs Liquid AI's LFM2.5-24B-A2B (8-bit) at about 112 tokens per second for one user, up from 41.6 on
+**One B70 runs Liquid AI's LFM2.5-24B-A2B (8-bit) at about 138 tokens per second for one user, up from 41.7 on
 llama.cpp's plain SYCL path, and every generated token and every log-probability is identical to that plain
-path.** Nothing is approximated: the speed comes from reading the weights in a faster memory layout while doing
-the arithmetic in exactly the same order.
+path.** Nothing is approximated: the speed comes from reading the weights in a faster memory layout and from doing
+chains of small steps in one GPU kernel each, while doing the arithmetic in exactly the same order.
 
 Status: **candidate** (measured on the lab's machine and rebuilt from this folder's public files; not yet replayed
-on a freshly installed host). Measured 2026-10-15.
+on a freshly installed host). Measured 2026-10-15. The first version (published the same morning, about 111
+tokens per second) is still available as `serve.sh unfused`.
 
 | | |
 | --- | --- |
 | Model | [LiquidAI/LFM2.5-24B-A2B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF) at revision `0912d33141f77e10705345a6732bfd83f0252fdc`, file `LFM2.5-24B-A2B-Q8_0.gguf` (25,493,732,640 bytes, SHA-256 `f09bf094a8a138c5b645598ca1abb6696a0fde26662d7af649b0713fdef330b6`) |
 | What it is | a 24B mixture-of-experts model (64 experts, 4 used per token, about 2B parameters active), 40 blocks of which 10 are attention and 30 short convolutions; up to 128K context |
 | Card | one Intel Arc Pro B70 (32 GiB); the model takes about 24 GiB, the rest holds the context |
-| Runtime | upstream llama.cpp `c926ad09857517978575d6a74d225b463f7417a0` (tag b9769) plus one patch: [`llama-cpp-c926ad098-lfm25-24b-a2b-exact-20261015.diff.gz.b64`](../../patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-20261015.diff.gz.b64) (decoded SHA-256 `0ec617979b3236614468baf3e1c3f732bebfc69e2c08b1064dd2857435be552a`) |
+| Runtime | upstream llama.cpp `c926ad09857517978575d6a74d225b463f7417a0` (tag b9769) plus one patch: [`llama-cpp-c926ad098-lfm25-24b-a2b-exact-fused-20261015.diff.gz.b64`](../../patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-fused-20261015.diff.gz.b64) (decoded SHA-256 `ab8b7bc86ecd60ea2244fd4be9ee30dd2baf212fcb7430373c4e51e64d18843c`) |
 | Compiler | Intel oneAPI Base Toolkit 2026.1 (icpx), SYCL ahead-of-time for the B70 (bmg-g31) |
 | Host measured | AMD EPYC 9015, 15 GiB RAM, Ubuntu 24.04 with Linux 7.0 (xe driver) |
 
@@ -27,35 +28,41 @@ first token.
 | --- | --- | --- |
 | Reference: llama.cpp's plain SYCL path (`serve.sh reference`) | 41.6 | (the reference; two fresh servers agree 12/12) |
 | The lab's general SYCL speed switches (the ones its Gemma recipe uses) | 113-114 | **different**: 0 of 12 answers token-identical |
-| **This recipe (`serve.sh fast`)** | **111.6-114.1** | **identical**: 12 of 12 answers, every token, on every fresh server tried |
+| The first version of this recipe (`serve.sh unfused`) | 111.3-114.1 | **identical**: 12 of 12 answers, every token |
+| **This recipe (`serve.sh fast`)** | **138.1-138.3** | **identical**: 12 of 12 answers, every token, on every fresh server tried |
 
-Also identical on the fast path: the log-probabilities of a 12-prompt probe (bit for bit), three long prompts of
-about 2K, 8K and 24K tokens, and the neural.download canary questions. The 1-2% spread is the host drifting over an
-evening; the fast path matched the general switches' speed measured at the same time.
+Also identical on the fast path: the top-8 log-probabilities at every step of a 12-prompt probe (bit for bit), the
+same on three long prompts of about 2K, 8K and 24K tokens, and the neural.download canary questions.
 
 **Rebuilt from this folder and checked, 2026-10-15.** `build.sh` (fresh upstream clone plus the patch, 12 minutes)
 and `serve.sh`/`check.sh` exactly as written, on one card of the lab's host, each run on a freshly started server:
 
 | Run | tok/s | Token-identical to the lab's original reference run |
 | --- | --- | --- |
-| `serve.sh reference` | 41.8 | 12 of 12 |
-| `serve.sh fast`, server A | 111.3 | 12 of 12 |
-| `serve.sh fast`, server B | 111.3 | 12 of 12 (and to server A) |
+| `serve.sh reference` | 41.7 | 12 of 12 |
+| `serve.sh unfused` | 112.2 | 12 of 12 |
+| `serve.sh fast`, server A | 138.1 | 12 of 12 |
+| `serve.sh fast`, server B | 138.3 | 12 of 12 (and 12 of 12 to server A) |
 
-The canary questions on server B all pass, with text identical to the reference's. Records:
-[`data/2026-10-15-lfm25-24b-a2b-package-check/`](../../data/2026-10-15-lfm25-24b-a2b-package-check/summary.json).
+On server B the canary questions all pass, and the log-probability probe is bit-identical to the lab's reference
+run on 12 of 12 prompts and 3 of 3 long prompts. Records:
+[`data/2026-10-15-lfm25-24b-a2b-package-check-fused/`](../../data/2026-10-15-lfm25-24b-a2b-package-check-fused/summary.json)
+(the first version's: [`data/2026-10-15-lfm25-24b-a2b-package-check/`](../../data/2026-10-15-lfm25-24b-a2b-package-check/summary.json)).
 
 ### With more context
 
-`llama-bench` on the fast path (raw engine rates, not the suite's measure; 3 repetitions each, all within 1%):
+`llama-bench` on the fast path (raw engine rates, not the suite's measure; 3 repetitions each, all within 2%;
+prompt reading measured in its own run, because mixed with generation runs it reads about 25% low). The fusions
+add 1-3% to prompt reading as well (unfused: 2,024 tok/s with no context, 779 at 32K):
 
 | Context already held | Generating (tok/s) | Reading a 2,048-token prompt (tok/s) |
 | --- | --- | --- |
-| 2K | 117.5 | 1,914 |
-| 4K | 113.8 | 1,354 |
-| 8K | 106.6 | 1,219 |
-| 16K | 94.9 | 978 |
-| 32K | 78.1 | 685 |
+| none | 151.4 | 2,089 |
+| 2K | 146.4 | 1,939 |
+| 4K | 140.1 | 1,807 |
+| 8K | 130.0 | 1,581 |
+| 16K | 113.3 | 1,202 |
+| 32K | 90.6 | 788 |
 
 ## Run it
 
@@ -88,7 +95,7 @@ should fit, but was not measured), `ALIAS`.
 
 ## Check it on your machine
 
-`check.sh` runs the same 12-prompt suite against a running server (about 2 minutes on the fast path, 3 on the
+`check.sh` runs the same 12-prompt suite against a running server (about 2 minutes on the fast path, 4 on the
 reference) and compares every token with the lab's reference run:
 
 ```bash
@@ -98,7 +105,8 @@ repro/lfm25-24b-a2b-q8-b70/check.sh run fast                   # with serve.sh f
 A different compiler or driver version can legitimately change the reference itself, so the proof that the fast
 path changes nothing is your own pair: start `serve.sh reference`, `check.sh run ref`, stop it, start `serve.sh
 fast`, `check.sh run fast`, then `check.sh compare lfm25-check/ref.json lfm25-check/fast.json`. Every prompt should
-say identical.
+say identical. If one does not, `serve.sh unfused` (the same fast layouts without the fusions) tells you which half
+of the speed-up is involved.
 
 ## What the patch changes
 
@@ -114,7 +122,33 @@ kernels' order of operations exactly, and `serve.sh fast` turns them on:
 | `LLAMA_SYCL_DMMV_Q8_0_REORDER_EXACT=4` | ... reading the reordered layout with the reference arithmetic |
 | `LLAMA_SYCL_MUL_MAT_ID_Q8_0_REORDER=1` | the experts on the reordered layout ... |
 | `LLAMA_SYCL_MMVQ_ID_XOR_REDUCE=1` | ... summed in the reference order |
-| `GGML_SYCL_DNNL_DETERMINISTIC=1` | (both modes) deterministic oneDNN matrix products for prompt processing |
+| `GGML_SYCL_DNNL_DETERMINISTIC=1` | (all modes) deterministic oneDNN matrix products for prompt processing |
+
+Then `serve.sh fast` (not `unfused`) adds twelve exact fusions. Each generated token used to take about 1,080 GPU
+kernel launches, most of them tiny steps between the big matrix products; each fusion does a chain of those steps
+in one kernel with the same arithmetic in the same order (floating-point contraction and reassociation switched
+off where the compiler could otherwise change it):
+
+| Setting | Steps done in one kernel |
+| --- | --- |
+| `LLAMA_SYCL_FUSE_RMS_NORM_MUL` | norm, then multiply by its weight |
+| `LLAMA_SYCL_FUSE_ADD_RMS_NORM_MUL` | residual add, norm, multiply |
+| `LLAMA_SYCL_FUSE_MOE_SUM` | weighted sum of the four experts' outputs |
+| `LLAMA_SYCL_FUSE_MOE_ROUTE` | expert routing: sigmoid, bias, top 4, weights |
+| `LLAMA_SYCL_FUSE_SHORTCONV` | the short-convolution blocks' small steps |
+| `LLAMA_SYCL_FUSE_F16_SHADOW` | the norms also write the 16-bit copy the next matrix product reads |
+| `LLAMA_SYCL_FUSE_Q8_SHADOW` | an 8-bit input copy made once and reused by the next product on the same input |
+| `LLAMA_SYCL_FUSE_MOE_GATE_UP` | the experts' gate and up products in one launch |
+| `LLAMA_SYCL_FUSE_NORM_ROPE` | attention q/k norm, rotary position, write of K into the cache |
+| `LLAMA_SYCL_FUSE_NORM_Q8` | the norm before the experts writes their 8-bit input |
+| `LLAMA_SYCL_FUSE_MOE_DOWN_SUM` | the experts' down product and their weighted sum |
+| `LLAMA_SYCL_FUSE_CONV_STATE_ROWS` | the short-convolution state read straight from its cache |
+
+Every fusion was checked by running the fused and the unfused steps side by side and comparing every output byte for
+byte (`LLAMA_SYCL_FUSE_VERIFY=1`, over 800,000 comparisons, none different), then on fresh servers against the
+reference. One more fusion (`LLAMA_SYCL_FUSE_MOE_FFN`, gate + up + SWIGLU + 8-bit quantization in one kernel) is in
+the patch but **not** used: the GPU compiler rounds about 1 in 30,000 of its quantized values differently, which
+changes the text, so `serve.sh` leaves it off.
 
 The patch also carries the lab's earlier B70 work on this llama.cpp version (all behind switches that are off
 unless set). Every attempt, including what did not help, is in the
@@ -133,10 +167,11 @@ unless set). Every attempt, including what did not help, is in the
 
 - [`build.sh`](build.sh): clone, patch (checksum checked), build; writes `lfm25-24b-a2b-build.json` with the
   compiler version and the server binary's SHA-256
-- [`serve.sh`](serve.sh): the server command, `fast` or `reference`
+- [`serve.sh`](serve.sh): the server command, `fast`, `unfused` or `reference`
 - [`check.sh`](check.sh): the suite and the token-by-token comparison
 - [`model-manifest.json`](model-manifest.json): the model file's revision, size and SHA-256
 - Evidence: [lab note](../../experiments/lfm25-24b-a2b-b70/notes/2026-10-14-lfm25-24b-a2b-bringup.md),
+  [package check of this version](../../data/2026-10-15-lfm25-24b-a2b-package-check-fused/summary.json),
   [reference run](../../experiments/lfm25-24b-a2b-b70/data/r0-suite-a.json),
   [fast runs](../../experiments/lfm25-24b-a2b-b70/data/x1final-suite-a.json)
   ([second server](../../experiments/lfm25-24b-a2b-b70/data/x1final-suite-b.json)),

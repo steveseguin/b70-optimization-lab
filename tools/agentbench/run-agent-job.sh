@@ -14,13 +14,16 @@
 #     same URL;
 #   - nothing else from the host is mounted: logs leave the container by `docker cp` after the run.
 #
-# Env: MODEL_NAME (qwen38-27b-fp8), AGENT_MEM (768m), TAP (summary | full: also store every request body),
+# Env: MODEL_NAME (qwen38-27b-fp8), AGENT_MEM (768m), AGENT_MEM_SWAP (memory + swap, default AGENT_MEM = no swap; set
+#      it higher to let a large agent page out instead of taking host memory), TAP (summary | full: also store every
+#      request body),
 #      KEEP_CONTAINER=1 (leave the container for inspection).
 set -uo pipefail
 AGENT=${1:?usage: run-agent-job.sh AGENT TASK_DIR OUT_DIR JOB_NAME PROXY_URL [TIME_LIMIT]}
 TASK=${2:?}; OUT=${3:?}; JOB=${4:?}; PROXY_URL=${5:?}; TIME_LIMIT=${6:-3300}
 MODEL_NAME=${MODEL_NAME:-qwen38-27b-fp8}
 AGENT_MEM=${AGENT_MEM:-768m}
+AGENT_MEM_SWAP=${AGENT_MEM_SWAP:-$AGENT_MEM}
 TAP=${TAP:-summary}
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 TASK=$(cd "$TASK" && pwd)
@@ -56,13 +59,13 @@ cleanup() {
 trap cleanup EXIT
 
 docker rm -f "$C" >/dev/null 2>&1 || true
-docker run -d --name "$C" --network none --memory "$AGENT_MEM" --memory-swap "$AGENT_MEM" --cpus 2 --pids-limit 1024 \
+docker run -d --name "$C" --network none --memory "$AGENT_MEM" --memory-swap "$AGENT_MEM_SWAP" --cpus 2 --pids-limit 1024 \
   --cap-drop ALL --security-opt no-new-privileges -v "$SOCKDIR:/run/agentbench:ro" \
   --label agentbench.job="$JOB" "$IMG" sleep infinity >/dev/null || die "container did not start"
 docker exec -i "$C" sh -c 'umask 022; cat > /opt/agentbench/task/instruction.md' < "$TASK/instruction.md"
 python3 -I "$HERE/memwatch.py" "$C" "$TRIAL/agent/memory.json" --every 0.5 &
 WATCH=$!
-say "container $C up ($IMG, cap $AGENT_MEM); agent $AGENT starts (time limit ${TIME_LIMIT}s, proxy $PROXY_URL)"
+say "container $C up ($IMG, cap $AGENT_MEM, with swap $AGENT_MEM_SWAP); agent $AGENT starts (time limit ${TIME_LIMIT}s, proxy $PROXY_URL)"
 
 timeout -k 30 $((TIME_LIMIT + 300)) docker exec -u agent -w /app \
   -e AB_PORT="$PORT" -e AB_PROXY_URL="$URL_IN" -e AB_MODEL="$MODEL_NAME" -e AB_TIME_LIMIT="$TIME_LIMIT" \

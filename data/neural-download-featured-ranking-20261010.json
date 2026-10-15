@@ -91,7 +91,7 @@
       "release": "not independently verified",
       "release_source": "https://huggingface.co/LiquidAI/LFM2.5-24B-A2B",
       "repository_created": "2026-10-12",
-      "basis": "24B / about 2B active MoE released 2026-10-12 (6.3K downloads, 351 likes by 2026-10-15); no independent capability comparison here. Exact fast path 2.7x the plain SYCL path, rebuilt from public files and fresh-server checked.",
+      "basis": "24B / about 2B active MoE released 2026-10-12 (6.3K downloads, 351 likes by 2026-10-15); no independent capability comparison here. Exact fast path 3.3x the plain SYCL path, rebuilt from public files and fresh-server checked.",
       "evidence": "families/lfm-2-5-24b-a2b.json"
     },
     {
@@ -365,11 +365,11 @@
       "optimization": 4,
       "score": 75,
       "metric": {
-        "value": 111.32374032604358,
+        "value": 138.21653370371516,
         "unit": "tok/s",
         "label": "strict class-balanced decode",
-        "scope": "Median of two fresh-server class-balanced medians over the complete 12-prompt/six-class, 512-cap, cache-zero native HTTP suite; one B70, one user, F16 KV, 32K context. Every token array identical to the plain SYCL reference path (12/12 on both servers); canaries passed.",
-        "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check/summary.json"
+        "scope": "Median of two fresh-server class-balanced medians over the complete 12-prompt/six-class, 512-cap, cache-zero native HTTP suite; one B70, one user, F16 KV, 32K context. Every token array identical to the plain SYCL reference path (12/12 on both servers), top-8 log-probabilities bit-identical; canaries passed.",
+        "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-fused/summary.json"
       },
       "guide": "repro/lfm25-24b-a2b-q8-b70/README.md",
       "decision": "Not featured yet: new model without an independent quality comparison; the main roles are covered. Listed with its exact-output package."

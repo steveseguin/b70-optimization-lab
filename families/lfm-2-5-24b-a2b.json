@@ -6,7 +6,7 @@
   "display_name": "LFM2.5 24B A2B",
   "publisher": "Liquid AI",
   "updated_at": "2026-10-15",
-  "summary": "Liquid AI's LFM2.5 24B mixture-of-experts: 64 experts with 4 used per token (about 2B parameters active), short convolutions in 30 of its 40 blocks and attention in 10. On one Arc Pro B70 in 8-bit form it runs at 111 tok/s with output identical to llama.cpp's plain path.",
+  "summary": "Liquid AI's LFM2.5 24B mixture-of-experts: 64 experts with 4 used per token (about 2B parameters active), short convolutions in 30 of its 40 blocks and attention in 10. On one Arc Pro B70 in 8-bit form it runs at 138 tok/s with output identical to llama.cpp's plain path.",
   "architecture": {
     "class": "Lfm2MoeForCausalLM",
     "model_type": "lfm2moe",
@@ -27,7 +27,7 @@
     "status": "one measured weight revision on one card; other quantizations, runtimes and card counts need their own gates",
     "transfers": [
       "the package's model-file verification, build and one-card launch procedure",
-      "the exact fast-path kernels for Q8_0 weights on this llama.cpp base"
+      "the exact fast-path kernels and exact kernel fusions for Q8_0 weights on this llama.cpp base"
     ],
     "does_not_transfer": [
       "Q8_0 speed or identity to another quantization",
@@ -50,7 +50,7 @@
       "scope": "objective canaries and token-identity with the plain SYCL reference path; not a cross-model capability score",
       "evidence": [
         "repro/lfm25-24b-a2b-q8-b70/README.md",
-        "data/2026-10-15-lfm25-24b-a2b-package-check/summary.json"
+        "data/2026-10-15-lfm25-24b-a2b-package-check-fused/summary.json"
       ]
     },
     "popularity": {
@@ -117,7 +117,7 @@
       "state": "lab-measured",
       "revision": "lfm2.5-24b-a2b",
       "variant": "Q8_0",
-      "runtime": "llama.cpp SYCL c926ad09857517978575d6a74d225b463f7417a0 + lab patch 0ec61797",
+      "runtime": "llama.cpp SYCL c926ad09857517978575d6a74d225b463f7417a0 + lab patch ab8b7bc8 (exact fusions)",
       "config": {
         "tp": 1,
         "mtp": 0,
@@ -128,12 +128,12 @@
       "workload": "two fresh servers; complete 12-prompt/six-class suite; 512-token cap; median within prompt class then median across class medians; 100-event/99-interval decode window; target-only; cache-zero",
       "metrics": {
         "decode_tok_s": [
-          111.30933059161632,
-          111.33815006047084
+          138.14791922217887,
+          138.28514818525144
         ]
       },
-      "quality": "both suite gates and the canaries passed; cached_tokens=0 for every request; every token array identical to the plain SYCL reference path (12/12 on both servers) and across servers",
-      "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check/summary.json"
+      "quality": "both suite gates and the canaries passed; cached_tokens=0 for every request; every token array identical to the plain SYCL reference path (12/12 on both servers) and across servers; top-8 log-probabilities bit-identical on 12/12 probe prompts and 3/3 long prompts",
+      "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-fused/summary.json"
     }
   ],
   "series_measurements": [
@@ -142,43 +142,43 @@
       "state": "lab-measured",
       "revision": "lfm2.5-24b-a2b",
       "variant": "Q8_0",
-      "runtime": "llama.cpp bench c926ad0 + lab patch (fast path)",
+      "runtime": "llama.cpp bench c926ad0 + lab patch (fast path with exact fusions)",
       "config": {
         "tp": 1,
         "mtp": 0,
         "graph": "not separately varied",
         "kv": "f16"
       },
-      "workload": "raw llama-bench pp2048 plus tg128 at each existing-context depth; FlashAttention on; three repetitions",
+      "workload": "raw llama-bench tg128 at each existing-context depth (combined run) and pp2048 at each depth (separate pp-only run); FlashAttention on; three repetitions",
       "points": [
         {
           "x": 2048,
-          "prefill_tok_s": 1913.84885,
-          "decode_tok_s": 117.505382
+          "prefill_tok_s": 1939.396864,
+          "decode_tok_s": 146.433038
         },
         {
           "x": 4096,
-          "prefill_tok_s": 1353.636197,
-          "decode_tok_s": 113.776061
+          "prefill_tok_s": 1806.736413,
+          "decode_tok_s": 140.06748
         },
         {
           "x": 8192,
-          "prefill_tok_s": 1219.082381,
-          "decode_tok_s": 106.585262
+          "prefill_tok_s": 1581.141635,
+          "decode_tok_s": 129.99611
         },
         {
           "x": 16384,
-          "prefill_tok_s": 977.599302,
-          "decode_tok_s": 94.890523
+          "prefill_tok_s": 1202.003593,
+          "decode_tok_s": 113.30303
         },
         {
           "x": 32768,
-          "prefill_tok_s": 685.402789,
-          "decode_tok_s": 78.131544
+          "prefill_tok_s": 787.60845,
+          "decode_tok_s": 90.617495
         }
       ],
       "quality": "raw engine shape characterization, not a language-quality gate or HTTP serving result",
-      "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check/sweep-fast.json"
+      "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-fused/sweep-fast.json"
     }
   ],
   "views": [
@@ -212,7 +212,7 @@
       ],
       "series": [
         {
-          "label": "Q8_0, exact fast path",
+          "label": "Q8_0, exact fast path with fusions",
           "measurement_ids": [
             "lfm25-24b-q8-tp1-f16-depth-sweep"
           ]
