@@ -1046,7 +1046,7 @@ class Pure(unittest.TestCase):
         self.assertEqual(ck.one_system_message(two), [{"role": "system", "content": "You are Forge.\n\n<os>linux</os>"},
                                                       {"role": "user", "content": "fix it"}])
         parts = [two[0], {"role": "system", "content": [{"type": "text", "text": "a"}, {"type": "text", "text": "b"}]}]
-        self.assertEqual(ck.one_system_message(parts)[0]["content"], "You are Forge.\n\na\nb")
+        self.assertEqual(ck.one_system_message(parts)[0]["content"], "You are Forge.\n\nab")
         for unchanged in (two[1:], two[2:], [], [two[0], {"role": "system", "content": [{"type": "image_url"}]}]):
             self.assertIs(ck.one_system_message(unchanged), unchanged)
         model = Model()
@@ -1056,6 +1056,28 @@ class Pure(unittest.TestCase):
         sent = model.requests[-1]["messages"]
         self.assertEqual([m["role"] for m in sent], ["system", "user"])
         self.assertTrue(sent[0]["content"].startswith("You are Forge.\n\n<os>linux</os>"))
+
+    def test_a_system_message_in_text_parts_gets_the_memory_note_in_place(self):
+        parts = [{"role": "system", "content": [{"type": "text", "text": "You are "}, {"type": "text", "text": "OpenHands."}]},
+                 {"role": "user", "content": "fix it"}]
+        noted = ck.with_memory_note(parts)
+        self.assertEqual([m["role"] for m in noted], ["system", "user"])
+        self.assertEqual(noted[0]["content"], "You are OpenHands." + ck.MEMORY_NOTE)
+        image = [{"role": "system", "content": [{"type": "image_url"}]}, parts[1]]
+        self.assertEqual([m["role"] for m in ck.with_memory_note(image)], ["system", "system", "user"])
+
+    def test_the_proxy_effort_replaces_the_clients(self):
+        model = Model()
+        with tempfile.TemporaryDirectory() as d:
+            k = ck.Keeper(model, Path(d), budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5,
+                          notes_cap=400, effort="medium")
+            k.complete({"model": "m", "messages": conversation(1), "reasoning_effort": "high"})
+            k2 = ck.Keeper(model, Path(d) / "plain", budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5,
+                           notes_cap=400)
+            k2.complete({"model": "m", "messages": conversation(1), "reasoning_effort": "high"})
+        self.assertNotIn("reasoning_effort", model.requests[0])
+        self.assertEqual(model.requests[0]["chat_template_kwargs"]["reasoning_effort"], "medium")
+        self.assertEqual(model.requests[1]["reasoning_effort"], "high")      # without --effort it is passed on
 
     def test_a_streamed_reply_keeps_the_thinking_under_either_name(self):
         for key in ("reasoning", "reasoning_content"):

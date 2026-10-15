@@ -13,6 +13,9 @@
 # through the final 1.0.1 code (leading system messages joined: ForgeCode and OpenHands send two, which Qwen's chat
 # template refuses):  RUN=c20c VENV=/mnt/fast-ai/venvs/ctxkeeper-1.0.1-final AGENTS="openhands hermes-agent kimi-code
 # mistral-vibe cline forgecode opencode"
+# 20d (04:20): 20c stopped at OpenHands' first request (it sends reasoning_effort "high", which Qwen3.8's template
+# refuses, and its system message as text parts, which made the memory note a second system message); both fixed in
+# the final 1.0.1 (ctxkeeper.py sha256 38879dde...); same queue, RUN=c20d
 #   AGENTS="freeagent goose" RUN=c20x ./longrun-campaign20.sh     (subset / rerun)
 #   DRY=1 PORT=18390 SLOTS="18391 18392" RUN=dry ...            (scheduler test against tools/agentbench/fake_agent_server.py
 #                                                                  already listening on PORT: no Gemma, no GPU server)
