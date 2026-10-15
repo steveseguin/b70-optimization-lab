@@ -29,7 +29,7 @@ All times are UTC.
 | 4 | 10-14 17:21 | K2, first line | fused route+gather (`p42.route.production_rank32`) adapter mismatch, all three versions, both ranks | `13cb290b0` | yes, round 5 (K2 ran 400 lines past it) |
 | 5 | 10-14 23:24 | K2, P39 gate | P39's first expert-bank upload of 268,697,600 B exceeds CopyEngine's 134,217,728 B per-copy limit (`owner.cpp:310`, "copy extent/lifetime") | `4bd493a72`, sealed `8a84cf7a0` | yes, round 6 (K2 passed) |
 | 6 | 10-15 01:24 | KD host reference, before device contact | K2 enabled `small.gdn.ab=round2` and `small.ffn=p30.small.rows4` on both pairs; the KD plan has a sibling group that fails `main.cpp:656` ("small GEMV sibling schedule/input") instead of running unfused | `564b356a1`, sealed `f912fdaf6` | yes, round 7 (KD passed both pairs) |
-| 7 | 10-15 02:03 | W2m admission, before device contact | `pipeline.py:442` requires `OMP_NUM_THREADS=2` in the window process, but the sealed `coordinator_windows.sh` launches with `env -i PATH LD_LIBRARY_PATH` only. WINDOW.md says the wrapper supplies it, and packet 44 did. The identity records the present env keys, so a resume from W2m is impossible; the chain restarts from K0 | coordinator launcher copy `runner/coordinator_windows_omp2.sh` (sealed script + `OMP_NUM_THREADS=2` in both `env -i` lists); WS128 queue scripts patched the same way; no code change or reseal | pending (relaunched 02:21) |
+| 7 | 10-15 02:03 | W2m admission, before device contact | `pipeline.py:442` requires `OMP_NUM_THREADS=2` in the window process, but the sealed `coordinator_windows.sh` launches with `env -i PATH LD_LIBRARY_PATH` only. WINDOW.md says the wrapper supplies it, and packet 44 did. The identity records the present env keys, so a resume from W2m is impossible; the chain restarts from K0 | coordinator launcher copy `runner/coordinator_windows_omp2.sh` (sealed script + `OMP_NUM_THREADS=2` in both `env -i` lists); WS128 queue scripts patched the same way; no code change or reseal | yes: full chain K0-WSs passed both pairs 02:43 |
 
 Every failure was identical on both card pairs. The kernel log has no xe/GuC reset, hang or fault line after
 2026-10-12; the last ones are the known 10-10/10-11 incidents. In every incident, the failing rank's teardown
@@ -52,6 +52,22 @@ Coordinator records are in `data/own-xpu-runtime-packet45-device-rounds-20261014
 - runners v3 and v4;
 - every Codex brief;
 - the tail of each Codex log.
+
+## Result (2026-10-15): exact on every gate, but slower than the record, so not submitted
+
+The sealed `f912fdaf6` chains passed K0-WSs on both pairs. W2m matched 64/64 tokens and 384/384 layers; WS and WSs matched 12/12 prompts. WS128x and WS128 were qualifying (12/12 × 128 tokens). Same-boot packet-44 controls were rerun from the record's own per-window commands into `packet44-context/build/c4096ctl15{a,b}`.
+
+Columns: class-balanced is the record metric; r0 and r1 are busy per interval for rank 0 and rank 1; fwd0 and fwd1 are the per-position forward times (prepare + enqueue + wait, positions ≥100).
+
+| Run | Cards | Decode tok/s | Class-balanced | r0 | r1 | fwd0 | fwd1 | Hit | Miss | Acceptance |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| p44 record (10-13) | 0-1 | 37.589 | **37.856** | 23.49 | 22.59 | 19.17 | 18.84 | 23.19 | 39.33 | 0.791 |
+| p44 control (10-15) | 0-1 | 37.732 | | 23.40 | 22.59 | 19.14 | 18.85 | 23.20 | 39.22 | 0.791 |
+| p44 control (10-15) | 2-3 | 37.573 | | 23.48 | 22.71 | 19.13 | 18.94 | 23.25 | 39.42 | 0.791 |
+| p45 draft rank 0 | 0-1 | 34.059 | 33.835 | 27.42 | 21.76 | 17.42 | 22.55 | 25.41 | 46.92 | 0.791 |
+| p45 draft rank 1 | 2-3 | 30.956 | 31.025 | 28.54 | 21.48 | 20.94 | 18.33 | 28.22 | 49.00 | 0.791 |
+
+The control reproduces the record on both card pairs, so there is no drift and no card-pair effect, and the packet-45 regression is real. Acceptance is identical, so outputs and guesses are unchanged. The pure regression is time spent outside the forward pass on rank 0 (busy minus forward: about 4 ms in p44, 7.5-10 ms in p45) together with miss cycles about 8-10 ms longer. In packet 45, draft rank 1 is worse than draft rank 0. The 32768 chains were skipped (`955-p45c-chain.sh.skip`) because they cannot help a slower build. Attribution: `experiments/own-xpu-runtime/stage2/packet45-merged3/REGRESSION-ANALYSIS.md` (Codex, in progress).
 
 ## Round 5 to 6 turnaround (2026-10-15)
 
