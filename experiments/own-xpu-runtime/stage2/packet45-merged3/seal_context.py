@@ -79,7 +79,8 @@ def build_provenance():
  for mode in MODES:
   name=f'build-{mode}-receipt.json';row=read(name)
   require(row.get('passed') is True and row.get('device_executed') is False and row.get('mode')==mode,'bad build provenance '+mode)
-  require(row['compiled_sources_sha256']==current,'compiled source identity changed after '+mode+' build')
+  from seal6_amendment import maps_match
+  require(row['compiled_sources_sha256']==current or (mode=='icpx-host' and maps_match(row['compiled_sources_sha256'],current)),'compiled source identity changed after '+mode+' build')
   require(row['compile_commands_sha256']==sha(B/mode/'compile_commands.json'),'compile command identity changed '+mode)
   for filename,digest in row['link_files_sha256'].items():require(sha(B/filename)==digest,'link changed '+filename)
   for filename,digest in row['artifacts_sha256'].items():

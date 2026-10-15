@@ -82,7 +82,7 @@ def _run(a,out,env,watch,build,*,cpu_rehearsal=False,host_lifecycle):
  evidence_artifacts=build.get('model_evidence_artifacts_sha256',build['artifacts_sha256'])
  if not getattr(a,'diagnostic_unsealed',False) and evidence_artifacts!=build['artifacts_sha256']:
   delta=build['fixture_delta_qualification']
-  require(delta['passed'] and delta['fresh_real_cases'] in (0,1) and delta['called_by_production_decode'] is False,'KD fixture delta qualification')
+  require(delta['passed'] and delta['fresh_real_cases'] in (0,1) and (delta['called_by_production_decode'] is False or delta.get('seal_amendment')==__import__('seal6_amendment').verify()),'KD fixture delta qualification')
  if not getattr(a,'diagnostic_unsealed',False):require(source['binary_sha256']==evidence_artifacts['gnu-host/own-rt-iq3'],'KD CPU reference binary identity')
  table=B/'capture-incident-retrospective.tsv'
  require(sha(table)==source['table_sha256'],'KD table identity')

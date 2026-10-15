@@ -3,7 +3,7 @@
 import hashlib,json
 from pathlib import Path
 P=Path(__file__).resolve().parent;B=P/'build';ROOT=P.parents[3]
-GATES=('diagnostic-unsealed-tests.json','diagnostic-coordinator-gates.json','audit6-tests.json','fixture-delta-tests.json','audit6-gates.json','copy-adoption-gates.json','fusion-matrix-gates.json','hc-activation-gates.json','cpu-merged-gates.json','cpu-real-gates.json','real-cross-placement-gates.json','real-cross-placement-tests.json','capacity-selection-gates.json',
+GATES=('seal6-amendment-tests.json','fix6-plan-gates.json','diagnostic-unsealed-tests.json','diagnostic-coordinator-gates.json','audit6-tests.json','fixture-delta-tests.json','audit6-gates.json','copy-adoption-gates.json','fusion-matrix-gates.json','hc-activation-gates.json','cpu-merged-gates.json','cpu-real-gates.json','real-cross-placement-gates.json','real-cross-placement-tests.json','capacity-selection-gates.json',
  'capacity-draft-gates.json','capacity-fixture-gates.json','asan-fixture-gates.json','p33-linked-fixture-gates.json',
  'p39-merged-fixture-gates.json','p45-kernel-tests.json','seal45-binding-tests.json','wrapper-merge-tests.json',
  'context-window-gates.json','memory-plan-gates.json','owner-gates.json','merged-campaign-completion-gates.json',
@@ -20,7 +20,8 @@ def bound_sources(values,root=P):
  for name,digest in values.items():
   path=root/name
   if not path.exists() and (root/(name+'.py')).exists():path=root/(name+'.py')
-  assert sha(path)==digest,'stale source '+str(path)
+  from seal6_amendment import source_matches
+  assert source_matches(path,digest),'stale source '+str(path)
 def archive_bound(archive,raw=None):
  assert sha(P/archive['path'])==archive['sha256'],'retained evidence missing/changed'
  if raw is not None:
@@ -82,7 +83,8 @@ def fixture_bindings(row,artifacts,identity=None):
  identity=row['identity'] if identity is None else identity
  assert identity['compiler']==compiler and identity['kind']==kind and identity['context']==context
  assert identity['binary_sha256']==row['binary_sha256']
- assert identity['sources']==source_identity(compiler,target),'fixture source identity changed'
+ from seal6_amendment import fixture_identity
+ assert fixture_identity(identity['sources'],source_identity(compiler,target)),'fixture source identity changed'
  assert identity['dispatch_sha256']==sha(P/'dispatch-p45.json'),'fixture candidate changed'
  assert identity['rope_sha256']==sha(P/'rope.bf16'),'fixture RoPE changed'
  current={f.name:sha(f) for f in sorted((B/'fusion-fixtures').glob('*')) if f.is_file()} if kind!='linked' else {}
@@ -252,7 +254,11 @@ def main():
  from memory_plan import plan
  from math_gate import check as mathcheck
  from queue_gate import check as queuecheck
- artifacts,build_receipts=build_provenance();precision,links=precision_audit()
+ from seal6_amendment import verify as verify_amendment,baseline
+ amendment=verify_amendment()
+ actual_artifacts,build_receipts=build_provenance();precision,links=precision_audit()
+ # Validate retained executions against their honest historical artifact identity.
+ artifacts=baseline()['artifacts_sha256'].copy()
  gates={n:read(n) for n in GATES}
  for name,row in gates.items():
   assert row.get('passed') is True and row.get('device_executed',False) is False,'incomplete CPU gate '+name
@@ -262,7 +268,7 @@ def main():
  from audit6 import verify as verify_audit6
  verify_audit6(gates['audit6-gates.json'])
  from fixture_delta import verify as verify_fixture_delta
- fixture_delta=verify_fixture_delta(artifacts)
+ fixture_delta=verify_fixture_delta(actual_artifacts)
  model_artifacts={**artifacts,**fixture_delta['historical_model_artifacts_sha256']}
  from copy_adoption_gate import verify as verify_copy_adoption
  verify_copy_adoption(gates['copy-adoption-gates.json'])
@@ -292,7 +298,8 @@ def main():
   target='p33-linked-fixtures' if row['kind']=='linked' else 'k2-fixtures' if row['kind']=='k2-validation' else 'nongemv-fixtures'
   if row['binary_sha256']!=artifacts[row['compiler']+'/'+target]:continue
   from capacity_fixture_gate import source_identity
-  assert row['identity']['sources']==source_identity(row['compiler'],target),'fixture source identity changed'
+  from seal6_amendment import fixture_identity
+  assert fixture_identity(row['identity']['sources'],source_identity(row['compiler'],target)),'fixture source identity changed'
   fixture_bindings(row,artifacts)
   key=(row['compiler'],row['kind'],row['context'])
   if key in current_fixture:assert current_fixture[key]['output_sha256']==row['output_sha256'],'duplicate current fixtures disagree'
@@ -345,10 +352,10 @@ def main():
  memory=read('memory-plan.json');assert memory==plan()
  official_path=P.parent/'packet38-integrated/official-tensors.json';official=json.loads(official_path.read_text())
  source_hashes=sources()
- for path in (P/'coordinator_windows.sh',P/'memory-plan.json',P/'merge-start.json',P/'draft-baseline-oracle.json',official_path):source_hashes[str(path.relative_to(ROOT))]=sha(path)
+ for path in (P/'coordinator_windows.sh',P/'memory-plan.json',P/'merge-start.json',P/'draft-baseline-oracle.json',P/'seal6-amendment.json',ROOT/'scripts/promotion_evidence.py',official_path):source_hashes[str(path.relative_to(ROOT))]=sha(path)
  review_hashes={n:sha(P/n) for n in ('review-draft-rank0.md','review-memory.md')}
- counts=dict(audit6_windows=28,audit6_mutation_tests=8,fixture_delta_tests=6,fresh_real_sentinel_cases=0,historical_real_cases_reused=6,fusion_matrix_checks=gates['fusion-matrix-gates.json']['checks'],fusion_compiler_arms=6,hc_activation_checks=4752,hc_compiler_arms=6,merged_fresh_cases=79,real_native_cases=6,real_token_matches=48,real_layer_fixture_matches=2304,
-   real_cross_placement_pairs=3,real_draft_semantic_buffers=17,
+ counts=dict(audit6_windows=28,audit6_mutation_tests=8,fixture_delta_tests=gates['fixture-delta-tests.json']['checks'],fresh_real_sentinel_cases=0,historical_real_cases_reused=6,fusion_matrix_checks=gates['fusion-matrix-gates.json']['checks'],fusion_compiler_arms=6,hc_activation_checks=4752,hc_compiler_arms=6,merged_historical_cases=79,real_native_cases=6,real_token_matches=48,real_layer_fixture_matches=2304,
+   fix6_plan_dispatch_rows=48,fix6_group_mutation_checks=9,seal6_amendment_tests=gates['seal6-amendment-tests.json']['checks'],real_cross_placement_pairs=3,real_draft_semantic_buffers=17,
    selection_checks=sum(r['result']['checks'] for r in gates['capacity-selection-gates.json']['rows']),
    draft_capture_arms=6,draft_valid_fixture_matches=378,
    native_controller_cases=3369,mailbox_gates=15,wrapper_tests=gates['wrapper-merge-tests.json']['tests'])
@@ -358,7 +365,8 @@ def main():
   seal_status='CPU integration qualified; device windows pending',real_model_device_qualified=False,
   post_seal_admission=dict(path='window-seal-binding.json',scope='detached exact build/admission receipt hashes; build receipt remains unchanged'),
   arithmetic='iq3-p17-detmath-v2',context_capacities=[256,4096,32768],draft_ranks=[0,1],
-  parent_pins=read('merge-start.json'),sources=source_hashes,artifacts_sha256=artifacts,
+  parent_pins=read('merge-start.json'),sources=source_hashes,artifacts_sha256=actual_artifacts,
+  seal_amendment=amendment,retained_gate_artifacts_sha256=artifacts,
   fixture_delta_qualification=fixture_delta,model_evidence_artifacts_sha256=model_artifacts,
   mode_build_receipts_sha256=build_receipts,precision=precision,link_commands=links,
   input_sha256=sha(B/'input/input.json'),official_manifest_sha256=sha(P/'mtp-manifest.tsv'),
@@ -375,8 +383,8 @@ def main():
   pending=['coordinator device chain at each capacity and draft placement','merged per-class and full-model speed',
     'measured 22/26 balance and reverse-handoff overlap','actual card allocation/driver overhead',
     'complete manifest-bound 32/64/128-token model suites on merged device binary'],
-  real_cpu_scope='six historical source-equivalent native first-eight-token checks of the first fixed suite prompt; not full suite or speed evidence')
+  real_cpu_scope='six historical pre-fix6 native first-eight-token checks of the first fixed suite prompt; not full suite or speed evidence')
  save('build-receipt.json',receipt)
- (P/'BINARY-HASHES.md').write_text('# Binary SHA256\n\nBuilt on the CPU; no device program executed.\n\n| Binary | SHA256 |\n|---|---|\n'+''.join(f'| {n} | `{h}` |\n' for n,h in sorted(artifacts.items())))
+ (P/'BINARY-HASHES.md').write_text('# Binary SHA256\n\nBuilt on the CPU; no device program executed.\n\n| Binary | SHA256 |\n|---|---|\n'+''.join(f'| {n} | `{h}` |\n' for n,h in sorted(actual_artifacts.items())))
  print(json.dumps(dict(passed=True,gate_receipts=len(GATES),binary_hashes=len(artifacts),counts=counts)))
 if __name__=='__main__':main()

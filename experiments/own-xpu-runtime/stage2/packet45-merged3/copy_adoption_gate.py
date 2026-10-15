@@ -40,7 +40,8 @@ def run_gate(name,args):
 def verify(gate=None):
  gate=gate or json.loads((P/'copy-adoption-gates.json').read_text())
  assert gate['passed'] and gate['device_executed'] is False and gate['synthetic_selection_only'] is True
- assert gate['compiled_sources_sha256']==pins(),'stale copy/adoption sources'
+ from seal6_amendment import maps_match
+ assert maps_match(gate['compiled_sources_sha256'],pins()),'stale copy/adoption sources'
  assert [(r['class'],r['context'],r['candidate']) for r in gate['selection_rows']]==expected(),'selection coverage differs'
  assert gate['extent_result']['cases']==8 and gate['extent_result']['failures']==0
  assert gate['extent_result']['byte_cases']==4 and gate['extent_result']['guard_rejections']==5

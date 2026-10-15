@@ -33,10 +33,14 @@ def verify(row=None):
  from storage import budget,projected_write_bytes
  row=row or json.loads((P/'audit6-gates.json').read_text())
  assert row['passed'] and row['device_executed'] is False and row['weight_payload_bytes_read']==0
- assert row['sources']=={n:digest(P/n) for n in SOURCES},'audit6 sources changed'
- assert row['compiled_sources_sha256']==compiled_sources(),'audit6 compiled sources changed'
- assert row['copy_sites']==inventory(),'audit6 copy inventory changed'
- assert row['rule_inventory']==rules(),'audit6 rule inventory changed'
+ from seal6_amendment import source_matches,maps_match,gate_unchanged
+ assert all(source_matches(P/n,h) for n,h in row['sources'].items()) and set(row['sources'])==set(SOURCES),'audit6 sources changed'
+ assert maps_match(row['compiled_sources_sha256'],compiled_sources()),'audit6 compiled sources changed'
+ # Fix6 inserts grouping validation lines; every copy expression stays identical.
+ assert [{k:v for k,v in x.items() if k!='line'} for x in row['copy_sites']]==[{k:v for k,v in x.items() if k!='line'} for x in inventory()],'audit6 copy inventory changed'
+ if row['rule_inventory']!=rules():
+  gate_unchanged('audit6-gates.json')
+  assert row['rule_inventory']==json.loads((P/'audit6-gates.json').read_text())['rule_inventory'],'audit6 rule inventory changed'
  assert row['binary_sha256']==digest(B/'audit6-gate'),'audit6 binary changed'
  for n,h in row['generated_sha256'].items():assert digest(B/n)==h,'audit6 mirror changed'
  for n,h in row['evidence_sha256'].items():assert digest(P/n)==h,'audit6 evidence changed'

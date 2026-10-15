@@ -124,9 +124,37 @@ def validate_promotion_attestation(
             if gate not in supported_gates:
                 failures.append(f"gate_{gate}_has_no_bound_evidence")
 
+    performance_data = json.loads(performance_path.read_text()) if performance_path.suffix == '.json' else {}
+    if 'packet45' in json.dumps([performance_data, identity]).lower():
+        # Packet45 seal6 explicitly defers real-model authority to device windows.
+        validate_packet45_device_evidence(performance_data, evidence, attestation_path)
     if failures:
         raise ValueError(
             f"{attestation_path}: promotion attestation failed: "
             + ", ".join(failures)
         )
     return data
+
+
+def validate_packet45_device_evidence(performance, evidence, attestation_path):
+    required = {'W2m', 'WS', 'WSs', 'WS128x'}
+    artifacts = performance.get('artifacts_sha256')
+    if not artifacts:
+        raise ValueError('packet45 publication requires actual artifact identity')
+    found = set()
+    for item in evidence or []:
+        path = resolve_evidence_path(item['path'], attestation_path)
+        if not path.is_file() or sha256_file(path) != item['sha256']:
+            raise ValueError('packet45 device evidence hash mismatch')
+        if path.suffix != '.json':
+            continue
+        row = json.loads(path.read_text())
+        if row.get('schema') != 'packet45.window.v1':
+            continue
+        require_qualifying(row)
+        if (row.get('passed') is not True or row.get('device_executed') is not True
+                or row.get('cpu_rehearsal') or row.get('artifacts_sha256') != artifacts):
+            raise ValueError('packet45 requires passing same-artifact device windows')
+        found.add(row['window'])
+    if not required <= found:
+        raise ValueError('packet45 publication requires passing W2m, WS, WSs and WS128x device windows')
