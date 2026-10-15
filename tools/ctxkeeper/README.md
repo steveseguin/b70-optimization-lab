@@ -64,14 +64,16 @@ that its own history trimming or summarizing was turned off (set-ups:
 | [Mistral Vibe](https://github.com/mistralai/mistral-vibe) 2.26.1 | 40 | 40 | 7 | 26 min |
 | [Hermes Agent](https://github.com/NousResearch/hermes-agent) 0.22.1 | 40 | 40 | 7 | 26 min |
 | [pi](https://github.com/earendil-works/pi) 1.2.0 | 39 | 39 | 0 | 28 min |
+| [OpenCode](https://github.com/anomalyco/opencode) 1.19.0 | 40 | 40 | 7 | 33 min |
 | [Qwen Code](https://github.com/QwenLM/qwen-code) 0.25.1 | 40 | 39 | 7 | 33 min |
 | [Kimi Code](https://github.com/MoonshotAI/kimi-code) 2.2.0 | 40 | 40 | 7 | 38 min |
 | [ForgeCode](https://github.com/tailcallhq/forgecode) 2.14.0 | 25 | 25 | not reached | 60 min (time limit) |
-| [OpenCode](https://github.com/anomalyco/opencode) 1.19.0 | not run: it needed more memory than the test machine had free beside the server | | | |
 
-Ten of the eleven agents that ran fixed 39 or 40 bugs. pi wrote its answers to the seven questions and then
+Eleven of the twelve agents fixed 39 or 40 bugs. pi wrote its answers to the seven questions and then
 deleted them, after a wrong line in the notes said the questions had never been asked (see [Limits](#limits)).
-ForgeCode was still working, correctly, when its hour ran out. ForgeCode and OpenHands only work from 1.0.1 on.
+ForgeCode was still working, correctly, when its hour ran out. OpenCode ran later, alone, with its memory capped
+at 400 MiB and swap behind it, because the test machine had too little memory free beside the server for it at
+first. ForgeCode and OpenHands only work from 1.0.1 on.
 
 Full record, every run and what went wrong: the lab note
 [`2026-10-10-context-16k-baseline.md`](../../experiments/qwen38-27b-b70/notes/2026-10-10-context-16k-baseline.md)

@@ -1,0 +1,97 @@
+{
+ "agent": "opencode",
+ "agent_version": "opencode-linux-x64 1.19.0 (npm sha512-+UFxn2AbOqKEISBDqrWk5nHsZrPWBMVZ4H9R7tbnrt1+nYvEGejpg9tyt+QMrpBPYZP7F+D3Ym0vZbZcF7gSSw==; binary sha256 in /opt/agent/SHA256)",
+ "image": "agentbench-opencode:repair-n40-s2x",
+ "image_id": "sha256:16531880665f80281f60adbbd55acc8e8c8c554ba608aff91b57e612466f58ea",
+ "job": "AB-opencode__repair-n40-s2x",
+ "task": "repair-n40-s2x",
+ "proxy_url": "http://127.0.0.1:18200/v1",
+ "model": "qwen38-27b-fp8",
+ "time_limit_s": 3600,
+ "memory_cap": "400m",
+ "exec_rc": 0,
+ "wall_s": 1977,
+ "agent_exit": {
+  "exit_code": 0,
+  "seconds": 1973,
+  "timed_out": false
+ },
+ "memory": {
+  "cgroup": "/sys/fs/cgroup/system.slice/docker-f2de13fca1ace513414a52c1f1681c91ed79bcce5daef58e2ca0ec49c270cfc9.scope",
+  "samples": 3936,
+  "peak_bytes": 419495936,
+  "max_current_bytes": 419430400,
+  "max_nonfile_bytes": 399683584,
+  "max_anon_bytes": 393744384,
+  "mib": {
+   "peak": 400.1,
+   "max_current": 400.0,
+   "max_nonfile": 381.2,
+   "max_anon": 375.5
+  }
+ },
+ "memory_peak_cgroup_bytes": 419495936,
+ "history": {
+  "requests": 296,
+  "posts": 296,
+  "chat_completions": 296,
+  "other_paths": [],
+  "responses_api": 0,
+  "chunked_bodies": 0,
+  "n_not_1": 0,
+  "stream": [
+   "True"
+  ],
+  "with_tools": 296,
+  "tool_names": [
+   "bash",
+   "edit",
+   "glob",
+   "grep",
+   "read",
+   "todowrite",
+   "write"
+  ],
+  "conversations": [
+   {
+    "key": "abac2f6f3956",
+    "requests": 296,
+    "max_messages": 626,
+    "head_messages": 2,
+    "first_roles": "su",
+    "with_tools": 296,
+    "every_request_extends_previous": true,
+    "breaks": []
+   }
+  ],
+  "main_conversation": "abac2f6f3956",
+  "whole_history_ok": true
+ },
+ "verifier": {
+  "fixed": 40,
+  "clean": 40,
+  "rules": {
+   "R1": {
+    "applies": 38,
+    "kept": 38
+   },
+   "R2": {
+    "applies": 33,
+    "kept": 33
+   },
+   "R3": {
+    "applies": 27,
+    "kept": 27
+   }
+  },
+  "score": 1.0,
+  "void": false,
+  "tickets_fetched": 44,
+  "audit": {
+   "asked": 7,
+   "right": 7,
+   "lines": 7,
+   "other_tickets": 0
+  }
+ }
+}

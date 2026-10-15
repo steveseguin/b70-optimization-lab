@@ -121,13 +121,13 @@ class FamilyCoverageTest(unittest.TestCase):
         )
         self.assertIsNotNone(fp8_row)
         self.assertIn(">29.78&dagger;</a>", fp8_row.group(0))
-        # Many-users cell is the c64 short-prompt aggregate from the older image:
-        # its run matched, but it is not exact by construction, so the page
-        # must call it a throughput ceiling.
-        self.assertIn(">931.4</a>", fp8_row.group(0))
+        # Many-users cell is the exact c64 short-prompt result of the package's
+        # multi-user profile (October 7, current image), not the older
+        # not-exact throughput ceiling.
+        self.assertIn(">875.3</a>", fp8_row.group(0))
         self.assertIn("64 simultaneous users", fp8_row.group(0))
-        self.assertIn("Tested answers matched the one-user answers", fp8_row.group(0))
-        self.assertIn("throughput ceiling, not exact", fp8_row.group(0))
+        self.assertIn("every answer identical to the one-user answers", fp8_row.group(0))
+        self.assertNotIn("not exact", fp8_row.group(0))
         laguna_row = re.search(
             r"Laguna-S-2\.1.*?</tr>", index_html, flags=re.DOTALL
         )

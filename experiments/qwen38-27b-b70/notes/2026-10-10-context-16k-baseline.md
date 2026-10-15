@@ -2832,7 +2832,7 @@ needed; c20d/e = final 1.0.1):
 | Qwen Code 0.25.1 | c20b | 40 | 39 | 7/7 | 33.1 min | |
 | Kimi Code 2.2.0 | c20d | 40 | 40 | 7/7 | 38.1 min | ~20,800-token fixed prompt; expected to do worst, did not |
 | ForgeCode 2.14.0 | c20d | 25 | 25 | - | 60 min limit | needed final 1.0.1 (two system messages); 69 cuts, ticket 29 of 44 |
-| OpenCode 1.19.0 | - | - | - | - | - | not run: needs ~0.84 GiB, 2.3 GiB free beside the server, 1.8 kept in reserve |
+| OpenCode 1.19.0 | c20f | 40 | 40 | 7/7 | 33.1 min | run alone later (20f) with 400 MiB RAM + swap; first skipped for host memory |
 
 Against the registered expectations: the control repeated campaign 19 (40/40, 7/7, faster alone: 21 min). Ten of
 the eleven other agents that ran fixed 39 or 40 (expected: 30 or more for the small-prompt agents; none stopped
@@ -2854,3 +2854,14 @@ MiB (81 above the server's 1.6 GiB guard; 1800 in 20b-e). Dry run first against 
 Expectation: it runs to the end (the agent's own CPU work is small next to the model's replies, so paging costs
 little time); fixed 30 or more like the other small-prompt agents. A watchdog stop or a memory-guard stop is a void
 for host memory, recorded as such. Gemma stopped first and put back on its throughput recipe after.
+
+### Campaign 20f result (13:37-14:18): OpenCode 40/40, 7/7
+
+Server ready in 165 s with 2,966 MiB free (more than the 2.29 GiB of campaign 20, so OpenCode would have fit uncapped
+this time; the cap was kept as registered). OpenCode 1.19.0: **fixed 40, clean 40, R1 38/38, R2 33/33, R3 27/27,
+audit 7/7**, 33.1 min (agent 1,973 s, exit 0), 296 requests, whole history every time, 13 cuts (12 in place, 0
+failed), 1 recall, container non-file peak 381 MiB inside the 400 MiB cap (it paged the rest). Host memory while the
+server ran: min 1.90, median 2.05 GiB; no watchdog or guard stop. Kernel log clean; Gemma back on its throughput
+recipe 14:13. Against the expectation: as expected (ran to the end, 30 or more). Data:
+`data/2026-10-15-context-campaign20/c20f/`. The campaign-20 table above now carries this row: twelve of twelve agents
+ran, eleven fixed 39 or 40.
