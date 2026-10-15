@@ -2769,3 +2769,40 @@ message gets the memory note in place; two new tests, both fail on the previous 
 against the 20c server: an OpenHands-shaped request (text parts, effort high) and a ForgeCode-shaped one (two system
 messages) both answered. No agent in 20b sent `reasoning_effort` or a text-parts system message (both would have
 been refused), so the final code sends them the same requests. 20d = 20c's queue and settings with this build.
+
+### Campaign 20d results (04:13-07:27) and 20e registered 2026-10-15 07:29 before its run
+
+The first 20d launch (04:07) ended at once: the server's port probe hit a socket still in TIME_WAIT from the live
+check of the fixed proxy (the known Errno 98); the runner now waits until no socket uses the port. Relaunched 04:13.
+No runaway, no watchdog stop, no GPU fault line; free host memory stayed at or above 2.24 GiB.
+
+| Agent | Fixed | Clean | Rules R1 / R2 / R3 | Audit | Time | Requests | Cuts (in place, failed) | Recalls | Peak MiB |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| OpenHands SDK 1.54.0 | 40 | 40 | 38/38, 33/33, 27/27 | 6/7 | 24.0 min | 210 | 6 (6, 0) | 0 | 418 |
+| Hermes Agent 0.22.1 | 40 | 40 | 38/38, 33/33, 27/27 | 7/7 | 25.6 min | 240 | 12 (9, 0) | 8 | 436 |
+| Kimi Code 2.2.0 | 40 | 40 | 38/38, 33/33, 27/27 | 7/7 | 38.1 min | 288 | 13 (12, 1) | 2 | 429 |
+| Mistral Vibe 2.26.1 | 40 | 7 (grader, see below) | 37/38, 0/33, 27/27 | 0/7 (grader) | 19.3 min | 278 | 5 (5, 0) | 0 | 361 |
+| Cline CLI 3.0.71 | 40 | 40 | 38/38, 33/33, 27/27 | 7/7 | 23.6 min | 283 | 12 (11, 1) | 11 | 447 |
+| ForgeCode 2.14.0 | 25 | 25 | 23/23, 18/18, 12/12 | 0/7 (not reached) | 60 min limit | 223 | 69 (7, 0) | 2 | 176 |
+| OpenCode 1.19.0 | not run: 2.29 GiB free, 2.52 needed (~0.84 GiB for the agent) | | | | | | | | |
+
+- **OpenHands audit 6/7:** six lines, all right; one early ticket left out.
+- **ForgeCode** worked through the fixed proxy (no refusal) and kept every rule, but reached ticket 29 of 44 in the
+  60 minutes: its ~11,600-token fixed prompt leaves the least room in the 32K window of any agent that ran, and the
+  proxy cut 69 times (62 of them not in place).
+- **Mistral Vibe: a grading fault in the harness, not the agent.** Vibe wrote `/app/FIXES.md` (first line with its
+  `write_file` tool, then `echo >>`) and `/app/AUDIT.md` (`write_file`), and its last command printed both, all
+  33 FIXES lines and the 7 audit lines (right). The grader read both as empty. `RECIPES.txt`, first created by a shell
+  `echo`, was graded normally (27/27). Cause, reproduced in a throwaway container with the harness's flags: the
+  grader runs as root, but the container drops every capability, so root cannot read a file its owner made
+  owner-only (`Permission denied`), which `write_file` evidently does; `docker exec --privileged` for the grading
+  command reads it. Fixed in `tools/agentbench/run-agent-job.sh` (06:05, swapped in atomically; Cline and ForgeCode
+  ran after it was written, Cline's job had started under the old copy and graded normally): the grading command
+  runs with `--privileged` (the agent's processes are all killed first) and `ls -la /app` is saved as
+  `verifier/app-files.txt`. No other run is affected: every other agent's FIXES and AUDIT lines were read (pi's
+  AUDIT.md was deleted by pi, seen in its own commands).
+
+**Campaign 20e, registered before its run:** Mistral Vibe once more, alone, with the fixed grader; everything else
+as in 20d (final 1.0.1 proxy, same server settings, 60 min limit, runaway stop, full request capture). The 20d row
+stays in the record as a harness fault. Expectation: about 40 fixed, 40 clean, audit 7/7 (what its 20d commands
+show); `app-files.txt` should show FIXES.md and AUDIT.md as owner-only.

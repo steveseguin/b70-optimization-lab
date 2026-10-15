@@ -137,6 +137,9 @@ sleep 5
 say "cards free; MemAvailable $(avail) MiB"
 
 # ---- the research server (campaign-19 settings)
+# the server's port probe binds without SO_REUSEADDR: a connection still in TIME_WAIT on the port fails the start
+# (20d's first launch, 04:08); wait until no socket at all uses it
+for i in $(seq 1 30); do [[ -z $(ss -Htan "( sport = :$PORT or dport = :$PORT )") ]] && break; sleep 5; done
 systemctl --user reset-failed ctx-fp8-tp2-server 2>/dev/null
 systemd-run --user --unit=ctx-fp8-tp2-server --collect -p WorkingDirectory=$LAB -E B70_GUARD_MIN_AVAILABLE_GIB=1.6 \
   python3 experiments/qwen38-27b-b70/scripts/run-fp8-tp1-server.py --out "$SRV" --port $PORT \

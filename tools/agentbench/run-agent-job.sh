@@ -77,7 +77,11 @@ docker cp "$C:/logs/agent/." "$TRIAL/agent/" >/dev/null 2>&1 || true
 docker cp "$C:/home/agent" "$TRIAL/agent/home" >/dev/null 2>&1 || true
 docker cp "$TASK/tests/." "$C:/tests/" >/dev/null
 docker exec "$C" mkdir -p /logs/verifier
-docker exec "$C" python3 /tests/grade.py 2>&1 | tee "$TRIAL/verifier/test-stdout.txt" | grep 'repair score' || true
+docker exec "$C" ls -la /app > "$TRIAL/verifier/app-files.txt" 2>&1 || true
+# The grader runs as root, but the container dropped every capability, so plain root cannot read a file the agent
+# made owner-only (Mistral Vibe's write_file: FIXES.md and AUDIT.md were graded as empty in campaign 20d). The
+# agent's processes are all gone by now; the grading command alone gets back the read access root normally has.
+docker exec --privileged "$C" python3 /tests/grade.py 2>&1 | tee "$TRIAL/verifier/test-stdout.txt" | grep 'repair score' || true
 docker cp "$C:/logs/verifier/." "$TRIAL/verifier/" >/dev/null 2>&1 || true
 
 python3 -I "$HERE/check_history.py" "$TRIAL/agent/requests.jsonl" > "$TRIAL/agent/history-check.json" 2>/dev/null || true
