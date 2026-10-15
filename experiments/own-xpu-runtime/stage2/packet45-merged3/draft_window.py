@@ -78,7 +78,12 @@ def _run(a,out,env,watch,build,*,cpu_rehearsal=False,host_lifecycle):
    result.append(cmd[index]);index+=1
   return result+['--mini','--pipeline-mini']
  source=json.loads((P/f'capture-run-incident-retrospective-c{a.context}.json').read_text());reference=Path(source['output'])
- require(source['binary_sha256']==build['artifacts_sha256']['gnu-host/own-rt-iq3'],'KD CPU reference binary identity')
+ # A fixture-only reseal retains historical execution identity explicitly.
+ evidence_artifacts=build.get('model_evidence_artifacts_sha256',build['artifacts_sha256'])
+ if evidence_artifacts!=build['artifacts_sha256']:
+  delta=build['fixture_delta_qualification']
+  require(delta['passed'] and delta['fresh_real_cases']==1 and delta['called_by_production_decode'] is False,'KD fixture delta qualification')
+ require(source['binary_sha256']==evidence_artifacts['gnu-host/own-rt-iq3'],'KD CPU reference binary identity')
  table=B/'capture-incident-retrospective.tsv'
  require(sha(table)==source['table_sha256'],'KD table identity')
  require(source['table_sha256']==json.loads((P/'capture-input-incident-retrospective.json').read_text())['table_sha256'],'KD sealed table identity')

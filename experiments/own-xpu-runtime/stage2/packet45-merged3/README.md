@@ -97,3 +97,10 @@ rehearsal chains (4,096 draft ranks 0/1; 32,768 draft rank 0). The new seal
 binds 25 gate receipts and 41 primary build artifacts. All five device binary
 hashes changed; the ABI is unchanged. All 150 protected incident/device files
 are unchanged. No device binary ran; fresh device qualification is required.
+
+The [October 14 copy-extent repair](COPY-EXTENT-CLOSEOUT.md) fixes the next K2
+setup failure: P39 tried to upload a complete 268.7 MB expert bank in one
+128 MiB-limited copy. It now uses waited 4 MiB slabs. A CPU gate exercises all
+eight P39 classes at full production geometry, and a registry-driven sweep
+loads every selectable GEMV/attention choice through the actual K2 owners.
+The full-size/adoption receipt is required by the coordinator rehearsal and seal.

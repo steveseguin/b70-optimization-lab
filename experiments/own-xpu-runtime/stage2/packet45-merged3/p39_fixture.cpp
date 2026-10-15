@@ -30,10 +30,32 @@ struct OwnerBackend {
 #endif
  }
  explicit OwnerBackend(unsigned card):d(backend(card)),copier(d){}
+#ifdef OWN_RT_HOST_ONLY
+ explicit OwnerBackend(std::unique_ptr<Backend> backend):d(std::move(backend)),copier(d){}
+#endif
  Allocation allocate(size_t n,Memory m=Memory::device){return d.arena.allocate("p39-fixture-"+std::to_string(serial++),std::max(n,size_t(4)),m,Category::scratch,Lifetime::transaction);}
  template<class T>T* alloc(size_t n){auto id=allocate(n*sizeof(T));auto ptr=d.arena.row(id).pointer;ids.emplace(ptr,id);return static_cast<T*>(ptr);}
  Allocation id(const void*p){return ids.at(p);}
- void copy(void*dst,const void*src,size_t n){if(!n)return;auto to=ids.find(dst),from=ids.find(src);if(to==ids.end()&&from==ids.end()){std::memcpy(dst,src,n);return;}auto host=allocate(n,Memory::pinned);auto hp=d.arena.row(host).pointer;if(from==ids.end())std::memcpy(hp,src,n);auto e=copier.copy(to==ids.end()?host:to->second,0,from==ids.end()?host:from->second,0,n,{});if(!d.wait(e,std::chrono::seconds(300)))throw std::runtime_error("p39 fixture copy deadline");if(to==ids.end())std::memcpy(dst,hp,n);d.retire_completed_events();d.arena.release(host);}
+ void copy(void*dst,const void*src,size_t n){
+  if(!n)return;
+  auto to=ids.find(dst),from=ids.find(src);
+  if(to==ids.end()&&from==ids.end()){std::memcpy(dst,src,n);return;}
+  // A production expert bank exceeds CopyEngine's single-copy bound.
+  // Reuse one bounded pinned slab only after each transfer has completed.
+  constexpr size_t slab_bytes=4*1024*1024;
+  auto host=allocate(std::min(n,slab_bytes),Memory::pinned);
+  auto hp=d.arena.row(host).pointer;
+  for(size_t offset=0;offset<n;offset+=slab_bytes){
+   const size_t bytes=std::min(n-offset,slab_bytes);
+   if(from==ids.end())std::memcpy(hp,static_cast<const uint8_t*>(src)+offset,bytes);
+   auto e=copier.copy(to==ids.end()?host:to->second,to==ids.end()?0:offset,
+                      from==ids.end()?host:from->second,from==ids.end()?0:offset,bytes,{});
+   if(!d.wait(e,std::chrono::seconds(300)))throw std::runtime_error("p39 fixture copy deadline");
+   if(to==ids.end())std::memcpy(static_cast<uint8_t*>(dst)+offset,hp,bytes);
+   d.retire_completed_events();
+  }
+  d.arena.release(host);
+ }
  void wait(){d.retire_completed_events();}
  void free(void*p){d.arena.release(ids.at(p));ids.erase(p);}
  void finish(Launch l){if(!d.wait(l.last,std::chrono::seconds(300)))throw std::runtime_error("p39 fixture launch deadline");}

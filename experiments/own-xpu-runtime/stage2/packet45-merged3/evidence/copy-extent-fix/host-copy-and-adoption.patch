@@ -1,0 +1,83 @@
+diff --git a/experiments/own-xpu-runtime/stage2/packet45-merged3/gemv_timing.cpp b/experiments/own-xpu-runtime/stage2/packet45-merged3/gemv_timing.cpp
+index 40e93af9e..d6c43057c 100644
+--- a/experiments/own-xpu-runtime/stage2/packet45-merged3/gemv_timing.cpp
++++ b/experiments/own-xpu-runtime/stage2/packet45-merged3/gemv_timing.cpp
+@@ -48,12 +48,12 @@ struct Runner {
+  void clear(){device.retire_completed_events();for(auto id:owned)device.arena.release(id);owned.clear();}
+ };
+ }
+-static AdapterFixtureReceipt gemv_gate(unsigned card,const std::filesystem::path& out,bool timing){
++static AdapterFixtureReceipt gemv_gate(unsigned card,const std::filesystem::path& out,bool timing,const std::string& adoption_class=""){
+ #ifdef OWN_RT_HOST_ONLY
+  if(timing&&!fixture_validation::only)throw std::runtime_error("GEMV K2 is a coordinator-only device timing window");
+ #endif
+  auto runner=std::make_unique<Runner>(card);unsigned checks=0;try{std::ofstream events(out/"events.jsonl",std::ios::app),fixture_bytes;if(!timing)fixture_bytes.open(out/"output.bin",std::ios::binary|std::ios::app);
+- for(auto s:shapes){const bool p30shape=s.type==iq3::Type::Q8_0&&((s.rows==10240&&s.k==320)||(s.rows==2560&&s.k==640));auto& r=*runner;unsigned experts=s.count>1?512:1,v=arithmetic::r5_variant(s.type,s.rows,s.k,experts,false);auto rb=arithmetic::row_bytes(s.type,s.k,v);if(!timing&&!p30shape&&s.type!=iq3::Type::IQ4_NL)s.rows=8;auto selected=packet26::dispatch.gemv_for(s.klass);bool candidate_available=!selected.empty();
++ for(auto s:shapes){if(!adoption_class.empty()&&s.klass!=adoption_class)continue;const bool p30shape=s.type==iq3::Type::Q8_0&&((s.rows==10240&&s.k==320)||(s.rows==2560&&s.k==640));auto& r=*runner;unsigned experts=s.count>1?512:1,v=arithmetic::r5_variant(s.type,s.rows,s.k,experts,false);auto rb=arithmetic::row_bytes(s.type,s.k,v);if(!timing&&!p30shape&&s.type!=iq3::Type::IQ4_NL)s.rows=8;auto selected=packet26::dispatch.gemv_for(s.klass);bool candidate_available=!selected.empty();
+  for(unsigned mode=0;mode<(!timing?6u:1u);++mode){
+   if(!timing&&!p30shape&&s.type!=iq3::Type::IQ4_NL)s.rows=mode==4?9:8;
+   std::vector<uint16_t> x(size_t(s.k)*(s.paired?1:s.count));for(size_t i=0;i<x.size();++i){x[i]=iq3::bf16_bits(float(int(i*17%127)-63)/128.f);if(mode==1)x[i]=i%2?0x8000:0;if(mode==2){constexpr uint16_t tiny[]{0,0x8000,1,0x8001,0x007f,0x807f,0x0080,0x8080};x[i]=tiny[i%8];}if(mode==3){constexpr uint16_t extreme[]{0,0x8000,0x4f00,0xcf00,0x3000,0xb000,0x3f80,0xbf80};x[i]=extreme[i%8];}}
+@@ -73,12 +73,13 @@ static AdapterFixtureReceipt gemv_gate(unsigned card,const std::filesystem::path
+   else if(s.count>1){candidates.push_back("p33.gate.restrict");candidates.push_back("p42.gate.packed");}else candidates.push_back("p33.dense.segment");
+   if(s.type==iq3::Type::Q8_0&&((s.rows==10240&&s.k==320)||(s.rows==2560&&s.k==640)))candidates.push_back("p30.small.rows4");
+   const std::string incumbent=timing?packet37::gemv_incumbent(s.klass):"r5";if(incumbent!="r5")candidates.insert(candidates.begin(),"r5");
++  if(!adoption_class.empty())candidates={selected};
+   auto fp32=r.alloc(x.size()*4);
+   for(const auto& candidate:candidates){selected=candidate;candidate_available=!selected.empty();
+   if(candidate=="p25.half_table")for(unsigned mutation=0;mutation<3;++mutation){auto bad=matrices;bad[0].workspace=mutation==0?Allocation(0):mutation==1?xid:bad[0].w;bool rejected=false;try{packet26::p25bridge::submit(r.device,bad,candidate,s.paired,v);}catch(const std::invalid_argument&){rejected=true;}if(!rejected)throw std::runtime_error("half_table accepted missing/undersized/aliased workspace");++checks;}
+ 
+   for(unsigned timing_mode=0;timing_mode<(heavy?2u:1u);++timing_mode){const bool rotated=timing_mode==1;
+-  std::vector<double> elapsed[2];bool excluded[2]{};for(unsigned iteration=0;iteration<(timing&&!fixture_validation::only?216u:1u);++iteration)for(unsigned variant=0;variant<2;++variant){if(excluded[variant])continue;const bool measuring=timing&&!fixture_validation::only&&iteration>=8&&iteration<208;const unsigned repetition=iteration<8?iteration:iteration<208?iteration-8:iteration-208;try{fixture_validation::inject_failure(std::string("gemv:")+s.klass,variant);const unsigned buffer_copy=rotated?(repetition+variant*4)%copies:0;auto& current=banks[buffer_copy];Launch prep{};if(variant&&selected=="p27.fp32_input")prep=packet26::p25bridge::prepare_input(r.device,xid,fp32,x.size());auto implementation=variant?selected:incumbent;auto launched=implementation=="r5"?(s.count>1?integrated::experts(r.device,current,s.paired):dense(r.device,current[0],v)):implementation=="p30.small.rows4"?p30integrated::small(r.device,s.k==320?"hc.gate":"shexpdown",current,std::array<unsigned,1>{v}):(implementation.starts_with("p33.")||implementation=="p42.gate.packed")?p33::submit(r.device,current,implementation,s.paired,v):implementation.starts_with("p28.")?p28::submit(r.device,current,implementation,s.paired,v):implementation.starts_with("p29.")?p29::submit(r.device,current,implementation,s.paired,v):packet26::p25bridge::submit(r.device,current,implementation,s.paired,v,fp32);if(prep.first)launched.first=prep.first;r.finish(launched.last);std::vector<std::pair<Event,EventTiming>> times;for(Event event=launched.first;event<=launched.last;++event)times.push_back({event,r.device.timing(event)});
++  std::vector<double> elapsed[2];bool excluded[2]{};for(unsigned iteration=0;iteration<(timing&&!fixture_validation::only?216u:adoption_class.empty()?1u:8u);++iteration)for(unsigned variant=0;variant<2;++variant){if(excluded[variant])continue;const bool measuring=timing&&!fixture_validation::only&&iteration>=8&&iteration<208;const unsigned repetition=iteration<8?iteration:iteration<208?iteration-8:iteration-208;try{fixture_validation::inject_failure(std::string("gemv:")+s.klass,variant);const unsigned buffer_copy=rotated?(repetition+variant*4)%copies:0;auto& current=banks[buffer_copy];Launch prep{};if(variant&&selected=="p27.fp32_input")prep=packet26::p25bridge::prepare_input(r.device,xid,fp32,x.size());auto implementation=variant?selected:incumbent;auto launched=implementation=="r5"?(s.count>1?integrated::experts(r.device,current,s.paired):dense(r.device,current[0],v)):implementation=="p30.small.rows4"?p30integrated::small(r.device,s.k==320?"hc.gate":"shexpdown",current,std::array<unsigned,1>{v}):(implementation.starts_with("p33.")||implementation=="p42.gate.packed")?p33::submit(r.device,current,implementation,s.paired,v):implementation.starts_with("p28.")?p28::submit(r.device,current,implementation,s.paired,v):implementation.starts_with("p29.")?p29::submit(r.device,current,implementation,s.paired,v):packet26::p25bridge::submit(r.device,current,implementation,s.paired,v,fp32);if(prep.first)launched.first=prep.first;r.finish(launched.last);std::vector<std::pair<Event,EventTiming>> times;for(Event event=launched.first;event<=launched.last;++event)times.push_back({event,r.device.timing(event)});
+    if(!measuring)for(size_t j=0;j<matrices.size();++j){size_t bytes=expected[j].size()*2;r.finish(r.copy.copy(hosts[j],0,matrices[j].y,0,bytes,{}));if(!fixture_validation::only&&std::memcmp(r.device.arena.row(hosts[j]).pointer,expected[j].data(),bytes)){auto actual=static_cast<const uint16_t*>(r.device.arena.row(hosts[j]).pointer);size_t at=0;while(at<expected[j].size()&&actual[at]==expected[j][at])++at;throw std::runtime_error(std::string("GEMV exactness: ")+s.label+" mode="+std::to_string(mode)+" variant="+std::to_string(variant)+" projection="+std::to_string(j)+" element="+std::to_string(at)+" expected_bf16="+std::to_string(expected[j][at])+" actual_bf16="+std::to_string(actual[at]));}if(s.count>1){r.finish(r.copy.copy(status_hosts[j],0,matrices[j].status,0,s.count*4,{}));if(!fixture_validation::only){auto status=static_cast<const uint32_t*>(r.device.arena.row(status_hosts[j]).pointer);for(unsigned slot=0;slot<s.count;++slot)if(status[slot]!=unsigned(!iq3::valid_route(routes[slot],experts,s.rows,s.rows)))throw std::runtime_error("GEMV route status differs");}}if(!timing)fixture_bytes.write(static_cast<const char*>(r.device.arena.row(hosts[j]).pointer),bytes);}
+    double sum_us=0;for(auto [event,t]:times)sum_us+=double(t.end_ns-t.start_ns)/1000.;if(measuring)elapsed[variant].push_back(sum_us);
+    if(measuring||fixture_validation::only)for(auto [event,t]:times)events<<"{\"class\":"<<quote(std::string("gemv:")+s.klass)<<",\"workload\":"<<quote(s.label)<<",\"variant\":\""<<(variant?"specialised":"packet18")<<"\",\"implementation\":"<<quote(implementation)<<",\"timing_mode\":"<<quote(rotated?"rotated":"reread")<<",\"rotation_copies\":"<<copies<<",\"buffer_copy\":"<<buffer_copy<<",\"full_payload_bytes\":"<<payload<<",\"payload_bytes\":"<<payload<<",\"candidate\":"<<quote(candidate)<<",\"kernel_identity\":"<<quote(implementation+":"+s.label+":v"+std::to_string(v))<<",\"same_kernel\":"<<(selected==incumbent?"true":"false")<<",\"bytes_equal\":true,\"equality_check\":\"untimed-preflight-and-postflight-all-eight-copies\",\"candidate_available\":"<<(candidate_available?"true":"false")<<",\"repetition\":"<<repetition<<",\"event\":"<<event<<",\"stage_count\":"<<times.size()<<",\"start_ns\":"<<t.start_ns<<",\"end_ns\":"<<t.end_ns<<",\"exact\":true}\n";
+@@ -95,3 +96,10 @@ static AdapterFixtureReceipt gemv_gate(unsigned card,const std::filesystem::path
+ }
+ AdapterFixtureReceipt gemv_timing_gate(unsigned card,const std::filesystem::path& out){return gemv_gate(card,out,true);}
+ AdapterFixtureReceipt gemv_fixture_gate(unsigned card,const std::filesystem::path& out){return gemv_gate(card,out,false);}
++
++#ifdef OWN_RT_HOST_ONLY
++AdapterFixtureReceipt gemv_adoption_gate(const std::filesystem::path& out,const std::string& klass){
++ if(!fixture_validation::only)throw std::logic_error("adoption gate requires CPU validation mode");
++ return gemv_gate(0,out,true,klass);
++}
++#endif
+diff --git a/experiments/own-xpu-runtime/stage2/packet45-merged3/p39_fixture.cpp b/experiments/own-xpu-runtime/stage2/packet45-merged3/p39_fixture.cpp
+index ebbe6d87b..991e017e4 100644
+--- a/experiments/own-xpu-runtime/stage2/packet45-merged3/p39_fixture.cpp
++++ b/experiments/own-xpu-runtime/stage2/packet45-merged3/p39_fixture.cpp
+@@ -30,10 +30,32 @@ struct OwnerBackend {
+ #endif
+  }
+  explicit OwnerBackend(unsigned card):d(backend(card)),copier(d){}
++#ifdef OWN_RT_HOST_ONLY
++ explicit OwnerBackend(std::unique_ptr<Backend> backend):d(std::move(backend)),copier(d){}
++#endif
+  Allocation allocate(size_t n,Memory m=Memory::device){return d.arena.allocate("p39-fixture-"+std::to_string(serial++),std::max(n,size_t(4)),m,Category::scratch,Lifetime::transaction);}
+  template<class T>T* alloc(size_t n){auto id=allocate(n*sizeof(T));auto ptr=d.arena.row(id).pointer;ids.emplace(ptr,id);return static_cast<T*>(ptr);}
+  Allocation id(const void*p){return ids.at(p);}
+- void copy(void*dst,const void*src,size_t n){if(!n)return;auto to=ids.find(dst),from=ids.find(src);if(to==ids.end()&&from==ids.end()){std::memcpy(dst,src,n);return;}auto host=allocate(n,Memory::pinned);auto hp=d.arena.row(host).pointer;if(from==ids.end())std::memcpy(hp,src,n);auto e=copier.copy(to==ids.end()?host:to->second,0,from==ids.end()?host:from->second,0,n,{});if(!d.wait(e,std::chrono::seconds(300)))throw std::runtime_error("p39 fixture copy deadline");if(to==ids.end())std::memcpy(dst,hp,n);d.retire_completed_events();d.arena.release(host);}
++ void copy(void*dst,const void*src,size_t n){
++  if(!n)return;
++  auto to=ids.find(dst),from=ids.find(src);
++  if(to==ids.end()&&from==ids.end()){std::memcpy(dst,src,n);return;}
++  // A production expert bank exceeds CopyEngine's single-copy bound.
++  // Reuse one bounded pinned slab only after each transfer has completed.
++  constexpr size_t slab_bytes=4*1024*1024;
++  auto host=allocate(std::min(n,slab_bytes),Memory::pinned);
++  auto hp=d.arena.row(host).pointer;
++  for(size_t offset=0;offset<n;offset+=slab_bytes){
++   const size_t bytes=std::min(n-offset,slab_bytes);
++   if(from==ids.end())std::memcpy(hp,static_cast<const uint8_t*>(src)+offset,bytes);
++   auto e=copier.copy(to==ids.end()?host:to->second,to==ids.end()?0:offset,
++                      from==ids.end()?host:from->second,from==ids.end()?0:offset,bytes,{});
++   if(!d.wait(e,std::chrono::seconds(300)))throw std::runtime_error("p39 fixture copy deadline");
++   if(to==ids.end())std::memcpy(static_cast<uint8_t*>(dst)+offset,hp,bytes);
++   d.retire_completed_events();
++  }
++  d.arena.release(host);
++ }
+  void wait(){d.retire_completed_events();}
+  void free(void*p){d.arena.release(ids.at(p));ids.erase(p);}
+  void finish(Launch l){if(!d.wait(l.last,std::chrono::seconds(300)))throw std::runtime_error("p39 fixture launch deadline");}

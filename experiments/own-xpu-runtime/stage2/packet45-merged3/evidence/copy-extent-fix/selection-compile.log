@@ -1,0 +1,22 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/copy_selection_gate.cpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp: In function ‘int unused_fixture_entry(int, char**)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp:279:84: warning: ‘int SHA256_Init(SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  279 |  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+      |                                                                         ~~~~~~~~~~~^~~~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/failure.hpp:6,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp:21:
+/usr/include/openssl/sha.h:73:27: note: declared here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      |                           ^~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp:279:185: warning: ‘int SHA256_Update(SHA256_CTX*, const void*, size_t)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  279 |  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+      |                                                                                                                                                                            ~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:74:27: note: declared here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      |                           ^~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp:279:259: warning: ‘int SHA256_Final(unsigned char*, SHA256_CTX*)’ is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+  279 |  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+      |                                                                                                                                                                                                                                                       ~~~~~~~~~~~~^~~~~~~~~~~~~~
+/usr/include/openssl/sha.h:76:27: note: declared here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      |                           ^~~~~~~~~~~~

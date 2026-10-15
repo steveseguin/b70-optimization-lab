@@ -62,6 +62,12 @@ def run():
  sys.addaudithook(prohibit_device)
  assert os.getpriority(os.PRIO_PROCESS,0)==19 and os.environ['OMP_NUM_THREADS']=='2'
  storage.admit(100_000_000)
+ from copy_adoption_gate import verify as verify_copy_adoption
+ verify_copy_adoption()
+ from audit6 import verify as verify_audit6
+ verify_audit6()
+ audit6_sha256=pp.sha(P/'audit6-gates.json')
+ copy_gate_sha256=pp.sha(P/'copy-adoption-gates.json')
  sources={n:pp.sha(P/n) for n in SOURCES};binary=B/'gnu-host/own-rt-iq3';assert_host_build(binary)
  original=json.loads((P/'build-receipt.json').read_text())
  artifacts=current_host_artifacts()
@@ -112,6 +118,7 @@ def run():
  retained=storage.archive_files([f for f in root.rglob('*') if f.is_file() and not f.is_symlink()],archive)
  assert sources=={n:pp.sha(P/n) for n in SOURCES}
  report=dict(passed=True,device_executed=False,rows=rows,source_sha256=sources,archive=retained,
+  copy_adoption_gate_sha256=copy_gate_sha256,audit6_gate_sha256=audit6_sha256,
   host_binary_sha256=pp.sha(binary),scope='exact coordinator_windows.sh; real host children and unmocked receipt/prerequisite/summary gates',
   limitations=['Hardware admission mocks and private miniature input/seal','K0 structural shim; no JIT executed','K1/K2 validate-only; arithmetic gates separate','CPU K2 zero timestamps must fail device timing','Miniature model suites; no device quality or speed claim'])
  save(P/'coordinator-chain-gates.json',report);shutil.rmtree(root)

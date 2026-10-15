@@ -26,7 +26,7 @@ class Watch:
     def postflight(self):raise AssertionError('blocked launch cannot pass postflight')
 
 def contract(build):
-    fields=('passed','sources','artifacts_sha256','official_manifest_sha256','memory_plan','input_sha256',
+    fields=('passed','sources','artifacts_sha256','model_evidence_artifacts_sha256','fixture_delta_qualification','official_manifest_sha256','memory_plan','input_sha256',
             'p33_linked_fixture_host_sha256','nongemv_fixture_host_sha256',
             'draft_capture_fixture_sha256_by_context','draft_capture_input_sha256','cpu_tests_sha256','nongemv_fixture_host_sha256_by_context')
     assert all(name in build for name in fields),['missing seal field',*[name for name in fields if name not in build]]

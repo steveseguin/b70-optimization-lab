@@ -3,7 +3,7 @@
 import hashlib,json
 from pathlib import Path
 P=Path(__file__).resolve().parent;B=P/'build';ROOT=P.parents[3]
-GATES=('fusion-matrix-gates.json','hc-activation-gates.json','cpu-merged-gates.json','cpu-real-gates.json','real-cross-placement-gates.json','real-cross-placement-tests.json','capacity-selection-gates.json',
+GATES=('audit6-tests.json','fixture-delta-tests.json','audit6-gates.json','cpu-real-sentinel.json','copy-adoption-gates.json','fusion-matrix-gates.json','hc-activation-gates.json','cpu-merged-gates.json','cpu-real-gates.json','real-cross-placement-gates.json','real-cross-placement-tests.json','capacity-selection-gates.json',
  'capacity-draft-gates.json','capacity-fixture-gates.json','asan-fixture-gates.json','p33-linked-fixture-gates.json',
  'p39-merged-fixture-gates.json','p45-kernel-tests.json','seal45-binding-tests.json','wrapper-merge-tests.json',
  'context-window-gates.json','memory-plan-gates.json','owner-gates.json','merged-campaign-completion-gates.json',
@@ -210,7 +210,7 @@ def native_bindings(gates):
    if suffix=='tsan-llvm22':assert '-fsanitize=thread' in build['command']
    if count_key=='cases':assert row['ternary_patterns']==1093 and row['long_random_cases']==24 and row['bounded_spin_iterations']==0
    else:assert row['repeated_requests']==32 and row['spin_iterations']==0
-ADMISSION_FIELDS=('passed','sources','artifacts_sha256','official_manifest_sha256','memory_plan','input_sha256',
+ADMISSION_FIELDS=('passed','sources','artifacts_sha256','model_evidence_artifacts_sha256','fixture_delta_qualification','official_manifest_sha256','memory_plan','input_sha256',
  'p33_linked_fixture_host_sha256','nongemv_fixture_host_sha256','draft_capture_fixture_sha256_by_context',
  'draft_capture_input_sha256','cpu_tests_sha256','nongemv_fixture_host_sha256_by_context')
 def verify_window_admission():
@@ -259,6 +259,13 @@ def main():
   gate_sources(row)
  hc_bindings(gates['hc-activation-gates.json'])
  fusion_bindings(gates['fusion-matrix-gates.json'])
+ from audit6 import verify as verify_audit6
+ verify_audit6(gates['audit6-gates.json'])
+ from fixture_delta import verify as verify_fixture_delta
+ fixture_delta=verify_fixture_delta(artifacts)
+ model_artifacts={**artifacts,**fixture_delta['historical_model_artifacts_sha256']}
+ from copy_adoption_gate import verify as verify_copy_adoption
+ verify_copy_adoption(gates['copy-adoption-gates.json'])
  selection_bindings(gates['capacity-selection-gates.json'])
  assert gates['seal45-binding-tests.json']['checks']==45 and gates['seal45-binding-tests.json']['errors']==gates['seal45-binding-tests.json']['failures']==0
  assert gates['p45-kernel-tests.json']['checks']>=72 and gates['p45-kernel-tests.json']['errors']==gates['p45-kernel-tests.json']['failures']==0
@@ -266,8 +273,9 @@ def main():
  assert gates['p39-merged-fixture-gates.json']['binary_sha256']==artifacts['gnu-host/p39-merged-fixtures']
  for name,count in (('cpu-merged-gates.json',79),('cpu-real-gates.json',6)):
   row=gates[name];assert row.get('completed') is True and row['cases']==len(row['rows'])==count and all(r['passed'] for r in row['rows'])
-  assert row['build']['binary_sha256']==artifacts['gnu-host/own-rt-iq3'],'stale model gate '+name
-  bound_sources(row['build']['compiled_sources_sha256'],ROOT)
+  expected_artifacts=model_artifacts if name=='cpu-real-gates.json' else artifacts
+  assert row['build']['binary_sha256']==expected_artifacts['gnu-host/own-rt-iq3'],'stale model gate '+name
+  if name!='cpu-real-gates.json':bound_sources(row['build']['compiled_sources_sha256'],ROOT)
   for source,digest in row['source_pins'].items():
    assert sha(P/('dispatch-p45.json' if source=='dispatch' else source))==digest,'gate harness changed '+source
   for item in row['rows']:
@@ -275,7 +283,7 @@ def main():
  real=gates['cpu-real-gates.json']
  assert {(r['context'],r['draft_rank']) for r in real['rows']}=={(c,r) for c in (256,4096,32768) for r in (0,1)}
  assert all(r['oracle_subset_tokens']==8 and r['oracle_layer_fixtures']==len(r['signature']['fixtures'])==384 for r in real['rows'])
- real_cross_bindings(gates['real-cross-placement-gates.json'],real,artifacts)
+ real_cross_bindings(gates['real-cross-placement-gates.json'],real,model_artifacts)
  fixture=gates['capacity-fixture-gates.json'];fixture_hashes=fixture['nongemv_fixture_host_sha256_by_context']
  assert set(fixture_hashes)=={'256','4096','32768'}
  current_fixture={}
@@ -308,6 +316,8 @@ def main():
   gate_sources(audit)
   chain=gates[name]['coordinator_chains']
   assert chain['passed'] and chain['device_executed'] is False
+  assert chain['copy_adoption_gate_sha256']==sha(P/'copy-adoption-gates.json'),'rehearsal lacks current full-extent/adoption gate'
+  assert chain['audit6_gate_sha256']==sha(P/'audit6-gates.json'),'rehearsal lacks current production-byte audit'
   gate_sources(chain);archive_bound(chain['archive'])
   assert chain['host_binary_sha256']==artifacts['gnu-host/own-rt-iq3']
   assert [(r['context'],r['draft_rank']) for r in chain['rows']]==[(4096,0),(4096,1),(32768,0)]
@@ -321,7 +331,7 @@ def main():
     assert admission['admitted_write_bytes']==admission['projected_build_write_bytes']==expected,'rehearsal storage projection differs'
     assert admission==budget(admission['root_free_bytes'],admission['build_bytes'],expected,expected),'rehearsal storage budget differs'
 
- draft=gates['capacity-draft-gates.json'];draft_bindings(draft,artifacts)
+ draft=gates['capacity-draft-gates.json'];draft_bindings(draft,model_artifacts)
  native_bindings(gates)
  for row in gates['owner-gates.json']['rows']:
   assert row['binary_sha256']==artifacts[row['compiler']+'/'+row['name']]
@@ -337,7 +347,7 @@ def main():
  source_hashes=sources()
  for path in (P/'coordinator_windows.sh',P/'memory-plan.json',P/'merge-start.json',P/'draft-baseline-oracle.json',official_path):source_hashes[str(path.relative_to(ROOT))]=sha(path)
  review_hashes={n:sha(P/n) for n in ('review-draft-rank0.md','review-memory.md')}
- counts=dict(fusion_matrix_checks=gates['fusion-matrix-gates.json']['checks'],fusion_compiler_arms=6,hc_activation_checks=4752,hc_compiler_arms=6,merged_fresh_cases=79,real_native_cases=6,real_token_matches=48,real_layer_fixture_matches=2304,
+ counts=dict(audit6_windows=28,audit6_mutation_tests=8,fixture_delta_tests=6,fresh_real_sentinel_cases=1,fresh_real_sentinel_tokens=8,fresh_real_sentinel_layer_matches=384,historical_real_cases_reused=6,fusion_matrix_checks=gates['fusion-matrix-gates.json']['checks'],fusion_compiler_arms=6,hc_activation_checks=4752,hc_compiler_arms=6,merged_fresh_cases=79,real_native_cases=6,real_token_matches=48,real_layer_fixture_matches=2304,
    real_cross_placement_pairs=3,real_draft_semantic_buffers=17,
    selection_checks=sum(r['result']['checks'] for r in gates['capacity-selection-gates.json']['rows']),
    draft_capture_arms=6,draft_valid_fixture_matches=378,
@@ -349,6 +359,7 @@ def main():
   post_seal_admission=dict(path='window-seal-binding.json',scope='detached exact build/admission receipt hashes; build receipt remains unchanged'),
   arithmetic='iq3-p17-detmath-v2',context_capacities=[256,4096,32768],draft_ranks=[0,1],
   parent_pins=read('merge-start.json'),sources=source_hashes,artifacts_sha256=artifacts,
+  fixture_delta_qualification=fixture_delta,model_evidence_artifacts_sha256=model_artifacts,
   mode_build_receipts_sha256=build_receipts,precision=precision,link_commands=links,
   input_sha256=sha(B/'input/input.json'),official_manifest_sha256=sha(P/'mtp-manifest.tsv'),
   official_tensor_receipt_sha256=sha(official_path),official_tensor_receipt_path=str(official_path.relative_to(ROOT)),
@@ -364,7 +375,7 @@ def main():
   pending=['coordinator device chain at each capacity and draft placement','merged per-class and full-model speed',
     'measured 22/26 balance and reverse-handoff overlap','actual card allocation/driver overhead',
     'complete manifest-bound 32/64/128-token model suites on merged device binary'],
-  real_cpu_scope='six native first-eight-token checks of the first fixed suite prompt; not full suite or speed evidence')
+  real_cpu_scope='one fresh 4096/dr0 sentinel plus six historical source-equivalent native first-eight-token checks of the first fixed suite prompt; not full suite or speed evidence')
  save('build-receipt.json',receipt)
  (P/'BINARY-HASHES.md').write_text('# Binary SHA256\n\nBuilt on the CPU; no device program executed.\n\n| Binary | SHA256 |\n|---|---|\n'+''.join(f'| {n} | `{h}` |\n' for n,h in sorted(artifacts.items())))
  print(json.dumps(dict(passed=True,gate_receipts=len(GATES),binary_hashes=len(artifacts),counts=counts)))

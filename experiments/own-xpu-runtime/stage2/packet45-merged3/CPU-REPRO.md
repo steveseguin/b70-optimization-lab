@@ -137,3 +137,15 @@ changed device identities and every protected incident/device file. All commands
 use the same nice/ionice/OMP prefix above. Evidence is under
 `evidence/route-gather-fix/`; [the closeout](ROUTE-GATHER-CLOSEOUT.md) gives the
 failure attribution and every registry fusion's actual CPU coverage.
+
+## Copy-extent repair 4
+
+`copy_extent_campaign.py all` runs the full serial qualification, including the
+new `copy_adoption_gate.py`, compiler matrices, four compile/link builds, CPU
+model/fixture/controller gates, all three 9/9 coordinator rehearsals and the
+final seal. `copy_extent_summary.py` verifies the final identities and unchanged
+protected evidence. All commands use the same nice/ionice/OMP prefix above.
+The new gate compiles and runs only GNU host binaries; its backend checks full
+production allocation extents without computing device kernels. Synthetic
+selection timestamps are test inputs, never measurements. See the
+[copy-extent closeout](COPY-EXTENT-CLOSEOUT.md) for exact coverage and limits.

@@ -155,3 +155,30 @@ adapter is recoverable from the retained `adapter-fix.patch` in reverse and the
 recorded original source hash. No incident/device directory is modified or
 removed by this repair. Full CPU fixture blobs use the existing hash-verified
 gzip retention path. Prior evidence is historical and is not a current gate.
+
+# Copy-extent repair evidence
+
+`evidence/copy-extent-fix/` retains the negative CPU reproduction, its exact
+pre-fix source snapshots as text, saved incident attribution, previous seals,
+full CPU campaign logs and final qualification. `prior-seal-retention.json`
+gives the commit and hashes for the replaced gate/build receipts and coordinator
+archive. Its scratch-stream archive preserves each original byte stream; strip
+`build/copy-extent-prior-seal/` when extracting into a separate review directory.
+Do not restore historical receipts over the current seal.
+
+The 16 MiB `evidence/scratch-copy-adoption-lkq1rfi6.jsonl.gz` is intentional
+evidence: all 1,680 members are retained (783,761,069 original bytes), including
+synthetic selector inputs, emitted dispatch JSON, summaries and native selection
+logs. `copy-adoption-gates.json` binds its SHA256 and the two host test binaries.
+Verify/extract using the scratch-stream format above; `copy_adoption_gate.py`
+recreates the cases, with new temporary paths and archive identity. The synthetic
+timestamps qualify selector behavior only, never device speed.
+
+New model-case archives and updated large fixed-name receipts follow the same
+retention rules above: preserve their exact committed blobs for historical
+identity, verify their receipt hashes, and regenerate disposable state with the
+corresponding CPU gate. The coordinator archive now additionally binds the
+full-extent/selection gate. All incident/device evidence remains in place and
+is checked against the 251-file pre-repair inventory.
+
+Audit 6 retains production-byte allocation censuses and metadata-only logs under `evidence/audit6`; its zero-byte payload sinks are indexed in `retention.json.gz`, not treated as model evidence. The authentication-interrupted real run is archived in `evidence/scratch-merged-gate-1792023922555130528.jsonl.gz`. These records preserve the failure/interruption and full extent checks without weight payloads.

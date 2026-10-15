@@ -1,0 +1,20 @@
+{
+  "stage": "fusion-matrix",
+  "exit_code": 0,
+  "seconds": 376.7529716491699,
+  "command": [
+    "nice",
+    "-n",
+    "19",
+    "ionice",
+    "-c",
+    "3",
+    "/usr/bin/python3",
+    "-B",
+    "-c",
+    "import sys;from pathlib import Path;import fusion_matrix as m;m.E=m.P/'evidence/copy-extent-fix/fusion';m.E.mkdir(exist_ok=True);sys.argv=['fusion_matrix.py','--label','after'];m.main()"
+  ],
+  "log": "evidence/copy-extent-fix/fusion-matrix.log",
+  "log_sha256": "adedaaef6e187eb5409449a53c3bac3b9680dfda14015be77d56a49c5b67f79b",
+  "device_executed": false
+}

@@ -1,0 +1,3977 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "weight_payload_bytes_read": 0,
+  "schema": "packet45.audit6.v1",
+  "sources": {
+    "audit6.py": "fb63e1ebb80c29fdcaef91308b05b773d53262097d36324e9128d4b60eb34082",
+    "audit6_canary.cpp": "1c3a3403eb5c6d03504357280a99ec93eef14c124c4d3099a2fd77a1f5d5a76e",
+    "audit6_gate.cpp": "830dafa2340a793345c074fcfaf691c4f29105cc424140b01db095068a5ca528",
+    "audit6_backend.hpp": "83c9480bc7d5f01d98a0039a89eb999bc70b0ce85d71dac504a6eb1e5114cf47",
+    "main.cpp": "7e8bb826de6463ca5cb48fa62be891f78cbcf71eba9011a2d5a79ab3f6a47296",
+    "mtp.hpp": "ab81b1640de3cfdd2407762cc05d3efec1f08381dafb44b0bc0ac57c41bb8b82",
+    "rank.hpp": "3e87bd512f69019499fc50bdb75a333d6d3018817eb759fc4c4472b7677cddd0",
+    "rank_canary.hpp": "e5ac0589c32fde6e25ab57da94f90fd4e3d1608a4a70f5d3382a490d105e303d",
+    "strict_snapshot.hpp": "b0eeff72dff303bd8186b2c36b6362c1bcf62c8a85ba74a5c8eddb5a85a7118b",
+    "request_reset.hpp": "b35ad7753e3b2155e62e9d02700c24c52292f773c5f0b5f496914c705b6fbe99",
+    "request_state_inventory.hpp": "1341737c1005f0bf7ae216648c4ee29805d5e3efa384184ee76e98521a275902",
+    "owner.cpp": "8e82affd2c119ef2ef13df14c11063f60ec8ba641ed643b7f2c652e7c256e94b",
+    "owner_api.hpp": "1c712169fca15d34319ab082701a054a4a1fc63caccdfd7515a00067f4843608",
+    "storage.py": "8497e1f8e045c06bdb4cbd39e3ad0058324d927d4c1ef5c0cc1d3d63acdcfd39",
+    "window.py": "57b0efedbc901b19bcca183ec4aa31b6db174bc2f367c0040ca2fb81347dd2e1",
+    "draft_window.py": "aebbbe66d39d556f782124afdea5d2518ad8810329f2e279834c360bec456cd6",
+    "pipeline.py": "61251db33bc2da7bba36ed18ca29c1bff29cda296c74d3f51da2ea7069160ff8",
+    "suite.py": "d8d0a373ba5fbc3e70605ea61b970694a1b837d0bcd5ac1e0087221333e546d1",
+    "memory_plan.py": "ec9e50a4ba33b1b935dfd0fd57dd348c4c7417c367df3ad9b649b46fbd8f304c",
+    "memory-plan.json": "2b21331812f4a88b001ba2acc410c7cc883acac51ed466962fcc39c80c66c9ae",
+    "memory_gate.py": "463105fb7fe10c598d318c6169df263be7d26b35c7fd2e4bb05196191046630d",
+    "dispatch-p45.json": "8d696e7f9cc7853dfdcc1e8774a50ce69b3afd94d1dc7dfa49fa804a125dd1c6",
+    "mtp-manifest.tsv": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9"
+  },
+  "compiled_sources_sha256": {
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp": "e5e68fd9aa3c9baaa34811b74c58f6ff8311f6bd18fae787fe80ccef2d6e3a32",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp": "94db5f67e518d4b4940811c9f381f3e1add47c403fca134cad11d84d4d2e626b",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp": "296eeb3fdf685b698cb7bb35da86157fbb12f97ff215f61ab7ad90f207364c9b",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp": "f3b311c18744091930ed4a038db8acb4fd4b30d8e348a62a0c25d377d309f1fc",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp": "b5a6c3b39d051853e49761491aaf69f55e7ad882cffef34ea8300a68c608176d",
+    "experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp": "021766a26c108dbdb830070bfb8c13c00934ca5a7df3f472aa3f10335309bb33",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": "1044e1a57d101d35a1d02e7fd911c3db9e5faed41248255ac61af52528f98f74",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp": "d2560c5530d56ca62b0ec43bcbd1668cd7c637d1743f51abfebfb96de56ee480",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp": "80647a747f697dd8131019ee2041ab42b1f6b772f735abdf116fa6e2036323f1",
+    "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
+    "experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp": "535eea979a14d3a5eb9f4768edffb6e47c7d0aa61cfeeaf27e9dade75d19759f",
+    "experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp": "e8da06cfc064ef9dd5f154d4b313b0dfeb95244fb6e7cb1a073591e6e8497cfa",
+    "experiments/own-xpu-runtime/stage2/packet4/owner_test.cpp": "90b62340aff81aaa2c8bee620b6ddfea13d9d9231b1f64e94140139181d498b1",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/CMakeLists.txt": "c6fbf0627c9ed70c3df2a805c2584f2d089c172ad910fc78ddb347876ac6430f",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/adapter.cpp": "625c8963ee94f6d914908522ce6a3bfef488c8cc887e852470a19ff31b5a241e",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/adapter.hpp": "ed38260c7ca1ddeab55f465e2635ae9f97f31970424b412d7e9ba9ca071a63be",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/adapter_fixture.cpp": "dec9e3135a555d899524a48f63b1d8f51744fc52a7f459fae80bc413bb92a2ed",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/adapter_fixture.hpp": "3073e6e8a9a4c18516acdff31109324888bfe50f6680aa1f54a7abe3ebb7b003",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/argument_block.hpp": "f2cc8a5709ae443e2fcaa755cfb86e36080a710e9964422b12d3a8425433db35",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/arithmetic.hpp": "4eea12510e598964cd901860bc0375e96918fc3eaefdaea009edefb20bcd6999",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/authority_test.cpp": "d15d1e01a7b27fce68c5ca6ed03574aff3d2db05a638c7070496e27723d18fe1",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/build/fusion-rope.hpp": "1bbb9d0ff339bd4ed20f02505aeaef484d906e8162d20ea247bae3889ecd7428",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/chain_test.cpp": "ad003ecd4336f09a643950894bada31c76fece436a0f7c5d2d72bddda5f670d4",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/core_v2.hpp": "aceab08e8156278c63cf2c112802620aa929430c06736ecb1f2877a25fd5be2e",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/detmath.hpp": "d699920742292f623317537dbb25d25873b8f8e9afd4f4f329448921890714db",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/dispatch.hpp": "ef8e349932fac5a0936eee5f0aae3730011d154cbd49cbb0fd348262f56502bc",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/dispatch_registry.hpp": "c5fd99027bd3b1c24b174c20a67fd94779025587a3441276d8c347107ec3f4f2",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/expert_down.cpp": "027dd4750e4d285b55dd83e4289c19bee59398fbe84ca54e63d139866e1451ba",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/expert_down.hpp": "eb327fb716344751870064c00c843ec3147219f996dfd89a8818c70fede03ffb",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/failure.hpp": "7b02ca42a4d27a0aa47e9db0fb478194998cbe26dfc38670b80f0f36252e5c36",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_driver.cpp": "265e57de5c02f468ad316404310a294cbeaf1b168f6b24be7b5241e35aaad975",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/fixture_validation.hpp": "747bb6149c2783bffaa5df2fc3d48ac61f5fc87bbfb03ed7c08bcf33ea4f0858",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/gemv_timing.cpp": "8b93bd16a832f334621cd6c525580c91963eeca637d3fb9751d171576740f80a",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/jit_smoke.cpp": "e55ed2bfe8baaf3e976cd5a1334aee3bd901ba45fdcb8769e37b66db5324e0da",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/k2_failure.hpp": "0b5edc160fe37e77e7293ffa937eac531ec29773275c517627a57e930a1ac900",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/k2_fixture.cpp": "d579d8599c0941759b54a4afcae6d0b5dfe3169c84b4ebfd268ee3860ff16030",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/k2_incumbents.hpp": "0443bb11aced12e3c9c96745f285e02779e217f991c57d7092b72832a7849616",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/kernel_gate.py": "dda5ca15289d17e9405ea9a8fcca6da5b002b1bcbec222e324943225159232c7",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/kernel_guard.hpp": "3ea4ec84bfcc75b51d98163afc6c4912ce1b34e9f248b9a348a55d2d0e29d4ad",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/kernel_overlay.py": "ce04187e0c9aa194668f864991d8a7a6feb699f57c2f512e7a5bc0d1c780cfcd",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/kernels.hpp": "715e38078abaf8e1ee38bbb650c946b754ad29f44e77e5dafbc8db1b077d530f",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/lifetime_mock.hpp": "97afe6f81d53824d2c5636a0d34aa924c63d11e3c2263e950812d464d79dfa62",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/lifetime_test.cpp": "c812297c867bd719ef0ce1ea29b71f0e9a82218ff79da2d3f4ad976ecc66121a",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/main.cpp": "7e8bb826de6463ca5cb48fa62be891f78cbcf71eba9011a2d5a79ab3f6a47296",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/math_gate.py": "27b5640d8a7901dbc8688065608e002ee4eac6b52187027a27a998026a05cadc",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/mock_order.hpp": "d2b1f370518ad0181a0d1f81b370374ceee4e9177abd3531439bd94017980149",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/mtp.hpp": "ab81b1640de3cfdd2407762cc05d3efec1f08381dafb44b0bc0ac57c41bb8b82",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/mtp_kernels.cpp": "1b179214aecb9e4910cc414c5ecb272510143f02d9edf4a1de5ae44d455370b4",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/mtp_kernels.hpp": "f6ae6a4781051e85dbc82b429b3eb06d2f07a625237138d67ffacd6992a2a674",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/native.cpp": "4e8f5683b6ad8fe2a8a9b44fd1a0cba7dfc6c90616eb06cd583bc0d7ba087b8d",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/native.hpp": "c0b710b43748dfeb23bb317254053106d68fc967d9ecdfe43f17f56a80d372b4",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/native_controller.hpp": "199040a5ffb2205e23845b436220a36b44bdc815e4a4fdc74ecae2647106adca",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/nongemv_fixture.cpp": "acc4c0a6d2aed8b377fadf5b35f59adf67510b44b9229f8e765f51ab46f374a9",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/owner.cpp": "8e82affd2c119ef2ef13df14c11063f60ec8ba641ed643b7f2c652e7c256e94b",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/owner.hpp": "ee69610bda3e786e2aecf9888430541879af2d4c51cb64329784cb58d3ba1faf",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp": "1c712169fca15d34319ab082701a054a4a1fc63caccdfd7515a00067f4843608",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/owner_retire.cpp": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p25_bridge.cpp": "b6bbeedea17c3d52e32f1a9adcc9d9be0876d300f55ab1756b2a481fbb874905",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p25_bridge.hpp": "c5d1765997de414df8df8df3a0c19de29f5d0250fbe387e5dc303762ef0bff80",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p25_candidates.hpp": "98d34f0ac7ce729410780c61016e88f6789baf5e2ec5510c79142ea33888df57",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p28/dense.hpp": "bc6d77353fa71520e15f2b349db381ced4370d8413fae3b6687cefed56297b47",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p28/expert.hpp": "fe0edeb0afedccd2b835d636c9d5e53f7725c995c192be2c6526377cdb58f63b",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p28/registry.hpp": "add5690af080348ac78cbc3a19e41ac4e46fcef133cc6c2a162e3089ea377d85",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p28/submit.cpp": "10ba4dee0b311c7d0f487d11159d06d8f16304ff3f9e745e62950d5ff54aa92d",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p28/submit.hpp": "6d0bddcbb38d635c9d5194b73cba7624db27a7617754af5369bfa51e731c5bbf",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p30_attention.cpp": "72403adc474cad4c112e59b2f2ffbff7fe0e52dba2874a36feb8c41df829e815",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p30_attention.hpp": "9d5eb89f4aa6515922a74b144a4bc3d19813169261f1cb1bb2ce6bf042608ddf",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p30_small.cpp": "fe8eee300850e3531ceeeecfff9c25300a99b7c7ef4202c3bda791e0f7f9733a",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p30_small.hpp": "4304140e67c89512773d3adefa306f2153d1dd13585224e2ce0bb61182ca4261",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p30_submit.cpp": "dab72a991d33df0becdedd69e1e659720ad725465940d704d3badb15c689449f",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p30_submit.hpp": "16502b1bf1d7c2f6669bd60d59ecb0885274958907371851a8d82951654f3fbd",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p33_candidates.hpp": "17f835ea9642d004eebbeb71c4b68dec5e3b795dbf6166c39a08f08307313797",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p33_linked_fixture.cpp": "1abb466123de8a71898ade5d65cf35aee16395481331cf99836e33d6051b4fe6",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p33_submit.cpp": "a7186a51ffc6deeee3874f8f812cc72f371b62bb574298be48b2a33a218354e5",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p33_submit.hpp": "b6833e2d825934c64d58d03e5b274e4bd1e87e7bd13082b8ca9caf01e3e302c8",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p33r2.cpp": "f6ad0f6150aff1d337264bda76e7f30afecd4b20558af601bcf2231b6fde25c4",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p33r2.hpp": "f7d736727f5c77bd78a2eff8460c1b56e7984ef7bbb21c4cd803507df73c6895",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p39_fixture.cpp": "f4e27e1b73f2653848750014e72779e92b01d200c0a31273c24ae9e1e5a3f8a0",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p39_fixture_data.hpp": "0ca39c7e72601c3225bfb025eec058289efb29a90e5579d49ee65c225cc61bb2",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p39_fused.hpp": "7d083b68b0f5ff665ed4688c871842bcab6dd5d2386b0516d9da79b8e94740b3",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p39_plan.hpp": "b87b0cfc5dd0f9883e40bdf6154a0218511874897b064f7bccee23cabcc86689",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p39_submit.cpp": "1dd79a46abd60340b2385f74d0f8a261776c7636f121a8f4abd366bcc8f0b015",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p39_submit.hpp": "f4ac85a5e48b3cf5990b1948fcf75629601b18af6373eedbf4bcc0058a9f697b",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p39_sycl.hpp": "d29e4a9527e7e585ee739dad6726750bfa0f59176fa66a7cde8b2097fa2885c9",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p42_cooperative.hpp": "9a1f1687ebfaae90b4b9b77067cf047daae1c6a6a92c83e0ffadf5d2c1c802fa",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p42_expert.hpp": "2027f73e732700f3c9814f55bcc539fc5fba5bde0cfe8b3a1f78e9e5720b3516",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p42_gdn.hpp": "7ad0798feb98a47512ca9273a6dcb0ec3f39c5b25b72d3bd307efa0be243fe90",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p42_gdn.inc": "695c96a963151ae947892e7134edffde2c6149437f1451c19c27989191c8a07b",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p42_submit.cpp": "c911a5c31512034131ca19f7afdac3aa4f3a65d346e1d077b6c934cb39055ce6",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p42_submit.hpp": "7f978d09377425ba53986594c3905023ced8ca9966b8f34814b375e5c8c06520",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p42_tiny.hpp": "4c7d29dfa6511160c01f284a620f1bbe27c511338c1ae0b857109f11bba38357",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/performance.cpp": "9f0b52da35dff6d71a4f4eea72b0cfee26a9796934aa033295cf73256bca04d1",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/performance.hpp": "97048551886ee82850180ef9a7981259d80569fb82981c16e8473793739b2137",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/prepared_invalidation_test.cpp": "b082a461f27c10b7e678e6c37f810e78fef6fa587645ae0e327a730ece01f27d",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/prepared_submission.hpp": "41405cfc3c10727e245536993f647601b99705cdc9ac070e29f2ef695ffed2b9",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/prototype/snapshot/core_v2.hpp": "279a51b16593f1a8432205ea65422b037a533783bdbd79152f17e2b4a9d8b6bb",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/prototype/snapshot/detmath.hpp": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/prototype/snapshot/kernels.hpp": "804c720eb7339e1d90c786ca43c8399fbe52999dd668ea43c30ad7a559a677f1",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/prototype/snapshot/reference.hpp": "41ff760abf1a4f7234f02ee209e232f4be2071273a3c703935472350a4db668b",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/prototype/snapshot/rope.hpp": "1cef648de09ac4b115f1966033f2e341c870203a7415a39d58a8bbe2adb6c643",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/queue_test.cpp": "92864c3a1ab28b9432f9fea437698259f9286fe7fde818573ab2975488906a1b",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/rank.hpp": "3e87bd512f69019499fc50bdb75a333d6d3018817eb759fc4c4472b7677cddd0",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/rank_canary.hpp": "e5ac0589c32fde6e25ab57da94f90fd4e3d1608a4a70f5d3382a490d105e303d",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/request_reset.hpp": "b35ad7753e3b2155e62e9d02700c24c52292f773c5f0b5f496914c705b6fbe99",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/request_state_inventory.hpp": "1341737c1005f0bf7ae216648c4ee29805d5e3efa384184ee76e98521a275902",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/rope.bf16": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/rope.hpp": "83782198e96337883f7e226d5fc474360841f6ca26a00bce43a6d87f42b74929",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/round2.hpp": "bd614a9944e33903a6f0c7c2d4a1dd1de4786f8b1cdc8418df73e6d54b7e38ef",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/round2_submit.cpp": "9376df1464877b7e5f0e24eb56000df350ade782582bd42ad18cc5cbb2a7c45b",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/round2_submit.hpp": "d9231c86021695fb1e6f0e84f833380bc5e5d685d6a92f52292ffe191718a7ad",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/route42.hpp": "8c6bc5850573de86054c1447290911fa08d2be7c4b7603d1dc4c2e4f6e03753c",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/route42_submit.cpp": "67068801a7c05a7345f6925dc5b140ab633cb6adb858cff21e19de675f5c0deb",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/runtime_kernels.cpp": "ff95284fda68e0097c35e7ee0b03851563b77cf935602b4e2ea0d5ba526f37f0",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/runtime_kernels.hpp": "49e2a958a36a087b379b2e85d90ee34c63817659b31c617ced9e5854f7774501",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/single_device.cpp": "4275f214b3727f5d23231b844992db35443446d004c0d34b5cc30b374a3fe11b",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/small_gemv.cpp": "36f250c15ef6de5081f934bbb85daf7476c9b36efb70f0708ef0bba2b39123af",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/small_gemv.hpp": "8da011c8025e8a3fec2c7d8e4e23eec08d212ad85be649ad0fc1009d75d4e872",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/small_gemv_fixture.cpp": "eabb9be3ad02ffa3794a8d2591634c2f538e7cbd1ad99f05a2076c17b98c4338",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/small_gemv_fixture.hpp": "8bd00ce4476cd9427c1f1bc9d222c3ee6ec66c41fb95d3fedbf663323a690180",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/specialised.hpp": "0d7489d31fb869a49db3a7a365dbe78af52931c0e7d5cdf38ff05b01e594c126",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/specialised_submit.cpp": "46f74d87620ff9f627a098905b8d6cfca7e2d2ebb3077a32ed906060442ade7d",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/specialised_submit.hpp": "bfbff1b46cf52ef5dd07ab0ea78350295af8932d3d18379623ab0b95967b742a",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/strict_snapshot.hpp": "b0eeff72dff303bd8186b2c36b6362c1bcf62c8a85ba74a5c8eddb5a85a7118b",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/submission_overlay.py": "c5c5d24589c3311d48676b5932df0c2316b8f2891b9378910f1a7377bc6ec868",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/synthetic.hpp": "0f3285642055d61ff84790f668b7e19fdf347b2c7875aed804a88db5f9c06f35",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/validation_mirror.py": "1006456d47ac73d0425cf33e04e440e567959fe6783d8106d0c5ebcec65b2fde",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp": "5391274d85d8f62e0398e80297744bcd85f23a16ac8c252a9a925bacbd630e8f",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp": "78f15ee1abaace582eff11e876e9f76a3e69d78159156655e1133dc2ed3aa8c0",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp": "2ea8d49225e539b31db9884b86c46bb80769935d9f6a4e23e78375e8d3178403",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp": "a4c24610451981c3d0d19289919e7b16521ed652605ba557f44c234bc413d54e",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": "7532f67c6d9a0be2a9187ce149b2004d9f1ea045705327d0ce542a283ad5ed72",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp": "efd7bb4c4dcdc0ee2afa24a7c1146e19a993f4f3cebd73cf025c84bc209053ed",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp": "1094da5f48201e42fec563a0ea91018cd3d706d5ae5f80bcef17d28b002f4f64",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp": "218ec7d39db6272038f05453c84e7823220f6e3d97f7272a17efa1cd9593c706",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": "f744a148509ed091d69a708262d0fcbc94c179da8ca5ed364791e8ba77a328af",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp": "ff0852ed39e4a33fb4002440a8bae301ca3003c4a391bcfce2feb946d589aa72",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp": "5122c8e7115d94e0546d7b40fcd9a9a795c45717394a636ac3c806ad6d37dd6e",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": "95bdc549c66d5cb72fd54cc73696187dae08568f15b19d206cc954ca290c85f4"
+  },
+  "copy_sites": [
+    {
+      "source": "main.cpp",
+      "line": 728,
+      "expressions": 1,
+      "code": "wait(c, copy.copy(dst, offset + i, slab[c], 0, k, {}));",
+      "scope": "all model windows",
+      "largest_n": 4194304,
+      "limit": 134217728,
+      "passed": true
+    },
+    {
+      "source": "main.cpp",
+      "line": 740,
+      "expressions": 1,
+      "code": "wait(c, copy.copy(slab[c], 0, src, i, k, {}));",
+      "scope": "all model windows",
+      "largest_n": 4194304,
+      "limit": 134217728,
+      "passed": true
+    },
+    {
+      "source": "main.cpp",
+      "line": 1152,
+      "expressions": 1,
+      "code": "auto event=copy.copy(dest.id,0,source.id,0,source.n*flash::scalar_bytes(source.type),{});if(!preparing_commands)tail=event;",
+      "scope": "all model windows",
+      "largest_n": 20480,
+      "limit": 134217728,
+      "passed": true
+    },
+    {
+      "source": "main.cpp",
+      "line": 1531,
+      "expressions": 1,
+      "code": "e->tail=copy.copy(e->snapshots[l.card],size_t(layer)*4*p.g.h*2,",
+      "scope": "single-process decode only; not used by listed windows",
+      "largest_n": 20480,
+      "limit": 134217728,
+      "passed": true
+    },
+    {
+      "source": "main.cpp",
+      "line": 1544,
+      "expressions": 1,
+      "code": "e->tail=copy.copy(e->slab[0],0,e->buffers[0].at(\"error\").id,0,4,{});",
+      "scope": "single-process decode only; not used by listed windows",
+      "largest_n": 4,
+      "limit": 134217728,
+      "passed": true
+    },
+    {
+      "source": "main.cpp",
+      "line": 1545,
+      "expressions": 1,
+      "code": "e->tail=copy.copy(e->slab[0],4,e->buffers[0].at(\"next_token\").id,0,4,{});",
+      "scope": "single-process decode only; not used by listed windows",
+      "largest_n": 4,
+      "limit": 134217728,
+      "passed": true
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 197,
+      "expressions": 1,
+      "code": "e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);ownrt::CopyEngine copy(e.dev(0));if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,\"missing confirmed reverse streams\");e.upload(0,id(\"merge.hidden\"),0,reverse_hidden,4*p.g.h*2);reverse_hidden=nullptr;}else e.tail=copy.copy(id(\"merge.hidden\"),0,e.buffers[0].at(\"streams\").id,0,4*p.g.h*2,{});e.drain();",
+      "scope": "KD and MTP model windows",
+      "largest_n": 20480,
+      "limit": 134217728,
+      "passed": true
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 216,
+      "expressions": 1,
+      "code": "ownrt::CopyEngine copy(e.dev(0));copy.copy(publication,0,id(\"error\"),0,4,{});",
+      "scope": "KD and MTP model windows",
+      "largest_n": 4,
+      "limit": 134217728,
+      "passed": true
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 217,
+      "expressions": 1,
+      "code": "publication_event=copy.copy(publication,4,id(\"next_token\"),0,4,{});e.tail=publication_event;",
+      "scope": "KD and MTP model windows",
+      "largest_n": 4,
+      "limit": 134217728,
+      "passed": true
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 254,
+      "expressions": 1,
+      "code": "ownrt::CopyEngine copy(e.dev(0));copy.copy(e.buffers[0].at(\"token\").id,0,half_staging,0,4,{});",
+      "scope": "KD and MTP model windows",
+      "largest_n": 4,
+      "limit": 134217728,
+      "passed": true
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 255,
+      "expressions": 1,
+      "code": "e.tail=copy.copy(e.buffers[0].at(\"streams\").id,0,half_staging,4,4*p.g.h*2,{});",
+      "scope": "KD and MTP model windows",
+      "largest_n": 20480,
+      "limit": 134217728,
+      "passed": true
+    },
+    {
+      "source": "rank.hpp",
+      "line": 154,
+      "expressions": 1,
+      "code": "if(e.a.retain_steps.contains(request.fixture)){ownrt::CopyEngine copy(e.dev(0));e.tail=copy.copy(e.snapshots[0],size_t(layer)*4*e.p.g.h*2,e.buffers[0].at(\"streams\").id,0,4*e.p.g.h*2,{});captured.at(captured_count++)=layer;}",
+      "scope": "two-rank model windows",
+      "largest_n": 20480,
+      "limit": 134217728,
+      "passed": true
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 32,
+      "expressions": 2,
+      "code": "e.tail=restore?engine.copy(x.id,x.offset+off,backup,x.backup_offset+off,count,{}):engine.copy(backup,x.backup_offset+off,x.id,x.offset+off,count,{});",
+      "scope": "two-rank model windows",
+      "largest_n": 134217728,
+      "limit": 134217728,
+      "passed": true
+    },
+    {
+      "source": "rank_canary.hpp",
+      "line": 32,
+      "expressions": 1,
+      "code": "drain(copy.copy(local,0,host,0,256,{}));std::array<Allocation,1> args{local};auto event=d.compute(CanaryIncrement{},args,{});drain(event);",
+      "scope": "W0p",
+      "largest_n": 256,
+      "limit": 4096,
+      "passed": true
+    },
+    {
+      "source": "rank_canary.hpp",
+      "line": 37,
+      "expressions": 1,
+      "code": "drain(copy.copy(host,0,local,0,256,{}));d.retire_completed_events();++iterations;",
+      "scope": "W0p",
+      "largest_n": 256,
+      "limit": 4096,
+      "passed": true
+    }
+  ],
+  "rule_inventory": [
+    {
+      "source": "main.cpp",
+      "line": 109,
+      "code": "require(!value.empty()&&value.back()!=',',\"invalid retain-steps\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 112,
+      "code": "auto dash=item.find('-');auto number=[](const std::string& text){require(!text.empty()&&std::all_of(text.begin(),text.end(),[](unsigned char c){return c>='0'&&c<='9';}),\"invalid retain-steps integer\");size_t n=0;int v=std::stoi(text,&n);require(n==text.size()&&v>0&&v<=1024,\"retain-steps range\");return v;};"
+    },
+    {
+      "source": "main.cpp",
+      "line": 114,
+      "code": "require(first<=last,\"reversed retain-steps range\");ranges.push_back({first,last});"
+    },
+    {
+      "source": "main.cpp",
+      "line": 116,
+      "code": "require(!ranges.empty(),\"empty retain-steps\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 149,
+      "code": "if (k == \"--retain-steps\") a.retain_steps.parse(value());"
+    },
+    {
+      "source": "main.cpp",
+      "line": 185,
+      "code": "else if (k == \"--memory\")"
+    },
+    {
+      "source": "main.cpp",
+      "line": 193,
+      "code": "else if (k == \"--context\")"
+    },
+    {
+      "source": "main.cpp",
+      "line": 213,
+      "code": "require(a.cancel_launch>=-1,\"cancel launch bound\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 221,
+      "code": "require(a.tokens > 0 && a.tokens <= 128 && a.context >= 8 &&"
+    },
+    {
+      "source": "main.cpp",
+      "line": 225,
+      "code": "require(a.wait_seconds>0 && a.wait_seconds<=600,\"bounded wait deadline\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 230,
+      "code": "require(a.cards==1 && (a.memory==\"layer-streaming\" || (a.rank>=0 && a.memory==\"resident\")), \"single-device process required\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 260,
+      "code": "require(madvise(reinterpret_cast<void*>(aligned),t.bytes+(address-aligned),MADV_WILLNEED)==0,\"lookup MADV_WILLNEED failed\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 263,
+      "code": "if(t.bytes)checksum+=data[t.bytes-1];bytes+=t.bytes;lookup_mappings.emplace(name,std::move(slice));"
+    },
+    {
+      "source": "main.cpp",
+      "line": 295,
+      "code": "require(identity.eof() && paths.size() == 3,"
+    },
+    {
+      "source": "main.cpp",
+      "line": 296,
+      "code": "\"three admitted shards required\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 355,
+      "code": "require(n && n <= 4 * 1024 * 1024, \"bounded read (4 MiB)\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 360,
+      "code": "require(off <= b.size() && n <= b.size() - off, \"synthetic bounds\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 364,
+      "code": "require(off<=it->second->size()&&n<=it->second->size()-off,\"resident lookup bounds\");auto data=it->second->data()+off;return {data,data+n};"
+    },
+    {
+      "source": "main.cpp",
+      "line": 384,
+      "code": "require(v.size() == 35, \"PLE metadata\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 472,
+      "code": "require(i+2<p.launches.size(),\"gate/up schedule\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 489,
+      "code": "if(a.nongemv==\"parallel\" && l.op==\"route\" && i+1<p.launches.size() && p.launches[i+1].op==\"expert_gather\" &&"
+    },
+    {
+      "source": "main.cpp",
+      "line": 496,
+      "code": "if(a.nongemv==\"parallel\" && l.op==\"hc_combine\" && i+1<p.launches.size()) {"
+    },
+    {
+      "source": "main.cpp",
+      "line": 605,
+      "code": "if(profile_events||draft_timing)pending.push_back({l,gemv,current_cls}); tail=l.last; submitted+=l.passes;"
+    },
+    {
+      "source": "main.cpp",
+      "line": 609,
+      "code": "if(!tail && pending.empty())return;"
+    },
+    {
+      "source": "main.cpp",
+      "line": 668,
+      "code": "require(site.card==first.card,\"small GEMV crosses card ownership boundary\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 683,
+      "code": "for(size_t i=1;i<group.members.size();++i)require(small_followers.emplace(group.members[i],&first).second,\"overlapping small GEMV groups\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 702,
+      "code": "while(!dev(c).complete(e)){progress_callback();guard();require(std::chrono::steady_clock::now()<end,\"operation drain timeout; retain owner\");std::this_thread::yield();}"
+    },
+    {
+      "source": "main.cpp",
+      "line": 711,
+      "code": "if (m == Memory::device)"
+    },
+    {
+      "source": "main.cpp",
+      "line": 712,
+      "code": "require(owned_bytes.at(c) + bytes <= 30ull * 1024 * 1024 * 1024,"
+    },
+    {
+      "source": "main.cpp",
+      "line": 715,
+      "code": "if(m==Memory::device){owned_bytes[c]+=bytes; allocations[id]={c,bytes};}"
+    },
+    {
+      "source": "main.cpp",
+      "line": 749,
+      "code": "require(n == s.n * flash::scalar_bytes(s.type), \"control extent\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 822,
+      "code": "require(rope_bytes.size()==rope_constants::bytes && hash(rope_bytes)==rope_constants::sha256,\"RoPE model constant hash/extent mismatch\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 823,
+      "code": "require(p.g.context<=rope_constants::positions,\"RoPE position bound\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 894,
+      "code": "if (a.memory == \"resident\") {"
+    },
+    {
+      "source": "main.cpp",
+      "line": 902,
+      "code": "if(a.memory!=\"resident\")return;"
+    },
+    {
+      "source": "main.cpp",
+      "line": 927,
+      "code": "for(int h=0;h<8;++h){int i=(n-2)*8+h;auto size=metadata[3+i];require(size>0,\"PLE host size\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 953,
+      "code": "require(id >= 0 && id < t.shape[0], \"lookup bounds\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 961,
+      "code": "if(a.memory!=\"layer-streaming\" || loaded_layer[c]==layer)return;"
+    },
+    {
+      "source": "main.cpp",
+      "line": 973,
+      "code": "require(t.shape.size()==3 && selected[c].size()==size_t(p.g.top),\"selected bank geometry\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 989,
+      "code": "if(routed && a.memory==\"layer-streaming\")load_selected(c,t.name);else load(c,t.name);"
+    },
+    {
+      "source": "main.cpp",
+      "line": 997,
+      "code": "if(a.memory==\"layer-streaming\") {"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1012,
+      "code": "auto found=matrices.find(site);if(a.memory==\"resident\"&&found==matrices.end())found=matrices.emplace(site,std::vector<Matrix>{matrix(*site)}).first;"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1020,
+      "code": "if(a.memory==\"resident\" && it==matrices.end()) {"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1030,
+      "code": "if(kind==p39::Kind::silu_div4)b.out=id(l.label.substr(0,l.label.size()-3)+\"act\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1037,
+      "code": "std::vector<Matrix> selected{m};if(l.op==\"expert_gate_up\")selected.push_back(a.memory==\"resident\"?it->second[1]:matrix(l,1));"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1048,
+      "code": "std::vector<Matrix> selected{m};if(l.op==\"expert_gate_up\")selected.push_back(a.memory==\"resident\"?it->second[1]:matrix(l,1));"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1051,
+      "code": "if((candidate.starts_with(\"p25.\")||candidate.starts_with(\"p27.\"))&&!a.mini){ // model-shape candidates; mini retains registered packed arithmetic"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1052,
+      "code": "std::vector<Matrix> selected{m};if(l.op==\"expert_gate_up\")selected.push_back(a.memory==\"resident\"?it->second[1]:matrix(l,1));"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1056,
+      "code": "if(fp32_sources[c]!=m.x||fp32_extents[c]!=n){finish(c,packet26::p25bridge::prepare_input(dev(c),m.x,fp32_inputs[c],n),true);fp32_sources[c]=m.x;fp32_extents[c]=n;}"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1112,
+      "code": "if(l.op==\"moe_combine\" && k==0)b={mixture_out[c],size_t(p.g.h),Scalar::bf16};"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1142,
+      "code": "if(l.op==\"route\" && l.outputs.size()==4)s.implementation=packet26::dispatch.fusion_choice(\"route+gather\")==\"p42.route.production_rank32\"?6:packet26::dispatch.fusion_choice(\"route+gather\")==\"round2\"?2:1;"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1146,
+      "code": "if (l.op == \"lookup\") { fp32_sources[c]=0; /* Prepared once at token boundary from known input/history. */ }"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1152,
+      "code": "auto event=copy.copy(dest.id,0,source.id,0,source.n*flash::scalar_bytes(source.type),{});if(!preparing_commands)tail=event;"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1161,
+      "code": "if(a.memory==\"resident\"&&!fresh_arguments)bound=&prepared.at(&l);"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1166,
+      "code": "if(l.op==\"route\" && a.memory==\"layer-streaming\") {"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1182,
+      "code": "if(prepared_path&&issue_sites.size()!=p.launches.size())throw std::logic_error(\"plan changed; rebuild Engine\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1185,
+      "code": "if(a.memory!=\"resident\" || a.legacy)return;"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1217,
+      "code": "require(position>=0&&position<p.g.context,\"capacity position admission\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1219,
+      "code": "if(context_extent==bound)return;"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1221,
+      "code": "if(!resident)return; // streaming prepares each site with the current bound"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1244,
+      "code": "require(fresh.size()==selected.size(),\"parity prepared command count\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1247,
+      "code": "require(x.ids==y.ids&&x.pointers==y.pointers&&x.argument_bytes==y.argument_bytes&&x.operation_bytes==y.operation_bytes,"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1268,
+      "code": "if(prepared_path){auto index=size_t(&l-p.launches.data());audit_issue_site(index);return issue_site(index,dep);}"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1366,
+      "code": "if(b.card==-1 || b.card==c)base[c]+=count(b.shape)*flash::scalar_bytes(b.type);"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1386,
+      "code": "require(peak_bytes<=30ull*1024*1024*1024,\"planned card exceeds 30 GiB\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1409,
+      "code": "while(rows>>pos>>token>>head>>path){std::ifstream f(path,std::ios::binary);std::vector<uint8_t> raw((std::istreambuf_iterator<char>(f)),{});require(raw.size()==4*p.g.h*2,\"capture streams extent\");e->put(0,\"streams\",raw.data(),raw.size());int result=draft->run(token,pos+1,head);out<<\"{\\\"position\\\":\"<<pos<<\",\\\"token\\\":\"<<result<<\"}\\n\";out.flush();if(head)draft->dump(a.output/(\"row-\"+std::to_string(pos)),true);}"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1438,
+      "code": "{cpu_set_t cpus;CPU_ZERO(&cpus);if(sched_getaffinity(0,sizeof cpus,&cpus)==0){std::ostringstream o;o<<'[';bool comma=false;for(int i=0;i<CPU_SETSIZE;++i)if(CPU_ISSET(i,&cpus)){o<<(comma?\",\":\"\")<<i;comma=true;}o<<']';affinity_json=o.str();}}"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1479,
+      "code": "require(input.size() + a.tokens <= size_t(p.g.context),"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1488,
+      "code": "require(n < 1024 * 1024, \"vocabulary token bound\");"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1500,
+      "code": "if(a.memory==\"resident\")w->warm_lookups();residency_json=w->residency;"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1570,
+      "code": "if(capture)for(int c=0;c<a.cards;++c){std::vector<uint8_t> zero(48*4*p.g.h*2,0);e->upload(c,e->snapshots[c],0,zero.data(),zero.size());}"
+    },
+    {
+      "source": "main.cpp",
+      "line": 1653,
+      "code": "if(!output.empty() && fs::is_directory(output)) {save(output/\"failure.txt\",error+\"\\n\");save(output/\"receipt.json\",\"{\\\"passed\\\":false,\\\"error\\\":\"+ownrt::quote(error)+\",\\\"teardown_pending\\\":true}\\n\");}"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 14,
+      "code": "require(t.name.starts_with(\"mtp.\")&&fs::path(t.file).filename()==t.file&&t.bytes&&t.bytes<=64*1024*1024&&t.offset<=t.filebytes&&t.bytes<=t.filebytes-t.offset,\"draft tensor manifest bounds\");"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 16,
+      "code": "}require(f.eof()&&tensors.size()==3101,\"missing official draft tensors\");"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 19,
+      "code": "require(!stat(file.c_str(),&st)&&uint64_t(st.st_size)==t.filebytes&&uint64_t(st.st_dev)==t.dev&&uint64_t(st.st_ino)==t.ino&&uint64_t(st.st_mtim.tv_sec)*1000000000+st.st_mtim.tv_nsec==t.mtime&&uint64_t(st.st_ctim.tv_sec)*1000000000+st.st_ctim.tv_nsec==t.ctime,\"official draft file changed since publisher hash authentication\");"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 20,
+      "code": "std::ifstream f(file,std::ios::binary);f.seekg(t.offset);std::vector<uint8_t> b(t.bytes);f.read(reinterpret_cast<char*>(b.data()),b.size());require(bool(f)&&hash(b)==t.sha,\"official draft tensor SHA256 mismatch\");reads[name]=t.sha;return b;"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 25,
+      "code": "require(w.size()==size_t(rows)*cols&&cols%16==0&&rows%128==0&&cols%128==0&&sc.size()==size_t(rows/128)*(cols/128)*2,\"draft FP8/scales shape\");"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 28,
+      "code": "for(unsigned r=0;r<rows;++r)for(unsigned g=0;g<cols/16;++g){float values[16],maximum=0;size_t si=((r/128)*(cols/128)+g/8)*2;uint16_t bits=uint16_t(sc[si])|(uint16_t(sc[si+1])<<8);float scale=iq3::bits_float(uint32_t(bits)<<16);require(std::isfinite(scale)&&scale>=0,\"draft FP8 scale\");"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 29,
+      "code": "for(unsigned k=0;k<16;++k){auto code=w[size_t(r)*cols+g*16+k];require((code&127)!=127,\"nonfinite official draft FP8\");values[k]=table[code]*scale;maximum=std::max(maximum,std::abs(values[k]));}"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 84,
+      "code": "std::vector<uint8_t> synthetic(const std::string& n,unsigned rows,unsigned cols,bool gain){std::vector<uint8_t> raw(size_t(rows)*cols*(gain?4:2));for(size_t i=0;i<size_t(rows)*cols;++i){float f=flash::mock::weight(\"draft:\"+n,int(i/cols),int(i%cols));if(gain)f+=1;if(gain)std::memcpy(raw.data()+i*4,&f,4);else {auto b=iq3::bf16_bits(f);std::memcpy(raw.data()+i*2,&b,2);}}return raw;}"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 87,
+      "code": "if(routed){for(unsigned expert=0;expert<w.experts;++expert){std::vector<uint8_t> raw;if(e.a.mini)raw=synthetic(name+std::to_string(expert),rows,cols,false);else {std::string kind=name.find(\"gate_\")!=std::string::npos?\"gate\":name.find(\"up_\")!=std::string::npos?\"up\":\"down\";std::string prefix=\"mtp.layers.0.mlp.experts.\"+std::to_string(expert)+\".\"+kind+\"_proj\";raw=requant(store->read(prefix+\".weight\"),store->read(prefix+\".weight_scale_inv\"),rows,cols);}e.upload(0,w.id,size_t(expert)*rows*rb,raw.data(),raw.size());}}"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 88,
+      "code": "else {std::vector<uint8_t> raw;if(e.a.mini)raw=synthetic(name,rows,cols,gain);else {auto full=store->read(official(name));if(name==\"blk.0.indexer.q_proj.weight\")raw={full.begin(),full.begin()+rows*cols*2};else if(name==\"blk.0.indexer.k_proj.weight\")raw={full.end()-rows*cols*2,full.end()};else raw=std::move(full);require(raw.size()==size_t(rows)*cols*2,\"official draft dense shape \"+name);if(gain){std::vector<uint8_t> converted(size_t(rows)*cols*4);for(size_t i=0;i<size_t(rows)*cols;++i){uint16_t b;std::memcpy(&b,raw.data()+i*2,2);float f=1.f+iq3::bits_float(uint32_t(b)<<16);std::memcpy(converted.data()+i*4,&f,4);}raw=std::move(converted);}}"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 92,
+      "code": "if(l.label==\"logits\"){integrated::Matrix m{};m.w=w.id;m.type=w.type;m.x=id(l.inputs[0]);m.y=id(l.outputs[0]);m.rows=w.rows;m.columns=w.cols;m.span=m.rows;m.workspace=head_workspace;"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 121,
+      "code": "std::vector<Allocation> a;int k=0;for(auto n:l.inputs){auto b=buffers.at(n);s.sizes[k]=b.n;s.types[k++]=b.type;a.push_back(b.id);++s.ni;}for(auto n:l.outputs){auto b=buffers.at(n);require(mutable_ids.count(b.id),\"draft output aliases immutable or target allocation\");s.sizes[k]=b.n;s.types[k++]=b.type;a.push_back(b.id);++s.no;}"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 127,
+      "code": "void set_reverse_hidden(const void* bytes){require(!async_pending,\"reverse handoff while draft pending\");reverse_hidden=bytes;}"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 132,
+      "code": "for(size_t i=0;i+2<p.launches.size();++i)if(p.launches[i].label==\"blk.0.expsgate\"){"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 141,
+      "code": "for(const auto& l:p.launches)for(size_t j=0;j<l.weights.size();++j){auto n=l.weights[j];if(n==\"output.weight\")continue;"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 150,
+      "code": "if(e.a.memory==\"resident\"&&e.weights[0].count(\"output.weight\"))hw.id=e.weights[0].at(\"output.weight\");else {auto fmt=iq3::layout(hw.type);size_t rb=hw.cols/fmt.elements*fmt.bytes,er=arithmetic::row_bytes(hw.type,hw.cols,head_variant);hw.id=alloc(\"shared-head-host\",size_t(hw.rows)*er,Category::weights);mutable_ids.erase(hw.id);"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 151,
+      "code": "size_t nr=std::max(size_t(1),size_t(4194304)/std::max(rb,er));for(size_t row=0;row<hw.rows;row+=nr){auto n=std::min(nr,size_t(hw.rows)-row);auto raw=e.w.read(\"output.weight\",row*rb,n*rb);if(arithmetic::is_expanded(head_variant))raw=iq3::expanded::expand(hw.type,raw.data(),raw.size(),hw.cols);e.upload(0,hw.id,row*er,raw.data(),raw.size());}}"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 154,
+      "code": "if(store){require(store->reads.size()==3101,\"not all official draft tensors read\");std::ostringstream o;o<<\"{\";bool comma=false;for(auto& [n,h]:store->reads){o<<(comma?\",\":\"\")<<ownrt::quote(n)<<\":\"<<ownrt::quote(h);comma=true;}o<<\"}\";save(e.a.output/\"draft-tensor-reads.json\",o.str());}"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 181,
+      "code": "require(position>=0&&position<p.g.context,\"draft capacity position admission\");"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 183,
+      "code": "if(bound==context_extent)return;"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 195,
+      "code": "require(!async_pending,\"draft publication still pending\");if(disabled)return -1;admit_position();require(confirmed>=0&&confirmed<p.g.vocab,\"draft confirmed token bound\");require(target_position==position+1,\"draft confirmed position sequence\");auto start=std::chrono::steady_clock::now();"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 233,
+      "code": "if(!async_pending||!e.dev(0).complete(publication_event))return {};"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 235,
+      "code": "std::memcpy(&status,bytes,4);if(pending_head)std::memcpy(&token,bytes+4,4);"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 245,
+      "code": "if(e.a.draft_fault==\"wrong\"&&pending_head&&token>=0)token=(token+1)%p.g.vocab;"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 259,
+      "code": "require(!async_pending,\"reset with pending draft publication\");e.drain();for(auto allocation:mutable_ids){auto bytes=e.dev(0).arena.row(allocation).bytes;"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 273,
+      "code": "void dump(const fs::path& path,bool logits=false){fs::create_directories(path);for(auto n:{\"blk.0.qsa.keys\",\"blk.0.qsa.values\",\"blk.0.qsa.raw\",\"blk.0.qsa.pooled\",\"position\"}){auto s=buffers.at(n);size_t elements=s.n;if(logits&&std::string(n)!=\"position\")elements=size_t(std::string(n).ends_with(\".pooled\")?position/4:position)*(std::string(n).ends_with(\".keys\")||std::string(n).ends_with(\".values\")?p.g.kvh*p.g.ad:p.g.id);auto raw=e.readback(0,s.id,elements*flash::scalar_bytes(s.type));std::ofstream f(path/(std::string(n)+\".bin\"),std::ios::binary);f.write(reinterpret_cast<const char*>(raw.data()),raw.size());}"
+    },
+    {
+      "source": "mtp.hpp",
+      "line": 274,
+      "code": "if(logits)for(auto n:{\"final.mix\",\"logits\"}){auto s=buffers.at(n);auto raw=e.readback(0,s.id,s.n*flash::scalar_bytes(s.type));std::ofstream f(path/(std::string(n)+\".bf16\"),std::ios::binary);f.write(reinterpret_cast<const char*>(raw.data()),raw.size());}}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 12,
+      "code": "static_assert(slot_bytes==65536,\"strict snapshot shared slot extent\");"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 16,
+      "code": "static_assert(sizeof(Request)==32 && sizeof(Reply)==64);"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 25,
+      "code": "require(left>0,\"bounded channel timeout\");"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 35,
+      "code": "require(count>0,\"short/closed channel\");done+=size_t(count);"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 44,
+      "code": "if(l.label.starts_with(\"blk.\"))keep=(std::stoi(l.label.substr(4))<boundary)==(rank==0);"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 56,
+      "code": "std::string out=\"[\";for(auto& v:values){if(out.size()>1)out+=\",\";out+=ownrt::quote(v);}return out+\"]\";"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 68,
+      "code": "require(l.outputs.size()==2,\"temporal output count\");auto name=l.outputs[1];"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 76,
+      "code": "if(e.a.memory==\"resident\") {"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 95,
+      "code": "if(!e.a.retain_steps.contains(c.fixture))return;"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 100,
+      "code": "require(bytes==expected,\"oracle fixture differs at \"+std::string(name));}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 101,
+      "code": "std::ofstream f(dest/name,std::ios::binary);f.write(reinterpret_cast<const char*>(bytes.data()),bytes.size());require(bool(f),\"fixture write\");"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 105,
+      "code": "require(!candidate.pending,\"half before resolving prior candidate\");"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 106,
+      "code": "require(request.position>=0&&request.position<e.p.g.context,\"half position bound\");"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 109,
+      "code": "require(request.token>=0&&request.token<e.p.g.vocab,\"half token bound\");"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 124,
+      "code": "else if(!prepared_inputs){size_t n=4*e.p.g.h*2;require(n<=slot_bytes,\"shared stream extent\");e.put(0,\"streams\",shared+slot_bytes,n);}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 129,
+      "code": "if(e.a.cancel_launch>=0)return issued==size_t(e.a.cancel_launch);"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 136,
+      "code": "e.dev(0).before_compute=[&](){if(cancel_at_boundary())throw CancelledLaunch{};};"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 141,
+      "code": "if(cancel_at_boundary()){candidate.cancelled=true;break;}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 154,
+      "code": "if(e.a.retain_steps.contains(request.fixture)){ownrt::CopyEngine copy(e.dev(0));e.tail=copy.copy(e.snapshots[0],size_t(layer)*4*e.p.g.h*2,e.buffers[0].at(\"streams\").id,0,4*e.p.g.h*2,{});captured.at(captured_count++)=layer;}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 160,
+      "code": "if(cancel_at_boundary())candidate.cancelled=true;"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 164,
+      "code": "if(captured_count){auto raw=e.readback(0,e.snapshots[0],48*4*e.p.g.h*2);for(size_t ci=0;ci<captured_count;++ci){int layer=captured[ci];size_t n=4*e.p.g.h*2;candidate.layers[layer]={raw.begin()+layer*n,raw.begin()+(layer+1)*n};}}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 165,
+      "code": "if(captured_count){std::vector<uint8_t> zero(48*4*e.p.g.h*2,0);e.upload(0,e.snapshots[0],0,zero.data(),zero.size());}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 167,
+      "code": "if(e.a.rank==0){bytes=4*e.p.g.h*2;auto raw=e.readback(0,e.buffers[0].at(\"streams\").id,bytes);std::memcpy(shared,raw.data(),bytes);}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 171,
+      "code": "double load_average=0;getloadavg(&load_average,1);cpu_set_t affinity;CPU_ZERO(&affinity);require(!sched_getaffinity(0,sizeof affinity,&affinity),\"per-half affinity\");"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 172,
+      "code": "e.timings<<\"{\\\"cpu_affinity\\\":[\";bool comma=false;for(int cpu=0;cpu<CPU_SETSIZE;++cpu)if(CPU_ISSET(cpu,&affinity)){e.timings<<(comma?\",\":\"\")<<cpu;comma=true;}e.timings<<\"],\\\"load_average_1m\\\":\"<<load_average<<\",\\\"position\\\":\"<<request.position<<\",\\\"fixture\\\":\"<<request.fixture<<\",\\\"speculative\\\":\"<<(request.speculative?\"true\":\"false\")"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 179,
+      "code": "if(!e.class_timing)e.timings<<\"null\";else {e.timings<<'{';for(size_t j=0;j<e.families.size();++j)e.timings<<(j?\",\":\"\")<<ownrt::quote(e.families[j])<<':'<<e.family_ms[j];e.timings<<'}';}e.timings<<\"}\\n\";"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 183,
+      "code": "require(e.a.rank==0&&c.pending&&c.speculative,\"rollback outside rank0 speculation\");"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 214,
+      "code": "require(!fstat(fd,&st)&&st.st_size==shared_bytes,\"shared extent\");mapping=mmap(nullptr,shared_bytes,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);require(mapping!=MAP_FAILED,\"shared mmap\");"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 215,
+      "code": "if(a.pipeline_canary){int rc=run_pipe_canary(a,static_cast<uint8_t*>(mapping));munmap(mapping,shared_bytes);::close(fd);return rc;}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 225,
+      "code": "{cpu_set_t cpus;CPU_ZERO(&cpus);require(!sched_getaffinity(0,sizeof cpus,&cpus),\"affinity receipt\");double load=0;getloadavg(&load,1);std::ostringstream o;o<<\"{\\\"cpu_affinity\\\":[\";bool comma=false;for(int i=0;i<CPU_SETSIZE;++i)if(CPU_ISSET(i,&cpus)){o<<(comma?\",\":\"\")<<i;comma=true;}o<<\"],\\\"load_average_1m\\\":\"<<load<<\"}\";save(a.output/\"host-environment.json\",o.str());}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 236,
+      "code": "if(a.rank==1){require(!c.pending&&engine->integer(0,\"position\")==r.position,\"draft target not confirmed\");}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 237,
+      "code": "else {auto* bytes=static_cast<uint8_t*>(mapping);require(__atomic_load_n(&reverse_ready(bytes).position_plus_one,__ATOMIC_ACQUIRE)==uint32_t(r.position),\"reverse stream position mismatch\");"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 238,
+      "code": "if(__atomic_load_n(&verification(bytes).position_plus_one,__ATOMIC_ACQUIRE)){auto& v=verification(bytes);require(__atomic_load_n(&v.position_plus_one,__ATOMIC_ACQUIRE)==uint32_t(r.position)&&v.token==r.token,\"rank0 draft requires target confirmation\");}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 241,
+      "code": "struct Publication{int32_t valid,position,token,error;uint64_t elapsed_ns;int32_t sequence,reserved;double gpu_ms;};static_assert(sizeof(Publication)==40);"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 245,
+      "code": "if(r.speculative){auto& mailbox=*reinterpret_cast<native38::Mailbox*>(static_cast<uint8_t*>(mapping)+2*slot_bytes+256);native38::publish(mailbox.draft_sequence,uint32_t(r.sequence));}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 258,
+      "code": "if(prepared_inputs){require(r.position==async_half_position&&r.token==async_half_token,\"asynchronous draft/half confirmed identity\");provider->queue_half_inputs(r.token,static_cast<uint8_t*>(mapping)+slot_bytes);async_half_ready=false;}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 261,
+      "code": "else if(r.op==pipeline::accept){require(c.pending,\"accept without candidate\");publish(*engine,c);if(c.speculative)image.accept();if(c.fixture>0)++accepted;c={};}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 263,
+      "code": "else if(r.op==dump){require(!c.pending,\"dump uncommitted state\");image.boundary();state_dump(*engine,r.position);if(r.position==2147483647)request_state_inventory(*engine);}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 264,
+      "code": "else if(r.op==11){image.boundary();request_reset(*engine,c,provider.get(),a.output/(\"reset-\"+std::to_string(r.sequence)+\".txt\"),accepted);accepted=0;}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 266,
+      "code": "else if(r.op==12){require(a.rank==0&&c.pending&&c.speculative,\"negative control ownership\");image.corrupt_protected_for_gate(r.token);}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 269,
+      "code": "else if(r.op==stall){auto until=std::chrono::steady_clock::now()+std::chrono::seconds(a.seconds);while(std::chrono::steady_clock::now()<until){pipeline_cancel_check();poll(nullptr,0,10);}throw std::runtime_error(\"bounded injected stall\");}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 275,
+      "code": "for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,\"command sequence\");"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 276,
+      "code": "if(r.op==finish){require(!c.pending,\"finish with unresolved candidate\");image.boundary();if(provider)provider->dump_all_state(engine->a.output/\"draft-final-state\");break;}"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 279,
+      "code": "require(!c.pending,\"native entry unresolved candidate\");"
+    },
+    {
+      "source": "rank.hpp",
+      "line": 308,
+      "code": "weights.reset();if(mapping!=MAP_FAILED)munmap(mapping,shared_bytes);if(fd>=0)::close(fd);"
+    },
+    {
+      "source": "rank_canary.hpp",
+      "line": 26,
+      "code": "auto drain=[&](ownrt::Event event){require(d.wait(event,std::chrono::seconds(5)),\"canary drain bound\");};"
+    },
+    {
+      "source": "rank_canary.hpp",
+      "line": 28,
+      "code": "for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,\"canary sequence\");"
+    },
+    {
+      "source": "rank_canary.hpp",
+      "line": 31,
+      "code": "std::memcpy(hp,shared+a.rank*slot_bytes,256);for(int i=0;i<64;++i)require(static_cast<uint32_t*>(hp)[i]==unsigned(iterations),\"canary input bytes\");"
+    },
+    {
+      "source": "rank_canary.hpp",
+      "line": 38,
+      "code": "for(int i=0;i<64;++i)require(static_cast<uint32_t*>(hp)[i]==unsigned(iterations),\"canary output bytes\");"
+    },
+    {
+      "source": "rank_canary.hpp",
+      "line": 46,
+      "code": "if(!receipt.safe_to_exit){save(a.output/\"retained-owner.json\",receipt.json());ownrt::hold_for_supervisor();}"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 49,
+      "code": "if(!row.live||row.category==Category::weights||row.category==Category::pinned_slab||represented.count(id)||id==e.one[0])continue;"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 50,
+      "code": "require(owner.first==0&&row.memory==Memory::device,\"snapshot owner/memory\");"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 53,
+      "code": "require(capacity>0,\"empty speculative snapshot\");saved.reserve(sources.size());"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 58,
+      "code": "require(e.a.rank==0&&backup&&!valid,\"snapshot begin ownership\");e.drain();"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 59,
+      "code": "require(!e.poisoned&&!e.integer(0,\"error\"),\"snapshot cannot erase target failure\");"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 62,
+      "code": "if(!e.resident)for(int layer:e.loaded_layer)require(layer==-1,\"snapshot requires released streaming layer\");"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 63,
+      "code": "require(shared!=nullptr,\"snapshot shared slot\");shared_slot=shared;std::memcpy(shared_before.data(),shared_slot,shared_before.size());"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 67,
+      "code": "int position=e.integer(0,\"position\");require(position>=0&&position<e.p.g.context,\"snapshot position\");"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 72,
+      "code": "if(source.bank)protected_active.push_back({e.buffers[0].at(source.name).id,source.bytes});"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 73,
+      "code": "if(source.kv){size_t rows=source.pooled?size_t((e.p.g.context+3)/4):size_t(e.p.g.context);"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 75,
+      "code": "require(source.bytes%rows==0,\"snapshot QSA row geometry\");skip=valid_rows*(source.bytes/rows);"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 81,
+      "code": "size_t bytes=source.bytes-skip;if(bytes)saved.push_back({id,skip,bytes,offset});offset+=bytes;"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 83,
+      "code": "require(offset<=capacity,\"snapshot extent overflow\");valid=true;dirty=true;"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 86,
+      "code": "void accept(){require(valid,\"snapshot accept without speculation\");e.drain();valid=false;}"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 88,
+      "code": "require(valid,\"snapshot restore without speculation\");e.drain();"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 89,
+      "code": "require(!e.poisoned&&!e.integer(0,\"error\"),\"snapshot cannot roll back sticky failure\");"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 90,
+      "code": "require(e.bank_parity==parity,\"snapshot restore bank selection\");"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 91,
+      "code": "if(!e.resident)for(int layer:e.loaded_layer)require(layer==-1,\"snapshot restore streaming layer retained\");"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 93,
+      "code": "require(shared_slot!=nullptr,\"restore shared slot lifetime\");std::memcpy(shared_slot,shared_before.data(),shared_before.size());"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 97,
+      "code": "if(e.context_extent!=launch_extent)e.admit_position(launch_extent-1);"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 98,
+      "code": "if(e.alternate_context_extent!=alternate_launch_extent){"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 101,
+      "code": "require(e.bank_parity==parity&&e.context_extent==launch_extent&&e.alternate_context_extent==alternate_launch_extent,\"snapshot launch extent restore\");"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 104,
+      "code": "for(size_t card=0;card<e.fp32_sources.size();++card)if(e.fp32_sources[card])require(e.dev(int(card)).arena.row(e.fp32_sources[card]).live,\"snapshot resurrected dead FP32 source\");"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 108,
+      "code": "require(!valid,\"snapshot boundary with unresolved speculation\");e.drain();if(dirty)zero_private();"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 112,
+      "code": "require(lookup.empty()&&selected.empty()&&loaded.empty()&&fp32_sources.empty()&&fp32_extents.empty()&&saved.empty(),\"private host snapshot retirement\");"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 113,
+      "code": "if(backup)save(e.a.output/\"speculative-snapshot.json\",\"{\\\"passed\\\":true,\\\"capacity_bytes\\\":\"+std::to_string(capacity)+\",\\\"captures\\\":\"+std::to_string(captures)+\",\\\"restores\\\":\"+std::to_string(restores)+\",\\\"snapshot_payload_bytes\\\":\"+std::to_string(saved_bytes)+\",\\\"private_backup_zeroed\\\":true,\\\"committed_state_scrubbed\\\":false,\\\"private_host_backup_empty\\\":true,\\\"snapshot_valid\\\":false,\\\"counters_are_telemetry\\\":true,\\\"rank0_shared_slot_bytes\\\":65536,\\\"rank1_shared_regions_untouched\\\":true}\");"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 120,
+      "code": "const auto& list=which?protected_qsa:protected_active;require(!list.empty(),\"negative control lacks protected extent\");"
+    },
+    {
+      "source": "strict_snapshot.hpp",
+      "line": 121,
+      "code": "auto [id,bytes]=list.front();require(bytes,\"empty protected extent\");auto raw=e.readback(0,id,1);raw[0]^=1;e.upload(0,id,0,raw.data(),1);"
+    },
+    {
+      "source": "request_reset.hpp",
+      "line": 7,
+      "code": "require(!candidate.pending,\"reset with unresolved candidate\");"
+    },
+    {
+      "source": "request_reset.hpp",
+      "line": 21,
+      "code": "if(!row.live||row.category==Category::weights||row.category==Category::pinned_slab)continue;"
+    },
+    {
+      "source": "request_state_inventory.hpp",
+      "line": 5,
+      "code": "e.drain();require(e.pending.empty()&&!e.tail,\"request inventory requires quiescence\");"
+    },
+    {
+      "source": "request_state_inventory.hpp",
+      "line": 11,
+      "code": "if(!row.live||row.category==Category::weights||row.category==Category::pinned_slab||represented.count(id)||row.label.find(\":draft:\")!=std::string::npos)continue;"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 48,
+      "code": "if(r.memory!=Memory::device)return -1;"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 63,
+      "code": "else if (c < 32) { char b[7]; std::snprintf(b, sizeof b, \"\\\\u%04x\", c); out << b; }"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 70,
+      "code": "case Memory::shadow:return \"host-shadow\"; } throw std::invalid_argument(\"memory\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 84,
+      "code": "case Lifetime::transfer:return \"transfer\"; } throw std::invalid_argument(\"lifetime\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 117,
+      "code": "std::fputs(\"Teardown incomplete; ownership retained; supervisor action required.\\n\", stderr);"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 121,
+      "code": "void forget_event_queues(std::span<const Event> events) {for(auto e:events) {auto& slot=event_queue[e%event_queue.size()];if(slot.handle==e)slot={};}}"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 123,
+      "code": "if(closed_) {fast_owners.erase(this);retained_receipts.erase(this);return;}"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 132,
+      "code": "if(events_.size() >= 16384) throw std::length_error(\"event ledger full; end this bounded smoke\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 161,
+      "code": "if(it->second.ids.size()==buffers.size() && std::equal(buffers.begin(),buffers.end(),it->second.ids.begin())) {bound=&it->second;break;}"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 162,
+      "code": "if(!bound) {"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 167,
+      "code": "if(!r.live || r.memory!=Memory::device)throw std::logic_error(\"compute requires live device allocation\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 175,
+      "code": "if(deps.size()>64)throw std::length_error(\"dependency bound\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 179,
+      "code": "assert_local_dependencies(chain,bound->queue);"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 182,
+      "code": "auto e=backend_->compute(op,bound->pointers,chain); events_.push_back(e); remember(e,bound->queue);if(after_compute)after_compute(e);return e;"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 186,
+      "code": "admit();if(!capture_ || ids.empty())throw std::logic_error(\"invalid capture\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 189,
+      "code": "for(auto id:ids){const auto& r=arena.row(id);if(!r.live||r.memory!=Memory::device||queue_of(r)!=item.queue)throw std::logic_error(\"prepared allocation ownership\");item.pointers.push_back(r.pointer);}"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 198,
+      "code": "admit();if(item.owner!=this||item.generation!=generation_)throw std::logic_error(\"stale prepared launch\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 212,
+      "code": "admit(); if(!destroy) throw std::invalid_argument(\"missing graph destructor\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 215,
+      "code": "if(!r.live || r.lifetime==Lifetime::transaction || r.lifetime==Lifetime::transfer)"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 216,
+      "code": "throw std::logic_error(\"graph would outlive buffer\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 229,
+      "code": "if(closed_) {auto it=retained_receipts.find(this);return it==retained_receipts.end()?receipt():it->second;}"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 241,
+      "code": "if(!final_marker_) { events_.reserve(events_.size()+1); final_marker_=backend_->marker({}); events_.push_back(final_marker_); }"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 242,
+      "code": "if(!backend_->wait(final_marker_,end)) return receipt(\"final idle marker pending; queue/context retained\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 250,
+      "code": "if(!r.in_flight) {r.safe_to_exit=true;r.exit_code=1;closed_=true;retained_receipts[this]=r;backend_.release();}"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 256,
+      "code": "if(label.empty() || !bytes) throw std::invalid_argument(\"empty allocation\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 257,
+      "code": "if(planned(c)!=l) throw std::logic_error(\"category lifetime violation\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 258,
+      "code": "if((c==Category::pinned_slab && m!=Memory::pinned) || (c==Category::host_shadow && m!=Memory::shadow))"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 259,
+      "code": "throw std::logic_error(\"category memory violation\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 260,
+      "code": "for(const auto& r:rows_) if(r.live && r.label==label) throw std::logic_error(\"duplicate allocation label\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 261,
+      "code": "if(bytes>std::numeric_limits<std::size_t>::max()-total(m)) throw std::overflow_error(\"census overflow\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 262,
+      "code": "if(rows_.size()==rows_.capacity())rows_.reserve(std::max(size_t(64),rows_.size()*2));"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 263,
+      "code": "void* ptr=owner_.backend_->allocate(bytes,m); if(!ptr) throw std::bad_alloc();"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 273,
+      "code": "const auto& r=row(id); if(!r.live) throw std::logic_error(\"double release\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 280,
+      "code": "for(auto& found:rows_) if(found.id==id) found.live=false;"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 283,
+      "code": "void Arena::release_group(int g) { for(const auto& r:rows_) if(r.live && group(r.category)==g) release(r.id); }"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 285,
+      "code": "std::size_t n=0; for(const auto& r:rows_) if(r.live && r.memory==m) n+=r.bytes; return n;"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 303,
+      "code": "if(!limit || limit>128ull*1024*1024 || !depth || depth>2) throw std::invalid_argument(\"copy bound\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 309,
+      "code": "if(!n || n>limit_ || !d.live || !s.live || off>d.bytes || n>d.bytes-off || soff>s.bytes || n>s.bytes-soff)"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 310,
+      "code": "throw std::out_of_range(\"copy extent/lifetime\");"
+    },
+    {
+      "source": "owner.cpp",
+      "line": 327,
+      "code": "if(deps.size()>64)throw std::length_error(\"dependency bound\");"
+    },
+    {
+      "source": "owner_api.hpp",
+      "line": 173,
+      "code": "for(auto dep:deps)if(!dep||dep>capture_->size())throw std::logic_error(\"foreign captured dependency\");"
+    },
+    {
+      "source": "owner_api.hpp",
+      "line": 177,
+      "code": "if(argument_audit)capture_->back().operation_bytes=arguments::block(op);"
+    },
+    {
+      "source": "owner_api.hpp",
+      "line": 184,
+      "code": "void begin_capture(std::vector<PreparedCompute>& out) { admit(); if(capture_)throw std::logic_error(\"nested capture\");capture_=&out; }"
+    },
+    {
+      "source": "owner_api.hpp",
+      "line": 187,
+      "code": "void invalidate_prepared() { if(in_flight())throw std::logic_error(\"invalidate while pending\");generation_=next_handle(); }"
+    },
+    {
+      "source": "storage.py",
+      "line": 18,
+      "code": "if context not in (256,4096,32768):raise ValueError('unregistered storage context')"
+    },
+    {
+      "source": "storage.py",
+      "line": 24,
+      "code": "if type(retained_steps) is not int or retained_steps<0:raise ValueError('invalid retained-step count')"
+    },
+    {
+      "source": "storage.py",
+      "line": 46,
+      "code": "CHAIN_RESERVE = sum(projected_write_bytes(n,13 if n in ('WS','WSs') else 1)"
+    },
+    {
+      "source": "storage.py",
+      "line": 51,
+      "code": "if any(type(n) is not int or n<0 for n in (free,used,extra,build_extra)):"
+    },
+    {
+      "source": "storage.py",
+      "line": 58,
+      "code": "if free-extra < FREE_FLOOR+CHAIN_RESERVE or used+build_extra >= cap:"
+    },
+    {
+      "source": "storage.py",
+      "line": 67,
+      "code": "if file.is_file() and not file.is_symlink():used+=file.stat().st_size"
+    },
+    {
+      "source": "storage.py",
+      "line": 106,
+      "code": "if current is None or not current['retained']:"
+    },
+    {
+      "source": "storage.py",
+      "line": 113,
+      "code": "if current['retained']:"
+    },
+    {
+      "source": "storage.py",
+      "line": 114,
+      "code": "if count != current['bytes'] or observed.hexdigest() != current['sha256']:"
+    },
+    {
+      "source": "storage.py",
+      "line": 131,
+      "code": "estimate = sum(f.stat().st_size * 4 // 3 + 4096 for f in paths if f.suffix in RETAINED_SUFFIXES) + len(paths) * 1024 + 1_000_000"
+    },
+    {
+      "source": "storage.py",
+      "line": 133,
+      "code": "admit(estimate, build_extra=estimate if destination.resolve().is_relative_to(B) else 0)"
+    },
+    {
+      "source": "storage.py",
+      "line": 145,
+      "code": "if row['retained']:"
+    },
+    {
+      "source": "storage.py",
+      "line": 151,
+      "code": "if count!=row['bytes'] or observed.hexdigest()!=row['sha256']:"
+    },
+    {
+      "source": "window.py",
+      "line": 22,
+      "code": "expected,default=CONFIG[name];expected=estimated_seconds(context) if name=='K2' else expected;seconds=default if seconds is None else seconds"
+    },
+    {
+      "source": "window.py",
+      "line": 46,
+      "code": "if key.startswith('drm-engine-') and not key.startswith(('drm-engine-capacity','drm-engine-cycles')):"
+    },
+    {
+      "source": "window.py",
+      "line": 87,
+      "code": "# Remember the fresh signature even if saving its text runs out of space."
+    },
+    {
+      "source": "window.py",
+      "line": 107,
+      "code": "out=Path(path).resolve();boundary=B.resolve() if cpu_rehearsal else P.resolve()"
+    },
+    {
+      "source": "window.py",
+      "line": 108,
+      "code": "require(boundary in out.parents and not out.exists(),'new output beneath packet40 required')"
+    },
+    {
+      "source": "window.py",
+      "line": 113,
+      "code": "return admit(extra,build_extra=extra if destination==B.resolve() or B.resolve() in destination.parents else 0)"
+    },
+    {
+      "source": "window.py",
+      "line": 117,
+      "code": "require(not rel.is_absolute() and '..' not in rel.parts,'unsafe retained evidence path')"
+    },
+    {
+      "source": "window.py",
+      "line": 119,
+      "code": "require(root.resolve() in path.parents,'retained evidence escapes window')"
+    },
+    {
+      "source": "window.py",
+      "line": 123,
+      "code": "require(Path(name).name=='output.bin' and item.get('uncompressed_bytes',0)>20_000_000,'hash-only retention is oversized fixture only')"
+    },
+    {
+      "source": "window.py",
+      "line": 135,
+      "code": "require(bound.get('path')==str(dispatch) and bound.get('sha256')==sha(dispatch),'fixture restoration dispatch changed')"
+    },
+    {
+      "source": "window.py",
+      "line": 154,
+      "code": "require(len(entries)==1,'oversized fixture needs exactly one authenticated launcher')"
+    },
+    {
+      "source": "window.py",
+      "line": 196,
+      "code": "require(digest==item['uncompressed_sha256'],'compressed prerequisite bytes changed')"
+    },
+    {
+      "source": "window.py",
+      "line": 208,
+      "code": "for filename,digest in row.get('receipts',{}).items():require(retained_hash(path.parent,filename,row)==digest,'prerequisite receipt changed')"
+    },
+    {
+      "source": "window.py",
+      "line": 216,
+      "code": "require(type(row.get('card')) is int and row['card']==card,'linked p33 fixture card differs from admitted first card')"
+    },
+    {
+      "source": "window.py",
+      "line": 218,
+      "code": "require(isinstance(teardown,dict) and teardown.get('safe_to_exit') is True and type(teardown.get('exit_code')) is int and teardown['exit_code']==0 and type(teardown.get('live_bytes')) is int and teardown['live_bytes']==0 and type(teardown.get('in_flight')) is int and teardown['in_flight']==0,'linked p33 owner teardown incomplete')"
+    },
+    {
+      "source": "window.py",
+      "line": 220,
+      "code": "require(digest==row.get('output_sha256')==build.get('p33_linked_fixture_host_sha256'),'linked p33 bytes differ from sealed host fixture')"
+    },
+    {
+      "source": "window.py",
+      "line": 258,
+      "code": "watch.check();admit_output(out,projected_write_bytes('K2',context=a.context) if a.window=='K2' else 550_000_000 if a.window!='K0' else 16_000_000);binary=B/binary_group/name"
+    },
+    {
+      "source": "window.py",
+      "line": 261,
+      "code": "if name in ('nongemv-fixtures','k2-fixtures'):cmd+=['--context',str(a.context)]"
+    },
+    {
+      "source": "window.py",
+      "line": 265,
+      "code": "if name=='p33-linked-fixtures':cmd+=['--seconds',str(watchdog(a.window,a.seconds,a.context))]"
+    },
+    {
+      "source": "window.py",
+      "line": 294,
+      "code": "pp.failure_attempt('fixture retained receipt',lambda:save(out/'retained.json',dict(pids=[child.pid for child in children if child.poll() is None],signals_sent=0,stop_requested=True,diagnostic_errors=errors)),errors)"
+    },
+    {
+      "source": "window.py",
+      "line": 312,
+      "code": "require(all(p.poll() is None for p in t.children),'canary ranks not simultaneously alive')"
+    },
+    {
+      "source": "window.py",
+      "line": 314,
+      "code": "for rank in (0,1):require(t.mapping[rank*SLOT:rank*SLOT+256]==pp.struct.pack('<64I',*([i+1]*64)),'shared handover bytes')"
+    },
+    {
+      "source": "window.py",
+      "line": 331,
+      "code": "require(len(inp['tokens'])+a.max_new<=a.context,'prompt plus --max-new exceeds context capacity')"
+    },
+    {
+      "source": "window.py",
+      "line": 341,
+      "code": "p.add_argument('--context',type=int,choices=(256,4096,32768),required=True);p.add_argument('--draft-rank',type=int,choices=(0,1),default=0);p.add_argument('--window',choices=CONFIG,required=True);p.add_argument('--card',type=int,required=True);p.add_argument('--prompt-overlap',choices=('on','off'),default='on');p.add_argument('--seconds',type=int);p.add_argument('--controller',choices=('python','native'),default='native');p.add_argument('--suite-manifest',type=Path);p.add_argument('--repeat',type=int,default=1)"
+    },
+    {
+      "source": "window.py",
+      "line": 352,
+      "code": "require(1<=a.max_new<=a.context,'--max-new must fit context capacity')"
+    },
+    {
+      "source": "window.py",
+      "line": 354,
+      "code": "if a.retain_steps is None:a.retain_steps='none' if a.window in SPEED_WINDOWS else '1-8,97-104' if a.window=='WS128x' else '1-8'"
+    },
+    {
+      "source": "window.py",
+      "line": 357,
+      "code": "if a.window in SPEED_WINDOWS and a.window!='WSs':require(not retained_steps,'speed windows require --retain-steps none')"
+    },
+    {
+      "source": "window.py",
+      "line": 358,
+      "code": "if a.window in ('W2m-exact','WS64x'):require(set(pp.retention_steps('1-8',a.max_new))<=set(retained_steps),'exactness needs available steps1-8')"
+    },
+    {
+      "source": "window.py",
+      "line": 359,
+      "code": "if a.window=='WS128x':require(set(pp.retention_steps('1-8,97-104',a.max_new))<=set(retained_steps),'exactness needs available steps1-8,97-104')"
+    },
+    {
+      "source": "window.py",
+      "line": 363,
+      "code": "expected=(estimated_seconds(a.context) if a.window=='K2' else CONFIG[a.window][0])*scale+17"
+    },
+    {
+      "source": "window.py",
+      "line": 370,
+      "code": "require(json.loads((P/'memory-plan.json').read_text())==build['memory_plan'],'memory plan changed')"
+    },
+    {
+      "source": "window.py",
+      "line": 396,
+      "code": "sample=memory_snapshot();require(sample['MemAvailable']>=16*1024**3,'KD needs16GiB host memory available')"
+    },
+    {
+      "source": "window.py",
+      "line": 397,
+      "code": "record['memory_admission']=dict(sample,required_MemAvailable=16*1024**3)"
+    },
+    {
+      "source": "window.py",
+      "line": 407,
+      "code": "sample=memory_snapshot();require(sample['MemAvailable']>=97*1024**3,'model window needs 97 GiB available before ranks load')"
+    },
+    {
+      "source": "window.py",
+      "line": 408,
+      "code": "record['memory_admission']=dict(sample,required_MemAvailable=97*1024**3,shadow_removal='unmeasured; no assumption')"
+    },
+    {
+      "source": "window.py",
+      "line": 415,
+      "code": "sample=memory_snapshot();require(sample['MemAvailable']>=97*1024**3,'suite needs97GiB available before ranks load')"
+    },
+    {
+      "source": "window.py",
+      "line": 416,
+      "code": "record['memory_admission']=dict(sample,required_MemAvailable=97*1024**3)"
+    },
+    {
+      "source": "window.py",
+      "line": 418,
+      "code": "if a.window in SPEED_WINDOWS and not retained_steps:"
+    },
+    {
+      "source": "window.py",
+      "line": 423,
+      "code": "require(companion.get('retained_steps')==companion_steps,'exactness companion retention metadata differs')"
+    },
+    {
+      "source": "window.py",
+      "line": 425,
+      "code": "require(companion_steps and set(required)<=set(companion_steps) and companion.get('diagnostic_for_speed') is True,'exactness companion has no retained fixture gate')"
+    },
+    {
+      "source": "window.py",
+      "line": 469,
+      "code": "args.controller=a.controller;args.prompt_overlap=a.prompt_overlap;args.card=a.card;args.seconds=seconds;args.wait_seconds=600;args.context=a.context;args.draft_rank=a.draft_rank;args.tokens=a.max_new;args.retain_steps=a.retain_steps;args.input=a.input;args.oracle=None if cpu_rehearsal else a.oracle;args.dispatch=a.dispatch;args.timing='class' if a.window in ('W2c','W2mc') else 'token'"
+    },
+    {
+      "source": "window.py",
+      "line": 488,
+      "code": "require(observed==hashes,'retained fixtures differ/missing');record.update(token_matches=len(expected),layer_matches=len(hashes),diagnostic=r['diagnostic'],decode_tok_s=r['decode_tok_s'])"
+    },
+    {
+      "source": "window.py",
+      "line": 501,
+      "code": "if not alive:"
+    },
+    {
+      "source": "draft_window.py",
+      "line": 23,
+      "code": "try:save(out/'retained.json',dict(pids=[child.pid] if child.poll() is None else [],signals_sent=0,stop_requested=True))"
+    },
+    {
+      "source": "draft_window.py",
+      "line": 129,
+      "code": "require(anon<8*1024**3,'KD host anonymous memory exceeded8GiB')"
+    },
+    {
+      "source": "draft_window.py",
+      "line": 164,
+      "code": "require(anon<8*1024**3,'KD anonymous memory exceeded8GiB')"
+    },
+    {
+      "source": "draft_window.py",
+      "line": 168,
+      "code": "result=json.loads((dest/'receipt.json').read_text());require(result['passed'] and result.get('device_executed') is (not cpu_rehearsal) and len(result.get('teardown',[]))==1 and all(t['safe_to_exit'] and not t['in_flight'] and not t['live_bytes'] for t in result['teardown']),'KD native failure/unsafe teardown')"
+    },
+    {
+      "source": "draft_window.py",
+      "line": 171,
+      "code": "require(expected and expected==sealed and expected==observed,'KD draft fixture bytes differ')"
+    },
+    {
+      "source": "draft_window.py",
+      "line": 218,
+      "code": "if not left:require(restored.read(1)==b'','KD compressed log trailing bytes');break"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 71,
+      "code": "if draft_pending:"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 85,
+      "code": "if guess is not None:half(0,guess,p+1,True);pending=True"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 100,
+      "code": "if pending:b.wait(0);b.call(0,ROLLBACK)"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 106,
+      "code": "if draft_rank==0 and pending:"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 110,
+      "code": "if draft_rank==0:b.wait(0);draft_pending=False;rank0_draft_row=b.draft_result(p+2)"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 112,
+      "code": "if not pending:half(0,prompt[p+1],p+1)"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 113,
+      "code": "if not (mtp and draft_rank==0 and pending):b.wait(0)"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 117,
+      "code": "if pending:"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 133,
+      "code": "diagnostic=diagnostic,evidence_label=\"DIAGNOSTIC ONLY: scripted guesses or provider fault injection; never a speed result\" if diagnostic else \"official draft head, draft-only 8-bit requantisation, output identical to sequential decode\" if mtp else \"CPU preparation; device qualification pending\","
+    },
+    {
+      "source": "pipeline.py",
+      "line": 159,
+      "code": "evidence_label=\"DIAGNOSTIC ONLY: scripted guesses or provider fault injection\" if diagnostic else \"official draft head, draft-only 8-bit requantisation, output identical to sequential decode\" if self.draft.mode==\"mtp\" else \"CPU preparation; device qualification pending\","
+    },
+    {
+      "source": "pipeline.py",
+      "line": 293,
+      "code": "\"--memory\",\"resident\" if self.device else getattr(args,\"host_memory\",\"layer-streaming\"),\"--context\",str(args.context),\"--seconds\",str(args.seconds),"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 335,
+      "code": "require(anonymous<8*1024**3,\"aggregate rank anonymous memory exceeded 8 GiB\")"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 338,
+      "code": "while (sent<len(payload) if payload is not None else len(data)<REPLY.size):"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 339,
+      "code": "self.check_alive();require(time.monotonic()<end,\"bounded rank channel timeout\")"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 363,
+      "code": "require(0<=values[3]<=SLOT,\"rank payload bounds\")"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 370,
+      "code": "require(values[3]==(128 if self.a.mini else 20480),\"rank0 stream payload extent\")"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 374,
+      "code": "require(not self.pending[rank],\"second command to busy rank\")"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 378,
+      "code": "require(self.pending[rank],\"wait without command\")"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 383,
+      "code": "require(not self.pending[1],\"overwrite consumer payload while busy\")"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 410,
+      "code": "require(not self.pending[rank],\"finish with in-flight command\")"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 420,
+      "code": "self.retained=[p.pid for p in self.children if p.poll() is None]"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 423,
+      "code": "if not self.retained:"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 430,
+      "code": "require(not self.retained,\"rank retained for coordinator after bounded drain\")"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 436,
+      "code": "require(p.returncode==0 and r[\"passed\"] and r.get(\"rank\")==rank and len(r[\"teardown\"])==1 and all(t[\"safe_to_exit\"] and not t[\"in_flight\"] and not t[\"live_bytes\"] for t in r[\"teardown\"]),\"rank teardown failure\")"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 446,
+      "code": "require(args.tokens>0 and len(prompt)+args.tokens<=args.context,\"prompt + max-new exceeds context capacity\")"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 527,
+      "code": "require(len(parts) in (1,2) and all(p.isascii() and p.isdecimal() for p in parts),'invalid retain-steps range')"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 529,
+      "code": "require(1<=left<=right<=2147483647,'invalid retain-steps bounds')"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 557,
+      "code": "require(a.tokens>0 and a.context>0 and a.tokens<=a.context,\"max-new/context bounds\")"
+    },
+    {
+      "source": "pipeline.py",
+      "line": 581,
+      "code": "require(not a.device,\"device ranks must be launched by admitted window.py\")"
+    },
+    {
+      "source": "suite.py",
+      "line": 21,
+      "code": "pipeline.require((mini or context in (256,4096,32768)) and context>=manifest.get('context',0),'suite capacity must cover oracle capacity')"
+    },
+    {
+      "source": "suite.py",
+      "line": 27,
+      "code": "pipeline.require(type(length) is int and length>0 and length+count<=context,'prompt tokens + cap exceeds context capacity')"
+    },
+    {
+      "source": "suite.py",
+      "line": 46,
+      "code": "pipeline.require({d.name for d in actual.glob('step*') if d.is_dir()}=={f'step{i}' for i in steps},'retained fixture step coverage differs')"
+    },
+    {
+      "source": "suite.py",
+      "line": 50,
+      "code": "pipeline.require([r.get('layer') for r in records]==list(range(48)),'retained fixture layer coverage differs')"
+    },
+    {
+      "source": "suite.py",
+      "line": 51,
+      "code": "pipeline.require({f.name for f in directory.glob('*.bf16')}=={f'layer-{i:02}.bf16' for i in range(48)},'retained fixture filenames differ')"
+    },
+    {
+      "source": "suite.py",
+      "line": 55,
+      "code": "pipeline.require(row.get('shape')==[1,4,2560] and row.get('dtype')=='BF16 little-endian','retained fixture shape/dtype')"
+    },
+    {
+      "source": "suite.py",
+      "line": 56,
+      "code": "pipeline.require(len(raw)==20480 and hashlib.sha256(raw).hexdigest()==row.get('sha256'),'retained fixture length/hash differs')"
+    },
+    {
+      "source": "suite.py",
+      "line": 57,
+      "code": "pipeline.require(raw==(oracle/name).read_bytes(),name+' byte mismatch')"
+    },
+    {
+      "source": "suite.py",
+      "line": 82,
+      "code": "return dict(midprompt_comparison='compared' if (actual/'midprompt').exists() else 'not retained by this binary',"
+    },
+    {
+      "source": "suite.py",
+      "line": 90,
+      "code": "if cap==128:return RetainedFixtureChecker(checker_module(CHECKER128))"
+    },
+    {
+      "source": "suite.py",
+      "line": 103,
+      "code": "pipeline.require(context>=length+1 and vocab>alphabet,'warmup context/vocabulary bounds')"
+    },
+    {
+      "source": "suite.py",
+      "line": 105,
+      "code": "pipeline.require(prompts and all(p for p in prompts),'warmup needs nonempty admitted prompts')"
+    },
+    {
+      "source": "suite.py",
+      "line": 110,
+      "code": "pipeline.require(len(spans)<space,'warmup candidate space exhausted')"
+    },
+    {
+      "source": "suite.py",
+      "line": 119,
+      "code": "raise AssertionError('warmup selection bound')"
+    },
+    {
+      "source": "suite.py",
+      "line": 137,
+      "code": "pipeline.require(len(row['sha256'])==64 and row['bytes']>=0,'invalid state evidence hash')"
+    },
+    {
+      "source": "suite.py",
+      "line": 140,
+      "code": "pipeline.require(len(raw)==row['bytes'] and hashlib.sha256(raw).hexdigest()==row['sha256'],'retained state metadata changed')"
+    },
+    {
+      "source": "suite.py",
+      "line": 176,
+      "code": "pipeline.require(gzip.decompress(temporary.read_bytes())==raw,'state retention gzip roundtrip')"
+    },
+    {
+      "source": "suite.py",
+      "line": 178,
+      "code": "pipeline.require(retained_state(root)==by_path,'state retention verification')"
+    },
+    {
+      "source": "suite.py",
+      "line": 183,
+      "code": "pipeline.require(not any(transport.pending),'reset with pending commands')"
+    },
+    {
+      "source": "suite.py",
+      "line": 264,
+      "code": "pipeline.require(source.is_file(),f'missing retained fixture {source}')"
+    },
+    {
+      "source": "suite.py",
+      "line": 311,
+      "code": "pipeline.require([row['layer'] for row in records]==list(range(48)),'retained fixture layer coverage differs')"
+    },
+    {
+      "source": "suite.py",
+      "line": 314,
+      "code": "pipeline.require(len(raw)==20480 and hashlib.sha256(raw).hexdigest()==row['sha256'],'retained fixture length/hash differs')"
+    },
+    {
+      "source": "suite.py",
+      "line": 315,
+      "code": "pipeline.require(raw==(oracle/name).read_bytes(),name+' byte mismatch')"
+    },
+    {
+      "source": "suite.py",
+      "line": 334,
+      "code": "blobs={name:(bundle/name).read_bytes() for name in sorted(required)}"
+    },
+    {
+      "source": "suite.py",
+      "line": 354,
+      "code": "pipeline.require(args.repeat>0 and args.repeat<=100,'repeat bound 1..100')"
+    },
+    {
+      "source": "suite.py",
+      "line": 363,
+      "code": "snapshots=admit_inputs(entries,args.output,compare) if compare else {}"
+    },
+    {
+      "source": "suite.py",
+      "line": 364,
+      "code": "launch=copy.copy(args);launch.input=(snapshots[entries[0]['prompt_id']][0] if compare else ROOT/entries[0]['input_bundle']);launch.oracle=None;launch.tokens=args.tokens"
+    },
+    {
+      "source": "suite.py",
+      "line": 365,
+      "code": "pipeline.require(args.context>=manifest['context'],'suite context admission')"
+    },
+    {
+      "source": "suite.py",
+      "line": 366,
+      "code": "pipeline.require(all(e.get('prompt_tokens',len(e.get('mini_tokens',[])))+args.tokens<=args.context for e in entries),'prompt + max-new exceeds context capacity')"
+    },
+    {
+      "source": "suite.py",
+      "line": 377,
+      "code": "measured_prompts=[entry['mini_tokens'] if args.mini else snapshots[entry['prompt_id']][1] for entry in entries]"
+    },
+    {
+      "source": "suite.py",
+      "line": 378,
+      "code": "warm_prompt=select_warmup(measured_prompts,args.context,16 if args.mini else 248320)"
+    },
+    {
+      "source": "suite.py",
+      "line": 394,
+      "code": "prompt=entry.get('mini_tokens') if args.mini else snapshots[entry['prompt_id']][1]"
+    },
+    {
+      "source": "suite.py",
+      "line": 396,
+      "code": "pipeline.require(len(prompt)+count<=args.context,'request context exceeded')"
+    },
+    {
+      "source": "suite.py",
+      "line": 453,
+      "code": "args=parser().parse_args();pipeline.require(not args.device,'device suite requires admitted window.py')"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 108,
+      "code": "assert len(raw) == item['original_bytes']"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 113,
+      "code": "rows = [r for r in census['allocations'] if r['live'] and r['memory'] == 'device']"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 115,
+      "code": "draft_bytes = sum(r['bytes'] for r in rows if ':draft:' in r['label'])"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 116,
+      "code": "assert total == census['totals']['device'] == item['device_bytes']"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 117,
+      "code": "assert draft_bytes == item['draft_device_bytes']"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 118,
+      "code": "assert total - draft_bytes == TARGET_BASE[item['rank']]"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 121,
+      "code": "assert argv[argv.index('--context') + 1] == '256'"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 122,
+      "code": "assert argv[argv.index('--memory') + 1] == 'resident'"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 128,
+      "code": "assert all(t['safe_to_exit'] and t['in_flight'] == t['live_bytes'] == 0 for t in native['teardown'])"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 163,
+      "code": "if not row['live'] or row['memory'] != 'device':"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 167,
+      "code": "if match and int(match[1]) >= boundary:"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 178,
+      "code": "assert total == STRICT_IMAGE_256[boundary]"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 192,
+      "code": "boundary = 22 if draft_rank == 0 else 24"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 206,
+      "code": "if rank == 0 else LAYER22_RANK1_BYTES + LAYER23_BYTES + growth)"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 207,
+      "code": "snapshot = STRICT_IMAGE_256[boundary] + qsa_counts[0] * growth if rank == 0 else 0"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 209,
+      "code": "duplicate_head = HEAD_BYTES if draft_rank == 0 and rank == 0 else 0"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 211,
+      "code": "draft_bytes = draft if rank == draft_rank else 0"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 214,
+      "code": "target_layers=boundary if rank == 0 else 48-boundary,"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 223,
+      "code": "draft_qsa_cache_bytes=per_layer if rank == draft_rank else 0,"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 224,
+      "code": "draft_weights_bytes=3_326_953_472 if rank == draft_rank else 0,"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 225,
+      "code": "draft_scratch_controls_buffers_bytes=17_711_414 if rank == draft_rank else 0,"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 231,
+      "code": "host_pinned_bytes=4*1024*1024+(DRAFT_PINNED_BYTES if rank == draft_rank else 0),"
+    },
+    {
+      "source": "memory_plan.py",
+      "line": 251,
+      "code": "scope='CPU allocation model from exact historical C256 owner census plus source-derived deltas. Conservative pre-fusion buffers retained in ceiling. Current live census required before first HALF; driver overhead/residency and new placement timings unmeasured.',"
+    },
+    {
+      "source": "memory_gate.py",
+      "line": 6,
+      "code": "live = sum(r['bytes'] for r in census['allocations'] if r['live'] and r['memory'] == 'device')"
+    },
+    {
+      "source": "memory_gate.py",
+      "line": 7,
+      "code": "if live != total:"
+    },
+    {
+      "source": "memory_gate.py",
+      "line": 8,
+      "code": "raise ValueError('device census live total differs')"
+    },
+    {
+      "source": "memory_gate.py",
+      "line": 14,
+      "code": "raise ValueError('context is not admitted by memory plan') from exc"
+    },
+    {
+      "source": "memory_gate.py",
+      "line": 15,
+      "code": "limit = planned['total_with_mtp_bytes'] if mtp else planned['target_total_bytes']"
+    },
+    {
+      "source": "memory_gate.py",
+      "line": 16,
+      "code": "if total > limit:"
+    },
+    {
+      "source": "memory_gate.py",
+      "line": 17,
+      "code": "raise ValueError('rank allocations exceed context-specific plan')"
+    },
+    {
+      "source": "memory_gate.py",
+      "line": 19,
+      "code": "if free < ledger['minimum_free_bytes']:"
+    }
+  ],
+  "rows": [
+    {
+      "window": "W0p",
+      "context": 4096,
+      "draft_rank": 0,
+      "requests": 1,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        256,
+        256
+      ],
+      "headroom_bytes": [
+        32212254464,
+        32212254464
+      ],
+      "maximum_copy": 256,
+      "state_payload_upper_bytes": 512,
+      "projected_write_bytes": 32000000,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 32000000,
+        "projected_build_write_bytes": 32000000,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/canary.log"
+      ],
+      "passed": true
+    },
+    {
+      "window": "KD",
+      "context": 4096,
+      "draft_rank": 0,
+      "requests": 1,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        31267162826,
+        0
+      ],
+      "headroom_bytes": [
+        945091894,
+        32212254720
+      ],
+      "maximum_copy": 4194304,
+      "state_payload_upper_bytes": 29097984,
+      "projected_write_bytes": 577279360,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 577279360,
+        "projected_build_write_bytes": 577279360,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/KD-c4096-dr0-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "W2m",
+      "context": 4096,
+      "draft_rank": 0,
+      "requests": 1,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        29633778506,
+        30144536692
+      ],
+      "headroom_bytes": [
+        2578476214,
+        2067718028
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 227350596,
+      "projected_write_bytes": 700210560,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 700210560,
+        "projected_build_write_bytes": 700210560,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c4096-dr0-r0/census.json",
+        "evidence/audit6/W2m-c4096-dr0-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WS",
+      "context": 4096,
+      "draft_rank": 0,
+      "requests": 13,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        29633778506,
+        30144536692
+      ],
+      "headroom_bytes": [
+        2578476214,
+        2067718028
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 227350596,
+      "projected_write_bytes": 1084210560,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1084210560,
+        "projected_build_write_bytes": 1084210560,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c4096-dr0-r0/census.json",
+        "evidence/audit6/W2m-c4096-dr0-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WSs",
+      "context": 4096,
+      "draft_rank": 0,
+      "requests": 13,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        25440092692,
+        30144536692
+      ],
+      "headroom_bytes": [
+        6772162028,
+        2067718028
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 217651264,
+      "projected_write_bytes": 1084210560,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1084210560,
+        "projected_build_write_bytes": 1084210560,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/WSs-c4096-dr0-r0/census.json",
+        "evidence/audit6/WSs-c4096-dr0-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WS128x",
+      "context": 4096,
+      "draft_rank": 0,
+      "requests": 13,
+      "retained_steps": 16,
+      "peak_device_bytes": [
+        29633778506,
+        30144536692
+      ],
+      "headroom_bytes": [
+        2578476214,
+        2067718028
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 227350596,
+      "projected_write_bytes": 1288682880,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1288682880,
+        "projected_build_write_bytes": 1288682880,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c4096-dr0-r0/census.json",
+        "evidence/audit6/W2m-c4096-dr0-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WS128",
+      "context": 4096,
+      "draft_rank": 0,
+      "requests": 13,
+      "retained_steps": 0,
+      "peak_device_bytes": [
+        29633778506,
+        30144536692
+      ],
+      "headroom_bytes": [
+        2578476214,
+        2067718028
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 227350596,
+      "projected_write_bytes": 1084210560,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1084210560,
+        "projected_build_write_bytes": 1084210560,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c4096-dr0-r0/census.json",
+        "evidence/audit6/W2m-c4096-dr0-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "W0p",
+      "context": 4096,
+      "draft_rank": 1,
+      "requests": 1,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        256,
+        256
+      ],
+      "headroom_bytes": [
+        32212254464,
+        32212254464
+      ],
+      "maximum_copy": 256,
+      "state_payload_upper_bytes": 512,
+      "projected_write_bytes": 32000000,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 32000000,
+        "projected_build_write_bytes": 32000000,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/canary.log"
+      ],
+      "passed": true
+    },
+    {
+      "window": "KD",
+      "context": 4096,
+      "draft_rank": 1,
+      "requests": 1,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        0,
+        31267162826
+      ],
+      "headroom_bytes": [
+        32212254720,
+        945091894
+      ],
+      "maximum_copy": 4194304,
+      "state_payload_upper_bytes": 29097984,
+      "projected_write_bytes": 577279360,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 577279360,
+        "projected_build_write_bytes": 577279360,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/KD-c4096-dr1-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "W2m",
+      "context": 4096,
+      "draft_rank": 1,
+      "requests": 1,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        27685361748,
+        31267162826
+      ],
+      "headroom_bytes": [
+        4526892972,
+        945091894
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 228984900,
+      "projected_write_bytes": 700210560,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 700210560,
+        "projected_build_write_bytes": 700210560,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c4096-dr1-r0/census.json",
+        "evidence/audit6/W2m-c4096-dr1-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WS",
+      "context": 4096,
+      "draft_rank": 1,
+      "requests": 13,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        27685361748,
+        31267162826
+      ],
+      "headroom_bytes": [
+        4526892972,
+        945091894
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 228984900,
+      "projected_write_bytes": 1084210560,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1084210560,
+        "projected_build_write_bytes": 1084210560,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c4096-dr1-r0/census.json",
+        "evidence/audit6/W2m-c4096-dr1-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WSs",
+      "context": 4096,
+      "draft_rank": 1,
+      "requests": 13,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        27685361748,
+        27912798612
+      ],
+      "headroom_bytes": [
+        4526892972,
+        4299456108
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 219285568,
+      "projected_write_bytes": 1084210560,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1084210560,
+        "projected_build_write_bytes": 1084210560,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/WSs-c4096-dr1-r0/census.json",
+        "evidence/audit6/WSs-c4096-dr1-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WS128x",
+      "context": 4096,
+      "draft_rank": 1,
+      "requests": 13,
+      "retained_steps": 16,
+      "peak_device_bytes": [
+        27685361748,
+        31267162826
+      ],
+      "headroom_bytes": [
+        4526892972,
+        945091894
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 228984900,
+      "projected_write_bytes": 1288682880,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1288682880,
+        "projected_build_write_bytes": 1288682880,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c4096-dr1-r0/census.json",
+        "evidence/audit6/W2m-c4096-dr1-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WS128",
+      "context": 4096,
+      "draft_rank": 1,
+      "requests": 13,
+      "retained_steps": 0,
+      "peak_device_bytes": [
+        27685361748,
+        31267162826
+      ],
+      "headroom_bytes": [
+        4526892972,
+        945091894
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 228984900,
+      "projected_write_bytes": 1084210560,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1084210560,
+        "projected_build_write_bytes": 1084210560,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c4096-dr1-r0/census.json",
+        "evidence/audit6/W2m-c4096-dr1-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "W0p",
+      "context": 32768,
+      "draft_rank": 0,
+      "requests": 1,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        256,
+        256
+      ],
+      "headroom_bytes": [
+        32212254464,
+        32212254464
+      ],
+      "maximum_copy": 256,
+      "state_payload_upper_bytes": 512,
+      "projected_write_bytes": 32000000,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 32000000,
+        "projected_build_write_bytes": 32000000,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/canary.log"
+      ],
+      "passed": true
+    },
+    {
+      "window": "KD",
+      "context": 32768,
+      "draft_rank": 0,
+      "requests": 1,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        31742429898,
+        0
+      ],
+      "headroom_bytes": [
+        469824822,
+        32212254720
+      ],
+      "maximum_copy": 4194304,
+      "state_payload_upper_bytes": 232783872,
+      "projected_write_bytes": 780965248,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 780965248,
+        "projected_build_write_bytes": 780965248,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/KD-c32768-dr0-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "W2m",
+      "context": 32768,
+      "draft_rank": 0,
+      "requests": 1,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        30380626762,
+        30619803764
+      ],
+      "headroom_bytes": [
+        1831627958,
+        1592450956
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 1109989444,
+      "projected_write_bytes": 1582849408,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1582849408,
+        "projected_build_write_bytes": 1582849408,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c32768-dr0-r0/census.json",
+        "evidence/audit6/W2m-c32768-dr0-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WS",
+      "context": 32768,
+      "draft_rank": 0,
+      "requests": 13,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        30380626762,
+        30619803764
+      ],
+      "headroom_bytes": [
+        1831627958,
+        1592450956
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 1109989444,
+      "projected_write_bytes": 1966849408,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1966849408,
+        "projected_build_write_bytes": 1966849408,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c32768-dr0-r0/census.json",
+        "evidence/audit6/W2m-c32768-dr0-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WSs",
+      "context": 32768,
+      "draft_rank": 0,
+      "requests": 13,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        26119045652,
+        30619803764
+      ],
+      "headroom_bytes": [
+        6093209068,
+        1592450956
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 1032394816,
+      "projected_write_bytes": 1966849408,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1966849408,
+        "projected_build_write_bytes": 1966849408,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/WSs-c32768-dr0-r0/census.json",
+        "evidence/audit6/WSs-c32768-dr0-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WS128x",
+      "context": 32768,
+      "draft_rank": 0,
+      "requests": 13,
+      "retained_steps": 16,
+      "peak_device_bytes": [
+        30380626762,
+        30619803764
+      ],
+      "headroom_bytes": [
+        1831627958,
+        1592450956
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 1109989444,
+      "projected_write_bytes": 2171321728,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 2171321728,
+        "projected_build_write_bytes": 2171321728,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c32768-dr0-r0/census.json",
+        "evidence/audit6/W2m-c32768-dr0-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WS128",
+      "context": 32768,
+      "draft_rank": 0,
+      "requests": 13,
+      "retained_steps": 0,
+      "peak_device_bytes": [
+        30380626762,
+        30619803764
+      ],
+      "headroom_bytes": [
+        1831627958,
+        1592450956
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 1109989444,
+      "projected_write_bytes": 1966849408,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1966849408,
+        "projected_build_write_bytes": 1966849408,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c32768-dr0-r0/census.json",
+        "evidence/audit6/W2m-c32768-dr0-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "W0p",
+      "context": 32768,
+      "draft_rank": 1,
+      "requests": 1,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        256,
+        256
+      ],
+      "headroom_bytes": [
+        32212254464,
+        32212254464
+      ],
+      "maximum_copy": 256,
+      "state_payload_upper_bytes": 512,
+      "projected_write_bytes": 32000000,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 32000000,
+        "projected_build_write_bytes": 32000000,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/canary.log"
+      ],
+      "passed": true
+    },
+    {
+      "window": "KD",
+      "context": 32768,
+      "draft_rank": 1,
+      "requests": 1,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        0,
+        31742429898
+      ],
+      "headroom_bytes": [
+        32212254720,
+        469824822
+      ],
+      "maximum_copy": 4194304,
+      "state_payload_upper_bytes": 232783872,
+      "projected_write_bytes": 780965248,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 780965248,
+        "projected_build_write_bytes": 780965248,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/KD-c32768-dr1-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "W2m",
+      "context": 32768,
+      "draft_rank": 1,
+      "requests": 1,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        28500105300,
+        31742429898
+      ],
+      "headroom_bytes": [
+        3712149420,
+        469824822
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 1111623748,
+      "projected_write_bytes": 1582849408,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1582849408,
+        "projected_build_write_bytes": 1582849408,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c32768-dr1-r0/census.json",
+        "evidence/audit6/W2m-c32768-dr1-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WS",
+      "context": 32768,
+      "draft_rank": 1,
+      "requests": 13,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        28500105300,
+        31742429898
+      ],
+      "headroom_bytes": [
+        3712149420,
+        469824822
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 1111623748,
+      "projected_write_bytes": 1966849408,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1966849408,
+        "projected_build_write_bytes": 1966849408,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c32768-dr1-r0/census.json",
+        "evidence/audit6/W2m-c32768-dr1-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WSs",
+      "context": 32768,
+      "draft_rank": 1,
+      "requests": 13,
+      "retained_steps": 8,
+      "peak_device_bytes": [
+        28500105300,
+        28320170388
+      ],
+      "headroom_bytes": [
+        3712149420,
+        3892084332
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 1034029120,
+      "projected_write_bytes": 1966849408,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1966849408,
+        "projected_build_write_bytes": 1966849408,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/WSs-c32768-dr1-r0/census.json",
+        "evidence/audit6/WSs-c32768-dr1-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WS128x",
+      "context": 32768,
+      "draft_rank": 1,
+      "requests": 13,
+      "retained_steps": 16,
+      "peak_device_bytes": [
+        28500105300,
+        31742429898
+      ],
+      "headroom_bytes": [
+        3712149420,
+        469824822
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 1111623748,
+      "projected_write_bytes": 2171321728,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 2171321728,
+        "projected_build_write_bytes": 2171321728,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c32768-dr1-r0/census.json",
+        "evidence/audit6/W2m-c32768-dr1-r1/census.json"
+      ],
+      "passed": true
+    },
+    {
+      "window": "WS128",
+      "context": 32768,
+      "draft_rank": 1,
+      "requests": 13,
+      "retained_steps": 0,
+      "peak_device_bytes": [
+        28500105300,
+        31742429898
+      ],
+      "headroom_bytes": [
+        3712149420,
+        469824822
+      ],
+      "maximum_copy": 134217728,
+      "state_payload_upper_bytes": 1111623748,
+      "projected_write_bytes": 1966849408,
+      "storage_admission": {
+        "root_free_bytes": 30771167232,
+        "build_bytes": 1656308577,
+        "admitted_write_bytes": 1966849408,
+        "projected_build_write_bytes": 1966849408,
+        "build_limit_bytes": 12941289057,
+        "structural_build_limit_bytes": 14486186752,
+        "free_floor_bytes": 8000000000,
+        "remaining_chain_reserve_bytes": 11486186752
+      },
+      "census_sources": [
+        "evidence/audit6/W2m-c32768-dr1-r0/census.json",
+        "evidence/audit6/W2m-c32768-dr1-r1/census.json"
+      ],
+      "passed": true
+    }
+  ],
+  "native_cases": [
+    {
+      "passed": true,
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 1,
+      "window": "KD",
+      "peak_device_bytes": 31267162826,
+      "copies": 11866,
+      "maximum_copy": 4194304,
+      "positions": 5,
+      "reset_written_bytes": 0,
+      "device_executed": false,
+      "census": "evidence/audit6/KD-c4096-dr0-r1/census.json"
+    },
+    {
+      "passed": true,
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 0,
+      "window": "W2m",
+      "peak_device_bytes": 29633778506,
+      "copies": 28731,
+      "maximum_copy": 134217728,
+      "positions": 5,
+      "reset_written_bytes": 120501528,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 0,
+        "draft_rank": 0,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 29633778506,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 29680279054,
+        "planned_free_bytes": 4608519350,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/W2m-c4096-dr0-r0/census.json"
+    },
+    {
+      "passed": true,
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 1,
+      "window": "W2m",
+      "peak_device_bytes": 30144536692,
+      "copies": 12456,
+      "maximum_copy": 4194304,
+      "positions": 5,
+      "reset_written_bytes": 106849068,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 1,
+        "draft_rank": 0,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 30144536692,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 30145765492,
+        "planned_free_bytes": 4097761164,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/W2m-c4096-dr0-r1/census.json"
+    },
+    {
+      "passed": true,
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 0,
+      "window": "WSs",
+      "peak_device_bytes": 25440092692,
+      "copies": 25515,
+      "maximum_copy": 134217728,
+      "positions": 5,
+      "reset_written_bytes": 110802196,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 0,
+        "draft_rank": 0,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 25440092692,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 25486593240,
+        "planned_free_bytes": 8802205164,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/WSs-c4096-dr0-r0/census.json"
+    },
+    {
+      "passed": true,
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 1,
+      "window": "WSs",
+      "peak_device_bytes": 30144536692,
+      "copies": 12456,
+      "maximum_copy": 4194304,
+      "positions": 5,
+      "reset_written_bytes": 106849068,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 1,
+        "draft_rank": 0,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 30144536692,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 30145765492,
+        "planned_free_bytes": 4097761164,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/WSs-c4096-dr0-r1/census.json"
+    },
+    {
+      "passed": true,
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 1,
+      "window": "KD",
+      "peak_device_bytes": 31267162826,
+      "copies": 11866,
+      "maximum_copy": 4194304,
+      "positions": 5,
+      "reset_written_bytes": 0,
+      "device_executed": false,
+      "census": "evidence/audit6/KD-c4096-dr1-r1/census.json"
+    },
+    {
+      "passed": true,
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 0,
+      "window": "W2m",
+      "peak_device_bytes": 27685361748,
+      "copies": 27746,
+      "maximum_copy": 134217728,
+      "positions": 5,
+      "reset_written_bytes": 124333172,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 0,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 27685361748,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 27731862296,
+        "planned_free_bytes": 6556936108,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/W2m-c4096-dr1-r0/census.json"
+    },
+    {
+      "passed": true,
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 1,
+      "window": "W2m",
+      "peak_device_bytes": 31267162826,
+      "copies": 14364,
+      "maximum_copy": 4194304,
+      "positions": 5,
+      "reset_written_bytes": 104651728,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 1,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 31267162826,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 31268391626,
+        "planned_free_bytes": 2975135030,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/W2m-c4096-dr1-r1/census.json"
+    },
+    {
+      "passed": true,
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 0,
+      "window": "WSs",
+      "peak_device_bytes": 27685361748,
+      "copies": 27746,
+      "maximum_copy": 134217728,
+      "positions": 5,
+      "reset_written_bytes": 124333172,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 0,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 27685361748,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 27731862296,
+        "planned_free_bytes": 6556936108,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/WSs-c4096-dr1-r0/census.json"
+    },
+    {
+      "passed": true,
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 1,
+      "window": "WSs",
+      "peak_device_bytes": 27912798612,
+      "copies": 11550,
+      "maximum_copy": 4194304,
+      "positions": 5,
+      "reset_written_bytes": 94952396,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 1,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 27912798612,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 27914027412,
+        "planned_free_bytes": 6329499244,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/WSs-c4096-dr1-r1/census.json"
+    },
+    {
+      "passed": true,
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 1,
+      "window": "KD",
+      "peak_device_bytes": 31742429898,
+      "copies": 12136,
+      "maximum_copy": 4194304,
+      "positions": 5,
+      "reset_written_bytes": 0,
+      "device_executed": false,
+      "census": "evidence/audit6/KD-c32768-dr0-r1/census.json"
+    },
+    {
+      "passed": true,
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 0,
+      "window": "W2m",
+      "peak_device_bytes": 30380626762,
+      "copies": 29850,
+      "maximum_copy": 134217728,
+      "positions": 5,
+      "reset_written_bytes": 527873304,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 0,
+        "draft_rank": 0,
+        "context_capacity": 32768,
+        "device_allocation_bytes": 30380626762,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 30427127310,
+        "planned_free_bytes": 3861671094,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/W2m-c32768-dr0-r0/census.json"
+    },
+    {
+      "passed": true,
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 1,
+      "window": "W2m",
+      "peak_device_bytes": 30619803764,
+      "copies": 12876,
+      "maximum_copy": 4194304,
+      "positions": 5,
+      "reset_written_bytes": 582116140,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 1,
+        "draft_rank": 0,
+        "context_capacity": 32768,
+        "device_allocation_bytes": 30619803764,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 30621032564,
+        "planned_free_bytes": 3622494092,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/W2m-c32768-dr0-r1/census.json"
+    },
+    {
+      "passed": true,
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 0,
+      "window": "WSs",
+      "peak_device_bytes": 26119045652,
+      "copies": 26544,
+      "maximum_copy": 134217728,
+      "positions": 5,
+      "reset_written_bytes": 450278676,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 0,
+        "draft_rank": 0,
+        "context_capacity": 32768,
+        "device_allocation_bytes": 26119045652,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 26165546200,
+        "planned_free_bytes": 8123252204,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/WSs-c32768-dr0-r0/census.json"
+    },
+    {
+      "passed": true,
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 1,
+      "window": "WSs",
+      "peak_device_bytes": 30619803764,
+      "copies": 12876,
+      "maximum_copy": 4194304,
+      "positions": 5,
+      "reset_written_bytes": 582116140,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 1,
+        "draft_rank": 0,
+        "context_capacity": 32768,
+        "device_allocation_bytes": 30619803764,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 30621032564,
+        "planned_free_bytes": 3622494092,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/WSs-c32768-dr0-r1/census.json"
+    },
+    {
+      "passed": true,
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 1,
+      "window": "KD",
+      "peak_device_bytes": 31742429898,
+      "copies": 12136,
+      "maximum_copy": 4194304,
+      "positions": 5,
+      "reset_written_bytes": 0,
+      "device_executed": false,
+      "census": "evidence/audit6/KD-c32768-dr1-r1/census.json"
+    },
+    {
+      "passed": true,
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 0,
+      "window": "W2m",
+      "peak_device_bytes": 28500105300,
+      "copies": 28979,
+      "maximum_copy": 134217728,
+      "positions": 5,
+      "reset_written_bytes": 531704948,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 0,
+        "draft_rank": 1,
+        "context_capacity": 32768,
+        "device_allocation_bytes": 28500105300,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 28546605848,
+        "planned_free_bytes": 5742192556,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/W2m-c32768-dr1-r0/census.json"
+    },
+    {
+      "passed": true,
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 1,
+      "window": "W2m",
+      "peak_device_bytes": 31742429898,
+      "copies": 14814,
+      "maximum_copy": 4194304,
+      "positions": 5,
+      "reset_written_bytes": 579918800,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 1,
+        "draft_rank": 1,
+        "context_capacity": 32768,
+        "device_allocation_bytes": 31742429898,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 31743658698,
+        "planned_free_bytes": 2499867958,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/W2m-c32768-dr1-r1/census.json"
+    },
+    {
+      "passed": true,
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 0,
+      "window": "WSs",
+      "peak_device_bytes": 28500105300,
+      "copies": 28979,
+      "maximum_copy": 134217728,
+      "positions": 5,
+      "reset_written_bytes": 531704948,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 0,
+        "draft_rank": 1,
+        "context_capacity": 32768,
+        "device_allocation_bytes": 28500105300,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 28546605848,
+        "planned_free_bytes": 5742192556,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/WSs-c32768-dr1-r0/census.json"
+    },
+    {
+      "passed": true,
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 1,
+      "window": "WSs",
+      "peak_device_bytes": 28320170388,
+      "copies": 11910,
+      "maximum_copy": 4194304,
+      "positions": 5,
+      "reset_written_bytes": 502324172,
+      "device_executed": false,
+      "memory_admission": {
+        "rank": 1,
+        "draft_rank": 1,
+        "context_capacity": 32768,
+        "device_allocation_bytes": 28320170388,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 28321399188,
+        "planned_free_bytes": 5922127468,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "census": "evidence/audit6/WSs-c32768-dr1-r1/census.json"
+    }
+  ],
+  "usable_capacity_bytes": 32212254720,
+  "physical_capacity_bytes": 34242297856,
+  "minimum_free_bytes": 1500000000,
+  "model_metadata_sha256": "9926b7a266ba2774f02fe00583257ab2aaff96ee0313d350d3ba54602ae2a656",
+  "generated_sha256": {
+    "audit6-rank.hpp": "a11eb367d87022d36a2440195d9f7c722459f3c4ac3bf82f0cbf9af447cb124d",
+    "audit6-main.cpp": "fb3aa6af3c3b39ebdf83a4cf41b98e13fcb035f4451eeee706ced0e53b84563b",
+    "audit6-mtp.hpp": "200111272efb9f733da82e62356f5687af8c767fc0a329d7d373304d5baba3a8"
+  },
+  "binary_sha256": "6aaa0f5c73c49b2b270d263ff4699375ec44c4dc54aabf5f8ce7946e0f1f6ca8",
+  "evidence_sha256": {
+    "evidence/audit6/canary-compile.json": "fd8c6768f70588a49b5b312ee1059981a4fbcde0c4afb03d820e9737284350a2",
+    "evidence/audit6/generated.json": "c1fb1a3a6195aecb6199c598e6236117a78587249bf6d82ea69f6bf6e17cc83f",
+    "evidence/audit6/model-plan.tsv.gz": "6a363fe738d4eb687858de73fed2dce71b17462e546f29178575b194730ce583",
+    "evidence/audit6/retention.json.gz": "4c615d5ef63b18e2185eab6ced973233631d411386e29fb3ef2163ef163c365e",
+    "evidence/audit6/bootstrap-header-resolution.log.gz": "d7295c6d960e1945f6687c5efab14e06afaced373f3593574f09bb2337517520",
+    "evidence/audit6/canary-compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/compile.json": "29546dc57e1c76de9c547c8b94f2832474b126360c7a3cfcf23e823de24cedbc",
+    "evidence/audit6/bootstrap-missing-include.log.gz": "dbb464ea35392d1ce58ee9fbe98679abdf8be152d9263fb4519b550c55052705",
+    "evidence/audit6/canary.log": "e875d9ec1c1abc10a7154b4359c3d072e3e16536db67df738ab2cb389ab082b4",
+    "evidence/audit6/WSs-c4096-dr1-r1/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr1-r1/run.log": "101750157333b13e55d6a88f3c8c57afcf2133a918505dd2454c4379f63b8303",
+    "evidence/audit6/WSs-c4096-dr1-r1/census.json": "c3f27433510e61eb6c3c71cb3e18e4a07996a110417caca7b8e362074add5296",
+    "evidence/audit6/WSs-c4096-dr1-r1/request-state-inventory.json": "a6bd66caeada3b5c843404352fd70c40ff5c97688eeb5eb3146b073f1a28204b",
+    "evidence/audit6/WSs-c4096-dr1-r1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr1-r1/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr1-r1/prepared-arguments-parity0.jsonl": "1a935c233285d2d1d8aca882a88eca1f95d06a58386e3ccd637821523e611f0d",
+    "evidence/audit6/WSs-c4096-dr1-r1/progress.jsonl.gz": "b3a529597308a02ed756f631eb3a2b9b2934a3b57d294924b23e9948f7e8f89d",
+    "evidence/audit6/WSs-c4096-dr1-r1/reset-metadata.txt": "b62e9c514072ae0bbe5543c6713241f63dee364507350758eb2fbe1b0bc35079",
+    "evidence/audit6/WSs-c4096-dr0-r0/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr0-r0/run.log": "c87174832cef940192e81521bddcf34c4fe183b674941c47bff22387fbcfbbd2",
+    "evidence/audit6/WSs-c4096-dr0-r0/census.json": "0eafd8bf56ceefd70ce042b65e2c34d8878b0aa85fdbc82e860008cd5cb615a6",
+    "evidence/audit6/WSs-c4096-dr0-r0/request-state-inventory.json": "abd3dab0f64cc1d9187796eca64c82973d02616b11fc6b6e5133b655fe8b2802",
+    "evidence/audit6/WSs-c4096-dr0-r0/speculative-snapshot.json": "f2b11f84d4ef57ac0358e5698d23b2d2e073c7f0052fd0d6c45152135238c1d9",
+    "evidence/audit6/WSs-c4096-dr0-r0/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr0-r0/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr0-r0/prepared-arguments-parity0.jsonl": "d5d38e8a5b1bae68297b3466f9ee151c62b0e7e5e9c79b80c16d9c5192a8bde9",
+    "evidence/audit6/WSs-c4096-dr0-r0/prepared-arguments-parity1.jsonl": "6e6de81fbdc3b8dd3c3d3b2b3c1ccd918f43deb27520d7b5e83b55cd72dda725",
+    "evidence/audit6/WSs-c4096-dr0-r0/progress.jsonl.gz": "b8cfca71b481fd41dc978167e654cb4267eeb07df404cb9773cce12608aa8e19",
+    "evidence/audit6/WSs-c4096-dr0-r0/reset-metadata.txt": "7d7de60853e668cf02b340d9b131fe76aae0cb5189856f9eea05a76cdd9ad3b4",
+    "evidence/audit6/WSs-c4096-dr0-r1/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr0-r1/run.log": "6cb792d831d6005fdeee94f3953a7b597ab9bedc6700c45657289b5689c7956a",
+    "evidence/audit6/WSs-c4096-dr0-r1/census.json": "8ebca7bd8ca2714a3e470440f3af234ce65e8093233f95b0d5e3d7b373378d50",
+    "evidence/audit6/WSs-c4096-dr0-r1/request-state-inventory.json": "a6bd66caeada3b5c843404352fd70c40ff5c97688eeb5eb3146b073f1a28204b",
+    "evidence/audit6/WSs-c4096-dr0-r1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr0-r1/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr0-r1/prepared-arguments-parity0.jsonl": "e764b7209da2d54062b6bcb51e253703534e3aab448d30e1f0949b281b3520fb",
+    "evidence/audit6/WSs-c4096-dr0-r1/progress.jsonl.gz": "a6e4df056aa79f63ba19c6c266a707f42805b94c6607684f6c6c01e09fd44e2b",
+    "evidence/audit6/WSs-c4096-dr0-r1/reset-metadata.txt": "2b170a67f83ed0eaa1524836c594aebb3be2d5ad8835decbe178121137630022",
+    "evidence/audit6/W2m-c32768-dr0-r0/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr0-r0/draft-rows.jsonl": "a48e3ad63fda27df25b5c4f48b91c76c60537314b88f9d58cea54fd19fdaf3bf",
+    "evidence/audit6/W2m-c32768-dr0-r0/run.log": "01528fb05549acf244a201c0674bb3878d69e6824ffd0a9e25adb955af855a43",
+    "evidence/audit6/W2m-c32768-dr0-r0/census.json": "da3bc1d6b1648ca8c92262b3dccff2b26e29b6578d0755dc141d1de0a278f894",
+    "evidence/audit6/W2m-c32768-dr0-r0/request-state-inventory.json": "2cb518efc8cf06dc75163af1f41c758ef3c706b9e63ed759d9f2e463b1984109",
+    "evidence/audit6/W2m-c32768-dr0-r0/draft-kernel-choices.json": "d4183fd7fecffd07964ab26f9e4787325f990bbe6ac3c4b889653278a0a74043",
+    "evidence/audit6/W2m-c32768-dr0-r0/draft-tensor-metadata.json": "61144c1e3b23d3b1b213ec277409b6c72002c1732b0466d1bbb5448cca313e43",
+    "evidence/audit6/W2m-c32768-dr0-r0/speculative-snapshot.json": "15491793a83c82d792004fbcfa5de3062e785a3f85db4b15f285d278e1e90dc3",
+    "evidence/audit6/W2m-c32768-dr0-r0/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr0-r0/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr0-r0/prepared-arguments-parity0.jsonl": "272b29b5ced8e57e4850829688db78b5ea19fa0ef0b2cec09a383907b57ca30c",
+    "evidence/audit6/W2m-c32768-dr0-r0/prepared-arguments-parity1.jsonl": "2a4e29167f82238964faf6cd33e78889542f44b55e84e34f9f7ac92369a42151",
+    "evidence/audit6/W2m-c32768-dr0-r0/progress.jsonl.gz": "b8cfca71b481fd41dc978167e654cb4267eeb07df404cb9773cce12608aa8e19",
+    "evidence/audit6/W2m-c32768-dr0-r0/draft-memory.json": "da5bf1ac8411d5ca2e5a2c9daf6f4b531498f00242e40d5726387d4b29098534",
+    "evidence/audit6/W2m-c32768-dr0-r0/reset-metadata.txt": "ab8091092c1d5e97bf60fb65e0966be3aaf65a9a20a900c2f3e67027672046d0",
+    "evidence/audit6/W2m-c4096-dr1-r0/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr1-r0/run.log": "f1e91ed5cf511a058342cd00cff08738c1b0cf2babbc7a2c80f77068f78d508b",
+    "evidence/audit6/W2m-c4096-dr1-r0/census.json": "4e1074519846cc27084e574c32f2ec923153237b1cd522d15196fac017344d49",
+    "evidence/audit6/W2m-c4096-dr1-r0/request-state-inventory.json": "b595ee2cf2cd48b177b848a14aa5565a3ca30a44f3ae132ebd74949858b4712a",
+    "evidence/audit6/W2m-c4096-dr1-r0/speculative-snapshot.json": "9dd1c9701f7f75e9b06f1401a6f6f0529857d8701517c40ab24b45adf0c54268",
+    "evidence/audit6/W2m-c4096-dr1-r0/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr1-r0/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr1-r0/prepared-arguments-parity0.jsonl": "ad2aa1fb6a347287214027ef5c5020a0ad00068da941501cd41f89c65d6c5aee",
+    "evidence/audit6/W2m-c4096-dr1-r0/prepared-arguments-parity1.jsonl": "469640bdeaab74a2089376e7b6b5a48c93fed21001dd605294aa889fac8d1507",
+    "evidence/audit6/W2m-c4096-dr1-r0/progress.jsonl.gz": "dcb0a7c1f3a9acf1a3563d87557cec9f0d9ad6c14deb4c1e4b4e5864810533e2",
+    "evidence/audit6/W2m-c4096-dr1-r0/reset-metadata.txt": "9db361f0487d28933284224d9add0ce013648d25e497f3c780685d53f26cbbb6",
+    "evidence/audit6/W2m-c4096-dr0-r1/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr0-r1/run.log": "f43c9257186d24e4ff62095397f1ea23a2cdd0ffae5f162ad660bd5117e56294",
+    "evidence/audit6/W2m-c4096-dr0-r1/census.json": "8ebca7bd8ca2714a3e470440f3af234ce65e8093233f95b0d5e3d7b373378d50",
+    "evidence/audit6/W2m-c4096-dr0-r1/request-state-inventory.json": "a6bd66caeada3b5c843404352fd70c40ff5c97688eeb5eb3146b073f1a28204b",
+    "evidence/audit6/W2m-c4096-dr0-r1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr0-r1/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr0-r1/prepared-arguments-parity0.jsonl": "ea6b125519582c25309c05d4d25dce24200c4b481040e37bdbfb34b57b879781",
+    "evidence/audit6/W2m-c4096-dr0-r1/progress.jsonl.gz": "a6e4df056aa79f63ba19c6c266a707f42805b94c6607684f6c6c01e09fd44e2b",
+    "evidence/audit6/W2m-c4096-dr0-r1/reset-metadata.txt": "7033267a28d00709d5829dbbf3cf28f8022b7e9e9890e8442b2e6993a9ce8222",
+    "evidence/audit6/W2m-c4096-dr0-r0/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr0-r0/draft-rows.jsonl": "4063e97e2e162a10f55dc1c5e7abd4d20d11c81a1c2b4865b8322c7a65ca93c8",
+    "evidence/audit6/W2m-c4096-dr0-r0/run.log": "1a2bfbeda024577c4691a839658b809bb1781b11b4130ab0061c0b30dede60cf",
+    "evidence/audit6/W2m-c4096-dr0-r0/census.json": "05999f905841c6a0ba72374469aa38d034c469ed83a60833ec5d1499f0c91426",
+    "evidence/audit6/W2m-c4096-dr0-r0/request-state-inventory.json": "abd3dab0f64cc1d9187796eca64c82973d02616b11fc6b6e5133b655fe8b2802",
+    "evidence/audit6/W2m-c4096-dr0-r0/draft-kernel-choices.json": "d4183fd7fecffd07964ab26f9e4787325f990bbe6ac3c4b889653278a0a74043",
+    "evidence/audit6/W2m-c4096-dr0-r0/draft-tensor-metadata.json": "61144c1e3b23d3b1b213ec277409b6c72002c1732b0466d1bbb5448cca313e43",
+    "evidence/audit6/W2m-c4096-dr0-r0/speculative-snapshot.json": "f2b11f84d4ef57ac0358e5698d23b2d2e073c7f0052fd0d6c45152135238c1d9",
+    "evidence/audit6/W2m-c4096-dr0-r0/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr0-r0/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr0-r0/prepared-arguments-parity0.jsonl": "0d5301f7d1a64bd90e9777809a03a69aa1d89cf885387f9eb1c45a9d86a53896",
+    "evidence/audit6/W2m-c4096-dr0-r0/prepared-arguments-parity1.jsonl": "e0d8f61a82a6b1bf7db7f884441d661922768b7fb3fd2d48ebd1169bc74c08b2",
+    "evidence/audit6/W2m-c4096-dr0-r0/progress.jsonl.gz": "b8cfca71b481fd41dc978167e654cb4267eeb07df404cb9773cce12608aa8e19",
+    "evidence/audit6/W2m-c4096-dr0-r0/draft-memory.json": "0bbeee268661dd00580bb69ec5df3d451f0cc48a81ea1ae7b21f34c23bf33e40",
+    "evidence/audit6/W2m-c4096-dr0-r0/reset-metadata.txt": "190e1a3e591e682cf62a29066b58f8464b1ed05c8db1bfbd0efcd8b26f7d148f",
+    "evidence/audit6/WSs-c32768-dr1-r0/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr1-r0/run.log": "5f5c4db67986747d4794410a3072bad737ddbaaea73ba51484b12432aaa32960",
+    "evidence/audit6/WSs-c32768-dr1-r0/census.json": "6cc169fba96bdeb0762d147b53c589482423a2e60cb4682e042b157fa0a20db5",
+    "evidence/audit6/WSs-c32768-dr1-r0/request-state-inventory.json": "54efb68208d2e06f9d1a575c4bb2b6233f502996c5b55bac0a1a83bf86f7e9df",
+    "evidence/audit6/WSs-c32768-dr1-r0/speculative-snapshot.json": "c44a70d3b5054f26669b210bdd5556e8b6d666db39de1f742b316ddc12ebf310",
+    "evidence/audit6/WSs-c32768-dr1-r0/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr1-r0/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr1-r0/prepared-arguments-parity0.jsonl": "0ab5a6f66a3e42a1cb738675f3c3167754b97e458ba4ac9b72b0a2d5a7f0ac02",
+    "evidence/audit6/WSs-c32768-dr1-r0/prepared-arguments-parity1.jsonl": "4a84dca937763da03aca93498dc5053e2ec70bf274a78a723dd15dd734a50525",
+    "evidence/audit6/WSs-c32768-dr1-r0/progress.jsonl.gz": "dcb0a7c1f3a9acf1a3563d87557cec9f0d9ad6c14deb4c1e4b4e5864810533e2",
+    "evidence/audit6/WSs-c32768-dr1-r0/reset-metadata.txt": "c3308ccce3102bd7dff4c8ebed97aee45871ec4393c459607c006ed499a471e0",
+    "evidence/audit6/W2m-c4096-dr1-r1/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr1-r1/draft-rows.jsonl": "32adfdf506f2f893981f2e6ebce10bc8879a9f4fb12eac65f0bfa9dc227abb28",
+    "evidence/audit6/W2m-c4096-dr1-r1/run.log": "7ab61c701a6eb2eed7e17f5225d4ffc0d4ba5a8678f28909a9c46139242e0ad0",
+    "evidence/audit6/W2m-c4096-dr1-r1/census.json": "29d020fc2b753636517655d1b9c9b226c595765a9ee350e0bce6951cd60cedb0",
+    "evidence/audit6/W2m-c4096-dr1-r1/request-state-inventory.json": "778403036c7cb966120bca1d6f1406b73ae71887779435880ddb7e974f663da9",
+    "evidence/audit6/W2m-c4096-dr1-r1/draft-kernel-choices.json": "d4183fd7fecffd07964ab26f9e4787325f990bbe6ac3c4b889653278a0a74043",
+    "evidence/audit6/W2m-c4096-dr1-r1/draft-tensor-metadata.json": "61144c1e3b23d3b1b213ec277409b6c72002c1732b0466d1bbb5448cca313e43",
+    "evidence/audit6/W2m-c4096-dr1-r1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr1-r1/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr1-r1/prepared-arguments-parity0.jsonl": "e5221e9d90dfc9725a725dc8a72a56c5f69f01625298fc72be09190c007b6be9",
+    "evidence/audit6/W2m-c4096-dr1-r1/progress.jsonl.gz": "b3a529597308a02ed756f631eb3a2b9b2934a3b57d294924b23e9948f7e8f89d",
+    "evidence/audit6/W2m-c4096-dr1-r1/draft-memory.json": "6ab5c5d535c3ba9ceaae0bdf8737306eb756f969a432e2d10f7d1fce283a6a5a",
+    "evidence/audit6/W2m-c4096-dr1-r1/reset-metadata.txt": "044552ff4fd7ea71959cbffdb71f7ef0b7828654b34466aa362730bba700a777",
+    "evidence/audit6/W2m-c32768-dr1-r0/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr1-r0/run.log": "e802d083dd4916c2f2fe30f413ee5f97982b08034c242736ccfcb2c56c953b01",
+    "evidence/audit6/W2m-c32768-dr1-r0/census.json": "6cc169fba96bdeb0762d147b53c589482423a2e60cb4682e042b157fa0a20db5",
+    "evidence/audit6/W2m-c32768-dr1-r0/request-state-inventory.json": "54efb68208d2e06f9d1a575c4bb2b6233f502996c5b55bac0a1a83bf86f7e9df",
+    "evidence/audit6/W2m-c32768-dr1-r0/speculative-snapshot.json": "c44a70d3b5054f26669b210bdd5556e8b6d666db39de1f742b316ddc12ebf310",
+    "evidence/audit6/W2m-c32768-dr1-r0/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr1-r0/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr1-r0/prepared-arguments-parity0.jsonl": "3fe6af83e0310598658978f5bd01c11aea5381e9d3db4f25c6c95c96f80d9b89",
+    "evidence/audit6/W2m-c32768-dr1-r0/prepared-arguments-parity1.jsonl": "77df5f71cea985b650a9bcc09300651614bf7bdc1f46ced5f1f0d3d46c66749e",
+    "evidence/audit6/W2m-c32768-dr1-r0/progress.jsonl.gz": "dcb0a7c1f3a9acf1a3563d87557cec9f0d9ad6c14deb4c1e4b4e5864810533e2",
+    "evidence/audit6/W2m-c32768-dr1-r0/reset-metadata.txt": "190a6f50c0d74b0bc6ef58ad16550c5be68ee874ac1989c173c6b667d11c78fa",
+    "evidence/audit6/KD-c4096-dr1-r1/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c4096-dr1-r1/draft-rows.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c4096-dr1-r1/run.log": "c0cc22598f08bfbb3c14508e0a4e1f17ef68d4d163c8382b3c719c6f790591ea",
+    "evidence/audit6/KD-c4096-dr1-r1/census.json": "29d020fc2b753636517655d1b9c9b226c595765a9ee350e0bce6951cd60cedb0",
+    "evidence/audit6/KD-c4096-dr1-r1/draft-kernel-choices.json": "d4183fd7fecffd07964ab26f9e4787325f990bbe6ac3c4b889653278a0a74043",
+    "evidence/audit6/KD-c4096-dr1-r1/draft-tensor-metadata.json": "61144c1e3b23d3b1b213ec277409b6c72002c1732b0466d1bbb5448cca313e43",
+    "evidence/audit6/KD-c4096-dr1-r1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c4096-dr1-r1/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c4096-dr1-r1/progress.jsonl.gz": "b3a529597308a02ed756f631eb3a2b9b2934a3b57d294924b23e9948f7e8f89d",
+    "evidence/audit6/KD-c4096-dr1-r1/draft-memory.json": "6ab5c5d535c3ba9ceaae0bdf8737306eb756f969a432e2d10f7d1fce283a6a5a",
+    "evidence/audit6/WSs-c4096-dr1-r0/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr1-r0/run.log": "cb507c4be47bdf47ec46d4de3bfc29851fbf0abc51eb8bceb7b7da530ce827e4",
+    "evidence/audit6/WSs-c4096-dr1-r0/census.json": "4e1074519846cc27084e574c32f2ec923153237b1cd522d15196fac017344d49",
+    "evidence/audit6/WSs-c4096-dr1-r0/request-state-inventory.json": "b595ee2cf2cd48b177b848a14aa5565a3ca30a44f3ae132ebd74949858b4712a",
+    "evidence/audit6/WSs-c4096-dr1-r0/speculative-snapshot.json": "9dd1c9701f7f75e9b06f1401a6f6f0529857d8701517c40ab24b45adf0c54268",
+    "evidence/audit6/WSs-c4096-dr1-r0/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr1-r0/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr1-r0/prepared-arguments-parity0.jsonl": "a6d38623ccc4444793aaa6d0168f9ee2513b38b63b632867cbf8edd3f7bed68d",
+    "evidence/audit6/WSs-c4096-dr1-r0/prepared-arguments-parity1.jsonl": "233d2e24a882cd9f608305f2862674a7370ffe19fc092e7abc75e75973d6c2bf",
+    "evidence/audit6/WSs-c4096-dr1-r0/progress.jsonl.gz": "dcb0a7c1f3a9acf1a3563d87557cec9f0d9ad6c14deb4c1e4b4e5864810533e2",
+    "evidence/audit6/WSs-c4096-dr1-r0/reset-metadata.txt": "6605abac000dee66f23a5e9b46710f28910ce7decbc7d977d18748116f15cc37",
+    "evidence/audit6/KD-c32768-dr1-r1/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c32768-dr1-r1/draft-rows.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c32768-dr1-r1/run.log": "8e5bed77d4f644e67d3acc5882b36db0c248c8930a5ffda0e21c2ddcc30e93f3",
+    "evidence/audit6/KD-c32768-dr1-r1/census.json": "a1218b7099446db7bfbb70389fc5c33a8426da8240ee001ddd4ead9c9ef4a597",
+    "evidence/audit6/KD-c32768-dr1-r1/draft-kernel-choices.json": "d4183fd7fecffd07964ab26f9e4787325f990bbe6ac3c4b889653278a0a74043",
+    "evidence/audit6/KD-c32768-dr1-r1/draft-tensor-metadata.json": "61144c1e3b23d3b1b213ec277409b6c72002c1732b0466d1bbb5448cca313e43",
+    "evidence/audit6/KD-c32768-dr1-r1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c32768-dr1-r1/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c32768-dr1-r1/progress.jsonl.gz": "b3a529597308a02ed756f631eb3a2b9b2934a3b57d294924b23e9948f7e8f89d",
+    "evidence/audit6/KD-c32768-dr1-r1/draft-memory.json": "cf98f8c789d104f28af711a3e00cf65d5305e84a7abd438c8c2401bdab647dda",
+    "evidence/audit6/W2m-c32768-dr0-r1/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr0-r1/run.log": "4b89ecee7ae57d6789b887cef909b2b6317c079842b398ee63788995b9b14d8f",
+    "evidence/audit6/W2m-c32768-dr0-r1/census.json": "b81dd4ca16a9a5898abc9a31b5bb82e5e02c9f2829be9ee2eeb40f90ecc0e571",
+    "evidence/audit6/W2m-c32768-dr0-r1/request-state-inventory.json": "23a164b92cd8de0f6eb5eba6c90b812b03fb15e448d2dd5b28405ad926720aaf",
+    "evidence/audit6/W2m-c32768-dr0-r1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr0-r1/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr0-r1/prepared-arguments-parity0.jsonl": "81e741615b42062477c714bcdf0ba143de84217ecc803fcd55edc2fd95f8717a",
+    "evidence/audit6/W2m-c32768-dr0-r1/progress.jsonl.gz": "a6e4df056aa79f63ba19c6c266a707f42805b94c6607684f6c6c01e09fd44e2b",
+    "evidence/audit6/W2m-c32768-dr0-r1/reset-metadata.txt": "eb7507e56926cc5ac62983f2c8aef8d022b43b584c9037e45120079d521f012b",
+    "evidence/audit6/KD-c32768-dr0-r1/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c32768-dr0-r1/draft-rows.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c32768-dr0-r1/run.log": "6f0d7d0c2fe2126dd06c597a94e169ab1fd3ad43f427ce492f9ee1dbc169be94",
+    "evidence/audit6/KD-c32768-dr0-r1/census.json": "a1218b7099446db7bfbb70389fc5c33a8426da8240ee001ddd4ead9c9ef4a597",
+    "evidence/audit6/KD-c32768-dr0-r1/draft-kernel-choices.json": "d4183fd7fecffd07964ab26f9e4787325f990bbe6ac3c4b889653278a0a74043",
+    "evidence/audit6/KD-c32768-dr0-r1/draft-tensor-metadata.json": "61144c1e3b23d3b1b213ec277409b6c72002c1732b0466d1bbb5448cca313e43",
+    "evidence/audit6/KD-c32768-dr0-r1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c32768-dr0-r1/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c32768-dr0-r1/progress.jsonl.gz": "b3a529597308a02ed756f631eb3a2b9b2934a3b57d294924b23e9948f7e8f89d",
+    "evidence/audit6/KD-c32768-dr0-r1/draft-memory.json": "cf98f8c789d104f28af711a3e00cf65d5305e84a7abd438c8c2401bdab647dda",
+    "evidence/audit6/WSs-c32768-dr1-r1/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr1-r1/run.log": "968bee2f0a96bcbcff423f7f7ff71f7d25954b09fda1d3ce3b5d5829aef53f3a",
+    "evidence/audit6/WSs-c32768-dr1-r1/census.json": "fa506f77cde98bc0eb376bdefaae2c62d2ad1cabb58cf6aed2ceb81b945d0ba6",
+    "evidence/audit6/WSs-c32768-dr1-r1/request-state-inventory.json": "23a164b92cd8de0f6eb5eba6c90b812b03fb15e448d2dd5b28405ad926720aaf",
+    "evidence/audit6/WSs-c32768-dr1-r1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr1-r1/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr1-r1/prepared-arguments-parity0.jsonl": "c31e50e95e0f8778cca52d8be8bcb04dff666e164e5f7ea7a0a8634b2f1ea532",
+    "evidence/audit6/WSs-c32768-dr1-r1/progress.jsonl.gz": "b3a529597308a02ed756f631eb3a2b9b2934a3b57d294924b23e9948f7e8f89d",
+    "evidence/audit6/WSs-c32768-dr1-r1/reset-metadata.txt": "97ca45bad2adcad7edb6464361a716fd885036cbd1cf46ceac5c27f932c7485f",
+    "evidence/audit6/WSs-c32768-dr0-r1/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr0-r1/run.log": "683a6ca4dae6c9895b031327684f33cd3e60b88699bf32ffb87c72ef808cdf0e",
+    "evidence/audit6/WSs-c32768-dr0-r1/census.json": "b81dd4ca16a9a5898abc9a31b5bb82e5e02c9f2829be9ee2eeb40f90ecc0e571",
+    "evidence/audit6/WSs-c32768-dr0-r1/request-state-inventory.json": "23a164b92cd8de0f6eb5eba6c90b812b03fb15e448d2dd5b28405ad926720aaf",
+    "evidence/audit6/WSs-c32768-dr0-r1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr0-r1/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr0-r1/prepared-arguments-parity0.jsonl": "a79f6cf549f2e9b53cf467f4558f1705770a68a6fa87a1079a4d847ada4e53aa",
+    "evidence/audit6/WSs-c32768-dr0-r1/progress.jsonl.gz": "a6e4df056aa79f63ba19c6c266a707f42805b94c6607684f6c6c01e09fd44e2b",
+    "evidence/audit6/WSs-c32768-dr0-r1/reset-metadata.txt": "352a2111c32aca1ac4aaddae33423de615d190d140d06e688db02f7e77ee8dd5",
+    "evidence/audit6/W2m-c32768-dr1-r1/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr1-r1/draft-rows.jsonl": "6add7dd7c61125cabb59461eaf246f27f2ee01e701fc3a5c296eda7e2db62723",
+    "evidence/audit6/W2m-c32768-dr1-r1/run.log": "445707ebe330663f67fa7d40e0ccff970369d180422cbe5ed39a61ca52082221",
+    "evidence/audit6/W2m-c32768-dr1-r1/census.json": "a1218b7099446db7bfbb70389fc5c33a8426da8240ee001ddd4ead9c9ef4a597",
+    "evidence/audit6/W2m-c32768-dr1-r1/request-state-inventory.json": "30dfd5db6dccf86636d4b33d0c80def5c2de0cd6c7a05c3ec4480382ac020fa6",
+    "evidence/audit6/W2m-c32768-dr1-r1/draft-kernel-choices.json": "d4183fd7fecffd07964ab26f9e4787325f990bbe6ac3c4b889653278a0a74043",
+    "evidence/audit6/W2m-c32768-dr1-r1/draft-tensor-metadata.json": "61144c1e3b23d3b1b213ec277409b6c72002c1732b0466d1bbb5448cca313e43",
+    "evidence/audit6/W2m-c32768-dr1-r1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr1-r1/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr1-r1/prepared-arguments-parity0.jsonl": "04a69c609008389315388828c4e84b97154481c76b865e2a9006d6199fe1c770",
+    "evidence/audit6/W2m-c32768-dr1-r1/progress.jsonl.gz": "b3a529597308a02ed756f631eb3a2b9b2934a3b57d294924b23e9948f7e8f89d",
+    "evidence/audit6/W2m-c32768-dr1-r1/draft-memory.json": "cf98f8c789d104f28af711a3e00cf65d5305e84a7abd438c8c2401bdab647dda",
+    "evidence/audit6/W2m-c32768-dr1-r1/reset-metadata.txt": "f2805129a309068d5bd14378199991617e5694b8802812697b85a5048f4efe6a",
+    "evidence/audit6/WSs-c32768-dr0-r0/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr0-r0/run.log": "56798103c708d8765ab75f6ff88bd3adc3a5b3285524d3eb073aa1108483bb62",
+    "evidence/audit6/WSs-c32768-dr0-r0/census.json": "3b818f5493986434b7d312b059102be5b804f5bd44cf2a69ee97b8d5d6436ebb",
+    "evidence/audit6/WSs-c32768-dr0-r0/request-state-inventory.json": "2cb518efc8cf06dc75163af1f41c758ef3c706b9e63ed759d9f2e463b1984109",
+    "evidence/audit6/WSs-c32768-dr0-r0/speculative-snapshot.json": "15491793a83c82d792004fbcfa5de3062e785a3f85db4b15f285d278e1e90dc3",
+    "evidence/audit6/WSs-c32768-dr0-r0/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr0-r0/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr0-r0/prepared-arguments-parity0.jsonl": "460cae8c9fe61d4d8df89a4e2dd43e68407de595a055ea82a56ff795f53699a7",
+    "evidence/audit6/WSs-c32768-dr0-r0/prepared-arguments-parity1.jsonl": "6c7b2c471f27b8520b5a367061e7077162d2310382c8e2301ee765d0c6c17bd3",
+    "evidence/audit6/WSs-c32768-dr0-r0/progress.jsonl.gz": "b8cfca71b481fd41dc978167e654cb4267eeb07df404cb9773cce12608aa8e19",
+    "evidence/audit6/WSs-c32768-dr0-r0/reset-metadata.txt": "2bc75c150c9f474c4526996b49e6babec72da021f0af30172dbf0d41bd167956",
+    "evidence/audit6/KD-c4096-dr0-r1/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c4096-dr0-r1/draft-rows.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c4096-dr0-r1/run.log": "364c011f105e8796bc0c0ff2e2d1f6aaec9f8465f130242894b110df27a27d4a",
+    "evidence/audit6/KD-c4096-dr0-r1/census.json": "29d020fc2b753636517655d1b9c9b226c595765a9ee350e0bce6951cd60cedb0",
+    "evidence/audit6/KD-c4096-dr0-r1/draft-kernel-choices.json": "d4183fd7fecffd07964ab26f9e4787325f990bbe6ac3c4b889653278a0a74043",
+    "evidence/audit6/KD-c4096-dr0-r1/draft-tensor-metadata.json": "61144c1e3b23d3b1b213ec277409b6c72002c1732b0466d1bbb5448cca313e43",
+    "evidence/audit6/KD-c4096-dr0-r1/bootstrap-metadata-read-map.log.gz": "668648474ec77a296a949d3299a7395f9baec4665f6f28ba77b92eaf7af79a4e",
+    "evidence/audit6/KD-c4096-dr0-r1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c4096-dr0-r1/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/KD-c4096-dr0-r1/progress.jsonl.gz": "b3a529597308a02ed756f631eb3a2b9b2934a3b57d294924b23e9948f7e8f89d",
+    "evidence/audit6/KD-c4096-dr0-r1/draft-memory.json": "6ab5c5d535c3ba9ceaae0bdf8737306eb756f969a432e2d10f7d1fce283a6a5a",
+    "evidence/audit6/WSs-c4096-dr1-r1/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr1-r1/reset/reset.json": "8f3d8598a771a005c68d0c98cc2a4e7e9107ba9b8b65b2edb2f87b7ecbfba898",
+    "evidence/audit6/WSs-c4096-dr1-r1/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr1-r1/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr1-r1/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/WSs-c4096-dr1-r1/state-2147483647/state.json": "f6bbe2aa5b2c0a303c67accf29f87fc74bd9fe1c4dc981c9f30bb5d524557fd5",
+    "evidence/audit6/WSs-c4096-dr0-r0/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr0-r0/reset/reset.json": "d2d98896ab2a654a69b3ddc48d98fc55c6c36a02dbb6732317f6bd658c5883e6",
+    "evidence/audit6/WSs-c4096-dr0-r0/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr0-r0/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr0-r0/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/WSs-c4096-dr0-r0/state-2147483647/state.json": "e8bada489484e1ae908a88d6628b8621b4f6a46299f840854cb942ac024fcd5d",
+    "evidence/audit6/WSs-c4096-dr0-r1/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr0-r1/reset/reset.json": "36d3575b78ea3f868bf85203ba81b940da1df57158e254275f863da8a3fb78a7",
+    "evidence/audit6/WSs-c4096-dr0-r1/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr0-r1/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr0-r1/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/WSs-c4096-dr0-r1/state-2147483647/state.json": "ce74b02b380b901519b7387298156c8a275da4b960232055ed820ac17c92bb9c",
+    "evidence/audit6/W2m-c32768-dr0-r0/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr0-r0/reset/draft-rows.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr0-r0/reset/reset.json": "254ea3ecd4583519ad1fe9ed009425f4aa22f576280670b9208393bae24f2c5e",
+    "evidence/audit6/W2m-c32768-dr0-r0/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr0-r0/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr0-r0/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/W2m-c32768-dr0-r0/draft-final-state/all-state.json": "53532123754226c213ff29284dc81a286faa210bda0a9489712980e7657c8089",
+    "evidence/audit6/W2m-c32768-dr0-r0/state-2147483647/state.json": "72867e303ce3dec6a170ad179a572a901e8ccec4f13564fdc880d06b66145571",
+    "evidence/audit6/W2m-c4096-dr1-r0/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr1-r0/reset/reset.json": "d4fdadd70f5c0d2f95029f5eb9725f2c8be1281c9849a065d159f839338c68e4",
+    "evidence/audit6/W2m-c4096-dr1-r0/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr1-r0/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr1-r0/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/W2m-c4096-dr1-r0/state-2147483647/state.json": "770e894c703f1c43ffa64fd5f6d9019ba9683e31268397fbe1e8f58ee38af29f",
+    "evidence/audit6/W2m-c4096-dr0-r1/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr0-r1/reset/reset.json": "36d3575b78ea3f868bf85203ba81b940da1df57158e254275f863da8a3fb78a7",
+    "evidence/audit6/W2m-c4096-dr0-r1/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr0-r1/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr0-r1/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/W2m-c4096-dr0-r1/state-2147483647/state.json": "ce74b02b380b901519b7387298156c8a275da4b960232055ed820ac17c92bb9c",
+    "evidence/audit6/W2m-c4096-dr0-r0/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr0-r0/reset/draft-rows.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr0-r0/reset/reset.json": "1ed97146558626095ca088bc22b211aff28efb2b80ad0aba7ba5d9704e415b1e",
+    "evidence/audit6/W2m-c4096-dr0-r0/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr0-r0/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr0-r0/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/W2m-c4096-dr0-r0/draft-final-state/all-state.json": "07621f85fc76733c978f5072c6258fe44f8d661573e02e0615646d897cba91bc",
+    "evidence/audit6/W2m-c4096-dr0-r0/state-2147483647/state.json": "e8bada489484e1ae908a88d6628b8621b4f6a46299f840854cb942ac024fcd5d",
+    "evidence/audit6/WSs-c32768-dr1-r0/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr1-r0/reset/reset.json": "d442b0534bd1102b35a6bf20abfa74d76623d6a11b57ed16cd9c8240c8ede662",
+    "evidence/audit6/WSs-c32768-dr1-r0/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr1-r0/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr1-r0/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/WSs-c32768-dr1-r0/state-2147483647/state.json": "a1a7b41a8e7e89e7b05524112a40fbd63a6456d541c0c60e9d40681e772dcafc",
+    "evidence/audit6/W2m-c4096-dr1-r1/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr1-r1/reset/draft-rows.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr1-r1/reset/reset.json": "2811a5820fdf59a7f8ec500ce03f24147f8069d5b67cfeaaae502ad06a0c46cf",
+    "evidence/audit6/W2m-c4096-dr1-r1/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr1-r1/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c4096-dr1-r1/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/W2m-c4096-dr1-r1/draft-final-state/all-state.json": "07621f85fc76733c978f5072c6258fe44f8d661573e02e0615646d897cba91bc",
+    "evidence/audit6/W2m-c4096-dr1-r1/state-2147483647/state.json": "782a4122042831c771e9e367bd256854f2f8e885fb3e8cb3aaf03864038b1278",
+    "evidence/audit6/W2m-c32768-dr1-r0/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr1-r0/reset/reset.json": "d442b0534bd1102b35a6bf20abfa74d76623d6a11b57ed16cd9c8240c8ede662",
+    "evidence/audit6/W2m-c32768-dr1-r0/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr1-r0/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr1-r0/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/W2m-c32768-dr1-r0/state-2147483647/state.json": "a1a7b41a8e7e89e7b05524112a40fbd63a6456d541c0c60e9d40681e772dcafc",
+    "evidence/audit6/KD-c4096-dr1-r1/draft-state/all-state.json": "07621f85fc76733c978f5072c6258fe44f8d661573e02e0615646d897cba91bc",
+    "evidence/audit6/WSs-c4096-dr1-r0/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr1-r0/reset/reset.json": "d4fdadd70f5c0d2f95029f5eb9725f2c8be1281c9849a065d159f839338c68e4",
+    "evidence/audit6/WSs-c4096-dr1-r0/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr1-r0/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c4096-dr1-r0/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/WSs-c4096-dr1-r0/state-2147483647/state.json": "770e894c703f1c43ffa64fd5f6d9019ba9683e31268397fbe1e8f58ee38af29f",
+    "evidence/audit6/KD-c32768-dr1-r1/draft-state/all-state.json": "53532123754226c213ff29284dc81a286faa210bda0a9489712980e7657c8089",
+    "evidence/audit6/W2m-c32768-dr0-r1/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr0-r1/reset/reset.json": "7678f5249061a14e744871a0dff8eebfd102d8df540417ca4b2494f49cd458e3",
+    "evidence/audit6/W2m-c32768-dr0-r1/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr0-r1/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr0-r1/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/W2m-c32768-dr0-r1/state-2147483647/state.json": "3b2df848dc74e3a3346348f30d8cc0e8ed320de1dbb0596aaec1a66c4ef65bfd",
+    "evidence/audit6/KD-c32768-dr0-r1/draft-state/all-state.json": "53532123754226c213ff29284dc81a286faa210bda0a9489712980e7657c8089",
+    "evidence/audit6/WSs-c32768-dr1-r1/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr1-r1/reset/reset.json": "363d0e23dcd5176b788ddbc5fc820bb97f66e5e2bafb074209012de043fb0e75",
+    "evidence/audit6/WSs-c32768-dr1-r1/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr1-r1/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr1-r1/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/WSs-c32768-dr1-r1/state-2147483647/state.json": "83d9bf958fb899173d2257639c0b201a8ef82dae11fdf638457dd2fb9c25e1c4",
+    "evidence/audit6/WSs-c32768-dr0-r1/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr0-r1/reset/reset.json": "7678f5249061a14e744871a0dff8eebfd102d8df540417ca4b2494f49cd458e3",
+    "evidence/audit6/WSs-c32768-dr0-r1/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr0-r1/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr0-r1/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/WSs-c32768-dr0-r1/state-2147483647/state.json": "3b2df848dc74e3a3346348f30d8cc0e8ed320de1dbb0596aaec1a66c4ef65bfd",
+    "evidence/audit6/W2m-c32768-dr1-r1/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr1-r1/reset/draft-rows.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr1-r1/reset/reset.json": "10fe3bf96d3d9901cd381bd5bcfc9017430c7f04e8cbd141f1417f377d87f274",
+    "evidence/audit6/W2m-c32768-dr1-r1/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr1-r1/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/W2m-c32768-dr1-r1/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/W2m-c32768-dr1-r1/draft-final-state/all-state.json": "53532123754226c213ff29284dc81a286faa210bda0a9489712980e7657c8089",
+    "evidence/audit6/W2m-c32768-dr1-r1/state-2147483647/state.json": "87af83963eb80645711637d4576532ed2d963749bdcf8b9a7fbd4c53036c3124",
+    "evidence/audit6/WSs-c32768-dr0-r0/reset/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr0-r0/reset/reset.json": "b171ea31bce31f4e9a4fb6421ccd0f02b8771d2eca5e2d4581ed2e117d04ff48",
+    "evidence/audit6/WSs-c32768-dr0-r0/reset/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr0-r0/reset/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "evidence/audit6/WSs-c32768-dr0-r0/reset/progress.jsonl.gz": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+    "evidence/audit6/WSs-c32768-dr0-r0/state-2147483647/state.json": "72867e303ce3dec6a170ad179a572a901e8ccec4f13564fdc880d06b66145571",
+    "evidence/audit6/KD-c4096-dr0-r1/draft-state/all-state.json": "07621f85fc76733c978f5072c6258fe44f8d661573e02e0615646d897cba91bc"
+  },
+  "defects": []
+}
