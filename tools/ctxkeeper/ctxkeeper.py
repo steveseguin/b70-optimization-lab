@@ -258,14 +258,43 @@ def keep_rules(old: str, new: str) -> tuple[str, list[str]]:
 
 
 # ------------------------------------------------------------------ messages (pure)
+def plain_text(content: Any) -> str | None:
+    """A message's content as one string when it is only text (a string, or a list of text parts, which chat
+    templates print one after the other); None when it holds anything else."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list) and all(isinstance(p, dict) and p.get("type") == "text" for p in content):
+        return "".join(str(p.get("text", "")) for p in content)
+    return None
+
+
 def with_memory_note(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """The conversation with the Memory paragraph at the end of its system message (added once, always the same
-    text, so the start of the prompt never changes). A conversation without a system message gets one."""
-    if messages and messages[0].get("role") in ("system", "developer") and isinstance(messages[0].get("content"), str):
-        if MEMORY_NOTE.strip() in messages[0]["content"]:
-            return messages
-        return [dict(messages[0], content=messages[0]["content"] + MEMORY_NOTE)] + messages[1:]
+    text, so the start of the prompt never changes). A conversation without a system message gets one. A system
+    message sent as text parts (OpenHands) becomes one string: a second system message would be refused by
+    Qwen's chat template."""
+    if messages and messages[0].get("role") in ("system", "developer"):
+        text = plain_text(messages[0].get("content"))
+        if text is not None:
+            if MEMORY_NOTE.strip() in text:
+                return messages
+            return [dict(messages[0], content=text + MEMORY_NOTE)] + messages[1:]
     return [{"role": "system", "content": MEMORY_NOTE.strip()}] + messages
+
+
+def one_system_message(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The leading system messages joined into one. Some agents send two (ForgeCode: its instructions, then the
+    system information); Qwen's chat template takes a system message only at the very start, so the server refused
+    such a request outright. A conversation with one system message (or none) is returned unchanged."""
+    n = 0
+    while n < len(messages) and messages[n].get("role") in ("system", "developer"):
+        n += 1
+    if n < 2:
+        return messages
+    parts = [plain_text(m.get("content")) for m in messages[:n]]
+    if any(p is None for p in parts):
+        return messages
+    return [{"role": messages[0]["role"], "content": "\n\n".join(parts)}] + messages[n:]
 
 
 def text_of(message: dict[str, Any]) -> str:
@@ -962,7 +991,7 @@ class Keeper:
         began, self.clock.spent, self.clock.calls = time.monotonic(), 0.0, 0
         s = self.session(body, header)
         with s.lock:
-            messages = list(body.get("messages") or [])
+            messages = one_system_message(list(body.get("messages") or []))
             if self.memory_note:
                 messages = with_memory_note(messages)
             if messages:
@@ -992,6 +1021,8 @@ class Keeper:
                 s.state["repeats_broken"] = s.state.get("repeats_broken", 0) + 1
             out = dict(body, messages=view, stream=False)
             out.pop("stream_options", None)          # the upstream call is never streamed
+            if self.effort:                          # the proxy's effort replaces the client's (OpenHands sends
+                out.pop("reasoning_effort", None)    # "high", which Qwen3.8's template refuses: xhigh/medium/low)
             if self.think_when is not None or self.effort or stuck:
                 ctk = dict(body.get("chat_template_kwargs") or {})
                 if self.think_when is not None:
