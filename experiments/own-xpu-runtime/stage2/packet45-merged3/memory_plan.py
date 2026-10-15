@@ -136,7 +136,7 @@ DRAFT_PINNED_BYTES = 8 + 4 + HIDDEN_STREAM_BYTES
 LAYER22_RANK0_BYTES = 1_117_597_962
 LAYER22_RANK1_BYTES = 1_115_963_658
 LAYER23_BYTES = 1_106_681_302
-STRICT_IMAGE_256 = {22: 316_271_288, 24: 319_074_840}
+STRICT_IMAGE_256 = {22: 316_271_288, 23: 318_188_610, 24: 319_074_840}
 
 def strict_image_evidence():
     """Recompute packet40 SpeculativeImage's allocation from preserved inputs."""
@@ -148,7 +148,7 @@ def strict_image_evidence():
     census = json.loads(gzip.decompress(base64.b64decode(
         BASELINE_SOURCE_ARCHIVES[item['census_sha256']]['data_base64'])))
     result = {}
-    for boundary in (22, 24):
+    for boundary in (22, 23, 24):
         launches = [l for l in launch_plan['launches']
                     if not l['label'].startswith('blk.')
                     or int(l['label'].split('.')[1]) < boundary]
@@ -188,8 +188,8 @@ def plan():
     snapshot_evidence = strict_image_evidence()
     baseline_cache = sum(cache(256).values())
     placements = {}
-    for key,draft_rank,boundary in (("0",0,22),("1",1,24),("0-split24",0,24)):
-        qsa_counts = (5, 7) if boundary == 22 else (6, 6)
+    for key,draft_rank,boundary in (("0",0,22),("1",1,24),("0-split24",0,24),("0-split23",0,23),("1-split23",1,23)):
+        qsa_counts = (boundary//4, 12-boundary//4)
         capacities = {}
         for context in CONTEXTS:
             components = cache(context)
@@ -203,6 +203,8 @@ def plan():
                 if boundary == 22:
                     transfer = (-(LAYER22_RANK0_BYTES + LAYER23_BYTES + growth)
                                 if rank == 0 else LAYER22_RANK1_BYTES + LAYER23_BYTES + growth)
+                if boundary == 23:
+                    transfer = -(LAYER23_BYTES + growth) if rank == 0 else LAYER23_BYTES + growth
                 snapshot = STRICT_IMAGE_256[boundary] + qsa_counts[0] * growth if rank == 0 else 0
                 modeled += transfer + snapshot
                 duplicate_head = HEAD_BYTES if draft_rank == 0 and rank == 0 else 0
@@ -256,7 +258,10 @@ def plan():
 if __name__ == '__main__':
     output = plan()
     assert all(r['allocation_margin_passed'] for p in output['placements'].values()
-               for c in p['capacities'].values() for r in c['ranks'] if p is not output['placements']['0-split24'])
+               for c in p['capacities'].values() for r in c['ranks'] if p['layer_boundary']==22 or (p['layer_boundary']==24 and p['draft_rank']==1))
     assert all(r['allocation_margin_passed'] for r in output['placements']['0-split24']['capacities']['4096']['ranks'])
     assert not output['placements']['0-split24']['capacities']['32768']['ranks'][0]['allocation_margin_passed']
+    assert all(r['allocation_margin_passed'] for r in output['placements']['0-split23']['capacities']['32768']['ranks'])
+    assert all(r['allocation_margin_passed'] for r in output['placements']['1-split23']['capacities']['4096']['ranks'])
+    assert not output['placements']['1-split23']['capacities']['32768']['ranks'][1]['allocation_margin_passed']
     Path(__file__).with_name('memory-plan.json').write_text(json.dumps(output, indent=2)+'\n')

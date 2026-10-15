@@ -30,7 +30,7 @@ class Admission(unittest.TestCase):
  def test_256_refused(self):
   with self.assertRaisesRegex(ValueError,'context4096 only'):memory_gate.configuration(self.plan,256,0,24)
  def test_unknown_split_refused(self):
-  with self.assertRaises(ValueError):memory_gate.configuration(self.plan,4096,0,23)
+  with self.assertRaises(ValueError):memory_gate.configuration(self.plan,4096,0,25)
  def test_unknown_placement_refused(self):
   with self.assertRaises(ValueError):memory_gate.configuration(self.plan,4096,2,24)
  def test_over_budget_plan_refused(self):

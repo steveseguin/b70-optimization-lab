@@ -3,7 +3,7 @@
 import hashlib,json
 from pathlib import Path
 P=Path(__file__).resolve().parent;B=P/'build';ROOT=P.parents[3]
-GATES=('speed4-plan-gates.json','speed4-snapshot-gates.json','speed4-snapshot-inventory.json','speed3-plan-gates.json','speed3-snapshot-gates.json','speed3-event-gates.json','speed3-admission-gates.json','speed2-plan-gates.json','speed2-snapshot-gates.json','speed2-snapshot-inventory.json','speed1-plan-gates.json','speed1-snapshot-gates.json','speed1-snapshot-inventory.json','seal6-amendment-tests.json','fix6-plan-gates.json','diagnostic-unsealed-tests.json','diagnostic-coordinator-gates.json','audit6-tests.json','fixture-delta-tests.json','audit6-gates.json','copy-adoption-gates.json','fusion-matrix-gates.json','hc-activation-gates.json','cpu-merged-gates.json','cpu-real-gates.json','real-cross-placement-gates.json','real-cross-placement-tests.json','capacity-selection-gates.json',
+GATES=('speed5-plan-gates.json','speed5-snapshot-gates.json','speed5-admission-gates.json','speed4-plan-gates.json','speed4-snapshot-gates.json','speed4-snapshot-inventory.json','speed3-plan-gates.json','speed3-snapshot-gates.json','speed3-event-gates.json','speed3-admission-gates.json','speed2-plan-gates.json','speed2-snapshot-gates.json','speed2-snapshot-inventory.json','speed1-plan-gates.json','speed1-snapshot-gates.json','speed1-snapshot-inventory.json','seal6-amendment-tests.json','fix6-plan-gates.json','diagnostic-unsealed-tests.json','diagnostic-coordinator-gates.json','audit6-tests.json','fixture-delta-tests.json','audit6-gates.json','copy-adoption-gates.json','fusion-matrix-gates.json','hc-activation-gates.json','cpu-merged-gates.json','cpu-real-gates.json','real-cross-placement-gates.json','real-cross-placement-tests.json','capacity-selection-gates.json',
  'capacity-draft-gates.json','capacity-fixture-gates.json','asan-fixture-gates.json','p33-linked-fixture-gates.json',
  'p39-merged-fixture-gates.json','p45-kernel-tests.json','seal45-binding-tests.json','wrapper-merge-tests.json',
  'context-window-gates.json','memory-plan-gates.json','owner-gates.json','merged-campaign-completion-gates.json',
@@ -239,6 +239,11 @@ def verify_window_admission():
  expected.update((4096,0,'W2m',controller,64,24) for controller in ('python','native'))
  expected.update((4096,0,name,'native',cap,24) for name in ('WS','WSs') for cap in (32,64,128))
  expected.update((4096,dr,name,'native',128,split) for dr,split in ((0,0),(1,0),(0,24)) for name in ('WS128x','WS128'))
+ for context,dr in ((4096,0),(32768,0),(4096,1)):
+  expected.update((context,dr,name,'python',64,23) for name in ('K0','K1a','K1b','K2','W0p','KD'))
+  expected.update((context,dr,'W2m',controller,64,23) for controller in ('python','native'))
+  expected.update((context,dr,name,'native',cap,23) for name in ('WS','WSs') for cap in (32,64,128))
+  expected.update((context,dr,name,'native',128,23) for name in ('WS128x','WS128'))
  actual={(r['context'],r['draft_rank'],r['window'],r['controller'],r['token_cap'],r['target_split']) for r in admission['rows']}
  assert actual==expected and len(admission['rows'])==len(expected),'window rehearsal matrix incomplete'
  assert len(admission['input_admissions'])==3 and {r['token_cap'] for r in admission['input_admissions']}=={32,64,128}
@@ -360,7 +365,7 @@ def main():
  source_hashes=sources()
  for path in (P/'coordinator_windows.sh',P/'memory-plan.json',P/'merge-start.json',P/'draft-baseline-oracle.json',P/'seal6-amendment.json',ROOT/'scripts/promotion_evidence.py',official_path):source_hashes[str(path.relative_to(ROOT))]=sha(path)
  review_hashes={n:sha(P/n) for n in ('review-draft-rank0.md','review-memory.md')}
- counts=dict(speed4_plan_dispatch_rows=72,speed4_mini_cases=93,speed4_full_state_checks=78,speed4_required_extent_negative_controls=6,speed3_plan_dispatch_rows=72,speed3_mini_cases=63,speed3_full_state_checks=54,speed3_required_extent_negative_controls=6,speed3_event_checks=16,speed3_admission_checks=10,speed2_plan_dispatch_rows=48,speed2_mini_cases=42,speed2_full_state_checks=36,speed2_required_extent_negative_controls=4,speed1_plan_dispatch_rows=48,speed1_mini_cases=42,speed1_full_state_checks=36,speed1_required_extent_negative_controls=4,audit6_windows=28,audit6_mutation_tests=8,fixture_delta_tests=gates['fixture-delta-tests.json']['checks'],fresh_real_sentinel_cases=0,historical_real_cases_reused=6,fusion_matrix_checks=gates['fusion-matrix-gates.json']['checks'],fusion_compiler_arms=6,hc_activation_checks=4752,hc_compiler_arms=6,merged_historical_cases=79,real_native_cases=6,real_token_matches=48,real_layer_fixture_matches=2304,
+ counts=dict(speed5_plan_dispatch_rows=120,speed5_mini_cases=62,speed5_full_state_checks=52,speed5_required_extent_negative_controls=4,speed5_admission_checks=gates['speed5-admission-gates.json']['checks'],speed4_plan_dispatch_rows=72,speed4_mini_cases=93,speed4_full_state_checks=78,speed4_required_extent_negative_controls=6,speed3_plan_dispatch_rows=72,speed3_mini_cases=63,speed3_full_state_checks=54,speed3_required_extent_negative_controls=6,speed3_event_checks=16,speed3_admission_checks=10,speed2_plan_dispatch_rows=48,speed2_mini_cases=42,speed2_full_state_checks=36,speed2_required_extent_negative_controls=4,speed1_plan_dispatch_rows=48,speed1_mini_cases=42,speed1_full_state_checks=36,speed1_required_extent_negative_controls=4,audit6_windows=28,audit6_mutation_tests=8,fixture_delta_tests=gates['fixture-delta-tests.json']['checks'],fresh_real_sentinel_cases=0,historical_real_cases_reused=6,fusion_matrix_checks=gates['fusion-matrix-gates.json']['checks'],fusion_compiler_arms=6,hc_activation_checks=4752,hc_compiler_arms=6,merged_historical_cases=79,real_native_cases=6,real_token_matches=48,real_layer_fixture_matches=2304,
    fix6_plan_dispatch_rows=48,fix6_group_mutation_checks=9,seal6_amendment_tests=gates['seal6-amendment-tests.json']['checks'],real_cross_placement_pairs=3,real_draft_semantic_buffers=17,
    selection_checks=sum(r['result']['checks'] for r in gates['capacity-selection-gates.json']['rows']),
    draft_capture_arms=6,draft_valid_fixture_matches=378,
@@ -370,7 +375,7 @@ def main():
  receipt=dict(schema='own-runtime.iq3.packet45.build.v1',passed=True,device_executed=False,
   seal_status='CPU integration qualified; device windows pending',real_model_device_qualified=False,
   post_seal_admission=dict(path='window-seal-binding.json',scope='detached exact build/admission receipt hashes; build receipt remains unchanged'),
-  admitted_target_splits=[dict(target_split=0,draft_ranks=[0,1],contexts=[256,4096,32768]),dict(target_split=24,draft_ranks=[0],contexts=[4096])],
+  admitted_target_splits=[dict(target_split=0,draft_ranks=[0,1],contexts=[256,4096,32768]),dict(target_split=24,draft_ranks=[0],contexts=[4096]),dict(target_split=23,draft_ranks=[0],contexts=[4096,32768]),dict(target_split=23,draft_ranks=[1],contexts=[4096])],
   arithmetic='iq3-p17-detmath-v2',context_capacities=[256,4096,32768],draft_ranks=[0,1],
   parent_pins=read('merge-start.json'),sources=source_hashes,artifacts_sha256=actual_artifacts,
   seal_amendment=amendment,retained_gate_artifacts_sha256=artifacts,

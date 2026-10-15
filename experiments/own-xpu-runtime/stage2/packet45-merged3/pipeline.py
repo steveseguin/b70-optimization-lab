@@ -570,7 +570,7 @@ def parser():
     p.add_argument("--output",type=Path,required=True);p.add_argument("--input",type=Path);p.add_argument("--oracle",type=Path);p.add_argument("--dispatch",type=Path)
     p.add_argument("--mini",action="store_true");p.add_argument("--device",action="store_true");p.add_argument("--draft",nargs="+",default="none")
     p.add_argument("--draft-rank",type=int,choices=(0,1),default=0)
-    p.add_argument("--target-split",type=int,choices=(0,24),default=0)
+    p.add_argument("--target-split",type=int,choices=(0,23,24),default=0)
     p.add_argument("--draft-head",choices=("full",),default="full")
     p.add_argument("--draft-fault",choices=("none","wrong","error","stall","suppress","garbage","late-error"),default="none")
     p.add_argument("--script",type=Path);p.add_argument("--prompt-overlap",choices=("on","off"),default="on");p.add_argument("--dump-state",action="store_true")

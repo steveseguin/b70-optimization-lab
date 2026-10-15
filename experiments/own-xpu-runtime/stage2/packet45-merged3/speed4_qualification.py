@@ -7,10 +7,11 @@ BEFORE='8460585fe53879223066a5d54799c9f105c73002adfc09fc9a743ceaee7e3fa8'
 PINS={'strict_snapshot.hpp': 'f3df4371d04b49121064a0215febd0a48806443642dfb54784b3d4429fe98a2c', 'rank.hpp': '80754bb682e89ff9be6c3dc66328f91ef73147cecf562a473040882654c9dabc', 'native_controller.hpp': '5f04a87a9bd7dbdd482f75b4fcb3c3157f61130b4ce1535d2ef0267c4155b67a', 'pipeline.py': 'd059aca9a446a9d66e01ae8f7d11eff91585a3edb82d9cba780922d15bb7528f'}
 COMPILED=('strict_snapshot.hpp','rank.hpp','native_controller.hpp')
 MIRRORS={'strict_snapshot.hpp': {'old': ['42a26f4aa254eab1b52edc2ea115d9082770d2a691d0b8eb0ac1e342d98ee885', '60957654a6a418782f7b1cd7930d4e3bc499784f157d25a64d02f5220c078ad7', '78820f2338872bf5f0d17f44885a66d47e0448e3ede7739fdf02090630319018'], 'new': '29a395575648247848372d056479f26f5252502e9ce1550d4a0dfd05699656d0'}, 'rank.hpp': {'old': ['c24f08a558840b32831785d47e2514c7df03e2ce75775e5a848aa13e38d87136', '4eef587666b52f9f8d2e8dfcbfef3228e0d4633efc53b76b42b82dab5c127c10'], 'new': 'c85dc64000c23352d991c8eb2965fa7d2e7fc99ef305f6a4f58f7676baeccabf'}, 'native_controller.hpp': {'old': ['8934b23f9fee65be3b85e47864533326ec555b3c31b51054e5a81e00c4401cb1'], 'new': '2317075b562df4e0f5159cbc2113d6b9a3d4f392d6670a2b32a90edb6ac0110f'}}
-def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def sha(p):return __import__('speed5_qualification').prior_sha(p)
 def before():
  p=P/'evidence/speed4/before-build-receipt.json';assert sha(p)==BEFORE,'SPEED4 baseline changed';return json.loads(p.read_text())
 def historical_compiled_sources(current):
+ current=__import__('speed5_qualification').historical_compiled_sources(current)
  old=before()['sources'];expected={str((P/n).relative_to(ROOT)) for n in COMPILED}
  assert all(k in old for k in current),'compiled source closure changed'
  assert {k for k in current if current[k]!=old[k]}==expected,'outside fixture/SPEED4 repair'
@@ -29,7 +30,7 @@ def mirror_allowed(path,old,new):
  return n in MIRRORS and str(path)==str((P/'build/checked'/P.relative_to(ROOT)/n).relative_to(ROOT)) and old in MIRRORS[n]['old'] and new==MIRRORS[n]['new']==sha(ROOT/path) and sha(P/n)==PINS[n]
 def verify():
  from build import compiled_sources
- current=compiled_sources();historical_compiled_sources(current)
+ current=compiled_sources();historical_compiled_sources(current);current=__import__('speed5_qualification').historical_compiled_sources(current)
  assert all(sha(P/n)==h for n,h in PINS.items()),'SPEED4 runtime source changed'
  gates={n:json.loads((P/n).read_text()) for n in ('speed4-plan-gates.json','speed4-snapshot-gates.json','speed4-snapshot-inventory.json')}
  for name,row in gates.items():
@@ -46,7 +47,7 @@ def verify():
   assert all(b['full_byte_coverage'] and b['inputs_use_distinct_active_bank'] and b['bytes']>0 for b in r['write_set']['redo_banks'])
   if r['plan']=='target' and r['rank']==0:assert r['write_set']['redo_banks']
  assert mini['cases']==93 and mini['gate_count']==78 and len(mini['negative_controls'])==6
- assert mini['build']['compiled_sources_sha256']==current and mini['build']['binary_sha256']==sha(P/'build/gnu-host/own-rt-iq3')
+ assert mini['build']['compiled_sources_sha256']==current and mini['build']['binary_sha256']==__import__('speed5_qualification').before()['artifacts_sha256']['gnu-host/own-rt-iq3']
  assert all(r['full_state_equal'] for r in mini['rows']) and all(r['rejected'] for r in mini['negative_controls'])
  from seal45 import archive_bound
  for row in mini['owners']:archive_bound(row['archive'])

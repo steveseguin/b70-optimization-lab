@@ -36,7 +36,7 @@ static void transfer(int fd,void* ptr,size_t n,bool send,int seconds) {
  }
 }
 static flash::Plan split(flash::Plan p,int rank,bool mini,int draft_rank=1,int target_split=0) {
- require(target_split==0||target_split==24,"unsupported target split");
+ require(target_split==0||target_split==23||target_split==24,"unsupported target split");
  const int boundary=mini?2:(target_split?target_split:(draft_rank==0?22:24));
  std::vector<flash::Launch> launches;
  for(auto l:p.launches) {

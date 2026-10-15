@@ -1,5 +1,9 @@
 # Packet 45: merged runtime, CPU qualified
 
+[SPEED5 split23](SPEED5-CLOSEOUT.md) is CPU sealed: 23/25 with draft rank 1 at
+4K, with 32K refused below the unchanged reserve. The coordinator owns device
+exactness and performance qualification on both card pairs.
+
 [SPEED4 miss-path repair](SPEED4-CLOSEOUT.md) restores 18.13 MiB before a
 confirmed 24/24 redo, while retaining the complete 46.36 MiB restore for
 terminal rollback. Its new artifact identity needs coordinator qualification.

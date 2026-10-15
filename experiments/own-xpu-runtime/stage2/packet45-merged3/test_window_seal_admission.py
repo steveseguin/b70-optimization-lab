@@ -97,6 +97,11 @@ def main():
         configurations.extend((4096,0,'W2m',controller,64,24) for controller in ('python','native'))
         configurations.extend((4096,0,name,'native',cap,24) for name in ('WS','WSs') for cap in (32,64,128))
         configurations.extend((4096,dr,name,'native',128,split) for dr,split in ((0,0),(1,0),(0,24)) for name in ('WS128x','WS128'))
+        for context,draft_rank in ((4096,0),(32768,0),(4096,1)):
+            configurations.extend((context,draft_rank,name,'python',64,23) for name in ('K0','K1a','K1b','K2','W0p','KD'))
+            configurations.extend((context,draft_rank,'W2m',controller,64,23) for controller in ('python','native'))
+            configurations.extend((context,draft_rank,name,'native',cap,23) for name in ('WS','WSs') for cap in (32,64,128))
+            configurations.extend((context,draft_rank,name,'native',128,23) for name in ('WS128x','WS128'))
         for context,draft_rank,name,controller,cap,target_split in configurations:
                 out=root/(f'{context}-dr{draft_rank}-s{target_split}-{name}-{controller}-cap{cap}');seen.clear()
                 manifest=manifests[cap]

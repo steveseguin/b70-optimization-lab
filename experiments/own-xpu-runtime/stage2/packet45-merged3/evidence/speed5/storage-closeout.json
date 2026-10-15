@@ -1,0 +1,20 @@
+{
+  "root_free_bytes_at_start": 27320975360,
+  "root_free_bytes_now": 27301482496,
+  "required_chain_floor_plus_reserve_and_buffer_bytes": 22000000000,
+  "temporary_mini_scratch": "archived with verified hashes and removed per case; empty terminal parent removed",
+  "retained_proof_build_bytes": 836809,
+  "retained_large_evidence": [
+    {
+      "path": "speed5-plan-gates.json",
+      "bytes": 1262157,
+      "sha256": "09a17422cd20a2c9ad4c905857b005a4531cc9a45f2a909e8e4cd1bac57b4b6d"
+    },
+    {
+      "path": "speed5-snapshot-gates.json",
+      "bytes": 2015994,
+      "sha256": "e27e981d8643c31839ddd08c05d3e4cc72294f8ebb0734b706bea321a25af4ee"
+    }
+  ],
+  "large_evidence_reason": "The seal verifies every one of 120 plan/dispatch rows including per-bank coverage. Keep this machine-readable gate intact; regenerate with speed5_plan_gate.py. The duplicate raw row list is retained as byte-verified gzip. The 2.02 MB snapshot gate retains complete per-case state and event records needed for the full-state and negative-control proof; restore exact bytes from this commit, or generate fresh evidence with speed5_snapshot_gate.py and reseal."
+}

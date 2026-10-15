@@ -1,13 +1,15 @@
 """Allocation admission only; driver residency is a separate device receipt."""
 def configuration(ledger, context, draft_rank=0, target_split=0):
-    if draft_rank not in (0,1) or target_split not in (0,24):
+    if draft_rank not in (0,1) or target_split not in (0,23,24):
         raise ValueError('invalid draft placement/target split')
-    key='0-split24' if draft_rank==0 and target_split==24 else str(draft_rank)
+    key=f'{draft_rank}-split23' if target_split==23 else ('0-split24' if draft_rank==0 and target_split==24 else str(draft_rank))
+    if target_split==23 and context not in (4096,32768):
+        raise ValueError('23/25 split admitted only at context4096/32768, subject to reserve')
     if key=='0-split24' and context!=4096:
         raise ValueError('24/24 rank0 draft admitted at context4096 only; 32K reserve is insufficient')
     try: row=ledger['placements'][key]['capacities'][str(context)]
     except KeyError as exc: raise ValueError('context is not admitted by memory plan') from exc
-    if key=='0-split24' and not all(r['allocation_margin_passed'] and r['free_with_mtp_bytes']>=ledger['minimum_free_bytes'] for r in row['ranks']):
+    if target_split and not all(r['allocation_margin_passed'] and r['free_with_mtp_bytes']>=ledger['minimum_free_bytes'] for r in row['ranks']):
         raise ValueError('planned device allocation margin below 1.5 GB')
     return row
 

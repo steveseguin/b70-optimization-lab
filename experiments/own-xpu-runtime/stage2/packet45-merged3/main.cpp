@@ -216,7 +216,8 @@ static Options parse(int argc, char **argv) {
   require(a.cancel_launch==-1,"forced cancellation is CPU diagnostic only");
 #endif
   require(a.draft_rank==0||a.draft_rank==1,"draft rank must be0 or1");
-  require(a.target_split==0||a.target_split==24,"target split must be0 (placement default) or24");
+  require(a.target_split==0||a.target_split==23||a.target_split==24,"target split must be0 (placement default),23 or24");
+  require(a.target_split!=23||a.mini||a.context==4096||(a.draft_rank==0&&a.context==32768),"23/25 rank1 draft admitted at context4096 only; rank0 at4096/32768");
   require(a.target_split!=24||a.draft_rank!=0||a.mini||a.context==4096,"24/24 rank0 draft admitted at context4096 only");
   require(a.draft_head=="full","draft shortlist head not qualified; use full");
   require(a.cards >= 1 && a.cards <= 2 && a.card >= 0 && a.card + a.cards <= 4,

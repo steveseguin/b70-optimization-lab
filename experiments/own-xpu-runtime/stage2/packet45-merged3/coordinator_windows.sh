@@ -6,8 +6,12 @@ packet45_card=${1:?first card of adjacent pair required}
 packet45_context=${2:?context 256,4096,32768 required}
 packet45_draft_rank=${3:-0}
 packet45_target_split=${6:-0}
+# Split identity is bound into every prerequisite; byte admission remains in window.py.
+case "$packet45_target_split" in 0|23|24) ;; *) echo "target split must be 0,23,24" >&2; exit 2;; esac
+packet45_split_suffix=""
+if [[ $packet45_target_split != 0 ]]; then packet45_split_suffix="-s$packet45_target_split"; fi
 packet45_suite=${4:-experiments/own-xpu-runtime/stage2/suite-inputs-20261012-cap128/suite-manifest.json}
-packet45_out="${5:-$packet45/build/c${packet45_context}-dr${packet45_draft_rank}}"
+packet45_out="${5:-$packet45/build/c${packet45_context}-dr${packet45_draft_rank}${packet45_split_suffix}}"
 packet45_input="$packet45/build/input"
 packet45_oracle=experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/runs/arithmetic-v2-detmath-20261011/incident-retrospective
 packet45_diagnostic=()

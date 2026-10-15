@@ -178,9 +178,12 @@ class SealBindings(unittest.TestCase):
                  device_executed=False,window_passed=False))
   rows.extend(dict(r,target_split=24) for r in list(rows) if r['context']==4096 and r['draft_rank']==0)
   rows.extend(dict(window=name,context=4096,draft_rank=dr,target_split=split,controller='native',token_cap=128,expected_capacity_refusal=False,admission_reached_blocked_launcher=True,device_executed=False,window_passed=False) for dr,split in ((0,0),(1,0),(0,24)) for name in ('WS128x','WS128'))
+  for context,dr in ((4096,0),(32768,0),(4096,1)):
+   rows.extend(dict(r,target_split=23) for r in list(rows) if r['target_split']==0 and r['context']==context and r['draft_rank']==dr and r['window'] not in ('WS128x','WS128'))
+   rows.extend(dict(window=name,context=context,draft_rank=dr,target_split=23,controller='native',token_cap=128,expected_capacity_refusal=False,admission_reached_blocked_launcher=True,device_executed=False,window_passed=False) for name in ('WS128x','WS128'))
   admission=dict(passed=True,device_executed=False,rehearsed_seal='build-receipt.json',seal_fields=list(seal.ADMISSION_FIELDS),
     consumed_seal_sha256=hashlib.sha256(json.dumps({n:receipt[n] for n in seal.ADMISSION_FIELDS},sort_keys=True).encode()).hexdigest(),
-    rows=rows,input_admissions=[{'token_cap':c} for c in (32,64,128)],gates=108)
+    rows=rows,input_admissions=[{'token_cap':c} for c in (32,64,128)],gates=156)
   return receipt,admission
  def check_admission(self,receipt,admission):
   with patch.object(seal,'read',side_effect=[receipt,admission]),patch.object(seal,'sha',return_value='1'*64),patch.object(seal,'save') as save:
@@ -188,7 +191,7 @@ class SealBindings(unittest.TestCase):
   return result
  def test_detached_admission_no_cycle(self):
   receipt,admission=self.admission();result=self.check_admission(receipt,admission)
-  self.assertEqual(result['gates'],108);self.assertNotIn('window-seal-binding.json',seal.GATES)
+  self.assertEqual(result['gates'],156);self.assertNotIn('window-seal-binding.json',seal.GATES)
  def test_detached_admission_stale_seal(self):
   receipt,admission=self.admission();receipt['input_sha256']='stale'
   with self.assertRaisesRegex(AssertionError,'different seal'):self.check_admission(receipt,admission)

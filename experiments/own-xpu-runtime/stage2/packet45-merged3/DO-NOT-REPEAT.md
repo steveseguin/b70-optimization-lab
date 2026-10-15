@@ -26,3 +26,5 @@ These close individual implementation errors, not the optimization lane. All
 historical negative evidence stays in its source packet or this packet's archives.
 
 - 2026-10-15 SPEED3: do not profile the same draft events before publication and again at drain. The engine drain is the single accounting/retirement owner. Do not admit 24/24 with rank-0 draft at 32K: it is 65,889,102 bytes below the unchanged reserve. [Closeout and 4K selection commands](SPEED3-CLOSEOUT.md).
+
+- 2026-10-15 SPEED5: 23/25 with rank-1 draft misses the 32K reserve by 185,030,560 bytes; never admit it by trusting a boolean over actual free bytes. Updating a detached admission matrix also requires updating its unit fixture. [Closeout](SPEED5-CLOSEOUT.md).
