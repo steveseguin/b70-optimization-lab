@@ -1,0 +1,202 @@
+{
+ "format": "b70-model-package-v1",
+ "id": "lfm25-24b-a2b-q8-b70",
+ "name": "LFM2.5 24B A2B Q8_0 on one Intel Arc Pro B70 (exact fast path)",
+ "status": "candidate",
+ "audience": "intermediate",
+ "guide": "repro/lfm25-24b-a2b-q8-b70/README.md",
+ "clean_host_tested": false,
+ "library": {
+  "model_family": "LFM2.5",
+  "publisher": "Liquid AI",
+  "variant": "24B A2B",
+  "summary": "Liquid AI's LFM2.5 24B mixture-of-experts (about 2B active) on one Arc Pro B70 in 8-bit form, 2.7x faster than llama.cpp's plain SYCL path with every token and log-probability identical to it.",
+  "quantization": "Q8_0",
+  "runtime_label": "llama.cpp SYCL + lab patch",
+  "operating_systems": [
+   "Linux"
+  ],
+  "delivery": [
+   "native"
+  ],
+  "modalities": [
+   "text"
+  ],
+  "use_cases": [
+   "general",
+   "chat",
+   "coding"
+  ],
+  "tags": [
+   "one card",
+   "mixture of experts",
+   "exact output",
+   "target only",
+   "cache zero"
+  ],
+  "published_at": "2026-10-15",
+  "featured_metric": {
+   "value": 111.32374032604358,
+   "unit": "tok/s",
+   "label": "strict class-balanced decode",
+   "scope": "Median of two fresh-server class-balanced medians over the complete 12-prompt/six-class, 512-cap, cache-zero native HTTP suite; one B70, one user, F16 KV, 32K context. Every token array identical to the plain SYCL reference path (12/12 on both servers); canaries passed.",
+   "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check/summary.json"
+  },
+  "benchmark_status": "Package check 2026-10-15: built from this folder by build.sh and run by serve.sh; reference 41.6 tok/s on the same build."
+ },
+ "contributors": [
+  {
+   "id": "b70-optimization-lab",
+   "name": "neural.download lab",
+   "kind": "lab",
+   "profile": "https://github.com/steveseguin/b70-optimization-lab",
+   "contribution": "Bring-up, exact reordered-layout kernels (DMMV and expert MMVQ in the reference order), identity gates, package.",
+   "status": "integrated",
+   "validated_effect": "41.8 -> 111.3 tok/s with identical output",
+   "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check/summary.json"
+  }
+ ],
+ "performance_profiles": [
+  {
+   "id": "decode-vs-context-depth",
+   "label": "Raw decode over existing context depth",
+   "metric": "decode",
+   "unit": "tok/s",
+   "x_label": "Existing context depth before tg128",
+   "scope": "llama-bench raw engine rate on the fast path (tg128, fa on, F16 KV, 3 reps each); not the HTTP suite metric. Measured points only.",
+   "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check/sweep-fast.json",
+   "points": [
+    {
+     "context_tokens": 2048,
+     "value": 117.505382,
+     "samples": 3
+    },
+    {
+     "context_tokens": 4096,
+     "value": 113.776061,
+     "samples": 3
+    },
+    {
+     "context_tokens": 8192,
+     "value": 106.585262,
+     "samples": 3
+    },
+    {
+     "context_tokens": 16384,
+     "value": 94.890523,
+     "samples": 3
+    },
+    {
+     "context_tokens": 32768,
+     "value": 78.131544,
+     "samples": 3
+    }
+   ]
+  },
+  {
+   "id": "prefill-vs-context-depth",
+   "label": "Raw pp2048 over existing context depth",
+   "metric": "prefill",
+   "unit": "tok/s",
+   "x_label": "Existing context depth before pp2048",
+   "scope": "llama-bench raw engine rate on the fast path (pp2048, fa on, F16 KV, 3 reps each). Measured points only.",
+   "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check/sweep-fast.json",
+   "points": [
+    {
+     "context_tokens": 2048,
+     "value": 1913.84885,
+     "samples": 3
+    },
+    {
+     "context_tokens": 4096,
+     "value": 1353.636197,
+     "samples": 3
+    },
+    {
+     "context_tokens": 8192,
+     "value": 1219.082381,
+     "samples": 3
+    },
+    {
+     "context_tokens": 16384,
+     "value": 977.599302,
+     "samples": 3
+    },
+    {
+     "context_tokens": 32768,
+     "value": 685.402789,
+     "samples": 3
+    }
+   ]
+  }
+ ],
+ "known_limitations": [
+  "Measured with one user (--parallel 1), prompt cache off, 32K context; identity with several users or the prompt cache on has not been checked.",
+  "Identical output is proven against the plain SYCL path of the same build, not against other backends.",
+  "Clean-host install (driver and oneAPI) not yet replayed."
+ ],
+ "hardware": {
+  "accelerator": "Intel Arc Pro B70 32 GiB",
+  "cards": 1,
+  "model_weight_bytes": 25493732640
+ },
+ "model": {
+  "repository": "LiquidAI/LFM2.5-24B-A2B-GGUF",
+  "revision": "0912d33141f77e10705345a6732bfd83f0252fdc",
+  "manifest": "repro/lfm25-24b-a2b-q8-b70/model-manifest.json"
+ },
+ "runtime": {
+  "kind": "native",
+  "project": "ggml-org/llama.cpp",
+  "revision": "c926ad09857517978575d6a74d225b463f7417a0",
+  "build": "repro/lfm25-24b-a2b-q8-b70/build.sh"
+ },
+ "project_patches": {
+  "required": true,
+  "items": [
+   "patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-20261015.diff.gz.b64"
+  ],
+  "decoded_sha256": "0ec617979b3236614468baf3e1c3f732bebfc69e2c08b1064dd2857435be552a"
+ },
+ "commands": {
+  "preflight": "python3 scripts/verify-neural-download-model.py repro/lfm25-24b-a2b-q8-b70/model-manifest.json \"$MODEL_DIR\" && SOURCE_DIR=\"$SOURCE_DIR\" repro/lfm25-24b-a2b-q8-b70/build.sh",
+  "launch": "BUILD_DIR=\"$SOURCE_DIR/build\" MODEL_DIR=\"$MODEL_DIR\" repro/lfm25-24b-a2b-q8-b70/serve.sh fast",
+  "health": "curl -fsS http://127.0.0.1:18110/health",
+  "benchmark": "repro/lfm25-24b-a2b-q8-b70/check.sh run fast",
+  "stop": "Ctrl-C in the serve.sh terminal (it runs in the foreground)"
+ },
+ "dependencies": [
+  "repro/lfm25-24b-a2b-q8-b70/README.md",
+  "repro/lfm25-24b-a2b-q8-b70/build.sh",
+  "repro/lfm25-24b-a2b-q8-b70/serve.sh",
+  "repro/lfm25-24b-a2b-q8-b70/check.sh",
+  "repro/lfm25-24b-a2b-q8-b70/model-manifest.json",
+  "patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-20261015.diff.gz.b64",
+  "scripts/verify-neural-download-model.py",
+  "scripts/bench-openai-realistic-suite.py",
+  "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json",
+  "repro/gemma4-26b-a4b-q8-b70/realistic-suite-v1.json",
+  "experiments/lfm25-24b-a2b-b70/data/r0-suite-a.json",
+  "experiments/lfm25-24b-a2b-b70/scripts/compare_arrays.py",
+  "experiments/lfm25-24b-a2b-b70/notes/2026-10-14-lfm25-24b-a2b-bringup.md",
+  "data/2026-10-15-lfm25-24b-a2b-package-check/summary.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check/sweep-fast.json",
+  "docs/neural-download-packet-standard.md"
+ ],
+ "evidence": [
+  "data/2026-10-15-lfm25-24b-a2b-package-check/summary.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check/ref.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check/fast-a.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check/fast-b.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check/canaries-fast-b.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check/build-receipt.json",
+  "data/2026-10-15-lfm25-24b-a2b-package-check/sweep-fast.json",
+  "experiments/lfm25-24b-a2b-b70/data/x1final-suite-a.json",
+  "experiments/lfm25-24b-a2b-b70/data/x1final-suite-b.json"
+ ],
+ "missing": [
+  "tested clean-host platform installation (driver, oneAPI)",
+  "identity with several users or prompt cache on",
+  "beginner recovery flow"
+ ]
+}

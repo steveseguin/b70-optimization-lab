@@ -44,6 +44,7 @@ evidence and remaining gates):
 | LTX 2.5 | [145-frame continuation video, four-B70 lab replay](ltx25-continuation-stream-b70-145f-20261010/) |
 | Gemma 4 26B A4B | [Q8 one-B70 reconstruction](gemma4-26b-a4b-q8-b70/) |
 | Laguna S 2.1 | [INT4 four-B70 record replay](laguna-s-2.1-int4-b70-125tps/) |
+| LFM2.5 24B A2B | [Q8_0 one-B70, exact fast path](lfm25-24b-a2b-q8-b70/) |
 | LFM2.5 2.6B | [Q8_0 one-B70](lfm25-26b-q8-b70/) |
 | MiniMax M2.7 | [AutoRound INT4 four-B70](minimax-m27-int4-autoround-b70/) |
 | Muse-Glimmer 30B | [Q8/WOQ four-B70](muse-glimmer-30b-q8-woq-b70/) |

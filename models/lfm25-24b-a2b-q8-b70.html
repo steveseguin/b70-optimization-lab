@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LFM2.5 24B A2B Q8_0 on one Intel Arc Pro B70 (exact fast path) — 111 tok/s measured — neural.download</title>
+<meta name="description" content="Liquid AI&#x27;s LFM2.5 24B mixture-of-experts (about 2B active) on one Arc Pro B70 in 8-bit form, 2.7x faster than llama.cpp&#x27;s plain SYCL path with every token and log-probability identical to it. Measured 111 tok/s strict class-balanced decode on 1× Intel Arc Pro B70 32 GiB with llama.cpp SYCL + lab patch (Q8_0).">
+<link rel="icon" href="../favicon.ico" sizes="32x32">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<link rel="canonical" href="https://neural.download/models/lfm25-24b-a2b-q8-b70.html">
+<meta name="theme-color" content="#0f62e8">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="neural.download">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://neural.download/models/lfm25-24b-a2b-q8-b70.html">
+<meta property="og:title" content="LFM2.5 24B A2B Q8_0 on one Intel Arc Pro B70 (exact fast path) — 111 tok/s measured">
+<meta property="og:description" content="Liquid AI&#x27;s LFM2.5 24B mixture-of-experts (about 2B active) on one Arc Pro B70 in 8-bit form, 2.7x faster than llama.cpp&#x27;s plain SYCL path with every token and log-probability identical to it. Measured 111 tok/s strict class-balanced decode on 1× Intel Arc Pro B70 32 GiB with llama.cpp SYCL + lab patch (Q8_0).">
+<meta property="og:image" content="https://neural.download/models/cards/lfm25-24b-a2b-q8-b70.png">
+<meta property="og:image:secure_url" content="https://neural.download/models/cards/lfm25-24b-a2b-q8-b70.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="LFM2.5 24B A2B Q8_0 on one Intel Arc Pro B70 (exact fast path): 111 tok/s measured on Intel Arc Pro B70 — neural.download">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@xyster">
+<meta name="twitter:creator" content="@xyster">
+<meta name="twitter:url" content="https://neural.download/models/lfm25-24b-a2b-q8-b70.html">
+<meta name="twitter:title" content="LFM2.5 24B A2B Q8_0 on one Intel Arc Pro B70 (exact fast path) — 111 tok/s measured">
+<meta name="twitter:description" content="Liquid AI&#x27;s LFM2.5 24B mixture-of-experts (about 2B active) on one Arc Pro B70 in 8-bit form, 2.7x faster than llama.cpp&#x27;s plain SYCL path with every token and log-probability identical to it. Measured 111 tok/s strict class-balanced decode on 1× Intel Arc Pro B70 32 GiB with llama.cpp SYCL + lab patch (Q8_0).">
+<meta name="twitter:image" content="https://neural.download/models/cards/lfm25-24b-a2b-q8-b70.png">
+<meta name="twitter:image:alt" content="LFM2.5 24B A2B Q8_0 on one Intel Arc Pro B70 (exact fast path): 111 tok/s measured on Intel Arc Pro B70 — neural.download">
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "TechArticle", "headline": "LFM2.5 24B A2B Q8_0 on one Intel Arc Pro B70 (exact fast path)", "description": "Liquid AI's LFM2.5 24B mixture-of-experts (about 2B active) on one Arc Pro B70 in 8-bit form, 2.7x faster than llama.cpp's plain SYCL path with every token and log-probability identical to it. Measured 111 tok/s strict class-balanced decode on 1× Intel Arc Pro B70 32 GiB with llama.cpp SYCL + lab patch (Q8_0). Exact pins, patches, and proof; no unmatched projection is implied.", "url": "https://neural.download/models/lfm25-24b-a2b-q8-b70.html", "dateModified": "2026-10-15", "inLanguage": "en", "isAccessibleForFree": true, "author": {"@type": "Organization", "name": "Unofficial Intel XPU Optimization Lab", "url": "https://neural.download/"}, "publisher": {"@type": "Organization", "name": "neural.download", "url": "https://neural.download/"}, "isPartOf": {"@type": "WebSite", "name": "neural.download", "url": "https://neural.download/"}, "about": ["LFM2.5", "Intel Arc Pro B70", "local LLM inference"]}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "neural.download", "item": "https://neural.download/"}, {"@type": "ListItem", "position": 2, "name": "Models", "item": "https://neural.download/models/"}, {"@type": "ListItem", "position": 3, "name": "LFM2.5 24B A2B", "item": "https://neural.download/models/lfm-2-5-24b-a2b.html"}, {"@type": "ListItem", "position": 4, "name": "LFM2.5 24B A2B Q8_0 on one Intel Arc Pro B70 (exact fast path)", "item": "https://neural.download/models/lfm25-24b-a2b-q8-b70.html"}]}
+</script>
+<link rel="stylesheet" href="../learn/learn.css">
+<link rel="preconnect" href="https://mlbottleneck.com">
+<style>
+  .profile { margin: 10px 0; border: 1px solid var(--line); padding: 10px 14px; }
+  .profile summary { cursor: pointer; font-weight: 700; }
+  .profile small { color: var(--muted); font-weight: 400; }
+  .table-scroll { overflow-x: auto; }
+  .exact-values { margin: 12px 0; }
+  .chart { overflow-x: auto; }
+  .graph-scroll-hint { display: none; }
+  @media (max-width: 600px) {
+    .chart .short-plot text { font-size: 24px; }
+    .chart .dense-plot { min-width: 560px; }
+    .graph-scroll-hint { display: block; font-size: 12px; }
+  }
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 16px; margin: 14px 0 22px; padding: 14px 16px; border: 2px solid var(--ink); background: var(--paper); }
+  .facts div { min-width: 0; }
+  .facts dt { font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .facts dd { margin: 2px 0 0; font-size: 13.5px; overflow-wrap: anywhere; }
+  .use-chip { display: inline-block; border: 1px solid var(--ink); padding: 1px 7px 0; font: 700 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; margin: 0 4px 4px 0; }
+  .placeholder { margin: 10px 0 22px; padding: 12px 16px; border: 2px solid var(--line); background: var(--surface); color: var(--muted); }
+  .placeholder p { margin: 0; font-size: 13.5px; }
+  .badge.todo { background: var(--surface); color: var(--muted); border-color: var(--muted); }
+  .missing { margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--ink); background: var(--surface); }
+  .missing-tag { margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--warn); }
+  .missing ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .limitations { margin: 0 0 22px; padding: 12px 16px; border: 2px solid var(--line); background: var(--surface); }
+  .limitations-tag { margin: 0 0 6px; font: 700 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink); }
+  .limitations ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .measured { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 18px; margin: 8px 0 6px; }
+  .measured .big { font: 900 44px/1 var(--display); color: var(--spot-dark); }
+  .measured .unit { font: 700 13px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .scope { margin: 0 0 6px; color: var(--muted); font-size: 13px; }
+  .scope-gloss { margin: 0 0 12px; color: var(--muted); font-size: 11.5px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 9px 12px; margin: 14px 0 22px; align-items: center; }
+  .actions .button { display: inline-flex; align-items: center; min-height: 36px; padding: 7px 12px; border: 2px solid var(--ink); background: var(--ink); color: var(--paper); font: 700 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .actions .button:hover { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .actions .button.secondary { background: transparent; color: var(--ink); }
+  .actions .button.secondary:hover { background: var(--ink); color: var(--paper); }
+  .copy-md { appearance: none; border: 2px solid var(--ink); border-radius: 0; background: transparent; color: var(--ink); min-height: 36px; padding: 6px 10px; font: 700 11px var(--mono); letter-spacing: .05em; text-transform: uppercase; cursor: pointer; }
+  .copy-md:hover { background: var(--ink); color: var(--paper); }
+  .copy-md.copied { background: var(--spot); border-color: var(--spot); color: #fff; }
+  .copy-md.failed { border-color: #a12820; color: #a12820; }
+  .hr-card { border: 2px solid var(--ink); background: var(--paper); padding: 13px 14px 11px; margin: 0 0 12px; }
+  .hr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .hr-card h3 { margin: 0; font: 900 15px var(--display); text-transform: uppercase; }
+  .hr-deploy { margin: 3px 0 0; color: var(--muted); font: 10.5px var(--mono); }
+  .hr-grade { flex: 0 0 auto; text-align: right; }
+  .hr-grade-letter { display: block; font: 900 26px/1 var(--display); color: var(--spot-dark); }
+  .hr-grade-note { display: block; margin-top: 3px; color: var(--muted); font: 700 9.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .hr-bar-row { display: grid; grid-template-columns: 108px 1fr 78px; align-items: center; gap: 8px; margin: 5px 0; font: 10.5px var(--mono); }
+  .hr-bar-label { color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .hr-bar-track { display: block; height: 9px; background: var(--surface); border: 1px solid var(--ink); }
+  .hr-bar { display: block; height: 100%; background: var(--ink); }
+  .hr-bar.is-measured { background: var(--spot); }
+  .hr-bar.is-stock { background: var(--ink); opacity: .45; }
+  .hr-bar.is-physical { background: var(--muted); opacity: .55; }
+  .hr-bar-value { text-align: right; font-weight: 700; white-space: nowrap; }
+  .hr-bar-value small { font-weight: 400; color: var(--muted); }
+  .hr-why { margin: 9px 0 0; color: var(--muted); font-size: 12px; }
+  .hr-links { margin: 7px 0 0; font: 10.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+  .hr-links a { border-bottom: 1px solid currentColor; }
+  @media (max-width: 520px) { .hr-bar-row { grid-template-columns: 92px 1fr 70px; } .measured .big { font-size: 36px; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="site-nav"><div class="wrap">
+  <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true">▮▮▮</span>neural.download</a>
+  <nav aria-label="Primary">
+    <a href="index.html" aria-current="page">Models</a>
+    <a href="../learn.html">Learn</a>
+    <a href="../guides.html">Recipes</a>
+    <a href="../index.html#lab-speeds">Benchmarks</a>
+    <a href="../index.html#contribute">Contribute</a>
+    <a class="github" href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="index.html">Models</a> / <a href="lfm-2-5-24b-a2b.html">LFM2.5 24B A2B</a> / 24B A2B</p>
+  <p class="eyebrow">Candidate package · llama.cpp SYCL + lab patch · 1× Intel Arc Pro B70</p>
+  <h1>LFM2.5 24B A2B Q8_0 on one Intel Arc Pro B70 (exact fast path)</h1>
+  <p>LFM2.5 24B A2B running on 1 Intel Arc Pro B70 GPU(s).</p>
+</div></header>
+
+<main id="main"><div class="wrap"><div class="col prose" id="package-page">
+
+  <h2 id="measured">What we measured <span class="badge lab">Lab-measured</span></h2><div class="measured"><span class="big">111</span><span class="unit">tok/s writing speed</span></div><p class="scope">Writing speed. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/2026-10-15-lfm25-24b-a2b-package-check/summary.json">Test details on GitHub</a></p>
+  <div class="actions">
+    <a class="button" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-24b-a2b-q8-b70/README.md">Open the full guide</a>
+    <button type="button" class="copy-md" data-copy-markdown="../repro/lfm25-24b-a2b-q8-b70/README.md" aria-label="Copy the guide Markdown" aria-live="polite">Copy Markdown</button>
+    <a class="button secondary" href="https://github.com/steveseguin/b70-optimization-lab/issues/new?template=result.yml&title=LFM2.5%2024B%20A2B%20Q8_0%20on%20one%20Intel%20Arc%20Pro%20B70%20(exact%20fast%20path)">Submit an improvement</a>
+  </div>
+
+  <dl class="facts"><div><dt>Model</dt><dd>LFM2.5 24B A2B</dd></div><div><dt>Publisher</dt><dd>Liquid AI</dd></div><div><dt>Compression</dt><dd>Q8_0</dd></div><div><dt>Software</dt><dd>llama.cpp SYCL + lab patch</dd></div><div><dt>Cards</dt><dd>1× Intel Arc Pro B70 32 GiB</dd></div><div><dt>Model download</dt><dd>25.5 GB</dd></div><div><dt>Operating systems</dt><dd>Linux</dd></div><div><dt>Delivery</dt><dd>native</dd></div><div><dt>Good for</dt><dd><span class="use-chip">general</span> <span class="use-chip">chat</span> <span class="use-chip">coding</span></dd></div><div><dt>Fresh install tested</dt><dd>not yet — follow the guide carefully</dd></div></dl>
+<p class="missing">This setup still needs installation checks. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-24b-a2b-q8-b70/README.md">See what remains in the guide.</a></p>
+<p class="limitations">Matching answers are only verified for the tested settings. Tested user counts depend on the chosen settings. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-24b-a2b-q8-b70/README.md">Read the limits before choosing settings.</a></p>
+<h2 id="prefill">Reading speed (prefill)</h2><details class="profile"><summary>Reading speed (prefill) · engine test <small>· test 1</small></summary><figure class="chart"><svg class="dense-plot" viewBox="0 0 640 280" width="100%" role="img" aria-label="Reading speed (prefill) · engine test" xmlns="http://www.w3.org/2000/svg"><text x="64" y="16" font-size="14" font-family="var(--mono)" fill="var(--muted)">Reading speed (tokens/s)</text><line x1="64" y1="236.0" x2="620" y2="236.0" stroke="var(--ink)" stroke-width="2"></line><path d="M64.0,57.8 L101.1,110.0 L175.2,122.5 L323.5,145.0 L620.0,172.2" fill="none" stroke="var(--spot)" stroke-width="3"></path><circle cx="64.0" cy="57.8" r="4" fill="var(--spot)" tabindex="0"><title>Tokens already in memory: 2048; 1913.84885 tok/s</title></circle><text x="64.0" y="48.8" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--ink)">1,914</text><circle cx="101.1" cy="110.0" r="4" fill="var(--spot)" tabindex="0"><title>Tokens already in memory: 4096; 1353.636197 tok/s</title></circle><text x="101.1" y="101.0" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--ink)">1,354</text><circle cx="175.2" cy="122.5" r="4" fill="var(--spot)" tabindex="0"><title>Tokens already in memory: 8192; 1219.082381 tok/s</title></circle><text x="175.2" y="113.5" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--ink)">1,219</text><circle cx="323.5" cy="145.0" r="4" fill="var(--spot)" tabindex="0"><title>Tokens already in memory: 16384; 977.599302 tok/s</title></circle><text x="323.5" y="136.0" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--ink)">978</text><circle cx="620.0" cy="172.2" r="4" fill="var(--spot)" tabindex="0"><title>Tokens already in memory: 32768; 685.402789 tok/s</title></circle><text x="620.0" y="163.2" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--ink)">685</text><text x="64.0" y="256" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--muted)">2K</text><text x="101.1" y="256" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--muted)">4K</text><text x="175.2" y="256" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--muted)">8K</text><text x="323.5" y="256" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--muted)">16K</text><text x="620.0" y="256" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--muted)">32K</text><text x="64" y="274" font-size="14" font-family="var(--mono)" fill="var(--muted)">Tokens already in memory</text></svg><p class="graph-scroll-hint">Scroll sideways for the full graph.</p><figcaption>Engine test: reading 2,048 new tokens with different amounts of text already in memory. Zero means empty memory before reading. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/2026-10-15-lfm25-24b-a2b-package-check/sweep-fast.json">Test details on GitHub</a></figcaption></figure><details class="exact-values"><summary>Exact measured values</summary><div class="table-scroll"><table><thead><tr><th>Tokens already in memory</th><th>tok/s</th><th>Samples</th></tr></thead><tbody><tr><td>2048</td><td>1913.84885</td><td>3</td></tr><tr><td>4096</td><td>1353.636197</td><td>3</td></tr><tr><td>8192</td><td>1219.082381</td><td>3</td></tr><tr><td>16384</td><td>977.599302</td><td>3</td></tr><tr><td>32768</td><td>685.402789</td><td>3</td></tr></tbody></table></div></details></details>
+<p class="scope">Tokens are pieces of words. Higher tokens per second means faster reading or writing; a shorter wait is better. Each test uses its own settings. Drafts are checked by the main model. Open a test to see its graph and exact values.</p>
+<h2 id="profiles">Writing speed and waiting time</h2><details class="profile"><summary>Writing speed · engine test <small>· test 1</small></summary><figure class="chart"><svg class="dense-plot" viewBox="0 0 640 280" width="100%" role="img" aria-label="Writing speed · engine test" xmlns="http://www.w3.org/2000/svg"><text x="64" y="16" font-size="14" font-family="var(--mono)" fill="var(--muted)">Writing speed (tokens/s)</text><line x1="64" y1="236.0" x2="620" y2="236.0" stroke="var(--ink)" stroke-width="2"></line><path d="M64.0,57.8 L101.1,63.5 L175.2,74.4 L323.5,92.1 L620.0,117.5" fill="none" stroke="var(--spot)" stroke-width="3"></path><circle cx="64.0" cy="57.8" r="4" fill="var(--spot)" tabindex="0"><title>Tokens already in memory: 2048; 117.505382 tok/s</title></circle><text x="64.0" y="48.8" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--ink)">118</text><circle cx="101.1" cy="63.5" r="4" fill="var(--spot)" tabindex="0"><title>Tokens already in memory: 4096; 113.776061 tok/s</title></circle><text x="101.1" y="85.5" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--ink)">114</text><circle cx="175.2" cy="74.4" r="4" fill="var(--spot)" tabindex="0"><title>Tokens already in memory: 8192; 106.585262 tok/s</title></circle><text x="175.2" y="65.4" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--ink)">107</text><circle cx="323.5" cy="92.1" r="4" fill="var(--spot)" tabindex="0"><title>Tokens already in memory: 16384; 94.890523 tok/s</title></circle><text x="323.5" y="83.1" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--ink)">94.9</text><circle cx="620.0" cy="117.5" r="4" fill="var(--spot)" tabindex="0"><title>Tokens already in memory: 32768; 78.131544 tok/s</title></circle><text x="620.0" y="108.5" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--ink)">78.1</text><text x="64.0" y="256" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--muted)">2K</text><text x="101.1" y="256" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--muted)">4K</text><text x="175.2" y="256" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--muted)">8K</text><text x="323.5" y="256" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--muted)">16K</text><text x="620.0" y="256" text-anchor="middle" font-size="14" font-family="var(--mono)" fill="var(--muted)">32K</text><text x="64" y="274" font-size="14" font-family="var(--mono)" fill="var(--muted)">Tokens already in memory</text></svg><p class="graph-scroll-hint">Scroll sideways for the full graph.</p><figcaption>Engine writing test with different amounts of text already in memory. Zero means empty memory before the test. <a class="inline" href="https://github.com/steveseguin/b70-optimization-lab/blob/main/data/2026-10-15-lfm25-24b-a2b-package-check/sweep-fast.json">Test details on GitHub</a></figcaption></figure><details class="exact-values"><summary>Exact measured values</summary><div class="table-scroll"><table><thead><tr><th>Tokens already in memory</th><th>tok/s</th><th>Samples</th></tr></thead><tbody><tr><td>2048</td><td>117.505382</td><td>3</td></tr><tr><td>4096</td><td>113.776061</td><td>3</td></tr><tr><td>8192</td><td>106.585262</td><td>3</td></tr><tr><td>16384</td><td>94.890523</td><td>3</td></tr><tr><td>32768</td><td>78.131544</td><td>3</td></tr></tbody></table></div></details></details>
+<h2 id="multi-user">Many people at once</h2><p>Multi-user tests are not published yet for this setup.</p>
+<details class="profile"><summary>Speed estimates</summary>
+  <h2 id="projection">How much faster could this get? <span class="badge todo">No projection</span></h2>
+  <div class="placeholder"><p>This package's measured workload does not map cleanly onto a single model + compression + card-count shape, so no like-for-like projection is shown. The measured numbers above stand on their own.</p></div></details>
+
+  <div class="related">
+    <h2>Keep going</h2>
+    <div class="related-grid">
+      <a href="lfm-2-5-24b-a2b.html"><b>LFM2.5 24B A2B coverage</b><span>Variants, evidence, gaps, and recipes</span></a>
+      <a href="lfm25-26b-q8-b70.html"><b>LFM2.5 2.6B Q8_0 on one Intel Arc Pro B70</b><span>132 tok/s · llama.cpp SYCL</span></a>
+      <a href="../learn.html"><b>Learn</b><span>What sets these numbers</span></a>
+      <a href="../guides.html"><b>Recipes</b><span>Every package, filterable</span></a>
+      <a href="../index.html#contribute"><b>Contribute</b><span>Made it faster? Send it in</span></a>
+    </div>
+  </div>
+
+</div></div></main>
+
+<footer><div class="wrap">
+  <span>Unofficial lab, not affiliated with Intel. Measured numbers link to proof; projections are labeled.</span>
+  <span><a href="../learn.html">Learn</a> · <a href="../guides.html">Recipes</a> · <a href="https://github.com/steveseguin/b70-optimization-lab">GitHub</a> · <a href="https://mlbottleneck.com/" title="Physics-based LLM speed and memory planner for any GPU — same author">ML Bottleneck</a> · <a href="https://style-genome.com/" title="Design-system generator used to style this site — same author">Style Genome</a></span>
+</div></footer>
+<script defer src="../learn/assets/mlbottleneck-bridge.js?v=2bb3049222"></script>
+<script>
+(() => {
+  document.querySelectorAll("[data-copy-markdown]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const original = button.textContent; button.disabled = true; button.textContent = "Copying…";
+      try {
+        const response = await fetch(button.dataset.copyMarkdown, { cache: "no-store" });
+        if (!response.ok) throw new Error("fetch failed");
+        await navigator.clipboard.writeText(await response.text());
+        button.textContent = "Copied"; button.classList.add("copied");
+      } catch (error) { button.textContent = "Copy failed"; button.classList.add("failed"); }
+      window.setTimeout(() => { button.textContent = original; button.classList.remove("copied", "failed"); button.disabled = false; }, 1800);
+    });
+  });
+})();
+</script>
+</body>
+</html>

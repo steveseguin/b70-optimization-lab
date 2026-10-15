@@ -1,0 +1,253 @@
+{
+  "format": "neural-download-model-family-v1",
+  "id": "lfm-2-5-24b-a2b",
+  "primary_packet_id": "lfm25-24b-a2b-q8-b70",
+  "name": "LFM2.5 24B A2B",
+  "display_name": "LFM2.5 24B A2B",
+  "publisher": "Liquid AI",
+  "updated_at": "2026-10-15",
+  "summary": "Liquid AI's LFM2.5 24B mixture-of-experts: 64 experts with 4 used per token (about 2B parameters active), short convolutions in 30 of its 40 blocks and attention in 10. On one Arc Pro B70 in 8-bit form it runs at 111 tok/s with output identical to llama.cpp's plain path.",
+  "architecture": {
+    "class": "Lfm2MoeForCausalLM",
+    "model_type": "lfm2moe",
+    "type": "mixture of experts with hybrid convolution and attention",
+    "layers": 40,
+    "native_context_tokens": 131072,
+    "evidence": "repro/lfm25-24b-a2b-q8-b70/README.md"
+  },
+  "weight_revisions": [
+    {
+      "id": "lfm2.5-24b-a2b",
+      "label": "LFM2.5 24B A2B",
+      "role": "current measured weights",
+      "model_manifest": "repro/lfm25-24b-a2b-q8-b70/model-manifest.json"
+    }
+  ],
+  "transfer_scope": {
+    "status": "one measured weight revision on one card; other quantizations, runtimes and card counts need their own gates",
+    "transfers": [
+      "the package's model-file verification, build and one-card launch procedure",
+      "the exact fast-path kernels for Q8_0 weights on this llama.cpp base"
+    ],
+    "does_not_transfer": [
+      "Q8_0 speed or identity to another quantization",
+      "identical output with several users or the prompt cache on (not checked)",
+      "the raw llama-bench depth curve to HTTP serving throughput",
+      "the 32K measured depth trend to the model's unmeasured 131K limit",
+      "multi-card scaling"
+    ],
+    "evidence": "repro/lfm25-24b-a2b-q8-b70/README.md"
+  },
+  "model_signals": {
+    "b70_fit": {
+      "band": "high",
+      "scope": "one 32 GiB B70",
+      "basis": "The Q8_0 file is 25.5 GB; with a 32K F16 cache it runs on one card (measured).",
+      "reviewed_at": "2026-10-15"
+    },
+    "quality_evidence": {
+      "band": "scoped-deployment-evidence",
+      "scope": "objective canaries and token-identity with the plain SYCL reference path; not a cross-model capability score",
+      "evidence": [
+        "repro/lfm25-24b-a2b-q8-b70/README.md",
+        "data/2026-10-15-lfm25-24b-a2b-package-check/summary.json"
+      ]
+    },
+    "popularity": {
+      "state": "not-scored",
+      "reason": "No dated family-level popularity snapshot is stored."
+    }
+  },
+  "dimensions": {
+    "weight_revision": [
+      "lfm2.5-24b-a2b"
+    ],
+    "weight_quantization": [
+      "Q8_0"
+    ],
+    "runtime": [
+      "llama.cpp SYCL + lab patch"
+    ],
+    "tp": [
+      1
+    ],
+    "mtp": [
+      0
+    ],
+    "active_context_tokens": [
+      2048,
+      4096,
+      8192,
+      16384,
+      32768
+    ],
+    "configured_max_context_tokens": [
+      32768
+    ],
+    "graph": [
+      "not separately varied"
+    ],
+    "kv": [
+      "f16"
+    ]
+  },
+  "packets": [
+    {
+      "id": "lfm25-24b-a2b-q8-b70",
+      "label": "LFM2.5 24B A2B Q8_0 · TP1 · exact fast path",
+      "revision": "lfm2.5-24b-a2b",
+      "quantization": "Q8_0",
+      "runtime": "llama.cpp SYCL + lab patch",
+      "cards": 1,
+      "status": "candidate",
+      "evidence_level": "B70-verified",
+      "coverage": [
+        "decode",
+        "prefill",
+        "active context through 32K",
+        "quality",
+        "exact output"
+      ],
+      "manifest": "packages/lfm25-24b-a2b-q8-b70/package.json"
+    }
+  ],
+  "run_measurements": [
+    {
+      "id": "lfm25-24b-q8-tp1-serving-exact",
+      "state": "lab-measured",
+      "revision": "lfm2.5-24b-a2b",
+      "variant": "Q8_0",
+      "runtime": "llama.cpp SYCL c926ad09857517978575d6a74d225b463f7417a0 + lab patch 0ec61797",
+      "config": {
+        "tp": 1,
+        "mtp": 0,
+        "graph": "not separately varied",
+        "kv": "f16",
+        "configured_max_context_tokens": 32768
+      },
+      "workload": "two fresh servers; complete 12-prompt/six-class suite; 512-token cap; median within prompt class then median across class medians; 100-event/99-interval decode window; target-only; cache-zero",
+      "metrics": {
+        "decode_tok_s": [
+          111.30933059161632,
+          111.33815006047084
+        ]
+      },
+      "quality": "both suite gates and the canaries passed; cached_tokens=0 for every request; every token array identical to the plain SYCL reference path (12/12 on both servers) and across servers",
+      "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check/summary.json"
+    }
+  ],
+  "series_measurements": [
+    {
+      "id": "lfm25-24b-q8-tp1-f16-depth-sweep",
+      "state": "lab-measured",
+      "revision": "lfm2.5-24b-a2b",
+      "variant": "Q8_0",
+      "runtime": "llama.cpp bench c926ad0 + lab patch (fast path)",
+      "config": {
+        "tp": 1,
+        "mtp": 0,
+        "graph": "not separately varied",
+        "kv": "f16"
+      },
+      "workload": "raw llama-bench pp2048 plus tg128 at each existing-context depth; FlashAttention on; three repetitions",
+      "points": [
+        {
+          "x": 2048,
+          "prefill_tok_s": 1913.84885,
+          "decode_tok_s": 117.505382
+        },
+        {
+          "x": 4096,
+          "prefill_tok_s": 1353.636197,
+          "decode_tok_s": 113.776061
+        },
+        {
+          "x": 8192,
+          "prefill_tok_s": 1219.082381,
+          "decode_tok_s": 106.585262
+        },
+        {
+          "x": 16384,
+          "prefill_tok_s": 977.599302,
+          "decode_tok_s": 94.890523
+        },
+        {
+          "x": 32768,
+          "prefill_tok_s": 685.402789,
+          "decode_tok_s": 78.131544
+        }
+      ],
+      "quality": "raw engine shape characterization, not a language-quality gate or HTTP serving result",
+      "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check/sweep-fast.json"
+    }
+  ],
+  "views": [
+    {
+      "id": "lfm24-serving-operating-point",
+      "title": "Serving repeat",
+      "subtitle": "Q8_0 · TP1 · MTP0 · 32K configured · f16 KV · full 12-prompt/six-class cache-zero suite",
+      "x_label": "tensor parallel cards",
+      "discrete": true,
+      "metrics": [
+        "decode_tok_s"
+      ],
+      "series": [
+        {
+          "label": "fresh-server repeats",
+          "measurement_ids": [
+            "lfm25-24b-q8-tp1-serving-exact"
+          ],
+          "x_from": "config.tp"
+        }
+      ]
+    },
+    {
+      "id": "lfm24-context-depth",
+      "title": "Active context depth",
+      "subtitle": "Q8_0 · TP1 · f16 KV · raw llama-bench pp2048/tg128; raw engine rates are not serving medians",
+      "x_label": "existing context tokens",
+      "metrics": [
+        "decode_tok_s",
+        "prefill_tok_s"
+      ],
+      "series": [
+        {
+          "label": "Q8_0, exact fast path",
+          "measurement_ids": [
+            "lfm25-24b-q8-tp1-f16-depth-sweep"
+          ]
+        }
+      ]
+    }
+  ],
+  "coverage_views": [
+    {
+      "id": "lfm24-q8-target-only",
+      "label": "Q8_0 · target only",
+      "fixed": "LFM2.5 24B A2B Q8_0 · llama.cpp SYCL + lab patch · f16 KV · no speculation. TP1 has serving and raw-depth evidence; TP2 has not been measured.",
+      "decision_note": "Missing topologies are unknown, not zero or unsupported.",
+      "evidence": "repro/lfm25-24b-a2b-q8-b70/README.md",
+      "rows": [
+        0
+      ],
+      "columns": [
+        1,
+        2
+      ],
+      "cells": {
+        "0:1": {
+          "state": "lab-measured",
+          "label": "serving + depth",
+          "evidence_id": "lfm25-24b-q8-tp1-serving-exact"
+        },
+        "0:2": {
+          "state": "missing",
+          "label": "not measured",
+          "reason": "No TP2 LFM2.5 24B result is stored."
+        }
+      }
+    }
+  ],
+  "family_closures": [],
+  "estimates": []
+}
