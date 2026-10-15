@@ -139,7 +139,8 @@ the conventional 99-interval field.
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, lossless MTP1, VRAM headroom | 4x Arc Pro B70 | **27.048435 conventional interval median (class-balanced; 27.526174 all-prompt median)**, fixed cold realistic gate, one speculative token with every output pin equal to the MTP0 rows (twelve suite rows, exact-2K and exact-4K authorities) | [`cmtp5u0ip02eln701lntsl2ns`](https://www.localmaxxing.com/runs/cmtp5u0ip02eln701lntsl2ns) | [packet](qwen38-flash-next-fp8-b70/README.md); [suite result](../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-realistic-suite-v1-result.json); [battery](../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a190-fresh-repeat-deterministic-summary.json) |
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, MTP0, both reference Triton kernels + W13-N64 map | 4x Arc Pro B70 | **34.495292 conventional interval median (class-balanced)**, fixed cold realistic gate, no speculation; two cold suites (34.510128, 34.495292), every row above every row of the record it supersedes; outputs bit-identical across three servers | [`cmts8zca50032ps01e0ddqm18`](https://www.localmaxxing.com/runs/cmts8zca50032ps01e0ddqm18) | [guide](../repro/qwen38-flash-next-fp8-tp4-mtp0-w13n64-b70-34tps-20260908/), [attestation](../experiments/qwen38-flash-next-fp8-b70/data/20260908-tp4-mtp0-a326-w13n64-promotion-attestation.json) |
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, lossless MTP1, exact serial GDN rows in the kernel extension | 4x Arc Pro B70 | **46.854250 conventional interval median (class-balanced)**, fixed cold realistic gate, one speculative token with every output pin equal to the 37.83 line (12/12 suite outputs bit-identical) | [`cmtzask41000nlq011f16bpbc`](https://www.localmaxxing.com/runs/cmtzask41000nlq011f16bpbc) | [packet](qwen38-flash-next-fp8-b70/README.md) |
-| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 24/24 split with draft on rank 0 | 2x Arc Pro B70 | **38.157157 conventional interval median (class-balanced; 38.004151 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized same scope as 2026-10-13; strict 512-cap gate false and declared), 12/12 requests bit-exact vs arithmetic-v2 oracles; A-B-A confirmation 38.217/38.214 vs interleaved packet-44 control 37.794 all-prompt. Supersedes `cmv6pugme0020oa01fjrho6nx` (37.856264) | [`cmv9j70v100v1le01q9jxyx2r`](https://www.localmaxxing.com/runs/cmv9j70v100v1le01q9jxyx2r) | [packet](../experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-result-packet.md) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 23/25 split with draft on rank 1 | 2x Arc Pro B70 | **39.422009 conventional interval median (class-balanced; 39.269034 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized same scope as 2026-10-13; strict 512-cap gate false and declared), 12/12 requests bit-exact vs arithmetic-v2 oracles; confirmation 39.386 (cards 0-1, run 2) and 39.378 (cards 2-3). Supersedes `cmv9j70v100v1le01q9jxyx2r` (38.157157) | [`cmv9wjmtj013gle01v8k1yg4v`](https://www.localmaxxing.com/runs/cmv9wjmtj013gle01v8k1yg4v) | [packet](../experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-result-packet.md) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 24/24 split with draft on rank 0 | 2x Arc Pro B70 | **38.157157 conventional interval median (class-balanced; 38.004151 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized same scope as 2026-10-13; strict 512-cap gate false and declared), 12/12 requests bit-exact vs arithmetic-v2 oracles; A-B-A confirmation 38.217/38.214 vs interleaved packet-44 control 37.794 all-prompt. Supersedes `cmv6pugme0020oa01fjrho6nx` (37.856264); superseded 2026-10-15 by `cmv9wjmtj013gle01v8k1yg4v`; retained | [`cmv9j70v100v1le01q9jxyx2r`](https://www.localmaxxing.com/runs/cmv9j70v100v1le01q9jxyx2r) | [packet](../experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s24dr0-result-packet.md) |
 | Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified | 2x Arc Pro B70 | **37.856264 conventional interval median (class-balanced; 37.766554 all-prompt median)**, fixed cold realistic gate at 4,096-position context, 128 tokens per prompt, 12/12 requests bit-exact vs arithmetic-v2 CPU oracles. Superseded 2026-10-15 by `cmv9j70v100v1le01q9jxyx2r`; retained | [`cmv6pugme0020oa01fjrho6nx`](https://www.localmaxxing.com/runs/cmv6pugme0020oa01fjrho6nx) | [packet](../experiments/own-xpu-runtime/stage2/packet44-context/receipts-cards01-20261013-c4096/README.md); [suite result](../experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-realistic-suite-v1-result.json); [attestation](../experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261013-own-rt-iq3-tp2-c4096-promotion-attestation.json) |
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, lossless MTP1, both reference Triton kernels | 4x Arc Pro B70 | **37.825654 conventional interval median (class-balanced)**, fixed cold realistic gate, one speculative token with every output pin equal to the MTP0 rows | [`cmtrmp3mj001fps01thcathd0`](https://www.localmaxxing.com/runs/cmtrmp3mj001fps01thcathd0) | [guide](../repro/qwen38-flash-next-fp8-tp4-mtp1-qsafused-b70-38tps-20260907/) |
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, MTP0, both reference Triton kernels | 4x Arc Pro B70 | **33.797067 conventional interval median (class-balanced)**, fixed cold realistic gate, no speculation. Superseded 2026-09-08 by `cmts8zca50032ps01e0ddqm18`; retained | [`cmtrmp37v001bps01a7fi46nf`](https://www.localmaxxing.com/runs/cmtrmp37v001bps01a7fi46nf) | [attestation](../experiments/qwen38-flash-next-fp8-b70/data/20260907-tp4-mtp0-a301-promotion-attestation.json) |
@@ -930,6 +931,38 @@ pairs under the recipe contract are 191.37/191.41 (4B), 123.22/123.86 (9B) and 1
 approved figures, so no re-submission was made; the R304 attestations and queue payloads are in each lane's `data/`
 (`*-20260912-r304-strict-result.json`, `localmaxxing-*-r304-strict-20260913.queue.json`) should a resubmission ever be
 wanted.
+
+### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, TP2, packet 45 SPEED6: 23/25 split, draft on rank 1 (2026-10-15)
+
+Submitted 2026-10-15 after a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmv9wjmtj013gle01v8k1yg4v`, status APPROVED. It supersedes `cmv9j70v100v1le01q9jxyx2r` (38.157157).
+
+Identity:
+- runtime: packet 45 SPEED6 `34c62b433` (seal build receipt `9b6fa7f3…`, device binary `a68963d2…`);
+- placement: 23/25 target-layer split with the official one-token MTP draft head on rank 1;
+- memory: right-sized scratch with a pre-launch 30 GiB per-card arena admission (85.22 MiB headroom on rank 1);
+- speculative state: write-set-exact rollback snapshot with confirmed-redo restore reduction;
+- kernels and controller: draft events profiled once, K2-selected kernels, native controller;
+- context capacity: 4,096 positions (32K refused for this split).
+
+Scope: the same fixed realistic 12-prompt suite, cold, 128 tokens each. This is the owner-authorized 128-token scope; the strict 512-cap gate is declared false, and the helper exception is pinned to the SPEED3 and SPEED6 identities only. Exactness: 12/12 bit-exact vs the arithmetic-v2 oracles. The device suite windows (W2m, WS, WSs, WS128x) are the exactness authority under the seal-6 amendment.
+
+Headline: run 1 on cards 0-1, **39.422009 tok/s** class-balanced (all-prompt 39.269034).
+
+Confirmation:
+
+| Run | Class-balanced | All-prompt |
+|---|---:|---:|
+| Run 2, cards 0-1 (fresh process) | 39.386 | 39.219 |
+| Replicate, cards 2-3 | 39.378 | 39.199 |
+| Interleaved packet-44 control | | 37.211 (8/12 requests retained; its window was refused at packet 44's 6 GB build cap after device execution) |
+
+The planned run 3 did not execute.
+
+Payload queue: `experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-localmaxxing-payload-queue.json`. Receipt: `data/localmaxxing-responses/qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-mtp1-c4096-s23dr1-realistic-20261015.json`.
+
+| label | run id | c | headline | notes |
+| --- | --- | ---: | ---: | --- |
+| `qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-mtp1-c4096-s23dr1-realistic-20261015` | `cmv9wjmtj013gle01v8k1yg4v` | 1 | **39.422009 class-balanced median of prompt-class medians, 99 intervals after TTFT** | lab's own runtime; engineName `custom`; 2x B70; target-verified MTP1; 23/25 split, draft rank 1 |
 
 ### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, TP2, packet 45 SPEED3: 24/24 split, draft on rank 0 (2026-10-15)
 

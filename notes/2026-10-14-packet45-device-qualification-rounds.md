@@ -203,6 +203,21 @@ On the SPEED5 build (`887a0bbbe`), 24/24 with draft rank 1 passed K0-WSs on both
 
 The two placements trade places across the two metrics, and every gap is about 0.5% or less. That is parity, not a real improvement, so nothing new was submitted; the record stays `cmv9j70v100v1le01q9jxyx2r` at 38.157157. The next real lever is memory: 23/25 with draft rank 1 (forecast 39.6) needs the per-card arena gap closed. A read-only memory-reduction design is in progress (`patches/packet45-speed6-memory.patch` and `notes/2026-10-15-p45-memory-reduction-design.md`).
 
+## Speed repair 6 (`34c62b433`): NEW RECORD 39.422009, submitted 2026-10-15
+
+Changes: the memory patch (`patches/packet45-speed6-memory.patch`, design `e108f96f1`). Window admission now applies the 30 GiB per-card arena cap before device contact, and scratch is right-sized from proven peaks. With that, 23/25 with draft rank 1 admits at 4K (rank-1 arena headroom 85.22 MiB; 32K refused). Chains K0-WSs passed on both pairs, including W2m, which refused under SPEED5. WS128 runs were qualifying, 12/12 exact, acceptance 0.791:
+
+| Run | Class-balanced | All-prompt | Hit | Miss |
+|---|---:|---:|---:|---:|
+| Cards 0-1, run 1 (headline) | **39.422009** | 39.269034 | 22.20 | 38.72 |
+| Cards 0-1, run 2 | 39.3856 | 39.2187 | | |
+| Cards 2-3 | 39.3778 | 39.1990 | 22.12 | 38.91 |
+| Interleaved p44 control (8/12 requests; refused at packet 44's 6 GB build cap) | | 37.2110 | | |
+
+The miss cycle is now below p44's (39.33 ms). Submitted run 1: localmaxxing `cmv9wjmtj013gle01v8k1yg4v`, APPROVED. It supersedes `cmv9j70v100v1le01q9jxyx2r` (38.157157). The submit-helper scope exception is pinned to the SPEED3 and SPEED6 identities (`0cec7b907`, 44 tests).
+
+Next levers: on hits, rank 0 is the busier card (22.7 ms against 21.7 ms on rank 1); further rebalancing needs memory beyond the 85 MiB rank-1 headroom; packet 44's 6 GB build cap blocks further p44 controls until its old runs are cleared.
+
 ## Relaunch procedure (after fix 5, and audit 6 if it reseals)
 
 1. Confirm that the runner is not running and that `queue/STOP` holds the halt reason.
