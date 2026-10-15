@@ -218,6 +218,12 @@ The miss cycle is now below p44's (39.33 ms). Submitted run 1: localmaxxing `cmv
 
 Next levers: on hits, rank 0 is the busier card (22.7 ms against 21.7 ms on rank 1); further rebalancing needs memory beyond the 85 MiB rank-1 headroom; packet 44's 6 GB build cap blocks further p44 controls until its old runs are cleared.
 
+## Speed repair 7 (`4af439d0e`) launched; speed4/speed5 chains archived (2026-10-15 19:46)
+
+SPEED7 is lever 1 of `notes/2026-10-15-p45-after-speed6-levers.md`: size-aware 8:1 snapshot batch sizing. Copied bytes, guards and admission are unchanged. For 23/25 dr1, padded grid slots drop from 183.3 M to 54.0 M per capture or full restore and from 91.0 M to 21.5 M per redo restore. Forecast 39.98 tok/s. It runs as 23/25 with draft rank 1 on both pairs (queue items 1020-1025).
+
+Root headroom: the unreferenced SPEED4/SPEED5 chain directories (4 × 896 MB, 166,760 files) were archived to `/mnt/usb-models/own-xpu-runtime-results/packet45-speed4-speed5-chains-20261015.tar.gz` (1,983,366,722 bytes, sha256 `fbc7362e564207e33aba7c2245b0f97620bd4649384b2a0c69106900834ae661`, member count verified) and removed from `build/`. Root free went from 23.14 to 26.90 GB. SPEED3 and SPEED6 chain directories (the evidence for the two submissions) stay in place.
+
 ## Relaunch procedure (after fix 5, and audit 6 if it reseals)
 
 1. Confirm that the runner is not running and that `queue/STOP` holds the halt reason.
