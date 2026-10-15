@@ -237,6 +237,18 @@ This is parity with SPEED6 (39.422 / 39.386 / 39.378). The instrumented WS hit a
 
 Lever 2 (expert kernels, `patches/packet45-speed8-expert-kernels.patch`, unapplied) has a calibrated forecast of +0.08 ms per hit, about 39.57, and zero is plausible. It was deferred as noise-level for a roughly 1.5 h GPU round. A read-only roofline and structural-lever study is in progress (`notes/2026-10-15-p45-roofline-and-structural-levers.md`).
 
+## Where packet 45 stands after the record (2026-10-15 21:10)
+
+Read-only studies after SPEED7:
+
+| Study | Commit | Finding |
+|---|---|---|
+| Roofline and structural levers | `a1fe7654e` | Large dense kernels at 86-93% of the measured 590-600 GB/s; expert kernels at 16-26%, costing 4.0/4.3 ms per rank-0/rank-1 half against floors of 0.76/0.82 ms. Memory-only ceiling about 115 tok/s. |
+| Expert-kernel diagnosis | `c76a5e110` | The expert gap is dequantization, lookup and reduction work. Exact (bytes_equal) variants recover at most about 0.1-0.16 ms per half (IQ4 fused bank/vector best). Noise-level, not pursued. |
+| Within-layer split, step 1 | `97667ab14` | REJECT: at least three dependent cross-card exchanges per layer (12,288 + 20,480 + 51,200 B plus route/status); the ordered-copy projection is 25.64 ms against the 23.5-24 ms budget. |
+
+Remaining structural candidate: k=2 drafting with the official MTP head. Its second-draft acceptance is unmeasured, and consecutive one-step acceptance is not equivalent. A diagnostic-only acceptance probe is the decisive cheap experiment.
+
 ## Relaunch procedure (after fix 5, and audit 6 if it reseals)
 
 1. Confirm that the runner is not running and that `queue/STOP` holds the halt reason.
