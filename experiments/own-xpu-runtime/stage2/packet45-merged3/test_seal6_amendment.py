@@ -6,6 +6,36 @@ import seal6_amendment as a
 sys.path.insert(0,str(a.ROOT/'scripts'))
 from promotion_evidence import validate_packet45_device_evidence
 class Amendment(unittest.TestCase):
+ def test_speed7_scope(self):
+  from speed7_qualification import PINS,before
+  for n in PINS:
+   self.assertTrue(a.source_matches(a.P/n,before()['sources'][str((a.P/n).relative_to(a.ROOT))]))
+   self.assertFalse(a.source_matches(a.P/n,'0'*64))
+  row=a.verify()['speed7_extension']
+  self.assertEqual(row['copy_phases'],96)
+  self.assertEqual(row['additional_device_allocation_bytes'],0)
+ def speed7_mutation(self,change):
+  import speed7_copy_gate as s
+  original=s.json.loads
+  def mutate(raw,*args,**kwargs):
+   row=original(raw,*args,**kwargs)
+   if isinstance(row,dict) and row.get('production_rows')==24 and row.get('copy_phases')==96:change(row)
+   return row
+  with patch.object(s.json,'loads',side_effect=mutate),self.assertRaises(AssertionError):s.verify()
+ def test_speed7_dropped_production_extent(self):
+  import speed7_copy_gate as s
+  original=s.json.loads
+  def mutate(raw,*args,**kwargs):
+   row=original(raw,*args,**kwargs)
+   if isinstance(row,list) and len(row)==24 and isinstance(row[0],dict) and 'extents' in row[0]:row[0]['extents'].pop()
+   return row
+  with patch.object(s.json,'loads',side_effect=mutate),self.assertRaises(AssertionError):s.verify()
+ def test_speed7_payload_changed(self):
+  self.speed7_mutation(lambda r:r['rows'][0]['phases']['capture'].__setitem__('bytes',1))
+ def test_speed7_missing_phase(self):
+  self.speed7_mutation(lambda r:r['rows'][0]['phases'].pop('deferred_restore'))
+ def test_speed7_grid_changed(self):
+  self.speed7_mutation(lambda r:r['rows'][0]['phases']['capture'].__setitem__('padded_byte_slots',1))
  def test_speed6_scope(self):
   from speed6_qualification import PINS,before
   for n in PINS:

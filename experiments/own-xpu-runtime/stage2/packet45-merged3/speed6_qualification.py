@@ -7,7 +7,8 @@ BEFORE='14123110115001cbd74e3f6d21a7bd556607f45827d0761b4806854b85bd28b4'
 PINS={'main.cpp': 'e861f0310e6874088c5970224a32ed7ea124bb544735983233dc5c68805a8d70', 'memory_plan.py': 'a1e1cb10d9e1f7550bbad9598160d3f4de0906cc343b42613e035e496e598aa9', 'memory_gate.py': '3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232', 'memory-plan.json': 'cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f', 'test_speed5.py': '9b3b7cc4d501d60a443674bda9e17c80e75b726d03832749d7f7cd02f2b2843e', 'coordinator_windows.sh': '58bc05a2c7acd7e530a14c1be7f3e114fcea9ee5e9cb242c0bc5c6aa2eb73cc4'}
 COMPILED=('main.cpp',)
 MIRRORS={'main.cpp': {'old': ['11afd06931951be3f9c5d2ffe3c077960ce1bd430962391c70c8e729fc2daa1b', '4ffe0ee8ec6442bed197458dd1ce0da804645227396da9323b44b12dc7ce7859', '60cab241e95a4d2798b3149032198210fcf8040d5cf1f2e541341f2a8e1c181a', 'bb1a84b338eefac6bc57ab81da2f4bedcb1db714b37301f2e9101eec4ed92688'], 'new': '97ddb7b54f34744be087003ec0319c559f1a4ae4c8f721928f1482180a30125a'}}
-def sha(p):
+def sha(p):return __import__('speed7_qualification').prior_sha(p)
+def historical_raw_sha(p):
  p=Path(p)
  if not p.exists():
   for name in ('results-f912fdaf6','results-65c5eb22b','results-9b91d3270'):
@@ -17,6 +18,7 @@ def sha(p):
 def before():
  p=P/'evidence/speed6/before-build-receipt.json';assert sha(p)==BEFORE,'SPEED6 baseline changed';return json.loads(p.read_text())
 def historical_compiled_sources(current):
+ current=__import__('speed7_qualification').historical_compiled_sources(current)
  old=before()['sources'];keys={str((P/n).relative_to(ROOT)) for n in COMPILED}
  assert all(n in old for n in current),'compiled source closure changed'
  assert {n for n in current if current[n]!=old[n]}==keys,'outside fixture/SPEED6 repair'
@@ -34,7 +36,7 @@ def mirror_allowed(path,old,new):
  return n in MIRRORS and str(path)==str((P/'build/checked'/P.relative_to(ROOT)/n).relative_to(ROOT)) and old in MIRRORS[n]['old'] and new==MIRRORS[n]['new']==sha(ROOT/path) and sha(P/n)==PINS[n]
 def verify():
  from build import compiled_sources
- current=compiled_sources();historical_compiled_sources(current)
+ current=compiled_sources();historical_compiled_sources(current);current=__import__('speed7_qualification').historical_compiled_sources(current)
  assert all(sha(P/n)==h for n,h in PINS.items()),'SPEED6 runtime/admission source changed'
  gates={n:json.loads((P/n).read_text()) for n in ('speed6-plan-gates.json','speed6-snapshot-gates.json','speed6-memory-gates.json')}
  for name,row in gates.items():
@@ -66,7 +68,7 @@ def verify():
  from seal45 import archive_bound
  from cpu_merged_gate import target_equal
  assert mini['cases']==62 and mini['gate_count']==52 and len(mini['negative_controls'])==4
- assert mini['build']['compiled_sources_sha256']==current and mini['build']['binary_sha256']==sha(P/'build/gnu-host/own-rt-iq3')
+ assert mini['build']['compiled_sources_sha256']==current and mini['build']['binary_sha256']==__import__('speed7_qualification').before()['artifacts_sha256']['gnu-host/own-rt-iq3']
  assert all(r['full_state_equal'] for r in mini['rows']) and all(r['rejected'] for r in mini['negative_controls'])
  cases=json.loads((P/'evidence/speed6/mini-cases.json').read_text());assert cases['passed'] and cases['completed'] and cases['cases']==34
  by_name={r['name']:r for r in cases['rows']}

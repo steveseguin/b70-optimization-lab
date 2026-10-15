@@ -11,7 +11,12 @@ struct SnapshotBatch final:integrated::HostOperation {
 struct SnapshotBatch final:ownrt::SyclOperation {
 #endif
  struct Item {uint8_t* dst=nullptr;const uint8_t* src=nullptr;size_t bytes=0;};
- static constexpr size_t width=32,limit=128ull*1024*1024;
+ static constexpr size_t width=32,limit=128ull*1024*1024,size_ratio=8;
+ // Sorted extents: bound padding without changing a single copied byte.
+ // minimum and bytes have already passed CopyEngine's nonzero/128 MiB guard.
+ bool accepts(size_t bytes,size_t minimum)const {
+  return count<width&&bytes<=limit-total&&(!count||bytes<=minimum*size_ratio);
+ }
  std::array<Item,width> items{};size_t count=0,maximum=0,total=0;
 #ifdef OWN_RT_HOST_ONLY
  void run(std::span<void*const>)const override {
@@ -158,7 +163,7 @@ class SpeculativeImage {
    SnapshotBatch batch;std::vector<Allocation> ids;
    size_t start=cursor;
    while(cursor<order.size()&&batch.count<SnapshotBatch::width){
-    size_t i=order[cursor],bytes=lengths[i];if(bytes>SnapshotBatch::limit-batch.total)break;
+    size_t i=order[cursor],bytes=lengths[i];if(!batch.accepts(bytes,lengths[order[start]]))break;
     const auto& item=checked[i];require(item.ids.size()==2&&item.pointers.size()==2,"snapshot copy descriptor");
     batch.items[batch.count++]={static_cast<uint8_t*>(item.pointers[0]),static_cast<const uint8_t*>(item.pointers[1]),bytes};
     batch.maximum=std::max(batch.maximum,bytes);batch.total+=bytes;

@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "mode": "gnu-host",
+  "targets": [
+    "own-rt-iq3",
+    "nongemv-fixtures",
+    "k2-fixtures",
+    "p33-linked-fixtures",
+    "p39-merged-fixtures"
+  ],
+  "commands": [
+    [
+      "cmake",
+      "-S",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/gnu-host",
+      "-DCMAKE_CXX_COMPILER=/usr/bin/g++",
+      "-DOWN_RT_HOST_ONLY=ON",
+      "-DOWN_RT_SANITIZE=OFF"
+    ],
+    [
+      "cmake",
+      "--build",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/gnu-host",
+      "--target",
+      "own-rt-iq3",
+      "nongemv-fixtures",
+      "k2-fixtures",
+      "p33-linked-fixtures",
+      "p39-merged-fixtures",
+      "-j2"
+    ]
+  ],
+  "seconds": 33.46711006696569,
+  "device_executed": false,
+  "receipt_sha256": "0cd8b58b4a2e4283037b3a70a15673ae06b256a0f3349f6896da700f3db80243"
+}
