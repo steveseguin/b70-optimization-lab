@@ -2688,3 +2688,29 @@ graded by the task's own verifier exactly as freeagent is. freeagent in the same
   (stops Gemma, starts the server, schedules the queue, stops the server, puts Gemma back on `throughput`). Its
   scheduler, result lines and watchdog were dry-run on the CPU against the scripted model (`DRY=1`, 2026-10-15
   00:53-01:06): sequential runs, two at once, and a forced watchdog stop all behaved.
+
+### Campaign 20 first launch stopped after 20 min; 20b registered 2026-10-15 01:36 before its run (launched 01:37)
+
+**What happened (01:08-01:29).** The registration above was wrong on one point: the campaign-19 server runs
+`--max-num-seqs 1` (the full 262K window), so it serves one request at a time; "up to three agents at once" only
+queued them behind each other. Goose's second request (01:11:54; no `max_tokens`, no sampling fields, so the model's
+defaults: temperature 1.0, top-k 20, top-p 0.95) then produced a reply that ran for 16 min at 18-24 tok/s with **zero
+accepted draft tokens** in every 10 s interval (1,060 s; the draft only knows the 65K most common tokens, so the reply
+had drifted into rare-token junk; without `max_tokens` vLLM allows up to the 262K window, i.e. hours). freeagent's
+24th request waited behind it, hit freeagent's 900 s client timeout, and freeagent ended with 6 tickets fetched, 5/40
+fixed, audit 0/7 (the control result is therefore void). Stopped at 01:29 (containers removed, proxies stopped, the
+in-flight request aborted; server kept for diagnosis). None of the 22 earlier campaign servers' logs has a
+zero-acceptance stretch of even 30 s.
+
+**Diagnosis so far.** Goose alone with every request body kept (`c20/diag/`, 01:30-01:34, 74 requests in 4 min):
+its second request took 1.5 s and every reply was normal. So the junk reply is not a fixed property of Goose's
+request; with temperature 1.0 and no length limit a long reply can drift and never stop. Not yet known whether the
+server contributed (no body or output of the bad request was kept). Follow-up after 20b: replay any captured runaway
+body several times (default sampling, then fixed seeds) against the same server.
+
+**Campaign 20b, changes only:** one agent at a time; every request body kept (`TAP=full`); 60 min limit per agent
+(each one now has the server to itself; campaign 19's control took 31 min); a runaway stop: if the server has
+logged drafting with zero accepted draft tokens for 300 s, the running agent is stopped and the event recorded in
+`runaway-stops.txt` (its score stands as graded, marked "runaway stop"). Same agents, order, proxy, server settings
+and expectations as registered above, except that a 40/40 control is expected in about 30 min. Output
+`c20b/`. Worst case 13 h; expected ~5-7 h (agents that stop early take minutes).
