@@ -24,7 +24,7 @@ SLOT=${2:-0}
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 TASK=${TASK:-/mnt/fast-ai/bench-results/context-longrun-20261012/client-repair2/tasks/repair-n40-s2x}
 ROOT=${PLUMB_ROOT:-/mnt/fast-ai/bench-results/agentbench-plumbing-20261014}
-CTXKEEPER=${CTXKEEPER:-/mnt/fast-ai/venvs/ctxkeeper-1.0.0/bin/ctxkeeper}
+CTXKEEPER=${CTXKEEPER:-/mnt/fast-ai/venvs/ctxkeeper-1.0.1-final/bin/ctxkeeper}
 FP=$((18310 + SLOT)); KP=$((18320 + SLOT))
 MODE=${MODE:-basic}
 TAG=${RUN_TAG:+-$RUN_TAG}          # RUN_TAG=x keeps this run apart: results in AGENT[-MODE]-x/
