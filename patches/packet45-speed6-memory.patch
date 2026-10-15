@@ -1,0 +1,1059 @@
+diff --git a/experiments/own-xpu-runtime/stage2/packet45-merged3/main.cpp b/experiments/own-xpu-runtime/stage2/packet45-merged3/main.cpp
+--- a/experiments/own-xpu-runtime/stage2/packet45-merged3/main.cpp
++++ b/experiments/own-xpu-runtime/stage2/packet45-merged3/main.cpp
+@@ -530,6 +530,7 @@
+   size_t n;
+   Scalar type;
+ };
++static size_t target_scratch_bytes(const flash::Plan&,const Options&);
+ class Engine final : public flash::Backend {
+ public:
+   Weights &w;
+@@ -820,6 +821,8 @@
+     fp32_sources[0]=0;fp32_extents[0]=0;
+   }
+   void initialize() {
++    // Validate the allocation policy before constructing any device/backend.
++    const size_t operator_scratch_bytes=target_scratch_bytes(p,a);
+     owned_bytes.resize(a.cards);
+ #ifdef OWN_RT_HOST_ONLY
+     devices.push_back(std::make_unique<ownrt::Device>(std::make_unique<Host>()));
+@@ -851,7 +854,7 @@
+                               Memory::pinned));
+       ropes.push_back(allocate(c,"rope-v2",rope_constants::bytes,Category::weights,Lifetime::process));
+       upload(c,ropes[c],0,rope_bytes.data(),rope_bytes.size());
+-      scratch.push_back(allocate(c, "operator-scratch", 256ull * 1024 * 1024,
++      scratch.push_back(allocate(c, "operator-scratch", operator_scratch_bytes,
+                                  Category::scratch, Lifetime::transaction));
+     }
+     // Some dispatches do not touch controls/compact routes, and kernels may
+@@ -1372,7 +1375,7 @@
+   o << "],\"expert_placement\":\"all experts belong to their layer owner; none "
+        "pruned\",\"one_card_full_model\":\"stream one layer at a "
+        "time\",\"capture\":false,\"memory_plan\":{";
+-  size_t extra=174080*4+rope_constants::bytes+256ull*1024*1024+8*1024*1024+p.g.top*sizeof(iq3::Route)+p.g.h*2+4+12+2*24*(p.g.budget+3)*4+48*4*p.g.h*2;
++  size_t extra=174080*4+rope_constants::bytes+target_scratch_bytes(p,a)+8*1024*1024+p.g.top*sizeof(iq3::Route)+p.g.h*2+4+12+2*24*(p.g.budget+3)*4+48*4*p.g.h*2;
+   std::vector<size_t> base(cards,extra),resident(cards,0);
+   for(const auto& b:p.buffers)for(int c=0;c<cards;++c)
+     if(b.card==-1 || b.card==c)base[c]+=count(b.shape)*flash::scalar_bytes(b.type);
+@@ -1413,6 +1416,25 @@
+ }
+ 
+ #include "rank.hpp"
++
++// SPEED6_SCRATCH_POLICY_BEGIN
++// Scope the footprint reduction to the previously refused split23/dr1 arm.
++// The reference interpreter advertises a 64M-float pool: never shrink it.
++// Unknown writers fail closed, rather than silently using an understated ledger.
++static size_t target_scratch_bytes(const flash::Plan& p,const Options& a) {
++ constexpr size_t legacy=256ull*1024*1024, bounded=8ull*1024*1024;
++ if(a.target_split!=23||a.draft_rank!=1||a.nongemv!="parallel"||
++    (!a.mini&&a.context!=4096))return legacy;
++ require((a.mini||p.g.h==2560)&&p.g.context==a.context&&
++         p.g.context>0&&p.g.context<=32768&&p.g.budget>0&&p.g.budget<=2048,
++         "unproved bounded scratch geometry");
++ const size_t required=pipeline::SnapshotWriteSet::scratch(p,legacy,true);
++ require(!p.launches.empty()&&required<=bounded,"unproved bounded scratch extent");
++ // SPEED6 plan gate also checks this writer union against the kernels' full
++ // scratch_floats read/write requirements. Binding-time extent guards stay on.
++ return bounded;
++}
++// SPEED6_SCRATCH_POLICY_END
+ 
+ static int run_draft_capture(Options a) {
+  a.rank=1;pipeline_stop_fd=a.stop_fd;std::unique_ptr<Weights> w;std::unique_ptr<Engine> e;std::unique_ptr<mtp36::DraftRuntime> draft;std::string error;std::vector<std::string> teardown;
+diff --git a/experiments/own-xpu-runtime/stage2/packet45-merged3/memory_plan.py b/experiments/own-xpu-runtime/stage2/packet45-merged3/memory_plan.py
+--- a/experiments/own-xpu-runtime/stage2/packet45-merged3/memory_plan.py
++++ b/experiments/own-xpu-runtime/stage2/packet45-merged3/memory_plan.py
+@@ -183,6 +183,12 @@
+                 source_plan_sha256=hashlib.sha256(raw).hexdigest(),
+                 census_sha256=item['census_sha256'], boundaries=result)
+ 
++# Engine::allocate accounts device allocations only. Pinned slabs and the
++# conservative card-accounting reserves do not consume its 30 GiB arena.
++ARENA_LIMIT_BYTES = 30 * 1024**3
++SCRATCH_SAVING_BYTES = (256-8) * 1024**2
++SCRATCH_POLICY = 'packet45.speed6.split23-dr1-4k.parallel-scratch-8mib'
++
+ def plan():
+     verify_baseline_evidence()
+     snapshot_evidence = strict_image_evidence()
+@@ -196,6 +202,9 @@
+             per_layer = sum(components.values())
+             growth = per_layer - baseline_cache
+             draft = DRAFT_BASE + growth
++            # Mirror target_scratch_bytes; all coordinator target ranks use
++            # parallel nongemv. Other production configurations keep old sizes.
++            scratch_saving = SCRATCH_SAVING_BYTES if key == '1-split23' and context == 4096 else 0
+             rows = []
+             for rank in range(2):
+                 modeled = TARGET_BASE[rank] + 6 * growth + ROPE_GROWTH
+@@ -206,7 +215,10 @@
+                 if boundary == 23:
+                     transfer = -(LAYER23_BYTES + growth) if rank == 0 else LAYER23_BYTES + growth
+                 snapshot = STRICT_IMAGE_256[boundary] + qsa_counts[0] * growth if rank == 0 else 0
+-                modeled += transfer + snapshot
++                # SpeculativeImage reserves source allocation capacities, so
++                # shrinking rank0 scratch shrinks its private backup as well.
++                if rank == 0: snapshot -= scratch_saving
++                modeled += transfer + snapshot - scratch_saving
+                 duplicate_head = HEAD_BYTES if draft_rank == 0 and rank == 0 else 0
+                 target = modeled + ALLOCATION_RESERVE[rank]
+                 draft_bytes = draft if rank == draft_rank else 0
+@@ -219,6 +231,9 @@
+                     strict_rollback_image_bytes=snapshot,
+                     allocation_reserve_bytes=ALLOCATION_RESERVE[rank],
+                     target_modeled_allocations_bytes=modeled,
++                    arena_device_bytes=modeled+draft_bytes+duplicate_head,
++                    arena_headroom_bytes=ARENA_LIMIT_BYTES-(modeled+draft_bytes+duplicate_head),
++                    arena_margin_passed=modeled+draft_bytes+duplicate_head <= ARENA_LIMIT_BYTES,
+                     target_total_bytes=target,
+                     target_qsa_cache_bytes=qsa_counts[rank]*per_layer,
+                     draft_qsa_cache_bytes=per_layer if rank == draft_rank else 0,
+@@ -239,6 +254,11 @@
+             layer_boundary=boundary, capacities=capacities)
+     return dict(schema='own-runtime.packet45.memory-plan.v1',
+         capacity_bytes=CAPACITY_BYTES, minimum_free_bytes=MINIMUM_FREE_BYTES,
++        arena_limit_bytes=ARENA_LIMIT_BYTES,
++        scratch_policy=dict(rule=SCRATCH_POLICY, placement='1-split23', context=4096,
++                            nongemv='parallel', bytes=8*1024**2, saving_per_engine_bytes=SCRATCH_SAVING_BYTES,
++                            rank0_backup_saving_bytes=SCRATCH_SAVING_BYTES,
++                            all_other_configurations='unchanged 256 MiB'),
+         default_draft_rank=0, placements=placements,
+         capacities=placements['0']['capacities'],
+         rope_table_bytes=32768*128, rope_growth_per_rank_bytes=ROPE_GROWTH,
+diff --git a/experiments/own-xpu-runtime/stage2/packet45-merged3/memory_gate.py b/experiments/own-xpu-runtime/stage2/packet45-merged3/memory_gate.py
+--- a/experiments/own-xpu-runtime/stage2/packet45-merged3/memory_gate.py
++++ b/experiments/own-xpu-runtime/stage2/packet45-merged3/memory_gate.py
+@@ -1,4 +1,19 @@
+ """Allocation admission only; driver residency is a separate device receipt."""
++ARENA_LIMIT_BYTES = 30 * 1024**3  # Must equal Engine::allocate; not a caller override.
++
++def arena_bytes(row):
++    keys=('target_modeled_allocations_bytes','allocation_reserve_bytes',
++          'draft_total_bytes','draft_duplicate_head_bytes','target_total_bytes','total_with_mtp_bytes')
++    if any(type(row.get(k)) is not int or row[k] < 0 for k in keys):
++        raise ValueError('invalid arena allocation components')
++    target=row['target_modeled_allocations_bytes']
++    total=target+row['draft_total_bytes']+row['draft_duplicate_head_bytes']
++    if row['target_total_bytes'] != target+row['allocation_reserve_bytes'] or row['total_with_mtp_bytes'] != total+row['allocation_reserve_bytes']:
++        raise ValueError('inconsistent arena allocation components')
++    # Derive this independently; never trust a stored "passed" boolean or the
++    # ledger's arena summary to authorize device contact.
++    return total
++
+ def configuration(ledger, context, draft_rank=0, target_split=0):
+     if draft_rank not in (0,1) or target_split not in (0,23,24):
+         raise ValueError('invalid draft placement/target split')
+@@ -9,8 +24,15 @@
+         raise ValueError('24/24 rank0 draft admitted at context4096 only; 32K reserve is insufficient')
+     try: row=ledger['placements'][key]['capacities'][str(context)]
+     except KeyError as exc: raise ValueError('context is not admitted by memory plan') from exc
+-    if target_split and not all(r['allocation_margin_passed'] and r['free_with_mtp_bytes']>=ledger['minimum_free_bytes'] for r in row['ranks']):
+-        raise ValueError('planned device allocation margin below 1.5 GB')
++    if ledger.get('arena_limit_bytes',ARENA_LIMIT_BYTES) != ARENA_LIMIT_BYTES:
++        raise ValueError('30 GiB arena cap changed')
++    for r in row['ranks']:
++        owned=arena_bytes(r)
++        if owned > ARENA_LIMIT_BYTES:
++            raise ValueError(f"planned rank{r['rank']} 30 GiB arena margin below zero: {owned-ARENA_LIMIT_BYTES} bytes over")
++        free=ledger['capacity_bytes']-r['total_with_mtp_bytes']
++        if not r['allocation_margin_passed'] or free < ledger['minimum_free_bytes'] or free != r['free_with_mtp_bytes']:
++            raise ValueError('planned device allocation margin below 1.5 GB or inconsistent free bytes')
+     return row
+ 
+ 
+@@ -23,6 +45,8 @@
+         raise ValueError('device census live total differs')
+     if total <= 0:
+         raise ValueError('empty device allocation census')
++    if total > ARENA_LIMIT_BYTES:
++        raise ValueError('live rank exceeds 30 GiB per-card arena')
+     try:
+         planned = configuration(ledger,context,draft_rank,target_split)['ranks'][rank]
+     except KeyError as exc:
+@@ -36,7 +60,8 @@
+     result=dict(rank=rank, draft_rank=draft_rank, context_capacity=context, device_allocation_bytes=total,
+                 capacity_bytes=ledger['capacity_bytes'], planned_maximum_bytes=limit,
+                 planned_free_bytes=free, minimum_free_bytes=ledger['minimum_free_bytes'],
+-                passed=True, scope='allocation admission; driver overhead/residency unmeasured')
++                arena_limit_bytes=ARENA_LIMIT_BYTES, arena_headroom_bytes=ARENA_LIMIT_BYTES-total,
++                passed=True, scope='device arena and card allocation admission; driver overhead/residency unmeasured')
+     if target_split:result['target_split']=target_split
+     return result
+ 
+diff --git a/experiments/own-xpu-runtime/stage2/packet45-merged3/test_speed5.py b/experiments/own-xpu-runtime/stage2/packet45-merged3/test_speed5.py
+--- a/experiments/own-xpu-runtime/stage2/packet45-merged3/test_speed5.py
++++ b/experiments/own-xpu-runtime/stage2/packet45-merged3/test_speed5.py
+@@ -8,9 +8,13 @@
+  def setUpClass(cls):cls.ledger=memory_plan.plan()
+  def test_old_rows_unchanged(self):
+   from speed5_qualification import before
+-  for k,v in before()['memory_plan']['placements'].items():self.assertEqual(self.ledger['placements'][k],v)
++  def without_arena(x):
++   if isinstance(x,dict):return {k:without_arena(v) for k,v in x.items() if not k.startswith('arena_')}
++   if isinstance(x,list):return [without_arena(v) for v in x]
++   return x
++  for k,v in before()['memory_plan']['placements'].items():self.assertEqual(without_arena(self.ledger['placements'][k]),without_arena(v))
+  def test_exact_new_rows(self):
+-  expected={(4096,0):(3442503518,5212496022),(32768,0):(2695655262,4737228950),(4096,1):(7636189332,1858131808)}
++  expected={(4096,0):(3442503518,5212496022),(32768,0):(2695655262,4737228950),(4096,1):(8156283028,2118178656)}
+   for (c,dr),free in expected.items():
+    row=memory_gate.configuration(self.ledger,c,dr,23)
+    self.assertEqual(tuple(r['free_with_mtp_bytes'] for r in row['ranks']),free)
+diff --git a/experiments/own-xpu-runtime/stage2/packet45-merged3/speed6_plan_gate.py b/experiments/own-xpu-runtime/stage2/packet45-merged3/speed6_plan_gate.py
+new file mode 100644
+--- /dev/null
++++ b/experiments/own-xpu-runtime/stage2/packet45-merged3/speed6_plan_gate.py
+@@ -0,0 +1,166 @@
++"""Actual plan/group construction, metadata only; no arithmetic or weights."""
++import gzip,hashlib,json,os,re,subprocess
++from pathlib import Path
++import plan_group_gate as group
++P=Path(__file__).resolve().parent;E=P/'evidence/speed6';B=P/'build/speed6-plan'
++def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
++def instrument(code):
++ strict=(P/'strict_snapshot.hpp').read_text();proof=strict.split('// SPEED2_WRITE_SET_BEGIN')[1].split('// SPEED2_WRITE_SET_END')[0]+strict.split('// SPEED4_REDO_PROOF_BEGIN')[1].split('// SPEED4_REDO_PROOF_END')[0]
++ code=code.replace('argc==6','argc==7').replace('split(full,rank,false,std::string(argv[1])=="KD"?1:dr)', 'split(full,rank,false,std::string(argv[1])=="KD"?1:dr,std::stoi(argv[6]))')
++ code='#include "round2.hpp"\n'+code
++ code=code.replace('int context=4096,cards=1;', 'int context=4096,cards=1,draft_rank=0,target_split=0;')
++ code=code.replace('packet26::dispatch.load(argv[5]);','a.draft_rank=dr;a.target_split=std::stoi(argv[6]);packet26::dispatch.load(argv[5]);')
++ runtime=(P/'main.cpp').read_text().split('// SPEED6_SCRATCH_POLICY_BEGIN')[1].split('// SPEED6_SCRATCH_POLICY_END')[0]
++ runtime=runtime.replace('pipeline::SnapshotWriteSet','SnapshotWriteSet')
++ code=code.replace('struct Probe {',runtime+'\n'+SCRATCH_PROOF+'\nstruct Probe {')
++ code=code.replace('static size_t target_scratch_bytes(',proof+'\n'+WRITE_PROOF+'\nstatic size_t target_scratch_bytes(',1)
++ code=code.replace('auto p=draft_plan(full.g);','auto p=draft_plan(full.g);write_proof(p);scratch_allocation_proof(p,a,true);')
++ needle='Probe e(w,a,std::move(p));std::cout'
++ assert code.count(needle)==1
++ return code.replace(needle,'''Probe e(w,a,std::move(p));write_proof(e.p);scratch_allocation_proof(e.p,a);
++ size_t ffns=0,shared=0;std::map<int,size_t> tags;
++ for(const auto& [site,g]:e.small_groups)if(g.name.starts_with("small.ffn"))++ffns;
++ for(const auto&site:e.p.launches)if(p39::tagged(site)){++tags[int(p39::kind(site))];if(p39::kind(site)==p39::Kind::shared_act)++shared;}
++ std::cerr<<"ffn="<<ffns<<" shared="<<shared;
++ for(auto[k,v]:tags)std::cerr<<" tag"<<k<<"="<<v;std::cerr<<"\\n";
++ std::cout''')
++
++
++SCRATCH_PROOF=r"""
++static void scratch_allocation_proof(const flash::Plan& p,const Options& a,bool draft=false){
++ constexpr size_t old=256ull*1024*1024,cap=8ull*1024*1024;
++ bool reduced=!draft&&a.target_split==23&&a.draft_rank==1&&a.context==4096;
++ size_t actual=draft?cap:target_scratch_bytes(p,a); // DraftRuntime already uses 8 MiB.
++ require(actual==((draft||reduced)?cap:old),"scratch allocation policy mismatch");
++ // check_writer_bound uses full kernel scratch_floats requirements, which
++ // cover reads as well as writes, for specialised, round2, p33r2 and p42.
++ for(const auto& l:p.launches){
++  size_t bound=SnapshotWriteSet::scratch(p,l,old,true);
++  require(bound<=actual,"allocation below possible writer extent");
++  check_writer_bound(p,l,bound);
++ }
++ auto reference=a;reference.nongemv="core";
++ require(target_scratch_bytes(p,reference)==old,"reference scratch shrunk");
++ if(reduced){
++  auto changed=p;flash::Launch bad;bad.op="unregistered-scratch-reader";changed.launches.push_back(bad);
++  bool refused=false;try{(void)target_scratch_bytes(changed,a);}catch(const std::runtime_error&){refused=true;}
++  require(refused,"unknown scratch footprint accepted");
++  auto wider=p;wider.g.budget=2049;refused=false;
++  try{(void)target_scratch_bytes(wider,a);}catch(const std::runtime_error&){refused=true;}
++  require(refused,"unregistered geometry accepted");
++ }
++ std::cerr<<"SCRATCHALLOC {\"bytes\":"<<actual<<",\"draft_private\":"<<(draft?"true":"false")<<",\"reduced\":"<<(reduced?"true":"false")
++          <<",\"kernel_read_write_requirements_checked\":true,\"reference_preserved\":true}\n";
++}
++"""
++
++WRITE_PROOF=r"""
++static void check_writer_bound(const flash::Plan& p,const flash::Launch& l,size_t bound){
++ ng::Shape s{};s.capacity=p.g.context;s.budget=p.g.budget;s.extent=p.g.context;
++ bool check=true;
++ size_t n=0;if(!l.inputs.empty())for(const auto& b:p.buffers)if(b.card==l.card&&b.name==l.inputs[0]){n=1;for(int v:b.shape)n*=v;break;}
++ if(l.op=="route"){require(bound>=4*(2*((n+15)/16)+2*n),"route writer undercovered");return;}
++ if(l.op=="argmax"){require(bound>=8*((n+255)/256),"argmax writer undercovered");return;}
++ if(l.op=="expert_gather"){require(bound>=4*size_t(p.g.top),"gather writer undercovered");return;}
++ if(l.op=="norm"||l.op=="hc_combine"){s.op=ng::norm;s.width=l.shape.at(1);s.heads=n/s.width;}
++ else if(p.g.h!=2560)return;
++ else if(l.op=="gdn")s.op=ng::gdn;
++ else if(l.op=="gdn_norm_gate")s.op=ng::gated_norm;
++ else if(l.op=="qsa_prepare")s.op=ng::prepare;
++ else if(l.op=="qsa_append_pool")s.op=ng::pool;
++ else if(l.op=="qsa_select")s.op=ng::select;
++ else if(l.op=="qsa_attention"){
++  for(auto op:{ng::attention_score,ng::attention_softmax,ng::attention_value}){s.op=op;require(bound>=specialised::scratch_floats(s)*4,"attention writer undercovered");require(bound>=round2::scratch_floats(s)*4,"round2 writer undercovered");}return;
++ }else check=false;
++ if(check){require(bound>=specialised::scratch_floats(s)*4,"specialised writer undercovered");if(round2::supported(s))require(bound>=round2::scratch_floats(s)*4,"round2 writer undercovered");}
++}
++static void write_proof(const flash::Plan& p){
++ constexpr size_t cap=256ull*1024*1024;
++ require(SnapshotWriteSet::scratch(p,cap,false)==cap,"reference fallback");
++ flash::Launch unknown;unknown.op="unknown-written-extent";
++ require(SnapshotWriteSet::scratch(p,unknown,cap,true)==cap,"unknown writer fallback");
++ for(const auto* name:{"route","argmax","norm"}){flash::Launch bad;bad.op=name;require(SnapshotWriteSet::scratch(p,bad,cap,true)==cap,"malformed writer fallback");}
++ for(const auto& l:p.launches)if(l.op=="route"||l.op=="argmax"||l.op=="expert_gather"){
++  bool rejected=false;try{check_writer_bound(p,l,0);}catch(const std::runtime_error&){rejected=true;}require(rejected,"dropped simple scratch writer escaped proof");
++ }
++ for(const auto& b:p.buffers)if(SnapshotWriteSet::single_row(p,b.name,true)){
++  auto changed=p;flash::Launch alias;alias.op="unproved-writer";alias.outputs={b.name};changed.launches.push_back(alias);
++  require(!SnapshotWriteSet::single_row(changed,b.name,true),"second cache writer escaped proof");break;
++ }
++ std::set<std::string> outputs{"token","position","token_history"};for(const auto& l:p.launches)outputs.insert(l.outputs.begin(),l.outputs.end());
++ size_t output_bytes=0,output_count=0;for(const auto& b:p.buffers)if(outputs.count(b.name)){size_t n=flash::scalar_bytes(b.type);for(int d:b.shape)n*=size_t(d);output_bytes+=n;++output_count;}
++ std::cerr<<"WRITESET {\"scratch_bound\":"<<SnapshotWriteSet::scratch(p,cap,true)<<",\"plan_output_bytes\":"<<output_bytes<<",\"plan_output_count\":"<<output_count<<",\"context\":"<<p.g.context<<",\"budget\":"<<p.g.budget<<",\"sites\":[";
++ bool comma=false;
++ for(const auto& l:p.launches){
++  check_writer_bound(p,l,SnapshotWriteSet::scratch(p,l,cap,true));
++  std::cerr<<(comma?",":"")<<"{\"label\":\""<<l.label<<"\",\"op\":\""<<l.op<<"\",\"scratch_bytes\":"<<SnapshotWriteSet::scratch(p,l,cap,true)<<"}";comma=true;
++ }
++ std::cerr<<"],\"qsa_rows\":[";comma=false;
++ for(const auto& b:p.buffers)if(SnapshotWriteSet::single_row(p,b.name,true)){
++  size_t bytes=flash::scalar_bytes(b.type);for(int n:b.shape)bytes*=size_t(n);
++  bool pooled=b.name.ends_with(".pooled");size_t rows=pooled?size_t((p.g.context+3)/4):size_t(p.g.context);
++  require(bytes%rows==0,"single row geometry");
++  std::cerr<<(comma?",":"")<<"{\"name\":\""<<b.name<<"\",\"allocation_bytes\":"<<bytes<<",\"row_bytes\":"<<bytes/rows<<",\"pooled\":"<<(pooled?"true":"false")<<"}";comma=true;
++ }
++ std::cerr<<"]}\n";
++ std::cerr<<"REDOBANK [";comma=false;
++ for(const auto& b:p.buffers){auto proof=RedoBankProof::derive(p,b.name);if(!proof.bytes)continue;
++  auto l=std::find_if(p.launches.begin(),p.launches.end(),[&](const auto& x){return x.label==proof.writer;});require(l!=p.launches.end(),"missing first writer");
++  ng::Shape shape{};shape.tokens=1;shape.capacity=p.g.context;shape.extent=p.g.context;shape.budget=p.g.budget;
++  shape.op=l->op=="gdn"?ng::gdn:ng::conv;shape.width=l->shape[0];shape.extra=l->parameter;
++  require(ng::required_bytes(shape)[l->op=="gdn"?7:4]==proof.bytes,"redo kernel byte coverage");
++  auto partial=p;for(auto& x:partial.buffers)if(x.name==b.name)++x.shape.back();require(!RedoBankProof::derive(partial,b.name).bytes,"partial write coverage accepted");
++  auto duplicate=p;duplicate.launches.push_back(*l);require(!RedoBankProof::derive(duplicate,b.name).bytes,"multiple writers accepted");
++  auto unknown=p;for(auto& x:unknown.launches)if(x.label==proof.writer)x.op="unknown";require(!RedoBankProof::derive(unknown,b.name).bytes,"unknown writer accepted");
++  std::cerr<<(comma?",":"")<<"{\"name\":\""<<b.name<<"\",\"first_writer\":\""<<proof.writer<<"\",\"bytes\":"<<proof.bytes<<",\"full_byte_coverage\":true,\"inputs_use_distinct_active_bank\":true}";comma=true;
++ }
++ std::cerr<<"]\n";
++}
++"""
++
++def main():
++ from datetime import datetime,timezone
++ assert datetime.now(timezone.utc)>=datetime(2026,10,15,5,15,tzinfo=timezone.utc),'owner build hold until 05:15 UTC'
++ assert os.getpriority(os.PRIO_PROCESS,0)==19
++ E.mkdir(exist_ok=True);B.mkdir(exist_ok=True);group.B=B;group.E=E
++ group.generate('after',instrument)
++ rows=[]
++ for context in (4096,32768):
++  for dr,split in ((0,0),(1,0),(0,24),(0,23),(1,23)):
++   for kind,rank in [('target',0),('target',1),('KD',1),('draft',dr)]:
++    for dispatch in ('dr0','dr1','forced'):
++     path=P/f'evidence/fix6/dispatch-{dispatch}.json'
++     cmd=[str(B/'after'),kind,str(context),str(dr),str(rank),str(path),str(split)]
++     run=subprocess.run(cmd,text=True,capture_output=True);result=json.loads(run.stdout)
++     footprint=json.loads(next(x.removeprefix('WRITESET ') for x in run.stderr.splitlines() if x.startswith('WRITESET ')))
++     assert run.returncode==0 and result['passed'],run.stderr+run.stdout
++     footprint['redo_banks']=json.loads(next(x.removeprefix('REDOBANK ') for x in run.stderr.splitlines() if x.startswith('REDOBANK ')))
++     allocation=json.loads(next(x.removeprefix('SCRATCHALLOC ') for x in run.stderr.splitlines() if x.startswith('SCRATCHALLOC ')))
++     counts={k:int(v) for k,v in re.findall(r'(\w+)=(\d+)',run.stderr)}
++     if kind!='draft':
++      boundary=split or (24 if kind=='KD' or dr else 22)
++      layers=boundary if rank==0 else 48-boundary
++      assert counts['ffn']==layers and counts['shared']==0,(kind,dr,rank,counts)
++     rows.append(dict(plan=kind,context=context,draft_rank=dr,target_split=split,rank=rank,dispatch=dispatch,
++                      dispatch_sha256=sha(path),result=result,group_census=counts,write_set=footprint,scratch_allocation=allocation))
++ for c in (4096,32768):
++  for dr,split in ((0,0),(1,0),(0,24),(0,23),(1,23)):
++   for dispatch in ('dr0','dr1','forced'):
++    target=[r for r in rows if (r['context'],r['draft_rank'],r['target_split'],r['dispatch'],r['plan'])==(c,dr,split,dispatch,'target')]
++    assert sum(r['group_census']['ffn'] for r in target)==48
++ details=[]
++ for r in rows:
++  sites=r['write_set'].pop('sites');r['write_set']['sites_count']=len(sites)
++  r['write_set']['sites_sha256']=hashlib.sha256(json.dumps(sites,sort_keys=True).encode()).hexdigest()
++  details.append(dict(plan=r['plan'],context=r['context'],draft_rank=r['draft_rank'],target_split=r['target_split'],rank=r['rank'],dispatch=r['dispatch'],sites=sites))
++ detailed=E/'plan-writer-sites.json.gz';detailed.write_bytes(gzip.compress(json.dumps(details,sort_keys=True).encode(),mtime=0))
++ sources=('p33r2.cpp','p42_submit.cpp','strict_snapshot.hpp','adapter.cpp','specialised.hpp','kernels.hpp','round2_submit.cpp','round2.hpp','p42_cooperative.hpp','p42_tiny.hpp','p33r2.hpp','route42.hpp','speed6_plan_gate.py','plan_group_gate.py','main.cpp','rank.hpp','mtp.hpp','p39_plan.hpp','small_gemv.cpp','small_gemv.hpp')
++ report=dict(passed=True,device_executed=False,weight_bytes_read=0,plan_dispatch_rows=len(rows),
++  writer_sites=dict(path=str(detailed.relative_to(P)),sha256=sha(detailed),rows=len(details)),target_ffn_groups=48,commands_per_tuple_before=6,commands_per_tuple_after=2,
++  removed_target_commands=192,command_count_scope='48 restored groups times the retained six-to-two command recipes; no model execution',
++  sources_sha256={n:sha(P/n) for n in sources},metadata_sha256=sha(P/'build/input/plan.tsv'),
++  binary_sha256=sha(B/'after'),generated_sha256=sha(B/'after.cpp'),rows=rows)
++ (P/'speed6-plan-gates.json').write_text(json.dumps(report,indent=2)+'\n')
++ (E/'plan-sweep.json').write_text(json.dumps(rows,indent=2)+'\n')
++ print(json.dumps({k:v for k,v in report.items() if k not in ('rows','sources_sha256')}))
++if __name__=='__main__':main()
+diff --git a/experiments/own-xpu-runtime/stage2/packet45-merged3/speed6_snapshot_gate.py b/experiments/own-xpu-runtime/stage2/packet45-merged3/speed6_snapshot_gate.py
+new file mode 100644
+--- /dev/null
++++ b/experiments/own-xpu-runtime/stage2/packet45-merged3/speed6_snapshot_gate.py
+@@ -0,0 +1,101 @@
++"""Fast mini-only SPEED6 full-state and deliberate-exclusion checks."""
++import hashlib,json,os,time
++from pathlib import Path
++import pipeline as pipe
++from cpu_merged_gate import Campaign,target_equal,assert_host_build
++from strict_terminal_gate import state
++from storage import admit,discard
++P=Path(__file__).resolve().parent;E=P/'evidence/speed6'
++
++def terminal(binary,root,rank,controller,prompt,count,guesses=(),eos=(),cut=-1,omit=False,target_split=0,abandon=False):
++ admit(100_000_000);root.mkdir();transport=None
++ args=pipe.parser().parse_args(['--binary',str(binary),'--output',str(root),'--mini','--context','256',
++  '--draft','none','--target-split',str(target_split),'--draft-rank',str(rank),'--controller',controller,'--tokens',str(count),
++  '--retain-steps','none','--cancel-launch',str(cut),'--dispatch',str(P/'dispatch-all-new.json')])
++ args.host_memory='resident'
++ row=dict(passed=False,draft_rank=rank,target_split=target_split,controller=controller,cancel_launch=cut,omit_required_extent=omit,abandoned_redo=abandon)
++ try:
++  transport=pipe.Transport(args,root)
++  result=pipe.request_run(transport,pipe.Draft('script' if guesses else 'none',guesses),prompt,count,eos)
++  if omit or abandon:
++   transport.call(0,pipe.HALF,token=(result['tokens'][-1]+1)%16,position=len(prompt)+len(result['tokens'])-1,fixture=count+1,speculative=1)
++   if omit:transport.call(0,12,token=2)
++   if abandon:transport.call(0,pipe.ROLLBACK,token=result['tokens'][-1],position=len(prompt)+len(result['tokens'])-1,fixture=count+1,speculative=1)
++   else:transport.call(0,pipe.ROLLBACK)
++  for rank_id in (0,1):transport.call(rank_id,pipe.DUMP,position=2147483647)
++  # Prove these contract cases exercised the new allocation, not a stale
++  # host binary which happens to produce the same miniature tokens.
++  scratch_sizes=[]
++  for rid in (0,1):
++   census=json.loads((root/f'rank{rid}/census.json').read_text())
++   sizes=[x['bytes'] for x in census['allocations'] if x['live'] and x['label'].endswith(':operator-scratch')]
++   assert sizes==[(8 if rank==1 and target_split==23 else 256)*1024**2],sizes
++   scratch_sizes.extend(sizes)
++  row['operator_scratch_bytes']=scratch_sizes
++  signature,events=state(root)
++  signature['shared-slot']=hashlib.sha256(transport.mapping[:pipe.SLOT]).hexdigest()
++  snapshot=json.loads((root/'rank0/speculative-snapshot.json').read_text())
++  assert snapshot['private_backup_zeroed'] and snapshot['private_host_backup_empty'] and not snapshot['snapshot_valid']
++  transport.close(True);transport=None
++  timings=[json.loads(x) for x in (root/'rank0/timings.jsonl').read_text().splitlines()]
++  row.update(passed=True,tokens=result['tokens'],state=signature,raw_events=events,snapshot=snapshot,timings=timings)
++  return row
++ finally:
++  if transport is not None:transport.stop('SPEED6 gate cleanup');transport.close(False)
++  pipe.save(root/'speed6-owner.json',row)
++  row['archive']=discard(root)
++
++def main():
++ assert os.getpriority(os.PRIO_PROCESS,0)==19 and os.environ['OMP_NUM_THREADS']=='2'
++ binary=P/'build/gnu-host/own-rt-iq3';proof=assert_host_build(binary)
++ receipt=dict(passed=False,device_executed=False,real_model=False,build=proof,rows=[],negative_controls=[],owners=[])
++ c=Campaign(binary,P/'dispatch-all-new.json',E/'mini-cases.json')
++ root=P/'build'/('speed6-terminal-'+str(time.time_ns()));root.mkdir();prompt=[2,5,3,7,1]
++ try:
++  for rank,split in ((0,23),(1,23)):
++   out,row=c.case(f'r{rank}s{split}-control',256,rank,'python',mode='none',count=3,prompt_tokens=prompt,target_split=split)
++   reference=row['signature'];c.retain(out,row)
++   for controller in ('python','native'):
++    for label,options in [('hit',dict(mode='script',guesses=reference['tokens'])),
++                          ('miss',dict(mode='script',guesses=[(t+1)%16 for t in reference['tokens']])),
++                          ('mtp',dict(mode='mtp')),('mtp-wrong',dict(mode='mtp',fault='wrong'))]:
++     out,row=c.case(f'r{rank}s{split}-{controller}-{label}',256,rank,controller,count=3,prompt_tokens=prompt,target_split=split,**options)
++     target_equal(row['signature'],reference)
++     if label=='hit':assert row['stats']['hits']>0 and row['stats']['misses']==0
++     if label=='miss':assert row['stats']['misses']>0
++     c.retain(out,row);receipt['rows'].append(dict(case=label,draft_rank=rank,target_split=split,controller=controller,full_state_equal=True))
++    # A 32-token prompt puts the discarded half on the first capacity boundary.
++    boundary_prompt=(prompt*7)[:32]
++    base=terminal(binary,root/f'r{rank}s{split}-{controller}-reference',rank,controller,boundary_prompt,1,target_split=split)
++    receipt['owners'].append(base)
++    n=next(r['launches_issued'] for r in base['timings'] if r['position']==31)
++    for cut in sorted({0,n//2,n,n+1}):
++     actual=terminal(binary,root/f'r{rank}s{split}-{controller}-cut{cut}',rank,controller,boundary_prompt,2,
++       [(base['tokens'][0]+1)%16],base['tokens'],cut,target_split=split)
++     receipt['owners'].append(actual)
++     assert actual['state']==base['state'] and actual['tokens']==base['tokens'],'terminal rollback changed full state'
++     assert actual['snapshot']['captures']==actual['snapshot']['restores']==1
++     receipt['rows'].append(dict(case='cancel-terminal-boundary',draft_rank=rank,target_split=split,controller=controller,cut=cut,full_state_equal=True))
++    abandoned=terminal(binary,root/f'r{rank}s{split}-{controller}-abandoned-redo',rank,controller,boundary_prompt,1,cut=n+1,target_split=split,abandon=True)
++    receipt['owners'].append(abandoned)
++    assert abandoned['state']==base['state'] and abandoned['snapshot']['redo_fallbacks']==1
++    receipt['rows'].append(dict(case='promised-redo-abandoned-before-dump',draft_rank=rank,target_split=split,controller=controller,full_state_equal=True))
++    out,row=c.case(f'r{rank}s{split}-{controller}-boundary-reference',256,rank,controller,mode='none',count=3,prompt_tokens=boundary_prompt,target_split=split)
++    boundary_reference=row['signature'];c.retain(out,row)
++    for cut in sorted({0,n//2,n}):
++     out,row=c.case(f'r{rank}s{split}-{controller}-partial-redo-{cut}',256,rank,controller,mode='script',guesses=[(t+1)%16 for t in boundary_reference['tokens']],count=3,prompt_tokens=boundary_prompt,target_split=split,cancel=cut)
++     target_equal(row['signature'],boundary_reference);assert row['stats']['misses']>0
++     snap=json.loads((out/'rank0/speculative-snapshot.json').read_text());assert snap['redo_restores']==snap['completed_redos']>0 and snap['redo_omitted_bytes']>0 and snap['redo_fallbacks']==0
++     c.retain(out,row);receipt['rows'].append(dict(case='cancelled-prefix-then-redo',draft_rank=rank,target_split=split,controller=controller,cut=cut,full_state_equal=True,snapshot=snap))
++    negative=terminal(binary,root/f'r{rank}s{split}-{controller}-omitted-streams',rank,controller,boundary_prompt,1,cut=n+1,omit=True,target_split=split)
++    receipt['owners'].append(negative)
++    assert negative['state']!=base['state'],'wrongly excluded output escaped full-state comparator'
++    receipt['negative_controls'].append(dict(draft_rank=rank,target_split=split,controller=controller,extent='streams',required_extent_omitted=True,rejected=True))
++  c.completed=True;c.seal()
++  receipt.update(passed=True,cases=c.seal()['cases']+len(receipt['owners']),gate_count=len(receipt['rows'])+len(receipt['negative_controls']),
++   protected_state='all plan and alternate allocation bytes, standalone scratch, invalid tails, host launch/bank/cache metadata and shared slot; only logical event telemetry differs',
++   request_boundary='DUMP invokes snapshot boundary and full private-backup retirement; no model allocation is scrubbed',
++   source_sha256={n:pipe.sha(P/n) for n in ('speed6_snapshot_gate.py','strict_snapshot.hpp','p39_plan.hpp','rank.hpp','main.cpp','request_state_inventory.hpp','pipeline.py','cpu_merged_gate.py','strict_terminal_gate.py','native_controller.hpp')})
++ finally:pipe.save(P/'speed6-snapshot-gates.json',receipt)
++ print(json.dumps({k:receipt[k] for k in ('passed','cases','gate_count')}))
++if __name__=='__main__':main()
+diff --git a/experiments/own-xpu-runtime/stage2/packet45-merged3/memory-plan.json b/experiments/own-xpu-runtime/stage2/packet45-merged3/memory-plan.json
+--- a/experiments/own-xpu-runtime/stage2/packet45-merged3/memory-plan.json
++++ b/experiments/own-xpu-runtime/stage2/packet45-merged3/memory-plan.json
+@@ -2,6 +2,17 @@
+   "schema": "own-runtime.packet45.memory-plan.v1",
+   "capacity_bytes": 34242297856,
+   "minimum_free_bytes": 1500000000,
++  "arena_limit_bytes": 32212254720,
++  "scratch_policy": {
++    "rule": "packet45.speed6.split23-dr1-4k.parallel-scratch-8mib",
++    "placement": "1-split23",
++    "context": 4096,
++    "nongemv": "parallel",
++    "bytes": 8388608,
++    "saving_per_engine_bytes": 260046848,
++    "rank0_backup_saving_bytes": 260046848,
++    "all_other_configurations": "unchanged 256 MiB"
++  },
+   "default_draft_rank": 0,
+   "placements": {
+     "0": {
+@@ -30,6 +41,9 @@
+               "strict_rollback_image_bytes": 316271288,
+               "allocation_reserve_bytes": 46500548,
+               "target_modeled_allocations_bytes": 25349161492,
++              "arena_device_bytes": 29533754186,
++              "arena_headroom_bytes": 2678500534,
++              "arena_margin_passed": true,
+               "target_total_bytes": 25395662040,
+               "target_qsa_cache_bytes": 3031040,
+               "draft_qsa_cache_bytes": 606208,
+@@ -53,6 +67,9 @@
+               "strict_rollback_image_bytes": 0,
+               "allocation_reserve_bytes": 1228800,
+               "target_modeled_allocations_bytes": 30080884852,
++              "arena_device_bytes": 30080884852,
++              "arena_headroom_bytes": 2131369868,
++              "arena_margin_passed": true,
+               "target_total_bytes": 30082113652,
+               "target_qsa_cache_bytes": 4243456,
+               "draft_qsa_cache_bytes": 0,
+@@ -90,6 +107,9 @@
+               "strict_rollback_image_bytes": 361736888,
+               "allocation_reserve_bytes": 46500548,
+               "target_modeled_allocations_bytes": 25440092692,
++              "arena_device_bytes": 29633778506,
++              "arena_headroom_bytes": 2578476214,
++              "arena_margin_passed": true,
+               "target_total_bytes": 25486593240,
+               "target_qsa_cache_bytes": 48496640,
+               "draft_qsa_cache_bytes": 9699328,
+@@ -113,6 +133,9 @@
+               "strict_rollback_image_bytes": 0,
+               "allocation_reserve_bytes": 1228800,
+               "target_modeled_allocations_bytes": 30144536692,
++              "arena_device_bytes": 30144536692,
++              "arena_headroom_bytes": 2067718028,
++              "arena_margin_passed": true,
+               "target_total_bytes": 30145765492,
+               "target_qsa_cache_bytes": 67895296,
+               "draft_qsa_cache_bytes": 0,
+@@ -150,6 +173,9 @@
+               "strict_rollback_image_bytes": 701213368,
+               "allocation_reserve_bytes": 46500548,
+               "target_modeled_allocations_bytes": 26119045652,
++              "arena_device_bytes": 30380626762,
++              "arena_headroom_bytes": 1831627958,
++              "arena_margin_passed": true,
+               "target_total_bytes": 26165546200,
+               "target_qsa_cache_bytes": 387973120,
+               "draft_qsa_cache_bytes": 77594624,
+@@ -173,6 +199,9 @@
+               "strict_rollback_image_bytes": 0,
+               "allocation_reserve_bytes": 1228800,
+               "target_modeled_allocations_bytes": 30619803764,
++              "arena_device_bytes": 30619803764,
++              "arena_headroom_bytes": 1592450956,
++              "arena_margin_passed": true,
+               "target_total_bytes": 30621032564,
+               "target_qsa_cache_bytes": 543162368,
+               "draft_qsa_cache_bytes": 0,
+@@ -216,6 +245,9 @@
+               "strict_rollback_image_bytes": 319074840,
+               "allocation_reserve_bytes": 46500548,
+               "target_modeled_allocations_bytes": 27576244308,
++              "arena_device_bytes": 27576244308,
++              "arena_headroom_bytes": 4636010412,
++              "arena_margin_passed": true,
+               "target_total_bytes": 27622744856,
+               "target_qsa_cache_bytes": 3637248,
+               "draft_qsa_cache_bytes": 0,
+@@ -239,6 +271,9 @@
+               "strict_rollback_image_bytes": 0,
+               "allocation_reserve_bytes": 1228800,
+               "target_modeled_allocations_bytes": 27858239892,
++              "arena_device_bytes": 31203510986,
++              "arena_headroom_bytes": 1008743734,
++              "arena_margin_passed": true,
+               "target_total_bytes": 27859468692,
+               "target_qsa_cache_bytes": 3637248,
+               "draft_qsa_cache_bytes": 606208,
+@@ -276,6 +311,9 @@
+               "strict_rollback_image_bytes": 373633560,
+               "allocation_reserve_bytes": 46500548,
+               "target_modeled_allocations_bytes": 27685361748,
++              "arena_device_bytes": 27685361748,
++              "arena_headroom_bytes": 4526892972,
++              "arena_margin_passed": true,
+               "target_total_bytes": 27731862296,
+               "target_qsa_cache_bytes": 58195968,
+               "draft_qsa_cache_bytes": 0,
+@@ -299,6 +337,9 @@
+               "strict_rollback_image_bytes": 0,
+               "allocation_reserve_bytes": 1228800,
+               "target_modeled_allocations_bytes": 27912798612,
++              "arena_device_bytes": 31267162826,
++              "arena_headroom_bytes": 945091894,
++              "arena_margin_passed": true,
+               "target_total_bytes": 27914027412,
+               "target_qsa_cache_bytes": 58195968,
+               "draft_qsa_cache_bytes": 9699328,
+@@ -336,6 +377,9 @@
+               "strict_rollback_image_bytes": 781005336,
+               "allocation_reserve_bytes": 46500548,
+               "target_modeled_allocations_bytes": 28500105300,
++              "arena_device_bytes": 28500105300,
++              "arena_headroom_bytes": 3712149420,
++              "arena_margin_passed": true,
+               "target_total_bytes": 28546605848,
+               "target_qsa_cache_bytes": 465567744,
+               "draft_qsa_cache_bytes": 0,
+@@ -359,6 +403,9 @@
+               "strict_rollback_image_bytes": 0,
+               "allocation_reserve_bytes": 1228800,
+               "target_modeled_allocations_bytes": 28320170388,
++              "arena_device_bytes": 31742429898,
++              "arena_headroom_bytes": 469824822,
++              "arena_margin_passed": true,
+               "target_total_bytes": 28321399188,
+               "target_qsa_cache_bytes": 465567744,
+               "draft_qsa_cache_bytes": 77594624,
+@@ -402,6 +449,9 @@
+               "strict_rollback_image_bytes": 319074840,
+               "allocation_reserve_bytes": 46500548,
+               "target_modeled_allocations_bytes": 27576244308,
++              "arena_device_bytes": 31760837002,
++              "arena_headroom_bytes": 451417718,
++              "arena_margin_passed": true,
+               "target_total_bytes": 27622744856,
+               "target_qsa_cache_bytes": 3637248,
+               "draft_qsa_cache_bytes": 606208,
+@@ -425,6 +475,9 @@
+               "strict_rollback_image_bytes": 0,
+               "allocation_reserve_bytes": 1228800,
+               "target_modeled_allocations_bytes": 27858239892,
++              "arena_device_bytes": 27858239892,
++              "arena_headroom_bytes": 4354014828,
++              "arena_margin_passed": true,
+               "target_total_bytes": 27859468692,
+               "target_qsa_cache_bytes": 3637248,
+               "draft_qsa_cache_bytes": 0,
+@@ -462,6 +515,9 @@
+               "strict_rollback_image_bytes": 373633560,
+               "allocation_reserve_bytes": 46500548,
+               "target_modeled_allocations_bytes": 27685361748,
++              "arena_device_bytes": 31879047562,
++              "arena_headroom_bytes": 333207158,
++              "arena_margin_passed": true,
+               "target_total_bytes": 27731862296,
+               "target_qsa_cache_bytes": 58195968,
+               "draft_qsa_cache_bytes": 9699328,
+@@ -485,6 +541,9 @@
+               "strict_rollback_image_bytes": 0,
+               "allocation_reserve_bytes": 1228800,
+               "target_modeled_allocations_bytes": 27912798612,
++              "arena_device_bytes": 27912798612,
++              "arena_headroom_bytes": 4299456108,
++              "arena_margin_passed": true,
+               "target_total_bytes": 27914027412,
+               "target_qsa_cache_bytes": 58195968,
+               "draft_qsa_cache_bytes": 0,
+@@ -522,6 +581,9 @@
+               "strict_rollback_image_bytes": 781005336,
+               "allocation_reserve_bytes": 46500548,
+               "target_modeled_allocations_bytes": 28500105300,
++              "arena_device_bytes": 32761686410,
++              "arena_headroom_bytes": -549431690,
++              "arena_margin_passed": false,
+               "target_total_bytes": 28546605848,
+               "target_qsa_cache_bytes": 465567744,
+               "draft_qsa_cache_bytes": 77594624,
+@@ -545,6 +607,9 @@
+               "strict_rollback_image_bytes": 0,
+               "allocation_reserve_bytes": 1228800,
+               "target_modeled_allocations_bytes": 28320170388,
++              "arena_device_bytes": 28320170388,
++              "arena_headroom_bytes": 3892084332,
++              "arena_margin_passed": true,
+               "target_total_bytes": 28321399188,
+               "target_qsa_cache_bytes": 465567744,
+               "draft_qsa_cache_bytes": 0,
+@@ -588,6 +653,9 @@
+               "strict_rollback_image_bytes": 318188610,
+               "allocation_reserve_bytes": 46500548,
+               "target_modeled_allocations_bytes": 26468676776,
++              "arena_device_bytes": 30653269470,
++              "arena_headroom_bytes": 1558985250,
++              "arena_margin_passed": true,
+               "target_total_bytes": 26515177324,
+               "target_qsa_cache_bytes": 3031040,
+               "draft_qsa_cache_bytes": 606208,
+@@ -611,6 +679,9 @@
+               "strict_rollback_image_bytes": 0,
+               "allocation_reserve_bytes": 1228800,
+               "target_modeled_allocations_bytes": 28964921194,
++              "arena_device_bytes": 28964921194,
++              "arena_headroom_bytes": 3247333526,
++              "arena_margin_passed": true,
+               "target_total_bytes": 28966149994,
+               "target_qsa_cache_bytes": 4243456,
+               "draft_qsa_cache_bytes": 0,
+@@ -648,6 +719,9 @@
+               "strict_rollback_image_bytes": 363654210,
+               "allocation_reserve_bytes": 46500548,
+               "target_modeled_allocations_bytes": 26559607976,
++              "arena_device_bytes": 30753293790,
++              "arena_headroom_bytes": 1458960930,
++              "arena_margin_passed": true,
+               "target_total_bytes": 26606108524,
+               "target_qsa_cache_bytes": 48496640,
+               "draft_qsa_cache_bytes": 9699328,
+@@ -671,6 +745,9 @@
+               "strict_rollback_image_bytes": 0,
+               "allocation_reserve_bytes": 1228800,
+               "target_modeled_allocations_bytes": 29028573034,
++              "arena_device_bytes": 29028573034,
++              "arena_headroom_bytes": 3183681686,
++              "arena_margin_passed": true,
+               "target_total_bytes": 29029801834,
+               "target_qsa_cache_bytes": 67895296,
+               "draft_qsa_cache_bytes": 0,
+@@ -708,6 +785,9 @@
+               "strict_rollback_image_bytes": 703130690,
+               "allocation_reserve_bytes": 46500548,
+               "target_modeled_allocations_bytes": 27238560936,
++              "arena_device_bytes": 31500142046,
++              "arena_headroom_bytes": 712112674,
++              "arena_margin_passed": true,
+               "target_total_bytes": 27285061484,
+               "target_qsa_cache_bytes": 387973120,
+               "draft_qsa_cache_bytes": 77594624,
+@@ -731,6 +811,9 @@
+               "strict_rollback_image_bytes": 0,
+               "allocation_reserve_bytes": 1228800,
+               "target_modeled_allocations_bytes": 29503840106,
++              "arena_device_bytes": 29503840106,
++              "arena_headroom_bytes": 2708414614,
++              "arena_margin_passed": true,
+               "target_total_bytes": 29505068906,
+               "target_qsa_cache_bytes": 543162368,
+               "draft_qsa_cache_bytes": 0,
+@@ -774,6 +857,9 @@
+               "strict_rollback_image_bytes": 318188610,
+               "allocation_reserve_bytes": 46500548,
+               "target_modeled_allocations_bytes": 26468676776,
++              "arena_device_bytes": 26468676776,
++              "arena_headroom_bytes": 5743577944,
++              "arena_margin_passed": true,
+               "target_total_bytes": 26515177324,
+               "target_qsa_cache_bytes": 3031040,
+               "draft_qsa_cache_bytes": 0,
+@@ -797,6 +883,9 @@
+               "strict_rollback_image_bytes": 0,
+               "allocation_reserve_bytes": 1228800,
+               "target_modeled_allocations_bytes": 28964921194,
++              "arena_device_bytes": 32310192288,
++              "arena_headroom_bytes": -97937568,
++              "arena_margin_passed": false,
+               "target_total_bytes": 28966149994,
+               "target_qsa_cache_bytes": 4243456,
+               "draft_qsa_cache_bytes": 606208,
+@@ -831,19 +920,22 @@
+               "target_qsa_layers": 5,
+               "target_baseline_256_bytes": 27253499452,
+               "layer_transfer_bytes": -1115774422,
+-              "strict_rollback_image_bytes": 363654210,
++              "strict_rollback_image_bytes": 103607362,
+               "allocation_reserve_bytes": 46500548,
+-              "target_modeled_allocations_bytes": 26559607976,
+-              "target_total_bytes": 26606108524,
++              "target_modeled_allocations_bytes": 26039514280,
++              "arena_device_bytes": 26039514280,
++              "arena_headroom_bytes": 6172740440,
++              "arena_margin_passed": true,
++              "target_total_bytes": 26086014828,
+               "target_qsa_cache_bytes": 48496640,
+               "draft_qsa_cache_bytes": 0,
+               "draft_weights_bytes": 0,
+               "draft_scratch_controls_buffers_bytes": 0,
+               "draft_total_bytes": 0,
+               "draft_duplicate_head_bytes": 0,
+-              "total_with_mtp_bytes": 26606108524,
+-              "free_with_mtp_bytes": 7636189332,
+-              "free_without_mtp_bytes": 7636189332,
++              "total_with_mtp_bytes": 26086014828,
++              "free_with_mtp_bytes": 8156283028,
++              "free_without_mtp_bytes": 8156283028,
+               "host_pinned_bytes": 4194304,
+               "allocation_margin_passed": true
+             },
+@@ -856,17 +948,20 @@
+               "layer_transfer_bytes": 1115774422,
+               "strict_rollback_image_bytes": 0,
+               "allocation_reserve_bytes": 1228800,
+-              "target_modeled_allocations_bytes": 29028573034,
+-              "target_total_bytes": 29029801834,
++              "target_modeled_allocations_bytes": 28768526186,
++              "arena_device_bytes": 32122890400,
++              "arena_headroom_bytes": 89364320,
++              "arena_margin_passed": true,
++              "target_total_bytes": 28769754986,
+               "target_qsa_cache_bytes": 67895296,
+               "draft_qsa_cache_bytes": 9699328,
+               "draft_weights_bytes": 3326953472,
+               "draft_scratch_controls_buffers_bytes": 17711414,
+               "draft_total_bytes": 3354364214,
+               "draft_duplicate_head_bytes": 0,
+-              "total_with_mtp_bytes": 32384166048,
+-              "free_with_mtp_bytes": 1858131808,
+-              "free_without_mtp_bytes": 5212496022,
++              "total_with_mtp_bytes": 32124119200,
++              "free_with_mtp_bytes": 2118178656,
++              "free_without_mtp_bytes": 5472542870,
+               "host_pinned_bytes": 4214796,
+               "allocation_margin_passed": true
+             }
+@@ -894,6 +989,9 @@
+               "strict_rollback_image_bytes": 703130690,
+               "allocation_reserve_bytes": 46500548,
+               "target_modeled_allocations_bytes": 27238560936,
++              "arena_device_bytes": 27238560936,
++              "arena_headroom_bytes": 4973693784,
++              "arena_margin_passed": true,
+               "target_total_bytes": 27285061484,
+               "target_qsa_cache_bytes": 387973120,
+               "draft_qsa_cache_bytes": 0,
+@@ -917,6 +1015,9 @@
+               "strict_rollback_image_bytes": 0,
+               "allocation_reserve_bytes": 1228800,
+               "target_modeled_allocations_bytes": 29503840106,
++              "arena_device_bytes": 32926099616,
++              "arena_headroom_bytes": -713844896,
++              "arena_margin_passed": false,
+               "target_total_bytes": 29505068906,
+               "target_qsa_cache_bytes": 543162368,
+               "draft_qsa_cache_bytes": 77594624,
+@@ -958,6 +1059,9 @@
+           "strict_rollback_image_bytes": 316271288,
+           "allocation_reserve_bytes": 46500548,
+           "target_modeled_allocations_bytes": 25349161492,
++          "arena_device_bytes": 29533754186,
++          "arena_headroom_bytes": 2678500534,
++          "arena_margin_passed": true,
+           "target_total_bytes": 25395662040,
+           "target_qsa_cache_bytes": 3031040,
+           "draft_qsa_cache_bytes": 606208,
+@@ -981,6 +1085,9 @@
+           "strict_rollback_image_bytes": 0,
+           "allocation_reserve_bytes": 1228800,
+           "target_modeled_allocations_bytes": 30080884852,
++          "arena_device_bytes": 30080884852,
++          "arena_headroom_bytes": 2131369868,
++          "arena_margin_passed": true,
+           "target_total_bytes": 30082113652,
+           "target_qsa_cache_bytes": 4243456,
+           "draft_qsa_cache_bytes": 0,
+@@ -1018,6 +1125,9 @@
+           "strict_rollback_image_bytes": 361736888,
+           "allocation_reserve_bytes": 46500548,
+           "target_modeled_allocations_bytes": 25440092692,
++          "arena_device_bytes": 29633778506,
++          "arena_headroom_bytes": 2578476214,
++          "arena_margin_passed": true,
+           "target_total_bytes": 25486593240,
+           "target_qsa_cache_bytes": 48496640,
+           "draft_qsa_cache_bytes": 9699328,
+@@ -1041,6 +1151,9 @@
+           "strict_rollback_image_bytes": 0,
+           "allocation_reserve_bytes": 1228800,
+           "target_modeled_allocations_bytes": 30144536692,
++          "arena_device_bytes": 30144536692,
++          "arena_headroom_bytes": 2067718028,
++          "arena_margin_passed": true,
+           "target_total_bytes": 30145765492,
+           "target_qsa_cache_bytes": 67895296,
+           "draft_qsa_cache_bytes": 0,
+@@ -1078,6 +1191,9 @@
+           "strict_rollback_image_bytes": 701213368,
+           "allocation_reserve_bytes": 46500548,
+           "target_modeled_allocations_bytes": 26119045652,
++          "arena_device_bytes": 30380626762,
++          "arena_headroom_bytes": 1831627958,
++          "arena_margin_passed": true,
+           "target_total_bytes": 26165546200,
+           "target_qsa_cache_bytes": 387973120,
+           "draft_qsa_cache_bytes": 77594624,
+@@ -1101,6 +1217,9 @@
+           "strict_rollback_image_bytes": 0,
+           "allocation_reserve_bytes": 1228800,
+           "target_modeled_allocations_bytes": 30619803764,
++          "arena_device_bytes": 30619803764,
++          "arena_headroom_bytes": 1592450956,
++          "arena_margin_passed": true,
+           "target_total_bytes": 30621032564,
+           "target_qsa_cache_bytes": 543162368,
+           "draft_qsa_cache_bytes": 0,
+diff --git a/experiments/own-xpu-runtime/stage2/packet45-merged3/test_speed6.py b/experiments/own-xpu-runtime/stage2/packet45-merged3/test_speed6.py
+new file mode 100644
+--- /dev/null
++++ b/experiments/own-xpu-runtime/stage2/packet45-merged3/test_speed6.py
+@@ -0,0 +1,132 @@
++"""CPU-only admission regressions; no binary, device discovery or model read."""
++import copy,json,tempfile,unittest
++from pathlib import Path
++from unittest.mock import patch
++import memory_gate,memory_plan,window
++
++P=Path(__file__).resolve().parent
++CAP=30*1024**3
++SAVING=248*1024**2
++
++def retotal(ledger,row,owned):
++    row['target_modeled_allocations_bytes']=owned-row['draft_total_bytes']-row['draft_duplicate_head_bytes']
++    row['target_total_bytes']=row['target_modeled_allocations_bytes']+row['allocation_reserve_bytes']
++    row['total_with_mtp_bytes']=owned+row['allocation_reserve_bytes']
++    row['free_with_mtp_bytes']=ledger['capacity_bytes']-row['total_with_mtp_bytes']
++    row['allocation_margin_passed']=row['free_with_mtp_bytes']>=ledger['minimum_free_bytes']
++
++class ArenaAdmission(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):cls.ledger=memory_plan.plan()
++
++    def row(self,ledger=None,context=4096,rank=1):
++        return (ledger or self.ledger)['placements']['1-split23']['capacities'][str(context)]['ranks'][rank]
++
++    def legacy(self):
++        old=copy.deepcopy(self.ledger)
++        for r in self.row(old,rank=0),self.row(old,rank=1):
++            retotal(old,r,memory_gate.arena_bytes(r)+SAVING*(2 if r['rank']==0 else 1))
++        return old
++
++    def test_incident_reproduced_before_device(self):
++        old=self.legacy();r=self.row(old)
++        self.assertEqual(memory_gate.arena_bytes(r),29_028_573_034+3_354_364_214)
++        self.assertEqual(memory_gate.arena_bytes(r)-CAP,170_682_528)
++        self.assertEqual(r['free_with_mtp_bytes']-old['minimum_free_bytes'],358_131_808)
++        with self.assertRaisesRegex(ValueError,'30 GiB arena.*170682528'):
++            memory_gate.configuration(old,4096,1,23)
++
++    def test_new_exact_accounting(self):
++        row=memory_gate.configuration(self.ledger,4096,1,23)
++        self.assertEqual([memory_gate.arena_bytes(r) for r in row['ranks']],
++                         [26_039_514_280,32_122_890_400])
++        self.assertEqual([CAP-memory_gate.arena_bytes(r) for r in row['ranks']],
++                         [6_172_740_440,89_364_320])
++        self.assertEqual(self.row()['free_with_mtp_bytes'],2_118_178_656)
++
++    def test_legacy_ledger_without_summary_still_refused(self):
++        old=self.legacy();old.pop('arena_limit_bytes')
++        for r in self.row(old,rank=0),self.row(old):
++            for k in list(r):
++                if k.startswith('arena_'):del r[k]
++        with self.assertRaisesRegex(ValueError,'30 GiB arena'):
++            memory_gate.configuration(old,4096,1,23)
++
++    def test_boolean_or_summary_cannot_override_arena(self):
++        old=self.legacy();r=self.row(old)
++        r.update(arena_margin_passed=True,arena_device_bytes=1,arena_headroom_bytes=CAP,allocation_margin_passed=True)
++        with self.assertRaisesRegex(ValueError,'30 GiB arena'):
++            memory_gate.configuration(old,4096,1,23)
++
++    def test_cap_cannot_be_raised(self):
++        old=self.legacy();old['arena_limit_bytes']=32*1024**3
++        with self.assertRaisesRegex(ValueError,'cap changed'):
++            memory_gate.configuration(old,4096,1,23)
++
++    def test_inconsistent_components_rejected(self):
++        for key in ('target_total_bytes','total_with_mtp_bytes','target_modeled_allocations_bytes','allocation_reserve_bytes'):
++            bad=copy.deepcopy(self.ledger);self.row(bad)[key]+=1
++            with self.assertRaisesRegex(ValueError,'components'):
++                memory_gate.configuration(bad,4096,1,23)
++
++    def test_exact_arena_boundary_and_one_byte_over(self):
++        for extra in (0,1):
++            bad=copy.deepcopy(self.ledger);retotal(bad,self.row(bad),CAP+extra)
++            if extra:
++                with self.assertRaisesRegex(ValueError,'1 bytes over'):memory_gate.configuration(bad,4096,1,23)
++            else:memory_gate.configuration(bad,4096,1,23)
++
++    def test_default_configuration_also_checked(self):
++        bad=copy.deepcopy(self.ledger);r=bad['placements']['1']['capacities']['4096']['ranks'][1]
++        retotal(bad,r,CAP+1)
++        with self.assertRaisesRegex(ValueError,'30 GiB arena'):memory_gate.configuration(bad,4096,1,0)
++
++    def test_card_reserve_still_checked(self):
++        bad=copy.deepcopy(self.ledger);bad['capacity_bytes']-=700_000_000
++        for r in self.row(bad,rank=0),self.row(bad):retotal(bad,r,memory_gate.arena_bytes(r))
++        with self.assertRaisesRegex(ValueError,'1.5 GB'):memory_gate.configuration(bad,4096,1,23)
++
++    def test_32k_refused_even_if_scratch_saving_is_extended(self):
++        bad=copy.deepcopy(self.ledger)
++        for r in self.row(bad,32768,0),self.row(bad,32768,1):
++            retotal(bad,r,memory_gate.arena_bytes(r)-SAVING*(2 if r['rank']==0 else 1))
++        self.assertEqual(memory_gate.arena_bytes(self.row(bad,32768))-CAP,453_798_048)
++        self.assertGreater(self.row(bad,32768)['free_with_mtp_bytes'],1_500_000_000)
++        with self.assertRaisesRegex(ValueError,'30 GiB arena'):memory_gate.configuration(bad,32768,1,23)
++
++    def test_all_previously_valid_configurations(self):
++        for c in (4096,32768):
++            for dr,split in ((0,0),(1,0),(0,23)):
++                memory_gate.configuration(self.ledger,c,dr,split)
++        memory_gate.configuration(self.ledger,4096,0,24)
++        with self.assertRaises(ValueError):memory_gate.configuration(self.ledger,32768,0,24)
++        with self.assertRaises(ValueError):memory_gate.configuration(self.ledger,32768,1,23)
++
++    def test_pinned_staging_is_not_device_arena(self):
++        n=memory_gate.arena_bytes(self.row())
++        census=dict(totals=dict(device=n),allocations=[dict(bytes=n,live=True,memory='device'),
++            dict(bytes=4_214_796,live=True,memory='pinned'),dict(bytes=99,live=False,memory='device')])
++        result=memory_gate.check(census,self.ledger,1,True,4096,1,23)
++        self.assertEqual(result['arena_headroom_bytes'],89_364_320)
++
++    def test_live_census_guard(self):
++        n=CAP+1;census=dict(totals=dict(device=n),allocations=[dict(bytes=n,live=True,memory='device')])
++        with self.assertRaisesRegex(ValueError,'live rank exceeds 30 GiB'):
++            memory_gate.check(census,self.ledger,1,True,4096,1,23)
++
++    def test_every_window_refuses_before_output_environment_or_children(self):
++        original=Path.read_text
++        legacy=json.dumps(self.legacy())
++        def read(path,*args,**kw):
++            return legacy if path==window.P/'memory-plan.json' else original(path,*args,**kw)
++        with tempfile.TemporaryDirectory(prefix='speed6-admission-') as d:
++            for name,diagnostic in ((name,d) for name in window.CONFIG for d in (False,True)):
++                out=Path(d)/(name+str(diagnostic))
++                argv=['window.py','--authorized-device-window','--window',name,'--card','2','--context','4096',
++                      '--draft-rank','1','--target-split','23','--output',str(out)]
++                if diagnostic:argv.append('--diagnostic-unsealed')
++                with patch('sys.argv',argv),patch.object(Path,'read_text',read),patch.object(window,'environment_gate',side_effect=AssertionError('device environment reached')):
++                    with self.assertRaisesRegex(ValueError,'30 GiB arena'):window.main()
++                self.assertFalse(out.exists())
++
++if __name__=='__main__':unittest.main()
+diff --git a/experiments/own-xpu-runtime/stage2/packet45-merged3/speed6_memory_gate.py b/experiments/own-xpu-runtime/stage2/packet45-merged3/speed6_memory_gate.py
+new file mode 100644
+--- /dev/null
++++ b/experiments/own-xpu-runtime/stage2/packet45-merged3/speed6_memory_gate.py
+@@ -0,0 +1,21 @@
++"""Future CPU receipt producer, to run only after patch application and rebuild.
++
++This does not reseal or authorize a device run. Existing seal source pins remain
++fail-closed until the new allocation policy and fresh gates are explicitly bound.
++"""
++import hashlib,json,unittest
++from pathlib import Path
++P=Path(__file__).resolve().parent
++
++def main():
++    suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromName(n) for n in ('test_speed5','test_speed6'))
++    result=unittest.TextTestRunner(verbosity=2).run(suite)
++    sources=('main.cpp','strict_snapshot.hpp','memory_plan.py','memory_gate.py','window.py','pipeline.py',
++             'memory-plan.json','test_speed5.py','test_speed6.py','speed6_memory_gate.py')
++    row=dict(passed=result.wasSuccessful(),checks=result.testsRun,device_executed=False,weight_bytes_read=0,
++             qualifying=False,scope='arena/card admission unit proof; not a device or seal receipt',
++             source_sha256={n:hashlib.sha256((P/n).read_bytes()).hexdigest() for n in sources})
++    (P/'speed6-memory-gates.json').write_text(json.dumps(row,indent=2)+'\n')
++    print(json.dumps(row));return not result.wasSuccessful()
++
++if __name__=='__main__':raise SystemExit(main())
