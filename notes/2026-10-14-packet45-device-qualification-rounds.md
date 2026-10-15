@@ -190,6 +190,19 @@ Conclusion: under the current memory plan the split lever is closed. 25/23 with 
 
 Fallback launched 15:56: 24/24 with draft rank 1 (SPEED4 measured 38.3661 on cards 2-3) on the SPEED5 build, on both pairs (`build/speed5-c4096-dr1-s0-cards{01,23}-gpu`), queue items 1000-1005.
 
+## Draft rank 1 vs draft rank 0 at 24/24: parity, not submitted (2026-10-15 16:41-17:01)
+
+On the SPEED5 build (`887a0bbbe`), 24/24 with draft rank 1 passed K0-WSs on both pairs. WS128 runs were qualifying and 12/12 exact:
+
+| Run | Class-balanced | All-prompt |
+|---|---:|---:|
+| Cards 0-1 | 38.3125 | 37.9181 |
+| Cards 2-3 | 38.2403 | 37.8048 |
+| Record configuration (24/24 dr0, SPEED3), three runs | 38.157 / 38.217 / 38.214 | 38.004 / 38.031 / 38.043 |
+| SPEED4 24/24 dr1, cards 2-3 | 38.366 | 38.114 |
+
+The two placements trade places across the two metrics, and every gap is about 0.5% or less. That is parity, not a real improvement, so nothing new was submitted; the record stays `cmv9j70v100v1le01q9jxyx2r` at 38.157157. The next real lever is memory: 23/25 with draft rank 1 (forecast 39.6) needs the per-card arena gap closed. A read-only memory-reduction design is in progress (`patches/packet45-speed6-memory.patch` and `notes/2026-10-15-p45-memory-reduction-design.md`).
+
 ## Relaunch procedure (after fix 5, and audit 6 if it reseals)
 
 1. Confirm that the runner is not running and that `queue/STOP` holds the halt reason.
