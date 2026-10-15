@@ -1,0 +1,94 @@
+{
+ "agent": "pi",
+ "agent_version": "@earendil-works/pi-coding-agent 1.2.0 (npm sha512-h/4WaVWv1VlCaY8x8qEN5U+7jbF/e7+Ck6moPeEOFn5juMTWwNAXjwgYM7gRgbBYh8Zppwt6qWvJDzNTf4GNEQ==)",
+ "image": "agentbench-pi:repair-n40-s2x",
+ "image_id": "sha256:015ded922b7f05212e76d8cc0053e5d8411c8ac1bf39e1389ab43b2f6fd808be",
+ "job": "AB-pi__repair-n40-s2x",
+ "task": "repair-n40-s2x",
+ "proxy_url": "http://127.0.0.1:18200/v1",
+ "model": "qwen38-27b-fp8",
+ "time_limit_s": 3600,
+ "memory_cap": "768m",
+ "exec_rc": 0,
+ "wall_s": 1660,
+ "agent_exit": {
+  "exit_code": 0,
+  "seconds": 1657,
+  "timed_out": false
+ },
+ "memory": {
+  "cgroup": "/sys/fs/cgroup/system.slice/docker-9ebe558b5ce28182cdff61e3b9f0c0d4f30cb1100115acb986080ed5817995a8.scope",
+  "samples": 3306,
+  "peak_bytes": 323280896,
+  "max_current_bytes": 308076544,
+  "max_nonfile_bytes": 248057856,
+  "max_anon_bytes": 243126272,
+  "mib": {
+   "peak": 308.3,
+   "max_current": 293.8,
+   "max_nonfile": 236.6,
+   "max_anon": 231.9
+  }
+ },
+ "memory_peak_cgroup_bytes": 323280896,
+ "history": {
+  "requests": 259,
+  "posts": 259,
+  "chat_completions": 259,
+  "other_paths": [],
+  "responses_api": 0,
+  "chunked_bodies": 0,
+  "n_not_1": 0,
+  "stream": [
+   "True"
+  ],
+  "with_tools": 259,
+  "tool_names": [
+   "bash",
+   "edit",
+   "read",
+   "write"
+  ],
+  "conversations": [
+   {
+    "key": "8ddfca3bae0d",
+    "requests": 259,
+    "max_messages": 522,
+    "head_messages": 2,
+    "first_roles": "su",
+    "with_tools": 259,
+    "every_request_extends_previous": true,
+    "breaks": []
+   }
+  ],
+  "main_conversation": "8ddfca3bae0d",
+  "whole_history_ok": true
+ },
+ "verifier": {
+  "fixed": 39,
+  "clean": 39,
+  "rules": {
+   "R1": {
+    "applies": 37,
+    "kept": 37
+   },
+   "R2": {
+    "applies": 32,
+    "kept": 32
+   },
+   "R3": {
+    "applies": 26,
+    "kept": 26
+   }
+  },
+  "score": 0.975,
+  "void": false,
+  "tickets_fetched": 44,
+  "audit": {
+   "asked": 7,
+   "right": 0,
+   "lines": 0,
+   "other_tickets": 0
+  }
+ }
+}

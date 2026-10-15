@@ -1,0 +1,14 @@
+### 01:08:12 campaign c20 (agentbench through ctxkeeper 1.0.1) start; MemAvailable 13620 MiB; agents: freeagent goose mini-swe-agent qwen-code pi forgecode open-interpreter openhands hermes-agent kimi-code mistral-vibe cline opencode
+### 01:08:12 stopping the Gemma service (front door state: 0 0)
+### 01:08:18 cards free; MemAvailable 13692 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: 8a8cb097d3734644ba256e7c43621bb5
+### 01:10:49 server ready after ~165 s; MemAvailable 3061 MiB
+### 01:10:50 [freeagent] start on proxy :18200 (cap 768m, time limit 5400 s); MemAvailable 3052 MiB
+### 01:11:51 [goose] start on proxy :18202 (cap 768m, time limit 5400 s); MemAvailable 2347 MiB
+### 01:27:07 [freeagent] done rc=0 in 16 min 17 s; MemAvailable 2327 MiB
+   RESULT fixed 5/40  clean 5/40  rules R1 3/3  R2 0/0  R3 0/0  tickets fetched 6  FIXES lines 0
+   AUDIT 0/7 right
+   run: agent exit 0 after 967 s (timed out False), requests 24, whole history every time True, memory non-file peak 152.7 MiB
+   proxy: requests 23, cuts 0 (in place 0, failed 0), messages archived 0, recalls 0, rules put back None, chars per token 3.0154
+### 01:27:08 [mini-swe-agent] start on proxy :18200 (cap 768m, time limit 5400 s); MemAvailable 2340 MiB
+### 01:30:02 STOPPED by operator: the server serves one request at a time; goose's 2nd request (no max_tokens) generated ~20K tokens with 0% draft acceptance for 16 min and blocked freeagent (900 s client timeout -> 6 tickets). Campaign to be rerun one agent at a time.

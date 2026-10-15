@@ -2806,3 +2806,40 @@ No runaway, no watchdog stop, no GPU fault line; free host memory stayed at or a
 as in 20d (final 1.0.1 proxy, same server settings, 60 min limit, runaway stop, full request capture). The 20d row
 stays in the record as a harness fault. Expectation: about 40 fixed, 40 clean, audit 7/7 (what its 20d commands
 show); `app-files.txt` should show FIXES.md and AUDIT.md as owner-only.
+
+### Campaign 20e result and campaign 20 summary (2026-10-15 08:00)
+
+**20e (Mistral Vibe with the fixed grader, 07:32-08:00):** fixed 40, clean 40, R1 38/38, R2 33/33, R3 27/27, audit
+7/7, 25.5 min, 289 requests, 5 cuts (5 in place, 0 failed), peak 383 MiB. `verifier/app-files.txt` shows the cause
+of the 20d reading: `FIXES.md` and `AUDIT.md` are `-rw-------` (made by `write_file`), `RECIPES.txt` is `-rw-r--r--`
+(made by the shell). As expected.
+
+**Campaign 20 in one table** (the valid run of each agent; ctxkeeper 1.0.1 `--recipe qwen`, 32K window, the
+two-card FP8 server alone, 60 min limit; c20b = the build without the request fixes, which none of those agents
+needed; c20d/e = final 1.0.1):
+
+| Agent | Run | Fixed | Clean | Audit | Time | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| mini-swe-agent 2.4.6 | c20b | 40 | 40 | 7/7 | 13.8 min | |
+| Open Interpreter rust-v0.0.56 | c20b | 40 | 39 | 7/7 | 17.8 min | its task message is not the first user message (kept head) and it still scored |
+| freeagent (control) | c20b | 40 | 39 | 7/7 | 21.0 min | campaign 19: 40/40/7, 30.9 min (then shared nothing either) |
+| Cline CLI 3.0.71 | c20d | 40 | 40 | 7/7 | 23.6 min | |
+| Goose 1.54.0 | c20b | 40 | 40 | 7/7 | 24.0 min | its runaway reply in c20 did not recur |
+| OpenHands SDK 1.54.0 | c20d | 40 | 40 | 6/7 | 24.0 min | needed final 1.0.1 (effort "high", text-parts system message) |
+| Mistral Vibe 2.26.1 | c20e | 40 | 40 | 7/7 | 25.5 min | c20d graded empty by the harness fault |
+| Hermes Agent 0.22.1 | c20d | 40 | 40 | 7/7 | 25.6 min | |
+| pi 1.2.0 | c20b | 39 | 39 | 0/7 | 27.8 min | deleted its AUDIT.md after a wrong notes line |
+| Qwen Code 0.25.1 | c20b | 40 | 39 | 7/7 | 33.1 min | |
+| Kimi Code 2.2.0 | c20d | 40 | 40 | 7/7 | 38.1 min | ~20,800-token fixed prompt; expected to do worst, did not |
+| ForgeCode 2.14.0 | c20d | 25 | 25 | - | 60 min limit | needed final 1.0.1 (two system messages); 69 cuts, ticket 29 of 44 |
+| OpenCode 1.19.0 | - | - | - | - | - | not run: needs ~0.84 GiB, 2.3 GiB free beside the server, 1.8 kept in reserve |
+
+Against the registered expectations: the control repeated campaign 19 (40/40, 7/7, faster alone: 21 min). Ten of
+the eleven other agents that ran fixed 39 or 40 (expected: 30 or more for the small-prompt agents; none stopped
+early at a text-only reply); the two predicted worst split: Kimi Code full marks, ForgeCode out of time. The proxy
+answered every request of every valid run; 2 of 93 in-place notes cuts were refused by the checks and held (Kimi,
+Cline), none failed a run. Failures found and fixed on the way: a runaway reply with no length limit starving
+other agents on a one-sequence server (runner: one agent at a time, runaway stop), three request shapes Qwen3.8's
+template refuses (ctxkeeper 1.0.1), a grader that could not read owner-only files (agentbench), the server-port
+TIME_WAIT race (runner). Open: the wrong notes line behind pi's deleted audit (silent-wrong notes, the program's
+known weakness); OpenCode on a host with more free memory; one run per agent and one seed (no spread).

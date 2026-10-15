@@ -1,0 +1,94 @@
+{
+ "agent": "cline",
+ "agent_version": "@cline/cli-linux-x64 3.0.71 (npm sha512-3bDa8a9KLAhj7UaoLYgXHl6wNpLp3t3REp37orGv9LMmGktqXw4z0wmHHgR7CApzwUVogaT93DowuW+vXvuEPw==; binary sha256 in /opt/agent/SHA256)",
+ "image": "agentbench-cline:repair-n40-s2x",
+ "image_id": "sha256:98f7bc7e1d425c2c823729666ceec7fcaad57de19a5499971caa9106bfb7ac08",
+ "job": "AB-cline__repair-n40-s2x",
+ "task": "repair-n40-s2x",
+ "proxy_url": "http://127.0.0.1:18200/v1",
+ "model": "qwen38-27b-fp8",
+ "time_limit_s": 3600,
+ "memory_cap": "1g",
+ "exec_rc": 0,
+ "wall_s": 1408,
+ "agent_exit": {
+  "exit_code": 0,
+  "seconds": 1404,
+  "timed_out": false
+ },
+ "memory": {
+  "cgroup": "/sys/fs/cgroup/system.slice/docker-1910e05028f6fa8bcf4a325ce2db4bcb198262b3a07b8fb991758be9f26209e2.scope",
+  "samples": 2802,
+  "peak_bytes": 557039616,
+  "max_current_bytes": 539815936,
+  "max_nonfile_bytes": 468566016,
+  "max_anon_bytes": 460951552,
+  "mib": {
+   "peak": 531.2,
+   "max_current": 514.8,
+   "max_nonfile": 446.9,
+   "max_anon": 439.6
+  }
+ },
+ "memory_peak_cgroup_bytes": 557039616,
+ "history": {
+  "requests": 283,
+  "posts": 283,
+  "chat_completions": 283,
+  "other_paths": [],
+  "responses_api": 0,
+  "chunked_bodies": 0,
+  "n_not_1": 0,
+  "stream": [
+   "True"
+  ],
+  "with_tools": 283,
+  "tool_names": [
+   "editor",
+   "read_files",
+   "run_commands",
+   "submit_and_exit"
+  ],
+  "conversations": [
+   {
+    "key": "50d770d381e3",
+    "requests": 283,
+    "max_messages": 573,
+    "head_messages": 2,
+    "first_roles": "suu",
+    "with_tools": 283,
+    "every_request_extends_previous": true,
+    "breaks": []
+   }
+  ],
+  "main_conversation": "50d770d381e3",
+  "whole_history_ok": true
+ },
+ "verifier": {
+  "fixed": 40,
+  "clean": 40,
+  "rules": {
+   "R1": {
+    "applies": 38,
+    "kept": 38
+   },
+   "R2": {
+    "applies": 33,
+    "kept": 33
+   },
+   "R3": {
+    "applies": 27,
+    "kept": 27
+   }
+  },
+  "score": 1.0,
+  "void": false,
+  "tickets_fetched": 44,
+  "audit": {
+   "asked": 7,
+   "right": 7,
+   "lines": 7,
+   "other_tickets": 0
+  }
+ }
+}

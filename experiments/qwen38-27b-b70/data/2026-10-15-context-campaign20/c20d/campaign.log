@@ -1,0 +1,51 @@
+### 04:13:17 campaign c20d (agentbench through ctxkeeper 1.0.1) start; MemAvailable 13551 MiB; agents: openhands hermes-agent kimi-code mistral-vibe cline forgecode opencode
+### 04:13:18 stopping the Gemma service (front door state: 0 0)
+### 04:13:24 cards free; MemAvailable 13772 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: 1bd995945e974b808a37834069275721
+### 04:15:54 server ready after ~165 s; MemAvailable 3292 MiB
+### 04:15:55 [openhands] start on proxy :18200 (cap 768m, time limit 3600 s); MemAvailable 3287 MiB
+### 04:39:57 [openhands] done rc=0 in 24 min 2 s; MemAvailable 2580 MiB
+   RESULT fixed 40/40  clean 40/40  rules R1 38/38  R2 33/33  R3 27/27  tickets fetched 44  FIXES lines 33
+   AUDIT 6/7 right
+   run: agent exit 0 after 1433 s (timed out False), requests 210, whole history every time True, memory non-file peak 417.8 MiB
+   proxy: requests 210, cuts 6 (in place 6, failed 0), messages archived 399, recalls 0, rules put back None, chars per token 2.5482
+### 04:39:58 [hermes-agent] start on proxy :18200 (cap 768m, time limit 3600 s); MemAvailable 2589 MiB
+### 05:05:31 [hermes-agent] done rc=0 in 25 min 33 s; MemAvailable 2613 MiB
+   RESULT fixed 40/40  clean 40/40  rules R1 38/38  R2 33/33  R3 27/27  tickets fetched 44  FIXES lines 33
+   AUDIT 7/7 right
+   run: agent exit 0 after 1516 s (timed out False), requests 240, whole history every time True, memory non-file peak 435.5 MiB
+   proxy: requests 230, cuts 12 (in place 9, failed 0), messages archived 455, recalls 8, rules put back None, chars per token 2.5224
+### 05:05:32 [kimi-code] start on proxy :18200 (cap 768m, time limit 3600 s); MemAvailable 2631 MiB
+### 05:43:35 [kimi-code] done rc=0 in 38 min 3 s; MemAvailable 2506 MiB
+   RESULT fixed 40/40  clean 40/40  rules R1 38/38  R2 33/33  R3 27/27  tickets fetched 44  FIXES lines 33
+   AUDIT 7/7 right
+   run: agent exit 0 after 2278 s (timed out False), requests 288, whole history every time True, memory non-file peak 429.4 MiB
+   proxy: requests 288, cuts 13 (in place 12, failed 1), messages archived 581, recalls 2, rules put back None, chars per token 2.5002
+### 05:43:37 [mistral-vibe] start on proxy :18200 (cap 1g, time limit 3600 s); MemAvailable 2511 MiB
+### 06:02:53 [mistral-vibe] done rc=0 in 19 min 16 s; MemAvailable 2554 MiB
+   RESULT fixed 40/40  clean 7/40  rules R1 37/38  R2 0/33  R3 27/27  tickets fetched 44  FIXES lines 0
+   AUDIT 0/7 right
+   run: agent exit 0 after 1143 s (timed out False), requests 278, whole history every time True, memory non-file peak 361.2 MiB
+   proxy: requests 278, cuts 5 (in place 5, failed 0), messages archived 484, recalls 0, rules put back None, chars per token 2.6592
+### 06:02:54 [cline] start on proxy :18200 (cap 1g, time limit 3600 s); MemAvailable 2563 MiB
+### 06:26:27 [cline] done rc=0 in 23 min 33 s; MemAvailable 2451 MiB
+   RESULT fixed 40/40  clean 40/40  rules R1 38/38  R2 33/33  R3 27/27  tickets fetched 44  FIXES lines 33
+   AUDIT 7/7 right
+   run: agent exit 0 after 1404 s (timed out False), requests 283, whole history every time True, memory non-file peak 446.9 MiB
+   proxy: requests 283, cuts 12 (in place 11, failed 1), messages archived 567, recalls 11, rules put back None, chars per token 2.6576
+### 06:26:28 [forgecode] start on proxy :18200 (cap 768m, time limit 3600 s); MemAvailable 2466 MiB
+### 07:26:34 [forgecode] done rc=0 in 60 min 6 s; MemAvailable 2297 MiB
+   RESULT fixed 25/40  clean 25/40  rules R1 23/23  R2 18/18  R3 12/12  tickets fetched 29  FIXES lines 18
+   AUDIT 0/7 right
+   run: agent exit 124 after 3600 s (timed out True), requests 223, whole history every time True, memory non-file peak 176.1 MiB
+   proxy: requests 1, cuts 0 (in place 0, failed 0), messages archived 0, recalls 0, rules put back None, chars per token 3.6
+   proxy: requests 222, cuts 69 (in place 7, failed 0), messages archived 451, recalls 2, rules put back None, chars per token 2.5002
+### 07:26:34 [opencode] NOT RUN: MemAvailable 2294 MiB leaves no room for it (2579 needed) even alone
+### 07:26:49 stopping the server; MemAvailable 2340 MiB
+server state: stopped None stop_confirmed True
+host memory available while the server ran: min 2.02  median 2.25 GiB  (23231 samples)
+### 07:27:17 kernel log clean since 2026-10-15 04:13:17; Gemma back on its throughput recipe
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 07:31:49 campaign c20d complete
