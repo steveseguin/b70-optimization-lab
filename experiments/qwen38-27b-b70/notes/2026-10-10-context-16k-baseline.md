@@ -2843,3 +2843,14 @@ other agents on a one-sequence server (runner: one agent at a time, runaway stop
 template refuses (ctxkeeper 1.0.1), a grader that could not read owner-only files (agentbench), the server-port
 TIME_WAIT race (runner). Open: the wrong notes line behind pi's deleted audit (silent-wrong notes, the program's
 known weakness); OpenCode on a host with more free memory; one run per agent and one seed (no spread).
+
+### Campaign 20f, registered 2026-10-15 13:36 before its run: OpenCode with a swap-backed memory cap
+
+The one agent campaign 20 could not run. Same task, server settings, ctxkeeper 1.0.1 final (`--recipe qwen`), 60 min
+limit and grader as 20d/e; one change: OpenCode's container gets 400 MiB of RAM with swap behind it
+(`run-agent-job.sh` AGENT_MEM_SWAP=2g; the host has a 32 GiB swap file on the NVMe disk), so the part of its ~0.84
+GiB that does not fit pages out instead of taking host memory. Start rule 1639 + 100 + 530 MiB; watchdog line 1720
+MiB (81 above the server's 1.6 GiB guard; 1800 in 20b-e). Dry run first against `fake_agent_server.py` (no GPU).
+Expectation: it runs to the end (the agent's own CPU work is small next to the model's replies, so paging costs
+little time); fixed 30 or more like the other small-prompt agents. A watchdog stop or a memory-guard stop is a void
+for host memory, recorded as such. Gemma stopped first and put back on its throughput recipe after.
