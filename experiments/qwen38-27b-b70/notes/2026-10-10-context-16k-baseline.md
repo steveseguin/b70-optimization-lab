@@ -2561,3 +2561,17 @@ so no evidence folder exists for it. Nothing followed: N2M and X2M ran about six
 log, and the log is still clean. The owner then gave sudo for the Gemma system units; the LAN service was started
 at 19:51 with the installed throughput recipe (8 x 4K slots per card), both cards loaded in about 25 s each, the
 production health check passed and http://192.168.2.45:8000 answers. No fault line during or after the load.
+
+### The cross-counter check: tried offline and closed (2026-10-14 evening, CPU-only)
+
+Four of the nine silent-wrong lines left at 2M took another counter's value ("received exactly what gupe37 stood
+at then") with the wrong amount. The check tried: when the turns or the line's remark say a thing took another
+thing's value, the amount must be one that other thing held in the NOTES (before or during the reply) or one the
+turns state for either. Replayed on X2M against the committed code: **0 of the 9 caught, 5 right lines newly
+questioned** (accepted-and-right 1,376 → 1,371); the nine other readable sessions unchanged. Why: in the wrong
+lines the NOTES already held the stale value of the source, so the copy agrees with the NOTES; in the questioned
+lines the model had read the source's value at that moment from the turns, which the NOTES did not hold. A check
+against the NOTES cannot separate the two. Reverted; the attempt is kept as
+`patches/ctxkeeper-took-value-check-rejected-20261014.patch` with a DO-NOT-REPEAT row. What would catch this class
+is the source's value at the item where it is taken, i.e. a per-item value history the notes do not keep; that is
+a design change, not a check, and is not worth building for 4 lines in 1,825 on a synthetic construct.

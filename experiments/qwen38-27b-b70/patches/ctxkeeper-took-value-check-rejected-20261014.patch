@@ -1,0 +1,204 @@
+diff --git a/experiments/qwen38-27b-b70/scripts/context/clm_keeper.py b/experiments/qwen38-27b-b70/scripts/context/clm_keeper.py
+index 8be4ee344..132f241d8 100644
+--- a/experiments/qwen38-27b-b70/scripts/context/clm_keeper.py
++++ b/experiments/qwen38-27b-b70/scripts/context/clm_keeper.py
+@@ -515,6 +515,27 @@ def steps_in(value: str) -> int:
+ LOOSE = "\x00said without a number"
+ 
+ 
++# A key of the `near` table: `receiver\x00source` for each sentence of the turns that says one thing took another's
++# value ("guke20 received exactly what gupe37 stood at then"). Read by took_value_ok's caller in apply_delta.
++TAKEN = "\x00took the value of"
++SOURCE = re.compile(r"\b(?:as much as|what)\s+([a-z0-9_]+)\s+(?:held|holds|stood|stands)\b", re.I)
++
++
++def taken_from(sents: list[str], i: int, want: set[str]) -> set[str]:
++    """`receiver\x00source` for each thing sentence `i` says took the value another thing held. The receiver is
++    another name of the same sentence, or, when the sentence calls it "It", a name of the sentence before."""
++    out: set[str] = set()
++    for m in SOURCE.finditer(sents[i]):
++        src = m.group(1).lower()
++        if src not in want:
++            continue
++        here = want & set(re.findall(r"[a-z0-9_]+", sents[i].lower())) - {src}
++        if not here and i:
++            here = want & set(re.findall(r"[a-z0-9_]+", sents[i - 1].lower())) - {src}
++        out.update(f"{r}\x00{src}" for r in here)
++    return out
++
++
+ def implied_ok(old: int, new: int, relative: bool, others: set[int] = frozenset()) -> bool:
+     """`520 -> 1040` written without working: can the turns have said that change without stating any number?
+     Only when some sentence mentions the thing without a number (`relative`), and then if the new value is
+@@ -597,6 +618,23 @@ def third_loss_away_from_zero(value: str, start: int | None) -> bool:
+     return re.search(r"-\s*" + str(abs(start) // 3) + r"(?!\d)", left[first.end():]) is not None
+ 
+ 
++def took_value_ok(value: str, allowed: set[int]) -> bool:
++    """Every sum of the line (`a + b = c`, its parts split as PARTS splits them) adds or takes only `allowed`
++    amounts: for a line about a thing that took another thing's value, what the turns state for it and the values
++    that other thing held. The amounts check alone lets any thing's value through, so `190 + 431 = 621` for
++    "received exactly what gupe37 stood at" passed while gupe37 held 28 (X2M at 2M, 2026-10-14: four of the nine
++    silent-wrong lines left after the third-loss rule took a value of the wrong thing or a made-up one)."""
++    flat = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", unremarked(value)).replace("−", "-")
++    for part in re.split(PARTS.pattern, flat):
++        if "=" not in part:
++            continue
++        left = part.split("=")[0]
++        first = re.match(r"\s*\(?\s*(-?\d+)", left)
++        if first and not amounts_ok(left[first.end():], allowed, int(first.group(1))):
++            return False
++    return True
++
++
+ # A remark that says the value was SET (`(set, item 373)`, `(recorded at, item 377)`), written after the result of
+ # a sum. If that result is not a number the turns state for the thing, the line has added the set value to the old
+ # one instead of setting it: three of the four wrong values that every version of the checks let through in the
+@@ -777,6 +815,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
+     at: list[int] = info.setdefault("mismatch_at", [])   # for each question, the index of the CHANGES line it is about
+     was: dict[str, set[int]] = {}                        # the values each thing has held while this reply was applied
+     where = {fact_of(ln)[0]: i for i, ln in enumerate(state)}
++    before_reply = {fact_of(ln)[0]: number_of(fact_of(ln)[1]) for ln in state}   # what each thing held before this reply
+     # values that things mentioned in these turns hold, now and as the reply is applied: an amount may be one of them
+     ever = {v for k, v in ((fact_of(ln)[0], number_of(fact_of(ln)[1])) for ln in state) if v is not None and near is not None and k in near}
+     for index, (name, value) in enumerate(delta.get("changes", [])):
+@@ -924,6 +963,27 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
+             state.append(line)
+             info["added"] += 1
+     at.extend([len(delta.get("changes", [])) - 1] * (len(info["mismatch"]) - len(at)))
++    if strict and near is not None:
++        # a line about a thing that took another's value: its amounts are the other thing's, not any thing's
++        took: dict[str, set[str]] = {}
++        for pair in near.get(TAKEN, ()):
++            receiver, source = pair.split("\x00")
++            took.setdefault(receiver, set()).add(source)
++        now = {fact_of(ln)[0]: number_of(fact_of(ln)[1]) for ln in state}
++        questioned = set(at)
++        for index, (name, value) in enumerate(delta.get("changes", [])):
++            named = {w for w in re.findall(r"[a-z0-9_]+", value.lower()) if w in before_reply and w != name}
++            others = sorted(x for x in took.get(name, set()) | named if x != name and before_reply.get(x) is not None)
++            if index in questioned or not others:
++                continue
++            allowed = set(near.get(name, set()))
++            for x in others:
++                allowed |= near.get(x, set()) | was.get(x, set()) | {before_reply[x]} | ({now[x]} if now.get(x) is not None else set())
++            if not took_value_ok(value, allowed):
++                held = ", ".join(f"{x} at {now.get(x) if now.get(x) is not None else before_reply[x]}" for x in others)
++                info["mismatch"].append(f"{name}: `{value}` adds or takes an amount that is not what the thing it took the "
++                                        f"value of held (the NOTES hold {held}); read the item again")
++                at.append(index)
+     if delta.get("open") is not None:
+         opened = list(delta["open"])
+     info["steps"] = steps
+@@ -1175,6 +1235,9 @@ def numbers_near(names: list[str], turns: list[dict[str, Any]], signed: bool = T
+                     out.setdefault(n, set()).update(nums)
+                 if not own:                          # "abcd12 was doubled.": a change can be said without a number
+                     out.setdefault(LOOSE, set()).update(here)
++                took = taken_from(sents, i, want)
++                if took:
++                    out.setdefault(TAKEN, set()).update(took)
+     return out
+ 
+ 
+diff --git a/tools/ctxkeeper/notesdelta.py b/tools/ctxkeeper/notesdelta.py
+index 9b65b36e8..086ca0496 100644
+--- a/tools/ctxkeeper/notesdelta.py
++++ b/tools/ctxkeeper/notesdelta.py
+@@ -286,6 +286,29 @@ def steps_in(value: str) -> int:
+ LOOSE = "\x00said without a number"
+ 
+ 
++# A key of the `near` table: `receiver\x00source` for each sentence of the turns that says one thing took another's
++# value ("guke20 received exactly what gupe37 stood at then"). Read by took_value_ok's caller in apply_delta.
++TAKEN = "\x00took the value of"
++
++
++SOURCE = re.compile(r"\b(?:as much as|what)\s+([a-z0-9_]+)\s+(?:held|holds|stood|stands)\b", re.I)
++
++
++def taken_from(sents: list[str], i: int, want: set[str]) -> set[str]:
++    """`receiver\x00source` for each thing sentence `i` says took the value another thing held. The receiver is
++    another name of the same sentence, or, when the sentence calls it "It", a name of the sentence before."""
++    out: set[str] = set()
++    for m in SOURCE.finditer(sents[i]):
++        src = m.group(1).lower()
++        if src not in want:
++            continue
++        here = want & set(re.findall(r"[a-z0-9_]+", sents[i].lower())) - {src}
++        if not here and i:
++            here = want & set(re.findall(r"[a-z0-9_]+", sents[i - 1].lower())) - {src}
++        out.update(f"{r}\x00{src}" for r in here)
++    return out
++
++
+ def implied_ok(old: int, new: int, relative: bool, others: set[int] = frozenset()) -> bool:
+     """`520 -> 1040` written without working: can the turns have said that change without stating any number?
+     Only when some sentence mentions the thing without a number (`relative`), and then if the new value is
+@@ -369,6 +392,23 @@ def third_loss_away_from_zero(value: str, start: int | None) -> bool:
+     return re.search(r"-\s*" + str(abs(start) // 3) + r"(?!\d)", left[first.end():]) is not None
+ 
+ 
++def took_value_ok(value: str, allowed: set[int]) -> bool:
++    """Every sum of the line (`a + b = c`, its parts split as PARTS splits them) adds or takes only `allowed`
++    amounts: for a line about a thing that took another thing's value, what the turns state for it and the values
++    that other thing held. The amounts check alone lets any thing's value through, so `190 + 431 = 621` for
++    "received exactly what gupe37 stood at" passed while gupe37 held 28 (X2M at 2M, 2026-10-14: four of the nine
++    silent-wrong lines left after the third-loss rule took a value of the wrong thing or a made-up one)."""
++    flat = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", unremarked(value)).replace("−", "-")
++    for part in re.split(PARTS.pattern, flat):
++        if "=" not in part:
++            continue
++        left = part.split("=")[0]
++        first = re.match(r"\s*\(?\s*(-?\d+)", left)
++        if first and not amounts_ok(left[first.end():], allowed, int(first.group(1))):
++            return False
++    return True
++
++
+ # A remark that says the value was SET (`(set, item 373)`, `(recorded at, item 377)`), written after the result of
+ # a sum. If that result is not a number the turns state for the thing, the line has added the set value to the old
+ # one instead of setting it: three of the four wrong values that every version of the checks let through in the
+@@ -549,6 +589,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
+     at: list[int] = info.setdefault("mismatch_at", [])   # for each question, the index of the CHANGES line it is about
+     was: dict[str, set[int]] = {}                        # the values each thing has held while this reply was applied
+     where = {fact_of(ln)[0]: i for i, ln in enumerate(state)}
++    before_reply = {fact_of(ln)[0]: number_of(fact_of(ln)[1]) for ln in state}   # what each thing held before this reply
+     # values that things mentioned in these turns hold, now and as the reply is applied: an amount may be one of them
+     ever = {v for k, v in ((fact_of(ln)[0], number_of(fact_of(ln)[1])) for ln in state) if v is not None and near is not None and k in near}
+     for index, (name, value) in enumerate(delta.get("changes", [])):
+@@ -696,6 +737,27 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
+             state.append(line)
+             info["added"] += 1
+     at.extend([len(delta.get("changes", [])) - 1] * (len(info["mismatch"]) - len(at)))
++    if strict and near is not None:
++        # a line about a thing that took another's value: its amounts are the other thing's, not any thing's
++        took: dict[str, set[str]] = {}
++        for pair in near.get(TAKEN, ()):
++            receiver, source = pair.split("\x00")
++            took.setdefault(receiver, set()).add(source)
++        now = {fact_of(ln)[0]: number_of(fact_of(ln)[1]) for ln in state}
++        questioned = set(at)
++        for index, (name, value) in enumerate(delta.get("changes", [])):
++            named = {w for w in re.findall(r"[a-z0-9_]+", value.lower()) if w in before_reply and w != name}
++            others = sorted(x for x in took.get(name, set()) | named if x != name and before_reply.get(x) is not None)
++            if index in questioned or not others:
++                continue
++            allowed = set(near.get(name, set()))
++            for x in others:
++                allowed |= near.get(x, set()) | was.get(x, set()) | {before_reply[x]} | ({now[x]} if now.get(x) is not None else set())
++            if not took_value_ok(value, allowed):
++                held = ", ".join(f"{x} at {now.get(x) if now.get(x) is not None else before_reply[x]}" for x in others)
++                info["mismatch"].append(f"{name}: `{value}` adds or takes an amount that is not what the thing it took the "
++                                        f"value of held (the NOTES hold {held}); read the item again")
++                at.append(index)
+     if delta.get("open") is not None:
+         opened = list(delta["open"])
+     info["steps"] = steps
+@@ -908,4 +970,7 @@ def numbers_near(names: list[str], texts: list[str], signed: bool = True) -> dic
+                     out.setdefault(n, set()).update(nums)
+                 if not own:                          # "abcd12 was doubled.": a change can be said without a number
+                     out.setdefault(LOOSE, set()).update(here)
++                took = taken_from(sents, i, want)
++                if took:
++                    out.setdefault(TAKEN, set()).update(took)
+     return out
