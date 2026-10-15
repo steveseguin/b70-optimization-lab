@@ -1,0 +1,361 @@
+{
+  "passed": true,
+  "mini_only": true,
+  "device_executed": false,
+  "requests": 6,
+  "samples": 30,
+  "rows": [
+    {
+      "request": "build/k2-probe-mini-1792099137154595735/native-5-on/receipt.json",
+      "samples": 5,
+      "censored": 1,
+      "stats": {
+        "g1_samples": 5,
+        "paired_samples": 4,
+        "g1_correct_all": 0,
+        "p_g1_all": 0.0,
+        "g1_correct_paired": 0,
+        "both_correct": 0,
+        "g2_correct_unconditional": 0,
+        "p_g1": 0.0,
+        "p_g2_given_g1": null,
+        "p_g2_unconditional": 0.0,
+        "first_drafter_ms_median": 0.2913425,
+        "extra_drafter_ms_median": 0.2786735,
+        "backup_ms_median": 5.228115,
+        "restore_and_check_ms_median": 5.895390000000001
+      },
+      "forecast": {
+        "projected_not_measured": true,
+        "qualifying": false,
+        "baseline_tok_s": 39.422009,
+        "expected_tokens_per_k2_cycle": 1.0,
+        "drafter_ms": 0.5700160000000001,
+        "formula": "1000*(1+p1+p1*q2)/(T3+D1+D2)",
+        "two_position_k1_historical_threshold_ms": 42.52,
+        "distinction": "42.52 ms is the prior k=1 two-position verification budget; k=2 with a bonus token requires three target positions. T3 is unmeasured.",
+        "k2_three_position_verification_must_be_below_ms": 24.796524807192245,
+        "excluded_diagnostic_costs": "host state backup, restore/check, logging; never use probe suite tok/s",
+        "scenarios": [
+          {
+            "verify_three_positions_ms": 40.0,
+            "projected_tok_s": 24.648745516886162
+          },
+          {
+            "verify_three_positions_ms": 45.0,
+            "projected_tok_s": 21.944253870790828
+          },
+          {
+            "verify_three_positions_ms": 50.0,
+            "projected_tok_s": 19.774563646568748
+          },
+          {
+            "verify_three_positions_ms": 55.0,
+            "projected_tok_s": 17.995316035179833
+          }
+        ]
+      }
+    },
+    {
+      "request": "build/k2-probe-mini-1792099137154595735/native-31-on/receipt.json",
+      "samples": 5,
+      "censored": 1,
+      "stats": {
+        "g1_samples": 5,
+        "paired_samples": 4,
+        "g1_correct_all": 0,
+        "p_g1_all": 0.0,
+        "g1_correct_paired": 0,
+        "both_correct": 0,
+        "g2_correct_unconditional": 0,
+        "p_g1": 0.0,
+        "p_g2_given_g1": null,
+        "p_g2_unconditional": 0.0,
+        "first_drafter_ms_median": 0.33209900000000003,
+        "extra_drafter_ms_median": 0.241368,
+        "backup_ms_median": 4.55655,
+        "restore_and_check_ms_median": 5.14842
+      },
+      "forecast": {
+        "projected_not_measured": true,
+        "qualifying": false,
+        "baseline_tok_s": 39.422009,
+        "expected_tokens_per_k2_cycle": 1.0,
+        "drafter_ms": 0.5734670000000001,
+        "formula": "1000*(1+p1+p1*q2)/(T3+D1+D2)",
+        "two_position_k1_historical_threshold_ms": 42.52,
+        "distinction": "42.52 ms is the prior k=1 two-position verification budget; k=2 with a bonus token requires three target positions. T3 is unmeasured.",
+        "k2_three_position_verification_must_be_below_ms": 24.793073807192243,
+        "excluded_diagnostic_costs": "host state backup, restore/check, logging; never use probe suite tok/s",
+        "scenarios": [
+          {
+            "verify_three_positions_ms": 40.0,
+            "projected_tok_s": 24.64664900339919
+          },
+          {
+            "verify_three_positions_ms": 45.0,
+            "projected_tok_s": 21.942592166621864
+          },
+          {
+            "verify_three_positions_ms": 50.0,
+            "projected_tok_s": 19.773214282501137
+          },
+          {
+            "verify_three_positions_ms": 55.0,
+            "projected_tok_s": 17.994198562418283
+          }
+        ]
+      }
+    },
+    {
+      "request": "build/k2-probe-mini-1792099137154595735/python-5-on/receipt.json",
+      "samples": 5,
+      "censored": 1,
+      "stats": {
+        "g1_samples": 5,
+        "paired_samples": 4,
+        "g1_correct_all": 0,
+        "p_g1_all": 0.0,
+        "g1_correct_paired": 0,
+        "both_correct": 0,
+        "g2_correct_unconditional": 0,
+        "p_g1": 0.0,
+        "p_g2_given_g1": null,
+        "p_g2_unconditional": 0.0,
+        "first_drafter_ms_median": 0.2687545,
+        "extra_drafter_ms_median": 0.298195,
+        "backup_ms_median": 5.17198,
+        "restore_and_check_ms_median": 5.8708849999999995
+      },
+      "forecast": {
+        "projected_not_measured": true,
+        "qualifying": false,
+        "baseline_tok_s": 39.422009,
+        "expected_tokens_per_k2_cycle": 1.0,
+        "drafter_ms": 0.5669495,
+        "formula": "1000*(1+p1+p1*q2)/(T3+D1+D2)",
+        "two_position_k1_historical_threshold_ms": 42.52,
+        "distinction": "42.52 ms is the prior k=1 two-position verification budget; k=2 with a bonus token requires three target positions. T3 is unmeasured.",
+        "k2_three_position_verification_must_be_below_ms": 24.799591307192244,
+        "excluded_diagnostic_costs": "host state backup, restore/check, logging; never use probe suite tok/s",
+        "scenarios": [
+          {
+            "verify_three_positions_ms": 40.0,
+            "projected_tok_s": 24.65060874246904
+          },
+          {
+            "verify_three_positions_ms": 45.0,
+            "projected_tok_s": 21.94573064409326
+          },
+          {
+            "verify_three_positions_ms": 50.0,
+            "projected_tok_s": 19.775762823106426
+          },
+          {
+            "verify_three_positions_ms": 55.0,
+            "projected_tok_s": 17.996309118966483
+          }
+        ]
+      }
+    },
+    {
+      "request": "build/k2-probe-mini-1792099137154595735/python-31-on/receipt.json",
+      "samples": 5,
+      "censored": 1,
+      "stats": {
+        "g1_samples": 5,
+        "paired_samples": 4,
+        "g1_correct_all": 0,
+        "p_g1_all": 0.0,
+        "g1_correct_paired": 0,
+        "both_correct": 0,
+        "g2_correct_unconditional": 0,
+        "p_g1": 0.0,
+        "p_g2_given_g1": null,
+        "p_g2_unconditional": 0.0,
+        "first_drafter_ms_median": 0.34425150000000004,
+        "extra_drafter_ms_median": 0.2423455,
+        "backup_ms_median": 4.4107,
+        "restore_and_check_ms_median": 5.17532
+      },
+      "forecast": {
+        "projected_not_measured": true,
+        "qualifying": false,
+        "baseline_tok_s": 39.422009,
+        "expected_tokens_per_k2_cycle": 1.0,
+        "drafter_ms": 0.586597,
+        "formula": "1000*(1+p1+p1*q2)/(T3+D1+D2)",
+        "two_position_k1_historical_threshold_ms": 42.52,
+        "distinction": "42.52 ms is the prior k=1 two-position verification budget; k=2 with a bonus token requires three target positions. T3 is unmeasured.",
+        "k2_three_position_verification_must_be_below_ms": 24.779943807192243,
+        "excluded_diagnostic_costs": "host state backup, restore/check, logging; never use probe suite tok/s",
+        "scenarios": [
+          {
+            "verify_three_positions_ms": 40.0,
+            "projected_tok_s": 24.638675669211686
+          },
+          {
+            "verify_three_positions_ms": 45.0,
+            "projected_tok_s": 21.936272189828077
+          },
+          {
+            "verify_three_positions_ms": 50.0,
+            "projected_tok_s": 19.76808204750361
+          },
+          {
+            "verify_three_positions_ms": 55.0,
+            "projected_tok_s": 17.98994818840952
+          }
+        ]
+      }
+    },
+    {
+      "request": "build/k2-probe-suite-1792099310911460250/on/repeat-1/code-review/receipt.json",
+      "samples": 5,
+      "censored": 1,
+      "stats": {
+        "g1_samples": 5,
+        "paired_samples": 4,
+        "g1_correct_all": 0,
+        "p_g1_all": 0.0,
+        "g1_correct_paired": 0,
+        "both_correct": 0,
+        "g2_correct_unconditional": 0,
+        "p_g1": 0.0,
+        "p_g2_given_g1": null,
+        "p_g2_unconditional": 0.0,
+        "first_drafter_ms_median": 0.28999949999999997,
+        "extra_drafter_ms_median": 0.2775165,
+        "backup_ms_median": 1.3419599999999998,
+        "restore_and_check_ms_median": 2.311815
+      },
+      "forecast": {
+        "projected_not_measured": true,
+        "qualifying": false,
+        "baseline_tok_s": 39.422009,
+        "expected_tokens_per_k2_cycle": 1.0,
+        "drafter_ms": 0.5675159999999999,
+        "formula": "1000*(1+p1+p1*q2)/(T3+D1+D2)",
+        "two_position_k1_historical_threshold_ms": 42.52,
+        "distinction": "42.52 ms is the prior k=1 two-position verification budget; k=2 with a bonus token requires three target positions. T3 is unmeasured.",
+        "k2_three_position_verification_must_be_below_ms": 24.799024807192243,
+        "excluded_diagnostic_costs": "host state backup, restore/check, logging; never use probe suite tok/s",
+        "scenarios": [
+          {
+            "verify_three_positions_ms": 40.0,
+            "projected_tok_s": 24.650264512128377
+          },
+          {
+            "verify_three_positions_ms": 45.0,
+            "projected_tok_s": 21.945457812534702
+          },
+          {
+            "verify_three_positions_ms": 50.0,
+            "projected_tok_s": 19.775541278317885
+          },
+          {
+            "verify_three_positions_ms": 55.0,
+            "projected_tok_s": 17.996125650101042
+          }
+        ]
+      }
+    },
+    {
+      "request": "build/k2-probe-suite-1792099310911460250/on/repeat-1/decision-memo/receipt.json",
+      "samples": 5,
+      "censored": 1,
+      "stats": {
+        "g1_samples": 5,
+        "paired_samples": 4,
+        "g1_correct_all": 0,
+        "p_g1_all": 0.0,
+        "g1_correct_paired": 0,
+        "both_correct": 0,
+        "g2_correct_unconditional": 0,
+        "p_g1": 0.0,
+        "p_g2_given_g1": null,
+        "p_g2_unconditional": 0.0,
+        "first_drafter_ms_median": 0.24534050000000002,
+        "extra_drafter_ms_median": 0.22456700000000002,
+        "backup_ms_median": 2.7416400000000003,
+        "restore_and_check_ms_median": 5.210255
+      },
+      "forecast": {
+        "projected_not_measured": true,
+        "qualifying": false,
+        "baseline_tok_s": 39.422009,
+        "expected_tokens_per_k2_cycle": 1.0,
+        "drafter_ms": 0.46990750000000003,
+        "formula": "1000*(1+p1+p1*q2)/(T3+D1+D2)",
+        "two_position_k1_historical_threshold_ms": 42.52,
+        "distinction": "42.52 ms is the prior k=1 two-position verification budget; k=2 with a bonus token requires three target positions. T3 is unmeasured.",
+        "k2_three_position_verification_must_be_below_ms": 24.896633307192243,
+        "excluded_diagnostic_costs": "host state backup, restore/check, logging; never use probe suite tok/s",
+        "scenarios": [
+          {
+            "verify_three_positions_ms": 40.0,
+            "projected_tok_s": 24.709717955248603
+          },
+          {
+            "verify_three_positions_ms": 45.0,
+            "projected_tok_s": 21.99256728199854
+          },
+          {
+            "verify_three_positions_ms": 50.0,
+            "projected_tok_s": 19.81378705716867
+          },
+          {
+            "verify_three_positions_ms": 55.0,
+            "projected_tok_s": 18.02779281721355
+          }
+        ]
+      }
+    }
+  ],
+  "sources": {
+    "k2_probe_analyze.py": "0cac358d8be6c037b249d25da97890f4c1308a68fb3dab057a7647e5d6ea7300",
+    "k2_probe_recheck.py": "e593da6ad8c65ce9a716e4614dbd30dc06a64d55204be45b37d7a1abe7cee243"
+  },
+  "archives": [
+    {
+      "path": "evidence/scratch-k2-probe-mini-1792099137154595735-native-5-on.jsonl.gz",
+      "sha256": "c01947edefed2994707d3f61b7acbda5e60a3d0918b72b546a7ed7db00a31b7e",
+      "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+      "files": 283,
+      "retained_files": 52,
+      "retained_bytes": 527898
+    },
+    {
+      "path": "evidence/scratch-k2-probe-mini-1792099137154595735-native-31-on.jsonl.gz",
+      "sha256": "4aade75d650db8f39505e4927ce605a57ca0e43cfb1c8ba5ba38cdab645515d4",
+      "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+      "files": 283,
+      "retained_files": 52,
+      "retained_bytes": 986435
+    },
+    {
+      "path": "evidence/scratch-k2-probe-mini-1792099137154595735-python-5-on.jsonl.gz",
+      "sha256": "2774d9cd5af1f43dda322be075200a408e8216ff36958aee53220c88ab644eb2",
+      "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+      "files": 281,
+      "retained_files": 50,
+      "retained_bytes": 514918
+    },
+    {
+      "path": "evidence/scratch-k2-probe-mini-1792099137154595735-python-31-on.jsonl.gz",
+      "sha256": "7763105d8e557ab041c7af003f8d94386717c651f6a093b1633e4b98d4ee3ab8",
+      "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+      "files": 281,
+      "retained_files": 50,
+      "retained_bytes": 941440
+    },
+    {
+      "path": "evidence/scratch-k2-probe-suite-1792099310911460250.jsonl.gz",
+      "sha256": "273f66e6b8e2278ad4a5114815c4d5f2494ce765adce897e247d2982db9446eb",
+      "format": "packet38.scratch-stream.v1 JSONL/gzip; text and nested gzip exact bytes, other scratch hashes",
+      "files": 442,
+      "retained_files": 256,
+      "retained_bytes": 2620789
+    }
+  ]
+}

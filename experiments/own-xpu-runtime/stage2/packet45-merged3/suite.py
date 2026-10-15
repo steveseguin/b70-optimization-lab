@@ -438,6 +438,8 @@ def run(args,environment=None,check=None,failure_hook=None,launch_hook=None):
         diagnostic=getattr(args,'retain_steps','1-8')!='none' or args.timing=='class',
         input_manifest_complete=manifest.get('complete',False),declared_prompt_count=len(entries),
         evidence_label='official draft head, draft-only 8-bit requantisation, output identical to sequential decode' if args.draft=='mtp' else 'sequential target decode')
+    from k2_probe import mark
+    mark(summary,args)
     if failure:summary.update(passed=False,error=str(failure))
     pipeline.save(args.output/'summary.json',summary);pipeline.save(args.output/'receipt.json',summary)
     if failure:raise failure

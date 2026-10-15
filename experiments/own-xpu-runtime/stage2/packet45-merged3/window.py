@@ -345,9 +345,13 @@ def main(*,cpu_rehearsal=False):
     prerequisite=partial(prerequisites,cpu_rehearsal=cpu_rehearsal)
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--authorized-device-window',action='store_true',required=True);p.add_argument('--diagnostic-unsealed',action='store_true')
     p.add_argument('--target-split',type=int,choices=(0,23,24),default=0);p.add_argument('--context',type=int,choices=(256,4096,32768),required=True);p.add_argument('--draft-rank',type=int,choices=(0,1),default=0);p.add_argument('--window',choices=CONFIG,required=True);p.add_argument('--card',type=int,required=True);p.add_argument('--prompt-overlap',choices=('on','off'),default='on');p.add_argument('--seconds',type=int);p.add_argument('--controller',choices=('python','native'),default='native');p.add_argument('--suite-manifest',type=Path);p.add_argument('--repeat',type=int,default=1)
+    p.add_argument('--mtp-k2-probe',action='store_true')
     p.add_argument('--max-new',type=int);p.add_argument('--retain-steps');p.add_argument('--exactness-window',type=Path)
     for name in ('output','input','oracle','dispatch','k0','k1a','k1b','k2','w0p','kd'):p.add_argument('--'+name,type=Path,required=name=='output')
-    a=p.parse_args();a.cpu_rehearsal=cpu_rehearsal;require(0<=a.card<=2,'--card is first of adjacent pair')
+    a=p.parse_args();a.cpu_rehearsal=cpu_rehearsal
+    from k2_probe import validate as validate_probe
+    validate_probe(a,window=True)
+    require(0<=a.card<=2,'--card is first of adjacent pair')
     from memory_gate import configuration
     configuration(json.loads((P/'memory-plan.json').read_text()),a.context,a.draft_rank,a.target_split)
     if a.window in SUITE_WINDOWS:
@@ -387,7 +391,7 @@ def main(*,cpu_rehearsal=False):
     require((('gnu-host' if cpu_rehearsal else 'device')+'/p33-linked-fixtures') in artifacts and isinstance(build.get('p33_linked_fixture_host_sha256'),str),'linked p33 fixture binary/host gate missing from seal')
     boot=Path('/proc/sys/kernel/random/boot_id').read_text().strip()
     if (B/'FAULT.json').exists():require(json.loads((B/'FAULT.json').read_text()).get('boot_id')!=boot,'boot fault latch requires coordinator recovery')
-    identity=dict(diagnostic_unsealed=a.diagnostic_unsealed,qualifying=not a.diagnostic_unsealed,schema='packet45.window.v1',window=a.window,card=a.card,context=a.context,draft_rank=a.draft_rank,target_split=a.target_split,boot_id=boot,artifacts_sha256=artifacts,environment=environment,build_receipt_sha256=sha(P/'build-receipt.json'))
+    identity=dict(mtp_k2_probe=a.mtp_k2_probe,diagnostic_unsealed=a.diagnostic_unsealed,qualifying=not a.diagnostic_unsealed,schema='packet45.window.v1',window=a.window,card=a.card,context=a.context,draft_rank=a.draft_rank,target_split=a.target_split,boot_id=boot,artifacts_sha256=artifacts,environment=environment,build_receipt_sha256=sha(P/'build-receipt.json'))
     record=dict(identity,cpu_rehearsal=cpu_rehearsal,prompt_overlap=a.prompt_overlap,controller=a.controller,max_new=a.max_new,retain_steps=a.retain_steps,retained_steps=retained_steps,diagnostic_for_speed=bool(retained_steps) or a.window=='W2mc',passed=False,device_executed=False,expected_seconds=expected,expectation_enforced=True,expectation_policy='prelaunch expected+17s <= watchdog/4; no early runtime stop',watchdog_seconds=seconds,cpu_affinity=sorted(os.sched_getaffinity(0)),load_average=list(os.getloadavg()))
     if a.window!='K0':prerequisite(a.k0,'K0',identity)
     if a.window=='K1b':prerequisite(a.k1a,'K1a',identity)
@@ -431,7 +435,7 @@ def main(*,cpu_rehearsal=False):
         record.update(token_cap=suite_cap,suite_manifest_sha256=sha(a.suite_manifest),controller=a.controller,repeat=a.repeat,dispatch_sha256=sha(a.dispatch))
     if a.window in SPEED_WINDOWS and not retained_steps:
         companion=prerequisite(a.exactness_window,SPEED_WINDOWS[a.window],identity)
-        for key in ('controller','max_new','dispatch_sha256','prompt_overlap','context','draft_rank','target_split'):
+        for key in ('controller','max_new','dispatch_sha256','prompt_overlap','context','draft_rank','target_split','mtp_k2_probe'):
             require(companion.get(key)==record.get(key),'exactness companion differs: '+key)
         companion_steps=pp.retention_steps(companion.get('retain_steps','none'),a.max_new)
         require(companion.get('retained_steps')==companion_steps,'exactness companion retention metadata differs')
@@ -484,6 +488,7 @@ def main(*,cpu_rehearsal=False):
                     record['rank_dispatches'][str(rank)]=dict(path='run0/'+name,sha256=sha(path),measurement_card=a.card,rank_card=a.card+rank,scope='one-card measured dispatch applied to both ranks')
         else:
             args=pp.parser().parse_args(['--output',str(out/'run')]);args.binary=B/('gnu-host' if cpu_rehearsal else 'device')/'own-rt-iq3';args.device=not cpu_rehearsal;args.native_nice=19 if cpu_rehearsal else 0;args.mini=cpu_rehearsal
+            args.diagnostic_unsealed=a.diagnostic_unsealed;args.mtp_k2_probe=a.mtp_k2_probe
             args.controller=a.controller;args.prompt_overlap=a.prompt_overlap;args.card=a.card;args.seconds=seconds;args.wait_seconds=600;args.context=a.context;args.draft_rank=a.draft_rank;args.target_split=a.target_split;args.tokens=a.max_new;args.retain_steps=a.retain_steps;args.input=a.input;args.oracle=None if cpu_rehearsal else a.oracle;args.dispatch=a.dispatch;args.timing='class' if a.window in ('W2c','W2mc') else 'token'
             record['ldd_preflight']=ldd_preflight(args.binary)
             if a.window=='W0p':concurrency_canary(args,out,environment['native'],watch)

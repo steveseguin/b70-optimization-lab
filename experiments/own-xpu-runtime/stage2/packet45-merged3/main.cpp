@@ -119,7 +119,7 @@ struct RetainSteps {
 struct Options {
   RetainSteps retain_steps;
   int cancel_launch=-1;
-  int draft_rank=0,target_split=0; bool mtp=false; fs::path draft_capture;
+  int draft_rank=0,target_split=0; bool mtp=false,mtp_k2_probe=false,diagnostic_unsealed=false; fs::path draft_capture;
   fs::path draft_manifest=fs::path(__FILE__).parent_path()/"mtp-manifest.tsv";
   fs::path draft_model="/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8";
   std::string draft_fault="none",draft_head="full";
@@ -151,6 +151,8 @@ static Options parse(int argc, char **argv) {
     else if (k == "--draft-rank") a.draft_rank=std::stoi(value());
     else if (k == "--target-split") a.target_split=std::stoi(value());
     else if (k == "--draft-mtp") a.mtp=true;
+    else if (k == "--mtp-k2-probe") a.mtp_k2_probe=true;
+    else if (k == "--diagnostic-unsealed") a.diagnostic_unsealed=true;
     else if (k == "--draft-head") a.draft_head=value();
     else if (k == "--draft-fault") a.draft_fault=value();
     else if (k == "--draft-capture") a.draft_capture=value();
@@ -220,6 +222,7 @@ static Options parse(int argc, char **argv) {
   require(a.target_split!=23||a.mini||a.context==4096||(a.draft_rank==0&&a.context==32768),"23/25 rank1 draft admitted at context4096 only; rank0 at4096/32768");
   require(a.target_split!=24||a.draft_rank!=0||a.mini||a.context==4096,"24/24 rank0 draft admitted at context4096 only");
   require(a.draft_head=="full","draft shortlist head not qualified; use full");
+  require(!a.mtp_k2_probe||(a.diagnostic_unsealed&&a.mtp&&a.rank==1&&a.draft_rank==1&&a.target_split==23&&(a.mini||a.context==4096)&&a.draft_fault=="none"),"MTP k2 probe requires diagnostic-unsealed, 23/25 dr1 at4K, no injected draft fault");
   require(a.cards >= 1 && a.cards <= 2 && a.card >= 0 && a.card + a.cards <= 4,
           "card range");
   require(a.tokens > 0 && a.tokens <= 128 && a.context >= 8 &&

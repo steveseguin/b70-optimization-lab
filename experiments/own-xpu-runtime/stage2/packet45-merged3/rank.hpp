@@ -246,7 +246,7 @@ static int run_rank(const Options& a) {
      std::memcpy(static_cast<uint8_t*>(mapping)+2*slot_bytes,&v,sizeof v);
      if(r.speculative){auto& mailbox=*reinterpret_cast<native38::Mailbox*>(static_cast<uint8_t*>(mapping)+2*slot_bytes+256);native38::publish(mailbox.draft_sequence,uint32_t(r.sequence));}
     };
-    if(r.speculative){
+    if(r.speculative&&!a.mtp_k2_probe){
      require(!async_half_ready,"duplicate asynchronous draft");
      async_half_ready=a.rank==1;async_half_position=r.position;async_half_token=r.token;
      if(provider->begin(r.token,r.position,r.fixture!=0)){

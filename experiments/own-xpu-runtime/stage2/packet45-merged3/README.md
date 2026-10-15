@@ -1,4 +1,9 @@
-# Packet 45: merged runtime, CPU qualified
+# Packet 45: merged runtime
+
+The [diagnostic k=2 acceptance probe](K2-PROBE-CLOSEOUT.md) is built and mini-tested.
+The current edited sources/binaries are **unsealed and nonqualifying**; the
+coordinator must use the new diagnostic chain. Historical seals below bind only
+their recorded sources and artifacts. No device run was made during probe preparation.
 
 [SPEED7 size-aware snapshot batching](SPEED7-CLOSEOUT.md) preserves the exact
 SPEED6 byte sets and arena headroom while bounding batch size spread at 8:1.

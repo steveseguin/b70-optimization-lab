@@ -264,6 +264,8 @@ def request_run(transport,provider,prompt,count,eos=(),overlap=True,dumps=False)
     result=cls(transport,provider,overlap,dumps).run(prompt,count,eos)
     result["controller"]=getattr(transport.a,"controller","python")
     result["target_split"]=getattr(transport.a,"target_split",0)
+    from k2_probe import mark
+    mark(result,transport.a)
     for row in result.get("draft_rows",[]):
         if row.get("draft_gpu_ms") is not None and row["draft_gpu_ms"]<0:
             row["draft_gpu_ms"]=None;row["draft_gpu_timing_deferred"]=True
@@ -271,6 +273,8 @@ def request_run(transport,provider,prompt,count,eos=(),overlap=True,dumps=False)
 
 class Transport:
     def __init__(self,args,out,environment=None,check=None,launch_hook=None):
+        from k2_probe import validate
+        validate(args)
         self.a=args;self.out=out;self.device=args.device;self.check=check or (lambda:None)
         self.children=[];self.sockets=[];self.logs=[];self.seq=[0,0];self.pending=[False,False];self.started=[0.,0.];self.commands=[{},{}]
         self.metrics=[dict(busy_ms=0.,handover_ms=0.,calls=0,gpu_ms=0.) for _ in range(2)]
@@ -302,6 +306,8 @@ class Transport:
             if getattr(args,"cancel_launch",-1)>=0:cmd += ["--cancel-launch",str(args.cancel_launch)]
             cmd += ["--draft-rank",str(getattr(args,"draft_rank",0)),"--target-split",str(getattr(args,"target_split",0))]
             if args.draft=="mtp" and rank==getattr(args,"draft_rank",0):cmd += ["--draft-mtp","--draft-fault",getattr(args,"draft_fault","none")]
+            if getattr(args,"diagnostic_unsealed",False):cmd += ["--diagnostic-unsealed"]
+            if getattr(args,"mtp_k2_probe",False) and rank==args.draft_rank:cmd += ["--mtp-k2-probe"]
             if getattr(args,"canary",False):cmd += ["--pipeline-canary"]
             if args.mini or getattr(args,"canary",False):cmd += ["--mini","--pipeline-mini"]
             else:
@@ -522,6 +528,8 @@ def run(args,environment=None,check=None,failure_hook=None,launch_hook=None):
     from suite_metrics import request_metrics
     result.update(request_metrics(result,len(prompt),args.tokens,getattr(args,'retain_steps','1-8'),
         getattr(transport,'work_start',None),getattr(transport,'work_end',None),args.device))
+    from k2_probe import mark
+    mark(result,args)
     save(args.output/"receipt.json",result)
     if failure:raise failure
     return result
@@ -563,6 +571,8 @@ class PipelineParser(argparse.ArgumentParser):
             if len(values)==2:a.script=Path(values[1])
         require(a.tokens>0 and a.context>0 and a.tokens<=a.context,"max-new/context bounds")
         require(a.cancel_launch>=-1 and (not a.device or a.cancel_launch==-1),"cancellation injection is CPU-only")
+        from k2_probe import validate
+        validate(a)
         return a
 def parser():
     p=PipelineParser(description=__doc__)
@@ -570,6 +580,8 @@ def parser():
     p.add_argument("--output",type=Path,required=True);p.add_argument("--input",type=Path);p.add_argument("--oracle",type=Path);p.add_argument("--dispatch",type=Path)
     p.add_argument("--mini",action="store_true");p.add_argument("--device",action="store_true");p.add_argument("--draft",nargs="+",default="none")
     p.add_argument("--draft-rank",type=int,choices=(0,1),default=0)
+    p.add_argument("--mtp-k2-probe",action="store_true")
+    p.add_argument("--diagnostic-unsealed",action="store_true")
     p.add_argument("--target-split",type=int,choices=(0,23,24),default=0)
     p.add_argument("--draft-head",choices=("full",),default="full")
     p.add_argument("--draft-fault",choices=("none","wrong","error","stall","suppress","garbage","late-error"),default="none")

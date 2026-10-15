@@ -77,7 +77,7 @@ class DraftRuntime {
  }
 
  Allocation scratch{},control{},score{},probability{},head_workspace{},head_fp32{};unsigned head_variant{};std::string head_candidate;
- std::set<Allocation> mutable_ids;size_t allocated=0;int position=0;bool disabled=false;std::ofstream trace;
+ std::set<Allocation> mutable_ids;size_t allocated=0;int position=0;bool disabled=false;std::ofstream trace,probe_trace;
  Allocation alloc(const std::string& name,size_t bytes,Category category=Category::scratch){auto id=e.allocate(0,"draft:"+name,bytes,category,category==Category::weights?Lifetime::process:category==Category::kv?Lifetime::request:Lifetime::transaction);allocated+=bytes;mutable_ids.insert(id);std::vector<uint8_t> zero(std::min(bytes,size_t(4194304)));for(size_t off=0;off<bytes;off+=zero.size())e.upload(0,id,off,zero.data(),std::min(zero.size(),bytes-off));return id;}
  Allocation id(const std::string& name)const{return buffers.at(name).id;}
  void add(const std::string& n,size_t elements,Scalar type=Scalar::bf16){buffers[n]={alloc(n,elements*flash::scalar_bytes(type),(ends(n,".keys")||ends(n,".values")||ends(n,".raw")||ends(n,".pooled"))?Category::kv:Category::scratch),elements,type};}
@@ -175,11 +175,15 @@ public:
    choices<<(choice_comma?",":"")<<ownrt::quote(launch.label)<<":"<<ownrt::quote(choice);choice_comma=true;
   }choices<<"}}";save(e.a.output/"draft-kernel-choices.json",choices.str());
   prepare_commands();
+  if(e.a.mtp_k2_probe){probe_trace.open(e.a.output/"mtp-k2-probe.jsonl");require(bool(probe_trace),"k2 probe log");}
   save(e.a.output/"draft-memory.json","{\"device_allocation_bytes\":"+std::to_string(allocated)+",\"cache_bytes\":"+std::to_string(size_t(p.g.context)*(2*p.g.kvh*p.g.ad+p.g.id)*2+size_t((p.g.context+3)/4)*p.g.id*2)+",\"head_weight_shared\":"+(e.a.memory=="resident"&&e.weights[0].count("output.weight")?"true":"false")+"}");
  }
  void admit_position() {
   require(position>=0&&position<p.g.context,"draft capacity position admission");
   int bound=std::min(p.g.context,((position+32)/32)*32);
+  set_context_extent(bound);
+ }
+ void set_context_extent(int bound) {
   if(bound==context_extent)return;
   e.drain();context_extent=bound;
   for(size_t i=0;i<p.launches.size();++i){const auto& l=p.launches[i];
@@ -191,10 +195,10 @@ public:
    catch(...){e.dev(0).end_capture();e.preparing_commands=false;throw;}
   }
  }
- int compute(int confirmed,int target_position,bool head,bool asynchronous=false){
+ int compute(int confirmed,int target_position,bool head,bool asynchronous=false,bool autoregressive=false){
   require(!async_pending,"draft publication still pending");if(disabled)return -1;admit_position();require(confirmed>=0&&confirmed<p.g.vocab,"draft confirmed token bound");require(target_position==position+1,"draft confirmed position sequence");auto start=std::chrono::steady_clock::now();
   if(e.a.draft_fault=="error"||e.a.draft_fault=="stall"){if(e.a.draft_fault=="stall"){auto until=std::chrono::steady_clock::now()+std::chrono::milliseconds(50);while(std::chrono::steady_clock::now()<until){e.guard();poll(nullptr,0,5);}}throw ProviderError("cooperative injected provider failure before submission");}
-  e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);ownrt::CopyEngine copy(e.dev(0));if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");e.upload(0,id("merge.hidden"),0,reverse_hidden,4*p.g.h*2);reverse_hidden=nullptr;}else e.tail=copy.copy(id("merge.hidden"),0,e.buffers[0].at("streams").id,0,4*p.g.h*2,{});e.drain();
+  e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);ownrt::CopyEngine copy(e.dev(0));if(autoregressive){require(e.a.mtp_k2_probe&&!asynchronous,"private autoregressive probe only");e.tail=copy.copy(id("merge.hidden"),0,id("streams"),0,4*p.g.h*2,{});}else if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");e.upload(0,id("merge.hidden"),0,reverse_hidden,4*p.g.h*2);reverse_hidden=nullptr;}else e.tail=copy.copy(id("merge.hidden"),0,e.buffers[0].at("streams").id,0,4*p.g.h*2,{});e.drain();
   // Bounded target embedding row only. No target PLE/history/token preparation.
   auto t=e.w.directory.at("token_embd.weight");auto type=flash::grid_type(t.grid);auto fmt=iq3::layout(type);size_t rb=p.g.h/fmt.elements*fmt.bytes;auto raw=e.w.read(t.name,size_t(confirmed)*rb,rb);std::vector<uint16_t> emb(p.g.h);for(int k=0;k<p.g.h;++k)emb[k]=iq3::bf16_bits(iq3::element(type,raw.data(),k));e.upload(0,id("embedding"),0,emb.data(),emb.size()*2);
   if(captured) {
@@ -220,9 +224,39 @@ public:
   }
   e.drain();auto error=e.readback(0,id("error"),4);int status;std::memcpy(&status,error.data(),4);if(status){disabled=true;return -1;}
   ++position;if(e.a.draft_fault=="late-error")throw ProviderError("injected provider failure after cache append");int token=-1;if(head){auto b=e.readback(0,id("next_token"),4);std::memcpy(&token,b.data(),4);}
-  trace<<"{\"draft_position\":"<<position-1<<",\"confirmed_token\":"<<confirmed<<",\"guess\":"<<token<<",\"head\":"<<(head?"true":"false")<<",\"wall_ms\":"<<Engine::ms(start)<<"}\n";trace.flush();if(e.a.draft_fault=="suppress")return -1;if(e.a.draft_fault=="garbage")return p.g.vocab;return e.a.draft_fault=="wrong"&&head?(token+1)%p.g.vocab:token;
+  if(!autoregressive)trace<<"{\"draft_position\":"<<position-1<<",\"confirmed_token\":"<<confirmed<<",\"guess\":"<<token<<",\"head\":"<<(head?"true":"false")<<",\"wall_ms\":"<<Engine::ms(start)<<"}\n";trace.flush();if(e.a.draft_fault=="suppress")return -1;if(e.a.draft_fault=="garbage")return p.g.vocab;return e.a.draft_fault=="wrong"&&head?(token+1)%p.g.vocab:token;
  }
- int run(int confirmed,int target_position,bool head){try{return compute(confirmed,target_position,head);}catch(const ProviderError& ex){e.drain();disabled=true;trace<<"{\"disabled\":true,\"reason\":"<<ownrt::quote(ex.what())<<"}\n";trace.flush();return -1;}}
+ // Diagnostic transaction: no device allocations, and no target writes. The
+ // second step reads the previous draft's four-stream hidden, not final.mix.
+ // Full private-state restoration includes cache tails, scratch and metadata.
+ void probe_second(int g1,int target_position,double first_ms) {
+  require(e.a.mtp_k2_probe&&e.a.diagnostic_unsealed&&!async_pending&&!disabled,"k2 probe ownership");
+  require(g1>=0&&g1<p.g.vocab,"k2 first guess bound");
+  if(position>=p.g.context){probe_trace<<"{\"diagnostic_unsealed\":true,\"qualifying\":false,\"skipped\":\"capacity\",\"g1_position\":"<<target_position+1<<"}\n";probe_trace.flush();return;}
+  auto start=std::chrono::steady_clock::now();e.drain();
+  const int saved_position=position,saved_extent=context_extent,saved_class=e.current_cls;
+  std::map<Allocation,std::vector<uint8_t>> before;
+  for(auto allocation:mutable_ids)before.emplace(allocation,e.readback(0,allocation,e.dev(0).arena.row(allocation).bytes));
+  const double backup_ms=Engine::ms(start);
+  const auto hidden_hash=hash(before.at(id("streams")));
+  auto step_start=std::chrono::steady_clock::now();
+  int g2=-1;try{g2=compute(g1,position+1,true,false,true);}catch(const ProviderError& ex){throw std::runtime_error(std::string("k2 probe abort: ")+ex.what());}
+  const double extra_ms=Engine::ms(step_start);
+  require(!disabled&&g2>=0&&g2<p.g.vocab,"k2 probe provider error; do not hide sticky errors");
+  require(hash(e.readback(0,id("merge.hidden"),4*p.g.h*2))==hidden_hash,"k2 autoregressive hidden source changed");
+  auto restore_start=std::chrono::steady_clock::now();
+  for(const auto& [allocation,bytes]:before)e.upload(0,allocation,0,bytes.data(),bytes.size());
+  e.drain();position=saved_position;set_context_extent(saved_extent);e.current_cls=saved_class;
+  for(const auto& [allocation,bytes]:before)require(e.readback(0,allocation,bytes.size())==bytes,"k2 probe private-state restoration");
+  const double restore_ms=Engine::ms(restore_start);
+  probe_trace<<"{\"schema\":\"packet45.mtp-k2-probe.v1\",\"diagnostic_unsealed\":true,\"qualifying\":false,\"g1_position\":"<<target_position+1
+   <<",\"g2_position\":"<<target_position+2<<",\"g1\":"<<g1<<",\"g2\":"<<g2<<",\"embedding_token\":"<<g1
+   <<",\"source_hidden_sha256\":"<<ownrt::quote(hidden_hash)<<",\"hidden_source\":\"previous-draft-pre-final-mixer-four-stream\",\"state_restored\":true"
+   <<",\"context_extent_before\":"<<saved_extent<<",\"context_extent_restored\":"<<context_extent
+   <<",\"first_step_ms\":"<<first_ms<<",\"extra_step_ms\":"<<extra_ms<<",\"backup_ms\":"<<backup_ms<<",\"restore_and_check_ms\":"<<restore_ms<<",\"total_probe_ms\":"<<Engine::ms(start)<<"}\n";
+  probe_trace.flush();require(bool(probe_trace),"k2 probe log write");
+ }
+ int run(int confirmed,int target_position,bool head){try{auto start=std::chrono::steady_clock::now();int token=compute(confirmed,target_position,head);const double first_ms=Engine::ms(start);if(e.a.mtp_k2_probe&&head&&token>=0)probe_second(token,target_position,first_ms);return token;}catch(const ProviderError& ex){e.drain();disabled=true;trace<<"{\"disabled\":true,\"reason\":"<<ownrt::quote(ex.what())<<"}\n";trace.flush();return -1;}}
  bool submitting()const{return async_pending;}
  bool begin(int confirmed,int target_position,bool head){
   try {compute(confirmed,target_position,head,true);return async_pending;}
@@ -264,6 +298,7 @@ public:
   std::memset(e.dev(0).arena.row(publication).pointer,0,8);std::memset(e.dev(0).arena.row(half_staging).pointer,0,4+4*p.g.h*2);
   publication_event=0;e.progress_pending=false;e.progress_callback={};
   trace.close();trace.open(output/"draft-rows.jsonl");require(bool(trace),"draft reset trace");
+  if(e.a.mtp_k2_probe){probe_trace.close();probe_trace.open(output/"mtp-k2-probe.jsonl");require(bool(probe_trace),"k2 reset log");}
  }
  void dump_all_state(const fs::path& path) {
   dump(path);std::ostringstream out;out<<"{\"position\":"<<position<<",\"disabled\":"<<(disabled?"true":"false")<<",\"mutable_sha256\":{";
