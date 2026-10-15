@@ -6,7 +6,7 @@ RULE='packet45.fix6.device-oracle-authority.2026-10-15'
 OLD_MAIN='7e8bb826de6463ca5cb48fa62be891f78cbcf71eba9011a2d5a79ab3f6a47296'
 NEW_MAIN='1263d055aae92ccb78e541fabbf583e5d1737a5597ad9517213fecf875d2a53f'
 BASELINE='7e0317b026d15fafe0e223040a0760bc81c6cb5b4db45574448e69ff0e5f110e'
-QUALIFICATION_SOURCES=('seal6_amendment.py','seal_context.py','seal45.py','fixture_delta.py','draft_window.py','copy_adoption_gate.py','audit6.py','test_fixture_delta.py','test_seal6_amendment.py','../../../../scripts/promotion_evidence.py','plan_group_gate.py','speed1_qualification.py','speed1_plan_gate.py','speed1_snapshot_gate.py','speed1_snapshot_inventory.py')
+QUALIFICATION_SOURCES=('seal6_amendment.py','seal_context.py','seal45.py','fixture_delta.py','draft_window.py','copy_adoption_gate.py','audit6.py','test_fixture_delta.py','test_seal6_amendment.py','../../../../scripts/promotion_evidence.py','plan_group_gate.py','speed1_qualification.py','speed1_plan_gate.py','speed1_snapshot_gate.py','speed1_snapshot_inventory.py','speed2_qualification.py','speed2_plan_gate.py','speed2_snapshot_gate.py','speed2_snapshot_inventory.py','speed2_rebuild.py','speed2_attribution.py','speed2_finalize.py')
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def baseline():
  p=P/'evidence/fix6/before-build-receipt.json'
@@ -20,12 +20,15 @@ def verify():
  assert sha(P/'evidence/fix6/before-main.cpp.txt')==OLD_MAIN and now[key]==NEW_MAIN,'outside fixture/fix6 repair'
  from speed1_qualification import verify as speed_verify,PINS
  speed=speed_verify()
+ from speed2_qualification import verify as speed2_verify
+ speed2=speed2_verify()
  assert {k for k in now if old['sources'].get(k)!=now[k]}=={key,*[str((P/n).relative_to(ROOT)) for n in PINS]},'outside fixture/fix6 repair'
  gate=plan_verify();r=record()
  assert r['rule']==RULE and r['directive_date']=='2026-10-15'
  assert r['plan_dispatch_rows']==48 and r['plan_gate_sha256']==sha(P/'fix6-plan-gates.json')
  assert r['production_changed_files']==['main.cpp','p39_plan.hpp','strict_snapshot.hpp']
  assert r['speed1_extension']==speed,'SPEED1 amendment evidence changed'
+ assert r['speed2_extension']==speed2,'SPEED2 amendment evidence changed'
  assert set(r['qualification_sources_sha256'])==set(QUALIFICATION_SOURCES),'amendment change set differs'
  for n,h in r['qualification_sources_sha256'].items():assert sha(P/n)==h,'amendment source changed '+n
  assert r['required_device_windows']==['W2m','WS','WSs','WS128x']
@@ -37,9 +40,11 @@ def source_matches(path,digest):
  if path==P/'main.cpp':return digest==OLD_MAIN and sha(path)==NEW_MAIN
  from speed1_qualification import source_allowed,before
  if source_allowed(path,digest):return True
+ from speed2_qualification import source_allowed as speed2_source,before as speed2_before
+ if speed2_source(path,digest):return True
  r=record();key=str(path.relative_to(ROOT))
  return (path.parent==P and path.name in r['qualification_sources_sha256']
-         and digest in {baseline()['sources'].get(key),before()['sources'].get(key)}
+         and digest in {baseline()['sources'].get(key),before()['sources'].get(key),speed2_before()['sources'].get(key)}
          and sha(path)==r['qualification_sources_sha256'][path.name])
 def maps_match(old,current):
  return set(old)==set(current) and all(old[k]==current[k] or source_matches(ROOT/k,old[k]) for k in old)

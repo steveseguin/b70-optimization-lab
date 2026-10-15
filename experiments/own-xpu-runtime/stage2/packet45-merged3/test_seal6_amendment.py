@@ -13,6 +13,21 @@ class Amendment(unittest.TestCase):
    self.assertTrue(a.source_matches(a.P/n,before()['sources'][str((a.P/n).relative_to(a.ROOT))]))
    self.assertFalse(a.source_matches(a.P/n,'0'*64))
   self.assertEqual(a.verify()['speed1_extension']['mini_checks'],36)
+ def test_speed2_scope(self):
+  from speed2_qualification import PINS,before
+  for n,h in PINS.items():
+   self.assertTrue(a.source_matches(a.P/n,before()['sources'][str((a.P/n).relative_to(a.ROOT))]))
+   self.assertFalse(a.source_matches(a.P/n,'0'*64))
+  self.assertEqual(a.verify()['speed2_extension']['mini_checks'],36)
+ def test_unproved_snapshot_exclusion(self):
+  import speed2_qualification as s
+  original=s.json.loads
+  def mutated(raw,*args,**kwargs):
+   row=original(raw,*args,**kwargs)
+   if isinstance(row,list) and len(row)==12 and isinstance(row[0],dict) and 'extents' in row[0]:
+    extent=next(x for x in row[0]['extents'] if x['name']=='streams');extent['captured_bytes']-=1
+   return row
+  with patch.object(s.json,'loads',side_effect=mutated),self.assertRaises(AssertionError):s.verify()
  def test_main_tamper(self):
   from build import compiled_sources
   now=compiled_sources();now[str((a.P/'main.cpp').relative_to(a.ROOT))]='0'*64

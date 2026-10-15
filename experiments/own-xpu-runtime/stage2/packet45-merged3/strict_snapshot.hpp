@@ -29,9 +29,53 @@ struct SnapshotBatch final:ownrt::SyclOperation {
  }
 #endif
 };
+// SPEED2_WRITE_SET_BEGIN
+// Union of all selectable parallel writers, derived from Launch geometry.
+// Bounds describe bytes which MAY be written, including every cancelled prefix.
+// Unknown operators/reference execution preserve the complete allocation.
+struct SnapshotWriteSet {
+ static size_t scratch(const flash::Plan& p,const flash::Launch& l,size_t allocation,bool parallel) {
+  if(!parallel)return allocation;
+  auto ceil=[](size_t n,size_t d){return (n+d-1)/d;};
+  size_t n=0;
+  if(!l.inputs.empty())for(const auto& b:p.buffers)if(b.card==l.card&&b.name==l.inputs[0]){
+   n=1;for(int v:b.shape){require(v>0,"snapshot input geometry");n*=size_t(v);}break;
+  }
+  size_t bytes=0;const auto& op=l.op;
+  if(op=="norm"||op=="hc_combine"){
+   if(l.shape.size()<2||l.shape[1]<=0||!n||n%size_t(l.shape[1]))return allocation;
+   bytes=(n/size_t(l.shape[1]))*ceil(size_t(l.shape[1]),32)*4;
+  }else if(op=="route")bytes=(2*ceil(n,16)+2*n)*4;
+  else if(op=="argmax")bytes=2*ceil(n,256)*4;
+  else if(op=="expert_gather")bytes=size_t(p.g.top)*4;
+  else if(op=="gdn")bytes=p.g.h==2560?4192*4:0;
+  else if(op=="gdn_norm_gate")bytes=p.g.h==2560?48*4*4:0;
+  else if(op=="qsa_prepare")bytes=p.g.h==2560?30*8*4:0;
+  else if(op=="qsa_append_pool")bytes=p.g.h==2560?ceil(size_t(p.g.context),4)*4*4:0;
+  else if(op=="qsa_select")bytes=p.g.h==2560?ceil(size_t(p.g.context),4)*4:0;
+  else if(op=="qsa_attention")bytes=p.g.h==2560?6144*ceil(size_t(std::min(p.g.context,p.g.budget+3)),32)*4:0;
+  else {
+   static const std::set<std::string> no_global_scratch={"begin","commit","broadcast","ple_hash","check_status","lookup","handoff","handoff_result","gemv","routed_gemv","expert_gate_up","silu_div4","silu_product","hc_mix","conv","moe_combine","ple_gate","ple_add"};
+   if(!no_global_scratch.count(op))return allocation;
+  }
+  if((op=="route"||op=="argmax")&&!n)return allocation;
+  require(bytes<=allocation,"snapshot scratch writer exceeds allocation");return bytes;
+ }
+ static size_t scratch(const flash::Plan& p,size_t allocation,bool parallel) {
+  size_t bound=0;for(const auto& l:p.launches)bound=std::max(bound,scratch(p,l,allocation,parallel));return bound;
+ }
+ static bool single_row(const flash::Plan& p,const std::string& name,bool parallel) {
+  if(!parallel)return false;bool writer=false;
+  for(const auto& l:p.launches)if(std::find(l.outputs.begin(),l.outputs.end(),name)!=l.outputs.end()){
+   if(l.op!="qsa_append_pool")return false;writer=true;
+  }
+  return writer;
+ }
+};
+// SPEED2_WRITE_SET_END
 class SpeculativeImage {
  Engine& e;
- struct Source {std::string name;Allocation standalone=0;size_t bytes=0;bool bank=false,kv=false,pooled=false;};
+ struct Source {std::string name;Allocation standalone=0;size_t bytes=0;bool bank=false,kv=false,pooled=false;size_t write_bytes=0;bool single_row=false;};
  struct Extent {Allocation id;size_t offset,bytes,backup_offset;};
  std::vector<Source> sources;
  std::vector<Extent> saved;
@@ -103,13 +147,16 @@ public:
    represented.insert(slot.id);
    if(!outputs.count(name))continue;
    Source row{name,0,slot.n*flash::scalar_bytes(slot.type),e.state_spares.count(name)!=0,kv.count(name)!=0,ends(name,".pooled")};
+   row.write_bytes=row.bytes;row.kv=row.kv&&SnapshotWriteSet::single_row(e.p,name,true);
+   row.single_row=row.kv&&e.a.nongemv=="parallel";
    capacity+=row.bytes;sources.push_back(std::move(row));
   }
   for(const auto& [name,id]:e.state_spares)represented.insert(id);
   for(const auto& [id,owner]:e.allocations){const auto& row=e.dev(owner.first).arena.row(id);
    if(!row.live||row.category==Category::weights||row.category==Category::pinned_slab||represented.count(id)||id==e.one[0])continue;
    require(owner.first==0&&row.memory==Memory::device,"snapshot owner/memory");
-   sources.push_back({{},id,row.bytes,false,false,false});capacity+=row.bytes;
+   Source source{{},id,row.bytes,false,false,false};source.write_bytes=id==e.scratch[0]?SnapshotWriteSet::scratch(e.p,row.bytes,e.a.nongemv=="parallel"):row.bytes;
+   sources.push_back(source);capacity+=row.bytes;
   }
   require(capacity>0,"empty speculative snapshot");saved.reserve(sources.size());
   backup=e.allocate(0,"speculative-private-image",capacity,Category::runtime_overhead,Lifetime::process);
@@ -128,18 +175,20 @@ public:
   int position=e.integer(0,"position");require(position>=0&&position<e.p.g.context,"snapshot position");
   saved.clear();protected_active.clear();protected_qsa.clear();size_t offset=0;
   for(const auto& source:sources){
-   Allocation id=source.standalone;size_t skip=0;
+   Allocation id=source.standalone;size_t skip=0,bytes=source.write_bytes;
    if(!id){id=source.bank?e.state_spares.at(source.name):e.buffers[0].at(source.name).id;
     if(source.bank)protected_active.push_back({e.buffers[0].at(source.name).id,source.bytes});
     if(source.kv){size_t rows=source.pooled?size_t((e.p.g.context+3)/4):size_t(e.p.g.context);
      size_t valid_rows=source.pooled?size_t(position/4):size_t(position);
      require(source.bytes%rows==0,"snapshot QSA row geometry");skip=valid_rows*(source.bytes/rows);
+     bytes=source.single_row?source.bytes/rows:source.bytes-skip;
      if(skip)protected_qsa.push_back({id,skip});
     }
    }
    // Active recurrent banks and already-committed QSA prefixes are not saved:
    // illegal mutation there must remain visible to the full-state gate.
-   size_t bytes=source.bytes-skip;if(bytes)saved.push_back({id,skip,bytes,offset});offset+=bytes;
+   require(skip<=source.bytes&&bytes<=source.bytes-skip,"snapshot writer range");
+   if(bytes)saved.push_back({id,skip,bytes,offset});offset+=bytes;
   }
   require(offset<=capacity,"snapshot extent overflow");valid=true;dirty=true;
   copy(false);++captures;saved_bytes+=offset;

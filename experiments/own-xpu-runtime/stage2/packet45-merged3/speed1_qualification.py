@@ -11,10 +11,15 @@ MIRRORS={'p39_plan.hpp':('13870730098c4b5f515c7e80f82d7a1316d6a12520f4e532f099aa
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def before():
  p=P/'evidence/speed1/before-build-receipt.json';assert sha(p)==BEFORE,'SPEED1 baseline changed';return json.loads(p.read_text())
+def current_pin(n):
+ from speed2_qualification import PINS as current
+ return current.get(n,PINS[n])
 def source_allowed(path,old):
  path=Path(path);n=path.name;key=str(path.relative_to(ROOT))
- return path.parent==P and n in PINS and old==before()['sources'][key] and sha(path)==PINS[n]
+ return path.parent==P and n in PINS and old==before()['sources'][key] and sha(path)==current_pin(n)
 def mirror_allowed(path,old,new):
+ from speed2_qualification import mirror_allowed as later
+ if later(path,old,new):return True
  p=Path(path);n=p.name
  return n in MIRRORS and str(p)==str((P/'build/checked'/P.relative_to(ROOT)/n).relative_to(ROOT)) and (old,new)==MIRRORS[n] and sha(P/n)==PINS[n] and sha(ROOT/p)==new
 
@@ -23,12 +28,14 @@ def verify():
  old=before();now=compiled_sources()
  expected={str((P/n).relative_to(ROOT)) for n in PINS}
  assert {k for k in now if old['sources'].get(k)!=now[k]}==expected,'outside fixture/SPEED1 repair'
- assert all(now[str((P/n).relative_to(ROOT))]==h for n,h in PINS.items()),'outside fixture/SPEED1 repair'
+ assert all(now[str((P/n).relative_to(ROOT))]==current_pin(n) for n in PINS),'outside fixture/SPEED1 repair'
  plan=json.loads((P/'speed1-plan-gates.json').read_text());mini=json.loads((P/'speed1-snapshot-gates.json').read_text());inventory=json.loads((P/'speed1-snapshot-inventory.json').read_text())
  for row in (plan,mini,inventory):
   assert row['passed'] and row['device_executed'] is False
   for field in ('sources_sha256','source_sha256'):
-   for n,h in row.get(field,{}).items():assert sha(P/n)==h,'SPEED1 source changed '+n
+   for n,h in row.get(field,{}).items():
+    from speed2_qualification import source_allowed as later
+    assert sha(P/n)==h or later(P/n,h),'SPEED1 source changed '+n
  assert plan['plan_dispatch_rows']==len(plan['rows'])==48 and plan['removed_target_commands']==192
  assert sha(P/'build/speed1-plan/after')==plan['binary_sha256'] and sha(P/'build/speed1-plan/after.cpp')==plan['generated_sha256']
  assert sha(P/'build/input/plan.tsv')==plan['metadata_sha256']
@@ -36,8 +43,9 @@ def verify():
   assert r['result']['passed'] and sha(P/('evidence/fix6/dispatch-'+r['dispatch']+'.json'))==r['dispatch_sha256']
   if r['plan']!='draft':assert r['group_census']['shared']==0 and r['group_census']['ffn']>0
  assert mini['cases']==42 and mini['gate_count']==36 and len(mini['negative_controls'])==4
- assert mini['build']['binary_sha256']==sha(P/'build/gnu-host/own-rt-iq3')
- assert mini['build']['compiled_sources_sha256']==now
+ from speed2_qualification import before as subsequent
+ assert mini['build']['binary_sha256']==subsequent()['artifacts_sha256']['gnu-host/own-rt-iq3']
+ assert mini['build']['compiled_sources_sha256']=={k:subsequent()['sources'][k] for k in now}
  assert all(r['full_state_equal'] for r in mini['rows']) and all(r['rejected'] for r in mini['negative_controls'])
  from seal45 import archive_bound
  for r in mini['owners']:archive_bound(r['archive'])
@@ -83,7 +91,7 @@ def audit_inventory_allowed(old,new):
  assert old==baseline_row['copy_sites'],'audit6 copy inventory changed'
  strip=lambda rows:[{k:v for k,v in r.items() if k!='line'} for r in rows if r['source']!='strict_snapshot.hpp']
  assert strip(old)==strip(new),'audit6 copy inventory changed outside snapshot'
- assert sha(P/'strict_snapshot.hpp')==PINS['strict_snapshot.hpp']
+ assert sha(P/'strict_snapshot.hpp')==current_pin('strict_snapshot.hpp')
  copies=[r for r in new if r['source']=='strict_snapshot.hpp']
  assert len(copies)==2 and all(r['expressions']==1 and r['largest_n']==r['limit']==134217728 for r in copies)
  return True

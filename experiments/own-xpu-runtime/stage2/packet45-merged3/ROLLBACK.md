@@ -31,3 +31,10 @@ Balance uses measured aggregate half times 16.6/17.1 ms and draft2.85 ms. Moving
 two layers, estimated at16.6/24 ms each, yields18.0667/18.4833 ms. These estimates
 omit transfers, host costs and misses; per-layer profiling and actual end-to-end
 measurements remain coordinator gates, not CPU speed claims.
+
+SPEED2 meets that same full-state contract by capturing a checked superset of
+every possible speculative write. Parallel operator scratch needs only its
+proved prefix; QSA append needs the current K/V/raw row and the current pooled
+row. Bytes outside these ranges stay untouched and remain fully hashed. Every
+other protected extent and all host metadata retain their existing coverage.
+See [SPEED2-CLOSEOUT.md](SPEED2-CLOSEOUT.md) and the checked write-set artifact.

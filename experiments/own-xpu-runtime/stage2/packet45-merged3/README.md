@@ -1,5 +1,9 @@
 # Packet 45: merged runtime, CPU qualified
 
+[SPEED2 write-set repair](SPEED2-CLOSEOUT.md) preserves full-state rollback while
+avoiding copies of untouched scratch and QSA tails. Device qualification remains
+the coordinator's exact-token responsibility under the named seal amendment.
+
 One runtime based on packet44-context at `421a4ab50`, with packet40-suite at
 `50d9e0031`, the measured packet42 candidates, packet39 epilogues, and selectable
 official draft placement. The target stays the quantized compressed Unsloth
