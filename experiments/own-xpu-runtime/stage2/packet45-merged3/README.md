@@ -131,3 +131,7 @@ The [SPEED3 closeout](SPEED3-CLOSEOUT.md) removes duplicate draft profiling and
 admits an independent 24/24 target split with drafting on rank 0 at 4K only.
 It includes exact coordinator commands, fresh mini/plan/event/admission gates,
 forecasts and the new seal hashes. The 32K version of that split is refused.
+
+The [SPEED6 closeout](SPEED6-CLOSEOUT.md) repairs pre-launch arena admission and
+bounds operator scratch for 23/25 dr1 at 4K, with production-size sparse checks,
+mini full-state gates, the new seal identity and both-pair coordinator commands.

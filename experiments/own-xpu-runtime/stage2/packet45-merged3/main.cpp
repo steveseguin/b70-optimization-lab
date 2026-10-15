@@ -530,6 +530,7 @@ struct Slot {
   size_t n;
   Scalar type;
 };
+static size_t target_scratch_bytes(const flash::Plan&,const Options&);
 class Engine final : public flash::Backend {
 public:
   Weights &w;
@@ -820,6 +821,8 @@ public:
     fp32_sources[0]=0;fp32_extents[0]=0;
   }
   void initialize() {
+    // Validate the allocation policy before constructing any device/backend.
+    const size_t operator_scratch_bytes=target_scratch_bytes(p,a);
     owned_bytes.resize(a.cards);
 #ifdef OWN_RT_HOST_ONLY
     devices.push_back(std::make_unique<ownrt::Device>(std::make_unique<Host>()));
@@ -851,7 +854,7 @@ public:
                               Memory::pinned));
       ropes.push_back(allocate(c,"rope-v2",rope_constants::bytes,Category::weights,Lifetime::process));
       upload(c,ropes[c],0,rope_bytes.data(),rope_bytes.size());
-      scratch.push_back(allocate(c, "operator-scratch", 256ull * 1024 * 1024,
+      scratch.push_back(allocate(c, "operator-scratch", operator_scratch_bytes,
                                  Category::scratch, Lifetime::transaction));
     }
     // Some dispatches do not touch controls/compact routes, and kernels may
@@ -1372,7 +1375,7 @@ static void write_plan(const fs::path &path, const flash::Plan &p,
   o << "],\"expert_placement\":\"all experts belong to their layer owner; none "
        "pruned\",\"one_card_full_model\":\"stream one layer at a "
        "time\",\"capture\":false,\"memory_plan\":{";
-  size_t extra=174080*4+rope_constants::bytes+256ull*1024*1024+8*1024*1024+p.g.top*sizeof(iq3::Route)+p.g.h*2+4+12+2*24*(p.g.budget+3)*4+48*4*p.g.h*2;
+  size_t extra=174080*4+rope_constants::bytes+target_scratch_bytes(p,a)+8*1024*1024+p.g.top*sizeof(iq3::Route)+p.g.h*2+4+12+2*24*(p.g.budget+3)*4+48*4*p.g.h*2;
   std::vector<size_t> base(cards,extra),resident(cards,0);
   for(const auto& b:p.buffers)for(int c=0;c<cards;++c)
     if(b.card==-1 || b.card==c)base[c]+=count(b.shape)*flash::scalar_bytes(b.type);
@@ -1413,6 +1416,25 @@ static void record_host_memory(const fs::path& output,const char* phase) {
 }
 
 #include "rank.hpp"
+
+// SPEED6_SCRATCH_POLICY_BEGIN
+// Scope the footprint reduction to the previously refused split23/dr1 arm.
+// The reference interpreter advertises a 64M-float pool: never shrink it.
+// Unknown writers fail closed, rather than silently using an understated ledger.
+static size_t target_scratch_bytes(const flash::Plan& p,const Options& a) {
+ constexpr size_t legacy=256ull*1024*1024, bounded=8ull*1024*1024;
+ if(a.target_split!=23||a.draft_rank!=1||a.nongemv!="parallel"||
+    (!a.mini&&a.context!=4096))return legacy;
+ require((a.mini||p.g.h==2560)&&p.g.context==a.context&&
+         p.g.context>0&&p.g.context<=32768&&p.g.budget>0&&p.g.budget<=2048,
+         "unproved bounded scratch geometry");
+ const size_t required=pipeline::SnapshotWriteSet::scratch(p,legacy,true);
+ require(!p.launches.empty()&&required<=bounded,"unproved bounded scratch extent");
+ // SPEED6 plan gate also checks this writer union against the kernels' full
+ // scratch_floats read/write requirements. Binding-time extent guards stay on.
+ return bounded;
+}
+// SPEED6_SCRATCH_POLICY_END
 
 static int run_draft_capture(Options a) {
  a.rank=1;pipeline_stop_fd=a.stop_fd;std::unique_ptr<Weights> w;std::unique_ptr<Engine> e;std::unique_ptr<mtp36::DraftRuntime> draft;std::string error;std::vector<std::string> teardown;

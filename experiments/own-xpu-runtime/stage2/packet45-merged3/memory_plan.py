@@ -183,6 +183,12 @@ def strict_image_evidence():
                 source_plan_sha256=hashlib.sha256(raw).hexdigest(),
                 census_sha256=item['census_sha256'], boundaries=result)
 
+# Engine::allocate accounts device allocations only. Pinned slabs and the
+# conservative card-accounting reserves do not consume its 30 GiB arena.
+ARENA_LIMIT_BYTES = 30 * 1024**3
+SCRATCH_SAVING_BYTES = (256-8) * 1024**2
+SCRATCH_POLICY = 'packet45.speed6.split23-dr1-4k.parallel-scratch-8mib'
+
 def plan():
     verify_baseline_evidence()
     snapshot_evidence = strict_image_evidence()
@@ -196,6 +202,9 @@ def plan():
             per_layer = sum(components.values())
             growth = per_layer - baseline_cache
             draft = DRAFT_BASE + growth
+            # Mirror target_scratch_bytes; all coordinator target ranks use
+            # parallel nongemv. Other production configurations keep old sizes.
+            scratch_saving = SCRATCH_SAVING_BYTES if key == '1-split23' and context == 4096 else 0
             rows = []
             for rank in range(2):
                 modeled = TARGET_BASE[rank] + 6 * growth + ROPE_GROWTH
@@ -206,7 +215,10 @@ def plan():
                 if boundary == 23:
                     transfer = -(LAYER23_BYTES + growth) if rank == 0 else LAYER23_BYTES + growth
                 snapshot = STRICT_IMAGE_256[boundary] + qsa_counts[0] * growth if rank == 0 else 0
-                modeled += transfer + snapshot
+                # SpeculativeImage reserves source allocation capacities, so
+                # shrinking rank0 scratch shrinks its private backup as well.
+                if rank == 0: snapshot -= scratch_saving
+                modeled += transfer + snapshot - scratch_saving
                 duplicate_head = HEAD_BYTES if draft_rank == 0 and rank == 0 else 0
                 target = modeled + ALLOCATION_RESERVE[rank]
                 draft_bytes = draft if rank == draft_rank else 0
@@ -219,6 +231,9 @@ def plan():
                     strict_rollback_image_bytes=snapshot,
                     allocation_reserve_bytes=ALLOCATION_RESERVE[rank],
                     target_modeled_allocations_bytes=modeled,
+                    arena_device_bytes=modeled+draft_bytes+duplicate_head,
+                    arena_headroom_bytes=ARENA_LIMIT_BYTES-(modeled+draft_bytes+duplicate_head),
+                    arena_margin_passed=modeled+draft_bytes+duplicate_head <= ARENA_LIMIT_BYTES,
                     target_total_bytes=target,
                     target_qsa_cache_bytes=qsa_counts[rank]*per_layer,
                     draft_qsa_cache_bytes=per_layer if rank == draft_rank else 0,
@@ -239,6 +254,11 @@ def plan():
             layer_boundary=boundary, capacities=capacities)
     return dict(schema='own-runtime.packet45.memory-plan.v1',
         capacity_bytes=CAPACITY_BYTES, minimum_free_bytes=MINIMUM_FREE_BYTES,
+        arena_limit_bytes=ARENA_LIMIT_BYTES,
+        scratch_policy=dict(rule=SCRATCH_POLICY, placement='1-split23', context=4096,
+                            nongemv='parallel', bytes=8*1024**2, saving_per_engine_bytes=SCRATCH_SAVING_BYTES,
+                            rank0_backup_saving_bytes=SCRATCH_SAVING_BYTES,
+                            all_other_configurations='unchanged 256 MiB'),
         default_draft_rank=0, placements=placements,
         capacities=placements['0']['capacities'],
         rope_table_bytes=32768*128, rope_growth_per_rank_bytes=ROPE_GROWTH,

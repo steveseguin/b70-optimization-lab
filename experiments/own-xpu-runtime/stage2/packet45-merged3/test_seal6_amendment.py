@@ -6,6 +6,21 @@ import seal6_amendment as a
 sys.path.insert(0,str(a.ROOT/'scripts'))
 from promotion_evidence import validate_packet45_device_evidence
 class Amendment(unittest.TestCase):
+ def test_speed6_scope(self):
+  from speed6_qualification import PINS,before
+  for n in PINS:
+   self.assertTrue(a.source_matches(a.P/n,before()['sources'][str((a.P/n).relative_to(a.ROOT))]))
+   self.assertFalse(a.source_matches(a.P/n,'0'*64))
+  self.assertEqual(a.verify()['speed6_extension']['sparse_production_rows'],120)
+ def test_speed6_short_workspace(self):
+  import speed6_qualification as s
+  original=s.json.loads
+  def mutate(raw,*args,**kwargs):
+   row=original(raw,*args,**kwargs)
+   if isinstance(row,dict) and row.get('plan_dispatch_rows')==120 and row.get('rows') and 'sparse_workspace' in row['rows'][0]:
+    row['rows'][0]['sparse_workspace']['workspace_peak_bytes']=8*1024**2+1
+   return row
+  with patch.object(s.json,'loads',side_effect=mutate),self.assertRaises(AssertionError):s.verify()
  def test_current(self):self.assertEqual(a.verify()['plan_dispatch_rows'],48)
  def test_speed1_scope(self):
   from speed1_qualification import PINS,before

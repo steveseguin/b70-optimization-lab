@@ -6,7 +6,7 @@ RULE='packet45.fix6.device-oracle-authority.2026-10-15'
 OLD_MAIN='7e8bb826de6463ca5cb48fa62be891f78cbcf71eba9011a2d5a79ab3f6a47296'
 NEW_MAIN='1263d055aae92ccb78e541fabbf583e5d1737a5597ad9517213fecf875d2a53f'
 BASELINE='7e0317b026d15fafe0e223040a0760bc81c6cb5b4db45574448e69ff0e5f110e'
-QUALIFICATION_SOURCES=('test_seal45_bindings.py','speed5_qualification.py','speed5_prepare.py','speed5_finalize.py','speed5_rebuild.py','speed5_plan_gate.py','speed5_snapshot_gate.py','test_speed5.py','speed4_qualification.py','speed4_rebuild.py','speed4_plan_gate.py','speed4_snapshot_gate.py','speed4_snapshot_inventory.py','speed4_attribution.py','speed4_finalize.py','seal6_amendment.py','seal_context.py','seal45.py','fixture_delta.py','draft_window.py','copy_adoption_gate.py','audit6.py','test_fixture_delta.py','test_seal6_amendment.py','../../../../scripts/promotion_evidence.py','plan_group_gate.py','speed1_qualification.py','speed1_plan_gate.py','speed1_snapshot_gate.py','speed1_snapshot_inventory.py','speed2_qualification.py','speed2_plan_gate.py','speed2_snapshot_gate.py','speed2_snapshot_inventory.py','speed2_rebuild.py','speed2_attribution.py','speed2_finalize.py','speed3_qualification.py','speed3_rebuild.py','speed3_plan_gate.py','speed3_snapshot_gate.py','speed3_event_gate.py','test_speed3.py','speed3_finalize.py','memory_gate.py','memory_plan.py','pipeline.py','window.py','cpu_merged_gate.py','coordinator_windows.sh','test_window_seal_admission.py')
+QUALIFICATION_SOURCES=('speed6_qualification.py','speed6_rebuild.py','speed6_finalize.py','speed6_plan_gate.py','speed6_snapshot_gate.py','speed6_memory_gate.py','test_speed6.py','test_seal45_bindings.py','speed5_qualification.py','speed5_prepare.py','speed5_finalize.py','speed5_rebuild.py','speed5_plan_gate.py','speed5_snapshot_gate.py','test_speed5.py','speed4_qualification.py','speed4_rebuild.py','speed4_plan_gate.py','speed4_snapshot_gate.py','speed4_snapshot_inventory.py','speed4_attribution.py','speed4_finalize.py','seal6_amendment.py','seal_context.py','seal45.py','fixture_delta.py','draft_window.py','copy_adoption_gate.py','audit6.py','test_fixture_delta.py','test_seal6_amendment.py','../../../../scripts/promotion_evidence.py','plan_group_gate.py','speed1_qualification.py','speed1_plan_gate.py','speed1_snapshot_gate.py','speed1_snapshot_inventory.py','speed2_qualification.py','speed2_plan_gate.py','speed2_snapshot_gate.py','speed2_snapshot_inventory.py','speed2_rebuild.py','speed2_attribution.py','speed2_finalize.py','speed3_qualification.py','speed3_rebuild.py','speed3_plan_gate.py','speed3_snapshot_gate.py','speed3_event_gate.py','test_speed3.py','speed3_finalize.py','memory_gate.py','memory_plan.py','pipeline.py','window.py','cpu_merged_gate.py','coordinator_windows.sh','test_window_seal_admission.py')
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def baseline():
  p=P/'evidence/fix6/before-build-receipt.json'
@@ -28,6 +28,7 @@ def verify():
  assert r['rule']==RULE and r['directive_date']=='2026-10-15'
  assert r['plan_dispatch_rows']==48 and r['plan_gate_sha256']==sha(P/'fix6-plan-gates.json')
  assert r['production_changed_files']==['main.cpp','mtp.hpp','native_controller.hpp','p39_plan.hpp','rank.hpp','strict_snapshot.hpp']
+ assert r['speed6_extension']==__import__('speed6_qualification').verify(),'SPEED6 amendment evidence changed'
  assert r['speed5_extension']==__import__('speed5_qualification').verify(),'SPEED5 amendment evidence changed'
  assert r['speed4_extension']==__import__('speed4_qualification').verify(),'SPEED4 amendment evidence changed'
  assert r['speed3_extension']==speed3_verify(),'SPEED3 amendment evidence changed'
@@ -41,6 +42,7 @@ def source_matches(path,digest):
  """Accept only pinned historical provenance; callers still validate outputs."""
  path=Path(path)
  if sha(path)==digest:return True
+ if __import__('speed6_qualification').source_allowed(path,digest):return True
  if __import__('speed5_qualification').source_allowed(path,digest):return True
  if __import__('speed4_qualification').source_allowed(path,digest):return True
  from speed3_qualification import source_allowed as speed3_source,effective_sha
@@ -52,7 +54,7 @@ def source_matches(path,digest):
  if speed2_source(path,digest):return True
  r=record();key=str(path.relative_to(ROOT))
  return (path.parent==P and path.name in r['qualification_sources_sha256']
-         and digest in {baseline()['sources'].get(key),before()['sources'].get(key),speed2_before()['sources'].get(key),__import__('speed3_qualification').before()['sources'].get(key),__import__('speed4_qualification').before()['sources'].get(key),__import__('speed5_qualification').before()['sources'].get(key)}
+         and digest in {baseline()['sources'].get(key),before()['sources'].get(key),speed2_before()['sources'].get(key),__import__('speed3_qualification').before()['sources'].get(key),__import__('speed4_qualification').before()['sources'].get(key),__import__('speed5_qualification').before()['sources'].get(key),__import__('speed6_qualification').before()['sources'].get(key)}
          and sha(path)==r['qualification_sources_sha256'][path.name])
 def maps_match(old,current):
  return set(old)==set(current) and all(old[k]==current[k] or source_matches(ROOT/k,old[k]) for k in old)
@@ -64,6 +66,7 @@ def fixture_identity(old,current):
   if x[k]==y[k]:continue
   from speed1_qualification import mirror_allowed
   from speed3_qualification import mirror_allowed as speed3_mirror
+  if __import__('speed6_qualification').mirror_allowed(k,x[k],y[k]):continue
   if __import__('speed5_qualification').mirror_allowed(k,x[k],y[k]):continue
   if __import__('speed4_qualification').mirror_allowed(k,x[k],y[k]):continue
   if speed3_mirror(k,x[k],y[k]) or mirror_allowed(k,x[k],y[k]):continue

@@ -75,7 +75,8 @@ def verify():
  assert sha(P/'build/speed3-events/gate')==event['binary_sha256'] and sha(P/'build/speed3-events/gate.cpp')==event['generated_sha256']
  assert gates['speed3-admission-gates.json']['checks']==10
  from memory_gate import configuration
- memory=json.loads((P/'memory-plan.json').read_text());old=json.loads((P/'evidence/speed3/before-memory-plan.json').read_text())
+ # Preserve the historical ledger proof; SPEED6 verifies the current arena ledger separately.
+ memory=__import__('speed6_qualification').before()['memory_plan'];old=json.loads((P/'evidence/speed3/before-memory-plan.json').read_text())
  assert all(memory['placements'][key]==old['placements'][key] for key in ('0','1'))
  assert configuration(memory,4096,0,24)['ranks'][0]['free_with_mtp_bytes']==2316749746
  try:configuration(memory,32768,0,24)

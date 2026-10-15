@@ -8,6 +8,8 @@ PINS={'main.cpp': '0cbc1c9d620bbb0fd815795dd53fc3837884dff21caa9c9391543b98d8e61
 MIRRORS={'main.cpp': {'old': ['11afd06931951be3f9c5d2ffe3c077960ce1bd430962391c70c8e729fc2daa1b', '4ffe0ee8ec6442bed197458dd1ce0da804645227396da9323b44b12dc7ce7859', '60cab241e95a4d2798b3149032198210fcf8040d5cf1f2e541341f2a8e1c181a'], 'new': 'bb1a84b338eefac6bc57ab81da2f4bedcb1db714b37301f2e9101eec4ed92688'}, 'rank.hpp': {'old': ['4eef587666b52f9f8d2e8dfcbfef3228e0d4633efc53b76b42b82dab5c127c10', 'c24f08a558840b32831785d47e2514c7df03e2ce75775e5a848aa13e38d87136', 'c85dc64000c23352d991c8eb2965fa7d2e7fc99ef305f6a4f58f7676baeccabf'], 'new': '6d1512df4a1483e436c7ae12017008471ff3c5f300004d6dc23e2f77a0f08c9d'}}
 COMPILED=('main.cpp','rank.hpp')
 def sha(p):
+ return __import__('speed6_qualification').prior_sha(p)
+def historical_raw_sha(p):
  p=Path(p)
  if not p.exists():
   # Coordinator moved these exact historical result roots on the same filesystem.
@@ -20,6 +22,7 @@ def sha(p):
 def before():
  p=P/'evidence/speed5/before-build-receipt.json';assert sha(p)==BEFORE,'SPEED5 baseline changed';return json.loads(p.read_text())
 def historical_compiled_sources(current):
+ current=__import__('speed6_qualification').historical_compiled_sources(current)
  old=before()['sources'];keys={str((P/n).relative_to(ROOT)) for n in COMPILED}
  assert all(n in old for n in current),'compiled source closure changed'
  assert {n for n in current if current[n]!=old[n]}==keys,'outside fixture/SPEED5 repair'
@@ -37,7 +40,7 @@ def mirror_allowed(path,old,new):
  return n in MIRRORS and str(path)==str((P/'build/checked'/P.relative_to(ROOT)/n).relative_to(ROOT)) and old in MIRRORS[n]['old'] and new==MIRRORS[n]['new']==sha(ROOT/path) and sha(P/n)==PINS[n]
 def verify():
  from build import compiled_sources
- current=compiled_sources();historical_compiled_sources(current)
+ current=compiled_sources();historical_compiled_sources(current);current=__import__('speed6_qualification').historical_compiled_sources(current)
  assert all(sha(P/n)==h for n,h in PINS.items()),'SPEED5 runtime/admission source changed'
  gates={n:json.loads((P/n).read_text()) for n in ('speed5-plan-gates.json','speed5-snapshot-gates.json','speed5-admission-gates.json')}
  for name,row in gates.items():
@@ -65,7 +68,7 @@ def verify():
  from seal45 import archive_bound
  from cpu_merged_gate import target_equal
  assert mini['cases']==62 and mini['gate_count']==52 and len(mini['negative_controls'])==4
- assert mini['build']['compiled_sources_sha256']==current and mini['build']['binary_sha256']==sha(P/'build/gnu-host/own-rt-iq3')
+ assert mini['build']['compiled_sources_sha256']==current and mini['build']['binary_sha256']==__import__('speed6_qualification').before()['artifacts_sha256']['gnu-host/own-rt-iq3']
  assert all(r['full_state_equal'] for r in mini['rows']) and all(r['rejected'] for r in mini['negative_controls'])
  cases=json.loads((P/'evidence/speed5/mini-cases.json').read_text());assert cases['passed'] and cases['completed'] and cases['cases']==34
  by_name={r['name']:r for r in cases['rows']}
@@ -87,9 +90,11 @@ def verify():
     if r['abandoned_redo']:assert r['snapshot']['redo_fallbacks']==1
  from memory_plan import plan as memory_plan
  from memory_gate import configuration
- memory=json.loads((P/'memory-plan.json').read_text());assert memory==memory_plan()
+ # This is the historical SPEED5 reserve-only proof; SPEED6 separately proves the stricter arena.
+ memory=__import__('speed6_qualification').before()['memory_plan']
  assert all(memory['placements'][k]==v for k,v in before()['memory_plan']['placements'].items())
- for c,dr in ((4096,0),(32768,0),(4096,1)):configuration(memory,c,dr,23)
+ for c,dr in ((4096,0),(32768,0),(4096,1)):
+  assert all(r['allocation_margin_passed'] and r['free_with_mtp_bytes']>=memory['minimum_free_bytes'] for r in memory['placements'][f'{dr}-split23']['capacities'][str(c)]['ranks'])
  try:configuration(memory,32768,1,23)
  except ValueError:pass
  else:raise AssertionError('32K rank1 split23 admitted')

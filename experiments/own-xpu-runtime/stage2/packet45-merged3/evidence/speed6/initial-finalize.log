@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/speed6_finalize.py", line 18, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/speed6_finalize.py", line 14, in main
+    amendment.verify()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/seal6_amendment.py", line 34, in verify
+    assert r['speed3_extension']==speed3_verify(),'SPEED3 amendment evidence changed'
+                                  ^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/speed3_qualification.py", line 79, in verify
+    assert all(memory['placements'][key]==old['placements'][key] for key in ('0','1'))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
