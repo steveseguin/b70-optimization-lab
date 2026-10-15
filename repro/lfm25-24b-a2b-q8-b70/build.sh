@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Build the llama.cpp server used by this recipe: upstream llama.cpp c926ad098 plus one aggregate patch (the lab's
-# B70 changes and the LFM2.5 exact fast-path kernels). Needs git, cmake, ninja and Intel oneAPI (measured with 2026.1).
+# B70 changes, the LFM2.5 exact fast-path kernels and the exact kernel fusions). Needs git, cmake, ninja and Intel
+# oneAPI (measured with 2026.1).
 #
 #   SOURCE_DIR=/path/to/new/dir repro/lfm25-24b-a2b-q8-b70/build.sh
 #
@@ -12,8 +13,8 @@ repo_root=$(cd -- "${script_dir}/../.." && pwd)
 source_dir=${SOURCE_DIR:-}
 jobs=${BUILD_JOBS:-4}
 base_commit=c926ad09857517978575d6a74d225b463f7417a0
-patch_rel=patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-20261015.diff.gz.b64
-patch_sha=0ec617979b3236614468baf3e1c3f732bebfc69e2c08b1064dd2857435be552a
+patch_rel=patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-fused-20261015.diff.gz.b64
+patch_sha=ab8b7bc86ecd60ea2244fd4be9ee30dd2baf212fcb7430373c4e51e64d18843c
 
 [[ -n ${source_dir} ]] || { echo 'Set SOURCE_DIR to a new, empty destination.' >&2; exit 2; }
 [[ ! -e ${source_dir} ]] || { echo "Refusing to overwrite existing path: ${source_dir}" >&2; exit 2; }

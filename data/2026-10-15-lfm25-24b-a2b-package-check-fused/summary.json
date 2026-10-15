@@ -1,0 +1,94 @@
+{
+ "format": "lfm25-24b-a2b-package-check-v2",
+ "date": "2026-10-15",
+ "what": "repro/lfm25-24b-a2b-q8-b70 (exact fusions version) built by its build.sh (fresh upstream clone + the aggregate patch) and run by its serve.sh/check.sh on card 1 of the lab host, Gemma on card 0; registered in experiments/lfm25-24b-a2b-b70/notes/2026-10-14-lfm25-24b-a2b-bringup.md before running",
+ "build_receipt": {
+  "base_commit": "c926ad09857517978575d6a74d225b463f7417a0",
+  "aggregate_patch_sha256": "ab8b7bc86ecd60ea2244fd4be9ee30dd2baf212fcb7430373c4e51e64d18843c",
+  "icpx_version": "Intel(R) oneAPI DPC++/C++ Compiler 2026.1.1 (2026.1.1.20260724)",
+  "llama_server_sha256": "b0c0c503c24b7d528e83149d3c62fe00bba28ee861054ae8b9285cbf6e33e678"
+ },
+ "runs": {
+  "ref": {
+   "mode": "reference",
+   "class_balanced_tok_s": 41.742338567718754,
+   "completed_prompts": 12,
+   "suite_checks_passed": true,
+   "cached_tokens_all_zero": true,
+   "token_arrays_identical_to_lab_reference_r0": 12,
+   "evidence": "ref.json"
+  },
+  "unfused": {
+   "mode": "unfused",
+   "class_balanced_tok_s": 112.2308602636377,
+   "completed_prompts": 12,
+   "suite_checks_passed": true,
+   "cached_tokens_all_zero": true,
+   "token_arrays_identical_to_lab_reference_r0": 12,
+   "evidence": "unfused.json"
+  },
+  "fast-a": {
+   "mode": "fast",
+   "class_balanced_tok_s": 138.14791922217887,
+   "completed_prompts": 12,
+   "suite_checks_passed": true,
+   "cached_tokens_all_zero": true,
+   "token_arrays_identical_to_lab_reference_r0": 12,
+   "evidence": "fast-a.json"
+  },
+  "fast-b": {
+   "mode": "fast",
+   "class_balanced_tok_s": 138.28514818525144,
+   "completed_prompts": 12,
+   "suite_checks_passed": true,
+   "cached_tokens_all_zero": true,
+   "token_arrays_identical_to_lab_reference_r0": 12,
+   "evidence": "fast-b.json"
+  }
+ },
+ "fast_a_vs_fast_b_identical": 12,
+ "reference_vs_fast_b_identical": 12,
+ "fast_class_balanced_tok_s_median_of_two_servers": 138.21653370371516,
+ "logprob_probe_fast_b_vs_r0": {
+  "bit_exact": 12,
+  "prompts": 12,
+  "what": "top-8 log-probabilities of every step, 12 suite prompts x 96 tokens, bit-identical to the lab reference R0 (probe-reference-r0.json)",
+  "evidence": "probe-fast-b.json"
+ },
+ "long_prompt_probe_fast_b_vs_r0": {
+  "bit_exact": 3,
+  "prompts": 3,
+  "what": "same check on three long prompts of about 2K, 8K and 24K tokens (lab text, not published), 128 tokens each"
+ },
+ "canaries_fast_b_pass_all": true,
+ "suite": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json (12 prompts, six classes, 512 tokens, greedy, seed 42, cache_prompt false); metric = median over the six classes of each class median tok/s for tokens 1-100 after TTFT",
+ "sweep": {
+  "command": "llama-bench -ngl 99 -fa 1 -ctk f16 -ctv f16 -b 2048 -ub 512 -t 8 --poll 50 -p 2048 -n 128 -d 0,2048,4096,8192,16384,32768 -r 3 -o json, environment of serve.sh fast (fusions on)",
+  "evidence": "sweep-fast.json",
+  "note": "use its tg128 points; its pp2048 points after the first are low (see prefill_sweep)"
+ },
+ "prefill_sweep": {
+  "command": "llama-bench -ngl 99 -fa 1 -ctk f16 -ctv f16 -b 2048 -ub 512 -t 8 --poll 50 -p 2048 -n 0 -d 0,2048,4096,8192,16384,32768 -r 3 -o json, run separately for serve.sh fast (fusions on) and unfused",
+  "why": "in the combined pp+tg sweep (sweep-fast.json) every pp2048 point after the first reads about 25% low; prefill numbers come from this pp-only run",
+  "fast_tok_s": {
+   "0": 2089.0,
+   "2048": 1939.4,
+   "4096": 1806.7,
+   "8192": 1581.1,
+   "16384": 1202.0,
+   "32768": 787.6
+  },
+  "unfused_tok_s": {
+   "0": 2023.5,
+   "2048": 1893.6,
+   "4096": 1770.9,
+   "8192": 1549.6,
+   "16384": 1182.4,
+   "32768": 779.0
+  },
+  "evidence": [
+   "sweep-prefill.json",
+   "sweep-prefill-unfused.json"
+  ]
+ }
+}
