@@ -1,12 +1,256 @@
 {
  "schema": "lab.speed6-confirmation.v1",
- "status": "PENDING_COORDINATOR",
+ "status": "PARTIAL_RUN3_NOT_EXECUTED",
  "headline": "run1-headline",
- "selection_policy": "Run 1 pre-registered; higher repeats cannot replace or pool into the headline",
- "runs": [],
- "pending": [
-  "SPEED6 WS128-r2 cards0-1",
-  "packet44 c4096ctl15a/WS128-r3 cards0-1",
-  "SPEED6 WS128-r3 cards0-1"
- ]
+ "selection_policy": "Run 1 pre-registered; no replacement or pooling",
+ "runs": [
+  {
+   "run": "run1-headline",
+   "submitted_headline": true,
+   "source_path": "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed6-c4096-dr1-s23-cards01-gpu/WS128",
+   "window_path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-run1-headline-confirmation-window.json",
+   "window_sha256": "18a30e68ca8c94d3c1a988f61d5c1f7f7bbd1fed49f5c6114311723f1a5192d2",
+   "summary_path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-run1-headline-confirmation-summary.json",
+   "summary_sha256": "0c1a5b23c3182faaf466c53e01ef8dceb974c92327095df4d0ff471be5bf1122",
+   "request_archive": {
+    "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-run1-headline-confirmation-requests.json.gz",
+    "sha256": "c3e0084cc5003ddd6f086145ff229790acbf994d8909e33dce055e991fe277ee"
+   },
+   "window_passed": true,
+   "summary_passed": true,
+   "qualifying": true,
+   "qualification_note": "Passing qualifying SPEED6 device receipt",
+   "window_error": null,
+   "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+   "build_receipt_sha256": "9b6fa7f397151c380a25f79dc3cf08abca1c70853300d7159febbf9456b35fbf",
+   "cards": [
+    0,
+    1
+   ],
+   "draft_rank": 1,
+   "target_split": 23,
+   "all_prompt_median": 39.269033659702785,
+   "class_balanced": 39.42200890284251,
+   "first_token_monotonic": 404685.450339374,
+   "last_token_monotonic": 404887.444358808,
+   "tokens_equal_headline": true,
+   "requests": 12,
+   "expected_prompts": 12,
+   "output_tokens_per_request": 128,
+   "original_request_hashes_bound_by_window": true
+  },
+  {
+   "run": "run2-confirmation",
+   "submitted_headline": false,
+   "source_path": "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed6-c4096-dr1-s23-cards01-gpu/WS128-r2",
+   "window_path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-run2-confirmation-confirmation-window.json",
+   "window_sha256": "809a75a6b3c2a2362bec5c55cdb44ccb5a3c0f29ef74ee7aed28d90c45cb6b98",
+   "summary_path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-run2-confirmation-confirmation-summary.json",
+   "summary_sha256": "49dbd5200038d60dbfe96dd087e2c44a5da4f98a0b8e50ef58b2743c799613c7",
+   "request_archive": {
+    "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-run2-confirmation-confirmation-requests.json.gz",
+    "sha256": "7d599f994b791db75b479b0c148b9b0dccba09db91f77ab417326abbbc9692bb"
+   },
+   "window_passed": true,
+   "summary_passed": true,
+   "qualifying": true,
+   "qualification_note": "Passing qualifying SPEED6 device receipt",
+   "window_error": null,
+   "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+   "build_receipt_sha256": "9b6fa7f397151c380a25f79dc3cf08abca1c70853300d7159febbf9456b35fbf",
+   "cards": [
+    0,
+    1
+   ],
+   "draft_rank": 1,
+   "target_split": 23,
+   "all_prompt_median": 39.21866538144296,
+   "class_balanced": 39.385607501240855,
+   "first_token_monotonic": 406571.275337059,
+   "last_token_monotonic": 406780.799687493,
+   "tokens_equal_headline": true,
+   "requests": 12,
+   "expected_prompts": 12,
+   "output_tokens_per_request": 128,
+   "original_request_hashes_bound_by_window": true
+  },
+  {
+   "run": "cards23-replicate",
+   "submitted_headline": false,
+   "source_path": "experiments/own-xpu-runtime/stage2/packet45-merged3/build/speed6-c4096-dr1-s23-cards23-gpu/WS128",
+   "window_path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-cards23-replicate-confirmation-window.json",
+   "window_sha256": "abf76112de758c6d3b2330a38c8f9245c20e601ea1532b744bf1b2e9048e40a4",
+   "summary_path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-cards23-replicate-confirmation-summary.json",
+   "summary_sha256": "035215c292b2c9a0324385fd083b3ee3e79028b65c9f7f30192546e527576d66",
+   "request_archive": {
+    "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-cards23-replicate-confirmation-requests.json.gz",
+    "sha256": "12062c9cadc0edcaf79a582c21096139a670b89f72dc3fbbab1710590994fc98"
+   },
+   "window_passed": true,
+   "summary_passed": true,
+   "qualifying": true,
+   "qualification_note": "Passing qualifying SPEED6 device receipt",
+   "window_error": null,
+   "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+   "build_receipt_sha256": "9b6fa7f397151c380a25f79dc3cf08abca1c70853300d7159febbf9456b35fbf",
+   "cards": [
+    2,
+    3
+   ],
+   "draft_rank": 1,
+   "target_split": 23,
+   "all_prompt_median": 39.19900046638044,
+   "class_balanced": 39.377848367958954,
+   "first_token_monotonic": 405938.504612942,
+   "last_token_monotonic": 406148.494614668,
+   "tokens_equal_headline": true,
+   "requests": 12,
+   "expected_prompts": 12,
+   "output_tokens_per_request": 128,
+   "original_request_hashes_bound_by_window": true
+  },
+  {
+   "run": "p44-interleaved-control",
+   "submitted_headline": false,
+   "source_path": "experiments/own-xpu-runtime/stage2/packet44-context/build/c4096ctl15a/WS128-r3",
+   "window_path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-p44-interleaved-control-confirmation-window.json",
+   "window_sha256": "16e80c682fe76425d6112ba290d46e04ae025f2187926a6d2811bcb1172cf273",
+   "summary_path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-p44-interleaved-control-confirmation-summary.json",
+   "summary_sha256": "3d661b8057f41b2b051cceab9df79f6edd4c219d211c27b72f78f1b5d48eb031",
+   "request_archive": {
+    "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-p44-interleaved-control-confirmation-requests.json.gz",
+    "sha256": "8626703c5b7578cf83caae98173b6d23b27e7f66e6129b5aec97f7325c7abb9b"
+   },
+   "window_passed": false,
+   "summary_passed": false,
+   "qualifying": null,
+   "qualification_note": "Failed final write admission; completed per-request measurements only, not a passing window",
+   "window_error": "Packet38 storage admission refused: free=23191195648, build=5342995322, reserve write=668210560; require 8 GB free and build below 6 GB",
+   "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+   "build_receipt_sha256": "809d6327ce9f144089049aa715a70ff8fb4aff9bbe59e43f2ce499be58fcf759",
+   "cards": [
+    0,
+    1
+   ],
+   "draft_rank": 0,
+   "target_split": null,
+   "all_prompt_median": 37.21098638069249,
+   "class_balanced": null,
+   "first_token_monotonic": 407187.344121577,
+   "last_token_monotonic": 407279.553957972,
+   "tokens_equal_headline": true,
+   "requests": 8,
+   "expected_prompts": 12,
+   "output_tokens_per_request": 128,
+   "original_request_hashes_bound_by_window": false
+  },
+  {
+   "run": "p44-earlier-control",
+   "submitted_headline": false,
+   "source_path": "experiments/own-xpu-runtime/stage2/packet44-context/build/c4096ctl15a/WS128",
+   "window_path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-p44-earlier-control-confirmation-window.json",
+   "window_sha256": "e9bf3994b5ed38348351536a2de3bc7658fb98c0dde26fbbaf1bac1db462e2d5",
+   "summary_path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-p44-earlier-control-confirmation-summary.json",
+   "summary_sha256": "089a4434c517c826097bd786373b3ce694b6dd89ba44281415916b6887fad7e5",
+   "request_archive": {
+    "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-p44-earlier-control-confirmation-requests.json.gz",
+    "sha256": "c047579d7a40f1db6ed3f03060b4ec6abf2df91da7fcbd329afc04d5fd177ae9"
+   },
+   "window_passed": true,
+   "summary_passed": true,
+   "qualifying": null,
+   "qualification_note": "Passing historical packet44 device window; legacy schema lacks qualifying field",
+   "window_error": null,
+   "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+   "build_receipt_sha256": "809d6327ce9f144089049aa715a70ff8fb4aff9bbe59e43f2ce499be58fcf759",
+   "cards": [
+    0,
+    1
+   ],
+   "draft_rank": 0,
+   "target_split": null,
+   "all_prompt_median": 37.74977984928242,
+   "class_balanced": null,
+   "first_token_monotonic": 352554.672627508,
+   "last_token_monotonic": 352686.982741945,
+   "tokens_equal_headline": true,
+   "requests": 12,
+   "expected_prompts": 12,
+   "output_tokens_per_request": 128,
+   "original_request_hashes_bound_by_window": true
+  },
+  {
+   "run": "p44-earlier-repeat",
+   "submitted_headline": false,
+   "source_path": "experiments/own-xpu-runtime/stage2/packet44-context/build/c4096ctl15a/WS128-r2",
+   "window_path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-p44-earlier-repeat-confirmation-window.json",
+   "window_sha256": "f1eaf28f28cf804b4a45bd1e58be6a004590081541830859775288972ae79bdd",
+   "summary_path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-p44-earlier-repeat-confirmation-summary.json",
+   "summary_sha256": "946962952044e606d9930404b8a68eed7dd8e9892fab7715c953b7e38b622a4b",
+   "request_archive": {
+    "path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-p44-earlier-repeat-confirmation-requests.json.gz",
+    "sha256": "39e6cf12f0bfb1059e86b51d06728da3b278f3df2feb45312665e6f1d6db6484"
+   },
+   "window_passed": true,
+   "summary_passed": true,
+   "qualifying": null,
+   "qualification_note": "Passing historical packet44 device window; legacy schema lacks qualifying field",
+   "window_error": null,
+   "boot_id": "13858eef-ec68-44ea-a67c-9444933b7100",
+   "build_receipt_sha256": "809d6327ce9f144089049aa715a70ff8fb4aff9bbe59e43f2ce499be58fcf759",
+   "cards": [
+    0,
+    1
+   ],
+   "draft_rank": 0,
+   "target_split": null,
+   "all_prompt_median": 37.79376800760946,
+   "class_balanced": null,
+   "first_token_monotonic": 370776.239777343,
+   "last_token_monotonic": 370915.412943436,
+   "tokens_equal_headline": true,
+   "requests": 12,
+   "expected_prompts": 12,
+   "output_tokens_per_request": 128,
+   "original_request_hashes_bound_by_window": true
+  }
+ ],
+ "run3": {
+  "executed": false,
+  "reason": "Coordinator runner halted after packet44 control final-write storage admission failure"
+ },
+ "aba_complete": false,
+ "chronological_order": [
+  {
+   "run": "p44-earlier-control",
+   "first_token_monotonic": 352554.672627508,
+   "last_token_monotonic": 352686.982741945
+  },
+  {
+   "run": "p44-earlier-repeat",
+   "first_token_monotonic": 370776.239777343,
+   "last_token_monotonic": 370915.412943436
+  },
+  {
+   "run": "run1-headline",
+   "first_token_monotonic": 404685.450339374,
+   "last_token_monotonic": 404887.444358808
+  },
+  {
+   "run": "cards23-replicate",
+   "first_token_monotonic": 405938.504612942,
+   "last_token_monotonic": 406148.494614668
+  },
+  {
+   "run": "run2-confirmation",
+   "first_token_monotonic": 406571.275337059,
+   "last_token_monotonic": 406780.799687493
+  },
+  {
+   "run": "p44-interleaved-control",
+   "first_token_monotonic": 407187.344121577,
+   "last_token_monotonic": 407279.553957972
+  }
+ ],
+ "control_caveat": "Packet44 WS128-r3 has passed=false after completed device execution because its old 6 GB build-cap admission refused the final write. Only 8 of 12 request receipts are retained and passing, despite complete=true in the legacy summary. The 37.211 median is over those 8 rows, not a full suite. This is partial measurement evidence, not a qualifying-window pass or completed A-B-A."
 }

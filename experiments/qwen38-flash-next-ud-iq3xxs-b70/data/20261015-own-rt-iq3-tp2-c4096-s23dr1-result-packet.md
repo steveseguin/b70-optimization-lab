@@ -3,7 +3,7 @@
 2026-10-15. Run 1 is the pre-registered headline. This packet prepares a
 submission under the owner's existing 128-token exception. It does not submit
 or change the public record. The coordinator retains submission and the
-pending A-B-A confirmation.
+confirmation evidence below; the planned A-B-A did not complete.
 
 Same Unsloth Qwen3.8 Flash-Next UD-IQ3_XXS GGUF model and quantization as
 SPEED3 record `cmv9j70v100v1le01q9jxyx2r`, revision
@@ -92,26 +92,58 @@ claim that the newly prepared attestation is absent. Both
 `realisticSuiteGatePassed` and `strict512TokenFinalGatePassed` remain false.
 `engineFlags.realisticSuiteScopeException` retains the dated authorization and
 original named exception path. Result and attestation carry the same scope and
-raw gate, plus the explicit SPEED6 extension. No unconditional marker bypass
+raw gate, plus the explicit SPEED6 extension authorized by the coordinator.
+The owner decision concerns the fixed suite, metric and cap; the implementation
+still admits only two explicitly pinned run-1 identities, SPEED3 and SPEED6. No unconditional marker bypass
 is used. The historical `lab.promotion-attestation.v1` and
 `lab.realistic-suite-result.v1` schemas match the SPEED3 packet.
 
-## A-B-A confirmation — PENDING COORDINATOR
+## Confirmation evidence — planned A-B-A did not complete
 
-**Placeholder: confirmation windows are queued/running. Do not mark this
-section complete until the coordinator adds their qualifying receipts.**
-Run 1 remains the headline regardless of subsequent values.
+Run 1 remains the pre-registered submitted value. The same-pair fresh-process
+repeat and the second-pair replicate each passed their qualifying device window
+with 12/12 prompts and 1,536/1,536 tokens exact. The three SPEED6 runs share
+boot `13858eef`, runtime `34c62b433`, build receipt `9b6fa7f3…`, actual artifact
+hashes, context 4096, 23/25 split and draft rank 1. The second card pair has its
+own measured dispatch. No confirmation value replaces or is pooled into run 1.
 
-| Run | Cards | All-prompt tok/s | Class-balanced tok/s | Status |
-|---|---|---:|---:|---|
-| SPEED6 WS128, run 1 | 0–1 | 39.269033659702785 | 39.42200890284251 | Registered headline |
-| SPEED6 WS128-r2 | 0–1 | Pending | Pending | Coordinator to fill |
-| Interleaved packet44 c4096ctl15a/WS128-r3 | 0–1 | Pending | Pending | Coordinator to fill |
-| SPEED6 WS128-r3 | 0–1 | Pending | Pending | Coordinator to fill |
+| Run | Cards | Requests retained | All-prompt tok/s | Class-balanced tok/s | Status |
+|---|---|---:|---:|---:|---|
+| SPEED6 WS128, run 1 — HEADLINE | 0–1 | 12/12 | 39.2690336597 | 39.4220089028 | Passing qualifying window |
+| SPEED6 WS128-r2, fresh processes | 0–1 | 12/12 | 39.2186653814 | 39.3856075012 | Passing qualifying window |
+| SPEED6 second-pair WS128 | 2–3 | 12/12 | 39.1990004664 | 39.3778483680 | Passing qualifying window |
+| Packet44 WS128-r3, interleaved | 0–1 | 8/12 | 37.2109863807 | Not reported | FAILED window; partial measurement only |
+| Packet44 WS128, earlier same boot | 0–1 | 12/12 | 37.7497798493 | Not reported | Passing legacy window |
+| Packet44 WS128-r2, earlier same boot | 0–1 | 12/12 | 37.7937680076 | Not reported | Passing legacy window |
+| Planned SPEED6 WS128-r3 | 0–1 | 0/12 | Not measured | Not measured | Did not execute |
 
-Add source paths, immutable receipt hashes, boot/seal identity and timing order.
-Do not replace the headline with a higher repeat or pool the runs. The matching
-`confirmation-evidence.json` is explicitly pending with no invented results.
+**Control caveat:** packet44's interleaved control completed device work, but
+its old 6 GB build-cap admission refused a write. Both its window and summary
+read `passed=false`. More specifically, the retained summary contains **eight
+rows** and only **eight passing request receipts** exist, each with 128 tokens
+matching the headline's corresponding oracle-checked token sequence. Its
+37.21098638069249 all-prompt median recomputes from those **8/12 prompts**, not
+from a complete twelve-prompt suite. The old summary also says `complete=true`;
+that field does not override the observed count or failure. We preserve the
+original bytes and do not upgrade this to a qualifying window or matched
+full-suite speed comparison. The legacy failed window has no bound request
+hash map; the archive records the hashes of the retained request bytes read
+here. The actual error is:
+
+> Packet38 storage admission refused: free=23191195648, build=5342995322, reserve write=668210560; require 8 GB free and build below 6 GB
+
+This corrects the coordinator's initial blanket 12/12 description for that
+control only. The earlier same-boot packet44 controls were complete twelve-row
+runs (37.74977984928242 and 37.79376800760946 all-prompt tok/s).
+
+The coordinator reports that its runner halted on the failed control window,
+so planned SPEED6 run 3 never executed; its output directory is absent. Thus
+this is a fresh-process repeat plus a second-pair replicate and partial
+interleaved control evidence, **not a completed A-B-A**. Original windows,
+summaries, per-request archives, SHA256 hashes, exact metrics and monotonic
+timestamp order are retained in
+[confirmation-evidence.json](20261015-own-rt-iq3-tp2-c4096-s23dr1-confirmation-evidence.json).
+The engine flags, result and attestation reference that same hash-bound record.
 
 ## Files and exact commands
 
@@ -121,7 +153,7 @@ All new files use prefix `20261015-own-rt-iq3-tp2-c4096-s23dr1-`.
 - [Result JSON](20261015-own-rt-iq3-tp2-c4096-s23dr1-realistic-suite-v1-result.json).
 - [Promotion attestation](20261015-own-rt-iq3-tp2-c4096-s23dr1-promotion-attestation.json).
 - [Verification](20261015-own-rt-iq3-tp2-c4096-s23dr1-verification.json) and [preparation script](20261015-own-rt-iq3-tp2-c4096-s23dr1-prepare.py).
-- [Pending confirmation](20261015-own-rt-iq3-tp2-c4096-s23dr1-confirmation-evidence.json).
+- [Confirmation evidence](20261015-own-rt-iq3-tp2-c4096-s23dr1-confirmation-evidence.json).
 
 The copied window JSON files preserve their exact original bytes. Compressed
 request archives contain original base64-encoded bytes, source paths and SHA256
@@ -161,15 +193,26 @@ or copied into evidence. Server validation status will be recorded below.
 
 ## Validation status
 
-The first `--server-dry-run` attempt was **blocked locally (exit 2)** before
-reading the API key or contacting the server. The existing helper's scope path
-is pinned to SPEED3 `75d2c459d`, its seal, 24/24 dr0 and its headline. SPEED6
-correctly fails that current check. This is not an HTTP failure or server
-approval. No pass marker has been flipped and no bypass was applied.
+The coordinator authorized the narrow helper extension under the owner's
+2026-10-15 decision. The helper now admits exactly these pinned identities:
 
-A narrowly pinned SPEED6 extension requires permission to change the helper
-and its tests outside the task's new-data-only commit boundary. That permission
-was requested. A proposed patch was tested in memory only (26 positive/negative
-checks passed); the repository helper remains unchanged. The submit command
-above becomes usable only after that extension is approved, applied and the
-server dry-run succeeds. See the [current dry-run response](20261015-own-rt-iq3-tp2-c4096-s23dr1-dry-run-response.json).
+- SPEED3 `75d2c459d`, 24/24 dr0, cards 0–1, seal `8460585f…`, headline
+  38.15715689731613; already submitted as `cmv9j70v100v1le01q9jxyx2r`.
+- SPEED6 `34c62b433`, 23/25 dr1, cards 0–1, seal `9b6fa7f3…`, headline
+  39.42200890284251; prepared only.
+
+The gate also pins the label, complete optimization identity, engine/binary
+identity, model and suite. It checks the hash-bound result, attestation and
+passing device quality windows. Removing authorization, changing the cap or
+revision, flipping a pass marker, changing the headline or seal, moving to the
+other card pair, or supplying diagnostic/unqualified receipts is refused.
+There is no unconditional bypass. The 26 reviewed checks are committed as
+individual unit tests, together with five extra identity/receipt checks; all
+13 existing helper tests also pass: **44/44 total**. [Test receipt](20261015-own-rt-iq3-tp2-c4096-s23dr1-helper-tests.json).
+
+The authenticated **server dry-run returned HTTP 200, `{"valid": true}`**.
+The [response archive](20261015-own-rt-iq3-tp2-c4096-s23dr1-dry-run-response.json)
+binds the exact queue and helper hashes and preserves the earlier local refusal.
+No real submission was performed. The strict 512-cap gate remains false, and
+run 1 remains the only prepared headline. The submit command above is for the
+coordinator after confirmation.

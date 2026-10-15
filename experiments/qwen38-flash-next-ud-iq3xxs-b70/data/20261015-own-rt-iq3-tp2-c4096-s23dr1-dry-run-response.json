@@ -1,19 +1,46 @@
 {
   "schema": "lab.localmaxxing-dry-run.v1",
-  "generated_utc": "2026-10-15T18:22:34.440530+00:00",
-  "passed": false,
-  "server_contacted": false,
+  "generated_utc": "2026-10-15T18:54:34.876344+00:00",
+  "passed": true,
+  "server_contacted": true,
   "real_submission_performed": false,
-  "http_status": null,
-  "exit_code": 2,
-  "response": null,
+  "http_status": 200,
+  "exit_code": 0,
+  "response": {
+    "valid": true
+  },
   "mode": "--server-dry-run",
-  "status": "BLOCKED_BY_LOCAL_SPEED3_ONLY_SCOPE_PIN",
-  "errors": [
-    "invalid owner-authorized 128-token scope exception: result identity, raw gate or measurement scope differs",
-    "missing realistic-suite final gate pass marker"
+  "command": [
+    "python3",
+    "-B",
+    "scripts/submit_localmaxxing_results.py",
+    "--payloads",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-localmaxxing-payload-queue.json",
+    "--label",
+    "qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-mtp1-c4096-s23dr1-realistic-20261015",
+    "--server-dry-run"
   ],
-  "helper_path": "scripts/submit_localmaxxing_results.py",
-  "helper_sha256": "c8802ba71cde7577c5b3b2aa70b52d1579b3819f39318a9d401f8e57b720f644",
-  "authorization_pending": "Permission requested to extend the helper and tests beyond the new-data-only commit scope; no helper edit or bypass applied."
+  "stdout": "1/1 qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-mtp1-c4096-s23dr1-realistic-20261015: HTTP 200\n{\"valid\": true}\n",
+  "stderr": "",
+  "payload_queue_sha256": "94e692dc1a58acc6ac11276693b99b6af10421102412dd1dc9855b207552e865",
+  "helper_sha256": "bf226a032a81cf28deb5f5a0361501cde86b20d134b84e7925a432192ff9b4f1",
+  "previous_attempt": {
+    "schema": "lab.localmaxxing-dry-run.v1",
+    "generated_utc": "2026-10-15T18:22:34.440530+00:00",
+    "passed": false,
+    "server_contacted": false,
+    "real_submission_performed": false,
+    "http_status": null,
+    "exit_code": 2,
+    "response": null,
+    "mode": "--server-dry-run",
+    "status": "BLOCKED_BY_LOCAL_SPEED3_ONLY_SCOPE_PIN",
+    "errors": [
+      "invalid owner-authorized 128-token scope exception: result identity, raw gate or measurement scope differs",
+      "missing realistic-suite final gate pass marker"
+    ],
+    "helper_path": "scripts/submit_localmaxxing_results.py",
+    "helper_sha256": "c8802ba71cde7577c5b3b2aa70b52d1579b3819f39318a9d401f8e57b720f644",
+    "authorization_pending": "Permission requested to extend the helper and tests beyond the new-data-only commit scope; no helper edit or bypass applied."
+  }
 }

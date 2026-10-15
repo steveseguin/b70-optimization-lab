@@ -31,7 +31,7 @@ API_STRING_LIMITS = {
     "notes": 2000,
 }
 
-# Owner decision, 2026-10-15: this one result may use the October 13 scope.
+# Owner decisions, 2026-10-15: only these pinned run-1 results use the October 13 scope.
 # This is an eligibility exception, never a pass of the strict 512-cap gate.
 OWNER_128_RULE = "packet45.speed3.owner-authorized-128-token-scope.2026-10-15"
 OWNER_128_AUTHORIZATION = {
@@ -48,31 +48,59 @@ OWNER_128_RAW_GATE = {
 }
 
 
+# SPEED6 PREPARE directive extends the same scope, not the strict 512-cap gate.
+# No wildcard revisions, headline selection, or authorization-free pass marker.
+OWNER_128_RESULTS = {
+    "75d2c459d": {
+        "label": "qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-mtp1-c4096-s24dr0-realistic-20261015",
+        "engine_version": "own-xpu-runtime packet45-merged3 SPEED3 75d2c459d; device binary sha256 724e4dee068d38c561a97e0a2814c470b7f07cc9e5ec24f0297ebd904aed8fc8",
+        "optimization_identity": "packet45-merged3-SPEED3-tp2-c4096-target24-24-draft-rank0-write-set-snapshot-K2-selected-kernels-native-controller-single-pass-draft-profiling",
+        "target_split": [24, 24], "draft_rank": 0,
+        "seal": "8460585fe53879223066a5d54799c9f105c73002adfc09fc9a743ceaee7e3fa8",
+        "headline": 38.15715689731613,
+    },
+    "34c62b433": {
+        "label": "qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-mtp1-c4096-s23dr1-realistic-20261015",
+        "engine_version": "own-xpu-runtime packet45-merged3 SPEED6 34c62b433; device binary sha256 a68963d2e207ee6ad1aee0d0311bc319b2b2368f02132f48d67410951f12182b",
+        "optimization_identity": "packet45-merged3-SPEED6-tp2-c4096-target23-25-draft-rank1-right-sized-scratch-prelaunch-arena-admission-write-set-snapshot-K2-selected-kernels-native-controller-single-pass-draft-profiling",
+        "target_split": [23, 25], "draft_rank": 1,
+        "seal": "9b6fa7f397151c380a25f79dc3cf08abca1c70853300d7159febbf9456b35fbf",
+        "headline": 39.42200890284251,
+    },
+}
+
+
 def owner_128_scope_problems(item: dict) -> list[str]:
-    """Fail closed outside the single owner-authorized SPEED3 headline."""
+    """Fail closed outside the exactly pinned owner-authorized run-1 headlines."""
     payload = item.get("payload") or {}
     engine = payload.get("engineFlags") or {}
     problem = "invalid owner-authorized 128-token scope exception"
     if engine.get("realisticSuiteScopeException") != OWNER_128_AUTHORIZATION:
         return [problem + ": missing or different owner authorization"]
     identity = engine.get("promotionIdentity") or {}
+    selected = OWNER_128_RESULTS.get(identity.get("runtime_revision"))
+    if selected is None:
+        return [problem + ": runtime is not owner-authorized"]
     expected = {
         "realisticSuiteGatePassed": False,
         "strict512TokenFinalGatePassed": False,
         "rawRealisticFinalGate": OWNER_128_RAW_GATE,
         "requestedMaxNew": 128,
         "realisticOutputTokenCounts": [128] * 12,
-        "targetSplit": [24, 24], "draftRank": 0, "deviceCards": [0, 1],
+        "targetSplit": selected["target_split"], "draftRank": selected["draft_rank"], "deviceCards": [0, 1],
         "realisticSuiteId": "rapid-model-snapshots-b70-realistic-v1",
         "prefixCaching": False, "responseReuse": False, "contextCheckpoints": 0,
         "historyAccelerated": False, "targetModelVerifiedAcceptedTokens": True,
-        "buildReceiptSha256": "8460585fe53879223066a5d54799c9f105c73002adfc09fc9a743ceaee7e3fa8",
+        "buildReceiptSha256": selected["seal"],
     }
     if any(engine.get(k) != v for k, v in expected.items()) or (
-        identity.get("runtime_revision") != "75d2c459d"
+        item.get("label") != selected["label"]
+        or payload.get("engineVersion") != selected["engine_version"]
+        or identity.get("optimization_identity") != selected["optimization_identity"]
+        or engine.get("freshRealisticSuiteGatePassed") is True
         or identity.get("model_revision") != "766911a6b7369840a91dbcd95f9f997acaab6cd6"
         or identity.get("suite_sha256") != "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812"
-        or payload.get("tokSOut") != 38.15715689731613
+        or payload.get("tokSOut") != selected["headline"]
         or payload.get("outputTokens") != 128
         or payload.get("modelRevision") != identity.get("model_revision")
         or payload.get("hfId") != "unsloth/Qwen3.8-Flash-Next-GGUF"
@@ -102,6 +130,22 @@ def owner_128_scope_problems(item: dict) -> list[str]:
                 or scope["strict_512_gate_passed"] is not False
                 or scope["owner_exception_authorized"] is not True):
                 raise ValueError("evidence authorization/raw gate mismatch")
+        from promotion_evidence import validate_packet45_device_evidence
+        validate_packet45_device_evidence(result, att["quality_evidence"],
+                                         REPO_ROOT / engine["promotionAttestation"])
+        if (result["artifacts_sha256"]["device/own-rt-iq3"]
+                != selected["engine_version"].rsplit(" ", 1)[-1]
+            or att["seal6_amendment"]["build_receipt_sha256"] != selected["seal"]):
+            raise ValueError("device artifact or seal identity mismatch")
+        for item_evidence in att["quality_evidence"]:
+            window = bound_json(item_evidence["path"], item_evidence["sha256"])
+            if (window["build_receipt_sha256"] != selected["seal"]
+                or window["context"] != 4096 or window["card"] != 0
+                or window["draft_rank"] != selected["draft_rank"]
+                or window["target_split"] != selected["target_split"][0]
+                or window["boot_id"] != engine.get("bootId")
+                or window["dispatch_sha256"] != engine.get("dispatchSha256")):
+                raise ValueError("device window identity mismatch")
         rows = result["rows"]
         if (result["promotionIdentity"] != identity or att["identity"] != identity
             or result["primary_metric"]["value_tok_s"] != payload["tokSOut"]
@@ -169,10 +213,9 @@ def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[s
         engine.get("realisticSuiteGatePassed") is True
         or engine.get("freshRealisticSuiteGatePassed") is True
     )
-    if "realisticSuiteScopeException" in engine or (
-        (engine.get("promotionIdentity") or {}).get("runtime_revision") == "75d2c459d"
-        and engine.get("requestedMaxNew") == 128
-    ):
+    if ("realisticSuiteScopeException" in engine
+        or (engine.get("promotionIdentity") or {}).get("runtime_revision") in OWNER_128_RESULTS
+        or label in {r["label"] for r in OWNER_128_RESULTS.values()}):
         exception_problems = owner_128_scope_problems(item)
         problems.extend(exception_problems)
         gate_passed = not exception_problems

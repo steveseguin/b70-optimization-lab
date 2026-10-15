@@ -24,7 +24,52 @@ def save(suffix,value):
  p.write_text(json.dumps(value,indent=1)+'\n');return p
 
 def confirmation_evidence(headline, headline_requests, input_hashes):
- return dict(schema='lab.speed6-confirmation.v1',status='PENDING_COORDINATOR',headline='run1-headline',selection_policy='Run 1 pre-registered; higher repeats cannot replace or pool into the headline',runs=[],pending=['SPEED6 WS128-r2 cards0-1','packet44 c4096ctl15a/WS128-r3 cards0-1','SPEED6 WS128-r3 cards0-1'])
+ p44=ROOT/'experiments/own-xpu-runtime/stage2/packet44-context/build/c4096ctl15a'
+ configs=[('run1-headline',RUN/'WS128'),('run2-confirmation',RUN/'WS128-r2'),
+  ('cards23-replicate',P/'build/speed6-c4096-dr1-s23-cards23-gpu/WS128'),
+  ('p44-interleaved-control',p44/'WS128-r3'),('p44-earlier-control',p44/'WS128'),
+  ('p44-earlier-repeat',p44/'WS128-r2')]
+ records=[];seen_pids=set()
+ for name,directory in configs:
+  source=directory/'window.json';raw=source.read_bytes();w=json.loads(raw)
+  summary_path=directory/'run/summary.json';summary_raw=summary_path.read_bytes();summary=json.loads(summary_raw)
+  is_p45=directory.is_relative_to(P);failed_control=name=='p44-interleaved-control'
+  assert w['device_executed'] and w['boot_id']==headline['boot_id'] and summary['complete'] and len(summary['rows'])==(8 if failed_control else 12)
+  if failed_control:
+   assert w['passed'] is False and summary['passed'] is False
+   assert 'storage admission refused' in w['error'] and 'build below 6 GB' in w['error']
+  else:assert w['passed'] and summary['passed']
+  if is_p45:
+   assert w['qualifying'] and not w['diagnostic_unsealed'] and not w['cpu_rehearsal']
+   assert w['build_receipt_sha256']==SEAL and w['artifacts_sha256']==headline['artifacts_sha256']
+   assert (w['target_split'],w['draft_rank'],w['context'])==(23,1,4096)
+   assert w['card']==(2 if name=='cards23-replicate' else 0)
+   if w['card']==0:assert w['dispatch_sha256']==headline['dispatch_sha256']
+   pids=set(w['launched_pids']);assert len(pids)==2 and not pids&seen_pids;seen_pids|=pids
+  out=dest(name+'-confirmation-window.json');out.write_bytes(raw)
+  summary_out=dest(name+'-confirmation-summary.json');summary_out.write_bytes(summary_raw)
+  input_hashes[rel(source)]=sha(raw);input_hashes[rel(summary_path)]=sha(summary_raw)
+  rates=[];classes={};timestamps=[];members=[]
+  for row in summary['rows']:
+   f=directory/'run'/row['receipt'];data=f.read_bytes();request=json.loads(data)
+   if not failed_control:assert w['receipts'][str(f.relative_to(directory))]==sha(data)
+   assert row['passed'] and request['passed'] and request['device_executed']
+   assert len(request['tokens'])==128 and request['tokens']==headline_requests[row['prompt_id']]['tokens']
+   assert request['oracle_check']['passed'] and request['oracle_check']['tokens']==128
+   stamps=row['token_timestamps'] if is_p45 else row['generated_token_completion_timestamps']
+   assert len(stamps)==128 and all(b>a for a,b in zip(stamps,stamps[1:]))
+   rate=99/(stamps[99]-stamps[0]);assert abs(rate-(row['tok_s_1_100_intervals_after_ttft'] if is_p45 else row['submission_tok_s']))<1e-8
+   rates.append(rate);timestamps.extend(stamps)
+   if is_p45:
+    assert row['cached_tokens']==0 and row['requested_max_new']==128 and row['repeat']==1
+    classes.setdefault(row['prompt_class'],[]).append(rate)
+   input_hashes[rel(f)]=sha(data);members.append(dict(path=rel(f),sha256=sha(data),raw_base64=base64.b64encode(data).decode()))
+  archive=dest(name+'-confirmation-requests.json.gz');archive.write_bytes(gzip.compress(json.dumps(members,separators=(',',':')).encode(),mtime=0))
+  all_prompt=statistics.median(rates)
+  assert abs(all_prompt-(summary['submission100_statistics']['median'] if is_p45 else summary['submission_median_tok_s']))<1e-8
+  records.append(dict(run=name,submitted_headline=name=='run1-headline',source_path=rel(directory),window_path=rel(out),window_sha256=sha(raw),summary_path=rel(summary_out),summary_sha256=sha(summary_raw),request_archive=dict(path=rel(archive),sha256=sha(archive.read_bytes())),window_passed=w['passed'],summary_passed=summary['passed'],qualifying=w.get('qualifying'),qualification_note=('Passing qualifying SPEED6 device receipt' if is_p45 else 'Failed final write admission; completed per-request measurements only, not a passing window' if failed_control else 'Passing historical packet44 device window; legacy schema lacks qualifying field'),window_error=w.get('error'),boot_id=w['boot_id'],build_receipt_sha256=w['build_receipt_sha256'],cards=[w['card'],w['card']+1],draft_rank=w.get('draft_rank',0),target_split=w.get('target_split'),all_prompt_median=all_prompt,class_balanced=statistics.median(statistics.median(v) for v in classes.values()) if classes else None,first_token_monotonic=min(timestamps),last_token_monotonic=max(timestamps),tokens_equal_headline=True,requests=len(summary['rows']),expected_prompts=12,output_tokens_per_request=128,original_request_hashes_bound_by_window=not failed_control))
+ assert not (RUN/'WS128-r3').exists(),'planned third repeat unexpectedly exists; review confirmation scope'
+ return dict(schema='lab.speed6-confirmation.v1',status='PARTIAL_RUN3_NOT_EXECUTED',headline='run1-headline',selection_policy='Run 1 pre-registered; no replacement or pooling',runs=records,run3=dict(executed=False,reason='Coordinator runner halted after packet44 control final-write storage admission failure'),aba_complete=False,chronological_order=sorted([dict(run=r['run'],first_token_monotonic=r['first_token_monotonic'],last_token_monotonic=r['last_token_monotonic']) for r in records],key=lambda r:r['first_token_monotonic']),control_caveat='Packet44 WS128-r3 has passed=false after completed device execution because its old 6 GB build-cap admission refused the final write. Only 8 of 12 request receipts are retained and passing, despite complete=true in the legacy summary. The 37.211 median is over those 8 rows, not a full suite. This is partial measurement evidence, not a qualifying-window pass or completed A-B-A.')
 
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--owner-128-exception',action='store_true');a=ap.parse_args()
@@ -127,13 +172,14 @@ def main():
  scope['owner_authorization']=copy.deepcopy(OWNER_128_AUTHORIZATION) if a.owner_128_exception else None
  scope['reference_submission']='cmv6pugme0020oa01fjrho6nx'
  scope['requested_max_new']=128
- scope['authorization_extension']='Owner PREPARE SPEED6 directive, 2026-10-15: the same owner-authorized 128-token scope as 2026-10-13 and 2026-10-15 applies; preparation and server dry-run only, no real submission.'
- result['confirmation_evidence']=dict(path=rel(confirmation_path),sha256=sha(confirmation_path.read_bytes()),headline_selection='Run 1 pre-registered; repeats and controls are never pooled or substituted',status='PENDING_COORDINATOR')
+ scope['authorization_extension']='Coordinator authorization under owner decision, 2026-10-15: the exception scope is the fixed suite, metric and 128-token cap, not one run. The helper admits only the pinned SPEED3 and SPEED6 run-1 identities. This task permits server dry-run only; no real submission.'
+ result['confirmation_evidence']=dict(path=rel(confirmation_path),sha256=sha(confirmation_path.read_bytes()),headline_selection='Run 1 pre-registered; repeats and controls are never pooled or substituted',status='PARTIAL_RUN3_NOT_EXECUTED')
  result.update(submission_scope=scope,hash_encoding=flags['hashEncoding'],quality_evidence=evidence,source_request_archives=archives)
  result_path=save('realistic-suite-v1-result.json',result)
  att=copy.deepcopy(read(D/(OLD+'promotion-attestation.json')));att.update(label=LABEL,date='2026-10-15',identity=identity,performance_evidence=dict(path=rel(result_path),sha256=sha(result_path.read_bytes())),quality_evidence=evidence,evidence=[e['path'] for e in evidence]+[rel(result_path)],submission_scope=scope)
  att['gates']['bit_exact_vs_cpu_oracles']='12/12 requests, 1536/1536 tokens in WS128; 9216/9216 retained layer fixtures in separate WS128x, byte equality'
  att['gates']['fresh_process_repeated_token_equality']='All 12 token sequences identical across independent WS, WSs, WS128x and WS128 rank-process launches; speed repeats are not pooled'
+ flags['confirmationEvidence']=result['confirmation_evidence']
  att['confirmation_evidence']=result['confirmation_evidence']
  att['gates']['strict_512_token_final_gate_passed']=False
  att['gates']['kernel_log_scope']='No new signatures in each window journal tail; preflight includes historical October 11 faults, so not a clean-boot claim'
