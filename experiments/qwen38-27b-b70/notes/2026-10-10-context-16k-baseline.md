@@ -2759,7 +2759,7 @@ Vibe, Cline, ForgeCode, OpenCode. Expectations: OpenCode (~0.84 GiB) cannot star
 15.5 GiB host (recorded as not run); ForgeCode and OpenHands now get past their first request; Kimi Code (~20,800
 fixed prompt tokens) leaves the least room in the 32K window and does worst; the rest 30 or more fixed.
 
-**20c stopped at 04:05, 20d registered 04:20 before its run.** OpenHands' first request was refused (400):
+**20c stopped at 04:05, 20d registered 04:07 before its run.** OpenHands' first request was refused (400):
 it sends `reasoning_effort: "high"`, and Qwen3.8's template accepts only xhigh (its default), medium and low. Its
 system message also comes as a list of text parts, for which ctxkeeper's memory note used to add a second system
 message (the "two system messages" seen for OpenHands in the plumbing tests came from the proxy, not the agent).
