@@ -1245,5 +1245,203 @@ class Http(unittest.TestCase):
             px.shutdown(); up.shutdown(); px.server_close(); up.server_close()
 
 
+class Keepers(unittest.TestCase):
+    """1.1 options: a separate keeper model, notes taken in the background, the prewarm and the call log."""
+
+    def keeper(self, model, **kw):
+        self.dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.dir.cleanup)
+        args = dict(budget=6000, reply_reserve=400, headroom=100, target_ratio=0.5, notes_cap=600, memory_note=False,
+                    notes_mode="inplace", inplace_tokens=300)
+        args.update(kw)
+        return ck.Keeper(model, Path(self.dir.name), **args)
+
+    def go(self, k, turns, tools=({"type": "function", "function": {"name": "bash"}},)):
+        for n in range(1, turns + 1):
+            k.complete({"model": "m", "messages": conversation(n), "tools": list(tools)})
+        for s in k.sessions.values():
+            if s.pending is not None:
+                s.pending["thread"].join()
+        return next(iter(k.sessions.values()))
+
+    def test_separate_keeper_takes_the_notes_from_text(self):
+        agent, keeper_model = LedgerModel(), KeeperModel()
+        k = self.keeper(agent, ask_notes=keeper_model, notes_model="small", notes_prepass=200)
+        s = self.go(k, 20)
+        self.assertGreater(s.state["inplace_cuts"], 2)
+        self.assertEqual(agent.notes_requests, [])                       # the agent's server wrote no notes
+        req = keeper_model.requests[0]
+        self.assertEqual(req["model"], "small")
+        self.assertNotIn("tools", req)
+        self.assertEqual([m["role"] for m in req["messages"]], ["system", "user"])
+        self.assertEqual(req["messages"][0]["content"], ck.KEEPER_SYSTEM)
+        text = req["messages"][1]["content"]
+        self.assertIn("=== TURNS BEING MOVED OUT ===", text)
+        self.assertIn("The task: keep the ledger.", text)                   # the opening messages, as text
+        self.assertIn("characters left out for the notes", text)            # the pre-pass cut the long tool results
+        self.assertIn("counter abcd00 to 0", text)                          # but kept their start
+        self.assertIn("abcd05: 35", s.state["notes"])                       # and the notes were applied
+        self.assertIn("Always answer in French.", s.state["notes"])
+
+    def test_background_notes_give_what_the_request_would_have_taken(self):
+        one, two = LedgerModel(), LedgerModel()
+        s1 = self.go(self.keeper(one), 24)
+        s2 = self.go(self.keeper(two, notes_async="wait"), 24)
+        self.assertEqual(s2.state["notes"], s1.state["notes"])
+        self.assertEqual(s2.state["cut"], s1.state["cut"])
+        self.assertEqual(s2.state["async_applied"], s1.state["inplace_cuts"])
+        chat = lambda m: [r["messages"] for r in m.requests if r not in m.notes_requests]
+        self.assertEqual(chat(two), chat(one))                              # the agent saw the same views
+        # the same notes calls, and one more: the one made after the last reply, for a request that never came
+        self.assertEqual([r["messages"] for r in two.notes_requests][:len(one.notes_requests)],
+                         [r["messages"] for r in one.notes_requests])
+        self.assertLessEqual(len(two.notes_requests), len(one.notes_requests) + 1)
+
+    def test_defer_goes_on_while_the_notes_are_written(self):
+        gate = threading.Event()
+        model = LedgerModel()
+
+        def slow(body):
+            if str(body["messages"][-1].get("content") or "").startswith("[[Message from the context keeper"):
+                gate.wait(5)
+            return model(body)
+        k = self.keeper(slow, notes_async="defer", log_calls=True)
+        for n in range(1, 8):
+            k.complete({"model": "m", "messages": conversation(n)})
+        s = next(iter(k.sessions.values()))
+        self.assertIsNotNone(s.pending)                                     # started, not done: the requests went on
+        self.assertEqual(s.state["cut"], 0)
+        gate.set()
+        s.pending["thread"].join()
+        k.complete({"model": "m", "messages": conversation(8)})
+        self.assertGreater(s.state["cut"], 0)
+        self.assertEqual(s.state["async_applied"], 1)
+        view = [r for r in model.requests if r not in model.notes_requests][-1]["messages"]
+        self.assertTrue(view[2]["content"].startswith("[[NOTES kept"))
+        self.assertEqual(view[3:], conversation(8)[2 + s.state["cut"]:])    # the turns after the noted ones stay, whole
+        calls = [json.loads(l) for l in (s.dir / "calls.jsonl").read_text().splitlines()]
+        self.assertTrue(any(c["kind"] == "notes" and c["background"] for c in calls))
+        self.assertTrue(all(c["kind"] == "main" and not c["background"] for c in calls if c["kind"] != "notes"))
+
+    def test_background_notes_of_a_rewritten_history_are_dropped(self):
+        model = LedgerModel()
+        k = self.keeper(model, notes_async="wait")
+        for n in range(1, 7):
+            k.complete({"model": "m", "messages": conversation(n)})
+        s = next(iter(k.sessions.values()))
+        self.assertIsNotNone(s.pending)
+        applied = s.state.get("async_applied", 0)
+        other = conversation(7)
+        other[-4] = dict(other[-4], content="something else")               # the client changed a turn the notes cover
+        k.complete({"model": "m", "messages": other})
+        self.assertEqual(s.state.get("async_applied", 0), applied)
+        self.assertGreaterEqual(s.state.get("async_discarded", 0) + s.state.get("restarts", 0), 1)
+
+    def test_prewarm_reads_the_start_of_the_next_view(self):
+        model = LedgerModel()
+        s = self.go(self.keeper(model, notes_async="wait", prewarm=True, effort="medium"), 12)
+        warm = [r for r in model.requests if r.get("max_tokens") == 1]
+        self.assertTrue(warm)
+        w = warm[0]
+        self.assertEqual(w["messages"][:2], conversation(1)[:2])
+        self.assertTrue(w["messages"][2]["content"].startswith("[[NOTES kept"))
+        self.assertEqual(w["chat_template_kwargs"]["reasoning_effort"], "medium")
+        self.assertEqual(w["tools"][-1]["function"]["name"], "recall")
+        after = [r["messages"] for r in model.requests if r not in model.notes_requests and r.get("max_tokens") != 1]
+        self.assertTrue(any(m[:3] == w["messages"] for m in after))          # the next view begins with exactly that
+
+    def test_option_combinations_are_checked(self):
+        with self.assertRaises(ValueError):
+            ck.Keeper(lambda b: None, Path(tempfile.gettempdir()), notes_async="wait")          # needs inplace
+        with self.assertRaises(ValueError):
+            ck.Keeper(lambda b: None, Path(tempfile.gettempdir()), notes_mode="inplace", prewarm=True)
+
+    def test_review_window_holds_after_a_deferred_cut(self):
+        gate = threading.Event()
+        model = LedgerModel()
+
+        def slow(body):
+            if str(body["messages"][-1].get("content") or "").startswith("[[Message from the context keeper"):
+                gate.wait(5)
+            return model(body)
+        k = self.keeper(slow, notes_async="defer", budget=3000, inplace_tokens=300)
+        for n in range(1, 14):
+            if n == 12:
+                gate.set()
+            k.complete({"model": "m", "messages": conversation(n)})
+        s = next(iter(k.sessions.values()))
+        for r in [r for r in model.requests if r not in model.notes_requests]:
+            self.assertLessEqual(k.tokens(s, r["messages"]), 3000 - 400)
+
+    def test_review_a_retry_without_the_reply_is_not_cut_into(self):
+        model = LedgerModel()
+        k = self.keeper(model, notes_async="wait")
+        for n in range(1, 7):
+            k.complete({"model": "m", "messages": conversation(n)})
+        s = next(iter(k.sessions.values()))
+        self.assertIsNotNone(s.pending)
+        k.complete({"model": "m", "messages": conversation(6)})           # the same request again
+        view = [r for r in model.requests if r not in model.notes_requests][-1]["messages"]
+        self.assertEqual(view[-2:], conversation(6)[-2:])                  # its newest exchange is still there
+
+    def test_review_background_calls_are_counted(self):
+        model = LedgerModel()
+        s = self.go(self.keeper(model, notes_async="wait", prewarm=True), 14)
+        k_calls = s.state["upstream_calls"] + s.state.get("background_calls", 0)
+        self.assertGreater(s.state.get("background_calls", 0), 0)
+        settled = len(model.requests) - (1 if s.pending is not None else 0)
+        self.assertGreaterEqual(k_calls, settled - 2)
+
+    def test_review_full_notes_go_to_the_keeper_as_text(self):
+        agent, keeper_model = Model(), KeeperModel()
+        k = ck.Keeper(agent, Path(tempfile.mkdtemp()), budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5,
+                      notes_cap=400, memory_note=False, ask_notes=keeper_model, notes_kwargs={"x": 1})
+        for n in range(1, 30):
+            k.complete({"model": "m", "messages": conversation(n)})
+        self.assertTrue(keeper_model.requests)
+        req = keeper_model.requests[0]
+        self.assertEqual(req["messages"][0]["content"], ck.KEEPER_SYSTEM)
+        self.assertEqual(req["chat_template_kwargs"], {"x": 1})
+        self.assertIn("(tool call t0)", req["messages"][1]["content"])
+        self.assertIn("TOOL (result of call t0)", req["messages"][1]["content"])
+
+    def test_review_option_checks(self):
+        with self.assertRaises(ValueError):
+            ck.Keeper(lambda b: None, Path(tempfile.gettempdir()), notes_mode="inplace", notes_checks="near", notes_prepass=100)
+        with self.assertRaises(ValueError):
+            ck.Keeper(lambda b: None, Path(tempfile.gettempdir()), notes_mode="inplace", notes_async="wait", prewarm=True,
+                      think_when="x")
+
+    def test_prepass_keeps_outcomes_and_the_agents_own_words(self):
+        turns = [{"role": "assistant", "content": "I ran the tests", "reasoning_content": "hmm " * 50},
+                 {"role": "tool", "content": "line\n" * 400 + "FAILED test_foo - AssertionError\n" + "line\n" * 400}]
+        out = ck.prepass(turns, 400)
+        self.assertEqual(out[0], {"role": "assistant", "content": "I ran the tests"})
+        self.assertIn("FAILED test_foo - AssertionError", out[1]["content"])
+        self.assertLess(len(out[1]["content"]), 1000)
+        self.assertEqual(turns[1]["content"].count("line"), 800)              # the original is untouched
+
+
+class KeeperModel:
+    """A separate keeper: reads the turns from the text it is given and writes one line per counter."""
+
+    def __init__(self):
+        self.requests = []
+
+    def __call__(self, body):
+        import re
+        self.requests.append(body)
+        text = str(body["messages"][-1].get("content") or "")
+        turns = text.split("=== TURNS BEING MOVED OUT ===", 1)[-1]
+        seen = re.findall(r"counter (abcd\d\d) to (\d+)", turns)
+        first = "[[NOTES kept" not in text and "(none yet)" in text
+        out = ("NEW RULES\n" + ("- Always answer in French." if first else "(none)") + "\nCHANGES\n"
+               + ("\n".join(f"{k}: {v}" for k, v in seen) or "(none)") + "\nOPEN\n- keep going")
+        resp = reply(out)
+        resp["usage"] = {"prompt_tokens": 800, "completion_tokens": 40}
+        resp["timings"] = {"prompt_n": 300}
+        return resp
+
+
 if __name__ == "__main__":
     unittest.main()

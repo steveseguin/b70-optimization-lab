@@ -195,6 +195,17 @@ the notes no longer had room to be written in place. Bigger windows are slower: 
 
 Everything else: `ctxkeeper --help`.
 
+### In development (1.1.0.dev0, being measured, all off by default)
+
+| Option | What it does |
+| --- | --- |
+| `--notes-upstream URL`, `--notes-model NAME` | send the notes calls to a second, separate model server (a smaller keeper) |
+| `--notes-system TEXT\|@file`, `--notes-kwargs JSON` | the keeper's own system message and chat-template options |
+| `--notes-prepass CHARS` | for a separate keeper only: long tool results are cut to their start, end and outcome lines before it reads them |
+| `--notes-async wait\|defer` | write the next notes in the background right after a reply; `defer` lets requests go on with the current view while there is room |
+| `--prewarm` | after background notes, have the server read the start of the view the cut will leave, so the next request finds it cached |
+| `--log-calls` | write every model call (main, notes, prewarm; tokens read, cached, written; seconds) to `calls.jsonl` |
+
 ## How it works
 
 1. **Notes, kept in place.** When enough new turns have gathered (15,000 tokens), the proxy sends the model the
@@ -228,6 +239,8 @@ Everything else: `ctxkeeper --help`.
 - Tested with one conversation at a time. Separate conversations have separate state and locks.
 
 ## Changes
+
+**1.1.0.dev0** (in development): the options above. Default behaviour is unchanged (same requests, same state).
 
 **1.0.1** (2026-10-15), found by running twelve agents through it:
 
