@@ -1,0 +1,146 @@
+{
+  "schema": "own-xpu-runtime.packet4.a367-census-preregistration.v1",
+  "status": "CPU BUILD ONLY; owner approval and fresh launch gates pending",
+  "recipe": "A367",
+  "generation_requests": "code-review then customer-email, once each, 128 tokens, one client invocation, no retry",
+  "sample_interval_seconds": 0.5,
+  "ready_plateau_seconds": 20,
+  "load_and_plateau_seconds": 1800,
+  "teardown_soft_seconds": 300,
+  "post_teardown_gap_seconds": 305,
+  "default_start_floor_kib": null,
+  "live_reserve_kib": 12000000,
+  "identity_deltas": [
+    {
+      "change": "OMP_NUM_THREADS=1; normal server priority; no server CPU affinity restriction; frozen clean base environment and PATH",
+      "reason": "Restore record identity from calibration OMP2/nice19/taskset; execute refuses wrong inherited profile",
+      "speed_risk": "Removes calibration scheduling deltas; actual speed remains unmeasured"
+    },
+    {
+      "change": "TORCH_TRACE and --cudagraph-metrics retained; trace path relocated to run directory",
+      "reason": "Both are present in frozen A367; not calibration-only diagnostics",
+      "speed_risk": "Same diagnostics; storage timing may differ"
+    },
+    {
+      "change": "One API PID SIGINT, guarded entry/spawn shutdown guards, all-session exit, 305s watch",
+      "reason": "Reuse calibration lifecycle; no retry, hard kill or resident server",
+      "speed_risk": "No intended arithmetic change; startup/shutdown overhead"
+    },
+    {
+      "change": "Fresh local ext4 scratch/cache/tmp/RPC; short a367c run name; ESRCH skip retained",
+      "reason": "Preserve all three calibration fixes; reject non-ext4 scratch",
+      "speed_risk": "Cold compilation and cache placement may affect startup/first-use timing"
+    },
+    {
+      "change": "Clean byte-identical source export; guarded entry and driver/prep PYTHONPATH prefixes; PACKET4_* bindings",
+      "reason": "Protect shared trees and install cooperative guards; preserve source/stage/model byte checks",
+      "speed_risk": "Import overhead possible; no intended compute difference"
+    },
+    {
+      "change": "Pinned reconciliation and calibration dependency scope; omit historical launcher bookkeeping env",
+      "reason": "Keep fresh payload verification; do not admit changed fixture arithmetic or fake attempt367 metadata",
+      "speed_risk": "No compute selectors omitted; no expected compute effect"
+    },
+    {
+      "change": "Historical host-controlled wrapper omitted; no power/swap/page-cache changes",
+      "reason": "Current host rules and safe calibration lifecycle",
+      "speed_risk": "Host/cache/driver state differs from historical record; one replay does not establish a new record"
+    },
+    {
+      "change": "Two fixed realistic prompts, max_tokens128, allow-screening; code-review and customer-email",
+      "reason": "Diagnostic census, same frozen client, greedy sampling/seed/thinking-off; final gate stays false",
+      "speed_risk": "No speed or quality promotion from shortened suite"
+    },
+    {
+      "change": "0.5s memory/live-check thread; separate rank/cgroup thread and start-of-scan timestamps; 2s plateau freshness; independent output metadata watcher",
+      "reason": "Replay gaps reached 1.433s near unchanged1.5s trip; blocking attribution must not delay memory reads",
+      "speed_risk": "Monitor CPU/IO remains; RAID sample writes and live checks can still delay cadence and trip"
+    },
+    {
+      "change": "114840824 KiB exact owner exception only, default refuse; admission binds selected arm",
+      "reason": "Replay generation need104784640 KiB; tracing memory unmeasured",
+      "speed_risk": "About1.9GB headroom above reserve in replay; extra1GiB allowance leaves about0.8GB, not guaranteed"
+    },
+    {
+      "change": "Conditional trace arms wrap server only in source-built pinned unitrace; finite4096 records, paused load/capture, resumed census window, ITT metadata wrappers",
+      "reason": "Need per-rank device timestamps and explicit host-submission correlation",
+      "speed_risk": "Prior full-model tracing stalled or killed workers; even paused tracing perturbs; graph visibility and correlation unproven"
+    },
+    {
+      "change": "Conditional eager census disables graphs; retains MTP1, BF16 KV, target weights, arithmetic selectors",
+      "reason": "Separately labelled fallback attribution if graph tracing lacks visibility",
+      "speed_risk": "Eager time is not graph time; eager parity unproven; no automatic fallback"
+    }
+  ],
+  "approved_exception_floor_kib": 114840824,
+  "client_wall_budget_seconds": 2700,
+  "post_plateau_client_delay_seconds": 30,
+  "record_class_balanced_median_tok_s": 46.85425,
+  "localmaxxing_record": "cmtzask41000nlq011f16bpbc",
+  "pass_rule": "Clean lifecycle, unchanged admission/reserve/gap, complete fresh plateau attribution and diagnostic client receipts; output-token mismatch is a finding, never a speed claim",
+  "owner_window": "Unchanged maximum 3600 seconds; expiry preempts client budget. No automatic renewal; worst-case budgets are not additive authorization.",
+  "diagnostic_only": true,
+  "realistic_final_gate": false,
+  "max_attribution_age_seconds": 2,
+  "max_sample_gap_seconds": 1.5,
+  "planned_write_bytes": 10737418240,
+  "output_soft_stop_bytes": 8589934592,
+  "tracer_expected_output_bytes": [
+    214748364,
+    2147483648
+  ],
+  "tracer_additional_host_memory_allowance_bytes": 1073741824,
+  "tracer_memory_allowance_is_upper_bound": false,
+  "arms": [
+    {
+      "id": "graph-reference",
+      "build": "CPU-tested executable control plane",
+      "graph": "FULL_DECODE_ONLY",
+      "trace": false,
+      "purpose": "Untraced diagnostic timing/output reference; no device decomposition"
+    },
+    {
+      "id": "graph-census",
+      "build": "CPU-tested conditional feasibility arm; device-unqualified",
+      "graph": "FULL_DECODE_ONLY",
+      "trace": true,
+      "purpose": "Establish actual graph device kernel visibility and per-step correlation; incomplete visibility produces incomplete census"
+    },
+    {
+      "id": "eager-census",
+      "build": "CPU-tested conditional feasibility arm; device-unqualified",
+      "graph": "NONE",
+      "trace": true,
+      "purpose": "Eager-only device census; never substitute its durations for graph replay"
+    }
+  ],
+  "arm_policy": "Exactly one selected arm per hash-bound owner window. No queue, automatic retry, automatic fallback or speed verdict. Review first trace outcome before any separately admitted next arm.",
+  "analysis": {
+    "tool": "analyze_census.py",
+    "manifest_tool": "build_manifest.py",
+    "method": "Worker PID/rank receipts, ITT host submission scopes joined by H2D flow ID to device args.id; no device-time overlap inference",
+    "families": [
+      "routed_moe_gemm",
+      "moe_glue",
+      "shared_expert",
+      "collectives",
+      "qsa",
+      "gdn",
+      "hc",
+      "ple",
+      "lm_head_sampler",
+      "mtp_draft",
+      "copies_memsets",
+      "unknown"
+    ],
+    "small_kernel_threshold_us": 50,
+    "gap_method": "union of device busy intervals; sum retained separately",
+    "scope": "Per-rank measured device work only. Missing or ambiguous correlation remains unknown/incomplete. No assumption of400 kernels or extrapolation. Generic GEMM names need evidenced mapping; candidates are measured clusters plus dispatch-audit boundaries, not predicted savings."
+  },
+  "tracer_pins": {
+    "/home/steve/src/pti-gpu/build-unitrace/unitrace": "5aaca1f418a212a1d298cac27afb6c471bf1fcf47a1622e0c20d1a2cf43fc85a",
+    "/home/steve/src/pti-gpu/build-unitrace/libunitrace_tool.so": "00f9e1c95f1b53f1466f15dafa97ddcd709899ad7ca2869626456deb5e177e04"
+  },
+  "tracer_source_commit": "a5bab309f4ffdd78bd127035c46f5f75371160f8",
+  "device_work_performed": false
+}

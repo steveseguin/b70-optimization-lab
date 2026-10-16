@@ -1,0 +1,224 @@
+"""Host-only ITT scopes for the admitted census; import is CPU-only.
+
+No tensor contents, device events, synchronization or arithmetic are touched.
+Scopes identify host submissions; only PTI flow IDs can connect device events.
+"""
+from __future__ import annotations
+
+from contextlib import contextmanager
+from functools import wraps
+import hashlib
+import inspect
+import json
+import os
+from pathlib import Path
+import threading
+
+
+SOURCE_PINS = {
+    "vllm/compilation/cuda_graph.py": "cbc474f9098386d2eef2e3ff61364c611fbc1338d9c259ad5a24439aa7f06412",
+    "vllm/forward_context.py": "985adacc9e7ed2a7695819ac2e2ad9cb264a7d886806d3091ad75bfda7392242",
+    "vllm/models/qwen4_exp/amd/model.py": "f7691bbd16bbddb39fc093ff19bfd3e7cabfe3289ae6c6ba18ca9afb918becc8",
+    "vllm/models/qwen4_exp/amd/mtp.py": "6cf6feab74788c3e7bb3a6813a102c310113538da6e723af50a9ec32301dba03",
+    "vllm/v1/spec_decode/qwen4_exp.py": "ba5b709e30ade8b111569bd0b0934e915cd89872ab6638668b136ed97a7112d1",
+    "vllm/v1/spec_decode/eagle.py": "b2b1f7d15117b43108be368756d9c6e9334d9415a070e46178e18bb7c6476378",
+    "vllm/v1/spec_decode/llm_base_proposer.py": "e4f3180b0d3c0648ee0ab112fc32bf843bc5dd2da110ae84b64821b1f4798039",
+    "vllm/v1/attention/backends/gdn_attn.py": "c65552d9aad86472544033d44ad8a872221a83e6b60ba9918cc049ab0c580c7c"
+}
+TARGET_NAMES = {"Qwen4ExpForCausalLM", "Qwen4ExpForConditionalGeneration"}
+
+
+def rows(value):
+    """Read shape metadata only; never coerce a tensor or read a scalar."""
+    shape = getattr(value, "shape", None)
+    if shape is None or len(shape) == 0 or type(shape[0]) is not int:
+        return None
+    return shape[0] if shape[0] > 0 else None
+
+
+def call_rows(args, kwargs):
+    for key in ("input_ids", "inputs_embeds"):
+        if kwargs.get(key) is not None:
+            return rows(kwargs[key])
+    if args and args[0] is not None:
+        return rows(args[0])
+    # All pinned target/MTP signatures put positions second. M-RoPE has a
+    # leading coordinate axis, so its final dimension is the token count.
+    positions = kwargs.get("positions", args[1] if len(args) > 1 else None)
+    shape = getattr(positions, "shape", None)
+    if shape is not None and len(shape) in (1, 2) and type(shape[-1]) is int:
+        return shape[-1] if shape[-1] > 0 else None
+    return None
+
+
+def is_verify(m, context):
+    """M=2 alone is insufficient: a short prefill can also have two rows."""
+    if m != 2 or context is None:
+        return False
+    metadata = getattr(context, "attn_metadata", None)
+    if not isinstance(metadata, dict):
+        return False
+    gdn = [v for v in metadata.values() if hasattr(v, "num_spec_decodes")]
+    return bool(gdn) and all(
+        type(getattr(v, "num_prefills", None)) is int
+        and v.num_prefills == 0
+        and type(v.num_spec_decodes) is int and v.num_spec_decodes == 1
+        and type(getattr(v, "num_spec_decode_tokens", None)) is int
+        and v.num_spec_decode_tokens == 2
+        for v in gdn
+    )
+
+
+def runnable_phase(obj):
+    """Only known model identities; do not guess from arbitrary class names."""
+    seen = set()
+    for _ in range(5):
+        if id(obj) in seen:
+            return None
+        seen.add(id(obj))
+        cls = type(obj)
+        if cls.__module__ == "vllm.models.qwen4_exp.amd.model" and cls.__name__ in TARGET_NAMES:
+            return "target"
+        if cls.__module__ == "vllm.models.qwen4_exp.amd.mtp" and cls.__name__ == "Qwen4ExpMTP":
+            return "draft"
+        # Only the source-pinned graph wrapper may be traversed. A generic
+        # runnable attribute is not proof that an unknown wrapper is transparent.
+        if cls.__module__ != "vllm.compilation.cuda_graph" or cls.__name__ != "CUDAGraphWrapper":
+            return None
+        obj = vars(obj).get("runnable")
+        if obj is None:
+            return None
+    return None
+
+
+class Marker:
+    def __init__(self, active, directory, itt, get_rank, get_context, source_pins):
+        self.active = Path(active)
+        self.directory = Path(directory)
+        self.itt = itt
+        self.get_rank = get_rank
+        self.get_context = get_context
+        self.source_pins = source_pins
+        self.local = threading.local()
+        self.lock = threading.Lock()
+        self.sequence = 0
+        self.receipted = False
+
+    @contextmanager
+    def scope(self, phase, m, dimension="M"):
+        if getattr(self.local, "depth", 0) or not self.active.is_file():
+            yield
+            return
+        if type(m) is not int or m < 1:
+            raise RuntimeError("census marker cannot determine row count from metadata")
+        if dimension not in {"M", "B"} or (dimension == "B" and phase != "draft"):
+            raise RuntimeError("census marker dimension does not match scope")
+        rank = self.get_rank()
+        if type(rank) is not int or rank not in range(4):
+            raise RuntimeError("census marker requires initialized rank 0..3")
+        if phase == "target":
+            phase = "verify" if is_verify(m, self.get_context()) else "target"
+        with self.lock:
+            self.sequence += 1
+            seq = self.sequence
+            if not self.receipted:
+                record = {"schema": "a367-census-marker-rank-v1", "rank": rank,
+                          "pid": os.getpid(), "source_pins": self.source_pins,
+                          "binding": "worker OS PID; Chrome device PID is synthetic"}
+                path = self.directory / f"marker-rank-{rank}-pid-{os.getpid()}.json"
+                with path.open("x", encoding="utf-8") as handle:
+                    json.dump(record, handle, sort_keys=True, indent=2)
+                    handle.write("\n")
+                self.receipted = True
+        name = f"A367|{phase}|{dimension}={m}|seq={seq}"
+        self.local.depth = 1
+        try:
+            self.itt.rangePush(name)
+            try:
+                yield
+            finally:
+                self.itt.rangePop()
+        finally:
+            self.local.depth = 0
+
+
+def patch_forward(cls, marker, phase):
+    original = cls.forward
+    @wraps(original)
+    def forward(self, *args, **kwargs):
+        # Inactive/nested path must not inspect shape or context during capture.
+        if getattr(marker.local, "depth", 0) or not marker.active.is_file():
+            return original(self, *args, **kwargs)
+        with marker.scope(phase, call_rows(args, kwargs)):
+            return original(self, *args, **kwargs)
+    cls.forward = forward
+
+
+def patch_graph(cls, marker):
+    original = cls.__call__
+    @wraps(original)
+    def call(self, *args, **kwargs):
+        if getattr(marker.local, "depth", 0) or not marker.active.is_file():
+            return original(self, *args, **kwargs)
+        phase = runnable_phase(self.runnable)
+        if phase is None:
+            raise RuntimeError("census cannot classify active graph runnable")
+        with marker.scope(phase, call_rows(args, kwargs)):
+            return original(self, *args, **kwargs)
+    cls.__call__ = call
+
+
+def patch_proposer(cls, marker):
+    original = cls.propose
+    signature = inspect.signature(original)
+    @wraps(original)
+    def propose(self, *args, **kwargs):
+        if getattr(marker.local, "depth", 0) or not marker.active.is_file():
+            return original(self, *args, **kwargs)
+        bound = signature.bind(self, *args, **kwargs)
+        # next_token_ids has one entry per request, NOT per draft model row.
+        # set_inputs_first_pass and padding later determine actual model M.
+        # This scope includes all proposer staging, model and sampling work.
+        batch_size = rows(bound.arguments.get("next_token_ids"))
+        with marker.scope("draft", batch_size, dimension="B"):
+            return original(self, *args, **kwargs)
+    cls.propose = propose
+
+
+def verify_pins(root):
+    if not SOURCE_PINS:
+        raise RuntimeError("census marker source pins absent")
+    for relative, expected in SOURCE_PINS.items():
+        if hashlib.sha256((root / relative).read_bytes()).hexdigest() != expected:
+            raise RuntimeError(f"census marker source drift: {relative}")
+
+
+def install():
+    """Runtime-only entry, after the unchanged driver cleanup bootstrap."""
+    active = Path(os.environ["A367_CENSUS_MARKER_ACTIVE"])
+    directory = Path(os.environ["A367_CENSUS_MARKER_DIR"])
+    if not active.is_absolute() or not directory.is_absolute() or not directory.is_dir():
+        raise RuntimeError("census marker paths must be absolute, prepared run paths")
+    root = Path(os.environ["PACKET4_SOURCE"])
+    verify_pins(root)
+    # This is the ITT binding only. It does not activate a PyTorch profiler.
+    from torch._C import _itt
+    from torch import distributed
+    if not _itt.is_available():
+        raise RuntimeError("census requires a functioning ITT build")
+    from vllm import forward_context
+    from vllm.compilation.cuda_graph import CUDAGraphWrapper
+    from vllm.models.qwen4_exp.amd.model import Qwen4ExpForCausalLM, Qwen4ExpForConditionalGeneration
+    from vllm.models.qwen4_exp.amd.mtp import Qwen4ExpMTP
+    from vllm.v1.spec_decode.qwen4_exp import Qwen4ExpMTPProposer
+    def get_rank():
+        return distributed.get_rank() if distributed.is_initialized() else None
+    def get_context():
+        return forward_context.get_forward_context() if forward_context.is_forward_context_available() else None
+    marker = Marker(active, directory, _itt, get_rank, get_context, SOURCE_PINS)
+    patch_graph(CUDAGraphWrapper, marker)
+    for cls in (Qwen4ExpForCausalLM, Qwen4ExpForConditionalGeneration):
+        patch_forward(cls, marker, "target")
+    patch_forward(Qwen4ExpMTP, marker, "draft")
+    patch_proposer(Qwen4ExpMTPProposer, marker)
+    return marker
