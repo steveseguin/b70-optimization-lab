@@ -11,7 +11,8 @@ LAB=/home/steve/b70-optimization-lab
 CTX=$LAB/experiments/qwen38-27b-b70/scripts/context
 O=/mnt/fast-ai/bench-results/context-longrun-20261016
 RUN=${RUN:-c23}
-SRV=$O/server/tp2-w262144-s2-xp-$RUN
+MTP=${MTP:-5}
+SRV=$O/server/tp2-w262144-s2-xp-mtp$MTP-$RUN
 Q=${QUEUE:-$O/QUEUE23.txt}
 PORT=18196
 PPORT=18200
@@ -171,7 +172,8 @@ run_line() {  # arm kind seed cap
       rc=$?
       say "[concurrency check] done rc=$rc in $((SECONDS-t0)) s (0 all same as solo, 1 some different, 2 garbage)"
       tail -4 "$O/$tag.out" | sed 's/^/   /'
-      (( rc == 0 || rc == 1 )) || { say "CHECK FAILED: the smoke test and the background arms are skipped"; NO_ASYNC=1; }
+      (( rc == 0 || rc == 1 )) || { say "CHECK FAILED: the smoke test and the background arms are skipped"; NO_ASYNC=1
+        [[ ${CHECK_FAIL_STOP:-0} == 1 ]] && { say "CHECK_FAIL_STOP: no further arms"; touch "$O/STOP-CAMPAIGN23"; }; }
       wait_idle || say "server still busy after 3 min"
       return 0 ;;
     smoke)
@@ -192,9 +194,9 @@ run_line() {  # arm kind seed cap
         say "SMOKE FAILED (background notes applied: $applied): background notes arms are skipped"; NO_ASYNC=1
       fi
       return 0 ;;
-    rules) tasks=$ODR/tasks/sparse-memory/sparse-memory-t240k-s$seed; sp=$SP240; job="${arm}__sparse-memory-t240k-s$seed"; runs=$O/runs/rules ;;
-    1m)    tasks=$OD1M/tasks/sparse-memory/sparse-memory-t1000k-s$seed; sp=$SP1M; job="${arm}__sparse-memory-t1000k-s$seed"; runs=$O/runs/1m; xk="emit_ctx_trajectory=false" ;;
-    repair) tasks=$ODX/tasks/repair-n40-s$seed; job="${arm}__repair-n40-s$seed"; runs=$O/runs/repair ;;
+    rules) tasks=$ODR/tasks/sparse-memory/sparse-memory-t240k-s$seed; sp=$SP240; job="${arm}__sparse-memory-t240k-s$seed"; runs=$O/runs/$RUN/rules ;;
+    1m)    tasks=$OD1M/tasks/sparse-memory/sparse-memory-t1000k-s$seed; sp=$SP1M; job="${arm}__sparse-memory-t1000k-s$seed"; runs=$O/runs/$RUN/1m; xk="emit_ctx_trajectory=false" ;;
+    repair) tasks=$ODX/tasks/repair-n40-s$seed; job="${arm}__repair-n40-s$seed"; runs=$O/runs/$RUN/repair ;;
     *) say "unknown kind $kind"; return 1 ;;
   esac
   [[ $(arm_async "$arm") == *notes-async* && ${NO_ASYNC:-0} == 1 ]] && { say "[$arm] skipped (the smoke test failed)"; return 0; }
@@ -281,8 +283,7 @@ systemctl --user reset-failed ctx-fp8-tp2-server 2>/dev/null
 systemd-run --user --unit=ctx-fp8-tp2-server --collect -p WorkingDirectory=$LAB -E B70_GUARD_MIN_AVAILABLE_GIB=1.6 \
   python3 experiments/qwen38-27b-b70/scripts/run-fp8-tp1-server.py --out "$SRV" --port $PORT \
   --image neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r314-state-stride --warmup --keep --startup-timeout 1800 \
-  --tp 2 --mem 0.95 --max-model-len 262144 --batched 832 --seqs "$SEQS" --fa-verify-rows --mtp 5 --draft-int4 \
-  --shortlist /opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt \
+  --tp 2 --mem 0.95 --max-model-len 262144 --batched 832 --seqs "$SEQS" --fa-verify-rows --mtp "$MTP" $( (( MTP )) && echo --draft-int4 --shortlist /opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt) \
   --overlay b70-allgather-allreduce --extra-env B70_ALLGATHER_ALLREDUCE=1 \
   --overlay b70-chunked-upload --extra-env B70_CHUNKED_UPLOAD=1 \
   --serve-arg=--enable-auto-tool-choice --serve-arg=--tool-call-parser=qwen3_coder --serve-arg=--reasoning-parser=qwen3 \
@@ -290,7 +291,8 @@ systemd-run --user --unit=ctx-fp8-tp2-server --collect -p WorkingDirectory=$LAB 
   --serve-arg=--prefix-cache-retention-interval=13312 \
   --overlay b70-spec-resume-accepted --extra-env B70_SPEC_RESUME_ACCEPTED=1 \
   --overlay b70-gdn-state-width --extra-env B70_GDN_STATE_WIDTH=1 \
-  --overlay b70-exclusive-prefill --extra-env B70_EXCLUSIVE_PREFILL=1 2>&1 | tail -1
+  --overlay b70-exclusive-prefill --extra-env B70_EXCLUSIVE_PREFILL=1 \
+  $( [[ ${FA_PER_SEQ:-0} == 1 ]] && echo --overlay b70-fa-decode-per-seq --extra-env B70_FA_DECODE_PER_SEQ=1) 2>&1 | tail -1
 ready=0
 for i in $(seq 1 120); do
   if server_up; then ready=1; say "server ready after ~$((i*15)) s; MemAvailable $(avail) MiB"; break; fi

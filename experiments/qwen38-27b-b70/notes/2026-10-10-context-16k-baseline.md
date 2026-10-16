@@ -3034,3 +3034,37 @@ threshold is lowered to 3/4 of the room the window leaves (at least 1,000 tokens
 queued after A32dp; one request at a time, so they run even if the concurrency check fails (then only the smoke
 test and the background arms are skipped). Expectation: most cuts in place, the same 39/39, and K12f near K16's
 10 min; K08f faster than K08's 40 min but still the slowest.
+
+### Campaign 23 so far (06:23-), and 23b registered 2026-10-16 06:40 before its run
+
+**The concurrency check on the pure-step server (MTP5, `--seqs 2`, exclusive prefill): no garbage, but 23 of 24
+overlapped replies differ from their solo replies, and the differences are not small drifts.** Some overlapped
+replies splice two continuations mid-sentence ("To determine which team moved the most accurately answer this, I
+will sum ...", "**Three Largest Moves:**\n1. Largest Moves:**\n1. ..."). Pure steps removed the "!!!!" but not this:
+two sequences under MTP5 on this server are not safe to score. (The package's qualified multi-user mode runs with no
+speculation; this matches its design.) Changes at 06:30, before any background arm ran: A32d, A32dp, M32dp moved out of
+campaign 23 into 23b; K32 was skipped by the runner (its job name existed from campaign 21: the runs folder was
+shared; from 23b each launch has its own folder); S16 had already started and is kept as a record of the async path
+on this server; K12f and K08f (one request at a time) stay.
+
+**23b**: the same runner and server with `MTP=0` (no draft model; decode is slower for every arm alike) and
+`FA_PER_SEQ=1` (the per-sequence long-key attention overlay of the multi-user work), `--seqs 2`, pure steps. Queue: X
+check (its solo replies are also compared with the MTP5 solos of campaign 23: equal means MTP5 alone is still exact),
+K32 (sync control on this server), S16 smoke, A32d, A32dp. Expectations: no garbage and overlapped replies equal to
+solo (the multi-user configuration was exact through 64 users); A32d/A32dp faster than this server's K32 by most of
+the notes time that can overlap, same 39/39. No 1M run (its reference ran with MTP5).
+
+**c23 S16 (06:27-06:31, pure steps, MTP5): "!!!!" again** in 10 of 64 main replies (2,048 tokens each, finish=length),
+3/4 questions; 14 background notes applied, none discarded. So pure steps did not remove the garbage in the proxy's
+real workload, although the check's 24 overlapped replies had none. The difference: a notes call and the agent's call
+read the same long cached prefix at the same time (the check's pairs shared only a short system message). Before 23b
+runs: `concurrency_check.py` gains a pair that shares one long cached prompt (B and D: the same 700 records, a
+different question), and 23b's queue order is check, S16, A32d, A32dp, K32, with `CHECK_FAIL_STOP=1` (a garbage
+result ends 23b before any arm). If the garbage follows the shared prefix with MTP off as well, the cause is the
+prefix cache serving two sequences at once (align mode with the recurrent layers' state), and background notes on
+one server wait for that fix; campaign 22's separate keeper on the other card does not share a server.
+
+**c23 K12f / K08f (seed 0) and two lines added 06:56 before they ran.** K12f: 35/39 (3 wrong, 1 stale), 10 min 5 s,
+70 cuts all in place (K12: 39/39, 24 min 15 s, none in place). K08f: **39/39, 13 min 8 s**, 136 of 152 cuts in place,
+largest call 5,149 tokens (K08: 39/39, 39 min 38 s). Added to the queue while the server is up: K12f and K08f on seed
+1 (46 questions; X32p 46/46 in 9.4 min), to tell whether K12f's four misses are the setting or one run.

@@ -5,7 +5,8 @@ Campaign 21 (2026-10-16) found that on the research server with --seqs 2 a main 
 call ran beside it came back as 2,048 tokens of "!!!!". This sends a few deterministic chat requests (temperature 0,
 thinking off) alone, then in overlapping pairs (the second one starting while the first is generating, so one
 request's prompt is read while the other decodes, and both decode together), and compares every reply with its
-solo reply.
+solo reply. B and D share one long prompt up to the question (both served from the prefix cache), as a notes call
+and the agent's call do.
 
   python3 concurrency_check.py --base-url http://127.0.0.1:18196/v1 [--rounds 3] [--json out.json]
 
@@ -63,6 +64,9 @@ def main() -> int:
         "A": prompt(1, 60, "List every move by the night shift, one line each, in record order, then give their total."),
         "B": prompt(2, 700, "Which team moved the most items in all? Show the per-team totals first."),
         "C": prompt(3, 200, "Write a short shift report: the three largest moves and anything moved to bay 7."),
+        # D shares B's whole record list (B's cached prompt) and differs only in the question: the shape of a
+        # ctxkeeper notes call beside the agent's own call (campaign 23's smoke test: garbage there, none in A-C)
+        "D": prompt(2, 700, "List the five largest single moves with their record numbers."),
     }
 
     def ask(name: str, out: dict, key: str) -> None:
@@ -83,7 +87,7 @@ def main() -> int:
         print(f"solo {name}: {solo[name]['written']} tokens, {solo[name]['finish']}, {solo[name]['s']} s"
               + ("  GARBAGE" if garbage(solo[name]["text"]) else ""), flush=True)
     rows, worst = [], 0
-    pairs = [("A", "B", 1.0), ("B", "A", 0.3), ("A", "C", 1.0), ("C", "B", 0.5)]
+    pairs = [("A", "B", 1.0), ("B", "A", 0.3), ("A", "C", 1.0), ("C", "B", 0.5), ("B", "D", 0.5), ("D", "B", 1.0)]
     for rnd in range(a.rounds):
         for first, second, delay in pairs:
             got: dict = {}

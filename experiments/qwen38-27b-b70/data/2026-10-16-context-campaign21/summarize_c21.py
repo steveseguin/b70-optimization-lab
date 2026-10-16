@@ -47,9 +47,10 @@ def main() -> int:
             except Exception:
                 pass
             seed = seed[1:]
-            job = {"rules": f"{O}/runs/rules/jobs/{arm}__sparse-memory-t240k-s{seed}",
-                   "1m": f"{O}/runs/1m/jobs/{arm}__sparse-memory-t1000k-s{seed}",
-                   "repair": f"{O}/runs/repair/jobs/{arm}__repair-n40-s{seed}"}.get(kind, "")
+            name = {"rules": f"rules/jobs/{arm}__sparse-memory-t240k-s{seed}", "1m": f"1m/jobs/{arm}__sparse-memory-t1000k-s{seed}",
+                    "repair": f"repair/jobs/{arm}__repair-n40-s{seed}"}.get(kind, "")
+            # c23b on: one runs folder per launch; before it, one shared folder
+            job = (f"{O}/runs/{run}/{name}" if os.path.isdir(f"{O}/runs/{run}") else f"{O}/runs/{name}") if name else ""
             main_c = [c for c in calls if c["kind"] == "main"]
             notes_c = [c for c in calls if c["kind"] == "notes"]
             ms = sum(c.get("s") or 0 for c in main_c)
