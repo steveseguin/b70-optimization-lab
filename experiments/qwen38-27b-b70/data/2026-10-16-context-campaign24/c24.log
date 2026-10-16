@@ -1,0 +1,19 @@
+### 15:10:46 campaign 24 (c24) start; queue /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE24.txt (4 lines); MemAvailable 11680 MiB
+### 15:10:46 queue checked: X check 0 900;S16 smoke 0 900;K32 rules 0 2400;A32dp rules 0 2400;
+### 15:10:46 stopping the Gemma service (front door state: 0 0)
+### 15:10:52 cards free; MemAvailable 13528 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: bfa83aabf1b04687ae7439f9d3dfa985
+### 15:13:22 server ready after ~165 s; MemAvailable 2780 MiB
+### 15:13:22 [concurrency check] start
+### 15:15:29 [concurrency check] done rc=2 in 127 s (0 all same as solo, 1 some different, 2 garbage)
+   round 2 D+B (1.0 s apart): D DIFFERENT, 400 tokens, length, 7.17 s
+   round 2 D+B (1.0 s apart): B DIFFERENT, 204 tokens, stop, 5.3 s
+   
+   36 overlapped replies: 2 garbage, 27 different from solo; solo replies different from the reference: 0 ()
+### 15:15:29 CHECK FAILED: the smoke test and the background arms are skipped
+### 15:15:29 CHECK_FAIL_STOP: no further arms
+### 15:15:32 stopped by STOP-CAMPAIGN24
+### 15:15:32 stopping the server; MemAvailable 2474 MiB
+server state: stopped None stop_confirmed True
+host memory available while the server ran: min 2.29  1% 2.33  median 3.03 GiB  (600 samples)
+### 15:16:00 kernel log clean since 2026-10-16 15:10:46; restoring Gemma (throughput)

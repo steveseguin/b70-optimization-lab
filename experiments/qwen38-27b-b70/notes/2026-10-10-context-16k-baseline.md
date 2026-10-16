@@ -3218,3 +3218,22 @@ fixed smoke test runs first); everything else as registered for
 - **Expectations:** check 0 garbage, 0 different, every solo reply equal to the MTP0 reference; K32 39/39 in about
   9 min (campaign 21's MTP5 K32: 8.7); A32dp 39/39 and 10-20 % faster than this K32. If the check fails, the memory
   and docs claim stands ("even with the four fixes") and the failing pairs are recorded.
+
+### Campaign 24 result (15:10-15:16) and campaign 24b registration (15:20, before it runs)
+
+- **Campaign 24's check failed, so the campaign stopped there** (K32 and A32dp not run). With all four multi-user
+  fixes, 36 overlapped replies: **2 garbage, 27 different from solo**; every solo reply equal to campaign 23b's MTP0
+  reference (one request at a time is exact on this server). It is deterministic: B beside C came back as the same
+  garbage in rounds 0 and 2 ("moved the mostitems, we need to counttheenumber000..."), and every pair repeated its
+  outcome. So the docs' claim stands; the four fixes are not enough on this server.
+- **What differs from the exact 2026-10-15 multi-user server** (launch argv diff): this server has
+  `--enable-prefix-caching --mamba-cache-mode align` + `b70-prefix-cache-exact` + retention interval, a 262,144-token
+  window (33,024 there), 832-token steps (4,096), and pure-step prompt batching at its default (8 there). Images,
+  every other env value, the draft (INT4 head, shortlist), compilation config, block size 64 and `--seqs 2` are the
+  same.
+- **Campaign 24b**, `data/2026-10-16-context-campaign24/mtp-multiseq-bisect.sh` (Gemma off once, one fresh server
+  per line, the same check against the same reference): **P0** = campaign 24's server without prefix caching;
+  **L33** = with prefix caching but 33K window, 4,096-token steps, prompt batching 8 (the exact server plus prefix
+  caching); **E0** = the exact server's settings through this runner (control). Expectation: P0 and E0 clean, L33
+  fails, i.e. prefix caching in align mode with drafting and two requests is the fault. If P0 fails, the window or
+  step size is involved and the next lines split those.
