@@ -2924,6 +2924,19 @@ stopped the queue at 464 MiB. Fixed before any arm ran: the smoke test is now S1
 5,000 tokens, 1,000-token reports, so notes are taken in place), and the room rule is 256 MiB (the task container's
 cap; campaigns 12 and 20 ran their arms at this level). Nothing else changed.
 
+**c21b smoke (S16, 02:38-02:43): the background path works, the server does not, with two requests at once.**
+15 notes calls ran in the background, 15 applied, 0 discarded (the proxy side is right). But every main reply that
+was written while a background notes or prewarm call ran beside it came back as 2,048 tokens of "!!!!"
+(finish=length; the same replies alone are a few tokens), and one of the four final questions failed that way. The
+server log shows vLLM's mixed prompt-and-decode step path (`R156 GDN split-mixed step executed`) at that time. This
+research server (MTP5, prefix cache in align mode, the research overlays) had only ever served one request at a time;
+the package's qualified multi-user mode avoids mixed steps (`B70_EXCLUSIVE_PREFILL`) and runs without MTP. Action at
+02:45, before the arm after K32 started: A32d, A32dp and M32dp commented out of the queue (garbage would be scored as
+memory loss); the window sweep is unaffected (one request at a time). Follow-up registered: a server configuration
+check with `scripts/context/concurrency_check.py` (solo vs overlapped replies; garbage, different, same) on the
+research server with `--overlay b70-exclusive-prefill`, then the background arms only on a configuration with no
+garbage.
+
 ### Campaign 22, registered 2026-10-16 02:30 before any run (to start after campaign 21): one card, and a smaller keeper
 
 Questions: does ctxkeeper let the 27B model work on ONE card (the 26,624-token window that card holds beside the
@@ -2947,3 +2960,20 @@ times (one card decodes ~54 against ~90 tok/s). LFM2.5's notes are less reliable
 L1 below 39/39, more checks refused and asked again; on the repair task, where notes are simpler, L1r close to O1r.
 L1d faster than L1 by most of the keeper's time; prepass shortens the keeper's reading with no score change.
 Decision: a separate small keeper is recommended only where its score equals the self-keeper's.
+
+### Campaign 23, registered 2026-10-16 03:15 before any run (after campaign 21, before 22): background notes on a pure-step server
+
+The c21b server plus `--overlay b70-exclusive-prefill` (B70_EXCLUSIVE_PREFILL=1: each step reads one request's
+prompt alone or writes decode rows only, never both; from the multi-user work of 2026-10-04, where it made answers
+equal to solo ones). Queue: **X** `concurrency_check.py` (three requests alone, then four overlapping pairs three
+times; 24 overlapped replies compared with the solo ones) — any garbage stops the campaign before an arm runs;
+**K32** (control: one request at a time, expected identical to c21b's K32 in every count); **S16** smoke (gate: 4/4
+and background notes applied); **A32d**, **A32dp** (240K rules s0); **M32dp** (1M s0, cap 100 min). Runner
+`data/2026-10-16-context-campaign23/longrun-campaign23.sh`.
+
+Expectations: no garbage with pure steps (the mixed step is what the log showed); overlapped replies may still differ
+from solo ones in a few tokens (MTP5 with two sequences was never batch-invariant). If replies differ, the async arms
+are still run (the context lane scores answers), and the differences are reported. Background notes then save most
+of the notes time that does not wait on the main call: A32d 15-30 % faster than K32 (8 min 43 s), M32dp 20-35 %
+faster than X32p (49.6 min), same scores. Pure steps make a main call wait while a notes prompt is read; if that
+eats the saving, it shows here.
