@@ -20,7 +20,7 @@ Attempts 1 and 2 left zero GPU fault lines and no surviving owners. Their review
 - [attempt1-review.json](../data/2026-10-16-flash-next-a367-reseal/window-20261016T133433Z/attempt1-review.json);
 - [attempt2-review.json](../data/2026-10-16-flash-next-a367-reseal/window-20261016T135036Z/attempt2-review.json).
 
-## Fix and reseal (`539b88ccd`)
+## Fix and reseal (`440daf116`)
 
 - `snapshot()` now skips `ProcessLookupError` (getsid ESRCH), as `window_driver.owned_session_gone` already did. Missing rank samples still fail the plateau gate.
 - The launcher refuses an output path whose `<output>/scratch/rpc/<uuid>` would exceed 107 characters. The runbook output name is now `a367-$FN_STAMP`.
@@ -41,7 +41,7 @@ At 14:49:43, during the first graph-capture warmup, rank 0 raised `FileNotFoundE
 
 Engine init failed and the loaded four-card server exited with zero GPU fault lines. That is useful evidence for this lane's exit-fault history. Review: [attempt3-review.json](../data/2026-10-16-flash-next-a367-reseal/window-20261016T142901Z/attempt3-review.json).
 
-**Fix `7a901fef3`:**
+**Fix `a6b6d14b5`:**
 
 - Every scratch environment path now points to local ext4 at `/home/steve/.cache/a367-scratch/<run>`. That covers the hf, vllm, inductor, triton and xdg caches, plus `TMPDIR` and the rpc socket.
 - The trace, logs and samples stay on raid.
@@ -96,3 +96,18 @@ Fix `derive_floor.py` at the next driver reseal.
 The proposal is in [proposal/](../data/2026-10-16-flash-next-a367-floor-derivation/proposal/): **123,229,432 KiB**. That is the need of 102,840,824 plus the 12,000,000 reserve plus the 8,388,608 fixture budget. This host has MemTotal 123,365,852 KiB with blocks 53-57 fenced, and about 118.8M KiB available at idle. **The proposed packet-4 fixture floor can therefore never be admitted here as written.**
 
 Need + reserve alone is 114,840,824 KiB, which leaves about 3.9M KiB of start margin. With the 12,000,000 KiB live watchdog, a generation run would have about 3.8 GiB of headroom over the measured ready-state minimum. Any floor for generation runs is an owner decision. Nothing has been approved.
+
+## Commit IDs after the October 16 rebase
+
+Local commits were rebased onto `origin/main` (11 context-campaign/ctxkeeper commits from the two-card host). Sealed files and the hash-bound approval records keep the pre-rebase IDs. The mapping is:
+
+| Pre-rebase | Post-rebase |
+|---|---|
+| 539b88ccd | 440daf116 |
+| 7a901fef3 | a6b6d14b5 |
+| 4bbb8e94e | 6706fae2f |
+| 5efca23e3 | 8211cf629 |
+| 701f77903 | 3ebb1e4ee |
+
+Seals pin file bytes, not commits, so every seal is unaffected.
+
