@@ -2882,7 +2882,7 @@ loss (the stubbed view stops matching the cache: 229K-565K more tokens re-read t
 help a separate keeper that reads the turns fresh. (4) FAd's whole-history run decoded ~41 tok/s against 60-100 inside
 a 32K view: most of the keeper's speed comes from the short view, not from fewer tokens read.
 
-### Campaign 21, registered 2026-10-16 02:40 before any run: the window floor, and notes written in the background
+### Campaign 21, registered 2026-10-16 02:20 before any run: the window floor, and notes written in the background
 
 Questions: how small a window ctxkeeper still works in, and where the speed/quality best point is; and whether writing
 the notes in the background (right after a reply, while the agent's next request runs) saves time. Code: lab commit
@@ -2915,3 +2915,35 @@ or 39 (the 21,855-token largest tool result cannot fit a 16K view; how the run c
 fail, R48 the same score as XR4 in about the same time. Decision rules: the smallest window whose score equals K32's
 is the floor; background notes become a recipe default only if they save 10 % or more with no score loss on both
 streams; anything below the floor is reported, not retried. Stopping early: `STOP-CAMPAIGN21`; no arm is rerun.
+
+**Campaign 21 first launch (02:22-02:28), relaunched as c21b.** The server came up in 165 s (3.0 GiB free, settling at
+2.1 GiB, as in campaigns 12 and 20). The smoke test passed its four questions but tested nothing: at an 8K window the
+2,000-token reports forced ordinary cuts every turn (30 cuts, 0 in place), so no background notes were ever started,
+and the gate skipped the background arms. Then the runner's room rule (512 MiB above the guard, from campaign 17)
+stopped the queue at 464 MiB. Fixed before any arm ran: the smoke test is now S16 (16,384 window, notes every
+5,000 tokens, 1,000-token reports, so notes are taken in place), and the room rule is 256 MiB (the task container's
+cap; campaigns 12 and 20 ran their arms at this level). Nothing else changed.
+
+### Campaign 22, registered 2026-10-16 02:30 before any run (to start after campaign 21): one card, and a smaller keeper
+
+Questions: does ctxkeeper let the 27B model work on ONE card (the 26,624-token window that card holds beside the
+weights), and can a different, cheaper model keep the notes for it. Keeper: LFM2.5-24B-A2B Q8_0 (about 2B active
+parameters per token; package v4 build, `serve.sh fast`, its exact fast mode, 64K context, no prompt cache) on card 1,
+loaded first; then the one-card Qwen server on card 0 (the 2026-10-10 one-card settings: cpu-embed, MTP5, mem 0.975,
+window 26,624, seqs 1, `B70_ALLOW_BUSY_RENDER=1`). The client asks for 8,192 reply tokens, so every arm runs
+`--budget 26624 --reply-reserve 8192 --notes-max-tokens 6144 --inplace-tokens 9000` (view up to ~17.4K, a little
+over campaign 21's K16 view). A separate keeper gets a fixed system message (the same every call, so it is never a
+blank slate about its job) and one message holding the opening messages, the current NOTES, what is still in the
+agent's view, and the turns to note. Runner `data/2026-10-16-context-campaign22/longrun-campaign22.sh`.
+
+Arms, one run each: **SL** smoke (`long_chat.py` 60K through the LFM2.5 keeper in the background; gate for the L
+arms); 240K rules stream s0 with X32p's options: **O1** (Qwen keeps its own notes), **L1** (LFM2.5 keeps them), **L1d**
+(L1 in the background: on a second card this runs truly beside the main call); repair task `repair-n40-s2x` with
+XR4's options: **O1r**, **L1r**, **L1rp** (L1r + `--notes-prepass 2000`: long tool results cut to their start, end and
+outcome lines before the keeper reads them). Caps 40 min (rules) and 60 min (repair).
+
+Expectations: O1 39/39 and O1r 40 fixed / 39-40 clean (the view is close to K16/R16's), about 1.5-1.8x the two-card
+times (one card decodes ~54 against ~90 tok/s). LFM2.5's notes are less reliable than Qwen's on the ledger stream:
+L1 below 39/39, more checks refused and asked again; on the repair task, where notes are simpler, L1r close to O1r.
+L1d faster than L1 by most of the keeper's time; prepass shortens the keeper's reading with no score change.
+Decision: a separate small keeper is recommended only where its score equals the self-keeper's.
