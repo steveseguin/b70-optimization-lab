@@ -32,7 +32,7 @@ Admission passed and the server started at 22:20:32. Every session process ran a
 - The 305 s watch completed, with zero GPU fault lines.
 - Evidence: `window-20261016T194524Z/attempt-b/`.
 
-**Fix `9c016a8a0`.** The sampler reads `comm`/`status`/`cgroup` each sample and reads `cmdline` only until a worker's rank is known, caching it per pid. A new test fails if cmdline is re-read. 233 CPU tests pass with zero seal mismatches. The seal changed from `78556b50` to `bb473f8e`; the preregistration is unchanged.
+**Fix `7aca7df2a`.** The sampler reads `comm`/`status`/`cgroup` each sample and reads `cmdline` only until a worker's rank is known, caching it per pid. A new test fails if cmdline is re-read. 233 CPU tests pass with zero seal mismatches. The seal changed from `78556b50` to `bb473f8e`; the preregistration is unchanged.
 
 The memory sentence is identical except for the seal hash. It was recorded under the owner's standing instruction "if you run into an issue, fix the issue. simple" (`owner-approval-replay-20261016-b.json`).
 
