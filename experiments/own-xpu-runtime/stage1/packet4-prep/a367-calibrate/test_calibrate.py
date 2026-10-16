@@ -37,6 +37,9 @@ class Base(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix='a367-calibrate-cpu-')
         self.root = Path(self.temp.name)
         self.addCleanup(self.temp.cleanup)
+        local = patch.object(c, 'LOCAL_SCRATCH', self.root / 'local-scratch')
+        local.start()
+        self.addCleanup(local.stop)
 
     def admission(self):
         now = time.time()
@@ -266,7 +269,7 @@ class HistoricalLatchAdmission(Base):
         (self.root / 'data/runtime-stage-gdn-roundstate-v2-loadable.sha256').write_text('')
         receipt = {'boot_id': 'test-boot', 'historical_fault_latches': [
             {'path': '/mock/evidence/FAULT.json', 'boot_id': 'prior', 'sha256': 'a' * 64}]}
-        with patch.object(c, 'command_and_environment', return_value=([], {})), \
+        with patch.object(c, 'command_and_environment', return_value=([], {'VLLM_RPC_BASE_PATH': '/s/rpc'})), \
              patch.object(c, 'verify_admission', return_value=receipt) as admission, \
              patch.object(c, 'verify_seals', return_value={'minimum_disk_free_bytes': 0}), \
              patch.object(c, 'fault_paths', return_value=[]), \
@@ -474,11 +477,31 @@ class Math(Base):
 
     def test_output_path_too_long_for_ipc_refused(self):
         # 2026-10-16 attempt 1: a 121-char ipc path made the API server fail before workers started.
-        long_root = '/mnt/raid-models/bench-results/flashnext-a367-calibrate-20261016T133433Z'
+        long_root = '/mnt/raid-models/bench-results/' + 'x' * 80
         with self.assertRaisesRegex(ValueError, 'too long for vLLM ipc'):
             c.main(['--plan', '--output', long_root])
-        ok_root = '/mnt/raid-models/bench-results/a367-20261016T135036Z'
-        self.assertLessEqual(len(ok_root + '/scratch/rpc') + 37, c.RPC_PATH_MAX)
+        ok_root = Path('/mnt/raid-models/bench-results/a367-20261016T135036Z')
+        with patch.object(c, 'LOCAL_SCRATCH', Path('/home/steve/.cache/a367-scratch')):
+            rpc = c.command_and_environment(ok_root)[1]['VLLM_RPC_BASE_PATH']
+        self.assertEqual(rpc, '/home/steve/.cache/a367-scratch/a367-20261016T135036Z/rpc')
+        self.assertLessEqual(len(rpc) + 37, c.RPC_PATH_MAX)
+
+    def test_scratch_caches_on_local_scratch_not_output(self):
+        # 2026-10-16 attempt 3: a shared Triton cache on the ntfs-3g output mount lost a published .llir.
+        out = Path('/mnt/raid-models/bench-results/a367-20261016T142901Z')
+        env = c.command_and_environment(out)[1]
+        local = str(c.scratch_dir(out))
+        for key in ('HF_HOME', 'HUGGINGFACE_HUB_CACHE', 'VLLM_CACHE_ROOT', 'TORCHINDUCTOR_CACHE_DIR',
+                    'TRITON_CACHE_DIR', 'XDG_CACHE_HOME', 'TMPDIR', 'VLLM_RPC_BASE_PATH'):
+            self.assertTrue(env[key].startswith(local + '/'), key)
+        self.assertEqual(env['TORCH_TRACE'], str(out / 'torch-trace'))
+        self.assertFalse(any(str(out / 'scratch') in v for v in env.values()))
+
+    def test_load_budget_matches_preregistration(self):
+        reg = w.read(c.REG)
+        self.assertEqual(c.LOAD_BUDGET, reg['load_and_plateau_seconds'])
+        self.assertEqual(c.PLATEAU, reg['ready_plateau_seconds'])
+        self.assertEqual(c.LOAD_BUDGET, 1800)
 
     def test_missing_rss_reported_unknown(self):
         self.assertEqual(c.meminfo_status('Name: mock\n'), {})
@@ -546,7 +569,7 @@ class Identity(Base):
 
 class Lifecycle(Base):
     def run_mock(self, fail=None, orphan_delay=0, rc=0):
-        root = self.root / 'run'; root.mkdir(); (root / 'scratch/rpc').mkdir(parents=True)
+        root = self.root / 'run'; root.mkdir(); (c.scratch_dir(root) / 'rpc').mkdir(parents=True)
         w.write(root / 'identity.json', {'mock': True})
         events = []; ticks = [100.0]; state = {'signal_at': None}
         class Thread:
@@ -605,7 +628,7 @@ class Lifecycle(Base):
         self.assertGreaterEqual(events[-1][1], signals[0][2] + 2 + 305)
         self.assertEqual(receipt['generation_requests'], 0)
         self.assertIs(receipt['mock'], True)
-        self.assertFalse((root / 'scratch').exists())
+        self.assertFalse(c.scratch_dir(root).exists())
 
     def test_fault_never_succeeds(self):
         code, events, receipt, root = self.run_mock(fail='fault')
@@ -621,7 +644,7 @@ class Lifecycle(Base):
     def test_launch_exception_cleanup(self):
         code, events, receipt, root = self.run_mock(fail='launch')
         self.assertEqual(code, 1)
-        self.assertFalse((root / 'scratch').exists())
+        self.assertFalse(c.scratch_dir(root).exists())
         self.assertFalse(any(e[0] == 'signal' for e in events))
 
     def test_nonzero_exit(self):

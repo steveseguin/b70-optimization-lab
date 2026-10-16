@@ -66,3 +66,40 @@ Two regression tests were added. Floors, watchdog, reserve, the command and
 the environment are unchanged. The seal hash changes, so the memory-floor
 exception needs the owner's new hash-bound approval.
 
+## Attempt 3 and the scratch relocation
+
+Attempt 3 (`a367-20261016T142901Z`, seal `0ad3948b`) launched at 14:34:26 UTC.
+All four ranks loaded the model in about 673 s, at 29.4-29.6 GiB each.
+MemAvailable fell from 113.2 GiB to a minimum of 16.16 GiB, 4.95 GB above the live
+reserve. During the first graph-capture warmup, rank 0 raised `FileNotFoundError`
+on `<output>/scratch/triton/<hash>/_qsa_merge_splitk_kernel.llir`. The four ranks
+compile the same Triton kernels into one shared cache, and Triton publishes
+cache files by `os.replace`. On the ntfs-3g output mount, rename-over is not
+atomic, so a reader can briefly see the target missing. The engine
+failed initialization and the server exited, with zero GPU fault lines and no
+surviving owners. Evidence is in `window-20261016T142901Z/`.
+
+**Remedy.** `command_and_environment` now rewrites every
+`<output>/scratch/...` environment path to a short local ext4 directory,
+`/home/steve/.cache/a367-scratch/<run>/...`. That covers the hf, vllm,
+inductor, triton and xdg caches, `TMPDIR` and `VLLM_RPC_BASE_PATH`.
+`TORCH_TRACE`, logs, samples and receipts stay on the raid output. The
+launcher:
+
+- requires 4 GiB free on the local scratch filesystem;
+- requires that the run's scratch directory does not already exist;
+- checks the actual rpc path length;
+- removes the scratch directory under the same owner-gone condition as before.
+
+Two tests cover the new paths. Floors, watchdog, reserve, the command and every
+non-scratch environment value are unchanged. The seal changes again and needs
+a new owner approval.
+
+**Loading budget raised to 1800 s.** `load_and_plateau_seconds` was 1200 s
+in the preregistration and in the launcher. Attempt 3 took 731 s to load and
+reached graph capture at 895 s, compiling from a cold per-run Triton cache.
+Running out of budget during capture would send SIGINT to a four-card server
+mid-capture. The budget remains a bound on a hung startup. No measurement
+changes. The preregistration hash therefore changes too, and the owner sentence
+binds both hashes.
+

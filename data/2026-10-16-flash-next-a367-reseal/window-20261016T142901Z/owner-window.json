@@ -1,0 +1,32 @@
+{
+  "schema": "own-xpu-runtime.packet4.owner-window.v1",
+  "authorized": true,
+  "halt_resolved": true,
+  "host": "steve-b70s",
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "issued_unix": 1792160959,
+  "expires_unix": 1792164559,
+  "previous_teardown_completed_unix": 1792160953.0,
+  "preregistration_sha256": "db83805e9a2b4099a0f6bdb005d0d08310009d474ce62546356f3c505e9f65b9",
+  "purpose": "a367-calibrate-load",
+  "calibration_preregistration_sha256": "0c1c5cbeda393c2d6d1f1699699d936793cd4c3449dff6eedbdfa5b60ce66c0a",
+  "calibration_seal_sha256": "0ad3948b052ae7c6ac877c11b126208319d8c451592aabfceee75895a08a4ad7",
+  "admission_revision_sha256": null,
+  "health_path": "/home/steve/llm-optimizations/data/2026-10-16-flash-next-a367-reseal/window-20261016T142901Z/health.json",
+  "health_sha256": "f971d2f14bbcbf0af6cbf57e4bf44c8cd9b19efb397f6d5e164325f67ff82e47",
+  "payload_sha256": "1613dd1583ed1329c10d95d3e6bbc51f5b2e31782ca5aad064716681d88a617e",
+  "output": "/mnt/raid-models/bench-results/a367-20261016T142901Z",
+  "firmware": "GuC 70.44.1 (xe/bmg_guc_70.bin), HuC 8.2.10 (xe/bmg_huc.bin); observed in the kernel log of this boot",
+  "pci_ids": [
+    "0000:23:00.0",
+    "0000:27:00.0",
+    "0000:43:00.0",
+    "0000:47:00.0"
+  ],
+  "calibration_memory_exception": {
+    "approved": true,
+    "approved_by": "owner",
+    "minimum_mem_available_kib": 114000000,
+    "owner_approval_text": "I authorize one A367 calibrate-load measurement on steve-b70s with a calibration-only MemAvailable start floor of 114000000 KiB, a 0.5-second watchdog and the 12000000 KiB live reserve, under preregistration SHA256 0c1c5cbeda393c2d6d1f1699699d936793cd4c3449dff6eedbdfa5b60ce66c0a and seal SHA256 0ad3948b052ae7c6ac877c11b126208319d8c451592aabfceee75895a08a4ad7. This accepts the unmatched loading-memory risk, does not lower the packet-4 fixture floor, and does not resolve the halt or authorize another launch."
+  }
+}

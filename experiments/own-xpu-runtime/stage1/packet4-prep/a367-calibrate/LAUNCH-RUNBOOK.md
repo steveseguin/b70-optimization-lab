@@ -15,7 +15,9 @@ repair is in progress. After clearance, use this one new run name; its final
 output directory must not already exist. The 10 GiB write allowance below is a
 planning budget for logs, Torch trace and private caches, not a measured demand.
 It is additional to the unchanged 60 GiB free reserve. Root receives only small
-JSON/log receipts; keep root growth below 2 GB. All bulky run/cache/trace output
+JSON/log receipts and the per-run cache/rpc scratch
+(`/home/steve/.cache/a367-scratch/<run>`, removed after owners exit); keep root
+growth below 2 GB. All bulky run/trace output
 lands on repaired RAID. A missing/read-only mount or I/O error refuses the run.
 
 ```bash

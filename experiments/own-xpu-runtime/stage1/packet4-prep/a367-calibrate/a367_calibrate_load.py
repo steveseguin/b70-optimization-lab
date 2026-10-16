@@ -29,8 +29,19 @@ REG = HERE / 'preregistration.json'
 SEAL = HERE / 'seal.json'
 INTERVAL = .5
 PLATEAU = 20
+# 1800 s (was 1200): attempt 3 needed 731 s to load and reached graph capture at 895 s on a cold
+# per-run Triton cache; a budget trip there would SIGINT a capturing four-card server.
+LOAD_BUDGET = 1800
 GAP = 305
 RPC_PATH_MAX = 107
+# Caches/rpc/tmp live on local ext4, not the output NTFS mount: ntfs-3g rename-over is not
+# atomic, so four ranks sharing a Triton cache saw a published .llir vanish (attempt 3).
+LOCAL_SCRATCH = Path('/home/steve/.cache/a367-scratch')
+LOCAL_SCRATCH_MIN_FREE = 4 * 2**30
+
+
+def scratch_dir(output):
+    return LOCAL_SCRATCH / output.name
 LIVE_FLOOR_KIB = 12_000_000  # A367 supervisor reserve, NOT a launch floor
 GRAPH = '{"mode":0,"cudagraph_mode":"FULL_DECODE_ONLY","cudagraph_capture_sizes":[1,2],"max_cudagraph_capture_size":2,"compile_sizes":[],"cudagraph_num_of_warmups":1}'
 
@@ -52,6 +63,11 @@ def command_and_environment(output):
     del command[command.index('--worker-cls'):]
     command.append('--cudagraph-metrics')
     env = w.build_environment(p, output)
+    shared, local = str(output / 'scratch'), str(scratch_dir(output))
+    for key, value in env.items():
+        if value == shared or value.startswith(shared + '/'):
+            env[key] = local + value[len(shared):]
+    w.require(not any(shared in value for value in env.values()), 'scratch path left on output mount')
     env['VLLM_XPU_ENABLE_XPU_GRAPH'] = '1'
     env['TORCH_TRACE'] = str(output / 'torch-trace')
     return command, env
@@ -296,13 +312,13 @@ def lifecycle(root, command, env, sampler, stop, watch, *, launch=subprocess.Pop
                            stderr=subprocess.STDOUT, start_new_session=True)
             stop.attach(child)
             w.write(root / 'launch.json', {'pid': child.pid, 'unix': time.time()})
-            deadline = clock() + 1200
+            deadline = clock() + LOAD_BUDGET
             plateau_start = None
             while True:
                 w.require(not stop.reason, str(stop.reason))
                 w.require(not watch.failed, 'kernel watcher failed: ' + str(watch.failed))
                 w.require(child.poll() is None, 'server exited before plateau completed')
-                w.require(clock() < deadline, '1200s loading/plateau budget exceeded')
+                w.require(clock() < deadline, f'{LOAD_BUDGET}s loading/plateau budget exceeded')
                 if plateau_start is None and is_ready():
                     reached_ready = True
                     sampler.phase = 'plateau'
@@ -357,9 +373,10 @@ def lifecycle(root, command, env, sampler, stop, watch, *, launch=subprocess.Pop
             if thread.is_alive():
                 error = error or 'monitor did not stop'
         if child is None or (child.poll() is not None and owners_gone(child.pid)):
-            shutil.rmtree(root / 'scratch')
+            shutil.rmtree(scratch_dir(root))
         else:
-            w.write(root / 'scratch-retained.json', {'reason': 'owner uncertain; no cleanup'})
+            w.write(root / 'scratch-retained.json', {'reason': 'owner uncertain; no cleanup',
+                                                    'path': str(scratch_dir(root))})
     summary = None
     try:
         w.require(error is None and reached_ready and clean_exit and gap_complete, error or 'incomplete lifecycle')
@@ -387,9 +404,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     w.require(os.getpriority(os.PRIO_PROCESS, 0) == 19 and os.environ.get('OMP_NUM_THREADS') == '2', 'nice19 OMP2 required')
     root = args.output.absolute()
-    # vLLM binds ipc://<VLLM_RPC_BASE_PATH>/<36-char uuid>; Unix socket paths cap at 107 chars.
-    w.require(len(str(root / 'scratch/rpc')) + 37 <= RPC_PATH_MAX, 'output path too long for vLLM ipc sockets')
     command, env = command_and_environment(root)
+    # vLLM binds ipc://<VLLM_RPC_BASE_PATH>/<36-char uuid>; Unix socket paths cap at 107 chars.
+    w.require(len(env['VLLM_RPC_BASE_PATH']) + 37 <= RPC_PATH_MAX, 'scratch path too long for vLLM ipc sockets')
     if args.plan:
         print(json.dumps({'command': command, 'environment': env, 'deltas': w.read(REG)['identity_deltas'],
                           'native_executed': False, 'generation_requests': 0}, indent=2))
@@ -417,6 +434,9 @@ def main(argv=None):
         w.require(actual_members == expected_members, 'A367 stage loadable file set changed')
         w.verify_calibration_payload(args.payload_receipt, owner, paths()['model'], prereg, time.time())
         w.require(shutil.disk_usage(root.parent).free >= prereg['minimum_disk_free_bytes'], 'disk reserve')
+        LOCAL_SCRATCH.mkdir(parents=True, exist_ok=True)
+        w.require(shutil.disk_usage(LOCAL_SCRATCH).free >= LOCAL_SCRATCH_MIN_FREE, 'local scratch reserve')
+        w.require(not scratch_dir(root).exists(), 'local scratch already exists')
         with socket.socket() as port:
             port.bind(('127.0.0.1', w.PORT))
         baseline = w.journal()
@@ -424,7 +444,7 @@ def main(argv=None):
         final_admission = admit()  # repeat freshness/owners/floor after byte audit
         w.verify_calibration_payload(args.payload_receipt, owner, paths()['model'], prereg, time.time())
         root.mkdir()
-        (root / 'scratch/rpc').mkdir(parents=True)
+        (scratch_dir(root) / 'rpc').mkdir(parents=True)
         w.write(root / 'admission.json', {'initial': initial_admission, 'final': final_admission})
         audit['fault_latch_admission'] = w.artifact(root / 'admission.json')
         w.write(root / 'environment.json', audit)

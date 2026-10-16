@@ -1,0 +1,44 @@
+{
+  "schema": "flash-next.a367.attempt-review.v1",
+  "attempt": 3,
+  "unit": "fn-a367-calibrate-20261016T142901Z",
+  "output": "/mnt/raid-models/bench-results/a367-20261016T142901Z",
+  "seal": "0ad3948b052ae7c6ac877c11b126208319d8c451592aabfceee75895a08a4ad7",
+  "launched_utc": "2026-10-16T14:34:26Z",
+  "workers_started_utc": "2026-10-16T14:35:46Z",
+  "model_loaded_utc": "2026-10-16T14:46:59Z",
+  "model_loading_seconds_per_rank": [
+    672.59,
+    673.1,
+    673.17,
+    673.2
+  ],
+  "model_loading_gib_per_rank": [
+    29.38,
+    29.54,
+    29.37,
+    29.57
+  ],
+  "failure_utc": "2026-10-16T14:49:43Z",
+  "unit_end_utc": "2026-10-16T14:50:06Z",
+  "result": "supervisor failure \"ValueError: server exited before plateau completed\"; engine core init failed in capture_model warmup",
+  "root_cause": "rank 0 FileNotFoundError on <output>/scratch/triton/<hash>/_qsa_merge_splitk_kernel.llir: four ranks share one cold Triton cache on the ntfs-3g raid mount, Triton publishes cache files with os.replace, and ntfs-3g rename-over is not atomic",
+  "memory": {
+    "samples": 1862,
+    "baseline_available_kib": 118707644,
+    "minimum_available_kib": 16950212,
+    "decline_kib": 101757432,
+    "margin_over_live_reserve_kib": 4950212,
+    "max_gpu_active_kib": 86612152,
+    "scope": "loading and pre-capture only; capture/ready/plateau/shutdown not reached; not a calibration result"
+  },
+  "load_rate_note": "first ~3 min ran ~11-16 s/shard (ranks re-reading shards through the FUSE page cache), then ~1 shard/s; total matched September (688 s)",
+  "gpu_fault_lines_this_boot": 0,
+  "owners_after_exit": "none",
+  "teardown": "server and workers exited after engine-init failure; zero GPU fault lines",
+  "calibration_json_sha256": "1959f42d822e35bad2c454bcdc9c1f3bc71953824d66b4d39a071e833471e4ee",
+  "samples_sha256": "595ea1a5e1c91e5149d6f9fc52c25442a74e5432ed9823b205290da2c2514867",
+  "server_log_sha256": "b1b4cf0bfdee299ffda3163c182eea491cfe0cd26e9de3f0a04bbf1a2432c20a",
+  "remedy": "third reseal: all scratch caches/tmp/rpc on local ext4 /home/steve/.cache/a367-scratch/<run>; load_and_plateau_seconds 1200 -> 1800; 149 CPU tests pass; seal b75d9f86, prereg d5959d82; new owner approval required",
+  "claims": "none formal: no ready/plateau/exit receipt, so no floor proposal"
+}
