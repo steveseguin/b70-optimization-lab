@@ -678,3 +678,20 @@ Server D0: reset off (as A0), both ranks traced (`B70_ALIGN_TRACE_ALL_RANKS=1`);
 back to back. Prediction: DS0 equals AS0 (64/64); DB0 differs on about a third of the hits; **every differing hit has
 bias above 0 on at least one rank at its first step, and every hit with bias above 0 on either rank differs.** If
 some differing hit has bias 0 on both ranks, the second cause is real and still open. Then part C (C2) as planned.
+
+### Result, part D (19:40-19:48 EDT, reset off, both ranks traced): the stale count explains every difference
+
+DS0 (paused) equals AS0 of part A's server: 64/64. DB0 (back to back): **34/64**. First steps of DB0's 56 hits
+(`data/2026-10-16-r314-pcorder/by-rank-DS0-DB0.txt`, traces `trace-D0-rank{0,1}.jsonl.gz`):
+
+| Offset above 0 on rank 0 / rank 1 | Hits | Answer differs |
+| --- | --- | --- |
+| no / no | 26 | 0 |
+| yes / yes | 20 | 20 |
+| yes / no | 9 | 9 |
+| no / yes | 1 | 1 |
+
+As predicted: every differing hit had the stale count on at least one rank, and every hit with a stale count on
+either rank differs. The ranks disagree in 10 of 30, so the copy really is raced per rank, and part A's six
+"offset 0" differences were rank-1 cases the rank-0 trace could not see. **No second cause.** With part B (fix on:
+256/256 in four orders), the hand-over defect is closed for one sequence. Part C (two users, fix on) is running.
