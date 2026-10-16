@@ -54,12 +54,12 @@ arm_window() {  # arm -> "budget inplace_tokens"
   case $1 in
     K06) echo "6144 2800" ;;   K08) echo "8192 3750" ;;   K12 | R12) echo "12288 5600" ;;
     K16 | R16) echo "16384 7500" ;;   K24) echo "24576 11250" ;;   K32 | A32d | A32dp | M32dp) echo "32768 15000" ;;
-    K48 | R48) echo "49152 22500" ;;   K64) echo "65536 30000" ;;   S08) echo "8192 3000" ;;
+    K48 | R48) echo "49152 22500" ;;   K64) echo "65536 30000" ;;   S08) echo "8192 3000" ;;   S16) echo "16384 5000" ;;
     *) return 1 ;;
   esac
 }
 arm_async() {  # arm -> background-notes options
-  case $1 in A32d) echo "--notes-async defer" ;; A32dp | M32dp | S08) echo "--notes-async defer --prewarm" ;; *) echo "" ;; esac
+  case $1 in A32d) echo "--notes-async defer" ;; A32dp | M32dp | S08 | S16) echo "--notes-async defer --prewarm" ;; *) echo "" ;; esac
 }
 start_proxy() {  # tag arm kind
   local tag=$1 arm=$2 kind=$3 w b i fl=()
@@ -165,7 +165,7 @@ run_line() {  # arm kind seed cap
       start_proxy "$tag" "$arm" smoke || return 1
       say "[$arm smoke] start; MemAvailable $(avail) MiB; $(mline)"
       timeout -s INT -k 60 "$cap" python3 "$LAB/tools/ctxkeeper/examples/long_chat.py" --base-url "http://127.0.0.1:$PPORT/v1" \
-        --tokens 60000 --extra-body '{"chat_template_kwargs": {"enable_thinking": false}}' > "$O/$tag.out" 2>&1
+        --tokens 60000 --report-tokens 1000 --extra-body '{"chat_template_kwargs": {"enable_thinking": false}}' > "$O/$tag.out" 2>&1
       rc=$?
       say "[$arm smoke] done rc=$rc in $((SECONDS-t0)) s"; tail -6 "$O/$tag.out" | sed 's/^/   /'
       wait_idle || say "server still busy after 3 min"
@@ -287,8 +287,8 @@ ok_to_continue() {
   [[ -e $O/STOP-CAMPAIGN21 ]] && { say "stopped by STOP-CAMPAIGN21"; return 1; }
   [[ -n $(faults) ]] && { say "GPU fault line in the kernel log; no further arms"; return 1; }
   server_up || { say "server is gone; no further arms (no restart)"; return 1; }
-  local room=$(( $(avail) - 1638 ))
-  (( room < 512 )) && { say "room beside the server is ${room} MiB; no further arms"; return 1; }
+  local room=$(( $(avail) - 1638 ))   # c21 first launch: this server settles at ~2.1 GiB free (room ~460 MiB), as in c12/c20
+  (( room < 256 )) && { say "room beside the server is ${room} MiB, under the 256 MiB task-container cap; no further arms"; return 1; }
   return 0
 }
 NO_ASYNC=0 done_lines=0 idle_since=0
