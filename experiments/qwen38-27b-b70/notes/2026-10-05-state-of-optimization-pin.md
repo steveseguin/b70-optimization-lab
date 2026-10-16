@@ -53,7 +53,9 @@ copy drafts at depth 5 (no gain), reading two long prompts in one step (not exac
 1. **The published packages are still on R310/R312d-c.** Their single-user drafting is identical on every test but
    not by construction. Moving them needs R314 pushed to the registry and a fresh acceptance each; the one-card
    package's kernel variant (`gdn_attention_ckpt`) needs the same eight-line fix first.
-2. **No many-users package profile exists.** The table above is from research servers.
+2. ~~**No many-users package profile exists.**~~ Done 2026-10-07 for drafting off: the two-card package's
+   `multi-user` profile (up to 64 users, R310 image, accepted through the launcher; `data/2026-10-07-fp8-two-card-multi-user/`).
+   A drafting-on profile for 2-16 users still needs R314 in the registry (item 1).
 3. **The out-of-range state read exists in the published recipe at the very end of the context window** (rare; fixed
    by R314 + `b70-gdn-state-width`).
 4. ~~Second fresh servers are owed for: drafting at 2, 8 and 16 users; drafting off at 2, 4 and 8.~~ Done
