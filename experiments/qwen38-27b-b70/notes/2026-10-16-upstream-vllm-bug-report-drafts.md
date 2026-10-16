@@ -234,6 +234,69 @@ of the later GPU copy. One request-level field restored into both the CPU array 
 
 ---
 
+## 4. Align mode: a request that starts right after every earlier request finished inherits the last accepted count
+
+**Title:** `[Bug][Spec Decode][Prefix Caching] mamba_cache_mode="align" + async scheduling: when every request of
+the previous step has finished, the next new request reads a stale num_accepted_tokens_cpu (its prefix-cache hit
+starts from the wrong state)`
+
+**Project:** vLLM (`vllm/v1/worker/gpu_model_runner.py`, `vllm/v1/worker/gpu_input_batch.py`,
+`vllm/v1/worker/mamba_utils.py`).
+
+**Affected, as observed:** vLLM 0.29.0 XPU fork (R314), V1 runner, async scheduling,
+`--enable-prefix-caching --mamba-cache-mode align`, MTP 5, TP2, `--max-num-seqs 1`, `--max-num-batched-tokens 832`,
+`--max-model-len 33024`. Lab overlays as in bugs 2 and 3 (with the bug-3 fix). The same code is in v0.29.0 and main
+`84bcbc62` (lines below). Not run on main or on CUDA. Separate from bug 3: it needs no request to sit out a step,
+only a new request handed the engine in the step right after the last running request finished.
+
+**Mechanism (R314 lines; main in brackets):**
+- After each step the align post-process copies the per-request accepted counts into
+  `input_batch.num_accepted_tokens_cpu` without waiting (`mamba_utils.py:1638-1640` [`:1589`]).
+- In the next step `_update_states` removes the finished request, which also drops it from `prev_req_id_to_index`
+  (`gpu_input_batch.py:573-574` [`:572`]), and `add_request` puts the new request in the freed row and writes 1
+  there (`gpu_input_batch.py:484` [`:481`]). Under async scheduling the previous step's device-to-host copy can
+  still be in flight at that point; it lands in the same row when `_prepare_inputs` waits on
+  `num_accepted_tokens_event` (`gpu_model_runner.py:2131-2132` [`:2089-2090`]), replacing the 1 with the finished
+  request's last count.
+- `_prepare_inputs` repairs new rows only through the `prev_positions` branch, which runs only if
+  `prev_req_id_to_index` is non-empty (`gpu_model_runner.py:2134-2146` [`:2092-2104`]). When every request of the
+  previous step has finished the dictionary is empty, the "non-async" branch copies the CPU array as it is
+  (`:2147-2150` [`:2105-2108`]), and the stale count goes to the GPU too.
+- `preprocess_mamba` uses `num_accepted_tokens_cpu[i] - 1` as the offset of the state it copies into the new
+  request's block (`mamba_utils.py:1505-1523` [`:1503-1521`]). For a request that starts from a prefix-cache hit,
+  the starting recurrent state is read that many slots past the hit block: in our trace, slot 5 of the hit, which
+  is a block the previous request used for a draft position.
+- It needs all of: drafting, align-mode prefix caching, async scheduling, a request already waiting when the last
+  running one finishes (a client that waits for each reply and then sends the next one did not trigger it in our
+  tests: the engine is idle and the copy has landed before the request arrives), and a cache hit for the new
+  request. With more than one sequence it needs every running request to finish in the same step.
+
+**Reproduction:** one-sequence server as above; 64 long prompts (2K-8K tokens, 7 of 8 families share an 832-token
+aligned prefix with an earlier prompt), greedy, 128 tokens. Pass 1: one at a time with a 1 s pause. Pass 2: all
+submitted 30 ms apart, so each one waits in the queue and starts in the step after the previous one finishes.
+
+**Symptom (lab numbers; every arm has the bug-1, 2 and 3 fixes):**
+
+| Server and order | Answers equal to the paused pass |
+|---|---|
+| paused, suite order, repeated | 64/64 |
+| paused, shuffled order | 64/64 |
+| queued, suite order | **40/64** (24 differ, all cache hits; 18 had a first-step offset above 0 on rank 0; rank 1 not traced) |
+| queued, suite order, with the fix below (another fresh server) | **64/64** |
+| queued, shuffled, with the fix | **64/64** |
+
+**Fix we used:** overlay 0.5.0 (lab commit `f1b74930a`). After the stock `_prepare_inputs`, for rows whose request
+was not in the previous step and has no stored count (new requests), when align mode is on, it writes 1 into
+`num_accepted_tokens_cpu[row]`, `num_accepted_tokens.np[row]` and `num_accepted_tokens.gpu[row]` before
+`preprocess_mamba`. Unit tests with a stub that lands the pending copy at the event wait: the stock code gives the
+new row 4, the fix gives 1.
+
+**Suggested upstream fix:** apply the new-row reset whatever `prev_req_id_to_index` holds (for example, take the
+`prev_positions` branch whenever async scheduling is on, or set `new_mask` rows to 1 in both branches), or write the
+1 of `add_request` after the event wait.
+
+---
+
 ## Owner notes (not for posting)
 
 - Earlier upstream posts by the lab: kernels issue #593 (filed 2026-09-12) and an evidence comment on vLLM PR #53542
@@ -242,11 +305,15 @@ of the later GPU copy. One request-level field restored into both the CPU array 
 - The paths above are relative to github.com/steveseguin/b70-optimization-lab. Before posting, confirm the repo is
   public and switch to commit permalinks: `aa3cc5f00` for the bug-1 patch, overlay and tests; `114b850f9` and
   `eb1a8ecd9` for the overlay in bugs 2 and 3.
-- These drafts cite the committed overlay 0.2.0 and 0.3.0 only (a 0.4.0 with optional draft keeping is being
-  tested separately and is not part of any report).
+- Bugs 1-3 cite the committed overlay 0.2.0 and 0.3.0 only (a 0.4.0 with optional draft keeping is being
+  tested separately and is not part of any report); bug 4 cites 0.5.0 (`f1b74930a`).
 - Bug 3 residual, 2026-10-16 16:36: with 0.3.0 a 2-user drafting + prefix-caching server flipped one long answer out
-  of 128 at a near tie (`notes/2026-10-04-fp8-multiuser-prereg.md`, 16:29 result). Cause not found yet; settle it
-  before filing bug 3 with a "0 of 36" claim.
+  of 128 at a near tie (`notes/2026-10-04-fp8-multiuser-prereg.md`, 16:29 result). 19:35 update: the probable cause
+  is bug 4 (added below, found the same evening); the two-user re-check with the bug-4 fix (arm C2) decides it.
+  Settle it before filing bug 3 with a "0 of 36" claim.
+- Bug 4 (2026-10-16 evening): the 40/64 row has 6 differing hits that showed offset 0 in the rank-0 trace; the
+  proposed reason is that rank 1 raced its own copy. A both-ranks trace (part D) checks it; fix the wording of that
+  row once it is in.
 - Related but not drafted: R307 "Defect 3" (`docker/rebase-v0290/r307-gdn-state-handoff.py`). A one-token step right
   after a step that accepted several tokens goes to the non-spec kernels, which read slot 0. R314 is built from R304,
   not R307, so it does not carry R307's fix. Whether R314 is still affected was not checked here.
