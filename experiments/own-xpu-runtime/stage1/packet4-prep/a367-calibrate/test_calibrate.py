@@ -1,5 +1,6 @@
 """Standard-library CPU tests. No Torch, native imports, devices or model launch."""
 import copy
+from contextlib import contextmanager
 import hashlib
 import json
 import os
@@ -59,7 +60,7 @@ class Base(unittest.TestCase):
 
     def admit(self, owner, health, now, output, **kw):
         with patch.object(w.socket, 'gethostname', return_value='steve-b70s'):
-            c.verify_admission(owner, health, 'test-boot', now, output,
+            return c.verify_admission(owner, health, 'test-boot', now, output,
                                kw.get('rows', []), kw.get('faults', []), kw.get('available', 120_000_000))
 
 
@@ -150,6 +151,139 @@ class Admission(Base):
         a = self.admission(); a[0]['admission_revision_sha256'] = 'pretend-approval'
         with self.assertRaisesRegex(ValueError, 'fixture revision'):
             self.admit(*a)
+
+
+class HistoricalLatchAdmission(Base):
+    @contextmanager
+    def latches(self, entries, roots=None):
+        # Virtual files only: no FAULT.json is created, edited or deleted.
+        original_stat, original_read = Path.lstat, Path.read_bytes
+        metadata = self.root.stat()
+        def stat(path):
+            return metadata if path in entries else original_stat(path)
+        def read(path):
+            if path not in entries:
+                return original_read(path)
+            value = entries[path]
+            if isinstance(value, Exception):
+                raise value
+            return value
+        with patch.object(w, 'FAULT_ROOTS', roots or (self.root,)), \
+             patch.object(Path, 'lstat', stat), patch.object(Path, 'read_bytes', read):
+            yield
+
+    def test_prior_boot_archives_exempt_and_recorded(self):
+        raw = b'{"boot_id": "prior-boot"}\n'
+        entries = {self.root / segment / 'receipts/FAULT.json': raw
+                   for segment in ('fault-archive', 'evidence', 'incident')}
+        with self.latches(entries):
+            receipt = self.admit(*self.admission(), faults=list(entries))
+        self.assertEqual(receipt['boot_id'], 'test-boot')
+        self.assertEqual(receipt['historical_fault_latches'], [
+            {'path': str(path), 'sha256': hashlib.sha256(raw).hexdigest(), 'boot_id': 'prior-boot'}
+            for path in sorted(entries)])
+
+    def test_current_boot_blocks_in_every_location(self):
+        for directory in ('', 'evidence', 'fault-archive', 'incident', 'runs'):
+            path = self.root / directory / 'FAULT.json'
+            with self.subTest(directory=directory), self.latches({path: b'{"boot_id":"test-boot"}'}), \
+                 self.assertRaisesRegex(ValueError, 'FAULT'):
+                self.admit(*self.admission(), faults=[path])
+
+    def test_prior_boot_top_level_blocks_even_when_root_is_evidence(self):
+        root = self.root / 'evidence'
+        path = root / 'FAULT.json'
+        with self.latches({path: b'{"boot_id":"prior-boot"}'}, roots=(root,)), \
+             self.assertRaisesRegex(ValueError, 'watched root'):
+            self.admit(*self.admission(), faults=[path])
+
+    def test_prior_boot_output_top_level_blocks(self):
+        args = self.admission()
+        path = args[3] / 'FAULT.json'
+        with self.latches({path: b'{"boot_id":"prior-boot"}'}), \
+             self.assertRaisesRegex(ValueError, 'watched root'):
+            self.admit(*args, faults=[path])
+
+    def test_missing_or_invalid_boot_blocks(self):
+        path = self.root / 'evidence/FAULT.json'
+        for raw in (b'{}', b'{"boot_id":null}', b'{"boot_id":""}', b'{"boot_id":" "}',
+                    b'{"boot_id":123}', b'[]', b'{"boot_id":" test-boot "}'):
+            with self.subTest(raw=raw), self.latches({path: raw}), \
+                 self.assertRaisesRegex(ValueError, 'boot_id'):
+                self.admit(*self.admission(), faults=[path])
+
+    def test_unreadable_or_malformed_latch_blocks(self):
+        path = self.root / 'evidence/FAULT.json'
+        for raw in (PermissionError('denied'), b'not JSON', b'\xff'):
+            with self.subTest(raw=raw), self.latches({path: raw}), \
+                 self.assertRaisesRegex(ValueError, 'unreadable boot_id'):
+                self.admit(*self.admission(), faults=[path])
+
+    def test_prior_boot_outside_archive_segments_blocks(self):
+        for directory in ('runs', 'evidence-copy', 'incident-20261011', 'fault-archive-old'):
+            path = self.root / directory / 'FAULT.json'
+            with self.subTest(directory=directory), self.latches({path: b'{"boot_id":"prior"}'}), \
+                 self.assertRaisesRegex(ValueError, 'outside evidence/archive'):
+                self.admit(*self.admission(), faults=[path])
+
+    def test_archive_segment_above_watched_root_does_not_exempt(self):
+        root = self.root / 'evidence/watched'
+        path = root / 'runs/FAULT.json'
+        with self.latches({path: b'{"boot_id":"prior"}'}, roots=(self.root, root)), \
+             self.assertRaisesRegex(ValueError, 'outside evidence/archive'):
+            self.admit(*self.admission(), faults=[path])
+
+    def test_unknown_current_boot_cannot_exempt(self):
+        with self.assertRaisesRegex(ValueError, 'current boot_id'):
+            w.verify_fault_latches([], '', self.root / 'out')
+
+    def test_same_latch_is_recorded_once(self):
+        path = self.root / 'evidence/FAULT.json'
+        with self.latches({path: b'{"boot_id":"prior"}'}):
+            receipt = self.admit(*self.admission(), faults=[path, path])
+        self.assertEqual(len(receipt['historical_fault_latches']), 1)
+
+    def test_new_boot_uses_supplied_identity_without_hardcoded_boot(self):
+        path = self.root / 'incident/FAULT.json'
+        with self.latches({path: b'{"boot_id":"test-boot"}'}):
+            receipt = w.verify_fault_latches([path], 'after-reboot', self.root / 'out')
+        self.assertEqual(receipt['historical_fault_latches'][0]['boot_id'], 'test-boot')
+
+    def test_discovery_keeps_nested_and_top_level_latches(self):
+        path = self.root / 'evidence/FAULT.json'
+        with patch.object(w, 'FAULT_ROOTS', (self.root,)), \
+             patch.object(Path, 'rglob', return_value=iter([path])):
+            found = c.fault_paths(self.root / 'out')
+        self.assertEqual(set(found), {path, self.root / 'FAULT.json', self.root / 'out/FAULT.json'})
+
+    def test_calibration_persists_both_admission_checks(self):
+        owner, health, now, output = self.admission()
+        owner_path = self.root / 'owner.json'
+        payload_path = self.root / 'payload.json'
+        w.write(owner_path, owner)
+        w.write(payload_path, {})
+        (self.root / 'data').mkdir()
+        (self.root / 'data/runtime-stage-gdn-roundstate-v2-loadable.sha256').write_text('')
+        receipt = {'boot_id': 'test-boot', 'historical_fault_latches': [
+            {'path': '/mock/evidence/FAULT.json', 'boot_id': 'prior', 'sha256': 'a' * 64}]}
+        with patch.object(c, 'command_and_environment', return_value=([], {})), \
+             patch.object(c, 'verify_admission', return_value=receipt) as admission, \
+             patch.object(c, 'verify_seals', return_value={'minimum_disk_free_bytes': 0}), \
+             patch.object(c, 'fault_paths', return_value=[]), \
+             patch.object(c, 'paths', return_value={'stage': self.root, 'model': self.root}), \
+             patch.object(w, 'LANE', self.root), patch.object(c, 'HERE', self.root / 'packet'), \
+             patch.object(w, 'processes', return_value=[]), \
+             patch.object(w, 'verify_environment'), patch.object(w, 'verify_calibration_payload'), \
+             patch.object(w, 'journal', return_value=''), patch.object(w.socket, 'socket'), \
+             patch.object(c, 'lifecycle', return_value=0):
+            self.assertEqual(c.main(['--execute', '--output', str(output),
+                '--owner-window', str(owner_path), '--health-receipt', owner['health_path'],
+                '--payload-receipt', str(payload_path)]), 0)
+        self.assertEqual(admission.call_count, 2)
+        self.assertEqual(w.read(output / 'admission.json'), {'initial': receipt, 'final': receipt})
+        audit = w.read(output / 'environment.json')
+        self.assertEqual(audit['fault_latch_admission'], w.artifact(output / 'admission.json'))
+        self.assertEqual(w.read(output / 'identity.json')['audit_sha256'], w.sha(output / 'environment.json'))
 
 
 class Reconciliation(Base):

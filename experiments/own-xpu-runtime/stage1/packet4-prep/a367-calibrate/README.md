@@ -7,8 +7,9 @@ faulted before ready and cannot supply this measurement. Read the corrected
 and [fourth-incident note](../../../../../notes/2026-10-11-attempt8-fourth-incident.md).
 The October 16 coordinator review is applied and resealed; see the
 [dependency decisions](RESEAL-REVIEW.md) and [exact launch runbook](LAUNCH-RUNBOOK.md).
-Storage repair, the owner's new hash-bound calibration floor approval, and fresh
-launch gates remain. This packet has not supplied any of those approvals.
+Storage admission, coordinator recording of the owner's approved 114,000,000 KiB
+exception against the new seal, and fresh launch gates remain. The pending
+object stays `approved=false`; this packet does not record approval on the owner's behalf.
 No stage, model, host setting, FAULT marker or old receipt was changed.
 
 ## Recipe and declared differences
@@ -88,8 +89,9 @@ health/payload hashes, resolved halt and previous teardown time. Add:
 The owner-window must be current, at most 3,600 seconds long, and bind this
 fresh output directory. The four-card health receipt must be passing, on this
 boot/kernel, at most 600 seconds old, with no earlier boot faults. All nested
-`FAULT.json` latches in packet-4 and the two existing campaign roots must be
-absent; this tool never removes or archives them. No ltx*, ComfyUI or vLLM
+`FAULT.json` latches in packet-4 and the two existing campaign roots block except
+for the narrowly scoped historical evidence described below; this tool never
+removes or archives them. No ltx*, ComfyUI or vLLM
 process may exist. It does not inspect a device node, contact port 8188 or
 operate any LTX/systemd unit. Only port 19980 is used in a later native run.
 
@@ -129,6 +131,29 @@ Replace all three placeholders with the chosen integer and actual file hashes.
 The exception floor must exceed the live reserve and be below the old floor;
 actual available memory must meet it. No approval is supplied in this packet.
 A stale sentence fails after either seal or preregistration changes.
+
+## Owner decision: exempt prior-boot evidence (2026-10-16)
+
+> "Exempt prior-boot evidence": a FAULT.json latch whose `boot_id` differs from the current boot AND that lives under an evidence/archive subpath is recorded in the receipts as historical evidence, not treated as a live latch. Any latch from the CURRENT boot, any latch at a watched root's top level, and any latch with a missing or unreadable boot_id still block.
+
+The shared driver and calibration admission check use only the complete path
+segments `fault-archive`, `evidence`, or `incident`, below the most-specific
+watched root. A similar name such as `incident-20261011` alone does not qualify.
+Current-boot latches anywhere, every top-level root latch, unknown/unreadable
+boot identities, symlink paths and latches outside those segments still block.
+The current boot is read from `/proc/sys/kernel/random/boot_id` at execution;
+no boot ID is hardcoded, so the rule continues to apply after a reboot.
+
+Each exempted latch is recorded with its absolute path, SHA256 and `boot_id`
+in `admission.json`, separately for the initial and final admission checks.
+`environment.json` binds that receipt by hash, and `identity.json` binds the
+environment receipt. The existing live top-level latch and kernel checks stay
+strict. No latch is moved, edited or deleted; this is not halt resolution,
+launch permission, or a waiver of current-boot health and ownership checks.
+
+The owner has already approved the 114,000,000 KiB numeric exception. The
+coordinator will record that approval against the new seal with the owner's
+verbatim words. `owner-approval.pending.json` remains `approved=false`.
 
 ## Sampling, teardown and limits
 
@@ -200,5 +225,9 @@ proc/cgroup files. They never import Torch/vLLM, run a server, access a GPU,
 launch a health probe or contact any endpoint. Temporary synthetic approvals
 and receipts are removed by `TemporaryDirectory`. Their samples are not
 measurements. [test-receipt.json](test-receipt.json) retains the original CPU check; the
-[October 16 receipt](../../../../../data/2026-10-16-flash-next-a367-reseal/cpu-tests.json)
-records this reseal's calibration, shared-driver and payload-verifier checks.
+[earlier October 16 receipt](../../../../../data/2026-10-16-flash-next-a367-reseal/cpu-tests.json)
+retains the preceding reseal checks. The [latch revision receipt](../../../../../data/2026-10-16-flash-next-a367-latch/cpu-tests.json)
+records 145 passing tests: 71 calibration (including archived-latch cases and
+admission receipt persistence), 59 shared driver, six payload and nine frozen-tree.
+The [read-only latch audit](../../../../../data/2026-10-16-flash-next-a367-latch/latch-audit.json)
+records the two actual prior-boot exemptions; it is not launch admission.

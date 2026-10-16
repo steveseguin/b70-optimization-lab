@@ -68,12 +68,7 @@ def verify_seals():
 
 
 def fault_paths(output):
-    # Include nested run latches, not only the top-level campaign markers.
-    result = [output / 'FAULT.json']
-    for root in w.FAULT_ROOTS:
-        if root.exists():
-            result.extend(root.rglob('FAULT.json'))
-    return result
+    return w.fault_paths(output)
 
 
 def calibration_approval_text(floor):
@@ -102,13 +97,14 @@ def calibration_floor(owner):
 
 
 def verify_admission(owner, health, boot, now, output, rows, faults, available_kib):
-    w.verify_admission(owner, health, boot, now, output, rows, faults)
+    latch_receipt = w.verify_admission(owner, health, boot, now, output, rows, faults)
     w.require(owner.get('purpose') == 'a367-calibrate-load', 'calibration purpose absent')
     w.require(owner.get('calibration_preregistration_sha256') == w.sha(REG), 'calibration preregistration pin')
     w.require(owner.get('calibration_seal_sha256') == w.sha(SEAL), 'calibration seal pin')
     # Default intentionally cannot fit this boot; never infer a lower floor.
     w.require(owner.get('admission_revision_sha256') is None, 'fixture revision is not calibration admission')
     w.require(available_kib >= calibration_floor(owner), 'A367/calibration-approved admission floor not met')
+    return latch_receipt
 
 
 def meminfo(text):
@@ -404,9 +400,9 @@ def main(argv=None):
         def admit():
             w.require(w.sha(args.owner_window) == owner_hash, 'owner flag changed')
             w.require(Path(owner['health_path']).resolve() == args.health_receipt.resolve(), 'health path differs')
-            verify_admission(owner, health, boot, time.time(), root, w.processes(), fault_paths(root),
+            return verify_admission(owner, health, boot, time.time(), root, w.processes(), fault_paths(root),
                              snapshot()['mem_available_bytes'] // 1024)
-        admit()
+        initial_admission = admit()
         prereg = verify_seals()
         audit = {}
         w.verify_environment(paths(), prereg, audit, calibration=True)
@@ -422,10 +418,12 @@ def main(argv=None):
             port.bind(('127.0.0.1', w.PORT))
         baseline = w.journal()
         w.require(not w.fault_lines(baseline), 'fault-bearing boot refused')
-        admit()  # repeat freshness/owners/floor after byte audit
+        final_admission = admit()  # repeat freshness/owners/floor after byte audit
         w.verify_calibration_payload(args.payload_receipt, owner, paths()['model'], prereg, time.time())
         root.mkdir()
         (root / 'scratch/rpc').mkdir(parents=True)
+        w.write(root / 'admission.json', {'initial': initial_admission, 'final': final_admission})
+        audit['fault_latch_admission'] = w.artifact(root / 'admission.json')
         w.write(root / 'environment.json', audit)
         (root / 'kernel-before.log').write_text(baseline)
         for name, source in [('owner-window.json', args.owner_window), ('health.json', args.health_receipt), ('payload.json', args.payload_receipt)]:

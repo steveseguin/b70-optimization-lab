@@ -1,7 +1,8 @@
 # One A367 zero-generation calibration: exact future launch sequence
 
 **Not executed during resealing.** Only the owner/coordinator may run these
-steps after storage repair and the new exact memory-exception approval.
+steps after storage admission and recording the owner's approved memory
+exception against the new seal.
 Run once, no queue/retry or automatic follow-on. Fixture extraction is excluded.
 Use the committed reseal and retain all receipts. No power, memory, swap,
 page-cache, service-configuration, model, stage or compute-selector change is
@@ -42,6 +43,12 @@ process ownership and preserved FAULT latches, and records the actual previous
 teardown time. Wait at least 305 seconds after that teardown. Do not remove
 latches to obtain admission. The launcher rejects conflicting owners, faults,
 wrong boot or an unresolved halt; no CPU prep result waives these gates.
+The October 16 owner decision exempts only prior-boot latches beneath an exact
+`fault-archive`, `evidence`, or `incident` directory segment below a watched
+root. Top-level, current-boot, missing/unreadable-boot and ordinary run latches
+still block. Preserve all latches. Read the current boot afresh after reboot;
+retain `admission.json` with both checks' path/hash/boot records and its hash
+binding in `environment.json`.
 
 ## 2. CPU plan and byte audit before the fresh health clock
 
@@ -117,10 +124,11 @@ loop. A fault follows the owner's recovery policy, with evidence preserved.
 
 ## 4. Exact new owner approval and window
 
-[owner-approval.pending.json](owner-approval.pending.json) contains the proposed
-114,000,000 KiB exception and exact post-reseal sentence. It is deliberately
-`approved=false`. The OWNER must approve that exact sentence; the coordinator
-may then record that actual decision as `approved=true`. A different number
+[owner-approval.pending.json](owner-approval.pending.json) contains the approved numeric
+114,000,000 KiB exception and regenerated post-reseal sentence. It deliberately
+remains `approved=false`. The owner has already approved the numeric exception;
+the coordinator will record that approval against the new seal using the owner's
+verbatim words, then set the actual window's exception to `approved=true`. A different number
 requires different exact text and a new owner decision. The 12,000,000 KiB live
 reserve and 120,000,000 KiB default never change. This proposal accepts unknown
 loading risk; it is not a measured safe floor or fixture approval.
@@ -157,7 +165,8 @@ PY_WINDOW
 The owner/coordinator supplies actual firmware and previous teardown facts,
 sets issued/expires times (at most one hour; allow the full 45-minute slot),
 records actual halt resolution and exclusive authorization, and sets the
-exception's approved flag **only after the exact owner sign-off**. Leave the
+exception's approved flag **only when recording the owner's actual approval
+against the new seal**. Leave the
 reviewed hashes, USB receipt, output and PCI identities bound to this window.
 No timestamp, approval, fault resolution or firmware observation is invented.
 The pending file above is refused until these owner actions are complete.
@@ -208,7 +217,7 @@ journalctl --user -u "$FN_UNIT" --no-pager > "$FN_RECEIPTS/unit.log"
 Success requires unit exit 0 plus `calibration.json` with `passed=true`,
 `ready=true`, `clean_exit=true`, `gap_complete=true`, `generation_requests=0`
 and no failure; `stop.json` must say `all_owners_gone=true`, returncode 0 and
-record the next-launch time. Retain identity/environment, owner/health/payload
+record the next-launch time. Retain admission/identity/environment, owner/health/payload
 copies, samples, bootstrap receipts, server log and before/latest kernel logs.
 A FAULT/STOP/teardown-incomplete marker, missing rank sample, sampling gap or
 incomplete watch gives no memory proposal. Preserve all evidence and leave

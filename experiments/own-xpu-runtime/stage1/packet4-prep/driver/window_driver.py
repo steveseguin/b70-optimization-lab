@@ -187,9 +187,62 @@ def owned_session_gone(pid):
     return True
 
 
+def fault_paths(output):
+    """Discover nested latches without changing or retiring any evidence."""
+    result = {output / 'FAULT.json'}
+    for root in FAULT_ROOTS:
+        result.add(root / 'FAULT.json')
+        if root.exists():
+            result.update(root.rglob('FAULT.json'))
+    return sorted(result)
+
+
+def verify_fault_latches(paths, boot, output):
+    """Owner decision 2026-10-16: only prior-boot archived evidence is exempt.
+
+    Match complete directory segments below a watched root, never substrings
+    or ancestors of the root. Unknown/unreadable identity fails closed. Hash
+    exactly the bytes whose boot_id was inspected; never mutate a latch.
+    """
+    require(isinstance(boot, str) and bool(boot.strip()), 'current boot_id missing')
+    roots = {p.absolute() for p in (*FAULT_ROOTS, output)}
+    historical = []
+    for path in sorted({Path(p).absolute() for p in paths}):
+        try:
+            path.lstat()
+        except FileNotFoundError:
+            continue
+        except OSError as exc:
+            raise ValueError('FAULT.json unreadable: ' + str(path)) from exc
+        require(path.parent not in roots, 'FAULT.json at watched root: ' + str(path))
+        require(path.resolve() == path, 'FAULT.json symlink path: ' + str(path))
+        # Most-specific root prevents an outer evidence directory from exempting
+        # an unrelated nested watched root's ordinary run directories.
+        containers = [root for root in roots if path.is_relative_to(root)]
+        require(bool(containers), 'FAULT.json outside watched roots: ' + str(path))
+        root = max(containers, key=lambda p: len(p.parts))
+        segments = path.relative_to(root).parts[:-1]
+        require(bool({'fault-archive', 'evidence', 'incident'}.intersection(segments)),
+                'FAULT.json outside evidence/archive: ' + str(path))
+        try:
+            raw = path.read_bytes()
+            data = json.loads(raw)
+        except (OSError, ValueError, UnicodeError) as exc:
+            raise ValueError('FAULT.json unreadable boot_id: ' + str(path)) from exc
+        prior_boot = data.get('boot_id') if isinstance(data, dict) else None
+        require(isinstance(prior_boot, str) and bool(prior_boot.strip())
+                and prior_boot == prior_boot.strip(), 'FAULT.json missing/invalid boot_id: ' + str(path))
+        require(prior_boot != boot, 'FAULT.json from current boot: ' + str(path))
+        historical.append({'path': str(path), 'sha256': hashlib.sha256(raw).hexdigest(),
+                           'boot_id': prior_boot})
+    return {'schema': 'own-xpu-runtime.packet4.fault-latch-admission.v1',
+            'boot_id': boot, 'owner_decision_date': '2026-10-16',
+            'historical_fault_latches': historical}
+
+
 def verify_admission(owner, health, boot, now, output, rows, fault_paths):
     require(not output.exists(), 'output exists: no retry/reuse')
-    require(not any(p.exists() for p in fault_paths), 'FAULT.json present')
+    latch_receipt = verify_fault_latches(fault_paths, boot, output)
     require(owner.get('schema') == 'own-xpu-runtime.packet4.owner-window.v1'
             and owner.get('authorized') is True, 'owner-window authorization absent')
     require(owner.get('boot_id') == boot and owner.get('host') == socket.gethostname() == 'steve-b70s', 'owner host/boot')
@@ -206,6 +259,7 @@ def verify_admission(owner, health, boot, now, output, rows, fault_paths):
     require(305 <= now - owner['previous_teardown_completed_unix'], '305-second stop gap')
     verify_health(health, boot, now)
     require(not conflicts(rows), 'ltx/vLLM/ComfyUI process running')
+    return latch_receipt
 
 
 def verify_repo(p=None, *, scope='fixture'):
@@ -566,8 +620,8 @@ def main(argv=None):
         owner_hash = sha(a.owner_window)
         verify_revision_binding(owner, revision)
         require(Path(owner['health_path']).resolve() == a.health_receipt.resolve(), 'different health file')
-        verify_admission(owner, health, boot, time.time(), root, processes(),
-                         [p / 'FAULT.json' for p in (*FAULT_ROOTS, root)])
+        initial_admission = verify_admission(owner, health, boot, time.time(), root, processes(),
+                                             fault_paths(root))
         audit = verify_environment(paths, prereg)
         payload = read(a.payload_receipt)
         require(payload.get('passed') is True and payload.get('model_root') == str(paths['model'])
@@ -583,13 +637,15 @@ def main(argv=None):
         baseline = journal()
         require(not fault_lines(baseline), 'fault-bearing boot refused')
         # Recheck freshness, owners and latches after the potentially slow source audit.
-        verify_admission(owner, health, boot, time.time(), root, processes(),
-                         [p / 'FAULT.json' for p in (*FAULT_ROOTS, root)])
+        final_admission = verify_admission(owner, health, boot, time.time(), root, processes(),
+                                           fault_paths(root))
         require(verify_memory_revision(a.admission_revision, boot) == revision, 'revision changed before launch')
         audit['memory_admission'] = memory_admission(prereg, revision)
         require(audit['memory_admission']['memory_floor_met'], 'memory floor no longer met')
         root.mkdir()
         (root / 'scratch/rpc').mkdir(parents=True)
+        write(root / 'admission.json', {'initial': initial_admission, 'final': final_admission})
+        audit['fault_latch_admission'] = artifact(root / 'admission.json')
         write(root / 'environment.json', audit)
         (root / 'kernel-before.log').write_text(baseline)
         request = make_identity(root, a, paths, env, command, audit, owner, health, revision)
