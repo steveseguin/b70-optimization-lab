@@ -51,7 +51,12 @@ for i in $(seq 1 30); do pgrep -x llama-server >/dev/null || break; sleep 2; don
 pgrep -x llama-server >/dev/null && { say "ABORT: llama-server still running"; exit 2; }
 sleep 5
 # The Q3 server (fp8-r314-Q3-20261016-pcwhy/tp2-pb8-pure-pc-faseq-mtp5-s1-owner.command.json) plus the trace overlay.
+wait_port() {  # a stop leaves the port in TIME_WAIT; the launcher's bind probe fails with Errno 98 until it clears
+  for i in $(seq 1 120); do ss -tanH "( sport = :$PORT or dport = :$PORT )" | grep -q . || return 0; sleep 2; done
+  say "port $PORT still busy"; return 1
+}
 start_server() {  # name fresh(0|1)
+  wait_port || return 1
   O=/mnt/fast-ai/bench-results/fp8-r314-$1-$TAG
   [[ -e $O ]] && { say "ABORT: $O exists"; return 1; }
   python3 experiments/qwen38-27b-b70/scripts/run-fp8-tp1-server.py --out "$O" --port $PORT \
@@ -88,12 +93,16 @@ probe() {  # label mode [extra args]
     || { say "probe $label failed"; return 1; }
 }
 cmp() { python3 "$PROBE" --compare "$D/$1.json" "$D/$2.json" > "$D/compare-$1-$2.txt" 2>&1; tail -1 "$D/compare-$1-$2.txt"; }
+PARTS=${PARTS:-A B C}
+if [[ $PARTS == *A* ]]; then
 # A: fix off (0.4.0 behaviour), traced
 start_server A0 0 || exit 3
 probe AS0 seq && probe AS1 seq && probe ASH shuffle && probe AB0 burst || exit 3
 stop_server
 cmp AS0 AS1; cmp AS0 ASH; cmp AS0 AB0
 cp "$O"/cache/b70-align-trace/rank0-*.jsonl "$D/trace-A0.jsonl" 2>/dev/null
+fi
+if [[ $PARTS == *B* ]]; then
 # B: fix on, traced
 OWNER=
 start_server B1 1 || exit 3
@@ -103,6 +112,9 @@ cmp BS0 BB0; cmp BS0 BB1; cmp BS0 BSH; cmp AS0 BS0
 cp "$O"/cache/b70-align-trace/rank0-*.jsonl "$D/trace-B1.jsonl" 2>/dev/null
 grep -o "b70_spec_resume_accepted: first new-request count reset[^)]*)" "$O/server.log" | head -2
 O=
+fi
+[[ $PARTS == *C* ]] || exit 0
+wait_port || exit 3
 # C: the standard two-user check (the P1 arm) with the fix
 export MU_MODE=longsweep MU_PURE=1 MU_FA_PER_SEQ=1 MU_PREFILL_BATCH=8 MU_STATE_WIDTH=1 MU_SPEC_RESUME=1 MU_SEQS=2 \
   MU_IMAGE=neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r314-state-stride MU_SKIP_SHORT=1 MU_LONG_REPEATS=3 \

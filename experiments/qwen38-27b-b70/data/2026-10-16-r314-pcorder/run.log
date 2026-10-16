@@ -26,3 +26,20 @@ b70_exclusive_prefill: installed on Scheduler
 b70_prefix_cache_exact: installed 
 ### 18:59:46 server stopped: stopped True
 ### 18:59:46 kernel log clean since 2026-10-16 18:56:54; Gemma back on its throughput recipe
+### 19:03:54 second attempt (amended plan A/B/C)
+### 19:03:54 stopping the Gemma service (front door state: 0 0)
+[recipe] backends unit died:
+### 19:03:57 probe 20261016-pcorder complete
+### 19:06:36 server A0 ready (new-request count reset 0), tracing
+b70_align_trace 0.1.0: installed (logs while /root/.cache/vllm/b70-align-trace.on exists, to /root/.cache/vllm/b70-align-trace)
+b70_spec_resume_accepted 0.5.0: installed on GPUModelRunner._update_states/_prepare_inputs (requests that sat out a step keep their accepted-token count; async speculative decoding only; align-mode prefix caching handled; new-request count reset off; drafts kept off; debug steps 0)
+AS0: seq 64 answers in 183 s -> /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-pcorder/AS0.json
+AS1: seq 64 answers in 175 s -> /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-pcorder/AS1.json
+ASH: shuffle 64 answers in 173 s -> /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-pcorder/ASH.json
+AB0: burst 64 answers in 103 s -> /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-pcorder/AB0.json
+### 19:17:21 server stopped: stopped True
+AS0 vs AS1: 64/64 equal; differing by family: {'code2k': '0/8', 'code6k': '0/8', 'docs4k': '0/8', 'docs6k': '0/8', 'docs8k': '0/8', 'prose2k': '0/8', 'prose4k': '0/8', 'prose8k': '0/8'}
+AS0 vs ASH: 64/64 equal; differing by family: {'code2k': '0/8', 'code6k': '0/8', 'docs4k': '0/8', 'docs6k': '0/8', 'docs8k': '0/8', 'prose2k': '0/8', 'prose4k': '0/8', 'prose8k': '0/8'}
+AS0 vs AB0: 40/64 equal; differing by family: {'code2k': '4/8', 'code6k': '0/8', 'docs4k': '2/8', 'docs6k': '5/8', 'docs8k': '5/8', 'prose2k': '0/8', 'prose4k': '2/8', 'prose8k': '6/8'}
+### 19:17:26 owner B1 exited before ready
+### 19:17:26 kernel log clean since 2026-10-16 19:03:54; Gemma back on its throughput recipe

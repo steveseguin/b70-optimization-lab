@@ -70,6 +70,18 @@ def main():
                         if curr + j < len(blocks):
                             writes[blocks[curr + j]].append((s['step'], k, f'draft col {curr + j}'))
 
+    # First step of every request in run B (the second --runs label): the pre-copy bias against whether its answer
+    # differs from run A. The mechanism predicts: differing exactly when a hit request's first bias is above 0.
+    table = defaultdict(int)
+    for pid in ids:
+        k = (a.runs[1], idx_of[pid])
+        first = per_req.get(k, [(None, {})])[0][1]
+        differs = res[a.runs[0]]['rows'][pid]['token_ids'] != res[a.runs[1]]['rows'].get(pid, {}).get('token_ids')
+        hit = (new_info.get(k) or {}).get('computed', 0) > 0
+        table[(hit, (first.get('bias') or 0) > 0, differs)] += 1
+    print(f'first steps of {a.runs[1]} (hit, bias>0, answer differs from {a.runs[0]}): count')
+    for kk in sorted(table):
+        print(f'  hit={kk[0]!s:<5} bias>0={kk[1]!s:<5} differs={kk[2]!s:<5} {table[kk]}')
     differing = [pid for pid in ids
                  if res[a.runs[0]]['rows'][pid]['token_ids'] != res[a.runs[1]]['rows'].get(pid, {}).get('token_ids')]
     print(f'{len(differing)} prompts differ between {a.runs[0]} and {a.runs[1]}; traced steps {len(steps)}')

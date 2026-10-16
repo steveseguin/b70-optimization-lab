@@ -634,3 +634,23 @@ Predictions: A: AS1 and ASH equal to AS0, AB0 not (a third or so of the hit prom
 prompts' first step shows count above 1 and bias above 0 with no request of the previous step left. B: BB0, BB1 and
 BSH equal to BS0 (64/64), BS0 equal to AS0, bias 0 on every first step. C: 64/64 in all three passes. A miss in B or
 C means the reset is not the whole story. About 70 minutes.
+
+### Result, part A (19:06-19:17 EDT, reset off): timing, not order; the stale count is the main cause, not the only one
+
+| Run (one server, reset off, traced) | Equal to AS0 |
+| --- | --- |
+| AS1 paused, suite order, every prompt now a hit | 64/64 |
+| ASH paused, shuffled order | 64/64 |
+| AB0 back to back, suite order | **40/64** (code2k 4/8, docs4k 2/8, docs6k 5/8, docs8k 5/8, prose4k 2/8, prose8k 6/8, code6k 0/8, prose2k 0/8 different) |
+
+AS0 also equals the Q3 bench oracle of the other server (64/64). So paused answers are reproducible in any order, and
+back-to-back ones are not. The trace sorts AB0's 56 hit requests by their first step: **18 had count 6 (bias 5) and
+all 18 differ**; their pre-copy read the temporal state from column hit+5, a block the previous request had just
+used for its fifth draft position (e.g. code2k-c001: block 430, written by c000's draft column 5 at steps 6407-6409).
+32 had bias 0 and are equal. **6 had bias 0 and still differ** (docs4k-c002 and -c034, prose4k-c011 and -c035,
+prose8k-c006 and -c022; first difference at token 0 or 1). For docs4k-c002 the trace shows its hit blocks (recurrent
+31/30/29, attention 2/23/36/40) untouched since c002's own cold read at steps 107-111, and count 1 at both prompt
+steps, so these six have a second cause, timing-dependent as well, not yet found. The 0.5.0 reset cannot fix them;
+part B measures what is left. Part B's server did not start (Errno 98: the port was still in TIME_WAIT after part
+A's stop; known, memory note), so B and C rerun with a port wait. Data: `data/2026-10-16-r314-pcorder/` (probe
+JSON, compares, `trace-A0.jsonl`), `/mnt/fast-ai/bench-results/fp8-r314-A0-20261016-pcorder/`.
