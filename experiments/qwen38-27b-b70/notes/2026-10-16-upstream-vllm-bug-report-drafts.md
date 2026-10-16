@@ -281,9 +281,13 @@ submitted 30 ms apart, so each one waits in the queue and starts in the step aft
 |---|---|
 | paused, suite order, repeated | 64/64 |
 | paused, shuffled order | 64/64 |
-| queued, suite order | **40/64** (24 differ, all cache hits; 18 had a first-step offset above 0 on rank 0; rank 1 not traced) |
+| queued, suite order (two fresh servers) | **40/64** and **34/64** (all differing answers are cache hits) |
 | queued, suite order, with the fix below (another fresh server) | **64/64** |
 | queued, shuffled, with the fix | **64/64** |
+
+Traced on both TP ranks (second server): of the 56 hits, the 30 whose first step read a stale count on at least one
+rank all differ, and the 26 with count 1 on both ranks are all equal. The two ranks disagree in 10 of the 30: each
+rank races its own copy, so one rank can start from the right state and the other from the wrong one.
 
 **Fix we used:** overlay 0.5.0 (lab commit `54747d7d6`). After the stock `_prepare_inputs`, for rows whose request
 was not in the previous step and has no stored count (new requests), when align mode is on, it writes 1 into
@@ -311,9 +315,8 @@ new row 4, the fix gives 1.
   of 128 at a near tie (`notes/2026-10-04-fp8-multiuser-prereg.md`, 16:29 result). 19:35 update: the probable cause
   is bug 4 (added below, found the same evening); the two-user re-check with the bug-4 fix (arm C2) decides it.
   Settle it before filing bug 3 with a "0 of 36" claim.
-- Bug 4 (2026-10-16 evening): the 40/64 row has 6 differing hits that showed offset 0 in the rank-0 trace; the
-  proposed reason is that rank 1 raced its own copy. A both-ranks trace (part D) checks it; fix the wording of that
-  row once it is in.
+- Bug 4 (2026-10-16 evening): fully explained by the both-ranks trace (prereg note, part D). Lab data:
+  `experiments/qwen38-27b-b70/data/2026-10-16-r314-pcorder/`.
 - Related but not drafted: R307 "Defect 3" (`docker/rebase-v0290/r307-gdn-state-handoff.py`). A one-token step right
   after a step that accepted several tokens goes to the non-spec kernels, which read slot 0. R314 is built from R304,
   not R307, so it does not carry R307's fix. Whether R314 is still affected was not checked here.
