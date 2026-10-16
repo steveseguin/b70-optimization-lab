@@ -1,0 +1,71 @@
+### 19:26:37 moving the Gemma service to card 0 (throughput-card0)
+backend 19351: not ready
+frontdoor: throughput-card0-ctx32768-parallel8-4k-slots-nospec-1gpu active 0 queued 0
+
+### 19:27:33 verify (copy, flag 2) ready after 25s
+### 19:27:33 verify: suite (512 tokens)
+### 19:29:20 verify: long prompts (128 tokens), then the prompt rate twice
+verify long-2k rep 1: 1867 tokens, 145.2 tok/s
+verify long-8k rep 1: 7623 tokens, 147.1 tok/s
+verify long-24k rep 1: 29400 tokens, 151.4 tok/s
+verify long-2k rep 2: 1867 tokens, 145.1 tok/s
+verify long-8k rep 2: 7623 tokens, 147.7 tok/s
+verify long-24k rep 2: 29400 tokens, 151.9 tok/s
+Q8_0_REORDER_DEQ_VERIFY calls=262144 mismatched_calls=0
+Q8_0_REORDER_DEQ_VERIFY calls=524288 mismatched_calls=0
+mismatch lines: 0
+
+### 19:43:56 prod-a (prod, flag 0) ready after 27s
+### 19:43:56 prod-a: suite (512 tokens)
+### 19:45:18 prod-a: long prompts (128 tokens), then the prompt rate twice
+prod-a long-2k rep 1: 1867 tokens, 1310.5 tok/s
+prod-a long-8k rep 1: 7623 tokens, 1167.8 tok/s
+prod-a long-24k rep 1: 29400 tokens, 909.4 tok/s
+prod-a long-2k rep 2: 1867 tokens, 1307.9 tok/s
+prod-a long-8k rep 2: 7623 tokens, 1168.0 tok/s
+prod-a long-24k rep 2: 29400 tokens, 909.2 tok/s
+
+### 19:48:53 new-a (copy, flag 1) ready after 25s
+### 19:48:53 new-a: suite (512 tokens)
+### 19:50:14 new-a: long prompts (128 tokens), then the prompt rate twice
+new-a long-2k rep 1: 1867 tokens, 1585.8 tok/s
+new-a long-8k rep 1: 7623 tokens, 1392.6 tok/s
+new-a long-24k rep 1: 29400 tokens, 1028.8 tok/s
+new-a long-2k rep 2: 1867 tokens, 1590.1 tok/s
+new-a long-8k rep 2: 7623 tokens, 1392.2 tok/s
+new-a long-24k rep 2: 29400 tokens, 1029.6 tok/s
+
+### 19:53:32 prod-b (prod, flag 0) ready after 25s
+### 19:53:32 prod-b: suite (512 tokens)
+### 19:54:53 prod-b: long prompts (128 tokens), then the prompt rate twice
+prod-b long-2k rep 1: 1867 tokens, 1306.1 tok/s
+prod-b long-8k rep 1: 7623 tokens, 1167.5 tok/s
+prod-b long-24k rep 1: 29400 tokens, 909.1 tok/s
+prod-b long-2k rep 2: 1867 tokens, 1305.7 tok/s
+prod-b long-8k rep 2: 7623 tokens, 1167.9 tok/s
+prod-b long-24k rep 2: 29400 tokens, 909.4 tok/s
+
+### 19:58:27 new-b (copy, flag 1) ready after 26s
+### 19:58:27 new-b: suite (512 tokens)
+### 19:59:48 new-b: long prompts (128 tokens), then the prompt rate twice
+new-b long-2k rep 1: 1867 tokens, 1592.7 tok/s
+new-b long-8k rep 1: 7623 tokens, 1392.4 tok/s
+new-b long-24k rep 1: 29400 tokens, 1029.7 tok/s
+new-b long-2k rep 2: 1867 tokens, 1585.4 tok/s
+new-b long-8k rep 2: 7623 tokens, 1392.2 tok/s
+new-b long-24k rep 2: 29400 tokens, 1029.3 tok/s
+### 20:01:41 suite: prod-a vs the others
+/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/identity-q8deq-20261015-b/suite-prod-b.json: 12/12 identical; speed 75.91 vs 76.02 tok/s (0.999x)
+/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/identity-q8deq-20261015-b/suite-new-a.json: 12/12 identical; speed 75.82 vs 76.02 tok/s (0.997x)
+/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/identity-q8deq-20261015-b/suite-new-b.json: 12/12 identical; speed 75.96 vs 76.02 tok/s (0.999x)
+/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/identity-q8deq-20261015-b/suite-verify.json: 12/12 identical; speed 76.03 vs 76.02 tok/s (1.000x)
+### 20:01:41 long prompts: prod-a vs the others
+prod-b: 3/3 long prompts token-identical to prod-a
+new-a: 3/3 long prompts token-identical to prod-a
+new-b: 3/3 long prompts token-identical to prod-a
+verify: 3/3 long prompts token-identical to prod-a
+### 20:01:41 restoring Gemma's two-card throughput recipe
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 20:03:08 done

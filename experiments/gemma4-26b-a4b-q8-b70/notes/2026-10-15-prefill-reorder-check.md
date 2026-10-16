@@ -67,9 +67,37 @@ owner with the numbers; it is not made by this check.
   the reason the LAN frontdoor rejects logprob requests; it is an abort in this build's logits path, not memory.
 - The speed check above was also run without deterministic oneDNN and at micro-batch 2048, so it is repeated.
 
-**Second attempt (registered 19:30, before it runs).** Same script, test servers now on the LAN service's settings
+**Second attempt (registered 19:26, before it runs).** Same script, test servers now on the LAN service's settings
 (`GGML_SYCL_DNNL_DETERMINISTIC=1`, `LLAMA_PREFILL_UBATCH_SIZE=1024`, no speculation, one slot): verify, prod-a, new-a,
 prod-b, new-b. Each: the suite (512 tokens), the 2K / 8K / 24K prompts (128 tokens, token ids, no logprobs), then the
 prompt rate twice. **Pass:** verify 0 mismatched calls; prod-a = prod-b (the control; if the control fails, the token
 comparison is unreadable again and nothing is concluded from it); new-a, new-b and verify 12/12 suite and 3/3 long
 token-identical to prod-a.
+
+### Identity check, second attempt (19:26-20:03): passed
+
+On the LAN service's settings (deterministic oneDNN, prompt micro-batch 1024, no speculation, one slot):
+
+- **verify**: 524,288+ conversion calls compared byte by byte (the last counter line), 0 mismatched, 0 mismatch lines.
+- **control**: prod-b = prod-a, suite 12/12 and long prompts 3/3 token-identical. The comparison is readable.
+- **new-a, new-b, verify**: suite 12/12 and long 3/3 token-identical to prod-a.
+- Decode is unchanged (suite 75.8-76.0 tok/s on every server; decode does not use the changed kernel).
+- Server prompt rate on these settings (tok/s, rep 1 / rep 2):
+
+| Server | 2K prompt (1,867 tokens) | 8K (7,623) | 24K (29,400) |
+|---|---|---|---|
+| production binary, a | 1,311 / 1,308 | 1,168 / 1,168 | 909 / 909 |
+| production binary, b | 1,306 / 1,306 | 1,168 / 1,168 | 909 / 909 |
+| test build, new kernel, a | 1,586 / 1,590 | 1,393 / 1,392 | 1,029 / 1,030 |
+| test build, new kernel, b | 1,593 / 1,585 | 1,392 / 1,392 | 1,030 / 1,029 |
+
+So on the service's own settings the new conversion reads prompts **+21.5 % (2K), +19.2 % (8K), +13.2 % (24K)** faster,
+more than the first speed check's +16 / +13 / +9 % (micro-batch 1024 converts the weights twice as often as 2048).
+No kernel fault lines; the LAN service back on its throughput recipe at 20:03. Evidence: `data/2026-10-15-prefill-reorder/` (both check logs, prompt-rate and long-prompt files, the prod-a and new-a
+suites, `convert-change-vs-production.diff`); test build `libggml-sycl.so.0` SHA-256 8f416c95..., `llama-server`
+c2bddf55...; full server logs in `/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/identity-q8deq-20261015-b/`.
+
+**Service change (offered to the owner, not made).** In each recipe drop-in under `deploy/systemd/two-b70-host/`,
+`LLAMA_SERVER=/home/steve/src/llama.cpp-gemma-c926-compat-q8deq-20261015/build-q8deq/bin/llama-server` and
+`Environment=LLAMA_SYCL_Q8_0_REORDER_DEQ_COALESCED=1`, then `scripts/gemma4-26b-two-b70-recipe.sh throughput`
+(about two minutes of downtime). Undo: the old two lines and the same command.

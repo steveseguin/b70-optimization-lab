@@ -1,0 +1,41 @@
+### 19:16:07 moving the Gemma service to card 0 (throughput-card0)
+backend 19351: not ready
+frontdoor: throughput-card0-ctx32768-parallel8-4k-slots-nospec-1gpu active 0 queued 0
+
+### 19:17:00 verify (copy, flag 2) ready after 27s
+### 19:17:00 verify: suite (512 tokens)
+### 19:18:24 verify: suite and long prompts with top-8 logprobs
+http.client.RemoteDisconnected: Remote end closed connection without response
+urllib.error.URLError: <urlopen error [Errno 111] Connection refused>
+Q8_0_REORDER_DEQ_VERIFY calls=8192 mismatched_calls=0
+Q8_0_REORDER_DEQ_VERIFY calls=16384 mismatched_calls=0
+mismatch lines: 0
+Failed to stop gemma-identity-srv.service: Unit gemma-identity-srv.service not loaded.
+
+### 19:19:57 prod (prod, flag 0) ready after 26s
+### 19:19:57 prod: suite (512 tokens)
+### 19:20:55 prod: suite and long prompts with top-8 logprobs
+http.client.RemoteDisconnected: Remote end closed connection without response
+urllib.error.URLError: <urlopen error [Errno 111] Connection refused>
+Failed to stop gemma-identity-srv.service: Unit gemma-identity-srv.service not loaded.
+
+### 19:22:25 new (copy, flag 1) ready after 26s
+### 19:22:25 new: suite (512 tokens)
+### 19:23:22 new: suite and long prompts with top-8 logprobs
+http.client.RemoteDisconnected: Remote end closed connection without response
+urllib.error.URLError: <urlopen error [Errno 111] Connection refused>
+Failed to stop gemma-identity-srv.service: Unit gemma-identity-srv.service not loaded.
+### 19:23:23 prod vs new (and vs verify)
+/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/identity-q8deq-20261015/suite-new.json: 0/12 identical; speed 115.27 vs 117.90 tok/s (0.978x); first divergence: incident-retrospective@59, code-review@11, customer-email@118, sql-debugging@37, release-plan@32, benchmark-analysis@34, architecture-tradeoff@68, bug-report-synthesis@132, technical-guide@62, risk-register@25, performance-hypotheses@14, decision-memo@127
+/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/identity-q8deq-20261015/suite-verify.json: 0/12 identical; speed 114.23 vs 117.90 tok/s (0.969x); first divergence: incident-retrospective@59, code-review@51, customer-email@83, sql-debugging@37, release-plan@32, benchmark-analysis@34, architecture-tradeoff@167, bug-report-synthesis@132, technical-guide@101, risk-register@25, performance-hypotheses@114, decision-memo@10
+    ref = {r["prompt_id"]: r for r in json.load(open(paths[0]))["rows"]}
+                                                ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/identity-q8deq-20261015/probe-prod.json'
+    ref = {r["prompt_id"]: r for r in json.load(open(paths[0]))["rows"]}
+                                                ^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/mnt/fast-ai/bench-results/gemma4-26b-a4b-q8/identity-q8deq-20261015/long-prod.json'
+### 19:23:24 restoring Gemma's two-card throughput recipe
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 19:24:56 done

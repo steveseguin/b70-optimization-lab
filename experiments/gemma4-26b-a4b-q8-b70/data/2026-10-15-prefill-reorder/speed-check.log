@@ -1,0 +1,53 @@
+### 19:00:16 moving the Gemma service to card 0 (throughput-card0)
+backend 19351: not ready
+frontdoor: throughput-card0-ctx32768-parallel8-4k-slots-nospec-1gpu active 0 queued 0
+
+### 19:01:15 prod-a (prod, flag 0) ready after 29s
+prod-a warm-up reply: 32 tokens generated
+prod-a long-2k rep 1: 1867 tokens, 1447.9 tok/s
+prod-a long-8k rep 1: 7623 tokens, 1510.2 tok/s
+prod-a long-24k rep 1: 29400 tokens, 1084.5 tok/s
+prod-a long-2k rep 2: 1867 tokens, 1853.9 tok/s
+prod-a long-8k rep 2: 7623 tokens, 1533.1 tok/s
+prod-a long-24k rep 2: 29400 tokens, 1084.3 tok/s
+
+### 19:03:51 new-a (copy, flag 1) ready after 27s
+new-a warm-up reply: 32 tokens generated
+new-a long-2k rep 1: 1867 tokens, 1568.7 tok/s
+new-a long-8k rep 1: 7623 tokens, 1695.2 tok/s
+new-a long-24k rep 1: 29400 tokens, 1173.5 tok/s
+new-a long-2k rep 2: 1867 tokens, 2145.8 tok/s
+new-a long-8k rep 2: 7623 tokens, 1738.5 tok/s
+new-a long-24k rep 2: 29400 tokens, 1177.6 tok/s
+
+### 19:06:23 old-a (copy, flag 0) ready after 27s
+old-a warm-up reply: 32 tokens generated
+old-a long-2k rep 1: 1867 tokens, 1435.9 tok/s
+old-a long-8k rep 1: 7623 tokens, 1497.7 tok/s
+old-a long-24k rep 1: 29400 tokens, 1079.6 tok/s
+old-a long-2k rep 2: 1867 tokens, 1854.0 tok/s
+old-a long-8k rep 2: 7623 tokens, 1530.8 tok/s
+old-a long-24k rep 2: 29400 tokens, 1083.5 tok/s
+
+### 19:08:59 prod-b (prod, flag 0) ready after 27s
+prod-b warm-up reply: 32 tokens generated
+prod-b long-2k rep 1: 1867 tokens, 1441.4 tok/s
+prod-b long-8k rep 1: 7623 tokens, 1489.8 tok/s
+prod-b long-24k rep 1: 29400 tokens, 1078.9 tok/s
+prod-b long-2k rep 2: 1867 tokens, 1856.9 tok/s
+prod-b long-8k rep 2: 7623 tokens, 1532.1 tok/s
+prod-b long-24k rep 2: 29400 tokens, 1083.7 tok/s
+
+### 19:11:34 new-b (copy, flag 1) ready after 27s
+new-b warm-up reply: 32 tokens generated
+new-b long-2k rep 1: 1867 tokens, 1569.2 tok/s
+new-b long-8k rep 1: 7623 tokens, 1693.8 tok/s
+new-b long-24k rep 1: 29400 tokens, 1172.1 tok/s
+new-b long-2k rep 2: 1867 tokens, 2150.3 tok/s
+new-b long-8k rep 2: 7623 tokens, 1738.9 tok/s
+new-b long-24k rep 2: 29400 tokens, 1177.5 tok/s
+### 19:12:37 restoring Gemma's two-card throughput recipe
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 19:14:09 done

@@ -1,0 +1,154 @@
+--- production/ggml/src/ggml-sycl/convert.cpp
++++ test-build/ggml/src/ggml-sycl/convert.cpp
+@@ -2,6 +2,10 @@
+ #include "dequantize.hpp"
+ #include "presets.hpp"
+ 
++#include <atomic>
++#include <cstdlib>
++#include <cstring>
++
+ template <int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
+ static void dequantize_block(const void * __restrict__ vx, dst_t * __restrict__ y, const int64_t k,
+                              const sycl::nd_item<3> &item_ct1) {
+@@ -157,9 +161,109 @@
+ 
+ }
+ 
++// LLAMA_SYCL_Q8_0_REORDER_DEQ_COALESCED=1: the reordered (SoA) Q8_0 rows are dequantized with each work-item taking
++// 8 consecutive values instead of a whole 32-value block, so neighbouring lanes read neighbouring quants and write
++// neighbouring outputs. The arithmetic per value is the same expression as dequantize_block_q8_0_reorder
++// (float(d) * q, then converted to dst_t), so the output is the same bytes. This is the prompt-path (GEMM) dequant
++// that runs once decode has reordered the weights: =2 also runs the old kernel and compares bytes (diagnosis).
++// LLAMA_SYCL_Q8_0_DEQ_COUNT=1 (diagnosis): count the Q8_0 to-FP16/FP32 conversions on the prompt path, reordered
++// and plain layout, with their element totals, logged at every power-of-two call count of either kind.
++static void ggml_sycl_q8_0_deq_count(bool reordered, int64_t k) {
++    static const bool on = [] {
++        const char * env = std::getenv("LLAMA_SYCL_Q8_0_DEQ_COUNT");
++        return env && std::atoi(env) != 0;
++    }();
++    if (!on) {
++        return;
++    }
++    static std::atomic<int64_t> calls[2], elems[2];
++    const int64_t c = ++calls[reordered];
++    elems[reordered] += k;
++    if ((c & (c - 1)) == 0) {
++        GGML_LOG_WARN("Q8_0_DEQ_COUNT reordered calls=%lld elems=%lld | plain calls=%lld elems=%lld\n",
++                      (long long) calls[1].load(), (long long) elems[1].load(), (long long) calls[0].load(),
++                      (long long) elems[0].load());
++    }
++}
++
++template <typename dst_t>
++static void dequantize_row_q8_0_sycl_plain_counted(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream);
++
++static int ggml_sycl_q8_0_reorder_deq_mode() {
++    static const int mode = [] {
++        const char * env = std::getenv("LLAMA_SYCL_Q8_0_REORDER_DEQ_COALESCED");
++        return env ? std::atoi(env) : 0;
++    }();
++    return mode;
++}
++
++template <typename dst_t>
++static void dequantize_row_q8_0_sycl_reorder_coalesced(const void * vx, dst_t * y, const int64_t k,
++                                                       dpct::queue_ptr stream) {
++    constexpr int VALS = 8;  // divides QK8_0, so a work-item never straddles two blocks
++    constexpr int WG   = 256;
++    GGML_ASSERT(k % QK8_0 == 0);
++    const int64_t n_items = k / VALS;
++    const int64_t n_wg    = (n_items + WG - 1) / WG;
++    stream->parallel_for(sycl::nd_range<1>(sycl::range<1>(n_wg * WG), sycl::range<1>(WG)),
++        [=](sycl::nd_item<1> it) {
++            const int64_t e0 = (int64_t) it.get_global_id(0) * VALS;
++            if (e0 >= k) {
++                return;
++            }
++            const int8_t *     qs = (const int8_t *) vx + e0;
++            const sycl::half * s  = (const sycl::half *) ((const uint8_t *) vx + k);
++            const float        d  = float(s[e0 / QK8_0]);
++#pragma unroll
++            for (int l = 0; l < VALS; ++l) {
++                y[e0 + l] = d * qs[l];
++            }
++        });
++}
++
++template <typename dst_t>
++static void dequantize_row_q8_0_sycl_reorder_blocked(const void *vx, dst_t *y, const int64_t k,
++                                     dpct::queue_ptr stream);
++
+ template <typename dst_t>
+ static void dequantize_row_q8_0_sycl_reorder(const void *vx, dst_t *y, const int64_t k,
+                                      dpct::queue_ptr stream) {
++    ggml_sycl_q8_0_deq_count(true, k);
++    const int mode = ggml_sycl_q8_0_reorder_deq_mode();
++    if (mode == 0) {
++        dequantize_row_q8_0_sycl_reorder_blocked(vx, y, k, stream);
++        return;
++    }
++    dequantize_row_q8_0_sycl_reorder_coalesced(vx, y, k, stream);
++    if (mode == 2) {
++        static std::atomic<int64_t> n_calls{0}, n_bad_calls{0};
++        dst_t * ref = sycl::malloc_device<dst_t>(k, *stream);
++        dequantize_row_q8_0_sycl_reorder_blocked(vx, ref, k, stream);
++        std::vector<dst_t> a(k), b(k);
++        stream->memcpy(a.data(), y, k * sizeof(dst_t));
++        stream->memcpy(b.data(), ref, k * sizeof(dst_t)).wait();
++        sycl::free(ref, *stream);
++        const bool same = std::memcmp(a.data(), b.data(), k * sizeof(dst_t)) == 0;
++        const int64_t calls = ++n_calls;
++        if (!same) {
++            ++n_bad_calls;
++            int64_t diff = 0;
++            for (int64_t i = 0; i < k; ++i) {
++                diff += std::memcmp(&a[i], &b[i], sizeof(dst_t)) != 0;
++            }
++            GGML_LOG_WARN("Q8_0_REORDER_DEQ_VERIFY mismatch: k=%lld elem_bytes=%d differing=%lld\n", (long long) k,
++                          (int) sizeof(dst_t), (long long) diff);
++        }
++        if ((calls & (calls - 1)) == 0) {
++            GGML_LOG_WARN("Q8_0_REORDER_DEQ_VERIFY calls=%lld mismatched_calls=%lld\n", (long long) calls,
++                          (long long) n_bad_calls.load());
++        }
++    }
++}
++
++template <typename dst_t>
++static void dequantize_row_q8_0_sycl_reorder_blocked(const void *vx, dst_t *y, const int64_t k,
++                                     dpct::queue_ptr stream) {
+ 
+     dpct::has_capability_or_fail(stream->get_device(),
+                                     {sycl::aspect::fp16});
+@@ -640,6 +744,12 @@
+ }
+ 
+ 
++template <typename dst_t>
++static void dequantize_row_q8_0_sycl_plain_counted(const void * vx, dst_t * y, const int64_t k, dpct::queue_ptr stream) {
++    ggml_sycl_q8_0_deq_count(false, k);
++    dequantize_block_sycl<QK8_0, QR8_0, dequantize_q8_0>(vx, y, k, stream);
++}
++
+ to_fp16_sycl_t ggml_get_to_fp16_sycl(ggml_type type, ggml_tensor * dst) {
+     switch (type) {
+         case GGML_TYPE_Q1_0:
+@@ -662,7 +772,7 @@
+                 ((ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder) {
+                 return dequantize_row_q8_0_sycl_reorder;
+             } else {
+-                return dequantize_block_sycl<QK8_0, QR8_0, dequantize_q8_0>;
++                return dequantize_row_q8_0_sycl_plain_counted;
+             }
+         case GGML_TYPE_Q2_K:
+             return dequantize_row_q2_K_sycl;
+@@ -746,7 +856,7 @@
+                 ((ggml_tensor_extra_gpu*)dst->src[0]->extra)->optimized_feature.reorder) {
+                 return dequantize_row_q8_0_sycl_reorder;
+             } else {
+-                return dequantize_block_sycl<QK8_0, QR8_0, dequantize_q8_0>;
++                return dequantize_row_q8_0_sycl_plain_counted;
+             }
+         case GGML_TYPE_Q2_K:
+             return dequantize_row_q2_K_sycl;
