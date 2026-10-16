@@ -1,0 +1,30 @@
+### 16:29:09 stopping the Gemma service (front door state: 0 0)
+### 16:29:15 arm drafting=1 users=2 -> /mnt/fast-ai/bench-results/fp8-r314-sweep-mtp1-s2-20261016-pc
+[review 10-16 16:29:15] multi-user campaign start; git f645e9679
+[review 10-16 16:29:25] preflight-health: rc=0
+[review 10-16 16:32:00] tp2-pb8-pure-pc-faseq-mtp5-s2: ready 
+[review 10-16 16:36:49] tp2-pb8-pure-pc-faseq-mtp5-s2-long-concurrency: rc=3
+[review 10-16 16:36:49] tp2-pb8-pure-pc-faseq-mtp5-s2: LONG prompts, pass 1: 64/64 equal to solo, 87.52 generated tok/s together, 239616 prompt tokens from the cache
+[review 10-16 16:36:49] tp2-pb8-pure-pc-faseq-mtp5-s2: LONG prompts, pass 2: 63/64 equal to solo, 89.66 generated tok/s together, 239616 prompt tokens from the cache
+[review 10-16 16:40:37] tp2-pb8-pure-pc-faseq-mtp5-s2-ladder: rc=0
+[review 10-16 16:40:38] tp2-pb8-pure-pc-faseq-mtp5-s2-ladder-compare: rc=0
+[review 10-16 16:40:38] tp2-pb8-pure-pc-faseq-mtp5-s2: pass 1: 64/64 equal to solo, 137.51 tok/s together
+[review 10-16 16:40:38] tp2-pb8-pure-pc-faseq-mtp5-s2: pass 2: 64/64 equal to solo, 137.59 tok/s together
+[review 10-16 16:40:38] tp2-pb8-pure-pc-faseq-mtp5-s2: vs the frozen single-user reference: exact {'sequential-oracle': '64/64', 'batch-c64-r1': '64/64', 'batch-c64-r2': '64/64'}
+[review 10-16 16:40:46] tp2-pb8-pure-pc-faseq-mtp5-s2: final stopped stop_confirmed=True
+[review 10-16 16:40:47] === multi-user campaign complete (cards left empty) ===
+### 16:40:47 arm drafting=1 users=4 -> /mnt/fast-ai/bench-results/fp8-r314-sweep-mtp1-s4-20261016-pc
+Traceback (most recent call last):
+  File "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/run-20261004-fp8-multiuser-campaign.py", line 599, in <module>
+    main()
+  File "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/run-20261004-fp8-multiuser-campaign.py", line 199, in main
+    OUT.mkdir(parents=True, exist_ok=False)
+  File "/usr/lib/python3.12/pathlib.py", line 1313, in mkdir
+    os.mkdir(self, mode)
+FileExistsError: [Errno 17] File exists: '/mnt/fast-ai/bench-results/fp8-r314-sweep-mtp1-s4-20261016-pc'
+### 16:40:47 arm failed rc=1
+### 16:40:47 kernel log clean since 2026-10-16 16:29:09; Gemma back on its throughput recipe
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 16:45:18 repeat sweep 20261016-pc complete

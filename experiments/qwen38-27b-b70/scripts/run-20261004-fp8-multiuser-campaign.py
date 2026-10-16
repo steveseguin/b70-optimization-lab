@@ -448,7 +448,8 @@ def main():
         # Long prompts (2K-8K tokens): prefill and decode steps mix. No frozen reference exists for these prompts; the
         # reference is the same server's one-at-a-time answers. `long16` was the first check (16 users, shipped
         # arithmetic: NOT exact). `longsweep` asks where it becomes exact: fewer users, and the invariant switches.
-        suite = ROOT / 'experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/long-prompt-suite.json'
+        suite = Path(os.environ.get('MU_LONG_SUITE') or
+                     ROOT / 'experiments/qwen38-27b-b70/data/2026-10-04-fp8-multiuser/long-prompt-suite.json')
 
         def long_stage(name, port, args):
             srv = R.Research(name, port, args)
@@ -522,7 +523,8 @@ def main():
             if srv.ready:
                 out = OUT / f'{name}-long-concurrency.json'
                 R.sh([sys.executable, R.LADDER, '--base-url', srv.base, '--model', R.MODEL_NAME, '--api-mode', 'completions',
-                      '--suite', suite, '--concurrency', '64', '--repeats', '2', '--max-tokens', '128', '--seed', '42',
+                      '--suite', suite, '--concurrency', '64', '--repeats', os.environ.get('MU_LONG_REPEATS', '2'),
+                      '--max-tokens', '128', '--seed', '42',
                       '--timeout', '3600', '--return-token-ids', '--out', out], f'{name}-long-concurrency', 7200)
                 if out.exists():
                     data = json.loads(out.read_text())
@@ -534,7 +536,8 @@ def main():
                         R.log(f"{name}: LONG prompts, pass {row['repeat']}: {row['exact_vs_own_solo']} equal to solo, "
                               f"{row['aggregate_tok_s']} generated tok/s together, {row['cached_tokens']} prompt tokens from the cache")
                 R.save_results(); R.fault_check(since)
-                r['short'] = saturated(srv.base, name)
+                if os.environ.get('MU_SKIP_SHORT') != '1':  # diagnostics on the long suite only
+                    r['short'] = saturated(srv.base, name)
             r['stop'] = srv.stop()
             R.save_results(); R.fault_check(since); R.wait_gpus_free()
         else:

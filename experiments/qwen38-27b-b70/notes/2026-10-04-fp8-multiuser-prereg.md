@@ -453,3 +453,36 @@ Gemma stopped first, restored at the end if the kernel log is clean. Command:
 frozen reference; a failing arm is reported as not exact and the sweep stops there. Speed is reported next to the
 2026-10-15 numbers; the short ladder is expected slower at 64 users (832-token prompt steps), and the long-prompt
 passes faster (cache hits).
+
+### Result (16:29-16:45 EDT): NOT exact at 2 users; sweep stopped after the first arm
+
+2 users, drafting on, prefix caching: short ladder 64/64 equal to solo in both passes (137.51 / 137.59 tok/s, the
+same as without caching) and exact against the frozen reference. Long suite: pass 1 64/64 (87.5 tok/s together,
+was 49.4 without caching: the repeats are read from the cache), **pass 2 63/64** (89.7 tok/s). The differing answer,
+prose4k-c043, diverges at its second token ("#" instead of "["), and from there is token for token the answer of
+prose4k-c003, a prompt that differs from it only in the runner's end marker ("case 003; variant 00" against
+"case 043; variant 05"). Both had 1,664 tokens from the cache; the client sent the right prompt (hashes match). Every
+other prose4k copy answers "[" alone and in both passes; c003 answers "#" cold and from the cache. So this prompt sits
+near a tie between two openings and a small arithmetic difference flipped it: something in this setup is not the same
+arithmetic as the solo answer. Prompt batching is not involved (it only groups prompts under 512 tokens).
+By the rule the sweep stopped there (the 4-user arm was made to refuse to start); kernel log clean; Gemma restored.
+Data: `data/2026-10-16-r314-sweep-pc/` (wrapper log), `/mnt/fast-ai/bench-results/fp8-r314-sweep-mtp1-s2-20261016-pc/`.
+
+## Addendum, 2026-10-16 16:47 EDT: near-tie diagnostic for the prefix-cache flip (written before it runs)
+
+A 1-in-128 flip is too rare to bisect with the normal suite, and logprobs are not an option on a drafting two-card
+server here (over 1 GiB of host memory). Instead a near-tie detector: the long suite's prose4k prompt eight times
+(`data/2026-10-16-r314-sweep-pc/near-tie-prose4k-x8-suite.json`), which the runner expands to 64 requests that differ
+only in the end marker, so many sit near the "[" / "#" tie. Three fresh servers, 2 users, same image and fixes as the
+sweep, long suite only (`MU_SKIP_SHORT=1`), three passes (`MU_LONG_REPEATS=3`):
+
+| Arm | Drafting | Prefix caching | Prompt step |
+| --- | --- | --- | --- |
+| D1 | on | on (align, exact overlay, 6,656) | 832 |
+| D2 | off | on | 832 |
+| D3 | on | off | 4,096 (the 2026-10-15 recipe) |
+
+**Reading.** Each arm reports answers different from its own solo answers out of 192. D3 is the control (the
+2026-10-15 recipe was exact on 128 long answers twice); D1 repeats the failing setup with a more sensitive suite;
+D2 says whether drafting is needed for the flip. No arm is a release gate. About 35 minutes. Wrapper:
+`scripts/run-20261016-fp8-pc-multiuser-diagnostic.sh`.
