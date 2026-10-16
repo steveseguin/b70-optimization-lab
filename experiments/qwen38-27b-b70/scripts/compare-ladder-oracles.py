@@ -44,11 +44,13 @@ def main():
     ap.add_argument('candidate', type=Path)
     ap.add_argument('reference', type=Path)
     ap.add_argument('--output', type=Path)
+    ap.add_argument('--allow-cached', action='store_true',
+                    help='prefix caching on: cache hits do not fail a batch (its tokens still must match)')
     a = ap.parse_args()
     cand, ref = json.loads(a.candidate.read_text()), json.loads(a.reference.read_text())
     reference = rows_by_id(ref['oracle']['rows'])
     result = {'schema': 'b70-lab.ladder-oracle-comparison.v1', 'candidate': str(a.candidate), 'reference': str(a.reference),
-              'reference_rows': len(reference), 'sections': []}
+              'reference_rows': len(reference), 'allow_cached': a.allow_cached, 'sections': []}
     all_exact = True
     exact, mismatches = compare_rows(cand['oracle']['rows'], reference)
     result['sections'].append({'section': 'sequential-oracle', 'exact': exact, 'total': len(cand['oracle']['rows']),
@@ -59,7 +61,7 @@ def main():
         result['sections'].append({'section': f"batch-c{batch['concurrency']}-r{batch['repeat']}", 'exact': exact,
                                    'total': len(batch['rows']), 'mismatches': mismatches,
                                    'cached_tokens_all_zero': batch.get('cached_tokens_all_zero')})
-        all_exact &= not mismatches and batch.get('cached_tokens_all_zero') is True
+        all_exact &= not mismatches and (a.allow_cached or batch.get('cached_tokens_all_zero') is True)
     result['all_exact'] = all_exact
     if a.output:
         a.output.write_text(json.dumps(result, indent=2) + '\n')

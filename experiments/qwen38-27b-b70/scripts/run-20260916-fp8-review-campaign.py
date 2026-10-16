@@ -260,11 +260,12 @@ def ladder(base, name, repeats):
     return out if out.exists() else None
 
 
-def ladder_compare(name, candidate, reference):
+def ladder_compare(name, candidate, reference, allow_cached=False):
     if not candidate or not reference:
         return {'verdict': 'not run'}
     out = OUT / f'{name}-ladder-vs-mtp0.json'
-    rc = sh([sys.executable, COMPARE_LADDER, candidate, reference, '--output', out], f'{name}-ladder-compare', 300)
+    rc = sh([sys.executable, COMPARE_LADDER, candidate, reference, '--output', out] + (['--allow-cached'] if allow_cached else []),
+            f'{name}-ladder-compare', 300)
     if not out.exists():
         return {'verdict': 'compare failed'}
     result = json.loads(out.read_text())

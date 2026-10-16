@@ -72,7 +72,7 @@ def saturated(base, name):
     if not ladder:
         return {'error': 'no ladder output'}
     data = json.loads(Path(ladder).read_text())
-    out = {'vs_reference': R.ladder_compare(name, ladder, REF_LADDER),
+    out = {'vs_reference': R.ladder_compare(name, ladder, REF_LADDER, allow_cached=os.environ.get('MU_PREFIX_CACHE') == '1'),
            'passes': [{'repeat': b['repeat'], 'answers': b['request_count'],
                        'exact_vs_own_solo': f"{b['oracle_exact_count']}/{b['oracle_exact_total']}",
                        'aggregate_tok_s': round(b['aggregate_tok_s_wall'], 2), 'cache_zero': b['cached_tokens_all_zero']}
@@ -510,6 +510,13 @@ def main():
                 name = name.replace('tp2-pure', 'tp2-inv-pure')
             if os.environ.get('MU_LOADCOPY_FIX', '1') == '1':  # validated on R310 two-card, 2026-10-04 11:07 EDT
                 pure += LOADCOPY_FIX
+            if os.environ.get('MU_PREFIX_CACHE') == '1':
+                # prefix caching the way the context lane runs it (hit == cold needs one-block prompt steps; the last
+                # --batched wins); with drafting it needs b70-spec-resume-accepted >= 0.3.0 (campaign 24b/24c, 2026-10-16)
+                pure += ['--batched', '832', '--prefix-cache', 'align', '--overlay', 'b70-prefix-cache-exact',
+                         '--extra-env', 'B70_PREFIX_CACHE_EXACT=1',
+                         f"--serve-arg=--prefix-cache-retention-interval={os.environ.get('MU_PC_INTERVAL', '6656')}"]
+                name = name.replace('-pure', '-pure-pc', 1)
             srv, name, since = start_server(name, 18196, TP2 + spec + SHIPPED + pure + ['--seqs', seqs], since)
             r = results[name] = {'server': {k: srv.state.get(k) for k in ('status', 'error', 'ready_at')}}
             if srv.ready:
@@ -520,10 +527,12 @@ def main():
                 if out.exists():
                     data = json.loads(out.read_text())
                     r['long'] = [{'repeat': b['repeat'], 'exact_vs_own_solo': f"{b['oracle_exact_count']}/{b['oracle_exact_total']}",
-                                  'aggregate_tok_s': round(b['aggregate_tok_s_wall'], 2)} for b in data['batches']]
+                                  'aggregate_tok_s': round(b['aggregate_tok_s_wall'], 2),
+                                  'cached_tokens': sum(b['cached_tokens']) if isinstance(b['cached_tokens'], list) else b['cached_tokens']}
+                                 for b in data['batches']]
                     for row in r['long']:
                         R.log(f"{name}: LONG prompts, pass {row['repeat']}: {row['exact_vs_own_solo']} equal to solo, "
-                              f"{row['aggregate_tok_s']} generated tok/s together")
+                              f"{row['aggregate_tok_s']} generated tok/s together, {row['cached_tokens']} prompt tokens from the cache")
                 R.save_results(); R.fault_check(since)
                 r['short'] = saturated(srv.base, name)
             r['stop'] = srv.stop()

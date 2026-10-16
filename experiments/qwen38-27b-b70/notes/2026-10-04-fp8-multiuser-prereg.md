@@ -428,3 +428,28 @@ the frozen single-user reference (sequential, batch r1, batch r2: 64/64 each). K
 So the table stands: drafting is faster up to 8 users, the two tie at 16 (428 vs 419), and drafting off
 wins from 32 up. Data: `data/2026-10-15-r314-sweep-repeat/` (campaign log and results per arm, the wrapper log, the
 image id).
+
+## Addendum, 2026-10-16 16:28 EDT: the same sweep with prefix caching on (written before it runs)
+
+Campaign 24b/24c (`2026-10-10-context-16k-baseline.md`) found and fixed the bug that broke drafting with two users
+once prefix caching was on (the accepted-token count lives on the CPU side in align mode; `b70-spec-resume-accepted`
+0.3.0). The context lane's check was two users and agent-style prompts. This asks whether the multi-user recipe stays
+exact with prefix caching at 2-16 users with drafting, and at 64 without, which is the practical profile for chat and
+agents (repeated system prompts and earlier turns are not read again).
+
+**Settings.** As the 2026-10-15 sweep (R314 state-stride image, pure steps, per-sequence attention, prompt batch 8,
+state-width and resume-accepted fixes, 1.6 GiB guard), plus `MU_PREFIX_CACHE=1`: `--enable-prefix-caching
+--mamba-cache-mode align`, `b70-prefix-cache-exact`, retention interval 6,656 tokens, and prompt steps of one cache
+block (832 tokens instead of 4,096; hit == cold needs it). Long suite: the solo pass reads each prompt cold, the
+batched passes hit the cache, so "equal to solo" here also means "cache hit equal to cold read under load". The short
+prompts are under one block and never hit. `compare-ladder-oracles.py --allow-cached` lets cache hits through the
+frozen-reference compare (tokens must still match); without the flag nothing changes.
+
+**Arms, in order:** drafting on at 2, 4, 8, 16 users; drafting off at 64. One fresh server each. About 1 h 45 min.
+Gemma stopped first, restored at the end if the kernel log is clean. Command:
+`MU_PREFIX_CACHE=1 ARMS="1 2;1 4;1 8;1 16;0 64" TAG=20261016-pc scripts/run-20261015-fp8-r314-sweep-repeat.sh`.
+
+**Rule.** As before: an arm passes if 64/64 equal to solo on long and short prompts in both passes and exact against the
+frozen reference; a failing arm is reported as not exact and the sweep stops there. Speed is reported next to the
+2026-10-15 numbers; the short ladder is expected slower at 64 users (832-token prompt steps), and the long-prompt
+passes faster (cache hits).
