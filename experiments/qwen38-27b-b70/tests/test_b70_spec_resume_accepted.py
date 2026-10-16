@@ -221,6 +221,128 @@ class OverlayTest(unittest.TestCase):
         self.assertEqual(len(restores), 1)
 
 
+class Event:
+    def __init__(self):
+        self.waits = 0
+
+    def synchronize(self):
+        self.waits += 1
+
+
+class AlignStockRunner(StockRunner):
+    """Align-mode prefix caching (R314 source): the count the GDN kernels read is the CPU array
+    input_batch.num_accepted_tokens_cpu. After a step the align postprocess writes its per-row result there (1 where it
+    already moved the state to the block-aligned slot); _prepare_inputs keeps it for rows of the previous step and puts 1
+    in the others (gpu_model_runner.py:2137-2144); after preprocess_mamba the GPU count is rewritten from the CPU array
+    (:4437-4444). Rows move with their requests when the batch is condensed (gpu_input_batch.py:813)."""
+    cache_config = NS(mamba_cache_mode='align')
+
+    def __init__(self):
+        super().__init__()
+        self.input_batch.num_accepted_tokens_cpu = torch.ones(16, dtype=torch.int32).numpy()
+        self.num_accepted_tokens.np = torch.ones(16, dtype=torch.int32).numpy()
+        self.num_accepted_tokens_event = Event()
+
+    def _update_states(self, so):
+        before = list(self.input_batch.req_ids)
+        old = self.input_batch.num_accepted_tokens_cpu.copy()
+        super()._update_states(so)
+        cpu = self.input_batch.num_accepted_tokens_cpu
+        for row, rid in enumerate(self.input_batch.req_ids):
+            cpu[row] = old[before.index(rid)] if rid in before else 1      # condense moves rows; add_request sets 1
+        return None
+
+    def _prepare_inputs(self, so, num_scheduled_tokens=None):
+        out = super()._prepare_inputs(so, num_scheduled_tokens)
+        prev = self.input_batch.prev_req_id_to_index or {}
+        cpu, host = self.input_batch.num_accepted_tokens_cpu, self.num_accepted_tokens.np
+        for row, rid in enumerate(self.input_batch.req_ids):
+            host[row] = cpu[row] if rid in prev else 1
+            cpu[row] = host[row]
+        self.num_accepted_tokens.gpu[:len(host)] = torch.from_numpy(host.copy())
+        return out
+
+
+def run_align_step(runner, batch, post_after, spec=None, finished=()):
+    """One align-mode step: returns the count the GDN kernels read per request (after the stock CPU-to-GPU rewrite).
+    `post_after`: the postprocessed count per request that the step leaves in the CPU array."""
+    so = sched_out(batch, spec, finished)
+    runner._update_states(so)
+    runner._prepare_inputs(so, None)
+    rows = list(runner.input_batch.req_ids)
+    n = len(rows)
+    runner.num_accepted_tokens.gpu[:n] = torch.from_numpy(runner.input_batch.num_accepted_tokens_cpu[:n].copy())
+    acc = {rid: int(runner.num_accepted_tokens.gpu[i]) for i, rid in enumerate(rows)}
+    runner.input_batch.prev_req_id_to_index = {rid: i for i, rid in enumerate(rows)}
+    for i, rid in enumerate(rows):
+        runner.input_batch.num_accepted_tokens_cpu[i] = post_after[batch.index(rid)]
+    runner.valid_sampled_token_count_gpu = torch.tensor([post_after[batch.index(r)] for r in rows], dtype=torch.int32)
+    return acc
+
+
+class AlignModeTest(unittest.TestCase):
+    def test_stock_align_loses_the_count(self):
+        r = AlignStockRunner()
+        run_align_step(r, ['a', 'x'], [3, 4], spec={'a': DRAFTS, 'x': DRAFTS})
+        run_align_step(r, ['y'], [1])
+        acc = run_align_step(r, ['a', 'x', 'y'], [1, 1, 1], spec={'a': DRAFTS, 'x': DRAFTS, 'y': DRAFTS})
+        self.assertEqual(acc, {'a': 1, 'x': 1, 'y': 1})
+
+    def test_overlay_0_2_gpu_restore_alone_would_be_overwritten(self):
+        # 0.2.0 wrote only the GPU count; the stock rewrite from the CPU array undoes that (campaign 24)
+        r = AlignStockRunner()
+        run_align_step(r, ['a'], [3], spec={'a': DRAFTS})
+        run_align_step(r, ['y'], [1])
+        so = sched_out(['a', 'y'], {'a': DRAFTS})
+        r._update_states(so)
+        r._prepare_inputs(so, None)
+        r.num_accepted_tokens.gpu[r.input_batch.req_ids.index('a')] = 3          # a GPU-only restore
+        n = len(r.input_batch.req_ids)
+        r.num_accepted_tokens.gpu[:n] = torch.from_numpy(r.input_batch.num_accepted_tokens_cpu[:n].copy())
+        self.assertEqual(int(r.num_accepted_tokens.gpu[r.input_batch.req_ids.index('a')]), 1)
+
+    def test_overlay_restores_in_cpu_array(self):
+        r = patched_runner(base=AlignStockRunner)
+        run_align_step(r, ['a', 'x'], [3, 4], spec={'a': DRAFTS, 'x': DRAFTS})
+        run_align_step(r, ['y'], [2])
+        self.assertEqual(r.num_accepted_tokens_event.waits, 1)                 # waited once, in the step they sat out
+        acc = run_align_step(r, ['a', 'x', 'y'], [1, 1, 1], spec={'a': DRAFTS, 'x': DRAFTS, 'y': DRAFTS})
+        self.assertEqual(acc, {'a': 3, 'x': 4, 'y': 2})
+        self.assertEqual(r._b70_resume['stash'], {})
+
+    def test_postprocessed_one_is_kept(self):
+        # the postprocess already moved a's state to the block-aligned slot and left 1: restore 1, not the raw count
+        r = patched_runner(base=AlignStockRunner)
+        run_align_step(r, ['a', 'x'], [1, 5], spec={'a': DRAFTS, 'x': DRAFTS})
+        r.valid_sampled_token_count_gpu = torch.tensor([6, 5], dtype=torch.int32)   # raw counts differ for a
+        run_align_step(r, ['y'], [1])
+        acc = run_align_step(r, ['x', 'a', 'y'], [1, 1, 1], spec={'a': DRAFTS, 'x': DRAFTS})
+        self.assertEqual((acc['a'], acc['x']), (1, 5))
+
+    def test_partial_skip_and_order(self):
+        r = patched_runner(base=AlignStockRunner)
+        run_align_step(r, ['a', 'b', 'x'], [2, 6, 3], spec={k: DRAFTS for k in 'abx'})
+        run_align_step(r, ['a'], [4], spec={'a': DRAFTS})                    # b and x sit out
+        acc = run_align_step(r, ['x', 'b', 'a'], [1, 1, 1], spec={k: DRAFTS for k in 'abx'})
+        self.assertEqual(acc, {'x': 3, 'b': 6, 'a': 4})
+
+    def test_no_skip_identical_to_stock(self):
+        seq = [(['a'], [1], 'a'), (['a'], [6], ''), (['a', 'b'], [2, 1], 'b'), (['a', 'b'], [4, 5], ''),
+               (['a', 'b'], [1, 3], '')]
+        stock, patched = AlignStockRunner(), patched_runner(base=AlignStockRunner)
+        for batch, post, new in seq:
+            spec = {k: DRAFTS for k in batch if k not in new}
+            self.assertEqual(run_align_step(stock, batch, post, spec=spec), run_align_step(patched, batch, post, spec=spec))
+        self.assertEqual(patched.num_accepted_tokens_event.waits, 0)          # no extra wait without a skipped request
+
+    def test_finished_while_out_dropped(self):
+        r = patched_runner(base=AlignStockRunner)
+        run_align_step(r, ['a', 'x'], [3, 4], spec={'a': DRAFTS, 'x': DRAFTS})
+        run_align_step(r, ['y'], [1], finished=['a'])
+        self.assertNotIn('a', r._b70_resume['stash'])
+        self.assertIn('x', r._b70_resume['stash'])
+
+
 class DebugTest(unittest.TestCase):
     def test_debug_lines_only_on_changed_steps_and_capped(self):
         os.environ['B70_SPEC_RESUME_DEBUG'] = '2'

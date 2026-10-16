@@ -3237,3 +3237,28 @@ fixed smoke test runs first); everything else as registered for
   caching); **E0** = the exact server's settings through this runner (control). Expectation: P0 and E0 clean, L33
   fails, i.e. prefix caching in align mode with drafting and two requests is the fault. If P0 fails, the window or
   step size is involved and the next lines split those.
+
+### Campaign 24b result (15:20-15:43): prefix caching is the trigger; the cause; campaign 24c registration (15:50)
+
+| Server (all: R314, MTP5, `--seqs 2`, four multi-user fixes) | Overlapped replies (36) | Solo vs MTP0 reference |
+|---|---|---|
+| 24: prefix caching (align), 262K, 832-token steps | 2 garbage, 27 different | 4/4 same |
+| **P0**: no prefix caching, 262K, 832 | **0 garbage, 0 different** | 4/4 same |
+| **L33**: prefix caching, 33K, 4,096-token steps, prompt batching 8 | 0 garbage, 27 different | B differs (4,096-token prompt pieces; the reference read in 832) |
+| **E0**: no prefix caching, 33K, 4,096, batching 8 (the 2026-10-15 exact server) | **0 garbage, 0 different** | B differs (same reason) |
+
+- **Cause, from the R314 source.** With `--mamba-cache-mode align` the count the GDN kernels read is the CPU array
+  `input_batch.num_accepted_tokens_cpu`: the align postprocess writes each row's result there after a step,
+  `_prepare_inputs` keeps it only for rows of the previous step (others 1, `gpu_model_runner.py:2137-2144`),
+  `preprocess_mamba` uses it as the accepted-token bias at a block crossing (`mamba_utils.py:1505-1523`), and the GPU
+  count is then rewritten from the CPU array (`gpu_model_runner.py:4437-4444`). `b70-spec-resume-accepted` 0.2.0
+  restored only the GPU count, so a request that sat out a step (the other request's prompt being read) still came
+  back with 1 and resumed from the state after the first verify row: the same defect the overlay fixed for
+  mamba_cache_mode "none" on 2026-10-04.
+- **Fix: overlay 0.3.0.** In align mode it stores the postprocessed CPU value of a request that sits out (after
+  waiting on the event the stock code waits on in the same step) and writes it into the CPU array, host buffer and
+  GPU count of its row when it returns. Unit tests 23 (7 new, a stub of the align bookkeeping); 0.2.0 fails 3 of the
+  new ones.
+- **Campaign 24c**: campaign 24's runner, server and queue (`QUEUE24c.txt`: X check strict against the MTP0
+  reference, S16 smoke, K32, A32dp), with overlay 0.3.0. Expectations: check 0 garbage, 0 different, solos equal to
+  the reference; K32 39/39 about 9 min; A32dp 39/39 and 10-20 % faster than K32. A failed check stops it.

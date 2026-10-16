@@ -42,6 +42,18 @@ the overlay, the stored counts used, and the previous step's valid sampled token
 values forces a host sync in those steps (debug mode only): it changes timing, not arithmetic.
 
 Cost: a skipped request's first step back yields one token (its drafts are lost, as in the stock engine).
+
+0.3.0 (2026-10-16): prefix caching (`--enable-prefix-caching --mamba-cache-mode align`). There the count the GDN
+kernels read comes from the CPU array `input_batch.num_accepted_tokens_cpu`: after each step the align postprocess
+(mamba_utils.postprocess_mamba_align_gpu) copies its per-request result there (1 where it already moved the state to
+the block-aligned slot), `_prepare_inputs` keeps it only for rows of the previous step (others get 1,
+gpu_model_runner.py:2137-2144), `preprocess_mamba` uses it as the accepted-token bias when the state crosses a block
+(mamba_utils.py:1505-1523), and then the GPU count is rewritten from the CPU array (gpu_model_runner.py:4437-4444),
+which undid 0.2.0's GPU-side restore. Campaign 24 (two requests, MTP5, align mode): 2 garbage and 27 of 36 replies
+different from solo; without prefix caching 0 of 36. In align mode this overlay therefore stores the CPU value of a
+request that sits out (after waiting for the event the stock code waits on in the same step anyway) and writes it
+back into the CPU array, the host buffer and the GPU count of its row when it returns, after the stock
+`_prepare_inputs` and before `preprocess_mamba`.
 """
 import os
 
@@ -66,15 +78,35 @@ def current_req_ids(runner):
     return [r for r in list(batch.req_ids)[:n] if r is not None]
 
 
+def align_mode(runner):
+    """Prefix caching with the recurrent state kept at block boundaries: the accepted count lives in the CPU array."""
+    return getattr(getattr(runner, 'cache_config', None), 'mamba_cache_mode', None) == 'align'
+
+
 def stash_unscheduled(runner, stash, scheduler_output):
-    """Before _update_states: store the device-side accepted counts of previous-step requests this step leaves out."""
+    """Before _update_states: store the accepted counts of previous-step requests this step leaves out
+    (device-side copies; in align mode the postprocessed CPU values)."""
     import torch
     prev = getattr(runner.input_batch, 'prev_req_id_to_index', None)
+    scheduled = scheduler_output.num_scheduled_tokens
+    finished = getattr(scheduler_output, 'finished_req_ids', ()) or ()
+    if align_mode(runner):
+        cpu = getattr(runner.input_batch, 'num_accepted_tokens_cpu', None)
+        if not prev or cpu is None:
+            return 0
+        dropped = [(rid, int(idx)) for rid, idx in prev.items()
+                   if rid not in scheduled and rid not in finished and int(idx) < len(cpu)]
+        if not dropped:
+            return 0
+        event = getattr(runner, 'num_accepted_tokens_event', None)
+        if event is not None:
+            event.synchronize()           # the previous step's postprocess copy; stock waits on it this step anyway
+        for rid, idx in dropped:
+            stash[rid] = max(1, int(cpu[idx]))
+        return len(dropped)
     counts = getattr(runner, 'valid_sampled_token_count_gpu', None)
     if not prev or counts is None:
         return 0
-    scheduled = scheduler_output.num_scheduled_tokens
-    finished = getattr(scheduler_output, 'finished_req_ids', ()) or ()
     dropped = [(rid, int(idx)) for rid, idx in prev.items()
                if rid not in scheduled and rid not in finished and int(idx) < counts.shape[0]]
     if not dropped:
@@ -105,7 +137,17 @@ def restore_returning(runner, stash, scheduler_output):
         value = stash.pop(rid, None)
         if value is not None:
             fixed.append((row, rid, value))
-    if fixed:
+    if fixed and align_mode(runner):
+        cpu = runner.input_batch.num_accepted_tokens_cpu
+        host = getattr(runner.num_accepted_tokens, 'np', None)
+        for row, _, value in fixed:
+            cpu[row] = value                                   # what preprocess_mamba and the later GPU copy read
+            if host is not None:
+                host[row] = value
+        target = runner.num_accepted_tokens.gpu
+        index = torch.tensor([r for r, _, _ in fixed], dtype=torch.long).to(target.device, non_blocking=True)
+        target.index_copy_(0, index, torch.tensor([v for _, _, v in fixed], dtype=target.dtype).to(target.device))
+    elif fixed:
         target = runner.num_accepted_tokens.gpu
         index = torch.tensor([r for r, _, _ in fixed], dtype=torch.long).to(target.device, non_blocking=True)
         target.index_copy_(0, index, torch.cat([v for _, _, v in fixed]).to(device=target.device, dtype=target.dtype))
@@ -162,7 +204,7 @@ def wrap_prepare_inputs(original, stats=None, log=None):
                 {_short(r): n for r, n in dbg['sched'].items()}, [_short(r) for r in dbg['prev_sched']],
                 {_short(r): i for r, i in dbg['prev_map'].items()},
                 {_short(r): before[i] for i, r in enumerate(rows)}, {_short(r): after[i] for i, r in enumerate(rows)},
-                {_short(r): int(v.item()) for _, r, v in fixed}, dbg['valid_prev'])
+                {_short(r): int(v) if isinstance(v, int) else int(v.item()) for _, r, v in fixed}, dbg['valid_prev'])
         return result
     setattr(_prepare_inputs, _GUARD, True)
     return _prepare_inputs
@@ -186,6 +228,6 @@ def register():
 
     logger = init_logger('b70_spec_resume_accepted')
     if install(module.GPUModelRunner, logger.warning):
-        logger.warning('b70_spec_resume_accepted 0.2.0: installed on GPUModelRunner._update_states/_prepare_inputs '
+        logger.warning('b70_spec_resume_accepted 0.3.0: installed on GPUModelRunner._update_states/_prepare_inputs '
                        '(requests that sat out a step keep their accepted-token count; async speculative decoding '
-                       'only; debug steps %s)', os.environ.get('B70_SPEC_RESUME_DEBUG', '0') or '0')
+                       'only; align-mode prefix caching handled; debug steps %s)', os.environ.get('B70_SPEC_RESUME_DEBUG', '0') or '0')

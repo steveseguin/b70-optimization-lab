@@ -1,0 +1,20 @@
+### 15:20:36 campaign 24b start; queue /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE24b.txt; MemAvailable 13764 MiB
+### 15:20:36 stopping the Gemma service (front door state: 0 0)
+### 15:20:42 [P0] pc=0 len=262144 batched=832 xpb=0 mtp=5 seqs=2: starting the server; MemAvailable 13833 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: 5cd0d953f9834154b287b5cc11f1395f
+### 15:23:12 [P0] server ready after ~165 s; MemAvailable 3068 MiB
+### 15:28:02 [P0] check rc=0 (0 all same, 1 some different, 2 garbage): 36 overlapped replies: 0 garbage, 0 different from solo; solo replies different from the reference: 0 ()
+### 15:29:07 [L33] pc=1 len=33024 batched=4096 xpb=8 mtp=5 seqs=2: starting the server; MemAvailable 13712 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: d075d41fb72846c8bcc89312360f8523
+### 15:31:37 [L33] server ready after ~165 s; MemAvailable 2577 MiB
+### 15:33:45 [L33] check rc=1 (0 all same, 1 some different, 2 garbage): 36 overlapped replies: 0 garbage, 27 different from solo; solo replies different from the reference: 1 (B)
+### 15:34:50 [E0] pc=0 len=33024 batched=4096 xpb=8 mtp=5 seqs=2: starting the server; MemAvailable 13653 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: ea74aa1f4b424ab796ad1203ef035f04
+### 15:37:21 [E0] server ready after ~165 s; MemAvailable 2765 MiB
+### 15:41:39 [E0] check rc=1 (0 all same, 1 some different, 2 garbage): 36 overlapped replies: 0 garbage, 0 different from solo; solo replies different from the reference: 1 (B)
+### 15:41:54 queue done after 3 lines
+### 15:41:54 kernel log clean since 2026-10-16 15:20:36; restoring Gemma (throughput)
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 15:43:25 campaign 24b complete
