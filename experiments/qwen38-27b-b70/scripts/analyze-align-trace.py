@@ -14,6 +14,7 @@ A hit block written after the request that filled it, by another request, is the
     (one file per TP rank, B70_ALIGN_TRACE_ALL_RANKS=1: first-step bias of each request on every rank)
 """
 import argparse
+import gzip
 import json
 import re
 from collections import defaultdict
@@ -25,7 +26,8 @@ RID = re.compile(r'probe-(?P<label>[A-Za-z0-9]+)-(?P<pos>\d{3})-(?P<idx>\d{3})')
 def load(trace_paths):
     steps = []
     for p in trace_paths:
-        for line in Path(p).read_text().splitlines():
+        text = gzip.open(p, 'rt').read() if str(p).endswith('.gz') else Path(p).read_text()
+        for line in text.splitlines():
             if line.strip():
                 steps.append(json.loads(line))
     steps.sort(key=lambda s: s['step'])
