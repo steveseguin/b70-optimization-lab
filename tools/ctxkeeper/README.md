@@ -95,7 +95,7 @@ R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeepe
 # 1. pip (gives you the `ctxkeeper` command)
 pip install $R/ctxkeeper-1.1.0-py3-none-any.whl
 
-# 2. Docker (builds the image from the 80 KB source archive)
+# 2. Docker (builds the image from the 90 KB source archive)
 docker build -t ctxkeeper $R/ctxkeeper-1.1.0.tar.gz
 
 # 3. just the two files (run with python3 ctxkeeper.py ...)
