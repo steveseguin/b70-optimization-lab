@@ -1,0 +1,52 @@
+{
+  "schema": "own-xpu-runtime.packet4.a367-derived-floor.v1",
+  "approved": false,
+  "calibration": {
+    "path": "/mnt/raid-models/bench-results/a367-20261016T145417Z/calibration.json",
+    "sha256": "3b7b160bb68ac8a4fc8e100f777169757397d4474bbeb726d534601e1e32ed2a"
+  },
+  "identity": {
+    "path": "/mnt/raid-models/bench-results/a367-20261016T145417Z/identity.json",
+    "sha256": "386142b32d56e02d216d40c59e3c889fd2949e9e37a2940a9958d62a125735e1"
+  },
+  "samples": {
+    "path": "/mnt/raid-models/bench-results/a367-20261016T145417Z/samples.jsonl",
+    "sha256": "b6cf967b8a16df9ada2dfe919292f22a7f60b2d78dcb268c1d95e98366fa5376"
+  },
+  "host": "steve-b70s",
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "summary": {
+    "baseline_available_bytes": 121638400000,
+    "minimum_available_bytes": 16329396224,
+    "observed_need_bytes": 105309003776,
+    "observed_need_kib": 102840824,
+    "max_sample_gap_seconds": 0.5251871019972896,
+    "sample_count": 2235,
+    "phase_min_available_bytes": {
+      "loading": 16574672896,
+      "shutdown": 16329396224,
+      "plateau": 16563777536,
+      "baseline": 121638400000
+    },
+    "scope": "sampled startup/ready/shutdown need; generation and fixture demand unmeasured"
+  },
+  "need_kib": 102840824,
+  "reserve_kib": 12000000,
+  "fixture_allowance_kib": 8388608,
+  "proposed_minimum_mem_available_kib": 123229432,
+  "delta_from_a367_kib": 3229432,
+  "sampling_interval_seconds": 0.5,
+  "generation_demand_measured": false,
+  "scope": "sampled load/ready/shutdown need plus existing reserve and planned fixture allowance; not a guaranteed serving peak",
+  "environment_audit_adaptation": {
+    "derived_passed_from": {
+      "source_files_verified": true,
+      "source_files_match": true,
+      "kernel_stage_passed": true,
+      "collective_libraries_passed": true,
+      "model_metadata_passed": true,
+      "fault_latch_admission": true
+    },
+    "reason": "Run the sealed A367 derive_floor.derive/write_proposal on a passing calibration."
+  }
+}
