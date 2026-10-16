@@ -219,9 +219,11 @@ Measured (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s unless noted; one run
   24K-48K was fastest (8-9 min), 64K slower (10 min). Below 16K the notes stopped fitting in place and every cut
   rewrote them in full: 24 min at 12K, 40 min at 8K. With `--inplace-fit`: 10 min at 12K, 13 min at 8K, 81 and 84 of
   85 answers over two streams. On the bug-fixing task the floor is about 16K (at 12K two fixes missed a house rule).
-- **Background notes** saved 14 % (18 % with `--prewarm`) on a server running two requests at once, same score. On
-  vLLM with MTP speculative decoding, two requests at once returned corrupted replies on our build, so there the
-  saving is not available; keep the default (notes in line).
+- **Background notes** saved 14 % (18 % with `--prewarm`) on a server running two requests at once without
+  speculative decoding, same score. With MTP speculative decoding they were correct but 8 % slower (9.4 against
+  8.7 min): each step is already full with one request's draft checks, and a second request slows it down. Keep the
+  default (notes in line). (Our first try with MTP returned corrupted replies; that was a bug in our vLLM build with
+  prefix caching, since fixed there, not in ctxkeeper.)
 - **One card.** On a single B70 with a 26K view, the model keeping its own notes, the bug-fixing task came out
   40/40 fixed, 40/40 following every rule, 7/7, in 21 min (two cards: 16); the notes took 8 % of the server's time.
 - **A separate, smaller keeper** (LFM2.5-24B-A2B, Q8_0 on llama.cpp on a second card, with `--notes-upstream`) did
