@@ -1,0 +1,57 @@
+### 07:24:24 campaign 23 (c23b) start; queue /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE23b.txt (5 lines); MemAvailable 13435 MiB
+### 07:24:24 queue checked: X check 0 900;S16 smoke 0 900;A32d rules 0 2400;A32dp rules 0 2400;K32 rules 0 2400;
+### 07:24:24 stopping the Gemma service (front door state: 0 0)
+### 07:24:30 cards free; MemAvailable 13620 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: 145b884c06a1480da32062f2529345ab
+### 07:26:46 server ready after ~150 s; MemAvailable 3567 MiB
+### 07:26:46 [concurrency check] start
+### 07:31:33 [concurrency check] done rc=0 in 287 s (0 all same as solo, 1 some different, 2 garbage)
+   round 2 D+B (1.0 s apart): D same as solo, 400 tokens, length, 13.98 s
+   round 2 D+B (1.0 s apart): B same as solo, 400 tokens, length, 13.9 s
+   
+   36 overlapped replies: 0 garbage, 0 different from solo
+Running as unit: ctx-keeper-proxy.service; invocation ID: 2310fae5e48c48b8abb45fb1b374b18a
+### 07:31:37 [S16 smoke] start; MemAvailable 3099 MiB; server totals: prompt 479451 cached 440128 generated 13060
+### 07:33:22 [S16 smoke] done rc=0 in 106 s
+   [PASS] current budget: 4,944 credits. ROGER
+   [PASS] standing rule kept (ends with ROGER): 4,944 credits. ROGER
+   [PASS] starting budget: 7,942 credits. ROGER
+   
+   4/4 checks passed; history about 62,360 tokens in 105 s
+   ctxkeeper: 12 cuts, 110 messages archived, 0 recalls, 0 rules put back
+   proxy: cuts 12 (in place 12, failed 0, asked again 0), archived 110, recalls 0, full-rewrite failed 0, notes read 84822 cached 72384 written 1346; background started 13 applied 12 discarded 0 waited 36.949 s; upstream 68.125 s (background 73.596 s); restarts 0
+   calls: main 64 calls 68 s read 519023 cached 362752 written 214; notes (background) 13 calls 75 s read 91182 cached 78208 written 1448; prewarm (background) 13 calls 4 s read 10585 cached 0 written 13; largest call (read + written) 12005 tokens
+Running as unit: ctx-keeper-proxy.service; invocation ID: 9694e857bf4f4b5784a30e37460e89b1
+### 07:33:30 [A32d__sparse-memory-t240k-s0] start (cap 2400s); MemAvailable 3044 MiB; server totals: prompt 1100241 cached 881088 generated 14735
+### 07:49:33 [A32d__sparse-memory-t240k-s0] done rc=0 in 16 min 4 s; MemAvailable 2759 MiB; server totals: prompt 4348888 cached 3634176 generated 45930
+   ledger score 1.0000 raw 1.0000 ({'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}) void=False [] delivery={'items_total': 147, 'items_delivered': 147, 'items_broken_pipe': 0, 'items_to_file': 0, 'it
+   RESULT 39/39 void=False violations=0 counts={'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}
+   client: calls 154 (main loop 154), written 12376, prompt 2813596 cached 2342080
+   proxy: cuts 16 (in place 16, failed 0, asked again 1), archived 278, recalls 7, full-rewrite failed 0, notes read 310910 cached 292864 written 16957; background started 17 applied 16 discarded 0 waited 248.067 s; upstream 665.333 s (background 643.977 s); restarts 0
+   calls: main 160 calls 665 s read 2937737 cached 2460224 written 14238; notes (background) 18 calls 644 s read 310910 cached 292864 written 16957; largest call (read + written) 26982 tokens
+Running as unit: ctx-keeper-proxy.service; invocation ID: 56d3a7c657b24fd58b7245b93cc3ffe2
+### 07:49:37 [A32dp__sparse-memory-t240k-s0] start (cap 2400s); MemAvailable 2773 MiB; server totals: prompt 4348888 cached 3634176 generated 45930
+### 08:05:01 [A32dp__sparse-memory-t240k-s0] done rc=0 in 15 min 25 s; MemAvailable 2884 MiB; server totals: prompt 7671821 cached 6452992 generated 75837
+   ledger score 1.0000 raw 1.0000 ({'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}) void=False [] delivery={'items_total': 147, 'items_delivered': 147, 'items_broken_pipe': 0, 'items_to_file': 0, 'it
+   RESULT 39/39 void=False violations=0 counts={'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}
+   client: calls 155 (main loop 155), written 12221, prompt 2852959 cached 2393664
+   proxy: cuts 16 (in place 16, failed 0, asked again 1), archived 278, recalls 7, full-rewrite failed 0, notes read 310893 cached 292864 written 15805; background started 17 applied 16 discarded 0 waited 216.444 s; upstream 658.757 s (background 614.634 s); restarts 0
+   calls: main 161 calls 659 s read 2977093 cached 2511808 written 14085; notes (background) 18 calls 607 s read 310893 cached 292864 written 15805; prewarm (background) 17 calls 7 s read 34947 cached 14144 written 17; largest call (read + written) 26982 tokens
+Running as unit: ctx-keeper-proxy.service; invocation ID: 042c60e9102e4c0b965f58a6d8ac8761
+### 08:05:05 [K32__sparse-memory-t240k-s0] start (cap 2400s); MemAvailable 2903 MiB; server totals: prompt 7671821 cached 6452992 generated 75837
+### 08:23:50 [K32__sparse-memory-t240k-s0] done rc=0 in 18 min 46 s; MemAvailable 2931 MiB; server totals: prompt 9603900 cached 8017984 generated 106086
+   ledger score 1.0000 raw 1.0000 ({'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}) void=False [] delivery={'items_total': 147, 'items_delivered': 147, 'items_broken_pipe': 0, 'items_to_file': 0, 'it
+   RESULT 39/39 void=False violations=0 counts={'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}
+   client: calls 154 (main loop 154), written 11339, prompt 1534852 cached 1195584
+   proxy: cuts 17 (in place 17, failed 0, asked again 3), archived 292, recalls 10, full-rewrite failed 0, notes read 342682 cached 321984 written 17146; background started 0 applied 0 discarded 0 waited 0 s; upstream 1075.227 s (background 0 s); restarts 0
+   calls: main 162 calls 523 s read 1589397 cached 1243008 written 13103; notes 20 calls 552 s read 342682 cached 321984 written 17146; largest call (read + written) 18997 tokens
+### 08:23:54 queue empty after 5 lines; waiting up to 600s for more lines in /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE23b.txt
+### 08:26:04 stopped by STOP-CAMPAIGN23
+### 08:26:04 stopping the server; MemAvailable 2994 MiB
+server state: stopped None stop_confirmed True
+host memory available while the server ran: min 2.27  1% 2.45  median 2.64 GiB  (7419 samples)
+### 08:26:32 kernel log clean since 2026-10-16 07:24:24; restoring Gemma (throughput)
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 08:28:03 campaign 23 complete

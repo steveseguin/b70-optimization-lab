@@ -1,0 +1,68 @@
+### 06:23:22 campaign 23 (c23) start; queue /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE23.txt (8 lines); MemAvailable 13569 MiB
+### 06:23:22 queue checked: X check 0 900;K32 rules 0 2400;S16 smoke 0 900;A32d rules 0 2400;A32dp rules 0 2400;K12f rules 0 2400;K08f rules 0 2400;M32dp 1m 0 6000;
+### 06:23:22 stopping the Gemma service (front door state: 0 0)
+### 06:23:28 cards free; MemAvailable 13637 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: 178f9bda16c14a2b80e1e6d9d5216d07
+### 06:25:58 server ready after ~165 s; MemAvailable 2966 MiB
+### 06:25:58 [concurrency check] start
+### 06:27:14 [concurrency check] done rc=1 in 76 s (0 all same as solo, 1 some different, 2 garbage)
+   round 2 C+B (0.5 s apart): C DIFFERENT, 244 tokens, stop, 3.39 s
+   round 2 C+B (0.5 s apart): B DIFFERENT, 400 tokens, length, 5.15 s
+   
+   24 overlapped replies: 0 garbage, 23 different from solo
+### 06:27:18 [K32__sparse-memory-t240k-s0] already run, skipped
+Running as unit: ctx-keeper-proxy.service; invocation ID: 7be7e221a07348b480c410302065a0a9
+### 06:27:19 [S16 smoke] start; MemAvailable 2332 MiB; server totals: prompt 238271 cached 182208 generated 7334
+### 06:31:18 [S16 smoke] done rc=1 in 240 s
+   [PASS] current budget: The project budget is 4,944 credits. ROGER
+   [PASS] standing rule kept (ends with ROGER): The project budget is 4,944 credits. ROGER
+   [PASS] starting budget: The project budget at the very start of this session was 7,942 credits. ROGER
+   
+   3/4 checks passed; history about 67,485 tokens in 239 s
+   ctxkeeper: 14 cuts, 120 messages archived, 0 recalls, 0 rules put back
+   proxy: cuts 14 (in place 14, failed 0, asked again 0), archived 120, recalls 0, full-rewrite failed 0, notes read 95956 cached 71552 written 1276; background started 14 applied 14 discarded 0 waited 3.252 s; upstream 235.324 s (background 51.836 s); restarts 0
+   calls: main 64 calls 235 s read 412352 cached 227136 written 20677; notes (background) 14 calls 47 s read 95956 cached 71552 written 1276; prewarm (background) 14 calls 5 s read 11297 cached 0 written 14; largest call (read + written) 12887 tokens
+### 06:31:21 SMOKE FAILED (background notes applied: 14): background notes arms are skipped
+Running as unit: ctx-keeper-proxy.service; invocation ID: 58f68e838e594989b7856bb4ca78c16f
+### 06:31:22 [K12f__sparse-memory-t240k-s0] start (cap 2400s); MemAvailable 2399 MiB; server totals: prompt 757876 cached 480896 generated 29301
+### 06:41:26 [K12f__sparse-memory-t240k-s0] done rc=0 in 10 min 5 s; MemAvailable 2349 MiB; server totals: prompt 1997349 cached 1049152 generated 68121
+   ledger score 0.8974 raw 0.8974 ({'correct': 35, 'blank': 0, 'wrong': 3, 'stale': 1}) void=False [] delivery={'items_total': 147, 'items_delivered': 147, 'items_broken_pipe': 0, 'items_to_file': 0, 'it
+   RESULT 35/39 void=False violations=0 counts={'correct': 35, 'blank': 0, 'wrong': 3, 'stale': 1}
+   client: calls 160 (main loop 160), written 8461, prompt 754149 cached 235456
+   proxy: cuts 70 (in place 70, failed 0, asked again 4), archived 310, recalls 10, full-rewrite failed 0, notes read 456136 cached 314496 written 28866; background started 0 applied 0 discarded 0 waited 0 s; upstream 551.564 s (background 0 s); restarts 0
+   calls: main 166 calls 260 s read 783337 cached 253760 written 9954; notes 74 calls 292 s read 456136 cached 314496 written 28866; largest call (read + written) 9594 tokens
+Running as unit: ctx-keeper-proxy.service; invocation ID: 0cf3f1203aff485b910ac07c521c5093
+### 06:41:30 [K08f__sparse-memory-t240k-s0] start (cap 2400s); MemAvailable 2349 MiB; server totals: prompt 1997349 cached 1049152 generated 68121
+### 06:54:37 [K08f__sparse-memory-t240k-s0] done rc=0 in 13 min 8 s; MemAvailable 2311 MiB; server totals: prompt 3300110 cached 1430208 generated 123255
+   ledger score 1.0000 raw 1.0000 ({'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}) void=False [] delivery={'items_total': 147, 'items_delivered': 147, 'items_broken_pipe': 0, 'items_to_file': 0, 'it
+   RESULT 39/39 void=False violations=0 counts={'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}
+   client: calls 162 (main loop 162), written 9844, prompt 612184 cached 24128
+   proxy: cuts 152 (in place 136, failed 0, asked again 3), archived 316, recalls 19, full-rewrite failed 0, notes read 609581 cached 348608 written 29842; background started 0 applied 0 discarded 0 waited 0 s; upstream 735.124 s (background 0 s); restarts 0
+   calls: main 174 calls 305 s read 649567 cached 32448 written 12296; notes 155 calls 430 s read 653194 cached 348608 written 42838; largest call (read + written) 5149 tokens
+### 06:54:41 queue empty after 5 lines; waiting up to 600s for more lines in /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE23.txt
+Running as unit: ctx-keeper-proxy.service; invocation ID: 694779fc30224b948d512ec93904b60a
+### 06:55:02 [K12f__sparse-memory-t240k-s1] start (cap 2400s); MemAvailable 2382 MiB; server totals: prompt 3300110 cached 1430208 generated 123255
+### 07:05:36 [K12f__sparse-memory-t240k-s1] done rc=0 in 10 min 35 s; MemAvailable 2300 MiB; server totals: prompt 4580870 cached 2010944 generated 165669
+   ledger score 1.0000 raw 1.0000 ({'correct': 46, 'blank': 0, 'wrong': 0, 'stale': 0}) void=False [] delivery={'items_total': 147, 'items_delivered': 147, 'items_broken_pipe': 0, 'items_to_file': 0, 'it
+   RESULT 46/46 void=False violations=0 counts={'correct': 46, 'blank': 0, 'wrong': 0, 'stale': 0}
+   client: calls 169 (main loop 169), written 9414, prompt 785559 cached 247104
+   proxy: cuts 72 (in place 68, failed 0, asked again 2), archived 330, recalls 13, full-rewrite failed 0, notes read 431967 cached 301184 written 26768; background started 0 applied 0 discarded 0 waited 0 s; upstream 580.765 s (background 0 s); restarts 0
+   calls: main 178 calls 284 s read 833289 cached 279552 written 11671; notes 74 calls 297 s read 447471 cached 301184 written 30743; largest call (read + written) 8722 tokens
+Running as unit: ctx-keeper-proxy.service; invocation ID: 9361f8a5820746c19261fbb9df6a9e9c
+### 07:05:40 [K08f__sparse-memory-t240k-s1] start (cap 2400s); MemAvailable 2311 MiB; server totals: prompt 4580870 cached 2010944 generated 165669
+### 07:18:45 [K08f__sparse-memory-t240k-s1] done rc=0 in 13 min 6 s; MemAvailable 2188 MiB; server totals: prompt 5874813 cached 2393664 generated 219945
+   ledger score 0.9783 raw 0.9783 ({'correct': 45, 'blank': 0, 'wrong': 1, 'stale': 0}) void=False [] delivery={'items_total': 147, 'items_delivered': 147, 'items_broken_pipe': 0, 'items_to_file': 0, 'it
+   RESULT 45/46 void=False violations=0 counts={'correct': 45, 'blank': 0, 'wrong': 1, 'stale': 0}
+   client: calls 156 (main loop 156), written 9343, prompt 600268 cached 19968
+   proxy: cuts 148 (in place 135, failed 0, asked again 5), archived 306, recalls 17, full-rewrite failed 0, notes read 618650 cached 354432 written 30260; background started 0 applied 0 discarded 0 waited 0 s; upstream 734.159 s (background 0 s); restarts 0
+   calls: main 168 calls 309 s read 637067 cached 28288 written 12810; notes 153 calls 425 s read 656876 cached 354432 written 41466; largest call (read + written) 5307 tokens
+### 07:18:48 queue empty after 7 lines; waiting up to 600s for more lines in /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE23.txt
+### 07:19:08 stopped by STOP-CAMPAIGN23
+### 07:19:08 stopping the server; MemAvailable 2335 MiB
+server state: stopped None stop_confirmed True
+host memory available while the server ran: min 1.82  1% 1.86  median 2.03 GiB  (6713 samples)
+### 07:19:36 kernel log clean since 2026-10-16 06:23:22; restoring Gemma (throughput)
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 07:24:07 campaign 23 complete

@@ -3068,3 +3068,44 @@ one server wait for that fix; campaign 22's separate keeper on the other card do
 70 cuts all in place (K12: 39/39, 24 min 15 s, none in place). K08f: **39/39, 13 min 8 s**, 136 of 152 cuts in place,
 largest call 5,149 tokens (K08: 39/39, 39 min 38 s). Added to the queue while the server is up: K12f and K08f on seed
 1 (46 questions; X32p 46/46 in 9.4 min), to tell whether K12f's four misses are the setting or one run.
+
+### Campaign 23 and 23b results (06:23-07:24 MTP5; 07:24-08:28 no MTP; kernel log clean)
+
+**The second sequence.** 23b (MTP0, `--seqs 2`, pure steps, per-sequence long-key attention): 36 of 36 overlapped
+replies equal to their solo replies, including the two pairs that share one long cached prompt; no garbage. Its solo
+replies equal campaign 23's MTP5 solos for B and C, but not A: **on the MTP5 `--seqs 2` server even a lone request
+spliced once** ("1. night shift moved 5. night shift moved 584 ..." against MTP0's "1. night shift moved 584 ...").
+So the fault is speculation with more than one sequence on this image, not the proxy and not mixed steps alone. (The
+packages are not affected: their multi-user profile runs without speculation, their MTP profiles one sequence.)
+
+**Background notes, measured on the 23b server** (240K rules s0; one run each; decode without MTP is slower for all):
+
+| arm | score | min | cuts (in place) | agent calls s | notes s | the agent waited for notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| K32 (notes in line) | 39/39 | 18.8 | 17 (17) | 523 | 552 | - |
+| A32d (background, defer) | 39/39 | 16.1 (-14 %) | 16 (16) | 665 | 644 | 248 s |
+| A32dp (+ prewarm) | 39/39 | 15.4 (-18 %) | 16 (16) | 659 | 607 | 216 s |
+
+K32 here repeated the MTP5 K32 in every proxy count (17 cuts, 292 archived, 10 recalls, 342,682 / 17,146 notes
+tokens): MTP5 one-sequence is still exact against MTP0. Against the expectations: the saving is at the low end of
+the 15-30 % range. The agent's calls got slower (523 -> 665 s) because they share the server with the notes, and the
+agent still waited 216-248 s for notes it needed before it could go on. Prewarm gave its few percent. Decision
+(registered rule: 10 % or more with no score loss on both streams): **not a recipe default**. It saves 14-18 % only
+on a server that can run two sequences correctly, and on this hardware that means giving up MTP, which costs far
+more (the same run with MTP5 and in-line notes took 8.7 min). Where it can pay: servers without speculation, and a
+separate keeper on its own card (campaign 22, L1d).
+
+**The window floor with `--inplace-fit`** (c23, MTP5, one request at a time):
+
+| arm | seed 0 | seed 1 | min (s0 / s1) | cuts in place |
+| --- | --- | --- | --- | --- |
+| K12f | 35/39 | 46/46 | 10.1 / 10.6 | 70/70, 68/72 |
+| K08f | 39/39 | 45/46 | 13.1 / 13.1 | 136/152, 135/148 |
+| (K12, K08 without it) | 39/39, 39/39 | - | 24.3, 39.6 | 0, 0 |
+| (X32p at 32K) | 39/39 | 46/46 | 8.5 / 9.4 | |
+
+`--inplace-fit` removes the small-window slowdown (8K: 3.0x faster, 1.5x the 32K time; largest call 5.1-5.3K
+tokens). Quality: 81/85 at 12K and 84/85 at 8K over the two seeds, against 85/85 at 32K; K12f's four misses on seed 0
+did not repeat on seed 1 (one run each: a notes slip, not yet a pattern). Decision: `--inplace-fit` becomes the
+recommended setting for windows under 24K (it changes nothing at 32K on these streams); at 32K and above the
+default stays as it is.
