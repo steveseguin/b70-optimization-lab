@@ -1,0 +1,61 @@
+Subject: [DESIGN PATCH, UNAPPLIED] Fold row-wise collective pre/post copies; preserve both CCL calls
+
+Base: certified export 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a
+Default off. No device execution or performance qualification.
+See notes/2026-10-16-flash-next-m2-glue-fusion-design.md.
+
+diff --git a/vllm/distributed/device_communicators/xpu_communicator.py b/vllm/distributed/device_communicators/xpu_communicator.py
+--- a/vllm/distributed/device_communicators/xpu_communicator.py
++++ b/vllm/distributed/device_communicators/xpu_communicator.py
+@@ -1,8 +1,10 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ 
++
++import os
+ 
+ import torch
+ import torch.distributed as dist
+ from torch.distributed import ProcessGroup
+ 
+@@ -10,10 +12,13 @@
+ from vllm.logger import init_logger
+ 
+ from .base_device_communicator import DeviceCommunicatorBase
+ 
+ logger = init_logger(__name__)
++
++# Diagnostic selector fixed before graph capture; never switch a live graph.
++_Q38_M2_GLUE_ROW_COPY = os.getenv("Q38_M2_GLUE_ROW_COPY", "0") == "1"
+ 
+ 
+ class XpuCommunicator(DeviceCommunicatorBase):
+     def __init__(
+         self,
+@@ -46,10 +51,26 @@
+                 self.all2all_manager = AgRsAll2AllManager(self.cpu_group)
+                 logger.info("Using AgRs manager on XPU device.")
+ 
+     def all_reduce(self, input_: torch.Tensor) -> torch.Tensor:
+         max_rows = envs.VLLM_XPU_ROWWISE_ALLREDUCE_MAX_ROWS
++        if (
++            _Q38_M2_GLUE_ROW_COPY
++            and max_rows == 2
++            and self.world_size == 4
++            and input_.device.type == "xpu"
++            and input_.dtype == torch.bfloat16
++            and input_.shape == (2, 2560)
++            and input_.is_contiguous()
++        ):
++            # Keep two identical (1, 2560) CCL calls, in the original order.
++            # Each 5120-byte row preserves 256-byte alignment. Copy once into
++            # fresh storage; no row temporary or post-collective copy is needed.
++            output = input_.clone()
++            for row in range(2):
++                dist.all_reduce(output[row : row + 1], group=self.device_group)
++            return output
+         if max_rows > 0 and input_.dim() >= 2 and 1 < input_.shape[0] <= max_rows:
+             output = torch.empty_like(input_)
+             for row in range(input_.shape[0]):
+                 row_out = input_[row : row + 1].clone()
+                 dist.all_reduce(row_out, group=self.device_group)

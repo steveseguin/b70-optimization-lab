@@ -1,0 +1,227 @@
+Subject: [DESIGN PATCH, UNAPPLIED] Fold EP map lookup into both MoE GEMMs
+
+Base: certified export 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a
+Default off. Native alignment, GEMM geometry and float arithmetic retained.
+No device execution or performance qualification.
+See notes/2026-10-16-flash-next-m2-glue-fusion-design.md.
+
+diff --git a/vllm/model_executor/layers/fused_moe/moe_align_block_size.py b/vllm/model_executor/layers/fused_moe/moe_align_block_size.py
+--- a/vllm/model_executor/layers/fused_moe/moe_align_block_size.py
++++ b/vllm/model_executor/layers/fused_moe/moe_align_block_size.py
+@@ -13,10 +13,11 @@
+     block_size: int,
+     num_experts: int,
+     expert_map: torch.Tensor | None = None,
+     pad_sorted_ids: bool = False,
+     ignore_invalid_experts: bool = False,
++    defer_expert_map: bool = False,
+ ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+     """
+     Aligns the token distribution across experts to be compatible with block
+     size for matrix multiplication.
+ 
+@@ -69,10 +70,12 @@
+         Tokens 12 are non-existent (padding) and are ignored in
+         the subsequent matrix multiplication.
+     - The padding ensures that the total number of tokens is now divisible
+         by block_size for proper block matrix operations.
+     """
++    if defer_expert_map and ignore_invalid_experts:
++        raise ValueError("Deferred EP mapping must retain remote expert blocks")
+     max_num_tokens_padded = topk_ids.numel() + num_experts * (block_size - 1)
+     if pad_sorted_ids:
+         max_num_tokens_padded = round_up(max_num_tokens_padded, block_size)
+     if topk_ids.numel() < num_experts:
+         max_num_tokens_padded = min(
+@@ -95,11 +98,12 @@
+         expert_ids,
+         num_tokens_post_pad,
+         expert_map if ignore_invalid_experts else None,
+     )
+ 
+-    if expert_map is not None and not ignore_invalid_experts:
++    # The deferred consumer applies this map before any expert access.
++    if expert_map is not None and not ignore_invalid_experts and not defer_expert_map:
+         expert_ids = expert_map[expert_ids]
+ 
+     return sorted_ids, expert_ids, num_tokens_post_pad
+ 
+ 
+diff --git a/vllm/model_executor/layers/fused_moe/fused_moe.py b/vllm/model_executor/layers/fused_moe/fused_moe.py
+--- a/vllm/model_executor/layers/fused_moe/fused_moe.py
++++ b/vllm/model_executor/layers/fused_moe/fused_moe.py
+@@ -352,10 +352,12 @@
+     HAS_BIAS: tl.constexpr,
+     SWAP_AB: tl.constexpr,
+     USE_B_TABLE: tl.constexpr = False,
+     # Tensor-descriptor path for the A gather and B load in the K-loop.
+     USE_TD: tl.constexpr = False,
++    MAP_EXPERTS: tl.constexpr = False,
++    expert_map_ptr=None,
+ ):
+     """
+     Implements the fused computation for a Mixture of Experts (MOE) using
+     token and expert matrices.
+ 
+@@ -421,10 +423,18 @@
+     offs_token = offs_token.to(tl.int64)
+ 
+     token_mask = offs_token < num_valid_tokens
+ 
+     off_experts = tl.load(expert_ids_ptr + pid_m).to(tl.int64)
++    if MAP_EXPERTS:
++        # Same lookup previously materialized by expert_map[expert_ids].
++        # Native alignment and per-token GEMM rows are unchanged.
++        off_experts = tl.load(
++            expert_map_ptr + off_experts,
++            mask=(off_experts >= 0) & (off_experts < 512),
++            other=-1,
++        ).to(tl.int64)
+     if USE_B_TABLE:
+         # Q38 per-expert placement: rows of B may live in device or (UVA) host memory;
+         # the table holds each expert's row offset (elements, signed) from b_ptr. Same bytes, same math.
+         b_off = tl.load(b_table_ptr + tl.maximum(off_experts, 0))
+         b_off = tl.multiple_of(b_off, 256)  # rows are 256-byte-aligned allocations; keeps vector loads
+@@ -787,10 +797,11 @@
+     use_int8_w8a16: bool,
+     use_int4_w4a16: bool,
+     per_channel_quant: bool,
+     block_shape: list[int] | None = None,
+     B_bias: torch.Tensor | None = None,
++    deferred_expert_map: torch.Tensor | None = None,
+ ):
+     assert topk_weights is not None or not mul_routed_weight
+     assert topk_weights is None or topk_weights.stride(1) == 1
+     assert sorted_token_ids is None or sorted_token_ids.stride(0) == 1
+ 
+@@ -915,10 +926,12 @@
+         HAS_BIAS=HAS_BIAS,
+         BLOCK_SIZE_K=BLOCK_SIZE_K,
+         SWAP_AB=SWAP_AB,
+         USE_B_TABLE=_q38_b_table is not None,
+         USE_TD=use_td,
++        MAP_EXPERTS=deferred_expert_map is not None,
++        expert_map_ptr=deferred_expert_map,
+         **config,
+     )
+ 
+ 
+ def dispatch_fused_moe_kernel(
+@@ -1653,10 +1666,11 @@
+     *,
+     use_int8_w8a16: bool = False,
+     use_int4_w4a16: bool = False,
+     block_shape: list[int] | None = None,
+     ignore_invalid_experts: bool = False,
++    defer_expert_map: bool = False,
+ ) -> tuple[torch.Tensor | None, torch.Tensor, torch.Tensor]:
+     """Prepare expert assignments for the aligned and low-latency Triton paths."""
+     # SPARSITY_FACTOR is a heuristic margin ensuring tokens_in_chunk * top_k
+     # activates only a small fraction of total experts
+     # Skips moe_align_block_size and activates the `sorted_token_ids is None`
+@@ -1687,10 +1701,11 @@
+         topk_ids,
+         config["BLOCK_SIZE_M"],
+         global_num_experts,
+         expert_map,
+         ignore_invalid_experts=ignore_invalid_experts,
++        defer_expert_map=defer_expert_map,
+     )
+ 
+ 
+ def fused_experts(
+     hidden_states: torch.Tensor,
+diff --git a/vllm/model_executor/layers/fused_moe/experts/triton_moe.py b/vllm/model_executor/layers/fused_moe/experts/triton_moe.py
+--- a/vllm/model_executor/layers/fused_moe/experts/triton_moe.py
++++ b/vllm/model_executor/layers/fused_moe/experts/triton_moe.py
+@@ -1,8 +1,10 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """Triton-based MoE expert implementations."""
++
++import os
+ 
+ import torch
+ 
+ import vllm.model_executor.layers.fused_moe.modular_kernel as mk
+ from vllm import _custom_ops as ops
+@@ -58,10 +60,13 @@
+     kInt8StaticTensorSym,
+ )
+ from vllm.platforms import current_platform
+ from vllm.triton_utils import tl
+ from vllm.utils.multi_stream_utils import maybe_execute_in_parallel
++
++
++_Q38_M2_GLUE_ALIGN_MAP = os.getenv("Q38_M2_GLUE_ALIGN_MAP", "0") == "1"
+ 
+ 
+ class TritonExperts(LoRAExpertsMixin, mk.FusedMoEExpertsModular):
+     """Triton-based fused MoE expert implementation."""
+ 
+@@ -322,10 +327,29 @@
+         intermediate_cache2 = _resize_cache(
+             workspace13, (num_tokens * top_k_num, cache2_dim)
+         )
+         intermediate_cache3 = _resize_cache(workspace2, (num_tokens, top_k_num, K))
+ 
++        defer_expert_map = (
++            _Q38_M2_GLUE_ALIGN_MAP
++            and current_platform.is_xpu()
++            and num_tokens == 2
++            and top_k_num == 10
++            and global_num_experts == 512
++            and self.quant_config.use_fp8_w8a8
++            and self.block_shape == [128, 128]
++            and self._lora_context is None
++            and w1_config["BLOCK_SIZE_M"] == 16
++            and w2_config["BLOCK_SIZE_M"] == 16
++            and expert_map is not None
++            and expert_map.shape == (512,)
++            and expert_map.dtype == torch.int32
++            and expert_map.device == hidden_states.device
++            and expert_map.is_contiguous()
++        )
++        deferred_expert_map = expert_map if defer_expert_map else None
++
+         # Include fused shared-expert rows while preserving EP remapping.
+         num_align_experts = w1.shape[0] if expert_map is None else global_num_experts
+         sorted_token_ids, expert_ids, num_tokens_post_padded = (
+             _prepare_expert_assignment(
+                 topk_ids,
+@@ -335,10 +359,11 @@
+                 num_align_experts,
+                 expert_map,
+                 use_int8_w8a16=self.quant_config.use_int8_w8a16,
+                 use_int4_w4a16=self.quant_config.use_int4_w4a16,
+                 block_shape=self.block_shape,
++                defer_expert_map=defer_expert_map,
+             )
+         )
+ 
+         # LoRA w13: applied to intermediate_cache1 before activation. When
+         # the LoRA layer requested a dual-stream schedule, we run base w13
+@@ -399,10 +424,11 @@
+                 use_int8_w8a16=self.quant_config.use_int8_w8a16,
+                 use_int4_w4a16=self.quant_config.use_int4_w4a16,
+                 per_channel_quant=self.per_act_token_quant,
+                 block_shape=self.block_shape,
+                 B_bias=self.w1_bias,
++                deferred_expert_map=deferred_expert_map,
+             )
+ 
+         if lora_context is not None and lora_context.aux_stream is not None:
+             # add_inputs=False: kernel overwrites lora_delta_w13. zeros (not
+             # empty) so untouched rows -- e.g. blocks where every program
+@@ -517,10 +543,11 @@
+                 use_int8_w8a16=self.quant_config.use_int8_w8a16,
+                 use_int4_w4a16=self.quant_config.use_int4_w4a16,
+                 per_channel_quant=self.per_act_token_quant,
+                 block_shape=self.block_shape,
+                 B_bias=self.w2_bias,
++                deferred_expert_map=deferred_expert_map,
+             )
+ 
+         if lora_context is not None and lora_context.aux_stream is not None:
+             lora_delta_w2 = torch.zeros_like(intermediate_cache3)
+ 

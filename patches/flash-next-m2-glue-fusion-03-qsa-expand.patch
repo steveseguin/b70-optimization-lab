@@ -1,0 +1,152 @@
+Subject: [DESIGN PATCH, UNAPPLIED] Fold post-sort cast and visibility mask into QSA index expansion
+
+Base: certified export 6d8724577dabbee5fa0bbc70c4d927c6174c8d8a
+Default off. No device execution or performance qualification.
+See notes/2026-10-16-flash-next-m2-glue-fusion-design.md.
+
+diff --git a/vllm/models/qwen4_exp/amd/ops/qsa.py b/vllm/models/qwen4_exp/amd/ops/qsa.py
+--- a/vllm/models/qwen4_exp/amd/ops/qsa.py
++++ b/vllm/models/qwen4_exp/amd/ops/qsa.py
+@@ -3,19 +3,21 @@
+ """Triton kernels for the Qwen4Exp weight-free QSA path."""
+ 
+ from __future__ import annotations
+ 
+ import math
++import os
+ 
+ import torch
+ 
+ from vllm import _custom_ops as ops
+ from vllm.platforms import current_platform
+ from vllm.triton_utils import HAS_TRITON, tl, triton
+ 
+ _LOGITS_WORKSPACE_BYTES = 128 * 1024 * 1024
+ _TOPK_WORKSPACE_BYTES = 1024 * 1024
++_Q38_M2_GLUE_QSA_EXPAND = os.getenv("Q38_M2_GLUE_QSA_EXPAND", "0") == "1"
+ 
+ 
+ @triton.jit
+ def _qsa_mqa_paged_kernel(
+     q_ptr,
+@@ -114,10 +116,11 @@
+ 
+ 
+ @triton.jit
+ def _expand_qsa_indices_kernel(
+     block_indices_ptr,
++    visible_blocks_ptr,
+     query_positions_ptr,
+     sequence_lengths_ptr,
+     token_to_req_ptr,
+     output_ptr,
+     stride_blocks_row,
+@@ -129,10 +132,11 @@
+     BLOCK_TOPK: tl.constexpr,
+     COMPRESS_RATIO: tl.constexpr,
+     TOKEN_TOPK: tl.constexpr,
+     OUTPUT_WIDTH: tl.constexpr,
+     COLUMN_BLOCK: tl.constexpr,
++    MASK_VISIBLE: tl.constexpr,
+ ) -> None:
+     row = tl.program_id(0)
+     columns = tl.program_id(1) * COLUMN_BLOCK + tl.arange(0, COLUMN_BLOCK)
+     query_position = tl.load(query_positions_ptr + row)
+     request = tl.load(token_to_req_ptr + row)
+@@ -160,10 +164,15 @@
+     block = tl.load(
+         block_indices_ptr + row * stride_blocks_row + safe_rank * stride_blocks_column,
+         mask=(row < rows) & is_expanded,
+         other=-1,
+     )
++    # Match the old int64 argsort -> int32 copy, then mask, before expansion.
++    block = block.to(tl.int32)
++    if MASK_VISIBLE:
++        visible = tl.load(visible_blocks_ptr + row)
++        block = tl.where(safe_rank < visible, block, -1)
+     expanded = block * COMPRESS_RATIO + offset
+     tail_offset = columns - expanded_count
+     is_tail = (
+         (columns >= expanded_count)
+         & (tail_offset < tail_count)
+@@ -674,10 +683,12 @@
+     sequence_lengths: torch.Tensor,
+     token_to_req: torch.Tensor,
+     compress_ratio: int,
+     token_topk: int,
+     out: torch.Tensor | None = None,
++    *,
++    visible_blocks: torch.Tensor | None = None,
+ ) -> torch.Tensor:
+     """Expand compressed blocks and compact the causal tail of the open group."""
+ 
+     if block_indices.device.type not in {"cuda", "xpu"} or not HAS_TRITON:
+         raise RuntimeError("QSA index expansion requires a GPU and Triton")
+@@ -685,10 +696,17 @@
+         raise ValueError("QSA token top-k must be divisible by compression ratio")
+     block_topk = token_topk // compress_ratio
+     output_width = token_topk + compress_ratio - 1
+     if block_indices.shape != (query_positions.numel(), block_topk):
+         raise ValueError("QSA compressed top-k has an invalid shape")
++    if visible_blocks is not None and (
++        visible_blocks.shape != query_positions.shape
++        or visible_blocks.device != block_indices.device
++        or visible_blocks.dtype != torch.int32
++        or not visible_blocks.is_contiguous()
++    ):
++        raise ValueError("QSA visible counts must be contiguous int32 row counts")
+     if token_to_req.shape != query_positions.shape:
+         raise ValueError("QSA request mapping must match query positions")
+     if sequence_lengths.ndim != 1 or not sequence_lengths.shape[0]:
+         raise ValueError("QSA request sequence lengths must be nonempty")
+     if out is None:
+@@ -704,10 +722,11 @@
+     column_block = 256
+     _expand_qsa_indices_kernel[
+         (block_indices.shape[0], triton.cdiv(output_width, column_block))
+     ](
+         block_indices,
++        visible_blocks if visible_blocks is not None else query_positions,
+         query_positions,
+         sequence_lengths,
+         token_to_req,
+         out,
+         block_indices.stride(0),
+@@ -719,10 +738,11 @@
+         BLOCK_TOPK=block_topk,
+         COMPRESS_RATIO=compress_ratio,
+         TOKEN_TOPK=token_topk,
+         OUTPUT_WIDTH=output_width,
+         COLUMN_BLOCK=column_block,
++        MASK_VISIBLE=visible_blocks is not None,
+         num_warps=4,
+     )
+     return out
+ 
+ 
+@@ -808,10 +828,25 @@
+                 logits,
+                 dim=1,
+                 descending=True,
+                 stable=True,
+             )[:, :block_topk]
++            if _Q38_M2_GLUE_QSA_EXPAND and rows == 2:
++                # Preserve stable argsort and its order. Consume its strided
++                # int64 slice directly; fold copy/cast and visible mask into
++                # the existing integer expansion, including -1 padding.
++                expand_qsa_block_indices_cuda(
++                    ranked,
++                    query_positions[row_slice],
++                    sequence_lengths,
++                    token_to_req[row_slice],
++                    compress_ratio,
++                    token_topk,
++                    out[row_slice],
++                    visible_blocks=visible_blocks,
++                )
++                continue
+             blocks.copy_(ranked)
+             ranks = torch.arange(block_topk, device=blocks.device)
+             blocks.masked_fill_(ranks[None, :] >= visible_blocks[:, None], -1)
+         else:
+             ops.top_k_per_row_decode(
