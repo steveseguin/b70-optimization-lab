@@ -1,0 +1,19 @@
+{
+  "schema": "own-xpu-runtime.packet4.owner-approval-record.v1",
+  "recorded_utc": "2026-10-16T18:55:20Z",
+  "recorded_by": "coordinator (Claude) from the owner's direct answer in session",
+  "owner_answer": "Approve as written (Recommended)",
+  "approved_sentence": "I authorize one A367 calibrate-load measurement on steve-b70s with a calibration-only MemAvailable start floor of 114000000 KiB, a 0.5-second watchdog and the 12000000 KiB live reserve, under preregistration SHA256 d5959d82956482f1bc0e73a16df75bd49b1ecbd65a1da89fa713cafbd5dc314d and seal SHA256 b75d9f86ace2bbeaa7cde7b94a91a15230ed1676823446c238e25edf502514b0. This accepts the unmatched loading-memory risk, does not lower the packet-4 fixture floor, and does not resolve the halt or authorize another launch.",
+  "calibration_memory_floor_kib": 114000000,
+  "live_reserve_kib": 12000000,
+  "preregistration_sha256": "d5959d82956482f1bc0e73a16df75bd49b1ecbd65a1da89fa713cafbd5dc314d",
+  "calibration_seal_sha256": "b75d9f86ace2bbeaa7cde7b94a91a15230ed1676823446c238e25edf502514b0",
+  "driver_seal_sha256": "e29fe31176a529879642e0e8bfea45e2266359304374d7d770c18e9129463c7a",
+  "supersedes": "owner-approval-20261016-reseal2.json (seal 0ad3948b; void after the 7a901fef3 reseal)",
+  "related_owner_decisions": [
+    "2026-10-16 reboot authorized: \"Yes, reboot now (Recommended)\"",
+    "2026-10-16 prior-boot evidence latches: \"Exempt prior-boot evidence (Recommended)\" (implemented 73c293ce7)",
+    "2026-10-16: \"continue please. do what you think is best unless blocked\""
+  ],
+  "scope": "one calibration under seal b75d9f86 / prereg d5959d82; the owner-window still requires fresh storage, payload (<=1h), health (<=600s), halt resolution on a fault-free boot"
+}
