@@ -15,7 +15,7 @@ your agent / app  --->  ctxkeeper (:18200)  --->  any OpenAI-compatible server (
                           shows a bounded view
 ```
 
-Version 1.0.1 · public domain ([Unlicense](LICENSE)) · Python 3.10 or newer, standard library only (two files:
+Version 1.1.0 · public domain ([Unlicense](LICENSE)) · Python 3.10 or newer, standard library only (two files:
 `ctxkeeper.py`, `notesdelta.py`) · in plain words: <https://skindeep.ai/context-use.html>
 
 ## Does it work?
@@ -45,7 +45,10 @@ Qwen server unless noted:
 Records: [`data/2026-10-14-context-campaign19/`](../../experiments/qwen38-27b-b70/data/2026-10-14-context-campaign19/).
 
 Version 1.0.1 changes only how requests and replies are passed on ([Changes](#changes)); its program files are
-byte-identical to the ones the twelve-agent test below ran.
+byte-identical to the ones the twelve-agent test below ran. Version 1.1.0 adds options that are all off by default
+([Added in 1.1.0](#added-in-110-all-off-by-default)); with them off it sends the same requests and keeps the same
+state as 1.0.1 (all 1.0.1 tests pass, and a request-by-request comparison against a scripted model over five
+setups came out identical).
 
 ## Tested with 12 open-source coding agents
 
@@ -83,24 +86,24 @@ Full record, every run and what went wrong: the lab note
 
 ## Install
 
-Pick one. All three come from the [1.0.1 release](https://github.com/steveseguin/b70-optimization-lab/releases/tag/ctxkeeper-v1.0.1)
+Pick one. All three come from the [1.1.0 release](https://github.com/steveseguin/b70-optimization-lab/releases/tag/ctxkeeper-v1.1.0)
 (small files; nothing clones the lab's large repository):
 
 ```bash
-R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.0.1
+R=https://github.com/steveseguin/b70-optimization-lab/releases/download/ctxkeeper-v1.1.0
 
 # 1. pip (gives you the `ctxkeeper` command)
-pip install $R/ctxkeeper-1.0.1-py3-none-any.whl
+pip install $R/ctxkeeper-1.1.0-py3-none-any.whl
 
 # 2. Docker (builds the image from the 80 KB source archive)
-docker build -t ctxkeeper $R/ctxkeeper-1.0.1.tar.gz
+docker build -t ctxkeeper $R/ctxkeeper-1.1.0.tar.gz
 
 # 3. just the two files (run with python3 ctxkeeper.py ...)
 curl -LO $R/ctxkeeper.py
 curl -LO $R/notesdelta.py
 ```
 
-The source archive `ctxkeeper-1.0.1.tar.gz` also holds the demo below, the tests and this README; the release page
+The source archive `ctxkeeper-1.1.0.tar.gz` also holds the demo below, the tests and this README; the release page
 lists every file's SHA-256.
 
 ## Quick start
@@ -195,13 +198,13 @@ the notes no longer had room to be written in place. Bigger windows are slower: 
 
 Everything else: `ctxkeeper --help`.
 
-### In development (1.1.0.dev0, being measured, all off by default)
+### Added in 1.1.0 (all off by default)
 
 | Option | What it does |
 | --- | --- |
 | `--notes-upstream URL`, `--notes-model NAME` | send the notes calls to a second, separate model server (a smaller keeper) |
 | `--notes-system TEXT\|@file`, `--notes-kwargs JSON` | the keeper's own system message and chat-template options |
-| `--notes-prefill` | start a separate keeper's reply with the notes heading, so a small model writes notes instead of carrying on the agent's work (llama.cpp continues it as is; vLLM needs `--notes-extra '{"continue_final_message":true,"add_generation_prompt":false}'`) |
+| `--notes-prefill` | start a separate keeper's reply with the notes heading, so a small model writes notes instead of carrying on the agent's work (llama.cpp continues it as is; for vLLM add `--notes-extra '{"continue_final_message":true,"add_generation_prompt":false}'`, not tested there) |
 | `--notes-prepass CHARS` | for a separate keeper only: long tool results are cut to their start, end and outcome lines before it reads them |
 | `--notes-extra JSON` | more fields for a separate keeper's requests; `'{"thinking_budget_tokens":0}'` turns thinking off on llama.cpp for a model whose template always starts it (LFM2.5) |
 | `--notes-async wait\|defer` | write the next notes in the background right after a reply; `defer` lets requests go on with the current view while there is room. Needs a server that runs two requests at once correctly (see below) or a separate keeper |
@@ -209,7 +212,7 @@ Everything else: `ctxkeeper --help`.
 | `--inplace-fit` | lower the notes threshold to the room a small window actually leaves (recommended below 24K) |
 | `--log-calls` | write every model call (main, notes, prewarm; tokens read, cached, written; seconds) to `calls.jsonl` |
 
-Measured so far (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s; one run per setting):
+Measured (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s unless noted; one run per setting):
 
 - **Window size.** On a 240K-token test stream every budget from 8K to 64K kept its 39 answers (one slip at 24K);
   24K-48K was fastest (8-9 min), 64K slower (10 min). Below 16K the notes stopped fitting in place and every cut
@@ -218,6 +221,14 @@ Measured so far (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s; one run per s
 - **Background notes** saved 14 % (18 % with `--prewarm`) on a server running two requests at once, same score. On
   vLLM with MTP speculative decoding, two requests at once returned corrupted replies on our build, so there the
   saving is not available; keep the default (notes in line).
+- **One card.** On a single B70 with a 26K view, the model keeping its own notes, the bug-fixing task came out
+  40/40 fixed, 40/40 following every rule, 7/7, in 21 min (two cards: 16); the notes took 8 % of the server's time.
+- **A separate, smaller keeper** (LFM2.5-24B-A2B, Q8_0 on llama.cpp on a second card, with `--notes-upstream`) did
+  worse and was slower. On the 240K stream: 19/39 in 38 min (the 27B as its own keeper: 39/39 in 16). On the
+  bug-fixing task, even with `--notes-prefill`: 39-40 fixed but only 20 of 40 following every rule, in 35-55 min; it
+  copied the request's instructions into the notes and missed house rules. It also reads every turn afresh, while a
+  model keeping its own notes reads its own cached view. Keep the main model as its own keeper; these options are
+  for trying other keepers.
 
 ## How it works
 
@@ -253,7 +264,10 @@ Measured so far (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s; one run per s
 
 ## Changes
 
-**1.1.0.dev0** (in development): the options above. Default behaviour is unchanged (same requests, same state).
+**1.1.0** (2026-10-16): new options, all off by default ([Added in 1.1.0](#added-in-110-all-off-by-default)): a
+separate keeper model (`--notes-upstream`, `--notes-model`, `--notes-system`, `--notes-kwargs`, `--notes-extra`,
+`--notes-prefill`, `--notes-prepass`), background notes (`--notes-async`, `--prewarm`), `--inplace-fit` for small
+windows and `--log-calls`. Default behaviour is unchanged (same requests, same state as 1.0.1).
 
 **1.0.1** (2026-10-15), found by running twelve agents through it:
 
