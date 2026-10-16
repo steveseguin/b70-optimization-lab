@@ -1,0 +1,23 @@
+### 02:22:29 campaign 21 (c21) start; queue /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE21.txt (15 lines); MemAvailable 13060 MiB
+### 02:22:29 queue checked: S08 smoke 0 900;K32 rules 0 2400;A32d rules 0 2400;A32dp rules 0 2400;K16 rules 0 2400;K08 rules 0 2400;K06 rules 0 2400;K12 rules 0 2400;K24 rules 0 2400;K48 rules 0 2400;K64 rules 0 2400;M32dp 1m 0 6000;R16 repair 2x 3600;R12 repair 2x 3600;R48 repair 2x 3600;
+### 02:22:29 stopping the Gemma service (front door state: 0 0)
+### 02:22:35 cards free; MemAvailable 13371 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: dc9d3c576425491089148174f8922f2f
+### 02:25:05 server ready after ~165 s; MemAvailable 3038 MiB
+Running as unit: ctx-keeper-proxy.service; invocation ID: e35195937be841f2b6e2d6b2c497f18b
+### 02:25:06 [S08 smoke] start; MemAvailable 3011 MiB; server totals: prompt 0 cached 0 generated 0
+### 02:27:29 [S08 smoke] done rc=0 in 144 s
+   [PASS] current budget: The project budget is now 3,381 credits. ROGER
+   [PASS] standing rule kept (ends with ROGER): The project budget is now 3,381 credits. ROGER
+   [PASS] starting budget: The project budget at the very start of this session was 7,942 credits. ROGER
+   
+   4/4 checks passed; history about 61,087 tokens in 142 s
+   ctxkeeper: 30 cuts, 60 messages archived, 0 recalls, 1 rules put back
+   proxy: cuts 30 (in place 0, failed 0, asked again 0), archived 60, recalls 0, full-rewrite failed 0, notes read 0 cached 0 written 0; background started 0 applied 0 discarded 0 waited 0 s; upstream 142.303 s (background 0 s); restarts 0
+   calls: main 34 calls 44 s read 111527 cached 0 written 138; notes 30 calls 99 s read 97854 cached 0 written 9591; largest call (read + written) 4044 tokens
+### 02:27:32 SMOKE FAILED (background notes applied: 0): background notes arms are skipped
+### 02:27:32 room beside the server is 464 MiB; no further arms
+### 02:27:32 stopping the server; MemAvailable 2102 MiB
+server state: stopped None stop_confirmed True
+host memory available while the server ran: min 2.01  1% 2.01  median 2.15 GiB  (635 samples)
+### 02:28:00 kernel log clean since 2026-10-16 02:22:29; restoring Gemma (throughput)

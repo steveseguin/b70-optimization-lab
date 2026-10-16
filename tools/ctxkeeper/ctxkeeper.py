@@ -70,6 +70,7 @@ RECIPES = {
 
 OPEN_HEAD = "[[Still open, kept in view by the context keeper while you work on it]]"
 OPEN_CHARS = 12000                                   # of a kept question that is shown; the rest is in the archive
+INPLACE_FIT_FLOOR = 1000                             # --inplace-fit never asks for notes on fewer turns than this
 PIN_HEAD = "[[NOTES kept by the context keeper: {n} earlier messages are in the archive (search it with the `recall` tool)]]"
 RECITE_HEAD = "[[RULES in force (from NOTES); apply every one that covers this before you answer]]"
 MEMORY_NOTE = """
@@ -638,7 +639,8 @@ class Keeper:
                  notes_scan: str | None = None, recall_label: str | None = None, recall_unit: str = "item",
                  empty_retry: bool = True, think_cap: int = 0, ask_notes=None, notes_model: str | None = None,
                  notes_system: str | None = None, notes_kwargs: dict | None = None, notes_prepass: int = 0,
-                 notes_async: str | None = None, prewarm: bool = False, log_calls: bool = False) -> None:
+                 notes_async: str | None = None, prewarm: bool = False, log_calls: bool = False,
+                 inplace_fit: bool = False) -> None:
         self.ask, self.root = ask, Path(state_dir)
         # ask_notes: a separate keeper model's server for the notes calls (--notes-upstream), with notes_model as its
         # model name, notes_system as its system message (default KEEPER_SYSTEM), notes_kwargs as its
@@ -652,6 +654,7 @@ class Keeper:
         self.ask_notes, self.notes_model, self.notes_kwargs = ask_notes, notes_model, notes_kwargs
         self.notes_system = notes_system or KEEPER_SYSTEM
         self.notes_prepass, self.prewarm, self.log_calls = notes_prepass, prewarm, log_calls
+        self.inplace_fit = inplace_fit
         if notes_async not in (None, "wait", "defer") or (notes_async and notes_mode != "inplace") or (prewarm and not notes_async):
             raise ValueError("--notes-async is wait or defer and needs --notes-mode inplace; --prewarm needs --notes-async")
         if notes_prepass and notes_checks in ("count", "near"):
@@ -955,12 +958,24 @@ class Keeper:
         keep_from = j if body[j].get("tool_calls") or not tail else j + 1
         noted = body[:keep_from]
         size = self.tokens(s, noted) if noted else 0
-        if size <= self.inplace_tokens or s.state.get("hold"):
+        if size <= self.inplace_threshold(s, messages, h) or s.state.get("hold"):
             return None
         found = self.opener(body)
         if (found and found[0] == "pattern") or s.state.get("kept_open") is not None:
             return None
         return noted
+
+    def inplace_threshold(self, s: Session, messages: list[dict[str, Any]], h: int) -> int:
+        """How many tokens of turns gather before in-place notes are taken: --inplace-tokens, or with --inplace-fit
+        at most 3/4 of the room the window leaves them (budget less the reply reserve, the largest turn seen, the
+        headroom, and the opening messages with the NOTES). Without it a small window fills before the turns reach
+        --inplace-tokens, and every cut is an ordinary one with the notes rewritten in full (campaign 21: 0 of 146
+        cuts in place at 8K, 0 of 85 at 12K, 34 of 35 at 16K)."""
+        if not self.inplace_fit:
+            return self.inplace_tokens
+        room = (self.budget - self.reply_reserve - max(s.state["largest_turn"], 0) - self.headroom
+                - self.tokens(s, self.fixed(s, messages, h)))
+        return min(self.inplace_tokens, max(INPLACE_FIT_FLOOR, int(0.75 * room)))
 
     def inplace_request(self, s: Session, messages: list[dict[str, Any]], h: int, noted: list[dict[str, Any]],
                         client: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -1586,6 +1601,9 @@ def main() -> None:
                     help="with --notes-mode inplace: make the next request's notes call right after a reply, in the "
                          "background; wait = the next request waits for it, defer = goes on with the current view "
                          "while it runs and the cut follows when it is done")
+    ap.add_argument("--inplace-fit", action="store_true",
+                    help="with --notes-mode inplace: lower --inplace-tokens to 3/4 of the room the window leaves, so "
+                         "that a small window still takes its notes in place (cheap) instead of rewriting them in full")
     ap.add_argument("--prewarm", action="store_true",
                     help="with --notes-async: after the notes, have the server read the start of the view the cut "
                          "will leave, so that the first request after it finds it in the prefix cache")
@@ -1618,11 +1636,12 @@ def main() -> None:
                     ask_notes=(lambda body: post_json(keeper_url + "/v1/chat/completions", body, a.timeout)) if keeper_url else None,
                     notes_model=a.notes_model, notes_system=system,
                     notes_kwargs=json.loads(a.notes_kwargs) if a.notes_kwargs else None, notes_prepass=a.notes_prepass,
-                    notes_async=a.notes_async, prewarm=a.prewarm, log_calls=a.log_calls)
+                    notes_async=a.notes_async, prewarm=a.prewarm, log_calls=a.log_calls, inplace_fit=a.inplace_fit)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper {__version__}" + (f" (recipe {a.recipe})" if a.recipe else "")
           + f": http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"
-          + (f" every {a.inplace_tokens} tokens, checks {a.notes_checks}" if a.notes_mode == "inplace" else "")
+          + (f" every {a.inplace_tokens} tokens{' (or less, to fit the window)' if a.inplace_fit else ''}, checks {a.notes_checks}"
+             if a.notes_mode == "inplace" else "")
           + (f", notes by {keeper_url}" if keeper_url else "") + (f", notes {a.notes_async} in the background" if a.notes_async else "")
           + f", state in {a.state_dir}", flush=True)
     try:

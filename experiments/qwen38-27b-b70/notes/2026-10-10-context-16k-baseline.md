@@ -2937,6 +2937,54 @@ check with `scripts/context/concurrency_check.py` (solo vs overlapped replies; g
 research server with `--overlay b70-exclusive-prefill`, then the background arms only on a configuration with no
 garbage.
 
+**c21b change at 03:35, before K06 ran:** K06 dropped from the queue. K08, 32 min in, had made 118 notes calls for
+133 agent turns (notes 1,603 s against 280 s of agent calls: 85 % of the server's time) and had 20 of 39 answers
+written, on course for its 40 min cap; a 6K window can only take more notes calls.
+
+**c21b ended 03:42 by the host memory guard; the rest relaunched as c21c with `--seqs 1`.** K08 finished (graded
+39/39, 39 min 38 s) and the guard stopped the server seconds later, at the run's end-of-task grading (1.59 GiB free;
+the same end-of-run spike as c17-first). With `--seqs 2` this server sat at 1.72-1.84 GiB free during arms (median
+1.77), about 0.3 GiB below the one-sequence campaigns (c12 median 2.13, c20f 2.05). The arms still to run need one
+request at a time, so c21c runs them on `--seqs 1` (queue `QUEUE21c.txt`: K12, K24, K48, K64, R16, R12, R48; nothing
+else changed). Kernel log clean; Gemma restored 03:46.
+
+### Campaign 21 results (c21b 02:36-03:42 with `--seqs 2`, c21c 03:46-06:18 with `--seqs 1`; kernel log clean)
+
+One run per arm, seed 0 / `repair-n40-s2x`; table from every model call the proxy logged
+(`data/2026-10-16-context-campaign21/summarize_c21.py`, `results-c21.json`). "Largest call" = the most one request
+read and wrote: the window the run really needed.
+
+| arm | window | score | min | cuts (in place) | agent calls s | notes s (share) | largest call |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| K08 | 8,192 | 39/39 | 39.6 | 146 (0) | 349 | 1,979 (85 %) | 7,360 |
+| K12 | 12,288 | 39/39 | 24.3 | 85 (0) | 316 | 1,089 (78 %) | 8,430 |
+| K16 | 16,384 | 39/39 | 10.3 | 35 (34) | 266 | 301 (53 %) | 11,718 |
+| K24 | 24,576 | 38/39 | 8.8 | 23 (23) | 287 | 188 (40 %) | 15,200 |
+| K32 | 32,768 | 39/39 | 8.7 | 17 (17) | 289 | 182 (39 %) | 18,997 |
+| K48 | 49,152 | 39/39 | 8.1 | 11 (11) | 301 | 136 (31 %) | 25,885 |
+| K64 | 65,536 | 39/39 | 10.0 | 8 (8) | 312 | 233 (43 %) | 36,397 |
+| R12 | 12,288 | 40 fixed, 38 clean (R1 36/38), 7/7 | 29.6 | 47 (7) | 1,043 | 652 (38 %) | 15,159 |
+| R16 | 16,384 | 40, 40, 7/7 | 35.1 | 19 (16) | 1,861 | 108 (6 %) | 17,057 |
+| R48 | 49,152 | 40, 40, 7/7 | 22.5 | 6 (6) | 1,244 | 36 (3 %) | 29,740 |
+
+(Repair at 24K and 32K, campaign 17: X24 40/40/40 7/7 13.1 min; XR4 40/40/40 7/7 15.6 min.) K32 repeated c13's
+X32q in every proxy count (17 cuts, 292 archived, 10 recalls, notes 342,682 read / 17,146 written): the code and the
+`--seqs 2` setting change nothing for one request at a time.
+
+Against the expectations: the stream held its score at every size, **down to 8K** (expected: 6K fails, 8K probably
+holds; 6K was not run, see above). Time is flat from 24K to 48K (8.1-8.8 min), rises above (64K: each turn reads
+more, each notes call is bigger) and **climbs steeply below 16K: 2.8x at 12K, 4.5x at 8K**. The reason is in the
+cuts column: at 12K and 8K no cut was taken in place. The window keeps room for the largest turn seen (2,266 tokens)
+besides the reply reserve, so the turns never reached the scaled threshold before the ordinary cut fired, and every
+cut rewrote the notes in full with thinking (~13 s each). That is a property of the threshold, not of the window:
+`--inplace-fit` (campaign 23, K12f/K08f) tests the fix. K24's one miss is a single run's notes slip (the arms either
+side of it held). On the repair task the floor is ~16K: R12 kept the fixes but missed the change marker twice
+(38/40 clean); R16 was perfect but slow, from the agent, not the notes (notes 6 % of the time; 10 replies thought to
+the 8,192-token cap, real deliberation, not garbage; 158K tokens written against R48's 99K): with less in view the
+agent re-derives more. Repair times vary run to run more than the stream's (one run each). Decisions: the floor is
+16K (8K on a stream whose notes are small and whose turns are short); the best speed is 24K-48K; 32K stays the
+default. Host memory with `--seqs 1`: min 1.62, median 1.97 GiB over c21c.
+
 ### Campaign 22, registered 2026-10-16 02:30 before any run (to start after campaign 21): one card, and a smaller keeper
 
 Questions: does ctxkeeper let the 27B model work on ONE card (the 26,624-token window that card holds beside the
@@ -2977,3 +3025,12 @@ are still run (the context lane scores answers), and the differences are reporte
 of the notes time that does not wait on the main call: A32d 15-30 % faster than K32 (8 min 43 s), M32dp 20-35 %
 faster than X32p (49.6 min), same scores. Pure steps make a main call wait while a notes prompt is read; if that
 eats the saving, it shows here.
+
+**Added 04:25, before campaign 23 started: K12f and K08f.** c21's K12 (39/39, 24 min 15 s) and K08 (39/39, 39 min 38 s)
+took 0 of 85 and 0 of 146 cuts in place: the scaled threshold (5,600 / 3,750) never fitted, because the window
+reserves room for the largest turn seen (2,266 tokens here), so every cut was an ordinary one with the notes
+rewritten in full (with thinking: 1,089 s and 1,979 s of notes). New option `--inplace-fit` (off by default): the
+threshold is lowered to 3/4 of the room the window leaves (at least 1,000 tokens). K12f / K08f = K12 / K08 with it,
+queued after A32dp; one request at a time, so they run even if the concurrency check fails (then only the smoke
+test and the background arms are skipped). Expectation: most cuts in place, the same 39/39, and K12f near K16's
+10 min; K08f faster than K08's 40 min but still the slowest.

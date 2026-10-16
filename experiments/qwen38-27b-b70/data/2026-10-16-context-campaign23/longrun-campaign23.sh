@@ -55,13 +55,14 @@ mline() {
 arm_window() {  # arm -> "budget inplace_tokens"
   case $1 in
     K06) echo "6144 2800" ;;   K08) echo "8192 3750" ;;   K12 | R12) echo "12288 5600" ;;
-    K16 | R16) echo "16384 7500" ;;   K24) echo "24576 11250" ;;   K32 | A32d | A32dp | M32dp) echo "32768 15000" ;;
+    K16 | R16) echo "16384 7500" ;;   K12f) echo "12288 5600" ;;   K08f) echo "8192 3750" ;;   K24) echo "24576 11250" ;;   K32 | A32d | A32dp | M32dp) echo "32768 15000" ;;
     K48 | R48) echo "49152 22500" ;;   K64) echo "65536 30000" ;;   S08) echo "8192 3000" ;;   S16) echo "16384 5000" ;;
     *) return 1 ;;
   esac
 }
 arm_async() {  # arm -> background-notes options
-  case $1 in A32d) echo "--notes-async defer" ;; A32dp | M32dp | S08 | S16) echo "--notes-async defer --prewarm" ;; *) echo "" ;; esac
+  case $1 in A32d) echo "--notes-async defer" ;; A32dp | M32dp | S08 | S16) echo "--notes-async defer --prewarm" ;;
+    K12f | K08f) echo "--inplace-fit" ;; *) echo "" ;; esac
 }
 start_proxy() {  # tag arm kind
   local tag=$1 arm=$2 kind=$3 w b i fl=()
@@ -170,10 +171,11 @@ run_line() {  # arm kind seed cap
       rc=$?
       say "[concurrency check] done rc=$rc in $((SECONDS-t0)) s (0 all same as solo, 1 some different, 2 garbage)"
       tail -4 "$O/$tag.out" | sed 's/^/   /'
-      (( rc == 0 || rc == 1 )) || { say "CHECK FAILED: no arm will run"; touch "$O/STOP-CAMPAIGN23"; }
+      (( rc == 0 || rc == 1 )) || { say "CHECK FAILED: the smoke test and the background arms are skipped"; NO_ASYNC=1; }
       wait_idle || say "server still busy after 3 min"
       return 0 ;;
     smoke)
+      (( NO_ASYNC )) && { say "[$arm smoke] skipped (the concurrency check failed)"; return 0; }
       start_proxy "$tag" "$arm" smoke || return 1
       say "[$arm smoke] start; MemAvailable $(avail) MiB; $(mline)"
       timeout -s INT -k 60 "$cap" python3 "$LAB/tools/ctxkeeper/examples/long_chat.py" --base-url "http://127.0.0.1:$PPORT/v1" \
@@ -195,7 +197,7 @@ run_line() {  # arm kind seed cap
     repair) tasks=$ODX/tasks/repair-n40-s$seed; job="${arm}__repair-n40-s$seed"; runs=$O/runs/repair ;;
     *) say "unknown kind $kind"; return 1 ;;
   esac
-  [[ -n $(arm_async "$arm") && ${NO_ASYNC:-0} == 1 ]] && { say "[$arm] skipped (the smoke test failed)"; return 0; }
+  [[ $(arm_async "$arm") == *notes-async* && ${NO_ASYNC:-0} == 1 ]] && { say "[$arm] skipped (the smoke test failed)"; return 0; }
   [[ -e $runs/jobs/$job ]] && { say "[$job] already run, skipped"; return 0; }
   mkdir -p "$runs" "$O/snap"
   start_proxy "$tag" "$arm" "$kind" || return 1
@@ -242,6 +244,7 @@ for p in $PORT $PPORT; do ss -tln | grep -q ":$p " && { say "ABORT: port $p is i
 [[ -n $(systemctl --user list-units --state=active --no-legend 'dl-*' 2>/dev/null) ]] && { say "ABORT: a download unit is running"; exit 2; }
 for u in lfm25-srv lfm25-pkg-srv ctx-keeper-proxy; do systemctl --user is-active --quiet $u && { say "ABORT: $u is running"; exit 2; }; done
 [[ "$(python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --version)" == "ctxkeeper 1.1.0.dev0" ]] || { say "ABORT: tools/ctxkeeper is not 1.1.0.dev0"; exit 2; }
+python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --inplace-fit || { say "ABORT: tools/ctxkeeper has no --inplace-fit"; exit 2; }
 cd "$CTX" || exit 2
 while read -r arm kind seed cap; do
   [[ -z $arm || $arm == \#* ]] && continue

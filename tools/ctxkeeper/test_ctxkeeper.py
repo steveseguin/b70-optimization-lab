@@ -123,6 +123,26 @@ class InPlace(unittest.TestCase):
         self.assertEqual(s.state["notes_cached_tokens"], 900 * len(model.notes_requests))
         self.assertGreater(len((Path(self.dir.name) / next(iter(keeper.sessions)) / "notes-history.jsonl").read_text().splitlines()), 1)
 
+    def test_inplace_fit_takes_notes_in_place_in_a_window_too_small_for_the_threshold(self):
+        """Campaign 21: at 8K and 12K the 0.458 x budget threshold never fitted beside the largest turn, so every
+        cut was an ordinary one with the notes rewritten in full. --inplace-fit lowers it to the room left."""
+        tools = [{"type": "function", "function": {"name": "bash"}}]
+        plain = self.run_conversation(self.keeper(LedgerModel(), budget=1600, reply_reserve=200, headroom=50,
+                                                  inplace_tokens=5000), 14, tools=tools)
+        self.assertGreater(plain.state["cuts"], 0)
+        self.assertEqual(plain.state["inplace_cuts"], 0)
+        keeper = self.keeper(LedgerModel(), budget=1600, reply_reserve=200, headroom=50, inplace_tokens=5000,
+                             inplace_fit=True)
+        fit = self.run_conversation(keeper, 14, tools=tools)
+        self.assertGreater(fit.state["inplace_cuts"], 0)
+        self.assertEqual(fit.state["inplace_failed"], 0)
+        self.assertLess(keeper.inplace_threshold(fit, conversation(14), 2), 5000)
+        self.assertGreaterEqual(keeper.inplace_threshold(fit, conversation(14), 2), ck.INPLACE_FIT_FLOOR)
+        # off by default: the threshold is the option's value
+        off = self.keeper(LedgerModel(), inplace_tokens=5000)
+        s_off = self.run_conversation(off, 2)
+        self.assertEqual(off.inplace_threshold(s_off, conversation(2), 2), 5000)
+
     def test_a_think_that_eats_the_notes_reply_is_followed_by_a_try_without_thinking(self):
         """Campaign 13, the first run on real code: the notes call thought to the token cap and wrote nothing."""
         class Thinker(LedgerModel):
