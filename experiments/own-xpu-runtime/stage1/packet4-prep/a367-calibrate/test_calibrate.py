@@ -451,6 +451,35 @@ class Math(Base):
         self.assertEqual(row['gpu_active_bytes'], 7 * 1024)
         self.assertIsNone(row['driver_shadow_bytes'])
 
+    def test_sampler_skips_process_exiting_during_scan(self):
+        # 2026-10-16 attempt 2: getsid() on a just-exited host process raised ESRCH and tripped the watcher.
+        proc = self.root / 'proc'; proc.mkdir()
+        (proc / 'meminfo').write_text('MemTotal: 200 kB\nMemAvailable: 123 kB')
+        cg = self.root / 'cgroup'; (cg / 'mock').mkdir(parents=True)
+        (cg / 'mock/memory.current').write_text('1')
+        for i in range(2):
+            p = proc / str(500 + i); p.mkdir()
+            (p / 'comm').write_text(f'VLLM::Worker_TP{i}_EP{i}')
+            (p / 'cmdline').write_bytes(b'worker\0')
+            (p / 'status').write_text('VmRSS: 9 kB\n')
+            (p / 'cgroup').write_text('0::/mock\n')
+        def getsid(pid):
+            if pid == 500:
+                raise ProcessLookupError(3, 'No such process')
+            return 999
+        with patch.object(c.os, 'getsid', side_effect=getsid):
+            row = c.snapshot(999, proc, cg)
+        self.assertIsNone(row['ranks']['0'])
+        self.assertEqual(row['ranks']['1']['rss_bytes'], 9 * 1024)
+
+    def test_output_path_too_long_for_ipc_refused(self):
+        # 2026-10-16 attempt 1: a 121-char ipc path made the API server fail before workers started.
+        long_root = '/mnt/raid-models/bench-results/flashnext-a367-calibrate-20261016T133433Z'
+        with self.assertRaisesRegex(ValueError, 'too long for vLLM ipc'):
+            c.main(['--plan', '--output', long_root])
+        ok_root = '/mnt/raid-models/bench-results/a367-20261016T135036Z'
+        self.assertLessEqual(len(ok_root + '/scratch/rpc') + 37, c.RPC_PATH_MAX)
+
     def test_missing_rss_reported_unknown(self):
         self.assertEqual(c.meminfo_status('Name: mock\n'), {})
 

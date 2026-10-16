@@ -1,0 +1,22 @@
+{
+  "schema": "flash-next.a367.attempt-review.v1",
+  "attempt": 1,
+  "unit": "fn-a367-calibrate-20261016T133433Z",
+  "output": "/mnt/raid-models/bench-results/flashnext-a367-calibrate-20261016T133433Z",
+  "launched_utc": "2026-10-16T13:47:13Z",
+  "server_exit_utc": "2026-10-16T13:48:27Z",
+  "result": "refused before model load; supervisor failure \"ValueError: server exited before plateau completed\"",
+  "root_cause": "VLLM_RPC_BASE_PATH = <output>/scratch/rpc; vLLM get_open_zmq_ipc_path appends a 36-char uuid, giving a 121-char ipc path > 107-char Unix socket limit; APIServer raised zmq.error.ZMQError before any worker started",
+  "server_error": [
+    "(APIServer pid=5698) zmq.error.ZMQError: ipc path \"/mnt/raid-models/bench-results/flashnext-a367-calibrate-20261016T133433Z/scratch/rpc/9dd38513-7746-4552-aec9-b516696091be\" is longer than 107 characters (sizeof(sockaddr_un.sun_path)). zmq.IPC_PATH_MAX_LEN constant can be used to check addr length (if it is defined). (addr='ipc:///mnt/raid-models/bench-results/flashnext-a367-calibrate-20261016T133433Z/scratch/rpc/9dd38513-7746-4552-aec9-b516696091be')"
+  ],
+  "worker_lines_in_server_log": 0,
+  "gpu_fault_lines_this_boot": 0,
+  "owners_after_exit": "none (fuser on all renderD nodes empty)",
+  "calibration_json_sha256": "f67239b39a822d14ed4ace63daec7d0949fd8fc1324583aa1c4dfea578119c15",
+  "server_log_sha256": "f22eb66bab3c83edc28783249226bdebd4da294153e99554917d1c71913b23dd",
+  "stop_json": "absent (supervisor exited on startup failure before the post-exit watch)",
+  "check_unix_and_zmq_ipc_on_raid_ntfs": "passed 13:49 UTC (AF_UNIX and venv pyzmq ipc bind/connect on /mnt/raid-models/bench-results)",
+  "remedy": "attempt 2 uses a shorter output name /mnt/raid-models/bench-results/a367-<stamp> (rpc path 101 chars); no code, seal, model, stage or approval-text change; fresh health pass and owner-window",
+  "claims": "none: no memory, startup or exit measurement"
+}

@@ -39,3 +39,30 @@ is in `data/2026-10-16-flash-next-a367-reseal/loader-audit.json`; this is a
 DT_NEEDED/import-path review, not runtime ABI qualification. Native startup's
 source guard remains mandatory. Existing protected source/archive/RAID paths
 were not accessed. No model benchmark or quality claim follows.
+
+## October 16 device attempts 1-2 and the follow-up reseal
+
+Both attempts on boot `2cba7160` stopped before any worker loaded weights, with
+zero GPU fault lines and no surviving owners. Evidence is in
+`data/2026-10-16-flash-next-a367-reseal/window-20261016T133433Z/` and
+`window-20261016T135036Z/`.
+
+1. Attempt 1 (`flashnext-a367-calibrate-20261016T133433Z`): `VLLM_RPC_BASE_PATH`
+   is `<output>/scratch/rpc`, and vLLM appends a 36-character uuid. The
+   121-character ipc path exceeded the 107-character Unix socket limit, so the
+   API server raised `zmq.error.ZMQError` during engine-client setup.
+   **Remedy:** the runbook output name is now `a367-$FN_STAMP` (101 characters),
+   and the launcher refuses longer paths before any device step. AF_UNIX and pyzmq
+   ipc sockets bind correctly on the raid NTFS mount (tested 13:49 UTC).
+2. Attempt 2 (`a367-20261016T135036Z`): the 0.5 s sampler calls `os.getsid` on
+   every `/proc` entry. A host process that exited during the scan raised
+   `ProcessLookupError` (ESRCH). The sampler caught only `FileNotFoundError`,
+   so it latched a failure and sent SIGINT to the API server while that server
+   was still in `torch.xpu` device enumeration.
+   **Remedy:** skip vanished processes, as `window_driver.owned_session_gone`
+   already does. Missing rank samples still fail the plateau gate.
+
+Two regression tests were added. Floors, watchdog, reserve, the command and
+the environment are unchanged. The seal hash changes, so the memory-floor
+exception needs the owner's new hash-bound approval.
+

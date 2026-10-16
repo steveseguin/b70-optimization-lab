@@ -23,7 +23,7 @@ cd /home/steve/llm-optimizations
 set -euo pipefail
 FN_STAMP=$(date -u +%Y%m%dT%H%M%SZ)
 FN_RECEIPTS="$PWD/data/2026-10-16-flash-next-a367-reseal/window-$FN_STAMP"
-FN_OUTPUT="/mnt/raid-models/bench-results/flashnext-a367-calibrate-$FN_STAMP"
+FN_OUTPUT="/mnt/raid-models/bench-results/a367-$FN_STAMP"  # short: vLLM ipc paths must stay <= 107 chars
 FN_UNIT="fn-a367-calibrate-$FN_STAMP"
 FN_HEALTH_UNIT="fn-a367-health-$FN_STAMP"
 mkdir "$FN_RECEIPTS"

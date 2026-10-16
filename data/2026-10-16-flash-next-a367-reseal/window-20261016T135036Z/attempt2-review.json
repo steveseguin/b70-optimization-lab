@@ -1,0 +1,19 @@
+{
+  "schema": "flash-next.a367.attempt-review.v1",
+  "attempt": 2,
+  "unit": "fn-a367-calibrate-20261016T135036Z",
+  "output": "/mnt/raid-models/bench-results/a367-20261016T135036Z",
+  "launched_utc": "2026-10-16T13:59:01Z",
+  "supervisor_exit_utc": "2026-10-16T13:59:12Z",
+  "result": "supervisor failure \"ValueError: memory/admission watcher: [Errno 3] No such process\"; one SIGINT sent to API pid 7634 at unix 1792159150.80 during torch.xpu device enumeration (import vllm)",
+  "root_cause": "a367_calibrate_load.snapshot() calls os.getsid() on every /proc entry each 0.5 s; a host process that exited between the /proc listing and getsid raised ProcessLookupError (ESRCH), which only FileNotFoundError was caught for; the Sampler latched it as a watcher failure",
+  "worker_lines_in_server_log": 0,
+  "gpu_fault_lines_this_boot": 0,
+  "owners_after_exit": "none (fuser on all renderD nodes empty)",
+  "calibration_json_sha256": "d385ae62db833042f64284c051a8f654cf7bb229daa48c6b6fe8e4986eed16e8",
+  "stop_request_sha256": "d6bb7a8772cfd55438f53450f8c84063a11e85812544eac66433845a1128c415",
+  "server_log_sha256": "6b60f754c7536a22c4780704b1fd5de6f5af44574b0888d0aa60cf7dd2f99b89",
+  "remedy": "reseal: snapshot() skips ProcessLookupError like window_driver.owned_session_gone; launcher refuses output paths whose ipc path exceeds 107 chars; 2 regression tests; seal a15e5223 -> 0ad3948b; new owner approval of the hash-bound sentence required",
+  "safety_note": "a trip of this race during weight load would SIGINT a loading multi-card server, the incident-5 pattern; retrying unchanged was rejected",
+  "claims": "none: no memory, startup or exit measurement"
+}

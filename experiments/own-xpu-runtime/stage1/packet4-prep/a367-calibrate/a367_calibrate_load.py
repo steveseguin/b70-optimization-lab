@@ -30,6 +30,7 @@ SEAL = HERE / 'seal.json'
 INTERVAL = .5
 PLATEAU = 20
 GAP = 305
+RPC_PATH_MAX = 107
 LIVE_FLOOR_KIB = 12_000_000  # A367 supervisor reserve, NOT a launch floor
 GRAPH = '{"mode":0,"cudagraph_mode":"FULL_DECODE_ONLY","cudagraph_capture_sizes":[1,2],"max_cudagraph_capture_size":2,"compile_sizes":[],"cudagraph_num_of_warmups":1}'
 
@@ -150,8 +151,8 @@ def snapshot(pid=None, proc=Path('/proc'), cgroups=Path('/sys/fs/cgroup')):
             for line in (entry / 'cgroup').read_text().splitlines():
                 if line.startswith('0::'):
                     cg_paths.add(line[3:])
-        except FileNotFoundError:
-            continue
+        except (FileNotFoundError, ProcessLookupError):
+            continue  # host process exited during the scan (getsid ESRCH, /proc ENOENT)
     for relative in sorted(cg_paths):
         target = cgroups / relative.lstrip('/') / 'memory.current'
         try:
@@ -386,6 +387,8 @@ def main(argv=None):
     args = parser.parse_args(argv)
     w.require(os.getpriority(os.PRIO_PROCESS, 0) == 19 and os.environ.get('OMP_NUM_THREADS') == '2', 'nice19 OMP2 required')
     root = args.output.absolute()
+    # vLLM binds ipc://<VLLM_RPC_BASE_PATH>/<36-char uuid>; Unix socket paths cap at 107 chars.
+    w.require(len(str(root / 'scratch/rpc')) + 37 <= RPC_PATH_MAX, 'output path too long for vLLM ipc sockets')
     command, env = command_and_environment(root)
     if args.plan:
         print(json.dumps({'command': command, 'environment': env, 'deltas': w.read(REG)['identity_deltas'],
