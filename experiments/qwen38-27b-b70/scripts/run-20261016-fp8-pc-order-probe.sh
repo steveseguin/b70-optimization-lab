@@ -55,9 +55,10 @@ wait_port() {  # a stop leaves the port in TIME_WAIT; the launcher's bind probe 
   for i in $(seq 1 120); do ss -tanH "( sport = :$PORT or dport = :$PORT )" | grep -q . || return 0; sleep 2; done
   say "port $PORT still busy"; return 1
 }
-start_server() {  # name fresh(0|1)
+start_server() {  # name fresh(0|1) [extra launcher args]
   wait_port || return 1
-  O=/mnt/fast-ai/bench-results/fp8-r314-$1-$TAG
+  local name=$1 fresh=$2; shift 2
+  O=/mnt/fast-ai/bench-results/fp8-r314-$name-$TAG
   [[ -e $O ]] && { say "ABORT: $O exists"; return 1; }
   python3 experiments/qwen38-27b-b70/scripts/run-fp8-tp1-server.py --out "$O" --port $PORT \
     --image sha256:eb8165070409959c9ce4ba4c605ebaf2a39f82ce6b755e408241ab85b08b1e04 --warmup --keep --startup-timeout 1800 \
@@ -70,22 +71,22 @@ start_server() {  # name fresh(0|1)
     --batched 832 --prefix-cache align --overlay b70-prefix-cache-exact --extra-env B70_PREFIX_CACHE_EXACT=1 \
     --serve-arg=--prefix-cache-retention-interval=6656 --seqs 1 \
     --image neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r314-state-stride \
-    --overlay b70-spec-resume-accepted --extra-env B70_SPEC_RESUME_ACCEPTED=1 --extra-env B70_SPEC_RESUME_FRESH=$2 \
+    --overlay b70-spec-resume-accepted --extra-env B70_SPEC_RESUME_ACCEPTED=1 --extra-env B70_SPEC_RESUME_FRESH=$fresh \
     --overlay b70-gdn-state-width --extra-env B70_GDN_STATE_WIDTH=1 \
-    --overlay b70-align-trace --extra-env B70_ALIGN_TRACE=1 > "$D/owner-$1.log" 2>&1 &
+    --overlay b70-align-trace --extra-env B70_ALIGN_TRACE=1 "$@" > "$D/owner-$name.log" 2>&1 &
   OWNER=$!
   local s=
   for i in $(seq 1 400); do
     s=$(python3 -c "import json;print(json.load(open('$O/state.json')).get('status'))" 2>/dev/null)
     [[ $s == ready ]] && break
-    [[ $s == failed || $s == stopped* ]] && { say "server $1 $s"; return 1; }
-    kill -0 $OWNER 2>/dev/null || { say "owner $1 exited before ready"; return 1; }
+    [[ $s == failed || $s == stopped* ]] && { say "server $name $s"; return 1; }
+    kill -0 $OWNER 2>/dev/null || { say "owner $name exited before ready"; return 1; }
     sleep 5
   done
-  [[ $s == ready ]] || { say "server $1 not ready in time"; return 1; }
+  [[ $s == ready ]] || { say "server $name not ready in time"; return 1; }
   touch "$O/cache/b70-align-trace.on"
-  say "server $1 ready (new-request count reset $2), tracing"
-  grep -o "b70_spec_resume_accepted 0.5.0: installed[^)]*)\|b70_align_trace 0.1.0: installed[^)]*)" "$O/server.log" | sort -u
+  say "server $name ready (new-request count reset $fresh), tracing"
+  grep -o "b70_spec_resume_accepted 0.5.0: installed[^)]*)\|b70_align_trace 0.[12].0: installed[^)]*)" "$O/server.log" | sort -u
 }
 probe() {  # label mode [extra args]
   local label=$1 mode=$2; shift 2
@@ -111,6 +112,17 @@ stop_server
 cmp BS0 BB0; cmp BS0 BB1; cmp BS0 BSH; cmp AS0 BS0
 cp "$O"/cache/b70-align-trace/rank0-*.jsonl "$D/trace-B1.jsonl" 2>/dev/null
 grep -o "b70_spec_resume_accepted: first new-request count reset[^)]*)" "$O/server.log" | head -2
+O=
+fi
+if [[ $PARTS == *D* ]]; then
+# D (added 19:40 after part B): reset off again, both ranks traced, paused then back to back. The A0 trace (rank 0
+# only) left 6 differing hits with offset 0; predicted: each had the stale count on rank 1.
+OWNER=
+start_server D0 0 --extra-env B70_ALIGN_TRACE_ALL_RANKS=1 || exit 3
+probe DS0 seq && probe DB0 burst || exit 3
+stop_server
+cmp DS0 DB0; cmp AS0 DS0
+for f in "$O"/cache/b70-align-trace/rank*.jsonl; do r=$(basename "$f" | cut -d- -f1); cp "$f" "$D/trace-D0-$r.jsonl"; done
 O=
 fi
 [[ $PARTS == *C* ]] || exit 0

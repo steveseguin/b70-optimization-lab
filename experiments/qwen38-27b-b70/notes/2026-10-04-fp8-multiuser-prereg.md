@@ -654,3 +654,27 @@ steps, so these six have a second cause, timing-dependent as well, not yet found
 part B measures what is left. Part B's server did not start (Errno 98: the port was still in TIME_WAIT after part
 A's stop; known, memory note), so B and C rerun with a port wait. Data: `data/2026-10-16-r314-pcorder/` (probe
 JSON, compares, `trace-A0.jsonl`), `/mnt/fast-ai/bench-results/fp8-r314-A0-20261016-pcorder/`.
+
+### Result, part B (19:22-19:35 EDT, reset on): every order exact
+
+| Run (one server, `b70-spec-resume-accepted` 0.5.0 with the new-request reset on, traced) | Equal to BS0 |
+| --- | --- |
+| BB0 back to back, suite order | **64/64** |
+| BB1 back to back, shuffled | **64/64** |
+| BSH paused, shuffled | 64/64 |
+| (BS0 paused, suite order, against part A's AS0, the other server) | 64/64 |
+
+The trace shows bias 0 on every first step of BB0 and BB1 (56 hits each). The six part-A differences that had bias 0
+on rank 0 are equal too, although the reset only acts on rows whose count is not 1 and part A's trace logged count 1
+for them. Explanation proposed at 19:40 (before part D): **the trace logs rank 0 only, and the two TP ranks each
+keep their own CPU count array and race their own copy.** On rank 1 the stale copy can land after `add_request` while
+on rank 0 it landed before, so rank 1 started those six from the wrong state for its half of the heads. The runner
+then stopped at a bash syntax error (I edited the script while it ran; bash re-read a shifted offset), so part C did
+not run; Gemma was put back as designed.
+
+### Part D, registered 19:40 EDT before launch (runs before C in the fourth start)
+
+Server D0: reset off (as A0), both ranks traced (`B70_ALIGN_TRACE_ALL_RANKS=1`); DS0 paused suite order, then DB0
+back to back. Prediction: DS0 equals AS0 (64/64); DB0 differs on about a third of the hits; **every differing hit has
+bias above 0 on at least one rank at its first step, and every hit with bias above 0 on either rank differs.** If
+some differing hit has bias 0 on both ranks, the second cause is real and still open. Then part C (C2) as planned.
