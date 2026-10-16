@@ -524,3 +524,40 @@ reference; otherwise draft keeping is not used and the reason is found first. Sp
 second-server numbers (16 users: long 56.4 / 56.7, short 427.5 / 428.6; 4 users: long 54.5 / 55.4, short 227.0 / 232.5)
 with the mean acceptance length from the server log. P1 counts flips out of 192 to estimate the rate of the 16:29 flip;
 it is not a gate. About 50 minutes.
+
+### Result (17:26-18:07 EDT): draft keeping is exact and faster; the prefix-cache flip repeats
+
+| Arm | Long prompts together, pass 1 / 2 | 2026-10-15 | Short ladder together, pass 1 / 2 | 2026-10-15 | Frozen reference |
+| --- | ---: | ---: | ---: | ---: | --- |
+| R16 (16 users) | 61.69 / 62.30 | 56.4 / 56.7 | **465.33 / 467.65** | 427.50 / 428.64 | exact (64/64 x3) |
+| R4 (4 users) | 56.42 / 57.09 | 54.5 / 55.4 | 236.24 / 233.89 | 227.04 / 232.51 | exact (64/64 x3) |
+
+Every pass 64/64 equal to solo on long and short prompts. The servers' speculation counters show why: both R16 and R4
+drafted exactly 69,150 tokens and accepted exactly 33,498 over the whole run (oracle + passes, long + short), so each
+request went through the same verify steps it goes through alone, whoever shares the server. Without draft keeping the
+same work took 71,745 drafted at 4 users and 83,195 at 16 (mean acceptance length 3.26 and 2.84, now 3.42). On the
+long suite at 16 users the ten-second acceptance windows are 3.3-5.5 (were 1.0-2.9). At 16 users drafting is now
+ahead of drafting off (465 against 419 on R314, 2026-10-15), where the two used to tie.
+
+**P1** (the 16:29 setup again, normal long suite, three passes): **62/64, 63/64, 63/64** (88.5 / 89.6 / 89.8 tok/s).
+Four flips, on other requests than at 16:29: docs6k-c013 (pass 1) and docs4k-c026 (pass 3) differ at their first
+token, i.e. in the prompt read itself; code2k-c041 (pass 1) and prose8k-c062 (pass 2) at their second. The solo
+answers of the two prefix-cache servers are identical (0 of 64 differ), as are those of two cache-off servers. So:
+deterministic alone, a timing-dependent difference with two users, only with the mixed suite (the one-family
+detector never flipped in 576 answers). Not from the 0.3.0 count restore: a request between two prompt pieces sits
+out the other user's decode step, but its stored count is 1 (the align postprocess writes 1 for prompt rows).
+Kernel log clean; Gemma restored. Data: `/mnt/fast-ai/bench-results/fp8-r314-{R16,R4,P1}-20261016-drafts/`.
+
+## Addendum, 2026-10-16 18:12 EDT: what the prefix-cache flip needs (written before it runs)
+
+P1 differs from the exact 2026-10-15 recipe in two things at once: prefix caching and 832-token prompt steps. Three
+fresh servers, normal long suite, three passes, long only, draft keeping off:
+
+| Arm | Users | Drafting | Prefix caching | Prompt step | Question |
+| --- | ---: | --- | --- | ---: | --- |
+| Q1 | 2 | off | on | 832 | is drafting needed? |
+| Q2 | 2 | on | off | 832 | is it caching or the step size? |
+| Q3 | 1 | on | on | 832 | does it need a second user at all (repeats after the solo pass, blocks reused)? |
+
+Q2 needs `MU_BATCHED=832` (new, only sets `--batched`). Reading: flips out of 192 per arm, against P1's 4 of 192. Not a
+gate. About 45 minutes. Same wrapper, `TAG=20261016-pcwhy`.

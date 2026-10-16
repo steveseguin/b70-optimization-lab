@@ -511,6 +511,9 @@ def main():
                 name = name.replace('tp2-pure', 'tp2-inv-pure')
             if os.environ.get('MU_LOADCOPY_FIX', '1') == '1':  # validated on R310 two-card, 2026-10-04 11:07 EDT
                 pure += LOADCOPY_FIX
+            if os.environ.get('MU_BATCHED'):  # research: prompt step size without prefix caching (the last --batched wins)
+                pure += ['--batched', os.environ['MU_BATCHED']]
+                name = name.replace('-pure', f"-pure-b{os.environ['MU_BATCHED']}", 1)
             if os.environ.get('MU_PREFIX_CACHE') == '1':
                 # prefix caching the way the context lane runs it (hit == cold needs one-block prompt steps; the last
                 # --batched wins); with drafting it needs b70-spec-resume-accepted >= 0.3.0 (campaign 24b/24c, 2026-10-16)
