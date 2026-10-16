@@ -285,7 +285,7 @@ submitted 30 ms apart, so each one waits in the queue and starts in the step aft
 | queued, suite order, with the fix below (another fresh server) | **64/64** |
 | queued, shuffled, with the fix | **64/64** |
 
-**Fix we used:** overlay 0.5.0 (lab commit `f1b74930a`). After the stock `_prepare_inputs`, for rows whose request
+**Fix we used:** overlay 0.5.0 (lab commit `54747d7d6`). After the stock `_prepare_inputs`, for rows whose request
 was not in the previous step and has no stored count (new requests), when align mode is on, it writes 1 into
 `num_accepted_tokens_cpu[row]`, `num_accepted_tokens.np[row]` and `num_accepted_tokens.gpu[row]` before
 `preprocess_mamba`. Unit tests with a stub that lands the pending copy at the event wait: the stock code gives the
@@ -306,7 +306,7 @@ new row 4, the fix gives 1.
   public and switch to commit permalinks: `aa3cc5f00` for the bug-1 patch, overlay and tests; `114b850f9` and
   `eb1a8ecd9` for the overlay in bugs 2 and 3.
 - Bugs 1-3 cite the committed overlay 0.2.0 and 0.3.0 only (a 0.4.0 with optional draft keeping is being
-  tested separately and is not part of any report); bug 4 cites 0.5.0 (`f1b74930a`).
+  tested separately and is not part of any report); bug 4 cites 0.5.0 (`54747d7d6`).
 - Bug 3 residual, 2026-10-16 16:36: with 0.3.0 a 2-user drafting + prefix-caching server flipped one long answer out
   of 128 at a near tie (`notes/2026-10-04-fp8-multiuser-prereg.md`, 16:29 result). 19:35 update: the probable cause
   is bug 4 (added below, found the same evening); the two-user re-check with the bug-4 fix (arm C2) decides it.
