@@ -10,6 +10,8 @@ pre-copy reads from, with the last step before it in which any request could hav
 A hit block written after the request that filled it, by another request, is the leftover the probe looks for.
 
   analyze-align-trace.py TRACE.jsonl --runs BT ST --results DIR [--nsb 5] [--limit 12]
+  analyze-align-trace.py RANK0.jsonl RANK1.jsonl --by-rank --runs BT ST --results DIR
+    (one file per TP rank, B70_ALIGN_TRACE_ALL_RANKS=1: first-step bias of each request on every rank)
 """
 import argparse
 import json
@@ -43,7 +45,10 @@ def main():
     ap.add_argument('--nsb', type=int, default=5)
     ap.add_argument('--limit', type=int, default=12, help='steps per request to print')
     ap.add_argument('--max-prompts', type=int, default=8)
+    ap.add_argument('--by-rank', action='store_true', help='one trace file per rank; table only')
     a = ap.parse_args()
+    if a.by_rank:
+        return by_rank(a)
     steps = load(a.trace)
     res = {r: json.loads((Path(a.results) / f'{r}.json').read_text()) for r in a.runs}
     ids = sorted(res[a.runs[0]]['rows'])
@@ -106,6 +111,32 @@ def main():
                     line += f' | last writes of block {srcb}: ' + ', '.join(
                         f'step {w[0]} {w[1][0]}:{w[1][1]:03d} {w[2]}' for w in last)
                 print(line)
+
+
+def by_rank(a):
+    res = {r: json.loads((Path(a.results) / f'{r}.json').read_text()) for r in a.runs}
+    ids = sorted(res[a.runs[0]]['rows'])
+    idx_of = {pid: int(pid.rsplit('-c', 1)[1]) for pid in ids}
+    first_bias, hit = [], {}
+    for p in a.trace:
+        seen = {}
+        for s in load([p]):
+            for n in (s.get('so') or {}).get('new', ()):
+                hit[key(n['rid'])] = n['computed'] > 0
+            for row in s['rows']:
+                seen.setdefault(key(row['rid']), row.get('bias') or 0)
+        first_bias.append(seen)
+    table = defaultdict(list)
+    for pid in ids:
+        k = (a.runs[1], idx_of[pid])
+        biases = tuple(fb.get(k) for fb in first_bias)
+        differs = res[a.runs[0]]['rows'][pid]['token_ids'] != res[a.runs[1]]['rows'].get(pid, {}).get('token_ids')
+        table[(hit.get(k, False), tuple((b or 0) > 0 for b in biases), differs)].append(f'{pid}{list(biases)}')
+    print(f'first steps of {a.runs[1]} per rank file {[Path(p).name for p in a.trace]}: '
+          f'(hit, bias>0 per rank, differs from {a.runs[0]}): count')
+    for kk in sorted(table):
+        print(f'  hit={kk[0]!s:<5} bias>0={kk[1]} differs={kk[2]!s:<5} {len(table[kk])}'
+              + (f'  {" ".join(table[kk][:12])}' if kk[2] != any(kk[1]) else ''))
 
 
 if __name__ == '__main__':
