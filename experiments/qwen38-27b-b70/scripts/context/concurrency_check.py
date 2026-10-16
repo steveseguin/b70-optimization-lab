@@ -8,9 +8,13 @@ request's prompt is read while the other decodes, and both decode together), and
 solo reply. B and D share one long prompt up to the question (both served from the prefix cache), as a notes call
 and the agent's call do.
 
-  python3 concurrency_check.py --base-url http://127.0.0.1:18196/v1 [--rounds 3] [--json out.json]
+  python3 concurrency_check.py --base-url http://127.0.0.1:18196/v1 [--rounds 3] [--json out.json] [--reference old.json]
 
-Exit status 0 when every overlapped reply equals its solo reply; 1 when one differs; 2 when one is garbage.
+With --reference (an earlier run's --json, from a server known to be exact), each solo reply must also equal that
+run's solo reply: a lone request on a multi-sequence MTP server once came back spliced (campaign 23).
+
+Exit status 0 when every overlapped reply equals its solo reply (and every solo reply its reference); 1 when one
+differs; 2 when one is garbage.
 Standard library only.
 """
 import argparse
@@ -56,6 +60,7 @@ def main() -> int:
     ap.add_argument("--max-tokens", type=int, default=400)
     ap.add_argument("--timeout", type=float, default=600)
     ap.add_argument("--json", default="")
+    ap.add_argument("--reference", default="", help="an earlier --json whose solo replies are known to be exact")
     a = ap.parse_args()
     model = a.model or post_get(a.base_url + "/models")
     url = a.base_url + "/chat/completions"
@@ -87,6 +92,16 @@ def main() -> int:
         print(f"solo {name}: {solo[name]['written']} tokens, {solo[name]['finish']}, {solo[name]['s']} s"
               + ("  GARBAGE" if garbage(solo[name]["text"]) else ""), flush=True)
     rows, worst = [], 0
+    ref_diff = []
+    if a.reference:
+        ref = json.load(open(a.reference))["solo"]
+        for name in cases:
+            same = name in ref and solo[name]["text"] == ref[name]["text"]
+            solo[name]["same_as_reference"] = same
+            if not same:
+                ref_diff.append(name)
+                worst = max(worst, 2 if garbage(solo[name]["text"]) else 1)
+            print(f"solo {name} vs reference: " + ("same" if same else "DIFFERENT"), flush=True)
     pairs = [("A", "B", 1.0), ("B", "A", 0.3), ("A", "C", 1.0), ("C", "B", 0.5), ("B", "D", 0.5), ("D", "B", 1.0)]
     for rnd in range(a.rounds):
         for first, second, delay in pairs:
@@ -107,7 +122,8 @@ def main() -> int:
                       + f", {r['written']} tokens, {r['finish']}, {r['s']} s", flush=True)
     n_bad = sum(r["garbage"] for r in rows)
     n_diff = sum(not r["same_as_solo"] for r in rows)
-    print(f"\n{len(rows)} overlapped replies: {n_bad} garbage, {n_diff} different from solo")
+    print(f"\n{len(rows)} overlapped replies: {n_bad} garbage, {n_diff} different from solo"
+          + (f"; solo replies different from the reference: {len(ref_diff)} ({' '.join(ref_diff)})" if a.reference else ""))
     if a.json:
         json.dump({"solo": solo, "rows": rows}, open(a.json, "w"), indent=1)
     return worst

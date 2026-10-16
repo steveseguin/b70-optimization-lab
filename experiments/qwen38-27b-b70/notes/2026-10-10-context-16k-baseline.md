@@ -3201,3 +3201,20 @@ fixed smoke test runs first); everything else as registered for
 - Checked from the public URLs: checksums, pip (wheel and archive), Docker build from the archive URL, and the demo
   through that image to the Gemma LAN server with a 4K view and `--inplace-fit`: 4/4 in 60 s
   (`data/2026-10-16-context-campaign22/release-1.1.0-check/`).
+
+### Campaign 24 (2026-10-16 12:55, registered before any run): drafting with two requests, with all four multi-user fixes
+
+- **Why.** Campaigns 21 and 23 concluded that MTP5 with `--seqs 2` corrupts replies. Neither server had
+  `b70-fa-decode-per-seq` (and campaign 21 had no `b70-exclusive-prefill`). The 2026-10-04 multi-user work (repeated
+  on a second server 2026-10-15) found drafting exact at 2 to 16 users on R314 with all four fixes: pure steps,
+  per-sequence attention, `b70-gdn-state-width`, `b70-spec-resume-accepted`. What the context server adds is prefix
+  caching (`align` + `b70-prefix-cache-exact`) and a shared long prompt, never tested with drafting and two requests.
+- **Server:** campaign 23's (R314, TP2, 262K, `--seqs 2`, MTP5 with the INT4 draft and shortlist, `--fa-verify-rows`,
+  all its overlays) plus `FA_PER_SEQ=1`. Runner `data/2026-10-16-context-campaign24/longrun-campaign24.sh` (campaign
+  23's, plus `CHECK_REF`/`CHECK_STRICT`), ctxkeeper 1.1.0.
+- **Queue:** X check (3 rounds; `--reference` = campaign 23b's MTP0 solo replies; `CHECK_STRICT=1 CHECK_FAIL_STOP=1`:
+  any garbage or any reply different from solo or from the reference ends the campaign); S16 smoke; K32 (240K rules
+  s0, notes in line: the control on this server); A32dp (`--notes-async defer --prewarm`).
+- **Expectations:** check 0 garbage, 0 different, every solo reply equal to the MTP0 reference; K32 39/39 in about
+  9 min (campaign 21's MTP5 K32: 8.7); A32dp 39/39 and 10-20 % faster than this K32. If the check fails, the memory
+  and docs claim stands ("even with the four fixes") and the failing pairs are recorded.
