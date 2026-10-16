@@ -1,0 +1,45 @@
+{
+  "schema": "flash-next.a367.model-reconciliation.v1",
+  "passed": true,
+  "verdict": "USB launch model matches certified publisher identity; zero model file differences. Historical receipt file was replaced by a later NVMe verification and remains byte-mismatched.",
+  "model_root": "/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8",
+  "revision": "bcd9f01ddc9cff2316eb84281bebcd5b058bddce",
+  "model_payload_receipt": {
+    "path": "data/2026-10-16-flash-next-a367-prep/model-payload.json",
+    "sha256": "db7802c2605a683a092848a00b2e4e9d1429a914947d38d2f18dd0e57934b72d"
+  },
+  "historical_receipt_observed": {
+    "path": "data/2026-10-16-flash-next-a367-prep/historical-receipt-observed.json",
+    "sha256": "f7a9a494428f022f2943fd50bac984203c9d00749833bb4d8188606473c72e45"
+  },
+  "historical_expected_sha256": "6ae22291119e8c8a01597bda9fe4b1fb5850912655ec188e363a88eb6de58470",
+  "historical_actual_sha256": "f7a9a494428f022f2943fd50bac984203c9d00749833bb4d8188606473c72e45",
+  "historical_expected_bytes_recovered": false,
+  "historical_contract": {
+    "path": "repro/qwen38-flash-next-fp8-tp4-mtp3-b70/model-contract.json",
+    "sha256": "1afca7679641d2c5fede9bb9b96f017bebcc9c5ecdde605482dfaaf58bcaf276"
+  },
+  "record_identity": {
+    "path": "repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/identity.json",
+    "sha256": "e87e2231469e313f84cbc87ca1e803cab36faf7b76145146b0d9edbb94507238"
+  },
+  "historical_original_path_evidence": {
+    "path": "notes/2026-08-27-storage-relocation-and-flash-next-localization.md",
+    "sha256": "a2b689b17147161bef3aff9a189583a933c1e44396e4d892d05132d44489050d"
+  },
+  "original_documented_model_root": "/mnt/fast-ai/llm-models/.Qwen3.8-Flash-Next-FP8.incoming-20260827",
+  "current_historical_model_root": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+  "current_historical_completed_utc": "2026-09-03T13:25:39+00:00",
+  "file_count_compared": 144,
+  "file_differences": [],
+  "missing_files": [],
+  "contract_equal": true,
+  "publisher_manifest": {
+    "packet1_path": "experiments/own-xpu-runtime/stage2/packet1/metadata/hf-model-info.json",
+    "packet1_sha256": "bc69301a1f528f69711ecebbd2d0187fef34d6df37e77b441cf7d0d24c74cb09",
+    "path": "/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8/.cache/huggingface/trees/bcd9f01ddc9cff2316eb84281bebcd5b058bddce.json",
+    "sha256": "4a3793bd4a795ea6761b3d322200b4a1fd8300cdeb75cc127d330d513f590eb2"
+  },
+  "active_packet_changed": false,
+  "admission_status": "NOT ADMITTED: review obsolete historical dependency and reseal; require new <=1h USB payload receipt in future owner-window; preparation receipt is not launch approval"
+}

@@ -1,0 +1,7 @@
+--- a/experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate/a367_calibrate_load.py
++++ b/experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate/a367_calibrate_load.py
+@@ -38,2 +38,4 @@
+     result = {k: Path(v) for k, v in w.read(w.PREREG)['defaults'].items()}
++    # Reviewed reconstruction proposal: exact source bytes, new isolated path.
++    result['source'] = Path('/home/steve/src/vllm-flashnext-a367-clean-20261016')
+     # The certified A367 launcher uses the retained USB publisher copy.

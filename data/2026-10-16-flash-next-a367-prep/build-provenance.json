@@ -1,0 +1,115 @@
+{
+  "method": "Static ELF symbol/string/NEEDED/comment inspection only; no dlopen, imports, binaries or compiler execution",
+  "exports": [
+    {
+      "path": "/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70/vllm_xpu_kernels/_C.abi3.so",
+      "matching_dynamic_symbols": [],
+      "embedded_option_strings": []
+    },
+    {
+      "path": "/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70/vllm_xpu_kernels/_moe_C.abi3.so",
+      "matching_dynamic_symbols": [],
+      "embedded_option_strings": []
+    },
+    {
+      "path": "/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70/vllm_xpu_kernels/_xpu_C.abi3.so",
+      "matching_dynamic_symbols": [
+        "00000000009834a0 T get_onednn_version[abi:cxx11]()"
+      ],
+      "embedded_option_strings": [
+        "-cl-fp32-correctly-rounded-divide-sqrt",
+        "-ftarget-register-alloc-mode=pvc:-ze-intel-enable-auto-large-GRF-mode",
+        "-ze-intel-enable-auto-large-GRF-mode"
+      ]
+    },
+    {
+      "path": "/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70/vllm_xpu_kernels/libgdn_attn_kernels_xe_2.so",
+      "matching_dynamic_symbols": [],
+      "embedded_option_strings": [
+        "-ze-intel-enable-auto-large-GRF-mode"
+      ]
+    },
+    {
+      "path": "/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70/vllm_xpu_kernels/libgrouped_gemm_xe_2.so",
+      "matching_dynamic_symbols": [],
+      "embedded_option_strings": [
+        "-ze-intel-enable-auto-large-GRF-mode"
+      ]
+    }
+  ],
+  "retained_build_records": [
+    {
+      "path": "/mnt/usb-models/qwen38-build/xpu-gdn-roundstate-e421889/CMakeCache.txt",
+      "sha256": "d2ce45392ebf0663db5875fce35af8506262eda0e6ba6ea95b6dd80dc90db771",
+      "selected_lines": [
+        "CMAKE_BUILD_TYPE:STRING=Release",
+        "GDN_KERNELS_ENABLED:BOOL=ON",
+        "MOE_KERNELS_ENABLED:BOOL=OFF",
+        "SYCL_LIBRARY:FILEPATH=/opt/intel/oneapi/compiler/2025.3/lib/libsycl.so",
+        "SYCL_LIBRARY_DIR:FILEPATH=/opt/intel/oneapi/compiler/2025.3/lib",
+        "VLLM_XPU_ENABLE_XE_DEFAULT:BOOL=OFF"
+      ]
+    },
+    {
+      "path": "/mnt/usb-models/qwen38-build/xpu-gdn-roundstate-e421889/build.ninja",
+      "sha256": "26f1a3b6c72c4913c8f0ff8e6c8a924eeb8f5d0154f9a631c0c6e87b9f63e088",
+      "selected_lines": [
+        "  DEFINES = -DCL_TARGET_OPENCL_VERSION=300 -DDNNL_ENABLE_CONCURRENT_EXEC -DDNNL_ENABLE_CPU_ISA_HINTS -DDNNL_ENABLE_MAX_CPU_ISA -DDNNL_GPU_ISA_XE2 -DDNNL_X64=1 -DENABLE_LLVM_WCONVERSION -DGEMMSTONE_BUILD_12HP -DGEMMSTONE_BUILD_12LP -DGEMMSTONE_BUILD_12P7 -DGEMMSTONE_BUILD_12P8 -DGEMMSTONE_BUILD_XE2 -DGEMMSTONE_BUILD_XE3 -DGEMMSTONE_BUILD_XE3P -DGEMMSTONE_CONFIG -DNGEN_CONFIG -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS",
+        "  DEFINES = -DCL_TARGET_OPENCL_VERSION=300 -DDNNL_ENABLE_CONCURRENT_EXEC -DDNNL_ENABLE_CPU_ISA_HINTS -DDNNL_ENABLE_MAX_CPU_ISA -DDNNL_GPU_ISA_XE3 -DDNNL_X64=1 -DENABLE_LLVM_WCONVERSION -DGEMMSTONE_BUILD_12HP -DGEMMSTONE_BUILD_12LP -DGEMMSTONE_BUILD_12P7 -DGEMMSTONE_BUILD_12P8 -DGEMMSTONE_BUILD_XE2 -DGEMMSTONE_BUILD_XE3 -DGEMMSTONE_BUILD_XE3P -DGEMMSTONE_CONFIG -DNGEN_CONFIG -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS",
+        "  DEFINES = -DCL_TARGET_OPENCL_VERSION=300 -DDNNL_ENABLE_CONCURRENT_EXEC -DDNNL_ENABLE_CPU_ISA_HINTS -DDNNL_ENABLE_MAX_CPU_ISA -DDNNL_GPU_ISA_XE3P -DDNNL_GPU_ISA_XE3P_35_10 -DDNNL_X64=1 -DENABLE_LLVM_WCONVERSION -DGEMMSTONE_BUILD_12HP -DGEMMSTONE_BUILD_12LP -DGEMMSTONE_BUILD_12P7 -DGEMMSTONE_BUILD_12P8 -DGEMMSTONE_BUILD_XE2 -DGEMMSTONE_BUILD_XE3 -DGEMMSTONE_BUILD_XE3P -DGEMMSTONE_CONFIG -DNGEN_CONFIG -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS",
+        "  DEFINES = -DCL_TARGET_OPENCL_VERSION=300 -DDNNL_ENABLE_CONCURRENT_EXEC -DDNNL_ENABLE_CPU_ISA_HINTS -DDNNL_ENABLE_MAX_CPU_ISA -DDNNL_GPU_ISA_XE3P -DDNNL_GPU_ISA_XE3P_35_11 -DDNNL_X64=1 -DENABLE_LLVM_WCONVERSION -DGEMMSTONE_BUILD_12HP -DGEMMSTONE_BUILD_12LP -DGEMMSTONE_BUILD_12P7 -DGEMMSTONE_BUILD_12P8 -DGEMMSTONE_BUILD_XE2 -DGEMMSTONE_BUILD_XE3 -DGEMMSTONE_BUILD_XE3P -DGEMMSTONE_CONFIG -DNGEN_CONFIG -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS",
+        "  DEFINES = -DCL_TARGET_OPENCL_VERSION=300 -DDNNL_ENABLE_CONCURRENT_EXEC -DDNNL_ENABLE_CPU_ISA_HINTS -DDNNL_ENABLE_MAX_CPU_ISA -DDNNL_GPU_ISA_XE3P -DDNNL_GPU_ISA_XE3P_UNKNOWN -DDNNL_X64=1 -DENABLE_LLVM_WCONVERSION -DGEMMSTONE_BUILD_12HP -DGEMMSTONE_BUILD_12LP -DGEMMSTONE_BUILD_12P7 -DGEMMSTONE_BUILD_12P8 -DGEMMSTONE_BUILD_XE2 -DGEMMSTONE_BUILD_XE3 -DGEMMSTONE_BUILD_XE3P -DGEMMSTONE_CONFIG -DNGEN_CONFIG -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS",
+        "  DEFINES = -DCL_TARGET_OPENCL_VERSION=300 -DDNNL_ENABLE_CONCURRENT_EXEC -DDNNL_ENABLE_CPU_ISA_HINTS -DDNNL_ENABLE_MAX_CPU_ISA -DDNNL_GPU_ISA_XEHP -DDNNL_X64=1 -DENABLE_LLVM_WCONVERSION -DGEMMSTONE_BUILD_12HP -DGEMMSTONE_BUILD_12LP -DGEMMSTONE_BUILD_12P7 -DGEMMSTONE_BUILD_12P8 -DGEMMSTONE_BUILD_XE2 -DGEMMSTONE_BUILD_XE3 -DGEMMSTONE_BUILD_XE3P -DGEMMSTONE_CONFIG -DNGEN_CONFIG -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS",
+        "  DEFINES = -DCL_TARGET_OPENCL_VERSION=300 -DDNNL_ENABLE_CONCURRENT_EXEC -DDNNL_ENABLE_CPU_ISA_HINTS -DDNNL_ENABLE_MAX_CPU_ISA -DDNNL_GPU_ISA_XEHPC -DDNNL_X64=1 -DENABLE_LLVM_WCONVERSION -DGEMMSTONE_BUILD_12HP -DGEMMSTONE_BUILD_12LP -DGEMMSTONE_BUILD_12P7 -DGEMMSTONE_BUILD_12P8 -DGEMMSTONE_BUILD_XE2 -DGEMMSTONE_BUILD_XE3 -DGEMMSTONE_BUILD_XE3P -DGEMMSTONE_CONFIG -DNGEN_CONFIG -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS",
+        "  DEFINES = -DCL_TARGET_OPENCL_VERSION=300 -DDNNL_ENABLE_CONCURRENT_EXEC -DDNNL_ENABLE_CPU_ISA_HINTS -DDNNL_ENABLE_MAX_CPU_ISA -DDNNL_GPU_ISA_XEHPG -DDNNL_X64=1 -DENABLE_LLVM_WCONVERSION -DGEMMSTONE_BUILD_12HP -DGEMMSTONE_BUILD_12LP -DGEMMSTONE_BUILD_12P7 -DGEMMSTONE_BUILD_12P8 -DGEMMSTONE_BUILD_XE2 -DGEMMSTONE_BUILD_XE3 -DGEMMSTONE_BUILD_XE3P -DGEMMSTONE_CONFIG -DNGEN_CONFIG -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS",
+        "  DEFINES = -DCL_TARGET_OPENCL_VERSION=300 -DDNNL_ENABLE_CONCURRENT_EXEC -DDNNL_ENABLE_CPU_ISA_HINTS -DDNNL_ENABLE_MAX_CPU_ISA -DDNNL_GPU_ISA_XELP -DDNNL_X64=1 -DENABLE_LLVM_WCONVERSION -DGEMMSTONE_BUILD_12HP -DGEMMSTONE_BUILD_12LP -DGEMMSTONE_BUILD_12P7 -DGEMMSTONE_BUILD_12P8 -DGEMMSTONE_BUILD_XE2 -DGEMMSTONE_BUILD_XE3 -DGEMMSTONE_BUILD_XE3P -DGEMMSTONE_CONFIG -DNGEN_CONFIG -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS",
+        "  DEFINES = -DCL_TARGET_OPENCL_VERSION=300 -DDNNL_ENABLE_CONCURRENT_EXEC -DDNNL_ENABLE_CPU_ISA_HINTS -DDNNL_ENABLE_MAX_CPU_ISA -DDNNL_STATUS_NODISCARD -DDNNL_X64=1 -DGEMMSTONE_CONFIG -DNGEN_CONFIG -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS",
+        "  DEFINES = -DCL_TARGET_OPENCL_VERSION=300 -DDNNL_ENABLE_CONCURRENT_EXEC -DDNNL_ENABLE_CPU_ISA_HINTS -DDNNL_ENABLE_MAX_CPU_ISA -DDNNL_X64=1 -DENABLE_LLVM_WCONVERSION -DGEMMSTONE_BUILD_12HP -DGEMMSTONE_BUILD_12LP -DGEMMSTONE_BUILD_12P7 -DGEMMSTONE_BUILD_12P8 -DGEMMSTONE_BUILD_XE2 -DGEMMSTONE_BUILD_XE3 -DGEMMSTONE_BUILD_XE3P -DGEMMSTONE_CONFIG -DNGEN_CONFIG -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS",
+        "  DEFINES = -DCL_TARGET_OPENCL_VERSION=300 -DDNNL_ENABLE_CONCURRENT_EXEC -DDNNL_ENABLE_CPU_ISA_HINTS -DDNNL_ENABLE_MAX_CPU_ISA -DDNNL_X64=1 -DENABLE_LLVM_WCONVERSION -DGEMMSTONE_CONFIG -DNGEN_CONFIG -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS",
+        "  DEFINES = -DCL_TARGET_OPENCL_VERSION=300 -DDNNL_ENABLE_CONCURRENT_EXEC -DDNNL_ENABLE_CPU_ISA_HINTS -DDNNL_ENABLE_MAX_CPU_ISA -DDNNL_X64=1 -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS",
+        "  DEFINES = -DPy_LIMITED_API=3 -DTORCH_EXTENSION_NAME=_C -DUSE_C10D_GLOO -DUSE_C10D_XCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -D_C_EXPORTS",
+        "  DEFINES = -DPy_LIMITED_API=3 -DTORCH_EXTENSION_NAME=_vllm_fa2_C -DUSE_C10D_GLOO -DUSE_C10D_XCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -D_vllm_fa2_C_EXPORTS",
+        "  DEFINES = -DPy_LIMITED_API=3 -DTORCH_EXTENSION_NAME=_xpu_C -DUSE_C10D_GLOO -DUSE_C10D_XCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -D_xpu_C_EXPORTS",
+        "  DEFINES = -DUSE_C10D_GLOO -DUSE_C10D_XCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -DVLLM_XPU_ENABLE_XE2 -Dattn_kernels_xe_2_EXPORTS",
+        "  DEFINES = -DUSE_C10D_GLOO -DUSE_C10D_XCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -DVLLM_XPU_ENABLE_XE2 -Dgdn_attn_kernels_xe_2_EXPORTS",
+        "  DEFINES = -DUSE_C10D_GLOO -DUSE_C10D_XCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -DVLLM_XPU_ENABLE_XE2 -Dmqa_logits_kernels_xe_2_EXPORTS",
+        "  DEFINES = -DUSE_C10D_GLOO -DUSE_C10D_XCCL -DUSE_DISTRIBUTED -DUSE_RPC -DUSE_TENSORPIPE -Dxpumem_allocator_EXPORTS",
+        "  FLAGS = -O3 -DNDEBUG",
+        "  FLAGS = -Werror -include /mnt/usb-models/qwen38-build/src-gdn-roundstate-e421889/csrc/sycl_first.h -O3 -DNDEBUG -fPIC -fsycl -O3 -DNDEBUG -fsycl-targets=spir64_gen -DVLLM_XPU_ENABLE_XE2 -DVLLM_GDN_ENABLED -DVLLM_MQA_LOGITS_ENABLED",
+        "  FLAGS = -Werror -include /mnt/usb-models/qwen38-build/src-gdn-roundstate-e421889/csrc/sycl_first.h -O3 -DNDEBUG -std=gnu++20 -fPIC -fsycl -O3 -DNDEBUG -fsycl-targets=spir64_gen -DCUTLASS_ENABLE_HEADERS_ONLY -DCUTLASS_ENABLE_SYCL -DSYCL_INTEL_TARGET -DCUTLASS_VERSIONS_GENERATED -ftemplate-backtrace-limit=0 -fdiagnostics-color=always -fno-sycl-instrument-device-code -fPIC",
+        "  FLAGS = -Werror -include /mnt/usb-models/qwen38-build/src-gdn-roundstate-e421889/csrc/sycl_first.h -O3 -DNDEBUG -std=gnu++20 -fPIC -fsycl -O3 -DNDEBUG -fsycl-targets=spir64_gen -DVLLM_XPU_ENABLE_XE2 -DVLLM_GDN_ENABLED -DVLLM_MQA_LOGITS_ENABLED",
+        "  FLAGS = -fiopenmp  -ffp-model=precise -fno-reciprocal-math -Wno-unknown-warning-option -Wsign-compare -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wall -Wno-unknown-pragmas -Wundef -fvisibility=internal   -fPIC -Wformat -Wformat-security -D_FORTIFY_SOURCE=2  -Wmissing-field-initializers  -Wno-pass-failed -Wno-tautological-compare -Wno-pass-failed -Wno-recommended-option  -DITT_API_IPT_SUPPORT -O3 -DNDEBUG -std=c99",
+        "  FLAGS = -fno-sycl-id-queries-fit-in-int -Wno-#pragma-messages -fsycl -fiopenmp -fvisibility-inlines-hidden  -ffp-model=precise -fno-reciprocal-math -Wno-unknown-warning-option -Wsign-compare -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wall -Wno-unknown-pragmas -Wundef -fvisibility=internal   -fPIC -Wformat -Wformat-security -D_FORTIFY_SOURCE=2  -Wmissing-field-initializers  -Wno-pass-failed -Wno-tautological-compare -Wno-pass-failed -Wno-recommended-option  -DITT_API_IPT_SUPPORT -O3 -DNDEBUG",
+        "  FLAGS = -fno-sycl-id-queries-fit-in-int -Wno-#pragma-messages -fsycl -fiopenmp -fvisibility-inlines-hidden  -ffp-model=precise -fno-reciprocal-math -Wno-unknown-warning-option -Wsign-compare -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wall -Wno-unknown-pragmas -Wundef -fvisibility=internal   -fPIC -Wformat -Wformat-security -D_FORTIFY_SOURCE=2  -Wmissing-field-initializers  -Wno-pass-failed -Wno-tautological-compare -Wno-pass-failed -Wno-recommended-option  -O3 -DNDEBUG",
+        "  FLAGS = -fno-sycl-id-queries-fit-in-int -Wno-#pragma-messages -fsycl -fiopenmp -fvisibility-inlines-hidden  -ffp-model=precise -fno-reciprocal-math -Wno-unknown-warning-option -Wsign-compare -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wall -Wno-unknown-pragmas -Wundef -fvisibility=internal   -fPIC -Wformat -Wformat-security -D_FORTIFY_SOURCE=2  -Wmissing-field-initializers  -Wno-pass-failed -Wno-tautological-compare -Wno-pass-failed -Wno-recommended-option  -Wbitfield-enum-conversion -Wbool-conversion -Wconstant-conversion -Wenum-conversion -Wimplicit-int-conversion -Wliteral-conversion -Wnon-literal-null-conversion -Wnull-conversion  -Wno-implicit-int-conversion -O3 -DNDEBUG",
+        "  FLAGS = -fno-sycl-id-queries-fit-in-int -Wno-#pragma-messages -fsycl -fiopenmp -fvisibility-inlines-hidden  -ffp-model=precise -fno-reciprocal-math -Wno-unknown-warning-option -Wsign-compare -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wall -Wno-unknown-pragmas -Wundef -fvisibility=internal   -fPIC -Wformat -Wformat-security -D_FORTIFY_SOURCE=2  -Wmissing-field-initializers  -Wno-pass-failed -Wno-tautological-compare -Wno-pass-failed -Wno-recommended-option  -Wbitfield-enum-conversion -Wbool-conversion -Wconstant-conversion -Wenum-conversion -Wimplicit-int-conversion -Wliteral-conversion -Wnon-literal-null-conversion -Wnull-conversion -O3 -DNDEBUG",
+        "  LINK_FLAGS = -shared -fsycl -fsycl-max-parallel-link-jobs=16 -flink-huge-device-code -Xspirv-translator -spirv-ext=+SPV_INTEL_split_barrier,+SPV_INTEL_2d_block_io,+SPV_INTEL_subgroup_matrix_multiply_accumulate -fsycl-targets=spir64_gen -Xsycl-target-backend=spir64_gen \"-device pvc,bmg,bmg-g21-a0,bmg-g31-a0 -internal_options -cl-intel-256-GRF-per-thread\" -Wl,--dependency-file=csrc/xpu/attn/xe_2/CMakeFiles/attn_kernels_xe_2.dir/link.d",
+        "  LINK_FLAGS = -shared -fsycl -fsycl-max-parallel-link-jobs=16 -flink-huge-device-code -Xspirv-translator -spirv-ext=+SPV_INTEL_split_barrier,+SPV_INTEL_2d_block_io,+SPV_INTEL_subgroup_matrix_multiply_accumulate -fsycl-targets=spir64_gen -Xsycl-target-backend=spir64_gen \"-device pvc,bmg,bmg-g21-a0,bmg-g31-a0 -internal_options -cl-intel-256-GRF-per-thread\" -Wl,--dependency-file=csrc/xpu/gdn_attn/xe_2/CMakeFiles/gdn_attn_kernels_xe_2.dir/link.d",
+        "  LINK_FLAGS = -shared -fsycl -fsycl-max-parallel-link-jobs=16 -flink-huge-device-code -Xspirv-translator -spirv-ext=+SPV_INTEL_split_barrier,+SPV_INTEL_2d_block_io,+SPV_INTEL_subgroup_matrix_multiply_accumulate -fsycl-targets=spir64_gen -Xsycl-target-backend=spir64_gen \"-device pvc,bmg,bmg-g21-a0,bmg-g31-a0 -internal_options -cl-intel-256-GRF-per-thread\" -Wl,--dependency-file=csrc/xpu/mqa_logits/xe_2/CMakeFiles/mqa_logits_kernels_xe_2.dir/link.d",
+        "  LINK_FLAGS = -shared -fsycl -fsycl-max-parallel-link-jobs=16 -flink-huge-device-code -Xspirv-translator -spirv-ext=+SPV_INTEL_split_barrier,+SPV_INTEL_2d_block_io,+SPV_INTEL_subgroup_matrix_multiply_accumulate -fsycl-targets=spir64_gen -Xsycl-target-backend=spir64_gen \"-device pvc,bmg,bmg-g21-a0,bmg-g31-a0\" -Wl,--dependency-file=CMakeFiles/_C.dir/link.d",
+        "  LINK_FLAGS = -shared -fsycl -fsycl-max-parallel-link-jobs=16 -flink-huge-device-code -Xspirv-translator -spirv-ext=+SPV_INTEL_split_barrier,+SPV_INTEL_2d_block_io,+SPV_INTEL_subgroup_matrix_multiply_accumulate -fsycl-targets=spir64_gen -Xsycl-target-backend=spir64_gen \"-device pvc,bmg,bmg-g21-a0,bmg-g31-a0\" -Wl,--dependency-file=CMakeFiles/_vllm_fa2_C.dir/link.d",
+        "  LINK_FLAGS = -shared -fsycl -fsycl-max-parallel-link-jobs=16 -flink-huge-device-code -Xspirv-translator -spirv-ext=+SPV_INTEL_split_barrier,+SPV_INTEL_2d_block_io,+SPV_INTEL_subgroup_matrix_multiply_accumulate -fsycl-targets=spir64_gen -Xsycl-target-backend=spir64_gen \"-device pvc,bmg,bmg-g21-a0,bmg-g31-a0\" -Wl,--dependency-file=CMakeFiles/_xpu_C.dir/link.d",
+        "  LINK_FLAGS = -shared -fsycl -fsycl-max-parallel-link-jobs=16 -flink-huge-device-code -Xspirv-translator -spirv-ext=+SPV_INTEL_split_barrier,+SPV_INTEL_2d_block_io,+SPV_INTEL_subgroup_matrix_multiply_accumulate -fsycl-targets=spir64_gen -Xsycl-target-backend=spir64_gen \"-device pvc,bmg,bmg-g21-a0,bmg-g31-a0\" -Wl,--dependency-file=CMakeFiles/xpumem_allocator.dir/link.d"
+      ]
+    },
+    {
+      "path": "/mnt/usb-models/qwen38-build/xpu-gdn-roundstate-e421889/CMakeFiles/rules.ninja",
+      "sha256": "48853ca4572ed39ad3f33155733c9470f4de670e6fd5b26d7390125edb314e01",
+      "selected_lines": [
+        "  command = $PRE_LINK && /opt/intel/oneapi/compiler/2025.3/bin/icpx -fPIC $LANGUAGE_COMPILE_FLAGS $ARCH_FLAGS $LINK_FLAGS $SONAME_FLAG$SONAME -o $TARGET_FILE $in $LINK_PATH $LINK_LIBRARIES && $POST_BUILD",
+        "  command = ${LAUNCHER}${CODE_CHECK}/opt/intel/oneapi/compiler/2025.3/bin/icpx $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in"
+      ]
+    }
+  ],
+  "compiler": "/opt/intel/oneapi/compiler/2025.3",
+  "SYCL_LIBRARY": "/opt/intel/oneapi/compiler/2025.3/lib/libsycl.so",
+  "SYCL_LIBRARY_DIR": "/opt/intel/oneapi/compiler/2025.3/lib",
+  "rebuilt": [],
+  "limitation": "Embedded option strings are evidence of those strings, not recovery of every compiler invocation. Full invocation flags below come from the retained build.ninja, hash-bound separately. Reuse exact stage bytes; any rebuild must requalify its oracle.",
+  "retained_build_xpu_C": {
+    "path": "/mnt/usb-models/qwen38-build/xpu-gdn-roundstate-e421889/_xpu_C.abi3.so",
+    "sha256": "6b95dc90c25bb0f9c2503805e4184648ddcac089ec54ec65fe7eeb13ab2b097b",
+    "matches_certified_stage": true
+  },
+  "sealed_stage_abi_caveat": "Nine DSOs need libsycl.so.8 and report 2025.3.3; xpumem_allocator.abi3.so needs libsycl.so.9 and reports 2026.0.0. All ten exactly match the frozen manifest. Preserve this historical hybrid; no new build-era substitution or claim of complete loader qualification."
+}
