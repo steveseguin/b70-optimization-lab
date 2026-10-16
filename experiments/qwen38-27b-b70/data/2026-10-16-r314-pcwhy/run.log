@@ -1,0 +1,36 @@
+### 18:07:14 stopping the Gemma service (front door state: 0 0)
+### 18:07:20 arm Q1 (MU_PREFIX_CACHE=1 MU_LONG_SUITE=) -> /mnt/fast-ai/bench-results/fp8-r314-Q1-20261016-pcwhy
+[review 10-16 18:07:20] multi-user campaign start; git c9d7ea431
+[review 10-16 18:07:30] preflight-health: rc=0
+[review 10-16 18:09:50] tp2-pb8-pure-pc-faseq-mtp0-s2: ready 
+[review 10-16 18:20:41] tp2-pb8-pure-pc-faseq-mtp0-s2-long-concurrency: rc=3
+[review 10-16 18:20:41] tp2-pb8-pure-pc-faseq-mtp0-s2: LONG prompts, pass 1: 64/64 equal to solo, 55.74 generated tok/s together, 292864 prompt tokens from the cache
+[review 10-16 18:20:41] tp2-pb8-pure-pc-faseq-mtp0-s2: LONG prompts, pass 2: 64/64 equal to solo, 55.79 generated tok/s together, 292864 prompt tokens from the cache
+[review 10-16 18:20:41] tp2-pb8-pure-pc-faseq-mtp0-s2: LONG prompts, pass 3: 64/64 equal to solo, 55.84 generated tok/s together, 292864 prompt tokens from the cache
+[review 10-16 18:20:49] tp2-pb8-pure-pc-faseq-mtp0-s2: final stopped stop_confirmed=True
+[review 10-16 18:20:49] === multi-user campaign complete (cards left empty) ===
+### 18:20:49 arm Q2 (MU_MTP=1 MU_BATCHED=832 MU_LONG_SUITE=) -> /mnt/fast-ai/bench-results/fp8-r314-Q2-20261016-pcwhy
+[review 10-16 18:20:49] multi-user campaign start; git 105d67064
+[review 10-16 18:20:58] preflight-health: rc=0
+[review 10-16 18:24:16] tp2-pb8-pure-b832-faseq-mtp5-s2: ready 
+[review 10-16 18:35:52] tp2-pb8-pure-b832-faseq-mtp5-s2-long-concurrency: rc=0
+[review 10-16 18:35:52] tp2-pb8-pure-b832-faseq-mtp5-s2: LONG prompts, pass 1: 64/64 equal to solo, 44.14 generated tok/s together, 0 prompt tokens from the cache
+[review 10-16 18:35:52] tp2-pb8-pure-b832-faseq-mtp5-s2: LONG prompts, pass 2: 64/64 equal to solo, 44.32 generated tok/s together, 0 prompt tokens from the cache
+[review 10-16 18:35:52] tp2-pb8-pure-b832-faseq-mtp5-s2: LONG prompts, pass 3: 64/64 equal to solo, 44.03 generated tok/s together, 0 prompt tokens from the cache
+[review 10-16 18:36:00] tp2-pb8-pure-b832-faseq-mtp5-s2: final stopped stop_confirmed=True
+[review 10-16 18:36:00] === multi-user campaign complete (cards left empty) ===
+### 18:36:00 arm Q3 (MU_MTP=1 MU_PREFIX_CACHE=1 MU_SEQS=1 MU_LONG_SUITE=) -> /mnt/fast-ai/bench-results/fp8-r314-Q3-20261016-pcwhy
+[review 10-16 18:36:00] multi-user campaign start; git 105d67064
+[review 10-16 18:36:10] preflight-health: rc=0
+[review 10-16 18:39:30] tp2-pb8-pure-pc-faseq-mtp5-s1: ready 
+[review 10-16 18:46:48] tp2-pb8-pure-pc-faseq-mtp5-s1-long-concurrency: rc=3
+[review 10-16 18:46:48] tp2-pb8-pure-pc-faseq-mtp5-s1: LONG prompts, pass 1: 38/64 equal to solo, 65.97 generated tok/s together, 239616 prompt tokens from the cache
+[review 10-16 18:46:48] tp2-pb8-pure-pc-faseq-mtp5-s1: LONG prompts, pass 2: 37/64 equal to solo, 61.77 generated tok/s together, 239616 prompt tokens from the cache
+[review 10-16 18:46:48] tp2-pb8-pure-pc-faseq-mtp5-s1: LONG prompts, pass 3: 39/64 equal to solo, 68.56 generated tok/s together, 239616 prompt tokens from the cache
+[review 10-16 18:46:58] tp2-pb8-pure-pc-faseq-mtp5-s1: final stopped stop_confirmed=True
+[review 10-16 18:46:58] === multi-user campaign complete (cards left empty) ===
+### 18:46:58 kernel log clean since 2026-10-16 18:07:14; Gemma back on its throughput recipe
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 18:51:29 diagnostic 20261016-pcwhy complete

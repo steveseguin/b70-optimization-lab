@@ -561,3 +561,46 @@ fresh servers, normal long suite, three passes, long only, draft keeping off:
 
 Q2 needs `MU_BATCHED=832` (new, only sets `--batched`). Reading: flips out of 192 per arm, against P1's 4 of 192. Not a
 gate. About 45 minutes. Same wrapper, `TAG=20261016-pcwhy`.
+
+### Result (18:07-18:51 EDT): drafting and caching are both needed, and a second user is not
+
+| Arm | Users | Drafting | Prefix caching | Long prompts, pass 1 / 2 / 3 equal to solo | Generated tok/s together |
+| --- | ---: | --- | --- | --- | --- |
+| Q1 | 2 | off | on | 64/64, 64/64, 64/64 | 55.7 / 55.8 / 55.8 |
+| Q2 | 2 | on | off (832-token steps) | 64/64, 64/64, 64/64 | 44.1 / 44.3 / 44.0 |
+| Q3 | 1 | on | on | **38/64, 37/64, 39/64** | 66.0 / 61.8 / 68.6 |
+
+Q3 is far worse than P1 (two users, 1-2 of 64 per pass). The three Q3 passes also disagree with each other (25-27 of 64
+equal pairwise; 25 of the 64 prompts gave three or four different answers over the oracle and three passes), so it is
+not one stable alternative answer. Every differing answer is a prompt that started from a cache hit: `prose2k` (1,700
+tokens, no reusable block once drafting moves the hit back) never differs (0 of 24), every other family does. Most
+differ at the first or second generated token (a few at 4, 10, 63), so the state read from the cache, or what the
+read puts in the request's own block, is not what the solo pass read. The answers stay fluent (other continuations,
+not garbage). What changes between the oracle pass and a pass: the client sends all 64 at once, so with one sequence
+the server runs them back to back, each starting the moment the previous one ends, in arrival order (random: the
+first five of pass 1 were c032, c006, c021, c050, c009); the oracle sends one, waits for its answer, sends the next,
+always in suite order. The two prefix-cache servers' oracles were identical (P1), so the paused fixed-order pass is
+reproducible. Kernel log clean; Gemma restored. Data: `/mnt/fast-ai/bench-results/fp8-r314-{Q1,Q2,Q3}-20261016-pcwhy/`.
+
+## Addendum, 2026-10-16 18:56 EDT: order or timing? (written before it runs)
+
+Two readings fit Q3. (a) Leftovers: a cached read picks up something left in reused memory by whichever request ran
+before it, so the answer follows the order. (b) Timing: a request that starts while the previous one's last step is
+still on the cards reads something before it is ready. One server in the Q3 setup (R314, one sequence, drafting on,
+prefix caching with the exact overlay, the multi-user overlays) plus `b70-align-trace` (new, debug only: logs per
+step the align pre-copy's columns, bias and the row's recurrent-state block ids, and the scheduler's hits and new
+blocks; CPU values only, no syncs; logs only while a flag file exists). Probe:
+`scripts/probe-pc-order-vs-timing.py`, the 64 long prompts with the bench's suffixes, 128 tokens, in this order:
+
+| Run | Order | Pause | Trace |
+| --- | --- | --- | --- |
+| S0 | suite order, cold cache | 1 s after each answer | off |
+| S1 | suite order (now every family's first prompt hits too) | 1 s | off |
+| SH | seeded shuffle | 1 s | off |
+| B0 | suite order, sent 30 ms apart (queued, back to back) | none | off |
+| BT | as B0 | none | on |
+| ST | as S1 | 1 s | on |
+
+Reading: S1 and SH equal to S0 and B0 not means timing; SH not equal means order (leftovers); S1 not equal means the
+pause is not enough or hits differ from cold. BT and ST give the traces to compare for the prompts that differ.
+Not a gate. About 40 minutes. Wrapper: `scripts/run-20261016-fp8-pc-order-probe.sh`.
