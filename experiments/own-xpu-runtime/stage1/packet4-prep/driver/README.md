@@ -1,5 +1,15 @@
 # A367 extraction worker driver
 
+**October 16 shared-code reseal:** calibration uses a separate explicit
+`calibration_repo_pins` set and the reviewed reconciliation. Fixture `repo_pins`
+and default paths remain unchanged: extraction still refuses the changed
+packet1b reference/test receipt. The current reference is **not** approved as
+an A367 oracle. CPU dispatch tests now read only the clean reconstructed source;
+they test shared controls, not fixture admission or reference parity. See
+[review decisions](../a367-calibrate/RESEAL-REVIEW.md) and the
+[new CPU receipt](../../../../../data/2026-10-16-flash-next-a367-reseal/cpu-tests.json).
+
+
 CPU preparation only, 2026-10-10. **59 tests pass, zero failures/errors/skips.**
 [Test receipt](test-receipt.json), [read-only environment audit](environment-audit.json),
 [printed launch plan](launch-plan.json), [conditional window and 45-minute budget](../WINDOW-RUNBOOK.md).

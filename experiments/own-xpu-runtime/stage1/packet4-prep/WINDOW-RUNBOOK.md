@@ -1,5 +1,12 @@
 # Flash-only extraction window — CPU prepared, admission blocked
 
+**October 16 calibration update:** use the [resealed calibration launch runbook](a367-calibrate/LAUNCH-RUNBOOK.md).
+Its reviewed reconciliation supersedes the historical-receipt admission blocker
+only for zero-generation calibration. Fixture extraction below stays blocked on
+its original reference/test-receipt pins; those changed files are not approved
+A367 oracles. All previous approval text is stale after resealing.
+
+
 **NOT READY to launch on the current host.** The [worker driver](driver/README.md)
 is implemented and CPU-tested. The [read-only environment audit](driver/environment-audit.json)
 now verifies all 18 A367 stage members on the existing read-only external mount.
@@ -222,7 +229,9 @@ This acknowledges the unknown loading-memory risk and retains the original
 12,000,000 KiB live watchdog reserve. It supplies no fixture approval and
 changes no default. No exception or new approval was created during CPU prep.
 The halt, absent FAULT markers, fresh health, idle ownership, 75-member seal,
-source/stage checks and historical model-receipt blocker still apply.
+source/stage checks still apply. The October 16 pinned reconciliation replaces
+the historical-receipt blocker only for calibration; fresh USB payload hashing
+remains mandatory.
 
 Reserve **45 minutes for calibration alone**: 6 minutes prior gap/admission,
 2 bounded health, up to 20 for load and plateau, 5 graceful teardown, 6 for the

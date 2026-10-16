@@ -1,6 +1,6 @@
 {
   "schema": "own-xpu-runtime.packet4.a367-calibration-preregistration.v1",
-  "status": "CPU PREPARED; no native run; owner halt/admission pending",
+  "status": "CPU RESEALED; zero generation; owner floor/storage and fresh launch gates pending",
   "recipe": "A367",
   "generation_requests": 0,
   "sample_interval_seconds": 0.5,
@@ -31,6 +31,18 @@
     {
       "change": "nice19, OMP_NUM_THREADS=2 instead of historical 1; fresh run-local cache/IPC/evidence paths",
       "scope": "Explicit task host limit and safe evidence isolation; TORCH_TRACE retained; stage/source/model and all compute selectors unchanged; no host settings changed"
+    },
+    {
+      "change": "Source path /home/steve/src/vllm-flashnext-a367-clean-20261016; identical 2305 Python hashes",
+      "scope": "Only calibration paths(); shared fixture defaults, source commit, stage, model and compute selectors unchanged"
+    },
+    {
+      "change": "Pinned historical reconciliation replaces obsolete origin receipt dependency for calibration only",
+      "scope": "Expected/observed historical comparison remains failed in audit; fresh <=1h full USB payload receipt still required"
+    },
+    {
+      "change": "Explicit calibration_repo_pins; fixture-only dependencies excluded from zero-generation admission",
+      "scope": "Original fixture pins remain enforced for extraction; 3ebd0d2b1 reference arithmetic is not accepted as A367 oracle"
     }
   ]
 }

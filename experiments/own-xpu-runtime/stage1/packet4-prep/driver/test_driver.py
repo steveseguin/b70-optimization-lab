@@ -32,7 +32,7 @@ def fake_vllm():
             parent, attr = name.rsplit('.',1)
             setattr(sys.modules[parent],attr,sys.modules[name])
     sys.modules['vllm']._packet4_mock=True
-    sys.modules['vllm'].__file__='/home/steve/src/vllm-current-main/vllm/__init__.py'
+    sys.modules['vllm'].__file__='/home/steve/src/vllm-flashnext-a367-clean-20261016/vllm/__init__.py'
     sys.modules['vllm.v1.executor.multiproc_executor'].MultiprocExecutor=type('Executor',(),{})
     class Worker:
         def __init__(self, rank, vllm_config, **kw):
@@ -56,7 +56,7 @@ def subprocess_rank(root, rank):
     """Execute certified init_worker AST with dependencies mocked, then real hook transport."""
     fake_vllm()
     # Real spawn bootstrap execution, with all vLLM dependencies mocked.
-    os.environ['PACKET4_SOURCE']='/home/steve/src/vllm-current-main'
+    os.environ['PACKET4_SOURCE']='/home/steve/src/vllm-flashnext-a367-clean-20261016'
     runpy.run_path(str(w.HERE/'server_entry.py'),run_name='__mp_main__')
     assert sys.modules['vllm.v1.utils'].shutdown is sg.request_and_wait
     assert sys.modules['vllm.v1.engine.utils'].shutdown is sg.request_and_wait
@@ -65,7 +65,7 @@ def subprocess_rank(root, rank):
     import torch
     from extract_fixtures import Recorder
     from mock_comparator import mock_identity, EAGER
-    source = Path('/home/steve/src/vllm-current-main/vllm/v1/worker/worker_base.py')
+    source = Path('/home/steve/src/vllm-flashnext-a367-clean-20261016/vllm/v1/worker/worker_base.py')
     w.require(w.sha(source) == w.read(w.PREREG)['source_pins']['vllm/v1/worker/worker_base.py'], 'test source drift')
     tree = ast.parse(source.read_text())
     cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'WorkerWrapperBase')
@@ -403,7 +403,7 @@ class ControlTests(unittest.TestCase):
             watch=w.Watch(root,'normal',boot)
             with patch.object(w,'journal',side_effect=ValueError('journal unavailable')):watch.run()
             self.assertIn('unavailable',watch.failed);self.assertTrue((root/'STOP.json').exists())
-    def test_real_seals(self): self.assertEqual(w.verify_repo()['patch_seal_members'],75)
+    def test_real_seals(self): self.assertEqual(w.verify_repo(scope='calibration')['patch_seal_members'],75)
     def test_tampered_seal(self):
         p=copy.deepcopy(w.read(w.PREREG)); p['repo_pins'][next(iter(p['repo_pins']))]='0'*64
         with self.assertRaisesRegex(ValueError,'seal mismatch'): w.verify_repo(p)

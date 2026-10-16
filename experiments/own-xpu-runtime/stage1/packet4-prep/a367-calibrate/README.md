@@ -5,14 +5,17 @@ launched a model or used a GPU. Attempt 8 used the experimental mmap adapter,
 faulted before ready and cannot supply this measurement. Read the corrected
 [admission review](../MEMORY-ADMISSION-REVISION.md#measured-on-2026-10-11-attempt-8)
 and [fourth-incident note](../../../../../notes/2026-10-11-attempt8-fourth-incident.md).
-The host halt and the historical model-verification receipt mismatch remain
-blockers. No source, stage, model, host setting, FAULT marker or old receipt is
-changed by this packet.
+The October 16 coordinator review is applied and resealed; see the
+[dependency decisions](RESEAL-REVIEW.md) and [exact launch runbook](LAUNCH-RUNBOOK.md).
+Storage repair, the owner's new hash-bound calibration floor approval, and fresh
+launch gates remain. This packet has not supplied any of those approvals.
+No stage, model, host setting, FAULT marker or old receipt was changed.
 
 ## Recipe and declared differences
 
 The [certified guide](../../../../../repro/qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/README.md)
-uses `/home/steve/.venvs/vllm-xpu`, source `6d872457`, and the rebuilt extension
+uses `/home/steve/.venvs/vllm-xpu`, source `6d872457` reconstructed at
+`/home/steve/src/vllm-flashnext-a367-clean-20261016`, and the rebuilt extension
 at `/mnt/usb-models/qwen38-build/runtime-gdn-roundstate-bbae3c5-b70`.
 The model is the launcher's USB publisher copy at
 `/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8`, revision
@@ -93,9 +96,14 @@ operate any LTX/systemd unit. Only port 19980 is used in a later native run.
 The 75 patch/bundle seal members, frozen four-script packet, all 2,305 source
 Python files, 18 loadable stage members, collective libraries, installed
 runtime versions, placement, tuned map and model metadata are checked using
-the packet-4 byte audit. The historical model receipt mismatch is **not silently
-repinned**. Fresh full payload verification (within one hour) is additionally
-required. The seal pins the shared supervisor/bootstrap/cleanup implementation.
+the explicit `calibration_repo_pins` byte audit. The reviewed, separately pinned
+reconciliation supersedes the obsolete historical receipt admission dependency
+for this zero-generation calibration only. Its failed historical comparison is
+retained in `environment.json`. All 144 retained digests match the publisher
+manifest and USB preparation receipt. Fresh full USB payload verification
+(within one hour, bound by owner-window hash) remains independently mandatory.
+The seal pins the shared supervisor/bootstrap/cleanup implementation and driver
+seal. Fixture pins stay frozen and block fixture admission on their known drift.
 Admission, health freshness, ownership and actual capacity are rechecked after
 the potentially slow byte audit. A 60 GiB free-disk reserve is retained.
 
@@ -156,23 +164,16 @@ existing reserve/fixture budget. A failed or partial run yields no proposal.
 
 ## Commands for the later owner window
 
-CPU plan, with a new absolute output path whose parent already exists:
-
-```bash
-nice -n 19 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate/a367_calibrate_load.py --plan --output "$CALIBRATION"
-```
-
-After owner halt resolution, fresh bounded health and all admission receipts,
-in the owner's durable terminal (never an agent shell or automatic unit):
-
-```bash
-nice -n 19 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate/a367_calibrate_load.py --execute --owner-window "$OWNER_WINDOW" --health-receipt "$HEALTH_RECEIPT" --payload-receipt "$PAYLOAD_RECEIPT" --output "$CALIBRATION"
-```
+Follow [LAUNCH-RUNBOOK.md](LAUNCH-RUNBOOK.md) in order. It provides the repaired
+RAID storage admission, CPU plan/audit, fresh USB re-hash, four-card health,
+owner-window fields, exact durable-unit command, and post-exit watch checks.
+No command there was launched by this CPU preparation. The unit has no automatic
+restart or forced kill timeout; it is created only in the later owner window.
 
 After a complete successful receipt, CPU derivation:
 
 ```bash
-nice -n 19 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate/derive_floor.py --run "$CALIBRATION" --output "$FLOOR_PROPOSAL"
+nice -n 19 ionice -c 3 taskset -c 4-15,20-31 env OMP_NUM_THREADS=2 python3 -B experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate/derive_floor.py --run "$CALIBRATION" --output "$FLOOR_PROPOSAL"
 ```
 
 The output contains the arithmetic and hash-bound evidence, a proposed complete
@@ -191,11 +192,13 @@ window with its own fresh health, actual capacity and 305-second gap checks.
 ## CPU tests
 
 ```bash
-nice -n 19 env OMP_NUM_THREADS=2 python3 -B -m unittest discover -s experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate -p test_calibrate.py -v
+nice -n 19 ionice -c 3 taskset -c 4-15,20-31 env OMP_NUM_THREADS=2 python3 -B -m unittest discover -s experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate -p test_calibrate.py -v
 ```
 
 The standard-library tests use mocked launchers, sessions, clocks, HTTP and
 proc/cgroup files. They never import Torch/vLLM, run a server, access a GPU,
 launch a health probe or contact any endpoint. Temporary synthetic approvals
 and receipts are removed by `TemporaryDirectory`. Their samples are not
-measurements. [test-receipt.json](test-receipt.json) records the CPU check.
+measurements. [test-receipt.json](test-receipt.json) retains the original CPU check; the
+[October 16 receipt](../../../../../data/2026-10-16-flash-next-a367-reseal/cpu-tests.json)
+records this reseal's calibration, shared-driver and payload-verifier checks.

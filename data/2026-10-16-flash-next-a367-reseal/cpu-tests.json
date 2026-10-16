@@ -1,0 +1,55 @@
+{
+  "utc": "2026-10-16T05:59:12.251708+00:00",
+  "cpu_only": true,
+  "priority": "nice19 ionice3 cores4-15,20-31 max2jobs OMP2 python3-B",
+  "suites": [
+    {
+      "suite": "calibration",
+      "tests": 58,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "passed": true,
+      "log": "data/2026-10-16-flash-next-a367-reseal/calibration-tests.log",
+      "sha256": "4680e69658cb01755c0452bcf4283dbfeb8abe3af99975b4f023e128f4afd9ec",
+      "exit_code": 0
+    },
+    {
+      "suite": "driver",
+      "tests": 59,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "passed": true,
+      "log": "data/2026-10-16-flash-next-a367-reseal/driver-tests.log",
+      "sha256": "c1764816d8b034825aa0242987e751a826d407a62b1146dce0132aee06b809bf",
+      "exit_code": 0
+    },
+    {
+      "suite": "payload",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "passed": true,
+      "log": "data/2026-10-16-flash-next-a367-reseal/payload-tests.log",
+      "sha256": "a6140f15244be86d3536ee0c0ed22b175fbb42ae915763f6e77244c2715ceb43",
+      "exit_code": 0
+    }
+  ],
+  "total_tests": 132,
+  "passed": true,
+  "native_model_imports": false,
+  "torch_used": "CPU tensors only in shared driver mocks",
+  "device_programs_executed": 0,
+  "model_launches": 0,
+  "scope": "zero-generation calibration controls and reconciliation, shared mock driver controls, payload helper and tree verifier; no fixture oracle approval",
+  "seals": {
+    "experiments/own-xpu-runtime/stage1/packet4-prep/driver/driver-seal.json": "d97d1ee16b76743ff1c818a1a5dc2d34cb25d7883077aa5ab25eab303f84aa93",
+    "experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate/seal.json": "69f22335288682a82a9df0c0ef6ea718cfa08cb3da6cd77b7144251cb1cb7934"
+  },
+  "verifier_breakdown": {
+    "launch_payload_helper": 6,
+    "shared_tree_verifier": 9
+  }
+}

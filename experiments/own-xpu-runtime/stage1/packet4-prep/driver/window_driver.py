@@ -208,9 +208,11 @@ def verify_admission(owner, health, boot, now, output, rows, fault_paths):
     require(not conflicts(rows), 'ltx/vLLM/ComfyUI process running')
 
 
-def verify_repo(p= None):
+def verify_repo(p=None, *, scope='fixture'):
     p = p or read(PREREG)
-    for relative, expected in p['repo_pins'].items():
+    require(scope in ('fixture', 'calibration'), 'unknown dependency scope')
+    pins = p['calibration_repo_pins'] if scope == 'calibration' else p['repo_pins']
+    for relative, expected in pins.items():
         require(sha(REPO / relative) == expected, 'seal mismatch: ' + relative)
     require(p['patch_seal_members'] == 75, '75-member seal required')
     for relative, expected in read(HERE / 'driver-seal.json')['files'].items():
@@ -218,7 +220,7 @@ def verify_repo(p= None):
     return p
 
 
-def verify_environment(paths, p, audit=None):
+def verify_environment(paths, p, audit=None, *, calibration=False):
     """Read bytes/metadata only. No torch/vLLM imports, weight loads or changes."""
     audit = {} if audit is None else audit
     source, stage, model = (paths[k] for k in ('source', 'stage', 'model'))
@@ -254,16 +256,104 @@ def verify_environment(paths, p, audit=None):
         require(sha(model / name) == c[key], 'model identity differs: ' + name)
     audit['model_metadata_passed'] = True
     verification = contract['historical_full_verification']
-    actual_sha = sha(verification['receipt_path_on_origin_host'])
-    audit['historical_payload_receipt'] = {**verification, 'actual_sha256': actual_sha,
-                                          'passed': actual_sha == verification['receipt_sha256']}
-    require(audit['historical_payload_receipt']['passed'], 'full model verification receipt absent/changed')
+    if calibration:
+        verify_calibration_reconciliation(p, model, audit)
+    else:
+        actual_sha = sha(verification['receipt_path_on_origin_host'])
+        audit['historical_payload_receipt'] = {**verification, 'actual_sha256': actual_sha,
+                                              'passed': actual_sha == verification['receipt_sha256']}
+        require(audit['historical_payload_receipt']['passed'], 'full model verification receipt absent/changed')
     require(len(list(model.glob('model-*.safetensors'))) == 131, 'model shards missing')
     # Headers/metadata and local publisher LFS SHA256s are frozen by packet1.
     # Actual payload hashing is supplied as a separate fresh admission receipt.
     return {'passed': True, 'versions': {k: versions[k] for k in p['versions']},
             'source': str(source), 'source_commit': p['certified_source_commit'],
             'source_files_verified': len(p['source_pins']), 'kernel_files': binaries}
+
+
+def verify_calibration_reconciliation(p, model, audit):
+    """Only the reviewed zero-generation scope supersedes the old receipt gate.
+
+    Everything read here is retained in-repo. Never read the obsolete origin
+    receipt or confuse this historical reconciliation with a fresh payload pass.
+    """
+    pins = p['calibration_repo_pins']
+    def pinned(relative, expected=None):
+        require(relative in pins and (expected is None or pins[relative] == expected),
+                'reconciliation dependency not pinned: ' + relative)
+        require(sha(REPO / relative) == pins[relative], 'reconciliation dependency hash: ' + relative)
+        return read(REPO / relative)
+    selected = p['calibration_reconciliation']
+    r = pinned(selected['path'], selected['sha256'])
+    contract = pinned(r['historical_contract']['path'], r['historical_contract']['sha256'])
+    historical = pinned(r['historical_receipt_observed']['path'], r['historical_actual_sha256'])
+    payload = pinned(r['model_payload_receipt']['path'], r['model_payload_receipt']['sha256'])
+    manifest = pinned(r['publisher_manifest']['packet1_path'], r['publisher_manifest']['packet1_sha256'])
+    require(r['schema'] == 'flash-next.a367.model-reconciliation.v1' and r['passed'] is True
+            and r['contract_equal'] is True and r['file_count_compared'] == 144
+            and r['file_differences'] == [] and r['missing_files'] == [], 'reconciliation differences')
+    verification = contract['historical_full_verification']
+    require(r['historical_expected_sha256'] == verification['receipt_sha256']
+            and r['historical_receipt_observed']['sha256'] == r['historical_actual_sha256']
+            and r['historical_actual_sha256'] != r['historical_expected_sha256']
+            and r['historical_expected_bytes_recovered'] is False, 'historical receipt comparison identity')
+    require(str(model) == r['model_root'] == '/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8'
+            and r['revision'] == manifest['sha'] == 'bcd9f01ddc9cff2316eb84281bebcd5b058bddce',
+            'reconciliation USB/revision identity')
+    require(payload['manifest'] == r['publisher_manifest']
+            and payload['contract'] == historical['contract'] == contract['contract']
+            and payload['contract']['tree_metadata_sha256'] == r['publisher_manifest']['sha256'],
+            'reconciliation manifest/contract identity')
+    validate_calibration_payload(payload, payload, model, p)
+    def rows(data):
+        return {f['path']: (f['size'], f['digest_kind'], f['digest']) for f in data['files']}
+    expected = {f['rfilename']: (f['size'], 'lfs_sha256' if f.get('lfs') else 'git_blob_sha1',
+                f['lfs']['sha256'] if f.get('lfs') else f['blobId']) for f in manifest['siblings']}
+    require(len(payload['files']) == len(historical['files']) == len(expected) == 144
+            and rows(payload) == rows(historical) == expected, 'reconciliation file comparison')
+    audit['historical_payload_receipt'] = {**verification,
+        'actual_sha256': r['historical_actual_sha256'], 'passed': False,
+        'observed_receipt': r['historical_receipt_observed'],
+        'admission_dependency': 'superseded for zero-generation calibration only'}
+    audit['calibration_reconciliation'] = {**selected, 'passed': True,
+        'model_root': r['model_root'], 'revision': r['revision'],
+        'file_count_compared': 144, 'file_differences': [],
+        'fresh_at_launch_payload_still_required': True}
+    return payload
+
+
+def validate_calibration_payload(payload, reference, model, p):
+    require(payload.get('schema') == 'flash-next.a367.launch-payload.v1'
+            and payload.get('passed') is True and payload.get('all_files_sha256_verified') is True
+            and payload.get('model_root') == reference['model_root'] == str(model)
+            and payload.get('revision') == reference['revision']
+            and payload.get('manifest') == reference['manifest']
+            and payload.get('contract') == reference['contract']
+            and payload.get('observed') == reference['observed']
+            and all(payload.get(k) == [] for k in ('missing', 'extra', 'mismatches')),
+            'matched full USB payload receipt required')
+    for key, path in [('producer_sha256', 'scripts/verify-flash-next-a367-launch-payload.py'),
+                      ('verifier_sha256', 'scripts/verify-qwen38-flash-next-fp8-tree.py')]:
+        require(payload.get(key) == p['calibration_repo_pins'][path], 'payload verifier identity')
+    files = payload.get('files', [])
+    require(len(files) == 144 and len({f['path'] for f in files}) == 144
+            and files == reference['files']
+            and all(f['passed'] is True and f['stable'] is True
+                    and f['digest'] == f['expected_digest'] for f in files), 'payload file hashes differ')
+    require(type(payload.get('verified_unix')) in (int, float)
+            and type(payload.get('started_unix')) in (int, float)
+            and 0 < payload['started_unix'] <= payload['verified_unix'], 'payload verification times')
+
+
+def verify_calibration_payload(path, owner, model, p, now):
+    reference = verify_calibration_reconciliation(p, model, {})
+    # Parse the same bytes whose hash the owner bound.
+    raw = Path(path).read_bytes()
+    require(hashlib.sha256(raw).hexdigest() == owner.get('payload_sha256'), 'owner payload pin')
+    payload = json.loads(raw)
+    validate_calibration_payload(payload, reference, model, p)
+    require(0 <= now - payload['verified_unix'] <= 3600, 'fresh matched payload receipt required')
+    return payload
 
 
 def build_environment(paths, output):

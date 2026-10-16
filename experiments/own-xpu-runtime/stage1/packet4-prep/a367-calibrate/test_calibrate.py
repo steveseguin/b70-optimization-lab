@@ -152,6 +152,107 @@ class Admission(Base):
             self.admit(*a)
 
 
+class Reconciliation(Base):
+    def test_pinned_reconciliation_preserves_failed_historical_comparison(self):
+        audit = {}
+        payload = w.verify_calibration_reconciliation(w.read(w.PREREG), c.paths()['model'], audit)
+        self.assertFalse(audit['historical_payload_receipt']['passed'])
+        self.assertTrue(audit['calibration_reconciliation']['passed'])
+        self.assertEqual(len(payload['files']), 144)
+
+    def test_calibration_dependencies_exclude_fixture_only_inputs(self):
+        p = c.verify_seals()
+        self.assertEqual(sum(k.startswith('patches/') for k in p['calibration_repo_pins']), 75)
+        for suffix in ('reference.py', 'test-receipt.json'):
+            key = 'experiments/own-xpu-runtime/stage2/packet1b/' + suffix
+            self.assertNotIn(key, p['calibration_repo_pins'])
+            self.assertIn(key, p['repo_pins'])
+        self.assertEqual(p['repo_pins']['experiments/own-xpu-runtime/stage2/packet1b/reference.py'],
+                         '4e36c7c7890e7df428c7e1d10dc1b536d26ba18b8b7066c07f9dbdea2ff4909b')
+        with self.assertRaisesRegex(ValueError, 'seal mismatch: .*stage2/packet1b/reference.py'):
+            w.verify_repo()  # Fixture scope still refuses changed arithmetic.
+
+    def test_missing_or_changed_reconciliation_pin_refused(self):
+        for missing in (True, False):
+            p = w.read(w.PREREG)
+            name = p['calibration_reconciliation']['path']
+            if missing:
+                del p['calibration_repo_pins'][name]
+            else:
+                p['calibration_repo_pins'][name] = '0' * 64
+            with self.subTest(missing=missing), self.assertRaises(ValueError):
+                w.verify_calibration_reconciliation(p, c.paths()['model'], {})
+
+    def test_reconciliation_semantics_cannot_waive_identity(self):
+        p = w.read(w.PREREG)
+        target = w.REPO / p['calibration_reconciliation']['path']
+        original = w.read
+        for key, value in [('historical_expected_sha256', '0'*64),
+                           ('historical_actual_sha256', '0'*64),
+                           ('revision', 'wrong'), ('model_root', '/nvme'),
+                           ('file_differences', ['changed']), ('file_count_compared', 143),
+                           ('passed', False), ('contract_equal', False)]:
+            changed = original(target); changed[key] = value
+            def reader(path):
+                return changed if Path(path) == target else original(path)
+            with self.subTest(key=key), patch.object(w, 'read', side_effect=reader), self.assertRaises(ValueError):
+                w.verify_calibration_reconciliation(p, c.paths()['model'], {})
+
+    def fresh(self):
+        p = w.read(w.PREREG)
+        payload = w.verify_calibration_reconciliation(p, c.paths()['model'], {})
+        now = time.time()
+        payload.update(started_unix=now-400, verified_unix=now-1)
+        path = self.root / 'payload.json'
+        w.write(path, payload)
+        return p, payload, path, now
+
+    def test_fresh_payload_accepted_and_owner_hash_required(self):
+        p, payload, path, now = self.fresh()
+        w.verify_calibration_payload(path, {'payload_sha256': w.sha(path)}, c.paths()['model'], p, now)
+        with self.assertRaisesRegex(ValueError, 'owner payload pin'):
+            w.verify_calibration_payload(path, {'payload_sha256': '0'*64}, c.paths()['model'], p, now)
+
+    def test_fresh_payload_time_boundaries(self):
+        p, payload, path, now = self.fresh()
+        for age in (-1, 0, 3600, 3601):
+            payload.update(started_unix=now-age-400, verified_unix=now-age)
+            w.write(path, payload)
+            if 0 <= age <= 3600:
+                w.verify_calibration_payload(path, {'payload_sha256': w.sha(path)}, c.paths()['model'], p, now)
+            else:
+                with self.subTest(age=age), self.assertRaisesRegex(ValueError, 'fresh matched'):
+                    w.verify_calibration_payload(path, {'payload_sha256': w.sha(path)}, c.paths()['model'], p, now)
+
+    def test_fresh_payload_rejects_wrong_path_manifest_verifier_or_files(self):
+        p, payload, path, now = self.fresh()
+        for key, value in [('model_root', '/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8'),
+                           ('manifest', {}), ('revision', 'wrong'), ('producer_sha256', '0'*64),
+                           ('verifier_sha256', '0'*64), ('files', payload['files'][:-1]),
+                           ('mismatches', ['changed']), ('passed', False),
+                           ('all_files_sha256_verified', False)]:
+            changed = copy.deepcopy(payload); changed[key] = value
+            w.write(path, changed)
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                w.verify_calibration_payload(path, {'payload_sha256': w.sha(path)}, c.paths()['model'], p, now)
+
+    def test_new_source_path_is_the_only_source_override(self):
+        self.assertEqual(str(c.paths()['source']), '/home/steve/src/vllm-flashnext-a367-clean-20261016')
+        command, env = c.command_and_environment(self.root)
+        self.assertEqual(env['PACKET4_SOURCE'], str(c.paths()['source']))
+        self.assertIn(str(c.paths()['source']), env['PYTHONPATH'].split(':'))
+        self.assertNotIn('--worker-cls', command)
+
+    def test_old_approval_text_does_not_survive_reseal(self):
+        owner = {'calibration_memory_exception': {'approved': True, 'approved_by': 'owner',
+                 'minimum_mem_available_kib': 114000000,
+                 'owner_approval_text': c.calibration_approval_text(114000000)}}
+        real = w.sha
+        with patch.object(w, 'sha', side_effect=lambda path: '0'*64 if path == c.SEAL else real(path)):
+            with self.assertRaisesRegex(ValueError, 'exact owner approval'):
+                c.calibration_floor(owner)
+
+
 class Math(Base):
     def test_units(self):
         self.assertEqual(c.meminfo('MemTotal: 200 kB\nMemAvailable: 123 kB\nGPUActive: 7 kB')['GPUActive'], 7168)

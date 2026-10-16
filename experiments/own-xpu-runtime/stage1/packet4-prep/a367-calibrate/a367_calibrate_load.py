@@ -36,6 +36,8 @@ GRAPH = '{"mode":0,"cudagraph_mode":"FULL_DECODE_ONLY","cudagraph_capture_sizes"
 
 def paths():
     result = {k: Path(v) for k, v in w.read(w.PREREG)['defaults'].items()}
+    # Reviewed byte-identical reconstruction; no shared fixture default change.
+    result['source'] = Path('/home/steve/src/vllm-flashnext-a367-clean-20261016')
     # The certified A367 launcher uses the retained USB publisher copy.
     result['model'] = Path('/mnt/usb-models/llm-models/Qwen3.8-Flash-Next-FP8')
     return result
@@ -55,12 +57,12 @@ def command_and_environment(output):
 
 
 def verify_seals():
-    p = w.read(w.PREREG)
+    p = w.verify_repo(scope='calibration')
     for relative, digest in w.read(SEAL)['files'].items():
         w.require(w.sha(w.REPO / relative) == digest, 'calibration seal mismatch: ' + relative)
-    members = {k: v for k, v in p['repo_pins'].items() if k.startswith('patches/')}
+    members = {k: v for k, v in p['calibration_repo_pins'].items() if k.startswith('patches/')}
     w.require(len(members) == p['patch_seal_members'] == 75, '75-member seal required')
-    for relative, digest in p['repo_pins'].items():
+    for relative, digest in p['calibration_repo_pins'].items():
         w.require(w.sha(w.REPO / relative) == digest, 'A367 seal mismatch: ' + relative)
     return p
 
@@ -406,25 +408,22 @@ def main(argv=None):
                              snapshot()['mem_available_bytes'] // 1024)
         admit()
         prereg = verify_seals()
-        audit = w.verify_environment(paths(), prereg)  # historical payload mismatch remains a blocker
+        audit = {}
+        w.verify_environment(paths(), prereg, audit, calibration=True)
         stage = paths()['stage'] / 'vllm_xpu_kernels'
         expected_members = {line.split(maxsplit=1)[1].strip().lstrip('*') for line in
                             (w.LANE / 'data/runtime-stage-gdn-roundstate-v2-loadable.sha256').read_text().splitlines()}
         actual_members = {str(p.relative_to(stage)) for p in stage.rglob('*')
                           if p.is_file() and p.suffix in ('.py', '.so')}
         w.require(actual_members == expected_members, 'A367 stage loadable file set changed')
-        payload = w.read(args.payload_receipt)
-        w.require(payload.get('passed') is True and payload.get('model_root') == str(paths()['model'])
-                  and payload.get('revision') == 'bcd9f01ddc9cff2316eb84281bebcd5b058bddce'
-                  and payload.get('all_files_sha256_verified') is True
-                  and 0 <= time.time() - payload['verified_unix'] <= 3600
-                  and w.sha(args.payload_receipt) == owner['payload_sha256'], 'fresh matched payload receipt required')
+        w.verify_calibration_payload(args.payload_receipt, owner, paths()['model'], prereg, time.time())
         w.require(shutil.disk_usage(root.parent).free >= prereg['minimum_disk_free_bytes'], 'disk reserve')
         with socket.socket() as port:
             port.bind(('127.0.0.1', w.PORT))
         baseline = w.journal()
         w.require(not w.fault_lines(baseline), 'fault-bearing boot refused')
         admit()  # repeat freshness/owners/floor after byte audit
+        w.verify_calibration_payload(args.payload_receipt, owner, paths()['model'], prereg, time.time())
         root.mkdir()
         (root / 'scratch/rpc').mkdir(parents=True)
         w.write(root / 'environment.json', audit)
