@@ -548,7 +548,7 @@ detector never flipped in 576 answers). Not from the 0.3.0 count restore: a requ
 out the other user's decode step, but its stored count is 1 (the align postprocess writes 1 for prompt rows).
 Kernel log clean; Gemma restored. Data: `/mnt/fast-ai/bench-results/fp8-r314-{R16,R4,P1}-20261016-drafts/`.
 
-## Addendum, 2026-10-16 18:12 EDT: what the prefix-cache flip needs (written before it runs)
+## Addendum, 2026-10-16 18:05 EDT: what the prefix-cache flip needs (written before it runs)
 
 P1 differs from the exact 2026-10-15 recipe in two things at once: prefix caching and 832-token prompt steps. Three
 fresh servers, normal long suite, three passes, long only, draft keeping off:
