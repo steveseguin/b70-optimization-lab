@@ -3238,7 +3238,7 @@ fixed smoke test runs first); everything else as registered for
   fails, i.e. prefix caching in align mode with drafting and two requests is the fault. If P0 fails, the window or
   step size is involved and the next lines split those.
 
-### Campaign 24b result (15:20-15:43): prefix caching is the trigger; the cause; campaign 24c registration (15:50)
+### Campaign 24b result (15:20-15:43): prefix caching is the trigger; the cause; campaign 24c registration (15:44)
 
 | Server (all: R314, MTP5, `--seqs 2`, four multi-user fixes) | Overlapped replies (36) | Solo vs MTP0 reference |
 |---|---|---|
@@ -3262,3 +3262,27 @@ fixed smoke test runs first); everything else as registered for
 - **Campaign 24c**: campaign 24's runner, server and queue (`QUEUE24c.txt`: X check strict against the MTP0
   reference, S16 smoke, K32, A32dp), with overlay 0.3.0. Expectations: check 0 garbage, 0 different, solos equal to
   the reference; K32 39/39 about 9 min; A32dp 39/39 and 10-20 % faster than K32. A failed check stops it.
+
+### Campaign 24c result (15:52-16:23): the fix holds; background notes with MTP are correct but slower
+
+(A first launch at 15:44 stopped at once on campaign 24's leftover `STOP-CAMPAIGN24`; a second aborted on the
+server folder that launch left; neither ran a request. Records `c24c-stopped.log`.)
+
+| Arm (MTP5, `--seqs 2`, prefix caching, all fixes, overlay 0.3.0) | Score | Wall | Cuts | Main calls: s / tokens read per call / write speed | Notes |
+|---|---|---:|---:|---|---|
+| X check (strict, vs MTP0 reference) | **0 garbage, 0 of 36 different, 4/4 solos = reference** | 139 s | | | |
+| S16 smoke (background notes) | 4/4; 12 of 13 background notes applied | 1.7 min | 12 | | |
+| K32 (notes in line) | 39/39 | **8 min 41 s** | 17 | 289 s / 9,811 / 45.3 tok/s | 182 s |
+| A32dp (`--notes-async defer --prewarm`) | 39/39 | 9 min 22 s (+8 %) | 16 | 435 s / 17,980 / 32.7 tok/s | 326 s in the background, 79 s waited |
+
+- **The fix works** on the server that failed in campaigns 21, 23 and 24: two requests at once with drafting and
+  prefix caching now give the same replies as one at a time. K32 repeated campaign 21's MTP5 K32 (8.7 min) on this
+  two-sequence server.
+- **Background notes do not pay with drafting on.** Without MTP they saved 14-18 % (campaign 23b), because writing two
+  sequences at once costs little more than one. With MTP5 a lone sequence already fills each step with six verify
+  rows: beside a background notes call the main calls wrote at 32.7 tok/s instead of 45.3, and with `defer` they read
+  the not-yet-cut view (18K tokens a call instead of 10K). Net +8 %. The default (notes in line) stays; the docs'
+  reason changes from "corrupted replies" to "slower".
+- What the fix opens beyond ctxkeeper: a multi-user server with drafting **and** prefix caching (agents, multi-turn
+  chat) now passes the two-request check; the 2-16-user drafting sweep was run without prefix caching, so a sweep with
+  it is the next measurement before any claim.
