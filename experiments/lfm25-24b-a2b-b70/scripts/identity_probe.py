@@ -3,6 +3,8 @@
 recording every generated token id and the top-8 log-probabilities at each step.
 
   identity_probe.py run  --base-url URL --out FILE [--tokens 96]
+  identity_probe.py run  ... --prompts LONG.json --token-lengths 513,1029,...   (raw token prompts: the longest
+                         prompt's tokens cut to each length, for prompt-step edge cases)
   identity_probe.py diff REF.json CAND.json [more ...]
 
 Any arithmetic difference in the forward pass shows up as a changed log-probability long before it flips a greedy
@@ -27,8 +29,13 @@ def run(args):
     suite = json.load(open(args.prompts or SUITE))
     prompts = suite["prompts"]
     out = {"base_url": args.base_url, "tokens": args.tokens, "rows": []}
+    if args.token_lengths:
+        text = max(prompts, key=lambda p: len(p["prompt"]))["prompt"]
+        ids = post(f"{args.base_url}/tokenize", {"content": text, "add_special": True})["tokens"]
+        prompts = [{"id": f"tokens-{n}", "ids": ids[:n]} for n in map(int, args.token_lengths.split(","))]
     for p in prompts:
-        rendered = post(f"{args.base_url}/apply-template", {"messages": [{"role": "user", "content": p["prompt"]}]})["prompt"]
+        rendered = p["ids"] if "ids" in p else post(
+            f"{args.base_url}/apply-template", {"messages": [{"role": "user", "content": p["prompt"]}]})["prompt"]
         r = post(f"{args.base_url}/completion", {
             "prompt": rendered, "n_predict": args.tokens, "temperature": 0, "top_k": 1, "seed": 42,
             "cache_prompt": False, "n_probs": 8, "post_sampling_probs": False, "return_tokens": True,
@@ -84,6 +91,7 @@ def main():
     r.add_argument("--out", required=True)
     r.add_argument("--tokens", type=int, default=96)
     r.add_argument("--prompts", help="JSON file with {'prompts': [{'id', 'prompt'}]} instead of the realistic suite")
+    r.add_argument("--token-lengths", help="comma-separated token counts (see above)")
     d = sub.add_parser("diff")
     d.add_argument("paths", nargs="+")
     a = ap.parse_args()

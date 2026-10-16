@@ -3,7 +3,8 @@
 # the package's own serve.sh/check.sh on a build made by its build.sh, card 1, Gemma moved to card 0 meanwhile.
 #   BUILD_DIR=... package-check.sh        (run under systemd-run --user; SUDO_ASKPASS for the Gemma recipe switch)
 # Runs: reference, unfused (the first version's fast path), fast a, fast b (+ canaries, + the top-8 logprob probe and
-# the long prompts vs R0), then a llama-bench depth sweep on the fast path. Gemma's two-card throughput recipe is
+# the long prompts vs R0), then a llama-bench depth sweep on the fast path. Since v4 (sliced prompt steps) also raw
+# token prompts whose last 512-token piece is a few tokens long, on unfused (-ub 512) and fast b (-ub 2048, sliced). Gemma's two-card throughput recipe is
 # restored on exit, whatever happens.
 set -uo pipefail
 LAB=/home/steve/b70-optimization-lab
@@ -15,6 +16,7 @@ MODEL_DIR=${MODEL_DIR:-/mnt/fast-ai/llm-models/lfm25-24b-a2b-q8-gguf}
 OUT=${OUT:-/mnt/fast-ai/bench-results/lfm25-24b-a2b/pkgcheck}
 PORT=18110
 UNIT=lfm25-pkg-srv
+EDGE_LENGTHS=513,516,520,1029,1543,2047,2048,2049,2052,2056,4103,6151,8200
 mkdir -p "$OUT"
 log() { echo "### $(date +%T) $*"; }
 
@@ -64,6 +66,11 @@ for run in reference:ref unfused:unfused fast:fast-a fast:fast-b; do
   serve "$mode" "$name" || exit 1
   log "$name: suite"
   RESULTS_DIR=$OUT PORT=$PORT "$PKG/check.sh" run "$name" 2>&1
+  if [[ $name == unfused || $name == fast-b ]]; then
+    log "$name: raw token prompts of $EDGE_LENGTHS tokens (64 tokens, top-8 logprobs)"
+    python3 "$E/scripts/identity_probe.py" run --prompts "$PROBE/long-prompts.json" --token-lengths "$EDGE_LENGTHS" \
+      --tokens 64 --out "$OUT/edge-$name.json" 2>&1 | tail -1
+  fi
   if [[ $name == fast-b ]]; then
     log "fast-b: canaries"
     python3 "$LAB/scripts/neural-download-canaries.py" --base-url "http://127.0.0.1:$PORT" --model lfm25-24b-a2b \
@@ -97,6 +104,8 @@ log "fast a vs fast b, and the reference vs fast b"
 log "logprob identity vs R0: probe, long prompts"
 python3 "$E/scripts/identity_probe.py" diff "$PROBE/r0-prod.json" "$OUT/probe-fast-b.json" 2>&1 | tail -2
 python3 "$E/scripts/identity_probe.py" diff "$PROBE/long-r0.json" "$OUT/long-fast-b.json" 2>&1 | tail -2
+log "edge prompts: fast b (sliced 2,048-token steps) vs unfused (512-token steps)"
+python3 "$E/scripts/identity_probe.py" diff "$OUT/edge-unfused.json" "$OUT/edge-fast-b.json" 2>&1 | tail -2
 
 # pp and tg alternate: every pp point after the first runs on weights a decode step has reordered, as a server does
 log "llama-bench depth sweep, fast path (pp2048 + tg128 at depths 0-32K, 3 reps)"
@@ -110,9 +119,10 @@ wait_port_free
   export LLAMA_SYCL_FUSE_RMS_NORM_MUL=1 LLAMA_SYCL_FUSE_ADD_RMS_NORM_MUL=1 LLAMA_SYCL_FUSE_MOE_SUM=1 \
     LLAMA_SYCL_FUSE_MOE_ROUTE=1 LLAMA_SYCL_FUSE_SHORTCONV=1 LLAMA_SYCL_FUSE_F16_SHADOW=1 LLAMA_SYCL_FUSE_Q8_SHADOW=1 \
     LLAMA_SYCL_FUSE_MOE_GATE_UP=1 LLAMA_SYCL_FUSE_NORM_ROPE=1 LLAMA_SYCL_FUSE_NORM_Q8=1 LLAMA_SYCL_FUSE_MOE_DOWN_SUM=1 \
-    LLAMA_SYCL_FUSE_CONV_STATE_ROWS=1 LLAMA_SYCL_Q8_0_REORDER_DEQ_COALESCED=1
+    LLAMA_SYCL_FUSE_CONV_STATE_ROWS=1 LLAMA_SYCL_Q8_0_REORDER_DEQ_COALESCED=1 \
+    LLAMA_SYCL_PREFILL_SLICE=512 LLAMA_SYCL_PREFILL_SLICE_FA=1
   timeout 1800 "$BUILD_DIR/bin/llama-bench" -m "$MODEL_DIR/LFM2.5-24B-A2B-Q8_0.gguf" -ngl 99 -fa 1 -ctk f16 -ctv f16 \
-    -b 2048 -ub 512 -t 8 --poll 50 -p 2048 -n 128 -d 0,2048,4096,8192,16384,32768 -r 3 -o json \
+    -b 2048 -ub 2048 -t 8 --poll 50 -p 2048 -n 128 -d 0,2048,4096,8192,16384,32768 -r 3 -o json \
     > "$OUT/sweep-fast.json" 2> "$OUT/sweep-fast.err"
   echo "llama-bench rc=$?"
 )
