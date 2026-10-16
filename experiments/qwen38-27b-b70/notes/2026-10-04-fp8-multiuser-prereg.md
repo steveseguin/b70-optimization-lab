@@ -695,3 +695,17 @@ As predicted: every differing hit had the stale count on at least one rank, and 
 either rank differs. The ranks disagree in 10 of 30, so the copy really is raced per rank, and part A's six
 "offset 0" differences were rank-1 cases the rank-0 trace could not see. **No second cause.** With part B (fix on:
 256/256 in four orders), the hand-over defect is closed for one sequence. Part C (two users, fix on) is running.
+
+### Result, part C (19:49-19:58 EDT): two users with drafting and prefix caching are exact with the fix
+
+Arm C2 = P1's setup (two sequences, MTP 5, align prefix cache, 832-token steps, long suite, three passes) with
+`b70-spec-resume-accepted` 0.5.0, new-request reset on. **64/64, 64/64, 64/64** equal to the server's own solo
+answers (88.4 / 89.4 / 89.6 generated tok/s together, 239,616 prompt tokens from the cache per pass), against P1's
+62/64, 63/64, 63/64 without the reset. The solo answers equal Q2's (cache off) 64/64. The bench exits 3 because
+cached tokens are above zero, which its classifier always reports as an output variant; every answer is equal. So
+the 16:29 "near-tie flip" with two users was the same hand-over defect. Data:
+`/mnt/fast-ai/bench-results/fp8-r314-C2-20261016-pcorder/`.
+
+**Closed:** drafting + align prefix caching is exact for one and two sequences, queued or paused, on R314 TP2 with
+the five multi-user overlays plus 0.5.0. Next on this line: the cost side (832-token steps read long prompts 16-33 %
+slower than 4,096-token steps; investigation started 19:42).
