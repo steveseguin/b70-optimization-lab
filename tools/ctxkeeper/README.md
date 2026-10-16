@@ -41,6 +41,7 @@ Qwen server unless noted:
 | [`long_chat.py`](examples/long_chat.py) through the Docker image, 300K tokens (more than the server's own 262K window) | 4/4, 4 min |
 | The OpenAI SDK snippet below | plain reply, tool call and streaming all came back in the SDK's types |
 | **Another model and server:** `long_chat.py` through `--recipe agent --budget 15360` to Gemma 4 26B (Q8) on llama.cpp, 100K tokens | 4/4, 4.5 min (a smoke test: one run) |
+| **1.1.0 from the public release:** checksums, pip from both URLs, the Docker image built from the archive URL; `long_chat.py` through it to the same Gemma server with a 4K view (`--budget 4000 --inplace-fit`), 16K tokens | all OK; 4/4 in 1 min ([record](../../experiments/qwen38-27b-b70/data/2026-10-16-context-campaign22/release-1.1.0-check/)) |
 
 Records: [`data/2026-10-14-context-campaign19/`](../../experiments/qwen38-27b-b70/data/2026-10-14-context-campaign19/).
 

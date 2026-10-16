@@ -3191,3 +3191,13 @@ fixed smoke test runs first); everything else as registered for
   view, which a separate model cannot. A keeper trained for the job (the owner's suggestion) is the remaining route;
   not started.
 - Gemma stopped at 11:03 and restored by the runner at the end (see the next line).
+
+### ctxkeeper 1.1.0 released (2026-10-16 12:11)
+
+- Tag `ctxkeeper-v1.1.0` at f3a981548: the 1.1.0.dev0 options (separate keeper, background notes, `--inplace-fit`,
+  `--log-calls`), all off by default; the default path unchanged against 1.0.1 (73 old tests pass; request-level
+  comparison over five setups identical). README: options under "Added in 1.1.0", the one-card and separate-keeper
+  results.
+- Checked from the public URLs: checksums, pip (wheel and archive), Docker build from the archive URL, and the demo
+  through that image to the Gemma LAN server with a 4K view and `--inplace-fit`: 4/4 in 60 s
+  (`data/2026-10-16-context-campaign22/release-1.1.0-check/`).
