@@ -3202,7 +3202,7 @@ fixed smoke test runs first); everything else as registered for
   through that image to the Gemma LAN server with a 4K view and `--inplace-fit`: 4/4 in 60 s
   (`data/2026-10-16-context-campaign22/release-1.1.0-check/`).
 
-### Campaign 24 (2026-10-16 12:55, registered before any run): drafting with two requests, with all four multi-user fixes
+### Campaign 24 (2026-10-16 15:00, registered before any run): drafting with two requests, with all four multi-user fixes
 
 - **Why.** Campaigns 21 and 23 concluded that MTP5 with `--seqs 2` corrupts replies. Neither server had
   `b70-fa-decode-per-seq` (and campaign 21 had no `b70-exclusive-prefill`). The 2026-10-04 multi-user work (repeated
