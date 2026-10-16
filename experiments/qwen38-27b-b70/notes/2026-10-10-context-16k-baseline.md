@@ -2865,3 +2865,53 @@ server ran: min 1.90, median 2.05 GiB; no watchdog or guard stop. Kernel log cle
 recipe 14:13. Against the expectation: as expected (ran to the end, 30 or more). Data:
 `data/2026-10-15-context-campaign20/c20f/`. The campaign-20 table above now carries this row: twelve of twelve agents
 ran, eleven fixed 39 or 40.
+
+### What the saved runs say about the owner's four questions (2026-10-16, CPU-only, no GPU job)
+
+Read from the request logs of campaigns 12-20 before designing campaign 21 (scripts and tables:
+`data/2026-10-16-context-campaign21/offline/`). (1) **Idle time to hide work in is small**: the server sat idle 12.8 %
+of the 1M run (X32p; mostly harness overhead), 0.4-8.7 % in the campaign-20 agent runs; gaps between requests median
+2-4 s. Notes work is the larger target: 38-42 % of the server's time in the 1M run (notes thinking on, 75 cuts, 93K
+tokens written), 3-8 % in the agent runs (notes thinking off). With `--max-num-seqs 1` a background notes call can
+only queue behind the next main call, so hiding it needs two sequences. (2) **The front of the view is already
+static** in in-place mode: a cut keeps the opening messages and replaces only the notes and the turns they cover;
+re-reading after cuts is ~4-10 % of uncached prompt tokens. The largest re-read cost (~66 % of uncached tokens in the
+campaign-20 runs) is the server's 832-token cache block granularity, an engine setting, not a proxy one. (3) **A CPU
+pre-pass that stubs old tool output** (simulated on the repair runs): for the model keeping its own notes it is a net
+loss (the stubbed view stops matching the cache: 229K-565K more tokens re-read to save 15-45 s of notes); it can only
+help a separate keeper that reads the turns fresh. (4) FAd's whole-history run decoded ~41 tok/s against 60-100 inside
+a 32K view: most of the keeper's speed comes from the short view, not from fewer tokens read.
+
+### Campaign 21, registered 2026-10-16 02:40 before any run: the window floor, and notes written in the background
+
+Questions: how small a window ctxkeeper still works in, and where the speed/quality best point is; and whether writing
+the notes in the background (right after a reply, while the agent's next request runs) saves time. Code: lab commit
+`d1435071e` (ctxkeeper 1.1.0.dev0; every new option off by default, five-scenario equivalence with 1.0.1). Server:
+the campaign 12-20 two-card research server unchanged except `--seqs 2` (so a background notes call can run beside a
+main call; with MTP5 two batched requests are not bit-identical to solo, which the context lane allows: the measure is
+the task score). One server for all arms; Gemma stopped first, restored on `throughput` only with a clean kernel log.
+Every proxy runs `--log-calls` (one row per model call: kind, seconds, tokens read/cached/written), so the largest
+single call (read + written) gives the window each run really needed.
+
+Arms (queue order; one run each, one seed; runner `data/2026-10-16-context-campaign21/longrun-campaign21.sh`):
+- **S08 smoke**: `long_chat.py` 60K tokens, `--recipe qwen --budget 8192 --inplace-tokens 3000 --notes-async defer
+  --prewarm`. Gate for the background arms: the client finishes, at least one background notes result is applied,
+  no proxy error. If it fails, A32d/A32dp/M32dp are skipped.
+- **240K rules stream s0** (39 questions; X32p 39/39 in 8.5 min at seqs 1), X32p's options throughout (notes
+  thinking on), `--inplace-tokens` = 0.458 x budget: **K32** (32,768, reference on this server), **A32d** (K32 +
+  `--notes-async defer`), **A32dp** (A32d + `--prewarm`), then the window sweep **K16, K08, K06, K12, K24, K48, K64**
+  (16,384 / 8,192 / 6,144 / 12,288 / 24,576 / 49,152 / 65,536). Cap 40 min each.
+- **1M stream s0** (228 questions; X32p 226/228 in 49.6 min at seqs 1): **M32dp** = A32dp. Cap 100 min.
+- **Repair task** `repair-n40-s2x`, harness client as X16/X24/XR4 (XR4 options, notes thinking off): **R16**
+  (16,384, notes every 7,500 tokens: the 16K test X16 was not, its 15,000 threshold never fit), **R12**, **R48**.
+  Cap 60 min.
+
+Expectations, written before the runs: the stream holds 39/39 down to 12K and probably 8K (its notes stayed under
+~400 tokens and its largest turn was 2,266 tokens in X32q); **6K fails** or nearly (opening + notes + largest turn
+already ~3.4K of the 3.1K a 6K budget leaves after the reply reserve); time grows as the window shrinks (more cuts,
+each with a thinking notes call) and flattens above 32K. Background notes cut A32d's time by 15-30 % against K32 on
+this stream and M32dp's by 20-35 % against X32p's 49.6 min; prewarm adds a few percent at most. Repair: R16 40 clean
+or 39 (the 21,855-token largest tool result cannot fit a 16K view; how the run copes is part of the result), R12 may
+fail, R48 the same score as XR4 in about the same time. Decision rules: the smallest window whose score equals K32's
+is the floor; background notes become a recipe default only if they save 10 % or more with no score loss on both
+streams; anything below the floor is reported, not retried. Stopping early: `STOP-CAMPAIGN21`; no arm is rerun.
