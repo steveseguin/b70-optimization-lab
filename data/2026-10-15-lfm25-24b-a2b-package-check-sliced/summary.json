@@ -1,0 +1,144 @@
+{
+ "format": "lfm25-24b-a2b-package-check-v4",
+ "date": "2026-10-15",
+ "what": "repro/lfm25-24b-a2b-q8-b70 (v4: exact fusions, the steadier prompt-path conversion, and prompt steps of 2,048 tokens run as 512-token pieces) built by its build.sh (fresh upstream clone + the aggregate patch) and run by its serve.sh/check.sh on card 1 of the lab host, Gemma on card 0; registered in experiments/lfm25-24b-a2b-b70/notes/2026-10-14-lfm25-24b-a2b-bringup.md before running",
+ "build_receipt": {
+  "base_commit": "c926ad09857517978575d6a74d225b463f7417a0",
+  "aggregate_patch_sha256": "448aed84e29a8500f88885abc380d8e92837f09bb3488d8b60b71db16c4e2538",
+  "icpx_version": "Intel(R) oneAPI DPC++/C++ Compiler 2026.1.1 (2026.1.1.20260724)",
+  "llama_server_sha256": "74a018c7bfa168f462b8752b1500a7d3bead697d4074b7f7c5c142de3f02b897"
+ },
+ "runs": {
+  "ref": {
+   "mode": "reference",
+   "class_balanced_tok_s": 41.741741373045365,
+   "completed_prompts": 12,
+   "suite_checks_passed": true,
+   "token_arrays_identical_to_lab_reference_r0": 12,
+   "evidence": "ref.json"
+  },
+  "unfused": {
+   "mode": "unfused",
+   "class_balanced_tok_s": 111.88914196014404,
+   "completed_prompts": 12,
+   "suite_checks_passed": true,
+   "token_arrays_identical_to_lab_reference_r0": 12,
+   "evidence": "unfused.json"
+  },
+  "fast-a": {
+   "mode": "fast",
+   "class_balanced_tok_s": 137.93412951552386,
+   "completed_prompts": 12,
+   "suite_checks_passed": true,
+   "token_arrays_identical_to_lab_reference_r0": 12,
+   "evidence": "fast-a.json"
+  },
+  "fast-b": {
+   "mode": "fast",
+   "class_balanced_tok_s": 137.30369000658857,
+   "completed_prompts": 12,
+   "suite_checks_passed": true,
+   "token_arrays_identical_to_lab_reference_r0": 12,
+   "evidence": "fast-b.json"
+  }
+ },
+ "fast_a_vs_fast_b_identical": 12,
+ "reference_vs_fast_b_identical": 12,
+ "fast_class_balanced_tok_s_median_of_two_servers": 137.61890976105622,
+ "logprob_probe_fast_b_vs_r0": {
+  "bit_exact": 12,
+  "prompts": 12,
+  "what": "top-8 log-probabilities of every step, 12 suite prompts x 96 tokens, bit-identical to the lab reference R0 (probe-reference-r0.json)",
+  "evidence": "probe-fast-b.json"
+ },
+ "long_prompt_probe_fast_b_vs_r0": {
+  "bit_exact": 3,
+  "prompts": 3,
+  "what": "same check on three long prompts of about 2K, 8K and 24K tokens (lab text, not published), 128 tokens each"
+ },
+ "edge_prompts_fast_b_vs_unfused": {
+  "bit_exact": 13,
+  "prompts": 13,
+  "what": "raw token prompts cut from the 24K lab prompt to 513, 516, 520, 1029, 1543, 2047, 2048, 2049, 2052, 2056, 4103, 6151 and 8200 tokens (the last 512-token piece 1-8 tokens long in several), 64 tokens, top-8 log-probabilities; fast (2,048-token steps in 512-token pieces) vs unfused (512-token steps)",
+  "evidence": [
+   "edge-unfused.json",
+   "edge-fast-b.json"
+  ]
+ },
+ "canaries_fast_b_pass_all": true,
+ "suite": "repro/qwen36-27b-autoround-int4-b70/realistic-suite-v1.json (12 prompts, six classes, 512 tokens, greedy, seed 42, cache_prompt false); metric = median over the six classes of each class median tok/s for tokens 1-100 after TTFT",
+ "server_prompt_rate": {
+  "what": "prompt reading speed as llama-server reports it (timings.prompt_per_second), one user, prompt cache off, after the server has answered other requests; the three long prompts (lab text, not published) each twice",
+  "v4_fast_b": {
+   "long-2k": {
+    "prompt_tokens": 1775,
+    "tok_s_rep1_rep2": [
+     1956.2,
+     1948.9
+    ]
+   },
+   "long-8k": {
+    "prompt_tokens": 7314,
+    "tok_s_rep1_rep2": [
+     1840.7,
+     1840.6
+    ]
+   },
+   "long-24k": {
+    "prompt_tokens": 26138,
+    "tok_s_rep1_rep2": [
+     1353.1,
+     1353.3
+    ]
+   }
+  },
+  "v3_fast_b": {
+   "long-2k": {
+    "prompt_tokens": 1775,
+    "tok_s_rep1_rep2": [
+     1705.6,
+     1711.7
+    ]
+   },
+   "long-8k": {
+    "prompt_tokens": 7314,
+    "tok_s_rep1_rep2": [
+     1649.8,
+     1653.7
+    ]
+   },
+   "long-24k": {
+    "prompt_tokens": 26138,
+    "tok_s_rep1_rep2": [
+     1246.8,
+     1246.3
+    ]
+   }
+  },
+  "why_v4_is_faster": "serve.sh fast now reads prompts in 2,048-token steps (-ub 2048) and runs every matrix product, expert product and attention of a step as 512-token pieces (LLAMA_SYCL_PREFILL_SLICE=512, LLAMA_SYCL_PREFILL_SLICE_FA=1), each with the shape, rows and key count of the 512-token step it replaces, so the results are the same bytes; each weight is converted to 16-bit once per step instead of four times",
+  "evidence": [
+   "prompt-rate-fast-b.json"
+  ]
+ },
+ "sweep": {
+  "command": "llama-bench -ngl 99 -fa 1 -ctk f16 -ctv f16 -b 2048 -ub 2048 -t 8 --poll 50 -p 2048 -n 128 -d 0,2048,4096,8192,16384,32768 -r 3 -o json, environment of serve.sh fast",
+  "note": "pp and tg alternate, so every pp point after depth 0 runs on weights a decode step has reordered, as in a server",
+  "pp2048_tok_s": {
+   "0": 2261.1,
+   "2048": 2282.7,
+   "4096": 2094.4,
+   "8192": 1778.0,
+   "16384": 1309.0,
+   "32768": 836.4
+  },
+  "tg128_tok_s": {
+   "0": 150.7,
+   "2048": 146.7,
+   "4096": 140.6,
+   "8192": 130.3,
+   "16384": 113.6,
+   "32768": 90.7
+  },
+  "evidence": "sweep-fast.json"
+ }
+}

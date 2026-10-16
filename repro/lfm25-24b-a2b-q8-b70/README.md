@@ -1,21 +1,22 @@
 # LFM2.5-24B-A2B Q8_0 on one Intel Arc Pro B70: 3.3x faster, same output
 
 **One B70 runs Liquid AI's LFM2.5-24B-A2B (8-bit) at about 137 tokens per second for one user, up from 41.7 on
-llama.cpp's plain SYCL path, reads prompts at about 1,700 tokens per second, and every generated token and every
+llama.cpp's plain SYCL path, reads prompts at about 1,950 tokens per second, and every generated token and every
 log-probability is identical to that plain path.** Nothing is approximated: the speed comes from reading the weights in a faster memory layout and from doing
 chains of small steps in one GPU kernel each, while doing the arithmetic in exactly the same order.
 
 Status: **candidate** (measured on the lab's machine and rebuilt from this folder's public files; not yet replayed
 on a freshly installed host). Measured 2026-10-15. The first version (published the same morning, about 111
-tokens per second) is still available as `serve.sh unfused`. The evening update (v3) makes prompt reading 35-52%
-faster than the afternoon build ([why](#reading-prompts)); generation and output are unchanged.
+tokens per second) is still available as `serve.sh unfused`. The evening updates make prompt reading faster
+([why](#reading-prompts)): v3 by 35-52% over the afternoon build, v4 by another 8-14%; generation and output are
+unchanged.
 
 | | |
 | --- | --- |
 | Model | [LiquidAI/LFM2.5-24B-A2B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF) at revision `0912d33141f77e10705345a6732bfd83f0252fdc`, file `LFM2.5-24B-A2B-Q8_0.gguf` (25,493,732,640 bytes, SHA-256 `f09bf094a8a138c5b645598ca1abb6696a0fde26662d7af649b0713fdef330b6`) |
 | What it is | a 24B mixture-of-experts model (64 experts, 4 used per token, about 2B parameters active), 40 blocks of which 10 are attention and 30 short convolutions; up to 128K context |
 | Card | one Intel Arc Pro B70 (32 GiB); the model takes about 24 GiB, the rest holds the context |
-| Runtime | upstream llama.cpp `c926ad09857517978575d6a74d225b463f7417a0` (tag b9769) plus one patch: [`llama-cpp-c926ad098-lfm25-24b-a2b-exact-fused-prefill-20261015.diff.gz.b64`](../../patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-fused-prefill-20261015.diff.gz.b64) (decoded SHA-256 `4b1a4cd014daafb74e2e44d2fc9c19e49d9d9e2626d1a29b998d919ce8d7af07`) |
+| Runtime | upstream llama.cpp `c926ad09857517978575d6a74d225b463f7417a0` (tag b9769) plus one patch: [`llama-cpp-c926ad098-lfm25-24b-a2b-exact-fused-prefill-sliced-20261015.diff.gz.b64`](../../patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-fused-prefill-sliced-20261015.diff.gz.b64) (decoded SHA-256 `448aed84e29a8500f88885abc380d8e92837f09bb3488d8b60b71db16c4e2538`) |
 | Compiler | Intel oneAPI Base Toolkit 2026.1 (icpx), SYCL ahead-of-time for the B70 (bmg-g31) |
 | Host measured | AMD EPYC 9015, 15 GiB RAM, Ubuntu 24.04 with Linux 7.0 (xe driver) |
 
@@ -33,23 +34,26 @@ first token.
 | **This recipe (`serve.sh fast`)** | **136.3-138.3** | **identical**: 12 of 12 answers, every token, on every fresh server tried |
 
 Also identical on the fast path: the top-8 log-probabilities at every step of a 12-prompt probe (bit for bit), the
-same on three long prompts of about 2K, 8K and 24K tokens, and the neural.download canary questions.
+same on three long prompts of about 2K, 8K and 24K tokens and on 13 prompts of awkward lengths (513 to 8,200 tokens),
+and the neural.download canary questions.
 
-**Rebuilt from this folder and checked, 2026-10-15 (v3).** `build.sh` (fresh upstream clone plus the patch, 11
+**Rebuilt from this folder and checked, 2026-10-15 (v4).** `build.sh` (fresh upstream clone plus the patch, 11
 minutes with 6 jobs) and `serve.sh`/`check.sh` exactly as written, on one card of the lab's host, each run on a
 freshly started server:
 
 | Run | tok/s | Token-identical to the lab's original reference run |
 | --- | --- | --- |
 | `serve.sh reference` | 41.7 | 12 of 12 |
-| `serve.sh unfused` | 111.7 | 12 of 12 |
-| `serve.sh fast`, server A | 136.3 | 12 of 12 |
-| `serve.sh fast`, server B | 138.0 | 12 of 12 (and 12 of 12 to server A) |
+| `serve.sh unfused` | 111.9 | 12 of 12 |
+| `serve.sh fast`, server A | 137.9 | 12 of 12 |
+| `serve.sh fast`, server B | 137.3 | 12 of 12 (and 12 of 12 to server A) |
 
-On server B the canary questions all pass, and the log-probability probe is bit-identical to the lab's reference
-run on 12 of 12 prompts and 3 of 3 long prompts. Records:
-[`data/2026-10-15-lfm25-24b-a2b-package-check-prefill/`](../../data/2026-10-15-lfm25-24b-a2b-package-check-prefill/summary.json)
-(the afternoon build's: [`data/2026-10-15-lfm25-24b-a2b-package-check-fused/`](../../data/2026-10-15-lfm25-24b-a2b-package-check-fused/summary.json),
+On server B the canary questions all pass, the log-probability probe is bit-identical to the lab's reference run
+on 12 of 12 prompts and 3 of 3 long prompts, and 13 of 13 awkward-length prompts are bit-identical to
+`serve.sh unfused`. Records:
+[`data/2026-10-15-lfm25-24b-a2b-package-check-sliced/`](../../data/2026-10-15-lfm25-24b-a2b-package-check-sliced/summary.json)
+(v3: [`data/2026-10-15-lfm25-24b-a2b-package-check-prefill/`](../../data/2026-10-15-lfm25-24b-a2b-package-check-prefill/summary.json),
+136.3 and 138.0 tok/s; the afternoon build's: [`data/2026-10-15-lfm25-24b-a2b-package-check-fused/`](../../data/2026-10-15-lfm25-24b-a2b-package-check-fused/summary.json),
 138.1 and 138.3 tok/s; the first version's:
 [`data/2026-10-15-lfm25-24b-a2b-package-check/`](../../data/2026-10-15-lfm25-24b-a2b-package-check/summary.json)).
 
@@ -58,18 +62,26 @@ run on 12 of 12 prompts and 3 of 3 long prompts. Records:
 How fast the server reads a whole prompt before it starts answering, by llama-server's own counters (one user,
 prompt cache off, after the server has answered other requests; each prompt twice):
 
-| Prompt length | This build (v3) | The afternoon build |
-| --- | --- | --- |
-| 1,775 tokens | 1,706-1,712 tok/s | 1,027-1,124 tok/s |
-| 7,314 tokens | 1,650-1,654 tok/s | 1,100-1,119 tok/s |
-| 26,138 tokens | 1,246-1,247 tok/s | 917-924 tok/s |
+| Prompt length | This build (v4) | v3 | The afternoon build |
+| --- | --- | --- | --- |
+| 1,775 tokens | 1,949-1,956 tok/s | 1,706-1,712 tok/s | 1,027-1,124 tok/s |
+| 7,314 tokens | 1,841 tok/s | 1,650-1,654 tok/s | 1,100-1,119 tok/s |
+| 26,138 tokens | 1,353 tok/s | 1,246-1,247 tok/s | 917-924 tok/s |
 
 Why it changed: after the first answer the weights are kept in the reordered layout, and for every prompt the
-server converts them to 16-bit numbers for the large matrix products (about half the model per 512 prompt tokens).
-The old conversion kernel gave each GPU lane a whole 32-value block, and its speed depended on the build: on the
-afternoon build it ran about a third slower. The new one (`LLAMA_SYCL_Q8_0_REORDER_DEQ_COALESCED=1`) gives each
-lane 8 neighbouring values with the same arithmetic, so the converted numbers are the same bytes (checked call by
-call), and it gave the same speed on every build tried.
+server converts them to 16-bit numbers for the large matrix products (about half the model per prompt step).
+
+- **v3:** the old conversion kernel gave each GPU lane a whole 32-value block, and its speed depended on the build:
+  on the afternoon build it ran about a third slower. The new one (`LLAMA_SYCL_Q8_0_REORDER_DEQ_COALESCED=1`) gives
+  each lane 8 neighbouring values with the same arithmetic, so the converted numbers are the same bytes (checked
+  call by call), and it gave the same speed on every build tried.
+- **v4:** `serve.sh fast` reads prompts in steps of 2,048 tokens instead of 512, but runs every matrix product and
+  every attention step inside a step as 512-token pieces (`LLAMA_SYCL_PREFILL_SLICE=512`,
+  `LLAMA_SYCL_PREFILL_SLICE_FA=1`). Each piece has exactly the shape, the rows and the number of keys of the
+  512-token step it replaces, so the results are the same bytes; what changes is that each weight is converted once
+  per 2,048 tokens instead of four times. Plain 2,048-token steps would read prompts up to twice as fast, but they
+  change the output, because the matrix kernels give slightly different last bits when they get more rows at once.
+  That is not used.
 
 ### With more context
 
@@ -79,12 +91,12 @@ server uses):
 
 | Context already held | Generating (tok/s) | Reading a 2,048-token prompt (tok/s) |
 | --- | --- | --- |
-| none | 150.7 | 2,072 |
-| 2K | 146.0 | 1,993 |
-| 4K | 139.6 | 1,875 |
-| 8K | 130.1 | 1,636 |
-| 16K | 113.4 | 1,229 |
-| 32K | 90.7 | 801 |
+| none | 150.7 | 2,261 |
+| 2K | 146.7 | 2,283 |
+| 4K | 140.6 | 2,094 |
+| 8K | 130.3 | 1,778 |
+| 16K | 113.6 | 1,309 |
+| 32K | 90.7 | 836 |
 
 ## Run it
 
@@ -146,6 +158,7 @@ kernels' order of operations exactly, and `serve.sh fast` turns them on:
 | `LLAMA_SYCL_MMVQ_ID_XOR_REDUCE=1` | ... summed in the reference order |
 | `GGML_SYCL_DNNL_DETERMINISTIC=1` | (all modes) deterministic oneDNN matrix products for prompt processing |
 | `LLAMA_SYCL_Q8_0_REORDER_DEQ_COALESCED=1` | (`fast` only) the steadier conversion of the reordered weights for prompt reading |
+| `LLAMA_SYCL_PREFILL_SLICE=512`, `LLAMA_SYCL_PREFILL_SLICE_FA=1` | (`fast` only, with `-ub 2048`) 2,048-token prompt steps run as 512-token pieces, each weight converted once per step |
 
 Then `serve.sh fast` (not `unfused`) adds twelve exact fusions. Each generated token used to take about 1,080 GPU
 kernel launches, most of them tiny steps between the big matrix products; each fusion does a chain of those steps
@@ -194,7 +207,7 @@ unless set). Every attempt, including what did not help, is in the
 - [`check.sh`](check.sh): the suite and the token-by-token comparison
 - [`model-manifest.json`](model-manifest.json): the model file's revision, size and SHA-256
 - Evidence: [lab note](../../experiments/lfm25-24b-a2b-b70/notes/2026-10-14-lfm25-24b-a2b-bringup.md),
-  [package check of this version](../../data/2026-10-15-lfm25-24b-a2b-package-check-fused/summary.json),
+  [package check of this version](../../data/2026-10-15-lfm25-24b-a2b-package-check-sliced/summary.json),
   [reference run](../../experiments/lfm25-24b-a2b-b70/data/r0-suite-a.json),
   [fast runs](../../experiments/lfm25-24b-a2b-b70/data/x1final-suite-a.json)
   ([second server](../../experiments/lfm25-24b-a2b-b70/data/x1final-suite-b.json)),

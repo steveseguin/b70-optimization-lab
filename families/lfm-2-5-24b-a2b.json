@@ -117,7 +117,7 @@
       "state": "lab-measured",
       "revision": "lfm2.5-24b-a2b",
       "variant": "Q8_0",
-      "runtime": "llama.cpp SYCL c926ad09857517978575d6a74d225b463f7417a0 + lab patch 4b1a4cd0 (exact fusions, steadier prompt-path conversion)",
+      "runtime": "llama.cpp SYCL c926ad09857517978575d6a74d225b463f7417a0 + lab patch 448aed84 (exact fusions, steadier prompt-path conversion, sliced prompt steps)",
       "config": {
         "tp": 1,
         "mtp": 0,
@@ -128,12 +128,12 @@
       "workload": "two fresh servers; complete 12-prompt/six-class suite; 512-token cap; median within prompt class then median across class medians; 100-event/99-interval decode window; target-only; cache-zero",
       "metrics": {
         "decode_tok_s": [
-          136.3184889657721,
-          138.04152894168826
+          137.93412951552386,
+          137.30369000658857
         ]
       },
       "quality": "both suite gates and the canaries passed; cached_tokens=0 for every request; every token array identical to the plain SYCL reference path (12/12 on both servers) and across servers; top-8 log-probabilities bit-identical on 12/12 probe prompts and 3/3 long prompts",
-      "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/summary.json"
+      "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-sliced/summary.json"
     }
   ],
   "series_measurements": [
@@ -142,7 +142,7 @@
       "state": "lab-measured",
       "revision": "lfm2.5-24b-a2b",
       "variant": "Q8_0",
-      "runtime": "llama.cpp bench c926ad0 + lab patch (fast path with exact fusions and the steadier prompt-path conversion)",
+      "runtime": "llama.cpp bench c926ad0 + lab patch (fast path with exact fusions, the steadier prompt-path conversion and sliced prompt steps at -ub 2048)",
       "config": {
         "tp": 1,
         "mtp": 0,
@@ -153,32 +153,32 @@
       "points": [
         {
           "x": 2048,
-          "prefill_tok_s": 1992.776035,
-          "decode_tok_s": 145.982967
+          "prefill_tok_s": 2282.732374,
+          "decode_tok_s": 146.696785
         },
         {
           "x": 4096,
-          "prefill_tok_s": 1874.994536,
-          "decode_tok_s": 139.557435
+          "prefill_tok_s": 2094.435262,
+          "decode_tok_s": 140.556363
         },
         {
           "x": 8192,
-          "prefill_tok_s": 1636.254515,
-          "decode_tok_s": 130.069625
+          "prefill_tok_s": 1778.040435,
+          "decode_tok_s": 130.306458
         },
         {
           "x": 16384,
-          "prefill_tok_s": 1228.712397,
-          "decode_tok_s": 113.380492
+          "prefill_tok_s": 1308.99333,
+          "decode_tok_s": 113.648308
         },
         {
           "x": 32768,
-          "prefill_tok_s": 800.749299,
-          "decode_tok_s": 90.719512
+          "prefill_tok_s": 836.354034,
+          "decode_tok_s": 90.742452
         }
       ],
       "quality": "raw engine shape characterization, not a language-quality gate or HTTP serving result",
-      "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-prefill/sweep-fast.json"
+      "evidence": "data/2026-10-15-lfm25-24b-a2b-package-check-sliced/sweep-fast.json"
     }
   ],
   "views": [

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Build the llama.cpp server used by this recipe: upstream llama.cpp c926ad098 plus one aggregate patch (the lab's
-# B70 changes, the LFM2.5 exact fast-path kernels, the exact kernel fusions and a steadier prompt-path conversion).
+# B70 changes, the LFM2.5 exact fast-path kernels, the exact kernel fusions, a steadier prompt-path conversion and
+# prompt steps run as pieces of the 512-token steps they replace).
 # Needs git, cmake, ninja and Intel oneAPI (measured with 2026.1).
 #
 #   SOURCE_DIR=/path/to/new/dir repro/lfm25-24b-a2b-q8-b70/build.sh
@@ -13,8 +14,8 @@ repo_root=$(cd -- "${script_dir}/../.." && pwd)
 source_dir=${SOURCE_DIR:-}
 jobs=${BUILD_JOBS:-4}
 base_commit=c926ad09857517978575d6a74d225b463f7417a0
-patch_rel=patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-fused-prefill-20261015.diff.gz.b64
-patch_sha=4b1a4cd014daafb74e2e44d2fc9c19e49d9d9e2626d1a29b998d919ce8d7af07
+patch_rel=patches/lfm25-24b-a2b-q8-b70/llama-cpp-c926ad098-lfm25-24b-a2b-exact-fused-prefill-sliced-20261015.diff.gz.b64
+patch_sha=448aed84e29a8500f88885abc380d8e92837f09bb3488d8b60b71db16c4e2538
 
 [[ -n ${source_dir} ]] || { echo 'Set SOURCE_DIR to a new, empty destination.' >&2; exit 2; }
 [[ ! -e ${source_dir} ]] || { echo "Refusing to overwrite existing path: ${source_dir}" >&2; exit 2; }

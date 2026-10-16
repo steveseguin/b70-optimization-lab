@@ -4,7 +4,8 @@
 #   BUILD_DIR=/path/to/build MODEL_DIR=/path/to/model repro/lfm25-24b-a2b-q8-b70/serve.sh [fast|unfused|reference]
 #
 # fast       (default) the exact fast path with the exact kernel fusions: about 3.3x the reference speed, same tokens
-#            and log-probabilities
+#            and log-probabilities; prompts are read 2,048 tokens per step in 512-token pieces (same results as the
+#            512-token steps the other modes use, each weight converted once per step instead of four times)
 # unfused    the exact fast path without the fusions (the first published version, about 2.7x); for narrowing down a
 #            difference on your machine
 # reference  llama.cpp's plain SYCL path (GGML_SYCL_DISABLE_OPT=1), the slow arm every fast-path output is checked against
@@ -14,6 +15,7 @@
 set -euo pipefail
 
 mode=${1:-fast}
+ubatch=512
 build_dir=${BUILD_DIR:?set BUILD_DIR to the build directory from build.sh}
 model=${MODEL_DIR:?set MODEL_DIR to the folder holding LFM2.5-24B-A2B-Q8_0.gguf}/LFM2.5-24B-A2B-Q8_0.gguf
 [[ -x ${build_dir}/bin/llama-server ]] || { echo "No llama-server in ${build_dir}/bin" >&2; exit 2; }
@@ -48,6 +50,9 @@ case ${mode} in
       export LLAMA_SYCL_FUSE_NORM_Q8=1             # the norm before the experts writes their 8-bit input
       export LLAMA_SYCL_FUSE_MOE_DOWN_SUM=1        # the experts' down product and their weighted sum
       export LLAMA_SYCL_FUSE_CONV_STATE_ROWS=1     # short-convolution state read straight from its cache
+      export LLAMA_SYCL_PREFILL_SLICE=512             # prompt reading: 2,048-token steps (below) run as 512-token
+      export LLAMA_SYCL_PREFILL_SLICE_FA=1            # pieces, attention included, so every product sees the same
+      ubatch=2048                                     # rows as at 512; each weight is converted once per step
       export LLAMA_SYCL_Q8_0_REORDER_DEQ_COALESCED=1  # prompt reading: weights converted in memory order (same
                                                      # values; the old order ran up to ~35 % slower on some builds)
     fi
@@ -60,6 +65,6 @@ esac
 
 exec "${build_dir}/bin/llama-server" -m "${model}" --alias "${ALIAS:-lfm25-24b-a2b}" \
   --host "${HOST:-127.0.0.1}" --port "${PORT:-18110}" -dev SYCL0 -ngl 99 \
-  -c "${CTX:-32768}" -b 2048 -ub 512 -t 8 --poll 50 -ctk f16 -ctv f16 -fa on --reasoning auto \
+  -c "${CTX:-32768}" -b 2048 -ub "${ubatch}" -t 8 --poll 50 -ctk f16 -ctv f16 -fa on --reasoning auto \
   --parallel 1 --cache-ram 0 --ctx-checkpoints 0 --no-cache-prompt --slot-prompt-similarity 0 --fit off \
   --metrics --no-webui --jinja
