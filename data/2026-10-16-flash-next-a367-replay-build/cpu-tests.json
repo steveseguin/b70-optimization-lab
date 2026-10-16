@@ -1,0 +1,173 @@
+{
+  "utc": "2026-10-16T19:43:05.565912+00:00",
+  "suites": [
+    {
+      "suite": "replay",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/a367-replay",
+        "-p",
+        "test_replay.py",
+        "-v"
+      ],
+      "tests": 83,
+      "returncode": 0,
+      "passed": true,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "log": "replay.log",
+      "log_sha256": "e3a67b9a0f929c6260b4f480de641f3404534206eb2c56cc3be38574ef24e7e9"
+    },
+    {
+      "suite": "calibration",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate",
+        "-p",
+        "test_calibrate.py",
+        "-v"
+      ],
+      "tests": 75,
+      "returncode": 0,
+      "passed": true,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "log": "calibration.log",
+      "log_sha256": "78be29e41f22eadb3d5adc4af6e345a9332c70544c33a019b14e4b1683f69003"
+    },
+    {
+      "suite": "driver",
+      "command": [
+        "/home/steve/.venvs/vllm-xpu/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/driver",
+        "-p",
+        "test_driver.py",
+        "-v"
+      ],
+      "tests": 59,
+      "returncode": 0,
+      "passed": true,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "log": "driver.log",
+      "log_sha256": "9a676f52a814833996d0fa448894df6d1f9a82a1c29e0f8daf34bb87a9114256"
+    },
+    {
+      "suite": "payload",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/scripts",
+        "-p",
+        "test_verify_flash_next_a367_launch_payload.py",
+        "-v"
+      ],
+      "tests": 6,
+      "returncode": 0,
+      "passed": true,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "log": "payload.log",
+      "log_sha256": "6e670a98276a480965a3efe817803231c1cac17cb4202a3aa3ca5c885c097bd6"
+    },
+    {
+      "suite": "frozen-tree",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/scripts",
+        "-p",
+        "test_verify_qwen38_flash_next_fp8_tree.py",
+        "-v"
+      ],
+      "tests": 9,
+      "returncode": 0,
+      "passed": true,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "log": "frozen-tree.log",
+      "log_sha256": "52c1fb88b615a7a6bb894363e9fa175faad294e8701013ef9ff50b603718699e"
+    }
+  ],
+  "tests": 232,
+  "passed": true,
+  "seals": [
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet4-prep/a367-replay/seal.json",
+      "sha256": "78556b50b5ede841f399d76a1ce45eb2751b9400d25e556293fab4c3be62bb6e",
+      "files": 36,
+      "mismatches": []
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate/seal.json",
+      "sha256": "b75d9f86ace2bbeaa7cde7b94a91a15230ed1676823446c238e25edf502514b0",
+      "files": 16,
+      "mismatches": []
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet4-prep/driver/driver-seal.json",
+      "sha256": "e29fe31176a529879642e0e8bfea45e2266359304374d7d770c18e9129463c7a",
+      "files": 9,
+      "mismatches": []
+    }
+  ],
+  "seal_mismatches": 0,
+  "preregistration_sha256": "a7fad58bc627d8ce16f46c1eb8bd0c20432edcbc71619eab0ff6649a9610c575",
+  "nice": 19,
+  "affinity": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "native_executed": false,
+  "plan_sha256": "f4bb26c9b4b65fef799aeb0cabe9506c635e71178eeb41da133684cd52984197"
+}
