@@ -41,7 +41,8 @@ scheduled token counts, the previous step's ids, num_accepted_tokens per request
 the overlay, the stored counts used, and the previous step's valid sampled token counts. Reading those device
 values forces a host sync in those steps (debug mode only): it changes timing, not arithmetic.
 
-Cost: a skipped request's first step back yields one token (its drafts are lost, as in the stock engine).
+Cost: a skipped request's first step back yields one token (its drafts are lost, as in the stock engine), unless
+B70_SPEC_RESUME_DRAFTS=1 (0.4.0, below) gives them back.
 
 0.3.0 (2026-10-16): prefix caching (`--enable-prefix-caching --mamba-cache-mode align`). There the count the GDN
 kernels read comes from the CPU array `input_batch.num_accepted_tokens_cpu`: after each step the align postprocess
@@ -54,6 +55,24 @@ different from solo; without prefix caching 0 of 36. In align mode this overlay 
 request that sits out (after waiting for the event the stock code waits on in the same step anyway) and writes it
 back into the CPU array, the host buffer and the GPU count of its row when it returns, after the stock
 `_prepare_inputs` and before `preprocess_mamba`.
+
+0.4.0 (2026-10-16): B70_SPEC_RESUME_DRAFTS=1 (default off; without it 0.4.0 behaves as 0.3.0) also keeps the
+returning request's drafts, so its first step back is a normal verify step instead of one token. The drafter's
+proposals for a request are made at the end of its last step (`runner._draft_token_ids`, one row per previous-step
+row, gpu_model_runner.py:4701-4715); the stock code copies them into the next step's input ids only for rows that
+ran in the previous step (`_prepare_input_ids`, :1909-1929). A request that sat out comes back with placeholder (-1)
+drafts, and the rejection sampler compares the draft ids it gathers from input_ids inside `_prepare_inputs`
+(`_calc_spec_decode_metadata`, :2939-2941), so every draft is rejected. Long prompts make this frequent: with
+pure steps every prompt chunk is a step the writers sit out (2026-10-15 sweep, 16 users: mean acceptance length
+4.1 one at a time on the long suite, 1.5-2.9 with 16 users, ten-second windows at 1.00).
+What it does: before `_update_states`, the previous-step drafts of each request this step leaves out are copied
+(device side) next to its stored count; after the stock `_prepare_inputs`, for a returning request whose scheduled
+drafts are all placeholders, the stored drafts are written at its draft positions in `input_ids.gpu` (what the model
+reads) and in `spec_decode_metadata.draft_token_ids` (what the rejection sampler compares). These are the drafts the
+request would have been given had it not sat out: nothing it has seen changed while it waited. The verify step has
+the same shape as before (1 + drafts rows); every output token is still the target model's own choice, so answers do
+not change, only how many tokens a step accepts. Requests that ran in the previous step, requests with real
+(non-placeholder) scheduled drafts, and steps with no returning request are untouched.
 """
 import os
 
@@ -63,9 +82,13 @@ _GUARD = '_b70_spec_resume_accepted'
 def _state(runner):
     st = runner.__dict__.get('_b70_resume')
     if st is None:
-        st = runner.__dict__['_b70_resume'] = {'stash': {}, 'prev_sched': (), 'step': 0, 'debug': None,
+        st = runner.__dict__['_b70_resume'] = {'stash': {}, 'drafts': {}, 'prev_sched': (), 'step': 0, 'debug': None,
                                                'debug_left': int(os.environ.get('B70_SPEC_RESUME_DEBUG', '0') or 0)}
     return st
+
+
+def resume_drafts_enabled():
+    return os.environ.get('B70_SPEC_RESUME_DRAFTS', '').strip() == '1'
 
 
 def _short(rid):
@@ -116,6 +139,66 @@ def stash_unscheduled(runner, stash, scheduler_output):
     for j, (rid, _) in enumerate(dropped):
         stash[rid] = values[j:j + 1]
     return len(dropped)
+
+
+def stash_drafts(runner, drafts_stash, scheduler_output):
+    """Before _update_states: copy the drafts the previous step proposed for the requests this step leaves out."""
+    import torch
+    drafts = getattr(runner, '_draft_token_ids', None)
+    prev = getattr(runner.input_batch, 'prev_req_id_to_index', None)
+    if not torch.is_tensor(drafts) or drafts.dim() != 2 or not prev:
+        return 0
+    scheduled = scheduler_output.num_scheduled_tokens
+    finished = getattr(scheduler_output, 'finished_req_ids', ()) or ()
+    dropped = [(rid, int(idx)) for rid, idx in prev.items()
+               if rid not in scheduled and rid not in finished and int(idx) < drafts.shape[0]]
+    if not dropped:
+        return 0
+    index = torch.tensor([i for _, i in dropped], dtype=torch.long).to(drafts.device, non_blocking=True)
+    rows = drafts.index_select(0, index)                     # a copy: the next step's drafter replaces the tensor
+    for j, (rid, _) in enumerate(dropped):
+        drafts_stash[rid] = rows[j]
+    return len(dropped)
+
+
+def restore_drafts(runner, drafts_stash, scheduler_output, result):
+    """After the stock _prepare_inputs: give a returning request with placeholder drafts its stored drafts, in
+    input_ids.gpu and in the spec-decode metadata's draft ids. Returns the number of draft tokens written."""
+    import torch
+    for rid in getattr(scheduler_output, 'finished_req_ids', ()) or ():
+        drafts_stash.pop(rid, None)
+    cached = getattr(scheduler_output, 'scheduled_cached_reqs', None)
+    for rid in getattr(cached, 'resumed_req_ids', ()) or ():
+        drafts_stash.pop(rid, None)
+    if not drafts_stash:
+        return 0
+    prev = getattr(runner.input_batch, 'prev_req_id_to_index', None) or {}
+    spec = getattr(scheduler_output, 'scheduled_spec_decode_tokens', None) or {}
+    counts = scheduler_output.num_scheduled_tokens
+    metadata = result[1] if isinstance(result, tuple) and len(result) > 1 else None
+    pos = offset = 0
+    input_pos, meta_pos, values = [], [], []
+    for rid in current_req_ids(runner):
+        drafts = list(spec.get(rid, ()))
+        end = pos + int(counts.get(rid, 0))
+        if rid not in prev:
+            stored = drafts_stash.pop(rid, None)
+            if stored is not None and drafts and all(t < 0 for t in drafts):
+                k = min(len(drafts), int(stored.shape[0]))
+                input_pos.extend(range(end - len(drafts), end - len(drafts) + k))
+                meta_pos.extend(range(offset, offset + k))
+                values.append(stored[:k])
+        pos, offset = end, offset + len(drafts)
+    if not values:
+        return 0
+    target = runner.input_ids.gpu
+    flat = torch.cat(values).to(device=target.device, dtype=target.dtype)
+    target.index_copy_(0, torch.tensor(input_pos, dtype=torch.long).to(target.device, non_blocking=True), flat)
+    ids = getattr(metadata, 'draft_token_ids', None)
+    if ids is not None:
+        ids.index_copy_(0, torch.tensor(meta_pos, dtype=torch.long).to(ids.device, non_blocking=True),
+                        flat.to(device=ids.device, dtype=ids.dtype))
+    return len(input_pos)
 
 
 def restore_returning(runner, stash, scheduler_output):
@@ -175,6 +258,8 @@ def wrap_update_states(original):
         st['prev_sched'] = tuple(sched)
         if getattr(self, 'use_async_spec_decode', False):
             stash_unscheduled(self, st['stash'], scheduler_output)
+            if resume_drafts_enabled():
+                stash_drafts(self, st['drafts'], scheduler_output)
         return original(self, scheduler_output, *args, **kwargs)
     setattr(_update_states, _GUARD, True)
     return _update_states
@@ -189,7 +274,14 @@ def wrap_prepare_inputs(original, stats=None, log=None):
         dbg = st.get('debug')
         rows = current_req_ids(self)
         before = self.num_accepted_tokens.gpu[:len(rows)].clone() if dbg is not None else None
+        written = restore_drafts(self, st['drafts'], scheduler_output, result) if resume_drafts_enabled() else 0
         fixed = restore_returning(self, st['stash'], scheduler_output)
+        if stats is not None and written:
+            first = not stats.get('drafts')
+            stats['drafts'] = stats.get('drafts', 0) + written
+            if first and log is not None:
+                log('b70_spec_resume_accepted: first draft restore, %d draft token(s) given back to returning '
+                    'request(s) (step %d)', written, st['step'])
         if stats is not None and fixed:
             first = not stats.get('rows')
             stats['rows'] = stats.get('rows', 0) + len(fixed)
@@ -228,6 +320,7 @@ def register():
 
     logger = init_logger('b70_spec_resume_accepted')
     if install(module.GPUModelRunner, logger.warning):
-        logger.warning('b70_spec_resume_accepted 0.3.0: installed on GPUModelRunner._update_states/_prepare_inputs '
+        logger.warning('b70_spec_resume_accepted 0.4.0: installed on GPUModelRunner._update_states/_prepare_inputs '
                        '(requests that sat out a step keep their accepted-token count; async speculative decoding '
-                       'only; align-mode prefix caching handled; debug steps %s)', os.environ.get('B70_SPEC_RESUME_DEBUG', '0') or '0')
+                       'only; align-mode prefix caching handled; drafts kept %s; debug steps %s)',
+                       'on' if resume_drafts_enabled() else 'off', os.environ.get('B70_SPEC_RESUME_DEBUG', '0') or '0')

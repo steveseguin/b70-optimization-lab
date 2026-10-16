@@ -486,3 +486,41 @@ sweep, long suite only (`MU_SKIP_SHORT=1`), three passes (`MU_LONG_REPEATS=3`):
 2026-10-15 recipe was exact on 128 long answers twice); D1 repeats the failing setup with a more sensitive suite;
 D2 says whether drafting is needed for the flip. No arm is a release gate. About 35 minutes. Wrapper:
 `scripts/run-20261016-fp8-pc-multiuser-diagnostic.sh`.
+
+### Result (16:48-17:22 EDT): no flip in 576 answers
+
+| Arm | Drafting | Prefix caching | Passes equal to solo | Long tok/s together | From the cache per pass |
+| --- | --- | --- | --- | ---: | ---: |
+| D1 | on | on | 64/64, 64/64, 64/64 | 109.9 / 112.2 / 114.0 | 106,496 (1,664 each) |
+| D2 | off | on | 64/64, 64/64, 64/64 | 56.0 / 55.9 / 55.9 | 159,744 (2,496 each) |
+| D3 | on | off | 64/64, 64/64, 64/64 | 81.2 / 82.4 / 81.8 | 0 |
+
+The detector was sensitive: the 64 solo answers start four different ways and 56 are distinct. Nothing was evicted
+(258,236 tokens of cache). So the 16:36 flip did not come back with one prompt family; it is rare or needs the mixed
+suite. Kernel log clean; Gemma restored. Data: `/mnt/fast-ai/bench-results/fp8-r314-D{1,2,3}-20261016-pcdiag/`,
+wrapper log `data/2026-10-16-r314-pcdiag/diag.log`.
+
+## Addendum, 2026-10-16 17:23 EDT: keeping a returning user's drafts, and the flip rate (written before it runs)
+
+**Why.** With pure steps, every prompt step is a step the writing users sit out, and a user that sat out comes back
+with placeholder drafts, so its first step back makes one token. The 2026-10-15 sweep's server logs show it: on the
+long suite one user at a time averaged 4.1 tokens per verify step, 16 users 1.5-2.9, with ten-second windows at 1.00.
+`b70-spec-resume-accepted` 0.4.0 adds `B70_SPEC_RESUME_DRAFTS=1` (off by default; off = 0.3.0): the drafts the drafter
+made for a user at the end of its last step are stored when it sits out and written back, in the model's input and in
+the rejection sampler's draft ids, when it returns. They are the drafts it would have been given had it not waited;
+every output token is still the target's own choice (32 CPU tests).
+
+**Arms** (one fresh server each, R314, the 2026-10-15 recipe: pure steps, per-sequence attention, prompt batch 8,
+state-width and resume-accepted fixes, drafting on, no prefix caching, normal long suite and short ladder, two passes):
+
+| Arm | Users | Drafts kept |
+| --- | ---: | --- |
+| R16 | 16 | on |
+| R4 | 4 | on |
+| P1 | 2 | off, prefix caching on: the 16:29 failing configuration again, normal long suite, three passes, long only |
+
+**Rule.** R16 and R4 must be 64/64 equal to solo on long and short prompts in both passes and exact against the frozen
+reference; otherwise draft keeping is not used and the reason is found first. Speed is reported next to the 2026-10-15
+second-server numbers (16 users: long 56.4 / 56.7, short 427.5 / 428.6; 4 users: long 54.5 / 55.4, short 227.0 / 232.5)
+with the mean acceptance length from the server log. P1 counts flips out of 192 to estimate the rate of the 16:29 flip;
+it is not a gate. About 50 minutes.

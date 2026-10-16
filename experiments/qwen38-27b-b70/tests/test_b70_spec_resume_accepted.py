@@ -14,6 +14,7 @@ import os
 import sys
 import types
 import unittest
+import unittest.mock
 from pathlib import Path
 
 import torch
@@ -376,6 +377,149 @@ class DebugTest(unittest.TestCase):
         self.assertIn("acc_stock={'y': 1, 'a': 1, 'x': 1}", last)
         self.assertIn("acc_overlay={'y': 1, 'a': 3, 'x': 4}", last)
         self.assertIn("stored={'a': 3, 'x': 4}", last)
+
+
+
+class DraftStockRunner(StockRunner):
+    """Adds the stock draft handling: drafts of previous-step rows come from _draft_token_ids
+    (_prepare_input_ids, gpu_model_runner.py:1909-1929); the rejection sampler's draft ids are gathered from
+    input_ids inside _prepare_inputs (_calc_spec_decode_metadata, :2939-2941)."""
+    def __init__(self):
+        super().__init__()
+        self._draft_token_ids = None
+
+    def _prepare_inputs(self, so, num_scheduled_tokens=None):
+        prev = self.input_batch.prev_req_id_to_index or {}
+        super()._prepare_inputs(so, num_scheduled_tokens)
+        pos, draft_pos = 0, []
+        for rid in self.input_batch.req_ids:
+            drafts = list(so.scheduled_spec_decode_tokens.get(rid, ()))
+            end = pos + so.num_scheduled_tokens[rid]
+            if rid in prev and self._draft_token_ids is not None:
+                for j in range(len(drafts)):
+                    self.input_ids.gpu[end - len(drafts) + j] = int(self._draft_token_ids[prev[rid], j])
+            draft_pos.extend(range(end - len(drafts), end))
+            pos = end
+        metadata = NS(draft_token_ids=self.input_ids.gpu[torch.tensor(draft_pos, dtype=torch.long)])  # a copy
+        return ('logits', metadata, 6)
+
+
+def run_draft_step(runner, batch, valid_after, proposals, spec=None, finished=()):
+    """One step; then the drafter proposes `proposals[req]` (5 ids) for each scheduled request.
+    Returns (draft ids the sampler compares per request, input-id drafts per request)."""
+    so = sched_out(batch, spec, finished)
+    runner._update_states(so)
+    _, metadata, _ = runner._prepare_inputs(so, None)
+    rows = list(runner.input_batch.req_ids)
+    compared, given, pos, off = {}, {}, 0, 0
+    for rid in rows:
+        n = len(so.scheduled_spec_decode_tokens.get(rid, ()))
+        end = pos + so.num_scheduled_tokens[rid]
+        compared[rid] = metadata.draft_token_ids[off:off + n].tolist()
+        given[rid] = runner.input_ids.gpu[end - n:end].tolist()
+        pos, off = end, off + n
+    runner.input_batch.prev_req_id_to_index = {rid: i for i, rid in enumerate(rows)}
+    runner.valid_sampled_token_count_gpu = torch.tensor([valid_after[batch.index(r)] for r in rows], dtype=torch.int32)
+    runner._draft_token_ids = torch.tensor([proposals[r] for r in rows], dtype=torch.int64)
+    return compared, given
+
+
+def prop(base):
+    return [base + i for i in range(5)]
+
+
+class ResumeDraftsTest(unittest.TestCase):
+    def setUp(self):
+        self.env = unittest.mock.patch.dict(os.environ, {'B70_SPEC_RESUME_DRAFTS': '1'})
+        self.env.start()
+
+    def tearDown(self):
+        self.env.stop()
+
+    def test_stock_returning_request_compares_placeholders(self):
+        r = DraftStockRunner()
+        run_draft_step(r, ['a', 'x'], [3, 4], {'a': prop(10), 'x': prop(20)}, spec={'a': DRAFTS, 'x': DRAFTS})
+        run_draft_step(r, ['y'], [1], {'y': prop(30)})
+        compared, _ = run_draft_step(r, ['a', 'x', 'y'], [1, 1, 1], {k: prop(0) for k in 'axy'},
+                                     spec={k: DRAFTS for k in 'axy'})
+        self.assertEqual(compared, {'a': DRAFTS, 'x': DRAFTS, 'y': prop(30)})   # a and x: every draft rejected
+
+    def test_returning_requests_get_their_drafts(self):
+        r = patched_runner(base=DraftStockRunner)
+        run_draft_step(r, ['a', 'x'], [3, 4], {'a': prop(10), 'x': prop(20)}, spec={'a': DRAFTS, 'x': DRAFTS})
+        run_draft_step(r, ['y'], [1], {'y': prop(30)})
+        compared, given = run_draft_step(r, ['a', 'x', 'y'], [1, 1, 1], {k: prop(0) for k in 'axy'},
+                                         spec={k: DRAFTS for k in 'axy'})
+        self.assertEqual(compared, {'a': prop(10), 'x': prop(20), 'y': prop(30)})
+        self.assertEqual(given, compared)                                        # model input == sampler's drafts
+        self.assertEqual(r._b70_resume['drafts'], {})
+
+    def test_switch_off_is_0_3_0(self):
+        with unittest.mock.patch.dict(os.environ, {'B70_SPEC_RESUME_DRAFTS': '0'}):
+            r = patched_runner(base=DraftStockRunner)
+            run_draft_step(r, ['a'], [3], {'a': prop(10)}, spec={'a': DRAFTS})
+            run_draft_step(r, ['y'], [1], {'y': prop(30)})
+            compared, given = run_draft_step(r, ['a', 'y'], [1, 1], {k: prop(0) for k in 'ay'},
+                                             spec={k: DRAFTS for k in 'ay'})
+        self.assertEqual(compared['a'], DRAFTS)
+        self.assertEqual(given['a'], [0] * 5)                                    # 0.3.0: placeholders clamped
+        self.assertEqual(r._b70_resume['drafts'], {})
+
+    def test_order_change_and_two_steps_out(self):
+        r = patched_runner(base=DraftStockRunner)
+        run_draft_step(r, ['a', 'b', 'x'], [2, 6, 1], {'a': prop(10), 'b': prop(40), 'x': prop(20)},
+                       spec={k: DRAFTS for k in 'abx'})
+        run_draft_step(r, ['y'], [1], {'y': prop(30)})
+        run_draft_step(r, ['z'], [1], {'z': prop(50)})
+        compared, given = run_draft_step(r, ['x', 'b', 'a'], [1, 1, 1], {k: prop(0) for k in 'abx'},
+                                         spec={k: DRAFTS for k in 'abx'})
+        self.assertEqual(compared, {'x': prop(20), 'b': prop(40), 'a': prop(10)})
+        self.assertEqual(given, compared)
+
+    def test_partial_skip_others_on_stock_path(self):
+        r = patched_runner(base=DraftStockRunner)
+        run_draft_step(r, ['a', 'x'], [3, 4], {'a': prop(10), 'x': prop(20)}, spec={'a': DRAFTS, 'x': DRAFTS})
+        run_draft_step(r, ['x', 'y'], [2, 1], {'x': prop(60), 'y': prop(30)}, spec={'x': DRAFTS})
+        compared, _ = run_draft_step(r, ['a', 'x', 'y'], [1, 1, 1], {k: prop(0) for k in 'axy'},
+                                     spec={k: DRAFTS for k in 'axy'})
+        self.assertEqual(compared, {'a': prop(10), 'x': prop(60), 'y': prop(30)})
+
+    def test_real_drafts_and_shorter_drafts(self):
+        r = patched_runner(base=DraftStockRunner)
+        run_draft_step(r, ['a', 'b'], [3, 3], {'a': prop(10), 'b': prop(40)}, spec={'a': DRAFTS, 'b': DRAFTS})
+        run_draft_step(r, ['y'], [1], {'y': prop(30)})
+        compared, given = run_draft_step(r, ['a', 'b'], [1, 1], {k: prop(0) for k in 'ab'},
+                                         spec={'a': [7, 8, 9], 'b': [-1, -1]})
+        self.assertEqual(compared['a'], [7, 8, 9])                               # scheduler sent real drafts: kept
+        self.assertEqual(compared['b'], [40, 41])                                # two slots: first two drafts
+        self.assertEqual(given['b'], [40, 41])
+
+    def test_finished_and_prompt_continuation_drop_the_drafts(self):
+        r = patched_runner(base=DraftStockRunner)
+        run_draft_step(r, ['a', 'p', 'x'], [3, 1, 2], {'a': prop(10), 'p': prop(70), 'x': prop(20)},
+                       spec={'a': DRAFTS, 'x': DRAFTS})
+        run_draft_step(r, ['y'], [1], {'y': prop(30)}, finished=['x'])
+        compared, given = run_draft_step(r, ['a', 'p'], [1, 1], {k: prop(0) for k in 'ap'}, spec={'a': DRAFTS})
+        self.assertEqual(compared, {'a': prop(10), 'p': []})
+        self.assertEqual(set(r._b70_resume['drafts']), {'y'})                   # x finished, p had no drafts; y is out now
+
+    def test_no_skip_identical_to_stock(self):
+        stock, r = DraftStockRunner(), patched_runner(base=DraftStockRunner)
+        for runner in (stock, r):
+            run_draft_step(runner, ['a', 'x'], [3, 4], {'a': prop(10), 'x': prop(20)}, spec={'a': DRAFTS, 'x': DRAFTS})
+        a = run_draft_step(stock, ['a', 'x'], [1, 1], {'a': prop(0), 'x': prop(0)}, spec={'a': DRAFTS, 'x': DRAFTS})
+        b = run_draft_step(r, ['a', 'x'], [1, 1], {'a': prop(0), 'x': prop(0)}, spec={'a': DRAFTS, 'x': DRAFTS})
+        self.assertEqual(a, b)
+        self.assertTrue(torch.equal(stock.input_ids.gpu, r.input_ids.gpu))
+
+    def test_first_draft_restore_logged_once(self):
+        lines = []
+        r = patched_runner(log=lambda *a: lines.append(a[0] % a[1:]), base=DraftStockRunner)
+        for _ in range(2):
+            run_draft_step(r, ['a'], [3], {'a': prop(10)}, spec={'a': DRAFTS})
+            run_draft_step(r, ['y'], [1], {'y': prop(30)})
+            run_draft_step(r, ['a', 'y'], [1, 1], {k: prop(0) for k in 'ay'}, spec={k: DRAFTS for k in 'ay'})
+        self.assertEqual(sum('first draft restore' in l for l in lines), 1)
 
 
 class RegisterTest(unittest.TestCase):
