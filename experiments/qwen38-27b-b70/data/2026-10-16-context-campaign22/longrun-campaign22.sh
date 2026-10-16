@@ -60,7 +60,8 @@ arm_window() {  # arm -> "budget inplace_tokens"
   case $1 in O1 | L1 | L1d | O1r | L1r | L1rp | L1rd | SL) echo "26624 9000" ;; *) return 1 ;; esac
 }
 arm_async() {  # arm -> keeper options
-  local k="--notes-upstream http://127.0.0.1:$KPORT --notes-model $KEEPER_MODEL"
+  # c22b on: LFM2.5's template always opens a think block; llama.cpp's thinking_budget_tokens 0 closes it at once
+  local k="--notes-upstream http://127.0.0.1:$KPORT --notes-model $KEEPER_MODEL ${KEEPER_EXTRA:+--notes-extra $KEEPER_EXTRA}"
   case $1 in L1 | L1r) echo "$k" ;; L1d | L1rd | SL) echo "$k --notes-async defer" ;; L1rp) echo "$k --notes-prepass 2000" ;; *) echo "" ;; esac
 }
 start_proxy() {  # tag arm kind
@@ -233,6 +234,7 @@ for p in $PORT $PPORT $KPORT; do ss -tln | grep -q ":$p " && { say "ABORT: port 
 [[ -n $(systemctl --user list-units --state=active --no-legend 'dl-*' 2>/dev/null) ]] && { say "ABORT: a download unit is running"; exit 2; }
 for u in lfm25-srv lfm25-pkg-srv lfm25-keeper-srv ctx-keeper-proxy; do systemctl --user is-active --quiet $u && { say "ABORT: $u is running"; exit 2; }; done
 [[ "$(python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --version)" == "ctxkeeper 1.1.0.dev0" ]] || { say "ABORT: tools/ctxkeeper is not 1.1.0.dev0"; exit 2; }
+[[ -z ${KEEPER_EXTRA:-} ]] || python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --notes-extra || { say "ABORT: tools/ctxkeeper has no --notes-extra"; exit 2; }
 cd "$CTX" || exit 2
 while read -r arm kind seed cap; do
   [[ -z $arm || $arm == \#* ]] && continue

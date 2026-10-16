@@ -1303,6 +1303,17 @@ class Keepers(unittest.TestCase):
         self.assertIn("abcd05: 35", s.state["notes"])                       # and the notes were applied
         self.assertIn("Always answer in French.", s.state["notes"])
 
+    def test_notes_extra_goes_to_the_separate_keeper_only(self):
+        """Campaign 22: LFM2.5's template always opens a think block; llama.cpp's thinking_budget_tokens 0 closes it."""
+        agent, keeper_model = LedgerModel(), KeeperModel()
+        k = self.keeper(agent, ask_notes=keeper_model, notes_model="small", notes_extra={"thinking_budget_tokens": 0},
+                        notes_kwargs={"x": 1})
+        s = self.go(k, 20)
+        self.assertGreater(s.state["inplace_cuts"], 0)
+        self.assertTrue(all(r.get("thinking_budget_tokens") == 0 for r in keeper_model.requests))
+        self.assertTrue(all(r.get("chat_template_kwargs") == {"x": 1} for r in keeper_model.requests))
+        self.assertFalse(any("thinking_budget_tokens" in r for r in agent.requests))
+
     def test_background_notes_give_what_the_request_would_have_taken(self):
         one, two = LedgerModel(), LedgerModel()
         s1 = self.go(self.keeper(one), 24)

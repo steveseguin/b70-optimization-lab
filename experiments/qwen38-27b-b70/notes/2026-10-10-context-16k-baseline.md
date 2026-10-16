@@ -3109,3 +3109,16 @@ tokens). Quality: 81/85 at 12K and 84/85 at 8K over the two seeds, against 85/85
 did not repeat on seed 1 (one run each: a notes slip, not yet a pattern). Decision: `--inplace-fit` becomes the
 recommended setting for windows under 24K (it changes nothing at 32K on these streams); at 32K and above the
 default stays as it is.
+
+### Campaign 22 so far (08:28-), and 22b registered 2026-10-16 08:55 before its run
+
+Both models loaded as planned: LFM2.5 ready in 21 s on card 1, then the one-card Qwen server in 150 s (5.9 GiB
+host memory free beside both). **The LFM2.5 keeper wrote no notes in the smoke test**: every notes call came back
+empty after 6,144 tokens (finish=length, ~59 s each). LFM2.5's chat template always opens a `<think>` block for a new
+reply (`enable_thinking: false` changes nothing); llama.cpp's per-request `thinking_budget_tokens: 0` closes it at
+once (tested on the running server: 8 tokens, no thinking, against 170 with). ctxkeeper gains `--notes-extra JSON`
+(more fields for a separate keeper's requests; unit-tested: they go to the keeper only). Campaign 22 is stopped after its smoke
+test (STOP file, 08:56; no arm had started) and everything moves to **22b**: the same runner with
+`KEEPER_EXTRA={"thinking_budget_tokens":0}`, queue SL, O1, L1, L1d, O1r, L1r, L1rp (one restart either way; the
+fixed smoke test runs first); everything else as registered for
+22 (the expectations there stand; LFM2.5 now writes its notes without thinking, as the Qwen recipe's own notes do).

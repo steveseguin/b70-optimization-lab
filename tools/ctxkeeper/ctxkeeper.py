@@ -640,7 +640,7 @@ class Keeper:
                  empty_retry: bool = True, think_cap: int = 0, ask_notes=None, notes_model: str | None = None,
                  notes_system: str | None = None, notes_kwargs: dict | None = None, notes_prepass: int = 0,
                  notes_async: str | None = None, prewarm: bool = False, log_calls: bool = False,
-                 inplace_fit: bool = False) -> None:
+                 inplace_fit: bool = False, notes_extra: dict | None = None) -> None:
         self.ask, self.root = ask, Path(state_dir)
         # ask_notes: a separate keeper model's server for the notes calls (--notes-upstream), with notes_model as its
         # model name, notes_system as its system message (default KEEPER_SYSTEM), notes_kwargs as its
@@ -652,6 +652,7 @@ class Keeper:
         # the view the cut will leave (opening messages and the new NOTES), one token asked for. log_calls: every
         # call to a model server goes to calls.jsonl in the session folder.
         self.ask_notes, self.notes_model, self.notes_kwargs = ask_notes, notes_model, notes_kwargs
+        self.notes_extra = dict(notes_extra or {})   # more fields for a separate keeper's requests (--notes-extra)
         self.notes_system = notes_system or KEEPER_SYSTEM
         self.notes_prepass, self.prewarm, self.log_calls = notes_prepass, prewarm, log_calls
         self.inplace_fit = inplace_fit
@@ -849,6 +850,7 @@ class Keeper:
             if self.ask_notes is not None:
                 if self.notes_kwargs:
                     body["chat_template_kwargs"] = dict(self.notes_kwargs)
+                body.update(self.notes_extra)
             else:
                 if thinking is not None:
                     body["chat_template_kwargs"] = {"enable_thinking": bool(thinking)}
@@ -1042,6 +1044,8 @@ class Keeper:
                     ctk["reasoning_effort"] = self.effort
             if ctk:
                 out["chat_template_kwargs"] = ctk
+            if self.ask_notes is not None:
+                out.update(self.notes_extra)
             try:
                 resp = self.upstream(out, s, "notes")
             except Exception as exc:
@@ -1594,6 +1598,9 @@ def main() -> None:
     ap.add_argument("--notes-model", help="model name to send to the keeper's server")
     ap.add_argument("--notes-system", help="with --notes-upstream: the keeper's system message (text, or @file)")
     ap.add_argument("--notes-kwargs", help="with --notes-upstream: chat_template_kwargs for the keeper, as JSON")
+    ap.add_argument("--notes-extra", help="with --notes-upstream: more fields for the keeper's requests, as JSON (e.g. "
+                    "'{\"thinking_budget_tokens\": 0}' turns thinking off on llama.cpp for a model whose template "
+                    "always starts it, such as LFM2.5)")
     ap.add_argument("--notes-prepass", type=int, default=0, metavar="CHARS",
                     help="with --notes-upstream: tool results longer than this are cut down for the keeper to their "
                          "start, end and the lines that look like outcomes or instructions (0: off)")
@@ -1636,6 +1643,7 @@ def main() -> None:
                     ask_notes=(lambda body: post_json(keeper_url + "/v1/chat/completions", body, a.timeout)) if keeper_url else None,
                     notes_model=a.notes_model, notes_system=system,
                     notes_kwargs=json.loads(a.notes_kwargs) if a.notes_kwargs else None, notes_prepass=a.notes_prepass,
+                    notes_extra=json.loads(a.notes_extra) if a.notes_extra else None,
                     notes_async=a.notes_async, prewarm=a.prewarm, log_calls=a.log_calls, inplace_fit=a.inplace_fit)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper {__version__}" + (f" (recipe {a.recipe})" if a.recipe else "")
