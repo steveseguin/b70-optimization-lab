@@ -522,6 +522,125 @@ class ResumeDraftsTest(unittest.TestCase):
         self.assertEqual(sum('first draft restore' in l for l in lines), 1)
 
 
+class LateCopyEvent:
+    """num_accepted_tokens_event: the previous step's align postprocess copies its counts into the CPU array on the
+    device (mamba_utils.py:1638-1639, non_blocking); waiting on the event is when those copies have landed."""
+    def __init__(self, runner):
+        self.runner, self.pending, self.waits = runner, [], 0
+
+    def synchronize(self):
+        self.waits += 1
+        for row, value in self.pending:
+            self.runner.input_batch.num_accepted_tokens_cpu[row] = value
+        self.pending = []
+
+
+class LateCopyAlignRunner(StockRunner):
+    """Align mode as in R314, including the hand-over case: _update_states condenses rows and add_request writes 1
+    (gpu_input_batch.py:484) before the previous step's postprocess copy has landed; _prepare_inputs waits on the
+    event, then keeps prev-row values and gives new rows 1 when prev_req_id_to_index is non-empty, or copies the CPU
+    array as is when it is empty (gpu_model_runner.py:2132-2150)."""
+    cache_config = NS(mamba_cache_mode='align')
+
+    def __init__(self):
+        super().__init__()
+        self.input_batch.num_accepted_tokens_cpu = torch.ones(16, dtype=torch.int32).numpy()
+        self.num_accepted_tokens.np = torch.ones(16, dtype=torch.int32).numpy()
+        self.num_accepted_tokens_event = LateCopyEvent(self)
+
+    def _update_states(self, so):
+        before = list(self.input_batch.req_ids)
+        old = self.input_batch.num_accepted_tokens_cpu.copy()
+        super()._update_states(so)
+        cpu = self.input_batch.num_accepted_tokens_cpu
+        for row, rid in enumerate(self.input_batch.req_ids):
+            cpu[row] = old[before.index(rid)] if rid in before else 1
+        return None
+
+    def _prepare_inputs(self, so, num_scheduled_tokens=None):
+        out = super()._prepare_inputs(so, num_scheduled_tokens)
+        self.num_accepted_tokens_event.synchronize()
+        prev = self.input_batch.prev_req_id_to_index
+        cpu, host = self.input_batch.num_accepted_tokens_cpu, self.num_accepted_tokens.np
+        n = len(self.input_batch.req_ids)
+        if prev:
+            for row, rid in enumerate(self.input_batch.req_ids):
+                host[row] = cpu[prev[rid]] if rid in prev else 1
+            cpu[:n] = host[:n]
+        else:
+            host[:n] = cpu[:n]
+        self.num_accepted_tokens.gpu[:n] = torch.from_numpy(host[:n].copy())
+        return out
+
+
+def run_late_step(runner, batch, post_after, spec=None, finished=()):
+    """One step; returns the count preprocess_mamba uses as the pre-copy bias source per request (the CPU array after
+    _prepare_inputs and the overlay). The step's own postprocessed counts are left as a copy that lands later."""
+    so = sched_out(batch, spec, finished)
+    runner._update_states(so)
+    runner._prepare_inputs(so, None)
+    rows = list(runner.input_batch.req_ids)
+    acc = {rid: int(runner.input_batch.num_accepted_tokens_cpu[i]) for i, rid in enumerate(rows)}
+    runner.input_batch.prev_req_id_to_index = {rid: i for i, rid in enumerate(rows)}
+    runner.num_accepted_tokens_event.pending = [(i, post_after[batch.index(rid)]) for i, rid in enumerate(rows)]
+    runner.valid_sampled_token_count_gpu = torch.tensor([post_after[batch.index(r)] for r in rows], dtype=torch.int32)
+    return acc
+
+
+class FreshRowTest(unittest.TestCase):
+    """0.5.0: a new request that takes over the row of a request that just finished, with nobody else left from the
+    previous step (one sequence, or both users finishing together)."""
+
+    def test_stock_new_request_reads_the_finished_requests_count(self):
+        r = LateCopyAlignRunner()
+        run_late_step(r, ['a'], [4], spec={'a': DRAFTS})
+        acc = run_late_step(r, ['b'], [1], finished=['a'])
+        self.assertEqual(acc, {'b': 4})                                  # the defect: bias 3 for b's hit pre-copy
+
+    def test_overlay_gives_the_new_request_one(self):
+        logs = []
+        r = patched_runner(log=lambda fmt, *a: logs.append(fmt % a), base=LateCopyAlignRunner)
+        run_late_step(r, ['a'], [4], spec={'a': DRAFTS})
+        acc = run_late_step(r, ['b'], [1], finished=['a'])
+        self.assertEqual(acc, {'b': 1})
+        self.assertEqual(int(r.num_accepted_tokens.gpu[0]), 1)
+        self.assertEqual(int(r.num_accepted_tokens.np[0]), 1)
+        self.assertEqual([m for m in logs if 'new-request count reset, 1 row' in m and 'step 2' in m], logs)
+        run_late_step(r, ['c'], [1], finished=['b'])                    # b left 1: nothing to reset, no new line
+        self.assertEqual(len(logs), 1)
+
+    def test_switch_off_is_0_4_0(self):
+        with unittest.mock.patch.dict(os.environ, {'B70_SPEC_RESUME_FRESH': '0'}):
+            r = patched_runner(base=LateCopyAlignRunner)
+            run_late_step(r, ['a'], [4], spec={'a': DRAFTS})
+            acc = run_late_step(r, ['b'], [1], finished=['a'])
+        self.assertEqual(acc, {'b': 4})
+
+    def test_other_user_still_running_is_stock(self):
+        stock, patched = LateCopyAlignRunner(), patched_runner(base=LateCopyAlignRunner)
+        for runner in (stock, patched):
+            run_late_step(runner, ['a', 'c'], [4, 3], spec={'a': DRAFTS, 'c': DRAFTS})
+        acc_stock = run_late_step(stock, ['c', 'b'], [2, 1], spec={'c': DRAFTS}, finished=['a'])
+        acc_patched = run_late_step(patched, ['c', 'b'], [2, 1], spec={'c': DRAFTS}, finished=['a'])
+        self.assertEqual(acc_stock, {'c': 3, 'b': 1})
+        self.assertEqual(acc_patched, acc_stock)
+        self.assertIn(patched._b70_resume.get('fresh_resets'), (None, []))   # nothing to change
+
+    def test_returning_requests_keep_their_counts_when_prev_empties(self):
+        r = patched_runner(base=LateCopyAlignRunner)
+        run_late_step(r, ['a', 'x'], [3, 4], spec={'a': DRAFTS, 'x': DRAFTS})
+        run_late_step(r, ['y'], [2])                                     # a and x sit out
+        acc = run_late_step(r, ['a', 'x', 'z'], [1, 1, 1], spec={'a': DRAFTS, 'x': DRAFTS}, finished=['y'])
+        self.assertEqual(acc, {'a': 3, 'x': 4, 'z': 1})
+
+    def test_steady_single_user_untouched(self):
+        stock, patched = LateCopyAlignRunner(), patched_runner(base=LateCopyAlignRunner)
+        seq = [(['a'], [1], None), (['a'], [5], DRAFTS), (['a'], [2], DRAFTS), (['a'], [6], DRAFTS)]
+        for batch, post, spec in seq:
+            sp = {'a': spec} if spec else None
+            self.assertEqual(run_late_step(stock, batch, post, spec=sp), run_late_step(patched, batch, post, spec=sp))
+
+
 class RegisterTest(unittest.TestCase):
     def test_env_gate_and_idempotent(self):
         class GPUModelRunner(StockRunner):

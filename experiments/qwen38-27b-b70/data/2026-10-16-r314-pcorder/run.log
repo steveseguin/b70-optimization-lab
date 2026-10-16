@@ -1,0 +1,28 @@
+### 18:56:54 stopping the Gemma service (front door state: 0 0)
+### 18:59:35 server ready
+Traceback (most recent call last):
+  File "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/probe-pc-order-vs-timing.py", line 133, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/probe-pc-order-vs-timing.py", line 129, in main
+    run(args)
+  File "/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/scripts/probe-pc-order-vs-timing.py", line 49, in run
+    _, base_prompts = B.load_suite(args.suite)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/b70-optimization-lab/scripts/bench-openai-realistic-suite.py", line 399, in load_suite
+    suite = json.loads(path.read_text())
+                       ^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'read_text'
+### 18:59:35 probe S0 failed
+FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-pcorder/S0.json'
+FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-pcorder/S0.json'
+FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-pcorder/S0.json'
+FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-pcorder/S0.json'
+FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-pcorder/S0.json'
+FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-pcorder/B0.json'
+b70_align_trace 0.1.0: installed (logs while /root/.cache/vllm/b70-align-trace.on exists, to /root/.cache/vllm/b70-align-trace)
+b70_allgather_allreduce: installed on XpuCommunicator
+b70_exclusive_prefill: installed on Scheduler 
+b70_prefix_cache_exact: installed 
+### 18:59:46 server stopped: stopped True
+### 18:59:46 kernel log clean since 2026-10-16 18:56:54; Gemma back on its throughput recipe

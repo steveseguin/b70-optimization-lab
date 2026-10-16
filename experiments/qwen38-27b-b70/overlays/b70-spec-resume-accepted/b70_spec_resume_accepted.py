@@ -73,6 +73,22 @@ request would have been given had it not sat out: nothing it has seen changed wh
 the same shape as before (1 + drafts rows); every output token is still the target model's own choice, so answers do
 not change, only how many tokens a step accepts. Requests that ran in the previous step, requests with real
 (non-placeholder) scheduled drafts, and steps with no returning request are untouched.
+
+0.5.0 (2026-10-16): align mode, a new request's count (B70_SPEC_RESUME_FRESH, default 1; 0 gives 0.4.0). With
+prefix caching and drafting, a request that starts from a cache hit pre-copies the hit block's state into its own
+block with bias `num_accepted_tokens_cpu[row] - 1` (mamba_utils.py:1505-1523), so its count must be 1. The stock
+code makes it 1 through `new_mask` in `_prepare_inputs` (gpu_model_runner.py:2132-2150), but only when
+`prev_req_id_to_index` is non-empty. When every request of the previous step has finished, remove_request has
+popped them all (gpu_input_batch.py:573-574), the dict is empty, and the "non-async" branch copies the CPU array
+as is. add_request wrote 1 into the reused row (gpu_input_batch.py:484), but the finished request's last align
+postprocess copies its own count into that row on the device (mamba_utils.py:1637-1639, non_blocking) and the
+event wait just before the branch lets that copy land first: the new request reads its starting state shifted by
+the previous request's accepted count. One sequence makes every hand-over such a step (Q3 on 2026-10-16: 37-39 of
+64 long answers equal to the paused pass, all differing ones started from a hit, most at the first or second
+token); two sequences only when both finish together (P1: 1-2 of 64). Fix: after the stock `_prepare_inputs`, rows
+of requests not in the previous step with no stored count get 1 in the CPU array, the host buffer and the device
+count, before `preprocess_mamba` reads them. Rows the stock code already set to 1 are not touched; non-align runs
+never take this path.
 """
 import os
 
@@ -85,6 +101,10 @@ def _state(runner):
         st = runner.__dict__['_b70_resume'] = {'stash': {}, 'drafts': {}, 'prev_sched': (), 'step': 0, 'debug': None,
                                                'debug_left': int(os.environ.get('B70_SPEC_RESUME_DEBUG', '0') or 0)}
     return st
+
+
+def fresh_reset_enabled():
+    return os.environ.get('B70_SPEC_RESUME_FRESH', '1').strip() != '0'
 
 
 def resume_drafts_enabled():
@@ -201,6 +221,26 @@ def restore_drafts(runner, drafts_stash, scheduler_output, result):
     return len(input_pos)
 
 
+def reset_fresh_rows(runner, rows):
+    """Align mode, after the stock _prepare_inputs: rows of requests that did not run in the previous step and have
+    no stored count (new requests) get count 1, which the stock code means to give them but skips when every
+    previous-step request has finished (see 0.5.0 in the module docstring). Returns the rows changed."""
+    import torch
+    cpu = runner.input_batch.num_accepted_tokens_cpu
+    changed = [r for r in rows if r < len(cpu) and int(cpu[r]) != 1]
+    if not changed:
+        return []
+    host = getattr(runner.num_accepted_tokens, 'np', None)
+    for r in changed:
+        cpu[r] = 1
+        if host is not None:
+            host[r] = 1
+    target = runner.num_accepted_tokens.gpu
+    index = torch.tensor(changed, dtype=torch.long).to(target.device, non_blocking=True)
+    target.index_fill_(0, index, 1)
+    return changed
+
+
 def restore_returning(runner, stash, scheduler_output):
     """After the stock _prepare_inputs: write stored counts for requests back after sitting out.
     Returns [(row, req_id, stored tensor)] for the rows fixed."""
@@ -212,7 +252,7 @@ def restore_returning(runner, stash, scheduler_output):
         stash.pop(rid, None)                                   # preempted and recomputed from the prompt
     prev = getattr(runner.input_batch, 'prev_req_id_to_index', None) or {}
     spec = getattr(scheduler_output, 'scheduled_spec_decode_tokens', None) or {}
-    fixed, placeholder_drafts = [], False
+    fixed, fresh, placeholder_drafts = [], [], False
     for row, rid in enumerate(current_req_ids(runner)):
         if rid in prev:
             continue                                           # ran last step: the stock correction covers it
@@ -220,6 +260,10 @@ def restore_returning(runner, stash, scheduler_output):
         value = stash.pop(rid, None)
         if value is not None:
             fixed.append((row, rid, value))
+        else:
+            fresh.append(row)
+    if fresh and align_mode(runner) and fresh_reset_enabled():
+        _state(runner)['fresh_resets'] = reset_fresh_rows(runner, fresh)
     if fixed and align_mode(runner):
         cpu = runner.input_batch.num_accepted_tokens_cpu
         host = getattr(runner.num_accepted_tokens, 'np', None)
@@ -276,6 +320,14 @@ def wrap_prepare_inputs(original, stats=None, log=None):
         before = self.num_accepted_tokens.gpu[:len(rows)].clone() if dbg is not None else None
         written = restore_drafts(self, st['drafts'], scheduler_output, result) if resume_drafts_enabled() else 0
         fixed = restore_returning(self, st['stash'], scheduler_output)
+        resets = st.get('fresh_resets')
+        if stats is not None and resets:
+            first = not stats.get('fresh')
+            stats['fresh'] = stats.get('fresh', 0) + len(resets)
+            if first and log is not None:
+                log('b70_spec_resume_accepted: first new-request count reset, %d row(s) set to 1 after the previous '
+                    "step's requests all finished (step %d)", len(resets), st['step'])
+            st['fresh_resets'] = []
         if stats is not None and written:
             first = not stats.get('drafts')
             stats['drafts'] = stats.get('drafts', 0) + written
@@ -320,7 +372,7 @@ def register():
 
     logger = init_logger('b70_spec_resume_accepted')
     if install(module.GPUModelRunner, logger.warning):
-        logger.warning('b70_spec_resume_accepted 0.4.0: installed on GPUModelRunner._update_states/_prepare_inputs '
+        logger.warning('b70_spec_resume_accepted 0.5.0: installed on GPUModelRunner._update_states/_prepare_inputs '
                        '(requests that sat out a step keep their accepted-token count; async speculative decoding '
-                       'only; align-mode prefix caching handled; drafts kept %s; debug steps %s)',
-                       'on' if resume_drafts_enabled() else 'off', os.environ.get('B70_SPEC_RESUME_DEBUG', '0') or '0')
+                       'only; align-mode prefix caching handled; new-request count reset %s; drafts kept %s; debug steps %s)',
+                       'on' if fresh_reset_enabled() else 'off', 'on' if resume_drafts_enabled() else 'off', os.environ.get('B70_SPEC_RESUME_DEBUG', '0') or '0')

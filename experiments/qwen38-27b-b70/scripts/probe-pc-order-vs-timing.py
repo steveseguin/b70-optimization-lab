@@ -46,7 +46,7 @@ def expand(base_prompts, count):
 
 def run(args):
     B = load_base()
-    _, base_prompts = B.load_suite(args.suite)
+    _, base_prompts = B.load_suite(Path(args.suite))
     items = expand(base_prompts, args.count)
     order = list(range(len(items)))
     if 'shuffle' in args.mode:

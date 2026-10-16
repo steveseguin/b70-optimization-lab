@@ -604,3 +604,33 @@ blocks; CPU values only, no syncs; logs only while a flag file exists). Probe:
 Reading: S1 and SH equal to S0 and B0 not means timing; SH not equal means order (leftovers); S1 not equal means the
 pause is not enough or hits differ from cold. BT and ST give the traces to compare for the prompts that differ.
 Not a gate. About 40 minutes. Wrapper: `scripts/run-20261016-fp8-pc-order-probe.sh`.
+
+### Amendment, 19:04 EDT, before any data: the cause found in the source; the probe now tests it
+
+The 18:56 run stopped at its first probe (a script bug: the suite path was passed as a string; fixed), no answers
+recorded, Gemma restored at 18:59. Reading the source meanwhile gave a mechanism that fits every Q3 observation. A
+request that starts from a cache hit pre-copies the hit block's recurrent state into its own block with bias
+`num_accepted_tokens_cpu[row] - 1` (mamba_utils.py:1505-1523), so its count must be 1. `_prepare_inputs` gives new
+rows 1 only when `prev_req_id_to_index` is non-empty (gpu_model_runner.py:2132-2150); when every request of the
+previous step has finished, remove_request has emptied it (gpu_input_batch.py:573-574) and the CPU array is used as
+is. add_request wrote 1 into the reused row, but the finished request's last align postprocess copies its own
+accepted count into that row on the device (mamba_utils.py:1638-1639, non_blocking), and the event wait just before
+the branch lets the copy land first. So the new request reads its starting state shifted by the previous request's
+count: only with drafting (counts above 1), only with prefix caching (the CPU-array count and the hit pre-copy),
+only for prompts with a hit (`prose2k` never differs), every hand-over with one sequence, and with two only when both
+finish together. A paused client lets the copy land before add_request. Fix: `b70-spec-resume-accepted` 0.5.0 gives
+such rows count 1 after the stock `_prepare_inputs` (`B70_SPEC_RESUME_FRESH`, default on, 0 = 0.4.0); 38/38 CPU
+tests, including a stub of the hand-over that shows the stock defect.
+
+The run, replacing the S0-ST table: one server per part, `b70-align-trace` on throughout.
+
+| Part | Reset | Runs |
+| --- | --- | --- |
+| A | off | AS0 paused suite order (cold), AS1 again, ASH paused shuffle, AB0 burst |
+| B | on | BS0 paused (cold), BB0 burst, BB1 burst shuffled, BSH paused shuffle |
+| C | on | the P1 arm: two users, long suite, three passes, standard harness |
+
+Predictions: A: AS1 and ASH equal to AS0, AB0 not (a third or so of the hit prompts), and in the trace the differing
+prompts' first step shows count above 1 and bias above 0 with no request of the previous step left. B: BB0, BB1 and
+BSH equal to BS0 (64/64), BS0 equal to AS0, bias 0 on every first step. C: 64/64 in all three passes. A miss in B or
+C means the reset is not the whole story. About 70 minutes.
