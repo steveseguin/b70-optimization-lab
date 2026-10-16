@@ -459,6 +459,30 @@ class Math(Base):
         self.assertEqual(row['gpu_active_bytes'], 7 * 1024)
         self.assertIsNone(row['driver_shadow_bytes'])
 
+    def test_sampler_reads_worker_cmdline_once(self):
+        # Replay b 2026-10-16: a cmdline read blocked on a loading worker's mmap lock (1.74 s gap).
+        proc = self.root / 'proc'; proc.mkdir()
+        (proc / 'meminfo').write_text('MemTotal: 200 kB\nMemAvailable: 123 kB')
+        cg = self.root / 'cgroup'; (cg / 'mock').mkdir(parents=True)
+        (cg / 'mock/memory.current').write_text('1')
+        for i in range(4):
+            p = proc / str(600 + i); p.mkdir()
+            (p / 'comm').write_text('VLLM::Worker_TP\n')
+            (p / 'cmdline').write_bytes(f'VLLM::Worker_TP{i}_EP{i}\0'.encode())
+            (p / 'status').write_text('VmRSS: 5 kB\n')
+            (p / 'cgroup').write_text('0::/mock\n')
+        q = proc / '610'; q.mkdir()
+        (q / 'comm').write_text('icpx\n'); (q / 'cmdline').write_bytes(b'icpx\0')
+        (q / 'status').write_text('VmRSS: 1 kB\n'); (q / 'cgroup').write_text('0::/mock\n')
+        with patch.object(c.os, 'getsid', return_value=999):
+            first = c.snapshot(999, proc, cg)
+            self.assertEqual({k: v['pid'] for k, v in first['ranks'].items()}, {str(i): 600 + i for i in range(4)})
+            def no_cmdline(path, *a, **k):
+                raise AssertionError('cmdline re-read: ' + str(path))
+            with patch.object(Path, 'read_bytes', no_cmdline):
+                second = c.snapshot(999, proc, cg)
+        self.assertEqual({k: v['rss_bytes'] for k, v in second['ranks'].items()}, {str(i): 5 * 1024 for i in range(4)})
+
     def test_sampler_skips_process_exiting_during_scan(self):
         # 2026-10-16 attempt 2: getsid() on a just-exited host process raised ESRCH and tripped the watcher.
         proc = self.root / 'proc'; proc.mkdir()

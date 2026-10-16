@@ -140,6 +140,13 @@ def meminfo(text):
     return result
 
 
+# Rank identity per (proc root, pid). /proc/<pid>/cmdline takes the target's mmap lock, so a
+# worker stalled in a FUSE page fault blocked the 0.5 s sample for 1.74 s (replay b, 22:24 UTC).
+# comm/status/cgroup do not take that lock; cmdline is read only until a worker's rank is known.
+_RANK_CACHE = {}
+WORKER_COMM = re.compile(r'Worker|VllmWorker', re.I)
+
+
 def snapshot(pid=None, proc=Path('/proc'), cgroups=Path('/sys/fs/cgroup')):
     """No device opens/API calls. Unknown attribution remains null, never zero.
 
@@ -160,10 +167,15 @@ def snapshot(pid=None, proc=Path('/proc'), cgroups=Path('/sys/fs/cgroup')):
         try:
             if os.getsid(int(entry.name)) != pid:
                 continue
-            label = (entry / 'comm').read_text() + ' ' + (entry / 'cmdline').read_bytes().replace(b'\0', b' ').decode(errors='replace')
-            match = re.search(r'(?:Worker[_-]TP|VllmWorker[-_])([0-3])(?=$|[^0-9])', label, re.I)
-            if match:
-                rank = match[1]
+            comm = (entry / 'comm').read_text()
+            key = (str(proc), int(entry.name))
+            rank = _RANK_CACHE.get(key) if WORKER_COMM.search(comm) else None
+            if rank is None and WORKER_COMM.search(comm):
+                label = comm + ' ' + (entry / 'cmdline').read_bytes().replace(b'\0', b' ').decode(errors='replace')
+                match = re.search(r'(?:Worker[_-]TP|VllmWorker[-_])([0-3])(?=$|[^0-9])', label, re.I)
+                if match:
+                    rank = _RANK_CACHE[key] = match[1]
+            if rank is not None:
                 w.require(row['ranks'][rank] is None, 'ambiguous rank PID attribution')
                 status = meminfo_status((entry / 'status').read_text())
                 row['ranks'][rank] = {'pid': int(entry.name), 'rss_bytes': status.get('VmRSS'),

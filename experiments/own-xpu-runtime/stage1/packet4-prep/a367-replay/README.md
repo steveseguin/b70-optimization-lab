@@ -47,3 +47,12 @@ one SIGINT; late monitor failures fail the result. Failed runs still observe the
 full 305 s post-exit watch. A client deadline latches the stop and lets server
 teardown/watch proceed before waiting for the CPU client to drain. A stuck client
 can still require owner recovery; nothing sends it a kill signal.
+
+## October 16 sampler fix after replay attempt b
+
+Attempt b (`a367r-20261016T194524Z`) passed admission, and its server ran with the record profile (nice 0, CPUs 0-31, OMP=1). During weight load, one sample took 1.738 s, which tripped the `sampler delayed >1.5s` watchdog.
+
+The cause: every sample read `/proc/<pid>/cmdline` for every session process. That read takes the target's mmap lock, which a loading worker can hold through a slow FUSE page fault. The sampler now reads `comm`/`status`/`cgroup` each sample and reads `cmdline` only until a worker's rank is known, caching it per pid.
+
+The SIGINT sent during loading was deferred by the API server until engine initialization finished. The engine then shut down in order: all four workers reported shutdown done, zero GPU fault lines. A test pins the no-re-read behaviour. Nothing else changed.
+
