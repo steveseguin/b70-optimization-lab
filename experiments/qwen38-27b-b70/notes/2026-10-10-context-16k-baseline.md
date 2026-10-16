@@ -3165,3 +3165,29 @@ fixed smoke test runs first); everything else as registered for
   keeper reads every turn afresh at about 2K tokens/s and the agent waits for it); the pre-pass cuts the keeper's
   tokens read by at least 30 %. Stop rule: if the fixed L1r fixes fewer than 35 or keeps the rules on fewer than 35,
   L1rp and L1 are dropped (a pre-pass cannot rescue a keeper that loses the work).
+
+### Campaign 22c results (2026-10-16 11:03-12:04): the small keeper with its reply started
+
+| arm | keeper | task | result | wall | cuts (in place / failed) | notes calls / s | notes read (cached) |
+|---|---|---|---|---|---|---|---|
+| O1r (22b) | Qwen itself | repair | 40 fixed, 40 clean, audit 7/7 | 21.1 min | 11 (11 / 0) | - / 95 s (8 %) | cached |
+| L1r (22b) | LFM2.5, as sent | repair | 40 fixed, 20 clean, audit 7/7 | 35.4 min | 13 (12 / 1) | 17 / 317 s | 0 cached |
+| **L1r (22c)** | LFM2.5, `--notes-prefill` | repair | **39 fixed, 20 clean** (R1 36/37, R2 19/32, R3 17/26), **audit 0/7** (no audit file written) | 55.4 min | 19 (16 / 1) | 27 / 774 s | 299K, 0 cached |
+| L1rp | prefill + pre-pass | repair | dropped by the stop rule at 1 min 56 s (SIGINT to its timeout, rc 120) | - | - | - | - |
+| L1 (22c) | prefill | rules | dropped by the stop rule (removed from the queue; `QUEUE22c.orig.txt` keeps it) | - | - | - | - |
+
+- The stop rule fired (clean 20 < 35), so L1rp and L1 were dropped. The first expectation held: no notes reply was
+  rejected for a missing layout (22b's L1 had 60 such rejections, mostly tool calls or agent steps; 22b's L1r had 3). The rest did not: the started reply fixes
+  the role, not the content.
+- What the keeper wrote (notes history, last notes): it copies the request's instruction text into RULES as if it
+  were a rule ("one line per standing rule, instruction, method or definition that those turns state ...", "one: line
+  `name: value` per fact of STATE ..."), copies the agent's system message into RULES although told not to, and
+  keeps only one of the NOTICE house rules (`# fixed` from ticket 7) in its own words. Ten notes replies were
+  rejected for length (the copied text plus re-listed old lines run past the cap), one in-place merge came out over
+  twice the cap, and two full rewrites failed.
+- Conclusion for the separate-keeper question: an off-the-shelf 24B-A2B model is not a usable keeper here. On one
+  card next to the 27B it was slower (35-55 min against 21) and lost the house rules on half the tickets, while the
+  27B keeping its own notes did everything right; its notes cost little because they read the agent's own cached
+  view, which a separate model cannot. A keeper trained for the job (the owner's suggestion) is the remaining route;
+  not started.
+- Gemma stopped at 11:03 and restored by the runner at the end (see the next line).

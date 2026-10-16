@@ -1,0 +1,32 @@
+### 11:03:00 campaign 22 (c22c) start; queue /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE22c.txt (3 lines); MemAvailable 13541 MiB
+### 11:03:00 queue checked: L1r repair 2x 3600;L1rp repair 2x 3600;L1 rules 0 2400;
+### 11:03:00 stopping the Gemma service (front door state: 0 0)
+### 11:03:06 cards free; MemAvailable 13702 MiB
+Running as unit: lfm25-keeper-srv.service; invocation ID: 073e8ab180414648920d4a899fb3d349
+### 11:03:26 LFM2.5 keeper ready=1; MemAvailable 13883 MiB
+### 11:03:46 after 20 s: MemAvailable 13728 MiB
+Running as unit: ctx-fp8-tp1-server.service; invocation ID: 048ce1df8f1a4b51ae5e207260be885e
+### 11:06:02 server ready after ~150 s; MemAvailable 6242 MiB
+Running as unit: ctx-keeper-proxy.service; invocation ID: 67dbfade935740938352296085e5f0f6
+### 11:06:03 [L1r__repair-n40-s2x] start (cap 3600s); MemAvailable 6210 MiB; server totals: prompt 0 cached 0 generated 0
+### 12:01:28 [L1r__repair-n40-s2x] done rc=0 in 55 min 26 s; MemAvailable 5654 MiB; server totals: prompt 2314298 cached 1684800 generated 135472
+   repair score 0.5000 fixed 39/40 clean 20/40 rules R1 36/37 R2 19/32 R3 17/26 stray_unmarked=0 tests_touched=0 tickets=43 void=False audit 0/7
+   RESULT fixed 39/40  clean 20/40  rules R1 36/37  R2 19/32  R3 17/26  tests touched 0  AUDIT 0/7
+   proxy: cuts 19 (in place 16, failed 1, asked again 0), archived 614, recalls 6, full-rewrite failed 2, notes read 241697 cached 0 written 39051; background started 0 applied 0 discarded 0 waited 0 s; upstream 3246.704 s (background 0 s); restarts 0
+   calls: main 321 calls 2472 s read 2314283 cached 1684800 written 135408; notes 27 calls 774 s read 299154 cached 0 written 68766; largest call (read + written) 18596 tokens
+Running as unit: ctx-keeper-proxy.service; invocation ID: 5f9ee9030fdc4d9d990c0528cd857b95
+### 12:01:32 [L1rp__repair-n40-s2x] start (cap 3600s); MemAvailable 5648 MiB; server totals: prompt 2314298 cached 1684800 generated 135472
+### 12:03:27 [L1rp__repair-n40-s2x] done rc=120 in 1 min 56 s; MemAvailable 5634 MiB; server totals: prompt 2378458 cached 1723072 generated 140814
+   no verifier result
+   proxy: cuts 1 (in place 1, failed 0, asked again 0), archived 18, recalls 0, full-rewrite failed 0, notes read 4846 cached 0 written 213; background started 0 applied 0 discarded 0 waited 0 s; upstream 99.565 s (background 0 s); restarts 0
+   calls: main 12 calls 95 s read 64160 cached 38272 written 5342; notes 1 calls 4 s read 4846 cached 0 written 213; largest call (read + written) 11075 tokens
+### 12:03:30 queue empty after 2 lines; waiting up to 600s for more lines in /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE22c.txt
+### 12:03:40 the LFM2.5 keeper is gone; no further arms
+### 12:03:40 stopping the server; MemAvailable 5914 MiB
+server state: stopped None stop_confirmed True
+host memory available while the server ran: min 4.88  1% 5.22  median 5.28 GiB  (7220 samples)
+### 12:04:08 kernel log clean since 2026-10-16 11:03:00; restoring Gemma (throughput)
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 12:08:39 campaign 22 complete
