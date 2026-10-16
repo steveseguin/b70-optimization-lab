@@ -3122,3 +3122,46 @@ test (STOP file, 08:56; no arm had started) and everything moves to **22b**: the
 `KEEPER_EXTRA={"thinking_budget_tokens":0}`, queue SL, O1, L1, L1d, O1r, L1r, L1rp (one restart either way; the
 fixed smoke test runs first); everything else as registered for
 22 (the expectations there stand; LFM2.5 now writes its notes without thinking, as the Qwen recipe's own notes do).
+
+### Campaign 22b so far, and L1d dropped (2026-10-16 10:01)
+
+- **O1** (Qwen3.8-27B FP8 on one card, its own keeper, 26,624-token window, rules stream s0): **39/39, 15.8 min**;
+  28 cuts (27 in place, 1 failed), notes 440 s of 897 s server time (49 %), largest call 17.1K.
+- **L1** (same, LFM2.5-24B-A2B Q8_0 on card 1 as the keeper, thinking closed): **19/39 (14 blank, 6 wrong), 38.3 min**;
+  33 cuts (21 in place, 11 failed, 25 asked again), 8 full rewrites failed; notes 1,535 s on the keeper (100 calls,
+  1.13M tokens read, none cached, 101K written). Two failure modes in `events.jsonl`: (a) the keeper answers as the
+  agent (34 in-place replies and 16 full-notes replies were tool calls such as `cat /app/answers.json`, or the
+  answers file itself) although it gets its own system message and the turns as quoted text, with no tools;
+  (b) when it does use the layout it leaves names out (29 "names the turns do not mention" drops, many "mentioned 2
+  times, 0 changes written") and writes amounts the turns do not state.
+- **L1d dropped** at 3 min (SIGINT to its time-limit process, as the cap would): it is the same keeper writing in the
+  background, so its score would repeat L1's and its timing would not apply to a usable keeper. Next: O1r as queued.
+  Before L1r: a direct test on the idle keeper server of starting the keeper's reply with `NEW RULES` (an assistant
+  prefill, which llama.cpp continues), to see whether (a) goes away.
+
+### O1r result, the keeper-reply test, and campaign 22c registration (2026-10-16 10:28, before 22c runs)
+
+- **O1r** (one-card Qwen, its own keeper, repair task): **40/40 fixed, 40/40 clean, audit 7/7, 21.1 min**; 11 cuts, all
+  in place, none failed; notes 95 s of 1,204 s server time (8 %); largest call 14.0K. (Two cards at 32K: 15.6-16 min.)
+- L1r (LFM2.5 keeper as in L1, repair) had started at 10:22, before the queue edit; it runs as registered. L1rp is
+  removed from the 22b queue (`QUEUE22b.orig.txt` keeps the original).
+- **Keeper-reply test** (scratch script, the L1 run's archive and notes history rebuilt into the requests the proxy
+  sends, with the agent's real opening messages from a context snapshot; the idle keeper server, temperature 0). The
+  last 10 notes windows: as sent, the keeper answered as the agent in 4 of 10 (a tool call, or a `{"thought": ...}`
+  step); with the reply started as `NEW RULES` (an assistant message that llama.cpp continues), in 0 of 10. It
+  then still wrote the notes inside the think block its template had opened, closed it and added a tool call
+  (`</think><|tool_call_start|>[bash(command='echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT')]`), and it re-listed old
+  values as "(no change)" lines. Cut at that tail, all three replies looked at parse as notes. With the first 8
+  windows and a made-up opening the keeper never answered as the agent: the agent's own system message is what pulls
+  it into the agent's role.
+- New proxy option **`--notes-prefill`** (1.1.0.dev0, off by default, a separate keeper only): the keeper's request
+  ends with an assistant message holding the layout's first heading (`NEW RULES` in place, `RULES` for a full
+  rewrite); the proxy puts the heading back and cuts the reply at `</think>`, a tool-call marker or a
+  `{"thought"` line. Unit test added (88 pass). The runner gained `KEEPER_PREFILL=1` and `RUNS_BASE`.
+- **Campaign 22c**: the same runner and servers, `RUN=c22c KEEPER_EXTRA={"thinking_budget_tokens":0} KEEPER_PREFILL=1
+  RUNS_BASE=$O/runs/c22c`, queue `L1r repair 2x 3600`, `L1rp repair 2x 3600` (prefill + `--notes-prepass 2000`),
+  `L1 rules 0 2400`; launched when 22b has ended. Expectations: no keeper reply is a tool call; on repair the fixed
+  keeper fixes 40 and keeps the rules on at least 38, audit at least 5 of 7, but takes longer than O1r's 21 min (the
+  keeper reads every turn afresh at about 2K tokens/s and the agent waits for it); the pre-pass cuts the keeper's
+  tokens read by at least 30 %. Stop rule: if the fixed L1r fixes fewer than 35 or keeps the rules on fewer than 35,
+  L1rp and L1 are dropped (a pre-pass cannot rescue a keeper that loses the work).

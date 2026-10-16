@@ -21,6 +21,7 @@ LFM_CTX=${LFM_CTX:-65536}
 export SUDO_ASKPASS=${SUDO_ASKPASS:?set SUDO_ASKPASS}
 GEMMA_RECIPE=${GEMMA_RECIPE:-throughput}
 IDLE_MAX=${IDLE_MAX:-600}
+RB=${RUNS_BASE:-$O/runs}   # campaign 22c on: its own runs folder ($O/runs/c22c), so arm names can repeat
 ODR=/mnt/fast-ai/bench-results/context-longrun-20261010/client-rules
 OD1M=/mnt/fast-ai/bench-results/context-longrun-20261011/client-1m
 ODX=/mnt/fast-ai/bench-results/context-longrun-20261012/client-repair2
@@ -61,7 +62,7 @@ arm_window() {  # arm -> "budget inplace_tokens"
 }
 arm_async() {  # arm -> keeper options
   # c22b on: LFM2.5's template always opens a think block; llama.cpp's thinking_budget_tokens 0 closes it at once
-  local k="--notes-upstream http://127.0.0.1:$KPORT --notes-model $KEEPER_MODEL ${KEEPER_EXTRA:+--notes-extra $KEEPER_EXTRA}"
+  local k="--notes-upstream http://127.0.0.1:$KPORT --notes-model $KEEPER_MODEL ${KEEPER_EXTRA:+--notes-extra $KEEPER_EXTRA}${KEEPER_PREFILL:+ --notes-prefill}"
   case $1 in L1 | L1r) echo "$k" ;; L1d | L1rd | SL) echo "$k --notes-async defer" ;; L1rp) echo "$k --notes-prepass 2000" ;; *) echo "" ;; esac
 }
 start_proxy() {  # tag arm kind
@@ -182,9 +183,9 @@ run_line() {  # arm kind seed cap
         say "SMOKE FAILED (background notes applied: $applied): the LFM2.5 keeper arms are skipped"; NO_ASYNC=1
       fi
       return 0 ;;
-    rules) tasks=$ODR/tasks/sparse-memory/sparse-memory-t240k-s$seed; sp=$SP240; job="${arm}__sparse-memory-t240k-s$seed"; runs=$O/runs/rules ;;
-    1m)    tasks=$OD1M/tasks/sparse-memory/sparse-memory-t1000k-s$seed; sp=$SP1M; job="${arm}__sparse-memory-t1000k-s$seed"; runs=$O/runs/1m; xk="emit_ctx_trajectory=false" ;;
-    repair) tasks=$ODX/tasks/repair-n40-s$seed; job="${arm}__repair-n40-s$seed"; runs=$O/runs/repair ;;
+    rules) tasks=$ODR/tasks/sparse-memory/sparse-memory-t240k-s$seed; sp=$SP240; job="${arm}__sparse-memory-t240k-s$seed"; runs=$RB/rules ;;
+    1m)    tasks=$OD1M/tasks/sparse-memory/sparse-memory-t1000k-s$seed; sp=$SP1M; job="${arm}__sparse-memory-t1000k-s$seed"; runs=$RB/1m; xk="emit_ctx_trajectory=false" ;;
+    repair) tasks=$ODX/tasks/repair-n40-s$seed; job="${arm}__repair-n40-s$seed"; runs=$RB/repair ;;
     *) say "unknown kind $kind"; return 1 ;;
   esac
   [[ $arm == L* && ${NO_ASYNC:-0} == 1 ]] && { say "[$arm] skipped (the smoke test failed)"; return 0; }
@@ -235,6 +236,7 @@ for p in $PORT $PPORT $KPORT; do ss -tln | grep -q ":$p " && { say "ABORT: port 
 for u in lfm25-srv lfm25-pkg-srv lfm25-keeper-srv ctx-keeper-proxy; do systemctl --user is-active --quiet $u && { say "ABORT: $u is running"; exit 2; }; done
 [[ "$(python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --version)" == "ctxkeeper 1.1.0.dev0" ]] || { say "ABORT: tools/ctxkeeper is not 1.1.0.dev0"; exit 2; }
 [[ -z ${KEEPER_EXTRA:-} ]] || python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --notes-extra || { say "ABORT: tools/ctxkeeper has no --notes-extra"; exit 2; }
+[[ -z ${KEEPER_PREFILL:-} ]] || python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --notes-prefill || { say "ABORT: tools/ctxkeeper has no --notes-prefill"; exit 2; }
 cd "$CTX" || exit 2
 while read -r arm kind seed cap; do
   [[ -z $arm || $arm == \#* ]] && continue

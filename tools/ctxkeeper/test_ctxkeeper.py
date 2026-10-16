@@ -1314,6 +1314,25 @@ class Keepers(unittest.TestCase):
         self.assertTrue(all(r.get("chat_template_kwargs") == {"x": 1} for r in keeper_model.requests))
         self.assertFalse(any("thinking_budget_tokens" in r for r in agent.requests))
 
+    def test_notes_prefill_starts_the_keepers_reply(self):
+        """Campaign 22b: LFM2.5 as keeper often carried on the agent's work (tool calls) instead of writing notes;
+        --notes-prefill ends its request with the layout's first heading, which the server continues."""
+        agent, keeper_model = LedgerModel(), KeeperModel(continues=True)
+        s = self.go(self.keeper(agent, ask_notes=keeper_model, notes_model="small", notes_prefill=True), 20)
+        self.assertGreater(s.state["inplace_cuts"], 0)
+        self.assertEqual(s.state["inplace_failed"], 0)
+        self.assertIn("abcd05: 35", s.state["notes"])
+        self.assertIn("Always answer in French.", s.state["notes"])
+        self.assertTrue(all(r["messages"][-1] == {"role": "assistant", "content": "NEW RULES\n"}
+                            for r in keeper_model.requests))
+        self.assertFalse(any(m.get("role") == "assistant" and m.get("content") == "NEW RULES\n"
+                             for r in agent.requests for m in r["messages"]))
+        self.assertEqual(ck.with_head("NEW RULES", "NEW RULES\n(none)"), "NEW RULES\n(none)")   # written again: kept once
+        self.assertEqual(ck.with_head("RULES", "- a rule\nSTATE"), "RULES\n- a rule\nSTATE")
+        self.assertEqual(ck.with_head("NEW RULES", "(none)\nCHANGES\nab12: 3\nOPEN\n- go on</think><|tool_call_start|>"
+                                                   "[bash(command='echo DONE')]<|tool_call_end|>"),
+                         "NEW RULES\n(none)\nCHANGES\nab12: 3\nOPEN\n- go on")             # campaign 22b's tail
+
     def test_background_notes_give_what_the_request_would_have_taken(self):
         one, two = LedgerModel(), LedgerModel()
         s1 = self.go(self.keeper(one), 24)
@@ -1456,19 +1475,22 @@ class Keepers(unittest.TestCase):
 class KeeperModel:
     """A separate keeper: reads the turns from the text it is given and writes one line per counter."""
 
-    def __init__(self):
+    def __init__(self, continues=False):
         self.requests = []
+        self.continues = continues            # a final assistant message is continued (llama.cpp's prefill)
 
     def __call__(self, body):
         import re
         self.requests.append(body)
-        text = str(body["messages"][-1].get("content") or "")
+        msgs = body["messages"]
+        head = msgs[-1]["content"] if self.continues and msgs[-1].get("role") == "assistant" else ""
+        text = str((msgs[-2] if head else msgs[-1]).get("content") or "")
         turns = text.split("=== TURNS BEING MOVED OUT ===", 1)[-1]
         seen = re.findall(r"counter (abcd\d\d) to (\d+)", turns)
         first = "[[NOTES kept" not in text and "(none yet)" in text
         out = ("NEW RULES\n" + ("- Always answer in French." if first else "(none)") + "\nCHANGES\n"
                + ("\n".join(f"{k}: {v}" for k, v in seen) or "(none)") + "\nOPEN\n- keep going")
-        resp = reply(out)
+        resp = reply(out[len(head):] if head and out.startswith(head) else out)
         resp["usage"] = {"prompt_tokens": 800, "completion_tokens": 40}
         resp["timings"] = {"prompt_n": 300}
         return resp

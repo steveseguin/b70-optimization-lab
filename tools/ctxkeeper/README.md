@@ -201,10 +201,23 @@ Everything else: `ctxkeeper --help`.
 | --- | --- |
 | `--notes-upstream URL`, `--notes-model NAME` | send the notes calls to a second, separate model server (a smaller keeper) |
 | `--notes-system TEXT\|@file`, `--notes-kwargs JSON` | the keeper's own system message and chat-template options |
+| `--notes-prefill` | start a separate keeper's reply with the notes heading, so a small model writes notes instead of carrying on the agent's work (llama.cpp continues it as is; vLLM needs `--notes-extra '{"continue_final_message":true,"add_generation_prompt":false}'`) |
 | `--notes-prepass CHARS` | for a separate keeper only: long tool results are cut to their start, end and outcome lines before it reads them |
-| `--notes-async wait\|defer` | write the next notes in the background right after a reply; `defer` lets requests go on with the current view while there is room |
+| `--notes-extra JSON` | more fields for a separate keeper's requests; `'{"thinking_budget_tokens":0}'` turns thinking off on llama.cpp for a model whose template always starts it (LFM2.5) |
+| `--notes-async wait\|defer` | write the next notes in the background right after a reply; `defer` lets requests go on with the current view while there is room. Needs a server that runs two requests at once correctly (see below) or a separate keeper |
 | `--prewarm` | after background notes, have the server read the start of the view the cut will leave, so the next request finds it cached |
+| `--inplace-fit` | lower the notes threshold to the room a small window actually leaves (recommended below 24K) |
 | `--log-calls` | write every model call (main, notes, prewarm; tokens read, cached, written; seconds) to `calls.jsonl` |
+
+Measured so far (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s; one run per setting):
+
+- **Window size.** On a 240K-token test stream every budget from 8K to 64K kept its 39 answers (one slip at 24K);
+  24K-48K was fastest (8-9 min), 64K slower (10 min). Below 16K the notes stopped fitting in place and every cut
+  rewrote them in full: 24 min at 12K, 40 min at 8K. With `--inplace-fit`: 10 min at 12K, 13 min at 8K, 81 and 84 of
+  85 answers over two streams. On the bug-fixing task the floor is about 16K (at 12K two fixes missed a house rule).
+- **Background notes** saved 14 % (18 % with `--prewarm`) on a server running two requests at once, same score. On
+  vLLM with MTP speculative decoding, two requests at once returned corrupted replies on our build, so there the
+  saving is not available; keep the default (notes in line).
 
 ## How it works
 

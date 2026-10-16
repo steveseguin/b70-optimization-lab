@@ -224,6 +224,19 @@ def from_rules(text: str) -> str:
     return text if at is None else "\n".join(lines[at:]).strip()
 
 
+# --notes-prefill: where a keeper's continued reply stops being notes. LFM2.5 (campaign 22b, rebuilt requests) wrote
+# the notes inside the think block its template had opened, then closed it and went on as the agent with a tool call.
+KEEPER_TAIL = re.compile(r"</think>|<\|tool_call|<tool_call>|^\s*\{\s*\"thought\"", re.M)
+
+
+def with_head(head: str, text: str) -> str:
+    """--notes-prefill: the keeper's reply continued from `head`; put it back (unless the model wrote it again) and
+    drop what follows the notes (a closed think block, a tool call)."""
+    m = KEEPER_TAIL.search(text)
+    text = text[:m.start()].rstrip() if m else text
+    return text if text.upper().startswith(head) else f"{head}\n{text}"
+
+
 def has_layout(notes: str) -> bool:
     heads = [section_of(ln) for ln in notes.splitlines()]
     return "RULES" in heads and "STATE" in heads and heads.index("RULES") < heads.index("STATE")
@@ -640,7 +653,7 @@ class Keeper:
                  empty_retry: bool = True, think_cap: int = 0, ask_notes=None, notes_model: str | None = None,
                  notes_system: str | None = None, notes_kwargs: dict | None = None, notes_prepass: int = 0,
                  notes_async: str | None = None, prewarm: bool = False, log_calls: bool = False,
-                 inplace_fit: bool = False, notes_extra: dict | None = None) -> None:
+                 inplace_fit: bool = False, notes_extra: dict | None = None, notes_prefill: bool = False) -> None:
         self.ask, self.root = ask, Path(state_dir)
         # ask_notes: a separate keeper model's server for the notes calls (--notes-upstream), with notes_model as its
         # model name, notes_system as its system message (default KEEPER_SYSTEM), notes_kwargs as its
@@ -653,6 +666,7 @@ class Keeper:
         # call to a model server goes to calls.jsonl in the session folder.
         self.ask_notes, self.notes_model, self.notes_kwargs = ask_notes, notes_model, notes_kwargs
         self.notes_extra = dict(notes_extra or {})   # more fields for a separate keeper's requests (--notes-extra)
+        self.notes_prefill = bool(notes_prefill)     # start a separate keeper's reply with its first heading
         self.notes_system = notes_system or KEEPER_SYSTEM
         self.notes_prepass, self.prewarm, self.log_calls = notes_prepass, prewarm, log_calls
         self.inplace_fit = inplace_fit
@@ -851,6 +865,8 @@ class Keeper:
                 if self.notes_kwargs:
                     body["chat_template_kwargs"] = dict(self.notes_kwargs)
                 body.update(self.notes_extra)
+                if self.notes_prefill:
+                    body["messages"] = req + [{"role": "assistant", "content": "RULES\n"}]
             else:
                 if thinking is not None:
                     body["chat_template_kwargs"] = {"enable_thinking": bool(thinking)}
@@ -861,7 +877,10 @@ class Keeper:
                 resp = self.upstream(body, s, "notes")
                 choice = (resp.get("choices") or [{}])[0]
                 finish = choice.get("finish_reason")
-                text = from_rules(str((choice.get("message") or {}).get("content") or "").strip())
+                text = str((choice.get("message") or {}).get("content") or "").strip()
+                if body["messages"] is not req:           # --notes-prefill: the reply went on from "RULES"
+                    text = with_head("RULES", text)
+                text = from_rules(text)
             except Exception as exc:
                 why = f"{type(exc).__name__}: {exc}"
             size = self.tokens(s, [{"role": "user", "content": text}]) if text else 0
@@ -1046,6 +1065,8 @@ class Keeper:
                 out["chat_template_kwargs"] = ctk
             if self.ask_notes is not None:
                 out.update(self.notes_extra)
+                if self.notes_prefill:
+                    out["messages"] = req + [{"role": "assistant", "content": "NEW RULES\n"}]
             try:
                 resp = self.upstream(out, s, "notes")
             except Exception as exc:
@@ -1054,6 +1075,8 @@ class Keeper:
             choice = (resp.get("choices") or [{}])[0]
             finish, usage = choice.get("finish_reason"), resp.get("usage") or {}
             text = str((choice.get("message") or {}).get("content") or "").strip()
+            if out["messages"] is not req:            # --notes-prefill: the reply went on from "NEW RULES"
+                text = with_head("NEW RULES", text)
             counts["notes_prompt_tokens"] += usage.get("prompt_tokens") or 0
             counts["notes_cached_tokens"] += cached_of(resp)
             counts["notes_written_tokens"] += usage.get("completion_tokens") or 0
@@ -1601,6 +1624,11 @@ def main() -> None:
     ap.add_argument("--notes-extra", help="with --notes-upstream: more fields for the keeper's requests, as JSON (e.g. "
                     "'{\"thinking_budget_tokens\": 0}' turns thinking off on llama.cpp for a model whose template "
                     "always starts it, such as LFM2.5)")
+    ap.add_argument("--notes-prefill", action="store_true",
+                    help="with --notes-upstream: start the keeper's reply with the layout's first heading, so that "
+                         "it writes notes and does not carry on the agent's work (llama.cpp continues a final "
+                         "assistant message by itself; vLLM needs --notes-extra "
+                         "'{\"continue_final_message\": true, \"add_generation_prompt\": false}')")
     ap.add_argument("--notes-prepass", type=int, default=0, metavar="CHARS",
                     help="with --notes-upstream: tool results longer than this are cut down for the keeper to their "
                          "start, end and the lines that look like outcomes or instructions (0: off)")
@@ -1643,7 +1671,7 @@ def main() -> None:
                     ask_notes=(lambda body: post_json(keeper_url + "/v1/chat/completions", body, a.timeout)) if keeper_url else None,
                     notes_model=a.notes_model, notes_system=system,
                     notes_kwargs=json.loads(a.notes_kwargs) if a.notes_kwargs else None, notes_prepass=a.notes_prepass,
-                    notes_extra=json.loads(a.notes_extra) if a.notes_extra else None,
+                    notes_extra=json.loads(a.notes_extra) if a.notes_extra else None, notes_prefill=a.notes_prefill,
                     notes_async=a.notes_async, prewarm=a.prewarm, log_calls=a.log_calls, inplace_fit=a.inplace_fit)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper {__version__}" + (f" (recipe {a.recipe})" if a.recipe else "")
