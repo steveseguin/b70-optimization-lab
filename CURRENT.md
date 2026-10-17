@@ -1,5 +1,7 @@
 # Current Workspace State
 
+**October 17, packet58f sealed on CPU:** The one-card child now filters discovery to card 0 before opening a device. The lane-A lease stays in place. A refusal before launch no longer leaves a shared teardown record; a clean K1 exit releases it before CPU report checks. All 81 Python checks, both builds, full post-load setup and the fresh card-0 plan pass. Memory budgets and arithmetic are unchanged. No GPU or service ran during preparation. The coordinator starts at K1a in a fresh 58f chain; actual device isolation, exactness and speed remain pending. [Evidence and commands](notes/2026-10-17-own-runtime-packet58f.md).
+
 **October 17, packet79 sealed on CPU:** The record-line draft can now use the first card with only its 91,392-row head prefix, at 23/25 or24/24 target layers. Both fit the unchanged memory limits in the complete post-load mock. Target and draft bytes match packet75 in miniature runs; both compilers, reverse-handoff tests,75 Python tests and both temporary queue plans pass. Six views share one binary, including hc-wide. No GPU or service ran. The coordinator screens A, then its exact improving winner between B controls. Real output checks, acceptance and speed remain pending; the estimated 5% is not a measurement. [Evidence and proposed jobs](notes/2026-10-17-own-runtime-packet79.md).
 
 **October 17, packet78 sealed on CPU:** Five choices can test a faster expert
