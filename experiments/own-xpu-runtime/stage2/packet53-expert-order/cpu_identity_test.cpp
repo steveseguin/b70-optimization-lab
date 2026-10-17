@@ -54,6 +54,9 @@ float scalar_tree(std::array<float,32> values){
  for(unsigned width=1;width<32;width*=2)for(unsigned logical=0;logical<32;logical+=width*2)values[logical]=values[logical]+values[logical+width];
  return values[0];
 }
+// The production helper reduces its input in place. Keep its scratch private
+// so later candidate comparisons still receive the original logical lanes.
+float production_tree(std::array<float,32> values){return iq3::tree32(values.data());}
 // Adjacent virtual logical lanes live in one physical lane. The low tree
 // levels are register additions; the remaining levels select physical peers.
 // This model explicitly snapshots each shuffle round, avoiding an accidental
@@ -123,7 +126,7 @@ template<Type T,unsigned K,unsigned Rows>void routed_rows(){
      auto*x=input.data()+(T==Type::IQ4_NL?slot*K:0);
      auto expected=scalar_lanes<T,K>(w,x);
      for(unsigned lane=0;lane<32;++lane){float actual=p48::lane<T,K>(w,x,0,K,lane);byte_equal(expected[lane],actual,"independent versus production lane");}
-     byte_equal(scalar_tree(expected),iq3::tree32(expected.data()),"production FP32 tree");
+     byte_equal(scalar_tree(expected),production_tree(expected),"production FP32 tree");
      check_virtual<T,K,1>(w,x,expected,nullptr);check_virtual<T,K,2>(w,x,expected,nullptr);check_virtual<T,K,4>(w,x,expected,nullptr);
      if constexpr(T==Type::IQ2_S){
       check_virtual<T,K,1>(w,x,expected,local_table.data());check_virtual<T,K,2>(w,x,expected,local_table.data());check_virtual<T,K,4>(w,x,expected,local_table.data());
@@ -197,8 +200,8 @@ void tree_adversaries(){
  for(unsigned test=0;test<128;++test){std::array<float,32> v{};for(unsigned j=0;j<32;++j){
   if(test==0)v[j]=iq3::bits_float(j%2?0x80000000u:0u);
   else if(test==1)v[j]=(j%4==0?1e20f:j%4==1?1.f:j%4==2?-1e20f:-1.f);
-  else v[j]=std::ldexp(float(int(random_word()%4097)-2048),int(random_word()%41)-20);
- }float expected=scalar_tree(v);byte_equal(expected,iq3::tree32(v.data()),"independent adjacent tree");byte_equal(expected,virtual_tree<1>(v),"V1 adjacent tree");byte_equal(expected,virtual_tree<2>(v),"V2 adjacent tree");byte_equal(expected,virtual_tree<4>(v),"V4 adjacent tree");}
+  else {int mantissa=int(random_word()%4097)-2048;int exponent=int(random_word()%41)-20;v[j]=std::ldexp(float(mantissa),exponent);}
+ }float expected=scalar_tree(v);byte_equal(expected,production_tree(v),"independent adjacent tree");byte_equal(expected,virtual_tree<1>(v),"V1 adjacent tree");byte_equal(expected,virtual_tree<2>(v),"V2 adjacent tree");byte_equal(expected,virtual_tree<4>(v),"V4 adjacent tree");}
  // Demonstrate that the proof would reject the packet52-style reordering.
  std::array<float,32> v{};v[0]=1e20f;v[1]=1.f;v[2]=-1e20f;v[3]=1.f;
  float wrong=(v[0]+v[2])+(v[1]+v[3]);float right=scalar_tree(v);

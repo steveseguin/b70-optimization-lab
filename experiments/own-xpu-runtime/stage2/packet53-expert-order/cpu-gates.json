@@ -1,0 +1,208 @@
+{
+  "schema": "own-runtime.packet53.cpu-gates.v1",
+  "passed": true,
+  "device_executed": false,
+  "build_receipt_sha256": "5dbdf859f81e303abc4b082ecdf91beac078c4485e62dc51929cb29c4d9987c6",
+  "intel_build_receipt_sha256": "776c56130a33e3397cfc90ac6758d0f3b8a47cd91e14194e7da8f3b2bcbca60a",
+  "artifacts": {
+    "experiments/own-xpu-runtime/stage2/packet53-expert-order/build/host/expert-order-bench": "6260a7faa67a28851a3eb728f26446cffec4f011560f7ad1806976fb4f9c888e",
+    "experiments/own-xpu-runtime/stage2/packet53-expert-order/build/host/cpu-identity-test": "39c4760531d51790c951a9c219278021f8cecb31278ee09097702534eebc67b1",
+    "experiments/own-xpu-runtime/stage2/packet53-expert-order/build/intel-host/expert-order-bench": "a36dbe81c96afefe6bf364d15039bb76d58702115a0ff0b4f02a0d18f73e7a1a",
+    "experiments/own-xpu-runtime/stage2/packet53-expert-order/build/intel-host/cpu-identity-test": "d758b407796226f3d4f54d40f40fc07aacc50ec0dfb238af25906fc15c5492b7",
+    "experiments/own-xpu-runtime/stage2/packet53-expert-order/build/sanitizer/cpu-identity-test": "d5ccb2590cb031966408c69124e0a1edd0c1b1064d76021e9f404d6679464c20"
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet53-expert-order/cpu_gate.py": "0794b19a128e8e170e4d87634b0184a0c0b2acf25f236f0ffb7c005340b27809",
+    "experiments/own-xpu-runtime/stage2/packet53-expert-order/manifest.json": "739010a56eb5212534d38f0b308196a4eed51c2cdb76333bc7f5fe3bafa179a9",
+    "experiments/own-xpu-runtime/stage2/packet53-expert-order/cpu_identity_test.cpp": "85d78214331b1550adf3e94b84a0dc32b377db1f311bc7487815da38ca7696e3",
+    "experiments/own-xpu-runtime/stage2/packet53-expert-order/expert_order.hpp": "8123b827e63be8a7695603f77d22f3e6877831ddcdeba0d123aa8a2e913b91d5",
+    "experiments/own-xpu-runtime/stage2/packet53-expert-order/bench.cpp": "99b7863ff89ba36e58f43ad261bc23a9f60680563c9a9e0bae12298237ce2c31"
+  },
+  "admission": {
+    "nice": 19,
+    "affinity": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "build_bytes": 29385415,
+    "free_bytes": 20628058112,
+    "planned_write_bytes": 8000000
+  },
+  "runs": [
+    {
+      "compiler": "host",
+      "repeat": 0,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53-expert-order/build/host/cpu-identity-test"
+      ],
+      "checks": 8432381,
+      "rows_checked": 2250,
+      "elapsed_seconds": 0.5798591509956168,
+      "output_sha256": "783b1e8984a63584d406fd10ff06ba92a53a2e973cc9e9757dd97f507613a2e6",
+      "comparisons_sha256": "b0116bd6f7f2f2b1be8ad7aad28c87c990be93ca04f69a15093cd2ece033e5be",
+      "files": {
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/host-1792228212429891882-0/native.log": "64f99bfc6bb61b984d51e38ecc913744d989eae4d466dab384c2dc64f3284c68",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/host-1792228212429891882-0/receipt.json": "b0116bd6f7f2f2b1be8ad7aad28c87c990be93ca04f69a15093cd2ece033e5be"
+      }
+    },
+    {
+      "compiler": "host",
+      "repeat": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53-expert-order/build/host/cpu-identity-test"
+      ],
+      "checks": 8432381,
+      "rows_checked": 2250,
+      "elapsed_seconds": 0.5796891010104446,
+      "output_sha256": "783b1e8984a63584d406fd10ff06ba92a53a2e973cc9e9757dd97f507613a2e6",
+      "comparisons_sha256": "b0116bd6f7f2f2b1be8ad7aad28c87c990be93ca04f69a15093cd2ece033e5be",
+      "files": {
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/host-1792228212429891882-1/native.log": "64f99bfc6bb61b984d51e38ecc913744d989eae4d466dab384c2dc64f3284c68",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/host-1792228212429891882-1/receipt.json": "b0116bd6f7f2f2b1be8ad7aad28c87c990be93ca04f69a15093cd2ece033e5be"
+      }
+    },
+    {
+      "compiler": "intel-host",
+      "repeat": 0,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53-expert-order/build/intel-host/cpu-identity-test"
+      ],
+      "checks": 8432381,
+      "rows_checked": 2250,
+      "elapsed_seconds": 0.5296991240029456,
+      "output_sha256": "783b1e8984a63584d406fd10ff06ba92a53a2e973cc9e9757dd97f507613a2e6",
+      "comparisons_sha256": "b0116bd6f7f2f2b1be8ad7aad28c87c990be93ca04f69a15093cd2ece033e5be",
+      "files": {
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/intel-host-1792228212429891882-0/native.log": "e9cbaa7ff63c5d24386acd9b3302a79acec813f0dc2f658330b3398c35644591",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/intel-host-1792228212429891882-0/receipt.json": "b0116bd6f7f2f2b1be8ad7aad28c87c990be93ca04f69a15093cd2ece033e5be"
+      }
+    },
+    {
+      "compiler": "intel-host",
+      "repeat": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53-expert-order/build/intel-host/cpu-identity-test"
+      ],
+      "checks": 8432381,
+      "rows_checked": 2250,
+      "elapsed_seconds": 0.5300462180020986,
+      "output_sha256": "783b1e8984a63584d406fd10ff06ba92a53a2e973cc9e9757dd97f507613a2e6",
+      "comparisons_sha256": "b0116bd6f7f2f2b1be8ad7aad28c87c990be93ca04f69a15093cd2ece033e5be",
+      "files": {
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/intel-host-1792228212429891882-1/native.log": "e9cbaa7ff63c5d24386acd9b3302a79acec813f0dc2f658330b3398c35644591",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/intel-host-1792228212429891882-1/receipt.json": "b0116bd6f7f2f2b1be8ad7aad28c87c990be93ca04f69a15093cd2ece033e5be"
+      }
+    }
+  ],
+  "full_runs": [
+    {
+      "repeat": 0,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53-expert-order/build/host/expert-order-bench",
+        "--mode",
+        "cpu-full",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-0"
+      ],
+      "elapsed_seconds": 6.472716194999521,
+      "checks": 60,
+      "comparisons_sha256": "e731a384a083fb3c5b8a76b4d5983f6ae8b865b637792c423e006b6cbc9b4826",
+      "files": {
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-0/comparisons.jsonl": "e731a384a083fb3c5b8a76b4d5983f6ae8b865b637792c423e006b6cbc9b4826",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-0/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-0/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-0/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-0/native.log": "a4733e1b5dbd2e18ceabec018ad0fde6be48136c0318919248dcbfecef596d47",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-0/receipt.json": "5285d4c78faaecf25b1e970f3548f2b14d646d44674c19c44b02b1762c803aaa",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-0/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-0/iterations.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "repeat": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53-expert-order/build/host/expert-order-bench",
+        "--mode",
+        "cpu-full",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-1"
+      ],
+      "elapsed_seconds": 6.472211877000518,
+      "checks": 60,
+      "comparisons_sha256": "e731a384a083fb3c5b8a76b4d5983f6ae8b865b637792c423e006b6cbc9b4826",
+      "files": {
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-1/comparisons.jsonl": "e731a384a083fb3c5b8a76b4d5983f6ae8b865b637792c423e006b6cbc9b4826",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-1/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-1/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-1/native.log": "a4733e1b5dbd2e18ceabec018ad0fde6be48136c0318919248dcbfecef596d47",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-1/receipt.json": "5285d4c78faaecf25b1e970f3548f2b14d646d44674c19c44b02b1762c803aaa",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-1/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/full-host-1792228212429891882-1/iterations.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ],
+  "sanitizer": {
+    "passed": true,
+    "device_executed": false,
+    "command": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-O1",
+      "-g1",
+      "-fno-omit-frame-pointer",
+      "-fsanitize=address,undefined",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fopenmp",
+      "-DOWN_RT_HOST_ONLY",
+      "-Werror=return-type",
+      "-I",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3",
+      "-I",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+      "-I",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+      "-I",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53-expert-order/build/host/source/cpu_identity_test.cpp",
+      "-lcrypto",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53-expert-order/build/sanitizer/cpu-identity-test"
+    ],
+    "elapsed_seconds": 5.2209760369878495,
+    "checks": 8432381,
+    "output_sha256": "783b1e8984a63584d406fd10ff06ba92a53a2e973cc9e9757dd97f507613a2e6",
+    "files": {
+      "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/sanitizer-1792228212429891882/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-cpu/sanitizer-1792228212429891882/native.log": "64f99bfc6bb61b984d51e38ecc913744d989eae4d466dab384c2dc64f3284c68"
+    }
+  },
+  "environment": {
+    "OMP_NUM_THREADS": "1",
+    "OMP_THREAD_LIMIT": "1"
+  },
+  "scope": "independent FP32 chains/tree, decode, scheduling, controls; complete production-shape M1/M2 host repeats; device equality pending"
+}
