@@ -166,3 +166,28 @@ scales in float32 (`create_fp8_scale_parameter`, checkpoint BF16 copied in), the
    - **Decision:** answers equal and 0.4 ms or more off per step at 1K: adopt for the context lane (a 1-2 % lever) and
      propose for the TP2 package after its census at the package's own image; a TP1 census row with the same gap
      opens the one-card package question. Any answer different: stop, trace.
+
+## Census result 11:13 EDT (R314, card 0): exact, but no row class; the 10-04 cliff does not reproduce
+
+`data/2026-10-17-step-floor/census-w8a16-pad-rows.json`. Both shapes pass every check (rows of 1-8-row calls equal to
+the 8-row call's, zero and random padding equal, repeats equal), so arm Lp runs as registered. But the times are flat:
+
+| K x N | 1 row | 2 | 4 | 5 | 6 | 8 | 1 padded to 6 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 8704 x 5120 (TP2 down proj) | 82.6 us | 82.4 | 82.4 | 82.5 | 82.4 | 82.6 | 97.1 |
+| 17408 x 5120 (TP1) | 159.8 | 160.2 | 160.4 | 160.6 | 160.4 | 160.9 | 181.1 |
+
+82.6 us for 44.6 MB of FP8 weight is about 540 GB/s, near the card's bandwidth: one row is already at speed, and
+padding only adds the concatenation (+15-21 us). The prediction (about 215 us at one row) is **wrong** at this
+layout (FP8 weight [N, K] passed as its [K, N] view, float32 128 x 128 scales as the contiguous [K/128, N/128]
+buffer). The 10-04 census either used another scale layout or another build of the op; not re-read here.
+
+What follows, before any arm has run:
+- **Lp is now a check of the server's own layout, not of the lever.** If Lp is no faster than L (expected), the
+  server calls the op the way this census does and the lever is closed. If Lp is 0.4 ms or more faster per step, the
+  server's call differs from the census (a slow layout in the server) and that layout is the thing to look at.
+- **The 07:34 arithmetic loses its premise** if the server is flat too: the six-row verify pass is then not cheaper
+  than a one-row pass, the no-drafting step (29 ms) is close to the base the drafter adds to, and the five drafter
+  passes come to about (38.5 - 29 - verify extra) / 5, roughly 1.5-1.9 ms each rather than 3. The clock's
+  waits-versus-host split still decides; the sharpened prediction (draft time 8-15 ms per step) is withdrawn in favour
+  of the original decision tree.
