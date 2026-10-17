@@ -1,0 +1,79 @@
+{
+  "evidence_label": "screen",
+  "device_executed": false,
+  "identity": {
+    "timing": "token",
+    "timing_modes": [
+      "token"
+    ],
+    "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet62-miss-path/selections/batch",
+    "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet62-miss-path/selections/batch/screen-seal.json",
+    "seal_sha256": "02c2ec90a2f74aa1ad485378f82df237773c4b5133eb8bd529c48e685d96951f",
+    "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet62-miss-path/selections/batch/build/device/own-rt-iq3",
+    "binary_sha256": "9df10e281f74fc676bc98e8f2f00bb896fcaf8710b2b5bad48d1ae2f09f68e22",
+    "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet62-miss-path/selections/batch/dispatch-speed6.json",
+    "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "selection_sha256": "c98c34eafd303983efa9121542f392990e52615b685c03fab15044492ad31a60",
+    "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+    "profile": "tp2",
+    "lane": "A",
+    "conditions": {
+      "card": 0,
+      "cards": [
+        0,
+        1
+      ],
+      "pci": [
+        "0000:23:00.0",
+        "0000:27:00.0"
+      ],
+      "cores": [
+        0,
+        1,
+        2,
+        3,
+        16,
+        17,
+        18,
+        19
+      ],
+      "affinity": "0-3,16-19",
+      "nice": 0,
+      "native_card": 0,
+      "native_cards": [
+        0,
+        1
+      ]
+    }
+  },
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3/tp2_worker.py",
+    "--identity",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3/evidence/packet62-batch-A/identity.json",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3/evidence/packet62-batch-A/run",
+    "--seconds",
+    "3600"
+  ],
+  "model_lifetimes": 1,
+  "watchdog_seconds": 3600,
+  "planned_write_bytes": 1100000000,
+  "physical_cards": [
+    0,
+    1
+  ],
+  "native_card_arguments": [
+    0,
+    1
+  ],
+  "device_mask": {
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:2",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0,1",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1"
+  },
+  "timing": "token"
+}

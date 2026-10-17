@@ -1,0 +1,57 @@
+{
+  "schema": "packet62.cpu-preparation.v1",
+  "passed": true,
+  "device_executed": false,
+  "selections": [
+    {
+      "selection": "control",
+      "seal_sha256": "fe092bb2cb0839d8b750efa7e7cdb7092f882080bf41fbc11841ef3ce78a3b80",
+      "binary_sha256": "9df10e281f74fc676bc98e8f2f00bb896fcaf8710b2b5bad48d1ae2f09f68e22",
+      "plan_sha256": {
+        "A": "586344f9fa6154d92d21a98a580228043b81719a624e27298dd903dc65ffc814",
+        "B": "f81b5692ad1b40b1185ea5b446aa7fc89a2c2047e7f8655ed4453e5002596005"
+      }
+    },
+    {
+      "selection": "batch",
+      "seal_sha256": "02c2ec90a2f74aa1ad485378f82df237773c4b5133eb8bd529c48e685d96951f",
+      "binary_sha256": "9df10e281f74fc676bc98e8f2f00bb896fcaf8710b2b5bad48d1ae2f09f68e22",
+      "plan_sha256": {
+        "A": "f328dfa8e8ab4947db8d22b7ef745187057bd6fb5cce41ef8b45d0c17e2586de",
+        "B": "3ee95c090b3e2d6f8233941a193cbd991cd93b5a3f658a3462621dbe3e8d1ade"
+      }
+    },
+    {
+      "selection": "banks",
+      "seal_sha256": "824e86cedb09b594a6cf248b046d8ad886749b81b6fa060136482350d17b703d",
+      "binary_sha256": "9df10e281f74fc676bc98e8f2f00bb896fcaf8710b2b5bad48d1ae2f09f68e22",
+      "plan_sha256": {
+        "A": "21819defd595103ffc2ee1e4c66b8268c02108296b00a6d72e9eb53e4a2129b0",
+        "B": "7ee5c74206bdab2d8e4727d3a2d40d3b4eef48ae1f5137964332e07d8e79955d"
+      }
+    },
+    {
+      "selection": "banks-batch",
+      "seal_sha256": "5bf75b216d9829891aa4f54edd8c253e0f34d54a4f3537456441c634c322a0dd",
+      "binary_sha256": "9df10e281f74fc676bc98e8f2f00bb896fcaf8710b2b5bad48d1ae2f09f68e22",
+      "plan_sha256": {
+        "A": "fc77d38c2630950a297ed715f3a3d52dcbe52f4edb4c12d03dc933a76b20ac96",
+        "B": "a6568bce7704c7b2e0163cc0036be199996cc93f36611d3f74feeac18e070445"
+      }
+    },
+    {
+      "selection": "banks-batch-overlap",
+      "seal_sha256": "aeffd76d32a27292fc53bba76efd86f4e5d89f24029651234e5dfeeb113d0a71",
+      "binary_sha256": "9df10e281f74fc676bc98e8f2f00bb896fcaf8710b2b5bad48d1ae2f09f68e22",
+      "plan_sha256": {
+        "A": "2d261e6dab3c3b1f76eeb92e8f612c8aea26a1f9c8c90f783de5ffe7a69cdfb1",
+        "B": "50e31e7c45361b99d675d6dd81044fcd16fb2fe7083568cf508219d366815d6b"
+      }
+    }
+  ],
+  "build_logical_bytes_including_selection_views": 357437560,
+  "build_unique_inode_bytes": 255894400,
+  "CPU_gates_sha256": "dbb2307f6adf3f72a8373e2a12d3daae37f1e6702a60ce7026f590289751ed8f",
+  "diagnosis_sha256": "42b7a325f4e4508f967a5dbb19bdb50f19c077d90321eb1c00396d764f1fad67",
+  "recommendation": "Screen batch first against control; banks are an independently selectable capture experiment, with no expected critical-path gain from current rank1-limited receipts."
+}

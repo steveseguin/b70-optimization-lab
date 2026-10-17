@@ -1,0 +1,79 @@
+{
+  "evidence_label": "screen",
+  "device_executed": false,
+  "identity": {
+    "timing": "token",
+    "timing_modes": [
+      "token"
+    ],
+    "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet62-miss-path/selections/banks-batch",
+    "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet62-miss-path/selections/banks-batch/screen-seal.json",
+    "seal_sha256": "5bf75b216d9829891aa4f54edd8c253e0f34d54a4f3537456441c634c322a0dd",
+    "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet62-miss-path/selections/banks-batch/build/device/own-rt-iq3",
+    "binary_sha256": "9df10e281f74fc676bc98e8f2f00bb896fcaf8710b2b5bad48d1ae2f09f68e22",
+    "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet62-miss-path/selections/banks-batch/dispatch-speed6.json",
+    "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "selection_sha256": "3eaa5ccbc3ca9db8abb0db41ccd14487ccf8e9253ab5589017866a9a135ed8ff",
+    "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+    "profile": "tp2",
+    "lane": "B",
+    "conditions": {
+      "card": 2,
+      "cards": [
+        2,
+        3
+      ],
+      "pci": [
+        "0000:43:00.0",
+        "0000:47:00.0"
+      ],
+      "cores": [
+        4,
+        5,
+        6,
+        7,
+        20,
+        21,
+        22,
+        23
+      ],
+      "affinity": "4-7,20-23",
+      "nice": 0,
+      "native_card": 0,
+      "native_cards": [
+        0,
+        1
+      ]
+    }
+  },
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3/tp2_worker.py",
+    "--identity",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3/evidence/packet62-banks-batch-B/identity.json",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3/evidence/packet62-banks-batch-B/run",
+    "--seconds",
+    "3600"
+  ],
+  "model_lifetimes": 1,
+  "watchdog_seconds": 3600,
+  "planned_write_bytes": 1100000000,
+  "physical_cards": [
+    2,
+    3
+  ],
+  "native_card_arguments": [
+    0,
+    1
+  ],
+  "device_mask": {
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:4",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0,1",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1"
+  },
+  "timing": "token"
+}
