@@ -2,11 +2,14 @@
 
 **October 17, packet58d sealed on CPU:** The one-card engine loaded all 48 layers in 58c, then stopped because two pinned copy slabs requested the wrong lifetime. The new packet fixes both callers and keeps the strict check. Errors now identify the allocation. A CPU mock passes the complete post-load setup; both builds, 59 Python checks, K1 byte checks and request resets pass. The seal and card-0 queue plan pass. No GPU or service ran during preparation. The coordinator reviews the retained lineage stops and starts the fresh chain at K1a; device correctness and speed remain pending. [Task note and command](notes/2026-10-17-own-runtime-packet58d.md).
 
-**October 17, packet76 attribution on CPU:** Most of rank1's reported 1.61 ms
-residual is host housekeeping, with substantial measurement overhead. The saved
-trace cannot isolate all transfer and late-submission costs. A new packet will
-screen cheaper event cleanup while preserving kernels and output checks. No GPU
-or service ran. [Evidence and next step](notes/2026-10-17-own-runtime-packet76.md).
+**October 17, packet76 sealed on CPU:** Most of rank1's reported 1.61 ms
+residual is host housekeeping, including substantial measurement overhead.
+Two sealed choices can test cheaper event cleanup with unchanged kernels.
+Both builds, mock byte checks, full-shape post-load allocations, all 76 Python
+checks and both temporary queue plans pass. The original pinned shared v4
+wrapper uses 23/25 for both controls and candidate. The coordinator runs lane A,
+then its exact improving winner on B. No GPU, model or service ran; speed and
+device exactness remain unmeasured. [Evidence and jobs](notes/2026-10-17-own-runtime-packet76.md).
 
 **October 17, packet58c prepared on CPU:** The one-card wrapper now counts completed pinned experts separately from remaining GPUActive growth. It keeps the same host admission, reserve and safety stops, and checks the combined memory total. All 57 CPU checks pass; native sources and binaries are unchanged. The old evidence fits the double-counting explanation but lacks the failing sample, so the new wrapper saves every sample. No GPU or service ran. The coordinator reviews the retained 58b latch, then starts the fresh card-0 chain at K1a; existing rules forbid reusing K1 across the new seal. [Task note and command](notes/2026-10-17-own-runtime-packet58c.md).
 
