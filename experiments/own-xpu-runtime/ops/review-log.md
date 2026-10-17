@@ -123,3 +123,12 @@ STOP-doing items applied:
 - no single-~1% chains;
 - queue work ahead of lane gaps;
 - check the unit result rather than the end line.
+
+Addendum, 18:15 UTC: packet 68's design note (`a474a23e2`) showed the following:
+- the current engine harvests the depth-1 draft by **pipelining** the two halves;
+- packet 66's +11% proxy is unreliable;
+- with serial target rows, depth 2 projects about 50 tok/s, no gain.
+
+The coordinator stopped packet 68 before it built that no-gain design (c), and kept its sealed discarded-row cost probe. That probe is queued on lane B after the packet 65 quick screens.
+
+Codex **packet 68b** now builds batched two-row target kernels (weights read once, each row's arithmetic bit-identical to M=1) and an in-engine H(2)/H(1) probe. That ratio decides every depth-2 design: about 1.3 means go, about 1.9 means dead. This is the reviewer's recommendation 2 as written.
