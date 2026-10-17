@@ -3,6 +3,7 @@ import json
 import tempfile
 import threading
 import unittest
+import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -1494,6 +1495,59 @@ class KeeperModel:
         resp["usage"] = {"prompt_tokens": 800, "completion_tokens": 40}
         resp["timings"] = {"prompt_n": 300}
         return resp
+
+
+class UpstreamRetry(unittest.TestCase):
+    """--upstream-retries: a failed call (HTTP 5xx, no answer) is sent again once the server's health check answers."""
+
+    def serve(self, plan):
+        calls = {"post": 0, "health": 0}
+
+        class Upstream(BaseHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+            def reply(self, code, data):
+                self.send_response(code); self.send_header("Content-Length", str(len(data))); self.end_headers()
+                self.wfile.write(data)
+
+            def do_GET(self):
+                calls["health"] += 1
+                self.reply(200 if calls["health"] > 1 else 503, b"{}")   # down at the first check, then back
+
+            def do_POST(self):
+                self.rfile.read(int(self.headers["Content-Length"]))
+                code = plan[min(calls["post"], len(plan) - 1)]
+                calls["post"] += 1
+                self.reply(code, b'{"choices": [{"message": {"content": "ok"}}]}' if code == 200 else b'{"error": {}}')
+
+        up = ThreadingHTTPServer(("127.0.0.1", 0), Upstream)
+        threading.Thread(target=up.serve_forever, daemon=True).start()
+        self.addCleanup(lambda: (up.shutdown(), up.server_close()))
+        return f"http://127.0.0.1:{up.server_address[1]}", calls
+
+    def test_retried_after_the_server_comes_back(self):
+        base, calls = self.serve([500, 500, 200])
+        out = ck.post_json_retrying(base + "/v1/chat/completions", {"m": 1}, 10, 3, 5, base + "/health", poll=0.05)
+        self.assertEqual(out["choices"][0]["message"]["content"], "ok")
+        self.assertEqual(calls["post"], 3)
+
+    def test_gives_up_after_the_retries(self):
+        base, calls = self.serve([500])
+        with self.assertRaises(urllib.error.HTTPError):
+            ck.post_json_retrying(base + "/v1/chat/completions", {"m": 1}, 10, 2, 5, base + "/health", poll=0.05)
+        self.assertEqual(calls["post"], 3)
+
+    def test_a_refusal_is_not_retried(self):
+        base, calls = self.serve([400, 200])
+        with self.assertRaises(urllib.error.HTTPError):
+            ck.post_json_retrying(base + "/v1/chat/completions", {"m": 1}, 10, 3, 5, base + "/health", poll=0.05)
+        self.assertEqual(calls["post"], 1)
+
+    def test_no_server_waits_then_raises(self):
+        with self.assertRaises(urllib.error.URLError):
+            ck.post_json_retrying("http://127.0.0.1:9/v1/chat/completions", {"m": 1}, 2, 1, 0.2,
+                                  "http://127.0.0.1:9/health", poll=0.05)
 
 
 if __name__ == "__main__":

@@ -1485,6 +1485,41 @@ def post_json(url: str, body: dict[str, Any], timeout: float, headers: dict[str,
         return json.loads(r.read())
 
 
+def post_json_retrying(url: str, body: dict[str, Any], timeout: float, retries: int, wait: float, health_url: str,
+                       poll: float = 5.0, log=None) -> dict[str, Any]:
+    """post_json, for a model server that may fail and be restarted under a long task (--upstream-retries): when the
+    call gets no answer (connection refused or reset, timeout) or an HTTP 5xx, poll health_url until it answers 200,
+    for at most `wait` seconds, then send the same request again; at most `retries` times. An HTTP 4xx (the server
+    refused the request itself) and a server that does not come back raise as before. A greedy request to an exact
+    server gets the answer the failed call would have had, so a retry changes nothing but the time."""
+    for attempt in range(retries + 1):
+        try:
+            return post_json(url, body, timeout)
+        except urllib.error.HTTPError as e:
+            if e.code < 500 or attempt == retries:
+                raise
+            err: Exception = e
+        except (urllib.error.URLError, OSError) as e:      # includes connection errors and timeouts
+            if attempt == retries:
+                raise
+            err = e
+        if log:
+            log(f"ctxkeeper: model server failed ({type(err).__name__}: {err}); retry {attempt + 1} of {retries} once "
+                f"it answers again (waiting up to {wait:.0f} s)")
+        deadline = time.monotonic() + wait
+        while True:
+            try:
+                with urllib.request.urlopen(health_url, timeout=10) as r:
+                    if r.status == 200:
+                        break
+            except Exception:
+                pass
+            if time.monotonic() > deadline:
+                raise err
+            time.sleep(poll)
+    raise AssertionError("unreachable")
+
+
 def as_stream(resp: dict[str, Any]) -> bytes:
     """A finished completion as the server-sent events a streaming client expects (one chunk, then [DONE])."""
     choices = []
@@ -1645,6 +1680,12 @@ def main() -> None:
     ap.add_argument("--log-calls", action="store_true", help="write every call to a model server to calls.jsonl")
     ap.add_argument("--state-dir", type=Path, default=Path.home() / ".cache" / "ctxkeeper")
     ap.add_argument("--timeout", type=float, default=1800)
+    ap.add_argument("--upstream-retries", type=int, default=0,
+                    help="when the model server fails a call (no answer, or HTTP 5xx), wait for it to answer again "
+                         "and send the same call again, this many times at most (default 0: pass the failure on)")
+    ap.add_argument("--upstream-wait", type=float, default=900,
+                    help="with --upstream-retries: seconds to wait for a failed model server to answer its health "
+                         "check again before giving up (default 900: a restart of a large model and its warm-up)")
     ap.add_argument("--recipe", choices=sorted(RECIPES),
                     help="measured settings to start from (agent: any OpenAI-compatible server; qwen: Qwen3.x on vLLM, "
                          "fastest); options given on the command line still win")
@@ -1658,7 +1699,14 @@ def main() -> None:
     system = a.notes_system
     if system and system.startswith("@"):
         system = Path(system[1:]).read_text()
-    keeper = Keeper(lambda body: post_json(upstream + "/v1/chat/completions", body, a.timeout), a.state_dir,
+    def ask_upstream(base: str):
+        if a.upstream_retries <= 0:
+            return lambda body: post_json(base + "/v1/chat/completions", body, a.timeout)
+        return lambda body: post_json_retrying(base + "/v1/chat/completions", body, a.timeout, a.upstream_retries,
+                                               a.upstream_wait, base + "/health",
+                                               log=lambda m: print(m, file=sys.stderr, flush=True))
+
+    keeper = Keeper(ask_upstream(upstream), a.state_dir,
                     budget=a.budget, target_ratio=a.target_ratio, headroom=a.headroom, notes_cap=a.notes_cap,
                     notes_max_tokens=a.notes_max_tokens,
                     notes_thinking={"on": True, "off": False, "unset": None}[a.notes_thinking],
@@ -1668,7 +1716,7 @@ def main() -> None:
                     inplace_tokens=a.inplace_tokens, notes_checks=a.notes_checks, notes_scan=a.notes_scan,
                     max_recalls=a.max_recalls, recall_label=a.recall_label, recall_unit=a.recall_unit,
                     empty_retry=not a.no_empty_retry, think_cap=a.think_cap,
-                    ask_notes=(lambda body: post_json(keeper_url + "/v1/chat/completions", body, a.timeout)) if keeper_url else None,
+                    ask_notes=ask_upstream(keeper_url) if keeper_url else None,
                     notes_model=a.notes_model, notes_system=system,
                     notes_kwargs=json.loads(a.notes_kwargs) if a.notes_kwargs else None, notes_prepass=a.notes_prepass,
                     notes_extra=json.loads(a.notes_extra) if a.notes_extra else None, notes_prefill=a.notes_prefill,

@@ -267,6 +267,13 @@ Measured (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s unless noted; one run
 
 ## Changes
 
+**Unreleased** (lab, 2026-10-17): `--upstream-retries N` (default 0, off) with `--upstream-wait SECONDS` (default
+900): when the model server fails a call (no answer, or HTTP 5xx), the proxy polls the server's `/health` until it
+answers 200 and sends the same call again, at most N times; a refusal (HTTP 4xx) is passed on as before. For long
+tasks on a server that may be restarted under them (for example by a supervisor after a GPU fault): a greedy call
+to an exact server gets the answer the failed one would have had, so the task loses only the time. Not measured
+yet on a real restart.
+
 **1.1.0** (2026-10-16): new options, all off by default ([Added in 1.1.0](#added-in-110-all-off-by-default)): a
 separate keeper model (`--notes-upstream`, `--notes-model`, `--notes-system`, `--notes-kwargs`, `--notes-extra`,
 `--notes-prefill`, `--notes-prepass`), background notes (`--notes-async`, `--prewarm`), `--inplace-fit` for small
