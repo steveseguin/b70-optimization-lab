@@ -138,3 +138,18 @@ CPU latency and transfer latency to choose a full design. The feasibility
 document also keeps host staging/repacking explicit: original CPU GGUF rows
 and GPU compact rows have equal byte counts but different serialized layouts.
 No adaptive GPU fill, second host bank or same-card draft time is free.
+
+## Coordinator decisions (2026-10-17 11:27 UTC)
+
+- **MTP draft source:** `--allow-existing-p49c-draft` is authorized.
+  - The IQ3-only weight restriction came from my brief, not from an owner rule.
+  - The draft is the same official one-token MTP head that the 2-card record engine (packet 45 SPEED6 and packet 49c) has used under the owner's weight-source policy. No new weights are introduced.
+- **No overlap with packet 49d's chain.** The H2D probe drives the copy engine on cards 2/3:
+  - card 2 = PCI `0000:43:00.0`, which has the GuC hard-lockup history;
+  - card 3 = `0000:47:00.0`, which had today's 01:09 BCS engine reset.
+  A fault there would stop 49d's queue through its journal check, and a third fault this boot halts device work.
+- **Order after 49d completes:**
+  1. quiet CPU benchmark, with GPUs idle;
+  2. H2D-a, then H2D-b, on card 2;
+  3. route window on cards 2+3 (needs 97 GiB available host memory);
+  4. offline locality analysis.
