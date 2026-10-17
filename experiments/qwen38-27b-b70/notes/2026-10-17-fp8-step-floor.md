@@ -325,3 +325,39 @@ Readings:
 the biggest single remainder is the cross-card exchange. Next measurement (cheap, no server): the all-gather's
 end-to-end latency per call at the decode shapes on the two cards, to confirm the 13-21 us figure before any
 transport idea is weighed against its fault risk.
+
+## Registered 12:08 EDT (before it runs): the all-gather's latency on the bare cards
+
+`scripts/bench-xccl-allgather-latency.py`, two processes (one per card) under `torch.distributed.run`, the server's
+oneCCL environment (the TP2 package's CCL_* settings), no server: for fp16 [1|6, 5120] and [1|6, 124160], the
+median device time of one all-gather alone, and what one gather adds after a 50 MB fp16 matmul (a decode linear).
+- **Prediction:** added 13-21 us per call at [1|6, 5120] (the profile pair's no-kernel time over 130-152 calls).
+- **Decision:** added 12 us or more: the exchanges' latency is about 2-3 ms per drafting step, and a lower-latency
+  transport goes into a design memo weighed against its fault risk (owner's call before any peer-visible kernel).
+  Under 8 us: the no-kernel time is something else (event waits, the GDN copies); the profile's gaps get a closer look.
+
+## All-gather latency result (12:07 EDT): about 5-6 us per decode exchange, about 1 ms a step; registered branch "under 8 us"
+
+`data/2026-10-17-step-floor/xccl-allgather-latency.json` (two cards, no server, kernel log clean). A first attempt
+synchronised after every call, so the two processes drifted apart and the gathers waited for the other host
+(12.8-246 us, discarded); timed in batches of back-to-back calls, the ranks stay in lockstep as in a server step:
+
+| fp16 shape per rank | gather alone | added after a 50 MB matmul |
+| --- | ---: | ---: |
+| 1 x 5120 | 15.2 us | 4.8 us |
+| 6 x 5120 | 15.3 | 6.4 |
+| 1 x 124160 (drafter head) | 15.6 | 12.5 |
+| 6 x 124160 (target head) | 42.4 | 49.9 |
+
+Bytes arrived unchanged on both ranks for every shape. About 150 decode exchanges at 5-6 us plus the heads' gathers
+come to about 1.0-1.2 ms per drafting step: under the 12 us bar, so **no transport memo**; the exchanges are not
+where the 3.25 ms of no-kernel time goes. What is left is the cards' own cost per kernel: a drafting step issues
+about 1,650 device operations (1,283 for one token; the five drafter passes add about 74 each), so 1-2 us of gap per
+operation accounts for the rest. That is a fusion question (fewer, larger kernels in the drafter passes), the same
+territory as R198's graphs (1.2-1.4 % slower here), and no single piece of it is above about 2 %.
+
+**Study conclusion:** a 27B FP8 TP2 writing step (37.9 ms at 1K) is about 25 ms of target weight reads at about
+540 GB/s, 2.1 ms LM head, about 6 ms of drafting kernels (five passes and the verify rows' extras), about 1 ms of
+exchanges and about 3 ms of per-kernel gaps and small kernels. Nothing measured today is a lossless lever above
+about 2 % per step; the levers worth their cost stay the ones that cut steps or reads: acceptance (tokens per step)
+and the long-context paths (one-launch verify, already +9/25/41 % over the shipped package at 8/16/30K).

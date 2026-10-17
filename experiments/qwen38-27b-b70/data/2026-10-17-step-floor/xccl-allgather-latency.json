@@ -1,0 +1,47 @@
+{
+ "schema": "b70-xccl-allgather-latency.v1",
+ "world": 2,
+ "torch": "2.11.0+xpu",
+ "shapes": [
+  {
+   "rows": 1,
+   "cols": 5120,
+   "bytes_per_rank": 10240,
+   "alone_us": 15.2,
+   "matmul_us": 90.8,
+   "matmul_plus_gather_us": 95.6,
+   "added_us": 4.8,
+   "bytes_ok_all_ranks": true
+  },
+  {
+   "rows": 6,
+   "cols": 5120,
+   "bytes_per_rank": 61440,
+   "alone_us": 15.3,
+   "matmul_us": 90.2,
+   "matmul_plus_gather_us": 96.6,
+   "added_us": 6.4,
+   "bytes_ok_all_ranks": true
+  },
+  {
+   "rows": 1,
+   "cols": 124160,
+   "bytes_per_rank": 248320,
+   "alone_us": 15.6,
+   "matmul_us": 90.8,
+   "matmul_plus_gather_us": 103.3,
+   "added_us": 12.5,
+   "bytes_ok_all_ranks": true
+  },
+  {
+   "rows": 6,
+   "cols": 124160,
+   "bytes_per_rank": 1489920,
+   "alone_us": 42.4,
+   "matmul_us": 90.1,
+   "matmul_plus_gather_us": 140.0,
+   "added_us": 49.9,
+   "bytes_ok_all_ranks": true
+  }
+ ]
+}
