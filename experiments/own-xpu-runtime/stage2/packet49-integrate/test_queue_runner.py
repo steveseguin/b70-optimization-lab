@@ -75,6 +75,27 @@ class QueueTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'authorized'):
             q.run(SimpleNamespace(authorized_device_window=False))
 
+    def test_oracle_pending_vs_failed(self):
+        from types import SimpleNamespace
+        for status in ('running', 'not-started'):
+            with patch.object(q.subprocess, 'run', return_value=SimpleNamespace(returncode=1, stdout=json.dumps(dict(ready=False, status=status)))):
+                self.assertFalse(q.oracle_ready())
+        for text in ('invalid', json.dumps(dict(ready=False, status='failed'))):
+            with patch.object(q.subprocess, 'run', return_value=SimpleNamespace(returncode=1, stdout=text)):
+                with self.assertRaises(RuntimeError):
+                    q.oracle_ready()
+
+    def test_durable_user_service(self):
+        q.user_unit_gate('0::/user.slice/user-1000.slice/user@1000.service/app.slice/p49.service\n')
+        for path in ('0::/user.slice/user-1000.slice/session-2.scope', '0::/system.slice/p49.service', '0::/'):
+            with self.assertRaises(ValueError):
+                q.user_unit_gate(path)
+
+    def test_fault_signature_variants(self):
+        for text in ('CAT error', 'device coredump', 'job 17 timed out', 'timed-out fence', 'engine reset', 'reset engine'):
+            self.assertIsNotNone(q.FAULT.search(text))
+        self.assertIsNone(q.FAULT.search('configuration changed'))
+
 
 if __name__ == '__main__':
     unittest.main()

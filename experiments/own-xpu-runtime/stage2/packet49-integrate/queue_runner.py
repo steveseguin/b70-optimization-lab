@@ -15,7 +15,13 @@ ROOT = P.parents[3]
 EARLY = ('K0', 'K1a', 'K1b', 'K2', 'W0p')
 LATE = ('KD', 'W2m', 'WS', 'WSs', 'WS128x', 'WS128')
 DEVICE_CORES = {0, 1, 2, 3, 16, 17, 18, 19}
-FAULT = re.compile(r'Fault response|Engine memory CAT error|engine reset|timed[- ]out job|devcoredump|GPU.*coredump', re.I)
+FAULT = re.compile(r'Fault response|CAT error|engine.*reset|reset.*engine|devcoredump|device coredump|GPU.*coredump|GuC.*(?:hang|lockup)|timed.out.*(?:job|fence)|job.*timed.out', re.I)
+
+
+def user_unit_gate(cgroup):
+    paths = [line.split(':', 2)[-1] for line in cgroup.splitlines()]
+    if not any('/user@' in path and path.endswith('.service') and path.rsplit('/', 1)[-1] != f'user@{os.getuid()}.service' for path in paths):
+        raise ValueError('durable systemd user service required for coordinator queue')
 
 
 def commands(out):
@@ -82,9 +88,18 @@ def journal(cursor=None):
 
 
 def oracle_ready():
-    return subprocess.run(['nice', '-n', '19', 'taskset', '-c', '4-15,20-31',
+    result = subprocess.run(['nice', '-n', '19', 'taskset', '-c', '4-15,20-31',
                            'python3', '-B', str(P / 'oracle/oracle_job.py'), 'status', '--require-complete'],
-                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+                          capture_output=True, text=True)
+    if result.returncode == 0:
+        return True
+    try:
+        status = json.loads(result.stdout)
+    except ValueError as error:
+        raise RuntimeError('CPU oracle status validation failed; inspect status command') from error
+    if status.get('status') not in ('running', 'not-started') or status.get('ready') is not False:
+        raise RuntimeError('CPU oracle failed or has invalid status; no device launch')
+    return False
 
 
 def validate_success(name, out, rc):
@@ -102,6 +117,7 @@ def run(args):
         raise ValueError('--authorized-device-window required to execute')
     if os.getpriority(os.PRIO_PROCESS, 0) != 0 or set(os.sched_getaffinity(0)) != DEVICE_CORES:
         raise ValueError('run inside admitted nice-0 coordinator unit on cores 0-3,16-19')
+    user_unit_gate(Path('/proc/self/cgroup').read_text())
     out = args.output_root.resolve()
     allowed = Path('/home/steve/own-xpu-runtime-results/packet49-integrate').resolve()
     if not out.is_relative_to(allowed) or out == allowed:

@@ -16,12 +16,28 @@ The changed reduction tree gets a separate full-model CPU oracle; old output
 differences are informational and the old oracle is never overwritten.
 
 Packet48 candidates require production reconciliation before adoption.
-The initial source audit finds matching shapes and quantization classes,
-but its dense control wrapper differs from the actual production P33
-instantiation. Expert controls use the actual P39 kernels, while tensor
-patterns and isolated versus full-layer timing still differ. Thus no packet48
-kernel is yet eligible for a production swap. A separate packet48b prepares
-the matched comparison; no performance conclusion is inferred from compilation.
+The source audit finds matching shapes and quantization classes. Ordinary GDN
+layer4 uses IQ2_S gate/up, IQ4_NL down, and Q6_K QKV/Z. Packet48's dense control
+wrapper specializes away production P33's runtime routing path, so it is not
+the same compiled production control. The primary expert controls use the
+actual P39 kernels. Packet46 repeats 32 synthetic blocks per tensor and measures
+complete layers with 10 warmups/200 pairs; packet48 changes row bytes and measures
+isolated classes with 4 warmups/24 pairs. These are known confounders, not proof
+of a single cause.
+
+| Class | Packet46 production control, µs | Packet48 isolated control, µs | Difference |
+| --- | ---: | ---: | ---: |
+| IQ2 gate/up | 81.875 | 106.927 | +30.6% |
+| IQ4 down | 91.875 | 93.542 | +1.8% |
+| Q6 QKV | 100.105 | 63.490 | −36.6% |
+| Q6 Z | 39.740 | 31.875 | −19.8% |
+
+Down remains the strongest candidate, but the registered production-layer gate
+is still missing. **No packet48 kernel is production-enabled in packet49.**
+[Packet48b](../experiments/own-xpu-runtime/stage2/packet48b-production/)
+prepares the matched full-layer comparison and per-class decision. Its unchanged
+control calls the production engine; the candidate changes only the four
+primary GEMV classes. No performance conclusion is inferred from compilation.
 Packet46 launch fusion and packet47 ordered attention stay closed.
 
 ## CPU and storage constraints
@@ -35,9 +51,11 @@ symlinks. This is the same root filesystem, not extra disk capacity; initial
 free space is about 22 GiB. Existing results, sealed packets and untracked
 work remain untouched.
 
-The oracle estimate before launch is **6–12 hours** for twelve 128-token
+The oracle estimate before launch is **6–12 hours**, about eight hours centrally,
+for twelve 128-token
 outputs with two lean CPU workers (historical rate about 20 seconds per
-consumed position, roughly 2,420 positions total). It must retain the fixture
+consumed position, 2,386 suite positions plus a 214-position first-prompt repeat).
+It must retain the fixture
 steps needed by the chain, including 1–8 and 97–104. A static arithmetic
 identity and separate completion receipt allow kernel windows to precede
 oracle completion without silently changing their seal.
@@ -48,7 +66,15 @@ Build/CPU passes will not establish full-model device parity or speed.
 The coordinator chain will mirror K0/K1a/K1b/K2/W0p/KD/W2m/WS/WSs plus
 WS128x/WS128. Oracle-dependent windows must fail closed while outputs are
 pending. Exact runnable commands, final seal, CPU evidence, unit identity,
-ETA and review will be added when prepared.
+ETA and review will be added when prepared. [The queue runbook](../experiments/own-xpu-runtime/stage2/packet49-integrate/WINDOW.md)
+and serial runner are committed. Ten CPU tests cover exact commands, topology,
+oracle barrier, strict receipts, fault signatures and durable-unit admission.
+
+The integrated bridge supports and tests M=1/M=2. The full engine retains
+SPEED6's per-row attention submissions during verification; it does not acquire
+new M=2 batching merely from supporting the bridge shape. The independent
+[attention review](../experiments/own-xpu-runtime/stage2/packet49-integrate/REVIEW-QSA.md)
+records this limit and found no blocking arithmetic or scratch defect.
 
 The twelve-prompt, 128-token suite preserves the old record's scope. It does
 not satisfy the separate 512-token publication gate, and no comparison to
