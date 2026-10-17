@@ -1,0 +1,108 @@
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+2026:10:17-18:44:03:   23 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:10:17-18:44:03:   23 |CCL_WARN| value of CCL_RECV changed to be direct (default:)
+2026:10:17-18:44:03:   23 |CCL_WARN| value of CCL_SEND changed to be direct (default:)
+2026:10:17-18:44:03:   23 |CCL_WARN| value of CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD changed to be 4294967296 (default:4194304)
+2026:10:17-18:44:03:   23 |CCL_WARN| value of CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD changed to be 4294967296 (default:8388608)
+2026:10:17-18:44:03:   23 |CCL_WARN| value of CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD changed to be 4294967296 (default:1048576)
+2026:10:17-18:44:03:   23 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:10:17-18:44:03:   23 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:10:17-18:44:03:   23 |CCL_ERROR| internal_kvs.cpp:314 fill_local_host_ip: can't find interface  to get host IP
+2026:10:17-18:44:03:   23 |CCL_ERROR| internal_kvs.cpp:360 kvs_main_server_address_reserve: failed to get local host IP
+2026:10:17-18:44:03:   23 |CCL_ERROR| internal_kvs.cpp:314 fill_local_host_ip: can't find interface  to get host IP
+2026:10:17-18:44:03:   23 |CCL_ERROR| internal_kvs.cpp:402 init_main_server_address: failed to get local host ip
+2026:10:17-18:44:03:   23 |CCL_ERROR| internal_kvs.cpp:524 kvs_init: init main server address error
+write: fd is closed, size 394
+read: fd is closed, size 8
+write: fd is closed, size 394
+write: fd is closed, size 394
+read: fd is closed, size 8
+write: fd is closed, size 394
+write: fd is closed, size 394
+read: fd is closed, size 130
+2026:10:17-18:44:03:   23 |CCL_ERROR| pmi_resizable_simple_internal.cpp:113 registration: proc_count_str contains corrupted data, errno: Bad file descriptor
+2026:10:17-18:44:03:   23 |CCL_ERROR| pmi_resizable_simple_internal.cpp:63 pmrt_init: registration failed
+2026:10:17-18:44:03:   23 |CCL_ERROR| atl_ofi_comm.cpp:838 init_transport: pmi init failed
+2026:10:17-18:44:03:   23 |CCL_ERROR| atl_ofi_comm.cpp:81 atl_ofi_comm: condition init_transport(true) == ATL_STATUS_SUCCESS failed
+init transport failed
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/tmp/s.py", line 79, in <module>
+[rank0]:     dist.barrier()
+[rank0]:   File "/opt/venv/lib/python3.12/site-packages/torch/distributed/c10d_logger.py", line 83, in wrapper
+[rank0]:     return func(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/opt/venv/lib/python3.12/site-packages/torch/distributed/distributed_c10d.py", line 5349, in barrier
+[rank0]:     work = group.barrier(opts=opts)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]: RuntimeError: oneCCL: atl_ofi_comm.cpp:81 atl_ofi_comm: EXCEPTION: init transport failed
+2026:10:17-18:44:03:   24 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:10:17-18:44:03:   24 |CCL_ERROR| internal_kvs.cpp:314 fill_local_host_ip: can't find interface  to get host IP
+2026:10:17-18:44:03:   24 |CCL_ERROR| internal_kvs.cpp:402 init_main_server_address: failed to get local host ip
+2026:10:17-18:44:03:   24 |CCL_ERROR| internal_kvs.cpp:524 kvs_init: init main server address error
+2026:10:17-18:44:03:   24 |CCL_ERROR| pmi_resizable_simple_internal.cpp:113 registration: proc_count_str contains corrupted data, errno: Bad file descriptor
+2026:10:17-18:44:03:   24 |CCL_ERROR| pmi_resizable_simple_internal.cpp:63 pmrt_init: registration failed
+2026:10:17-18:44:03:   24 |CCL_ERROR| atl_ofi_comm.cpp:838 init_transport: pmi init failed
+2026:10:17-18:44:03:   24 |CCL_ERROR| atl_ofi_comm.cpp:81 atl_ofi_comm: condition init_transport(true) == ATL_STATUS_SUCCESS failed
+init transport failed
+write: fd is closed, size 394
+read: fd is closed, size 8
+write: fd is closed, size 394
+write: fd is closed, size 394
+read: fd is closed, size 8
+write: fd is closed, size 394
+write: fd is closed, size 394
+read: fd is closed, size 130
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/tmp/s.py", line 79, in <module>
+[rank1]:     dist.barrier()
+[rank1]:   File "/opt/venv/lib/python3.12/site-packages/torch/distributed/c10d_logger.py", line 83, in wrapper
+[rank1]:     return func(*args, **kwargs)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/opt/venv/lib/python3.12/site-packages/torch/distributed/distributed_c10d.py", line 5349, in barrier
+[rank1]:     work = group.barrier(opts=opts)
+[rank1]:            ^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]: RuntimeError: oneCCL: atl_ofi_comm.cpp:81 atl_ofi_comm: EXCEPTION: init transport failed
+W1017 18:44:04.269000 1 torch/distributed/elastic/multiprocessing/api.py:1028] Sending process 24 closing signal SIGTERM
+E1017 18:44:04.285000 1 torch/distributed/elastic/multiprocessing/api.py:1002] failed (exitcode: 1) local_rank: 0 (pid: 23) of binary: /opt/venv/bin/python3
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/venv/lib/python3.12/site-packages/torch/distributed/run.py", line 1032, in <module>
+    main()
+  File "/opt/venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 367, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/opt/venv/lib/python3.12/site-packages/torch/distributed/run.py", line 1028, in main
+    run(args)
+  File "/opt/venv/lib/python3.12/site-packages/torch/distributed/run.py", line 1019, in run
+    elastic_launch(
+  File "/opt/venv/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 194, in __call__
+    return launch_agent(
+           ^^^^^^^^^^^^^
+  File "/opt/venv/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 383, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/tmp/s.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2026-10-17_18:44:04
+  host      : localhost
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 24) 
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-10-17_18:44:04
+  host      : localhost
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 23) 
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

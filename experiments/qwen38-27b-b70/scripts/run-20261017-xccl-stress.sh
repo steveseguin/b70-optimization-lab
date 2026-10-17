@@ -75,10 +75,10 @@ for arm in $ARMS; do
   watch_arm "$arm" &
   WD=$!
   docker run --rm --name xccl-stress --device /dev/dri:/dev/dri --group-add render --ipc host --memory 8g --memory-swap 8g \
-    --ulimit core=0 --network none "${COMMON_ENV[@]}" "${extra[@]}" \
+    --ulimit core=0 --network bridge --cap-add SYS_PTRACE --security-opt label=disable --shm-size 8g "${COMMON_ENV[@]}" "${extra[@]}" \
     -e ONEAPI_DEVICE_SELECTOR=level_zero:0,1 -e ZE_AFFINITY_MASK=0,1 \
     -v "$S/stress-xccl-allgather.py:/tmp/s.py:ro" -v "$D:/out" --workdir /tmp --entrypoint python3 "$IMAGE" \
-    -m torch.distributed.run --nproc-per-node 2 /tmp/s.py --minutes "$MIN" --out "/out/xccl-$arm.jsonl" \
+    -m torch.distributed.run --nproc-per-node 2 --master-addr 127.0.0.1 --master-port 29511 /tmp/s.py --minutes "$MIN" --out "/out/xccl-$arm.jsonl" \
     > "$D/xccl-$arm.log" 2>&1
   rc=$?
   touch "$D/.done-$arm"; sleep 3; kill $WD 2>/dev/null

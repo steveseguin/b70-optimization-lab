@@ -275,3 +275,27 @@ often. So the size reading is not favoured by history; the arms still run as reg
 the 832-token sizes, the load arm adds the one thing the package runs may have lacked: a lagging card mid-gather),
 and a clean A and B moves the search to what only the context lane has (prefix-cache hits in align mode with the
 exact-cache overlays, one sequence, 262,144 window).
+
+## Packed stress result (13:41-14:42 EDT): no hang in 4,158 first steps
+
+4,158 requests in 60.5 min (4,127 an hour), none failed (`data/2026-10-17-hang-repro2/stress-L.jsonl`); 4,053 with a
+cache hit (93.7 % of prompt tokens cached, new tokens per request median 1,309, prompts up to 41,196 tokens); answers
+of 1/2/4/8/16 tokens about 820 each; no breadcrumb stall, kernel log clean, server stopped cleanly, cards left empty.
+The runner's "stress client stopped with a failed request" at 14:42:14 is my SIGTERM (registered 14:00). One stall
+capture fired at 14:36:54 and was a false alarm: request 3,795 found nothing cached (its conversation had been
+evicted) and read 33,598 tokens in 13.1 s (2,550 tokens/s, normal); its stacks are kept as a baseline
+(`stall-143654/`): rank 0's main thread waits in `_prepare_inputs` (`gpu_model_runner.py:2132`, the accepted-count
+event) during a long prompt step, which is where the 06:23 traceback ended, so that line alone says nothing.
+With the hour at 12:20 this makes about 5,950 synthetic first steps with no hang. At one hang in ~10,000 first steps
+that is a ~45 % chance of a clean result, so it says little; it does not clear the first step.
+
+## Exchange stress started 14:46:40 after three setup errors of mine (no GPU work ran in them)
+
+`attempt1-rendezvous/` (14:42): with `--network none` the two processes could not resolve the container's hostname
+and waited in torch's rendezvous; stopped. `attempt2-no-network/` (14:44): with the hostname added, oneCCL's
+key-value store found no non-loopback interface ("can't find interface to get host IP"). `attempt3-no-ptrace/`
+(14:45): on the bridge network, oneCCL failed opening `/dev/dri` handles ("opendir failed"); the server container has
+`--cap-add SYS_PTRACE`, which the pidfd handle exchange needs. The runner now starts the stress like the server
+(bridge network, SYS_PTRACE, `label=disable`, 8 GB shm, rendezvous at 127.0.0.1). First minute of arm A: 887 steps
+(445 prompt-size), 119,745 gathers, byte checks all equal: about 9,000 prompt-size steps per 20-minute arm, half
+the context lane's prompt steps since 2026-10-03 in each arm.
