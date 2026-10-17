@@ -72,7 +72,7 @@ def checked():
     from shared_oracle import static_binding
     shared_oracle=static_binding()
     sources=build.sources()
-    for name in ('coordinator_windows.sh','dispatch-speed6.json','dispatch-speed6-provenance.json'):
+    for name in ('coordinator_windows.sh','dispatch-speed6.json','dispatch-speed6-provenance.json','oracle-binding.json'):
         sources[str((P/name).relative_to(ROOT))]=digest(P/name)
     from oracle.oracle_job import source_bindings
     oracle_build=source_bindings()

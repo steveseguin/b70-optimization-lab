@@ -8,7 +8,9 @@ The decision uses [packet48b's copied production evidence](../packet48b-producti
 IQ2_S gate/up and IQ4_NL down passed its two fresh exactness owners and
 production-matched timing screen. QKV/Z did not pass the M=1 worthwhile screen;
 production-matched M=2 was never measured, so those paths are excluded.
-Exceptional IQ3_S expert gates remain on their existing implementation.
+Exceptional IQ3_S expert gates remain on their existing implementation: the
+[packet48b preregistration](../packet48b-production/PREREGISTRATION.md) explicitly
+closed that approximately1% M=1 gain for this merge.
 
 The production hook replaces the corresponding packed weight banks during
 upload, before they are used, and dispatches those two existing P39 sites to

@@ -2,7 +2,7 @@
 
 Read-only reviewer, October17. The reviewer used no GPU, model payload,
 build, service action or protected-tree edit. CPU checks used nice19 and
-cores4–15,20–31. Final receipt/seal verification is still pending serial builds.
+cores4–15,20–31. Final receipt/seal verification passed after the serial builds.
 
 Reviewed production load/dispatch selection, the expert adapter and kernel,
 compact-pitch alignment, oracle binding, queue, storage and suite metrics.
@@ -27,6 +27,23 @@ The separate512-token publication gate stays false. Storage accounts for all
 also count root logs; the final queue/storage source does so. Packet49's own
 unchanged reserve can still refuse its later windows; the runbook documents it.
 
-The initial independent focused21tests passed. The implementer's expanded
-33-test admission suite also passes. A final independent verification will
-check fresh build/gate receipts and the seal before handoff.
+Final independent verification passed all 34 scoped tests and the seal:
+`000960bb7690119fbb99723c00abc23961aab3efb6b94bfeb8734624e3e71221`
+(35 artifacts, 437 sources). The reviewer checked all four dedicated expert
+receipts/logs: 192 checks, identical output hashes, two fresh GNU and two fresh
+ASAN/UBSAN processes, halt-on-error policy, no sanitizer diagnostics and clean
+teardown. GNU and ASAN snapshot receipts each pass 31 cases/26 checks; the
+ordinary CPU gate has eight fixture runs and six ownership suites. Twelve
+metadata rows prove 47 gate sites, 48 down sites and 142 banks without growth.
+
+The first down fixture correctly failed the retained production geometry
+guard. It now uses 2,560 output rows; its full-row and partial-route cases pass.
+The reviewer verified all three retained failure-evidence hashes. No runtime
+arithmetic or production guard changed for this correction.
+
+The final storage check passed with approximately 660 MB above its complete
+remaining budget. The parent allowance is released only for completed-prefix
+canonical queue windows with strict qualifying receipts bound to the original
+packet49 seal. Missing or invalid evidence retains the allowance. No source
+blockers remain. Device exactness, full-model parity and WS128 speed remain
+coordinator work.

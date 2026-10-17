@@ -83,7 +83,9 @@ remaining model writes, and 0.500 GB for oracle growth. Packet49b budgets a
 hashed and discarded by the inherited verified retention policy; the queue
 checks a 128 MB retained early-evidence cap, including root logs. Exceeding it
 preserves evidence and stops rather than deleting more or silently growing
-the budget. Each window rechecks actual free space before writes.
+the budget. Each window rechecks actual free space before writes. Completed packet49
+model windows release only their pending-write allowance after their original
+sealed receipts and canonical queue completion state pass validation.
 
 Packet49's sealed storage policy is unchanged and still requires its larger
 11.486 GB reserve. This packet's fit does not promise that packet49's own

@@ -2,15 +2,16 @@
 
 | Finding | Evidence | Revisit condition |
 | --- | --- | --- |
-| Packet45's current tree is later than the SPEED6 record | SPEED7 and K2 probe closeouts in packet45 | Derive the selected historical snapshot explicitly; do not inherit unqualified later changes silently |
-| Packet48's isolated controls do not establish production gain | [Packet48 device result](../../../../notes/2026-10-17-own-runtime-packet48-device-result.md), packet48b reconciliation | Fresh production-matched control/candidate windows, exact bytes and per-class decision |
-| Packet47 ordered attention is slower | [Packet47 device result](../../../../notes/2026-10-17-own-runtime-packet47-device-result.md) | New mechanism with an independent worthwhile gain estimate |
-| Packet46 layer launch fusion is neutral | [Packet46 device result](../../../../notes/2026-10-17-own-runtime-packet46-device-result.md) | New evidence that launches dominate a relevant workload |
-| The split32 reduction cannot use the old full-model oracle | New arithmetic identity, independent scalar reference | Regenerate the full suite and captures, keep old differences informational |
-| M=2 bridge support is not full-engine batching | [README](README.md) and independent attention review | A separate scheduling change with complete rollback and quality gates |
+| SPEED6 is a historical identity, not current packet45 HEAD | Packet49 derives from `34c62b433`; packet49b from `5cda094d2` | New explicitly qualified baseline |
+| Packet48 isolated dense timings are not production evidence | Packet48b production comparison | Fresh matched wrapper/shape evidence |
+| GDN QKV/Z M=1 not worthwhile; M=2 production match absent | [Packet48b evidence](../packet48b-production/evidence-copy/p48b-a-summary.json) | Fresh production-matched M=2 byte and timing gates |
+| Full16-byte expert row padding exceeds existing arena headroom | [Memory and load-alignment proof](INTEGRATION.md) | New separately qualified memory mechanism; never silently raise the cap |
+| Exceptional IQ3 gate gain was about1% and closed for this merge | [Packet48b preregistration](../packet48b-production/PREREGISTRATION.md) | New worthwhile production-matched evidence |
+| Four-row IQ4 down fixture fails the production geometry guard | `p49b-fixture-correction.json`, initial source `122d95fba` | Use2560 output rows, preserving the production guard |
+| Split32 requires its own oracle, but expert arithmetic does not change it | [Shared packet49 binding](oracle-binding.json) | Any arithmetic change requires a separate identity |
+| Ordered QSA alternative slower; packet46 layer launch fusion neutral | Packet49 inherited decisions | New mechanism with worthwhile gain estimate |
+| M=2 bridge support does not mean batched engine scheduling | [Integration](INTEGRATION.md) | Separate scheduling change with rollback/quality gates |
 
-These close individual choices. Device qualification, production GEMV choices,
-one-card work and further speed improvements remain open.
-
-| Packet48b dense M=2 is unqualified | Packet48b preregistration covers M=1 only | Fresh production-matched M=2 gate before GDN QKV/Z adoption |
-| 16-byte final expert row padding exceeds existing arena headroom | [Integration memory proof](INTEGRATION.md) | A separately justified memory mechanism; never silently raise the cap |
+The [CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md) records this task's
+outcome and remaining gates. Device qualification and further optimization
+remain open.

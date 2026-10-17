@@ -1,4 +1,5 @@
 import tempfile
+import json
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -13,11 +14,29 @@ class StorageTests(unittest.TestCase):
         self.assertEqual(s.BUILD_LIMIT, 8_446_804_480)
 
     def test_admission_preserves_other_work_and_floor(self):
-        s.budget(23_000_000_000, 2_000_000_000, 2_500_000_000, 2_500_000_000)
-        with self.assertRaises(RuntimeError):
-            s.budget(s.FREE_FLOOR+s.CHAIN_RESERVE+99, 0, 100, 100)
-        with self.assertRaises(RuntimeError):
-            s.budget(100_000_000_000, s.BUILD_LIMIT, 1, 1)
+        with patch.object(s, 'parent_pending_bytes', return_value=s.MODEL_CHAIN_BYTES):
+            s.budget(23_000_000_000, 2_000_000_000, 2_500_000_000, 2_500_000_000)
+            with self.assertRaises(RuntimeError):
+                s.budget(s.FREE_FLOOR+s.CHAIN_RESERVE+99, 0, 100, 100)
+            with self.assertRaises(RuntimeError):
+                s.budget(100_000_000_000, s.BUILD_LIMIT, 1, 1)
+
+    def test_only_completed_bound_parent_writes_release(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.assertEqual(s.parent_pending_bytes(root), s.MODEL_CHAIN_BYTES)
+            (root/'KD').mkdir()
+            (root/'queue-state.json').write_text(json.dumps(dict(completed=list(s.CHAIN_WINDOWS[:6]))))
+            seal=json.loads((s.P/'oracle-binding.json').read_text())['files_sha256']['experiments/own-xpu-runtime/stage2/packet49-integrate/build-receipt.json']
+            row=dict(window='KD',passed=True,qualifying=True,device_executed=True,card=0,context=4096,draft_rank=1,target_split=23,build_receipt_sha256=seal)
+            receipt=root/'KD/window.json';receipt.write_text(json.dumps(row))
+            self.assertEqual(s.parent_pending_bytes(root),s.MODEL_CHAIN_BYTES-s.chain_window_bytes('KD'))
+            for key in row:
+                receipt.write_text(json.dumps(dict(row,**{key:None})))
+                self.assertEqual(s.parent_pending_bytes(root),s.MODEL_CHAIN_BYTES,key)
+            receipt.write_text(json.dumps(row))
+            (root/'queue-state.json').write_text(json.dumps(dict(completed=['KD'])))
+            self.assertEqual(s.parent_pending_bytes(root),s.MODEL_CHAIN_BYTES)
 
     def test_early_cap_never_discards_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -1,6 +1,8 @@
 # Packet49b CPU build and seal
 
-Run from this packet directory. No command executes a device binary or reads
+These are the completed preparation commands. Do not rebuild or alter the
+sealed runtime identity in place; use a new packet for later changes.
+Run from this packet directory when reconstructing that preparation. No command executes a device binary or reads
 model weights. Builds are serial alongside the existing low-priority oracle.
 
 ```bash

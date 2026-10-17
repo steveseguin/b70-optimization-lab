@@ -64,6 +64,36 @@ EARLY_RETAINED_LIMIT = 128_000_000
 OWN_CHAIN_PEAK = EARLY_RETAINED_LIMIT + max(MODEL_CHAIN_BYTES, 2_500_000_000)
 BUILD_LIMIT = BUILD_BASE_BUDGET + OWN_CHAIN_PEAK
 
+def parent_pending_bytes(chain=None):
+    """Release only completed, sealed p49 writes; absent/invalid evidence reserves all."""
+    chain = Path(chain) if chain is not None else Path('/home/steve/own-xpu-runtime-results/packet49-integrate/build/device-cards01-b')
+    try:
+        state = json.loads((chain/'queue-state.json').read_text())
+        binding = json.loads((P/'oracle-binding.json').read_text())
+        seal = binding['files_sha256']['experiments/own-xpu-runtime/stage2/packet49-integrate/build-receipt.json']
+        completed = state['completed']
+        # The immutable queue cannot retry/overwrite completed stages in this chain.
+        if completed != list(CHAIN_WINDOWS[:len(completed)]):
+            return MODEL_CHAIN_BYTES
+    except (OSError, ValueError, KeyError, TypeError):
+        return MODEL_CHAIN_BYTES
+    remaining = MODEL_CHAIN_BYTES
+    for name in LATE_WINDOWS:
+        if name not in completed:
+            continue
+        try:
+            row = json.loads((chain/name/'window.json').read_text())
+            if not isinstance(row,dict):
+                continue
+            expected = dict(window=name, passed=True, qualifying=True, device_executed=True,
+                            card=0, context=4096, draft_rank=1, target_split=23,
+                            build_receipt_sha256=seal)
+            if all(type(row.get(k)) is type(v) and row.get(k)==v for k,v in expected.items()):
+                remaining -= chain_window_bytes(name)
+        except (OSError, ValueError, TypeError):
+            pass
+    return remaining
+
 def early_retention_gate(out):
     used = sum(build_size(Path(out)/name) for name in CHAIN_WINDOWS if name not in LATE_WINDOWS)
     used += sum(f.stat().st_size for f in Path(out).glob('*')
@@ -76,11 +106,13 @@ def precheck():
     free = shutil.disk_usage(B).free
     used = build_size(B)
     # No credit for actual build smaller than its registered 2.5 GB maximum.
-    required = FREE_FLOOR + CHAIN_RESERVE + max(0, BUILD_LIMIT-used)
+    parent = parent_pending_bytes()
+    required = FREE_FLOOR + parent + ORACLE_GROWTH_RESERVE + max(0, BUILD_LIMIT-used)
     return dict(passed=free>=required, device_executed=False, root_free_bytes=free,
                 required_free_bytes=required, margin_bytes=free-required,
                 build_bytes=used, build_budget_bytes=BUILD_BASE_BUDGET,
-                free_floor_bytes=FREE_FLOOR, parent_model_reserve_bytes=MODEL_CHAIN_BYTES,
+                free_floor_bytes=FREE_FLOOR, parent_model_reserve_bytes=parent,
+                parent_model_maximum_reserve_bytes=MODEL_CHAIN_BYTES,
                 oracle_growth_reserve_bytes=ORACLE_GROWTH_RESERVE,
                 early_retained_limit_bytes=EARLY_RETAINED_LIMIT,
                 own_chain_peak_bytes=OWN_CHAIN_PEAK,
@@ -89,12 +121,13 @@ def precheck():
 def budget(free, used, extra, build_extra):
     if any(type(n) is not int or n<0 for n in (free,used,extra,build_extra)):
         raise ValueError('storage byte counts must be nonnegative integers')
-    cap=min(BUILD_LIMIT, used+free-FREE_FLOOR-CHAIN_RESERVE)
+    reserve = parent_pending_bytes() + ORACLE_GROWTH_RESERVE
+    cap=min(BUILD_LIMIT, used+free-FREE_FLOOR-reserve)
     row=dict(root_free_bytes=free,build_bytes=used,admitted_write_bytes=extra,
              projected_build_write_bytes=build_extra,build_limit_bytes=cap,
              structural_build_limit_bytes=BUILD_LIMIT,free_floor_bytes=FREE_FLOOR,
-             remaining_chain_reserve_bytes=CHAIN_RESERVE)
-    if free-extra < FREE_FLOOR+CHAIN_RESERVE or used+build_extra >= cap:
+             remaining_chain_reserve_bytes=reserve)
+    if free-extra < FREE_FLOOR+reserve or used+build_extra >= cap:
         raise RuntimeError('Packet49b storage admission refused: '+str(row))
     return row
 

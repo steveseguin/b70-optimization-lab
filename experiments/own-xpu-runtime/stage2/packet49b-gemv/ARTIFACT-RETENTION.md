@@ -29,7 +29,12 @@ bounded single chain, not permission for unlimited retries or concurrent chains.
 `storage_precheck.py` reports current free space and the remaining full
 budget. `storage.py` also checks the floor, protected allowance and finite
 packet build/output cap before every write stage. A failed check stops before
-new work. No existing files were deleted to obtain this fit. Packet49's own
+new work. No existing files were deleted to obtain this fit. The parent pending-write
+allowance decreases only when its canonical `device-cards01-b` queue records
+a completed model window with a passing, qualifying device receipt bound to
+the original packet49 seal and topology. Missing or invalid evidence keeps the
+allowance. Completed parent outputs already consume actual free space, so
+they are not reserved a second time. Packet49's own
 larger sealed admission policy is unchanged; it may still refuse a later
 window and must be handled separately.
 

@@ -1,0 +1,24 @@
+{
+  "schema": "packet49b.cpu-fixture-correction.v1",
+  "device_executed": false,
+  "initial_source_commit": "122d95fba",
+  "passed": false,
+  "checks_before_refusal": 24,
+  "error": "p29 down fixed 2560x640 single projection",
+  "cause": "Fixture used 4 output rows for IQ4 down; retained production guard requires 2560.",
+  "correction": "Use 2560 output rows for IQ4 down; scenario 0 computes full rows, remaining scenarios include partial routes. Production guard and kernels unchanged.",
+  "evidence": [
+    {
+      "path": "/home/steve/own-xpu-runtime-results/packet49b-gemv/build/cpu-fixtures-1792212576370179492/p49b-expert-fixtures-0.log",
+      "sha256": "25e40058551673ee8c22f62490d051e4aaa14103e9b3d6bd17115be2580b3647"
+    },
+    {
+      "path": "/home/steve/own-xpu-runtime-results/packet49b-gemv/build/cpu-fixtures-1792212576370179492/p49b-expert-fixtures-0/receipt.json",
+      "sha256": "f86fe279c02f9bad06f68d232eda036a92f8b6b1da042b84467204b8e9e98772"
+    },
+    {
+      "path": "/home/steve/own-xpu-runtime-results/packet49b-gemv/build/cpu-fixtures-1792212576370179492/p49b-expert-fixtures-0/cases.jsonl",
+      "sha256": "8add260e5b24d97566426acb5d450fc9db960a4de33af9b9d9dd2debfcf737a4"
+    }
+  ]
+}

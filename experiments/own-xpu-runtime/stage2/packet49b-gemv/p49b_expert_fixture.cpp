@@ -1,5 +1,5 @@
-// Exercises every compiled p33 dense T/K/split instantiation without changing
-// the runtime object set. This is correctness evidence, never a speed benchmark.
+// Actual owner submissions for the qualified expert formats and both verification rows.
+// This is correctness evidence, never a speed benchmark.
 #include "p49b_expert_submit.hpp"
 #include "failure.hpp"
 #include <array>
@@ -18,7 +18,7 @@ using Clock=std::chrono::steady_clock;
 void check(bool ok,const std::string& what){if(!ok)throw std::runtime_error(what);}
 #ifdef OWN_RT_HOST_ONLY
 struct Cpu final:Backend {
- std::string identity()const override{return "CPU packet37 all-linked p33 fixture";}
+ std::string identity()const override{return "CPU packet49b compact expert fixture";}
  void* allocate(size_t n,Memory)override{return ::operator new(n,std::align_val_t(64));}
  void release(void* p,Memory)override{::operator delete(p,std::align_val_t(64));}
  Event copy(void* dst,const void* src,size_t n,std::span<const Event>)override{std::memcpy(dst,src,n);return next_handle();}
@@ -41,11 +41,11 @@ struct Runner {
 #endif
  }
  Runner(unsigned card,unsigned seconds):device(backend(card)),copy(device),wait_limit(seconds),deadline(Clock::now()+wait_limit){}
- Allocation alloc(size_t n,Memory m=Memory::device){auto id=device.arena.allocate("p33-linked-"+std::to_string(serial++),n,m,Category::scratch,Lifetime::transaction);owned.push_back(id);return id;}
- void finish(Event e){check(device.wait(e,wait_limit),"p33 linked fixture submission deadline");}
+ Allocation alloc(size_t n,Memory m=Memory::device){auto id=device.arena.allocate("p49b-expert-"+std::to_string(serial++),n,m,Category::scratch,Lifetime::transaction);owned.push_back(id);return id;}
+ void finish(Event e){check(device.wait(e,wait_limit),"p49b expert fixture submission deadline");}
  Allocation upload(const void* src,size_t bytes){auto host=alloc(bytes,Memory::pinned),out=alloc(bytes);std::memcpy(device.arena.row(host).pointer,src,bytes);finish(copy.copy(out,0,host,0,bytes,{}));return out;}
  void clear(){device.retire_completed_events();for(auto id:owned)device.arena.release(id);owned.clear();}
- void between_cases(){check(Clock::now()<deadline,"p33 linked fixture total deadline");}
+ void between_cases(){check(Clock::now()<deadline,"p49b expert fixture total deadline");}
 };
 } // namespace
 int main(int argc,char** argv){
@@ -71,7 +71,7 @@ int main(int argc,char** argv){
   std::ofstream bytes(out/"output.bin",std::ios::binary),cases(out/"cases.jsonl");check(bool(bytes)&&bool(cases),"fixture output files");
   runner=std::make_unique<Runner>(card,seconds);std::vector<uint8_t> all_output;
   auto exercise=[&]<iq3::Type T,unsigned K,p39::Kind E>(){
-   constexpr bool paired=E==p39::Kind::expert_checks;constexpr unsigned rows=4,experts=10,count=10;
+   constexpr bool paired=E==p39::Kind::expert_checks;constexpr unsigned rows=paired?4:2560,experts=10,count=10;
    const size_t raw_stride=p49bgemv::source_row_bytes(T,K),stride=p49bgemv::layout(T,K).row_bytes;
    std::vector<uint8_t> raw(rows*experts*raw_stride),peer(raw.size());uint32_t seed=0x49b;
    for(auto* v:{&raw,&peer}){for(auto& byte:*v){seed=seed*1664525u+1013904223u;byte=seed>>24;}
@@ -86,7 +86,7 @@ int main(int argc,char** argv){
     auto&r=*runner;r.between_cases();
     std::vector<uint16_t> x(K*(paired?1:count));for(size_t i=0;i<x.size();++i)x[i]=iq3::bf16_bits(float(int((i+token*7)%17)-8)/32.f);
     if(scenario==5)x[0]=0x7fc1;if(scenario==6){x[0]=0x7f80;x[8]=0xff80;}if(scenario==7){x[0]=1;x[1]=0x8001;}
-    std::vector<iq3::Route> routes(count);for(unsigned i=0;i<count;++i)routes[i]={uint32_t((i+token)%experts),0,rows};
+    std::vector<iq3::Route> routes(count);for(unsigned i=0;i<count;++i)routes[i]={uint32_t((i+token)%experts),0,scenario==0?rows:4};
     if(scenario>=1&&scenario<=3)routes[2].expert_id=experts;
     if(scenario==4){routes[0].row_count=0;routes[1].row_count=2;routes[1].row_begin=1;}
     std::vector<uint16_t> y(rows*count,0x7e31),py(rows*count,0x7e32);std::vector<uint32_t> status(count,9),peer_status(count,8);

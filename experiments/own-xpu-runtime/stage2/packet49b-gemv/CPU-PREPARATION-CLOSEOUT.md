@@ -10,15 +10,18 @@ packet49b, IQ3 compressed target, two B70 cards; CPU preparation only here.
 
 ## Outcome
 
-Preparation remains in progress. No device result or speed claim is made.
-Serial builds and fresh CPU/sanitizer gates must finish before sealing.
+CPU preparation passed and is sealed. All three builds, fresh CPU/sanitizer
+gates and independent seal verification passed. No device result or speed
+claim is made.
 
 ## What worked
 
 The integration selects IQ2 gate/up and IQ4 down for each existing M=1/M=2
 engine row. A compact4-byte final row pitch avoids increased weight-bank
 storage while retaining every required load alignment and arithmetic order.
-Shared oracle/queue/storage/metric admission checks pass33tests.
+Shared oracle/queue/storage/metric admission checks pass 34 tests. The expert
+gate passes 192 checks across fresh GNU and sanitizer processes; all 142
+replacement banks retain their original byte sizes.
 
 ## What failed or remains uncertain
 
@@ -34,11 +37,14 @@ new device qualification; no p48b gain transfers automatically.
 [shared oracle binding](oracle-binding.json), [build commands](CPU-BUILD.md),
 [storage/restore policy](ARTIFACT-RETENTION.md),
 [task note](../../../../notes/2026-10-17-own-runtime-packet49b.md).
-Fresh receipts will be bound by the final `build-receipt.json`.
+The [final seal](build-receipt.json) binds 35 artifacts and 437 sources, with
+SHA256 `000960bb7690119fbb99723c00abc23961aab3efb6b94bfeb8734624e3e71221`.
+The [fixture correction receipt](p49b-fixture-correction.json) preserves the
+initial CPU geometry refusal and hashes; production guards stayed unchanged.
 
 ## When to revisit
 
-After sealing, run the registered early windows on cards0+1, then the model
+Run the registered early windows on cards0+1, then the model
 windows against the completed original packet49 oracle. Final speed is WS128
 with its WS128x exactness companion. The lane remains open; this closeout
 records only CPU preparation and its remaining device gates.
