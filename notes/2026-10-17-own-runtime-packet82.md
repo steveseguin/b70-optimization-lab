@@ -16,3 +16,27 @@ The initial pull refused other workers' dirty files; fetch showed main already
 matched origin/main. Those files remain untouched. No GPU, service or host
 setting changed. All work uses nice19 and cores 8–15/24–31, an 8 GiB process
 ceiling for builds, one compile at a time, and less than 1 GB of build storage.
+
+## Candidate milestone
+
+Analysis commit `12a393fc4` was pushed before candidate edits. Three views now
+build: production, rec-gates and rec-parallel. Every view passes two fresh
+executions with GNU and Intel: 200 full-state comparisons per execution,
+covering 320 token steps. Both in-place and separate-state bindings, both head
+mappings, guards and exceptional values are covered. The CPU mirror checks raw
+bytes first, then retains compact SHA256 transcripts.
+
+GNU and Intel production differ in 20 deliberate NaN cases. Raw inspection
+confirmed only NaN payload elements differ; controls and every finite/infinity
+case match across compilers. Every candidate matches its own compiler's entire
+production bytes, including NaN payloads. This is an existing cross-compiler
+baseline difference, preserved in the evidence, not a tolerance or arithmetic
+change. GPU exactness remains pending.
+
+All six full-shape post-load startup runs pass, capture the selected recurrence
+kernel, and retain actual allocation/configuration checks. The undersized-head
+negative and five selection-consumer negatives refuse correctly. Both engine
+builds and shared wrapper/packet Python checks pass. Candidate offline kernels
+have 128 configured GRFs and no scratch spills; flag spills increase and could
+hurt device speed. No speed claim follows from the CPU work. Next: seal and
+check shared lane plans and temporary queue proposals.

@@ -31,7 +31,7 @@ def main():
  kernels=[]
  for i,p in enumerate(sorted((out/'igc').glob('*entry_*.asm'))):
   data=p.read_text();name=data.splitlines()[0]
-  if not any(n in name for n in ('p49drec',)):continue
+  if not any(n in name for n in ('p49drec','p82rec')):continue
   artifact=evidence/f'kernel-{i}.asm.gz';artifact.write_bytes(gzip.compress(p.read_bytes(),mtime=0))
   grf=re.search(r'numGRF=(\d+)',data)
   instructions=re.search(r'//.instCount (\d+)',data)
