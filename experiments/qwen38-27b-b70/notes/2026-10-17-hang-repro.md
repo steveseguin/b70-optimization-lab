@@ -265,3 +265,13 @@ cards sooner: arm B tests the leading mechanism directly, and another hour of th
 ~4,000 first steps (~35 % chance of a hang at one in ~10,000). The stop is mine: at 14:42 I end the stress client
 (pid 3187238) with SIGTERM, so the runner's "stress client stopped with a failed request" line at that time is that
 stop, not a failure; the result is read from `stress-L.jsonl` (every request it logs completed).
+
+**14:02 EDT, counter-evidence to the size reading (server folders since the 2026-10-03 boot, TP2, allgather overlay,
+4 GiB pin):** 119 runs with 832-token steps (91,536 requests; the context lane, the one hang) and 124 runs with
+4,096-token steps (24,721 requests, about 58M prompt tokens summed from the servers' throughput lines, mostly
+without prefix caching, so roughly 14,000 prompt steps whose gathers are about 42 MB per card), with no hang. If ring
+calls longer than the ring were the trigger, the package's five-times-larger gathers should have hung at least as
+often. So the size reading is not favoured by history; the arms still run as registered (they are cheap and cover
+the 832-token sizes, the load arm adds the one thing the package runs may have lacked: a lagging card mid-gather),
+and a clean A and B moves the search to what only the context lane has (prefix-cache hits in align mode with the
+exact-cache overlays, one sequence, 262,144 window).
