@@ -72,3 +72,16 @@ sudo, host setting changes, resets or reboot were used.
 The screens still need GPU execution by the coordinator. Real packet49 output
 identity, acceptance and speed remain pending. A screen is not a record:
 the 512-token final suite and complete chain remain separate gates.
+
+## Device result and closeout (coordinator, 2026-10-17 22:56–23:09 UTC, lane A; from the hourly review 10 readout)
+
+All screens were exact. Against the rank-1 24/24 production control at 54.11 tok/s:
+
+| Placement | tok/s | Change |
+|---|---:|---:|
+| Draft on rank 0, 23/25 | 52.86 | −2.3% |
+| Draft on rank 0, 24/24 | 53.40 | −1.3% |
+
+Hit cycles barely moved (16.14 and 15.95 ms vs 16.12). Misses got about 2.1 ms worse (29.7 vs 27.6 ms).
+
+**Closed.** The draft needs rank 1's final hidden state, so placing it on rank 0 adds a transfer and serialization to every miss. Packet 45 had already measured placement on rank 0 as a loss (38.16 vs 39.42). The "+5%" projection ignored that dependency and the ledger. DO-NOT-REPEAT.

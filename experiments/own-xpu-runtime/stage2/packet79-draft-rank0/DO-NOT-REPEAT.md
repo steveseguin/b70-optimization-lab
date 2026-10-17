@@ -12,3 +12,5 @@
 | Headroom projection is a measurement | False; the brief's roughly 5% remains projected. |
 
 [CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md).
+
+| 2026-10-17 | packet79 MTP draft on rank 0 (placements 0-split23, 0) | -2.3% / -1.3% on lane A, exact; misses +2.1 ms | draft depends on rank-1 final state; packet45 already measured rank-0 draft as a loss | do not repeat |
