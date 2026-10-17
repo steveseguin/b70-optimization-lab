@@ -8,6 +8,12 @@ P=Path(__file__).resolve().parent;B=P/'build';ROOT=P.parents[3]
 GATES=('p49-cpu-gates.json','p49-plan-gates.json','p49-snapshot-gates.json','p49-python-gates.json','p49-asan-gates.json','p49-asan-snapshot-gates.json','p49b-expert-gates.json','p49c-round2-gates.json','p49c-engine-gates.json','p49c-kernel-provenance.json')
 def checked():
     current=build.compiled_sources();artifacts={};modes={}
+    from storage import BUILD_BASE_BUDGET
+    storage=json.loads((P/'storage-precheck.json').read_text())
+    assert storage['device_executed'] is False and storage['build_budget_bytes']==BUILD_BASE_BUDGET
+    assert storage['root_free_bytes']-storage['required_free_bytes']==storage['margin_bytes']
+    assert storage['retained_build_fits'] is (storage['retained_build_bytes']<=BUILD_BASE_BUDGET)
+    assert storage['passed'] is (storage['margin_bytes']>=0 and storage['retained_build_fits'])
     for mode in ('gnu-host','device','asan'):
         path=P/f'build-{mode}-receipt.json';row=json.loads(path.read_text())
         assert row['passed'] and row['device_executed'] is False and row['mode']==mode
@@ -79,17 +85,30 @@ def checked():
         assert digest(Path(row['output'])/'output.bin')==row['output_sha256']
         assert digest(Path(row['output'])/'receipt.json')==row['native_receipt_sha256']
         assert row['receipt']==summarize_receipt(json.loads((Path(row['output'])/'receipt.json').read_text()))
+    assert len({row['output'] for row in round2['rows']})==4
+    for row in round2['rows']:
+        native=row['receipt'];assert native['schema']=='packet49c.round2-fixtures.v1' and native['passed'] is True and native['device_executed'] is False and native['card']==0
+        t=native['teardown'];assert t['safe_to_exit'] is True and t['exit_code']==t['live_bytes']==t['in_flight']==0
     assert len(round2['rows'])==4 and sorted(r['mode'] for r in round2['rows'])==['asan','asan','gnu-host','gnu-host']
     engine=gates['p49c-engine-gates.json']
     assert engine['compiled_sources_sha256']==current and engine['model_weights_read'] is False
     for name,expected in engine['source_hashes'].items():assert digest(ROOT/name)==expected
+    cleanup=json.loads((P/'object-cleanup-receipt.json').read_text())
+    removed={r['path']:r['sha256'] for r in cleanup['objects']}
+    for name,expected in engine['baseline_objects'].items():
+        assert digest(P/name)==expected if (P/name).exists() else removed.get(name)==expected
     assert len(engine['fresh_processes'])==2
+    assert [r['repeat'] for r in engine['fresh_processes']]==[0,1]
+    assert len({r['output'] for r in engine['fresh_processes']})==2
     engine_outputs=[]
     for row in engine['fresh_processes']:
         root=Path(row['output']);native=json.loads((root/'receipt.json').read_text())
         assert digest(root/'receipt.json')==row['receipt_sha256'] and native==row['receipt']
         assert native['passed'] and native['safe_to_exit'] and not native['device_executed'] and native['cpu_mock']
-        assert row['cases']==36 and native['checks']>0
+        assert native['schema']=='packet49c.engine-fixtures.v1' and native['arithmetic']=='iq3-p49-split32-v1' and native['mode']=='exact' and native['card']==-1
+        assert len(native['teardown'])==2
+        for t in native['teardown']:assert t['safe_to_exit'] is True and t['exit_code']==t['live_bytes']==t['in_flight']==0
+        assert row['cases']==36 and native['checks']==5472
         assert digest(root/'comparisons.jsonl')==row['comparison_sha256']==native['exact_output_identity']
         engine_outputs.append(row['comparison_sha256'])
     assert len(set(engine_outputs))==1
@@ -104,7 +123,7 @@ def checked():
     from shared_oracle import static_binding
     shared_oracle=static_binding()
     sources=build.sources()
-    for name in ('coordinator_windows.sh','dispatch-speed6.json','dispatch-speed6-provenance.json','oracle-binding.json','storage-parent-binding.json'):
+    for name in ('coordinator_windows.sh','dispatch-speed6.json','dispatch-speed6-provenance.json','oracle-binding.json','storage-parent-binding.json','storage-precheck.json','object-cleanup-receipt.json'):
         sources[str((P/name).relative_to(ROOT))]=digest(P/name)
     from oracle.oracle_job import source_bindings
     oracle_build=source_bindings()
@@ -126,7 +145,7 @@ def checked():
         p49b_expert_fixture_host_sha256=outputs['p49b-expert-fixtures'][0],
         p49c_fixture_host_sha256=outputs['p49c-fixtures'][0],
         nongemv_fixture_host_sha256_by_context={'4096':outputs['nongemv-fixtures'][0]},
-        scope=dict(context=4096,draft_rank=1,target_split=23,first_card=0,
+        scope=dict(storage_admission_at_seal=storage['passed'],storage_note='Live queue precheck is required even if static CPU-preparation storage passed',context=4096,draft_rank=1,target_split=23,first_card=0,
             host_compilers=['GNU','GNU ASAN/UBSAN'],device_execution_pending=True,full_model_oracle_pending=True,
             full_model_qualification='Coordinator windows against independent completed oracle required',
             p51_integrated=['route','hc.a.gate','hc.f.gate','hc.a.low','hc.f.low','attention'],p48_integrated=True,p48_reason='P48b IQ2_S gate/up and IQ4_NL down, compact four-byte row stride; fresh device qualification pending'))

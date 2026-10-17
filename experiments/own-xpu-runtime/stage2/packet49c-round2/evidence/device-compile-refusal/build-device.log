@@ -1,0 +1,21 @@
+[  1%] Building CXX object CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet49c-round2/p49c_submit.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49c-round2/p49c_submit.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49c-round2/p49c_kernel.hpp:134:211: error: use of undeclared identifier 'wg'
+  134 |   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(((size_t(b.rows)+255)/256)*256,256),p35_range1=sycl::nd_range<1>(size_t(b.rows)*128,128),p35_range2=sycl::nd_range<1>(((size_t(b.rows)*Split*32+wg-1)/wg)*wg,wg)](sycl::handler& h){
+      |                                                                                                                                                                                                                   ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49c-round2/p49c_kernel.hpp:134:217: error: use of undeclared identifier 'wg'
+  134 |   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(((size_t(b.rows)+255)/256)*256,256),p35_range1=sycl::nd_range<1>(size_t(b.rows)*128,128),p35_range2=sycl::nd_range<1>(((size_t(b.rows)*Split*32+wg-1)/wg)*wg,wg)](sycl::handler& h){
+      |                                                                                                                                                                                                                         ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49c-round2/p49c_kernel.hpp:134:221: error: use of undeclared identifier 'wg'
+  134 |   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(((size_t(b.rows)+255)/256)*256,256),p35_range1=sycl::nd_range<1>(size_t(b.rows)*128,128),p35_range2=sycl::nd_range<1>(((size_t(b.rows)*Split*32+wg-1)/wg)*wg,wg)](sycl::handler& h){
+      |                                                                                                                                                                                                                             ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49c-round2/p49c_kernel.hpp:134:224: error: use of undeclared identifier 'wg'
+  134 |   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(((size_t(b.rows)+255)/256)*256,256),p35_range1=sycl::nd_range<1>(size_t(b.rows)*128,128),p35_range2=sycl::nd_range<1>(((size_t(b.rows)*Split*32+wg-1)/wg)*wg,wg)](sycl::handler& h){
+      |                                                                                                                                                                                                                                ^~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49c-round2/p49c_kernel.hpp:151:20: error: use of undeclared identifier 'p35_range2'
+  151 |     h.parallel_for(p35_range2,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                    ^~~~~~~~~~
+5 errors generated.
+gmake[2]: *** [CMakeFiles/programs.dir/build.make:79: CMakeFiles/programs.dir/build/checked/experiments/own-xpu-runtime/stage2/packet49c-round2/p49c_submit.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:111: CMakeFiles/programs.dir/all] Error 2
+gmake: *** [Makefile:91: all] Error 2

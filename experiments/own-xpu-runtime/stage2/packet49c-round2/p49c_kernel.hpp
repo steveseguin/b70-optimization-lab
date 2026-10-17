@@ -147,8 +147,8 @@ template<Type T,unsigned K,unsigned Split,p39::Kind E,unsigned Stage=0>struct De
      if(!lane)partial[part]=value;it.barrier(sycl::access::fence_space::local_space);
      if(it.get_local_linear_id()==0){uint16_t y=iq3::bf16_bits((partial[0]+partial[1])+(partial[2]+partial[3]));b.y[row]=y;dense_tail_device<E>(b,row,y);}
     });
-   }else {constexpr unsigned wg=256;
-    h.parallel_for(sycl::nd_range<1>(((size_t(b.rows)*Split*32+wg-1)/wg)*wg,wg),[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+   }else {
+    h.parallel_for(sycl::nd_range<1>(((size_t(b.rows)*Split*32+256-1)/256)*256,256),[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
      unsigned logical=it.get_global_linear_id()/32,row=logical/Split,part=logical%Split;if(row>=b.rows)return;auto sg=it.get_sub_group();unsigned lane=sg.get_local_linear_id();auto bounds=iq3::kopt2::bounds(K,part,Split);float value=dense_lane<T,K>(b.w+size_t(row)*b.rb,b.x,bounds.first,bounds.second,lane);
      for(unsigned width=1;width<32;width*=2){float rhs=sycl::select_from_group(sg,value,(lane+width)%32);if(lane%(2*width)==0)value=value+rhs;}
      if(!lane){if constexpr(attention)b.scratch[row*8+part]=value;else b.y[row]=iq3::bf16_bits(value);}

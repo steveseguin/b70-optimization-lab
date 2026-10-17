@@ -21,7 +21,12 @@ windows; it does not inherit a speed result.
 `p49c_kernel.hpp` contains only the selected route and dense bodies from the
 lab's packet51 candidate. Its local `load32` is the same aligned device load
 and host memcpy helper. Header dependencies resolve to this packet's types;
-there is no duplicate packet45 runtime type tree. The packet51 IQ2 gate and
+there is no duplicate packet45 runtime type tree. The prepared-submission
+mirror hoists launch ranges into the outer capture, so the dense launch range
+uses literal256 in place of its identical block-local `constexpr wg=256`.
+This keeps the workgroup and global range exactly unchanged. The initial
+device compile refusal and original source/mirror/log remain under
+`evidence/device-compile-refusal`; no device program ran. The packet51 IQ2 gate and
 GDN QKV candidates are excluded. HC inject, final HC low/gate and all other
 classes remain on packet49b's implementations.
 

@@ -67,7 +67,40 @@ numerical input evidence and is not a disposable-space suggestion.
 
 ## Remaining device and timing gates
 
+The actual-engine CPU adapter was also inspected. Its explicit baseline uses
+the existing route42 submitter, the SPEED6 `p33.dense.segment` HC gate path,
+and P39 HC-low/attention epilogues. Other operations use the same engine.
+It compares producer outputs, logical state and every mutable allocation
+over both layer types and both separately scheduled M=2 rows. The two fresh
+processes and compiler objects are hash-bound. Its `legacy=true` setting
+exercises actual `execute_site` dispatch, not prepared-command replay or the
+complete two-rank MTP schedule. Those remain device/model qualifications.
+
 Preparation does not establish merged device byte equality, same-oracle
 full-model agreement, deterministic fresh-device repeats or a speed gain.
 The independent CPU oracle is still required. The coordinator owns early
 device gates, the conditional clean switch and the record-scope model chain.
+
+## Seal code review
+
+The new seal binds current compiler source mirrors, compile/link commands,
+each executable, native fixture receipts and actual output files. Round2
+requires its schema, card, scratch-exclusion scope, four distinct output
+directories and clean teardown. The engine gate requires two distinct fresh
+outputs, repeats 0/1, the declared arithmetic and CPU-only schema, 5,472
+comparisons per process and two clean owner teardowns. Removed compiler
+objects remain bound through the explicit cleanup receipt; retained binaries
+and their sources still validate. The packet51 selected-kernel provenance
+pins both the source header and final local kernel hash.
+
+The initial device build failed at compile time because the prepared-submit
+overlay hoisted a launch extent beyond a block-local `wg=256` declaration.
+Replacing that constant with literal 256 leaves all geometry and arithmetic
+unchanged. The failed source/mirror/log and earlier CPU passes remain under
+`evidence/device-compile-refusal`; final qualification must use rebuilt modes.
+
+Storage readiness is separate from CPU arithmetic qualification. The seal
+records and checks the immutable precheck's internally consistent status,
+including an explicit false readiness if space is unavailable. It does not
+claim a future disk snapshot is stable. The live queue repeats admission and
+refuses a failed storage check before creating or launching a chain.

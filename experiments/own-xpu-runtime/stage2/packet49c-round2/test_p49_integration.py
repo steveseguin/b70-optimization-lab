@@ -19,7 +19,7 @@ class IntegrationTests(unittest.TestCase):
 
     def test_fresh_five_owners(self):
         window.fresh_k1_owners({'pids':[1,2,3,4,5]},{'pids':[6,7,8,9,10]})
-        for bad in ([5,6,7],[1,5,6,7],[5,5,6,7]):
+        for bad in ([6,7,8,9],[1,6,7,8,9],[6,6,7,8,9]):
             with self.assertRaises(ValueError):window.fresh_k1_owners({'pids':[1,2,3,4,5]},{'pids':bad})
 
     def test_external_path_guard(self):

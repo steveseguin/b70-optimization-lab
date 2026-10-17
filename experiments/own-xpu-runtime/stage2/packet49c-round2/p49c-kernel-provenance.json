@@ -4,17 +4,20 @@
   "device_executed": false,
   "source": "experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp",
   "source_sha256": "68226856f6d6b2c1174cf35bfce5eb7f1a7b8cd27aa38b5fb207bcaef4335e86",
-  "candidate_sha256": "2577620fc19fc83637279523ce2aa73eccd58e862f5a4f7bb149a06666f4641b",
+  "candidate_sha256": "9dab3015bcaf7adc873c523fbfd13a321b4c19516689861d4a4121eb2feee961",
   "selected_arithmetic_body_exact": true,
   "normalizations": [
     "namespace p51 to p49c",
     "local identical load32 helper namespace",
-    "route exception text prefix only"
+    "route exception text prefix only",
+    "replace block-local constexpr wg=256 with identical literal256 in launch range so prepared-submission capture can hoist the expression"
   ],
   "excluded": [
     "IQ2 GateKernel",
     "GDN QKV dispatch",
     "HC inject",
     "final HC low/gate"
-  ]
+  ],
+  "launch_geometry_unchanged": true,
+  "compile_refusal_evidence": "evidence/device-compile-refusal"
 }

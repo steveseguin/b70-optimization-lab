@@ -9,7 +9,7 @@ The packet49 oracle and waiting packet49b model units remain untouched.
 ## Registered scope
 
 Keep split32 QSA, the p48b expert gate/up and down paths, SPEED6 dispatch,
-23/25 target split, draft rank1, capacity4096, BF16 KV and existing memory
+23/25 target split, draft rank 1, capacity 4096, BF16 KV and existing memory
 limits. Add only packet51 routing, HC attention/FFN gate and low projections,
 and attention output/combine. Apply them at every matching production call,
 including M=1 and both separately scheduled M=2 rows. Leave expsgate,
@@ -54,16 +54,16 @@ no storage reserve by itself. The old chain and its historical files remain.
 Exact commands and checked switch tests will be included in the final runbook.
 
 No integrated device speed is claimed. Packet51's operator gains do not prove
-an end-to-end gain. The39.422 tok/s record is unchanged; WS128 is the matching
-128-token comparison, not the separate512-token publication gate.
+an end-to-end gain. The 39.422 tok/s record is unchanged; WS128 is the matching
+128-token comparison, not the separate 512-token publication gate.
 
 ## Integration checkpoint
 
-The corrected GNU build and41 Python admission/storage/switch tests pass.
+The corrected GNU build and 41 Python admission/storage/switch tests pass.
 Independent kernel review found two issues before qualification: a duplicated
 HC dispatch hook in command preparation, and attention scratch included in a
 cross-backend hash despite being device-only. Both are corrected. The direct
-HC gate fixture was also expanded from four rows to its production10,240 rows.
+HC gate fixture was also expanded from four rows to its production 10,240 rows.
 The initial failed build's raw log was overwritten after an evidence-copy
 path error; the reconstructed rejected block and explicit retention limitation
 are in `evidence/preparation-corrections/`. No failed run is counted as passing.
@@ -73,3 +73,13 @@ execution enabled; it does not qualify prepared replay or full-model MTP.
 Those remain device/model gates. Compilation and remaining CPU tests continue
 serially. The independent reviews and exact coordinator runbook are included
 in the new packet. No predecessor, oracle unit or queued model unit changed.
+
+The full-layer CPU adapter passed two fresh processes, each36 cases and5,472
+byte comparisons. Intel compilation then exposed a prepared-wrapper scope
+issue: its range capture moved a reference to block-local `wg=256` out of
+scope. The final kernel uses literal256 in that unchanged launch range.
+Its failed source, transformed mirror and compiler log are preserved under
+`evidence/device-compile-refusal/`; the pre-fix passing CPU receipts stay
+historical. Independent review confirms identical geometry and arithmetic.
+The device build now passes without execution. GNU and CPU evidence are
+being refreshed against this final source identity before sanitizers and seal.

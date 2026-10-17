@@ -34,11 +34,21 @@ total fixture cases. This is a fixture coverage correction only; the production
 kernel, wrapper and engine sources retain their reviewed hashes. The final
 fixture hash below supersedes the earlier four-row fixture identity.
 
+A final device-compilation correction replaces the block-local `constexpr
+unsigned wg=256` in the dense launch range with literal `256` at its four uses.
+The prepared-submission overlay hoists that range expression outside the local
+constant's scope. The review compared the final body directly with packet51:
+only this substitution differs after the original namespace/helper
+normalizations. Launch geometry and floating-point arithmetic are unchanged.
+The initial compile refusal remains in `evidence/device-compile-refusal`; the
+final kernel hash below and `p49c-kernel-provenance.json` bind the correction.
+
 ## Integration and arithmetic
 
 - `p49c_kernel.hpp` from the route comment through the final dense template is
   identical to packet51 `candidate.hpp` after replacing the namespace/error-label
-  spelling and `p48::load32` qualification. The local `load32` body is identical
+  spelling, `p48::load32` qualification, and block-local `wg=256` with the same
+  literal in the dense launch range. The local `load32` body is identical
   to packet48's helper. Excluded expert/QKV/inject candidates were not copied into
   the production dispatch.
 - Routing retains four passes, the adjacent 16-value exponential reduction, the
@@ -97,7 +107,7 @@ the unchanged arithmetic, but does not waive completion or fresh model checks.
 | File | SHA256 |
 | --- | --- |
 | `main.cpp` | `218bede1d36966be478063cb6d50b3e693497ff59992ecf72de6137454d21d1a` |
-| `p49c_kernel.hpp` | `2577620fc19fc83637279523ce2aa73eccd58e862f5a4f7bb149a06666f4641b` |
+| `p49c_kernel.hpp` | `9dab3015bcaf7adc873c523fbfd13a321b4c19516689861d4a4121eb2feee961` |
 | `p49c_submit.cpp` | `2faeb6560dca467a4bdf3f93f1dfa93dd137b58b9b16db923bfa6ea3afa459e3` |
 | `p49c_fixture.cpp` | `314b574eb1c7a7e1eb3f2a12be8a67210a90f2f35fa94c1509d59b5099cae176` |
 | `p49c_engine_fixture.cpp` | `8f781041259ef74e89f68ad11da6db56efd31ba02794924cb8139600ba77b4fe` |

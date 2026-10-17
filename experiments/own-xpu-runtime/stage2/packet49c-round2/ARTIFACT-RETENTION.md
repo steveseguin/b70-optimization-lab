@@ -58,12 +58,24 @@ input fixtures and RoPE are read-only links. Shared-oracle outputs are neither
 copied nor edited. A failed storage check is a coordinator review item,
 never permission to delete another packet's evidence or weaken the floor.
 
+If final admission still fails, [the metadata-only fallback inventory](closed-object-space-options.json)
+lists exactly 477 ignored compiler objects in closed packet40, packet37,
+packet35 and packet36 trees, totaling 210,435,768 bytes. They are regular
+single-link `.o` files, absent from those packets' sealed executable-artifact
+maps. No command-line process reference or CURRENT protected-path match was
+found at inspection. None was removed. The coordinator must recheck ownership
+and record each original object hash before removing only the chosen listed
+objects; retain all executables, source mirrors, compile/link metadata,
+receipts and fixtures. Rebuild objects with the retained exact compiler
+commands if needed. This is a specific fallback proposal, not authorization
+for this preparer to alter a predecessor tree.
+
 ## Tracked large input
 
-`rope.bf16` is the4,194,304-byte frozen rotary-position fixture copied
+`rope.bf16` is the 4,194,304-byte frozen rotary-position fixture copied
 byte-for-byte from packet49b (also the admitted packet45 fixture). The local
 copy is required by the inherited build/input seal and kernel fixture paths;
 it is not a generated cache or model weight. Restore it from
 `../packet49b-gemv/rope.bf16` and require its SHA256 to equal the entry in the
 compiled-source map before rebuilding. It is retained explicitly despite
-exceeding the1MiB repository hygiene review threshold.
+exceeding the 1 MiB repository hygiene review threshold.

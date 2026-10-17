@@ -6,7 +6,7 @@ Packet49b and packet51 remain unchanged. [Integration](INTEGRATION.md)
 records production call coverage and exclusions.
 
 Keep split32 QSA, p48b expert gate/up and down, unchanged 16-bit KV, weights,
-23/25 target split, draft rank1, capacity4096, scheduling and memory guards.
+23/25 target split, draft rank 1, capacity 4096, scheduling and memory guards.
 All matching M=1 calls and each of the engine's two M=2 rows use the selected
 kernels. Arithmetic remains `iq3-p49-split32-v1` and the [same packet49 CPU
 oracle](oracle-binding.json) is hash-bound, never rebuilt or relaunched.
@@ -19,9 +19,9 @@ oracle](oracle-binding.json) is hash-bound, never rebuilt or relaunched.
 
 CPU preparation is not device qualification. Packet51 operator gains are not
 integrated model gains. Full-model windows must pass against the completed
-shared oracle. The39.422 tok/s record stays unchanged until qualified matched
-evidence exists. WS128 is the128-token record comparison; it does not satisfy
-the separate512-token publication gate. No submission is part of this task.
+shared oracle. The 39.422 tok/s record stays unchanged until qualified matched
+evidence exists. WS128 is the 128-token record comparison; it does not satisfy
+the separate 512-token publication gate. No submission is part of this task.
 
 Copied historical helper scripts are preserved implementation context, not
 extra approved entry points. Use only the build, gates, seal and runbook
