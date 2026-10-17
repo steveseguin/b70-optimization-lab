@@ -99,3 +99,41 @@ Ideas and evidence: packet68 DESIGN.md and measured device-cost.json;
 packet68b analyzer; packet66 recursive draft/state probe; packet62 flat rollback;
 packet64 production engine; packet68c production-derived paired kernels.
 All are lab code. No outside runtime is used as a base.
+
+
+## Implemented steady pipeline (integration milestone)
+
+Use positions explicitly: canonical target state is through p-1 and x[p] is
+verified. The current rank0 tile contains x[p] and a guess for x[p+1]. Rank1's
+row0 output verifies that second input; row1's output predicts x[p+2]. Rank0
+simultaneously processes the future proposals for x[p+2],x[p+3], starting from
+the current tile's private prefix-2 state. It does not mutate canonical state.
+At the next iteration compare the future tile's first input with the previous
+rank1 row1 output before sending that tile to rank1.
+
+Rank0 owns two private tile transactions; rank1 owns one. After both current
+rows pass, commit their prefix 2 and rotate the pending future transaction.
+If the first future input fails, discard its prefix 0 and rebuild it from the
+verified first input before rank1 starts. If a current second input fails,
+commit prefix 1 on both ranks, discard the entire future transaction, and
+resume from the target correction. EOS/cap use the same prefix selection.
+
+The draft first consumes the verified x[p] with target hidden[p-1]. If a
+current second guess already exists, use that exact input for the recursive
+branch. Two recursive passes then propose the future tile, using draft hidden
+state and rolling back all mutable draft allocations afterward. This is a
+feedback pass plus two recursive passes per tile, not two free predictions.
+After both inputs are verified, advance the committed draft with the current
+row0 target hidden and the accepted second input. A rejected suffix never
+advances the committed draft.
+
+The initial serial milestone drained tiles. Integration now overlaps a full
+rank0 pair with a full rank1 pair. Its cost still differs from the inherited
+ideal model: a second-input miss produces one token before repair, and state
+movement/draft copies are explicit work. `cost_model.py` labels this gap.
+
+Memory admission adds 1,090 MiB on rank0 (two bounded tile images plus reserve)
+and 577 MiB on rank1 (one image, draft backup, copy table and reserve), only for
+24/24, rank1 draft, 4096 context. The original 30 GiB per-card arena cap and
+1.5 GB free-device reserve remain enforced. CPU fixtures use tiny synthetic
+weights, never full model payloads.

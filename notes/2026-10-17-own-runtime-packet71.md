@@ -29,3 +29,42 @@ Smoke and matched control/candidate/control jobs are in the packet README.
 The control uses packet64's sealed `1-draft-hc-batch` view: its top-level screen
 seal is stale after the record bundle was selected. That failed CPU plan is
 retained and no device ran. Build is approximately 93 MiB; free disk about 17 GiB.
+
+Final integration milestone: the controller now pipelines two dependent rows
+per half. Rank0 owns separate current and future tiles; the future starts from
+the current tile's private second-row state. Rank1 verifies the current tile
+while rank0 computes the future. A rejection discards the appropriate private
+tile and copies only the accepted prefix into canonical state. Recursive draft
+proposals restore their private changes before any confirmed advancement.
+
+Packet68c sources were copied byte-for-byte and pinned in
+[the import manifest](../experiments/own-xpu-runtime/stage2/packet71-depth2-engine/packet68c-import.json).
+Nine classes select production-derived M2, prioritizing routed experts. The
+production model includes IQ3 expert shapes unsupported by those M2 kernels;
+these keep production M1. Other classes remain serial, including causal QSA and
+GDN recurrence. The all-M1 seal uses the same final pipelined engine.
+
+The final binary passes all nine forced-acceptance fixture cases (8, 11 and 32
+tokens), **1,854** plan/spare comparisons, both-bank extent/history/lookup
+metadata and **five** draft-cache comparisons. GNU and Intel each pass **1,428**
+operator byte checks, with matching bytes across compilers. Seven wrapper tests
+pass, including the exact 32-token smoke and lease release before reporting.
+Retained production metadata validates supported M2 shapes and explicit serial
+fallbacks. Host and device compilation pass; neither invokes a GPU.
+
+The CPU gates exposed stale per-row lookup metadata and an extent/bank-swap
+ordering error; both were fixed before the final passing run. Mixed IQ3 experts
+also required per-site fallback rather than assuming one type per class. The
+serial milestone and failed/intermediate logs remain available as described in
+[retention](../experiments/own-xpu-runtime/stage2/packet71-depth2-engine/RETENTION.md).
+
+The ideal analyzer's +8% threshold is H2/H1 <=1.56037; reserving another 2.38 ms
+gives <=1.42498. The actual engine runs three draft passes per tile and incurs
+copy/repair costs, so these are sensitivities, not an engine speed prediction.
+The build occupies 125 MiB and free disk is about 30 GiB. No frozen tree, host
+setting, service or GPU job was changed by this work.
+
+Coordinator handoff: [exact commands and jobs](../experiments/own-xpu-runtime/stage2/packet71-depth2-engine/README.md),
+[CPU preparation closeout](../experiments/own-xpu-runtime/stage2/packet71-depth2-engine/CPU-PREPARATION-CLOSEOUT.md).
+Run the lane-B smoke first, then control/candidate/control quick screens. Full
+packet49 device identity and any speed gain remain unmeasured.

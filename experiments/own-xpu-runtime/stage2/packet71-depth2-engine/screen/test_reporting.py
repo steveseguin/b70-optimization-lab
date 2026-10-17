@@ -16,7 +16,7 @@ class ReportingTests(unittest.TestCase):
             root=Path(d); here=root/'packet/screen';here.mkdir(parents=True)
             shared=root/'screen/v3';shared.mkdir(parents=True)
             out=here/'evidence/run';(here/'evidence').mkdir()
-            lineage=here.parent/'selections/preset';lineage.mkdir(parents=True)
+            lineage=here.parent
             wrapper=here/'wrapper-seal.json';wrapper.write_text('{}')
             # __file__ is only used for wrapper hash and source inventory.
             stack.enter_context(patch.object(s,'__file__',str(here/'screen.py')))
@@ -105,7 +105,7 @@ class WorkerTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=Path(self.tmp.name)
 
-    def test_full_worker_mock_incident_then_twelve_requests_and_drain(self):
+    def check_worker(self, kind):
         import sys
         sys.path.insert(0,str(P56))
         self.addCleanup(lambda:sys.path.remove(str(P56)))
@@ -129,17 +129,19 @@ class WorkerTests(unittest.TestCase):
             def poll(**kw):save(output/'device-isolation.json',dict(passed=True))
             return types.SimpleNamespace(poll=poll,register=lambda pid:None)
         identity=dict(lineage=str(P56),binary='/mock',dispatch='/mock',selection_sha256='a'*64,
-                      lane='A',timing='token',placement=dict(draft_rank=1,target_split=0))
+                      lane='A',kind=kind,timing='token',placement=dict(draft_rank=1,target_split=0))
         old=(pipeline.P,storage.P,storage.B,storage.admit)
         try:
             with patch.object(D,'oracle_inputs',return_value={'prompts':entries}),patch.object(D.CHECK,'token_record',return_value=list(range(128))),patch.object(pipeline,'Transport',Transport),patch.object(suite,'checker_module'),patch.object(suite,'admit_inputs',return_value=snapshots),patch.object(suite,'reset',side_effect=reset),patch.object(suite,'run_request',side_effect=request),patch('placement.verify_identity',return_value=(identity['placement'],module('mock_memory',P56/'memory_gate.py'))),patch.object(tp2_worker,'summary',side_effect=AssertionError('worker must not report')),patch.object(tp2_worker,'Teardown'),patch.object(tp2_worker,'masked_environment',return_value={}),patch.object(tp2_worker,'DeviceMonitor',side_effect=monitor):
                 self.assertEqual(tp2_worker.run(identity,self.root/'run',3600),0)
         finally:
             pipeline.P,storage.P,storage.B,storage.admit=old
-        self.assertEqual([c for c in calls if isinstance(c,tuple) and c[0]=='request'],[('request',64)]+[('request',128)]*12)
+        self.assertEqual([c for c in calls if isinstance(c,tuple) and c[0]=='request'],([('request',32)] if kind=='smoke' else [('request',64)]+[('request',128)]*12))
         self.assertEqual(calls[-1],('close',True))
         self.assertTrue(read(self.root/'run/report-inputs.json')['passed'])
         self.assertFalse((self.root/'run/summary.json').exists())
 
+    def test_full_worker_mock_incident_then_twelve_requests_and_drain(self):self.check_worker('quick')
+    def test_smoke_is_one_32_token_request(self):self.check_worker('smoke')
 
 if __name__=='__main__':unittest.main()

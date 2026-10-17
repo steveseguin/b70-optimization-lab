@@ -310,23 +310,23 @@
               "layer_transfer_bytes": 0,
               "strict_rollback_image_bytes": 373633560,
               "allocation_reserve_bytes": 46500548,
-              "target_modeled_allocations_bytes": 28290390100,
-              "arena_device_bytes": 28290390100,
-              "arena_headroom_bytes": 3921864620,
+              "target_modeled_allocations_bytes": 28828309588,
+              "arena_device_bytes": 28828309588,
+              "arena_headroom_bytes": 3383945132,
               "arena_margin_passed": true,
-              "target_total_bytes": 28336890648,
+              "target_total_bytes": 28874810136,
               "target_qsa_cache_bytes": 58195968,
               "draft_qsa_cache_bytes": 0,
               "draft_weights_bytes": 0,
               "draft_scratch_controls_buffers_bytes": 0,
               "draft_total_bytes": 0,
               "draft_duplicate_head_bytes": 0,
-              "total_with_mtp_bytes": 28336890648,
-              "free_with_mtp_bytes": 5905407208,
-              "free_without_mtp_bytes": 5905407208,
+              "total_with_mtp_bytes": 28874810136,
+              "free_with_mtp_bytes": 5367487720,
+              "free_without_mtp_bytes": 5367487720,
               "host_pinned_bytes": 4194304,
               "allocation_margin_passed": true,
-              "packet71_private_row_and_draft_bound_bytes": 605028352
+              "packet71_private_row_and_draft_bound_bytes": 1142947840
             },
             {
               "rank": 1,
@@ -1588,8 +1588,11 @@
     "mtp.hpp"
   ],
   "packet71": {
-    "extra_per_rank_bytes": 605028352,
+    "extra_per_rank_bytes": [
+      1142947840,
+      605028352
+    ],
     "scope": "24/24 rank1 draft context4096 only",
-    "components": "two row images <=512MiB, draft backup <64MiB, copy table 128KiB, reserve remainder"
+    "components": "rank0: two <=512MiB transactions and two copy tables; rank1: one <=512MiB transaction, <64MiB draft backup and copy table"
   }
 }

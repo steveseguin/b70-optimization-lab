@@ -69,7 +69,7 @@ def run(identity, output, seconds, pair_dir=None):
     # unchanged; sealed() already checks the candidate's supported timing modes.
     args.timing = identity['timing']
     args.depth2 = Path(identity['lineage']).name == 'packet71-depth2-engine'
-    args.depth2_kernels = read(Path(identity['lineage']) / 'screen-seal.json').get('depth2_kernels','serial') if args.depth2 else 'serial'
+    args.depth2_kernels = read(Path(identity['seal'])).get('depth2_kernels','serial') if args.depth2 else 'serial'
     args.depth2_force = 'none'
     args.selection_sha256 = identity['selection_sha256']
     checker = suite.checker_module(P56.parent / 'packet49-integrate/oracle/suite_check.py')

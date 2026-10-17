@@ -34,6 +34,11 @@ def main():
   cmd=list(map(str,cmd));commands.append(dict(command=cmd,cwd=str(ROOT),name=name))
   with (B/(name+'.log')).open('w') as log:subprocess.run(cmd,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,check=True,stdin=subprocess.DEVNULL)
   print(name,'PASS',flush=True)
+ # GNU and Intel host fixtures; no mini model or device execution.
+ for mode,compiler in [('gnu-host','/usr/bin/g++'),('intel-host','/opt/intel/oneapi/compiler/2026.0/bin/icpx')]:
+  cmd=next(x['command'] for x in prior if x['name']=='gnu-host-entry-main');cmd=[x.replace(str(BASE),str(P)) if x.startswith('-I') else x for x in cmd[:cmd.index('-o')]];cmd[0]=compiler
+  run([*cmd,'-ffunction-sections','-fdata-sections','-Wl,--gc-sections',mapping[P/'batch_fixture.cpp'],'-o',B/(mode+'-batch-fixture')],mode+'-fixture-compile')
+  artifacts['build/'+mode+'-batch-fixture']=sha(B/(mode+'-batch-fixture'))
  for mode in ('gnu-host','device'):
   dest=B/mode;dest.mkdir(exist_ok=True)
   cmd=next(x['command'] for x in prior if x['name']==mode+'-entry-main');cmd=cmd[:cmd.index('-o')]
@@ -49,7 +54,7 @@ def main():
     assert sha(src)==sha(target);link[i]=str(target)
   run(link,mode+'-link');artifacts[str((dest/'own-rt-iq3').relative_to(P))]=sha(dest/'own-rt-iq3')
  for p in local.iterdir():bind(p)
- for name in ('build_engine.py','kernel_gate.py','kernel_overlay.py','submission_overlay.py','math_gate.py','kernel_guard.hpp','mtp-manifest.tsv','rope.bf16','selection-decision.json','parent-source-manifest.json'):bind(P/name)
+ for name in ('build_engine.py','kernel_gate.py','kernel_overlay.py','submission_overlay.py','math_gate.py','kernel_guard.hpp','mtp-manifest.tsv','rope.bf16','selection-decision.json','parent-source-manifest.json','packet68c-import.json','kernel-table.tsv'):bind(P/name)
  save(P/'engine-commands.json',commands);bind(P/'engine-commands.json')
  size=sum(p.stat().st_size for p in B.rglob('*') if p.is_file());assert size<1_000_000_000
  save(P/'build-device-receipt.json',dict(schema='packet71.lean-build.v1',passed=True,device_executed=False,sources=sources,artifacts=artifacts,logical_build_bytes=size,commands=commands,compiler_version=subprocess.check_output(['/opt/intel/oneapi/compiler/latest/bin/icpx','--version'],text=True),max_address_space_bytes=8*1024**3,nice=19,cpu_affinity=sorted(os.sched_getaffinity(0))))

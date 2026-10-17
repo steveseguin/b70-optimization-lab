@@ -249,17 +249,20 @@ public:
  }
  int run(int confirmed,int target_position,bool head){try{return compute(confirmed,target_position,head);}catch(const ProviderError& ex){e.drain();disabled=true;trace<<"{\"disabled\":true,\"reason\":"<<ownrt::quote(ex.what())<<"}\n";trace.flush();return -1;}}
  // Recursive proposal has no persistent effect, including failed provider state.
- int second(int d1){
-  if(d1<0||d1>=p.g.vocab||disabled||position>=p.g.context)return -1;
+ std::array<int,2> recursive_pair(int input){
+  std::array<int,2> result{-1,-1};
+  if(input<0||input>=p.g.vocab||disabled||position+1>=p.g.context)return result;
   require(depth2_backup&&!async_pending,"recursive draft ownership");e.drain();
   int old_position=position,old_extent=context_extent,old_class=e.current_cls;bool old_disabled=disabled;
   auto copy=[&](bool restore){ownrt::CopyEngine c(e.dev(0));size_t off=0;
    for(auto id:mutable_ids){size_t n=e.dev(0).arena.row(id).bytes;e.tail=restore?c.copy(id,0,depth2_backup,off,n,{}):c.copy(depth2_backup,off,id,0,n,{});off+=n;}e.drain();};
-  copy(false);int result=-1;
-  try{result=compute(d1,position+1,true,false,id("streams"));}
+  copy(false);
+  try{result[0]=compute(input,position+1,true,false,id("streams"));
+   if(result[0]>=0&&result[0]<p.g.vocab)result[1]=compute(result[0],position+1,true,false,id("streams"));}
   catch(...){copy(true);position=old_position;disabled=old_disabled;admit_position(old_extent);e.current_cls=old_class;throw;}
   copy(true);position=old_position;disabled=old_disabled;admit_position(old_extent);e.current_cls=old_class;return result;
  }
+ int second(int d1){return recursive_pair(d1)[0];}
  void advance(int token,int target_position,Allocation hidden){
   if(disabled)return;
   compute(token,target_position,false,false,hidden);

@@ -216,7 +216,7 @@ static void pipeline_cancel_check() {
 static int run_rank(const Options& a) {
  using namespace pipeline;
  std::unique_ptr<Weights> weights;std::unique_ptr<Engine> engine;std::unique_ptr<mtp36::DraftRuntime> provider;
- std::unique_ptr<depth71::Rows> paired_rows;
+ std::unique_ptr<depth71::Rows> paired_rows,future_rows;
  int fd=-1;void* mapping=MAP_FAILED;std::string error,selection_observed_sha256;std::vector<std::string> teardown;
  pipeline_stop_fd=a.stop_fd;
  try {
@@ -236,7 +236,7 @@ static int run_rank(const Options& a) {
   {cpu_set_t cpus;CPU_ZERO(&cpus);require(!sched_getaffinity(0,sizeof cpus,&cpus),"affinity receipt");double load=0;getloadavg(&load,1);std::ostringstream o;o<<"{\"cpu_affinity\":[";bool comma=false;for(int i=0;i<CPU_SETSIZE;++i)if(CPU_ISSET(i,&cpus)){o<<(comma?",":"")<<i;comma=true;}o<<"],\"load_average_1m\":"<<load<<"}";save(a.output/"host-environment.json",o.str());}
   record_host_memory(a.output,"after_load");
   if(a.mtp&&a.rank==a.draft_rank)provider=std::make_unique<mtp36::DraftRuntime>(*engine);
-  if(a.depth2)paired_rows=std::make_unique<depth71::Rows>(*engine);
+  if(a.depth2){paired_rows=std::make_unique<depth71::Rows>(*engine);if(a.rank==0)future_rows=std::make_unique<depth71::Rows>(*engine,1);}
   save(a.output/"census.json",engine->dev(0).arena.census());
   Reply ready{};ready.rank=a.rank;transfer(a.channel,&ready,sizeof ready,true,a.seconds);
   Candidate c;int sequence=0,accepted=0;bool async_half_ready=false;int async_half_position=-1,async_half_token=-1;
@@ -244,10 +244,19 @@ static int run_rank(const Options& a) {
    auto received=std::chrono::steady_clock::now();
    Reply response{};response.sequence=r.sequence;response.rank=a.rank;
    bool completing_redo=image.before_command(r.op==half&&!r.speculative,r.position,r.token);
-   if(r.op==14){require(paired_rows&&!c.pending,"depth71 pair command");return paired_rows->run(r,static_cast<uint8_t*>(mapping));}
-   if(r.op==15){require(bool(paired_rows),"depth71 select unavailable");paired_rows->select(r.token);return response;}
-   if(r.op==16){require(provider&&a.rank==1&&!c.pending&&engine->integer(0,"position")==r.position,"depth71 proposal ownership");response.token=provider->run(r.token,r.position,r.fixture!=0);response.reserved[0]=r.fixture?provider->second(response.token):-1;return response;}
-   if(r.op==17){require(provider&&paired_rows&&paired_rows->pending,"depth71 confirmed draft carry");provider->advance(r.token,r.position,paired_rows->hidden(0));return response;}
+   if(r.op>=14&&r.op<=19){
+    if(r.op==14){require(paired_rows&&!c.pending,"depth71 pair command");
+     if(r.speculative){require(future_rows&&paired_rows->pending,"depth71 future ownership");response=future_rows->run(r,static_cast<uint8_t*>(mapping),paired_rows.get());}
+     else response=paired_rows->run(r,static_cast<uint8_t*>(mapping));}
+    else if(r.op==15){require(bool(paired_rows),"depth71 select unavailable");paired_rows->select(r.token);if(future_rows&&future_rows->pending)paired_rows.swap(future_rows);}
+    else if(r.op==16){require(provider&&a.rank==1&&!c.pending&&engine->integer(0,"position")==r.position,"depth71 proposal ownership");response.token=provider->run(r.token,r.position,r.fixture!=0);response.reserved[0]=r.fixture?provider->second(response.token):-1;}
+    else if(r.op==17){require(provider&&paired_rows&&paired_rows->pending,"depth71 confirmed draft carry");provider->advance(r.token,r.position,paired_rows->hidden(0));}
+    else if(r.op==18){require(future_rows&&future_rows->pending,"depth71 future discard");future_rows->select(0);}
+    else if(r.op==19){require(provider&&a.rank==1&&!c.pending&&engine->integer(0,"position")==r.position,"depth71 future proposal ownership");
+     int fresh=provider->run(r.token,r.position,true);response.token=r.reserved[0]>=0?r.reserved[0]:fresh;
+     auto guesses=provider->recursive_pair(response.token);response.reserved[0]=guesses[0];response.reserved[1]=guesses[1];}
+    response.redo_ms=std::chrono::duration<double>(received.time_since_epoch()).count();response.reserved_ms=std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();return response;
+   }
    if(r.op==draft){
     require(a.rank==a.draft_rank&&provider&&r.position>0,"draft command ownership/confirmation");
     if(a.rank==1){require(!c.pending&&engine->integer(0,"position")==r.position,"draft target not confirmed");}
@@ -285,7 +294,7 @@ static int run_rank(const Options& a) {
     undo(*engine,c,image,redo,r.position,r.token);
    }
    else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();state_dump(*engine,r.position);if(r.position==2147483647)request_state_inventory(*engine);}
-   else if(r.op==11){image.boundary();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
+   else if(r.op==11){require((!paired_rows||!paired_rows->pending)&&(!future_rows||!future_rows->pending),"depth71 reset unresolved tile");image.boundary();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
    #ifdef OWN_RT_HOST_ONLY
    else if(r.op==12){require(a.rank==0&&c.pending&&c.speculative,"negative control ownership");image.corrupt_protected_for_gate(r.token);}
 #endif
@@ -297,7 +306,7 @@ static int run_rank(const Options& a) {
    return response;
   };
   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
-   if(r.op==finish){require(!c.pending,"finish with unresolved candidate");image.boundary();if(provider)provider->dump_all_state(engine->a.output/"draft-final-state");break;}
+   if(r.op==finish){require((!paired_rows||!paired_rows->pending)&&(!future_rows||!future_rows->pending),"depth71 finish unresolved tile");require(!c.pending,"finish with unresolved candidate");image.boundary();if(provider)provider->dump_all_state(engine->a.output/"draft-final-state");break;}
    Reply response{};
    if(r.op==10){
     require(!c.pending,"native entry unresolved candidate");
@@ -327,7 +336,7 @@ static int run_rank(const Options& a) {
  }
  // Failure receipt is durable before any teardown. Device owns all SYCL borrowers.
  if(engine)engine->progress_callback={};
- paired_rows.reset();
+ future_rows.reset();paired_rows.reset();
  provider.reset();
  if(engine){try{teardown=engine->shutdown();}catch(const std::exception& ex){error+=(error.empty()?"":"; ")+std::string(ex.what());}engine.reset();}
  weights.reset();if(mapping!=MAP_FAILED)munmap(mapping,shared_bytes);if(fd>=0)::close(fd);
