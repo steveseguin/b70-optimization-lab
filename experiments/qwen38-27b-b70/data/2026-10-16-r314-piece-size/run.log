@@ -1,0 +1,83 @@
+### 20:07:53 stopping the Gemma service (front door state: 0 0)
+### 20:10:41 server K832 ready (block 832, retention 13312)
+b70_spec_resume_accepted 0.5.0: installed on GPUModelRunner._update_states/_prepare_inputs (requests that sat out a step keep their accepted-token count; async speculative decoding only; align-mode prefix caching handled; new-request count reset on; drafts kept off; debug steps 0)
+Setting attention block size to 832 tokens
+EDIT length=30000 request=cold prompt_tokens=29877 cached=0 after_edit=None first_token_s=11.50
+EDIT length=30000 request=edit@0.1 prompt_tokens=29616 cached=0 after_edit=26658 first_token_s=11.17
+EDIT length=120000 request=cold prompt_tokens=119789 cached=0 after_edit=None first_token_s=69.43
+EDIT length=120000 request=edit@0.1 prompt_tokens=119529 cached=0 after_edit=107532 first_token_s=69.59
+EDIT length=200000 request=cold prompt_tokens=199765 cached=0 after_edit=None first_token_s=152.11
+EDIT length=200000 request=edit@0.1 prompt_tokens=199505 cached=0 after_edit=179532 first_token_s=151.52
+K832-S1: seq 64 answers in 183 s -> /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-piece-size/K832-S1.json
+### 20:25:53 server stopped: stopped True
+### 20:29:15 server K1280 ready (block 1280, retention 12800)
+b70_spec_resume_accepted 0.5.0: installed on GPUModelRunner._update_states/_prepare_inputs (requests that sat out a step keep their accepted-token count; async speculative decoding only; align-mode prefix caching handled; new-request count reset on; drafts kept off; debug steps 0)
+EDIT length=30000 request=cold prompt_tokens=29877 cached=0 after_edit=None first_token_s=10.12
+EDIT length=30000 request=edit@0.1 prompt_tokens=29616 cached=0 after_edit=26658 first_token_s=10.01
+EDIT length=120000 request=cold prompt_tokens=119789 cached=0 after_edit=None first_token_s=56.39
+EDIT length=120000 request=edit@0.1 prompt_tokens=119529 cached=0 after_edit=107532 first_token_s=56.36
+EDIT length=200000 request=cold prompt_tokens=199765 cached=0 after_edit=None first_token_s=118.15
+EDIT length=200000 request=edit@0.1 prompt_tokens=199505 cached=0 after_edit=179532 first_token_s=117.69
+K1280-S1: seq 64 answers in 189 s -> /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-piece-size/K1280-S1.json
+K1280-S2: seq 64 answers in 181 s -> /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-piece-size/K1280-S2.json
+K1280-B1: burst 64 answers in 118 s -> /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-piece-size/K1280-B1.json
+### 20:47:17 server stopped: stopped True
+K1280-S1 vs K1280-S2: 64/64 equal; differing by family: {'code2k': '0/8', 'code6k': '0/8', 'docs4k': '0/8', 'docs6k': '0/8', 'docs8k': '0/8', 'prose2k': '0/8', 'prose4k': '0/8', 'prose8k': '0/8'}
+K1280-S1 vs K1280-B1: 64/64 equal; differing by family: {'code2k': '0/8', 'code6k': '0/8', 'docs4k': '0/8', 'docs6k': '0/8', 'docs8k': '0/8', 'prose2k': '0/8', 'prose4k': '0/8', 'prose8k': '0/8'}
+### 20:50:36 server K2048 ready (block 2048, retention 12288)
+b70_spec_resume_accepted 0.5.0: installed on GPUModelRunner._update_states/_prepare_inputs (requests that sat out a step keep their accepted-token count; async speculative decoding only; align-mode prefix caching handled; new-request count reset on; drafts kept off; debug steps 0)
+EDIT length=30000 request=cold prompt_tokens=29877 cached=0 after_edit=None first_token_s=10.23
+EDIT length=30000 request=edit@0.1 prompt_tokens=29616 cached=0 after_edit=26658 first_token_s=9.71
+EDIT length=120000 request=cold prompt_tokens=119789 cached=0 after_edit=None first_token_s=54.61
+EDIT length=120000 request=edit@0.1 prompt_tokens=119529 cached=0 after_edit=107532 first_token_s=54.79
+EDIT length=200000 request=cold prompt_tokens=199765 cached=0 after_edit=None first_token_s=114.15
+EDIT length=200000 request=edit@0.1 prompt_tokens=199505 cached=0 after_edit=179532 first_token_s=113.87
+K2048-S1: seq 64 answers in 200 s -> /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-piece-size/K2048-S1.json
+K2048-S2: seq 64 answers in 193 s -> /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-piece-size/K2048-S2.json
+K2048-B1: burst 64 answers in 131 s -> /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-piece-size/K2048-B1.json
+### 21:09:31 server stopped: stopped True
+K2048-S1 vs K2048-S2: 64/64 equal; differing by family: {'code2k': '0/8', 'code6k': '0/8', 'docs4k': '0/8', 'docs6k': '0/8', 'docs8k': '0/8', 'prose2k': '0/8', 'prose4k': '0/8', 'prose8k': '0/8'}
+K2048-S1 vs K2048-B1: 64/64 equal; differing by family: {'code2k': '0/8', 'code6k': '0/8', 'docs4k': '0/8', 'docs6k': '0/8', 'docs8k': '0/8', 'prose2k': '0/8', 'prose4k': '0/8', 'prose8k': '0/8'}
+### 21:09:31 200K cold read: K832 152.10668435809202 s, K1280 118.14781278907321 s
+### 21:09:31 200K cold read: K832 152.10668435809202 s, K2048 114.14970631198958 s
+### 21:09:31 round 2: K832b and K2048b
+### 21:12:57 server K832b ready (block 832, retention 13312)
+b70_spec_resume_accepted 0.5.0: installed on GPUModelRunner._update_states/_prepare_inputs (requests that sat out a step keep their accepted-token count; async speculative decoding only; align-mode prefix caching handled; new-request count reset on; drafts kept off; debug steps 0)
+Setting attention block size to 832 tokens
+EDIT length=30000 request=cold prompt_tokens=29877 cached=0 after_edit=None first_token_s=11.50
+EDIT length=30000 request=edit@0.1 prompt_tokens=29616 cached=0 after_edit=26658 first_token_s=11.20
+EDIT length=120000 request=cold prompt_tokens=119789 cached=0 after_edit=None first_token_s=69.55
+EDIT length=120000 request=edit@0.1 prompt_tokens=119529 cached=0 after_edit=107532 first_token_s=69.58
+EDIT length=200000 request=cold prompt_tokens=199765 cached=0 after_edit=None first_token_s=152.15
+EDIT length=200000 request=edit@0.1 prompt_tokens=199505 cached=0 after_edit=179532 first_token_s=151.59
+### 21:25:05 server stopped: stopped True
+### 21:28:36 server K2048b ready (block 2048, retention 12288)
+b70_spec_resume_accepted 0.5.0: installed on GPUModelRunner._update_states/_prepare_inputs (requests that sat out a step keep their accepted-token count; async speculative decoding only; align-mode prefix caching handled; new-request count reset on; drafts kept off; debug steps 0)
+EDIT length=30000 request=cold prompt_tokens=29877 cached=0 after_edit=None first_token_s=10.23
+EDIT length=30000 request=edit@0.1 prompt_tokens=29616 cached=0 after_edit=26658 first_token_s=9.72
+EDIT length=120000 request=cold prompt_tokens=119789 cached=0 after_edit=None first_token_s=54.62
+EDIT length=120000 request=edit@0.1 prompt_tokens=119529 cached=0 after_edit=107532 first_token_s=54.80
+EDIT length=200000 request=cold prompt_tokens=199765 cached=0 after_edit=None first_token_s=114.09
+EDIT length=200000 request=edit@0.1 prompt_tokens=199505 cached=0 after_edit=179532 first_token_s=113.95
+### 21:38:45 server stopped: stopped True
+### 21:38:46 kernel log clean since 2026-10-16 20:07:53; Gemma back on its throughput recipe
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 21:43:17 campaign 20261016-piece complete
+### 21:43:19 round 2b start
+### 21:43:19 stopping the Gemma service (front door state: 0 0)
+### 21:46:07 server K1280b ready (block 1280, retention 12800)
+b70_spec_resume_accepted 0.5.0: installed on GPUModelRunner._update_states/_prepare_inputs (requests that sat out a step keep their accepted-token count; async speculative decoding only; align-mode prefix caching handled; new-request count reset on; drafts kept off; debug steps 0)
+EDIT length=30000 request=cold prompt_tokens=29877 cached=0 after_edit=None first_token_s=10.13
+EDIT length=30000 request=edit@0.1 prompt_tokens=29616 cached=0 after_edit=26658 first_token_s=9.97
+EDIT length=120000 request=cold prompt_tokens=119789 cached=0 after_edit=None first_token_s=56.23
+EDIT length=120000 request=edit@0.1 prompt_tokens=119529 cached=0 after_edit=107532 first_token_s=56.28
+EDIT length=200000 request=cold prompt_tokens=199765 cached=0 after_edit=None first_token_s=118.07
+EDIT length=200000 request=edit@0.1 prompt_tokens=199505 cached=0 after_edit=179532 first_token_s=117.53
+### 21:55:57 server stopped: stopped True
+### 21:55:57 kernel log clean since 2026-10-16 21:43:19; Gemma back on its throughput recipe
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 22:00:28 campaign 20261016-piece complete
