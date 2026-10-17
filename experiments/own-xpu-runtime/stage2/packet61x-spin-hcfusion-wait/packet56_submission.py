@@ -329,7 +329,30 @@ def collect(packet, chain, oracle, repo=ROOT):
         elif name == 'W2m':
             e.add(name + '/run/ownership.json', root / 'run/ownership.json')
     e.add('dispatch.json', chain / 'K2/run0/dispatch-measured.json')
+    if (chain / 'resume-manifest.json').exists():
+        # Resumed chain (KD scratch repair): bind the import manifest and its pins.
+        e.add('resume-manifest.json', chain / 'resume-manifest.json')
+        e.add('resume-pins.json', directory / 'resume-pins.json')
     return e
+
+
+def chain_resume(e, seal_hash):
+    """Disclosure for a resumed chain; None for an uninterrupted chain."""
+    if 'resume-manifest.json' not in e.members:
+        return None
+    manifest = json.loads(e.raw('resume-manifest.json'))
+    require(manifest['schema'] == 'packet61x.resume-manifest.v1'
+            and manifest['imported_windows'] == ['K0', 'K1a', 'K1b', 'K2', 'W0p']
+            and manifest['fresh_windows'] == list(WINDOWS)
+            and manifest['resume_pins_sha256'] == sha(e.raw('resume-pins.json'))
+            and manifest['current_build_receipt_sha256'] == seal_hash, 'resume manifest identity mismatch')
+    return dict(source=manifest['source'], destination=manifest['destination'],
+                imported_windows=manifest['imported_windows'], fresh_windows=manifest['fresh_windows'],
+                original_build_receipt_sha256=manifest['original_build_receipt_sha256'],
+                current_build_receipt_sha256=manifest['current_build_receipt_sha256'],
+                artifacts_sha256=manifest['artifacts_sha256'], imported_files=len(manifest['files']),
+                reason='original chain stopped at KD on a host-scratch path check; wrapper-only repair, '
+                       'binaries, screen seal and dispatch unchanged; all headline and exactness windows fresh')
 
 
 def scope(packet=DEFAULT_PACKET):
@@ -604,7 +627,7 @@ def derive(e, packet):
                                oracle_arithmetic=ARITHMETIC, all_prompts_exact=True,
                                repeated_windows=list(SUITES), unchanged_target_verifier=True,
                                authority='hash-bound CPU oracle and independent device checker receipts; no tolerance'),
-                rows=rows, submission_scope=scope(packet), realistic_final_gate=scope(packet)['raw_realistic_final_gate'],
+                rows=rows, chain_resume=chain_resume(e, seal_hash), submission_scope=scope(packet), realistic_final_gate=scope(packet)['raw_realistic_final_gate'],
                 comparison=dict(reference_submission=threshold['reference_submission'], threshold_tok_s=floor,
                                 observed_increase_percent=(headline_rate / floor - 1) * 100,
                                 **({'threshold_file_sha256': threshold_hash} if threshold_hash else {})),
@@ -646,6 +669,7 @@ def payload_for(result, result_ref, attestation_ref, result_doc):
                        '--suite-manifest <packet49-oracle>/suite-manifest.json --exactness-window <chain>/WS128x/window.json '
                        '--k0 <K0> --k1a <K1a> --k1b <K1b> --k2 <K2> --w0p <W0p> --kd <KD> --dispatch <K2-dispatch>',
         commandSnippetFullInEvidence=str(STAGE / packet / 'WINDOW.md'),
+        **({'chainResume': result['chain_resume']} if result.get('chain_resume') else {}),
     )
     notes = (('Packet56 draft-head prefix: proposals use rows [0, 91,392) of 248,320; unchanged full target verifies. Controller spin: packet56x variant (a), pure PAUSE spin with yield every 256 iterations on mailbox, device and pending-draft progress waits; rank-0 queue profiling enabled, without timing reads. Combined spin/queue-property change, not an isolated spin attribution. Packet60 HC fusion: three exact-order kernels per side, both sides and M=1/both serial M=2 rows, unchanged BF16 intermediates and target arithmetic. ' if packet == P56_PACKET else '') + f'{packet}, sealed build base {result["promotionIdentity"]["runtime_revision"]}. '
              'Quantized compressed Unsloth UD-IQ3_XXS model; separate from FP8. Two B70 cards 0+1, '
@@ -659,7 +683,11 @@ def payload_for(result, result_ref, attestation_ref, result_doc):
              'Owner-authorized 128-token scope extended by coordinator 2026-10-17. Strict 512-cap gate '
              'remains false. 512-token natural completion and standard prefill not measured. '
              'No new fault signatures in window journal tails; historical faults retained. '
-             'Wall rate: output tokens / (last-token timestamp - request start), matching SPEED6.')
+             'Wall rate: output tokens / (last-token timestamp - request start), matching SPEED6.'
+             + (' Resumed chain: K0/K1a/K1b/K2/W0p kernel/fixture receipts imported byte-identical (hash-pinned) '
+                'from the first chain, which stopped at KD on a wrapper host-scratch path check; the wrapper-only '
+                'repair left binaries, screen seal and dispatch unchanged. KD, W2m, WS, WSs, WS128x and WS128 '
+                '(all exactness and headline windows) ran fresh.' if result.get('chain_resume') else ''))
     return dict(label=result['label'], payload=dict(
         hfId='unsloth/Qwen3.8-Flash-Next-GGUF', modelRevision=MODEL_REVISION,
         engineName='custom', engineVersion=f'own-xpu-runtime {packet} sealed base {result["promotionIdentity"]["runtime_revision"]}; '
@@ -835,9 +863,16 @@ def main(argv=None):
         print(json.dumps(update_record(args.update_record, args.submission_id)))
         return 0
     require(args.submission_id is None, '--submission-id requires --update-record')
-    chain = args.chain or (ROOT / STAGE / args.packet / 'build/device-cards01-a').resolve()
+    registered = (ROOT / STAGE / args.packet / 'build/device-cards01-a').resolve()
+    chain = (args.chain or registered).resolve()
     # No cherry-picked repeat or card pair. Test fixtures exercise the pure API.
-    require(chain.resolve() == (ROOT / STAGE / args.packet / 'build/device-cards01-a').resolve(), 'unregistered chain')
+    if args.packet == P56_PACKET and chain != registered:
+        # Only the pinned KD-repair resume of the registered chain; revalidates every import.
+        from resume_chain import LATE, validate as validate_resume
+        require(tuple(LATE) == WINDOWS, 'resume windows differ from submission windows')
+        validate_resume(registered, chain, prepared=True)
+    else:
+        require(chain == registered, 'unregistered chain')
     require(args.oracle.resolve() == (ROOT / STAGE / 'packet49-integrate/oracle/results').resolve(), 'unregistered oracle')
     output = args.output or ROOT / STAGE / args.packet / 'submission/prepared'
     require(not output.exists(), 'new output directory required')
