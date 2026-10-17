@@ -65,3 +65,17 @@ repair, not a promoted performance result.
 [queue plans](../experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/evidence/lanequeue-plan.jsonl),
 [proposed jobs](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p71c-B.txt),
 [closeout](../experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/CPU-PREPARATION-CLOSEOUT.md).
+
+## Device result and closeout (coordinator, 2026-10-17 22:47–23:01 UTC, lane B)
+
+- `smoke-B` (1 prompt × 32 tokens) passed exact.
+- `control-B` (production): 52.899 tok/s class-balanced, acceptance 0.787.
+- **`candidate-B` (depth-2): 28.165 tok/s**, exact, acceptance 0.708. That is **−46.8%**.
+- The `control-repeat` was dropped as unnecessary given the size of the loss.
+
+**Closed: depth 2 is not viable in this engine.** This is consistent with the device measurements:
+- packet 68: a serial extra row costs a full half;
+- packet 68c: production-derived M=2 runs at 1.66–1.74x, with experts about 2.1x;
+- the 2-card pipeline already harvests the depth-1 draft by overlapping the halves.
+
+DO-NOT-REPEAT without a fundamentally different verify structure (for example M≥2 expert kernels near 1.1x, which the expert union makes unlikely).
