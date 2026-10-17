@@ -8,7 +8,7 @@
 #   P  the package's flags (33,024 window, steps of 4,096, no prefix cache), on R314
 #   P0, L0  P and L without the drafter (one token per step: the step without speculation, measured the same way)
 # All: TP2, MTP5 with INT4 draft head + shortlist (except P0, L0), allgather, chunked-upload and GDN state-width overlays, verify rows
-# in one launch. No profiler: a guard kill mid-step resets an engine (06:00 fault), and a profile needs host memory.
+# in one launch, and the host step clock (b70-host-step-clock: time only, one line per answer per card). No profiler: a guard kill mid-step resets an engine (06:00 fault), and a profile needs host memory.
 # Stops at the first fault line or failed start; the cards are left empty (RESTORE=1 puts Gemma back at the end).
 #   SUDO_ASKPASS=... [ALLOW_GEMMA_STOP=1] [ARMS="L N M P P0 L0"] systemd-run --user ... bash run-20261017-step-floor.sh
 set -uo pipefail
@@ -53,6 +53,7 @@ COMMON=(--image neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r314-state-stri
         --overlay b70-allgather-allreduce --extra-env B70_ALLGATHER_ALLREDUCE=1
         --overlay b70-chunked-upload --extra-env B70_CHUNKED_UPLOAD=1
         --overlay b70-gdn-state-width --extra-env B70_GDN_STATE_WIDTH=1
+        --overlay b70-host-step-clock --extra-env B70_HOST_STEP_CLOCK=1
         --extra-env B70_FA_VERIFY_ROWS_ONE_LAUNCH=1)
 arm_args() {  # an arm name ending in 0 is the same server without the drafter
   if [[ $1 == *0 ]]; then echo --mtp 0
@@ -115,6 +116,7 @@ for arm in ${ARMS:-L N M P P0 L0}; do
   python3 $S/probe-write-rate-vs-context.py --base-url http://127.0.0.1:$PORT --lengths 1000,8000,16000,30000 \
     --out "$D/write-$arm.json" > "$D/write-$arm.log" 2>&1 || say "write probe failed on $arm"
   grep "^WRITE" "$D/write-$arm.log"
+  grep -o "b70_host_step_clock rank .*" "$O/server.log" > "$D/clock-$arm.txt"; head -c 600 "$D/clock-$arm.txt"; echo
   stop_server
   [[ -n $(faults) ]] && { say "ABORT: GPU fault line after $arm"; exit 1; }
 done

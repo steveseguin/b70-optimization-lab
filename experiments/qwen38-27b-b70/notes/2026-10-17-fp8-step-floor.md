@@ -85,3 +85,33 @@ Added arms (same runner, same probe; ms per token = 1 / writing rate): **P0** = 
     between leaves the cards idle), then register a fix with equal answers as its gate.
   - Both under 5 ms: the 33.0 / 38.5 difference was the measuring, the drafter is near its device work, and the floor
     is the GEMMs (lever: the in-server GEMM rate, about 480 against 550-600 GB/s alone).
+
+## Amendment 07:32 EDT (before any run): the host step clock, and what the code read found
+
+A read of R314's drafting path (vLLM 0.29 as installed in the image, and the overlays in use) found no wait for the
+cards inside the five drafter passes or in the hand-off from checking to drafting: the drafted ids stay on the card.
+What it found is host work: each drafter pass is issued from Python, op by op, about 25-35 launches (five of them
+collectives, each of the allgather overlay's all-reduces being an empty tensor + all-gather + add; each FP8 linear a
+quantise launch + a GEMM), and the INT4 shortlist head fills a 124,160-column row with -inf, scatters into it,
+gathers 248,320 logits across the cards and takes the argmax over all of them. Estimated host time 0.8-1.5 ms per
+pass against about 0.6-0.7 ms of card work. Smaller items: the verify-row tensors rebuilt in each of the 16 attention
+layers (1-2.5 ms per step), a CPU-mask index into a card tensor in the GDN metadata (a blocking copy, three times per
+step), rejection sampling in fp32 over 5 x 248,320 logits, environment reads inside per-layer calls. All unmeasured.
+
+So every arm also runs `overlays/b70-host-step-clock` (0.1.0, `B70_HOST_STEP_CLOCK=1`): for each decode step it
+records, on each card's worker, the time from one step's start to the next (period), the host time inside
+execute_model, sample_tokens and propose_draft_token_ids, and the time the host spends in the runner's event waits.
+It adds no synchronisation and touches no tensor (CPU tests `tests/test_b70_host_step_clock.py`; installs on R314's
+runner class, checked in the image on CPU). One line per answer per card, saved as `clock-<arm>.txt`.
+
+- **Prediction:** on the drafting arms the host waits under 2 ms per step at 1K (period about 38 ms): the host is the
+  slower side, and the period is roughly the host's issue time.
+- **Decision, added:**
+  - Waits under 2 ms with a drafting period of 35 ms or more: launch count is the lever. In order: argmax on the
+    shortlist output with a cross-card (value, index) exchange in place of fill + scatter + gather + full argmax
+    (first-max tie order checked on CPU before any run), verify-row tensors built once per step, the GDN index
+    copy made non-blocking; each change gated on answers equal to the arm's own answers, then timed. Then graphs for
+    the drafter passes (one token each), with the one-card graph exactness failure (9/12) re-checked first.
+  - Waits of 5 ms or more: the cards are the slower side; host fixes cannot pay; the next look is device-side (a
+    one-rank profile on a server with more host room).
+  - In between: both, sized by the arms.
