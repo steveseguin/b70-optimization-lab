@@ -1,0 +1,508 @@
+{
+  "schema": "packet59.planning-budget.v1",
+  "measured_packet59": false,
+  "device_executed": false,
+  "assumptions": "Ratios transfer target microtimings across incompatible draft weight formats, plus explicit unmeasured norm/merge fusion estimates. Acceptance held fixed; no launch-gap savings credited. No speed headline or lower bound. Final-head 15/27 ratio is approximate. Device screening decides.",
+  "sources_sha256": {
+    "/home/steve/own-xpu-runtime-results/packet57-attribution/build/device-cards01-a/W57-attribution/run/repeat-1/architecture-tradeoff/rank1/sites.jsonl": "cf8ee5940c0a3e64dcf7d7e84022bc857c58c9903bfcda1279151926c430f644",
+    "/home/steve/own-xpu-runtime-results/packet57-attribution/build/device-cards01-a/W57-attribution/run/repeat-1/benchmark-analysis/rank1/sites.jsonl": "fb44c75d02a544040638146c2151a9ec9f206efd69f3132deaba38ace49d8973",
+    "/home/steve/own-xpu-runtime-results/packet57-attribution/build/device-cards01-a/W57-attribution/run/repeat-1/bug-report-synthesis/rank1/sites.jsonl": "ba57a3b49e2285d40da7883e5da9c8f392b703b04e9fc10c3483b7bfa1a7494b",
+    "/home/steve/own-xpu-runtime-results/packet57-attribution/build/device-cards01-a/W57-attribution/run/repeat-1/code-review/rank1/sites.jsonl": "c65968a9524c85e28521f9e71e5b3bc78c50968bd9a5a4b56c5156337b2a3c60",
+    "/home/steve/own-xpu-runtime-results/packet57-attribution/build/device-cards01-a/W57-attribution/run/repeat-1/customer-email/rank1/sites.jsonl": "51019c8a2b2f114c500d8890fe2657dd72e5085e0a87d65360c2e373f812f551",
+    "/home/steve/own-xpu-runtime-results/packet57-attribution/build/device-cards01-a/W57-attribution/run/repeat-1/decision-memo/rank1/sites.jsonl": "56e62c1a2367b41f48165eb7c4711ae095855b439305b398ffe01b158c4ae263",
+    "/home/steve/own-xpu-runtime-results/packet57-attribution/build/device-cards01-a/W57-attribution/run/repeat-1/incident-retrospective/rank1/sites.jsonl": "b1993675100f681eeae052b53ee2b1e987e796beec4ece2b106545e6959999d8",
+    "/home/steve/own-xpu-runtime-results/packet57-attribution/build/device-cards01-a/W57-attribution/run/repeat-1/performance-hypotheses/rank1/sites.jsonl": "c7a84676e9ee510cfc0187d66226d8b3506263eb11eaf422b914850a7b5ed045",
+    "/home/steve/own-xpu-runtime-results/packet57-attribution/build/device-cards01-a/W57-attribution/run/repeat-1/release-plan/rank1/sites.jsonl": "009ebeb8b76a1ec1c689d01cbed7c980a8bbc70bea5ae142a06f9538d9c3b927",
+    "/home/steve/own-xpu-runtime-results/packet57-attribution/build/device-cards01-a/W57-attribution/run/repeat-1/risk-register/rank1/sites.jsonl": "eda18d7dab0a5c77e8cea57e93bb3a0ee2006bb99f6a67ec5228058ca5cb6cf2",
+    "/home/steve/own-xpu-runtime-results/packet57-attribution/build/device-cards01-a/W57-attribution/run/repeat-1/sql-debugging/rank1/sites.jsonl": "baf4b14d2180203a1cf5909ab72e1e2497509cb07c3d73f0d67998ea74200cf0",
+    "/home/steve/own-xpu-runtime-results/packet57-attribution/build/device-cards01-a/W57-attribution/run/repeat-1/technical-guide/rank1/sites.jsonl": "0fa8e729205cd5109b4e33fd26be03a4396429bfe3829cb71d46da472aa334d5"
+  },
+  "ratios": {
+    "draft.blk.0.qsa.qgate": 0.6111111111111112,
+    "draft.blk.0.qsa.attention": 0.3893805309734513,
+    "draft.blk.0.expsgate": 0.8780487804878049,
+    "draft.blk.0.attention": 0.6103896103896104,
+    "draft.blk.0.expsdown": 0.890625,
+    "draft.blk.0.route": 0.46511627906976744,
+    "draft.blk.0.hc.a.inject": 0.2708333333333333,
+    "draft.blk.0.hc.f.inject": 0.65,
+    "draft.merge.embedding_norm": 0.5,
+    "draft.merge.hidden_norm": 0.5,
+    "draft.merge.projected": 0.85,
+    "draft.blk.0.hc.a.low": 0.5227272727272727,
+    "draft.blk.0.hc.a.gate": 0.5555555555555556,
+    "draft.blk.0.hc.a.norm": 0.7,
+    "draft.blk.0.hc.f.low": 0.5227272727272727,
+    "draft.blk.0.hc.f.gate": 0.5555555555555556,
+    "draft.blk.0.hc.f.norm": 0.7,
+    "draft.final.low": 0.5227272727272727,
+    "draft.final.gate": 0.5555555555555556,
+    "draft.final.norm": 0.7,
+    "draft.merge.add": 0,
+    "draft.blk.0.expsact": 0,
+    "draft.blk.0.shexpact": 0,
+    "draft.blk.0.attn.combine": 0,
+    "draft.blk.0.hc.a.act": 0,
+    "draft.blk.0.hc.a.mix": 0,
+    "draft.blk.0.hc.f.act": 0,
+    "draft.blk.0.hc.f.mix": 0,
+    "draft.final.act": 0,
+    "draft.final.mix": 0
+  },
+  "per_prompt": [
+    {
+      "prompt_id": "architecture-tradeoff",
+      "prompt_class": "analysis",
+      "observed_cycles": 8,
+      "packet57_span_us": 1759.4795,
+      "projected_saving_us": 382.9160159242915
+    },
+    {
+      "prompt_id": "benchmark-analysis",
+      "prompt_class": "analysis",
+      "observed_cycles": 8,
+      "packet57_span_us": 1744.792,
+      "projected_saving_us": 379.59121056816514
+    },
+    {
+      "prompt_id": "bug-report-synthesis",
+      "prompt_class": "operations",
+      "observed_cycles": 8,
+      "packet57_span_us": 1789.8960000000002,
+      "projected_saving_us": 386.74602526234014
+    },
+    {
+      "prompt_id": "code-review",
+      "prompt_class": "code",
+      "observed_cycles": 8,
+      "packet57_span_us": 1781.4065,
+      "projected_saving_us": 399.47482614749003
+    },
+    {
+      "prompt_id": "customer-email",
+      "prompt_class": "prose",
+      "observed_cycles": 8,
+      "packet57_span_us": 1764.636,
+      "projected_saving_us": 386.96452819330494
+    },
+    {
+      "prompt_id": "decision-memo",
+      "prompt_class": "prose",
+      "observed_cycles": 8,
+      "packet57_span_us": 1791.4585000000002,
+      "projected_saving_us": 383.07067888660845
+    },
+    {
+      "prompt_id": "incident-retrospective",
+      "prompt_class": "operations",
+      "observed_cycles": 8,
+      "packet57_span_us": 1781.4585000000002,
+      "projected_saving_us": 394.6666576422068
+    },
+    {
+      "prompt_id": "performance-hypotheses",
+      "prompt_class": "analysis",
+      "observed_cycles": 8,
+      "packet57_span_us": 1761.3545,
+      "projected_saving_us": 381.01671589416026
+    },
+    {
+      "prompt_id": "release-plan",
+      "prompt_class": "operations",
+      "observed_cycles": 8,
+      "packet57_span_us": 1757.7085000000002,
+      "projected_saving_us": 383.0433542765959
+    },
+    {
+      "prompt_id": "risk-register",
+      "prompt_class": "structured-writing",
+      "observed_cycles": 8,
+      "packet57_span_us": 1743.1770000000001,
+      "projected_saving_us": 378.533172654823
+    },
+    {
+      "prompt_id": "sql-debugging",
+      "prompt_class": "code",
+      "observed_cycles": 8,
+      "packet57_span_us": 1789.9475,
+      "projected_saving_us": 389.89364462837136
+    },
+    {
+      "prompt_id": "technical-guide",
+      "prompt_class": "documentation",
+      "observed_cycles": 8,
+      "packet57_span_us": 1748.1775,
+      "projected_saving_us": 381.6415251737115
+    }
+  ],
+  "per_prompt_class": [
+    {
+      "prompt_class": "analysis",
+      "observed_packet57_span_us": 1759.4795,
+      "projected_saving_us": 381.01671589416026,
+      "projected_new_span_us": 1378.4627841058395,
+      "conditional_total_speedup_percent": 1.447863520397809
+    },
+    {
+      "prompt_class": "code",
+      "observed_packet57_span_us": 1785.6770000000001,
+      "projected_saving_us": 394.6842353879307,
+      "projected_new_span_us": 1390.9927646120695,
+      "conditional_total_speedup_percent": 1.4998000944741365
+    },
+    {
+      "prompt_class": "documentation",
+      "observed_packet57_span_us": 1748.1775,
+      "projected_saving_us": 381.6415251737115,
+      "projected_new_span_us": 1366.5359748262886,
+      "conditional_total_speedup_percent": 1.4502377956601038
+    },
+    {
+      "prompt_class": "operations",
+      "observed_packet57_span_us": 1781.4585000000002,
+      "projected_saving_us": 386.74602526234014,
+      "projected_new_span_us": 1394.7124747376602,
+      "conditional_total_speedup_percent": 1.4696348959968926
+    },
+    {
+      "prompt_class": "prose",
+      "observed_packet57_span_us": 1778.04725,
+      "projected_saving_us": 385.01760353995667,
+      "projected_new_span_us": 1393.0296464600433,
+      "conditional_total_speedup_percent": 1.4630668934518354
+    },
+    {
+      "prompt_class": "structured-writing",
+      "observed_packet57_span_us": 1743.1770000000001,
+      "projected_saving_us": 378.533172654823,
+      "projected_new_span_us": 1364.6438273451772,
+      "conditional_total_speedup_percent": 1.4384260560883273
+    }
+  ],
+  "per_kernel_class": [
+    {
+      "label": "draft.argmax",
+      "observed_packet57_us": 21.354,
+      "projected_p59_us": 21.354,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.begin.0",
+      "observed_packet57_us": 3.4895,
+      "projected_p59_us": 3.4895,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.attention",
+      "observed_packet57_us": 77.13550000000001,
+      "projected_p59_us": 47.08270779220779,
+      "projected_saving_us": 30.052792207792212
+    },
+    {
+      "label": "draft.blk.0.attn.combine",
+      "observed_packet57_us": 11.77,
+      "projected_p59_us": 0.0,
+      "projected_saving_us": 11.77
+    },
+    {
+      "label": "draft.blk.0.expsact",
+      "observed_packet57_us": 3.541,
+      "projected_p59_us": 0.0,
+      "projected_saving_us": 3.541
+    },
+    {
+      "label": "draft.blk.0.expsdown",
+      "observed_packet57_us": 63.958,
+      "projected_p59_us": 56.962593749999996,
+      "projected_saving_us": 6.99540625
+    },
+    {
+      "label": "draft.blk.0.expsdown.check",
+      "observed_packet57_us": 3.125,
+      "projected_p59_us": 3.125,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.expsgate",
+      "observed_packet57_us": 82.5,
+      "projected_p59_us": 72.4390243902439,
+      "projected_saving_us": 10.060975609756097
+    },
+    {
+      "label": "draft.blk.0.expsgate.check",
+      "observed_packet57_us": 4.791,
+      "projected_p59_us": 4.791,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.expsup.check",
+      "observed_packet57_us": 3.5415,
+      "projected_p59_us": 3.5415,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.ffn.combine",
+      "observed_packet57_us": 11.042,
+      "projected_p59_us": 11.042,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.gather",
+      "observed_packet57_us": 23.281,
+      "projected_p59_us": 23.281,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.hc.a.act",
+      "observed_packet57_us": 3.021,
+      "projected_p59_us": 0.0,
+      "projected_saving_us": 3.021
+    },
+    {
+      "label": "draft.blk.0.hc.a.gate",
+      "observed_packet57_us": 27.604,
+      "projected_p59_us": 15.335555555555556,
+      "projected_saving_us": 12.268444444444443
+    },
+    {
+      "label": "draft.blk.0.hc.a.inject",
+      "observed_packet57_us": 47.917,
+      "projected_p59_us": 12.977520833333333,
+      "projected_saving_us": 34.93947916666667
+    },
+    {
+      "label": "draft.blk.0.hc.a.low",
+      "observed_packet57_us": 21.875,
+      "projected_p59_us": 11.43465909090909,
+      "projected_saving_us": 10.44034090909091
+    },
+    {
+      "label": "draft.blk.0.hc.a.mix",
+      "observed_packet57_us": 6.875,
+      "projected_p59_us": 0.0,
+      "projected_saving_us": 6.875
+    },
+    {
+      "label": "draft.blk.0.hc.a.norm",
+      "observed_packet57_us": 7.917,
+      "projected_p59_us": 5.541899999999999,
+      "projected_saving_us": 2.3751
+    },
+    {
+      "label": "draft.blk.0.hc.f.act",
+      "observed_packet57_us": 3.021,
+      "projected_p59_us": 0.0,
+      "projected_saving_us": 3.021
+    },
+    {
+      "label": "draft.blk.0.hc.f.gate",
+      "observed_packet57_us": 27.188,
+      "projected_p59_us": 15.104444444444445,
+      "projected_saving_us": 12.083555555555554
+    },
+    {
+      "label": "draft.blk.0.hc.f.inject",
+      "observed_packet57_us": 20.0,
+      "projected_p59_us": 13.0,
+      "projected_saving_us": 7.0
+    },
+    {
+      "label": "draft.blk.0.hc.f.low",
+      "observed_packet57_us": 21.354,
+      "projected_p59_us": 11.162318181818181,
+      "projected_saving_us": 10.191681818181818
+    },
+    {
+      "label": "draft.blk.0.hc.f.mix",
+      "observed_packet57_us": 6.875,
+      "projected_p59_us": 0.0,
+      "projected_saving_us": 6.875
+    },
+    {
+      "label": "draft.blk.0.hc.f.norm",
+      "observed_packet57_us": 7.604000000000001,
+      "projected_p59_us": 5.3228,
+      "projected_saving_us": 2.2812000000000006
+    },
+    {
+      "label": "draft.blk.0.moe",
+      "observed_packet57_us": 5.313,
+      "projected_p59_us": 5.313,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.qsa.attention",
+      "observed_packet57_us": 113.49000000000001,
+      "projected_p59_us": 44.190796460177,
+      "projected_saving_us": 69.29920353982303
+    },
+    {
+      "label": "draft.blk.0.qsa.ik",
+      "observed_packet57_us": 7.708,
+      "projected_p59_us": 7.708,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.qsa.iq",
+      "observed_packet57_us": 8.438,
+      "projected_p59_us": 8.438,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.qsa.k",
+      "observed_packet57_us": 9.166,
+      "projected_p59_us": 9.166,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.qsa.pool",
+      "observed_packet57_us": 3.333,
+      "projected_p59_us": 3.333,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.qsa.prepare",
+      "observed_packet57_us": 5.729,
+      "projected_p59_us": 5.729,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.qsa.qgate",
+      "observed_packet57_us": 126.25,
+      "projected_p59_us": 77.15277777777779,
+      "projected_saving_us": 49.097222222222214
+    },
+    {
+      "label": "draft.blk.0.qsa.select",
+      "observed_packet57_us": 15.0,
+      "projected_p59_us": 15.0,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.qsa.v",
+      "observed_packet57_us": 8.542,
+      "projected_p59_us": 8.542,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.route",
+      "observed_packet57_us": 42.709,
+      "projected_p59_us": 19.8646511627907,
+      "projected_saving_us": 22.844348837209306
+    },
+    {
+      "label": "draft.blk.0.router",
+      "observed_packet57_us": 8.75,
+      "projected_p59_us": 8.75,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.shared_gate",
+      "observed_packet57_us": 5.625,
+      "projected_p59_us": 5.625,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.shexpact",
+      "observed_packet57_us": 3.021,
+      "projected_p59_us": 0.0,
+      "projected_saving_us": 3.021
+    },
+    {
+      "label": "draft.blk.0.shexpdown",
+      "observed_packet57_us": 14.791,
+      "projected_p59_us": 14.791,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.shexpgate",
+      "observed_packet57_us": 10.625,
+      "projected_p59_us": 10.625,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.blk.0.shexpup",
+      "observed_packet57_us": 10.0,
+      "projected_p59_us": 10.0,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.commit.final",
+      "observed_packet57_us": 3.438,
+      "projected_p59_us": 3.438,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.final.act",
+      "observed_packet57_us": 3.021,
+      "projected_p59_us": 0.0,
+      "projected_saving_us": 3.021
+    },
+    {
+      "label": "draft.final.gate",
+      "observed_packet57_us": 27.552,
+      "projected_p59_us": 15.306666666666667,
+      "projected_saving_us": 12.245333333333333
+    },
+    {
+      "label": "draft.final.low",
+      "observed_packet57_us": 21.979,
+      "projected_p59_us": 11.489022727272726,
+      "projected_saving_us": 10.489977272727273
+    },
+    {
+      "label": "draft.final.mix",
+      "observed_packet57_us": 6.875,
+      "projected_p59_us": 0.0,
+      "projected_saving_us": 6.875
+    },
+    {
+      "label": "draft.final.norm",
+      "observed_packet57_us": 7.708,
+      "projected_p59_us": 5.3956,
+      "projected_saving_us": 2.3124000000000002
+    },
+    {
+      "label": "draft.logits",
+      "observed_packet57_us": 521.094,
+      "projected_p59_us": 521.094,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.merge.add",
+      "observed_packet57_us": 2.2915,
+      "projected_p59_us": 0.0,
+      "projected_saving_us": 2.2915
+    },
+    {
+      "label": "draft.merge.embedding_norm",
+      "observed_packet57_us": 27.9685,
+      "projected_p59_us": 13.98425,
+      "projected_saving_us": 13.98425
+    },
+    {
+      "label": "draft.merge.embedding_projected",
+      "observed_packet57_us": 32.8125,
+      "projected_p59_us": 32.8125,
+      "projected_saving_us": 0.0
+    },
+    {
+      "label": "draft.merge.hidden_norm",
+      "observed_packet57_us": 8.0205,
+      "projected_p59_us": 4.01025,
+      "projected_saving_us": 4.01025
+    },
+    {
+      "label": "draft.merge.projected",
+      "observed_packet57_us": 58.333,
+      "projected_p59_us": 49.58305,
+      "projected_saving_us": 8.749950000000002
+    },
+    {
+      "label": "draft.transfer.hidden",
+      "observed_packet57_us": 2.448,
+      "projected_p59_us": 2.448,
+      "projected_saving_us": 0.0
+    }
+  ]
+}
