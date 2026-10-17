@@ -165,3 +165,22 @@ All checkpoints are on `main` and were pushed immediately:
 
 The final build/seal checkpoint carries this note, CURRENT, the three build
 receipts, six fresh gate summaries, final seal and independent reviews.
+
+## Device results, 2026-10-17 (coordinator)
+
+**Early phase on cards 0+1, chain `device-cards01-b` (04:16-04:33 UTC): PASSED.** K0, K1a, K1b, K2 and W0p are all passed and qualifying. K1a/K1b include the integrated split32 bridge's M=1/M=2 device checks against its CPU reference. No new fault lines.
+
+Chain `device-cards01-a` (04:06) passed K0-K1b, then K2 refused at storage admission. Root had 21.4 GB free; the 8 GB floor plus an 11.5 GB chain reserve capped the build budget at 3.85 GB. 2.17 GB of closed-packet ASAN builds were freed (`stage2/DISK-CLEANUP-20261017.md`), and the phase was rerun in chain b, since a phase cannot resume in a folder where its windows exist.
+
+**Model phase** (KD → W2m → WS → WSs → WS128x → WS128) waits for the CPU oracle unit `own-iq3-p49-oracle-20261017b` (started 03:44 UTC, estimate 6-12 h).
+
+**Packet 48b production-matched GEMV (card 0, 04:34-04:41): PASSED.** E1/E2 are byte-identical. T1/T2 meet the integration bar in both owners:
+
+- ordinary GDN 665.0 → 617.2 µs (47.3 µs saved);
+- QSA layer 42.7 µs saved, excluding p47 attention;
+- expsdown 91.25 → 54.38 µs (1.68x); expsgate 82.08 → 77.29 µs (worthwhile screen passed);
+- gdn.qkv/z 1.04-1.07x (not worthwhile at M=1).
+
+These kernels preserve order, so they can join packet 49's arithmetic identity without a new oracle (packet 49b).
+
+Evidence: `device-evidence/device-cards01-b/`, `../packet48b-production/evidence-copy/`.

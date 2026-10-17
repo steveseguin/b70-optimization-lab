@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49-integrate/window.py", line 556, in <module>
+    if __name__=='__main__':raise SystemExit(main())
+                                             ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49-integrate/window.py", line 468, in main
+    record['storage_admission']=admit_output(out,projected_write_bytes(a.window,request_count,a.context,len(retained_steps)))
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49-integrate/window.py", line 114, in admit_output
+    return admit(extra,build_extra=extra if destination==B.resolve() or B.resolve() in destination.parents else 0)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49-integrate/storage.py", line 87, in admit
+    return budget(free,used,extra,build_extra)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49-integrate/storage.py", line 66, in budget
+    raise RuntimeError('Packet45 storage admission refused: '+str(row))
+RuntimeError: Packet45 storage admission refused: {'root_free_bytes': 21371768832, 'build_bytes': 1959780163, 'admitted_write_bytes': 2500000000, 'projected_build_write_bytes': 2500000000, 'build_limit_bytes': 3845362243, 'structural_build_limit_bytes': 14486186752, 'free_floor_bytes': 8000000000, 'remaining_chain_reserve_bytes': 11486186752}

@@ -1,0 +1,456 @@
+{
+  "schema": "own-runtime.packet48b.two-owner-timing.v1",
+  "passed": true,
+  "device_executed": true,
+  "model_speed_claim": false,
+  "windows": [
+    "/home/steve/own-xpu-runtime-results/packet48b-production/evidence/p48b-a-t1/window.json",
+    "/home/steve/own-xpu-runtime-results/packet48b-production/evidence/p48b-a-t2/window.json"
+  ],
+  "primary_class_candidates": {
+    "expsgate": true,
+    "expsdown": true,
+    "gdn.qkv": false,
+    "gdn.z": false
+  },
+  "integration_candidates": {
+    "ordinary_gdn": true,
+    "qsa": true
+  },
+  "fresh_owners": [
+    {
+      "passed": true,
+      "device_executed": true,
+      "microbenchmark_only": true,
+      "model_speed_claim": false,
+      "layers": {
+        "ordinary_gdn": {
+          "current_gpu_us": {
+            "median": 664.9495,
+            "p10": 658.338,
+            "p90": 671.668
+          },
+          "specialized_gpu_us": {
+            "median": 617.1865,
+            "p10": 609.999,
+            "p90": 624.165
+          },
+          "paired_saved_gpu_us": {
+            "median": 47.34349999999995,
+            "p10": 34.894000000000005,
+            "p90": 61.254999999999995
+          },
+          "class_median_gpu_us": {
+            "current": {
+              "attention": 57.604,
+              "expsact": 4.48,
+              "expsdown": 91.25,
+              "expsgate": 82.084,
+              "ffn.combine": 11.25,
+              "gdn.conv": 7.2915,
+              "gdn.gated": 5.625,
+              "gdn.qkv": 100.937,
+              "gdn.recurrence": 35.938,
+              "gdn.z": 39.7915,
+              "hc.a.gate": 19.791,
+              "hc.a.inject": 13.333,
+              "hc.a.low": 15.886,
+              "hc.a.mix": 9.1145,
+              "hc.a.norm": 10.417,
+              "hc.f.gate": 18.75,
+              "hc.f.inject": 11.823,
+              "hc.f.low": 15.0,
+              "hc.f.mix": 9.0105,
+              "hc.f.norm": 7.188,
+              "moe": 6.354,
+              "route": 43.332,
+              "shexpact": 3.958,
+              "shexpdown": 10.834,
+              "small.ffn.q6": 27.5,
+              "small.gdn.ab": 6.771
+            },
+            "specialized": {
+              "attention": 57.812,
+              "expsact": 4.688,
+              "expsdown": 54.375,
+              "expsgate": 77.292,
+              "ffn.combine": 11.198,
+              "gdn.conv": 7.343500000000001,
+              "gdn.gated": 5.677,
+              "gdn.qkv": 96.667,
+              "gdn.recurrence": 35.938,
+              "gdn.z": 37.188,
+              "hc.a.gate": 19.791,
+              "hc.a.inject": 13.281500000000001,
+              "hc.a.low": 15.832999999999998,
+              "hc.a.mix": 9.375,
+              "hc.a.norm": 10.469000000000001,
+              "hc.f.gate": 18.646,
+              "hc.f.inject": 11.5105,
+              "hc.f.low": 15.0,
+              "hc.f.mix": 8.906500000000001,
+              "hc.f.norm": 7.188,
+              "moe": 6.302,
+              "route": 43.644,
+              "shexpact": 3.959,
+              "shexpdown": 10.938,
+              "small.ffn.q6": 27.5,
+              "small.gdn.ab": 6.7705
+            }
+          },
+          "integration_bar_us": 40,
+          "bar_passed": true,
+          "measured_pairs": 200,
+          "primary_classes": {
+            "expsgate": {
+              "current_us": 82.084,
+              "candidate_us": 77.292,
+              "median_paired_saved_us": 4.791,
+              "speedup": 1.0619986544532423,
+              "worthwhile_screen": true
+            },
+            "expsdown": {
+              "current_us": 91.25,
+              "candidate_us": 54.375,
+              "median_paired_saved_us": 36.876,
+              "speedup": 1.6781609195402298,
+              "worthwhile_screen": true
+            },
+            "gdn.qkv": {
+              "current_us": 100.937,
+              "candidate_us": 96.667,
+              "median_paired_saved_us": 4.166,
+              "speedup": 1.0441722614749605,
+              "worthwhile_screen": false
+            },
+            "gdn.z": {
+              "current_us": 39.7915,
+              "candidate_us": 37.188,
+              "median_paired_saved_us": 2.5,
+              "speedup": 1.0700091427342153,
+              "worthwhile_screen": false
+            }
+          }
+        },
+        "qsa": {
+          "current_gpu_us": {
+            "median": 3186.456,
+            "p10": 3173.333,
+            "p90": 3193.13
+          },
+          "specialized_gpu_us": {
+            "median": 3143.9565000000002,
+            "p10": 3131.04,
+            "p90": 3150.52
+          },
+          "paired_saved_gpu_us": {
+            "median": 42.707999999999856,
+            "p10": 24.26800000000003,
+            "p90": 61.347999999999956
+          },
+          "class_median_gpu_us": {
+            "current": {
+              "attention": 58.229,
+              "expsact": 5.209,
+              "expsdown": 91.146,
+              "expsgate": 82.917,
+              "ffn.combine": 11.198,
+              "hc.a.gate": 20.833,
+              "hc.a.inject": 13.438,
+              "hc.a.low": 19.167,
+              "hc.a.mix": 9.688,
+              "hc.a.norm": 12.499,
+              "hc.f.gate": 18.75,
+              "hc.f.inject": 11.562,
+              "hc.f.low": 15.0,
+              "hc.f.mix": 9.166,
+              "hc.f.norm": 7.292,
+              "moe": 6.146,
+              "qsa.attention": 2371.0935,
+              "qsa.ik": 6.562,
+              "qsa.iq": 9.218499999999999,
+              "qsa.k": 9.375,
+              "qsa.pool": 4.8955,
+              "qsa.prepare": 5.729,
+              "qsa.qgate": 113.125,
+              "qsa.select": 180.20749999999998,
+              "qsa.v": 8.437,
+              "route": 42.918,
+              "shexpact": 4.062,
+              "shexpdown": 10.9895,
+              "small.ffn.q6": 27.708
+            },
+            "specialized": {
+              "attention": 58.125,
+              "expsact": 5.0,
+              "expsdown": 54.584,
+              "expsgate": 77.708,
+              "ffn.combine": 11.198,
+              "hc.a.gate": 20.833,
+              "hc.a.inject": 13.438,
+              "hc.a.low": 19.063,
+              "hc.a.mix": 9.687,
+              "hc.a.norm": 12.396,
+              "hc.f.gate": 18.75,
+              "hc.f.inject": 11.51,
+              "hc.f.low": 15.0,
+              "hc.f.mix": 9.063,
+              "hc.f.norm": 7.292,
+              "moe": 6.146,
+              "qsa.attention": 2371.3545,
+              "qsa.ik": 6.5625,
+              "qsa.iq": 9.167,
+              "qsa.k": 9.323,
+              "qsa.pool": 4.895,
+              "qsa.prepare": 5.729,
+              "qsa.qgate": 113.229,
+              "qsa.select": 180.105,
+              "qsa.v": 8.437,
+              "route": 42.917,
+              "shexpact": 4.062,
+              "shexpdown": 10.938,
+              "small.ffn.q6": 27.7605
+            }
+          },
+          "integration_bar_us": 40,
+          "bar_passed": true,
+          "measured_pairs": 200,
+          "primary_classes": {
+            "expsgate": {
+              "current_us": 82.917,
+              "candidate_us": 77.708,
+              "median_paired_saved_us": 5.208,
+              "speedup": 1.0670329953157975,
+              "worthwhile_screen": true
+            },
+            "expsdown": {
+              "current_us": 91.146,
+              "candidate_us": 54.584,
+              "median_paired_saved_us": 36.562,
+              "speedup": 1.6698299868093214,
+              "worthwhile_screen": true
+            }
+          }
+        }
+      },
+      "timing_definition": "sum of unique completed compute-event end-start per full layer"
+    },
+    {
+      "passed": true,
+      "device_executed": true,
+      "microbenchmark_only": true,
+      "model_speed_claim": false,
+      "layers": {
+        "ordinary_gdn": {
+          "current_gpu_us": {
+            "median": 665.1565,
+            "p10": 658.643,
+            "p90": 672.184
+          },
+          "specialized_gpu_us": {
+            "median": 617.2945,
+            "p10": 610.415,
+            "p90": 624.687
+          },
+          "paired_saved_gpu_us": {
+            "median": 47.34100000000001,
+            "p10": 34.16899999999998,
+            "p90": 61.144000000000005
+          },
+          "class_median_gpu_us": {
+            "current": {
+              "attention": 57.605,
+              "expsact": 4.48,
+              "expsdown": 91.354,
+              "expsgate": 82.083,
+              "ffn.combine": 11.25,
+              "gdn.conv": 7.1355,
+              "gdn.gated": 5.729,
+              "gdn.qkv": 100.834,
+              "gdn.recurrence": 35.938,
+              "gdn.z": 39.791,
+              "hc.a.gate": 19.791,
+              "hc.a.inject": 13.3325,
+              "hc.a.low": 15.989,
+              "hc.a.mix": 9.1665,
+              "hc.a.norm": 10.521,
+              "hc.f.gate": 18.75,
+              "hc.f.inject": 11.823,
+              "hc.f.low": 15.104,
+              "hc.f.mix": 8.959,
+              "hc.f.norm": 7.188,
+              "moe": 6.354,
+              "route": 43.332,
+              "shexpact": 3.958,
+              "shexpdown": 10.834,
+              "small.ffn.q6": 27.604,
+              "small.gdn.ab": 6.7705
+            },
+            "specialized": {
+              "attention": 57.916,
+              "expsact": 4.688,
+              "expsdown": 54.479,
+              "expsgate": 77.5,
+              "ffn.combine": 11.25,
+              "gdn.conv": 7.292,
+              "gdn.gated": 5.625,
+              "gdn.qkv": 96.666,
+              "gdn.recurrence": 36.041,
+              "gdn.z": 37.291,
+              "hc.a.gate": 19.791,
+              "hc.a.inject": 13.23,
+              "hc.a.low": 15.885,
+              "hc.a.mix": 9.270499999999998,
+              "hc.a.norm": 10.3645,
+              "hc.f.gate": 18.646,
+              "hc.f.inject": 11.5625,
+              "hc.f.low": 15.104,
+              "hc.f.mix": 8.958,
+              "hc.f.norm": 7.188,
+              "moe": 6.354,
+              "route": 43.542,
+              "shexpact": 3.959,
+              "shexpdown": 11.041,
+              "small.ffn.q6": 27.5,
+              "small.gdn.ab": 6.7705
+            }
+          },
+          "integration_bar_us": 40,
+          "bar_passed": true,
+          "measured_pairs": 200,
+          "primary_classes": {
+            "expsgate": {
+              "current_us": 82.083,
+              "candidate_us": 77.5,
+              "median_paired_saved_us": 4.479,
+              "speedup": 1.0591354838709677,
+              "worthwhile_screen": true
+            },
+            "expsdown": {
+              "current_us": 91.354,
+              "candidate_us": 54.479,
+              "median_paired_saved_us": 36.876,
+              "speedup": 1.6768663154610033,
+              "worthwhile_screen": true
+            },
+            "gdn.qkv": {
+              "current_us": 100.834,
+              "candidate_us": 96.666,
+              "median_paired_saved_us": 4.063,
+              "speedup": 1.0431175387416465,
+              "worthwhile_screen": false
+            },
+            "gdn.z": {
+              "current_us": 39.791,
+              "candidate_us": 37.291,
+              "median_paired_saved_us": 2.604,
+              "speedup": 1.0670403046311443,
+              "worthwhile_screen": false
+            }
+          }
+        },
+        "qsa": {
+          "current_gpu_us": {
+            "median": 3183.8045,
+            "p10": 3173.437,
+            "p90": 3193.438
+          },
+          "specialized_gpu_us": {
+            "median": 3142.4475,
+            "p10": 3131.042,
+            "p90": 3150.311
+          },
+          "paired_saved_gpu_us": {
+            "median": 41.350000000000136,
+            "p10": 24.902000000000044,
+            "p90": 60.10199999999986
+          },
+          "class_median_gpu_us": {
+            "current": {
+              "attention": 58.2285,
+              "expsact": 5.209,
+              "expsdown": 91.146,
+              "expsgate": 82.917,
+              "ffn.combine": 11.146,
+              "hc.a.gate": 20.4685,
+              "hc.a.inject": 13.334,
+              "hc.a.low": 18.9585,
+              "hc.a.mix": 9.270499999999998,
+              "hc.a.norm": 10.4685,
+              "hc.f.gate": 18.75,
+              "hc.f.inject": 11.5105,
+              "hc.f.low": 15.0,
+              "hc.f.mix": 9.166,
+              "hc.f.norm": 7.292,
+              "moe": 6.146,
+              "qsa.attention": 2371.771,
+              "qsa.ik": 6.458,
+              "qsa.iq": 9.167,
+              "qsa.k": 9.271,
+              "qsa.pool": 4.583500000000001,
+              "qsa.prepare": 5.4165,
+              "qsa.qgate": 113.229,
+              "qsa.select": 180.208,
+              "qsa.v": 8.438,
+              "route": 42.916,
+              "shexpact": 3.959,
+              "shexpdown": 10.937,
+              "small.ffn.q6": 27.708
+            },
+            "specialized": {
+              "attention": 58.126,
+              "expsact": 5.0,
+              "expsdown": 54.479,
+              "expsgate": 77.709,
+              "ffn.combine": 11.146,
+              "hc.a.gate": 20.521,
+              "hc.a.inject": 13.438,
+              "hc.a.low": 18.9585,
+              "hc.a.mix": 9.374500000000001,
+              "hc.a.norm": 10.4165,
+              "hc.f.gate": 18.75,
+              "hc.f.inject": 11.406,
+              "hc.f.low": 15.0,
+              "hc.f.mix": 9.063,
+              "hc.f.norm": 7.292,
+              "moe": 6.146,
+              "qsa.attention": 2371.719,
+              "qsa.ik": 6.355,
+              "qsa.iq": 9.167,
+              "qsa.k": 9.271,
+              "qsa.pool": 4.6355,
+              "qsa.prepare": 5.365,
+              "qsa.qgate": 113.125,
+              "qsa.select": 180.156,
+              "qsa.v": 8.437,
+              "route": 42.916,
+              "shexpact": 4.062,
+              "shexpdown": 10.834,
+              "small.ffn.q6": 27.6565
+            }
+          },
+          "integration_bar_us": 40,
+          "bar_passed": true,
+          "measured_pairs": 200,
+          "primary_classes": {
+            "expsgate": {
+              "current_us": 82.917,
+              "candidate_us": 77.709,
+              "median_paired_saved_us": 5.208,
+              "speedup": 1.0670192641778944,
+              "worthwhile_screen": true
+            },
+            "expsdown": {
+              "current_us": 91.146,
+              "candidate_us": 54.479,
+              "median_paired_saved_us": 36.667,
+              "speedup": 1.673048330549386,
+              "worthwhile_screen": true
+            }
+          }
+        }
+      },
+      "timing_definition": "sum of unique completed compute-event end-start per full layer"
+    }
+  ]
+}
