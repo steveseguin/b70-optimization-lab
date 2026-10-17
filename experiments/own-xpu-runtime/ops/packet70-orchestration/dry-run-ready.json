@@ -1,0 +1,121 @@
+{
+  "schema": "packet70.ready.v1",
+  "ready": true,
+  "device_executed": false,
+  "chain_launched": false,
+  "boot_id": "mock-boot",
+  "selection": {
+    "experts": "wide64",
+    "all_screens_exact": true,
+    "errors": {},
+    "controls": {
+      "A": 50.0,
+      "B": 50.0
+    },
+    "gains": {
+      "wide64": {
+        "A": 0.020000000000000018,
+        "B": 0.020000000000000018
+      },
+      "wg64": {
+        "A": -0.020000000000000018,
+        "B": -0.020000000000000018
+      },
+      "wg128": {
+        "A": -0.020000000000000018,
+        "B": -0.020000000000000018
+      },
+      "prefetch64": {
+        "A": -0.020000000000000018,
+        "B": -0.020000000000000018
+      }
+    },
+    "rule": "strictly faster on both lanes versus mean of two same-lane controls; all 12 screens exact 13/13; maximin tie-break",
+    "diagnostic": true,
+    "promotion_eligible": false,
+    "evidence": {
+      "lanes": {
+        "A": [
+          {
+            "choice": "production",
+            "rate": 50,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "wide64",
+            "rate": 51,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "wg64",
+            "rate": 49,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "wg128",
+            "rate": 49,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "prefetch64",
+            "rate": 49,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "production",
+            "rate": 50,
+            "exact": true,
+            "exact_count": 13
+          }
+        ],
+        "B": [
+          {
+            "choice": "production",
+            "rate": 50,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "prefetch64",
+            "rate": 49,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "wg128",
+            "rate": 49,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "wg64",
+            "rate": 49,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "wide64",
+            "rate": 51,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "production",
+            "rate": 50,
+            "exact": true,
+            "exact_count": 13
+          }
+        ]
+      },
+      "errors": {}
+    }
+  },
+  "command": "systemd-run --user --unit=packet70-chain --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --property=StandardOutput=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/chain.log --property=StandardError=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/chain.log --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/device-entry.sh chain </dev/null",
+  "dry_run": true,
+  "requires_coordinator_launch": true
+}

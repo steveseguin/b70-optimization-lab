@@ -1,0 +1,10 @@
+2026-10-17T17:37:52Z SCREEN lane=A choice=1-production-control tok_s=51.870563883 exact=13/13
+2026-10-17T17:37:52Z SCREEN lane=A choice=1-draft-hc-control tok_s=52.486787454 exact=13/13
+2026-10-17T17:37:52Z SCREEN lane=A choice=1-draft-hc-batch tok_s=52.586882141 exact=13/13
+2026-10-17T17:37:52Z SCREEN lane=B choice=1-production-control tok_s=52.490575423 exact=13/13
+2026-10-17T17:37:52Z SCREEN lane=B choice=1-draft-hc-control tok_s=52.781846042 exact=13/13
+2026-10-17T17:37:52Z SCREEN lane=B choice=1-draft-hc-batch tok_s=52.962851843 exact=13/13
+2026-10-17T17:37:52Z COMPARE choice=1-draft-hc-control A_gain_pct=1.188002 B_gain_pct=0.554901
+2026-10-17T17:37:52Z COMPARE choice=1-draft-hc-batch A_gain_pct=1.380973 B_gain_pct=0.899736
+2026-10-17T17:37:52Z SELECTION 1-draft-hc-batch; all_six_exact=True; rule=strictly-ahead-on-both-lanes; tie=maximin-then-fewer-changes
+2026-10-17T17:37:52Z RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet64-record-bundle/fast_reseal.py --placement 1 --draft draft-hc --miss batch
