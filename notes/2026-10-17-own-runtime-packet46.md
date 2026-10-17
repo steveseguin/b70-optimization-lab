@@ -50,6 +50,14 @@ and labels partial layer coverage. Five Python schema/report test groups pass
 in 0.002 seconds. C++ compilation and the two fresh mock processes are still
 pending the 02:55 UTC boundary. This adapter is not installed in packet45.
 
+The independently authored AVX2 CPU expert, exact arithmetic specification,
+existing-fixture oracle comparisons and sustained benchmark are written in
+`packet46-specialized/cpu-expert/`. The runner checks every worker's affinity,
+FP environment and source/binary identity. Its 284,928,000-byte synthetic
+packed bank preserves the 47:1 ordinary/exceptional layer mix. Source review
+found no arithmetic mismatch; that is not a compiled exactness result.
+Nonfinite device-oracle parity is explicitly unqualified.
+
 Implementation, CPU tests, throughput measurements, independent review and
 final seal are pending. Device correctness, device speed and one-card fit
 remain unmeasured by this task. The device coordinator retains ownership.
