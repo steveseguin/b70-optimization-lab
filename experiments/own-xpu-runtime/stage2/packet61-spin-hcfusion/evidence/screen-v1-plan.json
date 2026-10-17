@@ -1,0 +1,30 @@
+{
+  "evidence_label": "screen",
+  "device_executed": false,
+  "identity": {
+    "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion",
+    "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/screen-seal.json",
+    "seal_sha256": "b4cd330ddef3a47c7406da9a54557defb317cac7f6ab3642bc8d5f88fa1953bc",
+    "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/device/own-rt-iq3",
+    "binary_sha256": "a8f58e768e9adca9fdee5a6e53d7ccccdba4939b0fd2098cc4f12b12ffe7e590",
+    "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/dispatch-speed6.json",
+    "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "selection_sha256": "9cf79904a9df1ca0a3a124a3bae286c6e641d859688d2ebacc14bb17913f1f2e",
+    "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+    "profile": "tp2"
+  },
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/tp2_worker.py",
+    "--identity",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/evidence/packet61-a/identity.json",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/evidence/packet61-a/run",
+    "--seconds",
+    "3600"
+  ],
+  "model_lifetimes": 1,
+  "watchdog_seconds": 3600,
+  "planned_write_bytes": 1100000000
+}
