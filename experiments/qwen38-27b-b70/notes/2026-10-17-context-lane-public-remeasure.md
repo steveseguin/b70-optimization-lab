@@ -21,3 +21,16 @@ effort medium, in-place notes, recite on tickets) on c27a's server (depth 5, one
 - **Prediction:** 40/40 fixed, 40/40 clean, 7/7; 10-13 min. The keeper and server have changed since campaign 17, so
   the transcript is not expected to match it; this is a re-measure of what the current stack does, not an A/B.
 - **Use:** the figures go to the owner as a proposal for the public pages (owner's call); nothing public changes here.
+
+## 28d result: void, the server was killed by my own command (05:59 EDT)
+
+The server was ready at 05:58:19 and had answered five agent calls when, at 05:59:04, I ran a Python one-liner
+beside it that read this session's 380 MB transcript into memory to search it. Host memory fell from 2.25 to
+1.40 GiB within half a second (`c28d-memory-guard-last20s.jsonl`; driver-held memory unchanged), the memory guard
+(floor 1.6 GiB) killed the server mid-step at 05:59:05 (`c28d-MEMORY-GUARD.json`), and the kill left a compute-engine
+reset on card e3:00.0 (`FAULT-20261017-c28d.json`; no page-fault or CAT lines; the same signature as the guard kill of
+2026-10-12 19:56). Not a card, server or overlay fault. The runner did not restore Gemma, by design; restarting it is
+the owner's call. Runner log lost: it was written into this folder, and the `git pull --rebase` at 05:56 replaced the
+file under the running job (live logs now go under `/mnt/fast-ai/bench-results` and are copied after).
+
+The re-measure is owed; it runs again unchanged once the owner has restarted the LAN service.
