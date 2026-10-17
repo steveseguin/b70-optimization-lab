@@ -21,6 +21,59 @@ SPEC.loader.exec_module(SUPERVISION)
 SUPERVISION.FAULT = re.compile(
     r'Fault response|CAT error|(?:GPU |engine )reset|timed[- ]out job|job.*timed out|'
     r'devcoredump|(?:device |GPU |xe.*)coredump', re.I)
+_inherited_process_tree_anon = SUPERVISION.process_tree_anon
+
+
+def _exited_status(proc, pid):
+    """True when /proc shows the pid as a zombie/dead task (its mm fields are gone)."""
+    try:
+        status = (proc / str(pid) / 'status').read_text()
+    except (FileNotFoundError, ProcessLookupError):
+        return True
+    state = [line.split()[1] for line in status.splitlines() if line.startswith('State:')]
+    return bool(state) and state[0] in ('Z', 'X')
+
+
+def process_tree_anon(pid, proc=Path('/proc')):
+    """2026-10-17 p48-a-e1: RssAnon is absent while the native child is a zombie at exit.
+    A zombie owns no anonymous memory, so report the tree without it instead of failing."""
+    try:
+        return _inherited_process_tree_anon(pid, proc)
+    except Exception as error:
+        if 'missing/malformed RssAnon' in str(error) and _exited_status(proc, int(str(error).rsplit(' ', 1)[-1])):
+            return _inherited_process_tree_anon_skip_exited(pid, proc)
+        raise
+
+
+def _inherited_process_tree_anon_skip_exited(pid, proc):
+    pending, seen, rows = [pid], set(), []
+    while pending:
+        current = pending.pop()
+        if current in seen:
+            continue
+        seen.add(current)
+        if _exited_status(proc, current):
+            continue
+        base = proc / str(current)
+        try:
+            status = base.joinpath('status').read_text()
+            values = [line.split() for line in status.splitlines() if line.startswith('RssAnon:')]
+            require(len(values) == 1 and len(values[0]) == 3 and values[0][2] == 'kB',
+                    'missing/malformed RssAnon for pid ' + str(current))
+            rows.append({'pid': current, 'rss_anon_bytes': int(values[0][1]) * 1024})
+            for task in base.joinpath('task').iterdir():
+                try:
+                    pending.extend(int(child) for child in task.joinpath('children').read_text().split())
+                except FileNotFoundError:
+                    pass
+        except FileNotFoundError:
+            pass
+    return {'anonymous_bytes': sum(row['rss_anon_bytes'] for row in rows),
+            'root_seen': any(row['pid'] == pid for row in rows),
+            'processes': sorted(rows, key=lambda row: row['pid'])}
+
+
+SUPERVISION.process_tree_anon = process_tree_anon
 require = SUPERVISION.require
 sha = SUPERVISION.sha
 save = SUPERVISION.save

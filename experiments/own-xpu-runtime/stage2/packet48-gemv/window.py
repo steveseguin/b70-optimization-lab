@@ -103,7 +103,8 @@ def main(argv=None):
                 record.update(pid=child.pid, process_start_ticks=process_start(child.pid), device_executed=True)
                 persist()
                 record.update(SUPERVISION.supervise(child, args.seconds, cursor, journal,
-                    reasons, latch, persist, observe_memory=record.update))
+                    reasons, latch, persist, observe_memory=record.update,
+                    memory_sensor=SUPERVISION.process_tree_anon))  # zombie-tolerant sensor (window_support)
             if record['child_still_running']:
                 record['child_retained'] = True
                 persist()
