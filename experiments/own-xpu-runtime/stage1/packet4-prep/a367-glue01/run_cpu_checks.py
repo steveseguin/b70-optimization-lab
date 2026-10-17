@@ -52,7 +52,7 @@ def main():
         result['seals'].append({'path':str(seal.relative_to(REPO)),'sha256':sha(seal),'files':len(files),'mismatches':mismatches})
     for arm in ('control','candidate'):
         command = ['/usr/bin/python3','-B',str(HERE/'a367_glue01.py'),'--plan','--arm',arm,
-                   '--output',f'/mnt/raid-models/bench-results/a367g-20261017T000000Z-{arm[0]}']
+                   '--output',f'/mnt/raid-models/bench-results/a367g-20261017T000000Z-{arm}']
         run = subprocess.run(command,capture_output=True,text=True,check=True)
         plan = json.loads(run.stdout); assert plan['native_executed'] is False
         path = OUT/(arm+'-plan.json'); path.write_text(run.stdout)

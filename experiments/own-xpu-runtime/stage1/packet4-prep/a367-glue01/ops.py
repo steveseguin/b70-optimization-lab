@@ -73,7 +73,9 @@ def main():
             c.verify_seals()
             stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
             plan = {'schema':'a367-glue01-campaign.v1', 'preregistration_sha256':w.sha(c.REG),
-                    'seal_sha256':w.sha(c.SEAL), 'arms':{arm:f'/mnt/raid-models/bench-results/a367g-{stamp}-{arm[0]}' for arm in c.ARMS}}
+                    'seal_sha256':w.sha(c.SEAL), 'arms':{arm:f'/mnt/raid-models/bench-results/a367g-{stamp}-{arm}' for arm in c.ARMS}}
+            # 2026-10-17: arm[0] gave both arms 'c'; full names keep the two outputs distinct.
+            w.require(len(set(plan['arms'].values())) == len(c.ARMS), 'unique arm outputs required')
             with path.open('x') as stream:
                 json.dump(plan, stream, indent=2); stream.write('\n')
         else:
