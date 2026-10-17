@@ -13,3 +13,20 @@ The initial virtual HC reduction failed NaN payload identity. The exact rejected
 Five views share one binary: production, hc-a, hc-f, rec-head and combined. Planning budgets are 87, 87 and 108 µs/half (combined 281 before rounding), simply 20% of the audit's memory excess; they are not measured or promised gains. [Preparation closeout and evidence](../experiments/own-xpu-runtime/stage2/packet67-roofline/CPU-PREPARATION-CLOSEOUT.md).
 
 The coordinator's next step is the [sealed quick lane A/B jobs](../experiments/own-xpu-runtime/stage2/packet67-roofline/WINDOW.md): production first/last, each candidate once, reversed candidate order between lanes, a 3,600-second watchdog and no retry. The compare helper checks packet49 tokens and reports each lane against its own controls. These 128-token screens are diagnostic; they cannot promote a speed record. The packet49 oracle remains the authority.
+
+## Device result and closeout (coordinator, 2026-10-17 20:10 UTC)
+
+Lane-B quick screens, 18:58–19:28 UTC: every candidate was exact 13/13 and **slower** than same-lane production control (52.17 tok/s).
+
+| Candidate | Change |
+|---|---|
+| `combined` | −21.8% |
+| `rec-head` | −11.8% |
+| `hc-f` | −6.3% |
+| `hc-a` | −7.0% |
+
+The sixth screen (`p67-quick-B-6-production-a`) finished its suite. Its teardown was then refused by the packet 70 K2 window's undrained record; the coordinator recovered it cooperatively at 20:09. See `ops/review-log.md`, review 7.
+
+The lane-A copy was stopped by rule: `screen/evidence/STOP` was written by `fn-run/p67-stop-rule.sh`, because no lane-B candidate reached ≥ +1.5%.
+
+**Closed: no promotion.** Lesson: candidates picked by useful-byte roofline excess, without in-engine achieved-bandwidth evidence, went 0 for 4. Packet 72 picks classes by measured in-engine GB/s and applies packet 65's `wide64` occupancy approach instead.
