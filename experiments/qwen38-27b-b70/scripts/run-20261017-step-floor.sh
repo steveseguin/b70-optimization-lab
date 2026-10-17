@@ -7,6 +7,7 @@
 #   M  the package's flags with L's window (262,144, steps of 4,096, no prefix cache)
 #   P  the package's flags (33,024 window, steps of 4,096, no prefix cache), on R314
 #   P0, L0  P and L without the drafter (one token per step: the step without speculation, measured the same way)
+#   Lp  L plus b70-w8a16-pad-rows (few-row down-projection GEMMs padded to 6 rows), only if its census passes first
 # All: TP2, MTP5 with INT4 draft head + shortlist (except P0, L0), allgather, chunked-upload and GDN state-width overlays, verify rows
 # in one launch, and the host step clock (b70-host-step-clock: time only, one line per answer per card). No profiler: a guard kill mid-step resets an engine (06:00 fault), and a profile needs host memory.
 # Stops at the first fault line or failed start; the cards are left empty (RESTORE=1 puts Gemma back at the end).
@@ -69,6 +70,7 @@ arm_args() {  # an arm name ending in 0 is the same server without the drafter
          --overlay b70-exclusive-prefill --extra-env B70_EXCLUSIVE_PREFILL=1 ;;
     M) echo --max-model-len 262144 --batched 4096 ;;
     P) echo --max-model-len 33024 --batched 4096 ;;
+    Lp) arm_args L | tail -n +2; echo --overlay b70-w8a16-pad-rows --extra-env B70_W8A16_PAD_ROWS=1 ;;
     *) return 1 ;;
   esac
 }
@@ -111,7 +113,16 @@ for i in $(seq 1 30); do pgrep -x llama-server >/dev/null || break; sleep 2; don
 pgrep -x llama-server >/dev/null && { say "ABORT: llama-server still running"; exit 2; }
 mkdir -p "$D"
 trap finish EXIT
-for arm in ${ARMS:-L N M P P0 L0}; do
+ARMS=${ARMS:-L N M P P0 L0}
+# the padded-GEMM census (one card, about a minute) decides whether arm Lp (L + b70-w8a16-pad-rows) runs at the end
+say "census: few-row W8A16 GEMMs padded to 6 rows (R314, card 0)"
+docker run --rm --name pad-census --device /dev/dri:/dev/dri --group-add render --memory 6g --ulimit core=0 \
+  -e ONEAPI_DEVICE_SELECTOR=level_zero:0 -v "$S/census-w8a16-pad-rows.py:/tmp/c.py:ro" -v "$D:/out" --workdir /tmp \
+  --entrypoint python3 neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r314-state-stride \
+  /tmp/c.py --out /out/census-w8a16-pad-rows.json 2>&1 | grep -E '^\{|^census' | cut -c1-300
+if [[ ${PIPESTATUS[0]} == 0 ]]; then ARMS="$ARMS Lp"; else say "census failed or differs: arm Lp not run"; fi
+[[ -n $(faults) ]] && { say "ABORT: GPU fault line after the census"; exit 1; }
+for arm in $ARMS; do
   OWNER=; start_server "$arm" || exit 1
   python3 $S/probe-write-rate-vs-context.py --base-url http://127.0.0.1:$PORT --lengths 1000,8000,16000,30000 \
     --out "$D/write-$arm.json" > "$D/write-$arm.log" 2>&1 || say "write probe failed on $arm"

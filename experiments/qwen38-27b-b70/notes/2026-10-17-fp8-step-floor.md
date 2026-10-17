@@ -145,3 +145,24 @@ on this EPYC host". That argues against a host-bound drafter, at least on that i
 arithmetic on a one-card census and could be wrong in the verify pass instead (six-slot recurrent state writes, the
 GDN speculative kernels). The clock decides; if the host waits 5 ms or more per step, the drafter graphs are not
 tried and the next step is the device-side look.
+
+## Amendment 07:41 EDT (before any run): the padded down projection, census then arm Lp
+
+`overlays/b70-w8a16-pad-rows` 0.1.0 (`B70_W8A16_PAD_ROWS=1`): a W8A16 GEMM call with fewer than 6 rows whose weight
+is K 8704 x N 5120 (the TP2 down projection) runs on its activation padded with zero rows to 6, as one vLLM custom op
+(opaque to the compiled graph, row count read at run time), and returns the real rows. The server holds the block
+scales in float32 (`create_fp8_scale_parameter`, checkpoint BF16 copied in), the census's dtype. CPU tests
+`tests/test_b70_w8a16_pad_rows.py`; installs on R314's `XPUFp8BlockScaledMMKernel` (checked in the image on CPU).
+
+1. **Census first** (`scripts/census-w8a16-pad-rows.py`, R314, card 0, about a minute, before any server): for
+   8704 x 5120 and 17408 x 5120 (TP1), every row of every 1-8-row call equal to the 8-row call's row, padded rows
+   (zero and random padding) equal to the unpadded call, repeats equal; device times at 1, 2, 4, 5, 6, 8 rows and
+   padded 1. **Must hold for 8704 x 5120**, or arm Lp is not run.
+2. **Arm Lp** (last, if the census holds): L plus the overlay, same probe.
+   - **Must hold:** every Lp answer bitwise equal to L's (same server otherwise), tokens per step equal.
+   - **Prediction:** census times like 10-04 (about 215 us at one row, about 76 padded); Lp's ms per step about 0.7
+     lower than L's at every length (five drafter passes); the no-drafter arms would gain about 9 ms per token, not
+     measured here.
+   - **Decision:** answers equal and 0.4 ms or more off per step at 1K: adopt for the context lane (a 1-2 % lever) and
+     propose for the TP2 package after its census at the package's own image; a TP1 census row with the same gap
+     opens the one-card package question. Any answer different: stop, trace.
