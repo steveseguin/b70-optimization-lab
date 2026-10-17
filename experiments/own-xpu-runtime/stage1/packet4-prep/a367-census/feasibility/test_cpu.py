@@ -5,10 +5,12 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace as NS
 from unittest.mock import patch
 
 import analyze_feasibility as analysis
 import run_driver as driver
+import ccl_init
 from common import write_json
 
 
@@ -114,10 +116,57 @@ class AnalysisTests(unittest.TestCase):
 
 
 class DriverTests(unittest.TestCase):
+    def test_only_completed_paused_control_sigsegv_allows_next_step(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            row = {'name': 'ccl-paused', 'ranks': 4}
+            self.assertFalse(driver.completed_ccl_exit_crash(row, root))
+            for rank in range(4):
+                (root / f'done-{rank}').touch()
+            exits = {'all_ranks_exited': True, 'exitcodes': {str(rank): -11 for rank in range(4)}}
+            write_json(root / 'rank-exits.json', exits)
+            self.assertTrue(driver.completed_ccl_exit_crash(row, root))
+            self.assertFalse(driver.completed_ccl_exit_crash(dict(row, name='ccl-create-after-resume'), root))
+            exits['exitcodes']['0'] = 1
+            write_json(root / 'rank-exits.json', exits)
+            self.assertFalse(driver.completed_ccl_exit_crash(row, root))
+            exits['exitcodes']['0'] = -11
+            write_json(root / 'rank-exits.json', exits)
+            (root / 'done-2').unlink()
+            self.assertFalse(driver.completed_ccl_exit_crash(row, root))
+
+    def test_ccl_resume_order_and_pause_before_destroy_with_fake_torch(self):
+        for reproduce in (False, True):
+            with self.subTest(reproduce=reproduce), tempfile.TemporaryDirectory() as temporary:
+                order = []
+                dist = NS(is_xccl_available=lambda: True, FileStore=lambda *a: object(),
+                          init_process_group=lambda **kw: order.append('init'),
+                          all_reduce=lambda tensor: order.append('reduce'),
+                          destroy_process_group=lambda: order.append('destroy'))
+                torch = NS(__version__='2.11.fake', distributed=dist, float32='float32',
+                           set_num_threads=lambda n: None, ones=lambda *a, **kw: object(),
+                           full_like=lambda *a: object(), equal=lambda *a: True,
+                           xpu=NS(set_device=lambda n: None, synchronize=lambda: None))
+                stages = NS(mark=lambda name: order.append(name), closed=NS(set=lambda: None))
+                args = NS(output=Path(temporary), create_after_resume=reproduce, handshake=True)
+                with patch.dict(sys.modules, {'torch': torch, 'torch.distributed': dist}), \
+                     patch.dict('os.environ', {}, clear=False), \
+                     patch.object(ccl_init, 'Stages', return_value=stages), \
+                     patch.object(ccl_init, 'rendezvous'), \
+                     patch.object(ccl_init, 'ready_go', side_effect=lambda *a: order.append('resume')), \
+                     patch.object(ccl_init, 'finished', side_effect=lambda *a, **kw: order.append('pause')):
+                    ccl_init.worker(0, args, Path(temporary) / 'store')
+                if reproduce:
+                    self.assertLess(order.index('resume'), order.index('init'))
+                else:
+                    self.assertLess(order.index('all_reduce_4k_complete'), order.index('resume'))
+                self.assertLess(order.index('pause'), order.index('destroy'))
+                self.assertLess(order.index('all_reduce_64m_complete'), order.index('pause'))
+
     def test_argument_order_and_exact_environment(self):
         root = Path('/mnt/raid-models/bench-results/a367-tracefeas-cpu-test')
         rows = driver.plan(root)
-        self.assertEqual([r['name'] for r in rows], ['graph-control', 'graph-traced', 'graph-paused', 'ccl-control', 'ccl-paused'])
+        self.assertEqual([r['name'] for r in rows], ['graph-control', 'graph-traced', 'graph-paused', 'ccl-control', 'ccl-paused', 'ccl-create-after-resume'])
         for row in rows:
             command = row['command']
             self.assertEqual('--start-paused' in command, row['paused'])
@@ -134,6 +183,20 @@ class DriverTests(unittest.TestCase):
         self.assertEqual(env['CCL_SYCL_ALLREDUCE_LL_THRESHOLD'], '4096')
         self.assertEqual(env['LD_PRELOAD'], '/mnt/fast-ai/runtime/oneccl-4ceafd1-b70-public/lib/libccl.so.1.0')
         self.assertNotIn('PYTHONPATH', env)
+
+    def test_only_selects_registered_order_and_reproduction_flag(self):
+        rows = driver.plan(Path('/tmp/never-created'), 'ccl-create-after-resume,ccl-paused')
+        self.assertEqual([r['name'] for r in rows], ['ccl-paused', 'ccl-create-after-resume'])
+        self.assertNotIn('--create-after-resume', rows[0]['command'])
+        self.assertIn('--create-after-resume', rows[1]['command'])
+        self.assertTrue(rows[1]['paused'])
+        self.assertIn('expected SIGSEGV', rows[1]['expected_time'])
+        self.assertEqual(len(driver.plan(Path('/tmp/never-created'), 'ccl-create-after-resume')), 1)
+
+    def test_only_refuses_unknown_duplicate_and_empty(self):
+        for value in ('', 'unknown', 'ccl-paused,ccl-paused', 'ccl-paused,'):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                driver.plan(Path('/tmp/never-created'), value)
 
     def test_summary_rejects_false_success(self):
         summary = driver.new_summary(Path('/tmp/not-created'), driver.plan(Path('/tmp/not-created')), {})

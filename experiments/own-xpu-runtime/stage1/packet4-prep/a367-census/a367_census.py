@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import fcntl
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -106,6 +107,7 @@ def command_and_environment(output, arm='graph-reference'):
         env['A367_CENSUS_ARM'] = arm
         env['A367_CENSUS_MARKER_ACTIVE'] = str(output / 'trace-active')
         env['A367_CENSUS_MARKER_DIR'] = str(output / 'markers')
+        env['A367_CENSUS_CAPTURE_DIR'] = str(scratch_dir(output))
         command = [str(UNITRACE), '--chrome-kernel-logging', '--chrome-itt-logging',
                    '--chrome-event-buffer-size', '4096', '--verbose', '--pid',
                    '--start-paused', '--session', trace_session(output),
@@ -606,12 +608,11 @@ class TraceControl:
 
 
 class CaptureResume:
-    """Observe loading in a separate supervisor thread; never retry a resume.
+    """Resume only while all four ranks are held at capture_model entry.
 
-    Capture logged before the acknowledgement (including bytes accumulated while
-    control IPC was in flight) invalidates graph attribution, not the lifecycle.
+    Log text can invalidate ordering, but can never trigger resume. A failed
+    resume still releases capture; validity and lifecycle are separate gates.
     """
-    rank_pattern = re.compile(r'Worker[_-]TP([0-3])(?=[^0-9]|$)')
 
     def __init__(self, root, control):
         self.root, self.control = root, control
@@ -620,6 +621,11 @@ class CaptureResume:
         self.offset = 0
         self.pending = ''
         self.ranks = set()
+        self.ready = {}
+        self.directory = scratch_dir(root)
+        self.released = None
+        self.started = time.monotonic()
+        self.next_notice = self.started + 600
         self.capture_before_ack = False
         self.failure = None
         self.acknowledged = False
@@ -631,11 +637,35 @@ class CaptureResume:
             self.capture_before_ack = True
         lines = self.pending.split('\n')
         self.pending = lines.pop()
-        for line in lines:
-            if 'Model loading took' in line:
-                match = self.rank_pattern.search(line)
-                if match:
-                    self.ranks.add(int(match[1]))
+
+    def read_ready(self):
+        for rank in range(4):
+            path = self.directory / f'capture-ready-rank-{rank}.json'
+            if rank in self.ready or not path.is_file():
+                continue
+            row = w.read(path)
+            w.require(row.get('schema') == 'a367-census-capture-ready.v1'
+                      and type(row.get('rank')) is int and row['rank'] == rank
+                      and type(row.get('pid')) is int and row['pid'] > 0
+                      and type(row.get('monotonic')) in (int, float)
+                      and math.isfinite(row['monotonic']) and row['monotonic'] >= self.started,
+                      'invalid/stale capture rank receipt')
+            w.require(row['pid'] not in {r['pid'] for r in self.ready.values()},
+                      'duplicate capture rank PID')
+            self.ready[rank] = row
+            self.ranks.add(rank)
+
+    def release(self, reason):
+        if self.released is not None:
+            return
+        released = {'monotonic': time.monotonic(), 'reason': reason,
+                    'resume_acknowledged': self.acknowledged}
+        if self.directory.is_dir():
+            path = self.directory / 'capture-go'
+            temporary = path.with_suffix('.tmp')
+            w.write(temporary, released)
+            temporary.replace(path)
+            self.released = released  # Only record success after publication.
 
     def read_new(self):
         with (self.root / 'server.log').open('r', errors='replace') as stream:
@@ -648,26 +678,33 @@ class CaptureResume:
         self.read_new()
         if self.done.is_set():
             return
-        if self.ranks == {0, 1, 2, 3} and self.control.resume_attempts == 0:
+        self.read_ready()
+        if time.monotonic() >= self.next_notice and self.released is None:
+            print('A367 capture rendezvous: 600s wait budget exceeded; still waiting; no kill', flush=True)
+            self.next_notice = time.monotonic() + 600
+        if self.ranks == {0, 1, 2, 3} and self.control.resume_attempts == 0 and self.released is None:
             try:
                 self.control.resume()
-                # Fail conservatively if capture arrived during the control call.
+                # Even a hook bypass must fail attribution, never look timely.
                 self.read_new()
                 self.acknowledged = True
             except Exception as exc:
                 self.failure = str(exc)
+            finally:
+                self.release('resume completed' if self.acknowledged else 'resume failed; continue normally')
             self.save()
 
     def receipt(self):
-        return {'schema': 'a367-census-capture-resume.v1',
-                'loaded_ranks': sorted(self.ranks),
+        return {'schema': 'a367-census-capture-resume.v2',
+                'ready_ranks': sorted(self.ranks), 'rank_receipts': self.ready,
+                'capture_go': self.released, 'wait_budget_seconds': 600,
                 'resume_attempts': self.control.resume_attempts,
                 'acknowledged': self.acknowledged,
                 'capture_before_acknowledgement': self.capture_before_ack,
                 'valid_for_graph_attribution': self.acknowledged and not self.capture_before_ack and not self.failure,
                 'failure': self.failure,
                 'acknowledgement': next((e for e in self.control.events if e['action'] == 'resume'), None),
-                'ordering_rule': 'Any capture bytes observed through the post-ack log read invalidate; conservative on races.'}
+                'ordering_rule': 'Four atomic local-scratch rank receipts at capture_model entry; resume once, then capture-go even on failure. Capture text before acknowledgement invalidates.'}
 
     def save(self):
         w.write(self.root / 'trace-control.json', self.control.events)
@@ -781,6 +818,9 @@ def lifecycle(root, command, env, sampler, stop, watch, *, launch=subprocess.Pop
             if observer.thread.is_alive():
                 observer.failure = 'capture supervisor did not stop'
             try:
+                # A pre-capture failure must not strand any present/future rank
+                # at the hook while graceful worker shutdown drains.
+                observer.release('lifecycle cleanup; no resume retry')
                 observer.save()
                 trace.pause()
             except Exception as exc:

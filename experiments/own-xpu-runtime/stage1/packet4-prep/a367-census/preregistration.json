@@ -62,8 +62,8 @@
       "speed_risk": "About1.9GB headroom above reserve in replay; extra1GiB allowance leaves about0.8GB, not guaranteed"
     },
     {
-      "change": "ITT-enabled pinned unitrace, finite4096 buffers, start-paused; resume after four rank loading lines and before graph capture; local ext4 traces",
-      "reason": "Microtest active-capture replay50/50 with8/8 kernels; paused-capture replay0 kernels",
+      "change": "ITT-enabled pinned unitrace, finite4096 buffers, start-paused; four-rank local-scratch rendezvous at V2 capture_model entry after profiling and KV initialization; local ext4 traces",
+      "reason": "Old loading-line resume crashed during lazy XCCL creation in profile; existing-communicator microtest succeeds under tracing; active capture required for replay kernel visibility",
       "speed_risk": "Full-model overhead/memory unmeasured; traced oneCCL exit crash expected; no speed claim."
     },
     {
@@ -152,7 +152,23 @@
   "local_trace_minimum_free_bytes": 8589934592,
   "local_trace_retention": "Separate from deleted local scratch; coordinator copies after lifecycle and keeps local source.",
   "next_arm": "graph-census",
-  "trace_resume": "Start paused. Supervisor thread watches server.log for Model loading took on four distinct ranks; resume exactly once, with acknowledgement before any Capturing CUDA graphs line. Continue through profiling, KV initialization, capture, readiness, 20s plateau, 30s sleep and requests; pause immediately after client completion. Failed/late resume invalidates graph attribution but does not short-circuit normal teardown or retry.",
+  "trace_resume": "Start paused. Source-pinned V2 capture_model entry writes capture-ready-rank-R.json with rank, PID and monotonic timestamp into local scratch after profiling/KV initialization. Four distinct ready ranks wait for capture-go; 600s expiry prints and keeps waiting, no exception or kill. Supervisor resumes exactly once after all four files, records acknowledgement, then writes capture-go even on failure. No Model loading took trigger. Resume failure invalidates graph attribution; normal requests/teardown continue, no retry. Pause immediately after client completion before normal communicator destruction. Cleanup releases waiters; crashes/safety stops may precede normal pause. Eager-only: rendezvous after original Worker.compile_or_warm_up_model returns, before readiness, because eager skips capture; never graph evidence.",
   "sampler_persistence": "Timed sampler performs no output-mount file I/O; rows remain in memory and are enqueued to independent ext4 scratch writer. Independent live-file monitor. After lifecycle drain writer, compare exact rows, copy samples.jsonl to output, hash both, receipt, then remove scratch.",
-  "tracer_exit_crash_evidence": "data/2026-10-17-flash-next-trace-feasibility/20261017T001502Z/"
+  "tracer_exit_crash_evidence": "data/2026-10-17-flash-next-trace-feasibility/20261017T001502Z/",
+  "capture_rendezvous_wait_budget_seconds": 600,
+  "communicator_audit": "COMMUNICATOR-AUDIT.md; default WORLD pre-load and TP/MTP during paused profile; no source-visible active late group in exact config; native stream/operation-specific lazy creation remains unproven. No extra warm collectives.",
+  "profile_crash_evidence": {
+    "source": "coordinator report 2026-10-17",
+    "run": "a367c-20261017T002647Z",
+    "passed": false,
+    "gpu_fault_lines": 0,
+    "failure": "all four workers SIGSEGV 0x140 in lazy XCCL init during profile after old loading-line resume"
+  },
+  "microtest_reproduction": {
+    "step": "ccl-create-after-resume",
+    "after": "ccl-paused",
+    "expected": "SIGSEGV at first collective; unexecuted in CPU build",
+    "single_steps": "--only ccl-paused,ccl-create-after-resume",
+    "no_kill_retry": true
+  }
 }

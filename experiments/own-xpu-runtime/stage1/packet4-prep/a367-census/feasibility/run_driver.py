@@ -22,7 +22,8 @@ STEPS = [('graph-control', 'graph', False, False, 90, '10-30 s'),
          ('graph-traced', 'graph', True, False, 120, '20-60 s'),
          ('graph-paused', 'graph', True, True, 120, '20-60 s'),
          ('ccl-control', 'ccl', False, False, 150, '20-60 s'),
-         ('ccl-paused', 'ccl', True, True, 180, '30-120 s')]
+         ('ccl-paused', 'ccl', True, True, 180, '30-120 s'),
+         ('ccl-create-after-resume', 'ccl', True, True, 180, '30-120 s; expected SIGSEGV at first collective')]
 SOURCE_FILES = ['vllm/platforms/xpu.py', 'vllm/v1/worker/xpu_worker.py',
                 'vllm/v1/executor/multiproc_executor.py',
                 'vllm/distributed/parallel_state.py', 'vllm/utils/network_utils.py']
@@ -47,15 +48,28 @@ def selected_environment(output):
                 PYTHONUNBUFFERED='1', PYTHONDONTWRITEBYTECODE='1', **selected)
 
 
-def plan(root):
+def select_steps(only):
+    if only is None:
+        return STEPS
+    names = only.split(',')
+    known = {row[0] for row in STEPS}
+    if not names or len(set(names)) != len(names) or any(name not in known for name in names):
+        raise ValueError('--only requires unique comma-separated step names: ' + ','.join(row[0] for row in STEPS))
+    # Always retain registered order, including the control before reproduction.
+    return [row for row in STEPS if row[0] in names]
+
+
+def plan(root, only=None):
     rows = []
-    for name, test, traced, paused, budget, expected in STEPS:
+    for name, test, traced, paused, budget, expected in select_steps(only):
         directory = root / name
         session = 'A367Feas' + hashlib.sha256(str(directory).encode()).hexdigest()[:20]
         command = [PYTHON, '-B', str(HERE / ('graph_visibility.py' if test == 'graph' else 'ccl_init.py')),
                    '--output', str(directory)]
         if paused:
             command += ['--handshake']
+        if name == 'ccl-create-after-resume':
+            command += ['--create-after-resume']
         if traced:
             prefix = [UNITRACE, *FLAGS, '--result-dir', str(directory / 'unitrace')]
             if paused:
@@ -94,6 +108,21 @@ def new_summary(root, rows, env):
 def save(root, summary):
     validate_summary(summary)
     write_json(root / 'summary.json', summary)
+
+
+def completed_ccl_exit_crash(row, directory):
+    if row['name'] != 'ccl-paused':
+        return False
+    try:
+        exits = json.loads((directory / 'rank-exits.json').read_text())
+        codes = exits['exitcodes']
+        return (exits['all_ranks_exited'] is True
+                and set(codes) == {str(rank) for rank in range(row['ranks'])}
+                and -signal.SIGSEGV in codes.values()
+                and all(type(code) is int and code in (0, -signal.SIGSEGV) for code in codes.values())
+                and all((directory / f'done-{rank}').exists() for rank in range(row['ranks'])))
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
 
 
 def run_step(row, summary, root, env):
@@ -178,21 +207,32 @@ def run_step(row, summary, root, env):
         row['overrun'] |= row['duration_s'] > row['budget_s']
         clean = child.returncode == 0 and not row['overrun'] and not row.get('control_failed', False)
         row['status'] = 'passed' if clean else 'failed'
+        # The matched paused control may finish all work and crash at process
+        # exit. Preserve failed/rc, but permit the next registered reproduction
+        # only after all ranks passed the pause/release handshake and exited.
+        row['expected_tracer_exit_crash'] = (
+            completed_ccl_exit_crash(row, directory) and child.returncode != 0
+            and paused and not row['overrun'] and not row.get('control_failed', False))
         save(root, summary)
         print(f'END {row["name"]}: rc={row["rc"]}, {row["duration_s"]:.3f}s, {row["status"]}', flush=True)
-        return clean
+        return clean or row['expected_tracer_exit_crash']
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--plan', action='store_true')
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--only', help='Comma-separated single steps, run in registered order')
     args = parser.parse_args()
     stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
     root = (args.output or Path('/mnt/raid-models/bench-results') / f'a367-tracefeas-{stamp}').absolute()
     if root.parent != Path('/mnt/raid-models/bench-results') or not root.name.startswith('a367-tracefeas-'):
         parser.error('output must be /mnt/raid-models/bench-results/a367-tracefeas-<stamp>')
-    env, rows = selected_environment(root), plan(root)
+    try:
+        rows = plan(root, args.only)
+    except ValueError as error:
+        parser.error(str(error))
+    env = selected_environment(root)
     summary = new_summary(root, rows, env)
     summary['identity'] = dict(unitrace_sha256=sha(UNITRACE),
         census_seal_sha256=sha(HERE.parent / 'seal.json'),
@@ -215,7 +255,8 @@ def main():
             summary['status'] = 'failed'
             break
     else:
-        summary['status'] = 'failed' if summary.get('interrupted') else 'passed'
+        summary['status'] = ('passed' if not summary.get('interrupted')
+                             and all(row['status'] == 'passed' for row in summary['steps']) else 'failed')
     save(root, summary)
     from analyze_feasibility import analyze
     result = analyze(root)

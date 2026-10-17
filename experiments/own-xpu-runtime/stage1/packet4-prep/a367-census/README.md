@@ -33,6 +33,10 @@ was active at capture, and zero replay kernels when capture was paused. Paused
 tracing did not stall four-rank oneCCL initialization. The traced ranks finished
 their work then segfaulted at exit; the untraced control exited cleanly, with
 zero GPU faults. Full-model four-rank attribution remains to be measured.
+The subsequent full-model run `a367c-20261017T002647Z` crashed in all four
+workers during lazy XCCL creation in profiling, about ten seconds after the old
+loading-line resume. It never reached requests and failed despite zero GPU
+faults and a completed watch. The capture-entry rendezvous replaces that trigger.
 See [device evidence and limits](TRACING-FEASIBILITY.md).
 
 ## Memory and safety
@@ -77,15 +81,40 @@ The one-hour window can expire before worst-case budgets complete.
 ## Tracing and analysis
 
 Unitrace wraps only the server, starts paused and follows spawned processes.
-A supervisor thread watches `server.log` for `Model loading took` from all four
-distinct ranks. It resumes exactly once, checks and records the acknowledgement,
-and requires this before any `Capturing CUDA graphs` line. Tracing stays active
-through profiling, KV initialization, capture, readiness, plateau, the 30-second
-sleep and both requests. Failed or late resume marks graph attribution invalid;
-the run still reaches normal teardown, with no retry. Census ITT scopes become
-active for the requests; pause immediately after the client finishes (and in
-failure cleanup). The observer conservatively invalidates capture text seen
-through its immediate post-acknowledgement read.
+The census-only, source-pinned V2 `GPUModelRunner.capture_model` wrapper holds
+each rank at entry, after paused profiling and KV initialization but before
+target or draft graph capture. Each rank atomically writes
+`capture-ready-rank-R.json` (rank, PID and monotonic timestamp) to local ext4
+scratch, then waits for `capture-go`. Every 600 seconds it prints an overrun
+notice and keeps waiting; there is no timeout exception or kill. The supervisor
+requires all four distinct rank/PID receipts, attempts resume exactly once,
+records the acknowledgement and then atomically writes `capture-go`. It also
+writes go when resume fails: requests and normal teardown continue, but graph
+attribution is invalid. Loading log text never triggers resume. Cleanup releases
+any waiting ranks before graceful shutdown; the copied receipt retains all
+rank timestamps and release evidence after scratch is removed.
+
+Tracing stays active through capture, readiness, plateau, the 30-second sleep
+and both requests. Census ITT scopes become active for the requests. Pause
+immediately after the client finishes and again idempotently in cleanup, before
+normal shutdown requests destroy communicators. An unexpected worker crash or
+independent safety stop can precede this normal ordering. Pausing does not
+unload the tracing layer or guarantee a clean exit.
+
+The [communicator audit](COMMUNICATOR-AUDIT.md) finds default WORLD already
+used before load and TP plus MTP using existing groups during paused profiling.
+EP and the separate vLLM WORLD device groups can remain unused; no active late
+group first use was found for this exact TP4/PP1/DP1/PCP1/DCP1/MTP1 launch.
+No blanket warm collective is added: that would allocate unused communicators
+and change memory use. **Residual risk:** native XCCL/oneCCL could create
+stream/operation-specific resources after resume; Python source cannot exclude
+that. The next device run remains a feasibility test.
+
+The secondary eager arm skips `capture_model`. Its census-only wrapper instead
+waits after `Worker.compile_or_warm_up_model` returns, after profiling, KV setup
+and warmup, before readiness. It uses the same four-rank file handshake and
+does not claim graph attribution. Only graph-census is next.
+
 Graph markers wrap actual replay calls, not only Python model
 forward. The marker code reads tensor metadata only; it adds no tensor operation,
 CPU value read, synchronization or arithmetic replacement. ITT emission and

@@ -689,6 +689,7 @@ class Lifecycle(Base):
             events.append(('compare', ticks[0]))
             return {'exact': fail != 'mismatch', 'class_balanced_median_tok_s': 1.0}
         def control(cmd, **kw):
+            events.append(('trace_control', cmd[1], ticks[0]))
             return type('Result', (), {'returncode': 0, 'stdout': '',
                 'stderr': f'Session {c.trace_session(root)} is paused'})()
         trace = c.TraceControl(root, control) if traced else None
@@ -753,6 +754,13 @@ class Lifecycle(Base):
         # Missing resume does not interrupt client/teardown; graph attribution stays invalid.
         self.assertFalse(receipt['trace_capture']['valid_for_graph_attribution'])
         self.assertTrue(receipt['client']['attempted'])
+
+    def test_normal_traced_shutdown_pauses_before_sigint(self):
+        code, events, receipt, root = self.run_mock(traced=True)
+        self.assertEqual(code, 0, receipt)
+        pause = next(i for i, event in enumerate(events) if event[:2] == ('trace_control', '--pause'))
+        shutdown = next(i for i, event in enumerate(events) if event[0] == 'signal')
+        self.assertLess(pause, shutdown)
 
     def test_traced_exit_never_waives_fault_or_client_failure(self):
         for fail in ('fault', 'client'):
@@ -1174,6 +1182,7 @@ class CaptureTiming(Base):
                 'stderr': f'Session {c.trace_session(self.root)} is resumed'})()
         control = c.TraceControl(self.root, run)
         observer = c.CaptureResume(self.root, control)
+        observer.directory.mkdir(parents=True)
         (self.root / 'server.log').write_text('')
         return observer, calls
 
@@ -1184,37 +1193,98 @@ class CaptureTiming(Base):
     def loaded(self, ranks=range(4)):
         self.append(''.join(f'(Worker_TP{i}_EP{i} pid={100+i}) Model loading took 123 seconds\n' for i in ranks))
 
+    def ready(self, ranks=range(4)):
+        for rank in ranks:
+            w.write(c.scratch_dir(self.root) / f'capture-ready-rank-{rank}.json',
+                    {'schema': 'a367-census-capture-ready.v1', 'rank': rank,
+                     'pid': 100 + rank, 'monotonic': time.monotonic()})
+
     def test_four_distinct_ranks_resume_exactly_once_before_capture(self):
         observer, calls = self.setup_observer()
-        self.loaded([0, 1, 2, 2]); observer.poll()
+        self.loaded(); observer.poll()
+        self.assertEqual(calls, [])  # Loading log text is no longer a trigger.
+        self.ready([0, 1, 2, 2]); observer.poll()
         self.assertEqual(calls, [])
-        self.loaded([3]); observer.poll()
+        self.assertFalse((observer.directory / 'capture-go').exists())
+        self.ready([3]); observer.poll()
         self.append('Capturing CUDA graphs\n'); observer.poll(); observer.poll()
         self.assertEqual(calls, ['--resume'])
         self.assertTrue(observer.receipt()['valid_for_graph_attribution'])
         self.assertTrue(w.read(self.root / 'trace-control.json')[0]['stderr'])
+        go = w.read(observer.directory / 'capture-go')
+        self.assertTrue(go['resume_acknowledged'])
+        self.assertLess(observer.control.events[0]['monotonic'], go['monotonic'])
 
     def test_capture_before_ack_including_during_control_is_invalid(self):
         observer, calls = self.setup_observer(lambda: self.append('Capturing CUDA graphs\n'))
-        self.loaded(); observer.poll(); observer.poll()
+        self.ready(); observer.poll(); observer.poll()
         self.assertEqual(calls, ['--resume'])
         self.assertFalse(observer.receipt()['valid_for_graph_attribution'])
 
     def test_split_capture_line_before_ack_is_invalid(self):
         observer, calls = self.setup_observer()
         self.append('Capturing CUDA gra'); observer.poll()
-        self.append('phs\n'); self.loaded(); observer.poll()
+        self.append('phs\n'); self.ready(); observer.poll()
         self.assertFalse(observer.receipt()['valid_for_graph_attribution'])
 
     def test_failed_resume_never_retries_or_requests_server_stop(self):
         def failed():
             raise OSError('mock control failed')
         observer, calls = self.setup_observer(failed)
-        self.loaded(); observer.poll(); observer.poll()
+        self.ready(); observer.poll(); observer.poll()
         self.assertEqual(calls, ['--resume'])
         self.assertFalse(observer.receipt()['valid_for_graph_attribution'])
         self.assertIn('mock control failed', observer.receipt()['failure'])
         self.assertFalse((self.root / 'stop-request.json').exists())
+        self.assertFalse(w.read(observer.directory / 'capture-go')['resume_acknowledged'])
+
+    def test_duplicate_pid_cannot_resume(self):
+        observer, calls = self.setup_observer()
+        self.ready()
+        path = observer.directory / 'capture-ready-rank-3.json'
+        row = w.read(path); row['pid'] = 100; w.write(path, row)
+        with self.assertRaisesRegex(Exception, 'duplicate capture rank PID'):
+            observer.poll()
+        self.assertEqual(calls, [])
+
+    def test_stale_rank_receipt_cannot_resume(self):
+        observer, calls = self.setup_observer()
+        self.ready()
+        path = observer.directory / 'capture-ready-rank-0.json'
+        row = w.read(path); row['monotonic'] = 0; w.write(path, row)
+        with self.assertRaisesRegex(Exception, 'invalid/stale'):
+            observer.poll()
+        self.assertEqual(calls, [])
+
+    def test_cleanup_releases_without_resuming(self):
+        observer, calls = self.setup_observer()
+        self.ready([0])
+        observer.done.set()
+        observer.release('cleanup')
+        observer.poll()
+        self.assertTrue((observer.directory / 'capture-go').exists())
+        self.assertEqual(calls, [])
+        self.assertFalse(observer.receipt()['valid_for_graph_attribution'])
+
+    def test_wait_budget_reports_without_resume_or_stop(self):
+        observer, calls = self.setup_observer()
+        observer.next_notice = 0
+        with patch('builtins.print') as report:
+            observer.poll()
+        report.assert_called_once()
+        self.assertEqual(calls, [])
+        self.assertIsNone(observer.failure)
+        self.assertFalse((observer.directory / 'capture-go').exists())
+
+    def test_release_write_failure_does_not_claim_success_or_block_cleanup(self):
+        observer, calls = self.setup_observer()
+        with patch.object(w, 'write', side_effect=OSError('temporary write failure')):
+            with self.assertRaises(OSError):
+                observer.release('first attempt')
+        self.assertIsNone(observer.released)
+        observer.release('cleanup')
+        self.assertEqual(w.read(observer.directory / 'capture-go')['reason'], 'cleanup')
+        self.assertEqual(calls, [])
 
 
 if __name__ == '__main__':

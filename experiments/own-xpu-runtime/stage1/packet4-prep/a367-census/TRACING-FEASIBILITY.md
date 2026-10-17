@@ -25,6 +25,62 @@ Full-model overhead, memory and four-rank step coverage remain unmeasured.
 Historical Laguna/DeepSeek stalls are not erased, but they do not override the
 matched new microtests. Never reuse their failed host-timing/submission flag mix.
 
+
+## October 17 profile crash and communicator audit
+
+Coordinator report: run `a367c-20261017T002647Z`, 00:39–00:57 UTC, loaded all
+four ranks and acknowledged the old resume trigger. Roughly ten seconds later,
+all four workers segfaulted at address 0x140 in `determine_available_memory`:
+`ProcessGroupXCCL::initXCCLComm` → `ccl::create_communicators` → `ccl_comm::init`
+→ `allocate_buffers` → `coll_init` → SYCL wait → `urEventWait` →
+`libur_adapter_level_zero_v2` → `libze_tracing_layer` → `libze_intel_gpu`.
+Zero GPU fault lines; orderly teardown and full 305-second watch;
+`census-run.json` has `passed=false` and `expected_tracer_exit_crash`. That label
+does not make this startup failure valid. Original evidence remains at
+`/mnt/raid-models/bench-results/a367c-20261017T002647Z/server.log` and
+`census-run.json`. This CPU change incorporates the coordinator report; it
+does not claim another device reproduction.
+
+The earlier paused CCL test created its communicator at the first all-reduce
+before resume; its later 64 MB all-reduce succeeded while tracing. One-card
+event-wait tests with v1/v2 adapters, traced and untraced, did not crash. The
+working hypothesis is lazy communicator creation under active L0 tracing,
+not ordinary `urEventWait` alone.
+
+The [source audit and complete group table](COMMUNICATOR-AUDIT.md) establishes
+the post-profile/post-KV/pre-capture hook and finds no active source-visible
+late group creation for this exact launch. Default WORLD is warmed before
+load; TP and the MTP draft use their existing group in profiling. EP and the
+separate coordinator WORLD device groups may remain unused. PP/DP/PCP/DCP are
+singletons; PP broadcast siblings, EPLB, elastic scaling, KV transfer and
+dynamic weight-update groups are absent. No blanket warm collective is added:
+initializing unused groups would change allocations and memory use.
+**Residual risk:** native XCCL/oneCCL may allocate resources or communicators
+per stream, operation, dtype or size after this hook. The clean Python source
+cannot prove otherwise. The microtest supports reuse, not full-model safety.
+
+`feasibility/run_driver.py` now registers `ccl-create-after-resume` immediately
+after `ccl-paused`. It holds all ranks before `init_process_group`, resumes,
+then releases them to create the lazy communicator at the first all-reduce.
+Expected outcome: SIGSEGV; retain actual per-rank exit codes and last stages,
+and do not treat an unrelated nonzero exit as confirmation. No device run was
+performed here. `--only` accepts one or multiple comma-separated steps and
+preserves registered order, for example:
+
+```bash
+nice -n 19 taskset -c 4-15,20-31 python3 -B experiments/own-xpu-runtime/stage1/packet4-prep/a367-census/feasibility/run_driver.py --only ccl-paused,ccl-create-after-resume
+```
+
+This is a future separately admitted device command. Add `--plan` for CPU-only
+inspection. It never kills or retries; an overrun prints and keeps waiting.
+The paused control now pauses before explicit communicator destruction. If it
+finishes all collective work, completes pause/release, all ranks exit with only
+zero/SIGSEGV codes, and no budget/control failure occurred, its failed exit
+receipt is retained and the next registered reproduction may run. Other control
+failures stop the sequence. Reproduction failure remains failure, never a clean
+pass or an automatic retry. A single-step reproduction is also supported with
+`--only ccl-create-after-resume`.
+
 ## Pinned ITT build
 
 The old `build-unitrace` has `BUILD_WITH_ITT=0` and rejects
@@ -44,15 +100,24 @@ calls device initialization. Only static inspection and `--plan` ran here.
 
 Wrap only the server. Keep `--start-paused --session <unique>` plus
 `--chrome-kernel-logging --chrome-itt-logging --verbose --pid` and
-`--chrome-event-buffer-size 4096`. The supervisor thread watches `server.log`.
-After four distinct rank `Model loading took` lines, resume exactly once and
-record the acknowledgement before any `Capturing CUDA graphs` line. Stay active
-through profiling, KV initialization, capture, readiness, 20-second plateau,
-30-second sleep and requests. Enable request ITT scopes just for the client;
-pause right after it finishes. Failed or late resume marks graph attribution
-invalid without skipping normal requests/teardown, and never triggers a retry.
-For races the observer conservatively treats capture text in the immediate
-post-acknowledgement log read as late.
+`--chrome-event-buffer-size 4096`. The source-pinned V2 capture-entry hook publishes four
+`capture-ready-rank-R.json` files (rank/PID/monotonic) in local ext4 scratch,
+after profiling and KV initialization. Each worker waits for `capture-go`,
+printing and continuing after each 600-second wait budget; no exception or
+kill. The supervisor resumes exactly once after all four distinct rank/PID
+receipts, records acknowledgement, then writes go even if resume fails.
+No loading-log resume remains. Failure invalidates graph attribution without
+skipping requests or normal teardown. Cleanup also releases waiters.
+
+Eager-census skips capture entirely. That secondary arm uses a census-only
+`Worker.compile_or_warm_up_model` wrapper after the original returns, before
+readiness, preserving its return value. It uses the same file handshake after
+profiling/KV/warmup; it is never graph evidence. Graph-census alone is next.
+
+Stay active through capture, readiness, 20-second plateau, 30-second sleep and
+requests. Enable request ITT scopes just for the client; pause right after it
+finishes, before normal shutdown destroys groups. Unexpected crashes and safety
+trips can precede that normal pause; pausing does not unload the tracing layer.
 
 Result directory: `/home/steve/.cache/a367-trace/<run-name>/`, local ext4,
 outside scratch. Require 8 GiB free, soft-stop at 6 GiB of local trace files.
@@ -96,7 +161,7 @@ insufficient to mark graph replays.
 
 `trace_marks.py` implements these source-pinned runtime wrappers and
 `census_entry.py` reuses the protected driver's spawn-safe cleanup bootstrap.
-Hooks remain inert until the supervisor creates `A367_CENSUS_MARKER_ACTIVE`.
+Request marker hooks remain inert until the supervisor creates `A367_CENSUS_MARKER_ACTIVE`; the startup capture rendezvous is independent of that request-only gate.
 The ITT binding is `torch._C._itt`, not a profiler activation. Missing ITT,
 unknown active graph runnable, unavailable rank or unreadable row metadata
 fails closed. M=2 is labeled verify only when existing GDN host metadata proves
@@ -107,7 +172,7 @@ shape is request batch B, not model M: source
 `vllm/v1/spec_decode/llm_base_proposer.py:522-524,557-583` derives the model
 token count and padding later. Unknown runnable wrappers fail closed even if
 they carry an attribute pointing to a recognized target model.
-Nested forward scopes are suppressed. Eight source dependencies are hash-pinned
+Nested forward scopes are suppressed. Twelve source dependencies are hash-pinned
 in that module and checked in every spawned process. CPU tests validate wrapper
 behavior with fake objects; actual marker emission remains a live-run check.
 

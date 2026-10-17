@@ -11,7 +11,7 @@ import sys
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[4]
-OUT = REPO / 'data/2026-10-17-flash-next-a367-census-reseal'
+OUT = REPO / 'data/2026-10-17-flash-next-a367-census-rendezvous'
 
 
 def sha(path):
@@ -58,15 +58,30 @@ def main():
         plan = json.loads(run.stdout)
         assert plan['native_executed'] is False
         result['plans'].append(dict(arm=arm, path=path.name, sha256=sha(path)))
+    cmd = ['/usr/bin/python3', '-B', str(HERE/'feasibility/run_driver.py'), '--plan',
+           '--only', 'ccl-paused,ccl-create-after-resume',
+           '--output', '/mnt/raid-models/bench-results/a367-tracefeas-rendezvous-plan']
+    run = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    path = OUT / 'ccl-reproduction-plan.json'; path.write_text(run.stdout)
+    plan = json.loads(run.stdout)
+    assert [r['name'] for r in plan['steps']] == ['ccl-paused', 'ccl-create-after-resume']
+    result['plans'].append(dict(arm='ccl-reproduction-plan-only', path=path.name, sha256=sha(path)))
     for path in HERE.glob('*.sh'):
         subprocess.run(['bash', '-n', str(path)], check=True)
     for path in HERE.glob('*.py'):
+        ast.parse(path.read_text(), filename=str(path))
+    for path in (HERE / 'feasibility').glob('*.py'):
         ast.parse(path.read_text(), filename=str(path))
     result['tests'] = sum(s['tests'] for s in result['suites'])
     result['seal_mismatches'] = sum(len(s['mismatches']) for s in result['seals'])
     result['preregistration_sha256'] = sha(HERE/'preregistration.json')
     result['passed'] = all(s['passed'] for s in result['suites']) and result['seal_mismatches'] == 0
     result['syntax_checks'] = True
+    import trace_marks
+    import a367_census
+    trace_marks.verify_pins(a367_census.paths()['source'])
+    result['runtime_hook_source_pins'] = {'checked': len(trace_marks.SOURCE_PINS), 'mismatches': 0,
+                                         'files': trace_marks.SOURCE_PINS}
     result['unitrace_smoke'] = 'Not run: even ITT-only tracer initialization calls zeInit(GPU_ONLY) in pinned source; static hashes only. No device access authorized.'
     (OUT/'cpu-tests.json').write_text(json.dumps(result, indent=2)+'\n')
     print(json.dumps({'tests': result['tests'], 'passed': result['passed'], 'seal_mismatches': result['seal_mismatches']}))

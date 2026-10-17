@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace as NS
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import trace_marks as marks
 
@@ -165,6 +165,69 @@ class MarkTests(unittest.TestCase):
         self.assertIn("vllm/models/qwen4_exp/amd/model.py", marks.SOURCE_PINS)
         self.assertIn("vllm/v1/spec_decode/llm_base_proposer.py", marks.SOURCE_PINS)
         self.assertTrue(all(len(v) == 64 for v in marks.SOURCE_PINS.values()))
+        for path in ('vllm/v1/worker/gpu/model_runner.py', 'vllm/v1/worker/gpu_worker.py',
+                     'vllm/v1/worker/xpu_worker.py', 'vllm/v1/worker/xpu_model_runner.py'):
+            self.assertIn(path, marks.SOURCE_PINS)
+
+    def test_capture_waits_past_600_and_returns_after_go(self):
+        now = [10.]
+        notices = []
+        def sleep(seconds):
+            ready = json.loads((self.root / 'capture-ready-rank-2.json').read_text())
+            self.assertEqual(ready['rank'], 2)
+            self.assertGreater(ready['pid'], 0)
+            self.assertEqual(ready['monotonic'], 10.)
+            now[0] += 601
+            if len(notices) == 2:
+                (self.root / 'capture-go').touch()
+        marks.capture_rendezvous(self.root, lambda: 2, clock=lambda: now[0],
+                                 sleep=sleep, report=lambda *a, **k: notices.append(a))
+        self.assertEqual(len(notices), 2)
+        self.assertFalse((self.root / 'capture-ready-rank-2.tmp').exists())
+
+    def test_capture_wrapper_preserves_call_and_return_after_release(self):
+        seen = []
+        result = object()
+        class Runner:
+            def capture_model(self, *args, **kwargs):
+                self_test.assertTrue((root / 'capture-ready-rank-2.json').is_file())
+                seen.append((args, kwargs))
+                return result
+        self_test, root = self, self.root
+        (root / 'capture-go').touch()
+        marks.patch_capture(Runner, root, lambda: 2)
+        self.assertIs(Runner().capture_model('argument', preserve=True), result)
+        self.assertEqual(seen, [(('argument',), {'preserve': True})])
+
+    def test_capture_wrapper_preserves_original_exception(self):
+        class Runner:
+            def capture_model(self):
+                raise ValueError('original capture failure')
+        (self.root / 'capture-go').touch()
+        marks.patch_capture(Runner, self.root, lambda: 2)
+        with self.assertRaisesRegex(ValueError, 'original capture failure'):
+            Runner().capture_model()
+
+    def test_capture_invalid_rank_fails_before_publication(self):
+        with self.assertRaisesRegex(RuntimeError, 'initialized rank'):
+            marks.capture_rendezvous(self.root, lambda: None)
+        self.assertEqual(list(self.root.glob('capture-*')), [])
+
+    def test_eager_rendezvous_after_warmup_and_preserves_return(self):
+        order = []
+        result = object()
+        class Worker:
+            model_config = NS(enforce_eager=True)
+            def compile_or_warm_up_model(self, value):
+                order.append(('warmup', value))
+                return result
+        marks.patch_eager_warmup(Worker, self.root, lambda: 2)
+        with patch.object(marks, 'capture_rendezvous', side_effect=lambda *a: order.append('rendezvous')):
+            self.assertIs(Worker().compile_or_warm_up_model(123), result)
+            self.assertEqual(order, [('warmup', 123), 'rendezvous'])
+            Worker.model_config.enforce_eager = False
+            Worker().compile_or_warm_up_model(456)
+        self.assertEqual(order, [('warmup', 123), 'rendezvous', ('warmup', 456)])
 
 
 if __name__ == "__main__":

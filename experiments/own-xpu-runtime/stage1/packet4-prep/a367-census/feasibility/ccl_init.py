@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 import time
 import traceback
-from common import Stages, arguments, finished, ready_go, wait_file
+from common import Stages, arguments, finished, ready_go, wait_file, write_json
 
 
 def rendezvous(args, rank, name):
@@ -32,6 +32,11 @@ def worker(rank, args, store_path):
         torch.xpu.synchronize()
         stages.mark('before_init_barrier')
         rendezvous(args, rank, 'before-init')
+        if args.create_after_resume:
+            # Hypothesis reproduction: the parent resumes before PG creation,
+            # so lazy XCCL/oneCCL creation at the FIRST collective is traced.
+            stages.mark('resume_before_init')
+            ready_go(args, stages)
         stages.mark('init_process_group')
         # Exact default A367 branch: XPUPlatform.dist_backend == xccl;
         # multiproc_executor selects file://; parallel_state creates FileStore
@@ -43,11 +48,12 @@ def worker(rank, args, store_path):
         stages.mark('init_complete')
         rendezvous(args, rank, 'before-small')
         stages.mark('all_reduce_4k')
-        # Force lazy communicator initialization WHILE tracing is still paused.
+        # Control creates while paused; reproduction creates while active.
         dist.all_reduce(small)
         torch.xpu.synchronize()
         stages.mark('all_reduce_4k_complete')
-        ready_go(args, stages)
+        if not args.create_after_resume:
+            ready_go(args, stages)
         rendezvous(args, rank, 'before-large')
         stages.mark('all_reduce_64m')
         dist.all_reduce(large)
@@ -58,11 +64,13 @@ def worker(rank, args, store_path):
             raise RuntimeError('all_reduce result is not four on every element')
         stages.mark('before_destroy_barrier')
         rendezvous(args, rank, 'before-destroy')
+        # Pause/release precedes communicator destruction, just as in census.
+        finished(args, stages, close=False)
         stages.mark('destroy_process_group')
         dist.destroy_process_group()
         initialized = False
         stages.mark('destroy_complete')
-        finished(args, stages)
+        stages.mark('exit')
     except BaseException:
         (args.output / 'abort').touch()
         stages.mark('error')
@@ -90,6 +98,11 @@ def main():
             if process.exitcode not in (None, 0):
                 (args.output / 'abort').touch()
         time.sleep(.1)
+    write_json(args.output / 'rank-exits.json', {
+        'create_after_resume': args.create_after_resume,
+        'exitcodes': {str(rank): process.exitcode for rank, process in enumerate(context.processes)},
+        'all_ranks_exited': True,
+        'expected_failure': 'SIGSEGV during lazy XCCL creation' if args.create_after_resume else None})
     return 0 if all(p.exitcode == 0 for p in context.processes) else 1
 
 

@@ -92,13 +92,21 @@ the byte audit. Unit restart and kill escalation are disabled. A refusal is
 reviewed, never retried automatically. No follow-on server is restored.
 
 Readiness is followed by 20 seconds of fresh complete plateau samples and a
-30-second sleep. Trace arms start paused. A supervisor thread resumes exactly once after all four
-rank `Model loading took` lines, before any `Capturing CUDA graphs` line, and
-records acknowledgement. It stays active through profiling, KV initialization,
-capture, readiness, plateau, delay and both requests. ITT request scopes turn on
-only for the client. Pause immediately after its last request, with finally
-cleanup. Failed/late resume invalidates graph attribution but the run continues
-to normal teardown without retry. Other trace/ITT failures,
+30-second sleep. Trace arms start paused. Each rank enters the source-pinned V2 `capture_model` hook
+after profiling/KV initialization and atomically writes its ready JSON into
+local scratch. All four wait for `capture-go`; a 600-second budget expiry prints
+and keeps waiting without exception or kill. The supervisor resumes exactly
+once only after four distinct rank/PID receipts, records acknowledgement, then
+writes go. Failed resume still writes go, invalidates graph attribution and
+continues to normal teardown without retry. Loading lines are not a trigger.
+Tracing covers capture, readiness, plateau, delay and both requests; ITT request
+scopes turn on only for the client. Pause immediately after its last request,
+with idempotent finally cleanup, before normal shutdown destroys groups.
+Unexpected worker crashes or independent safety trips can precede that normal
+ordering. `trace-capture.json` retains rank receipts and capture-go timing after
+scratch deletion. See the [communicator audit](COMMUNICATOR-AUDIT.md): native
+stream-specific lazy initialization remains a risk; no extra collectives were
+added to unused groups. Other trace/ITT failures,
 missing samples, faults, stale window, reserve breach or output soft-stop request
 one SIGINT to the captured API PID. Tracer flags retain exec/PID semantics;
 metric/KMD modes that add a supervising process are excluded. Never use a
@@ -106,6 +114,11 @@ cgroup kill or force-remove. To revoke, record STOP.json in the run directory
 or revoke the owner-window. Wait for all session owners to exit and the full
 305-second watch. A 300-second soft teardown overrun fails and continues
 waiting; recovery is the owner's decision.
+
+If an eager arm is separately admitted later, its handshake is after the
+original `compile_or_warm_up_model` returns, before readiness, because eager
+skips capture. It preserves the same failed-resume release and pause rules;
+eager evidence cannot supply graph attribution.
 
 ## 5. Retain outputs and analyze after exit
 

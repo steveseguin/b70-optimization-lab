@@ -13,9 +13,14 @@ import json
 import os
 from pathlib import Path
 import threading
+import time
 
 
 SOURCE_PINS = {
+    "vllm/v1/worker/gpu/model_runner.py": "aa2b1f1f2c3bf9277f6cad3639ee7f76874485a171bf673a28a130553c16f218",
+    "vllm/v1/worker/gpu_worker.py": "e7d59285879d3dce70d891b99e0e6892bd96ef93c3a4746b3fc723b5086df4d5",
+    "vllm/v1/worker/xpu_worker.py": "dc0aa8e7a0e303e38fdaf2729d878e2c23678be1a2e56fd2d46599cf5181ad11",
+    "vllm/v1/worker/xpu_model_runner.py": "07fa0390d28f2b8c3c3c0019eb9c3b126e2397aea268ba47c889f06b423deb23",
     "vllm/compilation/cuda_graph.py": "cbc474f9098386d2eef2e3ff61364c611fbc1338d9c259ad5a24439aa7f06412",
     "vllm/forward_context.py": "985adacc9e7ed2a7695819ac2e2ad9cb264a7d886806d3091ad75bfda7392242",
     "vllm/models/qwen4_exp/amd/model.py": "f7691bbd16bbddb39fc093ff19bfd3e7cabfe3289ae6c6ba18ca9afb918becc8",
@@ -26,6 +31,53 @@ SOURCE_PINS = {
     "vllm/v1/attention/backends/gdn_attn.py": "c65552d9aad86472544033d44ad8a872221a83e6b60ba9918cc049ab0c580c7c"
 }
 TARGET_NAMES = {"Qwen4ExpForCausalLM", "Qwen4ExpForConditionalGeneration"}
+
+
+def capture_rendezvous(directory, get_rank, *, clock=time.monotonic,
+                       sleep=time.sleep, report=print, budget=600):
+    """Host files only. Budget expiry reports and waits; never raises or kills.
+
+    The supervisor releases even a failed resume. Atomic publication prevents
+    it from seeing a partially written rank receipt on local ext4.
+    """
+    directory = Path(directory)
+    rank = get_rank()
+    if type(rank) is not int or rank not in range(4):
+        raise RuntimeError("capture rendezvous requires initialized rank 0..3")
+    ready = directory / f"capture-ready-rank-{rank}.json"
+    record = {"schema": "a367-census-capture-ready.v1", "rank": rank,
+              "pid": os.getpid(), "monotonic": clock()}
+    temporary = ready.with_suffix(".tmp")
+    temporary.write_text(json.dumps(record, sort_keys=True) + "\n")
+    temporary.replace(ready)
+    deadline = clock() + budget
+    while not (directory / "capture-go").is_file():
+        if clock() >= deadline:
+            report(f"A367 capture rendezvous rank {rank}: {budget}s wait budget exceeded; "
+                   "still waiting for capture-go; no exception or kill", flush=True)
+            deadline = clock() + budget
+        sleep(.05)
+
+
+def patch_capture(cls, directory, get_rank):
+    original = cls.capture_model
+    @wraps(original)
+    def capture(self, *args, **kwargs):
+        capture_rendezvous(directory, get_rank)
+        return original(self, *args, **kwargs)
+    cls.capture_model = capture
+
+
+def patch_eager_warmup(cls, directory, get_rank):
+    """Eager skips capture_model; hold after warmup, before readiness RPC returns."""
+    original = cls.compile_or_warm_up_model
+    @wraps(original)
+    def warmup(self, *args, **kwargs):
+        result = original(self, *args, **kwargs)
+        if self.model_config.enforce_eager:
+            capture_rendezvous(directory, get_rank)
+        return result
+    cls.compile_or_warm_up_model = warmup
 
 
 def rows(value):
@@ -197,8 +249,11 @@ def install():
     """Runtime-only entry, after the unchanged driver cleanup bootstrap."""
     active = Path(os.environ["A367_CENSUS_MARKER_ACTIVE"])
     directory = Path(os.environ["A367_CENSUS_MARKER_DIR"])
+    capture_directory = Path(os.environ["A367_CENSUS_CAPTURE_DIR"])
     if not active.is_absolute() or not directory.is_absolute() or not directory.is_dir():
         raise RuntimeError("census marker paths must be absolute, prepared run paths")
+    if not capture_directory.is_absolute() or not capture_directory.is_dir():
+        raise RuntimeError("census capture path must be absolute, prepared local scratch")
     root = Path(os.environ["PACKET4_SOURCE"])
     verify_pins(root)
     # This is the ITT binding only. It does not activate a PyTorch profiler.
@@ -211,11 +266,20 @@ def install():
     from vllm.models.qwen4_exp.amd.model import Qwen4ExpForCausalLM, Qwen4ExpForConditionalGeneration
     from vllm.models.qwen4_exp.amd.mtp import Qwen4ExpMTP
     from vllm.v1.spec_decode.qwen4_exp import Qwen4ExpMTPProposer
+    from vllm.v1.worker.gpu.model_runner import GPUModelRunner
     def get_rank():
         return distributed.get_rank() if distributed.is_initialized() else None
     def get_context():
         return forward_context.get_forward_context() if forward_context.is_forward_context_available() else None
     marker = Marker(active, directory, _itt, get_rank, get_context, SOURCE_PINS)
+    # XPUModelRunnerV2 inherits this method unchanged. On the pinned XPU path
+    # compile_or_warm_up_model calls it after profile_run and initialize_kv_cache;
+    # XPU cannot enter the earlier profile_cudagraph_memory path.
+    if os.environ["A367_CENSUS_ARM"] == "eager-census":
+        from vllm.v1.worker.gpu_worker import Worker
+        patch_eager_warmup(Worker, capture_directory, get_rank)
+    else:
+        patch_capture(GPUModelRunner, capture_directory, get_rank)
     patch_graph(CUDAGraphWrapper, marker)
     for cls in (Qwen4ExpForCausalLM, Qwen4ExpForConditionalGeneration):
         patch_forward(cls, marker, "target")

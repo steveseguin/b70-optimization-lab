@@ -51,7 +51,12 @@ def arguments(description):
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--output', required=True, type=Path)
     parser.add_argument('--handshake', action='store_true')
-    return parser.parse_args()
+    parser.add_argument('--create-after-resume', action='store_true',
+                        help='CCL hypothesis reproduction: resume before PG creation')
+    args = parser.parse_args()
+    if args.create_after_resume and not args.handshake:
+        parser.error('--create-after-resume requires --handshake')
+    return args
 
 
 def wait_file(path, root):
@@ -70,11 +75,12 @@ def ready_go(args, stages):
     stages.mark('measurement')
 
 
-def finished(args, stages):
+def finished(args, stages, *, close=True):
     stages.mark('done')
     (args.output / f'done-{stages.rank}').touch()
     if args.handshake:
         stages.mark('wait_release')
         wait_file(args.output / 'release', args.output)
-    stages.mark('exit')
-    stages.closed.set()
+    stages.mark('exit' if close else 'pause_handshake_complete')
+    if close:
+        stages.closed.set()

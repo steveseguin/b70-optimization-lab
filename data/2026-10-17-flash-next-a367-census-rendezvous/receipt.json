@@ -1,0 +1,57 @@
+{
+  "schema": "a367-census-rendezvous-cpu-receipt.v1",
+  "date": "2026-10-17",
+  "base_commit": "6a07c532486d23af7af098cde5a3f3172f4763d8",
+  "scope": "CPU-only hooks, source audit, microtest preparation and reseal; no device reproduction",
+  "native_executed": false,
+  "weights_read": false,
+  "owner_approval_recorded": false,
+  "protected_packets_unchanged": true,
+  "seal_sha256": "b0c48ad16b44898e66135f8ec43d6c1e6d435b94bbed6c6f41db9e3c20aadbca",
+  "preregistration_sha256": "2e321bbc199c38cec453e812569a536e05942d6a1c875a471afa1426468af57c",
+  "approval_sentence": "I authorize one A367 diagnostic census on steve-b70s with a census-only MemAvailable start floor of 114840824 KiB, a 0.5-second watchdog and the 12000000 KiB live reserve, under preregistration SHA256 2e321bbc199c38cec453e812569a536e05942d6a1c875a471afa1426468af57c and seal SHA256 b0c48ad16b44898e66135f8ec43d6c1e6d435b94bbed6c6f41db9e3c20aadbca. Tracing is diagnostic and makes no speed claim. This accepts the unmeasured tracer and generation-memory risk, does not lower the packet-4 fixture floor, and does not resolve the halt or authorize another launch.",
+  "cpu_receipt_sha256": "993347766b1683b3d1b4a33ef9358244ff90e55c85a51d31634dff32b7c5d329",
+  "test_counts": {
+    "census": 206,
+    "replay": 84,
+    "calibration": 75,
+    "driver": 59,
+    "payload": 6,
+    "tree": 9,
+    "feasibility": 19
+  },
+  "tests": 458,
+  "seal_mismatches": 0,
+  "source_pin_mismatches": 0,
+  "communicator_audit": {
+    "path": "experiments/own-xpu-runtime/stage1/packet4-prep/a367-census/COMMUNICATOR-AUDIT.md",
+    "sha256": "f307dde7ba065c851d7dbf35e30c6cfecce7fe8bef4c3fb901ee0740435bc45b"
+  },
+  "graph_hook": "vllm/v1/worker/gpu/model_runner.py:918 GPUModelRunner.capture_model, called gpu_worker.py:865 after profile/KV initialization",
+  "eager_hook": "Worker.compile_or_warm_up_model after original return, before readiness; graph capture skipped",
+  "warm_collectives_added": false,
+  "residual_risk": "Native XCCL/oneCCL stream/operation-specific lazy resources not excluded by clean Python source; unexpected crashes/safety stops can precede normal pause.",
+  "coordinator_report": {
+    "run": "a367c-20261017T002647Z",
+    "passed": false,
+    "crash": "all four workers SIGSEGV 0x140 during profile lazy XCCL creation after old loading-line resume",
+    "gpu_fault_lines": 0,
+    "watch_seconds": 305
+  },
+  "future_reproduction_command": "nice -n 19 taskset -c 4-15,20-31 python3 -B experiments/own-xpu-runtime/stage1/packet4-prep/a367-census/feasibility/run_driver.py --only ccl-paused,ccl-create-after-resume",
+  "reproduction_executed": false,
+  "files": {
+    "calibration.log": "6d9ea605c1b1e14551226324e8466c0c93626741f9ab11a62fff0023be4084b6",
+    "ccl-reproduction-plan.json": "3ab678d5d74d2c050bb56d4b991e51b9c9c8f374ff68fb6bf2a3e74e1aa92709",
+    "census.log": "934f1b9a81ec92b1822292effe1c4664c319bd31b9528922c9899e487f09820c",
+    "cpu-tests.json": "993347766b1683b3d1b4a33ef9358244ff90e55c85a51d31634dff32b7c5d329",
+    "driver.log": "6655864348a83af20afee263950e32ae5947367a0df2fac83334c0d6f5ad54ee",
+    "eager-census-plan.json": "8fd5b2d305df043dc6647f1f7f7d829b813f26741841096bd968d20f5f09c4e8",
+    "feasibility.log": "766208bbe6adfeb4dcb380d0d6b9e727f464b2d62b9afa9fdaec24dcf91ea70d",
+    "graph-census-plan.json": "68845ec9044ff27e83d8e23800663fbea63407004ac7eaa7fa4c244d85c7f91c",
+    "graph-reference-plan.json": "6a09c49495036b4f36361d58386a5e76ea30f1d2f0f637a86e75ce9f987ab45e",
+    "payload.log": "6e670a98276a480965a3efe817803231c1cac17cb4202a3aa3ca5c885c097bd6",
+    "replay.log": "cd94dbce4723319386ebb19c76f4add9d6e18e0694daec829130502f6255a8c8",
+    "tree.log": "a6af778cd6acff9fc84034d38c4bc85df476811e7e20be50377086626d0d1c2a"
+  }
+}
