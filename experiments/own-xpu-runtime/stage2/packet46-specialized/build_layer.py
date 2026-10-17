@@ -100,6 +100,8 @@ def run(mode):
         mirror_dir = output / 'source'
         own_mirror(mirror_dir)
         compiler = '/usr/bin/g++' if mode == 'host' else '/opt/intel/oneapi/compiler/2026.0/bin/icpx'
+        compiler_version = subprocess.run([compiler, '--version'], check=True,
+                                          text=True, capture_output=True).stdout
         commands = [
             ['cmake', '-S', str(HERE), '-B', str(output), '-DCMAKE_CXX_COMPILER=' + compiler,
              '-DOWN_RT_HOST_ONLY=' + ('ON' if mode == 'host' else 'OFF'),
@@ -122,8 +124,11 @@ def run(mode):
                       device_executed=False, mode=mode, limits=limits,
                       completed_utc=datetime.now(timezone.utc).isoformat(), commands=commands,
                       source_hashes=closure, baseline_provenance=provenance,
+                      compiler=dict(path=compiler, version=compiler_version),
                       baseline_objects=inventory,
                       artifacts={str((output / n).relative_to(ROOT)): h for n, h in artifacts.items()},
+                      cmake_cache_sha256=sha(output / 'CMakeCache.txt'),
+                      link_command_sha256=sha(output / 'CMakeFiles/layer-bench.dir/link.txt'),
                       compile_commands_sha256=sha(output / 'compile_commands.json'))
         (HERE / f'build-layer-{mode}.json').write_text(json.dumps(record, indent=2) + '\n')
         print(json.dumps(dict(passed=True, mode=mode, binaries=artifacts, device_executed=False)))

@@ -7,6 +7,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 
 HERE = Path(__file__).resolve().parent
@@ -15,6 +16,11 @@ SPEC = importlib.util.spec_from_file_location(
     'packet46_inherited_supervision', HERE.parent / 'packet34-replay-bench/window.py')
 SUPERVISION = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(SUPERVISION)
+# Extend the private imported supervisor's signatures without editing packet34.
+# Keep specific driver messages; generic words such as "hang" are not faults.
+SUPERVISION.FAULT = re.compile(
+    r'Fault response|CAT error|(?:GPU |engine )reset|timed[- ]out job|job.*timed out|'
+    r'devcoredump|(?:device |GPU |xe.*)coredump', re.I)
 require = SUPERVISION.require
 sha = SUPERVISION.sha
 save = SUPERVISION.save

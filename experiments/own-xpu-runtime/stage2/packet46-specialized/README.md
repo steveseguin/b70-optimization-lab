@@ -69,8 +69,10 @@ tests and touch no native backend.
 Build output is ignored. Baseline dependency objects are read-only and shared;
 only packet46's new objects, linked binaries and relink proof are added.
 The build's admitted write allowance is 1 GB per layer mode and preserves
-the inherited 8 GB free-disk floor. CPU tests retain compact JSONL comparisons
-and their hashes rather than a duplicate full model/state tree. No original
+the inherited 8 GB free-disk floor. Full-layer CPU tests retain compact JSONL
+comparisons, receipts and logs in tracked `evidence/cpu-layer-TIMESTAMP/`
+directories; no buffer dumps are retained. Compiled binaries remain ignored.
+CPU evidence retains hashes rather than a duplicate full model/state tree. No original
 evidence is deleted to reclaim space. The source, commands and pinned parent
 build are needed to restore these local binaries.
 

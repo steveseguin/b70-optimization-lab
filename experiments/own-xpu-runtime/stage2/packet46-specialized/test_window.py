@@ -7,13 +7,22 @@ import signal
 import tempfile
 import unittest
 from unittest.mock import patch
+from contextlib import ExitStack
 
 import preparation
 import summarize
 import window_support as support
+import window
 
 
 class AdmissionTests(unittest.TestCase):
+    def test_specific_fault_signatures(self):
+        for text in ('Fault response', 'Engine memory CAT error', 'engine reset',
+                     'timed-out job', 'job 17 timed out', 'devcoredump', 'xe GPU coredump'):
+            self.assertIsNotNone(support.SUPERVISION.FAULT.search(text))
+        for text in ('hang detection enabled', 'cache restored', 'job completed'):
+            self.assertIsNone(support.SUPERVISION.FAULT.search(text))
+
     def test_cutoff_before_any_build(self):
         with self.assertRaisesRegex(ValueError, 'prohibited before'):
             preparation.limits(now=datetime(2026, 10, 17, 2, 54, 59, tzinfo=timezone.utc))
@@ -134,6 +143,84 @@ class SummaryTests(unittest.TestCase):
                 write(data)
                 with self.assertRaises(ValueError):
                     summarize.timing(root)
+
+    def test_missing_capture_rejected_even_when_cases_remain(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rows = []
+            for layer in (3, 4):
+                for iteration in range(6):
+                    for scope, buffer in (('producer', 'first'), ('producer', 'second'),
+                                          ('all-mutable-allocation', 'state')):
+                        rows.append(dict(layer=layer, iteration=iteration, scope=scope,
+                                         buffer=buffer, bytes=8, equal=True, sha256='a'*64))
+            manifest = root / 'manifest.json'
+            manifest.write_text(json.dumps(summarize.capture_manifest(rows)))
+            def write(data):
+                (root / 'comparisons.jsonl').write_text(''.join(json.dumps(row)+'\n' for row in data))
+                (root / 'receipt.json').write_text(json.dumps(dict(passed=True, mode='exact',
+                    cpu_mock=False, safe_to_exit=True, checks=len(data), route_set_counts={'3': 2, '4': 2})))
+            write(rows)
+            self.assertTrue(summarize.exact(root, manifest_path=manifest)['passed'])
+            write(rows[1:])
+            with self.assertRaisesRegex(ValueError, 'capture manifest'):
+                summarize.exact(root, manifest_path=manifest)
+
+
+class CoordinatorRehearsalTests(unittest.TestCase):
+    def test_full_mock_exact_window(self):
+        # Exercise the coordinator's real command assembly and durable receipt,
+        # with every external observation/process mocked; no device or journal.
+        with tempfile.TemporaryDirectory() as directory, ExitStack() as stack:
+            root = Path(directory)
+            (root / 'build').mkdir()
+            output = root / 'evidence' / 'exact'
+            class Child:
+                pid = 321
+                returncode = 0
+                def poll(self): return 0
+            def launch(command, **kwargs):
+                run = output / 'run'
+                run.mkdir()
+                for name in ('receipt.json', 'comparisons.jsonl', 'iterations.jsonl', 'exact-capture-manifest.json'):
+                    (run / name).write_text('{}\n')
+                return Child()
+            original_read = Path.read_text
+            def read(path, *args, **kwargs):
+                if path == Path('/proc/self/cgroup'):
+                    return '0::/user.slice/packet46-test.service\n'
+                if path == Path('/proc/sys/kernel/random/boot_id'):
+                    return 'mock-boot\n'
+                return original_read(path, *args, **kwargs)
+            stack.enter_context(patch.object(Path, 'read_text', read))
+            stack.enter_context(patch.object(window, 'HERE', root))
+            stack.enter_context(patch.object(window.os, 'getpriority', return_value=19))
+            stack.enter_context(patch.object(window.os, 'sched_getaffinity', return_value={4}))
+            stack.enter_context(patch.object(window, 'environment', return_value={'PATH': '/mock'}))
+            stack.enter_context(patch.object(window, 'sealed_gate', return_value={}))
+            stack.enter_context(patch.object(window, 'identity', return_value=dict(
+                card=0, boot_id='mock-boot', environment={'PATH': '/mock'},
+                seal_sha256='seal', binary_sha256='binary')))
+            stack.enter_context(patch.object(window, 'host_memory', return_value={}))
+            stack.enter_context(patch.object(window, 'storage', return_value={}))
+            stack.enter_context(patch.object(window, 'gpu_clients', return_value={}))
+            stack.enter_context(patch.object(window, 'process_start', return_value=1000))
+            stack.enter_context(patch.object(window.SUPERVISION, 'journal', return_value=('', 'cursor')))
+            stack.enter_context(patch.object(window.SUPERVISION, 'ldd_preflight', return_value={}))
+            stack.enter_context(patch.object(window.SUPERVISION, 'supervise', return_value=dict(
+                returncode=0, child_still_running=False)))
+            stack.enter_context(patch.object(window.summarize, 'exact', return_value=dict(
+                passed=True, exact_output_identity='mock-output')))
+            mocked_launch = stack.enter_context(patch.object(window.subprocess, 'Popen', side_effect=launch))
+            result = window.main(['--authorized-device-window', '--mode', 'exact', '--card', '0',
+                                  '--output', str(output)])
+            self.assertEqual(result, 0)
+            row = json.loads((output / 'window.json').read_text())
+            self.assertTrue(row['passed'])
+            self.assertEqual(len(row['native_files']), 4)
+            self.assertEqual(row['exact_output_identity'], 'mock-output')
+            self.assertEqual(mocked_launch.call_args.args[0], [str(root / 'build/device/layer-bench'),
+                '--mode', 'exact', '--card', '0', '--output', str(output / 'run'), '--authorized-device-window'])
 
 
 if __name__ == '__main__':

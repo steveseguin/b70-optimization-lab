@@ -44,8 +44,8 @@ def main(argv=None):
     seal_path = HERE / 'seal.json'
     sealed_gate(seal_path)
     output = args.output.resolve()
-    require(output.is_relative_to(HERE / 'build') and not output.exists(),
-            'new output below packet46/build required')
+    require(output.is_relative_to(HERE / 'evidence') and not output.exists(),
+            'new output below packet46/evidence required')
     boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
     latch_path = HERE / 'build' / ('fault-' + boot + '.json')
     require(not latch_path.exists(), 'this boot has a retained packet46 fault/uncertain-owner latch')

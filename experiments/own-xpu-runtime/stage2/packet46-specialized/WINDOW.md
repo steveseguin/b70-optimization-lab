@@ -43,25 +43,25 @@ retry a failed previous one.
 ```bash
 systemd-run --user --unit=packet46-e1-p46-a --wait \
   --property=KillMode=process --property=SendSIGKILL=no --property=TimeoutStopSec=90s \
-  /usr/bin/bash "$P46/coordinator-exact.sh" "$P46_LIBS" "$P46_REVIEW" "$P46/build/p46-a-e1"
+  /usr/bin/bash "$P46/coordinator-exact.sh" "$P46_LIBS" "$P46_REVIEW" "$P46/evidence/p46-a-e1"
 
 systemd-run --user --unit=packet46-e2-p46-a --wait \
   --property=KillMode=process --property=SendSIGKILL=no --property=TimeoutStopSec=90s \
-  /usr/bin/bash "$P46/coordinator-exact.sh" "$P46_LIBS" "$P46_REVIEW" "$P46/build/p46-a-e2"
+  /usr/bin/bash "$P46/coordinator-exact.sh" "$P46_LIBS" "$P46_REVIEW" "$P46/evidence/p46-a-e2"
 
 systemd-run --user --unit=packet46-t1-p46-a --wait \
   --property=KillMode=process --property=SendSIGKILL=no --property=TimeoutStopSec=90s \
-  /usr/bin/bash "$P46/coordinator-timing.sh" "$P46_LIBS" "$P46_REVIEW" "$P46/build/p46-a-t1" \
-  "$P46/build/p46-a-e1/window.json" "$P46/build/p46-a-e2/window.json"
+  /usr/bin/bash "$P46/coordinator-timing.sh" "$P46_LIBS" "$P46_REVIEW" "$P46/evidence/p46-a-t1" \
+  "$P46/evidence/p46-a-e1/window.json" "$P46/evidence/p46-a-e2/window.json"
 
 systemd-run --user --unit=packet46-t2-p46-a --wait \
   --property=KillMode=process --property=SendSIGKILL=no --property=TimeoutStopSec=90s \
-  /usr/bin/bash "$P46/coordinator-timing.sh" "$P46_LIBS" "$P46_REVIEW" "$P46/build/p46-a-t2" \
-  "$P46/build/p46-a-e1/window.json" "$P46/build/p46-a-e2/window.json"
+  /usr/bin/bash "$P46/coordinator-timing.sh" "$P46_LIBS" "$P46_REVIEW" "$P46/evidence/p46-a-t2" \
+  "$P46/evidence/p46-a-e1/window.json" "$P46/evidence/p46-a-e2/window.json"
 
 nice -n 19 taskset -c 4-15,20-31 python3 -B "$P46/summarize.py" \
-  --windows "$P46/build/p46-a-t1/window.json" "$P46/build/p46-a-t2/window.json" \
-  --output "$P46/build/p46-a-summary.json"
+  --windows "$P46/evidence/p46-a-t1/window.json" "$P46/evidence/p46-a-t2/window.json" \
+  --output "$P46/evidence/p46-a-summary.json"
 ```
 
 E1 and E2 require the same full ordered intermediate/state capture manifest,
@@ -92,3 +92,7 @@ The raw results are `run/receipt.json`, `run/comparisons.jsonl`,
 the seal; timing `summary.json` reports the measured bar separately from
 whether the window completed correctly. Do not turn this synthetic per-layer
 screen into tokens/s, a full engine quality pass or a public speed claim.
+
+Retain the compact receipts, comparison rows and event rows under `evidence/`
+in the result commit. Review large journal logs for the repository retention
+rule; preserve their original bytes and hashes even if stored separately.

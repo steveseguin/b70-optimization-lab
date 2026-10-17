@@ -1,0 +1,114 @@
+{
+  "schema": "own-runtime.packet46.python-gates.v1",
+  "passed": true,
+  "device_executed": false,
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/window.py": "20426ac90dd439953fbb4857fa2afca05f233fd6b08e326eb1abb48c03d10017",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/build_layer.py": "2c1da9407d60b9b4c38320f56b823c750866572fb3ea880bdfaaf9f38fafcfbc",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/cache_budget.py": "b54cab129a79c8033efe17e14033a4620f05a8b65594235f539c4cac80db9163",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/coordinator-exact.sh": "643f7b8d5c1f613270f912df76b2f955ae78b05760f2d71d945e67f3b706d4ed",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/coordinator-timing.sh": "762b073fd852f2fb0f18f84d9641bdbc665fe560b1cab2bbe4eca532dbf45c1f",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/cpu_checks.py": "e3d5bb4c5fd6dd59ee9fb6e21dfcd85847130fb49f09c251323307f7e7c376d2",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/cpu_layer_gate.py": "d74e74e1a7d93643d6e7ca0b535d1a07a942bc2739eddd1639189cd5c5ccfc6a",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/diagnostics/cache_report.py": "e197063a93353a3e26b56a21ce4b5b34ec5f58f71269b0bc3adaa5eb4782e991",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/diagnostics/run_cpu.py": "e41ac24284ae5a4452d62b8283864457e621f2f6c4cd67f485ebe46f7f2ea02f",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/diagnostics/test_validate.py": "8bc721c0e99d39bd287c36a5e4c4e8f6784efe0796c344c3baba84a9b117a16d",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/diagnostics/validate.py": "6d29de11920247f86db59a88c145a31976e6c25d103b25a29e3e6637194f16eb",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/mirror_inputs.py": "bc2b9bae3699ba5d4599a11f52f620d057a8b56b1a1f3bed72f6ec986ee6c740",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/preparation.py": "659af0651e3ee36ef182b67632117de7d3c3e99b34141e4d5ff19397b150611c",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/seal.py": "7ee9e866213acf2b038679d9cc4013a8d1201fc4b5018910375dab1d20d2a57e",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/summarize.py": "c3e90917d88e85ef590c1b3b50dd320ddc8dbc3d45d9ea40f0aaafaccc50b63c",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/test_cache_budget.py": "50117d5769d6be7f240e268e6d7d24bab10136da851d2aa050720c06fccfd8db",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/test_window.py": "8122b82e5b406d304a821e3ac006306bbbaf15cbc0c6dd18b877641d3e519c4e",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/window.py": "ad6174350277e4aaa05371ad7d791cc1b2369887662f57fb6ebb775215d1550f",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/window_support.py": "e199ba9b067d4b7f8c8ac7a4880de69fe539ca08546190e7c38c5b164e2d3fcc"
+  },
+  "admission": {
+    "checked_utc": "2026-10-17T02:29:50.165157+00:00",
+    "not_before_utc": "2026-10-17T02:55:00+00:00",
+    "nice": 19,
+    "affinity": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "disk_free_bytes": 23706615808,
+    "planned_write_bytes": 0,
+    "min_remaining_bytes": 8000000000
+  },
+  "results": [
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet46-specialized",
+        "-p",
+        "test_cache_budget.py",
+        "-v"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "test_inventory_and_correction (test_cache_budget.BudgetTests.test_inventory_and_correction) ... ok\ntest_placement_fits_and_covers_every_layer (test_cache_budget.BudgetTests.test_placement_fits_and_covers_every_layer) ... ok\ntest_reserve_and_uniform_accounting (test_cache_budget.BudgetTests.test_reserve_and_uniform_accounting) ... ok\n\n----------------------------------------------------------------------\nRan 3 tests in 0.011s\n\nOK\n"
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet46-specialized",
+        "-p",
+        "test_window.py",
+        "-v"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "test_closed_environment (test_window.AdmissionTests.test_closed_environment) ... ok\ntest_cutoff_before_any_build (test_window.AdmissionTests.test_cutoff_before_any_build) ... ok\ntest_fresh_exact_companions (test_window.AdmissionTests.test_fresh_exact_companions) ... ok\ntest_sealed_paths_and_changed_source (test_window.AdmissionTests.test_sealed_paths_and_changed_source) ... ok\ntest_specific_fault_signatures (test_window.AdmissionTests.test_specific_fault_signatures) ... ok\ntest_supervisor_never_hard_kills (test_window.AdmissionTests.test_supervisor_never_hard_kills) ... ok\ntest_full_mock_exact_window (test_window.CoordinatorRehearsalTests.test_full_mock_exact_window) ... ok\ntest_complete_event_accounting_and_bar (test_window.SummaryTests.test_complete_event_accounting_and_bar) ... ok\ntest_missing_capture_rejected_even_when_cases_remain (test_window.SummaryTests.test_missing_capture_rejected_even_when_cases_remain) ... ok\n\n----------------------------------------------------------------------\nRan 9 tests in 0.658s\n\nOK\n"
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet46-specialized/diagnostics",
+        "-p",
+        "test_validate.py",
+        "-v"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "test_duplicate_or_unresolved (test_validate.Gate.test_duplicate_or_unresolved) ... ok\ntest_frozen_cache_report (test_validate.Gate.test_frozen_cache_report) ... ok\ntest_mutations (test_validate.Gate.test_mutations) ... ok\ntest_rejected_and_corrected_are_distinct (test_validate.Gate.test_rejected_and_corrected_are_distinct) ... ok\ntest_valid (test_validate.Gate.test_valid) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.001s\n\nOK\n"
+    }
+  ],
+  "completed_utc": "2026-10-17T02:29:51.016445+00:00"
+}

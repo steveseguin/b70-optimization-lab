@@ -35,7 +35,7 @@ def main():
             for path in (leaf, binary):
                 if str(path.relative_to(ROOT)) not in artifacts: raise ValueError('unbound CPU binary')
             stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
-            output = HERE / 'build' / ('cpu-layer-' + stamp)
+            output = HERE / 'evidence' / ('cpu-layer-' + stamp)
             output.mkdir(parents=True, exist_ok=False)
             env = dict(os.environ, OMP_NUM_THREADS='2', PYTHONDONTWRITEBYTECODE='1')
             with (output / 'leaf.json').open('w') as log:
