@@ -282,3 +282,46 @@ No breadcrumb block on any arm (no stall, no failure); kernel log clean from 11:
   9 % faster at 8K, 25 % at 16K and 41 % at 30K than the shipped package (same tokens per step, same prompts); the
   same direction as gates 1-3 of `notes/2026-10-17-tp2-package-one-launch-proposal.md`. Owner's call, unchanged.
 - Kernel log clean 11:48:55-11:53:08; the package's own stop path left the cards empty.
+
+## Profile pair result (11:56-12:00 EDT): where the 38 ms of a drafting step go on the card
+
+8 decode steps each, rank 0 only (comm5b recipe; profiler timing is not a speed figure, kernel durations are).
+Traces `/mnt/fast-ai/bench-results/fp8-r314-floor-{P,P0}-20261017-prof-trace/`, summaries
+`data/2026-10-17-step-floor/profile/summary-{P,P0}.json`, matmuls by launching op `scripts/trace-gemm-by-op.py`.
+Kernel log clean 11:53:32-12:00:23.
+
+| per step, card 0 (ms) | P0, one token | P, depth 5 | difference |
+| --- | ---: | ---: | ---: |
+| target FP8 linears (`_xpu_C::fp8_gemm_w8a16`, 256 calls, about 540 GB/s) | 22.57 | 22.6 | - |
+| drafter FP8 linears (about 17.5 calls, 4 per pass) | - | 2.62 | +2.62 |
+| target LM head, BF16 `aten::mm` (2.13 ms per call, about 600 GB/s) | 2.13 | 2.13 | - |
+| GDN `in_proj_ba`, BF16 `aten::mm` (48 calls at 10-20 us) | 0.5 | 0.5 | - |
+| drafter `mtp.fc`, BF16 (about 95 us per pass, split over the cards) | - | 0.48 | +0.48 |
+| drafter INT4 shortlist head (`int4_gemm_w4a16`, 262 us per pass, about 320 GB/s) | - | 1.15 | +1.15 |
+| attention (split-KV FMHA; 6 verify rows take 38.7 us per call against 7.4 for one) | 0.13 | 0.79 | +0.66 |
+| GDN kernels (speculative variants when drafting) | 0.63 | 0.99 | +0.36 |
+| all-gather kernels (130 / 152 calls) | 0.65 | 0.88 | +0.22 |
+| argmax and the rest (norms, elementwise, copies) | about 1.8 | about 2.3 | +0.5 |
+| **all kernels** | **28.4** | **34.6** | **+6.2** |
+| step without the profiler (write probe) | 30.1 | 37.85 | +7.75 |
+| **not in any kernel** (step minus kernels) | **1.7** | **3.25** | +1.55 |
+
+Readings:
+- **The target pass is at the memory wall.** Its FP8 linears move 12.2 GB per card in 22.6 ms (about 540 GB/s of the
+  B70's 608 GB/s) and the BF16 LM head runs at about 600 GB/s. 25 of the 30 ms of a one-token step is weight reads.
+- **Drafting costs about 1.2 ms of kernels per pass** (FP8 layer 0.52, `mtp.fc` 0.1, INT4 head 0.23, attention,
+  norms, exchanges), plus the verify rows' extra attention and GDN work. Its FP8 layer already runs at the target's
+  rate; an INT4 drafter layer would halve the bytes but the W4A16 kernel runs at about 320 GB/s, so it would save
+  roughly 0.1 ms per pass: not worth an acceptance risk.
+- **The time in no kernel (1.7 ms without drafting, 3.25 ms with it) matches the exchanges' latency:** the compute
+  queue waits for each all-gather's peer copy (130-152 per step, about 13-21 us each beyond the kernel). Together with
+  the kernels the exchanges cost about 2.4 ms (one token) to 4.1 ms (drafting) a step, 8-11 %. Moving the same bytes
+  faster cannot change any output, but the only faster path is a custom peer-to-peer transport, and the lab's one
+  peer-visible kernel lost the device on its first test (`notes/2026-08-16-q8-peer-pair-collective-unsafe.md`).
+- **Not left:** host time (the queues never run dry), GEMM row classes (flat on R314), the cache, step and window
+  settings (L = N = M = P).
+
+**Where this leaves the lane:** a writing step is within about 15 % of what reading the weights alone takes, and
+the biggest single remainder is the cross-card exchange. Next measurement (cheap, no server): the all-gather's
+end-to-end latency per call at the decode shapes on the two cards, to confirm the 13-21 us figure before any
+transport idea is weighed against its fault risk.

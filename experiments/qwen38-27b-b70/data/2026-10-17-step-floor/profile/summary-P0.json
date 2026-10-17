@@ -1,0 +1,206 @@
+{
+  "trace": "/mnt/fast-ai/bench-results/fp8-r314-floor-P0-20261017-prof-trace/worker-rank0-pid197.json",
+  "events": 114296,
+  "device_events": 10260,
+  "host_events": 104036,
+  "categories": {
+    "xpu_driver": 48482,
+    "cpu_op": 44252,
+    "xpu_runtime": 10260,
+    "kernel": 9741,
+    "user_annotation": 1040,
+    "gpu_memcpy": 519,
+    "Trace": 2
+  },
+  "wall_ms": 660.82524609375,
+  "device_busy_ms": 227.09177465820312,
+  "device_idle_share": 0.6563512426309662,
+  "distinct_kernels": 45,
+  "top_kernels": [
+    {
+      "name": "gemm_kernel",
+      "count": 2440,
+      "total_ms": 201.58789200000055,
+      "mean_us": 82.61798852459039
+    },
+    {
+      "name": "oneccl_allgatherv_pcie<sycl::_V1::detail::half_impl::half, Rt64_128_PCIE, false, 16>",
+      "count": 1040,
+      "total_ms": 5.157919000000022,
+      "mean_us": 4.959537500000021
+    },
+    {
+      "name": "gdn::gated_delta_rule_kernel<sycl::_V1::detail::half_impl::half, float, 4>",
+      "count": 384,
+      "total_ms": 2.924979999999999,
+      "mean_us": 7.617135416666663
+    },
+    {
+      "name": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_20",
+      "count": 248,
+      "total_ms": 2.331798000000002,
+      "mean_us": 9.402411290322586
+    },
+    {
+      "name": "gdn::causal_conv1d_kernel<sycl::_V1::detail::half_impl::half, 4, true>",
+      "count": 384,
+      "total_ms": 2.077032,
+      "mean_us": 5.4089375
+    },
+    {
+      "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::BinaryFunctor<c10::Half, c10::Half, c10::Half, at::nati",
+      "count": 1032,
+      "total_ms": 1.9398719999999978,
+      "mean_us": 1.879720930232556
+    },
+    {
+      "name": "triton_red_fused__to_copy_add_fused_add_rms_norm_21",
+      "count": 240,
+      "total_ms": 1.6335309999999985,
+      "mean_us": 6.806379166666661
+    },
+    {
+      "name": "triton_poi_fused_fp8_gemm_w8a16_mul_silu_slice_t_6",
+      "count": 512,
+      "total_ms": 1.1916200000000021,
+      "mean_us": 2.3273828125000042
+    },
+    {
+      "name": "_ZTSN6compat12experimental6detail13KernelFunctorIXadL_ZN7cutlass13device_kernelINS3_4fmha6kernel22XeFMHAFwdSplitKVKernel",
+      "count": 128,
+      "total_ms": 0.9534839999999999,
+      "mean_us": 7.449093749999999
+    },
+    {
+      "name": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_11",
+      "count": 248,
+      "total_ms": 0.9079809999999993,
+      "mean_us": 3.6612137096774164
+    },
+    {
+      "name": "triton_poi_fused__to_copy_add_fp8_gemm_w8a16_mean_mul_pow_rsqrt_silu_t_view_4",
+      "count": 384,
+      "total_ms": 0.8098559999999999,
+      "mean_us": 2.1089999999999995
+    },
+    {
+      "name": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_10",
+      "count": 248,
+      "total_ms": 0.7805480000000004,
+      "mean_us": 3.147370967741937
+    },
+    {
+      "name": "at::native::xpu::VectorizedElementwiseKernel<8, at::native::xpu::FillFunctor<c10::Half>, at::detail::Array<char*, 1>, Tr",
+      "count": 384,
+      "total_ms": 0.697740999999999,
+      "mean_us": 1.817033854166664
+    },
+    {
+      "name": "triton_per_fused__to_copy_mean_pow_view_3",
+      "count": 384,
+      "total_ms": 0.5290880000000001,
+      "mean_us": 1.3778333333333335
+    },
+    {
+      "name": "Memcpy D2D (DEVICE -> DEVICE)",
+      "count": 408,
+      "total_ms": 0.42475200000000013,
+      "mean_us": 1.041058823529412
+    },
+    {
+      "name": "triton_poi_fused_zeros_2",
+      "count": 384,
+      "total_ms": 0.3611600000000025,
+      "mean_us": 0.9405208333333398
+    },
+    {
+      "name": "triton_poi_fused_arange_bitwise_and_eq_index_lt_remainder_select_split_where_14",
+      "count": 128,
+      "total_ms": 0.305217,
+      "mean_us": 2.3845078125000003
+    },
+    {
+      "name": "triton_poi_fused__to_copy_add_cat_clone_mul_rms_norm_slice_split_split_with_sizes_sub_unsqueeze_view_15",
+      "count": 128,
+      "total_ms": 0.25903200000000054,
+      "mean_us": 2.0236875000000043
+    },
+    {
+      "name": "at::native::xpu::ReduceKernel<1, at::native::xpu::ReduceOp<float, at::native::xpu::ArgMaxOps<float>, unsigned int, long,",
+      "count": 7,
+      "total_ms": 0.24145499999999998,
+      "mean_us": 34.49357142857143
+    },
+    {
+      "name": "triton_red_fused_clone_rms_norm_split_split_with_sizes_view_12",
+      "count": 128,
+      "total_ms": 0.23569000000000018,
+      "mean_us": 1.8413281250000013
+    },
+    {
+      "name": "triton_poi_fused__to_copy_add_cat_mul_rms_norm_slice_split_split_with_sizes_sub_unsqueeze_view_16",
+      "count": 128,
+      "total_ms": 0.21626499999999987,
+      "mean_us": 1.689570312499999
+    },
+    {
+      "name": "vllm::reshape_and_cache_flash_strided_kernel<c10::Half, c10::Half, (vllm::Fp8KVCacheDataType)0>",
+      "count": 128,
+      "total_ms": 0.20649800000000024,
+      "mean_us": 1.613265625000002
+    },
+    {
+      "name": "triton_poi_fused__to_copy_add_cat_rms_norm_slice_split_with_sizes_view_17",
+      "count": 128,
+      "total_ms": 0.18620799999999987,
+      "mean_us": 1.454749999999999
+    },
+    {
+      "name": "triton_poi_fused__to_copy_add_cat_clone_rms_norm_slice_split_split_with_sizes_view_18",
+      "count": 128,
+      "total_ms": 0.17903200000000025,
+      "mean_us": 1.3986875000000019
+    },
+    {
+      "name": "triton_red_fused_rms_norm_split_with_sizes_view_13",
+      "count": 128,
+      "total_ms": 0.17643200000000017,
+      "mean_us": 1.3783750000000012
+    },
+    {
+      "name": "Memcpy H2D (HOST -> DEVICE)",
+      "count": 104,
+      "total_ms": 0.14574000000000006,
+      "mean_us": 1.4013461538461545
+    },
+    {
+      "name": "triton_poi_fused__unsafe_view_clone_fp8_gemm_w8a16_mul_sigmoid_split_split_with_sizes_t_view_19",
+      "count": 128,
+      "total_ms": 0.13179999999999975,
+      "mean_us": 1.029687499999998
+    },
+    {
+      "name": "triton_red_fused__to_copy_add_fp8_gemm_w8a16_fused_add_rms_norm_t_8",
+      "count": 8,
+      "total_ms": 0.07436999999999999,
+      "mean_us": 9.296249999999999
+    },
+    {
+      "name": "triton_red_fused__to_copy_add_fused_add_rms_norm_22",
+      "count": 8,
+      "total_ms": 0.054161999999999995,
+      "mean_us": 6.770249999999999
+    },
+    {
+      "name": "triton_red_fused__to_copy_add_fused_add_rms_norm_9",
+      "count": 8,
+      "total_ms": 0.05395299999999999,
+      "mean_us": 6.744124999999999
+    }
+  ],
+  "steps": {
+    "count": 0,
+    "mean_ms": null,
+    "names": []
+  }
+}
