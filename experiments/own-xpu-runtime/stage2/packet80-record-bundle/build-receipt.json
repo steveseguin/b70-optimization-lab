@@ -45,7 +45,7 @@
   "schema": "packet80.chain-cpu-seal.v1",
   "runtime_revision": "e2e3bed9cc48c172c50ca1100a638ce4e482583b",
   "parent_seal_sha256": "8c1d90e124fbdcd3d932dcfd31b8819674011137fbbded2a2a8340590a639cec",
-  "screen_seal_sha256": "1d25e83a85cb7f890f1c31f9928522567ee05e1e439b7b5d7b51b847b552f543",
+  "screen_seal_sha256": "46f84ea466d3d2ba542112269f98d04fbedfa4fc9e7315eb849b92f52a7778a4",
   "controller_spin": {
     "wait_policy": "spin",
     "yield_iterations": 256,
@@ -63,7 +63,7 @@
     "arithmetic_unchanged": true
   },
   "bundle_selection": {
-    "name": "production--hc-wide--wide64--ordered--fast--fused",
+    "name": "production--hc-wide--wide64--ordered--production--production",
     "placement": "1",
     "draft": "draft-hc",
     "miss": "batch",
@@ -74,10 +74,10 @@
     "dense": "production",
     "hc": "hc-wide",
     "host": "ordered",
-    "route": "fast",
-    "norm": "fused",
-    "selection_sha256": "2cf4fa314c438426a840ca157fdbf58ca68b206c67908149f65f947ec9e0f629",
-    "screen_seal_sha256": "1d25e83a85cb7f890f1c31f9928522567ee05e1e439b7b5d7b51b847b552f543"
+    "route": "production",
+    "norm": "production",
+    "selection_sha256": "a374b96f32df502e477b98bdde5246bf8bb8442c7126d3cad0880837f9f5aae1",
+    "screen_seal_sha256": "46f84ea466d3d2ba542112269f98d04fbedfa4fc9e7315eb849b92f52a7778a4"
   },
   "memory_plan": {
     "schema": "packet80.full-shape-memory.v1",
@@ -262,9 +262,9 @@
     "scope": "Exact mock allocation calls; driver overhead and physical residency unmeasured"
   },
   "selection": {
-    "selection_sha256": "2cf4fa314c438426a840ca157fdbf58ca68b206c67908149f65f947ec9e0f629",
+    "selection_sha256": "a374b96f32df502e477b98bdde5246bf8bb8442c7126d3cad0880837f9f5aae1",
     "choices": {
-      "route": "route-fast",
+      "route": "route-exp32-rank4",
       "recurrence": "rows4-shared",
       "hc": "production",
       "miss": "batch",
@@ -272,7 +272,7 @@
       "packed_dense": "production",
       "hc_gate": "wide",
       "host_retire": "ordered",
-      "hc_norm": "subgroup"
+      "hc_norm": "production"
     }
   },
   "fixture_inputs_sha256": {
@@ -3855,15 +3855,15 @@
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/evidence/protocol.json": "242b1f42de4535d9b6688b9dd05a431ff503b0e68615c495d4f9e8b8c24ade07",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/evidence/memory-admission.json": "e0593d16389b2933464cbb8ad1e9209dfce5bef40f39498ba142812694eae996",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/evidence/cpu-gates.json": "d3214f5c492a7a18d1fa65dfcccd33a054bf941a73f45fdc8b62a4815d6b646e",
-    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/selections/production--hc-wide--wide64--ordered--fast--fused--placement-1/placement-audit.json": "2bcfa78c6b6ab5d338583e00d347607f8410f6596fc5b9a39ef5a087aa6562ef",
-    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/selections/production--hc-wide--wide64--ordered--fast--fused--placement-1/dispatch-speed6.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
-    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/selections/production--hc-wide--wide64--ordered--fast--fused--placement-1/selection.json": "2cf4fa314c438426a840ca157fdbf58ca68b206c67908149f65f947ec9e0f629",
-    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/selections/production--hc-wide--wide64--ordered--fast--fused--placement-1/memory-plan.json": "912098470fbd2baecaad9e2b6ad8b8ac2f777f2ccc3352caea6fb41cef39faf6",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/selections/production--hc-wide--wide64--ordered--production--production--placement-1/placement-audit.json": "2bcfa78c6b6ab5d338583e00d347607f8410f6596fc5b9a39ef5a087aa6562ef",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/selections/production--hc-wide--wide64--ordered--production--production--placement-1/dispatch-speed6.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/selections/production--hc-wide--wide64--ordered--production--production--placement-1/selection.json": "a374b96f32df502e477b98bdde5246bf8bb8442c7126d3cad0880837f9f5aae1",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/selections/production--hc-wide--wide64--ordered--production--production--placement-1/memory-plan.json": "912098470fbd2baecaad9e2b6ad8b8ac2f777f2ccc3352caea6fb41cef39faf6",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/screen-integration.patch": "a7a99ba3a4646cb4b5be3b46718477cba37629e694f9e4b226b00711a0789a38",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/reference.json": "53e2d18ec20f79bffd53a0c858a2d475d8888953b81168b06c25840110696b3a",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/chain-registration.json": "8c9ecedb2f5ff9615bc80b8c91e4a5d7ea812860582db7eee8dc9e08c275efe5",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/oracle-binding.json": "3c270c8b3734ee5782875d8c1eb505dcc3d21adcc4cc66e96d7e8fb9960789c1",
-    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/bundle-selection.json": "c0008be7a294732da111ac48383dfc3ac34286f8e65a7fa258502f901bdf9ddd",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/bundle-selection.json": "66943450b735f129e3ddefb24ba91d6bd858e3e3da5a72e4ec74e60a15eb624b",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/dispatch-default.json": "6378da4b15235e822388c882ab9dec9d5c8d199d508b5e241981f46e0d1a2ae0",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/build-device-receipt.json": "312a5cc804a1f6f439b930a90e5836582d27b6968ee9dfd73521f9db7b6aff08",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/cpu-validation.json": "91ee34b1ae5ec9d06d684f7ee76a9b4055aba83430033069408eff29dbba1914",
@@ -3875,14 +3875,14 @@
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/wait-option.json": "51a3ab5bf663109fab7f97cfa14db1f100de5081b2ea298ee5610a1f2438a733",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/dispatch-speed6-provenance.json": "bfbc1198f69a7480d06d47b88b735c8f10633da3a53c89d9197965379c1a1ba9",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/dispatch-speed6.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
-    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/screen-seal.json": "1d25e83a85cb7f890f1c31f9928522567ee05e1e439b7b5d7b51b847b552f543",
-    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/selection.json": "2cf4fa314c438426a840ca157fdbf58ca68b206c67908149f65f947ec9e0f629",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/screen-seal.json": "46f84ea466d3d2ba542112269f98d04fbedfa4fc9e7315eb849b92f52a7778a4",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/selection.json": "a374b96f32df502e477b98bdde5246bf8bb8442c7126d3cad0880837f9f5aae1",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/kernel-submissions.json": "e7cd348be23c09134b1673a57e872cc8eaf7431dded90a7ee1f7f48254db59bd",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/input-fixtures.json": "ab32d19ce0e6dbbaebda150549eea8334d103b09488c3c61aa4001bd5f2c8274",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/integration.patch": "6bd3e2aa4fc0bd8bff65c329af281cc3c83e4e129831b37e577abe48935b4381",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/kernel-registry.json": "a09c46ffc844c09551c21ea04e6c254a292f27ace658de6b18026443e9f561b4",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/dispatch-p45.json": "8d696e7f9cc7853dfdcc1e8774a50ce69b3afd94d1dc7dfa49fa804a125dd1c6",
-    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/selections/production--hc-wide--wide64--ordered--fast--fused--placement-1/screen-seal.json": "1d25e83a85cb7f890f1c31f9928522567ee05e1e439b7b5d7b51b847b552f543",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/selections/production--hc-wide--wide64--ordered--production--production--placement-1/screen-seal.json": "46f84ea466d3d2ba542112269f98d04fbedfa4fc9e7315eb849b92f52a7778a4",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/calibration/selection.json": "aa841860347076a8c0887303ea6fa428fc3b7c54af3218477ad5abb2d6abd273",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/calibration/preregistration.json": "61f036c6b0aa54409d1a4af2c101cbfd37092d93c4304e3354852f07500cf147",
     "experiments/own-xpu-runtime/stage2/packet80-record-bundle/oracle/suite_check.py": "f33fd0d4a28943df90137b19a47c3ef2d176e3b352526f1037ec4757ef10ae93"

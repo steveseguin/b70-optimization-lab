@@ -45,7 +45,7 @@ def run(name,args):
         r=subprocess.run([*PREFIX,*map(str,args)],cwd=ROOT,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT)
     if r.returncode:raise ValueError(name+' failed; see '+str(O/(name+'.log')))
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--snapshot-only',action='store_true');a=ap.parse_args()
+    ap=argparse.ArgumentParser();ap.add_argument('--snapshot-only',action='store_true');ap.add_argument('--pin',action='append',default=[],help='coordinator pin key=value applied after evidence selection (subset only: a pinned key may only be set to production/its default)');a=ap.parse_args()
     resource.setrlimit(resource.RLIMIT_AS,(8*1024**3,8*1024**3))
     assert os.getpriority(os.PRIO_PROCESS,0)==19
     assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
@@ -56,7 +56,14 @@ def main():
             r=subprocess.run([*PREFIX,str(O/'read_screens.py'),str(packet)],cwd=ROOT,stdin=subprocess.DEVNULL,capture_output=True,text=True,check=True)
             screens[str(packet)]=json.loads(r.stdout)
         row['screens']=screens;save(O/'screens-current.json',screens)
-        choice=select(screens);row['selection']=choice
+        choice=select(screens)
+        pins=dict(x.split('=',1) for x in a.pin)
+        for k,v in pins.items():
+            if k not in choice:raise ValueError('unknown pin key '+k)
+            if v not in ('production',) and v!=choice[k]:raise ValueError('pins may only revert a choice to production: '+k)
+            choice[k]=v
+        if pins:row['coordinator_pins']=pins
+        row['selection']=choice
         if a.snapshot_only:raise ValueError('snapshot only; prechecks not run')
         if choice==dict(dense='production',hc='production',experts='wide64',host='production',route='production',norm='production',placement='1'):raise ValueError('no confirmed change; no record chain proposed')
         run('reseal',[P/'fast_reseal.py',*[s for k,v in choice.items() for s in ('--'+k,v)]])
