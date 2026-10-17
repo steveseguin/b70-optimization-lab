@@ -124,3 +124,44 @@ not answer by answer.
 - **Decision:** if met, hostile streams pass at 1M. The charter's "any history" line gets the result, and the next
   hostile lever is 2M. If an audit is missed, the turns at that audit and the recalls it made are read before
   anything is changed.
+
+## The one lost audit was a keeper bug; campaign 31 registered (18:10:59 EDT, before any run)
+
+Quiet audits, seed 1: 5/6 applied. domi68 was answered 501, its value before the reversal; the true value is 420.
+What happened at the audit (item 85: "the increase of domi68 entered in item 43 was a mistake"):
+- The model had recalled item 43 ("Another eighty-one went into domi68.") and its in-place notes reply wrote
+  `domi68: 501 − 81 (item-43 increase reversed by audit, item 85) = 420`. That line is right.
+- The proxy's near check counts as "stated" only the numbers in the turns being moved out of view. The proxy answers
+  `recall` itself, and recall results never enter the client's turns. So 81 was "an amount the turns do not state";
+  the model was asked again, its second reply (99 tokens) was unusable, the first stood without that line
+  (events.jsonl: "lines left out (the turns do not bear them out)"), and the NOTES kept 501 to the end.
+- The other audits survived only because their pending lines were later written as bare results, which the check
+  accepts on other grounds.
+
+So the miss is the keeper's, not the model's or the stream's.
+
+**Fix (ctxkeeper 1.1.1.dev0, commit 1d15b1f7b, not released).** The proxy keeps the text of its latest archive
+searches (up to 120,000 characters, in memory; not `notes_at` results, which are the model's own old NOTES). They are
+evidence for the amount check only, never counted as mentions of a name. Each search is logged to events.jsonl, so
+later replays can rebuild that evidence. Tests: the exact case (rejected with the turns alone, accepted with the
+recalled text; a made-up amount still rejected) and the wiring (a real search kept, an empty one not); 94 tests
+pass, and notesdelta.py is unchanged.
+
+**Campaign 31.** `run-20261017-campaign31.sh` starts after campaign 30 ends and runs `longrun-campaign31.sh`, a copy
+of the c30 runner whose only difference is the keeper version check. `RUN=c31 SEQS=1 MTP=5 RESTORE=0 MARKS=1`, the
+same server. Queue 31 (in this order):
+
+| # | Arm | What it checks | Prediction |
+|---|---|---|---|
+| 1 | `K32 retro 1` | the lost audit | 6/6 applied, domi68 = 420 |
+| 2 | `K32 rules 0` | the fix should be inert where no amount comes from a search; call-by-call against c29a | 39/39; calls equal up to the first cut whose evidence includes a recall, and probably the same answers to the end |
+| 3 | `K32 repair 1x` | the standing gate | 40/40 clean, audit 7/7 |
+| 4 | `K32 repair 2x` | the standing gate | 40/40 clean, audit 7/7 |
+| 5 | `K32 retro 0` | no regression on audits | 6/6 |
+
+**Decision.**
+- If 1-5 all hold, the fix stands as 1.1.1.dev0 (a release still needs the owner). The registered 1M follow-up then
+  runs on it: `K32 hostile1m 0 9000` appended to queue 31 while the runner waits. Its pass conditions are those of the
+  17:48 amendment, now on 1.1.1.dev0.
+- If the gate drops on either seed, the fix is not kept as it is: I read the cut where the answers part, then change
+  it or take it back.
