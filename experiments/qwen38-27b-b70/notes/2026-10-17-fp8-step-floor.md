@@ -115,3 +115,26 @@ runner class, checked in the image on CPU). One line per answer per card, saved 
   - Waits of 5 ms or more: the cards are the slower side; host fixes cannot pay; the next look is device-side (a
     one-rank profile on a server with more host room).
   - In between: both, sized by the arms.
+
+## Amendment 07:45 EDT (before any run): the verify pass is cheaper than a one-row pass, so the drafter costs more
+
+The 10-04 GEMM census (`data/2026-10-04-fp8-multiuser/census/census.json`, one card, TP2 shapes, R310 era) has the
+MLP down projection at 215 us for 1-4 rows, 104 us at 5 and 76 us from 6 rows up; the other five shapes are flat in
+rows. Summed over the 64 layers the target's GEMMs take 30.0 ms at one row and 20.5 ms at six. So:
+
+- the no-drafting step (29 ms, c28c) is mostly its one-row GEMMs, and is not the base the drafting step adds to;
+- the six-row verify pass should cost about 20.5 + 1.1 (head) + about 2-3 (attention, recurrent layers, norms,
+  collectives) = about 24 ms, leaving about 14-15 ms of the 38.5 ms step for the five drafter passes, sampling and
+  hand-over: about 3 ms per pass, against about 0.9 ms of device work per pass (one-row GEMMs of the MTP layer
+  0.46 ms, its fc and the 65K-row INT4 head about 0.2 ms, attention, norms, three collectives). Depth 6 cost about
+  2.7 ms more per step (`notes/2026-10-17-fp8-agent-draft-depth.md`): one more pass, the same figure.
+
+**Sharpened prediction for the clock:** on the drafting arms, host time inside propose_draft_token_ids 8-15 ms per
+step, waits under 2 ms. If so, the drafter passes are host-bound and taking them to device speed is worth up to
+about 10 ms per step (38.5 -> about 28 ms at 1K, writing about 35 % faster), far more than any single launch trim.
+That makes one-token graphs for the drafter (its passes only; the target's kernels untouched, so its answers cannot
+change) the first candidate, before the launch trims listed above.
+
+**Small separate lever, banked:** the drafter's down projection runs at one row (215 us); padded to six rows it
+would take 76 us, and the census shows row 0 bit-identical at every row count (one invariance class, 1-512 rows).
+About 0.7 ms per step at depth 5. Needs a census on R314 before use.
