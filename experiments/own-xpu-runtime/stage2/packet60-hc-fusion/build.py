@@ -61,7 +61,7 @@ def main():
     # icpx emits both host and device make rules inside offload-bundle markers.
     paths = {Path(x) for x in re.findall(r'/[^\s\\]+', raw)}
     assert paths and all(x.is_file() for x in paths)
-    paths.update(P.glob('*.py'))
+    paths.add(P / 'build.py')
     paths.update(P.glob('*.hpp'))
     paths.add(P / 'fixture.cpp')
     paths.add(PARENT / 'build-receipt.json')

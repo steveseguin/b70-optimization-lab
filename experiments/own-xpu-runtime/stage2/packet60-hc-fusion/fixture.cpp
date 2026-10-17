@@ -1,4 +1,6 @@
+#ifndef OWN_RT_HOST_ONLY
 #define OWN_RT_HOST_ONLY
+#endif
 #include "p60_math.hpp"
 #include <fstream>
 #include <random>
@@ -41,6 +43,7 @@ void reference(Bound b){
  for(unsigned r=0;r<S;++r){float parts[4];for(unsigned p=0;p<4;++p){auto bounds=iq3::kopt2::bounds(K,p,4);float lanes[32];for(unsigned l=0;l<32;++l)lanes[l]=p28::dense_lane<Type::F32,K>(b.inject_w+r*K*4,b.norm,bounds.first,bounds.second,l);parts[p]=iq3::tree32(lanes);b.workspace[r*8+p]=parts[p];}b.inject[r]=iq3::bf16_bits((parts[0]+parts[1])+(parts[2]+parts[3]));}
 }
 }
+#ifndef P60_FIXTURE_DATA_ONLY
 int main(int argc,char**argv){try{
  if(argc!=2)throw std::runtime_error("output directory required");std::filesystem::create_directories(argv[1]);
  std::ofstream expected(std::filesystem::path(argv[1])/"expected.bin",std::ios::binary),actual(std::filesystem::path(argv[1])/"actual.bin",std::ios::binary);
@@ -50,3 +53,4 @@ int main(int argc,char**argv){try{
  std::ifstream e(std::filesystem::path(argv[1])/"expected.bin",std::ios::binary),a(std::filesystem::path(argv[1])/"actual.bin",std::ios::binary);size_t at=0;char x,y;while(e.get(x)){if(!a.get(y)||x!=y)throw std::runtime_error("first differing byte "+std::to_string(at));++at;}if(a.get(y))throw std::runtime_error("extra actual bytes");
  std::cout<<"{\"passed\":true,\"device_executed\":false,\"cases\":"<<cases<<",\"bytes_compared\":"<<at<<"}\n";
  }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}
+#endif

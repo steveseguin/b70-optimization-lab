@@ -1,9 +1,11 @@
-# Packet 60: exact HC fusion primitives — integration pending
+# Packet 60: three-stage target HC fusion
 
-CPU preparation only. This folder does **not** yet contain a screenable engine
-or a screen seal. No GPU, model payload, service, host setting or other packet
-was touched. The original one-kernel-per-side requirement needs a design
-decision before integration. The question was sent to the owner on October 17.
+The coordinator accepted **three kernels per side** on October 17, under the
+owner's standing instruction to decide and proceed. This supersedes the earlier
+one-kernel proposal. The target engine copy is `main.cpp`; its unchanged
+implementation dependencies come from the hash-bound packet56 checked mirror.
+The MTP draft, target head, controller, oracle and 23/25 split remain packet56.
+No GPU or model payload is used by the preparation commands below.
 
 The production dependency graph is:
 
@@ -22,7 +24,7 @@ per output tile, or one workgroup for the side. The last choice contradicts the
 brief. A spinning grid barrier has no scheduler-independent progress guarantee;
 duplicating the whole low matrix per output tile defeats the saving.
 
-Proposed topology, awaiting the owner's answer: **three kernels per side**,
+Accepted topology: **three kernels per side**,
 six HC kernels per layer instead of fourteen:
 
 1. Norm: forty workgroups, ten output tiles for each stream. Repeat only the
@@ -55,45 +57,61 @@ the structural risk; no new device profile has proved their individual costs.
 Packet60 increases norm workgroups and computes independent stream gates in
 parallel. It does not reuse packet46's fusion body.
 
-## Lean preparation
+## Integration
+
+The actual `Engine::execute_site` hook handles both HC sides of every numbered
+target layer. Ordinary M=1 and both serial M=2 rows use the same hook. It retains
+one prepared-command slot per plan operation: norm, low and gate each capture
+one command; absorbed act, mix and inject slots capture none. Final HC and MTP
+labels are excluded. The existing BF16 intermediates, scratch and sticky error
+bindings remain present; no allocation budget is added.
+
+The earlier residual-combine-plus-next-norm rewrite is disabled only for target
+HC norms. The residual combine still runs in the same order, and its next norm
+is the first packet60 stage. Layer-end hooks retain their original labels.
+The production dispatch and selection files remain byte-identical to packet56.
+
+## Lean CPU preparation
 
 ```bash
-nice -n 19 taskset -c 8-15,24-31 python3 -B \
-  experiments/own-xpu-runtime/stage2/packet60-hc-fusion/build.py
+nice -n 19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 python3 -B \
+  experiments/own-xpu-runtime/stage2/packet60-hc-fusion/build_engine.py
+nice -n 19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 python3 -B \
+  experiments/own-xpu-runtime/stage2/packet60-hc-fusion/cpu_gate.py
 ```
 
-This compiles the three SYCL submission bodies without executing them and
-runs one CPU byte fixture against production norm and dense bodies. The
-fixture covers random finite weights and inputs at the real shapes, both
-HC sides, and the M=1/serial-M=2 positions 127, 4094 and 4095: twelve cases,
-585,360 compared bytes. It retains expected/actual norm, low, activation,
-gate, mix, inject, norm scratch, inject partial scratch and error bytes.
-These are synthetic values, not captured model tensors or device exactness.
-The candidate remains unintegrated; controller coverage is not claimed.
+The builder reruns the existing 585,360-byte production-shape primitive fixture,
+compiles the host and SYCL engines, and never executes a device binary. Parent
+object files were reclaimed, so missing link inputs are compiled inside this
+folder using packet56's exact compiler commands and verified source mirror.
+The parent is read-only. Its external build symlink requires byte-identical
+compiler-input snapshots inside this packet; see [retention](RETENTION.md).
+Build logs, commands and source/object hashes are kept;
+the ignored build tree is reproducible with this command while unsealed.
 
-The build uses packet56's existing checked header mirror read-only. Restore
-that parent build first if absent. Only the small primitive object and fixture
-executable are built here. Commands, compiler dependency hashes and byte
-receipts are retained. The ignored `build/` folder is regenerable by the command.
+The integrated fixture drives the actual target engine hook and capture/issue
+path at production HC shapes, both sides and positions 127, 4094 and 4095.
+It checks all six BF16 outputs, norm/inject scratch and the error word against
+packet56's production stage bodies. It also checks three commands per side,
+empty absorbed slots, all 48 target-layer labels, and exclusion of draft/final
+HC. The retained mini pipeline separately compares 96 target layer fixtures
+and 24 generated tokens against packet56. These are synthetic CPU checks;
+full-model device equality remains the coordinator's screen gate.
 
-## Integration and screen still required
+The final gates pass: **878,040 compared bytes**, **96 target layer fixtures**,
+and **24 tokens** equal packet56. The integrated capture has three commands
+per side, and the production plan has 96 HC sides / 288 commands per row.
+Both builds and diagnostic seal admission pass. See the
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md).
 
-If the three-kernel boundary is accepted, hook the primitive submissions into
-the same target engine path for M=1 and each serial M=2 row, preserve the
-existing residual/next-norm relationship and layer-end hooks, link against
-hash-bound unchanged packet56 objects, and create the diagnostic screen seal.
-The inherited target/draft/controller, 23/25 split, vocabulary prefix, memory
-plan and packet49 oracle must stay unchanged.
+## Coordinator screen
 
-An exact runnable screen command cannot be supplied yet: there is no integrated
-binary or screen seal. After integration it will use the `tp2` packet56 profile
-with this lineage and its new screen seal; the coordinator alone supplies the
-reviewed journal boundary, device admission and fresh output directory.
+See [WINDOW.md](WINDOW.md) for the exact seal, plan and screen commands.
+`screen-seal.json` is diagnostic admission only. It does not qualify a record,
+replace the full sealed chain or assert measured speed.
 
-Planning estimate for the proposed topology: **25–40 microseconds per layer**
-saved, not measured. The original approximately 110 microseconds contains
-roughly 24 microseconds of inject launches, 16–18 of mix, and 15 of norm.
-Low+inject and gate+mix retain their arithmetic but remove separate launches;
-the repeated norm reductions and changed workgroup occupancy can eat the gain.
-The saving may be zero or negative. No one-kernel saving is claimed. Only the
-coordinator's every-token packet49 screen and matched packet56 A/B can decide.
+Planning estimate: **25–40 microseconds per layer** saved, not measured. The
+original approximately 110 microseconds contains roughly 24 microseconds of
+inject launches, 16–18 of mix, and 15 of norm. The changed occupancy and repeated
+norm reductions can erase the saving. Only the coordinator's every-token
+packet49 screen and matched packet56 A/B can decide.

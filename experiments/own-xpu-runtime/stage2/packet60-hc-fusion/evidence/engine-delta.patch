@@ -1,0 +1,55 @@
+diff --git a/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/main.cpp b/experiments/own-xpu-runtime/stage2/packet60-hc-fusion/main.cpp
+index fa4910380..362d84d99 100644
+--- a/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/main.cpp
++++ b/experiments/own-xpu-runtime/stage2/packet60-hc-fusion/main.cpp
+@@ -1,3 +1,4 @@
++#include "p60_submit.hpp"
+ #include "p30_submit.hpp"
+ #include "p33_submit.hpp"
+ #include "p33r2.hpp"
+@@ -507,7 +508,8 @@ static flash::Plan plan(Weights &w, const Options &a) {
+     if(a.nongemv=="parallel" && l.op=="hc_combine" && i+1<p.launches.size()) {
+       const auto& next=p.launches[i+1];
+       auto fusion_class=l.label;if(fusion_class.starts_with("blk."))fusion_class=fusion_class.substr(fusion_class.find('.',4)+1);
+-      if(packet26::dispatch.fusion_choice(fusion_class=="attn.combine"?"attention-combine":"shared-down-combine")!="p39.epilogue" && packet26::dispatch.fusion_for(fusion_class+"+norm") && next.op=="norm" && next.card==l.card && next.inputs==l.outputs) {
++      if(packet26::dispatch.fusion_choice(fusion_class=="attn.combine"?"attention-combine":"shared-down-combine")!="p39.epilogue" && packet26::dispatch.fusion_for(fusion_class+"+norm") && next.op=="norm" && next.card==l.card && next.inputs==l.outputs &&
++         !(!a.mini && a.memory=="resident" && p60::stage(next.label)==0)) {
+         l.outputs.insert(l.outputs.end(),next.outputs.begin(),next.outputs.end());
+         l.weights=next.weights;l.parameter=next.parameter;++i;
+       }
+@@ -1207,8 +1209,34 @@ public:
+       auto submit=!a.mini&&a.memory=="resident"?sealed_selection.site(s):packet18::submit_parallel;
+       return {s,std::move(bindings),submit};
+   }
++  // Packet60: target-only HC. Both ordinary decode and each serial M=2
++  // row use this same dispatch. Preserve one capture slot per original site.
++  bool fused_hc(const flash::Launch& l) {
++    const int stage=p60::stage(l.label);
++    if(a.mini||a.memory!="resident"||a.nongemv!="parallel"||stage<0)return false;
++    if(stage==3)return true; // act/mix/inject are written by earlier stages
++    const int c=l.card;
++    const std::string tag=l.label.substr(0,l.label.rfind('.'));
++    const std::string prefix=tag.substr(0,tag.find(".hc."));
++    const std::string wt=prefix+(tag.ends_with(".a")?".hc_attn_":".hc_ffn_");
++    auto id=[&](const std::string&name){return buffers[c].at(name).id;};
++    auto weight=[&](const std::string&name){load(c,name);return weights[c].at(name);};
++    p60::IDs ids{id("streams"),weight(wt+"norm.weight"),weight(wt+"down.weight"),
++      weight(wt+"up.weight"),weight(wt+"inject.weight"),id(tag+".norm"),
++      id(tag+".low"),id(tag+".act"),id(tag+".gate"),id(tag+".mix"),
++      id(tag+".inject"),scratch[c],workspace[c],id("error"),id("active"),id("position")};
++    require(p.g.h==2560&&p.g.low==320,"packet60 production HC geometry");
++    require(flash::grid_type(w.directory.at(wt+"norm.weight").grid)==iq3::Type::F32 &&
++      flash::grid_type(w.directory.at(wt+"inject.weight").grid)==iq3::Type::F32 &&
++      flash::grid_type(w.directory.at(wt+"down.weight").grid)==iq3::Type::Q8_0 &&
++      flash::grid_type(w.directory.at(wt+"up.weight").grid)==iq3::Type::Q8_0,
++      "packet60 production HC weight formats");
++    finish(c,p60::submit(dev(c),ids,stage,p.g.context),stage!=0);
++    return true;
++  }
+   void execute_site(const flash::Launch& l) {int c=l.card;
+-    if (l.op == "lookup") { fp32_sources[c]=0; /* Prepared once at token boundary from known input/history. */ }
++    if(fused_hc(l)) { /* Preserve the common BF16-writer invalidation below. */ }
++    else if (l.op == "lookup") { fp32_sources[c]=0; /* Prepared once at token boundary from known input/history. */ }
+     else if (l.op == "handoff" || l.op == "handoff_result") {
+       for (auto &name : l.outputs) {
+         if(!preparing_commands)drain(); // every peer copy starts with both owners drained
