@@ -86,3 +86,74 @@ same affinity and priority for the packet56 control. The coordinator supplies
 the actual reviewed fault boundary and owns device admission and teardown.
 No screen ran here, and no device exactness, speed improvement or record is
 claimed. A promising screen still needs the full sealed qualification chain.
+
+
+## Full sealed chain and submission tooling — October 17, CPU-only
+
+The existing screen is promising: **48.831100403687785 class-balanced tok/s**,
+48.904244919074586 all-prompt, acceptance 0.7874015748031495, and exact answers
+for the separate incident check plus all twelve suite prompts. The brief's
+matched packet56 controls were 46.792 and 46.796. This remains screen evidence;
+it is not a record or a completed qualification chain. The compact
+[screen context receipt](../experiments/own-xpu-runtime/stage2/packet56w-chain/evidence/screen-context.json)
+pins the retained raw summary without copying its large request traces.
+
+Decisions made without an approval pause:
+
+- Create **packet56w-chain**, leaving packet56w-spin's source, screened binary
+  and screen seal unchanged. The original screen seal says screen-only and
+  must not be overwritten. The chain has a separate admission seal.
+- Use the exact screened engine
+  `b6a78f44a7174ad2d4b22da804227cd4c4f9668cd230368a5ccbb2338c95c169`.
+  No kernel, arithmetic, compiler or native controller change is made.
+  Reuse packet56's unchanged fixture binaries and CPU draft reference as
+  read-only links. Their provenance is explicit; they are not new builds.
+- Reuse packet56's two already completed draft-head windows, checking their
+  original bytes, two distinct process identities, summaries and current boot.
+  The calibrated prefix has not changed. These checks passed on this boot.
+  All eleven full-chain windows will produce fresh packet56w outputs.
+- Preserve the exact order K0 → K1a → K1b → K2 → W0p → KD → W2m → WS → WSs →
+  WS128x → WS128, the packet49 oracle, split 23/25, draft rank 1, full BF16 KV,
+  4096-token capacity, metric definitions and owner-authorized 128-token scope.
+  The strict 512-token gate stays false. No new target oracle is started.
+- Keep the PF_EXITING-aware memory sensor. Chain rank/KD supervision uses it
+  so a dying task's missing RssAnon is distinguished from malformed live-task
+  information. Device binaries and arithmetic are unchanged.
+- Use a new build view at
+  `/home/steve/own-xpu-runtime-results/packet56w-spin/build`, with the registered
+  chain output `device-cards01-a`. `prepare_chain.py` restores only checked
+  read-only links; it refuses replacement or changes after the chain starts.
+- Keep submission helpers local. They bind both the chain and screen seals,
+  retain all packet56 evidence checks, and read the current shared floor
+  **46.96269702286488**, reference `cmvcf84kb06r2le0174bgk16l`. Generated payload
+  notes name the **91,392-row draft-head prefix** and **250 µs bounded spin**,
+  including rank-0 queue profiling without timing reads. No attribution to
+  spin alone is claimed. Posting rechecks the floor; historical replay remains
+  reproducible.
+- Preserve packet56's storage envelope. At the first check, about 11.96 GB was
+  free against 15,446,804,480 bytes required, about **3.48 GB short**. Admission
+  refuses. Do not weaken the 8 GB free floor, 1.5 GB build reserve or complete
+  chain reserve. No cleanup of another job's evidence is authorized here.
+- Keep changes confined to the new chain folder and this requested note.
+  No live device state changed, and CURRENT.md/shared record files are untouched.
+
+The initial `git pull --rebase` refused because packet60 had concurrent
+uncommitted changes. A fetch showed no incoming commits; those edits were
+left alone. Work stays on main, with explicit path commits pushed immediately.
+
+Lean checks before sealing: **29 local tests passed**, covering submission
+replay, changed pins, current-floor enforcement, prefix/spin notes, queue
+order, oracle paths, no-launch planning and PF_EXITING. The existing shared
+submission tests passed **128 tests and 29 subtests**. Python syntax checks,
+shell syntax and all 28 retained binary/input links passed. The system Python
+has no pytest; tests use the existing vllm-xpu venv's python3. An initial
+shared-test collection needed `PYTHONPATH=scripts`; the corrected run passed.
+All Python commands use `-B`, nice19 and cores 8–15,24–31. No device executable,
+model payload, sudo, service, setting change, reboot, external dry-run or real
+submission was used. No process was killed.
+
+Exact commands are in [WINDOW.md](../experiments/own-xpu-runtime/stage2/packet56w-chain/WINDOW.md)
+and [SUBMISSION.md](../experiments/own-xpu-runtime/stage2/packet56w-chain/SUBMISSION.md).
+The implementation commit is followed by its immutable chain seal, submission
+pins and saved CPU plan verification. Device qualification and a real record
+remain the coordinator's next work, after storage admission passes.
