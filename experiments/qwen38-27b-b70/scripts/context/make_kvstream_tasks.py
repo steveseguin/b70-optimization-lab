@@ -421,7 +421,8 @@ json.dump({"score": reward, "score_raw": score, "void": void, "kind": kind, "mod
            "answers_file_ok": got is not None, "per_key": status, "violations": violations,
            "files_holding_data": holders[:50], "n_new_files": len(new_files),
            "new_files": sorted(new_files)[:200],
-           "stored_frac": stored, "delivery": dl, "archive": archive, "surprise": surprise},
+           "stored_frac": stored, "delivery": dl, "archive": archive, "surprise": surprise,
+           "answers": {k: answers.get(k) for k in exp if k in answers}},
           open("/logs/verifier/details.json", "w"), indent=1)
 print(f"{kind} score {reward:.4f} raw {score:.4f} ({counts}) void={void} {violations[:3]} delivery={dl}")
 '''
