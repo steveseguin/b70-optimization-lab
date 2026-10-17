@@ -22,7 +22,8 @@
 # prompt-only or decode-only, as for a lone user). Kind "check" runs scripts/context/concurrency_check.py first: any
 # garbage stops the campaign before an arm runs.
 # Every proxy is tools/ctxkeeper/ctxkeeper.py at 1.1.0 with --log-calls (one row per model call).
-# Queue lines: "ARM KIND SEED CAP_SECONDS", KIND = smoke | rules (240K rules stream) | poison | retro | retroloud (the same, hostile) | 1m | repair.
+# Queue lines: "ARM KIND SEED CAP_SECONDS", KIND = smoke | rules (240K rules stream) | poison | retro | retroloud (the same, hostile) | 1m | hostile1m (1M, forged
+# notices + audits) | repair.
 set -uo pipefail
 LAB=/home/steve/b70-optimization-lab
 CTX=$LAB/experiments/qwen38-27b-b70/scripts/context
@@ -98,7 +99,7 @@ start_proxy() {  # tag arm kind
   w=$(arm_window "$arm") || { say "unknown arm $arm"; return 1; }
   read -r b i <<< "$w"
   case $kind in
-    rules | poison | retro | retroloud | 1m) fl=(--reply-reserve 2048 --headroom 1024 --target-ratio 0.6 --notes-thinking on --effort medium
+    rules | poison | retro | retroloud | hostile1m | 1m) fl=(--reply-reserve 2048 --headroom 1024 --target-ratio 0.6 --notes-thinking on --effort medium
                     --think-when "$THINK_RE" --think-until "$UNTIL_RE" --recite-when "$RECITE_RE" --notes-mode inplace
                     --notes-checks near --max-recalls 16 --notes-scan "$SCAN_RE" --recall-label "$LABEL_RE" --recall-unit item) ;;
     repair)     fl=(--reply-reserve 2048 --headroom 1024 --target-ratio 0.6 --notes-thinking off --effort medium
@@ -223,6 +224,7 @@ run_line() {  # arm kind seed cap
       fi
       return 0 ;;
     rules) tasks=$ODR/tasks/sparse-memory/sparse-memory-t240k-s$seed; sp=$SP240; job="${arm}__sparse-memory-t240k-s$seed"; runs=$O/runs/$RUN/rules ;;
+    hostile1m) tasks=$ODH/tasks/sparse-memory/sparse-memory-t1000k-poison-retro-s$seed; job="${arm}__sparse-memory-t1000k-poison-retro-s$seed"; runs=$O/runs/$RUN/hostile1m; xk="emit_ctx_trajectory=false" ;;
     poison | retro | retroloud) tasks=$ODH/tasks/sparse-memory/sparse-memory-t240k-$kind-s$seed; job="${arm}__sparse-memory-t240k-$kind-s$seed"; runs=$O/runs/$RUN/$kind ;;
     1m)    tasks=$OD1M/tasks/sparse-memory/sparse-memory-t1000k-s$seed; sp=$SP1M; job="${arm}__sparse-memory-t1000k-s$seed"; runs=$O/runs/$RUN/1m; xk="emit_ctx_trajectory=false" ;;
     repair) tasks=$ODX/tasks/repair-n40-s$seed; job="${arm}__repair-n40-s$seed"; runs=$O/runs/$RUN/repair ;;
@@ -254,7 +256,7 @@ run_line() {  # arm kind seed cap
     grep -h 'ledger score' "$runs/jobs/$job"/*/verifier/test-stdout.txt 2>/dev/null | head -1 | cut -c1-200 | sed 's/^/   /'
     stream_result "$runs/jobs/$job"
     "$PY" ./summarize_results.py --brief --check "$runs/jobs/$job" > "$runs/$job.check" 2>&1 || say "[$job] summarize_results --check flagged the run (see $runs/$job.check)"
-    if [[ $kind == poison || $kind == retro* ]]; then
+    if [[ $kind == poison || $kind == retro* || $kind == hostile1m ]]; then
       local det; det=$(ls "$runs/jobs/$job"/*/verifier/details.json 2>/dev/null | head -1)
       [[ -n $det ]] && python3 ./hostile_report.py --task "$tasks" --details "$det" --notes "$O/proxy-state/$tag" \
         --json "$runs/$job.hostile.json" 2>&1 | sed 's/^/   HOSTILE /'
@@ -288,6 +290,7 @@ while read -r arm kind seed cap; do
   case $kind in
     smoke | check) ;;
     rules) [[ -e $ODR/tasks/sparse-memory/sparse-memory-t240k-s$seed/tests ]] || { say "ABORT: no rules task s$seed"; exit 2; } ;;
+    hostile1m) [[ -e $ODH/tasks/sparse-memory/sparse-memory-t1000k-poison-retro-s$seed/tests ]] || { say "ABORT: no hostile1m task s$seed"; exit 2; } ;;
     poison | retro | retroloud) [[ -e $ODH/tasks/sparse-memory/sparse-memory-t240k-$kind-s$seed/tests ]] || { say "ABORT: no $kind task s$seed"; exit 2; } ;;
     1m) [[ -e $OD1M/tasks/sparse-memory/sparse-memory-t1000k-s$seed/tests ]] || { say "ABORT: no 1M task s$seed"; exit 2; } ;;
     repair) [[ -e $ODX/tasks/repair-n40-s$seed/tests/spec.json ]] || { say "ABORT: no repair task s$seed"; exit 2; } ;;

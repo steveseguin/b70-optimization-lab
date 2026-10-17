@@ -203,6 +203,8 @@ class Sparse:
         res = getattr(self, "reserved", None)          # round-trip decoy counters inside their window: hands off
         if res and nm in res:
             pool = [x for x in (live if len(live) >= 8 else self.names) if x not in res]
+            if not pool:   # every live counter is reserved (seen at 1M with --retro): open one that is not
+                pool = [x for x in self.names if x not in res]
             if pool:
                 nm = r.choice(pool)
         if nm not in self.state:
@@ -600,7 +602,7 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
         # clean stream's text, questions and answers are unchanged; only the forged paragraphs are added
         xrng = random.Random(f"poison-{seed}-{target_tokens}-{density}-{tag}")
         prot = set((rules_info or {}).get("protected", ()))
-        final_names = [n for n in queried if n in g.ever and n not in prot]
+        final_names = [n for n in queried if n in g.ever and n not in prot and n not in retro_from]   # not an audited one
         taken: set[int] = set()
         for kind in poison:
             bi = max(3, min(len(batches) - 1, round(POISON_AT[kind] * len(batches))))

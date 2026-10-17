@@ -67,6 +67,21 @@ class Retro(unittest.TestCase):
                 if nm not in (spec["rules"] or {}).get("protected", []):
                     self.assertEqual(exp[nm], r["after"])
 
+    def test_crowded_ledger_keeps_audited_counters(self):
+        # few counters, many audits: every live counter can be reserved at once; a random change must then open a free
+        # counter, never touch a reserved one (2026-10-17: a 1M stream deleted an audited counter this way)
+        with tempfile.TemporaryDirectory() as tmp:
+            m.build(Path(tmp), "crowd", 0, 0, 400, 6.0, 14, 14, "memory", OPTS, 3.9, None, 200, probes_every=10,
+                    probes_k=3, rules=True, retro=10)
+            d = Path(tmp) / "crowd"
+            spec = json.loads((d / "tests" / "spec.json").read_text())
+            ref = json.loads((d / "tests" / "reference.json").read_text())
+            prot = set(spec["rules"]["protected"])
+            self.assertGreaterEqual(len(ref["retro"]), 5)
+            for r in ref["retro"]:
+                if r["counter"] not in prot:
+                    self.assertEqual(spec["expected"].get(r["counter"]), r["after"], r)
+
     def test_off_by_default(self):
         with tempfile.TemporaryDirectory() as tmp:
             _, ref, _, nq = build(tmp, "none", retro=0)
