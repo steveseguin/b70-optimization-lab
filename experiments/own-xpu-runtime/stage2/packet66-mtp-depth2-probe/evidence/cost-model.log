@@ -1,0 +1,60 @@
+{
+  "rank_models": [
+    {
+      "rank": 0,
+      "complete_sampled_layers": 232,
+      "median_layer_ms": 0.531408,
+      "expert_effective_GB_s": 153.22668407878987,
+      "gdn_glue_ms_per_row_per_layer": 0.0485935,
+      "gdn_layers": 18,
+      "serial_expert_bytes_per_added_row": 456960000,
+      "observed_unique_increment_M1_to_M2_bytes_mean": 319867237.79527557,
+      "observed_unique_increment_M2_to_M3_bytes_mean": 281129259.8425197,
+      "serial_expert_ms": 2.9822481818181816,
+      "serial_gdn_glue_ms": 0.874683,
+      "serial_proxy_ms": 3.8569311818181817,
+      "union_reuse_proxy_ms": 2.7094108186739443
+    },
+    {
+      "rank": 1,
+      "complete_sampled_layers": 192,
+      "median_layer_ms": 0.5390665,
+      "expert_effective_GB_s": 150.66477622541544,
+      "gdn_glue_ms_per_row_per_layer": 0.047656500000000004,
+      "gdn_layers": 18,
+      "serial_expert_bytes_per_added_row": 492800000,
+      "observed_unique_increment_M1_to_M2_bytes_mean": 306562343.3070866,
+      "observed_unique_increment_M2_to_M3_bytes_mean": 261733711.28608924,
+      "serial_expert_ms": 3.27083749995223,
+      "serial_gdn_glue_ms": 0.857817,
+      "serial_proxy_ms": 4.12865449995223,
+      "union_reuse_proxy_ms": 2.5950094469890645
+    }
+  ],
+  "serial_row_proxy": {
+    "verify_increment_ms": 4.12865449995223,
+    "verify_increment_rank_sum_ms": 7.985585681770411,
+    "normalized_equivalent_depth1_cycle_ms": 35.018616500097984,
+    "projected_depth2_equivalent_cycle_excluding_extra_draft_ms": 39.14727100005021,
+    "extra_draft_assumption_ms": 1.9063400000000001
+  },
+  "illustrative_a2_table": [
+    {
+      "a2": 0.5499999999999999,
+      "projected_tok_s": 54.071979198060916,
+      "change_percent": 5.961158530395672
+    },
+    {
+      "a2": 0.6,
+      "projected_tok_s": 55.03048197142114,
+      "change_percent": 7.839470843466856
+    },
+    {
+      "a2": 0.65,
+      "projected_tok_s": 55.988984744781376,
+      "change_percent": 9.717783156538061
+    }
+  ],
+  "a2_needed_for_10_percent": 0.65751251113827,
+  "decision": "Do not build the depth2 engine yet: the >=10% bar is unproven. Run the prepared probe, then use measured a2 and second-pass time with the explicitly conditional cost proxy."
+}
