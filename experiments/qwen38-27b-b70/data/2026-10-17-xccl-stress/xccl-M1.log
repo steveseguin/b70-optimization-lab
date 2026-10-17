@@ -1,0 +1,25 @@
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+2026:10:17-19:51:36:   23 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:10:17-19:51:36:   23 |CCL_WARN| value of CCL_RECV changed to be direct (default:)
+2026:10:17-19:51:36:   23 |CCL_WARN| value of CCL_SEND changed to be direct (default:)
+2026:10:17-19:51:36:   23 |CCL_WARN| value of CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD changed to be 4294967296 (default:4194304)
+2026:10:17-19:51:36:   23 |CCL_WARN| value of CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD changed to be 4294967296 (default:8388608)
+2026:10:17-19:51:36:   23 |CCL_WARN| value of CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD changed to be 4294967296 (default:1048576)
+2026:10:17-19:51:36:   23 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:10:17-19:51:36:   23 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:10:17-19:51:36:   24 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:10:17-19:51:37:   34:[0] |CCL_WARN| no membind support for NUMA node 0, skip thread membind
+2026:10:17-19:51:37:   33:[1] |CCL_WARN| no membind support for NUMA node 0, skip thread membind
+2026:10:17-19:51:37:   23:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+/opt/venv/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+/opt/venv/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+XCCL-STRESS 423 steps (204 prompt-size), 57105 gathers, bytes checks 7 bad 0
+XCCL-STRESS 875 steps (440 prompt-size), 118125 gathers, bytes checks 14 bad 0
+XCCL-STRESS 1332 steps (656 prompt-size), 179820 gathers, bytes checks 21 bad 0
+XCCL-STRESS 1779 steps (867 prompt-size), 240165 gathers, bytes checks 28 bad 0
+XCCL-STRESS DONE 1792 steps (872 prompt-size), 241920 gathers, bytes checks 28 bad 0

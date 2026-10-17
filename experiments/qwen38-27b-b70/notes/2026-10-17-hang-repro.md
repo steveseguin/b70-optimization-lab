@@ -426,3 +426,14 @@ queue `QUEUE29a.txt` (K32 rules stream, seed 0): c28f's server exactly, plus `B7
   about 4,000 first steps; after that the dedicated hunt stops (rule: decide within hours) and the marks plus
   `hang-capture.sh` ride along with ordinary context-lane work, so the next hang, whenever it comes, names its kernel.
   Any answer difference: marks off, the difference read first.
+
+**M2's end: a fault of mine (15:55:52 EDT), handled.** When the M2 watchdog ended the deliberately hung processes, the
+kernel logged on e3:00.0 (rank 1, the card left inside the gather) `Engine reset: engine_class=bcs, guc_id=11` and a
+copy-engine page fault (`Fault response: Unsuccessful -EINVAL`, faulted address in the process's own address space),
+no device coredump. Arm A's accidental hang at 15:06 ended with no such line; the difference is the marks: rank 1 had
+its marks copies (device-to-host, run on the copy engine) queued behind the stuck gather, and the process's memory was
+torn down under them. After M2 both cards had no context loaded on any engine (`after-M2-hw-*.txt`); the 15:56 bounded
+health probe passed (smoke on both cards, barrier, all-reduce 2.0) with no new kernel line. Evidence:
+`data/2026-10-17-xccl-stress/fault-155552/` (kernel log, the engine-register sampler's frozen 60 s, the probe log).
+Consequence for the server: with marks on, ending a hung server will also log copy-engine lines on teardown; a normal
+stop drains the queue first (M1 ended clean). Campaign 29a proceeds as registered.
