@@ -6,7 +6,9 @@ log, and optionally a folder of rolling engine-register snapshots (`<pci>-NN.txt
 
 Breadcrumbs: for each block (rank, reason) the last steps; then, step by step, whether the two ranks were given the
 same step (tokens, per-request scheduled and computed tokens) and issued the same collectives (count, elements,
-signature; 0.2.0 blocks only). The first step where they differ is printed.
+signature; 0.2.0 blocks only). The first step where they differ is printed. Device marks (0.3.0 with
+B70_STEP_BREADCRUMBS_DEVICE_MARKS=1): per rank, collectives issued and completed on the card and the first one not
+completed, then which reading the two ranks' counts fit.
 Engine snapshots: per card and engine (ccs0, bcs0), in time order, the instruction the command streamer last parsed
 (IPEHR), its position (ACTHD), the running context (CURRENT_LRCA) and RING_INSTDONE. ROW_INSTDONE is not used: it
 reads 0 on every row of an idle engine too (checked on the live server, 2026-10-17 13:17). Healthy server values seen:
@@ -26,7 +28,15 @@ a = ap.parse_args()
 STEP = re.compile(r'#(\d+) (\S+) tokens (\d+) fin (\d+) pre (\d+)( ONE-LAUNCH)? ((?:\[[^\]]*\] ?)*) ?\| (?:coll (\d+) elems (\d+) sig (\w+) \| )?(.*)$')
 blocks = []
 cur = None
+MARKS = re.compile(r'b70_step_breadcrumbs rank (\S+) device marks: (\d+) collectives issued on .*?, (\d+) completed on this '
+                   r'card(?:; first not completed #(\d+) (\w+) (\d+) elems \(step #(-?\d+)\); (\d+) issued after it)?')
+marks = defaultdict(list)
 for line in open(a.log, errors='replace'):
+    m = MARKS.search(line)
+    if m:
+        marks[m.group(1)].append({'issued': int(m.group(2)), 'done': int(m.group(3)), 'first': m.group(4) and (
+            int(m.group(4)), m.group(5), int(m.group(6)), int(m.group(7)), int(m.group(8)))})
+        continue
     m = re.search(r'b70_step_breadcrumbs rank (\S+) (STALL|FAILED)(.*?); last \d+ steps', line)
     if m:
         cur = {'rank': m.group(1), 'reason': (m.group(2) + m.group(3))[:200], 'steps': {}}
@@ -70,6 +80,28 @@ if '0' in by_rank and '1' in by_rank:
     only = sorted(set(by_rank['0']) ^ set(by_rank['1']))
     if only:
         print('steps seen by one rank only:', only[-6:])
+
+if marks:
+    last = {r: v[-1] for r, v in marks.items()}
+    for r in sorted(last):
+        v = last[r]
+        f = v['first']
+        print('device marks rank %s: %d issued, %d completed%s' % (r, v['issued'], v['done'], (
+            '; first not completed #%d %s %d elems (step #%d), %d issued after it' % f) if f else '; nothing pending'))
+    if '0' in last and '1' in last:
+        d0, d1 = last['0']['done'], last['1']['done']
+        p0, p1 = bool(last['0']['first']), bool(last['1']['first'])
+        if not p0 and not p1:
+            print('reading: both cards completed every collective they were given; the stuck work is not a collective')
+        elif d0 == d1:
+            print('reading: both cards completed the same %d collectives and are stuck in the next one (or a kernel '
+                  'between them)' % d0)
+        elif abs(d0 - d1) == 1:
+            print('reading: rank %s completed one collective more than rank %s: the slower card never finished a '
+                  'collective the faster one finished (a lost or overwritten message)' % ('0' if d0 > d1 else '1',
+                                                                                         '1' if d0 > d1 else '0'))
+        else:
+            print('reading: completed counts differ by %d: the ranks issued different collectives' % abs(d0 - d1))
 
 if a.hw:
     rows = defaultdict(list)
