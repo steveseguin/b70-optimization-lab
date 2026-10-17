@@ -55,6 +55,14 @@ Evidence (`data/2026-10-17-context-campaign28/`): `c28e-kernel-fault-lines.txt`,
 fault-20261017-0623/` with the full kernel log from 05:50), `c28e-server-log-end.txt`, `c28e-server-state.json`,
 `FAULT-20261017-c28e.json`, `c28e.log`, `c28e-K32-repair.summary.txt`.
 
+Reading of the coredump (03:00.0): the hung context is the worker's compute queue (`ccs15`, job seqno 82 never
+signalled, ring head 680 of tail 840); `ROW_INSTDONE` is 0 on all 32 rows and `RING_ESR` 0, i.e. a compute kernel
+still running on every Xe core with no command error and no page fault on this card: a kernel that ran or spun far too
+long (a wait on the other card inside a collective would look the same), not a bad address. The scheduler dump puts
+it at the first step of a new request (4,603 prompt tokens, one request running, 5.7 % of the KV cache), i.e. a
+prompt-reading step after 40 s of idle, not a verify step (the one-launch verify path only runs on drafting steps
+past 1,536 keys).
+
 Not known: whether the 05:59 kill-induced reset left a card in a state that made this hang likely (the 06:06 health
 probe passed), or whether this is an independent hang. This server configuration ran campaigns 26-28c today
 (about 2 h of agent traffic) without a fault line.
@@ -62,3 +70,20 @@ probe passed), or whether this is an independent hang. This server configuration
 **Decision (AGENTS.md rule 3): a second fault followed on the same boot, so all GPU work stops and the owner is told
 that a reboot is needed.** No further launches, no driver reload, no probe loop. After the reboot: the boot's first
 GPU job is the bounded health probe, then campaign 28e again unchanged.
+
+## Proposal for the owner (public pages; nothing is changed until the owner says)
+
+The skindeep `context-use.html` working-view table compares view sizes measured on one server state (campaigns
+21-24, 2026-10-15/16). Since then two exact changes made the server faster without changing any answer (every
+call of the 240K stream equal to the earlier runs, server totals equal; notes `2026-10-17-fp8-writing-attention.md`,
+`2026-10-17-fp8-cache-tail-block.md`).
+
+- **Option A (recommended): keep the table, add one sentence under it.** "Since these runs the server got faster
+  without changing a single answer: the 32K question stream now takes 7 minutes (was 9) and the 64K one 7.4 (was 10)."
+  Plus the repair task's figure once campaign 28e has run after the reboot. Cheap, honest, and the table keeps
+  comparing like with like.
+- **Option B: re-run the whole table on today's server** (7 view sizes x two tasks, about 13 runs, 2.5-3 GPU hours
+  in one unattended runner), then replace it. Worth it only if the owner wants the table itself current; the
+  ranking of the view sizes is not expected to change (a bigger view is slower because more is read each turn).
+- The open-source agents table (12 agents, campaign 20) stays as measured: its times are dominated by how each agent
+  works, and it is dated.
