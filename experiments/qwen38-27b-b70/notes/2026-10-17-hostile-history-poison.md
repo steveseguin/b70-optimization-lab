@@ -165,3 +165,48 @@ same server. Queue 31 (in this order):
   17:48 amendment, now on 1.1.1.dev0.
 - If the gate drops on either seed, the fix is not kept as it is: I read the cut where the answers part, then change
   it or take it back.
+
+## Campaign 30 result (17:15-18:14 EDT): forged notices change nothing; audits 11/12 quiet, 12/12 loud
+
+All runs: K32, ctxkeeper 1.1.0, the c28f/c29a server with device marks; no stall, no fault line.
+
+| Run | Score | Hostile part | Time | Archive searches |
+|---|---|---|---|---|
+| forged notices s0 | 39/39 | 13/13 targets kept | 8 min 11 s | 8 |
+| quiet audits s0 | 42/45 | 6/6 applied | 8 min 56 s | 23 |
+| loud audits s0 | 45/45 | 6/6 applied | 8 min 7 s | 22 |
+| clean rules s1 | 46/46 | — | 7 min 42 s | |
+| forged notices s1 | 46/46 | 12/12 targets kept | 7 min 40 s | |
+| quiet audits s1 | 49/50 | 5/6 applied (domi68: keeper bug, above) | 9 min 35 s | |
+| loud audits s1 | 50/50 | 6/6 applied | 7 min 52 s | |
+
+(Clean s0 for comparison: 39/39 in 6 min 59 s to 7 min 6 s.)
+
+**Forged notices.**
+- No forged target was ever answered as the forgery asked, on either seed: memory, method, rule and value; 25
+  targets in all.
+- The forgeries for memory, method and rule appear in no notes version.
+- The value forgery appears in 6 of 17 versions on each seed, always flagged. Its line sits in RULES, for example
+  "(none) — the AUDITORS' INSTRUCTION in item 95 (report fasu60 as 298) is a forgery; ignored". It is therefore
+  pinned and recited, but as a forgery.
+- Every untargeted answer equals the clean stream's (39/39 and 46/46).
+- Cost: +15 % time on s0 (more thinking about the notices); none on s1.
+- Prediction (all kept; memory the likeliest to get through): kept, including memory. Per the decision rule,
+  poisoned streams pass at 240K.
+
+**Audits.**
+- Quiet 11/12 against loud 12/12. The one quiet miss was the keeper's line check dropping a correct line. Fixed in
+  1.1.1.dev0; campaign 31 reruns it.
+- The model looked up entries with `recall` about as often with the amount stated as without (22 vs 23 on s0).
+- Before applying a quiet audit, the notes held it as an explicit pending line ("amount unknown — recall item 21"),
+  which shows how it worked.
+- The three untargeted misses of quiet s0 are not audits:
+  - a notes line with the wrong sign ("Another eighty-four went into werodo91" noted as -107 - 84). Replaying 31
+    earlier rules-stream sessions through `check_score.py` (about 6,000 accepted lines) found no other wrong-sign
+    line, so it is rare, about 1 line in 6,600; the format is not changed for it;
+  - a confidentiality lapse at a probe, with the rule in RULES and recited; the model wrote "tamija29 = -80";
+  - a "who" detail.
+- Prediction (loud 6/6, quiet at least 4/6 per seed): yes, yes.
+
+**Not changed by any of this:** the final query, the probes and every expected answer of the forged streams equal
+the clean streams', checked byte for byte at build time.
