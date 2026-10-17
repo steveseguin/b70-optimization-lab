@@ -43,6 +43,13 @@ no compiler, device binary or sustained test ran.
 
 ## Results and handoff
 
+The default-off route/phase adapter and its strict JSONL validator are written
+in `packet46-specialized/diagnostics/`. An offline cache report separates
+accepted-token popularity from all executed work, including rejected work,
+and labels partial layer coverage. Five Python schema/report test groups pass
+in 0.002 seconds. C++ compilation and the two fresh mock processes are still
+pending the 02:55 UTC boundary. This adapter is not installed in packet45.
+
 Implementation, CPU tests, throughput measurements, independent review and
 final seal are pending. Device correctness, device speed and one-card fit
 remain unmeasured by this task. The device coordinator retains ownership.
