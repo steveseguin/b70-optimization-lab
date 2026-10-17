@@ -73,3 +73,19 @@ is 726,108 KiB. [Final verification](../experiments/own-xpu-runtime/stage2/packe
 [CPU closeout](../experiments/own-xpu-runtime/stage2/packet73-hc-experts2/CPU-PREPARATION-CLOSEOUT.md).
 Both queue proposals are under `experiments/own-xpu-runtime/ops/lane-queue/`,
 with `proposed-p73-A.txt` and `proposed-p73-B.txt`; neither was enqueued here.
+
+## Lane-A admission repair (October 17, 21:02 UTC)
+
+Packet 73 now registers `screen` as an exactness window. Planning and live
+reservations call the same lane/window policy; a regression test removes that
+registration and confirms planning refuses before inputs or a lease. All 85
+CPU wrapper tests pass. `seal_and_plan.py` runs the packet CPU seal tools and
+regenerates all 5 selection seals, preserving the previous receipts and
+checking every engine artifact, selection, dispatch, placement and arithmetic
+source against its existing hash. Parent-wrapper provenance is refreshed only
+for the adopted v4 repair. No binary was rebuilt.
+
+All 6 lane-A screen plans and the proposed lane-A queue pass; both packets
+also pass together in a temporary queue. No live queue, GPU, model, service,
+sudo or host setting was touched. Packets 69 and 72 were left to their other
+job. [Repair receipts, plans and prior seals](../experiments/own-xpu-runtime/stage2/packet73-hc-experts2/evidence/admission-repair/).

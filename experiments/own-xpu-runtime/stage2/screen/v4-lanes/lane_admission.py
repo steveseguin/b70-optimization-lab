@@ -16,7 +16,7 @@ import uuid
 from chain_devices import require, process_identity
 
 DEFAULT_ROOT = Path('/home/steve/own-xpu-runtime-results/coordination/chain-lanes-v1')
-EXACT_WINDOWS = frozenset(('K0', 'K1a', 'K1b', 'K2', 'KD', 'W0p', 'WS',
+EXACT_WINDOWS = frozenset(('screen', 'K0', 'K1a', 'K1b', 'K2', 'KD', 'W0p', 'WS',
                            'WS64x', 'WS128x', 'W2m-exact'))
 TIMING_WINDOWS = frozenset(('WS128', 'WS64', 'WSs', 'W2m', 'W2m-speed', 'W2mc',
                             'W2s', 'W2n', 'W2x', 'W2d', 'W2c'))
@@ -26,6 +26,11 @@ def window_scope(window, *, timing_claim=False):
     require(window in EXACT_WINDOWS | TIMING_WINDOWS, 'unregistered window policy')
     # A new timing use can upgrade an exactness window, never downgrade speed.
     return 'whole-host' if timing_claim or window in TIMING_WINDOWS else 'lane-A'
+
+
+def admission_scope(lane, window, *, timing_claim=False):
+    require(lane in ('A', 'B'), 'unknown lane')
+    return window_scope(window, timing_claim=timing_claim) if lane == 'A' else 'lane-B'
 
 
 def present(path):
@@ -63,7 +68,7 @@ class Reservation:
         require(lane in ('A', 'B'), 'unknown lane')
         require(math.isfinite(wait_seconds) and 0 < wait_seconds <= 7200, 'bounded wait required')
         self.lane, self.window, self.root = lane, window, Path(root)
-        self.scope = window_scope(window, timing_claim=timing_claim) if lane == 'A' else 'lane-B'
+        self.scope = admission_scope(lane, window, timing_claim=timing_claim)
         self.wait_seconds, self.check, self.now, self.sleep = wait_seconds, check, now, sleep
         self.files, self.entered, self.completed = [], False, False
         self.hold = self.root / 'hold-lane-B'

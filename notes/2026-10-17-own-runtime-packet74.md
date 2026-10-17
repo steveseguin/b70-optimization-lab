@@ -105,3 +105,19 @@ The retained build is 125,278,746 logical bytes; engine compiler peak RSS
 at 28 GB free. No GPU, model, service, privileged operation, setting change or
 cleanup of another job's artifacts ran. Device execution stays with the
 coordinator; device parity, determinism, actual memory and speed remain open.
+
+## Lane-A admission repair (October 17, 21:02 UTC)
+
+Packet 74 now registers `screen` as an exactness window. Planning and live
+reservations call the same lane/window policy; a regression test removes that
+registration and confirms planning refuses before inputs or a lease. All 82
+CPU wrapper tests pass. `seal_and_plan.py` runs the packet CPU seal tools and
+regenerates all 4 selection seals, preserving the previous receipts and
+checking every engine artifact, selection, dispatch, placement and arithmetic
+source against its existing hash. Parent-wrapper provenance is refreshed only
+for the adopted v4 repair. No binary was rebuilt.
+
+All 5 lane-A screen plans and the proposed lane-A queue pass; both packets
+also pass together in a temporary queue. No live queue, GPU, model, service,
+sudo or host setting was touched. Packets 69 and 72 were left to their other
+job. [Repair receipts, plans and prior seals](../experiments/own-xpu-runtime/stage2/packet74-packed-dense/evidence/admission-repair/).

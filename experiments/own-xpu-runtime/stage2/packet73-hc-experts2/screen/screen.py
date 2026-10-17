@@ -2,7 +2,7 @@
 """Coordinator-only diagnostic screen. --plan is CPU-only and never opens a device."""
 import argparse
 import fcntl
-from lane_admission import Reservation, atomic_json
+from lane_admission import Reservation, atomic_json, admission_scope
 from chain_devices import process_identity, admit_clients
 from drain_gate import DEFAULT_DRAIN_ROOT, screen_teardown_admit
 import json
@@ -111,6 +111,7 @@ def pair_barrier(args, identity, reasons):
 def screen_main(argv=None, *, release=None):
     args = parser().parse_args(argv)
     cpu_gate() if args.plan else lane_gate(args.lane)
+    scope = admission_scope(args.lane, 'screen')
     args.lineage, args.output = args.lineage.resolve(), args.output.resolve()
     require(args.output.is_relative_to(HERE / 'evidence') and not args.output.exists(), 'new screen evidence output required')
     identity = sealed(args)
@@ -124,7 +125,7 @@ def screen_main(argv=None, *, release=None):
                               planned_write_bytes=WRITES[args.profile],
                               physical_cards=LANES[args.lane]['cards'], native_card_arguments=[0, 1],
                               device_mask=mask_for(args.lane), timing=args.timing,
-                              reservation_scope='lane-' + args.lane), indent=2))
+                              reservation_scope=scope), indent=2))
         return 0 if identity['placement']['supported'] else 2
     require(identity['placement']['supported'], identity['placement']['reason'])
     require(args.authorized_device_window, 'coordinator authorization required')
