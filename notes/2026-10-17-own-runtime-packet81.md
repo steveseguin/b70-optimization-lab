@@ -1,8 +1,27 @@
 # Packet81 routed-expert throughput round 3
 
-CPU-only preparation. [Analysis](../experiments/own-xpu-runtime/stage2/packet81-experts3/ANALYSIS.md)
-is complete before candidate work. Fresh BMG-G31 compilation finds no spills;
-IQ2 already uses eight-weight packed grid lookups and IQ4 already has a register
-LUT. Both fragment each eight-input BF16 vector into four load messages.
-Next: test packed activation loads while preserving exact arithmetic. This
-is a mechanism hypothesis, not a speed result. Existing trees remain frozen.
+CPU preparation is complete. [Analysis](../experiments/own-xpu-runtime/stage2/packet81-experts3/ANALYSIS.md)
+was committed and pushed first as e2e3bed9c. The two expert kernels still
+spend substantial work unpacking values and issuing loads. IQ2 already reads
+eight grid values together, and IQ4 already has its small table in registers.
+A new way to read the same activation bits cuts offline load instructions
+from 51 to 27 for gate/up and from 79 to 31 for down, with no spills.
+This does not establish a speed gain.
+
+Four choices share one binary: production, gate-only, down-only and combined.
+All pass two fresh runs with GNU and Intel. Each run checks 18 expert cases,
+110,592 raw FP32 chains and 3,456 reduction trees. All eight full-size startup
+checks pass and capture the intended selected kernels. Memory totals and
+limits are unchanged. Both builds, 85 Python checks, four seals, five lane-A
+plans, nine possible lane-B plans and both temporary queue plans pass.
+
+Next is the coordinator's lane-A grid. Lane B admits only the exact A winner
+that beats both production controls. [Commands and proposed jobs](../experiments/own-xpu-runtime/stage2/packet81-experts3/WINDOW.md),
+[CPU closeout and evidence](../experiments/own-xpu-runtime/stage2/packet81-experts3/CPU-PREPARATION-CLOSEOUT.md).
+No GPU, model, service, live queue or host setting was changed. Existing
+packet, screen and ops trees were left untouched apart from the two new
+proposed files. The build is about 169 MB and peak compiler RSS was 710 MiB.
+
+The requested pull --rebase refused unrelated live orchestration edits.
+Fetch confirmed main already matched origin/main, so those edits were
+preserved. Another packet's concurrent commits were preserved as well.
