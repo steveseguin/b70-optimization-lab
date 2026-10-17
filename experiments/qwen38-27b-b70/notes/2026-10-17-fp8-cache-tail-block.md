@@ -131,3 +131,18 @@ the pool's duplicate table found). A check against the image's real classes is b
 
 Before any public use of "exact cache" with drafting: a GPU run of 0.3.0 on the agent streams (calls equal to c27a's;
 hit counts equal or a few blocks lower), after the reboot.
+
+## Test of 0.3.0 (registered 06:38 EDT, before any run): campaign 28f, after the reboot
+
+`scripts/run-20261017-after-reboot.sh` (refuses on the faulted boot; one bounded health probe first): c27a's server
+(R314, piece 832, one sequence, MTP5, one-launch verify, tail switch) now with 0.3.0; queue `QUEUE28f.txt`: K32 on the
+240K rules stream seed 0, then the repair task K32 2x (the re-measure of `2026-10-17-context-lane-public-remeasure.md`).
+
+- **Must hold:** every K32 call equal to c27a's in everything but time and cached count (`compare-campaign-calls.py`),
+  39/39; server prompt and generated totals after K32 equal to c27a's (1,932,094 / 30,313). Any difference stops
+  0.3.0: traced before anything else.
+- **Prediction:** cached counts equal to c27a's on every call (an agent conversation only grows, so no divergence at a
+  block boundary is expected on this stream); the overlay's log shows `replaced 0` or a handful, `shortened` 0 or a
+  handful; wall time within noise of 6 min 58 s. A lower cached count on a few calls would be the hole showing up.
+- **Decision:** all equal: 0.3.0 replaces 0.2.0 for the context lane and the "exact cache with drafting" claim rests
+  on it. Repair figures go to the owner as registered in the remeasure note.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # After the owner's reboot (2026-10-17: second GPU fault on boot 66541315..., notes/2026-10-17-context-lane-public-remeasure.md).
 # Refuses to run on the faulted boot. Then: kernel log of this boot clean -> ONE bounded health probe -> kernel log still
-# clean -> the fault latch moved aside -> campaign 28f = campaign 28e unchanged (repair task K32 2x, depth 5, one launch,
+# clean -> the fault latch moved aside -> campaign 28f (QUEUE28f: K32 rules s0 to compare with c27a under overlay 0.3.0, then the repair task K32 2x; depth 5, one launch,
 # tail), cards left empty at the end. Any failure stops here and says why; nothing is retried.
 #   SUDO_ASKPASS=/path/to/askpass bash run-20261017-after-reboot.sh        (short; the campaign runs in its own unit)
 set -uo pipefail
@@ -41,6 +41,6 @@ say "health probe passed, kernel log clean"
 systemctl --user reset-failed ctx-campaign28f 2>/dev/null
 systemd-run --user --unit=ctx-campaign28f --collect -p WorkingDirectory=$E/scripts \
   -p StandardOutput=append:$O/c28f.log -p StandardError=append:$O/c28f.log -E SUDO_ASKPASS="$SUDO_ASKPASS" \
-  -E RUN=c28f -E MTP=5 -E SEQS=1 -E ONE_LAUNCH=1 -E TAIL=1 -E EDIT=0 -E RESTORE=0 -E IDLE_MAX=5 -E QUEUE=$O/QUEUE28d.txt \
+  -E RUN=c28f -E MTP=5 -E SEQS=1 -E ONE_LAUNCH=1 -E TAIL=1 -E EDIT=0 -E RESTORE=0 -E IDLE_MAX=5 -E QUEUE=$O/QUEUE28f.txt \
   /usr/bin/bash $E/scripts/longrun-campaign28.sh
 say "campaign 28f launched (unit ctx-campaign28f, log $O/c28f.log)"
