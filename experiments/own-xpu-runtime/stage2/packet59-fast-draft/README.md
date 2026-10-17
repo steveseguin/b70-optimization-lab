@@ -67,7 +67,7 @@ first merge kernel, matching the brief's roughly 1.77 ms scope. Actual acceptanc
 The lean CPU gate compares 96 target layer fixtures and all 24 generated
 mini-model tokens against packet56; two fresh candidate runs compare 27 draft
 proposals and 104,032 bytes of production-K synthetic outputs. There are no
-real model weights in these CPU fixtures. The target source check binds 132
+real model weights in these CPU fixtures. The target source check binds 134
 retained parent files. All passed; device compilation alone is not device
 qualification.
 

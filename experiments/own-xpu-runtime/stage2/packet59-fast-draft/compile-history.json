@@ -1,0 +1,16 @@
+{
+  "schema": "packet59.compile-history.v1",
+  "device_executed": false,
+  "failures": [
+    {
+      "path": "build/build-log-history/1792247489399451547-build-device.log",
+      "sha256": "86f87c4b6674276fed58350b898d0c9eb6e6328e6505596e559b1d92c12aecaf",
+      "diagnostic_lines": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet59-fast-draft/p59_draft.hpp:76:67: error: use of undeclared identifier 'global'",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet59-fast-draft/p59_draft.hpp:76:74: error: use of undeclared identifier 'wg'",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet59-fast-draft/p59_draft.hpp:79:19: error: use of undeclared identifier 'p35_range0'"
+      ]
+    }
+  ],
+  "resolution": "Move launch extent declarations outside submit lambda for prepared-command range capture; no arithmetic change. Final build receipt supersedes failed compilation only."
+}

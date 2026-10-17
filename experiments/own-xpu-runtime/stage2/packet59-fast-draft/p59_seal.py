@@ -18,6 +18,11 @@ def main():
   assert sha(B/mode/'compile_commands.json')==row['compile_commands_sha256']
   for n,h in row['artifacts_sha256'].items():assert sha(B/n)==h;artifacts['build/'+n]=h
  gate=json.loads((P/'cpu-gates.json').read_text());assert gate['passed'] and gate['sources']==sources
+ for name,digest in gate['fixture_sources'].items():assert sha(P/name)==digest,'changed CPU gate source'
+ assert sha(B/'p59-fixture')==gate['fixture_binary_sha256']
+ for name in ('production-a.bin','production-b.bin'):assert sha(P/'cpu-evidence'/name)==gate['production_fixture_sha256']
+ assert len(gate['runs'])==3 and len({r['target_identity_sha256'] for r in gate['runs']})==1
+ assert gate['runs'][1]['proposal_sha256']==gate['runs'][2]['proposal_sha256']
  for row in gate['runs']:
   if row['arm'].startswith('new'):assert row['binary_sha256']==artifacts['build/gnu-host/own-rt-iq3']
  for p in P.glob('p59_*.py'):sources[str(p.relative_to(ROOT))]=sha(p)

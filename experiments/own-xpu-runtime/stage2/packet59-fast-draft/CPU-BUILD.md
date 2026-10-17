@@ -18,8 +18,8 @@ independent engine and owner-specified packet56 base.
 
 The local `build/` is ignored and capped at 1 GB. Its three read-only metadata
 links (`input`, `fusion-fixtures`, `fusion-rope.hpp`) point to packet56's existing
-build metadata. For a clean rebuild create those links after restoring packet56
-metadata; do not run a weight-scanning preparer. `rope.bf16` is a relative link
+build metadata. The builder creates and checks those links after packet56 metadata is
+restored; it never runs a weight-scanning preparer. `rope.bf16` is a relative link
 to the unchanged parent asset, avoiding another 4 MB tracked copy.
 
 The CPU fixture uses tiny model tensors and at most a few MB of synthetic

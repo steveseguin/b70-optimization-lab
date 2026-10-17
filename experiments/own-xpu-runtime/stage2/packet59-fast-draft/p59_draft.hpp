@@ -73,9 +73,9 @@ template<unsigned K,bool I,bool Pair,unsigned V,unsigned Split>struct Dense fina
  }
 #else
  sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override {auto b=bind(a,p);size_t n=size_t(b.rows)*b.batch;
+  constexpr unsigned wg=Split>1?Split*32:256;
+  const size_t global=Split>1?n*wg:((n*lanes+wg-1)/wg)*wg;
   return q.submit([&](sycl::handler&h){h.depends_on(deps);sycl::local_accessor<float,1> partial(2*Split,h);
-   constexpr unsigned wg=Split>1?Split*32:256;
-   const size_t global=Split>1?n*wg:((n*lanes+wg-1)/wg)*wg;
    h.parallel_for(sycl::nd_range<1>(global,wg),[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
     auto sg=it.get_sub_group();unsigned physical=it.get_local_linear_id()%lanes,part=Split>1?it.get_local_linear_id()/32:0;size_t i=Split>1?it.get_group_linear_id():it.get_global_linear_id()/lanes;
     if(i>=n)return;unsigned row=i%b.rows,slot=i/b.rows;auto r=b.route?b.route[slot]:iq3::Route{0,0,b.rows};bool valid=iq3::valid_route(r,b.experts,b.rows,b.rows)&&row<r.row_count;float sum=0,peer=0;

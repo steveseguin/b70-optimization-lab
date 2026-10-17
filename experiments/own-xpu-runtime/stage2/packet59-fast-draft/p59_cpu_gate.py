@@ -41,6 +41,11 @@ def main():
   path=P/name
   if name=='mtp.hpp' or not path.exists():continue
   assert sha(path)==digest,'target or inherited source changed: '+name;checked+=1
- report={'schema':'packet59.lean-cpu-gates.v1','passed':True,'device_executed':False,'model_weights_read':False,'runs':rows,'target_source_files_identical':checked,'production_fixture_bytes':(evidence/'production-a.bin').stat().st_size,'production_fixture_sha256':sha(evidence/'production-a.bin'),'compile_command':cmd,'sources':build.compiled_sources(),'seconds':time.monotonic()-start,'scope':'Target mini fixture bytes equal packet56; fresh mini draft proposals and production-K synthetic draft arithmetic deterministic. Device target-oracle equality and acceptance remain pending.'}
+ parent=P.parent/'packet56-draft-prefix'
+ parent_inputs=json.loads((parent/'build-gnu-host-receipt.json').read_text())['compiled_sources_sha256']
+ current_inputs=build.compiled_sources()
+ external={n:h for n,h in parent_inputs.items() if not n.startswith(str(parent.relative_to(ROOT))+'/')}
+ assert all(current_inputs.get(n)==h for n,h in external.items()),'shared target compiler input changed'
+ report={'external_compiler_inputs_identical':len(external),'schema':'packet59.lean-cpu-gates.v1','passed':True,'device_executed':False,'model_weights_read':False,'runs':rows,'target_source_files_identical':checked,'production_fixture_bytes':(evidence/'production-a.bin').stat().st_size,'production_fixture_sha256':sha(evidence/'production-a.bin'),'compile_command':cmd,'fixture_binary_sha256':sha(B/'p59-fixture'),'fixture_sources':{n:sha(P/n) for n in ('p59_fixture.cpp','p59_cpu_gate.py')},'sources':build.compiled_sources(),'seconds':time.monotonic()-start,'scope':'Target mini fixture bytes equal packet56; fresh mini draft proposals and production-K synthetic draft arithmetic deterministic. Device target-oracle equality and acceptance remain pending.'}
  (P/'cpu-gates.json').write_text(json.dumps(report,indent=2)+'\n');shutil.rmtree(scratch);print(json.dumps({'passed':True,'seconds':report['seconds'],'target_source_files_identical':checked}))
 if __name__=='__main__':main()

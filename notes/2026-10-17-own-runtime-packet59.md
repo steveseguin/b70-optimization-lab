@@ -42,3 +42,28 @@ and a class-balanced rate above 46.962697 justify a full packet56-style chain.
 A screen cannot be submitted, and a screen-only seal does not qualify the full
 chain. The coordinator retains device ownership and must let packet58 finish
 and release its pinned host memory before admitting TP2 work.
+
+The first native compile found a capture-wrapper problem: launch dimensions
+were declared inside the submit callback, while the inherited prepared-command
+overlay lifts the range into that callback's capture list. Moving those two
+host declarations outside fixes the scope; it does not change arithmetic.
+The failed log is retained in this packet's build history. The final host build
+and short CPU gate are repeated against the corrected source before sealing.
+
+## Final CPU handoff
+
+Implementation `dc395bd37` was pushed immediately. The final corrected device
+and host builds both pass. The final short gate took 6.21 seconds and checks
+134 retained parent source files plus all 33 shared compiler inputs; all match.
+Target bytes and fresh draft proposal checks remain exact. The two extra source
+files are unchanged parent host fixtures required by CMake configuration.
+
+The final seal is `6f82880a1778e1395a6c10bbcc2a27d8ef8560ec297bb5a9998e6e88cf3e77d0`.
+The screen's CPU-only `--plan` accepted that seal and binary. Its placeholder
+fault-review timestamp was used only to inspect the command; it does not admit
+current GPU health. The coordinator supplies its actual reviewed-through time.
+
+Cleanup removed only 52.73 MB of this packet's regenerable objects, leaving
+53.22 MB of build artifacts. The [preparation closeout](../experiments/own-xpu-runtime/stage2/packet59-fast-draft/CPU-PREPARATION-CLOSEOUT.md)
+links the gates, failure history and final seal. No device window or submission
+was performed. Next is the coordinator screen; acceptance and speed are pending.

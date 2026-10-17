@@ -12,3 +12,7 @@
   as full-chain/submission evidence.
 - Keep inherited [packet56 decisions](../packet56-draft-prefix/DO-NOT-REPEAT.md)
   except its old draft-order restriction, explicitly relaxed by this brief.
+- The prepared-submit overlay lifts launch ranges into the capture list. Keep
+  range dimensions outside the submit lambda; defining them inside made the
+  first device compile fail before any execution. The fix only moves host
+  declarations. The failed compiler log remains in `build/build-log-history/`.

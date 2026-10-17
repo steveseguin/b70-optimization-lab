@@ -49,6 +49,14 @@ def sources():
  return {str(x.relative_to(ROOT)):sha(x) for x in sorted(paths)}
 def bootstrap():
  B.mkdir(exist_ok=True)
+ parent=P.parent/'packet56-draft-prefix/build'
+ for name in ('input','fusion-fixtures','fusion-rope.hpp'):
+  source=(parent/name).resolve();target=B/name
+  if not source.exists():raise RuntimeError('restore parent fixture metadata: '+str(source))
+  if target.is_symlink():
+   if target.resolve()!=source:raise RuntimeError('unexpected fixture link: '+str(target))
+  elif target.exists():raise RuntimeError('refuse to replace fixture metadata: '+str(target))
+  else:target.symlink_to(source)
 def prepare():
  # Packet49 deliberately reuses admitted metadata/fixtures read-only.  Never
  # run the historical weight-scanning preparer or write through these links.
@@ -58,6 +66,7 @@ def prepare():
 def main():
  p=argparse.ArgumentParser();p.add_argument('stage',choices=['prepare','gnu-host','icpx-host','asan','device']);p.add_argument('--jobs',type=int,choices=(1,),default=1);a=p.parse_args()
  assert os.getpriority(os.PRIO_PROCESS,0)==19 and os.environ.get('OMP_NUM_THREADS')=='2'
+ assert set(os.sched_getaffinity(0))<=set(range(4,16))|set(range(20,32))
  bootstrap();B.mkdir(exist_ok=True);(B/'tmp').mkdir(exist_ok=True);os.environ['TMPDIR']=str(B/'tmp')
  if a.stage=='prepare':prepare()
  else:configure(a.stage,a.jobs)
