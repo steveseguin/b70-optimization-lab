@@ -48,3 +48,14 @@ sequence, seal tampering, closed environment, review boundaries, memory
 fence, PF_EXITING, and cooperative fault handling. Both existing seals and
 the packet 49 oracle pass read-only `--plan` checks. Final test counts and
 source hashes are retained alongside the screen code.
+
+## First device screen (2026-10-17 14:24-14:28 UTC, cards 0+1, boot 2cba7160)
+
+`screen/evidence/packet56-a`: the packet 56 sealed binary in one model lifetime.
+- **Wall time:** **213 s**, against about 62 min for a sealed chain.
+- **Exactness:** all 12 prompts × 128 tokens, plus the 64-token incident check, are exact against the packet 49 oracle.
+- **Speed:** class-balanced **46.792** tok/s (all-prompt 46.869); acceptance 0.787; hit/miss 18.40/32.68 ms.
+- **Comparison:** the sealed WS128 record run was 46.963 (−0.4%, within run-to-run spread).
+- **No new fault lines.**
+
+Use screens for every experiment; reserve full chains for record candidates.
