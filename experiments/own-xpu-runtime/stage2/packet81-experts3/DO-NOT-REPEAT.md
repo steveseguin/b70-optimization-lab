@@ -12,3 +12,5 @@
 
 [Preparation closeout](CPU-PREPARATION-CLOSEOUT.md). The expert lane remains open;
 these decisions close or defer individual mechanisms only.
+
+| 2026-10-17 | packet81 packed activation reads for expert gate/down (loads 51->27, 79->31) | +0.07/+0.13/-0.10% on lane A (neutral), exact | expert limiter is not load issue | no repeat without ALU/latency evidence |

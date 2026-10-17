@@ -25,3 +25,15 @@ proposed files. The build is about 169 MB and peak compiler RSS was 710 MiB.
 The requested pull --rebase refused unrelated live orchestration edits.
 Fetch confirmed main already matched origin/main, so those edits were
 preserved. Another packet's concurrent commits were preserved as well.
+
+## Device result and closeout (coordinator, 2026-10-17 23:15–23:38 UTC, lane A)
+
+All exact. Production mean 54.314 tok/s (54.343 / 54.285):
+
+| View | tok/s | vs production |
+|---|---:|---:|
+| `gate-input-packed` | 54.349 | +0.07% |
+| `down-input-packed` | 54.379 | +0.13% |
+| `input-packed` | 54.256 | −0.10% |
+
+**Closed as neutral.** Cutting static loads (51→27, 79→31) did not move the expert class, so the experts' limiter is not load issue. It is likely IQ2_S grid-lookup/dequant ALU or latency. The lane-B confirmation was dropped. DO-NOT-REPEAT further load-count reductions on the expert kernels without an ALU/latency analysis that predicts a gain.
