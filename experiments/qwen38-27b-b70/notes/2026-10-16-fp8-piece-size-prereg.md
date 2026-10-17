@@ -179,3 +179,30 @@ previous answer), which a bigger piece lengthens, and 70K are 20 whole-window re
 after each notes update (`cached 0`: the new window shares only the system prompt and rules, about 1.4K tokens, and
 no kept state lies inside them), about 30 s of 517. The piece size can move at most the reading part, so part E
 should show a few per cent either way.
+
+## Result, part E (campaign 25, 22:00-23:04 EDT; kernel log clean; data `data/2026-10-16-context-campaign25/`)
+
+| Arm | Piece 832 (c25a) | Piece 1,280 (c25b) |
+| --- | --- | --- |
+| K32 | 39/39, 8 min 42 s | 39/39, 8 min 40 s |
+| K64 | 39/39, 9 min 56 s | 39/39, 10 min 47 s |
+| K32 main calls: tokens read uncached / written | 481,173 / 13,103 | 571,780 / 13,432 |
+| K32 notes calls: tokens written | 17,146 | 15,314 |
+| K64 main calls: tokens read uncached / written | 473,349 / 11,500 | 580,833 / 13,727 |
+| K64 notes calls: tokens written | 18,319 | 21,027 |
+
+**Decision by the registered rule: the agent default stays at 832.** K64 is 8.6 % slower on 1,280 (rule: switch only
+if K64 is faster). 1,280 stays the long-document setting (reading 100K+ at once).
+
+- Scores full on all four (the predictions held there). K32 within 0.4 %, predicted within 5 %; K64 predicted a few %
+  faster, came in 8.6 % slower.
+- Why: each hit re-reads more with bigger pieces, as expected (+19 % and +23 % uncached tokens in main calls), and the
+  two servers' different arithmetic sends the stream down different text paths, so the amount written differs: K32
+  wrote 1,500 fewer tokens on 1,280, K64 4,900 more (about +55 s at 11 ms a token, all of K64's 51 s gap). Writing
+  dominates these runs, so a single seed cannot separate a 3 % reading effect from the text-path difference; with
+  writing held equal, 1,280 is about 15 s slower on K32 and about even on K64. Either way no gain for agent traffic.
+- The 832 server repeats campaign 24c's notes exactly on K32 (17,146 tokens written, same cuts) although 24c ran on a
+  two-sequence server: the stream is deterministic for a given piece.
+
+Lever closed for the agent default. Next on the reading side: the prompt-attention kernel itself (about 70 TFLOPS of
+the card's FP16 peak at 200K, from the waves fit), measured alone first (`scripts/bench-chunk-prefill-attn.py`).
