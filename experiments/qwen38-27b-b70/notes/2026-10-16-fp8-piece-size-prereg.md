@@ -77,3 +77,36 @@ the repeat cost, and both need a second fresh server: **round 2b** adds a fresh 
 only, run right after round 2 (`scripts/run-20261016-fp8-piece-size-r2b.sh`, unit `fp8-piece2b`). Decision: the
 arm adopted for the context lane is the one with the lower 200K repeat wait among those that meet the 10 % cold-read
 rule on both rounds; 2,048 only if its repeat wait is within 0.5 s of 1,280's.
+
+## Result, round 1 (20:07-21:09 EDT, one server each, kernel log clean)
+
+Wait for the first token (s), edit-cost probe (`data/2026-10-16-r314-piece-size/edit-K*.json`):
+
+| Request | K832 | K1280 | K2048 |
+| --- | ---: | ---: | ---: |
+| 30K cold | 11.5 | 10.1 | 10.2 |
+| 30K same text again | 0.8 | 0.8 | 1.3 |
+| 30K edit in the last block | 0.7 | 1.6 | 1.2 |
+| 120K cold | 69.4 | 56.4 | 54.6 |
+| 120K same text again | 1.6 | 1.6 | 2.2 |
+| 120K edit at 50 % | 46.5 | 37.5 | 37.2 |
+| 200K cold | **152.1** | **118.1** | **114.1** |
+| 200K same text again | 1.8 | 1.9 | 3.2 |
+| 200K edit in the last block | 15.8 | 7.1 | 3.0 |
+| 200K edit at 90 % | 30.6 | 28.0 | 22.9 |
+| 200K edit at 50 % | 102.9 | 79.5 | 113.9 |
+
+- K832 repeats the 2026-10-05 table within 0.4 s on every cold read (11.4 / 69.8 / 152 then).
+- Predictions held: K1280's 200K cold read was predicted at about 118 s and came in at 118.1 s; K2048 at 114.1 s.
+  The wave model is right.
+- **Exactness:** every arm 15/15 (each cached repeat and each edited text sent again gives the same eight tokens).
+  K1280 and K2048: paused twice and back to back all 64/64. Across arms (different arithmetic): K832 against K1280
+  62/64 (two `prose2k` copies that never touch the cache differ at token 93, a near tie from the step size); the
+  30 eight-token edit-probe answers are the same on all three arms.
+- **Short prompts with hits** (the 64-prompt pass, 2K-8K prompts, 128 tokens): 183 s on K832, 189 s on K1280, 200 s
+  on K2048 (fewer cached tokens per hit: 209,664 / 179,200 tokens over the pass).
+- K2048's middle-of-text edit at 200K is slower (113.9 s) because its kept states (every 12,288 tokens) put the 50 %
+  edit's resume point further back; K1280 and K832 resume within 1 block of a kept state there.
+
+Round 1's winner by the registered rule is K2048 (114.1 s against 152.1 s, -25 %); K1280 also passes (-22 %).
+Round 2 (fresh K832b and K2048b) and round 2b (fresh K1280b) are running.
