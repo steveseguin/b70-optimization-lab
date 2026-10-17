@@ -1,4 +1,4 @@
-# Why does writing slow down 2-3x at long context? (preregistration, 2026-10-17 02:45 EDT)
+# Why does writing slow down 2-3x at long context? (preregistration, 2026-10-17 02:27 EDT)
 
 ## Question
 
@@ -70,7 +70,7 @@ Pages of 1,280 give the same within 4 % (JSON). No missing kernel; every repeat 
   context. Next: measure writing at fixed contexts on the R314 server, with tokens per step from the server's own
   draft-acceptance counts.
 
-## Writing at fixed context lengths on the server (registered 03:05 EDT, before the run)
+## Writing at fixed context lengths on the server (registered 02:35 EDT, before the run)
 
 Run: `scripts/run-20261017-write-rate.sh` brings up one context-lane server: campaign 24's flags, 832-token pieces,
 TP2, MTP5, INT4 draft head and shortlist, exact cache. Then `scripts/probe-write-rate-vs-context.py` writes two
@@ -90,3 +90,64 @@ writing time per step.
     rest.
   - Tokens per step falling more than 15 % from 1K to 137K on `copy`: look at the drafter at long context (its
     attention layer, the shortlist).
+
+## Result, writing at fixed lengths (02:39-02:47 EDT, server W832; `data/2026-10-17-write-rate/write-W832.json`)
+
+512 tokens per answer; ms per step = writing time / draft-and-check steps (server counters):
+
+| Context | copy tok/s | copy tokens/step | story tok/s | story tokens/step | ms per step (copy / story) |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1K | 136.5 | 5.27 | 70.5 | 2.73 | 38.6 / 38.3 |
+| 32K | 80.0 | 4.95 | 41.5 | 2.56 | 61.5 / 61.6 |
+| 64K | 67.0 | 5.44 | 29.8 | 2.43 | 81.1 / 81.2 |
+| 100K | 55.2 | 5.64 | 23.3 | 2.38 | 101.8 / 101.9 |
+| 137K | 45.5 | 5.64 | 18.6 | 2.32 | 123.4 / 123.7 |
+| 200K | 34.9 | 5.62 | 13.9 | 2.24 | 160.8 / 161.4 |
+| 246K | 28.9 | 5.45 | 13.2 | 2.49 | 188.2 / 188.4 |
+
+- Time per step is the same for both tasks at every length (within 0.6 ms), so it depends on the context only.
+  Tokens per step: copy steady (4.95-5.64), story falls 15-18 % by 137-200K.
+- **Predictions missed:** 38.6 ms at 1K (predicted 28-36). Growth of 85 ms at 137K and 150 ms at 246K, against 17 and
+  32 predicted from the attention kernel alone (5x). So by the registered rule this is the "profile" branch, and
+  acceptance (copy steady) is not the cause.
+- The cause of most of it showed up before a profile was needed (next section): the server's verify-rows overlay.
+  Six separate calls per layer predict about +50 ms at 137K and +87 ms at 246K (16 x 6 x the one-row time). The rest,
+  about 0.24 ms per 1,000 tokens (32 ms at 137K, 58 at 246K), is still unexplained and gets profiled after the change
+  below.
+
+## Found during the run: the server checks drafts with six separate attention calls (02:42 EDT)
+
+The context-lane server runs `--fa-verify-rows` (overlay `b70-fa-verify-rows` 0.1.0; also in the TP2 package). Above
+1,536 keys it computes the 6 checked rows as six separate one-token decode calls per layer, so that every row equals
+plain decoding. The kernel timing above shows six separate calls cost about 6x one decode (each re-reads the cache
+from memory), where one launch of the same six rows costs 1.8-2.0x (the rows' reads of each key tile overlap in L2).
+At 100K that is 16 x (2.44 - 0.74) = 27 ms per step. The September note (`2026-09-17-fa-multirow-verify-plan.md`)
+expected one launch to save "only launches"; one launch is what lets L2 catch the repeat reads. The one-pass
+`paged_decode_multiq` kernel built then (one card, R312d-c, +10-17 % at 16-30K) is not in R314.
+
+Why the kernel library's own one-launch path (`fast`) cannot simply be used: it picks the number of key splits for
+a batch of six rows, and a lone row picks it for a batch of one (`get_num_splits`, flash_api.cpp). The two differ
+between about 3,009 and 24,512 keys (counted from the formula, 32 Xe cores, pages of 832); all 14 timed points above
+happened to fall outside that band, so their 6/6 does not cover it. A row's key partition depends only on its own key
+count and the split count.
+
+**Change:** `b70-fa-verify-rows` 0.2.0, `B70_FA_VERIFY_ROWS_ONE_LAUNCH=1` (off by default; off = 0.1.0 behaviour).
+It makes one launch of the decode kernel with the six rows as one-token pseudo-sequences, and passes the split count
+each lone row's call would pick, computed on the host from the same `max_seqlen_k - back` the per-row calls use.
+When the six rows would not all pick the same count, it falls back to the per-row calls; the formula says that
+happens at about 0.3 % of lengths.
+
+## Check and server comparison (registered 02:47 EDT, before either run)
+
+1. **Census** (`scripts/census-verify-rows.py`, R314 image, card 0, split counts from the overlay file itself):
+   every length from 1,537 to 30,000 in steps of 7, plus 30-34K, 99.0-99.6K, 199.0-199.3K and 245.0-245.3K. Pages of
+   832 and 1,280; 6 rows each, against six lone-row calls. Must hold: the one-launch arm equals the lone rows 6/6 at
+   every length where it is used, and the kernel's own fast path differs exactly where the formula says the split
+   counts differ (validates the mirror). Any one-launch mismatch stops the change.
+2. **Server** (if the census holds): a fresh server with the same flags plus `B70_FA_VERIFY_ROWS_ONE_LAUNCH=1`, and
+   the same write probe. Must hold: all 14 answers (512 tokens each, 1K-246K) bitwise equal to this morning's W832
+   answers.
+   - **Prediction:** ms per step unchanged at 1K (the overlay is off below 1,536 keys), and 20-35 % lower from 32K
+     up (about 46 / 72 / 108 ms at 32K / 100K / 200K, against 61.5 / 101.8 / 160.8).
+   - **Decision:** adopt for the context lane, and propose it for the TP2 package, if the answers are identical and
+     the time per step falls 10 % or more at 64K and above. Otherwise record and close.
