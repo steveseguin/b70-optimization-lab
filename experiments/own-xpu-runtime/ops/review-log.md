@@ -132,3 +132,42 @@ Addendum, 18:15 UTC: packet 68's design note (`a474a23e2`) showed the following:
 The coordinator stopped packet 68 before it built that no-gain design (c), and kept its sealed discarded-row cost probe. That probe is queued on lane B after the packet 65 quick screens.
 
 Codex **packet 68b** now builds batched two-row target kernels (weights read once, each row's arithmetic bit-identical to M=1) and an in-engine H(2)/H(1) probe. That ratio decides every depth-2 design: about 1.3 means go, about 1.9 means dead. This is the reviewer's recommendation 2 as written.
+
+## Review 6, 19:08 UTC: **ACT**
+
+Evidence:
+- 99% device-in-flight over 2 h (83% over 6 h; no gap over 9 min); fault count 2.
+- wide64 wins on both lanes: +5.4% on A, +4.8% on B. The packet 70 chain is due at about 19:35.
+- Risks:
+  - the queue is mostly duplicate 1–2% screens;
+  - only one Codex job was running;
+  - disk is under 20 GB;
+  - nobody is building the depth-2 engine;
+  - there were 4 driver, environment or marker refusals in 70 min.
+
+Actions, 19:08-19:15 UTC:
+1. **Disk:** Codex `clean4` archives exactly `packet17-detmath/build/wa-reference` (14 GB of old test vectors), using clean3's procedure: reference check, verified tar, exact-path removal.
+2. **Depth-2 engine:** Codex **packet 71** started in parallel with packet 68c:
+   - pipelined two-card design with dependent batched verify rows;
+   - per-class M=2 or serial-M=1 kernel table;
+   - lossless restore;
+   - smoke and screen plans.
+   - The analyzer constants are updated to 52.90 / 16.45 / 28.37, with go/no-go at +8% over the current record (break-even about H(2)/H(1) ≤ 1.45). Experts come first in packet 68c.
+3. **Packet 67 lane A:** `fn-run/p67-stop-rule.sh` runs packet 67's `compare.py` when lane B finishes. If no lane-B candidate is ≥ +1.5%, it writes `packet67-roofline/screen/evidence/STOP`; the runner checks STOP before any lease.
+4. **Driver churn:** Codex `lanequeue` builds `ops/lane-queue/`. It is one robust per-lane queue that:
+   - re-reads its job file at boundaries;
+   - keeps a closed env, with extra variables passed only via `--setenv`;
+   - captures rc and the unit Result immediately;
+   - stops on REFUSED-fast, stale markers, latches or fault changes;
+   - supports PAUSE/STOP files;
+   - has a plan mode.
+
+   The packet 68c probe jumps lane B's queue now via `fn-run/laneB-p68c.sh`, which runs right after packet 67 lane B, then packet 69.
+5. **Packet 58b one-card:** a one-shot whole-host slot is booked at about 21:55 UTC (cron).
+
+STOP-doing items applied:
+- no new hand-written drivers once lane-queue lands;
+- full candidate grids are no longer forced on the second lane (packet 67 lane A gated);
+- the decisive probe goes first;
+- 3+ Codex jobs;
+- the packet 70 launch is watched at about 19:35 (`lanes-v3.log` "packet70 decision").
