@@ -20,11 +20,22 @@ def configs():
     return result
 
 def main():
-    for name, row in configs().items():
-        dest = P / 'selections' / name
-        dest.mkdir(parents=True, exist_ok=False)
-        save(dest / 'selection.json', row)
-        for leaf in ('selection-decision.json', 'memory-plan.json', 'dispatch-speed6.json'):
-            (dest / leaf).write_bytes((P / leaf).read_bytes())
+    """Validate existing packet70 views without changing selections or artifacts."""
+    from bundle_selection import EXPERTS
+    from prepare_packet import PRESET, read, check
+    from chain_seal import check_map
+    original = read(PRESET/'selection.json')
+    for expert in EXPERTS:
+        view = P/'selections'/('1-draft-hc-batch-'+expert)
+        expected = copy.deepcopy(original)
+        expected['choices']['experts'] = expert
+        assert read(view/'selection.json') == expected, 'selection bytes/config changed'
+        for name in ('memory-plan.json', 'dispatch-speed6.json'):
+            assert (view/name).read_bytes() == (PRESET/name).read_bytes(), name
+        seal = read(view/'screen-seal.json')
+        check_map(P.parents[3], seal['sources'])
+        for key in ('artifacts', 'gates', 'fixture_files'):
+            check_map(view, seal[key])
+    print('PASS: five unchanged packet70 selection views; no device execution')
 
 if __name__ == '__main__': main()

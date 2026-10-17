@@ -33,3 +33,11 @@ were never device-qualified. No historical sibling evidence was removed.
 All device outputs go to the packet's registered external build directory.
 The existing storage precheck still reserves the full chain and 8 GB free
 floor. No model weights or raw device state are added to Git.
+
+The stopped October 17 K2 chain is retained unchanged at external build path
+`device-cards01-a-k2fail-20261017T1933`, including STOP. Its 246-file inventory
+is pinned by `archived-chains.json` and `evidence/k2fix-archive.json`; CPU replay
+reads it without modifying it. No scratch or receipt was deleted. Original
+chain/screen seals and the before/after regression logs remain under
+`evidence/k2fix-*`. Storage precheck includes the retained archive and passes
+under the unchanged 400 MB retained-build budget.

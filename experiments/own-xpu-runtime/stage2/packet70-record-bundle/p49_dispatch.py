@@ -55,7 +55,7 @@ def pin_production_dispatch(root, summary, *, round3_root):
     root = Path(root)
     from p49d_k2 import measured_coverage
     selection=json.loads((P/'selection.json').read_text())
-    new_coverage=measured_coverage(round3_root,dict(selection,choices={k:v for k,v in selection['choices'].items() if k!='miss'}))
+    new_coverage=measured_coverage(round3_root,dict(selection,choices={k:v for k,v in selection['choices'].items() if k not in ('miss', 'experts')}))
     from bundle_selection import selected
     placement=selected()
     pinned_path = P / 'dispatch-speed6.json'

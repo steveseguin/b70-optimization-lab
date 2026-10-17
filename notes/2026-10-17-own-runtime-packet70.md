@@ -66,3 +66,49 @@ the combined packet's full quality chain remain unmeasured.
 [Packet and commands](../experiments/own-xpu-runtime/stage2/packet70-record-bundle/README.md),
 [evidence index](../experiments/own-xpu-runtime/stage2/packet70-record-bundle/evidence/validation.json),
 [CPU closeout](../experiments/own-xpu-runtime/stage2/packet70-record-bundle/CPU-PREPARATION-CLOSEOUT.md).
+
+## K2 wrapper repair and fresh-chain readiness
+
+The 19:17 UTC chain passed K0, K1a and K1b. K2's two device owners also
+passed and completed teardown, but CPU post-processing rejected the new
+`experts` selection field: `selection must name exactly route/recurrence/hc`.
+The chain stopped with `K2 exited 1; no retry`. The fault count remains two;
+this repair started no device work or service.
+
+`p49_dispatch.py` now removes both `miss` and `experts` before the strict
+three-choice measurement gate. Every packet70 choices consumer was audited;
+K2 is the only active window postprocessor needing this projection. The full
+five-key submission validation and strict rejection of unknown keys remain.
+The new CPU replay failed on all five expert choices before the fix, then
+passed using the original K2 summary and round3 timings, with temporary output
+copies. A reader inventory test covers future selection-consumer additions.
+See [regression evidence](../experiments/own-xpu-runtime/stage2/packet70-record-bundle/evidence/k2fix-tests.log)
+and [identity proof](../experiments/own-xpu-runtime/stage2/packet70-record-bundle/evidence/k2fix-identity.json).
+
+All 246 failed-chain files, including STOP, were renamed together to
+`/home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a-k2fail-20261017T1933`.
+The reseal guard permits only that exact archive with its complete hash-bound
+inventory, failed K2 wrapper receipt and passed safe device teardowns. Every
+other started chain still blocks resealing. Nothing was deleted. Existing
+resume tools require passed K2 and W0p, so this repair prepares a fresh full
+chain at the registered `device-cards01-a` path; no receipts are imported.
+The submission helper admits that fresh path.
+
+The packet-local selection and seal tools now validate/reseal packet70's five
+views without touching frozen shared screen tools. All binaries, arithmetic,
+selections, dispatch, screen artifacts, fixture/gate bytes and existing screen
+source hashes are unchanged. The old seals are retained. The selected bundle
+remains `1-draft-hc-batch-wide64`.
+
+All five required prechecks pass: chain seal, input census (12,490 files and
+352 write paths), storage, full-chain plan, and queue plan. Five repair tests
+and twelve orchestration tests pass. The stopped chain fits the existing
+storage budget without a change. The read-only review found no blockers.
+[Ready record](../experiments/own-xpu-runtime/ops/packet70-orchestration/ready.json)
+contains the exact coordinator command, current seal hashes, and check logs.
+It uses the unused `packet70-chain-k2fix` unit and a separate log; the failed
+unit is untouched. Readiness verification passes. No launch occurred.
+
+The initial `git pull --rebase` was refused because unrelated packet71 work
+and an orchestration log were dirty. Fetch confirmed local main matched
+origin/main; those unrelated edits were preserved.

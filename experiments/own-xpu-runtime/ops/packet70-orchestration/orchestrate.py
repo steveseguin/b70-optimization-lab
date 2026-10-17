@@ -122,11 +122,11 @@ def select(data):
 
 
 def chain_command():
-    args=['systemd-run','--user','--unit=packet70-chain','--property=Restart=no',
+    args=['systemd-run','--user','--unit=packet70-chain-k2fix','--property=Restart=no',
           '--property=Nice=0','--property=CPUAffinity=0-3 16-19','--property=KillMode=process',
           '--property=SendSIGKILL=no','--property=ExitType=cgroup','--property=TimeoutStopSec=infinity',
-          '--property=StandardOutput=append:'+str(HERE/'chain.log'),
-          '--property=StandardError=append:'+str(HERE/'chain.log'),
+          '--property=StandardOutput=append:'+str(HERE/'chain-k2fix.log'),
+          '--property=StandardError=append:'+str(HERE/'chain-k2fix.log'),
           '--working-directory='+str(ROOT),'/usr/bin/taskset','-c','0-3,16-19',
           '/usr/bin/bash',str(HERE/'device-entry.sh'),'chain']
     return shlex.join(args)+' </dev/null'

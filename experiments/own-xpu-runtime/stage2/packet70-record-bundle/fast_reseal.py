@@ -19,7 +19,8 @@ def main():
     assert os.getpriority(os.PRIO_PROCESS,0)==19
     assert set(os.sched_getaffinity(0)) <= set(range(8,16))|set(range(24,32))
     from storage import B,REGISTERED_CHAIN
-    assert not any(B.glob('device-cards01-*')), 'chain started; selection frozen'
+    from stopped_archive import require_fresh_chain
+    require_fresh_chain(B)
     name=a.placement+'-'+a.draft+'-'+a.miss+'-'+a.experts;view=P/'selections'/name
     seal=json.loads((view/'screen-seal.json').read_text())
     from chain_seal import check_map

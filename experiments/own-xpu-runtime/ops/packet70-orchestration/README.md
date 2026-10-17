@@ -53,3 +53,10 @@ invalid rates, precheck failures, new faults and stale/mock readiness.
 [Dry-run trace](dry-run.log), [current screen snapshot](screens-current.json),
 [packet](../../stage2/packet70-record-bundle/README.md),
 [task note](../../../../notes/2026-10-17-own-runtime-packet70.md).
+
+October 17 K2 repair readiness is in `ready.json`; `ready-k2fail.json` preserves
+the previous command/seal record. The new command uses the unused
+`packet70-chain-k2fix` unit and `chain-k2fix.log`. It starts a fresh full chain
+at the registered output, after the stopped chain was archived with STOP.
+The repair has not launched it. `verify_ready.py` verifies the current boot,
+command, selection, chain seal and orchestration source hashes.

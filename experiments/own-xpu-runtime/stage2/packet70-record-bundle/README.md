@@ -43,3 +43,20 @@ strict 512-token final gate, which remains false.
 [submission/resume](SUBMISSION.md), [retention](RETENTION.md),
 [CPU closeout](CPU-PREPARATION-CLOSEOUT.md), [boundaries](DO-NOT-REPEAT.md),
 [task note](../../../../notes/2026-10-17-own-runtime-packet70.md).
+
+October 17 K2 repair: device fixtures passed, then wrapper post-processing
+rejected the `experts` field. The wrapper now projects only route/recurrence/HC
+into the strict K2 validator. [CPU replay](evidence/k2fix-tests.log) runs the
+real postprocessor against the preserved failed-chain evidence for every expert
+choice. [Identity proof](evidence/k2fix-identity.json) records unchanged binaries,
+selection and screen artifacts. The fresh full chain is prepared, not launched;
+existing resume rules cannot import only K0/K1a/K1b. The stopped archive and
+STOP remain intact. `prepare_selections.py` validates the existing packet70
+views; `seal_and_plan.py` reseals wrapper sources only; `fast_reseal.py`
+selects a view and binds the chain. Required checks are retained as
+`evidence/k2fix-{seal,inputs,storage,plan,queue}.log`.
+
+CPU regression replay on this host:
+`nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest test_selection_postprocessing test_stopped_archive -v`
+from this packet directory. The test requires the read-only archived device
+evidence named in `evidence/k2fix-archive.json`; it never runs a device binary.

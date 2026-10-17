@@ -179,16 +179,53 @@
       "source": "packet65 screen/quick/compare.py load + checked_rate; mean of two production controls per lane"
     }
   },
-  "command": "systemd-run --user --unit=packet70-chain --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --property=StandardOutput=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/chain.log --property=StandardError=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/chain.log --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/device-entry.sh chain </dev/null",
+  "command": "systemd-run --user --unit=packet70-chain-k2fix --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --property=StandardOutput=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/chain-k2fix.log --property=StandardError=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/chain-k2fix.log --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/device-entry.sh chain </dev/null",
   "dry_run": false,
   "requires_coordinator_launch": true,
-  "build_receipt_sha256": "8158587032af4e3ebc738644d32502f657daf72097ecae95778e678a3f29878b",
+  "build_receipt_sha256": "8b33ee635956b538e945630c59daa9a5fc4749393c051be81d2faa1771e5a445",
   "selection_sha256": "f02ae02e5dd1a8e64bf2fff10137839843b19fd2d90a658c38b987a750451684",
   "orchestration_sources": {
     "test_orchestrate.py": "54ea63124b5a1d61aca13663d9cace5bb1e23d4f35723786cc05ea6a852b0e49",
     "verify_ready.py": "08be06d982afee64b376741f1b83f44f091b48b7883fbb6c6fa5914585dc02dc",
     "read_screens.py": "7fcaf83776348e3bb6ffe0545a928085eb88d7f1ba4335920644c93acc14d9e0",
-    "orchestrate.py": "bc4911a7b9b0242a697429b97b6f7133fdc8b2e9a22b1c6bcb012f8db3b96bbd",
+    "orchestrate.py": "3d739200d5db7ec8b7821fee2483f3475da3bdaa6f79f16f7143bda9ba34a72b",
     "device-entry.sh": "299cfe9063eb9e912415de24b293bde631c12c8204b1129a8f7cfc4638c2e664"
+  },
+  "prepared_utc": "2026-10-17T19:39:07.999155+00:00",
+  "chain_mode": "fresh",
+  "imported_windows": [],
+  "output_root": "/home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a",
+  "prior_attempt": {
+    "archive": "/home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a-k2fail-20261017T1933",
+    "stop_preserved": true,
+    "reason": "K2 wrapper rejected experts after device work passed",
+    "fault_count": 2
+  },
+  "prechecks": {
+    "seal": {
+      "passed": true,
+      "path": "experiments/own-xpu-runtime/stage2/packet70-record-bundle/evidence/k2fix-seal.log",
+      "sha256": "e7b4eaec648aaf495e622e2ee83fc9e2af688fc9f737f66f5f051d48471994f1"
+    },
+    "inputs": {
+      "passed": true,
+      "path": "experiments/own-xpu-runtime/stage2/packet70-record-bundle/evidence/k2fix-inputs.log",
+      "sha256": "32eec799d7e491adee11b499d06cc60e0c03317952ce64aca8a548a531350e1c"
+    },
+    "storage": {
+      "passed": true,
+      "path": "experiments/own-xpu-runtime/stage2/packet70-record-bundle/evidence/k2fix-storage.log",
+      "sha256": "2584c3921be35f2c058f693da835d495fd87ddac099c7c802112ad92ac6068f4"
+    },
+    "plan": {
+      "passed": true,
+      "path": "experiments/own-xpu-runtime/stage2/packet70-record-bundle/evidence/k2fix-plan.log",
+      "sha256": "02a5652e11534aba3098e428cb9072d4a63e0bbb7422bb1ae4eb565d551e8810"
+    },
+    "queue": {
+      "passed": true,
+      "path": "experiments/own-xpu-runtime/stage2/packet70-record-bundle/evidence/k2fix-queue.log",
+      "sha256": "d2ab3d8f92ded20fb401f4e454624a444c905049f075bd7c75e9a2a912fe5e95"
+    }
   }
 }
