@@ -29,3 +29,25 @@ head-256 policy (64 keys per inner step; 128 query rows per work-group) as a sta
 the same script, and take any variant 10 % or more faster at 1,280 x 100K+ to a server test (exactness: repeat equal
 in the script, then the edit probe's 15/15 and the order probe on a server). If it is already above 60 %, the kernel
 lever closes and the reading side is done for this lane.
+
+## Result, R314 kernel (00:55 EDT, card 0, kernel log clean; `data/2026-10-17-attn-bench/attn-r314.json`)
+
+Median of five calls, TFLOPS of useful attention work per card:
+
+| Context | 832 step | 1,280 | 2,048 | 4,096 |
+| --- | ---: | ---: | ---: | ---: |
+| 25K | 39.0 | 77.5 | 77.3 | 73.9 |
+| 50K | 49.7 | 76.8 | 78.5 | 75.0 |
+| 100K | 49.9 | **72.2** (21.9 ms) | 76.2 | 76.0 |
+| 150K | 49.6 | 69.2 | 75.0 | 74.2 |
+| 200K | 49.7 | 68.4 | 74.8 | 73.8 |
+
+- Predictions held for 1,280 (72 TFLOPS and 21.9 ms at 100K, predicted 65-75 and 23 ms) and for 2,048 / 4,096. The
+  832 step does better than predicted (50, not 40): the half-empty second wave costs less than a full wave.
+- Every repeat bitwise equal (24/24).
+- 1,280 loses rate as the context grows (77.5 at 25K to 68.4 at 200K) where 2,048 and 4,096 hold about 75; not
+  explained yet (the step is 94 % of two waves, so each wave's tail is waiting for its slowest work-group longer as
+  the per-work-group work grows).
+- **Decision:** 72 TFLOPS is 46-50 % of the 145-156 TFLOPS BF16 GEMM rate, under the 60 % line, so the tile variants
+  are built (64 keys per inner step; 128 query rows per work-group), from the same source as the image's library
+  (vllm-xpu-kernels 0.1.14.1, 6d92b1b) with a rebuilt unchanged control, and timed with the same script.
