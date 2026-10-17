@@ -138,3 +138,10 @@ change) the first candidate, before the launch trims listed above.
 **Small separate lever, banked:** the drafter's down projection runs at one row (215 us); padded to six rows it
 would take 76 us, and the census shows row 0 bit-identical at every row count (one invariance class, 1-512 rows).
 About 0.7 ms per step at depth 5. Needs a census on R314 before use.
+
+**Caveat (07:37, before any run):** R198 (2026-09-04, R156 image) captured whole decode steps in XPU graphs at MTP1
+and depth 3, drafter passes included, and was 1.2-1.4 % slower, not faster: "per-launch submission is cheap enough
+on this EPYC host". That argues against a host-bound drafter, at least on that image. The estimate above is
+arithmetic on a one-card census and could be wrong in the verify pass instead (six-slot recurrent state writes, the
+GDN speculative kernels). The clock decides; if the host waits 5 ms or more per step, the drafter graphs are not
+tried and the next step is the device-side look.
