@@ -229,3 +229,32 @@ by the registered rule (waits under 2 ms, period 35 ms or more) that reads as ho
 layer about 0.2 GB per card plus the 65K-row INT4 head) about 3-4 ms. About 31 ms at bandwidth, so about 7 ms of the
 38 is something else: the roughly 130-150 cross-card collectives per step (the copy engine is half busy), the
 recurrent layers' speculative kernels, attention, norms. The next measurement is a device-side split of one step.
+
+## Amendment 11:46 EDT (P0, L0 run; Lp running): speculation costs 7.8 ms a step, not 3.5; arm Pk added
+
+**No-drafter arms:** P0 33.18 / 33.20 tok/s at 1K (30.1 ms per token), 30.5 at 30K; L0 32.94 / 33.14 (30.3 ms),
+30.45 at 30K. Same within 1 %, and close to the 10-03 two-card figure (29.5 ms, R310). Card busy counters: compute
+and copy engines 99-100 % busy while writing.
+
+**So the drafting step costs P - P0 = 37.85 - 30.1 = 7.75 ms more than a one-token step on R314,** for five drafter
+passes plus five more verify rows. The 10-03/04 sizing (`notes/2026-10-03-fp8-comm5b-result.md`: "cost of
+speculating 3.5 ms", 33.0 vs 29.5) used the derived 33.0. Correction to the busy reading of 11:32: the counter is
+time a client's context has work on the engine, including semaphore waits (the copy engine reads 99.7 % busy
+without drafting, about 50 % with it), so it shows the cards' queues never run dry (the host is not the limit), not
+that the cards compute all the time.
+
+**The open question this study cannot answer:** every arm ran on R314. Either the package (R310 image) also takes
+about 38 ms per drafting step and 33.0 was an artefact of dividing two summary statistics, or R314's drafting step is
+about 5 ms slower than R310's.
+
+**Arm Pk (registered now, runs after Lp, about 6 min):** the TP2 package exactly as shipped,
+`packages/qwen38-27b-fp8-tp2-b70/scripts/serve.py start --profile recommended` (image eb8165..., R310, its own
+environment), port 18197, the same write probe (1K/8K/16K/30K, copy and story, 512 tokens), the same busy sampler.
+- **Prediction:** 37-39 ms per step at 1K (the 33.0 was derived; R310 to R314 changed nothing on the drafting path
+  that should cost 5 ms). Tokens per step may differ from P's (another image, other prompt-reading numerics).
+- **Decision:** Pk 35 ms or less at 1K: R314 has a drafting-step regression of 3 ms or more; the next run bisects
+  R310 -> R314 (image first, then one-launch, state-stride and the overlays) before any new lever. Pk 37-39 ms:
+  the package's quoted step was never real; the 7.75 ms speculation cost is real on both, and the next measurement is
+  a device-side split of a drafting step against a one-token step (one 8-step rank-0 profile on each, the comm5b
+  recipe, `overlays/b70-step-profiler`), to find which of the drafter's passes and the verify rows carry it.
+  In between (35-37): report both readings, run the profile.
