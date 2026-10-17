@@ -110,3 +110,18 @@ Wait for the first token (s), edit-cost probe (`data/2026-10-16-r314-piece-size/
 
 Round 1's winner by the registered rule is K2048 (114.1 s against 152.1 s, -25 %); K1280 also passes (-22 %).
 Round 2 (fresh K832b and K2048b) and round 2b (fresh K1280b) are running.
+
+## Part E, registered 21:50 EDT before any run: the agent stream (campaign 25)
+
+The edit probe reads whole texts; agent traffic is mostly cache hits plus a few thousand new tokens per call, where
+bigger blocks re-read more after each hit. Campaign 25 runs ctxkeeper 1.1.0 on the 240K rules stream, seed 0, at
+two working windows, K32 (32,768 budget; campaign 24c: 39/39 in 8 min 41 s on a two-sequence server) and K64
+(65,536), on two servers that differ only in the piece: c25a PIECE=832, c25b PIECE=1280 (one sequence, MTP 5,
+campaign 24's flags otherwise; runner `data/2026-10-16-context-campaign25/longrun-campaign25.sh`, queue
+`QUEUE25.txt`). Queued after round 2b.
+
+Predictions: both arms 39/39 on both servers. K32 time on c25b within 5 % of c25a either way (contexts up to 32K:
+the cold part reads about 12 % faster, each hit re-reads about 450 more tokens on average). K64 a few % faster on
+c25b. Decision: switch the context lane's default piece to 1,280 only if K64 is faster and K32 no more than 3 %
+slower, both with full scores; otherwise 1,280 is kept as the long-document profile (reading 100K+ at once) and the
+agent default stays 832.
