@@ -116,7 +116,7 @@ runner class, checked in the image on CPU). One line per answer per card, saved 
     one-rank profile on a server with more host room).
   - In between: both, sized by the arms.
 
-## Amendment 07:45 EDT (before any run): the verify pass is cheaper than a one-row pass, so the drafter costs more
+## Amendment 07:34 EDT (before any run): the verify pass is cheaper than a one-row pass, so the drafter costs more
 
 The 10-04 GEMM census (`data/2026-10-04-fp8-multiuser/census/census.json`, one card, TP2 shapes, R310 era) has the
 MLP down projection at 215 us for 1-4 rows, 104 us at 5 and 76 us from 6 rows up; the other five shapes are flat in
