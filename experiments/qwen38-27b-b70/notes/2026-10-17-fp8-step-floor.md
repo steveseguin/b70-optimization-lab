@@ -258,3 +258,27 @@ environment), port 18197, the same write probe (1K/8K/16K/30K, copy and story, 5
   a device-side split of a drafting step against a one-token step (one 8-step rank-0 profile on each, the comm5b
   recipe, `overlays/b70-step-profiler`), to find which of the drafter's passes and the verify rows carry it.
   In between (35-37): report both readings, run the profile.
+
+## Arm Lp result (11:43-11:48 EDT): exact, no gain; the padded down projection is closed
+
+Every Lp answer is bitwise equal to L's (8/8 texts, tokens per step equal), and the step is not faster: 38.27 / 38.13
+ms at 1K against L's 38.14 / 38.18, 42.60 against 42.50 at 30K (+0.1 ms, noise). The server's own call is as flat
+as the census's, so padding only adds the concatenation. Lever closed; the overlay stays as research code.
+No breadcrumb block on any arm (no stall, no failure); kernel log clean from 11:12:42 to the end (11:48:31).
+
+## Arm Pk result (11:48-11:53 EDT): the package's drafting step is 38 ms too; 33.0 was never a timed step
+
+`data/2026-10-17-step-floor/write-Pk.log`, the TP2 package as shipped (R310 image, profile recommended):
+
+| ms per step (copy / story) | 1K | 8K | 16K | 30K |
+| --- | --- | --- | --- | --- |
+| Pk, package as shipped | 37.95 / 37.77 | 42.20 / 42.15 | 50.29 / 50.36 | 59.70 / 59.83 |
+| P, package flags on R314 (one launch) | 37.85 / 37.81 | 38.82 / 38.93 | 40.25 / 40.17 | 42.18 / 42.24 |
+
+- **Prediction (37-39 ms at 1K) held.** The package's step at 1K is the same as R314's within 0.1 ms; the quoted
+  33.0 ms (and the 10-03/04 "speculation costs 3.5 ms") came from dividing two summary statistics. Registered
+  branch: the 7.75 ms speculation cost is real on both; next is the profile pair (P and P0, 8 steps each, rank 0).
+- **Side result, the package one-launch proposal:** with the package's own flags, R314's one-launch verify writes
+  9 % faster at 8K, 25 % at 16K and 41 % at 30K than the shipped package (same tokens per step, same prompts); the
+  same direction as gates 1-3 of `notes/2026-10-17-tp2-package-one-launch-proposal.md`. Owner's call, unchanged.
+- Kernel log clean 11:48:55-11:53:08; the package's own stop path left the cards empty.

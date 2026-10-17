@@ -20,7 +20,7 @@ export SUDO_ASKPASS=${SUDO_ASKPASS:?set SUDO_ASKPASS}
 export B70_GUARD_MIN_AVAILABLE_GIB=1.6
 TAG=${TAG:-20261017-floor}
 O=
-D=$LAB/experiments/qwen38-27b-b70/data/2026-10-17-step-floor
+D=${OUT_DIR:-$LAB/experiments/qwen38-27b-b70/data/2026-10-17-step-floor}
 S=$LAB/experiments/qwen38-27b-b70/scripts
 PORT=18196
 START=$(date '+%F %T')
@@ -58,6 +58,19 @@ COMMON=(--image neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r314-state-stri
         --overlay b70-host-step-clock --extra-env B70_HOST_STEP_CLOCK=1
         --overlay b70-step-breadcrumbs --extra-env B70_STEP_BREADCRUMBS=1
         --extra-env B70_FA_VERIFY_ROWS_ONE_LAUNCH=1)
+# PROFILE=1: every arm also gets the comm5b profiler recipe (b70-step-profiler, rank 0 only, 8 steps after 40), its
+# trace written to /mnt/fast-ai/bench-results/fp8-r314-floor-<arm>-$TAG-trace; CENSUS=0 skips the padded-GEMM census;
+# LENGTHS sets the write probe's prompt lengths.
+PROFILE=${PROFILE:-0}
+CENSUS=${CENSUS:-1}
+LENGTHS=${LENGTHS:-1000,8000,16000,30000}
+profile_args() {  # arm
+  (( PROFILE )) || return 0
+  local t=/mnt/fast-ai/bench-results/fp8-r314-floor-$1-$TAG-trace
+  mkdir -p "$t"
+  echo --overlay b70-step-profiler --extra-env B70_PROFILE_DIR=/trace --extra-env B70_PROFILE_SKIP=40 \
+    --extra-env B70_PROFILE_STEPS=8 --extra-env B70_PROFILE_RANKS=0 --mount-dir "$t:/trace"
+}
 arm_args() {  # an arm name ending in 0 is the same server without the drafter
   if [[ $1 == *0 ]]; then echo --mtp 0
   else echo --mtp 5 --draft-int4 --shortlist /opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt
@@ -79,6 +92,7 @@ arm_args() {  # an arm name ending in 0 is the same server without the drafter
 start_server() {  # arm
   local name=$1 extra
   extra=$(arm_args "$name") || { say "unknown arm $name"; return 1; }
+  extra="$extra $(profile_args "$name")"
   wait_port || return 1
   [[ -n $(faults) ]] && { say "ABORT: GPU fault line before $name"; return 1; }
   O=/mnt/fast-ai/bench-results/fp8-r314-floor-$name-$TAG
@@ -117,16 +131,18 @@ mkdir -p "$D"
 trap finish EXIT
 ARMS=${ARMS:-L N M P P0 L0}
 # the padded-GEMM census (one card, about a minute) decides whether arm Lp (L + b70-w8a16-pad-rows) runs at the end
+if (( CENSUS )); then
 say "census: few-row W8A16 GEMMs padded to 6 rows (R314, card 0)"
 docker run --rm --name pad-census --device /dev/dri:/dev/dri --group-add render --memory 6g --ulimit core=0 \
   -e ONEAPI_DEVICE_SELECTOR=level_zero:0 -v "$S/census-w8a16-pad-rows.py:/tmp/c.py:ro" -v "$D:/out" --workdir /tmp \
   --entrypoint python3 neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r314-state-stride \
   /tmp/c.py --out /out/census-w8a16-pad-rows.json 2>&1 | grep -E '^\{|^census' | cut -c1-300
 if [[ ${PIPESTATUS[0]} == 0 ]]; then ARMS="$ARMS Lp"; else say "census failed or differs: arm Lp not run"; fi
+fi
 [[ -n $(faults) ]] && { say "ABORT: GPU fault line after the census"; exit 1; }
 for arm in $ARMS; do
   OWNER=; start_server "$arm" || exit 1
-  python3 $S/probe-write-rate-vs-context.py --base-url http://127.0.0.1:$PORT --lengths 1000,8000,16000,30000 \
+  python3 $S/probe-write-rate-vs-context.py --base-url http://127.0.0.1:$PORT --lengths "$LENGTHS" \
     --out "$D/write-$arm.json" > "$D/write-$arm.log" 2>&1 || say "write probe failed on $arm"
   grep "^WRITE" "$D/write-$arm.log"
   grep -o "b70_host_step_clock rank .*" "$O/server.log" > "$D/clock-$arm.txt"; head -c 600 "$D/clock-$arm.txt"; echo
@@ -134,3 +150,4 @@ for arm in $ARMS; do
   stop_server
   [[ -n $(faults) ]] && { say "ABORT: GPU fault line after $arm"; exit 1; }
 done
+exit 0
