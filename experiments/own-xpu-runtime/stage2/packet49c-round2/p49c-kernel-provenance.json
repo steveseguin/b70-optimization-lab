@@ -1,0 +1,20 @@
+{
+  "schema": "packet49c.selected-kernel-provenance.v1",
+  "passed": true,
+  "device_executed": false,
+  "source": "experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp",
+  "source_sha256": "68226856f6d6b2c1174cf35bfce5eb7f1a7b8cd27aa38b5fb207bcaef4335e86",
+  "candidate_sha256": "2577620fc19fc83637279523ce2aa73eccd58e862f5a4f7bb149a06666f4641b",
+  "selected_arithmetic_body_exact": true,
+  "normalizations": [
+    "namespace p51 to p49c",
+    "local identical load32 helper namespace",
+    "route exception text prefix only"
+  ],
+  "excluded": [
+    "IQ2 GateKernel",
+    "GDN QKV dispatch",
+    "HC inject",
+    "final HC low/gate"
+  ]
+}

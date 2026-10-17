@@ -56,3 +56,20 @@ Exact commands and checked switch tests will be included in the final runbook.
 No integrated device speed is claimed. Packet51's operator gains do not prove
 an end-to-end gain. The39.422 tok/s record is unchanged; WS128 is the matching
 128-token comparison, not the separate512-token publication gate.
+
+## Integration checkpoint
+
+The corrected GNU build and41 Python admission/storage/switch tests pass.
+Independent kernel review found two issues before qualification: a duplicated
+HC dispatch hook in command preparation, and attention scratch included in a
+cross-backend hash despite being device-only. Both are corrected. The direct
+HC gate fixture was also expanded from four rows to its production10,240 rows.
+The initial failed build's raw log was overwritten after an evidence-copy
+path error; the reconstructed rejected block and explicit retention limitation
+are in `evidence/preparation-corrections/`. No failed run is counted as passing.
+
+The full-layer CPU adapter uses actual `execute_site` dispatch with legacy
+execution enabled; it does not qualify prepared replay or full-model MTP.
+Those remain device/model gates. Compilation and remaining CPU tests continue
+serially. The independent reviews and exact coordinator runbook are included
+in the new packet. No predecessor, oracle unit or queued model unit changed.
