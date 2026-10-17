@@ -41,4 +41,8 @@ Device H(2)/H(1), ≤1.3× dense targets, both row/state checks and all thirteen
 packet49 streams remain for the coordinator. The exact launch and analysis
 commands are in the packet README. No projected gain is presented as measured.
 
-The first sealed-probe commit is recorded below immediately after its push.
+First sealed probe: **`c83308f36`**, pushed to `origin/main` immediately after
+commit, well inside the two-hour limit. The follow-up records this identity and
+explicitly retains the byte fixtures that global binary-ignore rules omit from
+ordinary staging. The required RoPE constant was already included. The seal
+and runnable build are unchanged.
