@@ -1,5 +1,6 @@
-"""CPU check of b70-step-breadcrumbs 0.1.0 against a stand-in runner: steps kept with the worker's own view, one block
-per stall and per failure, events still forward record(), outputs returned unchanged. No vLLM, no GPU."""
+"""CPU check of b70-step-breadcrumbs 0.2.0 against a stand-in runner: steps kept with the worker's own view, one block
+per stall and per failure, events still forward record(), outputs returned unchanged, collectives counted per step
+with a signature that differs when the calls differ. No vLLM, no GPU."""
 import importlib.util
 import unittest
 from pathlib import Path
@@ -126,6 +127,41 @@ class CrumbsTest(unittest.TestCase):
         self.assertIn('DEVICE_LOST', failed[0])
         self.assertIn('ONE-LAUNCH', failed[0])                              # the step before, 4,606 keys, 6 rows
         self.assertEqual(r._b70_crumbs.busy, {})
+
+
+    def test_collectives_counted_per_step(self):
+        calls = []
+
+        class Tensor:
+            def __init__(self, n):
+                self.n = n
+
+            def numel(self):
+                return self.n
+
+        fake = SimpleNamespace(all_gather_into_tensor=lambda out, x, group=None: calls.append(('ag', x.n)) or 'w',
+                               broadcast=lambda x, src=0, group=None: calls.append(('bc', x.n)))
+        self.assertTrue(crumbs.count_collectives(fake))
+        self.assertFalse(crumbs.count_collectives(fake))
+        lines = []
+        r = self.make(lines)
+        sigs = []
+        for extra in (False, False, True):
+            r.execute_model(step('req-00000004', 6, 5, 4600))
+            for _ in range(3):
+                self.assertEqual(fake.all_gather_into_tensor(Tensor(12), Tensor(6), group='g'), 'w')
+            fake.broadcast(Tensor(1), src=0)
+            if extra:
+                fake.all_gather_into_tensor(Tensor(12), Tensor(6))
+            s = r._b70_crumbs.steps[-1]
+            sigs.append((s['coll'], s['elems'], s['sig']))
+        self.assertEqual(len(calls), 13)                                    # every call reached the original
+        self.assertEqual(sigs[0], sigs[1])                                  # same calls, same signature
+        self.assertEqual(sigs[0][:2], (4, 3 * 18 + 1))
+        self.assertEqual(sigs[2][0], 5)
+        self.assertNotEqual(sigs[2][2], sigs[0][2])
+        r._b70_crumbs.dump('test')
+        self.assertIn('coll 4 elems 55 sig %08x' % sigs[0][2], lines[-1])
 
 
 if __name__ == '__main__':

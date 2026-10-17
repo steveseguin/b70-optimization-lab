@@ -18,6 +18,12 @@ or a call of execute_model, sample_tokens or propose_draft_token_ids, has lasted
 seconds (default 20; a watcher thread compares host timestamps only), or one of them raised. The block is the kept
 steps, oldest first, then the Python stacks of all threads.
 
+0.2.0 (2026-10-17, notes/2026-10-17-hang-repro.md): each step also counts the torch.distributed calls this worker
+issued from the start of its execute_model to the start of the next one, with a running signature of their names and
+element counts. The two ranks must issue the same collectives in the same order; if a hang is a cross-card exchange
+that one card never joined, the two ranks' blocks show different counts or signatures for the same step. Counting is
+host arithmetic on the call's arguments (`numel()` of the tensors passed), nothing is read from the device.
+
 No device call is added and no tensor is read or written (the per-request view is read from numpy arrays on the host),
 so no output can change. The four events are wrapped in a proxy that forwards everything, as b70-host-step-clock does.
 """
@@ -33,6 +39,10 @@ EVENTS = ('prepare_inputs_event', 'valid_sampled_token_count_event', 'draft_toke
 SHORT = {'prepare_inputs_event': 'prep', 'valid_sampled_token_count_event': 'count',
          'draft_token_ids_event': 'drafts', 'num_accepted_tokens_event': 'accepted'}
 ONE_LAUNCH_KEYS = 1536
+COLLECTIVES = ('all_reduce', 'all_gather_into_tensor', 'all_gather', 'reduce_scatter_tensor', 'reduce_scatter',
+               'broadcast', 'gather', 'scatter', 'reduce', 'all_to_all_single', 'all_to_all', 'barrier', 'send', 'recv',
+               'isend', 'irecv', 'broadcast_object_list', 'all_gather_object')
+CURRENT = []          # this process's Crumbs (one model runner per worker); the collective wrappers count into it
 
 
 def stamp(t):
@@ -64,7 +74,8 @@ class Crumbs:
                          'computed': computed.get(rid)})
         step = {'i': self.index, 't': now, 'tokens': int(getattr(out, 'total_num_scheduled_tokens', 0) or 0),
                 'finished': len(getattr(out, 'finished_req_ids', None) or ()),
-                'preempted': len(getattr(out, 'preempted_req_ids', None) or ()), 'reqs': reqs, 'events': []}
+                'preempted': len(getattr(out, 'preempted_req_ids', None) or ()), 'reqs': reqs, 'events': [],
+                'coll': 0, 'sig': 0, 'elems': 0}
         self.index += 1
         with self.lock:
             self.steps.append(step)
@@ -93,6 +104,29 @@ class Crumbs:
             r = step['reqs'][0]
             keys = (r.get('w_computed', r['computed']) or 0) + r['sched']
             step['one_launch'] = 2 <= r['sched'] <= 8 and keys > ONE_LAUNCH_KEYS
+
+    def collective(self, index, args):
+        """One torch.distributed call issued by this worker: counted into the current step (host arithmetic only)."""
+        n = 0
+        for a in args:
+            numel = getattr(a, 'numel', None)
+            if numel is not None:
+                try:
+                    n += int(numel())
+                except Exception:
+                    pass
+            elif isinstance(a, (list, tuple)):
+                for b in a:
+                    try:
+                        n += int(b.numel())
+                    except Exception:
+                        pass
+        steps = self.steps
+        if steps:
+            s = steps[-1]
+            s['coll'] += 1
+            s['elems'] += n
+            s['sig'] = (s['sig'] * 1000003 + index * 7919 + n) & 0xffffffff
 
     def event(self, name, what):
         with self.lock:
@@ -138,9 +172,10 @@ class Crumbs:
                 r['id'], r['sched'], r['draft'], r['computed'], r.get('w_computed'), r.get('w_tokens'),
                 r.get('w_accepted')) for r in s['reqs'])
             ev = ' '.join('%s.%s+%.1fms' % (n, w, (t - s['t']) * 1e3) for n, w, t in s['events'])
-            lines.append('  #%d %s tokens %d fin %d pre %d%s %s | %s%s' % (
+            lines.append('  #%d %s tokens %d fin %d pre %d%s %s | coll %d elems %d sig %08x | %s%s' % (
                 s['i'], stamp(s['t']), s['tokens'], s['finished'], s['preempted'],
-                ' ONE-LAUNCH' if s.get('one_launch') else '', reqs, ev, ' ' + s['view_error'] if 'view_error' in s else ''))
+                ' ONE-LAUNCH' if s.get('one_launch') else '', reqs, s['coll'], s['elems'], s['sig'], ev,
+                ' ' + s['view_error'] if 'view_error' in s else ''))
         self.log('\n'.join(lines))
         try:
             sys.stderr.flush()
@@ -195,6 +230,28 @@ class CrumbEvent:
         return getattr(self._event, attr)
 
 
+def count_collectives(module):
+    """Wrap the torch.distributed functions in `module` so each call is counted into this process's Crumbs."""
+    if getattr(module, '_b70_step_breadcrumbs', False):
+        return False
+    for index, name in enumerate(COLLECTIVES):
+        original = getattr(module, name, None)
+        if original is None:
+            continue
+
+        def wrapper(*args, _original=original, _index=index, **kwargs):
+            if CURRENT:
+                try:
+                    CURRENT[0].collective(_index, args)
+                except Exception:
+                    pass
+            return _original(*args, **kwargs)
+        wrapper.__name__, wrapper.__doc__, wrapper.__wrapped__ = original.__name__, original.__doc__, original
+        setattr(module, name, wrapper)
+    module._b70_step_breadcrumbs = True
+    return True
+
+
 def install(cls, log, keep=32, stall_s=20.0, one_launch=False, watch=True):
     if getattr(cls, '_b70_step_breadcrumbs', False):
         return False
@@ -204,6 +261,7 @@ def install(cls, log, keep=32, stall_s=20.0, one_launch=False, watch=True):
         c = self.__dict__.get('_b70_crumbs')
         if c is None:
             c = self.__dict__['_b70_crumbs'] = Crumbs(log, keep, stall_s, one_launch)
+            CURRENT[:] = [c]
         return c
 
     def __init__(self, *args, **kwargs):
@@ -264,6 +322,9 @@ def register():
     keep = int(os.environ.get('B70_STEP_BREADCRUMBS_KEEP', '32') or 32)
     stall_s = float(os.environ.get('B70_STEP_BREADCRUMBS_STALL_S', '20') or 20)
     one_launch = os.environ.get('B70_FA_VERIFY_ROWS_ONE_LAUNCH', '').strip() == '1'
+    import torch.distributed as dist
+    counted = count_collectives(dist)
     if install(module.GPUModelRunner, logger.warning, keep, stall_s, one_launch):
-        logger.warning('b70_step_breadcrumbs 0.1.0: installed on GPUModelRunner (last %d steps kept in memory, written '
-                       'on a stall over %.0f s or a failure; host only, no device call)', keep, stall_s)
+        logger.warning('b70_step_breadcrumbs 0.2.0: installed on GPUModelRunner (last %d steps kept in memory, written '
+                       'on a stall over %.0f s or a failure; torch.distributed calls counted per step: %s; host only, '
+                       'no device call)', keep, stall_s, 'yes' if counted else 'already')
