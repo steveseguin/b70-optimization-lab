@@ -5,6 +5,12 @@ these windows after 49c and packet54 finish, with exclusive ownership of cards 0
 Leave `/home/steve/own-xpu-runtime-results/packet49c-round2/build/device-cards01-a`
 and `p49c-model-cards01-e` untouched. This runbook never stops a parent chain.
 
+**October 17 admission outcome:** packet54's completed owners yield combined
+30.003 / 30.0015 microseconds. The required 40-microsecond threshold is not met;
+the selection command refuses and no final seal exists. The commands below
+remain conditional on a qualifying decision. A coordinator note proposing a
+lower threshold does not alter this task's explicit gate.
+
 ## Selection and fast reseal
 
 Run from the repository root after the packet54 T1/T2 windows in its sealed

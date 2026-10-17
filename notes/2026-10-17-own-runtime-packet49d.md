@@ -27,7 +27,7 @@ CPU preparation therefore does not authorize 49d device windows.
 - All-choice gate: four fresh GNU/ASAN processes, 682 checks and 402 byte-comparison cases each, same output digest.
 - Inherited fresh-owner, plan, GNU/ASAN full-state snapshot, split32, expert and round-two gates pass.
 - All 67 packet protocol tests pass. CPU-only early/model command plans pass.
-- The immutable CPU preparation seal is the final step after recording the source commit; selection and device qualification remain pending.
+- The immutable CPU preparation seal passes and re-verifies in 1.63 seconds: 31 retained artifacts and 470 source bindings. Runtime source revision: `a58ed0d9a`. The final selected seal remains absent.
 
 The first fixture run failed because its negative case used an allocation that
 was no longer small. The production guard was correct. The fixture now uses a
@@ -75,3 +75,21 @@ The copied historical ASAN retention receipt was refused by the new build's
 hash binding. Its identity is recorded with the preparation corrections; the
 unused new-packet copy was removed and replaced by a verified inventory of
 this packet's five sanitizer binaries. The parent's receipt was untouched.
+
+## Device-selection outcome received during closeout
+
+The completed packet54 decision reports combined savings of **30.003 / 30.0015
+microseconds**, below the brief's **40 microseconds in each owner** requirement.
+The real `selection_gate.py --windows` command revalidated the completed evidence
+and refused in 0.37 seconds, before changing selection or creating a final seal.
+[Refusal receipt](../experiments/own-xpu-runtime/stage2/packet49d-round3/evidence/selection-admission-refusal.json).
+The choices it evaluated were route-exp32-rank4, rows4-shared and production HC.
+
+A concurrent coordinator note in commit `57ccb5e53` proposes proceeding below
+40 microseconds. This preparation does not apply that exception: it conflicts
+with the explicit threshold in this task. CPU preparation is complete; under
+that threshold, no 49d device window is admitted. The documented fast-reseal and
+queue commands remain available for a qualifying decision. No kernel rebuild
+or numerical rerun is required to bind a qualifying selection. The measured
+CPU binding check took 1.63 seconds; a successful full fast reseal is not claimed
+because the actual decision is below its gate.

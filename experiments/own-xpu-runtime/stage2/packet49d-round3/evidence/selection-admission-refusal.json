@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "device_admission_ready": false,
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    "experiments/own-xpu-runtime/stage2/packet49d-round3/selection_gate.py",
+    "--windows",
+    "experiments/own-xpu-runtime/stage2/packet54-compute/evidence/p54-a-t1/window.json",
+    "experiments/own-xpu-runtime/stage2/packet54-compute/evidence/p54-a-t2/window.json"
+  ],
+  "returncode": 1,
+  "elapsed_seconds": 0.3680031620024238,
+  "combined_owner_us": [
+    30.003,
+    30.0015
+  ],
+  "threshold_us": 40,
+  "refusal": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49d-round3/selection_gate.py\", line 132, in <module>\n    main()\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49d-round3/selection_gate.py\", line 128, in main\n    print(json.dumps(write_selection(args.windows) if args.windows else verify_selection(), indent=2))\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49d-round3/selection_gate.py\", line 110, in write_selection\n    choices, combined = decision_choices(decision)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49d-round3/selection_gate.py\", line 76, in decision_choices\n    require(len(combined) == 2 and all(x >= 40 for x in combined),\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49d-round3/selection_gate.py\", line 25, in require\n    raise ValueError(reason)\nValueError: banked plus selected savings must reach40 microseconds in BOTH owners\n",
+  "selection_unchanged": true
+}

@@ -34,3 +34,10 @@ savings reach 40us. Then all early/model windows must pass. A failed trigger
 keeps 49d off-device. Captured replay and full-model identity require those
 windows; CPU operator parity is not their substitute. The current submitted
 record is preserved in the coordinator-maintained threshold ledger.
+
+CPU preparation is complete: all three builds, numerical and protocol gates,
+and the immutable CPU seal pass. The real packet54 decision fails admission at
+30.003/30.0015 microseconds against 40; the refusal is retained in
+`evidence/selection-admission-refusal.json`. No final selected seal or 49d device
+chain was created. Revisit device admission only with a qualifying decision or
+an explicit owner change to the brief's threshold.
