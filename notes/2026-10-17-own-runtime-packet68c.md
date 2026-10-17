@@ -46,3 +46,34 @@ commit, well inside the two-hour limit. The follow-up records this identity and
 explicitly retains the byte fixtures that global binary-ignore rules omit from
 ordinary staging. The required RoPE constant was already included. The seal
 and runnable build are unchanged.
+
+## Device result (coordinator, 2026-10-17 20:10–20:18 UTC, lane B, via lane-queue)
+
+The screen passed: all 13 exact, all 163 paired samples byte-identical (`row_identity` [True, True]). The packet's `analyze_probe.py` refused with "ambiguous class execution mode: expsgate". The coordinator computed these numbers directly from the raw `batched-rows.jsonl` (device_sum_ms medians):
+
+**Consecutive real positions, differing routes:**
+
+| Rank | H1 (ms) | H2 (ms) | H(2)/H(1) |
+|---|---:|---:|---:|
+| 0 | 12.56 | 21.89 | 1.74 |
+| 1 | 13.86 | 23.03 | 1.66 |
+
+**Duplicate rows, same routes:** 1.49 (rank 0) and 1.33 (rank 1).
+
+Per class (rank 0, consecutive positions):
+
+| Group | Class | H(2)/H(1) |
+|---|---|---:|
+| Batched dense, good | `gdn.qkv` | 1.15 |
+| | `gdn.z` | 1.08 |
+| | `qsa.qgate` | 1.15 |
+| | `logits` (rank 1) | 1.01 |
+| | attention out | 1.33 |
+| Batched routed experts (union of differing routes) | `expsgate` | 2.03 |
+| | `expsdown` | 2.29 |
+| Still serial | `gdn.recurrence` | 1.97 |
+| | `hc.a.gate` / `hc.f.gate` | 1.97 / 1.99 |
+| | `route` | 1.93 |
+| | `router` | 1.47 |
+
+**Implication.** The batched dense kernels are near ideal. Routed experts cost about 2x with differing routes, because two rows read about twice the distinct expert bytes. Batching the HC gates and router as well gives a best case of about 1.43 overall, at the edge of the about-1.45 break-even for +8% over the current record. **Depth 2 is marginal in this engine:** worth finishing only cheaply (the HC gate and router batching, plus the packet 71 packaging fix), not as the main lever.
