@@ -20,14 +20,17 @@ import subprocess
 DEVICE = re.compile(r'^(packet\d+\S*|p49\S*|p5\d\S*|screen\S*)\.service$')
 # Driver units that only wait (no GPU work while they wait) are reported, but
 # not counted as busy.
-WAITERS = re.compile(r'^(p58-after-p57\S*|p56-chain\S*|p55-chain\S*|p52-chain\S*|p53\S*-chain\S*|p54-chain\S*)\.service$')
+# Only units that purely wait (no device work of their own). Chain drivers such as
+# p56-chain/p55-chain run windows themselves and count as busy (reviewer, 2026-10-17).
+WAITERS = re.compile(r'^(p58-after-p57\S*)\.service$')
 LINE = re.compile(r'^(\S+) \S+ systemd\[\d+\]: (?:Started (\S+\.service)|(\S+\.service): (Deactivated successfully|Failed with result.*|Consumed .*))')
 SCRATCH = '/tmp/claude-1000/-home-steve/9743941a-5875-4449-b2f0-62a6e15d94f5/scratchpad'
 REPO = '/home/steve/llm-optimizations'
 
 
 def parse(hours):
-    out = subprocess.run(['journalctl', '--user', '--since', f'-{hours}h', '-o', 'short-iso', '--no-pager'],
+    # Look back 12 h further so units that started before the window are still paired.
+    out = subprocess.run(['journalctl', '--user', '--since', f'-{hours + 12}h', '-o', 'short-iso', '--no-pager'],
                          capture_output=True, text=True, check=True).stdout
     starts, intervals, failed = {}, [], {}
     for line in out.splitlines():
@@ -71,7 +74,7 @@ def main():
     a = ap.parse_args()
     intervals, now = parse(a.hours)
     begin = now - dt.timedelta(hours=a.hours)
-    busy = union([(max(s, begin), e) for s, e, u, _ in intervals if not WAITERS.match(u)])
+    busy = union([(max(s, begin), e) for s, e, u, _ in intervals if e > begin and not WAITERS.match(u)])
     busy_s = sum((e - s).total_seconds() for s, e in busy)
     gaps, cursor = [], begin
     for s, e in busy:
@@ -82,7 +85,7 @@ def main():
         gaps.append((cursor, now))
     fmt = lambda t: t.strftime('%H:%M')
     print(f'Window: last {a.hours:g} h ({fmt(begin)}-{fmt(now)} UTC)')
-    strict = union([(max(s, begin), e) for s, e, u, _ in intervals if not WAITERS.match(u) and '-model-' not in u])
+    strict = union([(max(s, begin), e) for s, e, u, _ in intervals if e > begin and not WAITERS.match(u) and '-model-' not in u])
     strict_s = sum((e - s).total_seconds() for s, e in strict)
     print(f'Device units in flight (union, excl. pure waiters): {busy_s/3600:.2f} h = {100*busy_s/(a.hours*3600):.0f}% of wall time')
     print(f'  ... also excluding *-model-* queues (they can sit waiting on a CPU oracle): {strict_s/3600:.2f} h = {100*strict_s/(a.hours*3600):.0f}%')

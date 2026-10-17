@@ -16,8 +16,7 @@ independent submission. There is no cooldown inside the lifetime.
 
 Packet 58's sealed native interface has a hard twelve-request limit and one
 global token cap. A separate 64-token request plus twelve 128-token requests
-is impossible without a new binary. The owner was asked about the compatible
-prefix alternative during preparation. The prepared `--incident-prefix`
+is impossible without a new binary. The coordinator chose the compatible prefix alternative (the owner's standing rule is to decide, not ask). The prepared `--incident-prefix`
 option makes that deviation explicit: check the first 64 tokens of the first
 suite response from flushed timing rows, then compare every token of all
 twelve responses. Without the flag, one-card screen refuses. The prepared
