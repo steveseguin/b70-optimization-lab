@@ -32,3 +32,48 @@ Filesystem      Size  Used Avail Use% Mounted on
 ```
 
 Concurrent builds and runs also wrote to root, so the net filesystem change is smaller than the archived source allocation.
+
+## Packet17 test-vector archive, 19:08–19:20 UTC
+
+Archived and removed only `packet17-detmath/build/wa-reference`, reclaiming
+**14,644,039,680 allocated bytes (13.64 GiB)**. The **30 files** contain
+14,643,930,234 bytes; none had external hardlinks. The archive is
+`/mnt/raid-models/own-xpu-runtime-archive/packet17-detmath-wa-reference-20261017.tar.gz`
+(**14,151,268,858 bytes**), SHA-256
+`6de096ea7f50fe9cb14f3ff3926bff23e9a26c4d12d402acd8cf2e06c026161b`.
+[Restore instructions](../packet17-detmath/build/wa-reference-ARCHIVED.md).
+
+Read-only checks covered every stage2 `packet4*`–`packet7*` tree, `screen/`,
+existing stage2/runtime `ops/`, the requested temporary shell scripts, resolved
+runtime-tree symlinks, and active packet/screen/chain/Codex unit definitions.
+No active or queued runtime reader was found. Packet49c's retention note is
+historical evidence policy; the bytes remain preserved. Packet49's seal points
+to `packet17-detmath/build/rope_table.hpp`, outside the removed directory.
+The new ops review-log mention describes this authorized archive task.
+Repeated `lsof +D` checks found no open files; accessible `/proc` descriptors
+and mappings also had no matches. Other users' restricted process records
+were inaccessible without sudo. Final checks included the active packet70 chain.
+
+The archive was written directly to `/dev/sdb2` (`fuseblk`), without a rename.
+`tar -tzf` passed; its 30 regular files matched `find -type f`; every member's
+SHA-256 matched the original; two full archive reads produced the same checksum.
+Exact source names, sizes, nanosecond timestamps and inodes were unchanged
+before the literal absolute-path `rm -rf --`. All file work used
+`nice -n 19 ionice -c 3 taskset -c 8-15,24-31`. No GPU, sudo, service changes,
+process kills or host-setting changes. Packet45 and all other build/result,
+model, cache, screen and ops trees were untouched by this task.
+
+Initial `git pull --rebase` was refused because live orchestration files were
+dirty. They were left untouched; `git fetch origin` confirmed `main` and
+`origin/main` were identical before archival and again during verification.
+
+`df -h /` before (19:08 UTC) and after (19:20 UTC):
+
+```text
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/nvme0n1p2  915G  852G   17G  99% /
+/dev/nvme0n1p2  915G  839G   30G  97% /
+```
+
+Concurrent jobs also write to root, so net free-space change differs from the
+removed directory's allocation. Only this ledger and the restore note are committed.
