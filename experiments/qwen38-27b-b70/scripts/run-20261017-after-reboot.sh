@@ -2,7 +2,8 @@
 # After the owner's reboot (2026-10-17: second GPU fault on boot 66541315..., notes/2026-10-17-context-lane-public-remeasure.md).
 # Refuses to run on the faulted boot. Then: kernel log of this boot clean -> ONE bounded health probe -> kernel log still
 # clean -> the fault latch moved aside -> campaign 28f (QUEUE28f: K32 rules s0 to compare with c27a under overlay 0.3.0, then the repair task K32 2x; depth 5, one launch,
-# tail), cards left empty at the end. Any failure stops here and says why; nothing is retried.
+# tail) -> if the kernel log is still clean, the step-floor study (run-20261017-step-floor.sh, six servers, about 40 min);
+# cards left empty at the end. Any failure stops here and says why; nothing is retried.
 #   SUDO_ASKPASS=/path/to/askpass bash run-20261017-after-reboot.sh        (short; the campaign runs in its own unit)
 set -uo pipefail
 LAB=/home/steve/b70-optimization-lab
@@ -38,9 +39,11 @@ sleep 30
 say "health probe passed, kernel log clean"
 
 [[ -e $O/server/FAULT.json ]] && mv "$O/server/FAULT.json" "$O/server/FAULT-20261017-c28e.json"
-systemctl --user reset-failed ctx-campaign28f 2>/dev/null
-systemd-run --user --unit=ctx-campaign28f --collect -p WorkingDirectory=$E/scripts \
-  -p StandardOutput=append:$O/c28f.log -p StandardError=append:$O/c28f.log -E SUDO_ASKPASS="$SUDO_ASKPASS" \
+systemctl --user reset-failed ctx-after-reboot 2>/dev/null
+# the chain runs campaign 28f, then (kernel log still clean) the step-floor study; both leave the cards empty
+systemd-run --user --unit=ctx-after-reboot --collect -p WorkingDirectory=$E/scripts \
+  -p StandardOutput=append:$O/after-reboot-chain.log -p StandardError=append:$O/after-reboot-chain.log \
+  -E SUDO_ASKPASS="$SUDO_ASKPASS" \
   -E RUN=c28f -E MTP=5 -E SEQS=1 -E ONE_LAUNCH=1 -E TAIL=1 -E EDIT=0 -E RESTORE=0 -E IDLE_MAX=5 -E QUEUE=$O/QUEUE28f.txt \
-  /usr/bin/bash $E/scripts/longrun-campaign28.sh
-say "campaign 28f launched (unit ctx-campaign28f, log $O/c28f.log)"
+  /usr/bin/bash $E/scripts/run-20261017-after-reboot-chain.sh
+say "campaign 28f then the step-floor study launched (unit ctx-after-reboot; logs $O/c28f.log, $O/step-floor.log, $O/after-reboot-chain.log)"
