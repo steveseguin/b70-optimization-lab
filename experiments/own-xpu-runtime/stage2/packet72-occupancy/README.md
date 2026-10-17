@@ -9,6 +9,7 @@ remain unmeasured; the coordinator owns the prepared screens.
 - [Built selector checks](evidence/selection-gate.json).
 - [79 private v4 wrapper tests](screen/placement-validation/tests.log).
 - [LaneA four-screen job](screen/jobs-A.txt), [conditional laneB three-screen job](screen/jobs-B.txt).
+- [Coordinator commands and queue proposals](WINDOW.md), [passing queue plans](evidence/queue-plans.json).
 
 The three sealed views are `production`, `attention-out` and `combined`, all
 sharing one device binary. Production is packet70's selected configuration:

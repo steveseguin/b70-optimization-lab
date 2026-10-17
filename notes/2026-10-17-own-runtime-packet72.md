@@ -30,7 +30,8 @@ loads across two adjacent chains. Both compilers pass24 operator cases twice,
 including FP32 chains, BF16 outputs and exceptional values. The offline build
 uses7 static load instructions versus9 in production, with128 configured GRFs
 and no scratch messages. The initial13-load version is retained as a negative
-compiler result. Both engine builds pass; the build is about121 MiB.
+compiler result. Both engine builds pass; the final build, including the selector
+test and retained offline attempts, is about132 MiB.
 
 Three views share one device binary: production, attention-out and combined.
 Combined is the same sole new mechanism. The compiled selector passes all
@@ -38,5 +39,8 @@ views and rejects an unknown choice. The private screen copies v4-lanes and
 passes79 CPU mock tests, including safe report failure after lease release.
 LaneA has four screens; laneB has production, the canonical candidate and
 production, gated on exact improving laneA results. All seven CPU plans pass.
-Queue proposal validation is the final preparation step; device execution
-stays with the coordinator.
+Both proposed JSON job lines pass `lanequeue.py plan` in a private packet
+directory. Live queues were not edited. [Coordinator handoff and proposals](../experiments/own-xpu-runtime/stage2/packet72-occupancy/WINDOW.md)
+are ready; device execution stays with the coordinator. Generated executable
+paths remain unchanged locally and recoverable by commit/hash, but are excluded
+from the current Git index. Small CPU reference/candidate bytes are retained.
