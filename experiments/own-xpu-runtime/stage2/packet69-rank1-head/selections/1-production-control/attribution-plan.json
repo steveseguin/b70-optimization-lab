@@ -1,0 +1,59 @@
+{
+  "schema": "packet69.attribution.plan.v1",
+  "placement": "1",
+  "target_layers": [
+    24,
+    24
+  ],
+  "draft_rank": 1,
+  "draft": "production",
+  "miss": "control",
+  "sample_generated_indices": [
+    9,
+    16
+  ],
+  "target_layers_sampled": {
+    "0": {
+      "GDN": 22,
+      "QSA": 23
+    },
+    "1": {
+      "GDN": 24,
+      "QSA": 27
+    }
+  },
+  "target_layer_counts_per_rank": {
+    "GDN": 18,
+    "QSA": 6
+  },
+  "arms": [
+    "control",
+    "attribution"
+  ],
+  "control_reset_token": 1,
+  "attribution_reset_token": 0,
+  "requests": 25,
+  "model_lifetimes": 1,
+  "expected_work_seconds": 420,
+  "duration_status": "planning estimate only; admission/hold waits excluded",
+  "instrumentation": "packet57 events at existing drains; no new kernel barriers",
+  "layer_span_boundaries": {
+    "0": [
+      "blk.0.hc.a.norm",
+      "blk.23.ffn.combine"
+    ],
+    "1": [
+      "blk.24.hc.a.norm",
+      "blk.47.ffn.combine"
+    ]
+  },
+  "control": "Same loaded binary/weights, full state reset, 12x128 uninstrumented then 12x128 instrumented; incident64 first",
+  "oracle": "packet49-integrate",
+  "qualifying": false,
+  "outside_sites": [
+    "logits",
+    "final.*",
+    "argmax",
+    "transfer.*"
+  ]
+}
