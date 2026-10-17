@@ -27,3 +27,25 @@ false for the requested 128-token comparison scope.
 
 Credit Niko1221 / Strata for the hot-expert cache idea, without adopting any
 external code. See the packet README for the implementation boundary.
+
+## Memory and coordinator admission prepared
+
+The census charges 48,627,712,000 B of pinned experts. The target-only device
+bound is 26,409,219,600 B, including the 18 GB cache, expanded nonexpert
+weights, full 4K BF16 KV/state, tables and workspace/transfer allowances.
+This leaves 4,090,780,400 B beyond the required 1.5 GB reserve against the
+conservative 32 GB card capacity. No draft is included.
+
+Host admission requires 118,308,908,048 B available, including a full device
+allocation shadow, file-backed nonexperts/lookup tables and an 8 GiB reserve.
+The passive CPU snapshot passed; it is not permission to rely on that old
+headroom at launch. Window admission checks it again just before starting.
+No pinned allocation or model-payload read was made.
+
+Six accounting and twelve window tests pass. Guards retain the failing-memory
+54/56 contract, record margin blocks, use PF_EXITING-aware process sensors,
+reject future fault-review boundaries, preserve faults and admit one chosen
+card only. K1 gets two fresh processes. Full-model windows require both K1
+receipts and the preceding successful gate. Each full-suite window has a
+one-hour graceful watchdog, never an automatic retry. Commands are in
+`experiments/own-xpu-runtime/stage2/packet58-onecard/WINDOW.md`.
