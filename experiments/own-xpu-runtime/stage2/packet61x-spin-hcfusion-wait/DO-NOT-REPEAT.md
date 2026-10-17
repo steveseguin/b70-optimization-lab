@@ -14,3 +14,8 @@
   full `check_inputs.py` closure and explicit K1/K2 fixture paths; preserve
   stopped outputs and use only the registered fresh chain. See
   [input repair closeout](INPUT-REPAIR-CLOSEOUT.md).
+
+- **2026-10-17 — KD host scratch boundary:** source-local `P/build` is not the
+  external chain build root. Check every write/scratch path before launch;
+  never rerun the passed early windows or erase the stopped chain to fix this.
+  [Repair and strictly pinned resume](KD-RESUME-CLOSEOUT.md).

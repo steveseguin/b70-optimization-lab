@@ -49,9 +49,9 @@ def failed_owner(child,out,watch,error,stop_w):
 def archive_host_reference(out):
  # archive_files verifies every retained text byte and binds all raw hashes.
  # The caller alone decides that the CPU producer has exited.
- from storage import archive_files,P as storage_packet
- root=Path(out)/'host-reference'
- require(not root.is_symlink() and root.resolve().is_relative_to((storage_packet/'build').resolve()),'KD host scratch outside packet')
+ from storage import archive_files, B as output_build
+ from write_paths import kd_scratch
+ root=kd_scratch(out, output_build)
  archive=archive_files([f for f in root.rglob('*') if f.is_file()],Path(out)/'host-reference.jsonl.gz')
  return archive
 
@@ -115,7 +115,9 @@ def _run(a,out,env,watch,build,*,cpu_rehearsal=False,host_lifecycle):
  ldd_preflight(B/('gnu-host' if cpu_rehearsal else 'device')/'own-rt-iq3')
  # Recompute the draft-only oracle using exactly this K2 dispatch. Captured
  # target streams stay immutable; the host owner never contacts a device.
- host_reference=out/'host-reference'
+ from storage import B as output_build
+ from write_paths import kd_scratch
+ host_reference=kd_scratch(out, output_build)
  host_binary=B/'gnu-host/own-rt-iq3'
  require(sha(host_binary)==build['artifacts_sha256']['gnu-host/own-rt-iq3'],'KD host reference binary changed')
  stop_r,stop_w=os.pipe()

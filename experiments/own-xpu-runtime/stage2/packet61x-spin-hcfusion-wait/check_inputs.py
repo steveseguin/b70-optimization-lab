@@ -11,6 +11,8 @@ import hashlib
 import io
 import json
 import os
+import sys
+from write_paths import inventory as write_inventory
 from pathlib import Path
 
 P = Path(__file__).resolve().parent
@@ -239,21 +241,26 @@ def check(output_root=None, prefix_windows=None, window=None):
                             inv.file(path.parent / retained['path'], [consumer], retained['sha256'])
                         else:
                             inv.file(raw, [consumer], digest)
-    rows = {name: dict(static_files=sum(name in r['windows'] for r in inv.files.values()),
+    write_paths, write_errors = write_inventory(P, B, out, WINDOWS, [e['prompt_id'] for e in manifest.get('prompts', [])])
+    inv.errors.extend(write_errors)
+    rows = {name: dict(write_paths=sum(r['window'] == name for r in write_paths), static_files=sum(name in r['windows'] for r in inv.files.values()),
                        generated_prerequisites=sum(r['consumer'] == name for r in inv.generated)) for name in WINDOWS}
     return dict(schema='own-runtime.chain-input-check.v1', passed=not inv.errors,
                 device_executed=False, model_payload_read=False, output_root=str(out),
-                windows=rows, static_files=len(inv.files), generated_prerequisites=inv.generated,
+                write_paths=write_paths, write_path_count=len(write_paths), windows=rows, static_files=len(inv.files), generated_prerequisites=inv.generated,
                 errors=sorted(set(inv.errors)), files=list(inv.files.values()),
                 scope='Static closure now; generated prerequisites required immediately before each window. Device correctness remains pending.')
 
 
 def summary(row):
-    return {key: row[key] for key in ('passed', 'device_executed', 'model_payload_read', 'output_root', 'windows', 'static_files', 'errors')}
+    return {key: row[key] for key in ('passed', 'device_executed', 'model_payload_read', 'output_root', 'windows', 'static_files', 'write_path_count', 'errors')}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--packet', choices=('packet61x-spin-hcfusion-wait', 'packet61-spin-hcfusion', 'packet56w-chain'),
+                        help='Read-only audit using that packet’s own queue and path rules')
+    parser.add_argument('--resume-from', type=Path)
     parser.add_argument('--output-root', type=Path)
     parser.add_argument('--prefix-windows', type=Path, nargs=2)
     parser.add_argument('--window', choices=WINDOWS)
@@ -261,7 +268,17 @@ def main():
     args = parser.parse_args()
     if os.getpriority(os.PRIO_PROCESS, 0) != 19 or not set(os.sched_getaffinity(0)) <= set(range(8, 16)) | set(range(24, 32)):
         raise ValueError('nice19 and helper cores required')
+    global P
+    if args.packet and args.packet != P.name:
+        P = P.parent / args.packet
+        sys.path.insert(0, str(P))
     row = check(args.output_root, args.prefix_windows, args.window)
+    if args.resume_from:
+        from resume_chain import validate
+        try:
+            validate(args.resume_from, Path(row['output_root']), prepared=(Path(row['output_root'])/'resume-manifest.json').exists())
+        except (OSError, ValueError, KeyError, RuntimeError) as error:
+            row['errors'].append(str(error)); row['passed'] = False
     if args.report:
         args.report.write_text(json.dumps(row, indent=2) + '\n')
     print(json.dumps(summary(row)))

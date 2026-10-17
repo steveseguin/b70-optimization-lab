@@ -208,7 +208,11 @@ def prerequisites(path,name,identity,*,cpu_rehearsal=False):
     fields=('boot_id','artifacts_sha256','environment','card','context','draft_rank','target_split')
     if not diagnostic:fields+=('build_receipt_sha256',)
     for field in fields:
-        require(row.get(field)==identity.get(field),'prerequisite identity changed: '+name+' '+field)
+        expected = identity.get(field)
+        if field == 'build_receipt_sha256' and row.get(field) != expected:
+            from resume_chain import prerequisite_seal
+            expected = prerequisite_seal(path, identity)
+        require(row.get(field)==expected,'prerequisite identity changed: '+name+' '+field)
     if name in ('K1a','K1b'):
         round3=row.get('round3',{})
         require(round3.get('output_sha256')==identity.get('p49d_fixture_host_sha256') and round3.get('binary_sha256')==identity['artifacts_sha256'].get(('gnu-host' if cpu_rehearsal else 'device')+'/p49d-fixtures'),'K1 round3 evidence missing')

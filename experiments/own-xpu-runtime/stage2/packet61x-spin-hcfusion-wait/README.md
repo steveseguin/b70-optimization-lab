@@ -34,3 +34,8 @@ This is a lab candidate with retained local build inputs, not a public package.
 
 **October 17 input repair:** K1/K2 fixture paths are explicit and pinned; all
 eleven windows have CPU-only input preflight. See the [repair closeout](INPUT-REPAIR-CLOSEOUT.md).
+
+October 17 KD chain repair: the stopped `device-cards01-a` stays untouched.
+`device-cards01-b` imports only its five hash-pinned passed early windows; KD
+and all later model windows remain fresh coordinator work. See the
+[repair, checks and exact resume command](KD-RESUME-CLOSEOUT.md).
