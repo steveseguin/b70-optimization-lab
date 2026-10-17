@@ -683,6 +683,19 @@ class Policy(unittest.TestCase):
         self.assertIn("counter abcd03 to 21", second[-1]["content"])
         self.assertGreaterEqual(len(self.model.requests) - before, 2)
 
+    def test_recalled_archive_text_is_kept_for_the_note_checks(self):
+        """Campaign 30: what an archive search returned is evidence for the note checks' amounts (numbers only); a
+        search that found nothing is not kept."""
+        s = self.run_conversation(30)
+        self.model.recall_once = {"pattern": "abcd03"}
+        self.keeper.complete({"model": "m", "messages": conversation(30) + [{"role": "user", "content": "What was counter abcd03 set to?"}]})
+        self.assertEqual(len(s.recalled), 1)
+        self.assertIn("counter abcd03 to 21", s.recalled[0])
+        self.model.recall_once = {"pattern": "zzzz99"}
+        self.keeper.complete({"model": "m", "messages": conversation(30) + [{"role": "user", "content": "And zzzz99?"}]})
+        self.assertEqual(s.state["recalls"], 2)
+        self.assertEqual(len(s.recalled), 1)                                      # "recall: nothing ... matches" is not kept
+
     def test_recall_and_notes_at_use_the_contents_own_numbers_when_told_to(self):
         k = ck.Keeper(self.model, Path(self.dir.name) / "lab", budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5,
                       notes_cap=400, memory_note=False, recall_label=r"ITEM (\d+):", recall_unit="item")
@@ -1143,6 +1156,28 @@ class Pure(unittest.TestCase):
         out = a.recall("ziru63").splitlines()
         self.assertEqual(out[0], 'message 5 (tool, "ITEM 50/617 (UPDATE)"): ziru63 was set to 485.')
         self.assertEqual(out[1], "message 6 (assistant): ziru63 is 485 now.")            # a one-line message needs no heading
+
+    def test_an_amount_from_a_recalled_entry_passes_the_amount_check(self):
+        """Campaign 30, retro s1, item 85: "An audit found that the increase of domi68 entered in item 43 was a mistake"
+        names no amount; the model recalled item 43 ("Another eighty-one went into domi68.") and wrote the reversal.
+        With the turns alone the amount 81 is "not stated" and the line was left out; with the recalled text it stands."""
+        notes = "RULES\n(none)\nSTATE\ndomi68: 501\nOPEN\n"
+        turns = ["ITEM 85/147 (UPDATE)\nAn audit found that the increase of domi68 entered in item 43 was a mistake, and it "
+                 "has now been reversed. The fog lifted slowly."]
+        recalled = ["item 43 (tool):\nITEM 43/147 (UPDATE)\nThe cook swept the yard. Another eighty-one went into domi68. "
+                    "It rained for most of the morning."]
+        delta = ck.nd.parse_delta("NEW RULES\n(none)\nCHANGES\ndomi68: 501 \u2212 81 (item-43 increase reversed by audit, "
+                                  "item 85) = 420\nOPEN\n")
+        seen = ck.nd.numbers_in("\n".join(turns))
+        alone = ck.nd.apply_delta(notes, delta, seen, strict=True, near=ck.nd.numbers_near(["domi68"], turns))[1]
+        self.assertTrue(any("do not state" in m for m in alone["mismatch"]), alone["mismatch"])
+        new, info = ck.nd.apply_delta(notes, delta, seen, strict=True, near=ck.nd.numbers_near(["domi68"], turns + recalled))
+        self.assertEqual(info["mismatch"], [])
+        self.assertIn("domi68: 420", new)
+        # a made-up amount still fails with the recalled text in view
+        bad = ck.nd.parse_delta("NEW RULES\n(none)\nCHANGES\ndomi68: 501 - 77 = 424\nOPEN\n")
+        info = ck.nd.apply_delta(notes, bad, seen, strict=True, near=ck.nd.numbers_near(["domi68"], turns + recalled))[1]
+        self.assertTrue(any("do not state" in m for m in info["mismatch"]), info["mismatch"])
 
     def test_archive_recall(self):
         with tempfile.TemporaryDirectory() as d:

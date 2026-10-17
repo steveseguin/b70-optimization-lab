@@ -53,7 +53,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.1.0"
+__version__ = "1.1.1.dev0"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -198,6 +198,7 @@ RECALL_ROOM_NOTE = ("[[There is no room left in this turn for another archive se
                     "take the next step with what you have, for what you are sure of. You can search again right "
                     "after that step for anything still missing.]]")
 RECALL_NONE_NOTE = "recall: not run, no room left in this turn"
+RECALLED_CHARS = 120_000                             # how much recent archive-search text the note checks may cite
 RECALL_CUT_NOTE = "\n[cut here: no more room in this turn; narrow the search with `before` / `after` / `last`]"
 CARRY_HEAD = ("[[Message from the context keeper, not part of the task. Your last turn ended without a command. These "
               "are the archive searches you made in it and what they returned; they were not saved anywhere else, "
@@ -562,6 +563,11 @@ class Session:
         self.lock = threading.Lock()
         self.pending: dict[str, Any] | None = None   # --notes-async: the notes call running for the next request
         self.abandoned: list[dict[str, Any]] = []     # such calls whose conversation started over (settled when done)
+        # What the latest archive searches returned (newest last, at most RECALLED_CHARS): the note checks count an
+        # amount found there as stated, since the model took it from the archive, which holds the turns verbatim
+        # (campaign 30: a reversal worked out from a recalled entry was thrown out as "an amount the turns do not
+        # state"). In memory only; numbers only (it never counts as a mention of a name).
+        self.recalled: list[str] = []
         self.state = {"cut": 0, "notes": "", "boundary": "", "ratio": 3.6, "cuts": 0, "rules_put_back": 0,
                       "notes_failed": 0, "recalls": 0, "largest_turn": 0,
                       # in-place notes: cuts made that way, attempts that failed, replies asked for again, the size
@@ -1093,7 +1099,7 @@ class Keeper:
                 # The reply before it stands, without the lines whose number the turns do not state.
                 log({"event": "in-place notes: no usable second reply, the first stands", "attempt": attempt})
                 kept = self.supported(earlier, texts, strict)
-                near = nd.numbers_near(nd.state_keys(notes) + [k for k, _ in kept["changes"]], texts) if self.notes_checks == "near" else None
+                near = nd.numbers_near(nd.state_keys(notes) + [k for k, _ in kept["changes"]], texts + list(s.recalled)) if self.notes_checks == "near" else None
                 delta, dropped = nd.without_doubtful(notes, dict(kept, rules=list(rules_seen)), seen, strict, near)
                 new, info = nd.apply_delta(notes, delta, seen, strict=strict, near=near)
                 info.pop("steps", None)
@@ -1136,7 +1142,7 @@ class Keeper:
             if delta.get("unsupported"):
                 log({"event": "in-place notes: lines for names the turns do not mention left out", "names": delta["unsupported"][:20]})
             known = nd.state_keys(notes) + [k for k, _ in delta["changes"]]
-            near = nd.numbers_near(known, texts) if self.notes_checks == "near" else None
+            near = nd.numbers_near(known, texts + list(s.recalled)) if self.notes_checks == "near" else None
             new, info = nd.apply_delta(notes, delta, seen, strict=strict, near=near)
             steps = info.pop("steps")
             missing = [] if asked_count else nd.under_accounted(nd.mention_counts(known + nd.identifiers_in(texts), texts), steps)
@@ -1451,6 +1457,11 @@ class Keeper:
                         text, full = text[:fits] + RECALL_CUT_NOTE, True
                     room -= self.tokens(s, [{"role": "tool", "content": text}])
                     s.state["recalls"] += 1
+                    s.log_event({"event": "recall", "args": args, "chars": len(text)})   # replays can rebuild s.recalled
+                    if args.get("notes_at") is None and not text.startswith("recall:"):   # archive text, not old NOTES
+                        s.recalled.append(text)
+                        while sum(map(len, s.recalled)) > RECALLED_CHARS and len(s.recalled) > 1:
+                            s.recalled.pop(0)
                     results.append({"role": "tool", "tool_call_id": c.get("id"), "content": text})
                     rounds.append("recall(" + ", ".join(f"{k}={v!r}" for k, v in args.items()) + ") returned:\n" + text)
                 full = full or room < RECALL_MARGIN

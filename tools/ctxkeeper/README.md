@@ -274,6 +274,12 @@ tasks on a server that may be restarted under them (for example by a supervisor 
 to an exact server gets the answer the failed one would have had, so the task loses only the time. Not measured
 yet on a real restart.
 
+Also unreleased (1.1.1.dev0, 2026-10-17): with `--notes-checks near`, an amount the model took from an archive search
+counts as stated. The proxy keeps the text of its latest searches (up to 120,000 characters, in memory) as evidence
+for the amount check only, never as a mention of a name. Before, a correct line worked out from a recalled entry was
+"an amount the turns do not state" and was left out. Lab campaign 30: an audit naming only the item of the entry it
+reverses was lost that way. Each search is now also logged to `events.jsonl`.
+
 **1.1.0** (2026-10-16): new options, all off by default ([Added in 1.1.0](#added-in-110-all-off-by-default)): a
 separate keeper model (`--notes-upstream`, `--notes-model`, `--notes-system`, `--notes-kwargs`, `--notes-extra`,
 `--notes-prefill`, `--notes-prepass`), background notes (`--notes-async`, `--prewarm`), `--inplace-fit` for small
