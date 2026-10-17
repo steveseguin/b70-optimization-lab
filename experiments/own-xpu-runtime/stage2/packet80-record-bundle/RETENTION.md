@@ -26,6 +26,11 @@ restore_links.py restores missing archived bytes, verifies existing files and
 recreates only pinned parent/fixture/binary links. It never runs a model.
 Larger pre-refresh seal archives retain exact previous JSON strings and carry
 the decompressed SHA256 in their filenames. They were never used on a device.
+The build-retention manifest is also larger than1MiB because it records every
+original member separately. Keep it with its archive; restore_links.py consumes
+both. The final all-view plan receipt retains every actual plan output so each
+configuration and window can be reviewed. dry_run.py regenerates it; the final
+readiness receipt binds its exact bytes through the CPU rehearsal receipt.
 
 Both numerical compilers run twice for each of16 compositions. All64 placement
 configurations receive a real post-load memory census on both ranks and two

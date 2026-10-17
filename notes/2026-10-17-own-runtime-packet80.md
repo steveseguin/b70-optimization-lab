@@ -60,3 +60,25 @@ packet70/75 receipts are refused before any registration or subprocess call.
 Three direct helper tests pass. The CPU-only plan process was interrupted
 gracefully, its partial logs retained, and all seals and final plans are being
 regenerated with the corrected helper. No GPU process was touched.
+
+At 23:18 UTC, packet78's own comparison confirms small+hc-wide on both lanes,
+with all 13 requests exact in each screen. It can now supply fast route and
+fused norm alongside wide HC. Packet79's complete lane-A grid is exact, but
+both rank-0 candidates are slower than production; its own best logic returns
+no winner. The selection therefore keeps rank 1 at 24/24. These are component
+screen decisions, not a measured speed for the combined binary.
+
+Final CPU rehearsal passed all 128 shared-wrapper screen plans and all 704
+chain-window plans. It also passed 200 chain tests, 24 subtests and 9
+orchestration tests. The source-bound receipt records a 782,217,786-byte build,
+below the 1.5 GB limit. The numerical, allocation, handoff, K2, dispatch and
+submission checks are all retained in the new packet.
+
+The one-shot preparation now writes ready=true for ordered host cleanup, fast
+route, fused norm, hc-wide, rank1 at24/24, wide64 experts and production dense.
+Its CPU, seal, input, storage, window-plan and queue-plan prechecks pass, and
+verify_ready.py accepts the receipt. ready.json contains the exact chain
+command. No chain, GPU job, service or external submission was launched.
+Two consecutive one-shot runs selected the same configuration, passed every
+precheck and passed the readiness verifier. The latest ready.json and check logs
+are authoritative; ready-first-pass.json retains the earlier readiness snapshot.

@@ -5,8 +5,11 @@ packet75, with packet76 rank1 ordered retirement, packet78 route/norm choices
 and packet79 rank0 draft prefix. GNU host and Intel SYCL builds pass. All16
 compositions pass2096 numerical cases twice under each compiler. All128
 full-shape post-load mocks pass, and all64 configurations match packet75 target
-and draft bytes in two fresh native miniature runs. Final shared-wrapper and
-chain-window plans are in progress. No GPU, service or chain ran.
+and draft bytes in two fresh native miniature runs. All 128 shared-wrapper
+screen plans and 704 chain-window plans passed. The final test run passed
+200 chain tests, 24 subtests and 9 orchestration tests. No GPU, service or chain
+was launched by this preparation. See the [CPU closeout](CPU-PREPARATION-CLOSEOUT.md)
+and [ready receipt](../../ops/packet80-orchestration/ready.json).
 
 Independent choices: host production/ordered, route production/fast, norm
 production/fused, HC production/hc-wide. Experts stay wide64; dense stays
@@ -25,3 +28,8 @@ The preparation helper in ../../ops/packet80-orchestration reads each packet's
 own compare/best logic. Only exact 13/13 winners that improve both lanes are
 selected. Missing evidence leaves that packet's choices at production. No
 performance claim is made for a composition before its fresh device chain.
+
+Current ready selection: ordered host cleanup, fast route, fused norm, hc-wide,
+rank1 at24/24, wide64 experts and production dense. Packet79's rank0 candidates
+were exact but slower in lane A. Rerun the helper if screening evidence changes;
+it never launches the command it records.
