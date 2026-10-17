@@ -39,6 +39,9 @@ ap.add_argument('--gap-share', type=float, default=0.1, help='share of steps fol
 ap.add_argument('--stall-s', type=float, default=10)
 ap.add_argument('--report-s', type=float, default=60)
 ap.add_argument('--out', required=True)
+ap.add_argument('--marks', action='store_true', help='after every gather, copy its running number to pinned host memory')
+ap.add_argument('--mismatch-test', action='store_true',
+                help='rank 1 runs one extra step at the end (a known hang, to check what the marks show)')
 a = ap.parse_args()
 rank, world = int(os.environ['RANK']), int(os.environ['WORLD_SIZE'])
 torch.xpu.set_device(rank)
@@ -54,6 +57,26 @@ gs = torch.empty((world * 832, HID), device=dev, dtype=torch.float16)
 lv = torch.randn(832, VOCAB, device=dev, dtype=torch.float16)
 gv = torch.empty((world * 832, VOCAB), device=dev, dtype=torch.float16)
 where = {'step': -1, 'rows': 0, 'gather': -1, 'done_at': time.time()}
+# Device progress marks (--marks): after each gather this rank's queue copies the gather's running number (mod R) from
+# a device table into pinned host memory. The copy runs only after the gather has finished on this card, so on a
+# stall the host reads, without touching the stuck queue, the last gather each card completed.
+R = 1 << 16
+issued = [0]
+if a.marks:
+    mark_table = torch.arange(R, dtype=torch.int32, device=dev)
+    mark_host = torch.full((1,), -1, dtype=torch.int32).pin_memory()
+
+
+def completed():
+    v = int(mark_host[0])
+    return -1 if v < 0 else issued[0] - ((issued[0] - v) % R)
+
+
+def gather(out, inp):
+    dist.all_gather_into_tensor(out, inp)
+    issued[0] += 1
+    if a.marks:
+        mark_host.copy_(mark_table[issued[0] % R:issued[0] % R + 1], non_blocking=True)
 
 
 def watchdog():
@@ -62,8 +85,10 @@ def watchdog():
         time.sleep(1)
         late = time.time() - where['done_at']
         if late > a.stall_s and not reported:
-            print('STALL rank %d: no step finished for %.1f s; in step %d (%d rows), gather %d' % (
-                rank, late, where['step'] + 1, where['rows'], where['gather']), flush=True)
+            print('STALL rank %d: no step finished for %.1f s; in step %d (%d rows), gather %d%s' % (
+                rank, late, where['step'] + 1, where['rows'], where['gather'],
+                '; marks: %d gathers issued, %d completed on this card' % (issued[0], completed()) if a.marks else ''),
+                flush=True)
             faulthandler.dump_traceback(file=sys.stdout, all_threads=True)
             sys.stdout.flush()
             reported = True
@@ -76,6 +101,7 @@ log = open(a.out, 'a') if rank == 0 else None
 end = time.time() + a.minutes * 60
 steps = prompt_steps = gathers = checked = bad = 0
 t_report = time.time()
+extra = True
 go, gos = torch.ones(1, device=dev, dtype=torch.int32), torch.empty(world, device=dev, dtype=torch.int32)
 dist.barrier()
 while True:
@@ -83,7 +109,10 @@ while True:
         go.fill_(1 if time.time() < end else 0)
         dist.all_gather_into_tensor(gos, go)
         if int(gos.min()) == 0:
-            break
+            if a.mismatch_test and rank == 1 and extra:
+                extra = False   # one more step that rank 0 never joins
+            else:
+                break
     prompt = shared.random() < a.prompt_share
     rows = shared.randint(30, 832) if prompt else shared.randint(1, 6)
     sampled = shared.randint(1, 6)
@@ -97,10 +126,10 @@ while True:
             for _ in range(own.randint(1, 4)):
                 h = h @ w
         where['gather'] = i
-        dist.all_gather_into_tensor(g, x)
+        gather(g, x)
         h = (h + g[:rows]) * 0.5
     where['gather'] = a.gathers
-    dist.all_gather_into_tensor(gv[:world * sampled], lv[:sampled])
+    gather(gv[:world * sampled], lv[:sampled])
     if steps % 64 == 0:
         ok = torch.equal(g[rank * rows:(rank + 1) * rows], x)
         checked += 1

@@ -333,3 +333,47 @@ command error, no page fault, IPEHR at STATE_COMPUTE_MODE (0x61050001), which is
 kernel was a collective or a model kernel, and no register in it tells the 20-work-group ring kernel apart from a
 full-card one. MI_SEMAPHORE_WAIT (IPEHR 0x0e009003) is the most common normal state on both cards (the runtime's
 user-mode ring waiting for work).
+
+## Amendment 15:27 EDT (arm B running, 8,220 steps clean at 15:23; no result read): a slot-overwrite reading, and device marks
+
+**oneCCL history.** The public repository (`uxlfoundation/oneCCL`) has the "simple" ring code up to the 2022.0.0
+release candidate (`master`, 2026-05-04; the 2022.0.0 tag itself carries only 98 files, no SYCL kernels). Release
+2021.15.7 (Arc branch) lists "fixes for LL flag overflow, which may happen to a long running workload (stress test)":
+the shared step counter used to grow by every pass of every call and had no wrap handling; since then it grows by
+ceil(passes / 4) per call, 31 bits, and a wrap zeroes both ring buffers. At our rates (about 3,500 decode-size calls a
+second, a few per call) the 31-bit counter wraps after about a week, not in a 12-minute server life, so overflow is
+not the 06:23 cause.
+
+**A cross-call slot overwrite the code allows (reading, not a result).** For two cards, `runAllgather` (ring
+transmit, `master`) does, per wire and pass t: write this pass's data with flag `seqNo + t/4` into the peer's slot
+`(seqNo + t) % 4`, then spin until its own slot holds the peer's data with exactly that flag (`!=` test, no timeout).
+Within a call a card can be at most one pass ahead, so the 4 slots never collide. Between calls nothing holds the
+faster card back: once it has the slower card's last pass it can finish, run the next layer, and write the next call's
+first pass into slot `(seqNo + ceil(N/4)) % 4`. If that is the slot the slower card has not read yet (its last pass,
+`(seqNo + N - 1) % 4`, or `N - 2` for wires idle in the last pass), the slower card then sees a newer flag, spins for
+ever, and the faster card spins waiting for it: both cards stuck in a collective, no fault, which is what 06:23 looked
+like. With the source constants (20 work-groups of 64 wires, 240 bytes per wire per pass: 307,200 bytes per pass) a
+hidden-size gather of r rows takes N = ceil(r / 30) passes, and the slots coincide for N = 2, 7, 12, 13, 18, 23, 28, 29
+(31-60, 181-210, 331-390, 511-540, 661-690, 811-870 rows). Against it: (1) the 06:23 step was 443 rows, N = 15, which
+does not coincide; (2) every full 832-row prompt step (N = 28) coincides, the context lane runs thousands of them, and
+the package's 4,096-row steps (N = 137) coincide for most wires, all without a hang; (3) the slower card would have to
+stall for tens of microseconds between its last write and its last read, and preemption by the desktop could not
+supply that at 06:23 (the desktop first needed the engine 42 s after the hang began, and then could not preempt it). So
+this reading is recorded, not favoured; it would be favoured only if a hang lands on a coinciding size.
+
+**What the next hang must show: device progress marks.** The breadcrumbs say what each card's host issued, not what
+each card's GPU finished. `stress-xccl-allgather.py --marks` now has each card's queue, after every gather, copy that
+gather's running number into pinned host memory (an 8-byte copy ordered after the gather); on a stall the host reads
+the last gather each card completed without touching the stuck queue. Two readings it separates: the overwrite above
+(one card has completed exactly one gather more than the other, and the slower card's stuck call has a coinciding N)
+and a stuck model kernel (both cards completed the same gathers, nothing collective in flight).
+`scripts/run-20261017-xccl-marks.sh` (unit ctx-xccl-marks, queued behind arm B, cancelled if B hangs):
+
+- **M1**, 2 minutes with marks: steps per second against arm A's first two minutes (same seed, same steps).
+  Prediction: within 5 %.
+- **M2**, marks plus `--mismatch-test` (rank 1 runs one step rank 0 never joins, the arm A end-stall on purpose):
+  prediction: rank 0's marks show every issued gather completed; rank 1's show the same completed count as rank 0 and
+  the whole extra step issued but not completed; afterwards no context left on either card, kernel log clean.
+- **If both hold:** the marks go into `b70-step-breadcrumbs` 0.3.0 behind its own switch
+  (`B70_STEP_BREADCRUMBS_DEVICE_MARKS=1`, off by default), with CPU tests, a speed check on the context-lane server,
+  and then on in every context-lane run beside `scripts/hang-capture.sh`.
