@@ -170,7 +170,7 @@ Host samplers beside it as in the hour (xe job trace, engine-register ring, powe
   (a stalled step noticed in seconds, the server restarted, the keeper retrying the call), because a hang at one in
   ~10,000 requests must not end a long task.
 
-## Amendment 13:58 EDT (packed stress running, no result read): its rate, stack capture, and the exchange alone next
+## Amendment 13:46 EDT (packed stress running, no result read): its rate, stack capture, and the exchange alone next
 
 **Rate below the prediction.** The first 95 requests ran at about 4,400 an hour (median 0.58 s per request plus the
 idle before it; the prompt tails reach two 832-token pieces), not 8,000-12,000. Two hours give about 8,800 first
