@@ -9,7 +9,8 @@
 #   P0, L0  P and L without the drafter (one token per step: the step without speculation, measured the same way)
 #   Lp  L plus b70-w8a16-pad-rows (few-row down-projection GEMMs padded to 6 rows), only if its census passes first
 # All: TP2, MTP5 with INT4 draft head + shortlist (except P0, L0), allgather, chunked-upload and GDN state-width overlays, verify rows
-# in one launch, and the host step clock (b70-host-step-clock: time only, one line per answer per card). No profiler: a guard kill mid-step resets an engine (06:00 fault), and a profile needs host memory.
+# in one launch, the host step clock (b70-host-step-clock: time only, one line per answer per card) and
+# b70-step-breadcrumbs (host only: each card's last steps written to the log on a stall or failure). No profiler: a guard kill mid-step resets an engine (06:00 fault), and a profile needs host memory.
 # Stops at the first fault line or failed start; the cards are left empty (RESTORE=1 puts Gemma back at the end).
 #   SUDO_ASKPASS=... [ALLOW_GEMMA_STOP=1] [ARMS="L N M P P0 L0"] systemd-run --user ... bash run-20261017-step-floor.sh
 set -uo pipefail
@@ -23,7 +24,7 @@ D=$LAB/experiments/qwen38-27b-b70/data/2026-10-17-step-floor
 S=$LAB/experiments/qwen38-27b-b70/scripts
 PORT=18196
 START=$(date '+%F %T')
-FAULT_RE='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|wedged|device lost)|soft lockup'
+FAULT_RE='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|wedged|device lost|failed to respond)|soft lockup'
 say() { echo "### $(date +%H:%M:%S) $*"; }
 faults() { sudo -A journalctl -k --since "$START" --no-pager -o short-iso 2>/dev/null | grep -Ei "$FAULT_RE"; }
 stop_server() {
@@ -55,6 +56,7 @@ COMMON=(--image neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r314-state-stri
         --overlay b70-chunked-upload --extra-env B70_CHUNKED_UPLOAD=1
         --overlay b70-gdn-state-width --extra-env B70_GDN_STATE_WIDTH=1
         --overlay b70-host-step-clock --extra-env B70_HOST_STEP_CLOCK=1
+        --overlay b70-step-breadcrumbs --extra-env B70_STEP_BREADCRUMBS=1
         --extra-env B70_FA_VERIFY_ROWS_ONE_LAUNCH=1)
 arm_args() {  # an arm name ending in 0 is the same server without the drafter
   if [[ $1 == *0 ]]; then echo --mtp 0
@@ -99,7 +101,7 @@ start_server() {  # arm
     "$O/server.log" | sort -u
 }
 
-[[ $(cat /proc/sys/kernel/random/boot_id) == 66541315-49f1-41f7-af1d-4756d6b89c9c ]] && { say "still the faulted boot; nothing run"; exit 1; }
+# no boot refusal (owner, 2026-10-17: software faults are fixed and the work carries on); faults() counts only lines since START
 for u in ctx-campaign28f ctx-fp8-tp2-server; do
   systemctl --user is-active --quiet $u && { say "unit $u is still running; nothing run"; exit 1; }
 done
@@ -128,6 +130,7 @@ for arm in $ARMS; do
     --out "$D/write-$arm.json" > "$D/write-$arm.log" 2>&1 || say "write probe failed on $arm"
   grep "^WRITE" "$D/write-$arm.log"
   grep -o "b70_host_step_clock rank .*" "$O/server.log" > "$D/clock-$arm.txt"; head -c 600 "$D/clock-$arm.txt"; echo
+  grep -A40 "b70_step_breadcrumbs rank .* \(STALL\|FAILED\)" "$O/server.log" > "$D/crumbs-$arm.txt" && say "breadcrumb blocks on $arm: $D/crumbs-$arm.txt"
   stop_server
   [[ -n $(faults) ]] && { say "ABORT: GPU fault line after $arm"; exit 1; }
 done

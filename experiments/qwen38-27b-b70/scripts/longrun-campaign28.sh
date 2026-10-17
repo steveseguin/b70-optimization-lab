@@ -56,7 +56,7 @@ SCAN_RE='(?m)^ITEM \d+/\d+ \(UPDATE\)'
 LABEL_RE='(?m)^ITEM (\d+)/'
 RECITE_RE_REPAIR='(?m)^TICKET \d+/\d+ \((BUG|NOTICE)\)'
 START=$(date '+%F %T')
-FAULT_RE='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|wedged|device lost)|soft lockup'
+FAULT_RE='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|wedged|device lost|failed to respond)|soft lockup'
 say() { echo "### $(date +%H:%M:%S) $*"; }
 avail() { awk '/^MemAvailable:/ {printf "%d", $2/1024}' /proc/meminfo; }
 faults() { sudo -A journalctl -k --since "$START" --no-pager -o short-iso 2>/dev/null | grep -Ei "$FAULT_RE"; }
@@ -317,7 +317,8 @@ systemd-run --user --unit=ctx-fp8-tp2-server --collect -p WorkingDirectory=$LAB 
   --overlay b70-exclusive-prefill --extra-env B70_EXCLUSIVE_PREFILL=1 \
   $( [[ $ONE_LAUNCH == 1 ]] && echo --extra-env B70_FA_VERIFY_ROWS_ONE_LAUNCH=1) \
   $( [[ $TAIL == 1 ]] && echo --extra-env B70_PREFIX_CACHE_EXACT_TAIL=1) \
-  $( [[ ${FA_PER_SEQ:-0} == 1 ]] && echo --overlay b70-fa-decode-per-seq --extra-env B70_FA_DECODE_PER_SEQ=1) 2>&1 | tail -1
+  $( [[ ${FA_PER_SEQ:-0} == 1 ]] && echo --overlay b70-fa-decode-per-seq --extra-env B70_FA_DECODE_PER_SEQ=1) \
+  $( [[ ${BREADCRUMBS:-1} == 1 ]] && echo --overlay b70-step-breadcrumbs --extra-env B70_STEP_BREADCRUMBS=1) 2>&1 | tail -1
 ready=0
 for i in $(seq 1 120); do
   if server_up; then ready=1; say "server ready after ~$((i*15)) s; MemAvailable $(avail) MiB"; break; fi

@@ -2,20 +2,21 @@
 # Runs inside the unit that run-20261017-after-reboot.sh starts (ctx-after-reboot), so the morning's queue goes on
 # after the owner's reboot without a session watching it:
 #   1. campaign 28f (longrun-campaign28.sh with the env the unit was given: 0.3.0 check on K32, then the repair task)
-#   2. if this boot's kernel log is still clean: the step-floor study (run-20261017-step-floor.sh, six servers)
+#   2. if the kernel log is still clean since SINCE (default: the chain's start): the step-floor study (run-20261017-step-floor.sh, six servers)
 # Cards are left empty at the end; Gemma is not restored (owner's call after the faults of 2026-10-17).
 set -uo pipefail
 E=/home/steve/b70-optimization-lab/experiments/qwen38-27b-b70
 O=/mnt/fast-ai/bench-results/context-longrun-20261016
-FAULT_RE='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|wedged|device lost)|soft lockup'
+FAULT_RE='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|wedged|device lost|failed to respond)|soft lockup'
 say() { echo "### $(date +%H:%M:%S) $*"; }
-faults() { sudo -A journalctl -k -b --no-pager -o short-iso 2>/dev/null | grep -Ei "$FAULT_RE"; }
+SINCE=${SINCE:-$(date '+%F %T')}   # fault lines before this were handled already (owner rule of 2026-10-17)
+faults() { sudo -A journalctl -k --since "$SINCE" --no-pager -o short-iso 2>/dev/null | grep -Ei "$FAULT_RE"; }
 
 say "chain: campaign 28f"
 (cd "$E/scripts" && bash "$E/scripts/longrun-campaign28.sh") >> "$O/c28f.log" 2>&1
 rc=$?
 say "chain: campaign 28f exited rc $rc"
-[[ -n $(faults) ]] && { say "chain: fault line on this boot after 28f; step-floor study NOT run (AGENTS.md rule 3)"; faults | head -5; exit 1; }
+[[ -n $(faults) ]] && { say "chain: fault line since $SINCE after 28f; step-floor study NOT run (the session diagnoses it first)"; faults | head -5; exit 1; }
 [[ -n $(docker ps -q) ]] && { say "chain: containers still running after 28f; step-floor study NOT run"; exit 1; }
 sleep 30
 say "chain: step-floor study"

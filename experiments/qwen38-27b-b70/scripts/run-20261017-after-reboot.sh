@@ -1,23 +1,28 @@
 #!/usr/bin/env bash
-# After the owner's reboot (2026-10-17: second GPU fault on boot 66541315..., notes/2026-10-17-context-lane-public-remeasure.md).
-# Refuses to run on the faulted boot. Then: kernel log of this boot clean -> ONE bounded health probe -> kernel log still
-# clean -> the fault latch moved aside -> campaign 28f (QUEUE28f: K32 rules s0 to compare with c27a under overlay 0.3.0, then the repair task K32 2x; depth 5, one launch,
-# tail) -> if the kernel log is still clean, the step-floor study (run-20261017-step-floor.sh, six servers, about 40 min);
-# cards left empty at the end. Any failure stops here and says why; nothing is retried.
-#   SUDO_ASKPASS=/path/to/askpass bash run-20261017-after-reboot.sh        (short; the campaign runs in its own unit)
+# Starts the queued GPU work after a fault was handled: after the owner's reboot, or on the same boot once the cause is
+# dealt with (owner, 2026-10-17: software faults are fixed and the work carries on; on boot 66541315 the second fault's
+# leftover, a stuck copy-engine context on e3:00.0, was cleared by the driver's own GT reset at 10:33 and the 10:35
+# health probe passed). Fault lines are counted from SINCE (default: this boot's start). Then: kernel log clean since
+# SINCE -> ONE bounded health probe -> still clean -> the fault latch moved aside -> campaign 28f (QUEUE28f: K32 rules
+# s0 to compare with c27a under overlay 0.3.0, then the repair task K32 2x; depth 5, one launch, tail, step
+# breadcrumbs) -> if the kernel log is still clean, the step-floor study (run-20261017-step-floor.sh, six servers,
+# about 40 min); cards left empty at the end. Any failure stops here and says why; nothing is retried.
+#   SUDO_ASKPASS=/path/to/askpass [SINCE='2026-10-17 10:36:00'] bash run-20261017-after-reboot.sh   (short; the campaign runs in its own unit)
 set -uo pipefail
 LAB=/home/steve/b70-optimization-lab
 E=$LAB/experiments/qwen38-27b-b70
 O=/mnt/fast-ai/bench-results/context-longrun-20261016
-FAULTED_BOOT=66541315-49f1-41f7-af1d-4756d6b89c9c
 export SUDO_ASKPASS=${SUDO_ASKPASS:?set SUDO_ASKPASS}
-FAULT_RE='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|wedged|device lost)|soft lockup'
+FAULT_RE='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|wedged|device lost|failed to respond)|soft lockup'
 say() { echo "### $(date +%H:%M:%S) $*"; }
-faults() { sudo -A journalctl -k -b --no-pager -o short-iso 2>/dev/null | grep -Ei "$FAULT_RE"; }
+SINCE=${SINCE:-}
+faults() {
+  if [[ -n $SINCE ]]; then sudo -A journalctl -k --since "$SINCE" --no-pager -o short-iso 2>/dev/null
+  else sudo -A journalctl -k -b --no-pager -o short-iso 2>/dev/null; fi | grep -Ei "$FAULT_RE"
+}
 
 boot=$(cat /proc/sys/kernel/random/boot_id)
-[[ $boot == "$FAULTED_BOOT" ]] && { say "still the faulted boot ($boot): the owner has not rebooted; nothing run"; exit 1; }
-[[ -n $(faults) ]] && { say "fault lines on this boot already:"; faults | head -5; exit 1; }
+[[ -n $(faults) ]] && { say "fault lines since ${SINCE:-boot} already:"; faults | head -5; exit 1; }
 [[ -n $(docker ps -q) ]] && { say "containers running:"; docker ps --format '{{.Names}} {{.Image}}'; exit 1; }
 if systemctl is-active --quiet gemma4-26b-q8-quad-frontdoor.service gemma4-26b-q8-quad-backends.service; then
   # the Gemma units are enabled, so they start at boot; stop them only when asked, as the campaign runners do
@@ -29,7 +34,7 @@ if systemctl is-active --quiet gemma4-26b-q8-quad-frontdoor.service gemma4-26b-q
   sleep 60   # quiet minute before the probe
   [[ -n $(faults) ]] && { say "fault line after stopping Gemma:"; faults | head -5; exit 1; }
 fi
-say "boot $boot, kernel log clean, cards free; MemAvailable $(awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo) MiB"
+say "boot $boot, kernel log clean since ${SINCE:-boot}, cards free; MemAvailable $(awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo) MiB"
 
 PYTHON=$HOME/.venvs/vllm-xpu/bin/python timeout 200 "$LAB/scripts/check-qwen36-xpu-xccl-health.sh" > "$O/health-after-reboot-$(date +%Y%m%dT%H%M%S).log" 2>&1
 rc=$?
@@ -43,7 +48,7 @@ systemctl --user reset-failed ctx-after-reboot 2>/dev/null
 # the chain runs campaign 28f, then (kernel log still clean) the step-floor study; both leave the cards empty
 systemd-run --user --unit=ctx-after-reboot --collect -p WorkingDirectory=$E/scripts \
   -p StandardOutput=append:$O/after-reboot-chain.log -p StandardError=append:$O/after-reboot-chain.log \
-  -E SUDO_ASKPASS="$SUDO_ASKPASS" \
+  -E SUDO_ASKPASS="$SUDO_ASKPASS" -E SINCE="$(date '+%F %T')" \
   -E RUN=c28f -E MTP=5 -E SEQS=1 -E ONE_LAUNCH=1 -E TAIL=1 -E EDIT=0 -E RESTORE=0 -E IDLE_MAX=5 -E QUEUE=$O/QUEUE28f.txt \
   /usr/bin/bash $E/scripts/run-20261017-after-reboot-chain.sh
 say "campaign 28f then the step-floor study launched (unit ctx-after-reboot; logs $O/c28f.log, $O/step-floor.log, $O/after-reboot-chain.log)"

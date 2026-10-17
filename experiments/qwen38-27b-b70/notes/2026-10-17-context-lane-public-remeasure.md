@@ -92,6 +92,36 @@ probe passed), or whether this is an independent hang. This server configuration
 that a reboot is needed.** No further launches, no driver reload, no probe loop. After the reboot: the boot's first
 GPU job is the bounded health probe, then campaign 28e again unchanged.
 
+## 10:29-10:36 EDT: same-boot recovery on the owner's rule; the 06:23 leftover was a stuck copy engine
+
+The owner, 10:29: a fault our own software caused is fixed and the work goes on; stop only when the card itself is
+faulty and cannot be fixed (AGENTS.md rule 3, new bullet). No fault line between 06:23:03 and 10:31.
+
+- **10:31 health probe failed:** both cards passed their one-card smoke test; the two-card XCCL all-reduce hung after
+  topology setup until the probe's own timeout ended it (90 s). Ending it logged, on e3:00.0, `Schedule disable failed
+  to respond` (guc_id 11), a device coredump (copied before anything else: `/mnt/fast-ai/bench-results/
+  context-longrun-20261016/fault-20261017-1033/`, with the kernel log from 05:50 and the probe log) and a full GT
+  reset (`reset done`).
+- **The dump:** the probe's copy-engine context on e3 (bcs11) never ran a single command (seqno at its start value,
+  LRC head 0 of tail 120). The physical copy engine was occupied by a different context (`CURRENT_LRCA` 0x026d0001)
+  executing `MI_SEMAPHORE_WAIT` (IPEHR 0x0e009003). The probe's processes were the only GPU users, so that context is a
+  leftover: most likely the 06:23 server's TP1 copy queue, waiting on a peer flag from card 03:00.0 when 03:00.0
+  reset (the e3 copy-engine CAT error at 06:23:02 is the same engine). An engine reset had not cleared it; the GT reset
+  did. Not a card defect: compute on both cards was fine throughout.
+- **After the GT reset** both cards' copy and compute engines read idle with no context loaded (debugfs
+  `gt0/hw_engines`, read-only), and the **10:35 probe passed** (both smoke tests, all-reduce 2.0 on both ranks), with
+  no new kernel line. Cards usable on the same boot; no reboot needed.
+- **What a repeat of 06:23 needs:** `overlays/b70-step-breadcrumbs` 0.1.0 (host only, no device call; 3 CPU tests)
+  keeps each card's last 32 steps (shape, the scheduler's and the card's own token counts, accepted count, one-launch
+  flag, event record/wait times) and writes them to the server log on a stall over 20 s or a failure. It is in 28f and
+  every step-floor arm. It answers which step each card was given last and whether both were given the same one.
+  The preregistered response stands: if the hang recurs, the next run turns `B70_FA_VERIFY_ROWS_ONE_LAUNCH` off first.
+- **If a TP2 server dies mid-collective again:** expect the peer's copy engine to be stuck the same way; the bounded
+  probe detects it (all-reduce hang), and its timeout kill led to the GT reset that cleared it.
+- Runner fixes: the start script, the chain and the step-floor runner count fault lines from a start time instead of
+  the whole boot (and no longer refuse boot 66541315); all four fault filters now include `failed to respond`, which
+  the 10:33 line would otherwise have slipped past.
+
 ## Proposal for the owner (public pages; nothing is changed until the owner says)
 
 The skindeep `context-use.html` working-view table compares view sizes measured on one server state (campaigns

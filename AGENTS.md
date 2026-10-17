@@ -78,9 +78,16 @@ around it.
   (`docs/local-ops.md`; on the two-card host
   `scripts/check-qwen36-xpu-xccl-health.sh`). If it passes and the kernel log
   stays clean, carry on with the work and note the fault in `CURRENT.md`. Do
-  not ask first. If the probe fails, or a second fault follows on the same
-  boot, stop and tell the owner that a reboot is needed. There is no
-  one-experiment-per-boot rule.
+  not ask first. There is no one-experiment-per-boot rule.
+- **Software faults are fixed, not waited out** (owner, 2026-10-17). A fault
+  our own software caused (a kill, a hang or bad input in our code, a wrong
+  launch) does not stop the work, even when it is the second or later on the
+  boot: save the evidence, find and fix the cause (while it is unknown, add
+  what the next occurrence needs to pin it and change one suspect at a
+  time), run the bounded health probe, and carry on. Stop and tell the
+  owner that a reboot is needed only when the card itself is faulty and we
+  cannot fix it: the health probe fails, or the card stays unusable (wedged,
+  missing, or faulting on the probe's own small work).
 - **Stop GPU jobs gracefully.** Hard-killing a busy GPU process (a cgroup
   kill, `docker rm -f`, a watchdog's group kill) logs fault lines by itself on
   this driver. It is the last resort, and it is handled as a fault under the
