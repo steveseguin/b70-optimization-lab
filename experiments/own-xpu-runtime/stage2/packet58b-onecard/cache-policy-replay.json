@@ -1,0 +1,112 @@
+{
+  "schema": "own-runtime.packet58.cache-policy-replay.v1",
+  "passed": true,
+  "device_executed": false,
+  "model_payload_read": false,
+  "measured_token_speed": false,
+  "source_bindings": {
+    "calibration_manifest_sha256": "ea72831fa221dd404bd39ae1266f833bff73befde77feac5ba7fffc8f8baf0f9",
+    "trace_sha256": "4b103e39d3efc6cfe7d7601160959ca06797c4f8e6f184f6212c7ed87a4057a8",
+    "conversion_receipt_sha256": "b8be14afeaf93e16258a191fe116f9a9710c9cc2b147f1c375bf12829ab58e56",
+    "benchmark_manifest_sha256": "4216d6b7d31844d63162fdf475574171649fde1235f89176ce047983e2f3a540",
+    "calibration_source_sha256": "4e74e0c88f702bcb537ac1c7afc5b42eca08a5872e834ac99fbd0ea50687c25d"
+  },
+  "replay_source_sha256": "6880a25b3fd802beb2b4c0aa1cbd53a030cae888380da821a03c0f69f8a70743",
+  "policy_source_sha256": "3339d7bb6cb03d7e04f7e363db1c67714043a13d2d47ba1c59f86dcf28606280",
+  "upstream_analysis_sha256": "1b2289d7d0bb22a61f55a7fb93a0940232dca926eb866ec8aa9de20b0e3e137d",
+  "route_records": 403168,
+  "test_prompts": [
+    "p55-13-bounded-queue",
+    "p55-14-sql-islands",
+    "p55-15-market-repair",
+    "p55-16-public-footpath",
+    "p55-17-archive-storage",
+    "p55-18-survey-bias",
+    "p55-19-repair-checklist",
+    "p55-20-school-menu",
+    "p55-21-french-orchard",
+    "p55-22-arabic-translation",
+    "p55-23-integer-squares",
+    "p55-24-geometry-box"
+  ],
+  "cache_arena_bytes": 18000000000,
+  "global_slot_alignment": 256,
+  "comparisons": {
+    "per_layer_trained_reset": {
+      "prefill": {
+        "route_visits": 43776,
+        "requested_bytes": 866181120000,
+        "miss_bytes": 150476390400,
+        "missing_experts": 75958,
+        "byte_hit_fraction": 0.8262760675273089,
+        "missed_experts_per_layer_visit": 1.7351516812865497,
+        "missed_bytes_per_layer_visit": 3437417.543859649
+      },
+      "decode": {
+        "route_visits": 154833,
+        "requested_bytes": 3065092352000,
+        "miss_bytes": 231104384000,
+        "missing_experts": 116165,
+        "byte_hit_fraction": 0.9246011677758413,
+        "missed_experts_per_layer_visit": 0.7502599575025996,
+        "missed_bytes_per_layer_visit": 1492604.1864460418
+      }
+    },
+    "global_trained_reset": {
+      "prefill": {
+        "route_visits": 43776,
+        "requested_bytes": 866181120000,
+        "miss_bytes": 151589043200,
+        "missing_experts": 76555,
+        "byte_hit_fraction": 0.8249915177093677,
+        "missed_experts_per_layer_visit": 1.7487892909356726,
+        "missed_bytes_per_layer_visit": 3462834.5029239766
+      },
+      "decode": {
+        "route_visits": 154833,
+        "requested_bytes": 3065092352000,
+        "miss_bytes": 195006156800,
+        "missing_experts": 98388,
+        "byte_hit_fraction": 0.9363783748072854,
+        "missed_experts_per_layer_visit": 0.635445932068745,
+        "missed_bytes_per_layer_visit": 1259461.2052986121
+      }
+    },
+    "global_empty_persistent": {
+      "prefill": {
+        "route_visits": 43776,
+        "requested_bytes": 866181120000,
+        "miss_bytes": 130946995200,
+        "missing_experts": 66195,
+        "byte_hit_fraction": 0.8488226166832175,
+        "missed_experts_per_layer_visit": 1.5121299342105263,
+        "missed_bytes_per_layer_visit": 2991296.49122807
+      },
+      "decode": {
+        "route_visits": 154833,
+        "requested_bytes": 3065092352000,
+        "miss_bytes": 194056038400,
+        "missing_experts": 97908,
+        "byte_hit_fraction": 0.9366883551572673,
+        "missed_experts_per_layer_visit": 0.6323458177520296,
+        "missed_bytes_per_layer_visit": 1253324.797685248
+      }
+    }
+  },
+  "global_empty_persistent_final": {
+    "resident_experts": 8948,
+    "resident_bytes": 17713561600,
+    "free_extents": 439,
+    "fill_bytes": 325003033600,
+    "evictions": 155155
+  },
+  "interpretation": "Observed packet55 split-rank route demand only. Not one-card speed or native hit rate.",
+  "caveats": [
+    "Global order follows packet55 host monotonic ordering across two ranks; not one-card layer order.",
+    "Admissions complete after each observed layer route; packet58 zero-copy admits between positions.",
+    "All speculative/rejected route visits remain charged; packet58 plain decode has a different route stream.",
+    "Global cache budget is data arena; fixed per-layer budget includes its older alignment/metadata.",
+    "Trained-reset cases start every test prompt from the same train-only snapshot; empty-persistent starts empty and retains immutable weights across the 12 test prompts.",
+    "No benchmark prompts train cache placement; retained corpus is packet55 independent calibration."
+  ]
+}

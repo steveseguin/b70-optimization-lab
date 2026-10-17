@@ -121,3 +121,75 @@ Fills are fenced and charged to token timing, with no overlap claim.
 No matching submitted one-card IQ3 record was found in the pinned ledger.
 Submission output remains an offline draft until device gates and the new
 lineage's external 128-token scope review are complete.
+
+
+## Packet 58b — repair K1 startup (October 17, CPU only)
+
+The card0-a K1a process stopped after 5.29 seconds with Level Zero error 44,
+no kernel fault lines, and an empty `run/` directory. `Runner` constructs the
+SYCL backend before opening `k1-cases.jsonl`, so this failure precedes every
+fixture allocation and kernel. K1 does not load the full model or allocate
+the 48,627,712,000-byte expert bank.
+
+Source localization identifies the native copy-queue import in
+`single_device.cpp`: `zeCommandQueueCreate` produces a regular
+`ze_command_queue_handle_t`, which is passed to `sycl::make_queue`. The
+installed SYCL header marks that variant as non-immediate. Intel's UR Level
+Zero v2 `urQueueCreateWithNativeHandle` explicitly returns
+`UR_RESULT_ERROR_UNSUPPORTED_FEATURE` for it. The installed v2 library also
+contains that exact rejection diagnostic. This is a source-based diagnosis;
+no GPU tracing or probe was run.
+
+References: [pinned Intel adapter source](https://github.com/oneapi-src/unified-runtime/blob/f6fa8290508657eaf9ab901118c876f2e890258b/source/adapters/level_zero/v2/queue_create.cpp),
+[Level Zero immediate command lists](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/PROG.html#immediate-command-lists),
+and [local evidence and adapter hash](../experiments/own-xpu-runtime/stage2/packet58b-onecard/evidence/root-cause.json).
+
+The separate `packet58b-onecard` copy uses
+`ze_command_list_handle_t` + `zeCommandListCreateImmediate` with
+`ZE_COMMAND_QUEUE_FLAG_IN_ORDER`, on the same dedicated copy-only ordinal
+and in asynchronous mode. Both cleanup paths use `zeCommandListDestroy`.
+Copy fences, explicit ownership, arithmetic, kernel order, packed bytes,
+cache policy, host allocation and model selection remain unchanged. Neither
+chunking nor forcing streaming fixes a constructor import failure, so those
+paths were not changed speculatively. The existing two-K1 decision still
+selects zero-copy or streamed operation after exact byte gates.
+
+The changed-path CPU fixture compiles the actual constructor fragments with
+a mock of the documented import contract: parent returns 44, repaired handle
+passes while checking the copy ordinal, native in-order flag, asynchronous
+mode, context and ownership. The existing cache/expert gate runs once each,
+without sanitizers: 213,816 cache checks and 36 expert cases / 1,522,656 bytes
+compared. This is CPU evidence only, not hardware acceptance.
+
+Initial `git pull --rebase` was blocked by the other job's dirty packet59
+files; `git fetch origin main` showed no incoming commits. Those files were
+not stashed or edited. All work here uses nice 19, cores 8–15/24–31, Python
+-B and small local builds. No GPU, sudo, services, model payload, host setting,
+reboot or process termination was used. Original sealed packets and
+`stage2/screen/` remain untouched.
+
+[58b closeout](../experiments/own-xpu-runtime/stage2/packet58b-onecard/CPU-PREPARATION-CLOSEOUT.md)
+and [exact coordinator commands](../experiments/own-xpu-runtime/stage2/packet58b-onecard/WINDOW.md).
+
+Final 58b checks: device and GNU host builds pass, 173 source hashes per
+build, retained build 148,319,943 bytes. The host production K1 fixture passes
+24 placement comparisons with the unchanged parent golden hash
+`8ba3faa72a04985c65ea1b27d9cba2379a0fa91e00ac912334c4d86ab399c303`.
+The small reset fixture matches 40 retained files and all 44 Python checks
+pass. The original packet58 seal still verifies. Device acceptance is pending.
+
+Exact coordinator command, from repo root inside the existing coordinator-owned
+`packet58-*` user unit, using its genuinely reviewed UTC fault boundary and
+approved library path. This command was prepared, **not executed** here:
+
+```bash
+P=experiments/own-xpu-runtime/stage2/packet58b-onecard
+nice -n 19 taskset -c 8-15,24-31 env -i \
+  PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" \
+  python3 -B "$P/queue_runner.py" --authorized-device-window --card 0 \
+  --output-root "$P/evidence/card0-58b-a" \
+  --faults-reviewed-through "$REVIEWED_THROUGH"
+```
+
+Order remains K1a → K1b → KD → W2m → WS → WS128x → WS128.
+No retry or automatic fallback to another card. K1 failure ends the queue.
