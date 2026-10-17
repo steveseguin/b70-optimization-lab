@@ -36,3 +36,9 @@ not earn an extra token merely because it processed a second row.
 **Decision pending the coordinator's measurements.** Neither the CPU gates
 nor a compiled binary measures H(2)/H(1). The next action is the sealed lane-B
 window, then the analysis command in the [packet README](../experiments/own-xpu-runtime/stage2/packet68b-batched-rows/README.md).
+
+Sealed implementation committed and pushed as `9e33fe3ea`. The independent
+worker identity check also accepts the same sealed 24/24 plan. The analyzer's
+two small CPU tests pass, including refusal of incomplete or failed device
+evidence. [CPU preparation closeout](../experiments/own-xpu-runtime/stage2/packet68b-batched-rows/CPU-PREPARATION-CLOSEOUT.md)
+records the completed preparation separately from the pending device window.

@@ -101,3 +101,6 @@ launch identities. No device was contacted by that rejected CPU plan.
 [Task note](../../../../notes/2026-10-17-own-runtime-packet68b.md),
 [CPU receipt](fixture/receipt.json), [admitted plan](evidence/probe-plan.json),
 [seal](screen-seal.json).
+
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md) and
+[do-not-repeat record](DO-NOT-REPEAT.md) preserve the handoff and pending gates.
