@@ -101,3 +101,15 @@ separate512-token publication gate or establish a new submitted record.
 
 - `122d95fba`: separate integration, shared oracle, queue/runbook and initial CPU preparation. Pushed immediately.
 - The final seal checkpoint records the corrected fixture, all fresh gate receipts, independent review and this handoff. Its exact commit is in Git history and the coordinator report.
+
+## Device results, 2026-10-17 (coordinator)
+
+**Early phase on cards 0+1, chain `device-cards01-a`, 05:11-05:28 UTC: PASSED.**
+
+- K0, K1a, K1b, K2 and W0p are all passed and qualifying.
+- K1a/K1b include the `expert_gemv` device gate (p48b IQ2_S expsgate and IQ4_NL expsdown, M=1 and both M=2 rows) and the split32 QSA gate.
+- No new fault lines.
+
+**Model phase:** KD → W2m → WS → WSs → WS128x → WS128 is queued with `--wait-oracle`. It waits for the shared packet 49 CPU oracle; the oracle was 4/12 prompts complete at 05:31 UTC, projecting about 09:30.
+
+Evidence: `device-evidence/device-cards01-a/`.

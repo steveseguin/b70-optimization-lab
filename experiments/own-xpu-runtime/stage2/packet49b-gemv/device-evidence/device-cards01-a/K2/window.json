@@ -1,0 +1,633 @@
+{
+  "diagnostic_unsealed": false,
+  "qualifying": true,
+  "schema": "packet49b.window.v1",
+  "window": "K2",
+  "card": 0,
+  "context": 4096,
+  "draft_rank": 1,
+  "target_split": 23,
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "artifacts_sha256": {
+    "gnu-host/queue-tests": "70b36073b618e7de59555e51a5e91315349bf3f28c0832d5d5ce4e7a7118addf",
+    "gnu-host/owner-retirement-tests": "77cb38d56619ab82735c3de96d0331e1cf2779f7248e999963367093943f75b0",
+    "gnu-host/authority-tests": "ff7ebb15eb4e26d261d275054fb22b42615f92643c3a652e5b6a6cbd32bf24a4",
+    "gnu-host/prepared-invalidation-tests": "d8576bb49eb05d466a1c9cb822ef0e2c5883a5db8700bc9770ef61c7672edd91",
+    "gnu-host/k2-fixtures": "69e2f65f76959ef9aac550d086fdc0c7a276d3ded0639828984f88bf4242cb39",
+    "gnu-host/p39-merged-fixtures": "b010ebe3059faf17276da785d00f57b7aa676a0785f6d44e3f9117f643db337e",
+    "gnu-host/chain-tests": "709aa83950e8c97bf130eb64e9cac4f78831cf952fcfb7a5836b4cbcf05021c9",
+    "gnu-host/lifetime-tests": "618652e09e989a8ed60792179531f63dc338fa55d3f99500e1be20d2e7adb1fd",
+    "gnu-host/p49-qsa-fixtures": "225134615ebed3fc9706924001e5ceccc2bbf5c04f507f4129835f3d41603ff5",
+    "gnu-host/libmath_bridge.so": "0549ae1040a3d445ee0a5977798275701a3f4b7d85d46b2d4635b61fb8b12514",
+    "gnu-host/p33-linked-fixtures": "22aa9825c4a7fd9955054c1ce6226839788bbf97f331a6b7d508098e5b19f73c",
+    "gnu-host/own-rt-iq3": "7000181476cb15b891e7060cfec2253615b006ff4c126e1aeed9b4d8bbe2d0dd",
+    "gnu-host/p49b-expert-fixtures": "cda099d8ce8cf30c876e113f265115b1a88f83f220d854a6742fd3e89ed20d63",
+    "gnu-host/nongemv-fixtures": "8b2fd516649e3f589c4e20e336625afbe01e8057799bef371dd85f9cd1bced02",
+    "device/jit-smoke": "e506c3c802929108b2ba7deb26f191e8ad4a46eff74053b1b354c18232b385f6",
+    "device/k2-fixtures": "25ca8c6713f7fb0953b76d602e417645b5e294a8cf4eb0d8f39af805f9c3940c",
+    "device/p49-qsa-fixtures": "55137fca832b7f518fc78d0c827d1df2ccdcce2a300e3dc4880e3dab6ebfe35d",
+    "device/p33-linked-fixtures": "4e66acbd61193d0012bfbf1e8212d2e171a1ed461f27eb2cf302b19f33687d9d",
+    "device/own-rt-iq3": "b4d4f6d2e7bc8d434be9f682b9d92044bfba401f42a5281625a9ae1c343b39c8",
+    "device/p49b-expert-fixtures": "adb7c0939d11b54f11d1d3bff2244b800950e6a7768dca1171c6f3bdc8e798a3",
+    "device/nongemv-fixtures": "60dfb143fe0833fee1b509ff7db4a06a66fea30de0456b83cc03c1fbcee62aaf",
+    "asan/queue-tests": "9237c37a50d3a4a5cc3d3224359124c88e1f0efedd00e4cb1fa83b1091b3dced",
+    "asan/owner-retirement-tests": "22538fbbeb92653d0d88cf1ef86374da84acbf8a591ea660147a537db1da0e16",
+    "asan/authority-tests": "2c3bc775638c6a2d59252377103a80d072810c673ac5eff518ab523cd0003e68",
+    "asan/prepared-invalidation-tests": "7426c09e7d7aa7f14c3d50b28e9e06c5d59fa2492dc5f9f7d1709b1d098d53ec",
+    "asan/k2-fixtures": "424cf64c764246668469bbc5b0a98296584c11a2ce6760b302e4c7b9205aa320",
+    "asan/p39-merged-fixtures": "c93e1ba999c8871793e853bfa7b8663eee9aa55792fac765eec107bdec2699b6",
+    "asan/chain-tests": "e4d23dd0ff8a8a4068e7024d21375ea7ae18e277638f80277711749494e35061",
+    "asan/lifetime-tests": "60d1f237da037c600912b5ed59d60e389db262b30a422a0b597dd2e6a72d4f03",
+    "asan/p49-qsa-fixtures": "96190960983cb80e81c6cbe0a3eec3e3ae8113ae41a271ed1b855627b09f58b5",
+    "asan/libmath_bridge.so": "0549ae1040a3d445ee0a5977798275701a3f4b7d85d46b2d4635b61fb8b12514",
+    "asan/p33-linked-fixtures": "eaeaef654dd4273e1ad274724b9510d1df0db57958ee097e87b47bc4406ab905",
+    "asan/own-rt-iq3": "b8ef84216443d929a7ade8f4fd00515d8e4387bc3695b45210ebf25b57d7527c",
+    "asan/p49b-expert-fixtures": "5f685df7516e72035089efc93d4521db7a40b7b78b85c96d2b962c4c441559b7",
+    "asan/nongemv-fixtures": "ac5d84426c541eb62614c378e4352170caee95b9f45e4a27b3517e75ac61a666"
+  },
+  "environment": {
+    "native": {
+      "PATH": "/usr/bin:/bin",
+      "OMP_NUM_THREADS": "2",
+      "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+      "LC_CTYPE": "C.UTF-8"
+    },
+    "relevant_environment": {
+      "LC_CTYPE": "C.UTF-8",
+      "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+      "OMP_NUM_THREADS": "2",
+      "PATH": "/usr/bin:/bin"
+    },
+    "policy": "closed environment; unknown names refused; native receives only recorded environment"
+  },
+  "build_receipt_sha256": "000960bb7690119fbb99723c00abc23961aab3efb6b94bfeb8734624e3e71221",
+  "cpu_rehearsal": false,
+  "prompt_overlap": "on",
+  "controller": "native",
+  "max_new": 64,
+  "retain_steps": "1-8",
+  "retained_steps": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "diagnostic_for_speed": true,
+  "passed": true,
+  "device_executed": true,
+  "expected_seconds": 572,
+  "expectation_enforced": true,
+  "expectation_policy": "prelaunch expected+17s <= watchdog/4; no early runtime stop",
+  "watchdog_seconds": 14400,
+  "cpu_affinity": [
+    0,
+    1,
+    2,
+    3,
+    16,
+    17,
+    18,
+    19
+  ],
+  "load_average": [
+    3.36376953125,
+    3.8076171875,
+    4.041015625
+  ],
+  "storage_admission": {
+    "root_free_bytes": 21170040832,
+    "build_bytes": 2211362211,
+    "admitted_write_bytes": 2500000000,
+    "projected_build_write_bytes": 2500000000,
+    "build_limit_bytes": 8446804480,
+    "structural_build_limit_bytes": 8446804480,
+    "free_floor_bytes": 8000000000,
+    "remaining_chain_reserve_bytes": 6318804480
+  },
+  "foreign_engine_admission": {
+    "active": [],
+    "scope": "whole-host conservative",
+    "unreadable_processes": 486,
+    "sample_seconds": 0.25
+  },
+  "receipts": {
+    "run0/receipt.json": "a0aa26d977759a44c74964039161afcabea01546e49a621c3c298e42d1d2eb54",
+    "run0/summary-k2-measured.json": "69c8819c934abca66fc321c2ed21eb870d5f3d78dce68acdb2105bdd15f535a0",
+    "run0/dispatch-k2-recommendation.json": "ce002a3a755806f909a497d9d0e9bb8358dba1dffe87a2410ef368f08e6a87d2",
+    "run0/dispatch-measured.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "run0/events.jsonl": "893462bf40e18d58e0711c0e15bfd2f1aac1584bcac757523a5d95ca7bb154c2",
+    "run0/summary.json": "e97050d2db41b031693adac0c46e595db7bcb2e5114aeb53aaf90e49e0dbaa11",
+    "run0/dispatch-rank0.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "run0/dispatch-rank1.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612"
+  },
+  "pids": [
+    153683
+  ],
+  "device_timing_qualified": true,
+  "production_dispatch_policy": {
+    "schema": "packet49.pinned-production-dispatch.v1",
+    "policy": "Keep exact SPEED6 non-QSA choices; fresh K2 recommendation retained separately. Target QSA is split32; production IQ2_S gate/up and IQ4_NL down use packet49b expert kernels. These overrides require fresh K1a/K1b fixtures; K2 recommendations do not select them.",
+    "speed6_dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "fresh_measured_summary_sha256": "69c8819c934abca66fc321c2ed21eb870d5f3d78dce68acdb2105bdd15f535a0",
+    "fresh_recommendation_sha256": "ce002a3a755806f909a497d9d0e9bb8358dba1dffe87a2410ef368f08e6a87d2",
+    "fresh_exactness_coverage": [
+      {
+        "section": "classes",
+        "key": "hc.a.norm",
+        "implementation": "specialised",
+        "measured_class": "norm",
+        "arm": "incumbent"
+      },
+      {
+        "section": "classes",
+        "key": "hc.f.norm",
+        "implementation": "specialised",
+        "measured_class": "norm",
+        "arm": "incumbent"
+      },
+      {
+        "section": "classes",
+        "key": "final.norm",
+        "implementation": "specialised",
+        "measured_class": "norm",
+        "arm": "incumbent"
+      },
+      {
+        "section": "classes",
+        "key": "ple.kn",
+        "implementation": "specialised",
+        "measured_class": "norm",
+        "arm": "incumbent"
+      },
+      {
+        "section": "classes",
+        "key": "ple.qn",
+        "implementation": "specialised",
+        "measured_class": "norm",
+        "arm": "incumbent"
+      },
+      {
+        "section": "classes",
+        "key": "ple.cn",
+        "implementation": "specialised",
+        "measured_class": "norm",
+        "arm": "incumbent"
+      },
+      {
+        "section": "classes",
+        "key": "gdn.norm",
+        "implementation": "p42.tiny.wg256",
+        "measured_class": "gdn.norm",
+        "arm": "candidate"
+      },
+      {
+        "section": "classes",
+        "key": "gdn.recurrence",
+        "implementation": "round2",
+        "measured_class": "gdn.recurrence",
+        "arm": "incumbent"
+      },
+      {
+        "section": "classes",
+        "key": "qsa.prepare",
+        "implementation": "p42.tiny.wg256",
+        "measured_class": "qsa.prepare",
+        "arm": "candidate"
+      },
+      {
+        "section": "classes",
+        "key": "qsa.pool",
+        "implementation": "p42.tiny.wg256",
+        "measured_class": "qsa.pool",
+        "arm": "candidate"
+      },
+      {
+        "section": "classes",
+        "key": "qsa.select",
+        "implementation": "round2",
+        "measured_class": "qsa.select",
+        "arm": "incumbent"
+      },
+      {
+        "section": "classes",
+        "key": "attn.combine",
+        "implementation": "specialised",
+        "measured_class": "attn.combine",
+        "arm": "incumbent"
+      },
+      {
+        "section": "classes",
+        "key": "ffn.combine",
+        "implementation": "specialised",
+        "measured_class": "ffn.combine",
+        "arm": "incumbent"
+      },
+      {
+        "section": "classes",
+        "key": "route",
+        "implementation": "p42.route.production_rank32",
+        "measured_class": "route",
+        "arm": "candidate"
+      },
+      {
+        "section": "classes",
+        "key": "gather",
+        "implementation": "specialised",
+        "measured_class": "gather",
+        "arm": "incumbent"
+      },
+      {
+        "section": "classes",
+        "key": "argmax",
+        "implementation": "round2",
+        "measured_class": "argmax",
+        "arm": "incumbent"
+      },
+      {
+        "section": "classes",
+        "key": "streams",
+        "implementation": "specialised",
+        "measured_class": "streams",
+        "arm": "incumbent"
+      },
+      {
+        "section": "classes",
+        "key": "ple.add",
+        "implementation": "specialised",
+        "measured_class": "ple.add",
+        "arm": "incumbent"
+      },
+      {
+        "section": "classes",
+        "key": "hc.a.act",
+        "implementation": "p42.tiny.range",
+        "measured_class": "hc.a.act",
+        "arm": "candidate"
+      },
+      {
+        "section": "classes",
+        "key": "hc.f.act",
+        "implementation": "packet18",
+        "measured_class": "hc.f.act",
+        "arm": "incumbent"
+      },
+      {
+        "section": "classes",
+        "key": "final.act",
+        "implementation": "p42.tiny.range",
+        "measured_class": "final.act",
+        "arm": "candidate"
+      },
+      {
+        "section": "fusions",
+        "key": "attn.combine+norm",
+        "implementation": "specialised",
+        "measured_class": "attn.combine+norm",
+        "arm": "incumbent"
+      },
+      {
+        "section": "fusions",
+        "key": "ffn.combine+norm",
+        "implementation": "specialised",
+        "measured_class": "ffn.combine+norm",
+        "arm": "incumbent"
+      },
+      {
+        "section": "fusions",
+        "key": "route+gather",
+        "implementation": "p42.route.production_rank32",
+        "measured_class": "route+gather",
+        "arm": "candidate"
+      },
+      {
+        "section": "fusions",
+        "key": "expert-checks-iq2",
+        "implementation": "p39.epilogue",
+        "measured_class": "fusion:p39.expert-checks-iq2",
+        "arm": "candidate"
+      },
+      {
+        "section": "fusions",
+        "key": "expert-checks-iq3",
+        "implementation": "packet18",
+        "measured_class": "fusion:p39.expert-checks-iq3",
+        "arm": "incumbent"
+      },
+      {
+        "section": "fusions",
+        "key": "down-status",
+        "implementation": "p39.epilogue",
+        "measured_class": "fusion:p39.down-status",
+        "arm": "candidate"
+      },
+      {
+        "section": "fusions",
+        "key": "hc-low-act",
+        "implementation": "p39.epilogue",
+        "measured_class": "fusion:p39.hc-low-act",
+        "arm": "candidate"
+      },
+      {
+        "section": "fusions",
+        "key": "shared-up-act-q6",
+        "implementation": "p39.epilogue",
+        "measured_class": "fusion:p39.shared-up-act-q6",
+        "arm": "candidate"
+      },
+      {
+        "section": "fusions",
+        "key": "shared-up-act-q8",
+        "implementation": "p39.epilogue",
+        "measured_class": "fusion:p39.shared-up-act-q8",
+        "arm": "candidate"
+      },
+      {
+        "section": "fusions",
+        "key": "attention-combine",
+        "implementation": "p39.epilogue",
+        "measured_class": "fusion:p39.attention-combine",
+        "arm": "candidate"
+      },
+      {
+        "section": "fusions",
+        "key": "shared-down-combine",
+        "implementation": "packet18",
+        "measured_class": "fusion:p39.shared-down-combine",
+        "arm": "incumbent"
+      },
+      {
+        "section": "fusions",
+        "key": "small.hc",
+        "implementation": "packet18",
+        "measured_class": "fusion:small.hc",
+        "arm": "incumbent"
+      },
+      {
+        "section": "fusions",
+        "key": "small.gdn.ab",
+        "implementation": "round2",
+        "measured_class": "fusion:small.gdn.ab",
+        "arm": "candidate"
+      },
+      {
+        "section": "fusions",
+        "key": "small.ffn",
+        "implementation": "p30.small.rows4",
+        "measured_class": "fusion:small.ffn",
+        "arm": "candidate"
+      },
+      {
+        "section": "gemv",
+        "key": "expsgate",
+        "implementation": "p28.paired.wg32",
+        "measured_class": "gemv:expsgate",
+        "arm": "incumbent"
+      },
+      {
+        "section": "gemv",
+        "key": "expsdown",
+        "implementation": "p33.down.bank",
+        "measured_class": "gemv:expsdown",
+        "arm": "candidate"
+      },
+      {
+        "section": "gemv",
+        "key": "gdn.qkv",
+        "implementation": "p33.dense.segment",
+        "measured_class": "gemv:gdn.qkv",
+        "arm": "candidate"
+      },
+      {
+        "section": "gemv",
+        "key": "gdn.z",
+        "implementation": "p33.dense.segment",
+        "measured_class": "gemv:gdn.z",
+        "arm": "candidate"
+      },
+      {
+        "section": "gemv",
+        "key": "qsa.qgate",
+        "implementation": "p33.dense.segment",
+        "measured_class": "gemv:qsa.qgate",
+        "arm": "candidate"
+      },
+      {
+        "section": "gemv",
+        "key": "qsa.k",
+        "implementation": "p28.dense.rows4",
+        "measured_class": "gemv:qsa.k",
+        "arm": "incumbent"
+      },
+      {
+        "section": "gemv",
+        "key": "qsa.v",
+        "implementation": "p28.dense.rows4",
+        "measured_class": "gemv:qsa.v",
+        "arm": "incumbent"
+      },
+      {
+        "section": "gemv",
+        "key": "attention",
+        "implementation": "p28.dense.wg32",
+        "measured_class": "gemv:attention",
+        "arm": "incumbent"
+      },
+      {
+        "section": "gemv",
+        "key": "ple.key",
+        "implementation": "p33.dense.segment",
+        "measured_class": "gemv:ple.key",
+        "arm": "candidate"
+      },
+      {
+        "section": "gemv",
+        "key": "ple.value",
+        "implementation": "p28.dense.wg32",
+        "measured_class": "gemv:ple.value",
+        "arm": "incumbent"
+      },
+      {
+        "section": "gemv",
+        "key": "hc.gate",
+        "implementation": "r5",
+        "measured_class": null,
+        "arm": "unchanged generic fallback; specific sites measured separately"
+      },
+      {
+        "section": "gemv",
+        "key": "hc.low",
+        "implementation": "r5",
+        "measured_class": null,
+        "arm": "unchanged generic fallback; specific sites measured separately"
+      },
+      {
+        "section": "gemv",
+        "key": "logits",
+        "implementation": "p33.dense.segment",
+        "measured_class": "gemv:logits",
+        "arm": "candidate"
+      },
+      {
+        "section": "gemv",
+        "key": "hc.a.gate",
+        "implementation": "p33.dense.segment",
+        "measured_class": "gemv:hc.a.gate",
+        "arm": "candidate"
+      },
+      {
+        "section": "gemv",
+        "key": "hc.a.low",
+        "implementation": "p28.dense.rows4",
+        "measured_class": "gemv:hc.a.low",
+        "arm": "candidate"
+      },
+      {
+        "section": "gemv",
+        "key": "hc.a.inject",
+        "implementation": "p33.dense.segment",
+        "measured_class": "gemv:hc.a.inject",
+        "arm": "candidate"
+      },
+      {
+        "section": "gemv",
+        "key": "hc.f.gate",
+        "implementation": "p33.dense.segment",
+        "measured_class": "gemv:hc.f.gate",
+        "arm": "candidate"
+      },
+      {
+        "section": "gemv",
+        "key": "hc.f.low",
+        "implementation": "p28.dense.rows4",
+        "measured_class": "gemv:hc.f.low",
+        "arm": "candidate"
+      },
+      {
+        "section": "gemv",
+        "key": "hc.f.inject",
+        "implementation": "p28.dense.wg32",
+        "measured_class": "gemv:hc.f.inject",
+        "arm": "candidate"
+      },
+      {
+        "section": "gemv",
+        "key": "final.gate",
+        "implementation": "p33.dense.segment",
+        "measured_class": "gemv:final.gate",
+        "arm": "candidate"
+      },
+      {
+        "section": "gemv",
+        "key": "final.low",
+        "implementation": "p28.dense.rows4",
+        "measured_class": "gemv:final.low",
+        "arm": "incumbent"
+      },
+      {
+        "section": "gemv",
+        "key": "qsa.iq",
+        "implementation": "p28.dense.rows4",
+        "measured_class": "gemv:qsa.iq",
+        "arm": "incumbent"
+      },
+      {
+        "section": "gemv",
+        "key": "qsa.ik",
+        "implementation": "p28.dense.wg32",
+        "measured_class": "gemv:qsa.ik",
+        "arm": "incumbent"
+      },
+      {
+        "section": "gemv",
+        "key": "router",
+        "implementation": "r5",
+        "measured_class": "gemv:router",
+        "arm": "incumbent"
+      },
+      {
+        "section": "gemv",
+        "key": "gdn.a",
+        "implementation": "r5",
+        "measured_class": "gemv:gdn.a",
+        "arm": "incumbent"
+      },
+      {
+        "section": "gemv",
+        "key": "gdn.b",
+        "implementation": "r5",
+        "measured_class": "gemv:gdn.b",
+        "arm": "incumbent"
+      },
+      {
+        "section": "gemv",
+        "key": "shexpgate",
+        "implementation": "r5",
+        "measured_class": "gemv:shexpgate",
+        "arm": "incumbent"
+      },
+      {
+        "section": "gemv",
+        "key": "shexpup",
+        "implementation": "r5",
+        "measured_class": "gemv:shexpup",
+        "arm": "incumbent"
+      },
+      {
+        "section": "gemv",
+        "key": "shexpdown",
+        "implementation": "p33.dense.segment",
+        "measured_class": "gemv:shexpdown",
+        "arm": "candidate"
+      },
+      {
+        "section": "gemv",
+        "key": "shared_gate",
+        "implementation": "r5",
+        "measured_class": "gemv:shared_gate",
+        "arm": "incumbent"
+      }
+    ],
+    "unchanged_choices_are_not_new_speed_claims": true
+  },
+  "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+  "summary_sha256": "e97050d2db41b031693adac0c46e595db7bcb2e5114aeb53aaf90e49e0dbaa11",
+  "rank_dispatches": {
+    "0": {
+      "path": "run0/dispatch-rank0.json",
+      "sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+      "measurement_card": 0,
+      "rank_card": 0,
+      "scope": "SPEED6 pinned non-QSA dispatch with fresh one-card K2 exactness; target QSA overridden by split32"
+    },
+    "1": {
+      "path": "run0/dispatch-rank1.json",
+      "sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+      "measurement_card": 0,
+      "rank_card": 1,
+      "scope": "SPEED6 pinned non-QSA dispatch with fresh one-card K2 exactness; target QSA overridden by split32"
+    }
+  },
+  "launched_pids": [
+    153683
+  ],
+  "cpu_owned_pids": [],
+  "retained_owner_pids": [],
+  "retained_artifacts": {
+    "fixture0.log": {
+      "path": "fixture0.log.gz",
+      "sha256": "cbdd3ff3317ed72815bd27853818826995a2542b9a3d50812b002d8992c5c45c",
+      "uncompressed_sha256": "d53510b7d95d5271e757164471e51abbfa50634be789e5c8abfbd789906faa6d",
+      "uncompressed_bytes": 70174
+    },
+    "run0/events.jsonl": {
+      "path": "run0/events.jsonl.gz",
+      "sha256": "8bf14250bfa21a05fabefbb706da7de980417f19055434d664354bf943dc3408",
+      "uncompressed_sha256": "893462bf40e18d58e0711c0e15bfd2f1aac1584bcac757523a5d95ca7bb154c2",
+      "uncompressed_bytes": 130656582
+    }
+  }
+}
