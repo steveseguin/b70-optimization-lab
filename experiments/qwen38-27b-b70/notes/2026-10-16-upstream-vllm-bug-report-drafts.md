@@ -301,6 +301,35 @@ new row 4, the fix gives 1.
 
 ---
 
+## 5. Prefix cache + EAGLE/MTP: an interior block of a hit can hold another request's drafter KV (added 2026-10-17)
+
+**Summary.** With EAGLE/MTP drafting, the drafter's KV at a block's last position is computed from the *next* token,
+which the block hash does not cover; the coordinator handles this for the last block of a hit (match one extra block,
+then drop it). Interior blocks are not covered: the pool keeps duplicate blocks per hash (`BlockHashToBlockMap`, "we
+don't de-duplicate"), and every drafting hit recomputes the block it dropped, so two requests that agree up to a block
+boundary and then differ leave two copies of that block with different drafter KV at its last position.
+`BlockPool.get_cached_block` returns the first copy (`block_pool.py`, "If there are duplicated blocks, we return the
+first block in the cache"), so a later request following the second text can receive the first text's copy as an
+interior block of its hit. Its drafter then attends to a KV value computed for a different token. Target outputs are
+unaffected (verification), but drafts and acceptance differ from a cold run, so a prefix-cache hit is not equivalent
+to recomputation for the drafter. Also: a block whose prompt ended exactly at its end has drafter KV made from the
+sampled token and can later sit inside a hit.
+
+**Where:** v0.29.0 and main `84bcbc626443`: `vllm/v1/core/block_pool.py` (`get_one_block`, `get_cached_block`),
+`vllm/v1/core/kv_cache_coordinator.py` (`HybridKVCacheCoordinator.find_longest_cache_hit`, `drop_eagle_block`), and the
+single-type managers' `find_longest_cache_hit` (one lookup per block hash).
+
+**Reproduction (CPU, no model):** drive `KVCacheManager` (hybrid: one full-attention EAGLE group + one Mamba "align"
+group, block 4, `use_eagle=True`, `num_prefill_lookahead=1`) with A = X + [11, ...], B = X + [22, ...] (X = 5 blocks),
+then B's text again: the hit's block 4 is A's copy (recorded next token 11, the request's is 22). Over 2,420 requests
+built to diverge at block boundaries (3 seeds, dense and sparse Mamba retention), 208 hits contained such a block.
+Script: `experiments/qwen38-27b-b70/tests/r314_tail_engine_check.py --tail 0` in our lab repo (owner: link or inline).
+
+**Suggested fix:** record, per cached block of an EAGLE group, the token(s) that followed it when it was computed
+(`num_prefill_lookahead` tokens), and in the lookup take a copy whose recorded tokens equal the request's (or stop the
+hit before that block). This also lets the last block be kept instead of dropped when its recorded token matches
+(our overlay does both; with it the same 2,420 requests have 0 such hits and 25 % more hit tokens than stock).
+
 ## Owner notes (not for posting)
 
 - Earlier upstream posts by the lab: kernels issue #593 (filed 2026-09-12) and an evidence comment on vLLM PR #53542
