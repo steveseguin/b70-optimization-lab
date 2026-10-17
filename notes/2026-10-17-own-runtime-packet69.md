@@ -144,3 +144,18 @@ require fresh destinations; the original receipts and binaries were preserved
 before this reissuance. Use `OMP_NUM_THREADS=2 nice -n 19 taskset -c 8-15,24-31
 python3 -B`, stdin `/dev/null`, one compile at a time. No GPU, model, service,
 sudo, power, memory, swap, page-cache or reboot operation ran.
+
+## r3 device result and closeout (coordinator, 2026-10-17 21:05–21:44 UTC, lane B)
+
+All 8 screens exact 13/13; acceptance 0.7854. These are packet 64-base views, against a production mean of 52.318 tok/s:
+
+| View | Change |
+|---|---:|
+| `combined` | +0.82% |
+| `draft-hc` | +0.60% |
+| `draft-attention` | +0.36% |
+| `target-wide128` | +0.04% |
+| `target-wide64` | −0.05% |
+| `draft-head-wide64` | −0.19% |
+
+The best result is below the 1.5% bar for a lane-A confirmation, so **p69 is closed with no promotion.** The target head is at its bandwidth limit (566 GB/s), and the draft-side changes are worth under 1%. The `combined` row-stride fix (3,380 bytes) is retained for any later merge.
