@@ -1,6 +1,6 @@
 # Packet53 preparation findings
 
-No device speed verdict exists. Preserve negative preparation evidence.
+Device round closed below its 30 µs bar; preserve negative evidence.
 
 | Finding | Outcome | Revisit condition |
 | --- | --- | --- |
@@ -22,3 +22,18 @@ before JSON; the wrapper now accepts only that exact warning/hint prefix and
 preserves it in native.log. It does not raise the CPU thread limit.
 
 [CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md).
+
+## Device closeout (2026-10-17)
+
+| Arm | Outcome in both fresh timing owners | Revisit condition |
+| --- | --- | --- |
+| Persistent gate/up global, 64 workgroups | About 138 µs slower per layer | A different occupancy/scheduling mechanism with a new preregistration |
+| Persistent gate/up SLM | About 215 µs slower | Do not repeat this table staging geometry |
+| Persistent virtual2 gate/up SLM | About 218 µs slower | Different measured mechanism, not another repeat |
+| Persistent virtual2 down | About 26 µs slower | Different scheduling mechanism |
+
+Question: could exact-order expert scheduling save 30 µs per ordinary layer?
+No: the common V4 winners saved 22.083/22.291 µs. Both byte windows passed
+60/60. V4 logical-lane mapping is retained for packet53b; persistent arms
+close here. [Full closeout and uncertainty](../../../../notes/2026-10-17-own-runtime-packet53.md#device-results--october-17-09150919-utc),
+[hash-preserved receipts](evidence-copy/inventory.json). No model speed claim.

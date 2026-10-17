@@ -1,0 +1,72 @@
+{
+  "schema": "ownrt.packet53.manifest.v1",
+  "classes": [
+    "expsgate",
+    "expsdown"
+  ],
+  "variants": [
+    "persistent-global",
+    "persistent-slm",
+    "virtual2-global",
+    "virtual4-global",
+    "persistent-virtual2-global",
+    "persistent-virtual2-slm"
+  ],
+  "class_variants": {
+    "expsgate": [
+      "persistent-global",
+      "persistent-slm",
+      "virtual2-global",
+      "virtual4-global",
+      "persistent-virtual2-slm"
+    ],
+    "expsdown": [
+      "virtual2-global",
+      "virtual4-global",
+      "persistent-virtual2-global"
+    ]
+  },
+  "exact_fixtures": 2,
+  "warmup": 10,
+  "iterations": 210,
+  "expected_buffers": {
+    "expsgate": 5,
+    "expsdown": 3
+  },
+  "expected_bytes": {
+    "expsgate": 25684,
+    "expsdown": 51244
+  },
+  "expected_events": {
+    "expsgate": {
+      "control": 1,
+      "persistent-global": 1,
+      "persistent-slm": 1,
+      "virtual2-global": 1,
+      "virtual4-global": 1,
+      "persistent-virtual2-slm": 1
+    },
+    "expsdown": {
+      "control": 1,
+      "virtual2-global": 1,
+      "virtual4-global": 1,
+      "persistent-virtual2-global": 1
+    }
+  },
+  "m_values": [
+    1,
+    2
+  ],
+  "m2": "two independent serial M=1 production token rows",
+  "routes": 10,
+  "fixture_domain": "finite weights/activations; valid distinct changing routes; active=1,error=0,position=4095; all outputs/status/error captured",
+  "timing_payload": "packet51 deterministic synthetic bytes; packet48 compact production expert strides",
+  "production_control": "packet48b Kernel IQ2_S2560 paired / IQ4_NL640 selected by packet49c",
+  "persistent_workgroups": 64,
+  "workgroup_size": 256,
+  "subgroup_size": 32,
+  "logical_lane_order": "256*t + 8*logical_lane; eight products in ascending order; adjacent SG32 tree width1,2,4,8,16",
+  "gate_threshold_us": 30,
+  "decision": "one common per-class selection; sum paired median M1 savings >=30us in both fresh owners; controls allowed; M2 fully reported",
+  "restoration": "four snapshots; scoped operand/output/control allocations; no timed repack or source change"
+}

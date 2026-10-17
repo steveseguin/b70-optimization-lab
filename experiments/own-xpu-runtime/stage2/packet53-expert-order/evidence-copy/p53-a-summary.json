@@ -1,0 +1,351 @@
+{
+  "schema": "own-runtime.packet53.two-owner-timing.v1",
+  "passed": true,
+  "device_executed": true,
+  "model_speed_claim": false,
+  "windows": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence/p53-a-t1/window.json",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence/p53-a-t2/window.json"
+  ],
+  "fresh_owners": [
+    {
+      "passed": true,
+      "device_executed": true,
+      "microbenchmark_only": true,
+      "model_speed_claim": false,
+      "classes": {
+        "expsgate": {
+          "persistent-global": {
+            "1": {
+              "control_us": 83.646,
+              "candidate_us": 221.45850000000002,
+              "median_paired_saved_us": -137.8125,
+              "p10_paired_saved_us": -142.813,
+              "p90_paired_saved_us": -132.812,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 168.542,
+              "candidate_us": 445.6775,
+              "median_paired_saved_us": -277.031,
+              "p10_paired_saved_us": -292.70799999999997,
+              "p90_paired_saved_us": -261.77,
+              "measured_pairs": 200
+            }
+          },
+          "persistent-slm": {
+            "1": {
+              "control_us": 82.916,
+              "candidate_us": 297.396,
+              "median_paired_saved_us": -214.58299999999997,
+              "p10_paired_saved_us": -214.89500000000004,
+              "p90_paired_saved_us": -214.26999999999998,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 165.833,
+              "candidate_us": 594.792,
+              "median_paired_saved_us": -429.062,
+              "p10_paired_saved_us": -429.582,
+              "p90_paired_saved_us": -428.43800000000005,
+              "measured_pairs": 200
+            }
+          },
+          "virtual2-global": {
+            "1": {
+              "control_us": 82.917,
+              "candidate_us": 82.396,
+              "median_paired_saved_us": 0.5210000000000008,
+              "p10_paired_saved_us": 0.1039999999999992,
+              "p90_paired_saved_us": 0.9369999999999976,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 165.833,
+              "candidate_us": 164.687,
+              "median_paired_saved_us": 1.0430000000000064,
+              "p10_paired_saved_us": 0.5219999999999914,
+              "p90_paired_saved_us": 1.664999999999992,
+              "measured_pairs": 200
+            }
+          },
+          "virtual4-global": {
+            "1": {
+              "control_us": 82.916,
+              "candidate_us": 68.021,
+              "median_paired_saved_us": 14.792000000000002,
+              "p10_paired_saved_us": 14.269999999999996,
+              "p90_paired_saved_us": 15.311999999999998,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 165.832,
+              "candidate_us": 136.146,
+              "median_paired_saved_us": 29.686000000000007,
+              "p10_paired_saved_us": 28.854000000000013,
+              "p90_paired_saved_us": 30.313000000000017,
+              "measured_pairs": 200
+            }
+          },
+          "persistent-virtual2-slm": {
+            "1": {
+              "control_us": 82.917,
+              "candidate_us": 300.625,
+              "median_paired_saved_us": -217.70800000000003,
+              "p10_paired_saved_us": -218.333,
+              "p90_paired_saved_us": -217.29199999999997,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 165.833,
+              "candidate_us": 601.25,
+              "median_paired_saved_us": -435.52,
+              "p10_paired_saved_us": -436.14599999999996,
+              "p90_paired_saved_us": -434.898,
+              "measured_pairs": 200
+            }
+          }
+        },
+        "expsdown": {
+          "virtual2-global": {
+            "1": {
+              "control_us": 58.438,
+              "candidate_us": 57.292,
+              "median_paired_saved_us": 1.1460000000000008,
+              "p10_paired_saved_us": -1.4590000000000032,
+              "p90_paired_saved_us": 3.540999999999997,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 117.3435,
+              "candidate_us": 116.614,
+              "median_paired_saved_us": 1.0945000000000036,
+              "p10_paired_saved_us": -6.144999999999996,
+              "p90_paired_saved_us": 8.439000000000007,
+              "measured_pairs": 200
+            }
+          },
+          "virtual4-global": {
+            "1": {
+              "control_us": 57.604,
+              "candidate_us": 50.313,
+              "median_paired_saved_us": 7.290999999999997,
+              "p10_paired_saved_us": 5.832999999999998,
+              "p90_paired_saved_us": 8.541999999999994,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 115.104,
+              "candidate_us": 100.625,
+              "median_paired_saved_us": 14.375999999999998,
+              "p10_paired_saved_us": 12.290999999999997,
+              "p90_paired_saved_us": 16.355000000000004,
+              "measured_pairs": 200
+            }
+          },
+          "persistent-virtual2-global": {
+            "1": {
+              "control_us": 57.604,
+              "candidate_us": 83.333,
+              "median_paired_saved_us": -25.730000000000004,
+              "p10_paired_saved_us": -26.354,
+              "p90_paired_saved_us": -25.415999999999997,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 115.001,
+              "candidate_us": 166.563,
+              "median_paired_saved_us": -51.562999999999995,
+              "p10_paired_saved_us": -52.39699999999999,
+              "p90_paired_saved_us": -50.93599999999999,
+              "measured_pairs": 200
+            }
+          }
+        }
+      },
+      "timing_definition": "sum of all completed compute-event durations for each class; M2 sums both serial rows"
+    },
+    {
+      "passed": true,
+      "device_executed": true,
+      "microbenchmark_only": true,
+      "model_speed_claim": false,
+      "classes": {
+        "expsgate": {
+          "persistent-global": {
+            "1": {
+              "control_us": 83.5935,
+              "candidate_us": 221.562,
+              "median_paired_saved_us": -137.9685,
+              "p10_paired_saved_us": -142.709,
+              "p90_paired_saved_us": -132.709,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 167.86450000000002,
+              "candidate_us": 445.67650000000003,
+              "median_paired_saved_us": -277.5525,
+              "p10_paired_saved_us": -293.02,
+              "p90_paired_saved_us": -262.395,
+              "measured_pairs": 200
+            }
+          },
+          "persistent-slm": {
+            "1": {
+              "control_us": 82.917,
+              "candidate_us": 297.396,
+              "median_paired_saved_us": -214.479,
+              "p10_paired_saved_us": -214.793,
+              "p90_paired_saved_us": -214.16699999999997,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 165.209,
+              "candidate_us": 594.895,
+              "median_paired_saved_us": -429.58400000000006,
+              "p10_paired_saved_us": -430.10400000000004,
+              "p90_paired_saved_us": -429.063,
+              "measured_pairs": 200
+            }
+          },
+          "virtual2-global": {
+            "1": {
+              "control_us": 82.917,
+              "candidate_us": 82.395,
+              "median_paired_saved_us": 0.5210000000000008,
+              "p10_paired_saved_us": 0.20900000000000318,
+              "p90_paired_saved_us": 0.8340000000000032,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 165.105,
+              "candidate_us": 164.375,
+              "median_paired_saved_us": 0.8329999999999984,
+              "p10_paired_saved_us": 0.20899999999997476,
+              "p90_paired_saved_us": 1.2510000000000048,
+              "measured_pairs": 200
+            }
+          },
+          "virtual4-global": {
+            "1": {
+              "control_us": 82.917,
+              "candidate_us": 67.917,
+              "median_paired_saved_us": 15.0,
+              "p10_paired_saved_us": 14.375,
+              "p90_paired_saved_us": 15.313000000000002,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 165.104,
+              "candidate_us": 135.833,
+              "median_paired_saved_us": 29.271,
+              "p10_paired_saved_us": 28.542,
+              "p90_paired_saved_us": 29.89699999999999,
+              "measured_pairs": 200
+            }
+          },
+          "persistent-virtual2-slm": {
+            "1": {
+              "control_us": 82.917,
+              "candidate_us": 300.625,
+              "median_paired_saved_us": -217.70800000000003,
+              "p10_paired_saved_us": -218.22799999999998,
+              "p90_paired_saved_us": -217.29200000000003,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 165.209,
+              "candidate_us": 601.25,
+              "median_paired_saved_us": -435.938,
+              "p10_paired_saved_us": -436.66700000000003,
+              "p90_paired_saved_us": -435.41700000000003,
+              "measured_pairs": 200
+            }
+          }
+        },
+        "expsdown": {
+          "virtual2-global": {
+            "1": {
+              "control_us": 58.438,
+              "candidate_us": 57.4485,
+              "median_paired_saved_us": 1.0940000000000012,
+              "p10_paired_saved_us": -1.6659999999999968,
+              "p90_paired_saved_us": 3.4380000000000024,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 116.92699999999999,
+              "candidate_us": 116.459,
+              "median_paired_saved_us": 0.5735000000000028,
+              "p10_paired_saved_us": -6.665999999999997,
+              "p90_paired_saved_us": 8.335000000000008,
+              "measured_pairs": 200
+            }
+          },
+          "virtual4-global": {
+            "1": {
+              "control_us": 57.604,
+              "candidate_us": 50.3645,
+              "median_paired_saved_us": 7.290999999999997,
+              "p10_paired_saved_us": 5.729999999999997,
+              "p90_paired_saved_us": 8.543,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 114.374,
+              "candidate_us": 99.896,
+              "median_paired_saved_us": 14.582999999999998,
+              "p10_paired_saved_us": 12.707999999999998,
+              "p90_paired_saved_us": 16.144999999999996,
+              "measured_pairs": 200
+            }
+          },
+          "persistent-virtual2-global": {
+            "1": {
+              "control_us": 57.604,
+              "candidate_us": 83.334,
+              "median_paired_saved_us": -25.833500000000004,
+              "p10_paired_saved_us": -26.352999999999994,
+              "p90_paired_saved_us": -25.417,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 114.271,
+              "candidate_us": 166.563,
+              "median_paired_saved_us": -52.3945,
+              "p10_paired_saved_us": -53.33399999999999,
+              "p90_paired_saved_us": -51.771000000000015,
+              "measured_pairs": 200
+            }
+          }
+        }
+      },
+      "timing_definition": "sum of all completed compute-event durations for each class; M2 sums both serial rows"
+    }
+  ],
+  "selected_classes": {
+    "expsgate": {
+      "variant": "virtual4-global",
+      "owner_saved_us": [
+        14.792000000000002,
+        15.0
+      ]
+    },
+    "expsdown": {
+      "variant": "virtual4-global",
+      "owner_saved_us": [
+        7.290999999999997,
+        7.290999999999997
+      ]
+    }
+  },
+  "owner_saved_us": [
+    22.083,
+    22.290999999999997
+  ],
+  "threshold_us": 30,
+  "expert_order_proceeds": false,
+  "decision_metric": "sum of per-class paired median savings using one common selection; ordinary M1 only",
+  "oracle_started": false,
+  "engine_integrated": false
+}

@@ -109,3 +109,34 @@ Evidence: [CPU gates](../experiments/own-xpu-runtime/stage2/packet53-expert-orde
 [independent review](../experiments/own-xpu-runtime/stage2/packet53-expert-order/REVIEW.md),
 [preparation closeout](../experiments/own-xpu-runtime/stage2/packet53-expert-order/CPU-PREPARATION-CLOSEOUT.md).
 Device byte identity and speed remain pending at handoff.
+
+## Device results — October 17, 09:15–09:19 UTC
+
+The coordinator ran E1/E2 and T1/T2 on physical card 0. Both fresh byte
+checks passed all 60 comparisons against production and the unchanged CPU
+evaluation. The original sealed four-window chain was revalidated before this
+documentation update; [compact receipts](../experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-copy/inventory.json) preserve original bytes.
+
+| Class | Common selection | T1 saved | T2 saved |
+| --- | --- | ---: | ---: |
+| Expert gate/up | virtual4-global | 14.792 µs | 15.000 µs |
+| Expert down | virtual4-global | 7.291 µs | 7.291 µs |
+| Ordinary M=1 layer total | | 22.083 µs | 22.291 µs |
+
+The registered 30 µs bar failed: `expert_order_proceeds=false`. No engine
+integration or model speed claim follows. Gate/up fell from about 82.9 to
+68.0 µs and down from 57.6 to 50.3 µs. V2 saved only about 0.5 and 1.1 µs.
+Persistent gate/up global, SLM and virtual2-SLM lost about 138, 215 and
+218 µs; persistent virtual2 down lost about 26 µs. Those persistent arms
+are closed. Full M2 and per-owner results remain in the
+[summary](../experiments/own-xpu-runtime/stage2/packet53-expert-order/evidence-copy/p53-a-summary.json).
+
+V4 improved over V2, warranting a separate V8/V16 screen; this does not
+establish that larger V will win. The roughly 19/17 µs weight-only floors
+at an assumed 550 GB/s are estimates, not measured performance. Packet53b
+also tests HC low/gate and the small FFN, with a combined 35 µs bar.
+
+The source, binaries and original seal remain unchanged. The allowed
+DO-NOT-REPEAT update changes a documentation hash in the historical seal;
+the original device receipts retain their original seal identity. Do not
+re-seal this closed device result or launch more windows under it.
