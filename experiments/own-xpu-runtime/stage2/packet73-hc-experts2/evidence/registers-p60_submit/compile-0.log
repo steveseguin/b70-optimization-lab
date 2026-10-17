@@ -1,0 +1,45 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p60_submit.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p60_kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/kernel_guard.hpp:5:46: error: redefinition of 'capture_size'
+    5 | template<class F> inline const unsigned char capture_size[sizeof(F)] __attribute__((used)) = {};
+      |                                              ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/kernel_guard.hpp:5:46: note: previous definition is here
+    5 | template<class F> inline const unsigned char capture_size[sizeof(F)] __attribute__((used)) = {};
+      |                                              ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p60_submit.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p60_kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/kernel_guard.hpp:6:21: error: redefinition of 'checked'
+    6 | template<class F> F checked(F f) {
+      |                     ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/kernel_guard.hpp:6:21: note: previous definition is here
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p60_submit.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p60_kernels.hpp:14:47: error: no matching function for call to 'checked'
+   14 |   h.parallel_for(p35_range0,packet26::checked(packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                                               ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p60_kernels.hpp:14:65)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p60_submit.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p60_kernels.hpp:34:47: error: no matching function for call to 'checked'
+   34 |   h.parallel_for(p35_range0,packet26::checked(packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                                               ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p60_kernels.hpp:34:65)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p60_submit.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p60_kernels.hpp:49:47: error: no matching function for call to 'checked'
+   49 |   h.parallel_for(p35_range0,packet26::checked(packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                                               ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p60_kernels.hpp:49:65)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p60_submit.cpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p73_hc.hpp:51:28: error: no matching function for call to 'checked'
+   51 |  h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                            ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet73-hc-experts2/p73_hc.hpp:51:46)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+6 errors generated.
