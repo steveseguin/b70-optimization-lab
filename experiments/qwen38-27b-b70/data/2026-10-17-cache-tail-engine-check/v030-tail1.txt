@@ -1,0 +1,45 @@
+  return _enum_zes_device_infos(visible_mask)
+  count = torch._C._xpu_getDeviceCount() if zes_count < 0 else zes_count
+  return _enum_zes_device_infos(visible_mask)
+  return _enum_zes_device_infos(visible_mask)
+b70_prefix_cache_exact: installed (nothing past the prompt is cached: KVCacheCoordinator, HybridKVCacheCoordinator; recurrent state also kept 1 block(s) before each reuse point; drafting hits on the end-of-prompt state)
+variant {"name": "dense", "retention_tokens": null, "tail": 1}
+hit {"hit": 0, "prompt": 29, "request": "dense/A", "tail": 1}
+hit {"hit": 16, "prompt": 29, "request": "dense/B", "tail": 1}
+duplicate_X_following_tokens [11, 22]
+b70_prefix_cache_exact: drafting hit moved to a later kept state 1 times, 1 blocks in all; {'lookups': 3, 'extended': 1, 'no_state': 0, 'token_differs': 1, 'replaced': 1, 'shortened': 0, 'blocks_gained': 1}
+hit {"hit": 28, "prompt": 33, "request": "dense/follow-B-0", "tail": 1}
+hit {"hit": 28, "prompt": 33, "request": "dense/follow-A-1", "tail": 1}
+hit {"hit": 32, "prompt": 33, "request": "dense/follow-B-2", "tail": 1}
+hit {"hit": 32, "prompt": 33, "request": "dense/follow-A-3", "tail": 1}
+hit {"hit": 32, "prompt": 33, "request": "dense/follow-B-4", "tail": 1}
+hit {"hit": 32, "prompt": 33, "request": "dense/follow-A-5", "tail": 1}
+hit {"hit": 32, "prompt": 33, "request": "dense/follow-B-6", "tail": 1}
+hit {"hit": 32, "prompt": 33, "request": "dense/follow-A-7", "tail": 1}
+seed {"requests": 400, "seed": 314, "variant": "dense"}
+b70_prefix_cache_exact: drafting hit moved to a later kept state 100 times, 108 blocks in all; {'lookups': 272, 'extended': 100, 'no_state': 85, 'token_differs': 89, 'replaced': 13, 'shortened': 0, 'blocks_gained': 108}
+seed_summary {"oracle_failures": 0, "requests": 400, "total_hit_tokens": 2852, "total_prompt_tokens": 13896}
+seed {"requests": 400, "seed": 2718, "variant": "dense"}
+seed_summary {"oracle_failures": 0, "requests": 400, "total_hit_tokens": 2992, "total_prompt_tokens": 14417}
+seed {"requests": 400, "seed": 65537, "variant": "dense"}
+seed_summary {"oracle_failures": 0, "requests": 400, "total_hit_tokens": 3384, "total_prompt_tokens": 13917}
+variant {"name": "sparse4", "retention_tokens": 16, "tail": 1}
+hit {"hit": 0, "prompt": 29, "request": "sparse4/A", "tail": 1}
+hit {"hit": 16, "prompt": 29, "request": "sparse4/B", "tail": 1}
+duplicate_X_following_tokens [11, 22]
+hit {"hit": 28, "prompt": 33, "request": "sparse4/follow-B-0", "tail": 1}
+hit {"hit": 28, "prompt": 33, "request": "sparse4/follow-A-1", "tail": 1}
+hit {"hit": 32, "prompt": 33, "request": "sparse4/follow-B-2", "tail": 1}
+hit {"hit": 32, "prompt": 33, "request": "sparse4/follow-A-3", "tail": 1}
+hit {"hit": 32, "prompt": 33, "request": "sparse4/follow-B-4", "tail": 1}
+hit {"hit": 32, "prompt": 33, "request": "sparse4/follow-A-5", "tail": 1}
+hit {"hit": 32, "prompt": 33, "request": "sparse4/follow-B-6", "tail": 1}
+hit {"hit": 32, "prompt": 33, "request": "sparse4/follow-A-7", "tail": 1}
+seed {"requests": 400, "seed": 314, "variant": "sparse4"}
+seed_summary {"oracle_failures": 0, "requests": 400, "total_hit_tokens": 2824, "total_prompt_tokens": 13896}
+seed {"requests": 400, "seed": 2718, "variant": "sparse4"}
+seed_summary {"oracle_failures": 0, "requests": 400, "total_hit_tokens": 3168, "total_prompt_tokens": 14417}
+seed {"requests": 400, "seed": 65537, "variant": "sparse4"}
+seed_summary {"oracle_failures": 0, "requests": 400, "total_hit_tokens": 3456, "total_prompt_tokens": 13917}
+TOTAL {"evictions": 26699, "oracle_failures": 0, "requests": 2420, "tail": 1, "total_hit_tokens": 19204, "total_prompt_tokens": 85104}
+overlay_stats {"HybridKVCacheCoordinator.cache_blocks": {"calls": 17365, "capped": 0}, "HybridKVCacheCoordinator.find_longest_cache_hit": {"blocks_gained": 985, "extended": 730, "lookups": 2420, "no_state": 1268, "replaced": 138, "shortened": 0, "token_differs": 996}, "KVCacheCoordinator.cache_blocks": {"calls": 17365, "capped": 0}}

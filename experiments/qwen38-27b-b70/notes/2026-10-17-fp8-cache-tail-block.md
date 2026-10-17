@@ -126,8 +126,20 @@ where none does, the hit stops at the furthest earlier boundary with a kept stat
 request reads from the start. A block with no recorded token is never part of a hit. Tests:
 `tests/test_b70_prefix_cache_exact_tail.py` (7 cases with stand-ins shaped like the R314 pool, coordinator and
 manager; 4 of them fail on 0.2.0, all pass on 0.3.0); installs in the R314 image on CPU (all three wraps in place,
-the pool's duplicate table found). A check against the image's real classes is being written
-(`tests/r314_tail_engine_check.py`).
+the pool's duplicate table found). A check against the image's real classes,
+`tests/r314_tail_engine_check.py` (written by Codex to my spec, read before running; CPU only: vLLM 0.29's own
+KVCacheManager, hybrid coordinator, block pool and request hasher in the R314 image, one drafting attention group + one
+align-mode state group, block 4, 64 blocks so eviction happens; an oracle of its own records the token after every
+cached block and checks every block of every hit), results in `data/2026-10-17-cache-tail-engine-check/`:
+
+| Overlay | Requests | Hits holding a block made with another next token | Hit tokens |
+| --- | ---: | ---: | ---: |
+| 0.3.0, tail on | 2,420 (duplicate case + 3 seeds x 400, dense and sparse states) | **0** | 19,204 |
+| tail off (= stock engine) | 2,420 | **208** | 15,408 |
+| 0.2.0, tail on | stopped at request 3 (the duplicate case) | 1 | - |
+
+So the hole is real in the stock engine on a workload built to diverge at block boundaries, 0.2.0 had it, and 0.3.0
+closes it while reusing more of the cache than stock.
 
 Before any public use of "exact cache" with drafting: a GPU run of 0.3.0 on the agent streams (calls equal to c27a's;
 hit counts equal or a few blocks lower), after the reboot.

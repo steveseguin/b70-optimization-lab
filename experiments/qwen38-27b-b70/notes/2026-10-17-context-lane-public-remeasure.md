@@ -67,6 +67,15 @@ tail switch builds, though the stock path builds the same one) and the step read
 call of the day made a step of this kind (a hit, then a short last piece), so the step itself is ordinary; what the
 dump cannot say is whether the hit was one the tail switch had extended.
 
+Correction to the timing: the worker's error came from `_prepare_inputs` waiting on the previous step's
+`num_accepted_tokens_event` (the engine schedules one step ahead), and an engine reset is reported when the card has to
+switch to new work and the running work cannot be preempted within 640 ms. So the hung work may have started at the end
+of the previous request (about 06:22:20, the last step before the 40 s idle, which could be a drafting verify step on
+the one-launch path, new today) and only been noticed when the new request arrived. Neither the one-launch kernel nor
+the prompt path can be excluded from this evidence. If a hang recurs after the reboot, the next run turns
+`B70_FA_VERIFY_ROWS_ONE_LAUNCH` off first (it is the newest GPU code in the stack; ~2 h of traffic today without a
+fault before this).
+
 Not known: whether the 05:59 kill-induced reset left a card in a state that made this hang likely (the 06:06 health
 probe passed), or whether this is an independent hang. This server configuration ran campaigns 26-28c today
 (about 2 h of agent traffic) without a fault line.

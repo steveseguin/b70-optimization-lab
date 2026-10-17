@@ -1,0 +1,14 @@
+  return _enum_zes_device_infos(visible_mask)
+  count = torch._C._xpu_getDeviceCount() if zes_count < 0 else zes_count
+  return _enum_zes_device_infos(visible_mask)
+  return _enum_zes_device_infos(visible_mask)
+b70_prefix_cache_exact: installed (nothing past the prompt is cached: KVCacheCoordinator, HybridKVCacheCoordinator; recurrent state also kept 1 block(s) before each reuse point; drafting hits on the end-of-prompt state)
+variant {"name": "dense", "retention_tokens": null, "tail": 1}
+hit {"hit": 0, "prompt": 29, "request": "dense/A", "tail": 1}
+hit {"hit": 16, "prompt": 29, "request": "dense/B", "tail": 1}
+duplicate_X_following_tokens [11, 22]
+b70_prefix_cache_exact: drafting hit moved to a later kept state 1 times, 1 blocks in all {'lookups': 3, 'extended': 1, 'no_state': 0, 'token_differs': 1, 'blocks_gained': 1}
+hit {"hit": 28, "prompt": 33, "request": "dense/follow-B-0", "tail": 1}
+FIRST_ORACLE_FAILURE {"errors": [{"block_id": 9, "index": 4, "recorded": [11, "dense/A", 4], "want": 22}], "hit": 28, "prompt": [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 22, 41, 42, 43, 44, 45, 46, 47, 48, 51, 52, 53, 54], "request": "dense/follow-B-0", "shared_prefix_boundary": 0}
+TOTAL {"evictions": 0, "oracle_failures": 1, "requests": 3, "tail": 1, "total_hit_tokens": 44, "total_prompt_tokens": 91}
+overlay_stats {"HybridKVCacheCoordinator.cache_blocks": {"calls": 12, "capped": 0}, "HybridKVCacheCoordinator.find_longest_cache_hit": {"blocks_gained": 1, "extended": 1, "lookups": 3, "no_state": 0, "token_differs": 1}, "KVCacheCoordinator.cache_blocks": {"calls": 12, "capped": 0}}
