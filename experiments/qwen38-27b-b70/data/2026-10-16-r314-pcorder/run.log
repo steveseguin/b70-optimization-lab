@@ -67,3 +67,28 @@ experiments/qwen38-27b-b70/scripts/run-20261016-fp8-pc-order-probe.sh: line 118:
 experiments/qwen38-27b-b70/scripts/run-20261016-fp8-pc-order-probe.sh: line 118: `[^)]*)" "$O/server.log" | head -2'
 ### 19:35:53 kernel log clean since 2026-10-16 19:22:33; Gemma back on its throughput recipe
 ### 19:36:11 runner stopped at a syntax error after part B (script edited while running; bash re-read a shifted offset); part C not run. Fourth start queued: PARTS='D C'
+### 19:40:30 fourth start: PARTS=D C
+### 19:40:30 stopping the Gemma service (front door state: 0 0)
+### 19:43:11 server D0 ready (new-request count reset 0), tracing
+b70_align_trace 0.2.0: installed (logs while /root/.cache/vllm/b70-align-trace.on exists, to /root/.cache/vllm/b70-align-trace; state checksums off)
+b70_spec_resume_accepted 0.5.0: installed on GPUModelRunner._update_states/_prepare_inputs (requests that sat out a step keep their accepted-token count; async speculative decoding only; align-mode prefix caching handled; new-request count reset off; drafts kept off; debug steps 0)
+DS0: seq 64 answers in 183 s -> /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-pcorder/DS0.json
+DB0: burst 64 answers in 105 s -> /home/steve/b70-optimization-lab/experiments/qwen38-27b-b70/data/2026-10-16-r314-pcorder/DB0.json
+### 19:48:09 server stopped: stopped True
+DS0 vs DB0: 34/64 equal; differing by family: {'code2k': '4/8', 'code6k': '3/8', 'docs4k': '4/8', 'docs6k': '6/8', 'docs8k': '4/8', 'prose2k': '0/8', 'prose4k': '4/8', 'prose8k': '5/8'}
+AS0 vs DS0: 64/64 equal; differing by family: {'code2k': '0/8', 'code6k': '0/8', 'docs4k': '0/8', 'docs6k': '0/8', 'docs8k': '0/8', 'prose2k': '0/8', 'prose4k': '0/8', 'prose8k': '0/8'}
+### 19:49:04 arm C2 (P1 with the fix) -> /mnt/fast-ai/bench-results/fp8-r314-C2-20261016-pcorder
+[review 10-16 19:49:04] multi-user campaign start; git e897185b0
+[review 10-16 19:49:13] preflight-health: rc=0
+[review 10-16 19:51:48] tp2-pb8-pure-pc-faseq-mtp5-s2: ready 
+[review 10-16 19:58:00] tp2-pb8-pure-pc-faseq-mtp5-s2-long-concurrency: rc=3
+[review 10-16 19:58:00] tp2-pb8-pure-pc-faseq-mtp5-s2: LONG prompts, pass 1: 64/64 equal to solo, 88.36 generated tok/s together, 239616 prompt tokens from the cache
+[review 10-16 19:58:00] tp2-pb8-pure-pc-faseq-mtp5-s2: LONG prompts, pass 2: 64/64 equal to solo, 89.4 generated tok/s together, 239616 prompt tokens from the cache
+[review 10-16 19:58:00] tp2-pb8-pure-pc-faseq-mtp5-s2: LONG prompts, pass 3: 64/64 equal to solo, 89.61 generated tok/s together, 239616 prompt tokens from the cache
+[review 10-16 19:58:10] tp2-pb8-pure-pc-faseq-mtp5-s2: final stopped stop_confirmed=True
+[review 10-16 19:58:10] === multi-user campaign complete (cards left empty) ===
+### 19:58:10 kernel log clean since 2026-10-16 19:40:30; Gemma back on its throughput recipe
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 20:02:41 probe 20261016-pcorder complete
