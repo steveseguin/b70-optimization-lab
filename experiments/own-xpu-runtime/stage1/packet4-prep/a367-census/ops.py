@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -22,7 +23,7 @@ def environment():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=('audit', 'health', 'pending', 'check', 'analyze'))
+    parser.add_argument('action', choices=('audit', 'health', 'pending', 'check', 'copy-traces', 'analyze'))
     args = parser.parse_args()
     env = environment()
     root, receipts = Path(env['FN_OUTPUT']), Path(env['FN_RECEIPTS'])
@@ -73,8 +74,20 @@ def main():
         for name in ('census-run.json', 'comparison.json', 'write-budget.json'):
             path = root / name
             print(name + ': ' + (path.read_text() if path.exists() else 'pending'))
+    elif args.action == 'copy-traces':
+        life = w.read(root / 'census-run.json')
+        w.require(life.get('all_owners_gone') is True and life.get('gap_complete') is True,
+                  'trace copy requires all owners gone and completed watch')
+        source, target = c.trace_dir(root), root / 'unitrace'
+        w.require(source.is_dir() and not target.exists(), 'unique trace copy source/destination required')
+        pins = {str(p.relative_to(source)): w.sha(p) for p in sorted(source.rglob('*')) if p.is_file()}
+        shutil.copytree(source, target, symlinks=False)
+        copied = {str(p.relative_to(target)): w.sha(p) for p in sorted(target.rglob('*')) if p.is_file()}
+        w.require(pins == copied, 'trace copy hash mismatch; keep both trees')
+        w.write(root / 'trace-copy.json', {'source': str(source), 'target': str(target),
+                'files': pins, 'passed': True, 'local_source_retained': True})
     else:
-        # Analyzer and builder enforce clean exit/watch; never parse bulky JSON beside the server.
+        # Analyzer and builder enforce owner exit/watch; never parse bulky JSON beside the server.
         for script, flags in [
             ('build_manifest.py', ['--run-dir', str(root), '--arm', env['FN_ARM'], '--output', str(root / 'census-map.json')]),
             ('analyze_census.py', ['--manifest', str(root / 'census-map.json'), '--out-dir', str(root)]),

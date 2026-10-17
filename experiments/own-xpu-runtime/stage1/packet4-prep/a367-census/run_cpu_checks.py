@@ -11,7 +11,7 @@ import sys
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[4]
-OUT = REPO / 'data/2026-10-16-flash-next-a367-census-build'
+OUT = REPO / 'data/2026-10-17-flash-next-a367-census-reseal'
 
 
 def sha(path):
@@ -29,6 +29,7 @@ def main():
         ('driver', HERE.parent / 'driver', 'test_driver.py', '/home/steve/.venvs/vllm-xpu/bin/python3'),
         ('payload', REPO / 'scripts', 'test_verify_flash_next_a367_launch_payload.py', '/usr/bin/python3'),
         ('tree', REPO / 'scripts', 'test_verify_qwen38_flash_next_fp8_tree.py', '/usr/bin/python3'),
+        ('feasibility', HERE / 'feasibility', 'test_cpu.py', '/usr/bin/python3'),
     ]
     result = {'schema': 'a367-census-cpu-build-v1', 'native_executed': False, 'owner_approval_recorded': False,
               'nice': 19, 'test_environment': {'OMP_NUM_THREADS': '2'}, 'affinity': sorted(os.sched_getaffinity(0)), 'suites': [], 'seals': [], 'plans': []}
@@ -51,7 +52,7 @@ def main():
         result['seals'].append(dict(path=str(seal.relative_to(REPO)), sha256=sha(seal), files=len(files), mismatches=mismatches))
     for arm in ('graph-reference', 'graph-census', 'eager-census'):
         cmd = ['/usr/bin/python3', '-B', str(HERE/'a367_census.py'), '--plan', '--arm', arm,
-               '--output', '/mnt/raid-models/bench-results/a367c-20261016T000000Z']
+               '--output', '/mnt/raid-models/bench-results/a367c-20261017T000000Z']
         run = subprocess.run(cmd, capture_output=True, text=True, check=True)
         path = OUT / (arm + '-plan.json'); path.write_text(run.stdout)
         plan = json.loads(run.stdout)

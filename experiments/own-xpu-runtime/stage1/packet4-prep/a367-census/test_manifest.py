@@ -19,7 +19,8 @@ class ManifestTests(unittest.TestCase):
         self.output = self.root / 'map.json'
         identity = self.write('identity.json', {'schema': 'own-xpu-runtime.packet4.a367-census-identity.v1', 'arm': 'eager-census'})
         self.write('census-run.json', {'identity_sha256': MODULE.analysis.sha(identity), 'schema': 'own-xpu-runtime.packet4.a367-census.v1',
-            'clean_exit': True, 'gap_complete': True, 'passed': False})
+            'clean_exit': True, 'all_owners_gone': True, 'gap_complete': True,
+            'gpu_fault_lines': 0, 'client': {'returncode': 0}, 'passed': True})
 
     def write(self, name, value):
         path = self.root / name
@@ -79,9 +80,9 @@ class ManifestTests(unittest.TestCase):
         self.trace(gpu=False)
         self.assertTrue(self.build('graph-census')['graph_opaque'])
 
-    def test_lifecycle_clean_exit_required(self):
+    def test_lifecycle_all_owners_gone_required(self):
         self.write('census-run.json', {'schema': 'own-xpu-runtime.packet4.a367-census.v1', 'clean_exit': False, 'gap_complete': True})
-        with self.assertRaisesRegex(ValueError, 'clean exit'):
+        with self.assertRaisesRegex(ValueError, 'all owners gone'):
             self.build()
 
     def test_lifecycle_gap_required(self):
@@ -90,7 +91,17 @@ class ManifestTests(unittest.TestCase):
             self.build()
 
     def test_false_overall_pass_does_not_hide_findings(self):
+        life = json.loads((self.root / 'census-run.json').read_text())
+        life['passed'] = False
+        self.write('census-run.json', life)
         self.assertEqual(self.build()['traces'], [])
+
+    def test_nonzero_tracer_exit_can_build(self):
+        life = json.loads((self.root / 'census-run.json').read_text())
+        life['clean_exit'] = False
+        self.write('census-run.json', life)
+        self.receipt(); self.trace()
+        self.assertEqual(len(self.build()['traces']), 1)
 
     def test_arm_cannot_be_relabeled(self):
         with self.assertRaisesRegex(ValueError, 'arm or identity'):

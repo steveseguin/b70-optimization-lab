@@ -2,7 +2,7 @@
 """Build hash-bound CPU census mapping after the admitted lifecycle has exited.
 
 python3 -B build_manifest.py --run-dir RAID_RUN --arm eager-census --output MAP
-Requires census-run.json clean_exit=true and gap_complete=true. Discovers PTI
+Requires all owners gone and the full post-exit watch. Discovers PTI
 Chrome JSON under run-dir/unitrace (including result-dir per-process folders),
 and PID/rank receipts under run-dir/markers. Never infers rank from a synthetic
 GPU PID. Parent/API-only traces and malformed/unbound worker evidence are
@@ -41,8 +41,8 @@ def build(run_dir, arm, output):
     lifecycle = json.loads(lifecycle_path.read_text())
     if lifecycle.get('schema') != 'own-xpu-runtime.packet4.a367-census.v1':
         raise ValueError('wrong lifecycle receipt schema')
-    if lifecycle.get('clean_exit') is not True or lifecycle.get('gap_complete') is not True:
-        raise ValueError('offline analysis requires clean exit and full post-exit gap')
+    if lifecycle.get('all_owners_gone') is not True or lifecycle.get('gap_complete') is not True:
+        raise ValueError('offline analysis requires all owners gone and full post-exit gap')
     if arm not in {'graph-reference', 'graph-census', 'eager-census'}:
         raise ValueError('unknown arm')
     identity_path = root / 'identity.json'

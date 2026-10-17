@@ -40,6 +40,9 @@ class Base(unittest.TestCase):
         local = patch.object(c, 'LOCAL_SCRATCH', self.root / 'local-scratch')
         local.start()
         self.addCleanup(local.stop)
+        trace = patch.object(c, 'LOCAL_TRACE', self.root / 'local-trace')
+        trace.start()
+        self.addCleanup(trace.stop)
 
     def admission(self):
         now = time.time()
@@ -617,7 +620,7 @@ class Identity(Base):
 
 
 class Lifecycle(Base):
-    def run_mock(self, fail=None, orphan_delay=0, rc=0):
+    def run_mock(self, fail=None, orphan_delay=0, rc=0, traced=False):
         root = self.root / 'run'; root.mkdir(); (c.scratch_dir(root) / 'rpc').mkdir(parents=True)
         w.write(root / 'identity.json', {'mock': True})
         events = []; ticks = [100.0]; state = {'signal_at': None}
@@ -650,6 +653,7 @@ class Lifecycle(Base):
         sampler.thread = Thread()
         sampler.attribution.thread = Thread()
         sampler.budget.thread = Thread()
+        sampler.live_thread = Thread()
         watch = Watch()
         def launch(*a, **kw):
             events.append(('launch', ticks[0]))
@@ -663,6 +667,8 @@ class Lifecycle(Base):
                 sampler.take()
             if fail == 'fault' and ticks[0] >= 101:
                 watch.failed = 'mock kernel fault'
+            if fail == 'memory' and ticks[0] >= 101:
+                sampler.failed = 'mock memory reserve crossed'
         def readiness():
             if fail == 'ready': raise ValueError('mock readiness failed')
             return ticks[0] >= 101
@@ -682,10 +688,14 @@ class Lifecycle(Base):
         def compare(root):
             events.append(('compare', ticks[0]))
             return {'exact': fail != 'mismatch', 'class_balanced_median_tok_s': 1.0}
+        def control(cmd, **kw):
+            return type('Result', (), {'returncode': 0, 'stdout': '',
+                'stderr': f'Session {c.trace_session(root)} is paused'})()
+        trace = c.TraceControl(root, control) if traced else None
         with patch.object(c.time, 'monotonic', side_effect=lambda: ticks[0]):
             code = c.lifecycle(root, ['MOCK'], {}, sampler, stop, watch, launch=launch, is_ready=readiness,
                 clock=lambda: ticks[0], sleep=sleep, process_rows=lambda: [], mock=True,
-                run_client=client, check_result=compare,
+                run_client=client, check_result=compare, trace=trace,
                 owners_gone=lambda pid: state['signal_at'] is not None and ticks[0] >= state['signal_at'] + orphan_delay)
         return code, events, w.read(root / 'census-run.json'), root
 
@@ -708,6 +718,13 @@ class Lifecycle(Base):
         self.assertFalse(receipt['passed'])
         self.assertEqual(len([e for e in events if e[0] == 'signal']), 1)
 
+    def test_loading_checks_memory_failure_independently_of_live_file_thread(self):
+        code, events, receipt, _ = self.run_mock(fail='memory')
+        self.assertEqual(code, 1)
+        self.assertIn('memory', receipt['failure'])
+        self.assertFalse(receipt['client']['attempted'])
+        self.assertEqual(len([e for e in events if e[0] == 'signal']), 1)
+
     def test_failed_readiness_stops_once(self):
         code, events, receipt, root = self.run_mock(fail='ready')
         self.assertEqual(code, 1)
@@ -723,6 +740,28 @@ class Lifecycle(Base):
         code, events, receipt, root = self.run_mock(rc=1)
         self.assertEqual(code, 1)
         self.assertFalse(receipt['clean_exit'])
+
+    def test_traced_nonzero_exit_waits_and_records_expected_crash(self):
+        code, events, receipt, root = self.run_mock(rc=-11, traced=True, orphan_delay=2)
+        self.assertEqual(code, 0, receipt)
+        self.assertFalse(receipt['clean_exit'])
+        self.assertTrue(receipt['all_owners_gone'])
+        self.assertTrue(receipt['gap_complete'])
+        self.assertEqual(receipt['gpu_fault_lines'], 0)
+        self.assertEqual(receipt['expected_tracer_exit_crash']['classification'], 'expected_tracer_exit_crash')
+        self.assertEqual(receipt['expected_tracer_exit_crash']['microtest_evidence'], c.EXIT_CRASH_EVIDENCE)
+        # Missing resume does not interrupt client/teardown; graph attribution stays invalid.
+        self.assertFalse(receipt['trace_capture']['valid_for_graph_attribution'])
+        self.assertTrue(receipt['client']['attempted'])
+
+    def test_traced_exit_never_waives_fault_or_client_failure(self):
+        for fail in ('fault', 'client'):
+            with self.subTest(fail=fail):
+                code, _, receipt, root = self.run_mock(rc=-11, traced=True, fail=fail)
+                self.assertEqual(code, 1)
+                self.assertFalse(receipt['passed'])
+                # Separate mock runs must use separate output names.
+                __import__('shutil').rmtree(root)
 
     def test_teardown_overrun_no_escalation(self):
         code, events, receipt, root = self.run_mock(orphan_delay=301)
@@ -760,8 +799,13 @@ class Lifecycle(Base):
         sampler.done = type('Event', (), {'wait': __import__('unittest').mock.Mock(side_effect=[False, True])})()
         sampler.run()
         self.assertIn('reserve', sampler.failed)
+        with self.assertRaisesRegex(ValueError, 'reserve'):
+            sampler.check_live()
+        sampler.done = type('Event', (), {'is_set': __import__('unittest').mock.Mock(side_effect=[False, True]), 'wait': lambda *a: None})()
+        sampler.run_live()
         self.assertIn('memory/admission watcher', stop.reason)
-        self.assertTrue((self.root / 'samples.jsonl').exists())
+        self.assertFalse((self.root / 'samples.jsonl').exists())
+        self.assertEqual(len(sampler.rows), 1)
 
     def test_memory_guard_latches_once(self):
         stop = c.Stop(self.root)
@@ -892,6 +936,16 @@ class ClientPhase(Base):
         self.assertEqual(signals, [signal.SIGINT])
         self.assertIn('disk full', stop.reason)
 
+    def test_stop_signals_before_any_receipt_io(self):
+        events = []
+        stop = c.Stop(self.root)
+        child = type('Child', (), {'pid': 42, 'poll': lambda _: None,
+                    'send_signal': lambda _, sig: events.append('signal')})()
+        stop.attach(child)
+        with patch.object(w, 'write', side_effect=lambda *args: events.append('receipt')):
+            stop.request('reserve crossed')
+        self.assertEqual(events, ['signal', 'receipt'])
+
     def test_compare_prefix_exact_and_mismatch_finding(self):
         record = w.read(c.RECORD)
         rep = {'rows': [r for r in record['rows'] if r['prompt_id'] in c.PROMPT_IDS],
@@ -911,6 +965,77 @@ class ClientPhase(Base):
 
 
 class SamplerHardening(Base):
+    def test_local_trace_ext4_and_eight_gib_admission(self):
+        with patch.object(c, 'LOCAL_TRACE', self.root / 'trace-local'), \
+             patch.object(c.subprocess, 'run', return_value=type('Result', (), {'stdout': 'ext4'})()):
+            for free in (8 * 2**30 - 1, 8 * 2**30):
+                with patch.object(c.shutil, 'disk_usage', return_value=type('Usage', (), {'free': free})()):
+                    if free < 8 * 2**30:
+                        with self.assertRaisesRegex(ValueError, '8 GiB'):
+                            c.verify_trace_storage(self.root)
+                    else:
+                        c.verify_trace_storage(self.root)
+            with patch.object(c.subprocess, 'run', return_value=type('Result', (), {'stdout': 'fuseblk'})()):
+                with self.assertRaisesRegex(ValueError, 'ext4'):
+                    c.verify_trace_storage(self.root)
+
+    def test_local_trace_inside_scratch_is_refused(self):
+        with patch.object(c, 'LOCAL_TRACE', c.LOCAL_SCRATCH), \
+             patch.object(c, 'verify_scratch_filesystem'):
+            with self.assertRaisesRegex(ValueError, 'inside deleted scratch'):
+                c.verify_trace_storage(self.root)
+
+    def test_sample_persistence_failure_retains_scratch(self):
+        # Full mocked lifecycle still waits for owners/watch before discovering copy failure.
+        case = Lifecycle('test_launch_exception_cleanup')
+        case.setUp()
+        try:
+            def fail_copy(sampler):
+                sampler.writer.finish()
+                raise OSError('copy failed')
+            with patch.object(c.Sampler, 'persist', fail_copy):
+                code, _, receipt, root = case.run_mock()
+            self.assertEqual(code, 1)
+            self.assertIn('copy failed', receipt['failure'])
+            self.assertTrue(c.scratch_dir(root).exists())
+            self.assertTrue((root / 'scratch-retained.json').exists())
+        finally:
+            case.doCleanups()
+
+    def test_sampler_path_has_no_output_io_even_with_blocked_writer(self):
+        import threading
+        entered, release = threading.Event(), threading.Event()
+        local = c.scratch_dir(self.root)
+        local.mkdir(parents=True)
+        def open_file(path):
+            entered.set(); release.wait(5)
+            return path.open('x')
+        stop = c.Stop(self.root)
+        sampler = c.Sampler(self.root, stop, lambda: None, lambda pid: samples()[0])
+        sampler.writer = c.SampleWriter(local / 'samples.jsonl', open_file=open_file)
+        sampler.writer.start()
+        self.assertTrue(entered.wait(1))
+        try:
+            with patch.object(Path, 'open', side_effect=AssertionError('sampler file I/O')):
+                for i in range(20):
+                    sampler.take()
+            self.assertEqual(len(sampler.rows), 20)
+        finally:
+            release.set()
+            sampler.persist()
+        persisted = [json.loads(line) for line in (self.root / 'samples.jsonl').read_text().splitlines()]
+        self.assertEqual(persisted, sampler.rows)
+        self.assertTrue(w.read(self.root / 'samples-persistence.json')['equals_in_memory_rows'])
+
+    def test_budget_accounts_local_trace_not_output(self):
+        sampler = c.Sampler(self.root, c.Stop(self.root), lambda: None)
+        self.assertEqual(sampler.budget.root, c.trace_dir(self.root))
+        self.assertFalse(c.trace_dir(self.root).is_relative_to(c.scratch_dir(self.root)))
+
+    def test_optional_reference_without_trace_directory_has_zero_budget(self):
+        budget = c.WriteBudget(self.root / 'absent', c.Stop(self.root), __import__('threading').Event())
+        self.assertEqual(budget.take(), 0)
+
     def test_attribution_published_during_memory_read_is_used_next_time(self):
         stop = c.Stop(self.root)
         sampler = c.Sampler(self.root, stop, lambda: None)
@@ -986,6 +1111,7 @@ class SamplerHardening(Base):
         sampler.attribution.thread.start()
         self.assertTrue(entered.wait(1))
         sampler.thread.start()
+        sampler.live_thread.start()
         try:
             time.sleep(1.65)
             self.assertGreaterEqual(len(sampler.rows), 4)
@@ -996,6 +1122,7 @@ class SamplerHardening(Base):
         finally:
             sampler.done.set(); release.set()
             sampler.thread.join(2); sampler.attribution.thread.join(2)
+            sampler.live_thread.join(2)
 
     def test_sampler_live_stale_plateau_trips(self):
         row = samples()[4]
@@ -1028,10 +1155,66 @@ class SamplerHardening(Base):
             return type('Result', (), {'returncode': 0, 'stdout': '', 'stderr': f'[INFO] Session {c.trace_session(self.root)} is ' + ('resumed' if cmd[1] == '--resume' else 'paused') + '\n[INFO] Log is stored elsewhere'})()
         control = c.TraceControl(self.root, run)
         control.resume()
+        self.assertFalse((self.root / 'trace-active').exists())
+        control.enable_markers()
         self.assertTrue((self.root / 'trace-active').exists())
         control.pause()
         self.assertEqual(calls, [('--resume', False), ('--pause', False)])
         self.assertFalse((self.root / 'trace-active').exists())
+
+
+class CaptureTiming(Base):
+    def setup_observer(self, callback=None):
+        calls = []
+        def run(cmd, **kwargs):
+            calls.append(cmd[1])
+            if callback:
+                callback()
+            return type('Result', (), {'returncode': 0, 'stdout': '',
+                'stderr': f'Session {c.trace_session(self.root)} is resumed'})()
+        control = c.TraceControl(self.root, run)
+        observer = c.CaptureResume(self.root, control)
+        (self.root / 'server.log').write_text('')
+        return observer, calls
+
+    def append(self, text):
+        with (self.root / 'server.log').open('a') as stream:
+            stream.write(text)
+
+    def loaded(self, ranks=range(4)):
+        self.append(''.join(f'(Worker_TP{i}_EP{i} pid={100+i}) Model loading took 123 seconds\n' for i in ranks))
+
+    def test_four_distinct_ranks_resume_exactly_once_before_capture(self):
+        observer, calls = self.setup_observer()
+        self.loaded([0, 1, 2, 2]); observer.poll()
+        self.assertEqual(calls, [])
+        self.loaded([3]); observer.poll()
+        self.append('Capturing CUDA graphs\n'); observer.poll(); observer.poll()
+        self.assertEqual(calls, ['--resume'])
+        self.assertTrue(observer.receipt()['valid_for_graph_attribution'])
+        self.assertTrue(w.read(self.root / 'trace-control.json')[0]['stderr'])
+
+    def test_capture_before_ack_including_during_control_is_invalid(self):
+        observer, calls = self.setup_observer(lambda: self.append('Capturing CUDA graphs\n'))
+        self.loaded(); observer.poll(); observer.poll()
+        self.assertEqual(calls, ['--resume'])
+        self.assertFalse(observer.receipt()['valid_for_graph_attribution'])
+
+    def test_split_capture_line_before_ack_is_invalid(self):
+        observer, calls = self.setup_observer()
+        self.append('Capturing CUDA gra'); observer.poll()
+        self.append('phs\n'); self.loaded(); observer.poll()
+        self.assertFalse(observer.receipt()['valid_for_graph_attribution'])
+
+    def test_failed_resume_never_retries_or_requests_server_stop(self):
+        def failed():
+            raise OSError('mock control failed')
+        observer, calls = self.setup_observer(failed)
+        self.loaded(); observer.poll(); observer.poll()
+        self.assertEqual(calls, ['--resume'])
+        self.assertFalse(observer.receipt()['valid_for_graph_attribution'])
+        self.assertIn('mock control failed', observer.receipt()['failure'])
+        self.assertFalse((self.root / 'stop-request.json').exists())
 
 
 if __name__ == '__main__':

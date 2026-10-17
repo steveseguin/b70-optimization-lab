@@ -2,9 +2,8 @@
 
 Adapted from the sealed replay runbook. **Nothing here was executed by the CPU
 build.** This requires a new owner approval and current coordinator admission.
-Each arm runs once; there is no retry, queue or automatic fallback. Start with
-`graph-reference`; review it before separately admitting a conditional trace
-arm. All measurements here are diagnostic, not benchmark results.
+Each arm runs once; there is no retry, queue or automatic fallback. Run **only `graph-census` next**. Keep eager secondary; graph-reference is
+optional because replay c provides the full-suite untraced timing. All measurements here are diagnostic, not benchmark results.
 
 Every launch/check command is a **script file**. Do not paste process-search
 patterns, runtime paths or inline Python into a host shell command: the conflict
@@ -25,17 +24,20 @@ From a normal-priority shell with unrestricted CPU affinity:
 
 ```bash
 cd /home/steve/llm-optimizations
-export FN_ARM=graph-reference
+export FN_ARM=graph-census
 source experiments/own-xpu-runtime/stage1/packet4-prep/a367-census/prepare.sh
 bash "$FN_PACKET/audit.sh"
 ```
 
-Future independently admitted alternatives are `graph-census` and
+Future independently admitted alternatives are optional `graph-reference` and
 `eager-census`; set the selected value before sourcing prepare. Never reuse an
 output directory or mutate the arm in an admitted window. Output is
 `/mnt/raid-models/bench-results/a367c-$FN_STAMP`. Require storage admission true,
 60 GiB reserve plus 10 GiB planned writes. Scratch stays on local ext4 at
-`/home/steve/.cache/a367-scratch/<run>`, at least 4 GiB free. No cache drops,
+`/home/steve/.cache/a367-scratch/<run>`, at least 4 GiB free. Tracer output is separate local ext4 at
+`/home/steve/.cache/a367-trace/<run-name>/`: require at least **8 GiB free**
+on that filesystem. Never place it inside scratch; scratch is deleted. The
+6 GiB local trace soft stop leaves drain space, not a hard quota. No cache drops,
 mount repairs, memory caps, power changes or service configuration changes.
 
 The audit checks all replay dependencies and clean source/stage pins. Trace
@@ -90,8 +92,13 @@ the byte audit. Unit restart and kill escalation are disabled. A refusal is
 reviewed, never retried automatically. No follow-on server is restored.
 
 Readiness is followed by 20 seconds of fresh complete plateau samples and a
-30-second sleep. Trace arms start paused, resume only for the two requests,
-check the session acknowledgement, and pause in finally. Trace/ITT failures,
+30-second sleep. Trace arms start paused. A supervisor thread resumes exactly once after all four
+rank `Model loading took` lines, before any `Capturing CUDA graphs` line, and
+records acknowledgement. It stays active through profiling, KV initialization,
+capture, readiness, plateau, delay and both requests. ITT request scopes turn on
+only for the client. Pause immediately after its last request, with finally
+cleanup. Failed/late resume invalidates graph attribution but the run continues
+to normal teardown without retry. Other trace/ITT failures,
 missing samples, faults, stale window, reserve breach or output soft-stop request
 one SIGINT to the captured API PID. Tracer flags retain exec/PID semantics;
 metric/KMD modes that add a supervising process are excluded. Never use a
@@ -104,23 +111,37 @@ waiting; recovery is the owner's decision.
 
 ```bash
 python3 -B "$FN_PACKET/ops.py" check
+nice -n 19 taskset -c 4-15,20-31 python3 -B "$FN_PACKET/ops.py" copy-traces
 nice -n 19 taskset -c 4-15,20-31 python3 -B "$FN_PACKET/ops.py" analyze
 ```
 
-Require unit exit 0 and `census-run.json` with passed/ready/clean_exit/gap_complete
-true for lifecycle success. `comparison.json` records exact token prefixes or
-the first differing ID; mismatch is a finding, not a gate failure. The subset
-must retain realistic_final_gate=false. `write-budget.json` records the actual
-after-drain size; over 10 GiB fails. The 8 GiB poll is a soft stop, not a quota.
+The supervisor unit must finish; require `census-run.json` with passed, ready,
+all_owners_gone and gap_complete true, gpu_fault_lines=0 and client returncode=0.
+The **server** need not return zero: `clean_exit` records that fact independently.
+Nonzero traced exit or segfault is retained as `expected_tracer_exit_crash` with
+the microtest evidence path. This never waives complete traces, requests or the
+fault watch. A teardown overrun still fails and waits; no kill escalation.
+
+`samples-persistence.json` must show the local file equals all in-memory rows
+and its copied SHA256. `copy-traces` above copies the persistent local trace tree
+to `$FN_OUTPUT/unitrace`, checks every hash and writes `trace-copy.json`; it
+retains the local originals. Run it only after owners exit and the 305s watch.
+`ops.py analyze` then runs `build_manifest.py` and `analyze_census.py` on that
+RAID copy, writing census-map.json, census.json and census.md.
+
+`comparison.json` records exact token prefixes or the first differing ID;
+mismatch is a finding, not a gate failure. The subset must retain
+realistic_final_gate=false. `write-budget.json` measures the local trace directory
+after drain; over 10 GiB fails. The 6 GiB poll is a soft stop, not a quota.
 
 The manifest builder requires completed exit/watch and binds raw traces plus
 rank receipts. Analysis writes `census.json` and `census.md`; graph-reference
-has no device census. Trace success additionally requires actual per-rank
+has no device census. `census.json` must report **census_valid=true** for a valid traced census.
+Trace success additionally requires timely acknowledged resume and actual per-rank
 kernel timestamps and defensible verify/draft correlation. Unknown or incomplete
 coverage is reported rather than filled in. Generic kernel family names may
-need reviewed source mappings. Eager results remain labelled eager. No measured
-speed gain, benchmark promotion or graph-device visibility is claimed by a CPU
-pass. See [tracing evidence](TRACING-FEASIBILITY.md).
+need reviewed source mappings. Eager results remain labelled eager. No speed gain, benchmark promotion or full-model four-rank attribution is
+claimed by a CPU pass. The graph visibility microtest remains separate evidence. See [tracing evidence](TRACING-FEASIBILITY.md).
 
 Retain owner/health/payload/admission/environment/identity receipts, memory rows
 with attribution timestamps, server/client logs and outputs, trace controls,

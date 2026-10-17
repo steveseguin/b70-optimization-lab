@@ -52,9 +52,9 @@
       "speed_risk": "No speed or quality promotion from shortened suite"
     },
     {
-      "change": "0.5s memory/live-check thread; separate rank/cgroup thread and start-of-scan timestamps; 2s plateau freshness; independent output metadata watcher",
-      "reason": "Replay gaps reached 1.433s near unchanged1.5s trip; blocking attribution must not delay memory reads",
-      "speed_risk": "Monitor CPU/IO remains; RAID sample writes and live checks can still delay cadence and trip"
+      "change": "0.5s memory-only sampler; separate attribution, local writer, live-file and local trace metadata threads",
+      "reason": "Replay1.433s/1.26s worst gaps best explained by timed samples.jsonl appends to USB ntfs-3g/FUSE",
+      "speed_risk": "CPU scheduling remains; blocked file I/O no longer delays memory sampling. Missing cadence still trips at1.5s."
     },
     {
       "change": "114840824 KiB exact owner exception only, default refuse; admission binds selected arm",
@@ -62,9 +62,9 @@
       "speed_risk": "About1.9GB headroom above reserve in replay; extra1GiB allowance leaves about0.8GB, not guaranteed"
     },
     {
-      "change": "Conditional trace arms wrap server only in source-built pinned unitrace; finite4096 records, paused load/capture, resumed census window, ITT metadata wrappers",
-      "reason": "Need per-rank device timestamps and explicit host-submission correlation",
-      "speed_risk": "Prior full-model tracing stalled or killed workers; even paused tracing perturbs; graph visibility and correlation unproven"
+      "change": "ITT-enabled pinned unitrace, finite4096 buffers, start-paused; resume after four rank loading lines and before graph capture; local ext4 traces",
+      "reason": "Microtest active-capture replay50/50 with8/8 kernels; paused-capture replay0 kernels",
+      "speed_risk": "Full-model overhead/memory unmeasured; traced oneCCL exit crash expected; no speed claim."
     },
     {
       "change": "Conditional eager census disables graphs; retains MTP1, BF16 KV, target weights, arithmetic selectors",
@@ -77,14 +77,14 @@
   "post_plateau_client_delay_seconds": 30,
   "record_class_balanced_median_tok_s": 46.85425,
   "localmaxxing_record": "cmtzask41000nlq011f16bpbc",
-  "pass_rule": "Clean lifecycle, unchanged admission/reserve/gap, complete fresh plateau attribution and diagnostic client receipts; output-token mismatch is a finding, never a speed claim",
+  "pass_rule": "Lifecycle: all owners gone, zero GPU faults through full305s watch, completed client requests, unchanged admission/reserve/sampling gates and no teardown overrun. Traced nonzero exit or segfault recorded as expected_tracer_exit_crash, with microtest evidence; no rc0 requirement for traced server. Census validity additionally requires four complete rank traces with ITT verify markers, timestamped verify kernels and unambiguous flow coverage; graph arm requires timely resume. Startup kernels outside census scopes may remain unassigned. Diagnostic only, no speed claim.",
   "owner_window": "Unchanged maximum 3600 seconds; expiry preempts client budget. No automatic renewal; worst-case budgets are not additive authorization.",
   "diagnostic_only": true,
   "realistic_final_gate": false,
   "max_attribution_age_seconds": 2,
   "max_sample_gap_seconds": 1.5,
   "planned_write_bytes": 10737418240,
-  "output_soft_stop_bytes": 8589934592,
+  "output_soft_stop_bytes": 6442450944,
   "tracer_expected_output_bytes": [
     214748364,
     2147483648
@@ -97,24 +97,27 @@
       "build": "CPU-tested executable control plane",
       "graph": "FULL_DECODE_ONLY",
       "trace": false,
-      "purpose": "Untraced diagnostic timing/output reference; no device decomposition"
+      "purpose": "Untraced diagnostic timing/output reference; no device decomposition",
+      "priority": "optional; replay c is existing full-suite untraced timing"
     },
     {
       "id": "graph-census",
       "build": "CPU-tested conditional feasibility arm; device-unqualified",
       "graph": "FULL_DECODE_ONLY",
       "trace": true,
-      "purpose": "Establish actual graph device kernel visibility and per-step correlation; incomplete visibility produces incomplete census"
+      "purpose": "Establish actual graph device kernel visibility and per-step correlation; incomplete visibility produces incomplete census",
+      "priority": "only next arm"
     },
     {
       "id": "eager-census",
       "build": "CPU-tested conditional feasibility arm; device-unqualified",
       "graph": "NONE",
       "trace": true,
-      "purpose": "Eager-only device census; never substitute its durations for graph replay"
+      "purpose": "Eager-only device census; never substitute its durations for graph replay",
+      "priority": "secondary; independently admitted only"
     }
   ],
-  "arm_policy": "Exactly one selected arm per hash-bound owner window. No queue, automatic retry, automatic fallback or speed verdict. Review first trace outcome before any separately admitted next arm.",
+  "arm_policy": "Run only graph-census next. Exactly one arm per owner window, no retry/queue/fallback. Eager is secondary; untraced reference optional because replay c supplies full-suite timing.",
   "analysis": {
     "tool": "analyze_census.py",
     "manifest_tool": "build_manifest.py",
@@ -138,9 +141,18 @@
     "scope": "Per-rank measured device work only. Missing or ambiguous correlation remains unknown/incomplete. No assumption of400 kernels or extrapolation. Generic GEMM names need evidenced mapping; candidates are measured clusters plus dispatch-audit boundaries, not predicted savings."
   },
   "tracer_pins": {
-    "/home/steve/src/pti-gpu/build-unitrace/unitrace": "5aaca1f418a212a1d298cac27afb6c471bf1fcf47a1622e0c20d1a2cf43fc85a",
-    "/home/steve/src/pti-gpu/build-unitrace/libunitrace_tool.so": "00f9e1c95f1b53f1466f15dafa97ddcd709899ad7ca2869626456deb5e177e04"
+    "/home/steve/src/pti-gpu/build-unitrace-itt/unitrace": "def24ca596afcb8bca952bb47cf5b1a35496656ab906a8aa531cdb26c1f6c2c7",
+    "/home/steve/src/pti-gpu/build-unitrace-itt/libunitrace_tool.so": "114242e35621656bca60d3fa44d447ac0b1ba75f18505dc341b0a6772381da68"
   },
   "tracer_source_commit": "a5bab309f4ffdd78bd127035c46f5f75371160f8",
-  "device_work_performed": false
+  "device_work_performed": false,
+  "tracer_build_with_itt": true,
+  "tracer_build_directory_ldd_extra_dsos": [],
+  "local_trace_root": "/home/steve/.cache/a367-trace/<run-name>/",
+  "local_trace_minimum_free_bytes": 8589934592,
+  "local_trace_retention": "Separate from deleted local scratch; coordinator copies after lifecycle and keeps local source.",
+  "next_arm": "graph-census",
+  "trace_resume": "Start paused. Supervisor thread watches server.log for Model loading took on four distinct ranks; resume exactly once, with acknowledgement before any Capturing CUDA graphs line. Continue through profiling, KV initialization, capture, readiness, 20s plateau, 30s sleep and requests; pause immediately after client completion. Failed/late resume invalidates graph attribution but does not short-circuit normal teardown or retry.",
+  "sampler_persistence": "Timed sampler performs no output-mount file I/O; rows remain in memory and are enqueued to independent ext4 scratch writer. Independent live-file monitor. After lifecycle drain writer, compare exact rows, copy samples.jsonl to output, hash both, receipt, then remove scratch.",
+  "tracer_exit_crash_evidence": "data/2026-10-17-flash-next-trace-feasibility/20261017T001502Z/"
 }

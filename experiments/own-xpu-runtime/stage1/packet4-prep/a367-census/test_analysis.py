@@ -3,6 +3,7 @@
 import importlib.util
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -11,6 +12,17 @@ import unittest
 SPEC = importlib.util.spec_from_file_location('analyze_census', Path(__file__).with_name('analyze_census.py'))
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
+FIXTURES = Path(__file__).with_name('fixtures')
+FEAS_MARKER = re.compile(r'PyTorch::A367Feas\|(eager|replay)\|i=([0-9]+)')
+
+
+def real_trace_correlations(path):
+    """Exercise production parsing/join with unchanged microtest marker names."""
+    events = MODULE.chrome_events(path)
+    spans = MODULE.itt_spans(events, 69448, FEAS_MARKER)
+    devices = [{'event_ref': f'real:{i}', 'correlation_id': e.get('args', {}).get('id')}
+               for i, e in enumerate(events) if e.get('ph') == 'X' and e.get('cat') == 'gpu_op']
+    return events, MODULE.correlate_scopes(events, 69448, devices, spans)
 
 
 def kernel(name='hc_gate_mix', start=100, duration=10, kid='1', pid=999, tid=5):
@@ -45,6 +57,114 @@ class AnalysisTests(unittest.TestCase):
         path = self.root / 'map.json'
         path.write_text(json.dumps(manifest))
         return MODULE.analyze(path)
+
+    def lifecycle_case(self, **updates):
+        self.run_case([scope(), flow(), kernel(), scope('draft', 1, 1, 20),
+                       flow(2, 22), kernel('generic', 120, 5, '2')], arm='graph-census')
+        identity = self.root / 'identity.json'
+        identity.write_text(json.dumps({'arm': 'graph-census'}))
+        receipt = {'all_owners_gone': True, 'gap_complete': True, 'gpu_fault_lines': 0,
+                   'client': {'returncode': 0}, 'passed': True, 'clean_exit': False,
+                   'identity_sha256': MODULE.sha(identity),
+                   'trace_capture': {'valid_for_graph_attribution': True},
+                   'expected_tracer_exit_crash': {'evidence': 'data/2026-10-17-flash-next-trace-feasibility/'}}
+        receipt.update(updates)
+        lifecycle = self.root / 'lifecycle.json'
+        lifecycle.write_text(json.dumps(receipt))
+        manifest = json.loads((self.root / 'map.json').read_text())
+        manifest.update(identity={'path': identity.name, 'sha256': MODULE.sha(identity)},
+                        lifecycle={'path': lifecycle.name, 'sha256': MODULE.sha(lifecycle)})
+        (self.root / 'map.json').write_text(json.dumps(manifest))
+        return MODULE.analyze(self.root / 'map.json')
+
+    def test_expected_exit_crash_does_not_invalidate_complete_census(self):
+        result = self.lifecycle_case()
+        self.assertTrue(result['segmentation_complete'])
+        self.assertFalse(result['census_valid'])  # a one-rank fixture is not the census
+        self.assertTrue(result['lifecycle_evidence_present'])
+        self.assertIn('evidence', result['expected_tracer_exit_crash'])
+
+    def test_missing_lifecycle_safety_fields_fail_closed(self):
+        for field in ('all_owners_gone', 'gap_complete', 'gpu_fault_lines', 'client', 'passed'):
+            with self.subTest(field=field):
+                with self.assertRaises(ValueError):
+                    self.lifecycle_case(**{field: None})
+
+    def test_gpu_fault_or_failed_client_invalidates_lifecycle(self):
+        for update in ({'gpu_fault_lines': 1}, {'gpu_fault_lines': False},
+                       {'client': {'returncode': 1}}, {'client': {'returncode': False}}, {'client': {}}):
+            with self.subTest(update=update), self.assertRaises(ValueError):
+                self.lifecycle_case(**update)
+
+    def test_late_resume_keeps_analysis_but_invalidates_graph_attribution(self):
+        result = self.lifecycle_case(trace_capture={'valid_for_graph_attribution': False})
+        self.assertFalse(result['segmentation_complete'])
+        self.assertFalse(result['requested_scope_flow_coverage_complete'])
+        self.assertEqual(len(result['timeline']), 2)
+        self.assertTrue(any('before graph capture' in issue for issue in result['issues']))
+
+    def test_missing_capture_receipt_invalidates_graph_attribution(self):
+        result = self.lifecycle_case(trace_capture={})
+        self.assertFalse(result['segmentation_complete'])
+
+    def test_four_rank_census_valid_despite_unassigned_startup_work(self):
+        self.lifecycle_case()
+        path = self.root / 'map.json'
+        manifest = json.loads(path.read_text())
+        original = json.loads((self.root / 'trace.json').read_text())['traceEvents']
+        manifest['expected_ranks'] = [0, 1, 2, 3]
+        manifest['traces'] = []
+        for rank in range(4):
+            pid = 123 + rank
+            events = [dict(e, pid=pid if e.get('cat') != 'gpu_op' else e['pid']) for e in original]
+            events.append(kernel('startup_kernel', 200, 10, '99'))
+            trace = self.root / f'trace-{rank}.json'
+            trace.write_text(json.dumps({'traceEvents': events}))
+            receipt = self.root / f'rank-{rank}.json'
+            receipt.write_text(json.dumps({'schema': 'a367-census-marker-rank-v1', 'rank': rank, 'pid': pid}))
+            manifest['traces'].append({'id': f'r{rank}', 'rank': rank, 'worker_pid': pid,
+                                      'path': trace.name, 'sha256': MODULE.sha(trace),
+                                      'rank_evidence': receipt.name, 'rank_evidence_sha256': MODULE.sha(receipt)})
+        path.write_text(json.dumps(manifest))
+        result = MODULE.analyze(path)
+        self.assertTrue(result['census_valid'])
+        self.assertTrue(result['requested_scope_flow_coverage_complete'])
+        self.assertFalse(result['segmentation_complete'])
+        self.assertFalse(result['whole_trace_assignment_complete'])
+        manifest.pop('lifecycle')
+        manifest.pop('identity')
+        path.write_text(json.dumps(manifest))
+        self.assertFalse(MODULE.analyze(path)['census_valid'])
+
+    def test_copy_only_verify_scope_does_not_count_as_kernel_evidence(self):
+        result = self.run_case([scope(), flow(), kernel('zeCommandListAppendMemoryCopy(D2D)'),
+                                scope('draft', 1, 1, 20), flow(2, 22), kernel('generic', 120, 5, '2')])
+        self.assertFalse(result['requested_scope_flow_coverage_complete'])
+        self.assertFalse(result['census_valid'])
+        self.assertTrue(any('no timestamped kernels' in issue for issue in result['issues']))
+
+    def test_actual_unitrace_itt_fixture_correlates_eager_and_graph_replay(self):
+        path = FIXTURES / 'unitrace-itt-graph-traced-excerpt.json'
+        provenance = json.loads((FIXTURES / 'unitrace-itt-graph-traced-provenance.json').read_text())
+        self.assertEqual(MODULE.sha(path), provenance['fixture_sha256'])
+        self.assertLess(path.stat().st_size, 200_000)
+        events, spans = real_trace_correlations(path)
+        self.assertEqual([s['name'] for s in spans],
+                         ['PyTorch::A367Feas|eager|i=0', 'PyTorch::A367Feas|replay|i=0'])
+        self.assertEqual([len(s['event_refs']) for s in spans], [8, 8])
+        self.assertEqual([s['unresolved_flow_sources'] for s in spans], [0, 0])
+        self.assertEqual(MODULE.itt_spans(events, 69448), [])  # feasibility is not model verify
+        self.assertEqual(MODULE.itt_spans(events, 123, FEAS_MARKER), [])
+
+    def test_actual_fixture_never_guesses_attribution_without_flows(self):
+        path = FIXTURES / 'unitrace-itt-graph-traced-excerpt.json'
+        events = MODULE.chrome_events(path)
+        events = [e for e in events if e.get('ph') != 's']
+        spans = MODULE.itt_spans(events, 69448, FEAS_MARKER)
+        devices = [{'event_ref': f'r:{i}', 'correlation_id': e.get('args', {}).get('id')}
+                   for i, e in enumerate(events) if e.get('cat') == 'gpu_op']
+        result = MODULE.correlate_scopes(events, 69448, devices, spans)
+        self.assertEqual([s['event_refs'] for s in result], [[], []])
 
     def test_async_device_timestamp_joined_by_flow_not_host_interval(self):
         result = self.run_case([scope(), flow(), kernel(start=1000)])
@@ -194,6 +314,7 @@ class AnalysisTests(unittest.TestCase):
         result = self.run_case([scope(), flow(), kernel(), scope('draft', 1, 1, 20),
                                 flow(2, 22), kernel('generic', 120, 5, '2')])
         self.assertTrue(result['segmentation_complete'])
+        self.assertFalse(result['census_valid'])  # no lifecycle evidence
         self.assertEqual(result['timeline'][1]['family'], 'MTP draft')
         self.assertEqual(result['timeline'][1]['intrinsic_family'], 'unknown')
 
@@ -201,6 +322,13 @@ class AnalysisTests(unittest.TestCase):
         result = self.run_case([kernel()], steps=[dict(id='manual', rank=0, kind='verify', m=2,
             event_refs=['r0:0'], evidence='audited device correlation fixture')])
         self.assertEqual(result['steps'][0]['kernel_count'], 1)
+
+    def test_explicit_mapping_cannot_replace_required_itt_verify_markers(self):
+        result = self.run_case([kernel(), kernel(kid='2')], steps=[
+            dict(id='v', rank=0, kind='verify', m=2, event_refs=['r0:0'], evidence='synthetic'),
+            dict(id='d', rank=0, kind='draft', m=1, event_refs=['r0:1'], evidence='synthetic')])
+        self.assertFalse(result['segmentation_complete'])
+        self.assertIn('rank 0: no ITT verify markers', result['issues'])
 
     def test_explicit_mapping_cannot_reference_host_event(self):
         with self.assertRaisesRegex(ValueError, 'non-device'):

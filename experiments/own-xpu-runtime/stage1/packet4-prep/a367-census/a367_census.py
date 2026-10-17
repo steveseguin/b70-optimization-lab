@@ -24,6 +24,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from sample_writer import SampleWriter
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / 'driver'))
@@ -42,6 +43,14 @@ RPC_PATH_MAX = 107
 # atomic, so four ranks sharing a Triton cache saw a published .llir vanish (attempt 3).
 LOCAL_SCRATCH = Path('/home/steve/.cache/a367-scratch')
 LOCAL_SCRATCH_MIN_FREE = 4 * 2**30
+LOCAL_TRACE = Path('/home/steve/.cache/a367-trace')
+LOCAL_TRACE_MIN_FREE = 8 * 2**30
+TRACE_SOFT_STOP = 6 * 2**30
+EXIT_CRASH_EVIDENCE = 'data/2026-10-17-flash-next-trace-feasibility/20261017T001502Z/'
+
+
+def trace_dir(output):
+    return LOCAL_TRACE / output.name
 
 
 def scratch_dir(output):
@@ -60,7 +69,7 @@ def paths():
 
 
 ARMS = ('graph-reference', 'graph-census', 'eager-census')
-UNITRACE = Path('/home/steve/src/pti-gpu/build-unitrace/unitrace')
+UNITRACE = Path('/home/steve/src/pti-gpu/build-unitrace-itt/unitrace')
 
 
 def trace_session(output):
@@ -100,7 +109,7 @@ def command_and_environment(output, arm='graph-reference'):
         command = [str(UNITRACE), '--chrome-kernel-logging', '--chrome-itt-logging',
                    '--chrome-event-buffer-size', '4096', '--verbose', '--pid',
                    '--start-paused', '--session', trace_session(output),
-                   '--result-dir', str(output / 'unitrace')] + command
+                   '--result-dir', str(trace_dir(output))] + command
     return command, env
 
 
@@ -304,16 +313,16 @@ class Stop:
             self.reason = self.reason or reason
             if self.child is not None and not self.sent and self.child.poll() is None:
                 self.sent = True
+                # A slow output mount must not postpone the one graceful signal.
+                try:
+                    self.child.send_signal(signal.SIGINT)
+                except ProcessLookupError:
+                    pass
                 try:
                     w.write(self.root / 'stop-request.json', {'pid': self.child.pid, 'signal': 'SIGINT',
                             'unix': time.time(), 'reason': self.reason})
                 except OSError as exc:
                     self.reason += f'; stop receipt write failed: {exc}'
-                finally:
-                    try:
-                        self.child.send_signal(signal.SIGINT)
-                    except ProcessLookupError:
-                        pass
 
     def attach(self, child):
         with self.lock:
@@ -332,6 +341,8 @@ class WriteBudget:
     def measure(self):
         # Account all run files, including trace buffers flushed by all ranks.
         total = 0
+        if not self.root.exists():
+            return 0  # The optional untraced arm creates no trace directory.
         for directory, _, files in os.walk(self.root, onerror=lambda e: (_ for _ in ()).throw(e)):
             for name in files:
                 try:
@@ -343,7 +354,7 @@ class WriteBudget:
 
     def take(self):
         total = self.measure()
-        w.require(total < 8 * 2**30, '8 GiB output soft stop; reserve 2 GiB for drain')
+        w.require(total < TRACE_SOFT_STOP, '6 GiB local trace soft stop; reserve for drain')
         return total
 
     def run(self):
@@ -364,8 +375,10 @@ class Sampler:
         self.done = threading.Event()
         self.lock = threading.Lock()
         self.attribution = Attribution(stop, self.done, scan)
-        self.budget = WriteBudget(root, stop, self.done)
+        self.budget = WriteBudget(trace_dir(root), stop, self.done)
+        self.writer = SampleWriter(scratch_dir(root) / 'samples.jsonl')
         self.thread = threading.Thread(target=self.run, daemon=True)
+        self.live_thread = threading.Thread(target=self.run_live, daemon=True)
 
     def take(self):
         with self.lock:
@@ -375,10 +388,8 @@ class Sampler:
                 row.update(latest)
             row['attribution_error'] = self.attribution.error
             row['phase'] = self.phase
-            with (self.root / 'samples.jsonl').open('a') as stream:
-                stream.write(json.dumps(row, allow_nan=False) + '\n')
-                stream.flush()
             self.rows.append(row)
+            self.writer.enqueue(row)
             if row['phase'] == 'plateau':
                 validate_attribution(row)
             w.require(row['mem_available_bytes'] >= LIVE_FLOOR_KIB * 1024, 'A367 live memory reserve crossed')
@@ -391,14 +402,40 @@ class Sampler:
         while not self.done.wait(max(0, due - time.monotonic())):
             try:
                 self.take()
-                self.live_check()
             except BaseException as exc:
                 self.failed = self.failed or str(exc)
-                self.stop.request('memory/admission watcher: ' + self.failed)
                 # Keep sampling shutdown even after a trip, preserving the first failure.
             due += INTERVAL
             if due < time.monotonic():
                 due = time.monotonic() + INTERVAL
+
+    def check_live(self):
+        # File checks and stop receipts must never run in the timed sample thread.
+        w.require(not self.failed, self.failed)
+        w.require(not self.writer.failure, self.writer.failure)
+        self.live_check()
+
+    def run_live(self):
+        while not self.done.is_set():
+            try:
+                self.check_live()
+            except BaseException as exc:
+                self.failed = self.failed or str(exc)
+                self.stop.request('memory/admission watcher: ' + self.failed)
+            self.done.wait(INTERVAL)
+
+    def persist(self):
+        self.writer.finish()
+        local = self.writer.path
+        # Compare the exact serialized rows before copying; scratch cleanup follows.
+        expected = ''.join(json.dumps(r, allow_nan=False) + '\n' for r in self.rows).encode()
+        w.require(local.read_bytes() == expected, 'local samples differ from memory rows')
+        shutil.copyfile(local, self.root / 'samples.jsonl')
+        digest = w.sha(local)
+        w.require(w.sha(self.root / 'samples.jsonl') == digest, 'sample copy hash mismatch')
+        w.write(self.root / 'samples-persistence.json', {
+            'local_path': str(local), 'output_path': str(self.root / 'samples.jsonl'),
+            'rows': len(self.rows), 'sha256': digest, 'equals_in_memory_rows': True})
 
 
 def ready():
@@ -436,10 +473,19 @@ def verify_process_profile():
     w.require(os.sched_getaffinity(0) == online_cpus(), 'execute requires unrestricted online CPU affinity')
 
 
-def verify_scratch_filesystem():
-    result = subprocess.run(['findmnt', '-n', '-o', 'FSTYPE', '-T', str(LOCAL_SCRATCH)],
+def verify_scratch_filesystem(directory=None):
+    result = subprocess.run(['findmnt', '-n', '-o', 'FSTYPE', '-T', str(directory or LOCAL_SCRATCH)],
                             capture_output=True, text=True, check=True)
     w.require(result.stdout.strip() == 'ext4', 'local scratch must be ext4')
+
+
+def verify_trace_storage(output):
+    LOCAL_TRACE.mkdir(parents=True, exist_ok=True)
+    verify_scratch_filesystem(LOCAL_TRACE)
+    w.require(not trace_dir(output).resolve().is_relative_to(scratch_dir(output).resolve()),
+              'trace output inside deleted scratch')
+    w.require(shutil.disk_usage(LOCAL_TRACE).free >= LOCAL_TRACE_MIN_FREE, 'local trace requires 8 GiB free')
+    w.require(not trace_dir(output).exists(), 'local trace directory already exists')
 
 
 def client_command(root):
@@ -482,7 +528,7 @@ def client_phase(root, sampler, stop, watch, server, *, clock=time.monotonic,
     child = None
     try:
         if trace is not None:
-            trace.resume()
+            trace.enable_markers()
         with (root / 'realistic-suite-v1-result.log').open('xb') as log:
             child = launch(receipt['command'], env=client_environment(), cwd=w.REPO,
                            stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
@@ -517,29 +563,123 @@ class TraceControl:
         self.root, self.runner = root, runner
         self.active = False
         self.events = []
+        self.resume_attempts = 0
+        self.paused = False
+        self.acknowledged = False
 
     def control(self, action):
-        result = self.runner([str(UNITRACE), '--' + action, trace_session(self.root)],
-                             capture_output=True, text=True, timeout=5, check=False)
-        self.events.append({'action': action, 'unix': time.time(), 'returncode': result.returncode,
+        try:
+            result = self.runner([str(UNITRACE), '--' + action, trace_session(self.root)],
+                                 capture_output=True, text=True, timeout=5, check=False)
+        except Exception as exc:
+            self.events.append({'action': action, 'unix': time.time(), 'monotonic': time.monotonic(),
+                                'returncode': None, 'error': str(exc), 'acknowledged': False})
+            raise
+        self.events.append({'action': action, 'unix': time.time(), 'monotonic': time.monotonic(), 'returncode': result.returncode,
                             'stdout': result.stdout, 'stderr': result.stderr})
-        w.write(self.root / 'trace-control.json', self.events)
         ack = f'Session {trace_session(self.root)} is {dict(resume="resumed", pause="paused")[action]}'
         w.require(result.returncode == 0 and ack in result.stderr, 'unitrace session control failed or missing acknowledgement')
 
     def resume(self):
-        # Markers are no-ops throughout load/capture and the readiness plateau.
+        w.require(self.resume_attempts == 0, 'resume already attempted; no retry')
+        self.resume_attempts += 1
         self.control('resume')
-        (self.root / 'trace-active').touch(exist_ok=False)
+        self.acknowledged = True
         self.active = True
 
+    def enable_markers(self):
+        # Device tracing starts before capture; census ITT scopes only mark requests.
+        if self.active:
+            (self.root / 'trace-active').touch(exist_ok=False)
+
     def pause(self):
+        if self.paused:
+            return
+        self.paused = True
         # Pause even when resume failed part way; this cannot launch a server.
         (self.root / 'trace-active').unlink(missing_ok=True)
         try:
             self.control('pause')
         finally:
             self.active = False
+            w.write(self.root / 'trace-control.json', self.events)
+
+
+class CaptureResume:
+    """Observe loading in a separate supervisor thread; never retry a resume.
+
+    Capture logged before the acknowledgement (including bytes accumulated while
+    control IPC was in flight) invalidates graph attribution, not the lifecycle.
+    """
+    rank_pattern = re.compile(r'Worker[_-]TP([0-3])(?=[^0-9]|$)')
+
+    def __init__(self, root, control):
+        self.root, self.control = root, control
+        self.done = threading.Event()
+        self.thread = threading.Thread(target=self.run, daemon=True)
+        self.offset = 0
+        self.pending = ''
+        self.ranks = set()
+        self.capture_before_ack = False
+        self.failure = None
+        self.acknowledged = False
+
+    def consume(self, text):
+        # Inspect partial lines too: a capture prefix is enough to invalidate.
+        self.pending += text
+        if not self.acknowledged and 'Capturing CUDA graphs' in self.pending:
+            self.capture_before_ack = True
+        lines = self.pending.split('\n')
+        self.pending = lines.pop()
+        for line in lines:
+            if 'Model loading took' in line:
+                match = self.rank_pattern.search(line)
+                if match:
+                    self.ranks.add(int(match[1]))
+
+    def read_new(self):
+        with (self.root / 'server.log').open('r', errors='replace') as stream:
+            stream.seek(self.offset)
+            text = stream.read()
+            self.offset = stream.tell()
+        self.consume(text)
+
+    def poll(self):
+        self.read_new()
+        if self.done.is_set():
+            return
+        if self.ranks == {0, 1, 2, 3} and self.control.resume_attempts == 0:
+            try:
+                self.control.resume()
+                # Fail conservatively if capture arrived during the control call.
+                self.read_new()
+                self.acknowledged = True
+            except Exception as exc:
+                self.failure = str(exc)
+            self.save()
+
+    def receipt(self):
+        return {'schema': 'a367-census-capture-resume.v1',
+                'loaded_ranks': sorted(self.ranks),
+                'resume_attempts': self.control.resume_attempts,
+                'acknowledged': self.acknowledged,
+                'capture_before_acknowledgement': self.capture_before_ack,
+                'valid_for_graph_attribution': self.acknowledged and not self.capture_before_ack and not self.failure,
+                'failure': self.failure,
+                'acknowledgement': next((e for e in self.control.events if e['action'] == 'resume'), None),
+                'ordering_rule': 'Any capture bytes observed through the post-ack log read invalidate; conservative on races.'}
+
+    def save(self):
+        w.write(self.root / 'trace-control.json', self.control.events)
+        w.write(self.root / 'trace-capture.json', self.receipt())
+
+    def run(self):
+        while not self.done.is_set():
+            try:
+                self.poll()
+            except Exception as exc:
+                self.failure = str(exc)
+            self.done.wait(.01)
 
 
 def verify_tracer():
@@ -579,7 +719,7 @@ def compare_result(root):
 def lifecycle(root, command, env, sampler, stop, watch, *, launch=subprocess.Popen,
               is_ready=ready, clock=time.monotonic, sleep=time.sleep,
               owners_gone=w.owned_session_gone, process_rows=w.processes, mock=False,
-              run_client=None, check_result=None):
+              run_client=None, check_result=None, trace=None):
     """Injectable control plane for CPU mocks. No test-only CLI launch bypass."""
     error = None
     reached_ready = clean_exit = gap_complete = False
@@ -587,14 +727,19 @@ def lifecycle(root, command, env, sampler, stop, watch, *, launch=subprocess.Pop
     clients = []
     comparison = None
     client_receipt = {'attempted': False}
+    observer = CaptureResume(root, trace) if trace is not None else None
+    all_owners_gone = False
+    exit_crash = None
     run_client = run_client or client_phase
     check_result = check_result or compare_result
     try:
+        sampler.writer.start()
         sampler.take()  # baseline is committed before Popen
         sampler.phase = 'loading'
         sampler.budget.thread.start()
         sampler.attribution.thread.start()
         sampler.thread.start()
+        sampler.live_thread.start()
         watch.poll()
         watch.thread.start()
         w.require(not stop.reason and not sampler.failed and not watch.failed, 'prelaunch monitor failure')
@@ -602,11 +747,15 @@ def lifecycle(root, command, env, sampler, stop, watch, *, launch=subprocess.Pop
             child = launch(command, env=env, cwd=root, stdout=log,
                            stderr=subprocess.STDOUT, start_new_session=True)
             stop.attach(child)
+            if observer is not None:
+                observer.thread.start()
             w.write(root / 'launch.json', {'pid': child.pid, 'unix': time.time()})
             deadline = clock() + LOAD_BUDGET
             plateau_start = None
             while True:
                 w.require(not stop.reason, str(stop.reason))
+                w.require(not sampler.failed, 'memory sampler failed: ' + str(sampler.failed))
+                w.require(not sampler.writer.failure, 'sample writer failed: ' + str(sampler.writer.failure))
                 w.require(not watch.failed, 'kernel watcher failed: ' + str(watch.failed))
                 w.require(child.poll() is None, 'server exited before plateau completed')
                 w.require(clock() < deadline, f'{LOAD_BUDGET}s loading/plateau budget exceeded')
@@ -625,6 +774,17 @@ def lifecycle(root, command, env, sampler, stop, watch, *, launch=subprocess.Pop
     except BaseException as exc:
         error = f'{type(exc).__name__}: {exc}'
     finally:
+        if observer is not None:
+            observer.done.set()
+            if observer.thread.ident is not None:
+                observer.thread.join(6)
+            if observer.thread.is_alive():
+                observer.failure = 'capture supervisor did not stop'
+            try:
+                observer.save()
+                trace.pause()
+            except Exception as exc:
+                error = error or 'trace final pause: ' + str(exc)
         sampler.phase = 'shutdown'
         stop.request(error or 'record suite complete; one client attempt')
         if child is not None:
@@ -637,13 +797,15 @@ def lifecycle(root, command, env, sampler, stop, watch, *, launch=subprocess.Pop
                     w.write(root / 'teardown-incomplete.json', {'reason': error, 'pid': child.pid})
                     overrun = True
                 sleep(INTERVAL)
+            all_owners_gone = True
             # Always observe the full post-exit gap, including failed client/monitor runs.
             try:
                 sampler.take()
                 watch.poll()
                 w.require(not w.conflicts(process_rows()), 'native conflict after exit')
-                w.require(child.returncode == 0 and not overrun, 'unclean server/session teardown')
-                clean_exit = True
+                clean_exit = child.returncode == 0
+                w.require(not overrun, 'unclean server/session teardown')
+                w.require(clean_exit or trace is not None, 'unclean server/session teardown')
             except BaseException as exc:
                 error = error or str(exc)
             completed = time.time()
@@ -673,12 +835,18 @@ def lifecycle(root, command, env, sampler, stop, watch, *, launch=subprocess.Pop
                     sleep(INTERVAL)
         sampler.done.set()
         watch.stop.set()
-        for thread in (sampler.thread, sampler.attribution.thread, sampler.budget.thread, watch.thread):
+        for thread in (sampler.thread, sampler.live_thread, sampler.attribution.thread, sampler.budget.thread, watch.thread):
             if thread.ident is not None:
                 thread.join(5)
             if thread.is_alive():
                 error = error or 'monitor did not stop'
-        if child is None or (child.poll() is not None and owners_gone(child.pid)):
+        persisted = False
+        try:
+            sampler.persist()
+            persisted = True
+        except Exception as exc:
+            error = error or 'sample persistence: ' + str(exc)
+        if persisted and (child is None or (child.poll() is not None and owners_gone(child.pid))):
             shutil.rmtree(scratch_dir(root))
         else:
             w.write(root / 'scratch-retained.json', {'reason': 'owner uncertain; no cleanup',
@@ -688,7 +856,7 @@ def lifecycle(root, command, env, sampler, stop, watch, *, launch=subprocess.Pop
     summary = None
     try:
         w.require(stop.reason == 'record suite complete; one client attempt', stop.reason or 'missing completion stop')
-        w.require(error is None and reached_ready and clean_exit and gap_complete, error or 'incomplete lifecycle')
+        w.require(error is None and reached_ready and all_owners_gone and gap_complete, error or 'incomplete lifecycle')
         summary = summarize(sampler.rows)
     except (ValueError, KeyError) as exc:
         error = error or str(exc)
@@ -701,15 +869,30 @@ def lifecycle(root, command, env, sampler, stop, watch, *, launch=subprocess.Pop
             error = error or f'census comparison: {exc}'
     if (root / 'client.json').exists():
         client_receipt = w.read(root / 'client.json')
+    if trace is not None and child is not None and all_owners_gone:
+        # A worker may crash while the API process still returns zero. Retain either.
+        log = (root / 'server.log').read_text(errors='replace')
+        signatures = [s for s in ('ucs_handle_error', 'SIGSEGV', 'Segmentation fault', 'exit code -11') if s in log]
+        if child.returncode != 0 or signatures:
+            exit_crash = {'classification': 'expected_tracer_exit_crash',
+                          'server_returncode': child.returncode, 'signatures': signatures,
+                          'microtest_evidence': EXIT_CRASH_EVIDENCE,
+                          'census_validity_requires_complete_traces_and_requests': True}
+            w.write(root / 'expected_tracer_exit_crash.json', exit_crash)
     try:
         size = sampler.budget.measure()
         w.write(root / 'write-budget.json', {'bytes_after_owners_and_client_exit': size, 'limit_bytes': 10 * 2**30,
-                                          'passed': size <= 10 * 2**30, 'soft_stop_bytes': 8 * 2**30})
+                                          'passed': size <= 10 * 2**30, 'soft_stop_bytes': TRACE_SOFT_STOP,
+                                          'measured_directory': str(trace_dir(root))})
         w.require(size <= 10 * 2**30, '10 GiB write budget exceeded after trace drain')
     except Exception as exc:
         error = error or str(exc)
     receipt = {'schema': 'own-xpu-runtime.packet4.a367-census.v1', 'passed': error is None,
                'ready': reached_ready, 'clean_exit': clean_exit, 'gap_complete': gap_complete,
+               'all_owners_gone': all_owners_gone, 'gpu_fault_lines': 0 if gap_complete and not watch.failed else None,
+               'expected_tracer_exit_crash': exit_crash,
+               'trace_capture': observer.receipt() if observer is not None else None,
+               'census_validity': 'pending offline four-rank trace analysis',
                'client': client_receipt, 'comparison': comparison, 'failure': error, 'summary': summary,
                'samples_sha256': w.sha(root / 'samples.jsonl') if (root / 'samples.jsonl').exists() else None,
                'identity_sha256': w.sha(root / 'identity.json'), 'mock': mock,
@@ -724,7 +907,7 @@ def main(argv=None):
     mode.add_argument('--plan', action='store_true')
     mode.add_argument('--execute', action='store_true')
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--arm', choices=ARMS, default='graph-reference')
+    parser.add_argument('--arm', choices=ARMS, default='graph-census')
     for option in ('owner-window', 'health-receipt', 'payload-receipt'):
         parser.add_argument('--' + option, type=Path)
     args = parser.parse_args(argv)
@@ -767,6 +950,8 @@ def main(argv=None):
         verify_scratch_filesystem()
         w.require(shutil.disk_usage(LOCAL_SCRATCH).free >= LOCAL_SCRATCH_MIN_FREE, 'local scratch reserve')
         w.require(not scratch_dir(root).exists(), 'local scratch already exists')
+        if args.arm != 'graph-reference':
+            verify_trace_storage(root)
         with socket.socket() as port:
             port.bind(('127.0.0.1', w.PORT))
         baseline = w.journal()
@@ -776,7 +961,7 @@ def main(argv=None):
         root.mkdir()
         (scratch_dir(root) / 'rpc').mkdir(parents=True)
         if args.arm != 'graph-reference':
-            (root / 'unitrace').mkdir()
+            trace_dir(root).mkdir()
             (root / 'markers').mkdir()
         w.write(root / 'admission.json', {'initial': initial_admission, 'final': final_admission})
         audit['fault_latch_admission'] = w.artifact(root / 'admission.json')
@@ -809,7 +994,7 @@ def main(argv=None):
             trace = TraceControl(root) if args.arm != 'graph-reference' else None
             def run_client(*a, **kw):
                 return client_phase(*a, **kw, trace=trace)
-            return lifecycle(root, command, env, sampler, stop, watch, run_client=run_client)
+            return lifecycle(root, command, env, sampler, stop, watch, run_client=run_client, trace=trace)
         finally:
             for sig, handler in old.items():
                 signal.signal(sig, handler)

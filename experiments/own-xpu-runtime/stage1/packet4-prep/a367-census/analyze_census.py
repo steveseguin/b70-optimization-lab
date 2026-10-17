@@ -37,8 +37,11 @@ trace files must be <=1 GiB each; larger files need offline trace sharding
 with exact original indexes preserved via a new reviewed mapping. No traces
 are modified. Do not run analysis alongside the server.
 
-Completeness requires all requested ranks, verify and draft device steps on
-all ranks, no opaque graph, and every device event assigned. Classification
+Segmentation completeness requires every device event assigned. Census
+validity instead requires a safe, complete lifecycle and requested verify/draft
+flow coverage on all four ranks, including actual verify kernels. Startup
+profiling, KV initialization and capture events can remain unassigned: they
+are outside the request markers, never invented verify work. Classification
 coverage is separate: unknown family never becomes inferred model work.
 """
 from __future__ import annotations
@@ -141,34 +144,65 @@ def grouped(rows, key):
                   key=lambda r: (-r["sum_device_us"], r["name"]))
 
 
-def auto_steps(events, trace, devices):
-    """Return explicit mappings via host ITT scope -> H2D flow -> device ID."""
-    scopes = []
+def chrome_events(path):
+    """Read actual PTI Chrome JSON; displayTimeUnit does not scale timestamps."""
+    payload = json.loads(Path(path).read_text())
+    events = payload.get("traceEvents") if isinstance(payload, dict) else payload
+    if not isinstance(events, list) or any(not isinstance(e, dict) for e in events):
+        raise ValueError("not a Chrome trace event array")
+    if isinstance(payload, dict) and payload.get("timestampUnit", "us") != "us":
+        raise ValueError("only Chrome microsecond timestamps supported")
+    return events
+
+
+def itt_spans(events, worker_pid, marker_pattern=SCOPE):
+    """Parse PTI's domain-prefixed cpu_op X markers without renaming events.
+
+    A separate pattern lets CPU regression tests exercise the unmodified real
+    A367Feas markers. Production calls use only the registered A367 pattern.
+    """
+    spans = []
     for index, event in enumerate(events):
-        match = SCOPE.fullmatch(str(event.get("name", "")))
+        match = marker_pattern.fullmatch(str(event.get("name", "")))
         if not match or event.get("ph") != "X" or event.get("cat") != "cpu_op":
             continue
-        if event.get("pid") != trace["worker_pid"]:
+        if event.get("pid") != worker_pid:
             continue
         start = number(event.get("ts"), "scope ts")
         duration = number(event.get("dur"), "scope duration")
         if duration < 0:
             raise ValueError("negative scope duration")
-        kind, dimension, m, seq = match.groups()
+        spans.append({"index": index, "name": event["name"], "groups": match.groups(),
+                      "tid": event.get("tid"), "start": start, "end": start + duration})
+    return spans
+
+
+def auto_steps(events, trace, devices):
+    """Return explicit mappings via host ITT scope -> H2D flow -> device ID."""
+    scopes = []
+    for span in itt_spans(events, trace["worker_pid"]):
+        kind, dimension, m, seq = span["groups"]
         if dimension == "B" and kind != "draft":
             continue
         if kind == "verify" and int(m) != 2:
             continue  # M=1/prefill is not an M=2 verify census.
+        index = span["index"]
         scopes.append({"id": f"{trace['id']}:scope:{index}", "rank": trace["rank"],
                        "kind": kind, "m": int(m) if dimension == "M" else None,
                        "batch_size": int(m) if dimension == "B" else None, "sequence": int(seq),
-                       "host_flow_sources": 0, "unresolved_flow_sources": 0,
-                       "event_refs": [], "evidence": f"ITT event {trace['id']}:{index}; same-thread H2D flow id -> gpu_op args.id",
-                       "tid": event.get("tid"), "start": start, "end": start + duration})
+                       "evidence": f"ITT event {trace['id']}:{index}; same-thread H2D flow id -> gpu_op args.id",
+                       "tid": span["tid"], "start": span["start"], "end": span["end"]})
+    return correlate_scopes(events, trace["worker_pid"], devices, scopes)
+
+
+def correlate_scopes(events, worker_pid, devices, scopes):
+    """Join by correlation IDs, never asynchronous host/device containment."""
+    scopes = [dict(scope, host_flow_sources=0, unresolved_flow_sources=0, event_refs=[])
+              for scope in scopes]
     sources = defaultdict(list)
     for event in events:
         if event.get("ph") == "s" and str(event.get("cat", "")).startswith("Flow_H2D_"):
-            if event.get("pid") == trace["worker_pid"]:
+            if event.get("pid") == worker_pid:
                 sources[str(event.get("id"))].append(event)
     device_ids = Counter(str(r["correlation_id"]) for r in devices if r["correlation_id"] is not None)
     for source_list in sources.values():
@@ -220,7 +254,10 @@ def analyze(manifest_path):
         raise ValueError("wrong manifest schema")
     if manifest.get("arm") not in {"eager-census", "graph-census", "graph-reference"}:
         raise ValueError("unknown arm")
+    lifecycle = None
     if "identity" in manifest or "lifecycle" in manifest:
+        if "identity" not in manifest or "lifecycle" not in manifest:
+            raise ValueError("identity and lifecycle must be supplied together")
         for key in ("identity", "lifecycle"):
             record = manifest[key]
             path = manifest_path.parent / record["path"]
@@ -228,8 +265,12 @@ def analyze(manifest_path):
                 raise ValueError(f"{key} hash mismatch")
         identity = json.loads((manifest_path.parent / manifest["identity"]["path"]).read_text())
         lifecycle = json.loads((manifest_path.parent / manifest["lifecycle"]["path"]).read_text())
+        client = lifecycle.get("client")
         if (identity.get("arm") != manifest["arm"] or lifecycle.get("identity_sha256") != manifest["identity"]["sha256"]
-                or lifecycle.get("clean_exit") is not True or lifecycle.get("gap_complete") is not True):
+                or lifecycle.get("all_owners_gone") is not True or lifecycle.get("gap_complete") is not True
+                or type(lifecycle.get("gpu_fault_lines")) is not int or lifecycle["gpu_fault_lines"] != 0
+                or not isinstance(client, dict) or type(client.get("returncode")) is not int
+                or client["returncode"] != 0 or lifecycle.get("passed") is not True):
             raise ValueError("manifest arm/identity/lifecycle mismatch")
     expected = manifest.get("expected_ranks", [0, 1, 2, 3])
     if not expected or len(set(expected)) != len(expected) or any(type(r) is not int or r < 0 for r in expected):
@@ -264,12 +305,7 @@ def analyze(manifest_path):
         digest = sha(path)
         if digest != trace.get("sha256"):
             raise ValueError(f"trace hash mismatch: {trace['id']}")
-        payload = json.loads(path.read_text())
-        events = payload.get("traceEvents") if isinstance(payload, dict) else payload
-        if not isinstance(events, list) or any(not isinstance(e, dict) for e in events):
-            raise ValueError("not a Chrome trace event array")
-        if isinstance(payload, dict) and payload.get("timestampUnit", "us") != "us":
-            raise ValueError("only Chrome microsecond timestamps supported")
+        events = chrome_events(path)
         devices = []
         for index, event in enumerate(events):
             if event.get("ph") != "X" or event.get("cat") != "gpu_op":
@@ -289,6 +325,8 @@ def analyze(manifest_path):
             step_maps.extend(auto_steps(events, trace, devices))
         trace_receipts.append({"id": trace["id"], "path": str(path), "sha256": digest,
                                "bytes": path.stat().st_size, "rank": rank, "worker_pid": pid,
+                               "verify_itt_markers": sum(s["groups"][:3] == ("verify", "M", "2")
+                                                         for s in itt_spans(events, pid)),
                                "rank_evidence": trace["rank_evidence"], "rank_evidence_sha256": trace["rank_evidence_sha256"], "device_events": len(devices)})
     # Explicit entries replace auto membership for those events, but never each other.
     explicit = manifest.get("steps", [])
@@ -334,15 +372,24 @@ def analyze(manifest_path):
         kinds = Counter(s["kind"] for s in steps if s["rank"] == rank and s["device_event_count"])
         rank_rows.append({"rank": rank, **interval_stats(selected), "assigned_kernels": len(assigned),
                           "unassigned_kernels": len(selected) - len(assigned),
+                          "verify_itt_markers": sum(t["verify_itt_markers"] for t in trace_receipts if t["rank"] == rank),
                           "verify_steps": kinds["verify"], "draft_steps": kinds["draft"],
                           "family_classified_kernels": sum(r["family"] != "unknown" for r in selected),
                           "families": grouped(selected, "family")})
     issues = []
     requested_complete = bool(steps) and not manifest.get("graph_opaque")
+    capture = lifecycle.get("trace_capture") if lifecycle is not None else None
+    if (manifest["arm"] == "graph-census" and lifecycle is not None
+            and (not isinstance(capture, dict) or capture.get("valid_for_graph_attribution") is not True)):
+        issues.append("tracing was not acknowledged before graph capture: graph attribution invalid")
+        requested_complete = False
     for step in steps:
         if not step["device_event_count"] or step.get("unresolved_flow_sources", 0):
             requested_complete = False
             issues.append(f"{step['id']}: empty or unresolved requested-scope flow coverage")
+        if step["kind"] == "verify" and not step["kernel_count"]:
+            requested_complete = False
+            issues.append(f"{step['id']}: verify scope has no timestamped kernels")
     unbound_device_traces = sum(t.get("device_events", 0) for t in manifest.get("excluded_traces", []))
     if unbound_device_traces:
         issues.append(f"{unbound_device_traces} device events in unbound excluded traces")
@@ -350,6 +397,9 @@ def analyze(manifest_path):
     if manifest.get("graph_opaque"):
         issues.append("graph replay is opaque: no graph-internal attribution claim")
     for row in rank_rows:
+        if not row["verify_itt_markers"]:
+            issues.append(f"rank {row['rank']}: no ITT verify markers")
+            requested_complete = False
         if not row["device_event_count"]:
             issues.append(f"rank {row['rank']}: no device timestamps")
         if not row["verify_steps"] or not row["draft_steps"]:
@@ -373,8 +423,11 @@ def analyze(manifest_path):
             sink.pop(key)
     return {"schema": "a367-device-census-v1", "diagnostic_only": True, "speed_claim": False,
             "arm": manifest["arm"], "timing_unit": "us", "manifest_sha256": sha(manifest_path),
+            "census_valid": lifecycle is not None and requested_complete and set(expected) == {0, 1, 2, 3},
             "segmentation_complete": not issues, "requested_scope_flow_coverage_complete": requested_complete,
             "whole_trace_assignment_complete": bool(rows) and not unbound_device_traces and all(r["step_id"] for r in rows),
+            "lifecycle_evidence_present": lifecycle is not None,
+            "expected_tracer_exit_crash": lifecycle.get("expected_tracer_exit_crash") if lifecycle else None,
             "excluded_scopes": excluded_scopes, "issues": issues, "traces": trace_receipts,
             "rank_summaries": rank_rows, "excluded_traces": manifest.get("excluded_traces", []), "steps": steps, "timeline": sorted(rows, key=lambda r: (r["rank"], r["ts_us"], r["event_ref"])),
             "ranked_time_sinks": sinks, "ranked_small_kernel_clusters": candidate_clusters,
@@ -384,6 +437,7 @@ def analyze(manifest_path):
 
 def markdown(result):
     lines = ["# A367 diagnostic device census", "", f"Arm: `{result['arm']}`. Diagnostic only; no speed claim.", "",
+             f"Census valid: **{str(result['census_valid']).lower()}**. Startup kernels may remain unassigned; validity requires four ranks, ITT verify kernels, request flow coverage and lifecycle receipts.", "",
              f"Segmentation complete: **{str(result['segmentation_complete']).lower()}**. Requested-scope flow coverage complete: **{str(result['requested_scope_flow_coverage_complete']).lower()}**.", "", result["interpretation"], "",
              "| Rank | Device events | Unassigned | Verify steps | Draft steps | Sum device µs |", "| --- | ---: | ---: | ---: | ---: | ---: |"]
     for row in result["rank_summaries"]:
@@ -417,7 +471,7 @@ def main():
         parser.error("refusing to overwrite census output")
     targets[0].write_text(json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n")
     targets[1].write_text(markdown(result))
-    print(json.dumps({"segmentation_complete": result["segmentation_complete"], "issues": result["issues"], "out_dir": str(args.out_dir)}))
+    print(json.dumps({"census_valid": result["census_valid"], "segmentation_complete": result["segmentation_complete"], "issues": result["issues"], "out_dir": str(args.out_dir)}))
     return 0  # Missing coverage is a diagnostic finding, recorded prominently.
 
 

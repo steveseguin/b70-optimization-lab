@@ -1,0 +1,226 @@
+{
+  "schema": "a367-census-cpu-build-v1",
+  "native_executed": false,
+  "owner_approval_recorded": false,
+  "nice": 19,
+  "test_environment": {
+    "OMP_NUM_THREADS": "2"
+  },
+  "affinity": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "suites": [
+    {
+      "suite": "census",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/a367-census",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "tests": 195,
+      "returncode": 0,
+      "passed": true,
+      "log": "census.log",
+      "log_sha256": "a7f9dbaad0efb23c8f5494b7d621b79b83ec39bbbe7cdf58066ab7da2f48e7e8"
+    },
+    {
+      "suite": "replay",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/a367-replay",
+        "-p",
+        "test_replay.py",
+        "-v"
+      ],
+      "tests": 84,
+      "returncode": 0,
+      "passed": true,
+      "log": "replay.log",
+      "log_sha256": "f0ef197eb714a663ea341bf86c729580837e530858ad06aada2941bf5b1b2ecd"
+    },
+    {
+      "suite": "calibration",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate",
+        "-p",
+        "test_calibrate.py",
+        "-v"
+      ],
+      "tests": 75,
+      "returncode": 0,
+      "passed": true,
+      "log": "calibration.log",
+      "log_sha256": "7a0194a46ae2cbf5371041f8074df34b2ef3f68d299891a35be73a0e75cb9bff"
+    },
+    {
+      "suite": "driver",
+      "command": [
+        "/home/steve/.venvs/vllm-xpu/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/driver",
+        "-p",
+        "test_driver.py",
+        "-v"
+      ],
+      "tests": 59,
+      "returncode": 0,
+      "passed": true,
+      "log": "driver.log",
+      "log_sha256": "5ccb93a4c8908fee06c20ef25175a449470455d657dba77944a30c69bfe43f25"
+    },
+    {
+      "suite": "payload",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/scripts",
+        "-p",
+        "test_verify_flash_next_a367_launch_payload.py",
+        "-v"
+      ],
+      "tests": 6,
+      "returncode": 0,
+      "passed": true,
+      "log": "payload.log",
+      "log_sha256": "6e670a98276a480965a3efe817803231c1cac17cb4202a3aa3ca5c885c097bd6"
+    },
+    {
+      "suite": "tree",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/scripts",
+        "-p",
+        "test_verify_qwen38_flash_next_fp8_tree.py",
+        "-v"
+      ],
+      "tests": 9,
+      "returncode": 0,
+      "passed": true,
+      "log": "tree.log",
+      "log_sha256": "60fe8a96b6a6287cced6c6d5a632865b5d7a2422057d92617eeae11e74bcb3c3"
+    },
+    {
+      "suite": "feasibility",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/a367-census/feasibility",
+        "-p",
+        "test_cpu.py",
+        "-v"
+      ],
+      "tests": 15,
+      "returncode": 0,
+      "passed": true,
+      "log": "feasibility.log",
+      "log_sha256": "6c0ea92a345a8702d34e7c81ca6ea0056328d886b7a64538c702075e892226b6"
+    }
+  ],
+  "seals": [
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet4-prep/a367-census/seal.json",
+      "sha256": "f9ba14c2e697b41efebb537bea9462d8551a1f12fa2ab273f98243b49bd1bc4b",
+      "files": 77,
+      "mismatches": []
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet4-prep/a367-replay/seal.json",
+      "sha256": "bb473f8e923f63b0ef1f1b7d57727063cb941a3c6cf492ecbf9e26e557a1203b",
+      "files": 36,
+      "mismatches": []
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate/seal.json",
+      "sha256": "b75d9f86ace2bbeaa7cde7b94a91a15230ed1676823446c238e25edf502514b0",
+      "files": 16,
+      "mismatches": []
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet4-prep/driver/driver-seal.json",
+      "sha256": "e29fe31176a529879642e0e8bfea45e2266359304374d7d770c18e9129463c7a",
+      "files": 9,
+      "mismatches": []
+    }
+  ],
+  "plans": [
+    {
+      "arm": "graph-reference",
+      "path": "graph-reference-plan.json",
+      "sha256": "3fd2aa9554135289ec3b3269b5011f521b287e1804236e01f6ef2713965f2a91"
+    },
+    {
+      "arm": "graph-census",
+      "path": "graph-census-plan.json",
+      "sha256": "4c7f07f36b4e43712c503c340eea53bc1abcf52a5f8d8cdbff0c261a0309ebbd"
+    },
+    {
+      "arm": "eager-census",
+      "path": "eager-census-plan.json",
+      "sha256": "496d96b3a9e22a1523d4612d35d78e30776b3592a6c792d5afdcff052f3ef596"
+    }
+  ],
+  "tests": 443,
+  "seal_mismatches": 0,
+  "preregistration_sha256": "18a68e09d5c0066319d51caa21aaa07b558a7d53889955655366b1b7fa9eb085",
+  "passed": true,
+  "syntax_checks": true,
+  "unitrace_smoke": "Not run: even ITT-only tracer initialization calls zeInit(GPU_ONLY) in pinned source; static hashes only. No device access authorized."
+}

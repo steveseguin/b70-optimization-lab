@@ -1,102 +1,83 @@
 # A367 diagnostic census: tracing feasibility
 
-CPU review, 2026-10-16. No GPU process, model import, device probe or tracer
-experiment was run for this review. These are feasibility findings and planning
-estimates, not a measured census or a speed claim.
+CPU reseal, October 17, 2026. This reseal ran no model, device probe or tracer
+target. The coordinator's device evidence changes the October 16 plan.
 
-## Verdict and prior evidence
+## Device evidence and chosen arm
 
-Per-kernel timestamps inside A367 `FULL_DECODE_ONLY` replay are **unproven on
-this stack**. It would be incorrect to describe unitrace as categorically graph
-blind: its current checked-in source contains graph capture/replay hooks. It
-would also be incorrect to call a full-model eager census known-safe. The same
-tracer has failed on four-rank collective workloads in both cases.
+See [microtest results](../../../../../notes/2026-10-16-flash-next-trace-feasibility-microtests.md#device-results-2026-10-17-coordinator)
+and `data/2026-10-17-flash-next-trace-feasibility/20261017T001502Z/`.
 
-The selected executable is
-`/home/steve/src/pti-gpu/build-unitrace/unitrace`, SHA256
-`5aaca1f418a212a1d298cac27afb6c471bf1fcf47a1622e0c20d1a2cf43fc85a`.
-PTI source HEAD is `a5bab309f4ffdd78bd127035c46f5f75371160f8`; the only
-untracked source-tree entry observed was `build-unitrace/`. This binary identity
-matches the prior-lane pin. A source capability is not proof that the retained
-binary and deployed driver exercise it successfully.
+- Active at capture: 50/50 replays had 8/8 timestamped kernels.
+- Paused at capture and resumed before replay: zero replay kernels, while eager
+  kernels remained visible. Resume after readiness is therefore invalid.
+- Paused four-rank oneCCL init took about 1 ms and its first 4 KB all-reduce about
+  1 s, like control. The old Laguna init stall did not reproduce with these flags.
+- All traced ranks completed work then segfaulted at exit (`ucs_handle_error`,
+  address 0x40); control exited cleanly. Zero GPU fault lines were reported.
+  The raw analyzer's older aggregate "partial/incomplete" verdict reflects its
+  requirement for clean exits and agreement between both capture variants;
+  the individual device observations above are the coordinator's interpretation.
 
-Repository evidence:
+Run **graph-census only next**. Eager remains secondary with separate admission;
+graph-reference is optional because replay c supplies full-suite untraced timing.
+Full-model overhead, memory and four-rank step coverage remain unmeasured.
+Historical Laguna/DeepSeek stalls are not erased, but they do not override the
+matched new microtests. Never reuse their failed host-timing/submission flag mix.
 
-- `experiments/laguna-s-2.1-xpu-b70/notes/2026-07-24-m8-replay-trace-retry-terminal-pti-failure.md`,
-  Result and Disposition: eager initialization completed, then the first request
-  with `--host-timing --device-timing --kernel-submission` exceeded the five-minute
-  RPC timeout and repeatedly reported `Unable to query event for timestamps`.
-  No complete output existed and **the graph arm never ran**. Do not repeat that
-  unchanged instrumentation combination.
-- `experiments/laguna-s-2.1-xpu-b70/notes/2026-08-05-KEY-the-serving-path-is-half-the-decode-step.md:244-282`:
-  a start-paused device/submission trace stalled oneCCL initialization for
-  15 minutes, before readiness or resume, and produced only 292 bytes. The
-  first-replay resume hook was reached in a separate acknowledgement-mismatch
-  attempt. Paused collection is therefore not zero-cost instrumentation.
-- `experiments/deepseek-v4-flash-reap-xpu-b70/notes/2026-07-20-nospec-unitrace-attribution-crosscheck.md`,
-  Tracer and bounded fallback: device timestamp mode serialized progress and
-  killed a worker after about 43 steps. Host-only tracing succeeded, but did
-  **not** produce a device decomposition. The configured graph path was
-  PIECEWISE, not the A367 full-decode path.
-- `notes/2026-08-10-vdr2-unitrace-profile.md`: filtered device timing did expose
-  921 complete decode cycles on another runtime, but the controller missed an
-  exact progress marker, and tracer teardown failed. This supports bounded,
-  relative collection windows and strict lifecycle reporting, not transfer of
-  that lane's graph visibility or timings to A367.
-- `option4-decoder/tools/summarize_unitrace.py` counts host Level Zero submit
-  boundaries from Chrome events. A single graph-submit event demonstrates
-  submission compression, not visibility into its device kernels.
+## Pinned ITT build
 
-Local PTI source evidence (read-only):
-`tools/unitrace/src/levelzero/ze_collector.h:4528-4537` has
-`ShouldCaptureAppend`, which retains graph-capture commands even while paused;
-`:5821-5855` handles `zeCommandListImmediateAppendCommandListsExp`. These hooks
-make a conditional graph-trace feasibility arm reasonable, but do not erase the
-full-model failures above.
+The old `build-unitrace` has `BUILD_WITH_ITT=0` and rejects
+`--chrome-itt-logging`. Use `/home/steve/src/pti-gpu/build-unitrace-itt/`:
+same PTI source `a5bab309f4ffdd78bd127035c46f5f75371160f8`, same options plus
+`BUILD_WITH_ITT=1`. Preregistration pins both files:
 
-## Preregistered arms and limits
+- `unitrace`: `def24ca596afcb8bca952bb47cf5b1a35496656ab906a8aa531cdb26c1f6c2c7`
+- `libunitrace_tool.so`: `114242e35621656bca60d3fa44d447ac0b1ba75f18505dc341b0a6772381da68`
 
-Each arm requires its own explicit admission and fresh lifecycle. There is no
-automatic retry or eager fallback after a failure.
+`ldd` on both files found no further DSO from that build directory; the receipt
+is `data/2026-10-17-flash-next-a367-census-reseal/tracer-identity.json`.
+No tracer target, including `/bin/true`, is a CPU-only test: collector startup
+calls device initialization. Only static inspection and `--plan` ran here.
 
-1. **Graph reference:** certified `FULL_DECODE_ONLY`, no tracing. The fixed short
-   requests provide diagnostic wall timing and output-token comparison only.
-2. **Conditional graph trace:** unchanged graph/arithmetic path, bounded paused
-   unitrace collection during the same request window. Success requires four
-   rank-bound traces, actual device kernel timestamps, and defensible step
-   correlation. Empty or submit-only traces mean visibility is unresolved; do
-   not fabricate a graph census from them.
-3. **Conditional eager census:** graph disabled, the same arithmetic selectors,
-   model and client. Device timestamps are explicitly **eager**, not a graph
-   performance decomposition. This also remains a feasibility experiment in
-   light of the eager Laguna failure. Output differences are findings.
+## Window, storage and exit contract
 
-The machine-control implementation and which arms are executable are defined
-by `preregistration.json` and the supervisor. Do not silently substitute a
-host-only trace for the requested device census. Do not enable torch.profiler,
-GPU events, CCL profiling, hardware metric sampling, or xpu-smi.
+Wrap only the server. Keep `--start-paused --session <unique>` plus
+`--chrome-kernel-logging --chrome-itt-logging --verbose --pid` and
+`--chrome-event-buffer-size 4096`. The supervisor thread watches `server.log`.
+After four distinct rank `Model loading took` lines, resume exactly once and
+record the acknowledgement before any `Capturing CUDA graphs` line. Stay active
+through profiling, KV initialization, capture, readiness, 20-second plateau,
+30-second sleep and requests. Enable request ITT scopes just for the client;
+pause right after it finishes. Failed or late resume marks graph attribution
+invalid without skipping normal requests/teardown, and never triggers a retry.
+For races the observer conservatively treats capture text in the immediate
+post-acknowledgement log read as late.
 
-## Window control and output
+Result directory: `/home/steve/.cache/a367-trace/<run-name>/`, local ext4,
+outside scratch. Require 8 GiB free, soft-stop at 6 GiB of local trace files.
+Local trace originals survive scratch cleanup. The coordinator copies them to
+RAID after the full lifecycle, verifies every copied hash and runs analysis.
+The timed sampler only stores rows in memory and queues them; a separate writer
+appends to local scratch. After lifecycle its complete file must equal the rows,
+then it is copied to output/samples.jsonl and hashed before scratch deletion.
+Live-file checks are on a separate thread, never on the memory sampler.
 
-The Laguna reference is
-`experiments/laguna-s-2.1-xpu-b70/tools/run_laguna_m8_replay_trace.sh` and
-`profile_laguna_m8_replay_trace.py`. Wrap only the server executable, not the
-lifecycle supervisor. Pass `--start-paused --session A367Census<alphanumeric>`;
-resume with `unitrace --resume <session>` after readiness, plateau and the
-30-second sleep; pause in a finally block after the last census request. Local
-`tools/unitrace/README.md:894-928` specifies that these controls affect every
-child process in the named session. Record return codes and acknowledgements.
-A control child may add an `[INFO] Log is stored in ...` line; do not require
-that stderr consists of a single acknowledgement line. The VDR2 note also
-shows why an exact progress-log value is an unsafe stop trigger.
+Do not require server return code zero for traced runs. Record a nonzero exit
+or segfault as `expected_tracer_exit_crash` with the microtest evidence path.
+Require all session owners gone, completed requests, zero GPU fault lines
+through the full 305-second watch, and complete four-rank ITT verify/kernel
+evidence. No kill/escalation, restart or retry. Teardown overrun remains a failed
+receipt and waits for owner recovery. `census_valid` is the final offline gate;
+startup kernels outside request markers may leave whole-trace segmentation
+incomplete without invalidating fully correlated request scopes.
 
-Use `--chrome-kernel-logging --chrome-itt-logging --verbose --pid` with finite
-`--chrome-event-buffer-size 4096` and `--result-dir` under the RAID run path.
-Kernel logging includes host/device flow correlation; device-only logging does
-not provide enough host correlation for reliable asynchronous step ownership.
-Do not add the historically failing host-timing/kernel-submission combination.
-Local README lines 486-530 describe per-process `chrome_trace.json` output;
-all artifacts and helper control logs must stay under the run directory.
+The parser has been checked against a copy of the actual `graph-traced` Chrome
+file: `PyTorch::...` ITT cpu_op X spans, H2D flow IDs and timestamped gpu_op
+kernels. The 9,810-byte fixture preserves original event objects and indices;
+the full 4,127,634-byte source hash and fixture provenance are in `fixtures/`.
+The full file yielded 100 ITT iterations, eight flow-correlated kernels each,
+zero unresolved sources. No GPU timestamp overlap is used to infer ownership.
 
 ## Step attribution contract
 
@@ -169,7 +150,7 @@ rounding, stable QSA order, two one-row collectives, and state/rollback ordering
 
 ## Planned size and host-memory risk
 
-These are deliberately conservative **unmeasured planning estimates**:
+These are **unmeasured planning estimates**, originally request-only. The expanded active window includes startup/capture; the old 0.2–2 GiB range is not a bound:
 
 - For roughly 60-100 verify steps, four ranks and up to roughly 1,000 target,
   draft, copy and supporting launches per cycle/rank, expect about 240,000-
@@ -192,7 +173,7 @@ These are deliberately conservative **unmeasured planning estimates**:
   not waive existing live trips.
 - Keep the whole planned write envelope below **10 GiB**, with raw traces
   budgeted at **2 GiB** plus logs, manifests and analysis. Monitor actual write
-  growth through an independent disk watchdog (8 GiB soft stop, below the
+  growth through an independent disk watchdog (6 GiB local-trace soft stop, below the
   10 GiB planned budget); abort rather than
   truncate raw traces into a misleading complete census. Bound each parser
   input and process ranks one at a time after server teardown so Python JSON

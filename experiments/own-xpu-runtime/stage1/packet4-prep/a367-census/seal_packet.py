@@ -17,6 +17,9 @@ def main():
     files = dict(inherited)
     members = [HERE.parent / 'a367-replay/seal.json']
     members += [p for p in HERE.iterdir() if p.is_file() and p.name not in {'seal.json', 'owner-approval.pending.json'}]
+    members += [p for p in (HERE / 'fixtures').rglob('*') if p.is_file()]
+    members += [REPO / 'notes/2026-10-16-flash-next-trace-feasibility-microtests.md']
+    members += [p for p in (REPO / 'data/2026-10-17-flash-next-trace-feasibility').rglob('*') if p.is_file()]
     members += [REPO / 'notes' / name for name in (
         '2026-10-16-flash-next-a367-record-replay.md',
         '2026-10-16-flash-next-a367-calibration-attempts.md',

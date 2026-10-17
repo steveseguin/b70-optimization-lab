@@ -4,7 +4,7 @@ cd /home/steve/llm-optimizations
 : "${FN_ARM:?select graph-reference, graph-census or eager-census}"
 FN_PACKET="$PWD/experiments/own-xpu-runtime/stage1/packet4-prep/a367-census"
 FN_STAMP=$(date -u +%Y%m%dT%H%M%SZ)
-FN_RECEIPTS="$PWD/data/2026-10-16-flash-next-a367-census-build/window-$FN_STAMP"
+FN_RECEIPTS="$PWD/data/2026-10-17-flash-next-a367-census-reseal/window-$FN_STAMP"
 FN_OUTPUT="/mnt/raid-models/bench-results/a367c-$FN_STAMP"
 FN_UNIT="fn-a367c-$FN_STAMP"
 FN_PAYLOAD="$FN_RECEIPTS/payload.json"

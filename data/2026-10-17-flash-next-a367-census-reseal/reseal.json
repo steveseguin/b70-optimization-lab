@@ -1,0 +1,53 @@
+{
+  "schema": "a367-census-cpu-reseal.v1",
+  "date": "2026-10-17",
+  "native_executed": false,
+  "owner_approval_recorded": false,
+  "device_ownership_changed": false,
+  "seal_sha256": "f9ba14c2e697b41efebb537bea9462d8551a1f12fa2ab273f98243b49bd1bc4b",
+  "preregistration_sha256": "18a68e09d5c0066319d51caa21aaa07b558a7d53889955655366b1b7fa9eb085",
+  "owner_approval_sentence": "I authorize one A367 diagnostic census on steve-b70s with a census-only MemAvailable start floor of 114840824 KiB, a 0.5-second watchdog and the 12000000 KiB live reserve, under preregistration SHA256 18a68e09d5c0066319d51caa21aaa07b558a7d53889955655366b1b7fa9eb085 and seal SHA256 f9ba14c2e697b41efebb537bea9462d8551a1f12fa2ab273f98243b49bd1bc4b. Tracing is diagnostic and makes no speed claim. This accepts the unmeasured tracer and generation-memory risk, does not lower the packet-4 fixture floor, and does not resolve the halt or authorize another launch.",
+  "tracer_pins": {
+    "/home/steve/src/pti-gpu/build-unitrace-itt/unitrace": "def24ca596afcb8bca952bb47cf5b1a35496656ab906a8aa531cdb26c1f6c2c7",
+    "/home/steve/src/pti-gpu/build-unitrace-itt/libunitrace_tool.so": "114242e35621656bca60d3fa44d447ac0b1ba75f18505dc341b0a6772381da68"
+  },
+  "test_counts": {
+    "census": 195,
+    "replay": 84,
+    "calibration": 75,
+    "driver": 59,
+    "payload": 6,
+    "tree": 9,
+    "feasibility": 15
+  },
+  "total_tests": 443,
+  "seal_mismatches": 0,
+  "protected_directories_unchanged": [
+    "experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate",
+    "experiments/own-xpu-runtime/stage1/packet4-prep/a367-replay",
+    "experiments/own-xpu-runtime/stage1/packet4-prep/driver"
+  ],
+  "next_arm": "graph-census",
+  "other_arms": {
+    "eager-census": "secondary",
+    "graph-reference": "optional; replay c already supplies timing"
+  },
+  "exact_coordinator_sequence": "experiments/own-xpu-runtime/stage1/packet4-prep/a367-census/LAUNCH-RUNBOOK.md",
+  "scope": "CPU reseal only. No execute, device probe, model load, weight read, sudo, services or host-setting changes.",
+  "receipts": {
+    "calibration.log": "7a0194a46ae2cbf5371041f8074df34b2ef3f68d299891a35be73a0e75cb9bff",
+    "census.log": "a7f9dbaad0efb23c8f5494b7d621b79b83ec39bbbe7cdf58066ab7da2f48e7e8",
+    "cpu-tests.json": "71aa1755190f992aa757fba7bd1d305dd1717c678a5b1c136ebb603e36875b70",
+    "driver.log": "5ccb93a4c8908fee06c20ef25175a449470455d657dba77944a30c69bfe43f25",
+    "eager-census-plan.json": "496d96b3a9e22a1523d4612d35d78e30776b3592a6c792d5afdcff052f3ef596",
+    "feasibility.log": "6c0ea92a345a8702d34e7c81ca6ea0056328d886b7a64538c702075e892226b6",
+    "graph-census-plan.json": "4c7f07f36b4e43712c503c340eea53bc1abcf52a5f8d8cdbff0c261a0309ebbd",
+    "graph-reference-plan.json": "3fd2aa9554135289ec3b3269b5011f521b287e1804236e01f6ef2713965f2a91",
+    "independent-review.json": "b7504f5aebbcec7319ccfc9961cb44703bfd35a8bc82b10c45157a4104473cfd",
+    "payload.log": "6e670a98276a480965a3efe817803231c1cac17cb4202a3aa3ca5c885c097bd6",
+    "real-trace-parser.json": "3888b3e75c60339e62631578af8a46b74b5485bfdf5b374d465207cdfccd27d4",
+    "replay.log": "f0ef197eb714a663ea341bf86c729580837e530858ad06aada2941bf5b1b2ecd",
+    "tracer-identity.json": "efb652356cdf606c089452281b2c73f8a2b4c4e08f882963eab651b0e6b36543",
+    "tree.log": "60fe8a96b6a6287cced6c6d5a632865b5d7a2422057d92617eeae11e74bcb3c3"
+  }
+}

@@ -1,6 +1,6 @@
 # A367 M=2 diagnostic census packet
 
-CPU build only, October 16, 2026. No model, GPU process, health probe or native
+CPU reseal, October 17, 2026; device evidence from the coordinator is incorporated. No model, GPU process, health probe or native
 supervisor execution ran. The certified 46.854250 tok/s result is unchanged.
 This packet copies the replay lifecycle at `7aca7df2a` (seal `bb473f8e`). The
 replay, calibration, driver and certified source export remain untouched.
@@ -24,14 +24,16 @@ The owner-window binds the selected arm as well as preregistration and seal.
 | `graph-census` | unchanged | conditional device/ITT trace | Graph visibility and correlation feasibility experiment |
 | `eager-census` | disabled | conditional device/ITT trace | Eager census only; times do not describe graph replay |
 
-Graph kernel visibility is **unproven**, not proven impossible. PTI has graph
-capture/replay hooks, but previous Laguna and DeepSeek full-model traces stalled
-or killed workers; even paused tracing had startup overhead. Both trace arms
-are CPU-built and device-unqualified. The graph reference is the first arm;
-review it before admitting a trace arm. Empty, submit-only or incompletely
-correlated traces remain incomplete findings. See [the evidence and sizing
-analysis](TRACING-FEASIBILITY.md). No torch.profiler, device-event timing or
-xpu-smi is used.
+Run **only `graph-census` next**. The eager arm remains secondary and separately
+admitted. The untraced graph reference is optional: replay c already provides
+full-suite untraced timing. No automatic fallback or retry.
+
+The ITT microtest saw all eight kernels in all 50 graph replays when tracing
+was active at capture, and zero replay kernels when capture was paused. Paused
+tracing did not stall four-rank oneCCL initialization. The traced ranks finished
+their work then segfaulted at exit; the untraced control exited cleanly, with
+zero GPU faults. Full-model four-rank attribution remains to be measured.
+See [device evidence and limits](TRACING-FEASIBILITY.md).
 
 ## Memory and safety
 
@@ -41,7 +43,12 @@ the latest completed scan with its own **start** timestamp; a blocked scan canno
 refresh old attribution. Plateau rows require all four distinct rank PIDs/RSS,
 cgroup current and attribution no older than two seconds. The cmdline-once cache,
 ESRCH handling, 1.5-second gap trip and 12,000,000 KiB live reserve remain.
-RAID writes and live checks can still stall; a missed cadence still trips.
+The timed sampler performs no output-mount file I/O. Rows stay in memory; a
+separate writer appends to ext4 scratch. Live file checks run in a separate
+thread. After all owners and clients exit and the watch finishes, the writer
+drains; its file is checked against the rows, copied to output/samples.jsonl,
+and hashed in samples-persistence.json before scratch removal. A missed cadence
+still trips; blocked live-file checks cannot block memory reads.
 
 The proposed start floor is **114,840,824 KiB**, default-refused until the exact
 new owner sentence is recorded. Replay measured 104,784,640 KiB generation need
@@ -51,13 +58,15 @@ roughly 0.8 GB of that observed margin. This is not an upper bound. A start at
 exactly the proposed floor cannot cover even the measured replay generation
 need plus reserve; it can trip. Approval accepts risk, not an assurance of fit.
 
-Expected raw trace size is **0.2–2 GiB**, unmeasured, under a whole-run **10 GiB
-planned-write allowance**. PTI uses 4,096-record buffers instead of unlimited
-buffers. An independent metadata thread requests one graceful stop at 8 GiB,
-leaving 2 GiB planned for drain. Buffered growth/teardown can exceed that soft
-margin; this is not a hard filesystem quota. All traces/logs are on RAID;
-compiler/cache/tmp/RPC scratch stays on local ext4. The unchanged free-space
-reserve is 60 GiB plus the planned 10 GiB writes; local scratch requires 4 GiB.
+The old **0.2–2 GiB** request-only trace estimate is not a bound for the expanded
+capture-to-request window. Keep the **10 GiB** planned-write allowance on RAID
+and its 60 GiB reserve. Traces go to local ext4 at
+`/home/steve/.cache/a367-trace/<run-name>/`, outside deleted scratch; admission
+requires **8 GiB free** there. A separate metadata watcher measures that local
+trace directory and requests one graceful stop at **6 GiB**. Drain may exceed
+the soft stop; it is not a quota. Copy traces to RAID after the lifecycle using
+the runbook, hash the copy, and retain the local originals. Scratch still
+requires 4 GiB. The tracer uses finite 4,096-event buffers.
 
 Server: nice 0, all online CPUs, OMP=1. Client: nice 0, CPUs 4-15,20-31. Same
 source/stage/model checks, current owner/health/payload/boot gates, one SIGINT,
@@ -68,9 +77,16 @@ The one-hour window can expire before worst-case budgets complete.
 ## Tracing and analysis
 
 Unitrace wraps only the server, starts paused and follows spawned processes.
-After the delay the supervisor resumes its unique named session, checks the
-acknowledgement, then enables host ITT scopes. It disables scopes and pauses in
-a finally block. Graph markers wrap actual replay calls, not only Python model
+A supervisor thread watches `server.log` for `Model loading took` from all four
+distinct ranks. It resumes exactly once, checks and records the acknowledgement,
+and requires this before any `Capturing CUDA graphs` line. Tracing stays active
+through profiling, KV initialization, capture, readiness, plateau, the 30-second
+sleep and both requests. Failed or late resume marks graph attribution invalid;
+the run still reaches normal teardown, with no retry. Census ITT scopes become
+active for the requests; pause immediately after the client finishes (and in
+failure cleanup). The observer conservatively invalidates capture text seen
+through its immediate post-acknowledgement read.
+Graph markers wrap actual replay calls, not only Python model
 forward. The marker code reads tensor metadata only; it adds no tensor operation,
 CPU value read, synchronization or arithmetic replacement. ITT emission and
 actual device correlation remain unverified until a separately admitted run.
@@ -96,3 +112,14 @@ ordering, marker transparency, synthetic correlation/overlap/unknowns and trace
 mapping. Seal pins code, tests, docs, workload/record, design audit and the
 unchanged replay dependencies. Pending approval and build receipts stay outside
 the seal to avoid circular hashes. No owner approval is recorded by this build.
+
+Traced nonzero server exit or segfault is recorded as `expected_tracer_exit_crash`
+with the microtest evidence path. `clean_exit` still records whether the API
+return code was zero; it is not the traced census gate. Every owner must be gone,
+the full 305-second watch must have zero GPU fault lines, and both requests must
+finish. No kill escalation or retry; a teardown overrun keeps its receipt and
+waits. `census_valid` additionally requires four complete rank traces with ITT
+verify markers, timestamped verify kernels and flow attribution. Startup kernels
+outside request markers may remain unassigned; whole-trace segmentation and
+census validity are distinct fields. The real ITT fixture and its original-event
+indices are retained in `fixtures/`.
