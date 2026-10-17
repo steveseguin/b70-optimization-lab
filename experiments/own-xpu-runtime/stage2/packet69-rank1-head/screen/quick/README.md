@@ -1,5 +1,12 @@
 # Packet69 quick token screens
 
+Revision 3 fixes the wide-head expanded-row stride and reseals all seven views.
+Use the fresh `jobs-A-r3.txt` and `jobs-B-r3.txt` files below. Both retain the
+fixed eight-screen order, including `combined`; old evidence stays untouched.
+The queue proposals are `ops/lane-queue/proposed-p69-r3-A.txt` and
+`ops/lane-queue/proposed-p69-r3-B.txt`, relative to `experiments/own-xpu-runtime`.
+Device validation of the repair remains pending.
+
 Seven immutable views share one binary: production, target-wide64,
 target-wide128, draft-head-wide64, draft-attention, draft-hc and combined.
 Production is first and last on both lanes. Lane B reverses the six candidates.
@@ -11,7 +18,7 @@ post-drain release sequence. It saves checked request inputs before FINISH,
 confirms process exit, isolation and postflight, releases the cooperative and
 legacy lane locks, then aggregates on CPU. Report failure leaves raw data and
 `report-failure.json`; it cannot leave an active lane marker or device-fault
-latch. Drain, worker or postflight failure retains the marker. Fifteen mocked
+latch. Drain, worker or postflight failure retains the marker. Eighteen mocked
 CPU checks cover both paths, full request flow, all job orders, stop-on-failure,
 mask isolation and class-balanced timing. All sixteen plans pass.
 
@@ -29,8 +36,8 @@ CPU-only validation:
 P=experiments/own-xpu-runtime/stage2/packet69-rank1-head
 Q="$P/screen/quick"
 OMP_NUM_THREADS=2 nice -n 19 taskset -c 8-15,24-31 python3 -B "$Q/quick_seal.py" </dev/null
-OMP_NUM_THREADS=2 nice -n 19 taskset -c 8-15,24-31 python3 -B "$Q/run.py" --lane A --jobs "$Q/jobs-A.txt" --plan </dev/null
-OMP_NUM_THREADS=2 nice -n 19 taskset -c 8-15,24-31 python3 -B "$Q/run.py" --lane B --jobs "$Q/jobs-B.txt" --plan </dev/null
+OMP_NUM_THREADS=2 nice -n 19 taskset -c 8-15,24-31 python3 -B "$Q/run.py" --lane A --jobs "$Q/jobs-A-r3.txt" --plan </dev/null
+OMP_NUM_THREADS=2 nice -n 19 taskset -c 8-15,24-31 python3 -B "$Q/run.py" --lane B --jobs "$Q/jobs-B-r3.txt" --plan </dev/null
 ```
 
 Coordinator commands, from repository root with current approved library path
@@ -47,14 +54,14 @@ systemd-run --user --unit=screen-p69-quick-A \
   --property=WorkingDirectory=/home/steve/llm-optimizations \
   /usr/bin/taskset -c 0-3,16-19 /usr/bin/env -i PATH=/usr/bin:/bin \
   OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$P49_LDP" /usr/bin/python3 -B "$Q/run.py" \
-  --lane A --jobs "$Q/jobs-A.txt" --fault-review "$FAULT_REVIEW" --authorized-device-window </dev/null
+  --lane A --jobs "$Q/jobs-A-r3.txt" --fault-review "$FAULT_REVIEW" --authorized-device-window </dev/null
 systemd-run --user --unit=screen-p69-quick-B \
   --property=Restart=no --property=SendSIGKILL=no --property=KillMode=process \
   --property=ExitType=cgroup --property=TimeoutStopSec=infinity --property=Nice=0 \
   --property=WorkingDirectory=/home/steve/llm-optimizations \
   /usr/bin/taskset -c 4-7,20-23 /usr/bin/env -i PATH=/usr/bin:/bin \
   OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$P49_LDP" /usr/bin/python3 -B "$Q/run.py" \
-  --lane B --jobs "$Q/jobs-B.txt" --fault-review "$FAULT_REVIEW" --authorized-device-window </dev/null
+  --lane B --jobs "$Q/jobs-B-r3.txt" --fault-review "$FAULT_REVIEW" --authorized-device-window </dev/null
 ```
 
 After both jobs finish:

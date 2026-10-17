@@ -1,0 +1,1384 @@
+{
+  "device_executed": false,
+  "lane": "B",
+  "plans": [
+    {
+      "evidence_label": "screen",
+      "device_executed": false,
+      "supported": true,
+      "identity": {
+        "attribution_plan": null,
+        "placement": {
+          "name": "1",
+          "draft_rank": 1,
+          "target_split": 0,
+          "layer_boundary": 24,
+          "target_layers": [
+            24,
+            24
+          ],
+          "context": 4096,
+          "memory_admitted": true,
+          "supported": true,
+          "reason": "Packet64 sealed rank1 resident head; class dispatch independent of layer boundary",
+          "memory_gate": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/memory_gate.py",
+          "memory_gate_sha256": "3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232",
+          "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+          "configuration": {
+            "context_capacity": 4096,
+            "per_qsa_layer_cache": {
+              "keys_bytes": 4194304,
+              "values_bytes": 4194304,
+              "raw_index_bytes": 1048576,
+              "pooled_index_bytes": 262144
+            },
+            "per_qsa_layer_cache_bytes": 9699328,
+            "target_all_12_layers_cache_bytes": 116391936,
+            "target_plus_draft_13_layers_cache_bytes": 126091264,
+            "ranks": [
+              {
+                "rank": 0,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27253499452,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 373633560,
+                "allocation_reserve_bytes": 46500548,
+                "target_modeled_allocations_bytes": 27685361748,
+                "arena_device_bytes": 27685361748,
+                "arena_headroom_bytes": 4526892972,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27731862296,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 0,
+                "draft_weights_bytes": 0,
+                "draft_scratch_controls_buffers_bytes": 0,
+                "draft_total_bytes": 0,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 27731862296,
+                "free_with_mtp_bytes": 6510435560,
+                "free_without_mtp_bytes": 6510435560,
+                "host_pinned_bytes": 4194304,
+                "allocation_margin_passed": true
+              },
+              {
+                "rank": 1,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27854569876,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 0,
+                "allocation_reserve_bytes": 1228800,
+                "target_modeled_allocations_bytes": 27912798612,
+                "arena_device_bytes": 31267162826,
+                "arena_headroom_bytes": 945091894,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27914027412,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 9699328,
+                "draft_weights_bytes": 3326953472,
+                "draft_scratch_controls_buffers_bytes": 17711414,
+                "draft_total_bytes": 3354364214,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 31268391626,
+                "free_with_mtp_bytes": 2973906230,
+                "free_without_mtp_bytes": 6328270444,
+                "host_pinned_bytes": 4214796,
+                "allocation_margin_passed": true
+              }
+            ]
+          },
+          "dispatch_policy": "same sealed class dispatch on both ranks",
+          "rank_dispatch_sha256": [
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612"
+          ],
+          "policy_sha256": "1cd108d6f8011810821a6fe320374639a7320ac25c56138a356c42870eae21f5",
+          "plan_sha256": "f1b9654eaf04c331bae4ed9913c2f60b1a0cad17314314790148d328d98920a1"
+        },
+        "timing": "token",
+        "timing_modes": [
+          "token"
+        ],
+        "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/production",
+        "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/production/screen-seal.json",
+        "seal_sha256": "d7d323a0effb8ebe5e6c0a9a398563cf606e1b25e53ec8030cbdbf2ef2783dba",
+        "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/production/build/device/own-rt-iq3",
+        "binary_sha256": "83137a320ef47f8eacc65334cf4cf49ca172ac228948fb1e4b63de828aa6a2fe",
+        "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/production/dispatch-speed6.json",
+        "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "selection_sha256": "f306df922ae66515f976eff9bd61e43ca8a448958317c9d5448660458ab8957d",
+        "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+        "profile": "tp2",
+        "lane": "B",
+        "conditions": {
+          "card": 2,
+          "cards": [
+            2,
+            3
+          ],
+          "pci": [
+            "0000:43:00.0",
+            "0000:47:00.0"
+          ],
+          "cores": [
+            4,
+            5,
+            6,
+            7,
+            20,
+            21,
+            22,
+            23
+          ],
+          "affinity": "4-7,20-23",
+          "nice": 0,
+          "native_card": 0,
+          "native_cards": [
+            0,
+            1
+          ]
+        }
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/tp2_worker.py",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-01-production-r3/identity.json",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-01-production-r3/run",
+        "--seconds",
+        "3600"
+      ],
+      "model_lifetimes": 1,
+      "watchdog_seconds": 3600,
+      "planned_write_bytes": 1100000000,
+      "physical_cards": [
+        2,
+        3
+      ],
+      "native_card_arguments": [
+        0,
+        1
+      ],
+      "device_mask": {
+        "NEOReadDebugKeys": "1",
+        "FilterBdfPath": "0000:4",
+        "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+        "ZE_AFFINITY_MASK": "0,1",
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1"
+      },
+      "timing": "token",
+      "reservation_scope": "lane-B"
+    },
+    {
+      "evidence_label": "screen",
+      "device_executed": false,
+      "supported": true,
+      "identity": {
+        "attribution_plan": null,
+        "placement": {
+          "name": "1",
+          "draft_rank": 1,
+          "target_split": 0,
+          "layer_boundary": 24,
+          "target_layers": [
+            24,
+            24
+          ],
+          "context": 4096,
+          "memory_admitted": true,
+          "supported": true,
+          "reason": "Packet64 sealed rank1 resident head; class dispatch independent of layer boundary",
+          "memory_gate": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/memory_gate.py",
+          "memory_gate_sha256": "3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232",
+          "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+          "configuration": {
+            "context_capacity": 4096,
+            "per_qsa_layer_cache": {
+              "keys_bytes": 4194304,
+              "values_bytes": 4194304,
+              "raw_index_bytes": 1048576,
+              "pooled_index_bytes": 262144
+            },
+            "per_qsa_layer_cache_bytes": 9699328,
+            "target_all_12_layers_cache_bytes": 116391936,
+            "target_plus_draft_13_layers_cache_bytes": 126091264,
+            "ranks": [
+              {
+                "rank": 0,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27253499452,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 373633560,
+                "allocation_reserve_bytes": 46500548,
+                "target_modeled_allocations_bytes": 27685361748,
+                "arena_device_bytes": 27685361748,
+                "arena_headroom_bytes": 4526892972,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27731862296,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 0,
+                "draft_weights_bytes": 0,
+                "draft_scratch_controls_buffers_bytes": 0,
+                "draft_total_bytes": 0,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 27731862296,
+                "free_with_mtp_bytes": 6510435560,
+                "free_without_mtp_bytes": 6510435560,
+                "host_pinned_bytes": 4194304,
+                "allocation_margin_passed": true
+              },
+              {
+                "rank": 1,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27854569876,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 0,
+                "allocation_reserve_bytes": 1228800,
+                "target_modeled_allocations_bytes": 27912798612,
+                "arena_device_bytes": 31267162826,
+                "arena_headroom_bytes": 945091894,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27914027412,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 9699328,
+                "draft_weights_bytes": 3326953472,
+                "draft_scratch_controls_buffers_bytes": 17711414,
+                "draft_total_bytes": 3354364214,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 31268391626,
+                "free_with_mtp_bytes": 2973906230,
+                "free_without_mtp_bytes": 6328270444,
+                "host_pinned_bytes": 4214796,
+                "allocation_margin_passed": true
+              }
+            ]
+          },
+          "dispatch_policy": "same sealed class dispatch on both ranks",
+          "rank_dispatch_sha256": [
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612"
+          ],
+          "policy_sha256": "1cd108d6f8011810821a6fe320374639a7320ac25c56138a356c42870eae21f5",
+          "plan_sha256": "f1b9654eaf04c331bae4ed9913c2f60b1a0cad17314314790148d328d98920a1"
+        },
+        "timing": "token",
+        "timing_modes": [
+          "token"
+        ],
+        "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/combined",
+        "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/combined/screen-seal.json",
+        "seal_sha256": "cb70f35027ede4ef600e558d9edd03f2bcec85ddc61d9132f16d286b020273e5",
+        "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/combined/build/device/own-rt-iq3",
+        "binary_sha256": "83137a320ef47f8eacc65334cf4cf49ca172ac228948fb1e4b63de828aa6a2fe",
+        "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/combined/dispatch-speed6.json",
+        "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "selection_sha256": "64554a0c7531c56d534c3d0a62cbc2971740e92aa15c990c2aaa0051aa149cbd",
+        "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+        "profile": "tp2",
+        "lane": "B",
+        "conditions": {
+          "card": 2,
+          "cards": [
+            2,
+            3
+          ],
+          "pci": [
+            "0000:43:00.0",
+            "0000:47:00.0"
+          ],
+          "cores": [
+            4,
+            5,
+            6,
+            7,
+            20,
+            21,
+            22,
+            23
+          ],
+          "affinity": "4-7,20-23",
+          "nice": 0,
+          "native_card": 0,
+          "native_cards": [
+            0,
+            1
+          ]
+        }
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/tp2_worker.py",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-02-combined-r3/identity.json",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-02-combined-r3/run",
+        "--seconds",
+        "3600"
+      ],
+      "model_lifetimes": 1,
+      "watchdog_seconds": 3600,
+      "planned_write_bytes": 1100000000,
+      "physical_cards": [
+        2,
+        3
+      ],
+      "native_card_arguments": [
+        0,
+        1
+      ],
+      "device_mask": {
+        "NEOReadDebugKeys": "1",
+        "FilterBdfPath": "0000:4",
+        "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+        "ZE_AFFINITY_MASK": "0,1",
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1"
+      },
+      "timing": "token",
+      "reservation_scope": "lane-B"
+    },
+    {
+      "evidence_label": "screen",
+      "device_executed": false,
+      "supported": true,
+      "identity": {
+        "attribution_plan": null,
+        "placement": {
+          "name": "1",
+          "draft_rank": 1,
+          "target_split": 0,
+          "layer_boundary": 24,
+          "target_layers": [
+            24,
+            24
+          ],
+          "context": 4096,
+          "memory_admitted": true,
+          "supported": true,
+          "reason": "Packet64 sealed rank1 resident head; class dispatch independent of layer boundary",
+          "memory_gate": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/memory_gate.py",
+          "memory_gate_sha256": "3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232",
+          "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+          "configuration": {
+            "context_capacity": 4096,
+            "per_qsa_layer_cache": {
+              "keys_bytes": 4194304,
+              "values_bytes": 4194304,
+              "raw_index_bytes": 1048576,
+              "pooled_index_bytes": 262144
+            },
+            "per_qsa_layer_cache_bytes": 9699328,
+            "target_all_12_layers_cache_bytes": 116391936,
+            "target_plus_draft_13_layers_cache_bytes": 126091264,
+            "ranks": [
+              {
+                "rank": 0,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27253499452,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 373633560,
+                "allocation_reserve_bytes": 46500548,
+                "target_modeled_allocations_bytes": 27685361748,
+                "arena_device_bytes": 27685361748,
+                "arena_headroom_bytes": 4526892972,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27731862296,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 0,
+                "draft_weights_bytes": 0,
+                "draft_scratch_controls_buffers_bytes": 0,
+                "draft_total_bytes": 0,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 27731862296,
+                "free_with_mtp_bytes": 6510435560,
+                "free_without_mtp_bytes": 6510435560,
+                "host_pinned_bytes": 4194304,
+                "allocation_margin_passed": true
+              },
+              {
+                "rank": 1,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27854569876,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 0,
+                "allocation_reserve_bytes": 1228800,
+                "target_modeled_allocations_bytes": 27912798612,
+                "arena_device_bytes": 31267162826,
+                "arena_headroom_bytes": 945091894,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27914027412,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 9699328,
+                "draft_weights_bytes": 3326953472,
+                "draft_scratch_controls_buffers_bytes": 17711414,
+                "draft_total_bytes": 3354364214,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 31268391626,
+                "free_with_mtp_bytes": 2973906230,
+                "free_without_mtp_bytes": 6328270444,
+                "host_pinned_bytes": 4214796,
+                "allocation_margin_passed": true
+              }
+            ]
+          },
+          "dispatch_policy": "same sealed class dispatch on both ranks",
+          "rank_dispatch_sha256": [
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612"
+          ],
+          "policy_sha256": "1cd108d6f8011810821a6fe320374639a7320ac25c56138a356c42870eae21f5",
+          "plan_sha256": "f1b9654eaf04c331bae4ed9913c2f60b1a0cad17314314790148d328d98920a1"
+        },
+        "timing": "token",
+        "timing_modes": [
+          "token"
+        ],
+        "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/draft-hc",
+        "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/draft-hc/screen-seal.json",
+        "seal_sha256": "d8bf43807fffee26321323a824314f3c31a98b01cb86a5fd12b16e3733c10a52",
+        "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/draft-hc/build/device/own-rt-iq3",
+        "binary_sha256": "83137a320ef47f8eacc65334cf4cf49ca172ac228948fb1e4b63de828aa6a2fe",
+        "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/draft-hc/dispatch-speed6.json",
+        "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "selection_sha256": "e6b3569cff1808d4dc463d81358e1f29f2f4124bd5bd9f780039613e3cb781d6",
+        "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+        "profile": "tp2",
+        "lane": "B",
+        "conditions": {
+          "card": 2,
+          "cards": [
+            2,
+            3
+          ],
+          "pci": [
+            "0000:43:00.0",
+            "0000:47:00.0"
+          ],
+          "cores": [
+            4,
+            5,
+            6,
+            7,
+            20,
+            21,
+            22,
+            23
+          ],
+          "affinity": "4-7,20-23",
+          "nice": 0,
+          "native_card": 0,
+          "native_cards": [
+            0,
+            1
+          ]
+        }
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/tp2_worker.py",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-03-draft-hc-r3/identity.json",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-03-draft-hc-r3/run",
+        "--seconds",
+        "3600"
+      ],
+      "model_lifetimes": 1,
+      "watchdog_seconds": 3600,
+      "planned_write_bytes": 1100000000,
+      "physical_cards": [
+        2,
+        3
+      ],
+      "native_card_arguments": [
+        0,
+        1
+      ],
+      "device_mask": {
+        "NEOReadDebugKeys": "1",
+        "FilterBdfPath": "0000:4",
+        "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+        "ZE_AFFINITY_MASK": "0,1",
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1"
+      },
+      "timing": "token",
+      "reservation_scope": "lane-B"
+    },
+    {
+      "evidence_label": "screen",
+      "device_executed": false,
+      "supported": true,
+      "identity": {
+        "attribution_plan": null,
+        "placement": {
+          "name": "1",
+          "draft_rank": 1,
+          "target_split": 0,
+          "layer_boundary": 24,
+          "target_layers": [
+            24,
+            24
+          ],
+          "context": 4096,
+          "memory_admitted": true,
+          "supported": true,
+          "reason": "Packet64 sealed rank1 resident head; class dispatch independent of layer boundary",
+          "memory_gate": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/memory_gate.py",
+          "memory_gate_sha256": "3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232",
+          "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+          "configuration": {
+            "context_capacity": 4096,
+            "per_qsa_layer_cache": {
+              "keys_bytes": 4194304,
+              "values_bytes": 4194304,
+              "raw_index_bytes": 1048576,
+              "pooled_index_bytes": 262144
+            },
+            "per_qsa_layer_cache_bytes": 9699328,
+            "target_all_12_layers_cache_bytes": 116391936,
+            "target_plus_draft_13_layers_cache_bytes": 126091264,
+            "ranks": [
+              {
+                "rank": 0,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27253499452,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 373633560,
+                "allocation_reserve_bytes": 46500548,
+                "target_modeled_allocations_bytes": 27685361748,
+                "arena_device_bytes": 27685361748,
+                "arena_headroom_bytes": 4526892972,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27731862296,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 0,
+                "draft_weights_bytes": 0,
+                "draft_scratch_controls_buffers_bytes": 0,
+                "draft_total_bytes": 0,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 27731862296,
+                "free_with_mtp_bytes": 6510435560,
+                "free_without_mtp_bytes": 6510435560,
+                "host_pinned_bytes": 4194304,
+                "allocation_margin_passed": true
+              },
+              {
+                "rank": 1,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27854569876,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 0,
+                "allocation_reserve_bytes": 1228800,
+                "target_modeled_allocations_bytes": 27912798612,
+                "arena_device_bytes": 31267162826,
+                "arena_headroom_bytes": 945091894,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27914027412,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 9699328,
+                "draft_weights_bytes": 3326953472,
+                "draft_scratch_controls_buffers_bytes": 17711414,
+                "draft_total_bytes": 3354364214,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 31268391626,
+                "free_with_mtp_bytes": 2973906230,
+                "free_without_mtp_bytes": 6328270444,
+                "host_pinned_bytes": 4214796,
+                "allocation_margin_passed": true
+              }
+            ]
+          },
+          "dispatch_policy": "same sealed class dispatch on both ranks",
+          "rank_dispatch_sha256": [
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612"
+          ],
+          "policy_sha256": "1cd108d6f8011810821a6fe320374639a7320ac25c56138a356c42870eae21f5",
+          "plan_sha256": "f1b9654eaf04c331bae4ed9913c2f60b1a0cad17314314790148d328d98920a1"
+        },
+        "timing": "token",
+        "timing_modes": [
+          "token"
+        ],
+        "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/draft-attention",
+        "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/draft-attention/screen-seal.json",
+        "seal_sha256": "167a34a552556fb4210dd9f85c0b2416bd1ec89a38076d28749d45ef7ae4df1c",
+        "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/draft-attention/build/device/own-rt-iq3",
+        "binary_sha256": "83137a320ef47f8eacc65334cf4cf49ca172ac228948fb1e4b63de828aa6a2fe",
+        "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/draft-attention/dispatch-speed6.json",
+        "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "selection_sha256": "116531df5adedd24d3e71526b79b876d903292929c4a4035cfd40ca43120bfa4",
+        "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+        "profile": "tp2",
+        "lane": "B",
+        "conditions": {
+          "card": 2,
+          "cards": [
+            2,
+            3
+          ],
+          "pci": [
+            "0000:43:00.0",
+            "0000:47:00.0"
+          ],
+          "cores": [
+            4,
+            5,
+            6,
+            7,
+            20,
+            21,
+            22,
+            23
+          ],
+          "affinity": "4-7,20-23",
+          "nice": 0,
+          "native_card": 0,
+          "native_cards": [
+            0,
+            1
+          ]
+        }
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/tp2_worker.py",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-04-draft-attention-r3/identity.json",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-04-draft-attention-r3/run",
+        "--seconds",
+        "3600"
+      ],
+      "model_lifetimes": 1,
+      "watchdog_seconds": 3600,
+      "planned_write_bytes": 1100000000,
+      "physical_cards": [
+        2,
+        3
+      ],
+      "native_card_arguments": [
+        0,
+        1
+      ],
+      "device_mask": {
+        "NEOReadDebugKeys": "1",
+        "FilterBdfPath": "0000:4",
+        "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+        "ZE_AFFINITY_MASK": "0,1",
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1"
+      },
+      "timing": "token",
+      "reservation_scope": "lane-B"
+    },
+    {
+      "evidence_label": "screen",
+      "device_executed": false,
+      "supported": true,
+      "identity": {
+        "attribution_plan": null,
+        "placement": {
+          "name": "1",
+          "draft_rank": 1,
+          "target_split": 0,
+          "layer_boundary": 24,
+          "target_layers": [
+            24,
+            24
+          ],
+          "context": 4096,
+          "memory_admitted": true,
+          "supported": true,
+          "reason": "Packet64 sealed rank1 resident head; class dispatch independent of layer boundary",
+          "memory_gate": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/memory_gate.py",
+          "memory_gate_sha256": "3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232",
+          "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+          "configuration": {
+            "context_capacity": 4096,
+            "per_qsa_layer_cache": {
+              "keys_bytes": 4194304,
+              "values_bytes": 4194304,
+              "raw_index_bytes": 1048576,
+              "pooled_index_bytes": 262144
+            },
+            "per_qsa_layer_cache_bytes": 9699328,
+            "target_all_12_layers_cache_bytes": 116391936,
+            "target_plus_draft_13_layers_cache_bytes": 126091264,
+            "ranks": [
+              {
+                "rank": 0,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27253499452,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 373633560,
+                "allocation_reserve_bytes": 46500548,
+                "target_modeled_allocations_bytes": 27685361748,
+                "arena_device_bytes": 27685361748,
+                "arena_headroom_bytes": 4526892972,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27731862296,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 0,
+                "draft_weights_bytes": 0,
+                "draft_scratch_controls_buffers_bytes": 0,
+                "draft_total_bytes": 0,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 27731862296,
+                "free_with_mtp_bytes": 6510435560,
+                "free_without_mtp_bytes": 6510435560,
+                "host_pinned_bytes": 4194304,
+                "allocation_margin_passed": true
+              },
+              {
+                "rank": 1,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27854569876,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 0,
+                "allocation_reserve_bytes": 1228800,
+                "target_modeled_allocations_bytes": 27912798612,
+                "arena_device_bytes": 31267162826,
+                "arena_headroom_bytes": 945091894,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27914027412,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 9699328,
+                "draft_weights_bytes": 3326953472,
+                "draft_scratch_controls_buffers_bytes": 17711414,
+                "draft_total_bytes": 3354364214,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 31268391626,
+                "free_with_mtp_bytes": 2973906230,
+                "free_without_mtp_bytes": 6328270444,
+                "host_pinned_bytes": 4214796,
+                "allocation_margin_passed": true
+              }
+            ]
+          },
+          "dispatch_policy": "same sealed class dispatch on both ranks",
+          "rank_dispatch_sha256": [
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612"
+          ],
+          "policy_sha256": "1cd108d6f8011810821a6fe320374639a7320ac25c56138a356c42870eae21f5",
+          "plan_sha256": "f1b9654eaf04c331bae4ed9913c2f60b1a0cad17314314790148d328d98920a1"
+        },
+        "timing": "token",
+        "timing_modes": [
+          "token"
+        ],
+        "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/draft-head-wide64",
+        "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/draft-head-wide64/screen-seal.json",
+        "seal_sha256": "d29d25750ff04db2a1702f6f0183e30df683e2e5cb8453e7191cdaed6fdc2968",
+        "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/draft-head-wide64/build/device/own-rt-iq3",
+        "binary_sha256": "83137a320ef47f8eacc65334cf4cf49ca172ac228948fb1e4b63de828aa6a2fe",
+        "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/draft-head-wide64/dispatch-speed6.json",
+        "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "selection_sha256": "9a6978387a34874071992d522550d74cdf1d864ff8abb90842f44433e0be9c34",
+        "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+        "profile": "tp2",
+        "lane": "B",
+        "conditions": {
+          "card": 2,
+          "cards": [
+            2,
+            3
+          ],
+          "pci": [
+            "0000:43:00.0",
+            "0000:47:00.0"
+          ],
+          "cores": [
+            4,
+            5,
+            6,
+            7,
+            20,
+            21,
+            22,
+            23
+          ],
+          "affinity": "4-7,20-23",
+          "nice": 0,
+          "native_card": 0,
+          "native_cards": [
+            0,
+            1
+          ]
+        }
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/tp2_worker.py",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-05-draft-head-wide64-r3/identity.json",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-05-draft-head-wide64-r3/run",
+        "--seconds",
+        "3600"
+      ],
+      "model_lifetimes": 1,
+      "watchdog_seconds": 3600,
+      "planned_write_bytes": 1100000000,
+      "physical_cards": [
+        2,
+        3
+      ],
+      "native_card_arguments": [
+        0,
+        1
+      ],
+      "device_mask": {
+        "NEOReadDebugKeys": "1",
+        "FilterBdfPath": "0000:4",
+        "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+        "ZE_AFFINITY_MASK": "0,1",
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1"
+      },
+      "timing": "token",
+      "reservation_scope": "lane-B"
+    },
+    {
+      "evidence_label": "screen",
+      "device_executed": false,
+      "supported": true,
+      "identity": {
+        "attribution_plan": null,
+        "placement": {
+          "name": "1",
+          "draft_rank": 1,
+          "target_split": 0,
+          "layer_boundary": 24,
+          "target_layers": [
+            24,
+            24
+          ],
+          "context": 4096,
+          "memory_admitted": true,
+          "supported": true,
+          "reason": "Packet64 sealed rank1 resident head; class dispatch independent of layer boundary",
+          "memory_gate": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/memory_gate.py",
+          "memory_gate_sha256": "3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232",
+          "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+          "configuration": {
+            "context_capacity": 4096,
+            "per_qsa_layer_cache": {
+              "keys_bytes": 4194304,
+              "values_bytes": 4194304,
+              "raw_index_bytes": 1048576,
+              "pooled_index_bytes": 262144
+            },
+            "per_qsa_layer_cache_bytes": 9699328,
+            "target_all_12_layers_cache_bytes": 116391936,
+            "target_plus_draft_13_layers_cache_bytes": 126091264,
+            "ranks": [
+              {
+                "rank": 0,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27253499452,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 373633560,
+                "allocation_reserve_bytes": 46500548,
+                "target_modeled_allocations_bytes": 27685361748,
+                "arena_device_bytes": 27685361748,
+                "arena_headroom_bytes": 4526892972,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27731862296,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 0,
+                "draft_weights_bytes": 0,
+                "draft_scratch_controls_buffers_bytes": 0,
+                "draft_total_bytes": 0,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 27731862296,
+                "free_with_mtp_bytes": 6510435560,
+                "free_without_mtp_bytes": 6510435560,
+                "host_pinned_bytes": 4194304,
+                "allocation_margin_passed": true
+              },
+              {
+                "rank": 1,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27854569876,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 0,
+                "allocation_reserve_bytes": 1228800,
+                "target_modeled_allocations_bytes": 27912798612,
+                "arena_device_bytes": 31267162826,
+                "arena_headroom_bytes": 945091894,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27914027412,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 9699328,
+                "draft_weights_bytes": 3326953472,
+                "draft_scratch_controls_buffers_bytes": 17711414,
+                "draft_total_bytes": 3354364214,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 31268391626,
+                "free_with_mtp_bytes": 2973906230,
+                "free_without_mtp_bytes": 6328270444,
+                "host_pinned_bytes": 4214796,
+                "allocation_margin_passed": true
+              }
+            ]
+          },
+          "dispatch_policy": "same sealed class dispatch on both ranks",
+          "rank_dispatch_sha256": [
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612"
+          ],
+          "policy_sha256": "1cd108d6f8011810821a6fe320374639a7320ac25c56138a356c42870eae21f5",
+          "plan_sha256": "f1b9654eaf04c331bae4ed9913c2f60b1a0cad17314314790148d328d98920a1"
+        },
+        "timing": "token",
+        "timing_modes": [
+          "token"
+        ],
+        "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/target-wide128",
+        "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/target-wide128/screen-seal.json",
+        "seal_sha256": "9f7ac8d98ef2a940cba8ac8ac1aa62fefad8d4c31c558603f03fafc0d4d0e941",
+        "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/target-wide128/build/device/own-rt-iq3",
+        "binary_sha256": "83137a320ef47f8eacc65334cf4cf49ca172ac228948fb1e4b63de828aa6a2fe",
+        "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/target-wide128/dispatch-speed6.json",
+        "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "selection_sha256": "3a3870082fd2b60683de1e878ba8090743e97b38ad10ee9f8c548e250df169b6",
+        "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+        "profile": "tp2",
+        "lane": "B",
+        "conditions": {
+          "card": 2,
+          "cards": [
+            2,
+            3
+          ],
+          "pci": [
+            "0000:43:00.0",
+            "0000:47:00.0"
+          ],
+          "cores": [
+            4,
+            5,
+            6,
+            7,
+            20,
+            21,
+            22,
+            23
+          ],
+          "affinity": "4-7,20-23",
+          "nice": 0,
+          "native_card": 0,
+          "native_cards": [
+            0,
+            1
+          ]
+        }
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/tp2_worker.py",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-06-target-wide128-r3/identity.json",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-06-target-wide128-r3/run",
+        "--seconds",
+        "3600"
+      ],
+      "model_lifetimes": 1,
+      "watchdog_seconds": 3600,
+      "planned_write_bytes": 1100000000,
+      "physical_cards": [
+        2,
+        3
+      ],
+      "native_card_arguments": [
+        0,
+        1
+      ],
+      "device_mask": {
+        "NEOReadDebugKeys": "1",
+        "FilterBdfPath": "0000:4",
+        "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+        "ZE_AFFINITY_MASK": "0,1",
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1"
+      },
+      "timing": "token",
+      "reservation_scope": "lane-B"
+    },
+    {
+      "evidence_label": "screen",
+      "device_executed": false,
+      "supported": true,
+      "identity": {
+        "attribution_plan": null,
+        "placement": {
+          "name": "1",
+          "draft_rank": 1,
+          "target_split": 0,
+          "layer_boundary": 24,
+          "target_layers": [
+            24,
+            24
+          ],
+          "context": 4096,
+          "memory_admitted": true,
+          "supported": true,
+          "reason": "Packet64 sealed rank1 resident head; class dispatch independent of layer boundary",
+          "memory_gate": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/memory_gate.py",
+          "memory_gate_sha256": "3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232",
+          "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+          "configuration": {
+            "context_capacity": 4096,
+            "per_qsa_layer_cache": {
+              "keys_bytes": 4194304,
+              "values_bytes": 4194304,
+              "raw_index_bytes": 1048576,
+              "pooled_index_bytes": 262144
+            },
+            "per_qsa_layer_cache_bytes": 9699328,
+            "target_all_12_layers_cache_bytes": 116391936,
+            "target_plus_draft_13_layers_cache_bytes": 126091264,
+            "ranks": [
+              {
+                "rank": 0,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27253499452,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 373633560,
+                "allocation_reserve_bytes": 46500548,
+                "target_modeled_allocations_bytes": 27685361748,
+                "arena_device_bytes": 27685361748,
+                "arena_headroom_bytes": 4526892972,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27731862296,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 0,
+                "draft_weights_bytes": 0,
+                "draft_scratch_controls_buffers_bytes": 0,
+                "draft_total_bytes": 0,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 27731862296,
+                "free_with_mtp_bytes": 6510435560,
+                "free_without_mtp_bytes": 6510435560,
+                "host_pinned_bytes": 4194304,
+                "allocation_margin_passed": true
+              },
+              {
+                "rank": 1,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27854569876,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 0,
+                "allocation_reserve_bytes": 1228800,
+                "target_modeled_allocations_bytes": 27912798612,
+                "arena_device_bytes": 31267162826,
+                "arena_headroom_bytes": 945091894,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27914027412,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 9699328,
+                "draft_weights_bytes": 3326953472,
+                "draft_scratch_controls_buffers_bytes": 17711414,
+                "draft_total_bytes": 3354364214,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 31268391626,
+                "free_with_mtp_bytes": 2973906230,
+                "free_without_mtp_bytes": 6328270444,
+                "host_pinned_bytes": 4214796,
+                "allocation_margin_passed": true
+              }
+            ]
+          },
+          "dispatch_policy": "same sealed class dispatch on both ranks",
+          "rank_dispatch_sha256": [
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612"
+          ],
+          "policy_sha256": "1cd108d6f8011810821a6fe320374639a7320ac25c56138a356c42870eae21f5",
+          "plan_sha256": "f1b9654eaf04c331bae4ed9913c2f60b1a0cad17314314790148d328d98920a1"
+        },
+        "timing": "token",
+        "timing_modes": [
+          "token"
+        ],
+        "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/target-wide64",
+        "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/target-wide64/screen-seal.json",
+        "seal_sha256": "3e748b9c3f335642ff1b61a7df487d961914076117ec5c85692e4d0a22ba3ecb",
+        "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/target-wide64/build/device/own-rt-iq3",
+        "binary_sha256": "83137a320ef47f8eacc65334cf4cf49ca172ac228948fb1e4b63de828aa6a2fe",
+        "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/target-wide64/dispatch-speed6.json",
+        "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "selection_sha256": "ed23dc68e5431d43712f14cd49144120f0d90075b62449d9452fea1254dd3bb3",
+        "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+        "profile": "tp2",
+        "lane": "B",
+        "conditions": {
+          "card": 2,
+          "cards": [
+            2,
+            3
+          ],
+          "pci": [
+            "0000:43:00.0",
+            "0000:47:00.0"
+          ],
+          "cores": [
+            4,
+            5,
+            6,
+            7,
+            20,
+            21,
+            22,
+            23
+          ],
+          "affinity": "4-7,20-23",
+          "nice": 0,
+          "native_card": 0,
+          "native_cards": [
+            0,
+            1
+          ]
+        }
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/tp2_worker.py",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-07-target-wide64-r3/identity.json",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-07-target-wide64-r3/run",
+        "--seconds",
+        "3600"
+      ],
+      "model_lifetimes": 1,
+      "watchdog_seconds": 3600,
+      "planned_write_bytes": 1100000000,
+      "physical_cards": [
+        2,
+        3
+      ],
+      "native_card_arguments": [
+        0,
+        1
+      ],
+      "device_mask": {
+        "NEOReadDebugKeys": "1",
+        "FilterBdfPath": "0000:4",
+        "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+        "ZE_AFFINITY_MASK": "0,1",
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1"
+      },
+      "timing": "token",
+      "reservation_scope": "lane-B"
+    },
+    {
+      "evidence_label": "screen",
+      "device_executed": false,
+      "supported": true,
+      "identity": {
+        "attribution_plan": null,
+        "placement": {
+          "name": "1",
+          "draft_rank": 1,
+          "target_split": 0,
+          "layer_boundary": 24,
+          "target_layers": [
+            24,
+            24
+          ],
+          "context": 4096,
+          "memory_admitted": true,
+          "supported": true,
+          "reason": "Packet64 sealed rank1 resident head; class dispatch independent of layer boundary",
+          "memory_gate": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/memory_gate.py",
+          "memory_gate_sha256": "3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232",
+          "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+          "configuration": {
+            "context_capacity": 4096,
+            "per_qsa_layer_cache": {
+              "keys_bytes": 4194304,
+              "values_bytes": 4194304,
+              "raw_index_bytes": 1048576,
+              "pooled_index_bytes": 262144
+            },
+            "per_qsa_layer_cache_bytes": 9699328,
+            "target_all_12_layers_cache_bytes": 116391936,
+            "target_plus_draft_13_layers_cache_bytes": 126091264,
+            "ranks": [
+              {
+                "rank": 0,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27253499452,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 373633560,
+                "allocation_reserve_bytes": 46500548,
+                "target_modeled_allocations_bytes": 27685361748,
+                "arena_device_bytes": 27685361748,
+                "arena_headroom_bytes": 4526892972,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27731862296,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 0,
+                "draft_weights_bytes": 0,
+                "draft_scratch_controls_buffers_bytes": 0,
+                "draft_total_bytes": 0,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 27731862296,
+                "free_with_mtp_bytes": 6510435560,
+                "free_without_mtp_bytes": 6510435560,
+                "host_pinned_bytes": 4194304,
+                "allocation_margin_passed": true
+              },
+              {
+                "rank": 1,
+                "draft_rank": 1,
+                "target_layers": 24,
+                "target_qsa_layers": 6,
+                "target_baseline_256_bytes": 27854569876,
+                "layer_transfer_bytes": 0,
+                "strict_rollback_image_bytes": 0,
+                "allocation_reserve_bytes": 1228800,
+                "target_modeled_allocations_bytes": 27912798612,
+                "arena_device_bytes": 31267162826,
+                "arena_headroom_bytes": 945091894,
+                "arena_margin_passed": true,
+                "target_total_bytes": 27914027412,
+                "target_qsa_cache_bytes": 58195968,
+                "draft_qsa_cache_bytes": 9699328,
+                "draft_weights_bytes": 3326953472,
+                "draft_scratch_controls_buffers_bytes": 17711414,
+                "draft_total_bytes": 3354364214,
+                "draft_duplicate_head_bytes": 0,
+                "total_with_mtp_bytes": 31268391626,
+                "free_with_mtp_bytes": 2973906230,
+                "free_without_mtp_bytes": 6328270444,
+                "host_pinned_bytes": 4214796,
+                "allocation_margin_passed": true
+              }
+            ]
+          },
+          "dispatch_policy": "same sealed class dispatch on both ranks",
+          "rank_dispatch_sha256": [
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+            "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612"
+          ],
+          "policy_sha256": "1cd108d6f8011810821a6fe320374639a7320ac25c56138a356c42870eae21f5",
+          "plan_sha256": "f1b9654eaf04c331bae4ed9913c2f60b1a0cad17314314790148d328d98920a1"
+        },
+        "timing": "token",
+        "timing_modes": [
+          "token"
+        ],
+        "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/production",
+        "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/production/screen-seal.json",
+        "seal_sha256": "d7d323a0effb8ebe5e6c0a9a398563cf606e1b25e53ec8030cbdbf2ef2783dba",
+        "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/production/build/device/own-rt-iq3",
+        "binary_sha256": "83137a320ef47f8eacc65334cf4cf49ca172ac228948fb1e4b63de828aa6a2fe",
+        "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/selections/production/dispatch-speed6.json",
+        "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "selection_sha256": "f306df922ae66515f976eff9bd61e43ca8a448958317c9d5448660458ab8957d",
+        "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+        "profile": "tp2",
+        "lane": "B",
+        "conditions": {
+          "card": 2,
+          "cards": [
+            2,
+            3
+          ],
+          "pci": [
+            "0000:43:00.0",
+            "0000:47:00.0"
+          ],
+          "cores": [
+            4,
+            5,
+            6,
+            7,
+            20,
+            21,
+            22,
+            23
+          ],
+          "affinity": "4-7,20-23",
+          "nice": 0,
+          "native_card": 0,
+          "native_cards": [
+            0,
+            1
+          ]
+        }
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/tp2_worker.py",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-08-production-r3/identity.json",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/evidence/p69-quick-B-08-production-r3/run",
+        "--seconds",
+        "3600"
+      ],
+      "model_lifetimes": 1,
+      "watchdog_seconds": 3600,
+      "planned_write_bytes": 1100000000,
+      "physical_cards": [
+        2,
+        3
+      ],
+      "native_card_arguments": [
+        0,
+        1
+      ],
+      "device_mask": {
+        "NEOReadDebugKeys": "1",
+        "FilterBdfPath": "0000:4",
+        "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+        "ZE_AFFINITY_MASK": "0,1",
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1"
+      },
+      "timing": "token",
+      "reservation_scope": "lane-B"
+    }
+  ],
+  "gap_seconds": 90,
+  "retries": 0
+}

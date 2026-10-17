@@ -25,7 +25,7 @@ class QuickTests(unittest.TestCase):
 
     def test_runner_mock_both_full_orders_and_seven_90_second_gaps(self):
         for lane in ('A', 'B'):
-            rows = jobs.jobs(jobs.QUICK / ('jobs-' + lane + '.txt'), lane)
+            rows = jobs.jobs(jobs.QUICK / ('jobs-' + lane + '-r3.txt'), lane)
             commands, gaps = [], []
             with contextlib.redirect_stdout(io.StringIO()):
                 run.run_jobs(rows, lane, '/review', lambda c: commands.append(c) or 0, gaps.append)
@@ -36,11 +36,43 @@ class QuickTests(unittest.TestCase):
             self.assertTrue(all(c[c.index('--placement')+1] == '1' for c in commands))
 
     def test_runner_never_retries_or_skips_failure(self):
-        rows = jobs.jobs(jobs.QUICK / 'jobs-A.txt', 'A')
+        rows = jobs.jobs(jobs.QUICK / 'jobs-A-r3.txt', 'A')
         commands=[]
         with contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(ValueError, 'no retry'):
             run.run_jobs(rows, 'A', '/review', lambda c: commands.append(c) or 75, lambda n: self.fail('gap'))
         self.assertEqual(len(commands),1)
+
+    def test_revision_outputs_are_fresh_with_original_eight_screen_order(self):
+        for lane in ('A', 'B'):
+            before = jobs.jobs(jobs.QUICK / f'jobs-{lane}.txt', lane)
+            after = jobs.jobs(jobs.QUICK / f'jobs-{lane}-r3.txt', lane)
+            self.assertEqual([r['choice'] for r in before], [r['choice'] for r in after])
+            self.assertEqual(sum(r['choice'] == 'combined' for r in after), 1)
+            self.assertFalse({r['out'] for r in before} & {r['out'] for r in after})
+
+    def test_fixed_order_rejects_missing_combined_reorder_and_duplicate(self):
+        original = [s for s in (jobs.QUICK / 'jobs-A-r3.txt').read_text().splitlines()
+                    if s and not s.startswith('#')]
+        variants = [original[:6] + original[7:],
+                    [original[0], original[2], original[1], *original[3:]],
+                    [*original[:-1], original[0]]]
+        for lines in variants:
+            path = self.root / 'jobs.txt'
+            path.write_text('\n'.join(lines) + '\n')
+            with self.assertRaises(ValueError):
+                jobs.jobs(path, 'A')
+
+    def test_runner_refuses_any_existing_output_before_subprocess(self):
+        import sys
+        path = jobs.QUICK / 'jobs-A-r3.txt'
+        row = jobs.jobs(path, 'A')[3]
+        (self.root / 'evidence' / row['out']).mkdir(parents=True)
+        with patch.object(run, 'HERE', self.root), patch.object(run, 'cpu_gate'), \
+             patch.object(run, 'verify'), \
+             patch.object(sys, 'argv', ['run.py', '--lane', 'A', '--jobs', str(path), '--plan']), \
+             patch.object(run.subprocess, 'run', side_effect=AssertionError('subprocess')):
+            with self.assertRaisesRegex(ValueError, 'all outputs must be fresh'):
+                run.main()
 
     def test_lanes_overlap_without_whole_host_hold(self):
         with Reservation('A', window='screen', root=self.root) as a:
@@ -71,7 +103,7 @@ class QuickTests(unittest.TestCase):
             a.complete(drained=True)
 
     def test_plan_has_no_device_or_journal_or_output(self):
-        row = jobs.jobs(jobs.QUICK/'jobs-A.txt','A')[0]
+        row = jobs.jobs(jobs.QUICK/'jobs-A-r3.txt','A')[0]
         with patch.object(screen.subprocess,'Popen',side_effect=AssertionError('device')),\
              patch.object(screen.S,'journal',side_effect=AssertionError('journal')),\
              contextlib.redirect_stdout(io.StringIO()) as output:

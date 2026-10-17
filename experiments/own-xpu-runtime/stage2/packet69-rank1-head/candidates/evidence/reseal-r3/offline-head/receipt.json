@@ -1,0 +1,101 @@
+{
+  "device_executed": false,
+  "variants": {
+    "before": {
+      "receipt": {
+        "device_executed": false,
+        "commands": [
+          [
+            "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+            "-fsycl",
+            "-fsycl-device-only",
+            "-O2",
+            "-std=c++20",
+            "-fno-fast-math",
+            "-ffp-contract=off",
+            "-fdenormal-fp-math=ieee",
+            "-foffload-fp32-prec-div",
+            "-foffload-fp32-prec-sqrt",
+            "-c",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/build/checked/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/p69_head.cpp",
+            "-o",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/build/head-inspection/head.bc"
+          ],
+          [
+            "/opt/intel/oneapi/compiler/2026.0/bin/compiler/llvm-spirv",
+            "--spirv-ext=+all,-SPV_INTEL_runtime_aligned,-SPV_KHR_untyped_pointers",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/build/head-inspection/head.bc",
+            "-o",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/build/head-inspection/head.spv"
+          ],
+          [
+            "/usr/bin/ocloc",
+            "compile",
+            "-spirv_input",
+            "-file",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/build/head-inspection/head.spv",
+            "-device",
+            "bmg-g31",
+            "-out_dir",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/build/head-inspection/aot"
+          ]
+        ],
+        "source_sha256": "007c0a23a94f79560e2c1fdec8b874302342e83fdb8fb538ee5482a6c3c1654b"
+      },
+      "artifacts": {
+        "before-OCL_asmfeece8655881b820_codegen.ll.gz": "bf4c011728bd59317492cf03e10e0213de29ba71049e5bc6bc3c7e99065340eb",
+        "before-OCL_asmfeece8655881b820_simd32_entry_0002.asm.gz": "bfe6138a0780b8368d27b449756abc4a25b785e237e13d95969e29f5bf5bf3fc",
+        "before-OCL_asmfeece8655881b820_simd32_entry_0001.asm.gz": "497571971bc15e0922b7e6db7b25a46e652d16ce072cba00d08b0eb19564f93f",
+        "before-OCL_asmfeece8655881b820.zeinfo.gz": "d1f13867b4956fb73b3406953b88e4471fed3eb80e0aab8e97bdb12a83a9b104"
+      }
+    },
+    "r3": {
+      "receipt": {
+        "device_executed": false,
+        "commands": [
+          [
+            "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+            "-fsycl",
+            "-fsycl-device-only",
+            "-O2",
+            "-std=c++20",
+            "-fno-fast-math",
+            "-ffp-contract=off",
+            "-fdenormal-fp-math=ieee",
+            "-foffload-fp32-prec-div",
+            "-foffload-fp32-prec-sqrt",
+            "-c",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/build/checked/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/p69_head.cpp",
+            "-o",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/build/head-inspection-r3/head.bc"
+          ],
+          [
+            "/opt/intel/oneapi/compiler/2026.0/bin/compiler/llvm-spirv",
+            "--spirv-ext=+all,-SPV_INTEL_runtime_aligned,-SPV_KHR_untyped_pointers",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/build/head-inspection-r3/head.bc",
+            "-o",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/build/head-inspection-r3/head.spv"
+          ],
+          [
+            "/usr/bin/ocloc",
+            "compile",
+            "-spirv_input",
+            "-file",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/build/head-inspection-r3/head.spv",
+            "-device",
+            "bmg-g31",
+            "-out_dir",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/build/head-inspection-r3/aot"
+          ]
+        ],
+        "source_sha256": "a5fcef0d2c7991b9d288b352312765cf5b1b8e4b3ef202609edc3627b80b0cf0"
+      },
+      "artifacts": {
+        "r3-OCL_asm1190705249d3e737_codegen.ll.gz": "0e339d32ebb02b46e2f06b3bfcc290f3fb200bbc4d906324bf9f1d050f501c32",
+        "r3-OCL_asm1190705249d3e737_simd32_entry_0001.asm.gz": "9b0a2a3b6353c01d846279e551e34f3af6cc53293a0eadd802318a521f3b204f",
+        "r3-OCL_asm1190705249d3e737_simd32_entry_0002.asm.gz": "ef0ba5defb9534861cc44fc38e2974fb5fb482a7dd7398c80710f2ef3a0398ef",
+        "r3-OCL_asm1190705249d3e737.zeinfo.gz": "c8f1b0495e79c2833f69c082304102a6880b5b9531547d9b3f42387d7521ccf9"
+      }
+    }
+  }
+}

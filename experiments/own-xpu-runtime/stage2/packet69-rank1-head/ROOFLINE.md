@@ -27,4 +27,11 @@ Existing packet64 raw device means; no new device run. GB/s uses the stated logi
 
 The full JSON retains the byte definition and official draft tensor identity for each site. Matrix rows count a single weight read; attention counts unique BF16 operands only. These are lower-bound byte models. No bandwidth is invented for zero-time copies, host waits, or target sites absent from packet64.
 
-Target head: 794,624,000 expanded resident bytes, 1,346.82–1,471.53 µs bandwidth floor; measured time pending. Final HC/norm, target argmax and outside transfers are named in the new measurement report; host submission/waits remain a separately reported residual.
+Target head: 794,624,000 useful code/scale read bytes, 1,346.82–1,471.53 µs bandwidth floor; measured time pending. Final HC/norm, target argmax and outside transfers are named in the new measurement report; host submission/waits remain a separately reported residual.
+
+Revision-3 layout correction: useful read bytes are not the row stride or
+allocation size. Expanded Q6_K retains 180 metadata bytes after each row's
+3,200 code/scale bytes. The actual stride is 3,380 bytes, and the full head's
+allocation is 839,321,600 bytes, as the failed run's census confirms. The
+roofline above counts unique code/scale reads; it is neither allocated bytes
+nor measured physical DRAM traffic. [Repair evidence](candidates/evidence/reseal-r3/diagnosis.json).

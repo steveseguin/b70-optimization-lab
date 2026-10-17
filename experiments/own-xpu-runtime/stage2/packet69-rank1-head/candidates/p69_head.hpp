@@ -2,6 +2,9 @@
 #include "p33_submit.hpp"
 #include "p33_candidates.hpp"
 namespace p69 {
+// Expanded rows retain source metadata after the codes and F32 scales. The
+// kernel reads 3,200 useful bytes, but the next row starts at byte 3,380.
+inline size_t row_bytes(){return integrated::arithmetic::row_bytes(iq3::Type::Q6_K,2560,6);}
 // Same eight products per lane, same K traversal, multiply then add, tree32.
 // Only memory loads and the number of independent row subgroups change.
 inline float lane(const uint8_t* __restrict w,const uint16_t* __restrict x,unsigned id){

@@ -101,3 +101,46 @@ The draft:
 | Experts | 245 µs |
 
 **Next lever:** the runtime expands Q6_K weights to about 10 bits per weight (signed 8-bit codes plus an F32 scale per 16), against 6.56 bits packed. Reading packed blocks with bit-identical dequantization (packet 74) could remove about a third of the head's and the dense projections' bytes.
+
+## Combined sticky-error repair and revision 3 (CPU only)
+
+Found the addressing bug in the new wide head. It advanced by 3,200 bytes per
+row, but expanded Q6_K retains another 180 bytes of source metadata. Its real
+stride is **3,380 bytes**. The failed run's census records 839,321,600 bytes
+for the full head. The earlier 794,624,000-byte figure is useful code/scale
+reads, not allocation size; the kernel does not read the retained metadata.
+
+The corrupting kernel is `p69::Head<64>` at target and draft `logits` (wide128
+has the same defect). A two-row CPU fixture reproduces it: the second output
+should be BF16 `0x42cc`, but becomes NaN `0xfff7`. The actual production
+argmax finishing kernel then sets sticky `error=1`. The original one-row
+fixture could not catch this. The device's useful logs moved on request reset
+to `run/incident64/rank1`: 86 target prompt halves finish before the first
+head-enabled step fails. Device logs lack per-kernel error provenance; the
+writer/mechanism is demonstrated on CPU, and the repaired device run is pending.
+
+Both host and device head paths now derive stride from the existing arithmetic
+layout helper. Reductions, target arithmetic, choices, packet49 oracle and
+sticky-error handling are unchanged. GNU and Intel each pass 96 linked
+head/prefix/argmax/status cases in two fresh processes. The archived old head
+still reproduces the exact failure as a required negative control. Original
+production head and draft fixture hashes are unchanged; the qualified inherited
+arithmetic objects are unchanged. Both engine builds and offline compilation
+pass. Eighteen wrapper tests and all sixteen fresh screen plans pass.
+
+All seven views and the private quick wrapper are resealed. Fresh
+`screen/quick/jobs-A-r3.txt` and `jobs-B-r3.txt` preserve the complete eight-screen
+order, including `combined`, with production first and last. The new queue lines
+are `experiments/own-xpu-runtime/ops/lane-queue/proposed-p69-r3-A.txt` and
+`proposed-p69-r3-B.txt`. Both are planned in a temporary copy of the queue
+directory. Live queues and coordination latches are untouched.
+
+[Closeout, retained originals and exact evidence](../experiments/own-xpu-runtime/stage2/packet69-rank1-head/STRIDE-REPAIR-CLOSEOUT.md),
+[validation](../experiments/own-xpu-runtime/stage2/packet69-rank1-head/candidates/evidence/reseal-r3/validation.json).
+Rebuild/check order: `candidates/build_engine.py`, `cpu_gate.py`,
+`head_status_gate.py`, `selection_gate.py`, `seal_candidates.py`,
+`screen/quick/seal_wrapper.py`, then `candidates/validate_r3.py`. Creation tools
+require fresh destinations; the original receipts and binaries were preserved
+before this reissuance. Use `OMP_NUM_THREADS=2 nice -n 19 taskset -c 8-15,24-31
+python3 -B`, stdin `/dev/null`, one compile at a time. No GPU, model, service,
+sudo, power, memory, swap, page-cache or reboot operation ran.

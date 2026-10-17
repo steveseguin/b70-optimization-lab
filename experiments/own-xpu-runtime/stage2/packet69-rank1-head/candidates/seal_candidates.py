@@ -5,12 +5,12 @@ from selections import CHOICES
 
 def main():
  limits();build=json.loads((P/'build-device-receipt.json').read_text())
- gates=[json.loads((P/'evidence'/n).read_text()) for n in ('cpu-gates.json','selection-gate.json')]
+ gates=[json.loads((P/'evidence'/n).read_text()) for n in ('cpu-gates.json','selection-gate.json','head-status/receipt.json')]
  assert all(g['passed'] and not g['cpu_model_executed'] and not g['device_executed'] for g in gates)
  sources=dict(build['sources'])
  for gate in gates:sources.update(gate['sources'])
  for n,h in sources.items():assert sha(ROOT/n)==h,n
- for f in [P/'build-device-receipt.json',P/'seal_candidates.py',P/'selections.py',P/'evidence/cpu-gates.json',P/'evidence/selection-gate.json']:
+ for f in [P/'build-device-receipt.json',P/'seal_candidates.py',P/'selections.py',P/'evidence/cpu-gates.json',P/'evidence/selection-gate.json',P/'evidence/head-status/receipt.json']:
   sources[str(f.relative_to(ROOT))]=sha(f)
  for choice in CHOICES:
   dest=P/'selections'/choice;assert not (dest/'screen-seal.json').exists()
@@ -22,7 +22,9 @@ def main():
     rationale='packet64 production 24/24 with explicit independent site choices; unchanged target arithmetic, full BF16 KV and original prefix')
   save(dest/'placement-audit.json',audit)
   bound=dict(sources)
-  for f in dest.glob('*.json'):bound[str(f.relative_to(ROOT))]=sha(f)
+  # Reissuance must not bind a superseded build receipt or fixture into itself.
+  for name in ('selection.json','memory-plan.json','dispatch-speed6.json','placement-audit.json'):
+   f=dest/name;bound[str(f.relative_to(ROOT))]=sha(f)
   save(dest/'build-receipt.json',dict(passed=True,device_executed=False,sources=bound,artifacts={'build/device/own-rt-iq3':sha(binary)}))
   save(dest/'fixture.json',dict(schema='own-runtime.screen.byte-fixture.v1',passed=True,device_executed=False,
     build_receipt_sha256=sha(dest/'build-receipt.json'),sources=gates[0]['sources'],

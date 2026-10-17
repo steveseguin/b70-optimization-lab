@@ -19,9 +19,9 @@ def main():
     tests_sha256=sha(HERE/'cpu-tests.log'),release_before_reporting=True))
  plans={}
  for lane in ('A','B'):
-  cmd=[sys.executable,'-B',str(HERE/'run.py'),'--lane',lane,'--jobs',str(HERE/('jobs-'+lane+'.txt')),'--plan']
+  cmd=[sys.executable,'-B',str(HERE/'run.py'),'--lane',lane,'--jobs',str(HERE/('jobs-'+lane+'-r3.txt')),'--plan']
   with (HERE/('plans-'+lane+'.json')).open('w') as log:subprocess.run(cmd,check=True,stdin=subprocess.DEVNULL,stdout=log)
   rows=read(HERE/('plans-'+lane+'.json'));assert len(rows['plans'])==8 and all(r['supported'] for r in rows['plans']);plans[lane]=sha(HERE/('plans-'+lane+'.json'))
- save(HERE/'validation.json',dict(passed=True,device_executed=False,cpu_model_executed=False,wrapper_seal_sha256=sha(HERE/'wrapper-seal.json'),plans=plans,tests=15,lanes=['A','B'],fresh_controls='first and last on each lane',speed='unmeasured',quality='pending packet49 device screen'))
- print('PASS: 16 screen plans, 15 CPU protocol tests; no GPU')
+ save(HERE/'validation.json',dict(passed=True,device_executed=False,cpu_model_executed=False,wrapper_seal_sha256=sha(HERE/'wrapper-seal.json'),plans=plans,tests=18,lanes=['A','B'],fresh_controls='first and last on each lane',speed='unmeasured',quality='pending packet49 device screen'))
+ print('PASS: 16 screen plans, 18 CPU protocol tests; no GPU')
 if __name__=='__main__':main()

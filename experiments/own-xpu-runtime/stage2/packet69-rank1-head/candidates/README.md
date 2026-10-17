@@ -22,6 +22,16 @@ per tile, visits tiles in the same order, and uses the original ascending-width
 reduction is split or reassociated. It writes the original BF16 logit array,
 then the unchanged argmax chooses the token with the unchanged tie rule.
 
+Revision 3 repairs the expanded-row stride: each row stores 2,560 code bytes,
+640 scale bytes and 180 retained metadata bytes, so its stride is **3,380**.
+Only the first 3,200 bytes are used by the arithmetic. The old kernel mistook
+useful bytes for storage stride and read metadata as the next row. A two-row
+CPU fixture reproduces NaN output and the production argmax's sticky error.
+The fixed kernel derives its stride from the existing arithmetic layout helper.
+See [diagnosis](evidence/reseal-r3/diagnosis.json) and the
+[linked head/status gate](evidence/head-status/receipt.json). The original
+single-row fixtures could not detect this addressing defect.
+
 Draft attention selects the existing implementation 12, the target split32
 kernel. Draft HC uses the existing independently selected packet59 low,
 gate/mix and injection choices from packet64's draft-HC view. It does not
