@@ -29,8 +29,15 @@ class Tests(unittest.TestCase):
                 path.parent.mkdir()
                 path.write_text('offline\n')
             self.assertEqual(len(window.memory_fence(root)), 5)
+            # Margin block 57 online (the 2026-10-17 boot state) is recorded, not refused.
             path.write_text('online\n')
-            with self.assertRaises(ValueError): window.memory_fence(root)
+            self.assertEqual(window.memory_fence(root)['57'], 'online')
+            # A failing block (54 or 56) online is refused.
+            for failing in (54, 56):
+                bad = root / ('memory' + str(failing)) / 'state'
+                bad.write_text('online\n')
+                with self.assertRaises(ValueError): window.memory_fence(root)
+                bad.write_text('offline\n')
 
     def test_complete_grid_and_negative_overlap(self):
         rows = []

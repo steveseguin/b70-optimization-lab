@@ -53,9 +53,18 @@ def selected_clients(card, proc=Path('/proc')):
                 inaccessible_entries=inaccessible, hidden_clients_require_coordinator_ownership=True)
 
 
+# b70-offline-bad-memory.service contract: blocks 54 and 56 hold the regions that
+# fail the memory test and must be offline; 53, 55 and 57 are best-effort margin
+# ("a block that cannot be offlined (unmovable kernel pages) is left as it is").
+# 2026-10-17: block 57 stayed online all boot (unmovable FUSE page-cache pages); a
+# coordinator re-offline attempt failed without changing state. Margin states are
+# recorded in every receipt, never silently ignored.
+FAILING_BLOCKS = (54, 56)
+
+
 def memory_fence(sysroot=Path('/sys/devices/system/memory')):
     states = {str(n): (sysroot / ('memory' + str(n)) / 'state').read_text().strip() for n in range(53, 58)}
-    require(all(state == 'offline' for state in states.values()), 'memory fence 53–57 changed')
+    require(all(states[str(n)] == 'offline' for n in FAILING_BLOCKS), 'failing memory blocks 54/56 not offline')
     return states
 
 

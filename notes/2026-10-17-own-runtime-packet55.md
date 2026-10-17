@@ -153,3 +153,24 @@ No adaptive GPU fill, second host bank or same-card draft time is free.
   2. H2D-a, then H2D-b, on card 2;
   3. route window on cards 2+3 (needs 97 GiB available host memory);
   4. offline locality analysis.
+
+## Memory-fence finding and packet 55 wrapper alignment (2026-10-17 13:25 UTC)
+
+H2D-a refused before any device work: "memory fence 53–57 changed". The live state on boot `2cba7160`:
+
+| Block | State |
+|---|---|
+| 53 | offline |
+| 54 | offline (failing region) |
+| 55 | offline |
+| 56 | offline (failing region) |
+| **57** | **online** |
+
+`b70-offline-bad-memory.service` reported success at boot. Its contract, in the unit comment, is that blocks 54 and 56 hold the regions that fail the memory test, while 53, 55 and 57 are margin, and "a block that cannot be offlined (unmovable kernel pages) is left as it is".
+
+- **Re-offline attempt:** the coordinator retried with sudo under the owner's 2026-10-03 standing authorization to re-apply the fence. The kernel refused with "unmovable page". That page was cached content of the IQ3 GGUF on the FUSE (ntfs-3g) mount; FUSE pages cannot migrate. Nothing changed.
+- **Cache drop:** not attempted. A cache drop would free the pages, but the owner forbids cache drops.
+- **Exposure:** block 57 was almost certainly online all boot, so every device result today, including the three records, ran in this state. The failing blocks were offline throughout.
+- **Wrapper change:** `h2d/window.py` `memory_fence` (also used by the route window) now refuses unless 54 and 56 are offline, and records all five states in every receipt. The unit test covers the margin-online and failing-online cases.
+- **Evidence:** the refused `h2d/evidence/h2d-a` is retained. The rerun uses new output names.
+- **Owner note:** to get block 57 offline, offline it at boot before the USB model disk is mounted and read.
