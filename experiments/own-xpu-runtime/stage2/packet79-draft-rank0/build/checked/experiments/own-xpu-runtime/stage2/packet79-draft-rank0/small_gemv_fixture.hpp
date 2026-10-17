@@ -1,6 +1,0 @@
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/kernel_guard.hpp"
-#line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/small_gemv_fixture.hpp"
-#pragma once
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/build/checked/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/adapter_fixture.hpp"
-AdapterFixtureReceipt small_gemv_fixture_gate(unsigned,const std::filesystem::path&);
-AdapterFixtureReceipt small_gemv_timing_gate(unsigned,const std::filesystem::path&);

@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/cpu_gate.py", line 37, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/cpu_gate.py", line 27, in main
+    expected,row=run_one('parent75',BASE/'build/gnu-host/own-rt-iq3',1,0,'production');rows.append(row)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/cpu_gate.py", line 15, in run_one
+    with patch.object(pipeline,'P',adapter):result=pipeline.run(args)
+                                                   ^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/pipeline.py", line 450, in run
+    require(os.environ.get("OMP_NUM_THREADS")=="2","OMP_NUM_THREADS=2 required")
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/pipeline.py", line 30, in require
+    if not test:raise ValueError(message)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: OMP_NUM_THREADS=2 required

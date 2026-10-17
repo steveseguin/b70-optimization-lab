@@ -1,30 +1,37 @@
-"""Serial GNU/Intel exact-byte gates for both disjoint composed operator sets."""
-import json,os,resource,shlex,subprocess
-from pathlib import Path
-from build_engine import P,ROOT,B,sha,save,limits
-from bundle_selection import views,choices
+"""Fresh host-only miniature engines: target, draft bytes and reverse handoff."""
+import json,subprocess
+from unittest.mock import patch
+import pipeline
+from build_engine import P,ROOT,B,BASE,sha,save,limits
+from bundle_selection import PLACEMENTS,views,choices
+
+def run_one(label,binary,dr,split,hc):
+ links=subprocess.check_output(['readelf','-d',str(binary)],text=True).lower()
+ assert not any(x in links for x in ('libsycl','libze_loader','libur_loader','libopencl'))
+ dest=B/'mini'/label;adapter=B/'mini'/(label+'-adapter');adapter.mkdir(parents=True,exist_ok=True)
+ s=json.loads((P/'selection.json').read_text());s['choices']=choices('production',hc,'wide64');save(adapter/'selection.json',s)
+ args=pipeline.parser().parse_args(['--binary',str(binary),'--output',str(dest),'--mini','--context','256','--tokens','24','--seconds','180','--wait-seconds','120','--native-nice','19','--draft','mtp','--draft-rank',str(dr),'--target-split',str(split),'--controller','native','--timing','token','--retain-steps','1-24'])
+ args.host_memory='resident';args.selection_sha256=sha(adapter/'selection.json')
+ with patch.object(pipeline,'P',adapter):result=pipeline.run(args)
+ assert result['passed'],result.get('error')
+ fixtures={str(f.relative_to(dest)):sha(f) for rank in ('rank0','rank1') for f in (dest/rank).glob('step*/layer-*.bf16')}
+ assert len(fixtures)==96 and len(result['tokens'])==24
+ proposals=[r['guess'] for line in (dest/f'rank{dr}/draft-rows.jsonl').read_text().splitlines() if 'guess' in (r:=json.loads(line))]
+ state=dest/f'rank{dr}/draft-final-state';states={str(f.relative_to(state)):sha(f) for f in state.rglob('*') if f.is_file() and f.suffix in ('.bin','.bf16','.f32','.u32')}
+ identity=dict(tokens=result['tokens'],fixtures=fixtures,proposals=proposals,draft_state=states)
+ save(P/'evidence'/('mini-'+label+'.json'),identity)
+ return identity,dict(label=label,binary_sha256=sha(binary),draft_rank=dr,target_split=split,hc=hc,fixture_count=len(fixtures),proposals=len(proposals),stats=result['stats'],identity_sha256=sha(P/'evidence'/('mini-'+label+'.json')))
 
 def main():
- limits();result=dict(passed=False,device_executed=False,runs=[],sources={})
- for name,compiler in [('gnu','/usr/bin/g++'),('intel','/opt/intel/oneapi/compiler/2026.0/bin/icpx')]:
-  for packet,count in ((73,44),(74,60)):
-   out=B/f'cpu-p{packet}-{name}';out.mkdir(parents=True,exist_ok=True)
-   cmd=[compiler,'-std=c++20','-O2','-fno-fast-math','-ffp-contract=off','-DOWN_RT_HOST_ONLY','-I'+str(P),'-I'+str(P.parents[1]/'stage1/packet3-prep/src'),'-I'+str(P.parent/'packet2/kernels'),'-I'+str(P.parent/'packet2/loader'),'-MMD','-MF',str(out/'deps.d'),str(P/f'p{packet}_cpu.cpp'),'-o',str(out/'fixture')]
-   with (out/'compile.log').open('w') as f:subprocess.run(cmd,stdout=f,stderr=subprocess.STDOUT,stdin=subprocess.DEVNULL,check=True,timeout=300)
-   for n in shlex.split((out/'deps.d').read_text().replace('\\\n',' ').split(':',1)[1]):result['sources'][str(Path(n).resolve().relative_to(ROOT))]=sha(n)
+ limits();rows=[]
+ expected,row=run_one('parent75',BASE/'build/gnu-host/own-rt-iq3',1,0,'production');rows.append(row)
+ for placement,(dr,split,_) in PLACEMENTS.items():
+  for hc in ('production','hc-wide'):
    for repeat in (1,2):
-    dest=out/f'repeat-{repeat}';dest.mkdir(exist_ok=True)
-    with (dest/'run.log').open('w') as f:subprocess.run([str(out/'fixture'),str(dest)],stdout=f,stderr=subprocess.STDOUT,stdin=subprocess.DEVNULL,check=True,timeout=300)
-    native=json.loads((dest/'native.json').read_text());a=sha(dest/'expected.bin');b=sha(dest/'candidate.bin')
-    assert native['passed'] and native['cases']==count and a==b
-    result['runs'].append(dict(compiler=name,packet=packet,command=cmd,repeat=repeat,native=native,expected_sha256=a,candidate_sha256=b,path=str(dest.relative_to(ROOT))))
-    print(name,packet,repeat,'PASS',flush=True)
- for packet in (73,74):assert len({r['candidate_sha256'] for r in result['runs'] if r['packet']==packet})==1
- out=B/'composed-fixture';out.mkdir(exist_ok=True)
- for kind in ('expected','candidate'):
-  (out/(kind+'.bin')).write_bytes(b''.join((B/f'cpu-p{packet}-gnu/repeat-1'/f'{kind}.bin').read_bytes() for packet in (73,74)))
- result['views']={n:dict(choices=choices(*v),passed=True,scope='Disjoint packed dense and HC/expert kernels; all alternatives exact in both compiler fixtures. Full-shape initialization separately mandatory.') for n,v in views().items()}
- result['sources'][str((P/'cpu_gate.py').relative_to(ROOT))]=sha(P/'cpu_gate.py');result['sources'][str((P/'bundle_selection.py').relative_to(ROOT))]=sha(P/'bundle_selection.py')
- result.update(passed=True,max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
- save(P/'evidence/cpu-byte-identity.json',result)
+    actual,row=run_one(f'{placement}-{hc}-{repeat}',B/'gnu-host/own-rt-iq3',dr,split,hc)
+    assert actual==expected,'target/draft bytes changed: '+row['label'];rows.append(row);print(row['label'],'MATCH',flush=True)
+ for label,value in [('expected',expected),('actual',actual)]:
+  (P/'evidence'/('fixture-'+label+'.bin')).write_bytes((json.dumps(value,sort_keys=True)+'\n').encode())
+ sources={str((P/n).relative_to(ROOT)):sha(P/n) for n in ('cpu_gate.py','pipeline.py','selection.json','rank.hpp','mtp.hpp','native_controller.hpp','bundle_selection.py')}
+ save(P/'evidence/cpu-gates.json',dict(passed=True,device_executed=False,model_weights_read=False,rows=rows,sources=sources,build_receipt_sha256=sha(P/'build-device-receipt.json'),scope='Synthetic miniature; real packet49 output/acceptance pending screens'))
 if __name__=='__main__':main()

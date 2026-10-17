@@ -1,5 +1,7 @@
 # Current Workspace State
 
+**October 17, packet79 sealed on CPU:** The record-line draft can now use the first card with only its 91,392-row head prefix, at 23/25 or24/24 target layers. Both fit the unchanged memory limits in the complete post-load mock. Target and draft bytes match packet75 in miniature runs; both compilers, reverse-handoff tests,75 Python tests and both temporary queue plans pass. Six views share one binary, including hc-wide. No GPU or service ran. The coordinator screens A, then its exact improving winner between B controls. Real output checks, acceptance and speed remain pending; the estimated 5% is not a measurement. [Evidence and proposed jobs](notes/2026-10-17-own-runtime-packet79.md).
+
 **October 17, packet78 sealed on CPU:** Five choices can test a faster expert
 sort and smaller HC norms on the record configuration, including the wider HC
 gate. Both compilers pass every byte check twice. Full-size startup passes on
