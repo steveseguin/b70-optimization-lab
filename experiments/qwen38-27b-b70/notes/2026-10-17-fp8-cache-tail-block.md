@@ -101,3 +101,33 @@ first token, 2026-10-16's K832 server -> this one (cached tokens in brackets):
 **Decision (as registered): adopt for the context lane.** Every context-lane server adds
 `B70_PREFIX_CACHE_EXACT_TAIL=1` (campaign 27's runner defaults to it). The packages run without the prefix cache, so
 nothing changes there. Agent-run figures measured before today (campaigns 1-26) are without it.
+
+## Review finding and 0.3.0 (06:25-06:45 EDT, CPU only; the cards were down after the 06:23 fault)
+
+A read-only Codex review of the tail switch (prompt and output in the session scratchpad; the review read the
+overlay against the R314 sources) found one real hole, in the stock engine too: **only the hit's last block was
+checked for the following token.** The engine keeps duplicate copies of a block hash (every drafting hit recomputes
+the block it drops) and its lookup returns the first copy. When two texts agree up to a block's end and then differ,
+there are two copies of that block whose drafter values at the last position differ (each made from its own next
+token); a later request following the second text can be handed the first text's copy as an interior block. Codex
+reproduced it on CPU with the stock lookup code: in a case with the first boundary's state evicted, stock hit 0, tail
+hit 1,664 tokens containing the other text's block. Also unchecked before: a block whose prompt ended exactly at its
+end (its drafter value comes from the sampled token) could sit inside a later hit.
+
+What it can and cannot have changed: only the drafter's values (the main model's values in a block depend only on the
+tokens up to it), so drafts, accepted counts and step counts, not answers (campaign 28c: no drafting gives the same
+answers as depth 5 on all 182 agent calls). It needs a divergence exactly at a block boundary (about 1 in 832 per
+divergence) followed by reuse of that block. No measured run is known to have hit it: campaigns 27 and 28 compared
+every call with campaign 26 (no tail) in everything but time and cache counts, all equal.
+
+**0.3.0** (same switch, `B70_PREFIX_CACHE_EXACT_TAIL=1`): every block of a drafting group in the hit must carry this
+request's own following token(s): the engine's copy if it does, otherwise another copy of the same hash that does;
+where none does, the hit stops at the furthest earlier boundary with a kept state, and with no boundary left the
+request reads from the start. A block with no recorded token is never part of a hit. Tests:
+`tests/test_b70_prefix_cache_exact_tail.py` (7 cases with stand-ins shaped like the R314 pool, coordinator and
+manager; 4 of them fail on 0.2.0, all pass on 0.3.0); installs in the R314 image on CPU (all three wraps in place,
+the pool's duplicate table found). A check against the image's real classes is being written
+(`tests/r314_tail_engine_check.py`).
+
+Before any public use of "exact cache" with drafting: a GPU run of 0.3.0 on the agent streams (calls equal to c27a's;
+hit counts equal or a few blocks lower), after the reboot.

@@ -39,6 +39,17 @@ the boundary in the same pieces. Gains: one block (832 tokens) of re-reading on 
 a repeated prompt; an edit just before the end of a long text resumes from the kept state before the edit (the
 end-of-prompt state or the one a block before it) instead of the last periodic one. Never past the prompt or
 `num_tokens - 1`; with the switch off, behaviour equals 0.1.0.
+
+0.3.0 (2026-10-17, same switch): the check covers every block of the hit, not only the last. The engine keeps
+duplicate copies of a block hash (every drafting hit recomputes its dropped block) and its lookup returns the first
+copy, so two texts that agree up to a block's end and then differ give two copies of that block whose drafter values
+at the last position differ; a later request could be handed the other text's copy as an interior block (the stock
+engine does the same; a Codex review found it, `notes/2026-10-17-fp8-cache-tail-block.md`). Now every block of a
+drafting group must carry this request's own following token(s): the engine's copy if it does, otherwise another copy
+that does; where none does, the hit stops before that block (at the furthest earlier kept state), and if no boundary
+is left the request reads from the start. A block with no recorded token (a prompt that ended exactly at its end, so
+its drafter value came from the sampled token) is never part of a hit. Only the drafter's values were ever at stake:
+the main model's values in a block depend only on the tokens up to it.
 """
 import os
 
@@ -116,14 +127,15 @@ def register():
 
 
 def install_tail(coordinator, logger):
-    """B70_PREFIX_CACHE_EXACT_TAIL=1: record the token(s) after each cached block; extend a drafting hit by one block."""
+    """B70_PREFIX_CACHE_EXACT_TAIL=1: record the token(s) after each cached block; a drafting hit uses only blocks made
+    with the request's own following token(s), and lands on the furthest kept state they reach."""
     from vllm.v1.core import block_pool as pools
     from vllm.v1.core import kv_cache_manager as kvm
-    from vllm.v1.kv_cache_interface import FullAttentionSpec, MambaSpec
+    from vllm.v1.core.kv_cache_utils import make_block_hash_with_group_id
 
     after = {}  # physical block id -> the prompt token(s) right after the block, when it was cached
     current = {'request': None}
-    stats = {'lookups': 0, 'extended': 0, 'no_state': 0, 'token_differs': 0}
+    stats = {'lookups': 0, 'extended': 0, 'no_state': 0, 'token_differs': 0, 'replaced': 0, 'shortened': 0}
     pool_cls = pools.BlockPool
     original_cache = pool_cls.__dict__['cache_full_blocks']
 
@@ -160,6 +172,17 @@ def install_tail(coordinator, logger):
     hybrid = coordinator.HybridKVCacheCoordinator
     original_find = hybrid.__dict__['find_longest_cache_hit']
 
+    def copies(pool, block_hash, gid):
+        """Every cached block of this hash in this group (the engine keeps duplicates), the engine's own choice first."""
+        table = getattr(pool.cached_block_hash_to_block, '_cache', None)
+        if table is None:  # not the R314 map: only the engine's choice is visible
+            found = pool.get_cached_block(block_hash, [gid])
+            return [found[0]] if found else []
+        entry = table.get(make_block_hash_with_group_id(block_hash, gid))
+        if entry is None:
+            return []
+        return list(entry.values()) if isinstance(entry, dict) else [entry]
+
     def find_longest_cache_hit(self, block_hashes, max_cache_hit_length):
         blocks, hit, uncached = original_find(self, block_hashes, max_cache_hit_length)
         request = current['request']
@@ -170,7 +193,7 @@ def install_tail(coordinator, logger):
         size = self.scheduler_block_size
         first = hit // size
         top = min(max_cache_hit_length, request.num_prompt_tokens - n, len(block_hashes) * size) // size
-        if hit % size or top <= first:
+        if hit % size or (top <= 0 and first == 0):
             return blocks, hit, uncached
         attn, states = [], []
         for gid, manager in enumerate(self.single_type_managers):
@@ -180,41 +203,72 @@ def install_tail(coordinator, logger):
                 stats['other_group'] = stats.get('other_group', 0) + 1
                 return blocks, hit, uncached
             (attn if kind == 'FullAttentionManager' else states).append(gid)
+        drafting = [gid for gid in attn if gid in self.eagle_group_ids]
         stats['lookups'] += 1
         if stats['lookups'] in (20, 1000) and not stats['extended']:
             logger.warning('b70_prefix_cache_exact: %d drafting-hit lookups, none extended %s; groups %s', stats['lookups'],
                            stats, [(type(m).__name__, m.block_size) for m in self.single_type_managers])
-        # attention blocks past the engine's hit, in hash-chain order, as far as every attention group holds them
-        more = {gid: [] for gid in attn}
-        reach = first
-        for idx in range(first, top):
-            found = [self.block_pool.get_cached_block(block_hashes[idx], [gid]) for gid in attn]
-            if any(f is None for f in found):
+        pool, tokens = self.block_pool, request.all_token_ids
+        # Every attention block of the hit, in hash-chain order, from the first: a drafting group's block holds the
+        # drafter's value at its last position, made from the token after the block in the request that computed it,
+        # which the hash does not cover. So a drafting block is usable only if that recorded token equals this
+        # request's; among duplicate copies of a hash the engine's choice is taken first, then any copy that matches.
+        chosen = {gid: [] for gid in attn}
+        reach = 0
+        for idx in range(top):
+            want = tuple(tokens[(idx + 1) * size:(idx + 1) * size + n])
+            row = []
+            for gid in attn:
+                engine = blocks[gid][idx] if idx < first else None
+                if gid in drafting:
+                    pick = next((b for b in ([engine] if engine is not None else []) + copies(pool, block_hashes[idx], gid)
+                                 if after.get(b.block_id) == want), None)
+                else:
+                    pick = engine if engine is not None else next(iter(copies(pool, block_hashes[idx], gid)), None)
+                if pick is None:
+                    break
+                row.append(pick)
+            if len(row) < len(attn):
+                if any(after.get(b.block_id) is not None for gid in drafting
+                       for b in copies(pool, block_hashes[idx], gid)):
+                    stats['token_differs'] += 1
                 break
-            for gid, f in zip(attn, found):
-                more[gid].append(f[0])
+            for gid, b in zip(attn, row):
+                chosen[gid].append(b)
             reach = idx + 1
-        tokens = request.all_token_ids
-        for k in range(reach, first, -1):  # the furthest boundary with a kept state and the same next token(s)
-            want = tuple(tokens[k * size:k * size + n])
-            if any(after.get(more[gid][k - 1 - first].block_id) != want for gid in attn):
-                stats['token_differs'] += 1
-                continue
-            kept = [self.block_pool.get_cached_block(block_hashes[k - 1], [gid]) for gid in states]
-            if any(f is None for f in kept):
+        replaced = sum(a is not b for gid in attn for a, b in zip(chosen[gid], blocks[gid]))
+        for k in range(reach, 0, -1):  # the furthest boundary with a kept state, every block before it usable
+            if k == first and not replaced:
+                return blocks, hit, uncached  # the engine's own hit, every block checked
+            if k == first:
+                kept = [blocks[gid][-1:] for gid in states]
+            else:
+                kept = [pool.get_cached_block(block_hashes[k - 1], [gid]) for gid in states]
+            if any(not f for f in kept):
                 stats['no_state'] += 1
                 continue
             new = list(blocks)
             for gid in attn:
-                new[gid] = list(blocks[gid]) + more[gid][:k - first]
+                new[gid] = chosen[gid][:k]
             for gid, f in zip(states, kept):
-                new[gid] = [self.block_pool.null_block] * (k - 1) + [f[0]]
-            stats['extended'] += 1
-            stats['blocks_gained'] = stats.get('blocks_gained', 0) + k - first
-            if stats['extended'] in (1, 100, 10000):
+                new[gid] = [pool.null_block] * (k - 1) + [f[0]]
+            if replaced:
+                stats['replaced'] += 1
+            if k < first:
+                stats['shortened'] += 1
+            if k > first:
+                stats['extended'] += 1
+                stats['blocks_gained'] = stats.get('blocks_gained', 0) + k - first
+            noted = stats['extended'] if k > first else stats['replaced'] + stats['shortened']
+            if noted in (1, 100, 10000):
                 logger.warning('b70_prefix_cache_exact: drafting hit moved to a later kept state %d times, %d blocks in '
-                               'all %s', stats['extended'], stats['blocks_gained'], stats)
+                               'all; %s', stats['extended'], stats.get('blocks_gained', 0), stats)
             return tuple(new), k * size, max(0, hit + uncached - k * size)
-        return blocks, hit, uncached
+        if first == 0:
+            return blocks, hit, uncached
+        stats['shortened'] += 1  # no usable boundary: read from the start rather than use a block made for other text
+        logger.warning('b70_prefix_cache_exact: engine hit of %d tokens refused (a block made for other text); %s',
+                       hit, stats)
+        return tuple([] for _ in blocks), 0, max(0, hit + uncached)
 
     hybrid.find_longest_cache_hit = find_longest_cache_hit

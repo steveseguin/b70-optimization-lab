@@ -61,7 +61,11 @@ still running on every Xe core with no command error and no page fault on this c
 long (a wait on the other card inside a collective would look the same), not a bad address. The scheduler dump puts
 it at the first step of a new request (4,603 prompt tokens, one request running, 5.7 % of the KV cache), i.e. a
 prompt-reading step after 40 s of idle, not a verify step (the one-launch verify path only runs on drafting steps
-past 1,536 keys).
+past 1,536 keys). The engine's dump of that step (`c28e-server-log-end.txt`): the request had a cache hit of 4,160
+tokens (five whole blocks; the recurrent-state groups list four null blocks and then the kept state, the layout the
+tail switch builds, though the stock path builds the same one) and the step read the remaining 443 tokens. Every agent
+call of the day made a step of this kind (a hit, then a short last piece), so the step itself is ordinary; what the
+dump cannot say is whether the hit was one the tail switch had extended.
 
 Not known: whether the 05:59 kill-induced reset left a card in a state that made this hang likely (the 06:06 health
 probe passed), or whether this is an independent hang. This server configuration ran campaigns 26-28c today
