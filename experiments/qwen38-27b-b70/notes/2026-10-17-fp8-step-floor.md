@@ -59,3 +59,29 @@ two-card server does not leave.
   a code read of its per-step work (host side first: with asynchronous scheduling a step only slows if the host's
   work per step outgrows the device's), and a fix is tested for equal answers before any timing claim.
 - Any fault line: stop, rule 3.
+
+## Amendment 07:03 EDT (before any run): two arms without the drafter
+
+From this morning's agent runs (per-call fit of model seconds on uncached and written tokens, K32 rules stream):
+
+| Run | Drafting | ms per written token | Tokens per step | ms per step |
+| --- | --- | ---: | ---: | ---: |
+| c28c | none | 28.8 + 0.168 per 1K of context | 1 | about 31.7 at the calls' mean 17K |
+| c27a | depth 5 | 7.66 | 5.27 (c28a note) | about 40.4 |
+
+So on the lane, speculation (five drafter passes plus five more checked rows) adds about 8.7 ms per step at 17K and
+about 9.5 ms at 1K (38.5 against about 29.0). The package's derived figures give it 3.5 ms (33.0 against 29.5). The
+device work it should take: five passes of one layer plus a 65K-row INT4 head (about 0.6 ms each) and five more rows
+in GEMMs that are weight-bound at six rows: about 3-4 ms. The step without drafting is the same on both (29 against
+29.5), so the gap, if real, sits in speculation.
+
+Added arms (same runner, same probe; ms per token = 1 / writing rate): **P0** = P and **L0** = L with `--mtp 0`.
+
+- **Predictions:** P0 and L0 at 1K within 1 ms of each other and of 29 ms.
+- **Decision, added:** speculation cost = (L − L0) and (P − P0) at 1K.
+  - L's 2 ms or more above P's: the lane's extra is in speculation; N and M say which flag group it follows.
+  - Both within 2 ms of each other and 6 ms or more: speculation costs about twice its device work everywhere.
+    Next: read the drafter loop on the host side (the five passes run one after another; any wait for the host in
+    between leaves the cards idle), then register a fix with equal answers as its gate.
+  - Both under 5 ms: the 33.0 / 38.5 difference was the measuring, the drafter is near its device work, and the floor
+    is the GEMMs (lever: the in-server GEMM rate, about 480 against 550-600 GB/s alone).

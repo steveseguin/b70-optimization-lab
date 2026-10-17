@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # 2026-10-17 the writing-step floor: why a context-lane step costs 38.5 ms at 1K when the TP2 package's is quoted at
-# 33.0 (registered in notes/2026-10-17-fp8-step-floor.md before any run). Four R314 servers in turn, the same write
+# 33.0 (registered in notes/2026-10-17-fp8-step-floor.md before any run). Six R314 servers in turn, the same write
 # probe on each (probe-write-rate-vs-context.py: copy and story, 512 tokens, at 1K / 8K / 16K / 30K):
 #   L  the context lane as campaign 27 ran it (pieces of 832, exact cache with the tail switch, one launch)
 #   N  L without the prefix cache and the overlays that serve it (same 262,144 window, same 832-token steps)
 #   M  the package's flags with L's window (262,144, steps of 4,096, no prefix cache)
 #   P  the package's flags (33,024 window, steps of 4,096, no prefix cache), on R314
-# All four: TP2, MTP5, INT4 draft head + shortlist, allgather, chunked-upload and GDN state-width overlays, verify rows
+#   P0, L0  P and L without the drafter (one token per step: the step without speculation, measured the same way)
+# All: TP2, MTP5 with INT4 draft head + shortlist (except P0, L0), allgather, chunked-upload and GDN state-width overlays, verify rows
 # in one launch. No profiler: a guard kill mid-step resets an engine (06:00 fault), and a profile needs host memory.
 # Stops at the first fault line or failed start; the cards are left empty (RESTORE=1 puts Gemma back at the end).
-#   SUDO_ASKPASS=... [ALLOW_GEMMA_STOP=1] [ARMS="L N M P"] systemd-run --user ... bash run-20261017-step-floor.sh
+#   SUDO_ASKPASS=... [ALLOW_GEMMA_STOP=1] [ARMS="L N M P P0 L0"] systemd-run --user ... bash run-20261017-step-floor.sh
 set -uo pipefail
 LAB=/home/steve/b70-optimization-lab
 cd "$LAB"
@@ -48,14 +49,16 @@ wait_port() {  # a stop leaves the port in TIME_WAIT; the launcher's bind probe 
   say "port $PORT still busy"; return 1
 }
 COMMON=(--image neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r314-state-stride --warmup --keep --startup-timeout 1800
-        --tp 2 --mem 0.95 --seqs 1 --fa-verify-rows --mtp 5 --draft-int4
-        --shortlist /opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt
+        --tp 2 --mem 0.95 --seqs 1 --fa-verify-rows
         --overlay b70-allgather-allreduce --extra-env B70_ALLGATHER_ALLREDUCE=1
         --overlay b70-chunked-upload --extra-env B70_CHUNKED_UPLOAD=1
         --overlay b70-gdn-state-width --extra-env B70_GDN_STATE_WIDTH=1
         --extra-env B70_FA_VERIFY_ROWS_ONE_LAUNCH=1)
-arm_args() {
-  case $1 in
+arm_args() {  # an arm name ending in 0 is the same server without the drafter
+  if [[ $1 == *0 ]]; then echo --mtp 0
+  else echo --mtp 5 --draft-int4 --shortlist /opt/draft-shortlists/shortlist-u-v1all-v2top65k.txt
+  fi
+  case ${1%0} in
     L) echo --max-model-len 262144 --batched 832 \
          --prefix-cache align --overlay b70-prefix-cache-exact --extra-env B70_PREFIX_CACHE_EXACT=1 \
          --extra-env B70_PREFIX_CACHE_EXACT_TAIL=1 --serve-arg=--prefix-cache-retention-interval=13312 \
@@ -107,7 +110,7 @@ for i in $(seq 1 30); do pgrep -x llama-server >/dev/null || break; sleep 2; don
 pgrep -x llama-server >/dev/null && { say "ABORT: llama-server still running"; exit 2; }
 mkdir -p "$D"
 trap finish EXIT
-for arm in ${ARMS:-L N M P}; do
+for arm in ${ARMS:-L N M P P0 L0}; do
   OWNER=; start_server "$arm" || exit 1
   python3 $S/probe-write-rate-vs-context.py --base-url http://127.0.0.1:$PORT --lengths 1000,8000,16000,30000 \
     --out "$D/write-$arm.json" > "$D/write-$arm.log" 2>&1 || say "write probe failed on $arm"
