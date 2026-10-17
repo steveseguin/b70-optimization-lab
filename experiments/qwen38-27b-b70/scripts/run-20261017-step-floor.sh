@@ -142,9 +142,24 @@ fi
 [[ -n $(faults) ]] && { say "ABORT: GPU fault line after the census"; exit 1; }
 for arm in $ARMS; do
   OWNER=; start_server "$arm" || exit 1
+  if [[ -n ${STRESS_MIN:-} ]]; then   # the hang reproduction: request endings instead of the write probe
+    python3 $S/stress-request-endings.py --base-url http://127.0.0.1:$PORT --minutes "$STRESS_MIN" \
+      --log "$D/stress-$arm.jsonl" > "$D/stress-$arm.log" 2>&1 || {
+      say "stress client stopped with a failed request on $arm; saving the evidence before anything else"
+      sleep 5
+      for c in /sys/class/drm/card*/device/devcoredump/data; do
+        [[ -e $c ]] || continue
+        sudo -A cat "$c" > "$D/devcoredump-$(basename "$(readlink -f "${c%/devcoredump/data}")")-$arm.txt" && say "copied $c"
+      done
+      sudo -A journalctl -k --since "$START" --no-pager -o short-iso > "$D/kernel-$arm.txt" 2>&1
+      grep -A60 "b70_step_breadcrumbs rank" "$O/server.log" > "$D/crumbs-$arm.txt"
+      tail -400 "$O/server.log" > "$D/server-log-end-$arm.txt"; }
+    tail -2 "$D/stress-$arm.log"
+  else
   python3 $S/probe-write-rate-vs-context.py --base-url http://127.0.0.1:$PORT --lengths "$LENGTHS" \
     --out "$D/write-$arm.json" > "$D/write-$arm.log" 2>&1 || say "write probe failed on $arm"
   grep "^WRITE" "$D/write-$arm.log"
+  fi
   grep -o "b70_host_step_clock rank .*" "$O/server.log" > "$D/clock-$arm.txt"; head -c 600 "$D/clock-$arm.txt"; echo
   grep -A40 "b70_step_breadcrumbs rank .* \(STALL\|FAILED\)" "$O/server.log" > "$D/crumbs-$arm.txt" && say "breadcrumb blocks on $arm: $D/crumbs-$arm.txt"
   stop_server
