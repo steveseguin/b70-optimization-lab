@@ -64,6 +64,7 @@ From the repository root:
 
 ```bash
 P=experiments/own-xpu-runtime/stage2/packet56w-spin
+nice -n 19 taskset -c 8-15,24-31 python3 -B "$P/prepare_cpu_input.py"
 nice -n 19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 python3 -B "$P/build_spin.py"
 nice -n 19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 python3 -B "$P/cpu_gate.py"
 nice -n 19 taskset -c 8-15,24-31 python3 -B \
@@ -87,4 +88,6 @@ The screen seal binds compiler inputs, commands, binary, CPU gates, fixture
 bytes, dispatch, selection and memory plan. Never overwrite it after a screen.
 The unchanged RoPE bytes are a read-only link to packet56; the draft manifest
 is copied unchanged. Both runtime inputs are bound by the build receipt.
+The inherited generated CPU RoPE header has a hash-checked
+[restoration helper](ARTIFACT-RETENTION.md); it does not need a duplicate blob.
 See [coordinator command](WINDOW.md) and [task note](../../../../notes/2026-10-17-own-runtime-packet56w.md).

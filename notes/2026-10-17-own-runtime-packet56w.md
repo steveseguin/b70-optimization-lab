@@ -67,6 +67,16 @@ Only this packet's regenerable object files were removed: 29,938,634 bytes;
 the remaining build is 37,910,098 bytes. RoPE is a read-only byte-identical
 link to packet56; the unchanged draft manifest is copied and sealed.
 
+A final Git-retention check identified the inherited generated CPU RoPE header
+as the sole source path outside Git. It already exists in packet45's build;
+no parent was changed. A small preparation helper now reconstructs its exact
+12,582,900 bytes from the retained RoPE input and checks the existing seal's
+hash, restoring only this candidate's local read-only link on this host.
+[Restoration details](../experiments/own-xpu-runtime/stage2/packet56w-spin/ARTIFACT-RETENTION.md)
+and a derivation receipt are retained. This adds no new header blob and changes
+neither the sealed sources, binary nor seal. The build-size figure above is
+the candidate's own retained bytes, excluding that shared read-only input.
+
 ## Coordinator handoff
 
 Run the [exact screen command](../experiments/own-xpu-runtime/stage2/packet56w-spin/WINDOW.md)
