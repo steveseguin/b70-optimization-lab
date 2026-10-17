@@ -135,7 +135,7 @@ count and the split count.
 It makes one launch of the decode kernel with the six rows as one-token pseudo-sequences, and passes the split count
 each lone row's call would pick, computed on the host from the same `max_seqlen_k - back` the per-row calls use.
 When the six rows would not all pick the same count, it falls back to the per-row calls; the formula says that
-happens at about 0.3 % of lengths.
+happens at 130 of the 260,603 lengths from 1,542 to 262,144 (0.05 %).
 
 ## Check and server comparison (registered 02:47 EDT, before either run)
 
@@ -151,3 +151,22 @@ happens at about 0.3 % of lengths.
      up (about 46 / 72 / 108 ms at 32K / 100K / 200K, against 61.5 / 101.8 / 160.8).
    - **Decision:** adopt for the context lane, and propose it for the TP2 package, if the answers are identical and
      the time per step falls 10 % or more at 64K and above. Otherwise record and close.
+
+## Result, census (02:51 EDT, card 0, kernel log clean; `data/2026-10-17-verify-census/attn-r314.json`)
+
+| Pages | Lengths | one launch used | one launch = lone rows, 6/6 | kernel fast path = lone rows, 6/6 |
+| ---: | ---: | ---: | ---: | ---: |
+| 832 | 4,209 | 4,190 | **4,190** | 1,206 |
+| 1,280 | 4,209 | 4,190 | **4,190** | 1,206 |
+
+- **The one-launch mode holds:** every row equal to the lone-row call wherever it was used, both page sizes. The other
+  19 lengths per page are split-count boundaries, where the overlay falls back to the per-row calls.
+- The kernel's own fast path is lone-row equal at only 1,206 of 4,209 lengths. With 32 Xe cores, the formula never
+  predicted equality where the rows differed (0 false "equal"). Its 73 false "differ" are split counts that differ
+  but give the same key partition (e.g. 31 and 32 splits over the same number of tiles), or rows under 2,048 keys,
+  which the kernel keeps unsplit.
+- **Found and fixed before any server run:** the kernel interface's core-count helper returns 20 on this torch (it
+  looks for per-slice fields torch does not expose); the card has 32 (`gpu_subslice_count`). The first draft of
+  0.2.0 compared the two and would have refused to start. It now uses `gpu_subslice_count`. For one sequence with 2
+  key/value heads, the lone-row split count is the same for 20 and 32 cores at every length up to 262,144 (checked),
+  so the census result does not depend on it.

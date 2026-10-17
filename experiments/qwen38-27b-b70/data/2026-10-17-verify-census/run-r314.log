@@ -1,0 +1,14 @@
+### 02:51:40 stopping the Gemma service (front door state: 0 0)
+### 02:51:46 timing neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r314-state-stride (r314)
+xe cores (interface): 20 properties: {"architecture": 21483225088, "device_id": 57891, "driver_version": "1.15.39122+11", "gpu_eu_count": 256, "gpu_subslice_count": 32, "has_atomic64": true, "has_bfloat16_conversions": true, "has_fp16": true, "has_fp64": true, "has_subgroup_2d_block_io": true, "has_subgroup_matrix_multiply_accumulate": true, "has_subgroup_matrix_multiply_accumulate_tensor_float32": false, "is_integrated_gpu": false, "last_level_cache_size": 25165824, "local_mem_size": 131072, "max_compute_units": 256, "max_num_sub_groups": 64, "max_work_group_size": 1024, "memory_bus_width": 64, "memory_clock_rate": 2800, "name": "Intel(R) Arc(TM) Pro B70 Graphics", "platform_name": "Intel(R) oneAPI Unified Runtime over Level-Zero V2", "total_memory": 34242297856, "type": "gpu", "vendor": "Intel(R) Corporation", "version": "20.2.0"}
+one-launch split counts from /tmp/ov.py
+{"page": 832, "points": 4209, "fast_all_equal": 1206, "fast_prediction_right": 3992, "pinned_used": 4190, "pinned_all_equal": 4190, "seconds": 5.6}
+pinned mismatches: []
+{"page": 1280, "points": 4209, "fast_all_equal": 1206, "fast_prediction_right": 3992, "pinned_used": 4190, "pinned_all_equal": 4190, "seconds": 5.4}
+pinned mismatches: []
+### 02:52:01 bench exit 0
+### 02:52:01 kernel log clean since 2026-10-17 02:51:40; Gemma back on its throughput recipe
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 02:56:27 attention bench complete

@@ -3,6 +3,7 @@
 # One context-lane server (campaign 24's flags, 832-token pieces), then probe-write-rate-vs-context.py: copy and
 # story tasks of 512 tokens at 1K-246K, with the server's draft counters per request. Gemma stopped first and put
 # back at the end unless a GPU fault line was logged.
+# NAME= names the server arm (default W832); ONE_LAUNCH=1 adds B70_FA_VERIFY_ROWS_ONE_LAUNCH=1 (b70-fa-verify-rows 0.2.0).
 #   SUDO_ASKPASS=... systemd-run --user ... bash run-20261017-write-rate.sh
 set -uo pipefail
 LAB=/home/steve/b70-optimization-lab
@@ -57,7 +58,7 @@ start_server() {  # name block
     --serve-arg=--prefix-cache-retention-interval=$retention \
     --overlay b70-spec-resume-accepted --extra-env B70_SPEC_RESUME_ACCEPTED=1 \
     --overlay b70-gdn-state-width --extra-env B70_GDN_STATE_WIDTH=1 \
-    --overlay b70-exclusive-prefill --extra-env B70_EXCLUSIVE_PREFILL=1 > "$D/owner-$name.log" 2>&1 &
+    --overlay b70-exclusive-prefill --extra-env B70_EXCLUSIVE_PREFILL=1 "${ARM_ARGS[@]}" > "$D/owner-$name.log" 2>&1 &
   OWNER=$!
   local s=
   for i in $(seq 1 400); do
@@ -87,7 +88,12 @@ trap restore EXIT
 for i in $(seq 1 30); do pgrep -x llama-server >/dev/null || break; sleep 2; done
 pgrep -x llama-server >/dev/null && { say "ABORT: llama-server still running"; exit 2; }
 sleep 5
-OWNER=; start_server W832 832 || exit 1
-python3 $S/probe-write-rate-vs-context.py --base-url http://127.0.0.1:$PORT --out "$D/write-W832.json" > "$D/write-W832.log" 2>&1 \
+NAME=${NAME:-W832}
+ARM_ARGS=()
+[[ ${ONE_LAUNCH:-0} == 1 ]] && ARM_ARGS=(--extra-env B70_FA_VERIFY_ROWS_ONE_LAUNCH=1)
+OWNER=; start_server $NAME 832 || exit 1
+grep -o "b70_fa_verify_rows: enabled.*" "$O/server.log" | sort -u
+python3 $S/probe-write-rate-vs-context.py --base-url http://127.0.0.1:$PORT --out "$D/write-$NAME.json" > "$D/write-$NAME.log" 2>&1 \
   || say "write probe failed"
-grep "^WRITE" "$D/write-W832.log"
+grep "^WRITE" "$D/write-$NAME.log"
+grep -o "b70_fa_verify_rows: [0-9]* one-launch.*\|b70_fa_verify_rows: verifier attention.*" "$O/server.log" | sort | uniq -c | tail -3
