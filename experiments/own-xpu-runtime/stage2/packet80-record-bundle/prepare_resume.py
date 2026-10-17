@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pin exact early packet64 receipts and register a fresh destination, CPU only.
+"""Pin exact early packet80 receipts and register a fresh destination, CPU only.
 
 Never imports a parent packet's receipts or clears/changes a stopped output.
 The engine, topology, draft and miss selection stay identical.
@@ -36,7 +36,7 @@ def main():
         inside(source/name,source,tree=True)
         validate_success(name,source,0)
         row=prerequisites(source/name/'window.json',name,first)
-        assert row['schema']=='packet70.window.v1' and row['build_receipt_sha256']==old_hash
+        assert row['schema']=='packet80.window.v1' and row['build_receipt_sha256']==old_hash
         assert row['artifacts_sha256']==seal['artifacts_sha256']
         assert row['screen_seal_sha256']==seal['screen_seal_sha256']
         assert row['boot_id']==Path('/proc/sys/kernel/random/boot_id').read_text().strip()

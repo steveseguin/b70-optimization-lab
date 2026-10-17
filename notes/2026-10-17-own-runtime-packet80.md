@@ -53,3 +53,10 @@ The final128 shared-wrapper plans and704 chain-window plans are underway.
 No GPU or service ran. Packet76 now has both-lane confirmation; the current
 reader selects ordered host cleanup plus hc-wide. Packet78/79 remain production
 until their own exact improving B confirmations are present.
+
+The final read-only review found a stale packet70 schema assertion in the
+copied resume preparation entry. Packet80 receipts now pass that entry, while
+packet70/75 receipts are refused before any registration or subprocess call.
+Three direct helper tests pass. The CPU-only plan process was interrupted
+gracefully, its partial logs retained, and all seals and final plans are being
+regenerated with the corrected helper. No GPU process was touched.
