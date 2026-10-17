@@ -56,3 +56,27 @@ because the coordinator's tracked orchestration log is dirty. Fetch showed
 HEAD and origin/main equal (0/0); the log was left untouched. Root had28 GB
 free. The explicit task's <1 GB budget governs this CPU preparation; no old
 artifacts are cleaned. Packets71b/73 are being prepared by other workers.
+
+## Kernel milestone
+
+GNU and Intel each pass two fresh CPU fixture runs:60 cases and5,657,600
+decoded values per run. FP32 lane accumulators, BF16 row outputs and attention
+stream-combine bytes match. Fixtures exercise both block alignments,17 rows,
+SG32 and split4, signed zeros, subnormal and maximal finite half scales.
+[Byte evidence](../experiments/own-xpu-runtime/stage2/packet74-packed-dense/evidence/cpu-byte-identity.json).
+Both engine builds pass, as does the coordinator-only microbenchmark compile.
+The microbenchmark uses full248320×2560 head and10240×2560 QKV shapes,
+one timed launch, matching SG32 arithmetic, separate FP32 device equality,
+alternating control/candidate samples and event plus submission/wait timing.
+It has not run. Initial compile caught a missing dependent-template keyword;
+fixed before its successful build.
+
+The head-only view preserves the draft's existing expanded arithmetic/kernel
+by keeping only its91392-row expanded prefix in a separate allocation.
+Therefore net resident saving is8,944,640 bytes, not317,849,600: claiming the
+latter would omit the prefix. Target-head traffic still falls34.375 percent.
+The dense view covers QKV, Z, Q-gate, K/V, attention output, PLE projections
+and shared down where their type is Q6_K/Q8_0. Fused HC and small-FFN tuples
+retain their expanded storage and kernels; raw F32/BF16 routers cannot be
+converted to GGUF Q6/Q8 without changing weights. No full-model speed or
+device quality is claimed. Seals and coordinator screen plans follow.
