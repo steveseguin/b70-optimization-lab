@@ -38,7 +38,7 @@ def ask(base, model, prompt, max_tokens, timeout):
     req = urllib.request.Request(base.rstrip('/') + '/v1/completions', data=json.dumps(body).encode(),
                                  headers={'Content-Type': 'application/json'})
     t0 = time.perf_counter()
-    first, usage = None, None
+    first, usage, text = None, None, []
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         for raw in resp:
             line = raw.decode('utf-8', 'replace').strip()
@@ -46,12 +46,15 @@ def ask(base, model, prompt, max_tokens, timeout):
                 continue
             chunk = json.loads(line[5:].strip())
             usage = chunk.get('usage') or usage
-            if first is None and any((c.get('text') or '') for c in chunk.get('choices', [])):
+            pieces = [c.get('text') or '' for c in chunk.get('choices', [])]
+            text += pieces
+            if first is None and any(pieces):
                 first = time.perf_counter()
     end = time.perf_counter()
     details = (usage or {}).get('prompt_tokens_details') or {}
+    # 2026-10-16: the answer text too, so a cold read can be compared with its cached repeat on the same server
     return {'first_token_s': (first or end) - t0, 'prompt_tokens': (usage or {}).get('prompt_tokens'),
-            'cached_tokens': details.get('cached_tokens')}
+            'cached_tokens': details.get('cached_tokens'), 'text': ''.join(text)}
 
 
 def main() -> int:
