@@ -86,3 +86,40 @@ STOP-doing items applied:
 - the Codex count does not drop to 0 during chains;
 - lanes are compared within a lane only;
 - no silent driver exits.
+
+## Review 5, 18:07 UTC: **ACT**
+
+Evidence:
+- 95% device-in-flight over 2 h; both lanes back to back since 17:22; fault count 2.
+- Risks ahead:
+  - `/` at 14 GB free (99%), with two Codex builds compiling;
+  - both lanes run out of queued work around 19:00-19:20 UTC;
+  - 305 s W-window gaps take about 25 min of each about-70-min chain;
+  - a CPU-side report failure after drain left a lane-B marker and a screen/v3 latch, blocking packets 66 and 65 at 17:56/17:57 until they were archived;
+  - a driver logged `rc=0` for a failed unit.
+
+Actions, 18:05-18:12 UTC:
+1. **Disk:** Codex `clean3` archives exactly `packet45-merged3/build` (6.2 GB), `packet38-integrated/build` (3.1 GB) and `packet44-context/build` (3.1 GB) to `/mnt/raid-models/own-xpu-runtime-archive/`.
+   - Order: reference check (no active or queued reader), tar and verify (file count + sha256 read back), exact-path remove, `build-ARCHIVED.md`.
+   - No wildcards.
+   - New Codex builds wait for 20 GB free (`codex-p69-gated`).
+2. **Depth-2 MTP:** packet 66's device probe measured a2 = 0.718, class-balanced (`07dd19f3a`); projection +11% (56.6 tok/s). Codex **packet 68** started at 18:06:
+   - design note comparing a deeper speculative pipeline with a batched M=3 verify;
+   - a device cost probe for the chosen design, as a lane-B screen, committed early;
+   - then a lossless prototype with bit-identical per-row target arithmetic.
+3. **Rank 1 outside-layer critical path** (target head, draft head prefix, draft attention): Codex **packet 69**, gated on disk ≥ 20 GB. It measures first (diagnostic head site, lane-B screen), then order-preserving target-head and free draft-side candidates.
+4. **Multi-improvement chain with 90 s gaps:** Codex **packet 70 record bundle**, on packet 65's executable with packet 64's selection preset:
+   - expert choice set by fast reseal from the packet 65 quick screens on both lanes;
+   - 90 s gaps for all windows;
+   - a resume-capable submission tool;
+   - an orchestration that prepares but does not launch the chain.
+   - Chain only when the combined screen gain is about 3% or more, or at an overnight boundary.
+5. **Lease-release fix:** packets 69 and 70's own screen copies release the lane lease after confirmed drain, before CPU reporting (frozen trees untouched).
+   - The coordinator's own drivers capture `rc=$?` immediately after `systemd-run --wait`. The bug: `$(date ...)` in the same echo reset `$?`.
+   - A watcher Monitor flags a stale `active-lane-B.json` whose owner pid is dead.
+
+STOP-doing items applied:
+- no Codex builds under 20 GB free;
+- no single-~1% chains;
+- queue work ahead of lane gaps;
+- check the unit result rather than the end line.
