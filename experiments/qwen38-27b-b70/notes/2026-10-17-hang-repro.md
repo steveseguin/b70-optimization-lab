@@ -204,3 +204,28 @@ ranks' Python stacks, and the runner saves thread states, engine registers and, 
   at most 1 MiB in b70-allgather-allreduce.
 - **If not:** the exchange alone is cleared at that rate; the hang needs the model's own prompt-step kernels, and the
   next test runs those (GDN prompt kernel from a cached state, prompt attention over cached keys) at high rate.
+
+## Amendment 14:03 EDT (no result read): what oneCCL's "simple" all-gather is on these cards
+
+Read from oneCCL's source (uxlfoundation/oneCCL master, `src/coll/algorithms/allgatherv/sycl/allgatherv_sycl.cpp`,
+`allgatherv_pcie.cpp`, `src/common/env/env.cpp`; the image's oneCCL 2022.0.0 exports the same `allgatherv_ll_ring`):
+on Arc-family devices a message up to `CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD` (default 1 MiB) goes to
+`allgatherv_ll_ring`, a PCIe ring kernel. Up to `CCL_SYCL_ALLGATHERV_LL_THRESHOLD` (default 2 KB) it uses the small
+"LL" ring, above it the "LL256" ring; above `CCL_SYCL_ALLGATHERV_CHUNKING_THRESHOLD` (default 0, off) it would be
+split into several calls. Bigger messages go to `allgatherv_large`. So the earlier reading "the simple path is
+host-staged" (2026-09-19 note) was wrong for all-gather: it is a device kernel whose receiving side waits on flags
+the peer card writes into the ring buffer.
+
+What that means for the 06:23 hang: with the threshold at 4 GiB, every prompt-step gather (4.5 MB per card at 443
+rows, up to 8.5 MB at 832) runs through the LL256 ring kernel at sizes oneCCL's default never sends there. A ring
+kernel that misses or misorders a peer's flag waits forever with no page fault, and compute queues have no job
+timeout. That fits the 06:23 card-03 dump and a hang inside a prompt step. Decode steps' hidden-size gathers (61 KB)
+are inside the default range. This is a mechanism, not a result; the exchange stress (registered 13:46) tests it
+directly, and both its step kinds use these sizes.
+
+Lossless fix candidates if the stress hangs, each tested on the same stress first (an all-gather only moves bytes, so
+the algorithm cannot change any value): (1) `CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD` back to 1 MiB, so big gathers take
+`allgatherv_large`, checked first for the peer-access faults of 2026-09-17; (2) oneCCL's own chunking at 1 MiB
+(`CCL_SYCL_ALLGATHERV_CHUNKING_THRESHOLD=1048576`), keeping every LL256 call inside the default range; (3) the same
+split done in b70-allgather-allreduce. The prompt-reading speed of each goes next to the result: (2) and (3) add
+per-call overhead to 134 gathers per prompt step.
