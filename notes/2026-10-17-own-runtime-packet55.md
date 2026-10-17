@@ -70,3 +70,22 @@ physical cores, so 16 threads means 12 physical cores plus four SMT siblings.
 Expected peak resident memory is 256 MiB, with zero pinned host memory. It must
 run only while all GPU windows remain stopped. No throughput run occurred.
 Actual device output and exception/status integration remain separate gates.
+
+## Offline cache accounting passed its CPU checks
+
+The [analyzer](../experiments/own-xpu-runtime/stage2/packet55-feasibility/analysis/README.md)
+uses fixed per-layer quotas for LRU, LFU and static placement at 8/12/18/24
+decimal GB. It reproduces packet46's 18 GB allocation exactly, separates
+payload from padded slots, trains on twelve independent prompts, and resets
+that trained state for each of twelve held-out prompts. Initial fills,
+prefill and decode are separate; every repeated speculative visit is charged.
+The full draft stays resident outside the target cache. Twenty-four GB is a
+sensitivity point, not an admitted one-card setup.
+
+Independent review caught a false-miss case when one selected expert evicted
+another from the same route. The corrected policy snapshots all ten hits and
+protects those slots before filling misses. Nine CPU tests now pass, including
+real binary conversion, provenance validation and all twelve cache settings
+on 2,328 temporary synthetic records. Six artifact-tampering checks refuse
+changed inputs. This establishes accounting behavior, not a measured hit rate.
+Early natural EOS is retained and marks the requested 24 × 256 scope incomplete.
