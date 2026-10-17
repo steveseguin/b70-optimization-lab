@@ -32,6 +32,7 @@ TAIL=${TAIL:-1}
 EDIT=${EDIT:-0}
 RESTORE=${RESTORE:-1}
 ONE_LAUNCH=${ONE_LAUNCH:-1}
+# MARKS=1 (2026-10-17, notes/2026-10-17-hang-repro.md): breadcrumbs 0.3.0 device progress marks around every collective
 MTP=${MTP:-5}
 SEQS=${SEQS:-2}
 PIECE=${PIECE:-832}
@@ -318,7 +319,8 @@ systemd-run --user --unit=ctx-fp8-tp2-server --collect -p WorkingDirectory=$LAB 
   $( [[ $ONE_LAUNCH == 1 ]] && echo --extra-env B70_FA_VERIFY_ROWS_ONE_LAUNCH=1) \
   $( [[ $TAIL == 1 ]] && echo --extra-env B70_PREFIX_CACHE_EXACT_TAIL=1) \
   $( [[ ${FA_PER_SEQ:-0} == 1 ]] && echo --overlay b70-fa-decode-per-seq --extra-env B70_FA_DECODE_PER_SEQ=1) \
-  $( [[ ${BREADCRUMBS:-1} == 1 ]] && echo --overlay b70-step-breadcrumbs --extra-env B70_STEP_BREADCRUMBS=1) 2>&1 | tail -1
+  $( [[ ${BREADCRUMBS:-1} == 1 ]] && echo --overlay b70-step-breadcrumbs --extra-env B70_STEP_BREADCRUMBS=1) \
+  $( [[ ${MARKS:-0} == 1 ]] && echo --extra-env B70_STEP_BREADCRUMBS_DEVICE_MARKS=1) 2>&1 | tail -1
 ready=0
 for i in $(seq 1 120); do
   if server_up; then ready=1; say "server ready after ~$((i*15)) s; MemAvailable $(avail) MiB"; break; fi

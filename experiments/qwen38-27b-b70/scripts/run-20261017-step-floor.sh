@@ -58,6 +58,8 @@ COMMON=(--image neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r314-state-stri
         --overlay b70-host-step-clock --extra-env B70_HOST_STEP_CLOCK=1
         --overlay b70-step-breadcrumbs --extra-env B70_STEP_BREADCRUMBS=1
         --extra-env B70_FA_VERIFY_ROWS_ONE_LAUNCH=1)
+# MARKS=1 (notes/2026-10-17-hang-repro.md): breadcrumbs 0.3.0 device progress marks around every collective
+[[ ${MARKS:-0} == 1 ]] && COMMON+=(--extra-env B70_STEP_BREADCRUMBS_DEVICE_MARKS=1)
 # PROFILE=1: every arm also gets the comm5b profiler recipe (b70-step-profiler, rank 0 only, 8 steps after 40), its
 # trace written to /mnt/fast-ai/bench-results/fp8-r314-floor-<arm>-$TAG-trace; CENSUS=0 skips the padded-GEMM census;
 # LENGTHS sets the write probe's prompt lengths.
