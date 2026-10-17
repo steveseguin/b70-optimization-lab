@@ -939,7 +939,7 @@ wanted.
 
 ### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, TP2, packet 64 record bundle (2026-10-17)
 
-Submitted 2026-10-17 at about 18:52 UTC after a local dry-run and a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmvcr0nee07wele01ypyng2nz`, status APPROVED. It supersedes `cmvco3d6606u1le01941ek8hq` (51.033041).
+Submitted 2026-10-17 at about 18:47 UTC after a local dry-run and a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmvcr0nee07wele01ypyng2nz`, status APPROVED. It supersedes `cmvco3d6606u1le01941ek8hq` (51.033041).
 
 **Identity:** packet64-record-bundle, sealed base `53ffe4605`, device binary `aeda7568…`. Selection `1-draft-hc-batch`, made by the preregistered both-lanes rule (`ops/packet64-orchestration`, 17:37 UTC). Screens were 13/13 exact on both lanes; +1.38% on lane A and +0.90% on lane B over same-lane production. It is packet 61x plus three changes:
 - packet 63's draft-side HC schedules and fusions (draft arithmetic only; the target verifies every token);
