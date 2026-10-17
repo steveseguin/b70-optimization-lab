@@ -76,10 +76,10 @@ def generate(root):
     base = summarize(root)  # validates paired tokens, acceptance, events and cancellations
     selection = P / 'selection.json'
     require(all(json.loads(f.read_text())['selection_sha256']==sha(selection)
-                for f in root.glob('*/*/receipt.json')), 'not packet70 selected view')
+                for f in [f for arm in ('control','attribution') for f in (root/arm).glob('*/receipt.json')]), 'not packet70 selected view')
     build = json.loads((P/'build-device-receipt.json').read_text())
     require(all(json.loads(f.read_text())['binary_sha256']==build['artifacts']['build/device/own-rt-iq3']
-                for f in root.glob('*/*/receipt.json')), 'not packet77 instrumented binary')
+                for f in [f for arm in ('control','attribution') for f in (root/arm).glob('*/receipt.json')]), 'not packet77 instrumented binary')
     census = P.parent / 'packet72-occupancy/header-census.json'
     pins = json.loads((P/'dependency-pins.json').read_text())
     require(sha(census)==pins[str(census.relative_to(ROOT))], 'tensor census changed')

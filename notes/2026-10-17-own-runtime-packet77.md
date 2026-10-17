@@ -51,3 +51,26 @@ uncommitted work. Fetch showed HEAD already equal to remote main at that point.
 Those edits were preserved; packet75 committed independently during this task.
 Only packet77, this note, its proposed queue file and the current-state pointer
 are included in this commit. No other process was stopped.
+
+## Device result (coordinator, 2026-10-17 21:56–22:01 UTC, lane B via lane-queue)
+
+The device screen passed (`window.json` passed; v4 released the lane before reporting, so there was no stale marker or latch). The paired report then failed with `KeyError 'binary_sha256'`: `report.py` globbed `*/*/receipt.json`, which also matched rank receipts. The coordinator restricted it to the `control`/`attribution` arm receipts and regenerated the report from the retained raw evidence: `screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution-summary.{json,md}`.
+
+**Current line (packet 70: wide64), per half, headroom vs 555 GB/s:**
+
+| Rank | Class | ms/half | Read GB/s | Headroom (ms) |
+|---|---|---:|---:|---:|
+| 0 | `expsgate` | 1.48 | 171 | 1.02 |
+| 0 | `expsdown` | 1.25 | 177 | 0.85 |
+| 0 | `gdn.recurrence` | 0.65 | 44 | 0.59 |
+| 0 | `route` | 0.47 | 0.22 | 0.47 |
+| 0 | `hc.f.gate` / `hc.a.gate` | 0.60 each | 149 | 0.44 each |
+| 0 | `hc.a.norm` / `hc.f.norm` | 0.19 each | about 8 | 0.18 each |
+| 0 | router | 0.53 | 423 | 0.13 |
+| 1 | same pattern | — | — | — |
+| 1 | `target_head` | 1.40 | 566 | at the limit |
+
+**Next levers:**
+- latency-bound small kernels (`route` top-k about 19.6 µs per layer; HC norms about 7.8 µs each per layer);
+- `hc-wide` (packet 73, +0.98% on lane A) is pending lane-B confirmation;
+- experts at about 31% of reference likely dequant-ALU bound (packet 73's experts2 variants lost).
