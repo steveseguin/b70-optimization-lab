@@ -67,3 +67,27 @@ and decision tests pass. GNU, Intel and device compilation pass; no device code 
 leaves a 59.1 MB build, below the 500 MB cap. E1/E2 and T1/T2 remain the
 coordinator's work. The final seal binds these sources, binaries and receipts.
 [Preparation closeout](../experiments/own-xpu-runtime/stage2/packet54-compute/CPU-PREPARATION-CLOSEOUT.md).
+
+## Device result (card 0, 10:50-10:56 UTC, boot 2cba7160)
+
+Windows `p54-a-{e1,e2,t1,t2}`; summary `packet54-compute/evidence/p54-a-summary.json` (ignored tree). There were no new fault lines (still the 2 reviewed lines from 01:09). The first launch refused before any device work because I passed a fault-review time 2 s in the future; the driver now computes it as now minus 60 s.
+
+E1/E2 are byte-identical. Savings per ordinary M=1 layer (µs, T1/T2):
+
+| Class | Selected | Saved | Notes |
+|---|---|---:|---|
+| route | route-exp32-rank4 | 5.52 / 5.52 | control 24.4 → 19.1; route-rank4 is equal |
+| gdn.recurrence | rows4-shared | 1.04 / 1.04 | rows8-shared 0.4 |
+| hc.inject_mix_norm | control | 0 | mix-vector4 was −33.8 (closed) |
+| ffn.combine | control | 0 | closed at the CPU NaN-parity gate |
+
+- Packet 54 total: **6.56 µs**, against its own 25 µs bar, so `compute_proceeds=false`.
+- Banked p53b 23.44 + p54 6.56 = **30.0 µs**, against the 40 µs packet 49d trigger, so `packet49d_trigger=false`.
+
+**Coordinator amendment (2026-10-17 10:58 UTC):** packet 49d proceeds anyway, with every exact winner: p53b expsgate v8-split, expsdown v16, small FFN v4; p54 route-exp32-rank4 and recurrence rows4-shared.
+
+- **Why:** the 40 µs trigger was a resource gate for the roughly 2-hour device chain, not a quality or measurement gate.
+- **What changed:** the cards are otherwise idle, and the 49d build was already underway.
+- **Projection:** about 30 µs per layer is roughly 0.7 ms per half, about +3-4% (planning arithmetic, not a measurement).
+- **Unchanged:** the 49d WS128 must still be exact against the packet 49 oracle and beat 45.695513 tok/s before any submission.
+- **Trend:** exact-order kernel rounds now return 5-25 µs per layer. Larger levers need structural work (see packet 55, the one-card feasibility study).
