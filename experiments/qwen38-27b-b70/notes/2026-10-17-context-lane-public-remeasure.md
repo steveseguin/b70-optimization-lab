@@ -122,6 +122,25 @@ faulty and cannot be fixed (AGENTS.md rule 3, new bullet). No fault line between
   the whole boot (and no longer refuse boot 66541315); all four fault filters now include `failed to respond`, which
   the 10:33 line would otherwise have slipped past.
 
+## 28f result (10:46-11:12 EDT, same boot): the 0.3.0 fix changes nothing; repair 40/40, 7/7 in 15 min 55 s
+
+Same server as c27a plus b70-prefix-cache-exact 0.3.0 (interior-block duplicate check) and b70-step-breadcrumbs.
+No fault line, no stall block, memory guard silent (2.2-2.9 GiB free).
+
+- **K32 question stream, seed 0, against c27a call by call** (`scripts/compare-campaign-calls.py`): 182/182 calls
+  equal apart from time and cache, cached tokens identical in every call, model time 367.3 -> 367.1 s; 39/39,
+  6 min 59 s (c27a: 6 min 58 s). So 0.3.0 is answer- and hit-identical on this stream, and the breadcrumbs cost
+  nothing measurable.
+- **Repair task (`repair-n40-s2x`, K32):** fixed 40/40, clean 40/40, rules R1 38/38 R2 33/33 R3 27/27, audit 7/7,
+  **15 min 55 s**. Prediction (40/40, 40/40, 7/7; 10-13 min): scores yes, time **no**. Model time 894 s: main
+  212 calls, 826 s, 83,301 tokens written; notes 9 calls, 67 s. The public figure (campaign 17, XR4: 15 min 38 s,
+  notes written 4,549) is the same within 2 %. The faster server did not show here because this transcript wrote
+  far more: at the c27a fit (7.66 ms per written token) the 90K written tokens alone are ~690 s. The repair time is
+  set by how much the agent writes, which varies between transcripts, so one run per side cannot split server speed
+  from agent behaviour on this task.
+- Files: `data/2026-10-17-context-campaign28/c28f.log`, `c28f-rules.summary.txt`, `c28f-repair.summary.txt`,
+  `calls-c28f-K32.jsonl`, `calls-c28f-K32-repair.jsonl`, `proxy-status-c28f-*.json`.
+
 ## Proposal for the owner (public pages; nothing is changed until the owner says)
 
 The skindeep `context-use.html` working-view table compares view sizes measured on one server state (campaigns
@@ -131,7 +150,7 @@ call of the 240K stream equal to the earlier runs, server totals equal; notes `2
 
 - **Option A (recommended): keep the table, add one sentence under it.** "Since these runs the server got faster
   without changing a single answer: the 32K question stream now takes 7 minutes (was 9) and the 64K one 7.4 (was 10)."
-  Plus the repair task's figure once campaign 28e has run after the reboot. Cheap, honest, and the table keeps
+  The repair figure stays "16 min" (re-measured 15 min 55 s on today's stack, 28f, 2026-10-17). Cheap, honest, and the table keeps
   comparing like with like.
 - **Option B: re-run the whole table on today's server** (7 view sizes x two tasks, about 13 runs, 2.5-3 GPU hours
   in one unattended runner), then replace it. Worth it only if the owner wants the table itself current; the
