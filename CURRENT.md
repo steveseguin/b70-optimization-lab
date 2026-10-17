@@ -43,6 +43,14 @@ coordinator's matched screen; device quality and speed remain unmeasured.
 
 **October 17, packet 57 CPU preparation complete:** The timing tools are built and sealed. Packet 56's saved traces show rank 0 finishing last in 93% of complete cycles; moving a whole layer does not look useful under the available average-cost estimates. The draft still takes about 1.90 ms, but its individual kernel costs remain unmeasured. Four fresh small CPU runs match the old engine exactly, all 19 focused checks pass, and both builds and the final seal pass. The retained build is about 336 MB. No GPU window ran and packet 55's work was left alone. Next is the coordinator's diagnostic run on cards 0+1, after the host is free: about 88 minutes planned, comparing ordinary timing with the new event recording against the same packet 49 answers. This is not a new speed result. [Task record](notes/2026-10-17-own-runtime-packet57.md), [timeline](experiments/own-xpu-runtime/stage2/packet57-attribution/TIMELINE.md), [exact command](experiments/own-xpu-runtime/stage2/packet57-attribution/WINDOW.md).
 
+**October 17, 20:35 UTC — 2-card IQ3 record 54.16 tok/s, submitted and approved (`cmvcuvh4q080wle01pgjwixvj`).** Packet 70 is packet 64 plus packet 65 `wide64` routed-expert kernels (exact order; screens +5.4%/+4.8% on both lanes). All 12 prompts exact against the packet 49 oracle. WS128 measured 54.162022 class-balanced (+2.39% over 52.899081); hit/miss 16.09/27.57 ms, acceptance 0.787; 90 s chain gaps. The first attempt stopped at K2 on a CPU-side validator (fixed, fresh chain). Today: 39.42 → 45.70 → 46.00 → 46.96 → 51.03 → 52.90 → 54.16. Next:
+- packet 74 packed-format dense weights (the target head reads 795 MB of expanded Q6_K at 566 GB/s);
+- packet 73 HC gates + experts round 2;
+- packet 71b depth-2 (marginal: H(2)/H(1) 1.66–1.74);
+- packet 69/72 screens;
+- packet 58b one-card slot at 21:55 UTC.
+[Result packet](experiments/own-xpu-runtime/stage2/packet70-record-bundle/submission/prepared/result-packet.md).
+
 **October 17, 18:47 UTC — 2-card IQ3 record 52.90 tok/s, submitted and approved (`cmvcr0nee07wele01ypyng2nz`).** Packet 64 is packet 61x plus packet 63 draft-HC kernels, packet 62 batched rollback copies and balanced 24/24 placement, selected by the preregistered both-lanes screen rule. All 12 prompts are exact against the packet 49 oracle. WS128 measured 52.899081 class-balanced (+3.66% over 51.033041); hit/miss 16.45/28.37 ms, acceptance 0.787. Today: 39.42 → 45.70 → 46.00 → 46.96 → 51.03 → 52.90. Next:
 - packet 65 `wide64` expert kernel (+4.8% on lane B screens; lane A pending), then the packet 70 bundle with 90 s chain gaps;
 - packet 67 roofline kernels and packet 69 rank-1 head candidates (screens queued);
