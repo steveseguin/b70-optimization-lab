@@ -2,7 +2,8 @@
 
 One CPU driver per lane replaces the coordinator's hand-written waiters. It
 rereads `queue-A.txt` or `queue-B.txt` at every job boundary. Preparation and
-tests start no services or devices. **This queue has not been started.**
+tests start no services or devices. Code changes take effect at the driver's
+next restart; editing this tool does not restart the live lane units.
 
 The driver sets itself to nice 19 and cores `8-15,24-31`. Each device job gets
 its own `screen-<name>` user unit, `systemd-run --wait`, nice 0, the exact lane
@@ -168,17 +169,45 @@ If the unit has disappeared, that receipt is used immediately. There is no
 
 Every completed job moves to `done-<lane>.txt` as JSON with the original job,
 rc, unit result/status and evidence source, UTC start/end, seconds elapsed,
-review path, log path, and outcome. Nonzero rc under 10 seconds is
-`REFUSED-fast`; any other nonzero rc, bad unit result, changed fault count,
-marker or latch after exit also stops the lane. No failure starts the next
-job. Alerts go to stderr/stdout and `events-<lane>.jsonl`; there is no external
-notification or automatic retry.
+review path, log path, start/end kernel fault counts, and outcome. Normally,
+nonzero rc under 10 seconds is `REFUSED-fast`; any other nonzero rc, bad unit
+result, changed fault count, marker or latch after exit also stops the lane.
+
+The sole exception is **REPORT-FAILED**: a nonzero exit after a passed device
+run whose CPU report failed. All of these checks must pass:
+
+- The job's explicit `--output` directory contains `window.json` with JSON
+  booleans `passed: true` and `device_executed: true`.
+- That directory contains a `*-report-failure.json` with `device_failure:
+  false`. Every matching receipt must exclude device failure; conflicting
+  receipts stop the lane.
+- Its `lane-coordination.json` has `released_before_report: true` (v4) or
+  `passed: true`.
+- Postflight can read the complete kernel journal, its fault count equals the
+  job's recorded start count, and the reviewed boot/base guards still pass.
+- No `stage2/screen/v3/fault-*` latch has appeared and no
+  `active-lane-<this lane>.json` remains. Preflight requires no latches;
+  postflight checks again, including latches from the other lane.
+- Shared `stage2/screen/v3/teardown-state.json` has `drained: true`.
+
+Missing, unreadable, malformed or non-object receipts, and non-boolean flags,
+cannot qualify. Outputs are never inferred from coordinator scripts or nested
+quick jobs. A zero process rc with bad unit status remains `FAILED-status`.
+The existing failure outcomes remain unchanged when any required check fails.
+
+REPORT-FAILED is written to both `done-<lane>.txt` and `events-<lane>.jsonl`,
+with an ALERT explaining the report failure and continuation. The completion
+also records the checked evidence paths. The driver advances to the next,
+different job after the usual 90-second gap. **It never retries the job.**
+Alerts are printed and saved in `events-<lane>.jsonl`; there is no external
+notification. Other failures still stop the lane.
 
 The lane driver lock prevents a second driver in the same queue directory.
 An `inflight-<lane>.json` is fsynced before launch and removed only after durable
 completion and queue update. A crash, partial completion, or ambiguous launch
-leaves it in place and refuses restart. A last failed completion likewise
-refuses restart, even if someone appends new jobs. Inspect the unit, log,
+leaves it in place and refuses restart. Only `DONE` and `REPORT-FAILED` allow
+restart, preserving the remaining cooldown and completed-name replay guard.
+Any other last outcome refuses restart, even if someone appends new jobs. Inspect the unit, log,
 receipt, markers and device teardown; preserve the records for review before
 any manual recovery. The queue never clears these conditions itself.
 
@@ -192,7 +221,12 @@ nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest discover \
 Tests mock all systemd/journal/device work and exercise garbage-collected
 units, closed environments, rc preservation, stale/live markers, latches,
 fault changes, pause/stop, reordering/appending, the 90-second gap, fast
-refusals, device failures and crash recovery. The example CPU plans check the
-real frozen packet seals and fresh-output rules. The [validation receipt](validation.json) records 28 passing tests and all four
-example plans, bound to source hashes. No live unit execution has been tested
-in this preparation.
+refusals, device failures and crash recovery. REPORT-FAILED tests cover each
+required condition, malformed/missing evidence, both release proofs, durable
+completion/events, continuation, restart cooldown and replay refusal. All 49
+CPU tests pass for this change; no live units were started or stopped.
+
+The example CPU plans check the real frozen packet seals and fresh-output
+rules. The historical [validation receipt](validation.json) records the
+original 28 tests and four example plans under their old source hashes; it
+does not attest to this revision.

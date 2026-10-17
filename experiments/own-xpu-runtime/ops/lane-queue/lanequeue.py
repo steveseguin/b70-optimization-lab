@@ -169,7 +169,8 @@ class Backend:
                    for r in rows for line in str(r.get('MESSAGE', '')).splitlines())
 
     def guards(self, lane):
-        require(self.faults() == BASE, 'kernel fault count changed from reviewed base 2')
+        faults = self.faults()
+        require(faults == BASE, 'kernel fault count changed from reviewed base 2')
         marker = COORD / f'active-lane-{lane}.json'
         if os.path.lexists(marker):
             try:
@@ -186,6 +187,7 @@ class Backend:
                 state = 'unknown'
             raise ValueError(f'active lane marker has {state} owner; retained for coordinator review: {marker}')
         require(not any((STAGE / 'screen/v3').glob('fault-*')), 'screen/v3 fault latch present; retained for review')
+        return faults
 
     def review(self, job, directory):
         tool = resolve(job['review'])
@@ -261,6 +263,38 @@ def option(argv, name):
         if arg.startswith(name + '='):
             return arg.split('=', 1)[1]
     return None
+
+
+def report_failure_evidence(job):
+    """Require job-local report/release proof and the shared completed drain.
+
+    Called only after a nonzero exit and clean postflight against the launch
+    fault count. Never guess outputs for coordinator scripts or nested jobs.
+    """
+    output = option(job.get('argv', []), '--output')
+    require(output, 'report failure needs an explicit job --output')
+    output = resolve(output)
+
+    def read(path):
+        row = json.loads(path.read_text())
+        require(isinstance(row, dict), 'evidence must be a JSON object: ' + str(path))
+        return row
+
+    window = read(output / 'window.json')
+    require(window.get('passed') is True and window.get('device_executed') is True,
+            'device window did not pass and execute')
+    failures = sorted(output.glob('*-report-failure.json'))
+    require(failures, 'no job report-failure receipt')
+    # Conflicting or malformed receipts must not hide a possible device failure.
+    require(all(read(path).get('device_failure') is False for path in failures),
+            'report-failure receipt does not exclude device failure')
+    coordination = read(output / 'lane-coordination.json')
+    require(coordination.get('released_before_report') is True or coordination.get('passed') is True,
+            'lane release unproven')
+    teardown = STAGE / 'screen/v3/teardown-state.json'
+    require(read(teardown).get('drained') is True, 'shared teardown not drained')
+    return dict(output=str(output), report_failures=[str(p) for p in failures],
+                coordination=str(output / 'lane-coordination.json'), teardown=str(teardown))
 
 
 def plan_job(job, ldp, invoke=subprocess.run):
@@ -368,7 +402,7 @@ class Queue:
             if self.done.exists():
                 records = [json.loads(line) for line in self.done.read_text().splitlines() if line.strip()]
                 if records:
-                    require(records[-1]['outcome'] == 'DONE', 'previous job failed; lane remains stopped for review')
+                    require(records[-1]['outcome'] in ('DONE', 'REPORT-FAILED'), 'previous job failed; lane remains stopped for review')
                     elapsed = time.time() - records[-1]['end_unix']
                     until += max(0, 90 - elapsed)
             while self.boundary(until):
@@ -392,12 +426,13 @@ class Queue:
                     current = read_queue(self.directory, self.lane)
                     if not current or current[0] != job:
                         continue
-                    self.backend.guards(self.lane)
+                    faults_start = self.backend.guards(self.lane)
                     run_id = job['name'] + '-' + uuid.uuid4().hex
                     receipt = self.directory / (run_id + '.exit.json')
                     log = self.directory / (run_id + '.log')
                     start, started = self.now(), utc()
-                    save(self.active, dict(job=job, start_utc=started, receipt=str(receipt), log=str(log), review=review))
+                    save(self.active, dict(job=job, start_utc=started, receipt=str(receipt), log=str(log),
+                                           review=review, faults_start=faults_start))
                 self.event('START', name=job['name'])
                 rc = self.backend.execute(command(job, review, receipt, ldp), log)
                 duration = self.now() - start
@@ -408,19 +443,34 @@ class Queue:
                     outcome = 'REFUSED-fast' if duration < 10 else 'FAILED'
                 elif status['Result'] != 'success' or str(status['ExecMainStatus']) != '0':
                     outcome = 'FAILED-status'
+                postflight_ok, faults_end = False, None
+                evidence = {}
                 try:
-                    self.backend.guards(self.lane)
+                    faults_end = self.backend.guards(self.lane)
+                    require(type(faults_start) is int and faults_end == faults_start,
+                            'kernel fault count changed from job start')
+                    postflight_ok = True
                 except (ValueError, OSError, subprocess.SubprocessError) as exc:
                     self.event('ALERT', reason=str(exc))
                     if outcome == 'DONE':
                         outcome = 'FAILED-postflight'
+                if rc != 0 and postflight_ok:
+                    try:
+                        evidence['report_failure_evidence'] = report_failure_evidence(job)
+                        outcome = 'REPORT-FAILED'
+                    except (ValueError, OSError) as exc:
+                        evidence['report_failure_rejection'] = str(exc)
                 record = dict(rc=rc, **status, start_utc=started, end_utc=ended,
                               end_unix=end_unix, duration_seconds=duration, outcome=outcome,
-                              log=str(log), receipt=str(receipt), review=review)
+                              log=str(log), receipt=str(receipt), review=review,
+                              faults_start=faults_start, faults_end=faults_end, **evidence)
                 save(self.active, dict(job=job, **record))
                 self.finish(job, record)
                 self.event(outcome, name=job['name'], rc=rc, Result=status['Result'])
-                if outcome != 'DONE':
+                if outcome == 'REPORT-FAILED':
+                    self.event('ALERT', name=job['name'],
+                               reason='CPU report failed after passed device run and release; continuing to a different job; no retry')
+                elif outcome != 'DONE':
                     self.event('ALERT', reason='lane stopped; no retry or next job')
                     return 1
                 until = self.now() + 90

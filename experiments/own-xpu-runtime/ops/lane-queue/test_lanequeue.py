@@ -19,9 +19,14 @@ class FakeBackend:
         self.after = lambda: None
         self.guard = lambda: None
         self.result = 'success'
+        self.fault_count = q.BASE
 
     def guards(self, lane):
         self.guard()
+        return self.faults()
+
+    def faults(self):
+        return self.fault_count
 
     def review(self, job, directory):
         return str(directory / 'fresh-review.json')
@@ -36,7 +41,7 @@ class FakeBackend:
         return dict(Result=self.result, ExecMainStatus=str(self.rc), source='mock')
 
 
-class Tests(unittest.TestCase):
+class QueueTestCase(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
@@ -64,6 +69,8 @@ class Tests(unittest.TestCase):
     def done(self):
         return [json.loads(s) for s in (self.root / 'done-A.txt').read_text().splitlines()]
 
+
+class Tests(QueueTestCase):
     def test_env_closed_and_all_unit_properties(self):
         cmd = q.command(self.job(), None, self.root / 'receipt', '/lib/test')
         at = cmd.index('-i')
@@ -336,6 +343,186 @@ class Tests(unittest.TestCase):
             result = q.plan_job(dict(script=str(script), name='coord'), '/lib', run)
         self.assertIn('unsupported', result['plan'])
         run.assert_not_called()
+
+
+class ReportFailureTests(QueueTestCase):
+    def setUp(self):
+        super().setUp()
+        self.stage = self.root / 'stage2'
+        self.shared = self.stage / 'screen/v3'
+        self.shared.mkdir(parents=True)
+        self.coord = self.root / 'coordination'
+        self.coord.mkdir()
+        patch.object(q, 'STAGE', self.stage).start()
+        patch.object(q, 'COORD', self.coord).start()
+        self.output = self.root / 'output'
+        self.output.mkdir()
+        self.proofs = {
+            self.output / 'window.json': dict(passed=True, device_executed=True),
+            self.output / 'packet77-report-failure.json': dict(device_failure=False),
+            self.output / 'lane-coordination.json': dict(released_before_report=True),
+            self.shared / 'teardown-state.json': dict(drained=True),
+        }
+        for path, row in self.proofs.items():
+            q.save(path, row)
+        self.first = self.job()
+        self.first['argv'] += ['--output', str(self.output)]
+        self.write([self.first, self.job('two')])
+        self.backend.rc = 1
+        self.backend.result = 'exit-code'
+        # Exercise real marker/latch guards, with only the journal mocked.
+        self.backend.guards = lambda lane: q.Backend.guards(self.backend, lane)
+
+    def assert_stops(self):
+        self.assertEqual(self.queue.run(), 1)
+        self.assertEqual(self.done()[0]['outcome'], 'FAILED')
+        self.assertEqual(len(self.backend.runs), 1)
+        self.assertEqual(q.read_queue(self.root, 'A'), [self.job('two')])
+        self.assertNotIn('REPORT-FAILED', [kind for kind, _ in self.events])
+        with self.assertRaisesRegex(ValueError, 'previous job failed'):
+            self.queue.run()
+
+    def test_report_failure_continues_different_job_and_records_alert(self):
+        # Exercise actual durable events in a temporary queue, never live files.
+        self.queue.event = q.Queue.event.__get__(self.queue)
+        def after():
+            if len(self.backend.runs) == 2:
+                self.backend.rc, self.backend.result = 0, 'success'
+                (self.root / 'STOP-A').touch()
+        self.backend.after = after
+        with patch('sys.stdout', new_callable=io.StringIO):
+            self.assertEqual(self.queue.run(), 0)
+        rows = self.done()
+        self.assertEqual([r['outcome'] for r in rows], ['REPORT-FAILED', 'DONE'])
+        self.assertEqual([r['job']['name'] for r in rows], ['one', 'two'])
+        self.assertEqual(rows[0]['rc'], 1)
+        self.assertEqual(rows[0]['faults_start'], rows[0]['faults_end'])
+        self.assertEqual(rows[0]['report_failure_evidence']['output'], str(self.output))
+        self.assertEqual(len(self.backend.runs), 2)
+        self.assertEqual(self.clock[0], 112)  # 11 + 90-second gap + 11
+        events = [json.loads(s) for s in (self.root / 'events-A.jsonl').read_text().splitlines()]
+        self.assertIn('REPORT-FAILED', [r['event'] for r in events])
+        self.assertTrue(any(r['event'] == 'ALERT' and 'no retry' in r['reason'] for r in events))
+
+    def test_coordination_passed_is_alternative_release_proof(self):
+        q.save(self.output / 'lane-coordination.json', dict(passed=True))
+        self.backend.after = lambda: (self.root / 'STOP-A').touch()
+        self.assertEqual(self.queue.run(), 0)
+        self.assertEqual(self.done()[0]['outcome'], 'REPORT-FAILED')
+
+    def test_each_required_boolean_is_strict(self):
+        for path, row in self.proofs.items():
+            for key in row:
+                for value in (None, 0, 1, 'true', 'false', not row[key]):
+                    with self.subTest(file=path.name, key=key, value=value):
+                        q.save(path, {**row, key: value})
+                        with self.assertRaises(ValueError):
+                            q.report_failure_evidence(self.first)
+                q.save(path, {k: v for k, v in row.items() if k != key})
+                with self.assertRaises(ValueError):
+                    q.report_failure_evidence(self.first)
+                q.save(path, row)
+
+    def test_missing_malformed_and_nonobject_receipts_fail_closed(self):
+        for path, row in self.proofs.items():
+            with self.subTest(file=path.name, case='missing'):
+                path.unlink()
+                with self.assertRaises((ValueError, OSError)):
+                    q.report_failure_evidence(self.first)
+            for contents in ('{', '[]', 'null', 'true', '42', '"text"'):
+                with self.subTest(file=path.name, contents=contents):
+                    path.write_text(contents)
+                    with self.assertRaises(ValueError):
+                        q.report_failure_evidence(self.first)
+            q.save(path, row)
+
+    def test_unreadable_receipt_fails_closed(self):
+        with patch.object(Path, 'read_text', side_effect=PermissionError('unreadable')):
+            with self.assertRaises(PermissionError):
+                q.report_failure_evidence(self.first)
+
+    def test_conflicting_report_receipts_stop(self):
+        q.save(self.output / 'another-report-failure.json', dict(device_failure=True))
+        self.assert_stops()
+
+    def test_failed_device_window_stops(self):
+        q.save(self.output / 'window.json', dict(passed=False, device_executed=True))
+        self.assert_stops()
+
+    def test_device_not_executed_stops(self):
+        q.save(self.output / 'window.json', dict(passed=True, device_executed=False))
+        self.assert_stops()
+
+    def test_missing_report_failure_stops(self):
+        (self.output / 'packet77-report-failure.json').unlink()
+        self.assert_stops()
+
+    def test_unreleased_lane_stops(self):
+        q.save(self.output / 'lane-coordination.json', dict(passed=False, released_before_report=False))
+        self.assert_stops()
+
+    def test_undrained_teardown_stops(self):
+        q.save(self.shared / 'teardown-state.json', dict(drained=False))
+        self.assert_stops()
+
+    def test_changed_kernel_fault_count_stops(self):
+        self.backend.after = lambda: setattr(self.backend, 'fault_count', q.BASE + 1)
+        self.assert_stops()
+
+    def test_count_compared_with_job_start_even_if_backend_guards_pass(self):
+        self.backend.guards = lambda lane: self.backend.fault_count
+        self.backend.after = lambda: setattr(self.backend, 'fault_count', q.BASE + 1)
+        self.assert_stops()
+
+    def test_unreadable_kernel_journal_stops(self):
+        def after():
+            self.backend.faults = lambda: q.require(False, 'journal unavailable')
+        self.backend.after = after
+        self.assert_stops()
+
+    def test_new_fault_latch_on_either_lane_stops(self):
+        self.backend.after = lambda: (self.shared / 'fault-other-B.json').touch()
+        self.assert_stops()
+
+    def test_active_marker_even_dangling_symlink_stops(self):
+        self.backend.after = lambda: (self.coord / 'active-lane-A.json').symlink_to(self.root / 'absent')
+        self.assert_stops()
+
+    def test_other_lane_marker_does_not_block_report_failure(self):
+        (self.coord / 'active-lane-B.json').write_text('{}')
+        self.backend.after = lambda: (self.root / 'STOP-A').touch()
+        self.assertEqual(self.queue.run(), 0)
+        self.assertEqual(self.done()[0]['outcome'], 'REPORT-FAILED')
+
+    def test_no_output_path_does_not_guess_or_search(self):
+        self.write([self.job(), self.job('two')])
+        self.assert_stops()
+
+    def test_report_failure_not_applied_to_zero_rc_bad_status(self):
+        self.backend.rc = 0
+        self.assertEqual(self.queue.run(), 1)
+        self.assertEqual(self.done()[0]['outcome'], 'FAILED-status')
+
+    def test_report_failure_can_finish_in_under_ten_seconds(self):
+        self.backend.duration = 2
+        self.backend.after = lambda: (self.root / 'STOP-A').touch()
+        self.assertEqual(self.queue.run(), 0)
+        self.assertEqual(self.done()[0]['outcome'], 'REPORT-FAILED')
+
+    def test_restart_allows_report_failed_but_keeps_gap_and_no_replay(self):
+        self.queue.done.write_text(json.dumps(dict(job=self.first, outcome='REPORT-FAILED',
+                                                 end_unix=100)) + '\n')
+        with patch.object(q.time, 'time', return_value=120):
+            with self.assertRaisesRegex(ValueError, 'no automatic replay'):
+                self.queue.run()
+        self.assertEqual(self.clock[0], 70)
+        self.assertEqual(self.backend.runs, [])
+        self.write([self.job('two')])
+        self.backend.rc, self.backend.result = 0, 'success'
+        self.backend.after = lambda: (self.root / 'STOP-A').touch()
+        with patch.object(q.time, 'time', return_value=120):
+            self.assertEqual(self.queue.run(), 0)
+        self.assertEqual([r['job']['name'] for r in self.done()], ['one', 'two'])
 
 
 if __name__ == '__main__':
