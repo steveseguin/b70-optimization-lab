@@ -22,7 +22,8 @@ def generate():
  mirror=B/'checked'/P.relative_to(ROOT)
  t=(mirror/'main.cpp').read_text();m=(mirror/'mtp.hpp').read_text()
  start=t.index('class Host final');end=t.index('\n#endif',start)
- t=t[:start]+r'''class Host final : public packet18::LifetimeMock {
+ t=t[:start]+r'''static std::map<std::string,unsigned> p78_operations;
+class Host final : public packet18::LifetimeMock {
  struct Item{size_t bytes;ownrt::Memory memory;};std::map<uintptr_t,Item> dry;
  uintptr_t next=0x100000000000ULL;
  void bounds(const void*p,size_t n){auto x=uintptr_t(p);auto i=dry.upper_bound(x);require(i!=dry.begin(),"mock unknown pointer");--i;require(x-i->first<=i->second.bytes&&n<=i->second.bytes-(x-i->first),"mock copy extent");}
@@ -31,7 +32,7 @@ public:
  void release(void*p,ownrt::Memory m)override{require(dry.at(uintptr_t(p)).memory==m,"mock memory");if(m!=ownrt::Memory::device)::operator delete(p);dry.erase(uintptr_t(p));}
  ownrt::Event copy(void*a,const void*b,size_t n,std::span<const ownrt::Event>d)override{bounds(a,n);bounds(b,n);return marker(d);}
  ownrt::Event compute(const ownrt::Operation&,std::span<void*const>,std::span<const ownrt::Event>d)override{return marker(d);}
- std::function<ownrt::Event()> prepare_owned(std::shared_ptr<const ownrt::Operation>,std::span<void*const>)override{return [this]{return marker({});};}
+ std::function<ownrt::Event()> prepare_owned(std::shared_ptr<const ownrt::Operation> op,std::span<void*const>)override{std::string name=typeid(*op).name();int status=0;char*dem=abi::__cxa_demangle(name.c_str(),nullptr,nullptr,&status);if(dem){name=dem;std::free(dem);}++p78_operations[name];return [this]{return marker({});};}
  void close_queue()override{require(dry.empty(),"mock allocations remain");LifetimeMock::close_queue();}
 };'''+t[end:]
  t=body(t,'Weights(const Options &a)', '\n directory=flash::directory_from_loader(iq3::read_plan(a.plan));\n')
@@ -47,7 +48,8 @@ public:
  (S/'main.cpp').write_text(t)
  for leaf in ('rope.bf16','mtp-manifest.tsv'):
   if not (S/leaf).exists():(S/leaf).symlink_to(P/leaf)
- entry=r'''#define main packet75_unexecuted_model_entry
+ entry=r'''#include <cxxabi.h>
+#define main packet75_unexecuted_model_entry
 #include "main.cpp"
 #undef main
 int main(int argc,char**argv){std::unique_ptr<Engine> e;std::unique_ptr<mtp36::DraftRuntime> draft;try{
@@ -59,6 +61,12 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;std::unique_ptr<mtp36::D
  if(std::string(argv[5])=="negative"&&a.rank==1){auto id=e->weights[0].at("output.weight");auto &r=const_cast<ownrt::AllocationRecord&>(e->dev(0).arena.row(id));r.bytes-=2100;}
  if(a.rank==0)pipeline::banks(*e);else{e->prepare_plan();e->prepare_commands();}
  {pipeline::SpeculativeImage image(*e);if(a.rank==1)draft=std::make_unique<mtp36::DraftRuntime>(*e);
+ auto count=[](const std::string& key){unsigned n=0;for(const auto&[name,value]:p78_operations)if(name.find(key)!=std::string::npos)n+=value;return n;};
+ const auto& choice=e->sealed_selection.choices;
+ require((count("p78route::Kernel")>0)==(choice.at("route")=="route-fast"),"route selection consumer");
+ require((count("p60::Kernel<0, false, true>")>0)==(choice.at("hc_norm")=="subgroup"),"norm selection consumer");
+ require((count("p60::Kernel<2, true, false>")>0)==(choice.at("hc_gate")=="wide"),"HC wide selection consumer");
+ std::ofstream selected(a.output/"selected-operations.txt");for(const auto&[name,value]:p78_operations)selected<<name<<" "<<value<<"\n";selected.close();
  save(a.output/"census.json",e->dev(0).arena.census());save(a.output/"result.json","{\"passed\":true,\"device_executed\":false,\"rank\":"+std::to_string(a.rank)+",\"postload_device_bytes\":"+std::to_string(e->owned_bytes[0])+",\"expanded_head_stride\":3380}");draft.reset();}
  e->shutdown();e.reset();return 0;
  }catch(const std::exception&x){std::cerr<<x.what()<<'\n';draft.reset();if(e){try{e->shutdown();}catch(...){}e.reset();}return 1;}}
@@ -85,12 +93,24 @@ def main():
    cmd=[str(S/'fixture'),str(path),sha(path),str(rank),str(dest),'positive']
    with (dest/'run.log').open('w') as f:r=subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,timeout=120)
    if r.returncode:raise ValueError('full shape failed '+str(dest))
-   report['runs'].append(dict(view=name,**json.loads((dest/'result.json').read_text())))
+   consumers=[line for line in (dest/'selected-operations.txt').read_text().splitlines() if line.startswith(('p78route::','p60::'))]
+   report['runs'].append(dict(view=name,selection_key_consumers_verified=True,selected_operations=consumers,selected_operations_sha256=sha(dest/'selected-operations.txt'),**json.loads((dest/'result.json').read_text())))
    print(name,rank,'PASS',flush=True)
  # Prove the full head capture exercises the actual packed extent guard.
  name='negative-head-packed';path=S/(name+'.json');sel=json.loads((P/'selection.json').read_text());sel['choices']=choices('production');sel['choices']['packed_dense']='head-packed';save(path,sel);dest=S/'negative';dest.mkdir(exist_ok=True)
  r=subprocess.run([str(S/'fixture'),str(path),sha(path),'1',str(dest),'negative'],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120)
  (dest/'run.log').write_text(r.stdout+r.stderr);assert r.returncode!=0 and 'p74 allocation extent/alignment' in r.stderr,r.stderr
- report.update(passed=True,negative_extent_rejected=True,binary_sha256=sha(S/'fixture'))
+ for case in ('missing-norm','unknown-norm','missing-route','extra-key','unknown-gate'):
+  sel=json.loads((P/'selection.json').read_text());sel['choices']=choices('small+hc-wide')
+  if case=='missing-norm':del sel['choices']['hc_norm']
+  if case=='unknown-norm':sel['choices']['hc_norm']='bogus'
+  if case=='missing-route':del sel['choices']['route']
+  if case=='extra-key':sel['choices']['new_option']='production'
+  if case=='unknown-gate':sel['choices']['hc_gate']='bogus'
+  path=S/(case+'.json');save(path,sel);out=S/case;out.mkdir(exist_ok=True)
+  r=subprocess.run([str(S/'fixture'),str(path),sha(path),'1',str(out),'positive'],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120)
+  (out/'run.log').write_text(r.stdout+r.stderr)
+  assert r.returncode!=0 and ('selection' in r.stderr),r.stderr
+ report.update(passed=True,negative_extent_rejected=True,selection_negatives_rejected=5,binary_sha256=sha(S/'fixture'))
  save(P/'evidence/full-shape.json',report)
 if __name__=='__main__':main()

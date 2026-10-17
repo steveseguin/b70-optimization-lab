@@ -14,10 +14,11 @@ does not merge the norm with the low projection.
 Route currently launches maximum, exp/sum, rank, and renormalization separately.
 The candidate keeps the same max scan, exp polynomial, 16-leaf sums,
 denominator tree, rounded probabilities, index tie rule, and selected-weight
-normalization. One workgroup replaces all four launches. Integer rank counting
-uses two independent candidates per thread and shared probabilities. Its
-all-pairs comparisons remain; this trades parallel occupancy for fewer launches
-and must be measured. Ranking raw logits would be wrong for rounded ties.
+normalization. One workgroup replaces all four launches. A bitonic network
+sorts probability/index pairs in 45 rounds: 35 use subgroup exchange, ten use
+workgroup shared memory. This replaces 262,144 rank comparisons with 23,040
+thread comparisons. The speed and barrier cost must be measured. Ranking raw
+logits would be wrong for rounded ties.
 
 HC norms retain the 80 original 32-leaf FP32 trees, padded 128-root upper
 tree, rsqrt, gain and BF16 boundary. Each output tile is now one subgroup;
@@ -41,3 +42,6 @@ controls. Queue proposals are planned only in a temporary directory.
 CPU success is not packet49 device parity or a speed claim. The proposed 4%
 is a motivation, not a measured result or promise. Device screens and any
 subsequent full-chain qualification belong to the coordinator.
+
+See the [CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md) and
+[task note](../../../../notes/2026-10-17-own-runtime-packet78.md).
