@@ -24,6 +24,7 @@ def parser():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--profile', choices=('tp2',), default='tp2')
     ap.add_argument('--lane', choices=('A', 'B'), required=True)
+    ap.add_argument('--placement', choices=('1-split23', '0-split23', '0', '1'), default='1-split23')
     ap.add_argument('--timing', choices=('token', 'attribution'), default='token')
     ap.add_argument('--pair-dir', type=Path, help=argparse.SUPPRESS)
     ap.add_argument('--lineage', type=Path, required=True)
@@ -113,12 +114,13 @@ def main(argv=None):
     require(manifest['prompts'][0]['prompt_id'] == 'incident-retrospective', 'incident must be first')
     cmd = command(args, identity, manifest)
     if args.plan:
-        print(json.dumps(dict(evidence_label='screen', device_executed=False, identity=identity,
+        print(json.dumps(dict(evidence_label='screen', device_executed=False, supported=identity['placement']['supported'], identity=identity,
                               command=cmd, model_lifetimes=1, watchdog_seconds=WATCHDOG[args.profile],
                               planned_write_bytes=WRITES[args.profile],
                               physical_cards=LANES[args.lane]['cards'], native_card_arguments=[0, 1],
                               device_mask=mask_for(args.lane), timing=args.timing), indent=2))
-        return 0
+        return 0 if identity['placement']['supported'] else 2
+    require(identity['placement']['supported'], identity['placement']['reason'])
     require(args.authorized_device_window, 'coordinator authorization required')
     require(args.fault_review, '--fault-review receipt required')
     from cpu_seal import verify

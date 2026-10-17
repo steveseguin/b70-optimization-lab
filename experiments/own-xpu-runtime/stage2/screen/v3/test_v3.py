@@ -25,7 +25,8 @@ class V3Tests(unittest.TestCase):
 
     def identity(self, lane='A', timing='token', lineage=C.P56):
         return dict(lineage=str(lineage), binary='/sealed/binary', dispatch='/sealed/dispatch',
-                    selection_sha256='a'*64, lane=lane, timing=timing)
+                    selection_sha256='a'*64, lane=lane, timing=timing,
+                    placement=dict(name='1-split23', draft_rank=1, target_split=23, supported=True))
 
     def rows(self, scale=1.):
         rows = []
@@ -187,14 +188,14 @@ class V3Tests(unittest.TestCase):
         loads=[];calls=[]
         class Transport:
             def __init__(self,args,ranks,env,check,launch_hook=None):
-                loads.append((args.card,args.native_nice,args.timing));calls.append('load')
+                loads.append((args.card,args.native_nice,args.timing,args.draft_rank,args.target_split));calls.append('load')
             def close(self,success):calls.append(('close',success))
         def reset(t,dest):dest.mkdir();calls.append(('reset',dest.name))
         def request(t,args,prompt,count):
             row=self.rows()[0];row.update(tokens=list(range(count)));calls.append(('request',count));return row
         old=(pipeline.P,storage.P,storage.B,storage.admit)
         try:
-            with patch.object(C.D,'oracle_inputs',return_value={'prompts':entries}),patch.object(C.D.CHECK,'token_record',return_value=list(range(128))),patch.object(pipeline,'Transport',Transport),patch.object(suite,'checker_module',return_value=object()),patch.object(suite,'admit_inputs',return_value=snapshots),patch.object(suite,'reset',side_effect=reset),patch.object(suite,'run_request',side_effect=request),patch.object(tp2_worker,'Teardown'),patch.object(tp2_worker,'masked_environment',return_value={}),patch.object(tp2_worker,'DeviceMonitor') as monitor:
+            with patch.object(C.D,'oracle_inputs',return_value={'prompts':entries}),patch.object(C.D.CHECK,'token_record',return_value=list(range(128))),patch.object(pipeline,'Transport',Transport),patch.object(suite,'checker_module',return_value=object()),patch.object(suite,'admit_inputs',return_value=snapshots),patch.object(suite,'reset',side_effect=reset),patch.object(suite,'run_request',side_effect=request),patch('placement.verify_identity', side_effect=lambda identity:(identity['placement'], C.module('fixture_memory_gate', C.P56/'memory_gate.py'))),patch.object(tp2_worker,'Teardown'),patch.object(tp2_worker,'masked_environment',return_value={}),patch.object(tp2_worker,'DeviceMonitor') as monitor:
                 def fake_monitor(lane, output):
                     def proof(*args, **kwargs):
                         C.save(output/'device-isolation.json', dict(passed=True))
@@ -203,19 +204,24 @@ class V3Tests(unittest.TestCase):
                 self.assertEqual(original.run(self.identity(),self.root/'v1',3600),0)
                 self.assertEqual(tp2_worker.run(self.identity('B'),self.root/'v3',3600),0)
                 self.assertEqual(tp2_worker.run(self.identity('A','attribution'),self.root/'attribution',3600),0)
+                alternate=self.identity('A')
+                alternate['placement']=dict(name='1',draft_rank=1,target_split=0,supported=True)
+                self.assertEqual(tp2_worker.run(alternate,self.root/'alternate',3600),0)
         finally:pipeline.P,storage.P,storage.B,storage.admit=old
-        self.assertEqual(loads,[(0,19,'token'),(0,0,'token'),(0,0,'attribution')])
-        width=len(calls)//3
+        self.assertEqual(loads,[(0,19,'token',1,23),(0,0,'token',1,23),(0,0,'attribution',1,23),(0,0,'token',1,0)])
+        width=len(calls)//4
         self.assertEqual(calls[:width],calls[width:2*width])
-        self.assertEqual(calls[:width],calls[2*width:])
+        self.assertEqual(calls[:width],calls[2*width:3*width])
+        self.assertEqual(calls[:width],calls[3*width:])
         self.assertEqual([r for r in calls[:width] if isinstance(r,tuple) and r[0]=='request'],
                          [('request',64)]+[('request',128)]*12)
         expected=b''.join((self.root/'v1'/e['prompt_id']/'receipt.json').read_bytes() for e in entries)
         actual=b''.join((self.root/'v3'/e['prompt_id']/'receipt.json').read_bytes() for e in entries)
         self.assertEqual(expected,actual)
+        (C.HERE/'placement-validation').mkdir(exist_ok=True)
         # Retain only small byte fixture, not the temporary fake output tree.
-        (C.HERE/'fixture-expected.bin').write_bytes(expected)
-        (C.HERE/'fixture-actual.bin').write_bytes(actual)
+        (C.HERE/'placement-validation'/'fixture-expected.bin').write_bytes(expected)
+        (C.HERE/'placement-validation'/'fixture-actual.bin').write_bytes(actual)
 
 
 if __name__=='__main__':unittest.main()

@@ -34,6 +34,10 @@ def drain(transport, output, success, reason=None):
 
 
 def run(identity, output, seconds, pair_dir=None):
+    from placement import verify_identity
+    placement, memory_gate = verify_identity(identity)
+    # Use this lineage's admission for both prelaunch and live census checks.
+    sys.modules['memory_gate'] = memory_gate
     # Reuse the sealed dispatch/control protocol, with private Python module state.
     # Only paths used for new writes are redirected. No sealed files are modified.
     sys.path.insert(0, str(P56))
@@ -52,8 +56,8 @@ def run(identity, output, seconds, pair_dir=None):
     storage.admit = lambda extra, **unused: SUPPORT.storage(output, extra)
     args = pipeline.parser().parse_args(['--output', str(output), '--device',
         '--binary', identity['binary'], '--dispatch', identity['dispatch'],
-        '--controller', 'native', '--draft', 'mtp', '--draft-rank', '1',
-        '--target-split', '23', '--context', '4096', '--tokens', '128',
+        '--controller', 'native', '--draft', 'mtp', '--draft-rank', str(placement['draft_rank']),
+        '--target-split', str(placement['target_split']), '--context', '4096', '--tokens', '128',
         '--retain-steps', 'none', '--timing', 'token', '--native-nice', '0',
         '--card', '0',
         '--seconds', str(seconds), '--wait-seconds', str(seconds)])
@@ -113,7 +117,7 @@ def run(identity, output, seconds, pair_dir=None):
         monitoring = False  # FINISH legitimately closes rank FDs and PIDs.
         drain(transport, output, True)
         result = summary(rows, incident, 'tp2')
-        result.update(lane=identity['lane'], conditions=LANES[identity['lane']], timing=identity['timing'],
+        result.update(placement=placement, lane=identity['lane'], conditions=LANES[identity['lane']], timing=identity['timing'],
                       device_isolation=read(output / 'device-isolation.json'))
         save(output / 'summary.json', result)
         return 0

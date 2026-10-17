@@ -1,7 +1,9 @@
 # Screen v3: independent masked pairs
 
-CPU preparation only. No GPU window has run through v3 yet. The coordinator
-must confirm the recorded native fdinfo proof and exact outputs on the device.
+The initial preparation below predates the retained v3 device screens.
+Placement support was added on October 17; those new placement runs remain
+pending coordinator device windows. See the [placement closeout](PLACEMENT-CLOSEOUT.md)
+and [eight job lines](placement-jobs.txt).
 V1/v2 sources, seals and results are unchanged.
 
 V3 accepts v1-compatible **two-card** lineages, including lean screen seals
@@ -183,8 +185,11 @@ for separately authorized attempts. A new output name is not retry authority.
 
 Each screen loads one rank pair once, checks a separate 64-token incident
 request against packet49, resets state and checks **all 12 × 128 tokens**
-against the same oracle. The target, arithmetic, full BF16 KV, split 23/25,
-draft rank 1 and verifier are unchanged. A mismatch cannot become a passed
+against the same oracle. The target, arithmetic, full BF16 KV and verifier are unchanged.
+The default placement remains draft rank 1 with split 23/25. `--placement`
+selects only memory-admitted, audited placements; packet61x also supports
+rank-1 draft with split 24/24. Its two rank-0 draft plans are explicitly
+unsupported because the resident prefix head is missing on that rank. A mismatch cannot become a passed
 screen. There is no prompt/KV/response reuse or learned draft.
 
 The metric remains the conventional 99 intervals between token events 1–100,
@@ -196,3 +201,9 @@ masking, model exactness and crossover performance are **pending device work**.
 
 See the [task note](../../../../../notes/2026-10-17-own-runtime-screen-v3.md)
 and [CPU closeout](CPU-PREPARATION-CLOSEOUT.md).
+
+The placement-aware wrapper seal and CPU receipts live under
+`placement-validation/`; the root-level v3 seal and receipts remain historical.
+`cpu_seal.py --verify` checks the new closure. `--plan` prints unsupported
+placements with `supported=false` and returns 2; device execution refuses them
+before creating output or launching a child.

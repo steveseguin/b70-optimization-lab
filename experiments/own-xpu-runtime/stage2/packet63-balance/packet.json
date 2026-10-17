@@ -1,0 +1,38 @@
+{
+  "schema": "packet63.cpu-preparation.v1",
+  "passed": true,
+  "device_executed": false,
+  "rank_balance": {
+    "rank_balance": "skipped",
+    "reason": "Rank1 finishes last in all 4536 complete cycles; even its target half alone is longer than rank0.",
+    "memory_admission": "not applicable: timing prerequisite fails; no split option built or sealed",
+    "split_unchanged": "23/25; draft on rank1; full target head, state and BF16 KV unchanged"
+  },
+  "selections": [
+    {
+      "selection": "control",
+      "seal_sha256": "db67697e0c45bfc3e9b2d6fb044258bc1d1655008b2d9eb8f30d62a38353f6b1",
+      "binary_sha256": "57b505fd0e821890fac6c7e0fdec000e1d9cc625604ff944ab5aa04c175cffe0",
+      "selection_sha256": "9175a5289bc1a74ff1a4c933866fc8e36e94bd5aa6aef391a92e061bc275941b",
+      "plans": {
+        "A": "50395de6250f1c3c24897cd07d55ced293e7304c4bfd377dc6a8187e945a8df0",
+        "B": "a132dd3e16f23691e003d05e849be12ddf60dfd17bf0d09c843ff956c7013473"
+      }
+    },
+    {
+      "selection": "draft-hc",
+      "seal_sha256": "ca375c292b42d33aadbabcff55c6c616e23c3a8b95bb850b0b19056c7ffe25a4",
+      "binary_sha256": "57b505fd0e821890fac6c7e0fdec000e1d9cc625604ff944ab5aa04c175cffe0",
+      "selection_sha256": "bfd49bf9292af248e290f0125f1069a0e8d56702e2aac1e7d001bb31587d25c7",
+      "plans": {
+        "A": "2636698ec8a423f0128061932db46837d59392eaf142693c00287f9022c019dd",
+        "B": "080e43cc33f7a392c720b23d96905bc4c9534bad54c1300777fdf1cdb18066dc"
+      }
+    }
+  ],
+  "build_and_selection_logical_bytes": 167380138,
+  "unique_inode_bytes": 127004378,
+  "cpu_gates_sha256": "06baecad6fb2dc088e4f76d08cd5a08d8dddee4546365a8d70dccef3f35b565b",
+  "diagnosis_sha256": "aac77eda542a631ff5b981921892da65c087478b03cbb5c78c29df677682c187",
+  "qualification": "CPU preparation only; coordinator screens and any full chain remain pending."
+}

@@ -23,7 +23,7 @@ RATE = 'tok_s_1_100_intervals_after_ttft'
 def candidate(args, role):
     lineage = getattr(args, role).resolve()
     return sealed(SimpleNamespace(lineage=lineage, profile='tp2',
-        timing=getattr(args, role + '_timing'),
+        timing=getattr(args, role + '_timing'), placement=getattr(args, role + '_placement'),
         binary=getattr(args, role + '_binary'), dispatch=getattr(args, role + '_dispatch'),
         seal=getattr(args, role + '_seal')))
 
@@ -40,7 +40,7 @@ def lane_command(identity, lane, output, review, pair):
     return ['/usr/bin/taskset', '-c', LANES[lane]['affinity'], '/usr/bin/python3', '-B',
             str(HERE / 'screen.py'), '--lane', lane, '--lineage', identity['lineage'],
             '--binary', identity['binary'], '--dispatch', identity['dispatch'], '--seal', identity['seal'],
-            '--timing', identity['timing'], '--output', str(output), '--fault-review', str(review),
+            '--placement', identity['placement']['name'], '--timing', identity['timing'], '--output', str(output), '--fault-review', str(review),
             '--pair-dir', str(pair), '--authorized-device-window']
 
 
@@ -162,6 +162,7 @@ def parser():
     ap = argparse.ArgumentParser(description=__doc__)
     for role in ('x', 'y'):
         ap.add_argument('--' + role, type=Path, required=True)
+        ap.add_argument('--' + role + '-placement', choices=('1-split23', '0-split23', '0', '1'), default='1-split23')
         ap.add_argument('--' + role + '-timing', choices=('token', 'attribution'), default='token')
         for name in ('binary', 'dispatch', 'seal'):
             ap.add_argument('--' + role + '-' + name, type=Path)
@@ -184,12 +185,14 @@ def main(argv=None):
     args.output = args.output.resolve()
     require(args.output.is_relative_to(HERE / 'evidence') and not args.output.exists(), 'fresh v3 output required')
     if args.plan:
-        print(json.dumps(dict(device_executed=False, identities=identities, orderings=orders(), lanes=LANES,
+        print(json.dumps(dict(device_executed=False, supported=all(i['placement']['supported'] for i in identities.values()), identities=identities, orderings=orders(), lanes=LANES,
             expected_seconds=[480,600], expected_duration_is_estimate=True, teardown_gap_seconds=60,
             commands=[{lane:lane_command(lane_identity(identities[role],lane),lane,
                 args.output / str(index+1) / (lane+'-'+role), args.fault_review or Path('REVIEW.json'),
                 args.output / str(index+1)) for lane,role in order.items()} for index,order in enumerate(orders())]), indent=2))
-        return 0
+        return 0 if all(i['placement']['supported'] for i in identities.values()) else 2
+    for identity in identities.values():
+        require(identity['placement']['supported'], identity['placement']['reason'])
     require(args.authorized_device_window and args.fault_review, 'coordinator authorization and fault receipt required')
     from cpu_seal import verify
     verify()
