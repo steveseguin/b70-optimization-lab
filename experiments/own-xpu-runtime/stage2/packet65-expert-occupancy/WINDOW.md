@@ -115,3 +115,15 @@ This remains diagnostic class-screen evidence. Profiling rates and the 128-token
 screens are not public performance headlines. A class pass still needs the
 lane's full packet49 quality/determinism and promotion chain; default selection
 stays `production` until that work succeeds. No device result is available yet.
+
+## Quick token decision before the class campaign
+
+The coordinator can now run six fresh token screens per lane concurrently,
+using only each lane's lease. The separately sealed
+[`screen/quick/` path](screen/quick/README.md#coordinator-commands) preserves the
+original binary, selection seals and whole-host class campaign above. It has
+two fixed job files, all twelve CPU plans, a mock-tested runner and a comparison
+helper. Both lanes bracket the four candidates with fresh production controls;
+lane B reverses candidate order. Expect roughly 30 minutes per lane plus any
+admission or shared-drain wait. The 3,600-second per-screen watchdog remains.
+No device window ran during preparation; the coordinator owns the next launch.

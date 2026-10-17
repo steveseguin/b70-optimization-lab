@@ -97,3 +97,41 @@ No campaign or device screen ran during this preparation. A passing class
 screen is still diagnostic: a full fresh quality/record chain is needed before
 integrating a winner or publishing a model speed. The 512-token final gate is
 not claimed by a 128-token screen.
+
+## Quick lane token screens prepared on CPU
+
+The first decision now takes six fresh screens per lane, with both card pairs
+available for work at once. Lane A runs production, wide64, wg64, wg128,
+prefetch64, production; lane B reverses the four candidates. Each takes only
+its own lane lease and legacy lock, keeps the same 13 exact requests and
+packet49 authority, and leaves the shared memory, device isolation, fault,
+graceful drain and teardown-spacing checks in place. There are five 90-second
+gaps per lane. The 3,600-second watchdog exceeds four times the expected screen
+time. Roughly 30 minutes per lane is an estimate; admission and shared drains
+can add time.
+
+The frozen lane wrappers could not directly admit packet65 placement 1 and
+only allowed lane B live entry. Packet65's selections bind its original wrapper
+sources, so those files also remain byte-for-byte unchanged. The additional
+[`screen/quick/`](../experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/quick/README.md)
+copy has its own wrapper seal and reuses the original seals. No selection or
+binary was rebuilt or resealed. The whole-host class campaign remains available
+for a winner after this cheap end-to-end token-rate decision.
+
+CPU checks passed: original and new wrapper seal verification, all twelve
+`--plan` jobs, mocked six-screen runs on both lanes with five 90-second gaps,
+stop-on-failure, cooperative lease overlap and hold/refusal checks, device
+isolation, full incident64 plus twelve-request worker flow, and class/token
+accounting. No CPU model, GPU, service or device window ran. Work stayed on the
+helper cores at nice19, Python `-B`, with stdin closed; scripts use small bounded
+metadata, receipts and streamed binary hashes, below the 8 GB budget. This task did not edit any frozen tree or existing selection file. A concurrent
+coordinator reseal changed packet64 files while this task ran; those changes
+are left with their owner and excluded from this commit. Seal verification
+used 23,596 KiB peak RSS.
+
+[Coordinator commands and job files](../experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/quick/README.md#coordinator-commands),
+[CPU validation](../experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/quick/validation.json).
+The helper reports class-balanced tok/s against the mean of the two production
+screens on the same lane and independently checks all 13 token streams. These
+are diagnostic 128-token screens. No device quality or speed result is claimed;
+the coordinator's launch is next, followed by the class gate for a winner.
