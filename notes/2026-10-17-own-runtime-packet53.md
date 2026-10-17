@@ -37,7 +37,7 @@ precision and output conversion remain unchanged. Existing packet49 oracles
 are retained; no new oracle job is needed or launched.
 
 The production controls are packet48b's accepted expert kernels, used through
-the packet51 fixture exactly as packet49c uses them. Both kernel families use
+the packet51 fixture (see the row-pitch clarification below). Both kernel families use
 ten distinct changing routes across actual512-expert banks and real compact
 format strides. M2 means two independent serial rows. E captures complete
 outputs, route statuses and sticky error: gate/up25684 bytes in five buffers,
@@ -140,3 +140,14 @@ The source, binaries and original seal remain unchanged. The allowed
 DO-NOT-REPEAT update changes a documentation hash in the historical seal;
 the original device receipts retain their original seal identity. Do not
 re-seal this closed device result or launch more windows under it.
+
+### Row-pitch clarification from packet53b review
+
+Packet53's unchanged fixture uses 16-byte-aligned IQ2/IQ4 row pitches832/368.
+Packet49c's integrated copy uses820/360-byte compact rows. The arithmetic
+bodies match, but those bank layouts are different benchmark identities.
+The recorded22.083/22.291 µs savings are valid within packet53's own matched
+fixture; they are not a measurement against packet49c's exact compact banks.
+Packet53b binds the820/360-byte layout for both production controls and
+candidates and remeasures V4. Original packet53 sources, seal and receipts
+remain unchanged.

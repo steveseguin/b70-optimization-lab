@@ -36,8 +36,8 @@ class AdmissionTests(unittest.TestCase):
             build = Path(directory) / 'build'
             build.mkdir()
             with (build / 'own-sparse-scratch').open('wb') as stream:
-                stream.truncate(999_999_999)
-            with self.assertRaisesRegex(AssertionError, '1 GB build cap'):
+                stream.truncate(499_999_999)
+            with self.assertRaisesRegex(AssertionError, '500 MB build cap'):
                 preparation.limits(planned_write_bytes=1)
 
     def test_early_window_refusals_never_launch(self):

@@ -1,0 +1,154 @@
+{
+  "schema": "own-runtime.packet53b.cpu-gates.v1",
+  "passed": true,
+  "device_executed": false,
+  "build_receipt_sha256": "edfd702231d02de82f0953ae914b33a3aa2bab8a3c271044f989306507d1878a",
+  "intel_build_receipt_sha256": "7a627aaed011d227a963b90d9f717201ef1423f6f01f31093d243b6245484f15",
+  "artifacts": {
+    "experiments/own-xpu-runtime/stage2/packet53b-virtual/build/host/virtual-bench": "12fb7c6fc3951315abd1fb33fbb212e754f7496ecc87e30d33612acdb60b3d59",
+    "experiments/own-xpu-runtime/stage2/packet53b-virtual/build/host/cpu-identity-test": "39eb4ce474e34246446265e7811b1203d4ad2054d5ed01cb5d0c1c8ef16e620e",
+    "experiments/own-xpu-runtime/stage2/packet53b-virtual/build/intel-host/virtual-bench": "2450c32039a0e174ee9ab483ed710c0ebde5b66909c4e7c1db40703e86bbb1d0",
+    "experiments/own-xpu-runtime/stage2/packet53b-virtual/build/intel-host/cpu-identity-test": "281b4cfff49e88c57c619aef8acef24141df472d2c5e7ed1d6d05d9799690157",
+    "experiments/own-xpu-runtime/stage2/packet53b-virtual/build/sanitizer/cpu-identity-test": "5a955ab18f76a203c60bc143eff44da8407314f80b3a5a1dd454b36eae71511b"
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet53b-virtual/cpu_gate.py": "9ae08ee515f4b2a60e9e2d80ffe93a9b44c7568b11cbcdb9398deacff945b81f",
+    "experiments/own-xpu-runtime/stage2/packet53b-virtual/manifest.json": "bb50e72baac8faba794debaa445c2dc15e5be4a99e9dfa179a6aa72eebd17a9a",
+    "experiments/own-xpu-runtime/stage2/packet53b-virtual/cpu_identity_test.cpp": "c210564b281f148a61093a224878fce80a4bd2471a9a1e651b6efa68d1f2eee2",
+    "experiments/own-xpu-runtime/stage2/packet53b-virtual/expert_order.hpp": "47501c82ec689500e8a55f6f0244844d5e295d36815efc7c08441378897a18e3",
+    "experiments/own-xpu-runtime/stage2/packet53b-virtual/dense_virtual.hpp": "3efca6cb7964794b2bace9f4e51d35ce6e22511d4fcd229bafa3684c96750c51",
+    "experiments/own-xpu-runtime/stage2/packet53b-virtual/bench.cpp": "7d5181898aa53882a004d5ae55996d18cd48d81a335609d24a6bb938cada4da1"
+  },
+  "admission": {
+    "nice": 19,
+    "affinity": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "build_bytes": 100327364,
+    "free_bytes": 20517740544,
+    "planned_write_bytes": 8000000
+  },
+  "runs": [
+    {
+      "compiler": "host",
+      "repeat": 0,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/host/cpu-identity-test"
+      ],
+      "checks": 2884253,
+      "rows_checked": 2750,
+      "elapsed_seconds": 0.5740683210024145,
+      "output_sha256": "281b0296c00b51edec17941c30557aa0c91469d80e2141461d1a9d859b35aa83",
+      "comparisons_sha256": "5c61d12e2958481c684401ed22dbd48d3093ddae90daeeb28978139b77d80e3e",
+      "files": {
+        "experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-cpu/host-1792229311761145277-0/native.log": "a66ac8e317964da65bded3e50c3119c6a9ff63137f26cb872eaf0aa1022596e4",
+        "experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-cpu/host-1792229311761145277-0/receipt.json": "5c61d12e2958481c684401ed22dbd48d3093ddae90daeeb28978139b77d80e3e"
+      }
+    },
+    {
+      "compiler": "intel-host",
+      "repeat": 0,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/intel-host/cpu-identity-test"
+      ],
+      "checks": 2884253,
+      "rows_checked": 2750,
+      "elapsed_seconds": 0.47289906900550704,
+      "output_sha256": "281b0296c00b51edec17941c30557aa0c91469d80e2141461d1a9d859b35aa83",
+      "comparisons_sha256": "5c61d12e2958481c684401ed22dbd48d3093ddae90daeeb28978139b77d80e3e",
+      "files": {
+        "experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-cpu/intel-host-1792229311761145277-0/native.log": "94f7113ee217ae6a3bb04b71e72c8bd468fc50cc1d1c651a535f108b9e42f5da",
+        "experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-cpu/intel-host-1792229311761145277-0/receipt.json": "5c61d12e2958481c684401ed22dbd48d3093ddae90daeeb28978139b77d80e3e"
+      }
+    }
+  ],
+  "full_runs": [
+    {
+      "repeat": 0,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/host/virtual-bench",
+        "--mode",
+        "cpu-full",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-cpu/full-host-1792229311761145277-0"
+      ],
+      "elapsed_seconds": 3.4184565860050498,
+      "checks": 15,
+      "comparisons_sha256": "9377a74f935c1cd577aacd1536b9df2d43b3959e3d0a7e2f992d8d247da03013",
+      "files": {
+        "experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-cpu/full-host-1792229311761145277-0/comparisons.jsonl": "9377a74f935c1cd577aacd1536b9df2d43b3959e3d0a7e2f992d8d247da03013",
+        "experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-cpu/full-host-1792229311761145277-0/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-cpu/full-host-1792229311761145277-0/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-cpu/full-host-1792229311761145277-0/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-cpu/full-host-1792229311761145277-0/native.log": "058b16b7ff13d542ca1fa45bd369f65e942ac9e9777672e23c93584f015875f1",
+        "experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-cpu/full-host-1792229311761145277-0/receipt.json": "b7ee45ed248c40f800c7811c440088a47082b5ea4f9b5fe50737d33cd94c1ac1",
+        "experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-cpu/full-host-1792229311761145277-0/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-cpu/full-host-1792229311761145277-0/iterations.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ],
+  "sanitizer": {
+    "passed": true,
+    "device_executed": false,
+    "command": [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-O1",
+      "-g1",
+      "-fno-omit-frame-pointer",
+      "-fsanitize=address,undefined",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fopenmp",
+      "-DOWN_RT_HOST_ONLY",
+      "-Werror=return-type",
+      "-I",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3",
+      "-I",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+      "-I",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+      "-I",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/host/source/cpu_identity_test.cpp",
+      "-lcrypto",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/sanitizer/cpu-identity-test"
+    ],
+    "elapsed_seconds": 4.569728867994854,
+    "checks": 2884253,
+    "output_sha256": "281b0296c00b51edec17941c30557aa0c91469d80e2141461d1a9d859b35aa83",
+    "files": {
+      "experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-cpu/sanitizer-1792229311761145277/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-cpu/sanitizer-1792229311761145277/native.log": "a66ac8e317964da65bded3e50c3119c6a9ff63137f26cb872eaf0aa1022596e4"
+    }
+  },
+  "environment": {
+    "OMP_NUM_THREADS": "1",
+    "OMP_THREAD_LIMIT": "1"
+  },
+  "scope": "independent FP32 chains/tree, decode, scheduling, controls; complete production-shape M1/M2 host repeats; device equality pending"
+}

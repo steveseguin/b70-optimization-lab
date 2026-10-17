@@ -11,6 +11,7 @@ nice -n 19 taskset -c 4-15,20-31 python3 -B "$P/inspect_registers.py"
 nice -n 19 taskset -c 4-15,20-31 python3 -B "$P/cpu_gate.py"
 nice -n 19 taskset -c 4-15,20-31 python3 -B "$P/python_gate.py"
 nice -n 19 taskset -c 4-15,20-31 python3 -B "$P/cleanup.py"
+nice -n 19 taskset -c 4-15,20-31 python3 -B "$P/check_controls.py"
 nice -n 19 taskset -c 4-15,20-31 python3 -B "$P/seal.py"
 ```
 

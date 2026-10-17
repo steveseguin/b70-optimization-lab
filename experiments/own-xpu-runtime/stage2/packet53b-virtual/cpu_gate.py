@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Serial, bounded CPU proof and full M1/M2 production composition gates."""
+"""Serial, bounded M1/M2 small proofs and one full-shape M1 composition gate."""
 import json
 import os
 import subprocess
@@ -111,7 +111,7 @@ def main():
             build_receipt_sha256=sha(HERE/'build-host.json'),intel_build_receipt_sha256=sha(HERE/'build-intel-host.json'),
             artifacts=artifacts,sources=sources,admission=admission,runs=runs,full_runs=full_runs,sanitizer=sanitizer,
             environment={'OMP_NUM_THREADS':'1','OMP_THREAD_LIMIT':'1'},
-            scope='independent FP32 chains/tree, decode, scheduling, controls; complete production-shape M1/M2 host repeats; device equality pending')
+            scope='independent FP32 chains/tree, decode, scheduling, controls; one complete production-shape M1 host pass; M2 small proofs; full device M1/M2 equality pending')
         save(HERE/'cpu-gates.json',row)
         print(json.dumps(dict(passed=True,device_executed=False,proof_checks=runs[0]['checks'],full_checks=full_runs[0]['checks'],
                              proof_seconds=[r['elapsed_seconds'] for r in runs],full_seconds=[r['elapsed_seconds'] for r in full_runs])))

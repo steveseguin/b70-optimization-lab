@@ -55,3 +55,28 @@ to packet49d in the next brief. This preparation does not modify that engine.
 [WINDOW.md](../experiments/own-xpu-runtime/stage2/packet53b-virtual/WINDOW.md)
 contains E1/E2, T1/T2 and summary commands, with the original PF_EXITING sensor,
 past-UTC review boundary, fresh-owner seals and cooperative stop behavior.
+
+## Final CPU qualification
+
+GNU and Intel host builds and the device compile-only build pass. Each host
+compiler passes **2,935,673 checks** over2,750 sampled rows, with identical
+output hash `4e4601f6ea577bb191930a887c09fd0a52082cee56eb2bd997d14ac604715dcb`. The full-shape pass matches all15 production/candidate
+comparisons across the four classes in3.47 seconds. The small proofs take
+less than one second each; ASan/UBSan passes the same check count and hash
+in 4.62 seconds.
+All17 mocked coordinator/parser tests pass, including the exact500 MB cap,
+PF_EXITING, future review refusal, missing M2 cases, incomplete HC event
+counts, production identity, two-owner selection and the35 µs boundary.
+
+The final offline BMG-G31 report includes15 kernels and binds the final device
+build. All use128 configured GRFs. Gate/up split-stream V8/V16, down V4/V8/V16,
+HC gate V2/V4/V8 and small FFN V2/V4 have no spill metadata. Paired gate/up V4
+retains896 bytes; HC low V2/V4/V8 each retains64 bytes, exactly like its accepted
+control. These are offline compiler findings; installed-driver JIT and speed
+remain unmeasured. [Full report](../experiments/own-xpu-runtime/stage2/packet53b-virtual/REGISTER-REPORT.md).
+
+Cleanup leaves **62,036,613 bytes** (about62 MB), below500 MB.
+The [closeout](../experiments/own-xpu-runtime/stage2/packet53b-virtual/CPU-PREPARATION-CLOSEOUT.md)
+links retained evidence and rejected attempts. No GPU, oracle, protected unit
+or engine was touched. The coordinator can now run the sealed windows; the
+result is pending and no speed improvement is claimed.

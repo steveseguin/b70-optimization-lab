@@ -1,0 +1,179 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/dense_virtual.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:6: warning: 'parallel_for' is deprecated: To specify properties, use a launch configuration object of type launch_config or a kernel functor with a get(sycl::ext::oneapi::experimental::properties_tag) member function instead. [-Wdeprecated-declarations]
+  134 |    h.parallel_for(sycl::nd_range<1>(size_t(groups)*workgroup_size,workgroup_size),sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<(paired&&V>=8)?256:128>},[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |      ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:133:39: note: while substituting into a lambda expression here
+  133 |   return q.submit([&](sycl::handler&h){h.depends_on(deps);sycl::local_accessor<uint32_t,1> table(choice.local_table?2048:1,h);
+      |                                       ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:158:33: note: in instantiation of function template specialization 'p53b::Kernel<iq3::Type::IQ2_S, 2560>::submit_arm<1U>' requested here
+  158 |   switch(variant){case 1:return submit_arm<1>(q,p,deps);case 2:return submit_arm<2>(q,p,deps);case 3:return submit_arm<3>(q,p,deps);}
+      |                                 ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:4:29: note: in instantiation of member function 'p53b::Kernel<iq3::Type::IQ2_S, 2560>::submit' requested here
+    4 |  p53b::GateKernel gate;gate.submit(q,p,deps);
+      |                             ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/handler.hpp:1542:28: note: 'parallel_for' has been explicitly marked deprecated here
+ 1542 |       PropertiesT>::value> parallel_for(nd_range<Dims> Range,
+      |                            ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/dense_virtual.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:6: warning: 'parallel_for<sycl::detail::auto_name, (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:193), sycl::ext::oneapi::experimental::properties<sycl::ext::oneapi::experimental::detail::properties_type_list<sycl::ext::oneapi::experimental::property_value<sycl::ext::intel::experimental::grf_size_key, std::integral_constant<unsigned int, 128>>>>, 1>' is deprecated: To specify properties, use a launch configuration object of type launch_config or a kernel functor with a get(sycl::ext::oneapi::experimental::properties_tag) member function instead. [-Wdeprecated-declarations]
+  134 |    h.parallel_for(sycl::nd_range<1>(size_t(groups)*workgroup_size,workgroup_size),sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<(paired&&V>=8)?256:128>},[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |      ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/handler.hpp:1537:3: note: 'parallel_for<sycl::detail::auto_name, (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:193), sycl::ext::oneapi::experimental::properties<sycl::ext::oneapi::experimental::detail::properties_type_list<sycl::ext::oneapi::experimental::property_value<sycl::ext::intel::experimental::grf_size_key, std::integral_constant<unsigned int, 128>>>>, 1>' has been explicitly marked deprecated here
+ 1537 |   __SYCL_DEPRECATED("To specify properties, use a launch configuration object "
+      |   ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/detail/defines_elementary.hpp:62:38: note: expanded from macro '__SYCL_DEPRECATED'
+   62 | #define __SYCL_DEPRECATED(message) [[deprecated(message)]]
+      |                                      ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/dense_virtual.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:6: warning: 'parallel_for' is deprecated: To specify properties, use a launch configuration object of type launch_config or a kernel functor with a get(sycl::ext::oneapi::experimental::properties_tag) member function instead. [-Wdeprecated-declarations]
+  134 |    h.parallel_for(sycl::nd_range<1>(size_t(groups)*workgroup_size,workgroup_size),sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<(paired&&V>=8)?256:128>},[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |      ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:133:39: note: while substituting into a lambda expression here
+  133 |   return q.submit([&](sycl::handler&h){h.depends_on(deps);sycl::local_accessor<uint32_t,1> table(choice.local_table?2048:1,h);
+      |                                       ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:158:71: note: in instantiation of function template specialization 'p53b::Kernel<iq3::Type::IQ2_S, 2560>::submit_arm<2U>' requested here
+  158 |   switch(variant){case 1:return submit_arm<1>(q,p,deps);case 2:return submit_arm<2>(q,p,deps);case 3:return submit_arm<3>(q,p,deps);}
+      |                                                                       ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:4:29: note: in instantiation of member function 'p53b::Kernel<iq3::Type::IQ2_S, 2560>::submit' requested here
+    4 |  p53b::GateKernel gate;gate.submit(q,p,deps);
+      |                             ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/handler.hpp:1542:28: note: 'parallel_for' has been explicitly marked deprecated here
+ 1542 |       PropertiesT>::value> parallel_for(nd_range<Dims> Range,
+      |                            ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/dense_virtual.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:6: warning: 'parallel_for<sycl::detail::auto_name, (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:193), sycl::ext::oneapi::experimental::properties<sycl::ext::oneapi::experimental::detail::properties_type_list<sycl::ext::oneapi::experimental::property_value<sycl::ext::intel::experimental::grf_size_key, std::integral_constant<unsigned int, 256>>>>, 1>' is deprecated: To specify properties, use a launch configuration object of type launch_config or a kernel functor with a get(sycl::ext::oneapi::experimental::properties_tag) member function instead. [-Wdeprecated-declarations]
+  134 |    h.parallel_for(sycl::nd_range<1>(size_t(groups)*workgroup_size,workgroup_size),sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<(paired&&V>=8)?256:128>},[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |      ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/handler.hpp:1537:3: note: 'parallel_for<sycl::detail::auto_name, (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:193), sycl::ext::oneapi::experimental::properties<sycl::ext::oneapi::experimental::detail::properties_type_list<sycl::ext::oneapi::experimental::property_value<sycl::ext::intel::experimental::grf_size_key, std::integral_constant<unsigned int, 256>>>>, 1>' has been explicitly marked deprecated here
+ 1537 |   __SYCL_DEPRECATED("To specify properties, use a launch configuration object "
+      |   ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/detail/defines_elementary.hpp:62:38: note: expanded from macro '__SYCL_DEPRECATED'
+   62 | #define __SYCL_DEPRECATED(message) [[deprecated(message)]]
+      |                                      ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/dense_virtual.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:6: warning: 'parallel_for' is deprecated: To specify properties, use a launch configuration object of type launch_config or a kernel functor with a get(sycl::ext::oneapi::experimental::properties_tag) member function instead. [-Wdeprecated-declarations]
+  134 |    h.parallel_for(sycl::nd_range<1>(size_t(groups)*workgroup_size,workgroup_size),sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<(paired&&V>=8)?256:128>},[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |      ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:133:39: note: while substituting into a lambda expression here
+  133 |   return q.submit([&](sycl::handler&h){h.depends_on(deps);sycl::local_accessor<uint32_t,1> table(choice.local_table?2048:1,h);
+      |                                       ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:158:109: note: in instantiation of function template specialization 'p53b::Kernel<iq3::Type::IQ2_S, 2560>::submit_arm<3U>' requested here
+  158 |   switch(variant){case 1:return submit_arm<1>(q,p,deps);case 2:return submit_arm<2>(q,p,deps);case 3:return submit_arm<3>(q,p,deps);}
+      |                                                                                                             ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:4:29: note: in instantiation of member function 'p53b::Kernel<iq3::Type::IQ2_S, 2560>::submit' requested here
+    4 |  p53b::GateKernel gate;gate.submit(q,p,deps);
+      |                             ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/handler.hpp:1542:28: note: 'parallel_for' has been explicitly marked deprecated here
+ 1542 |       PropertiesT>::value> parallel_for(nd_range<Dims> Range,
+      |                            ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/dense_virtual.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:6: warning: 'parallel_for<sycl::detail::auto_name, (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:193), sycl::ext::oneapi::experimental::properties<sycl::ext::oneapi::experimental::detail::properties_type_list<sycl::ext::oneapi::experimental::property_value<sycl::ext::intel::experimental::grf_size_key, std::integral_constant<unsigned int, 256>>>>, 1>' is deprecated: To specify properties, use a launch configuration object of type launch_config or a kernel functor with a get(sycl::ext::oneapi::experimental::properties_tag) member function instead. [-Wdeprecated-declarations]
+  134 |    h.parallel_for(sycl::nd_range<1>(size_t(groups)*workgroup_size,workgroup_size),sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<(paired&&V>=8)?256:128>},[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |      ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/handler.hpp:1537:3: note: 'parallel_for<sycl::detail::auto_name, (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:193), sycl::ext::oneapi::experimental::properties<sycl::ext::oneapi::experimental::detail::properties_type_list<sycl::ext::oneapi::experimental::property_value<sycl::ext::intel::experimental::grf_size_key, std::integral_constant<unsigned int, 256>>>>, 1>' has been explicitly marked deprecated here
+ 1537 |   __SYCL_DEPRECATED("To specify properties, use a launch configuration object "
+      |   ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/detail/defines_elementary.hpp:62:38: note: expanded from macro '__SYCL_DEPRECATED'
+   62 | #define __SYCL_DEPRECATED(message) [[deprecated(message)]]
+      |                                      ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/dense_virtual.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:6: warning: 'parallel_for' is deprecated: To specify properties, use a launch configuration object of type launch_config or a kernel functor with a get(sycl::ext::oneapi::experimental::properties_tag) member function instead. [-Wdeprecated-declarations]
+  134 |    h.parallel_for(sycl::nd_range<1>(size_t(groups)*workgroup_size,workgroup_size),sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<(paired&&V>=8)?256:128>},[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |      ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:133:39: note: while substituting into a lambda expression here
+  133 |   return q.submit([&](sycl::handler&h){h.depends_on(deps);sycl::local_accessor<uint32_t,1> table(choice.local_table?2048:1,h);
+      |                                       ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:158:33: note: in instantiation of function template specialization 'p53b::Kernel<iq3::Type::IQ4_NL, 640>::submit_arm<1U>' requested here
+  158 |   switch(variant){case 1:return submit_arm<1>(q,p,deps);case 2:return submit_arm<2>(q,p,deps);case 3:return submit_arm<3>(q,p,deps);}
+      |                                 ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:5:29: note: in instantiation of member function 'p53b::Kernel<iq3::Type::IQ4_NL, 640>::submit' requested here
+    5 |  p53b::DownKernel down;down.submit(q,p,deps);
+      |                             ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/handler.hpp:1542:28: note: 'parallel_for' has been explicitly marked deprecated here
+ 1542 |       PropertiesT>::value> parallel_for(nd_range<Dims> Range,
+      |                            ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/dense_virtual.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:6: warning: 'parallel_for<sycl::detail::auto_name, (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:193), sycl::ext::oneapi::experimental::properties<sycl::ext::oneapi::experimental::detail::properties_type_list<sycl::ext::oneapi::experimental::property_value<sycl::ext::intel::experimental::grf_size_key, std::integral_constant<unsigned int, 128>>>>, 1>' is deprecated: To specify properties, use a launch configuration object of type launch_config or a kernel functor with a get(sycl::ext::oneapi::experimental::properties_tag) member function instead. [-Wdeprecated-declarations]
+  134 |    h.parallel_for(sycl::nd_range<1>(size_t(groups)*workgroup_size,workgroup_size),sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<(paired&&V>=8)?256:128>},[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |      ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/handler.hpp:1537:3: note: 'parallel_for<sycl::detail::auto_name, (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:193), sycl::ext::oneapi::experimental::properties<sycl::ext::oneapi::experimental::detail::properties_type_list<sycl::ext::oneapi::experimental::property_value<sycl::ext::intel::experimental::grf_size_key, std::integral_constant<unsigned int, 128>>>>, 1>' has been explicitly marked deprecated here
+ 1537 |   __SYCL_DEPRECATED("To specify properties, use a launch configuration object "
+      |   ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/detail/defines_elementary.hpp:62:38: note: expanded from macro '__SYCL_DEPRECATED'
+   62 | #define __SYCL_DEPRECATED(message) [[deprecated(message)]]
+      |                                      ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/dense_virtual.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:6: warning: 'parallel_for' is deprecated: To specify properties, use a launch configuration object of type launch_config or a kernel functor with a get(sycl::ext::oneapi::experimental::properties_tag) member function instead. [-Wdeprecated-declarations]
+  134 |    h.parallel_for(sycl::nd_range<1>(size_t(groups)*workgroup_size,workgroup_size),sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<(paired&&V>=8)?256:128>},[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |      ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:133:39: note: while substituting into a lambda expression here
+  133 |   return q.submit([&](sycl::handler&h){h.depends_on(deps);sycl::local_accessor<uint32_t,1> table(choice.local_table?2048:1,h);
+      |                                       ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:158:71: note: in instantiation of function template specialization 'p53b::Kernel<iq3::Type::IQ4_NL, 640>::submit_arm<2U>' requested here
+  158 |   switch(variant){case 1:return submit_arm<1>(q,p,deps);case 2:return submit_arm<2>(q,p,deps);case 3:return submit_arm<3>(q,p,deps);}
+      |                                                                       ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:5:29: note: in instantiation of member function 'p53b::Kernel<iq3::Type::IQ4_NL, 640>::submit' requested here
+    5 |  p53b::DownKernel down;down.submit(q,p,deps);
+      |                             ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/handler.hpp:1542:28: note: 'parallel_for' has been explicitly marked deprecated here
+ 1542 |       PropertiesT>::value> parallel_for(nd_range<Dims> Range,
+      |                            ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/dense_virtual.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:6: warning: 'parallel_for<sycl::detail::auto_name, (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:193), sycl::ext::oneapi::experimental::properties<sycl::ext::oneapi::experimental::detail::properties_type_list<sycl::ext::oneapi::experimental::property_value<sycl::ext::intel::experimental::grf_size_key, std::integral_constant<unsigned int, 128>>>>, 1>' is deprecated: To specify properties, use a launch configuration object of type launch_config or a kernel functor with a get(sycl::ext::oneapi::experimental::properties_tag) member function instead. [-Wdeprecated-declarations]
+  134 |    h.parallel_for(sycl::nd_range<1>(size_t(groups)*workgroup_size,workgroup_size),sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<(paired&&V>=8)?256:128>},[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |      ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/handler.hpp:1537:3: note: 'parallel_for<sycl::detail::auto_name, (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:193), sycl::ext::oneapi::experimental::properties<sycl::ext::oneapi::experimental::detail::properties_type_list<sycl::ext::oneapi::experimental::property_value<sycl::ext::intel::experimental::grf_size_key, std::integral_constant<unsigned int, 128>>>>, 1>' has been explicitly marked deprecated here
+ 1537 |   __SYCL_DEPRECATED("To specify properties, use a launch configuration object "
+      |   ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/detail/defines_elementary.hpp:62:38: note: expanded from macro '__SYCL_DEPRECATED'
+   62 | #define __SYCL_DEPRECATED(message) [[deprecated(message)]]
+      |                                      ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/dense_virtual.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:6: warning: 'parallel_for' is deprecated: To specify properties, use a launch configuration object of type launch_config or a kernel functor with a get(sycl::ext::oneapi::experimental::properties_tag) member function instead. [-Wdeprecated-declarations]
+  134 |    h.parallel_for(sycl::nd_range<1>(size_t(groups)*workgroup_size,workgroup_size),sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<(paired&&V>=8)?256:128>},[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |      ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:133:39: note: while substituting into a lambda expression here
+  133 |   return q.submit([&](sycl::handler&h){h.depends_on(deps);sycl::local_accessor<uint32_t,1> table(choice.local_table?2048:1,h);
+      |                                       ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:158:109: note: in instantiation of function template specialization 'p53b::Kernel<iq3::Type::IQ4_NL, 640>::submit_arm<3U>' requested here
+  158 |   switch(variant){case 1:return submit_arm<1>(q,p,deps);case 2:return submit_arm<2>(q,p,deps);case 3:return submit_arm<3>(q,p,deps);}
+      |                                                                                                             ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:5:29: note: in instantiation of member function 'p53b::Kernel<iq3::Type::IQ4_NL, 640>::submit' requested here
+    5 |  p53b::DownKernel down;down.submit(q,p,deps);
+      |                             ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/handler.hpp:1542:28: note: 'parallel_for' has been explicitly marked deprecated here
+ 1542 |       PropertiesT>::value> parallel_for(nd_range<Dims> Range,
+      |                            ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/dense_virtual.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:6: warning: 'parallel_for<sycl::detail::auto_name, (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:193), sycl::ext::oneapi::experimental::properties<sycl::ext::oneapi::experimental::detail::properties_type_list<sycl::ext::oneapi::experimental::property_value<sycl::ext::intel::experimental::grf_size_key, std::integral_constant<unsigned int, 128>>>>, 1>' is deprecated: To specify properties, use a launch configuration object of type launch_config or a kernel functor with a get(sycl::ext::oneapi::experimental::properties_tag) member function instead. [-Wdeprecated-declarations]
+  134 |    h.parallel_for(sycl::nd_range<1>(size_t(groups)*workgroup_size,workgroup_size),sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<(paired&&V>=8)?256:128>},[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |      ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/handler.hpp:1537:3: note: 'parallel_for<sycl::detail::auto_name, (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:193), sycl::ext::oneapi::experimental::properties<sycl::ext::oneapi::experimental::detail::properties_type_list<sycl::ext::oneapi::experimental::property_value<sycl::ext::intel::experimental::grf_size_key, std::integral_constant<unsigned int, 128>>>>, 1>' has been explicitly marked deprecated here
+ 1537 |   __SYCL_DEPRECATED("To specify properties, use a launch configuration object "
+      |   ^
+/opt/intel/oneapi/compiler/2026.0/bin/compiler/../../include/sycl/detail/defines_elementary.hpp:62:38: note: expanded from macro '__SYCL_DEPRECATED'
+   62 | #define __SYCL_DEPRECATED(message) [[deprecated(message)]]
+      |                                      ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/inspect_kernels.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/dense_virtual.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:218: warning: kernel has both attribute 'sycl::reqd_sub_group_size' and kernel properties; if the kernel properties contains the property "sycl::ext::oneapi::experimental::sub_group_size" it will be ignored [-Wignored-attributes]
+  134 |    h.parallel_for(sycl::nd_range<1>(size_t(groups)*workgroup_size,workgroup_size),sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<(paired&&V>=8)?256:128>},[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                                                                                                                                                                                                                          ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:218: warning: kernel has both attribute 'sycl::reqd_sub_group_size' and kernel properties; if the kernel properties contains the property "sycl::ext::oneapi::experimental::sub_group_size" it will be ignored [-Wignored-attributes]
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:218: warning: kernel has both attribute 'sycl::reqd_sub_group_size' and kernel properties; if the kernel properties contains the property "sycl::ext::oneapi::experimental::sub_group_size" it will be ignored [-Wignored-attributes]
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:218: warning: kernel has both attribute 'sycl::reqd_sub_group_size' and kernel properties; if the kernel properties contains the property "sycl::ext::oneapi::experimental::sub_group_size" it will be ignored [-Wignored-attributes]
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:218: warning: kernel has both attribute 'sycl::reqd_sub_group_size' and kernel properties; if the kernel properties contains the property "sycl::ext::oneapi::experimental::sub_group_size" it will be ignored [-Wignored-attributes]
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/build/registers/expert_order.hpp:134:218: warning: kernel has both attribute 'sycl::reqd_sub_group_size' and kernel properties; if the kernel properties contains the property "sycl::ext::oneapi::experimental::sub_group_size" it will be ignored [-Wignored-attributes]
+18 warnings generated.

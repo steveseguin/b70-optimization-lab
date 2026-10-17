@@ -30,7 +30,7 @@ def main():
         kernels=[]
         for i,p in enumerate(sorted((out/'igc').glob('*entry_*.asm'))):
             data=p.read_text()
-            if 'p53b' not in data.splitlines()[0] and 'p51' not in data.splitlines()[0]:continue
+            if 'p53b' not in data.splitlines()[0] and '3p5111DenseKernelILN3iq34TypeE8ELj10240ELj4' not in data.splitlines()[0]:continue
             artifact=evidence/f'kernel-{i}.asm.gz';artifact.write_bytes(gzip.compress(p.read_bytes(),mtime=0))
             grf=re.search(r'numGRF=(\d+)',data)
             kernels.append(dict(name=data.splitlines()[0],configured_grf=int(grf[1]) if grf else None,
