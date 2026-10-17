@@ -40,15 +40,13 @@ def sources():
  paths=set(closure())|set((P/'prototype').rglob('*.py'))|{x for x in P.iterdir() if x.suffix in ('.cpp','.hpp','.py') or x.name in ('CMakeLists.txt','rope.bf16','dispatch-default.json','dispatch-all-new.json','dispatch-p33.json','dispatch-p38.json','dispatch-incumbent.json','k2-class-registry.json','kernel-registry.json','dispatch-merged-example.json','dispatch-p45.json')}
  return {str(x.relative_to(ROOT)):sha(x) for x in sorted(paths)}
 def prepare():
- from storage import admit
- admit(100_000_000)
- if not (P/"mtp-manifest.tsv").exists():run([PY,"-B",P/"prepare_mtp.py"],"prepare-mtp.log")
- if not (B/'input').exists():run([PY,'-B',P/'prepare.py','--output',B/'input'],'prepare.log')
- if not (B/'fusion-fixtures').exists():run([PY,'-B',P/'prototype/fixtures.py','--output',B/'fusion-fixtures'],'prepare-fixtures.log')
- values=struct.unpack('<2097152H',(P/'rope.bf16').read_bytes())
- (B/'fusion-rope.hpp').write_text('#pragma once\nnamespace rope_constants { inline constexpr int positions=32768; inline constexpr uint16_t table[]={'+','.join(map(str,values))+'};}\n')
+ # Packet49 deliberately reuses admitted metadata/fixtures read-only.  Never
+ # run the historical weight-scanning preparer or write through these links.
+ for path in (P/'mtp-manifest.tsv',B/'input/input.json',B/'input/plan.tsv',B/'fusion-fixtures',B/'fusion-rope.hpp',P/'rope.bf16'):
+  if not path.exists():raise RuntimeError('restore admitted packet45 input before building: '+str(path))
+ print('admitted metadata and fixture inputs present; no weight payload read',flush=True)
 def main():
- p=argparse.ArgumentParser();p.add_argument('stage',choices=['prepare','gnu-host','icpx-host','asan','device','seal']);p.add_argument('--jobs',type=int,choices=(1,2),default=1);a=p.parse_args()
+ p=argparse.ArgumentParser();p.add_argument('stage',choices=['prepare','gnu-host','icpx-host','asan','device','seal']);p.add_argument('--jobs',type=int,choices=(1,),default=1);a=p.parse_args()
  assert os.getpriority(os.PRIO_PROCESS,0)==19 and os.environ.get('OMP_NUM_THREADS')=='2'
  B.mkdir(exist_ok=True);(B/'tmp').mkdir(exist_ok=True);os.environ['TMPDIR']=str(B/'tmp')
  if a.stage=='prepare':prepare()

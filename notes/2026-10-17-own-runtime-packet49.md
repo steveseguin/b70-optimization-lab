@@ -1,6 +1,6 @@
 # Packet 49: split32 QSA integration and production GEMV reconciliation
 
-CPU preparation is in progress. No device program is authorized in this task.
+CPU preparation is complete and sealed. No device program ran in this task.
 The coordinator owns every device window. The old packet45 SPEED6 record,
 39.422 tok/s (`cmv9wjmtj013gle01v8k1yg4v`), remains unchanged.
 
@@ -68,7 +68,7 @@ oracle completion without silently changing their seal.
 
 The oracle launched at **2026-10-17 03:44:10 UTC** in the durable CPU-only
 unit **`own-iq3-p49-oracle-20261017b.service`**, with restart disabled. Initial
-completion estimate: **09:44–15:44 UTC**, central estimate about11:33 UTC.
+completion estimate: **09:44–15:44 UTC**, central estimate about 11:33 UTC.
 Outputs are under
 `/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/`.
 The first attempt refused before reading model bytes because idle I/O priority
@@ -90,13 +90,12 @@ Exit zero binds the full manifest, binary, sources, token/fixture results,
 fresh-process repeat and KD captures. `old-v-new.json` is produced only once
 the new suite exists; it compares against retained old outputs informationally.
 
-Build/CPU passes will not establish full-model device parity or speed.
-The coordinator chain will mirror K0/K1a/K1b/K2/W0p/KD/W2m/WS/WSs plus
-WS128x/WS128. Oracle-dependent windows must fail closed while outputs are
-pending. Exact runnable commands, final seal, CPU evidence, unit identity,
-ETA and review will be added when prepared. [The queue runbook](../experiments/own-xpu-runtime/stage2/packet49-integrate/WINDOW.md)
-and serial runner are committed. Ten CPU tests cover exact commands, topology,
-oracle barrier, strict receipts, fault signatures and durable-unit admission.
+Build/CPU passes do not establish full-model device parity or speed.
+The coordinator chain mirrors K0/K1a/K1b/K2/W0p/KD/W2m/WS/WSs plus
+WS128x/WS128. Oracle-dependent windows fail closed while outputs are pending.
+[The queue runbook](../experiments/own-xpu-runtime/stage2/packet49-integrate/WINDOW.md)
+contains exact commands. Eleven queue tests cover topology, oracle barriers,
+strict receipts, fault signatures, output boundaries and durable-unit admission.
 
 The integrated bridge supports and tests M=1/M=2. The full engine retains
 SPEED6's per-row attention submissions during verification; it does not acquire
@@ -107,3 +106,62 @@ records this limit and found no blocking arithmetic or scratch defect.
 The twelve-prompt, 128-token suite preserves the old record's scope. It does
 not satisfy the separate 512-token publication gate, and no comparison to
 Strata's different hardware is a matched performance result.
+
+## CPU evidence and review
+
+The GNU host, Intel device and GNU ASAN/UBSAN binaries compile successfully;
+no device binary has been executed. Two fresh GNU processes each pass 88 integrated QSA checks,
+216 linked-kernel cases and 218 non-GEMV fixtures with 3,427 adapter checks.
+Six owner/lifetime suites pass. The miniature snapshot gate passes 31 cases
+and 26 full-state/negative checks. Twelve sparse metadata plan/dispatch rows
+pass without reading weights, covering both ranks and the draft path.
+The current Python admission receipt passes 22 tests. The independent review
+also passes 64 scoped metadata tests and resolves all five findings.
+
+Two fresh sanitizer processes pass 176 QSA checks in total. The sanitizer
+snapshot gate also passes 31 cases and 26 full-state/negative checks. Both
+sanitizers must halt on errors; the gate enforces and records this policy.
+The normal snapshot receipt was refreshed after that gate-source change.
+The final seal binds 32 binary/artifact hashes and 425 source hashes and passes
+an independent read-only verification:
+
+`c95a6cdf423d4c059afda23a6b9a5a2372f16781d021b7f65749fad1fd7ce5bb`
+
+[Seal receipt](../experiments/own-xpu-runtime/stage2/packet49-integrate/build-receipt.json),
+[CPU build and verification commands](../experiments/own-xpu-runtime/stage2/packet49-integrate/CPU-BUILD.md).
+The build tree uses about 1.9 GiB, CPU evidence about 11 MiB, and roughly
+20 GiB remains free on root. The oracle unit is still active at handoff.
+
+**Runnable now under coordinator admission:** K0 → K1a → K1b → K2 → W0p,
+using the early-phase command in the runbook. Packet48b E1/E2 can also run
+without the full-model oracle; T1/T2 follow their exactness gates. These share
+card0 and must run serially. **Wait for the new oracle:** KD → W2m → WS →
+WSs → WS128x → WS128. The queue and each model window both enforce completion.
+
+The read-only build preparer was repaired before sealing: it checks admitted
+inputs without writing through inherited fixture symlinks or invoking the
+historical weight scanner. Focused review confirms all six missing inputs
+refuse and predecessor files stay untouched. Only one compiler is allowed.
+Historical copied helper tests are not a newly qualified test matrix; the
+old long-suite helper assumes different scope/arithmetic and is not used as
+packet49 admission. The authoritative paths are the new build, seal, oracle
+and coordinator entry points.
+
+[Independent review](../experiments/own-xpu-runtime/stage2/packet49-integrate/REVIEW-INDEPENDENT.md)
+and [CPU preparation closeout](../experiments/own-xpu-runtime/stage2/packet49-integrate/CPU-PREPARATION-CLOSEOUT.md)
+retain the exact scope, setup failures and remaining gates.
+
+## Committed checkpoints
+
+All checkpoints are on `main` and were pushed immediately:
+
+- `e0628d6e8`: registration and preserved SPEED6 identity.
+- `6d7b7274c`: serial coordinator chain and oracle barrier.
+- `8bef9b696`: control reconciliation and queue admission.
+- `dee051a11`: independent CPU oracle and arithmetic proof.
+- `b234d2933`: durable oracle unit and live-state record.
+- `c63232ab8`: sealed production-matched packet48b.
+- `d6ade9f54`: split32 runtime integration and fresh CPU gates.
+
+The final build/seal checkpoint carries this note, CURRENT, the three build
+receipts, six fresh gate summaries, final seal and independent reviews.

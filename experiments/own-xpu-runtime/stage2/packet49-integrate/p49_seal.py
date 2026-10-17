@@ -28,6 +28,8 @@ def checked():
     for name,row in gates.items():assert row['passed'] and row.get('device_executed',False) is False,name
     cpu=gates['p49-cpu-gates.json'];assert cpu['compiled_sources_sha256']==current
     assert len(cpu['fixtures'])==6 and len(cpu['owner_suites'])==6
+    for row in cpu['owner_suites']:
+        assert row['passed'] and row['binary_sha256']==artifacts['gnu-host/'+row['name']]
     outputs={}
     for row in cpu['fixtures']:
         assert row['binary_sha256']==artifacts['gnu-host/'+row['name']]
@@ -38,10 +40,14 @@ def checked():
         outputs.setdefault(row['name'],[]).append(row['output_sha256'])
     assert all(len(v)==2 and len(set(v))==1 for v in outputs.values())
     plan=gates['p49-plan-gates.json'];assert plan['plan_dispatch_rows']==12 and plan['weight_bytes_read']==0
+    assert plan['binary_sha256']==digest(B/'p49-plan/after')
+    assert plan['generated_sha256']==digest(B/'p49-plan/after.cpp')
+    assert plan['writer_sites']['sha256']==digest(P/plan['writer_sites']['path'])
     for name,sha in plan['sources_sha256'].items():assert digest(P/name)==sha
     for mode,name in (('gnu-host','p49-snapshot-gates.json'),('asan','p49-asan-snapshot-gates.json')):
         snapshot=gates[name];assert snapshot['build']['binary_sha256']==artifacts[mode+'/own-rt-iq3']
         assert snapshot['cases']==31 and snapshot['gate_count']==26
+        if mode=='asan':assert snapshot['sanitizer_options']=={'ASAN_OPTIONS':'halt_on_error=1:detect_leaks=1','UBSAN_OPTIONS':'halt_on_error=1:print_stacktrace=1'}
         for name,sha in snapshot['source_sha256'].items():assert digest(P/name)==sha
     for row in gates['p49-asan-gates.json']['rows']:
         assert row['binary_sha256']==artifacts['asan/p49-qsa-fixtures']

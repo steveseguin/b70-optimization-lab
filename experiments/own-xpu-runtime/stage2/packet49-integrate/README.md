@@ -32,6 +32,9 @@ attention alternative remain closed.
 - [Oracle coordinator and checked completion](oracle/oracle_job.py)
 - [Independent attention review](REVIEW-QSA.md)
 - [Independent queue review](REVIEW-ORCHESTRATION.md)
+- [Independent source review](REVIEW-INDEPENDENT.md)
+- [CPU preparation closeout and remaining device work](CPU-PREPARATION-CLOSEOUT.md)
+- [CPU build and seal commands](CPU-BUILD.md)
 - [Task record, status, commits and limitations](../../../../notes/2026-10-17-own-runtime-packet49.md)
 - [Storage and artifact retention](ARTIFACT-RETENTION.md)
 
@@ -46,7 +49,10 @@ historical tooling, not permission to run their old campaigns or resealers.
 Use only packet49's new build, seal, oracle and queue entry points. In
 particular, old CPU campaigns reference obsolete receipts and must not be used
 to claim new qualification. Fresh GNU-host and device build receipts identify
-what was actually built; omitted compiler/sanitizer matrices remain limitations.
+what was actually built. The scoped seal includes GNU host, Intel device and
+GNU ASAN/UBSAN builds, fresh owner/fixture checks and miniature snapshot gates.
+The full historical compiler/test matrix is not claimed. Final seal:
+`c95a6cdf423d4c059afda23a6b9a5a2372f16781d021b7f65749fad1fd7ce5bb`.
 
 The 12-prompt ×128-token comparison has the SPEED6 record's scope. It cannot
 pass the separate 512-token final publication gate. One-card engine

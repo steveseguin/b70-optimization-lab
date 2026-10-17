@@ -24,6 +24,11 @@ are retained under their existing identities; no source/build/result from those
 sealed packets is changed. No pre-existing result, record, coredump, incident,
 cache or unrelated untracked path is a cleanup target.
 
+The unchanged 4MiB `rope.bf16` is a relative symlink to packet45's retained
+table, verified byte-for-byte during preparation. The new seal binds its
+contents; there is no duplicate table in Git. Restore it from the retained
+packet45 table, not a newly generated approximation.
+
 The inherited packet45 cleanup scripts assume their historical path layout.
 Do not invoke them blindly against this external build tree. Any deletion of
 new regenerable build objects must record exact scope and restoration commands;

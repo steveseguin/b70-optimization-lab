@@ -48,9 +48,13 @@ def terminal(binary,root,rank,controller,prompt,count,guesses=(),eos=(),cut=-1,o
 
 def main():
  assert os.getpriority(os.PRIO_PROCESS,0)==19 and os.environ['OMP_NUM_THREADS']=='2'
+ sanitizer_options={}
+ if MODE=='asan':
+  sanitizer_options={'ASAN_OPTIONS':'halt_on_error=1:detect_leaks=1','UBSAN_OPTIONS':'halt_on_error=1:print_stacktrace=1'}
+  os.environ.update(sanitizer_options)
  E.mkdir(parents=True,exist_ok=True)
  binary=P/'build'/MODE/'own-rt-iq3';proof=assert_host_build(binary)
- receipt=dict(passed=False,device_executed=False,real_model=False,build=proof,rows=[],negative_controls=[],owners=[])
+ receipt=dict(passed=False,device_executed=False,real_model=False,build=proof,sanitizer_options=sanitizer_options,rows=[],negative_controls=[],owners=[])
  c=Campaign(binary,P/'dispatch-all-new.json',E/'mini-cases.json')
  root=P/'build'/('speed6-terminal-'+str(time.time_ns()));root.mkdir();prompt=[2,5,3,7,1]
  try:

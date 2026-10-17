@@ -68,17 +68,35 @@ The following issues were sent to the author immediately:
 5. The oracle README used `taskset -c4-15,20-31`, rejected by this host. The
    correct spelling is `taskset -c 4-15,20-31`.
 
-Items3–5 were still being addressed when this review record was first written;
-final disposition belongs below, before handoff.
+Final disposition: all five findings are resolved in the reviewed source.
+`window.admit_oracle` requires completed, hash-bound campaign status and the
+authoritative prompt/suite paths before memory admission or device work.
+`build.py seal` now invokes the packet49 seal; the README taskset command has
+the required space. No blocking source-review finding remains.
+
+The final dispatch helper also preserves the exact SPEED6 non-QSA choices
+after fresh K2 qualification. It retains the original measured recommendation
+and summary before selecting the pinned production file. Its coverage check
+requires fresh exactness for selected candidate implementations and accounts
+for63 measured choice rows plus two unchanged generic HC defaults. The target
+QSA override remains explicit; this policy cannot promote a new timing claim.
+
+Final preparation delta: `build.py prepare` now only checks that the six
+already-admitted metadata/fixture inputs exist. It cannot invoke the historical
+weight scanner or rewrite `fusion-rope.hpp` through its predecessor symlink.
+A focused temporary-directory check confirmed that existing inputs and the
+symlink target remain unchanged, and each of the six missing inputs refuses
+without calling the subprocess helper. Presence is not an identity proof;
+the build/seal and oracle admissions still provide the hash bindings.
 
 ## Validation and limits
 
-The following command passed58 CPU metadata/mocked tests during review:
+The following final command passed64 CPU metadata/mocked tests during review:
 
 ```bash
 cd experiments/own-xpu-runtime/stage2/packet49-integrate
 nice -n 19 taskset -c 4-15,20-31 python3 -B -m unittest -q \
-  test_p49_integration test_queue_runner test_suite_metrics \
+  test_p49_integration test_queue_runner test_p49_dispatch test_suite_metrics \
   test_suite_export_retention test_draft_window_cleanup
 ```
 
