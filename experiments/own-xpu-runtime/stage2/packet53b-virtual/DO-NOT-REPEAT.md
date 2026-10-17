@@ -22,3 +22,15 @@ new oracle. A device result is pending until E1/E2 and T1/T2 pass.
   This packet uses packet49c's actual820/360-byte rows for both arms.
 - `dispatch-p45.json` is not the active control map. Packet49c uses the
   SPEED6 map, byte-identical to packet51's registered baseline map.
+
+## Device closeout — October 17
+
+| Closed arm | Outcome | Revisit condition |
+| --- | --- | --- |
+| Gate/up V16 split-stream | About 52 µs slower in both owners despite spill-free offline compilation | A new mechanism addressing its measured cost; no repeat geometry sweep |
+| HC low/gate virtualization V2/V4/V8 | All slower; V8 loses 7.395 µs in both owners | New mechanism beyond virtual lane count |
+
+[Device closeout](../../../../notes/2026-10-17-own-runtime-packet53b.md#device-results--october-17-09450950-utc):
+23.4385/23.4375 µs misses 35 µs. Gate/up V8, down V16 and small-FFN V4 are
+banked exact candidates for packet49d when combined qualified savings reach
+40 µs in both owners. This does not reopen the closed HC or V16 gate/up arms.

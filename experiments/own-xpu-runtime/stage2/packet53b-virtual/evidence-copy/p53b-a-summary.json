@@ -1,0 +1,481 @@
+{
+  "schema": "own-runtime.packet53b.two-owner-timing.v1",
+  "passed": true,
+  "device_executed": true,
+  "model_speed_claim": false,
+  "windows": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence/p53b-a-t1/window.json",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence/p53b-a-t2/window.json"
+  ],
+  "fresh_owners": [
+    {
+      "passed": true,
+      "device_executed": true,
+      "microbenchmark_only": true,
+      "model_speed_claim": false,
+      "classes": {
+        "expsgate": {
+          "virtual4-global": {
+            "1": {
+              "control_us": 77.0835,
+              "candidate_us": 73.5415,
+              "median_paired_saved_us": 3.6454999999999984,
+              "p10_paired_saved_us": -5.311999999999998,
+              "p90_paired_saved_us": 13.334000000000003,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 154.01049999999998,
+              "candidate_us": 145.937,
+              "median_paired_saved_us": 7.865499999999997,
+              "p10_paired_saved_us": -9.584000000000003,
+              "p90_paired_saved_us": 26.458,
+              "measured_pairs": 200
+            }
+          },
+          "virtual8-split-stream": {
+            "1": {
+              "control_us": 74.375,
+              "candidate_us": 66.875,
+              "median_paired_saved_us": 7.396000000000001,
+              "p10_paired_saved_us": 6.873999999999995,
+              "p90_paired_saved_us": 7.814000000000007,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 148.749,
+              "candidate_us": 133.542,
+              "median_paired_saved_us": 15.10499999999999,
+              "p10_paired_saved_us": 14.375,
+              "p90_paired_saved_us": 15.728000000000009,
+              "measured_pairs": 200
+            }
+          },
+          "virtual16-split-stream": {
+            "1": {
+              "control_us": 74.479,
+              "candidate_us": 126.98,
+              "median_paired_saved_us": -52.5,
+              "p10_paired_saved_us": -54.06299999999999,
+              "p90_paired_saved_us": -51.354,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 148.854,
+              "candidate_us": 253.229,
+              "median_paired_saved_us": -104.2705,
+              "p10_paired_saved_us": -106.042,
+              "p90_paired_saved_us": -103.22900000000001,
+              "measured_pairs": 200
+            }
+          }
+        },
+        "expsdown": {
+          "virtual4-global": {
+            "1": {
+              "control_us": 55.208,
+              "candidate_us": 51.094,
+              "median_paired_saved_us": 3.959000000000003,
+              "p10_paired_saved_us": -5.833999999999996,
+              "p90_paired_saved_us": 12.188000000000002,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 110.1565,
+              "candidate_us": 102.2915,
+              "median_paired_saved_us": 7.813000000000002,
+              "p10_paired_saved_us": -10.418000000000006,
+              "p90_paired_saved_us": 24.269999999999996,
+              "measured_pairs": 200
+            }
+          },
+          "virtual8-global": {
+            "1": {
+              "control_us": 53.23,
+              "candidate_us": 45.9895,
+              "median_paired_saved_us": 7.188000000000002,
+              "p10_paired_saved_us": 6.561999999999998,
+              "p90_paired_saved_us": 7.915999999999997,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 106.459,
+              "candidate_us": 91.3545,
+              "median_paired_saved_us": 15.207999999999998,
+              "p10_paired_saved_us": 14.376000000000005,
+              "p90_paired_saved_us": 15.936999999999998,
+              "measured_pairs": 200
+            }
+          },
+          "virtual16-global": {
+            "1": {
+              "control_us": 53.23,
+              "candidate_us": 44.271,
+              "median_paired_saved_us": 9.0625,
+              "p10_paired_saved_us": 8.229,
+              "p90_paired_saved_us": 10.417000000000002,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 106.459,
+              "candidate_us": 87.0315,
+              "median_paired_saved_us": 19.375,
+              "p10_paired_saved_us": 18.021,
+              "p90_paired_saved_us": 21.354,
+              "measured_pairs": 200
+            }
+          }
+        },
+        "hc.low_gate": {
+          "virtual2-global": {
+            "1": {
+              "control_us": 52.0305,
+              "candidate_us": 52.0835,
+              "median_paired_saved_us": -0.36499999999999844,
+              "p10_paired_saved_us": -8.229,
+              "p90_paired_saved_us": 7.396000000000001,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 103.594,
+              "candidate_us": 105.417,
+              "median_paired_saved_us": -1.7719999999999985,
+              "p10_paired_saved_us": -18.019000000000005,
+              "p90_paired_saved_us": 14.584999999999994,
+              "measured_pairs": 200
+            }
+          },
+          "virtual4-global": {
+            "1": {
+              "control_us": 47.707,
+              "candidate_us": 48.334,
+              "median_paired_saved_us": -0.7279999999999944,
+              "p10_paired_saved_us": -1.25,
+              "p90_paired_saved_us": -0.10400000000000631,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 95.313,
+              "candidate_us": 96.979,
+              "median_paired_saved_us": -1.563999999999993,
+              "p10_paired_saved_us": -2.5,
+              "p90_paired_saved_us": -0.730000000000004,
+              "measured_pairs": 200
+            }
+          },
+          "virtual8-global": {
+            "1": {
+              "control_us": 47.812,
+              "candidate_us": 55.208,
+              "median_paired_saved_us": -7.395000000000003,
+              "p10_paired_saved_us": -7.813000000000002,
+              "p90_paired_saved_us": -6.7719999999999985,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 95.729,
+              "candidate_us": 110.313,
+              "median_paired_saved_us": -14.686500000000002,
+              "p10_paired_saved_us": -15.521,
+              "p90_paired_saved_us": -13.85499999999999,
+              "measured_pairs": 200
+            }
+          }
+        },
+        "small.ffn.q6": {
+          "virtual2-global": {
+            "1": {
+              "control_us": 24.271,
+              "candidate_us": 19.6355,
+              "median_paired_saved_us": 4.791499999999999,
+              "p10_paired_saved_us": -8.542000000000002,
+              "p90_paired_saved_us": 17.813000000000002,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 48.5945,
+              "candidate_us": 39.3225,
+              "median_paired_saved_us": 9.062999999999999,
+              "p10_paired_saved_us": -17.083,
+              "p90_paired_saved_us": 35.41499999999999,
+              "measured_pairs": 200
+            }
+          },
+          "virtual4-global": {
+            "1": {
+              "control_us": 18.125,
+              "candidate_us": 11.145,
+              "median_paired_saved_us": 6.980000000000001,
+              "p10_paired_saved_us": 6.667000000000002,
+              "p90_paired_saved_us": 7.291999999999998,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 36.25,
+              "candidate_us": 22.292,
+              "median_paired_saved_us": 13.854,
+              "p10_paired_saved_us": 13.436999999999998,
+              "p90_paired_saved_us": 14.272000000000002,
+              "measured_pairs": 200
+            }
+          }
+        }
+      },
+      "timing_definition": "sum of all completed compute-event durations for each class; M2 sums both serial rows"
+    },
+    {
+      "passed": true,
+      "device_executed": true,
+      "microbenchmark_only": true,
+      "model_speed_claim": false,
+      "classes": {
+        "expsgate": {
+          "virtual4-global": {
+            "1": {
+              "control_us": 77.0835,
+              "candidate_us": 73.69800000000001,
+              "median_paired_saved_us": 3.7489999999999952,
+              "p10_paired_saved_us": -5.311999999999998,
+              "p90_paired_saved_us": 13.230000000000004,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 154.16750000000002,
+              "candidate_us": 146.30200000000002,
+              "median_paired_saved_us": 8.020499999999998,
+              "p10_paired_saved_us": -9.791000000000025,
+              "p90_paired_saved_us": 26.354000000000013,
+              "measured_pairs": 200
+            }
+          },
+          "virtual8-split-stream": {
+            "1": {
+              "control_us": 74.375,
+              "candidate_us": 66.875,
+              "median_paired_saved_us": 7.396000000000001,
+              "p10_paired_saved_us": 6.875,
+              "p90_paired_saved_us": 7.813000000000002,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 148.75,
+              "candidate_us": 133.6465,
+              "median_paired_saved_us": 15.0,
+              "p10_paired_saved_us": 14.271000000000015,
+              "p90_paired_saved_us": 15.623999999999995,
+              "measured_pairs": 200
+            }
+          },
+          "virtual16-split-stream": {
+            "1": {
+              "control_us": 74.479,
+              "candidate_us": 126.875,
+              "median_paired_saved_us": -52.501000000000005,
+              "p10_paired_saved_us": -53.75,
+              "p90_paired_saved_us": -51.355000000000004,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 148.854,
+              "candidate_us": 253.281,
+              "median_paired_saved_us": -104.4265,
+              "p10_paired_saved_us": -105.833,
+              "p90_paired_saved_us": -103.02000000000001,
+              "measured_pairs": 200
+            }
+          }
+        },
+        "expsdown": {
+          "virtual4-global": {
+            "1": {
+              "control_us": 55.104,
+              "candidate_us": 51.0415,
+              "median_paired_saved_us": 4.114000000000001,
+              "p10_paired_saved_us": -5.728999999999999,
+              "p90_paired_saved_us": 12.292000000000002,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 110.1035,
+              "candidate_us": 101.7705,
+              "median_paired_saved_us": 8.438000000000002,
+              "p10_paired_saved_us": -10.519999999999996,
+              "p90_paired_saved_us": 24.061999999999998,
+              "measured_pairs": 200
+            }
+          },
+          "virtual8-global": {
+            "1": {
+              "control_us": 53.333,
+              "candidate_us": 46.146,
+              "median_paired_saved_us": 7.291,
+              "p10_paired_saved_us": 6.561999999999998,
+              "p90_paired_saved_us": 7.915999999999997,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 106.459,
+              "candidate_us": 91.459,
+              "median_paired_saved_us": 15.103500000000004,
+              "p10_paired_saved_us": 14.373999999999995,
+              "p90_paired_saved_us": 15.832999999999998,
+              "measured_pairs": 200
+            }
+          },
+          "virtual16-global": {
+            "1": {
+              "control_us": 53.333,
+              "candidate_us": 44.27,
+              "median_paired_saved_us": 9.062499999999996,
+              "p10_paired_saved_us": 8.125,
+              "p90_paired_saved_us": 10.415999999999997,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 106.562,
+              "candidate_us": 87.24000000000001,
+              "median_paired_saved_us": 19.5315,
+              "p10_paired_saved_us": 18.021,
+              "p90_paired_saved_us": 21.147000000000006,
+              "measured_pairs": 200
+            }
+          }
+        },
+        "hc.low_gate": {
+          "virtual2-global": {
+            "1": {
+              "control_us": 51.7195,
+              "candidate_us": 52.188500000000005,
+              "median_paired_saved_us": -0.6240000000000023,
+              "p10_paired_saved_us": -8.229,
+              "p90_paired_saved_us": 7.294999999999995,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 103.9065,
+              "candidate_us": 105.4185,
+              "median_paired_saved_us": -1.668999999999997,
+              "p10_paired_saved_us": -17.915000000000006,
+              "p90_paired_saved_us": 14.585000000000008,
+              "measured_pairs": 200
+            }
+          },
+          "virtual4-global": {
+            "1": {
+              "control_us": 47.709,
+              "candidate_us": 48.438,
+              "median_paired_saved_us": -0.7289999999999992,
+              "p10_paired_saved_us": -1.2520000000000024,
+              "p90_paired_saved_us": -0.2079999999999984,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 95.52,
+              "candidate_us": 97.084,
+              "median_paired_saved_us": -1.5619999999999976,
+              "p10_paired_saved_us": -2.5,
+              "p90_paired_saved_us": -0.7279999999999944,
+              "measured_pairs": 200
+            }
+          },
+          "virtual8-global": {
+            "1": {
+              "control_us": 47.916,
+              "candidate_us": 55.209,
+              "median_paired_saved_us": -7.395000000000003,
+              "p10_paired_saved_us": -7.917000000000002,
+              "p90_paired_saved_us": -6.771000000000001,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 95.626,
+              "candidate_us": 110.52,
+              "median_paired_saved_us": -14.7395,
+              "p10_paired_saved_us": -15.727000000000004,
+              "p90_paired_saved_us": -13.855000000000004,
+              "measured_pairs": 200
+            }
+          }
+        },
+        "small.ffn.q6": {
+          "virtual2-global": {
+            "1": {
+              "control_us": 24.427,
+              "candidate_us": 19.6875,
+              "median_paired_saved_us": 4.688000000000001,
+              "p10_paired_saved_us": -8.436999999999998,
+              "p90_paired_saved_us": 17.813,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 48.385,
+              "candidate_us": 39.323,
+              "median_paired_saved_us": 8.905999999999999,
+              "p10_paired_saved_us": -17.083,
+              "p90_paired_saved_us": 35.208,
+              "measured_pairs": 200
+            }
+          },
+          "virtual4-global": {
+            "1": {
+              "control_us": 18.125,
+              "candidate_us": 11.146,
+              "median_paired_saved_us": 6.979000000000001,
+              "p10_paired_saved_us": 6.667000000000002,
+              "p90_paired_saved_us": 7.290999999999999,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 36.249,
+              "candidate_us": 22.396,
+              "median_paired_saved_us": 13.854,
+              "p10_paired_saved_us": 13.436999999999998,
+              "p90_paired_saved_us": 14.373000000000001,
+              "measured_pairs": 200
+            }
+          }
+        }
+      },
+      "timing_definition": "sum of all completed compute-event durations for each class; M2 sums both serial rows"
+    }
+  ],
+  "selected_classes": {
+    "expsgate": {
+      "variant": "virtual8-split-stream",
+      "owner_saved_us": [
+        7.396000000000001,
+        7.396000000000001
+      ]
+    },
+    "expsdown": {
+      "variant": "virtual16-global",
+      "owner_saved_us": [
+        9.0625,
+        9.062499999999996
+      ]
+    },
+    "hc.low_gate": {
+      "variant": "control",
+      "owner_saved_us": [
+        0.0,
+        0.0
+      ]
+    },
+    "small.ffn.q6": {
+      "variant": "virtual4-global",
+      "owner_saved_us": [
+        6.980000000000001,
+        6.979000000000001
+      ]
+    }
+  },
+  "owner_saved_us": [
+    23.4385,
+    23.4375
+  ],
+  "threshold_us": 35,
+  "virtualization_proceeds": false,
+  "decision_metric": "sum of per-class paired median savings using one common selection; ordinary M1 only",
+  "oracle_started": false,
+  "engine_integrated": false
+}

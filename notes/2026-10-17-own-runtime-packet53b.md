@@ -80,3 +80,34 @@ The [closeout](../experiments/own-xpu-runtime/stage2/packet53b-virtual/CPU-PREPA
 links retained evidence and rejected attempts. No GPU, oracle, protected unit
 or engine was touched. The coordinator can now run the sealed windows; the
 result is pending and no speed improvement is claimed.
+
+## Device results — October 17, 09:45–09:50 UTC
+
+The coordinator ran E1/E2 and T1/T2 on card 0. Both byte windows passed
+and have the same complete output identity. The common timing selection is:
+
+| Class | Banked candidate | T1 saved µs | T2 saved µs |
+| --- | --- | ---: | ---: |
+| Expert gate/up | virtual8-split-stream | 7.3960 | 7.3960 |
+| Expert down | virtual16-global | 9.0625 | 9.0625 |
+| Small FFN Q6 tuple | virtual4-global | 6.9800 | 6.9790 |
+| HC low/gate | control | 0 | 0 |
+| Total | | **23.4385** | **23.4375** |
+
+The total misses the registered 35 µs bar: `virtualization_proceeds=false`.
+Gate/up V16 loses about 52 µs, and every HC virtualization loses time
+(V8 loses 7.395 µs). Those arms are closed. The controls now use the exact
+packet49c 820/360-byte pitches; this supersedes packet53's roughly 22 µs
+comparison for integration planning, without changing that historical result.
+
+Coordinator decision: keep the three exact winners banked. Combine them with
+later qualified candidates in packet49d once the banked total reaches at least
+40 µs per ordinary M=1 layer in both owners. Packet54 separately needs 25 µs
+of its own; the combined trigger is reported independently. These sums are
+operator planning evidence, not an integrated model speed claim.
+
+[Compact receipts](../experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-copy/p53b-a-summary.json)
+retain the exact summary, window receipts, byte comparisons and manifest.
+The [retention inventory](../experiments/own-xpu-runtime/stage2/packet53b-virtual/evidence-copy/retention.json)
+hashes the unchanged original timing streams, which remain in the ignored
+evidence tree. No device was used to record this closeout.
