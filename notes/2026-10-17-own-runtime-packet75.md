@@ -33,3 +33,31 @@ in progress at this milestone; device quality/speed remain pending.
 The helper reads each packet's own comparison and best-selection logic in
 isolated Python processes, then requires its exact best-of-A B confirmation.
 It writes ready.json and the coordinator command; it never starts a chain.
+
+## Complete CPU and chain preparation
+
+All 24 composed views now pass their own selected implementation against
+reference bytes under GNU and Intel, twice each: 96 fresh executions, 90 cases
+per execution. All 48 full-shape mock runs pass across both ranks. They use
+the real 3,380-byte expanded-head stride and retain post-load captures,
+speculative snapshots and the rank-one draft prefix. A deliberately undersized
+packed-head allocation is rejected by the real extent check. No GPU or model
+payload is touched by these tests.
+
+The chain/submission test set passes 117 tests plus 32 subtests, including
+registered and pinned-resume submissions, selection replay, lane admission and
+queue boundaries. The submission records every selected dense, HC and expert
+change; all normal and resumed notes are 1,649–1,787 characters. The live
+wrapper stays the unmodified shared code. Portable historical receipt replay
+uses a separately hash-pinned packet70 verifier because the shared verifier
+does not accept in-memory receipt bytes; it is not the live lane wrapper.
+
+The input census finds 12,709 static paths and 352 prospective write paths.
+Build artifacts occupy about 650 MB, below 1.2 GB. All chain prechecks are CPU
+only. Evidence and reproduction steps are in the packet
+[CPU closeout](../experiments/own-xpu-runtime/stage2/packet75-record-bundle/CPU-PREPARATION-CLOSEOUT.md).
+
+Release-order review confirms the shared screen wrapper releases both locks
+before CPU report aggregation, as packet70 did. Chain windows retain the
+packet70 order: initial reports first, then drain/lease completion, then the
+final admission-bound receipt. No lane-wrapper code was copied and modified.

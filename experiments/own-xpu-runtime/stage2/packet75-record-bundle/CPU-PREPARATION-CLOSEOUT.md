@@ -1,33 +1,63 @@
-# Packet70 CPU preparation closeout
+# Packet75 CPU preparation — closeout
 
 <!-- campaign-closeout -->
 
-Question: can the selected packet64 improvements and an optional packet65
-expert choice share one record chain, with shorter gaps and safe reporting?
-Identity: packet65 binary and exact source copies, packet64 `1-draft-hc-batch`,
-placement 1, five expert views, unchanged packet49 oracle and BF16 KV.
+## Question and identity
 
-Outcome: CPU preparation passes. No GPU, compile or CPU model run. Fast reseal
-is about 1.5 seconds. All eleven chain windows and ten screen plans pass.
-The input census checks 12,484 files and 352 write paths. Storage admission
-passes without reducing the inherited reserve. Fifty-three chain/submission
-checks plus seven subtests, six screen lease/worker tests and twelve helper
-checks pass. [Evidence index](evidence/validation.json).
+Can packet70 record-chain code select packet74 packed head/dense kernels and
+packet73 HC/expert kernels independently, without another merge build after
+the screens finish? Tested October 17, 2026 on steve-b70s, CPU only. Target
+arithmetic remains `iq3-p49-split32-v1`; packet49 is the device oracle.
+The packet70 draft-HC, batch rollback, wide64 baseline and 24/24 placement stay
+fixed. The shared v4-lanes wrapper is referenced under d5b060769 source hashes.
 
-Mechanisms retained: one shared binary; five expert views; fixed draft-HC,
-batch-miss and 24/24 preset; 90-second queue gaps; unchanged lane/teardown/fault
-gates; report aggregation moved after worker drain/postflight and release of
-both lane locks. Pinned early-resume admission and all payload disclosures
-are tested. The helper never launches devices, including in live mode.
+## Outcome
 
-A review caught the legacy v3 lane lock remaining held during reporting;
-that lock is now released too, with a regression check. Submission notes
-initially exceeded the API length cap; concise notes plus structured flags
-retain every disclosure and pass preflight. Superseded CPU-preparation seals
-remain retained. No frozen packet was changed.
+CPU preparation passed for all 24 choices in one merged binary. GNU and Intel
+each passed two fresh byte comparisons per view: 96 executions, 90 cases each.
+All 48 production-shape mock runs passed, including both ranks, actual row
+strides, post-load allocation/capture and rank-one draft initialization.
+Device exactness, deterministic repeats and performance remain pending.
+No chain or service was launched. There is no packet75 speed claim.
 
-Uncertainty: packet65's two quick-screen lanes are not both complete.
-Production stays selected and live readiness is pending; mock readiness is
-separate. Neither CPU fixtures nor diagnostic screen speed qualifies this
-combined packet. Next is the coordinator's helper after both lanes finish,
-then the full fresh device chain. No device result or new record is claimed.
+## What worked
+
+The dense/head selector composes with separate HC and expert selectors.
+The full-shape mock executes the real initialization code with logical device
+addresses and checked copy bounds. It confirms the 3,380-byte expanded head
+stride and rejects a deliberately short packed-head allocation. Every window
+plan calls the actual shared lane-admission predicate before returning.
+The chain retains 90-second gaps. The shared screen wrapper releases its lease
+before CPU report aggregation. Chain windows preserve packet70 ordering:
+their initial reports precede release, and their final admission-bound receipt
+follows completed drain and lease release.
+
+## What failed or remains uncertain
+
+Initial receipt finalization found a missing inherited RoPE link after the
+build completed; exact source bytes and saved compiler output hashes allowed
+receipt recovery without rebuilding or claiming an unrun check. The first
+mock compile exposed duplicate owner declarations from using raw sources;
+the test now uses the checked compiler mirror. A reporting-key collision was
+fixed before the full sweep passed. Early inherited tests needed the current
+record threshold and packet75 schemas; final tests pass. None of these CPU
+fixes changes target arithmetic. The mock cannot establish device numerical
+identity, device memory health, timing or a new record.
+
+## Evidence and patches
+
+- [Merged build receipt](build-device-receipt.json) and [parent source pins](parent-source-manifest.json).
+- [Original operator fixture checks](evidence/cpu-byte-identity.json).
+- [Per-view GNU/Intel byte checks](evidence/composed-byte-identity.json).
+- [Full production-shape allocation checks](evidence/full-shape.json).
+- [Chain and submission tests](evidence/chain-tests-v4.log).
+- [All-view real window plans](evidence/all-view-plans.json).
+- [Retained artifacts and rebuilding](RETENTION.md).
+
+## When to revisit
+
+Once each screen packet has a terminal decision, the preparation helper selects
+only exact improvements confirmed by its own lane-A and lane-B rules. It
+fast-reseals and writes readiness after all chain prechecks. The coordinator
+then owns any separately authorized launch. A CPU pass cannot bypass the full
+packet49 device oracle and registered record chain.

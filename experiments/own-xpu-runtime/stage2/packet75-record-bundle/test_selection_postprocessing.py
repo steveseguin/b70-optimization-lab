@@ -12,18 +12,19 @@ import bundle_selection
 from storage import B, digest
 
 P = Path(__file__).resolve().parent
-ARCHIVE = B / 'device-cards01-a-k2fail-20261017T1933'
+P70=P.parent/'packet70-record-bundle'
+ARCHIVE = Path('/home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a-k2fail-20261017T1933')
 
 
 class SelectionPostprocessing(unittest.TestCase):
     def test_real_k2_all_experts_and_unknown_key(self):
-        pins = json.loads((P/'evidence/k2fix-archive.json').read_text())['files']
+        pins = json.loads((P70/'evidence/k2fix-archive.json').read_text())['files']
         names = ('K2/run0/summary.json', 'K2/run0/dispatch-measured.json',
                  'K2/run0/receipt.json', 'K2/round3-timing/receipt.json',
                  'K2/round3-timing/timings.jsonl')
         for name in names:
             self.assertEqual(digest(ARCHIVE/name), pins[name])
-        for expert in bundle_selection.EXPERTS + ('unknown-key-test',):
+        for expert in (*bundle_selection.views(),'unknown-key-test'):
             with self.subTest(expert=expert), tempfile.TemporaryDirectory() as tmp:
                 local = Path(tmp); run = local/'run'; run.mkdir()
                 for name in ('summary.json', 'dispatch-measured.json'):
@@ -31,12 +32,12 @@ class SelectionPostprocessing(unittest.TestCase):
                 for name in ('dispatch-speed6.json', 'dispatch-speed6-provenance.json', 'k2-class-registry.json'):
                     shutil.copyfile(P/name, local/name)
                 selection = json.loads((P/'selection.json').read_text())
-                selection['choices']['experts'] = expert if expert != 'unknown-key-test' else 'wide64'
+                selection['choices'] = bundle_selection.choices(*bundle_selection.views()[expert]) if expert != 'unknown-key-test' else bundle_selection.choices('production','production','wide64')
                 if expert == 'unknown-key-test':
                     selection['choices']['unexpected'] = 'must reject'
                 (local/'selection.json').write_text(json.dumps(selection))
                 summary = json.loads((run/'summary.json').read_text())
-                bundle = dict(json.loads((P/'bundle-selection.json').read_text()), experts=expert)
+                bundle = dict(json.loads((P/'bundle-selection.json').read_text()))
                 with patch.object(dispatch, 'P', local), patch.object(bundle_selection, 'selected', return_value=bundle):
                     if expert == 'unknown-key-test':
                         with self.assertRaisesRegex(ValueError, 'exactly route/recurrence/hc'):
@@ -65,7 +66,7 @@ class SelectionPostprocessing(unittest.TestCase):
                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == 'get' and node.args and isinstance(node.args[0], ast.Constant) and node.args[0].value == 'choices':
                     readers.add(path.name)
         self.assertEqual(readers, {'p49_dispatch.py', 'p49d_k2.py', 'selection_gate.py',
-            'chain_seal.py', 'packet56_submission.py', 'prepare_selections.py', 'prepare_packet.py', 'cpu_gate.py'})
+            'chain_seal.py', 'packet56_submission.py', 'prepare_selections.py', 'prepare_packet.py', 'bundle_selection.py', 'full_shape.py'})
         # Every registered window shares this selection identity gate. K2 is the
         # only additional choices-reading postprocessor; it is replayed above.
         from packet56_submission import validate_bundle
@@ -73,9 +74,10 @@ class SelectionPostprocessing(unittest.TestCase):
         bundle = json.loads((P/'bundle-selection.json').read_text())
         for name in commands(B/'device-cards01-a'):
             self.assertIn(name, EARLY + LATE)
-            for expert in bundle_selection.EXPERTS:
-                selection = json.loads((P/'selections'/('1-draft-hc-batch-'+expert)/'selection.json').read_text())
-                validate_bundle(dict(bundle, experts=expert, name='1-draft-hc-batch-'+expert), selection)
+            for view,v in bundle_selection.views().items():
+                selection = json.loads((P/'selections'/view/'selection.json').read_text())
+                validate_bundle(dict(bundle,dense=v[0],hc=v[1],experts=v[2],name=view),selection)
+
 
 
 if __name__ == '__main__':

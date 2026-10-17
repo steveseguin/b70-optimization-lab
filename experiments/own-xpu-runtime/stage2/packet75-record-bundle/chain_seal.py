@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bind one of five packet65 expert selections to the packet70 chain."""
+"""Bind one of24 independent packet75 compositions to the full chain."""
 import argparse
 import json
 import os
@@ -52,7 +52,7 @@ def checked():
         sources[str(path.relative_to(ROOT))]=digest(path)
     fields=('passed','device_executed','arithmetic','parent_commit','shared_oracle','oracle_inputs_sha256','oracle_binary_sha256','official_manifest_sha256','input_sha256','p33_linked_fixture_host_sha256','p49_qsa_fixture_host_sha256','p49b_expert_fixture_host_sha256','p49c_fixture_host_sha256','p49d_fixture_host_sha256','nongemv_fixture_host_sha256_by_context','draft_prefix')
     from packet56_submission import SPIN,HC_FUSION
-    return dict({k:parent[k] for k in fields},schema='packet75.chain-cpu-seal.v1',runtime_revision=json.loads((P/'runtime-revision.json').read_text())['runtime_revision'],parent_seal_sha256=digest(PARENT/'build-receipt.json'),screen_seal_sha256=choice['screen_seal_sha256'],controller_spin=SPIN,hc_fusion=HC_FUSION,bundle_selection=choice,memory_plan=ledger,selection=dict(selection_sha256=choice['selection_sha256'],choices=json.loads((P/'selection.json').read_text())['choices']),fixture_inputs_sha256=fixture_hashes,sources=sources,artifacts_sha256=artifacts,original_artifacts_sha256=artifacts,device_admission_ready=True,scope=dict(qualification='CPU only; complete coordinator chain pending',admission='lane-aware c495d1d6a: whole host only for timing windows, hold-lane-B protocol, fixed mask and private homes; companion B wrapper mandatory'))
+    return dict({k:parent[k] for k in fields},schema='packet75.chain-cpu-seal.v1',runtime_revision=json.loads((P/'runtime-revision.json').read_text())['runtime_revision'],parent_seal_sha256=digest(PARENT/'build-receipt.json'),screen_seal_sha256=choice['screen_seal_sha256'],controller_spin=SPIN,hc_fusion=HC_FUSION,bundle_selection=choice,memory_plan=ledger,selection=dict(selection_sha256=choice['selection_sha256'],choices=json.loads((P/'selection.json').read_text())['choices']),fixture_inputs_sha256=fixture_hashes,sources=sources,artifacts_sha256=artifacts,original_artifacts_sha256=artifacts,device_admission_ready=True,scope=dict(qualification='CPU only; complete coordinator chain pending',admission='shared v4-lanes d5b060769: screen and exactness lane scope; whole host for timing; unchanged drain/hold-lane-B protocol'))
 def verify():
     row=json.loads((P/'build-receipt.json').read_text())
     require(row==checked(),'chain source/build/selection binding changed')

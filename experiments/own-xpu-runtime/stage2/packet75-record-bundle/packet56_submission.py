@@ -336,7 +336,7 @@ def collect(packet, chain, oracle, repo=ROOT):
         root = chain / name
         window = json.loads(e.add(name + '/window.json', root / 'window.json'))
         if packet == P56_PACKET:
-            from window_adapter import verify_receipt
+            from receipt_replay import verify_receipt
             verify_receipt(window)
             bound = window['lane_admission']
             require(Path(bound['path']).resolve() == (chain / (name+'-lane-admission.json')).resolve(), 'lane sidecar outside registered chain')
@@ -478,7 +478,7 @@ def derive(e, packet):
     for name, w in windows.items():
         observed_selection(w, name + '/window.json', mandatory=True)
         if packet == P56_PACKET:
-            from window_adapter import verify_receipt
+            from receipt_replay import verify_receipt
             proof = verify_receipt(w, data=e.raw(name+'/lane-admission.json',w['lane_admission']['sha256']))
             require(w.get('timing_claim_eligible') is (proof['scope']=='whole-host'), 'timing admission differs')
             require(name not in ('W2m','WSs','WS128') or proof['timing_claim_eligible'] is True, 'speed window did not hold whole host')
@@ -673,12 +673,17 @@ def payload_for(result, result_ref, attestation_ref, result_doc):
     packet = result['packet']
     bundle = result['bundle_selection']
     boundary, split, draft_rank = bundle['layer_boundary'], bundle['target_split'], bundle['draft_rank']
+    changes = {
+        'dense': {'production':'expanded dense/head retained','head-packed':'packed Q6 target head','dense-packed':'packed Q6/Q8 projections','combined':'packed Q6 head plus Q6/Q8 projections'}[bundle['dense']],
+        'hc': 'HC two-output shared loads, original SG32 trees' if bundle['hc']=='hc-wide' else 'original HC gates',
+        'experts': {'wide64':'wide64 exact-order experts','experts2-a':'wide64 plus deeper IQ2 load pipeline','experts2-b':'wide64 plus two-block IQ4 shared loads'}[bundle['experts']],
+    }
     flags = dict(
         draftHeadPrefix=dict(rows=91392,full_head_rows=248320,unchanged_full_target_verifier=True),
         controllerSpin=SPIN, targetHCFusion=HC_FUSION,
         draftHCFusion=dict(packet='packet59',schedules=8,fusions=6),
         missPath=dict(mode=bundle['miss'],third_bank=False,overlap=False),
-        chainGapSeconds=90,
+        chainGapSeconds=90, packet75Changes=changes,
         benchmarkJson=result_ref['path'], benchmarkJsonSha256=result_ref['sha256'],
         promotionAttestation=attestation_ref['path'], promotionAttestationSha256=attestation_ref['sha256'],
         promotionIdentity=result['promotionIdentity'], packet49Evidence=True,
@@ -717,6 +722,7 @@ def payload_for(result, result_ref, attestation_ref, result_doc):
         'Draft-HC kernels selected: packet59 draft-HC fusion via packet63, eight schedules and six fusions. '
         'Batched rollback copies selected: packet62 descriptor/flat-copy path; third bank and overlap off. '
         f'Packet75: packed dense={bundle["dense"]} (packet74); HC={bundle["hc"]}, experts={bundle["experts"]} (packet73, wide64 baseline). Packed views retain expanded draft prefix; exact dequant/order. '
+        f'{changes["dense"]}; {changes["hc"]}; {changes["experts"]}. '
         'Lane admission/hold-lane-B: whole host held for W2m/WSs/WS128. Every gap 90 s; unchanged drains. '
         f'{ARITHMETIC}: lossless against packet49 CPU oracle, not bit equality to SPEED6. '
         '12 prompts/1536 tokens exact; fresh WS/WSs/WS128x/WS128; unchanged target verifies speculation. '

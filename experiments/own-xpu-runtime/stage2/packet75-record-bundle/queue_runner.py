@@ -120,7 +120,8 @@ def validate_success(name, out, rc):
 
 def admitted_output(path):
     out = path.resolve()
-    allowed = Path('/home/steve/own-xpu-runtime-results/packet75-record-bundle/build')
+    from storage import B
+    allowed = B.resolve()
     from storage import REGISTERED_CHAIN
     if out != allowed / REGISTERED_CHAIN:
         raise ValueError('output must be the registered packet64 chain '+REGISTERED_CHAIN)

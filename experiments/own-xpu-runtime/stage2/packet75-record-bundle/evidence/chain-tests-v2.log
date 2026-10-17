@@ -1,0 +1,891 @@
+FFFFFFFFFFFFFFFFFFFFFFFFF......FFF......F...... [ 40%]
+................................................................. [ 95%]
+.....                                                                    [100%]
+=================================== FAILURES ===================================
+_______________ test_complete_synthetic_chain_and_current_floor ________________
+
+    def test_complete_synthetic_chain_and_current_floor():
+>       result = p.derive(prefix_fixture(), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:81: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[production-production-wide64-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'wide64'
+dense = 'production', hc = 'production'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[production-production-experts2-a-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-a'
+dense = 'production', hc = 'production'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[production-production-experts2-b-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-b'
+dense = 'production', hc = 'production'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[production-head-packed-wide64-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'wide64'
+dense = 'head-packed', hc = 'production'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[production-head-packed-experts2-a-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-a'
+dense = 'head-packed', hc = 'production'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[production-head-packed-experts2-b-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-b'
+dense = 'head-packed', hc = 'production'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[production-dense-packed-wide64-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'wide64'
+dense = 'dense-packed', hc = 'production'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[production-dense-packed-experts2-a-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-a'
+dense = 'dense-packed', hc = 'production'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[production-dense-packed-experts2-b-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-b'
+dense = 'dense-packed', hc = 'production'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[production-combined-wide64-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'wide64'
+dense = 'combined', hc = 'production'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[production-combined-experts2-a-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-a'
+dense = 'combined', hc = 'production'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[production-combined-experts2-b-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-b'
+dense = 'combined', hc = 'production'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-production-wide64-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'wide64'
+dense = 'production', hc = 'hc-wide'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-production-experts2-a-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-a'
+dense = 'production', hc = 'hc-wide'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-production-experts2-b-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-b'
+dense = 'production', hc = 'hc-wide'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-head-packed-wide64-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'wide64'
+dense = 'head-packed', hc = 'hc-wide'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-head-packed-experts2-a-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-a'
+dense = 'head-packed', hc = 'hc-wide'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-head-packed-experts2-b-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-b'
+dense = 'head-packed', hc = 'hc-wide'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-dense-packed-wide64-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'wide64'
+dense = 'dense-packed', hc = 'hc-wide'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-dense-packed-experts2-a-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-a'
+dense = 'dense-packed', hc = 'hc-wide'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-dense-packed-experts2-b-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-b'
+dense = 'dense-packed', hc = 'hc-wide'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-combined-wide64-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'wide64'
+dense = 'combined', hc = 'hc-wide'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-combined-experts2-a-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-a'
+dense = 'combined', hc = 'hc-wide'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_ test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-combined-experts2-b-batch-draft-hc-1] _
+
+placement = '1', draft = 'draft-hc', miss = 'batch', experts = 'experts2-b'
+dense = 'combined', hc = 'hc-wide'
+
+    @pytest.mark.parametrize('placement', ['1'])
+    @pytest.mark.parametrize('draft', ['draft-hc'])
+    @pytest.mark.parametrize('miss', ['batch'])
+    @pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+    @pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+    @pytest.mark.parametrize('hc', ['production','hc-wide'])
+    def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+>       result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_______ test_prepared_queue_replays_current_pins_and_refuses_changed_pin _______
+
+tmp_path = PosixPath('/tmp/pytest-of-steve/pytest-40/test_prepared_queue_replays_cu0')
+
+    def test_prepared_queue_replays_current_pins_and_refuses_changed_pin(tmp_path):
+        e = prefix_fixture()
+        for leaf, key in [(p.PINS_FILE, 'submission-pins.json'), (p.THRESHOLD_FILE, 'record-threshold.json')]:
+            path = tmp_path / leaf
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(e.raw(key))
+        out = tmp_path / p.STAGE / p.P56_PACKET / 'submission/prepared'
+>       result = p.write_prepared(e, p.P56_PACKET, out, tmp_path)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:167: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:816: in write_prepared
+    result = derive(e, packet)  # Refuse before writing any eligible output.
+             ^^^^^^^^^^^^^^^^^
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+__ test_posting_rechecks_advanced_record_floor_but_historical_replay_survives __
+
+tmp_path = PosixPath('/tmp/pytest-of-steve/pytest-40/test_posting_rechecks_advanced0')
+
+    def test_posting_rechecks_advanced_record_floor_but_historical_replay_survives(tmp_path):
+        e = prefix_fixture()
+        for leaf, key in [(p.PINS_FILE, 'submission-pins.json'), (p.THRESHOLD_FILE, 'record-threshold.json')]:
+            path = tmp_path / leaf
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(e.raw(key))
+        out = tmp_path / p.STAGE / p.P56_PACKET / 'submission/prepared'
+>       result = p.write_prepared(e, p.P56_PACKET, out, tmp_path)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:189: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:816: in write_prepared
+    result = derive(e, packet)  # Refuse before writing any eligible output.
+             ^^^^^^^^^^^^^^^^^
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+_______________ test_payload_names_both_prefix_and_spin_changes ________________
+
+tmp_path = PosixPath('/tmp/pytest-of-steve/pytest-40/test_payload_names_both_prefix0')
+
+    def test_payload_names_both_prefix_and_spin_changes(tmp_path):
+>       result = p.derive(prefix_fixture(), p.P56_PACKET)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:205: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+________________ test_resume_disclosure_binds_manifest_and_pins ________________
+
+    def test_resume_disclosure_binds_manifest_and_pins():
+        e=prefix_fixture()
+        pin_hash=put(e,'resume-pins.json',dict(reason='test'))
+        manifest=dict(schema='packet75.resume-manifest.v1',source='a',destination='b',
+            imported_windows=['K0','K1a','K1b','K2','W0p'],fresh_windows=list(p.WINDOWS),
+            resume_pins_sha256=pin_hash,current_build_receipt_sha256=p.sha(e.raw('seal.json')),
+            original_build_receipt_sha256='a'*64,artifacts_sha256=e.read('seal.json')['artifacts_sha256'],files={'K0/window.json':'a'*64})
+        put(e,'resume-manifest.json',manifest)
+>       result=p.derive(e,p.P56_PACKET)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py:286: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:641: in derive
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False
+message = 'speed at or below 54.162021859952475: 51.249999999999645'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: speed at or below 54.162021859952475: 51.249999999999645
+
+experiments/own-xpu-runtime/stage2/packet75-record-bundle/packet56_submission.py:77: ValueError
+=========================== short test summary info ============================
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_complete_synthetic_chain_and_current_floor
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[production-production-wide64-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[production-production-experts2-a-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[production-production-experts2-b-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[production-head-packed-wide64-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[production-head-packed-experts2-a-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[production-head-packed-experts2-b-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[production-dense-packed-wide64-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[production-dense-packed-experts2-a-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[production-dense-packed-experts2-b-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[production-combined-wide64-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[production-combined-experts2-a-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[production-combined-experts2-b-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-production-wide64-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-production-experts2-a-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-production-experts2-b-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-head-packed-wide64-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-head-packed-experts2-a-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-head-packed-experts2-b-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-dense-packed-wide64-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-dense-packed-experts2-a-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-dense-packed-experts2-b-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-combined-wide64-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-combined-experts2-a-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_all_bundle_payloads_are_placement_and_selection_aware[hc-wide-combined-experts2-b-batch-draft-hc-1]
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_prepared_queue_replays_current_pins_and_refuses_changed_pin
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_posting_rechecks_advanced_record_floor_but_historical_replay_survives
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_payload_names_both_prefix_and_spin_changes
+FAILED experiments/own-xpu-runtime/stage2/packet75-record-bundle/test_submission56.py::test_resume_disclosure_binds_manifest_and_pins
+29 failed, 88 passed, 32 subtests passed in 6.10s

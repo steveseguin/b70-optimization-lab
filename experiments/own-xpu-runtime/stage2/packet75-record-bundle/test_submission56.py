@@ -14,8 +14,8 @@ import packet56_submission as p
 from test_packet49_submission import fixture, put
 
 
-def prefix_fixture(placement='1', draft='draft-hc', miss='batch', experts='production'):
-    e = fixture(p.TEMPLATE_PACKET)
+def prefix_fixture(placement='1', draft='draft-hc', miss='batch', experts='wide64', dense='production', hc='production'):
+    e = fixture(p.TEMPLATE_PACKET, speed=65)
     seal = e.read('seal.json')
     seal['schema'] = 'packet75.chain-cpu-seal.v1'
     seal['runtime_revision'] = 'a' * 40
@@ -24,7 +24,7 @@ def prefix_fixture(placement='1', draft='draft-hc', miss='batch', experts='produ
     seal['sources'] = {k.replace(p.TEMPLATE_PACKET, p.P56_PACKET): v for k, v in seal['sources'].items()}
     hashes = {}
     for key, leaf, value in [
-        ('selection.json', 'selection.json', json.loads((P/'selections'/(placement+'-'+draft+'-'+miss+'-'+experts)/'selection.json').read_text())),
+        ('selection.json', 'selection.json', json.loads((P/'selections'/(dense+'--'+hc+'--'+experts)/'selection.json').read_text())),
         ('draft-prefix-selection.json', 'calibration/selection.json', {'N': 91392}),
         ('draft-prefix-config.hpp', 'p56_config.hpp', b'constexpr unsigned prefix = 91392;\n')]:
         hashes[key] = put(e, key, value)
@@ -32,7 +32,7 @@ def prefix_fixture(placement='1', draft='draft-hc', miss='batch', experts='produ
     screen_hash = put(e, 'screen-seal.json', {'artifacts': {'build/device/own-rt-iq3': seal['artifacts_sha256']['device/own-rt-iq3']}})
     seal.update(screen_seal_sha256=screen_hash, controller_spin=p.SPIN, hc_fusion=p.HC_FUSION)
     split=0 if placement=='1' else 23;boundary=24 if placement=='1' else 23
-    bundle=dict(experts=experts,name=placement+'-'+draft+'-'+miss+'-'+experts,placement=placement,draft=draft,miss=miss,draft_rank=1,target_split=split,layer_boundary=boundary,selection_sha256=hashes['selection.json'],screen_seal_sha256=screen_hash)
+    bundle=dict(dense=dense,hc=hc,experts=experts,name=dense+'--'+hc+'--'+experts,placement=placement,draft=draft,miss=miss,draft_rank=1,target_split=split,layer_boundary=boundary,selection_sha256=hashes['selection.json'],screen_seal_sha256=screen_hash)
     seal['bundle_selection']=bundle
     seal['sources'][str(p.STAGE/p.P56_PACKET/'bundle-selection.json')]=put(e,'bundle-selection.json',bundle)
     sh = put(e, 'seal.json', seal)
@@ -44,7 +44,7 @@ def prefix_fixture(placement='1', draft='draft-hc', miss='batch', experts='produ
     e.add('record-threshold.json', ROOT / p.THRESHOLD_FILE)
     for name in p.WINDOWS:
         w = e.read(name + '/window.json')
-        w.update(target_split=split,screen_seal_sha256=screen_hash, controller_spin=p.SPIN, hc_fusion=p.HC_FUSION, schema='packet70.window.v1', build_receipt_sha256=sh,
+        w.update(target_split=split,screen_seal_sha256=screen_hash, controller_spin=p.SPIN, hc_fusion=p.HC_FUSION, schema='packet75.window.v1', build_receipt_sha256=sh,
                  selection_sha256=pin['selection_sha256'],
                  draft_prefix_selection_sha256=pin['draft_prefix_selection_sha256'],
                  draft_prefix_config_sha256=pin['draft_prefix_config_sha256'])
@@ -82,16 +82,18 @@ def test_complete_synthetic_chain_and_current_floor():
     assert result['packet'] == p.P56_PACKET
     assert result['comparison']['threshold_tok_s'] == p.validate_threshold(
         json.loads((ROOT / p.THRESHOLD_FILE).read_bytes()))['threshold_tok_s']
-    assert result['primary_metric']['value_tok_s'] == pytest.approx(51.25)
+    assert result['primary_metric']['value_tok_s'] == pytest.approx(71.25)
     assert result['realistic_final_gate']['passed'] is False
 
 
 @pytest.mark.parametrize('placement', ['1'])
 @pytest.mark.parametrize('draft', ['draft-hc'])
 @pytest.mark.parametrize('miss', ['batch'])
-@pytest.mark.parametrize('experts', ['production','wide64','wg64','wg128','prefetch64'])
-def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts):
-    result = p.derive(prefix_fixture(placement, draft, miss, experts), p.P56_PACKET)
+@pytest.mark.parametrize('experts', ['wide64','experts2-a','experts2-b'])
+@pytest.mark.parametrize('dense', ['production','head-packed','dense-packed','combined'])
+@pytest.mark.parametrize('hc', ['production','hc-wide'])
+def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft, miss, experts, dense, hc):
+    result = p.derive(prefix_fixture(placement, draft, miss, experts, dense, hc), p.P56_PACKET)
     payload = p.payload_for(result, {'path':'r','sha256':'a'}, {'path':'a','sha256':'b'}, 'doc')['payload']
     boundary = 24 if placement == '1' else 23
     assert payload['engineFlags']['targetSplit'] == [boundary,48-boundary]
@@ -101,7 +103,10 @@ def test_all_bundle_payloads_are_placement_and_selection_aware(placement, draft,
     assert 'hold-lane-B' in payload['notes']
     assert payload['engineFlags']['expertKernelChoice'] == experts
     assert 'packet59 draft-HC fusion' in payload['notes']
-    assert f'Expert kernel choice: {experts}' in payload['notes']
+    assert f'experts={experts}' in payload['notes']
+    assert f'packed dense={dense}' in payload['notes']
+    assert f'HC={hc}' in payload['notes']
+    assert len(payload['notes'])<=2000
 
 
 def test_bundle_selection_and_admission_tampering_refuse():
@@ -188,12 +193,12 @@ def test_posting_rechecks_advanced_record_floor_but_historical_replay_survives(t
     cli.REPO_ROOT = tmp_path
     assert cli.preflight_payload(item) == []
     threshold = json.loads((tmp_path / p.THRESHOLD_FILE).read_bytes())
-    threshold['records'].append(dict(reference_submission='synthetic-new-record', threshold_tok_s=52,
+    threshold['records'].append(dict(reference_submission='synthetic-new-record', threshold_tok_s=72,
                                      result=dict(path='synthetic/result.json', sha256='0' * 64)))
     (tmp_path / p.THRESHOLD_FILE).write_bytes(p.encoded(threshold))
     assert any('current pinned record threshold' in problem for problem in p.scope_problems(item, tmp_path))
     assert cli.preflight_payload(item)
-    assert p.replay_result(result, tmp_path)['primary_metric']['value_tok_s'] == pytest.approx(51.25)
+    assert p.replay_result(result, tmp_path)['primary_metric']['value_tok_s'] == pytest.approx(71.25)
 
 
 def test_payload_names_both_prefix_and_spin_changes(tmp_path):

@@ -1,11 +1,13 @@
-# Packet70 boundaries
+# Packet75 boundaries
 
-| Date | Arm | Status and next condition |
-| --- | --- | --- |
-| 2026-10-17 | CPU packet assembly | Complete; [closeout](CPU-PREPARATION-CLOSEOUT.md). Coordinator selects from both finished quick-screen lanes and runs the full chain. |
-| 2026-10-17 | New compile / CPU model run | Not needed: reuse packet65's exact sealed binary and inherited byte fixtures. |
-| 2026-10-17 | Single-lane expert win | Insufficient. All twelve screens exact 13/13, candidate faster than same-lane production on both lanes. Otherwise production. |
-| 2026-10-17 | Packet64 early receipt reuse | Refused: packet65/70 binary differs. Resume only packet70's exact pinned early receipts, same boot and identity. |
-| 2026-10-17 | CPU report failure poisoning a drained lease | Fixed in this packet's screen only; both locks released before report. Pre-drain/postflight failures still latch. Frozen originals remain unchanged. |
-| 2026-10-17 | Screen speed as a record | Diagnostic only. Full unchanged-target packet49 chain required; strict 512-token gate remains false. |
-| 2026-10-17 | Plan-only coverage for selection postprocessing | Insufficient: K2 failed after safe device completion because experts reached a three-key validator. Real CPU K2 replay now covers all expert selections and rejects unknown keys; archive and failure evidence retained. |
+| Arm | Rule / evidence |
+| --- | --- |
+| Lane-A win alone | Insufficient: exact best-of-A must also beat its own lane-B controls. |
+| Unconfirmed A component | Does not inherit another choice's B confirmation. |
+| Small-shape-only fixture | Insufficient:48 real full-shape initialization/capture runs and short-head negative guard retained in evidence/full-shape.json. |
+| Aggregate component proof alone | Supplemented by actual24-view GNU/Intel selected byte executions, two fresh repeats each. |
+| Shared lane wrapper edit | Prohibited: source is referenced and hash-pinned to d5b060769. |
+| Model/target/oracle change | None; iq3-p49-split32-v1 and packet49 stay authoritative. |
+| Prior-packet receipt reuse | Refused by binary/source seal; packet75 pinned resumes only. |
+
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md).

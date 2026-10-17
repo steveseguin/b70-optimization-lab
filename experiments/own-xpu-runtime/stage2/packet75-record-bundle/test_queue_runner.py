@@ -100,7 +100,8 @@ class QueueTests(unittest.TestCase):
         self.assertIsNone(q.FAULT.search('configuration changed'))
 
     def test_output_matches_window_build_boundary(self):
-        base = Path('/home/steve/own-xpu-runtime-results/packet75-record-bundle/build')
+        from storage import B
+        base = B
         self.assertEqual(q.admitted_output(base / 'device-cards01-a'), base / 'device-cards01-a')
         for path in (base / 'another-chain', base, base.parent / 'device-cards01-a', Path('/tmp/packet49')):
             with self.assertRaises(ValueError):
