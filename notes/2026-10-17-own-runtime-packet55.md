@@ -34,3 +34,17 @@ the lab's arithmetic definitions, fixtures and safety mechanisms.
 Detailed component checks, commands and retained evidence will be appended
 as preparation completes. No route hit rate, CPU throughput, H2D bandwidth or
 one-card speed has been measured in this preparation.
+
+## Transfer component prepared
+
+The [H2D probe](../experiments/own-xpu-runtime/stage2/packet55-feasibility/h2d/README.md)
+compiles to a 159,280-byte binary. Three CPU-only guard/summary tests pass.
+It selects an actual copy-only Level Zero queue, checks physical card 2 or 3,
+and covers ordinary and exceptional expert sizes at 4–10 slabs per batch.
+Peak pinned host allocation is 23,300,096 bytes. No native program was run.
+
+The coordinator's two fresh windows will record standalone and concurrent
+copy/compute durations, route-known-to-resident wall latency and full transfer
+byte verification. Overlap is reported from duration envelopes inside a host
+wall span, without subtracting unrelated clock epochs. The synthetic source
+is already pinned; pageable-to-pinned staging remains a separate engine cost.

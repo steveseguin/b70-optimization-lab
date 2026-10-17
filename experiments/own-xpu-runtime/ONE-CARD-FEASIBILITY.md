@@ -20,7 +20,7 @@ All packet 55 code is independently written; no external runtime code is used.
 | Route misses | Held-out 12 of 24 independent calibration prompts, all executed target visits, including rejected speculation; LRU/LFU/static at 8/12/18/24 decimal GB | Pending |
 | CPU `C_l(m,t)` | Exact full expert batch time, `m=4,6,10`, `t=1,4,8,12,16`, ordinary and exceptional layer separately, both fresh owners | Pending |
 | H2D `X_l(m)` | Route-known to all slabs resident, `m=4..10`, isolated and concurrent compute; ordinary and layer-2 payloads separately | Pending |
-| Copy overlap | Measured common-clock event overlap and wall time, plus compute slowdown | Pending |
+| Copy overlap | Concurrent device-duration envelopes versus enclosing host wall time, plus compute slowdown; no subtraction across clock epochs | Pending |
 | One-card `A_l,G_l,F_l,D` | Nonexpert prefix, hit/shared and miss expert work, final combination, and same-card draft time | Not measured by packet 55 |
 | Work ratios `r_T,r_D` | Executed target positions and draft calls divided by emitted tokens; retain partial/rejected work | Pending route/controller receipts |
 | Mailbox `Q_l` and host contention | Input/route D2H, CPU wakeup and BF16 result return; shared CPU/DMA/PLE memory pressure | Not measured by packet 55 |
@@ -82,6 +82,9 @@ T_DMA(l,m) = A_l + max(G_l(10-m), X_l(m)) + J_l(m) + F_l
 
 `X_l` includes host enqueue and completion latency. Do not replace it with
 payload/bandwidth unless explicitly showing an ideal lower-bound scenario.
+The synthetic transfer source is already in a bounded pinned slab. Add the
+unmeasured bank-to-staging gather cost for a pageable weight-bank implementation;
+the microbenchmark does not justify pinning the whole bank or hiding that copy.
 The serial control adds `G_l + X_l + J_l`. A more finely pipelined slab schedule
 needs its own event-DAG measurement before reducing this estimate. Copy-engine
 overlap with a synthetic kernel does not prove overlap with actual expert work.

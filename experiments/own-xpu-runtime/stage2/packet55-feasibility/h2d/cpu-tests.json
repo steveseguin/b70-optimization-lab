@@ -1,0 +1,12 @@
+{
+  "schema": "ownrt.packet55.h2d.cpu-tests.v1",
+  "passed": true,
+  "device_executed": false,
+  "tests": 3,
+  "command": "nice -n 19 taskset -c 4-15,20-31 python3 -B -m unittest discover -s experiments/own-xpu-runtime/stage2/packet55-feasibility/h2d -p test_h2d.py",
+  "checks": [
+    "selected PCI/unknown PCI admission",
+    "offlined memory blocks53\u201357 unchanged",
+    "complete summary grid, negative overlap, duplicate refusal"
+  ]
+}
