@@ -1,0 +1,118 @@
+--- experiments/own-xpu-runtime/stage2/packet56w-spin/host_spin.hpp
++++ experiments/own-xpu-runtime/stage2/packet56x-wait/host_spin.hpp
+@@ -1,11 +1,10 @@
+ #pragma once
+ #include <chrono>
+ #include <thread>
+-
+-// Host scheduling only. Poll publication/completion with its existing acquire
+-// semantics, for at most 250 us per wait invocation, then use the old sleep.
+-namespace p56w {
+-inline constexpr int spin_microseconds = 250;
++// Linked policy, sealed by the executable hash; no environment override.
++namespace p56x {
++extern const bool sleep20;
++inline constexpr unsigned yield_iterations = 256;
+ inline void pause() {
+ #if defined(__i386__) || defined(__x86_64__)
+   __builtin_ia32_pause();
+@@ -15,19 +14,24 @@
+   std::this_thread::yield();
+ #endif
+ }
++// Preserve acquire/completion checks and cancellation/progress on every loop.
++// One spin budget per invocation; sleeps are capped to the remaining deadline.
+ template<class Ready, class Guard>
+-bool spin(Ready ready, Guard guard,
++bool wait(Ready ready, Guard guard,
+           std::chrono::steady_clock::time_point deadline) {
+-  auto end = std::chrono::steady_clock::now() +
+-             std::chrono::microseconds(spin_microseconds);
+-  if (deadline < end) end = deadline;
++  const auto spin_end = std::chrono::steady_clock::now() + std::chrono::microseconds(250);
++  unsigned iterations = 0;
+   while (!ready()) {
+     guard();
+-    if (std::chrono::steady_clock::now() >= end) return false;
+-    // Amortize clock/stop-channel checks, but acquire-check each publication.
+-    for (int i = 0; i < 32; ++i) {
++    const auto now = std::chrono::steady_clock::now();
++    if (now >= deadline) return false;
++    if (sleep20 && now >= spin_end) {
++      auto delay = std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::microseconds(20));
++      if (deadline - now < delay) delay = deadline - now;
++      std::this_thread::sleep_for(delay);
++    } else {
+       pause();
+-      if (ready()) return true;
++      if (++iterations % yield_iterations == 0) std::this_thread::yield();
+     }
+   }
+   return true;
+--- experiments/own-xpu-runtime/stage2/packet56w-spin/native_controller.hpp
++++ experiments/own-xpu-runtime/stage2/packet56x-wait/native_controller.hpp
+@@ -17,13 +17,8 @@
+ inline void publish(uint32_t& n,uint32_t value){__atomic_store_n(&n,value,__ATOMIC_RELEASE);::syscall(SYS_futex,&n,FUTEX_WAKE,1,nullptr,nullptr,0);}
+ inline double clock_now(){return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();}
+ inline void wait_change(uint32_t& n,uint32_t old,Mailbox& m,int seconds,const std::function<void()>& cancel){
+- double deadline=clock_now()+seconds;
+- p56w::spin([&]{return load(n)!=old;},[&]{cancel();require(!load(m.abort),"native peer failed");},
+-            std::chrono::steady_clock::now()+std::chrono::seconds(seconds));
+- while(load(n)==old){cancel();require(!load(m.abort),"native peer failed");require(clock_now()<deadline,"bounded native mailbox timeout");
+-  timespec timeout{0,100000};int rc=::syscall(SYS_futex,&n,FUTEX_WAIT,old,&timeout,nullptr,0);
+-  require(rc==0||errno==EAGAIN||errno==EINTR||errno==ETIMEDOUT,"native futex wait");
+- }
++ require(p56x::wait([&]{return load(n)!=old;},[&]{cancel();require(!load(m.abort),"native peer failed");},
++            std::chrono::steady_clock::now()+std::chrono::seconds(seconds)),"bounded native mailbox timeout");
+  cancel();require(!load(m.abort),"native peer failed");
+ }
+ inline void abort(Mailbox& m){publish(m.abort,1);::syscall(SYS_futex,&m.request_sequence,FUTEX_WAKE,1,nullptr,nullptr,0);::syscall(SYS_futex,&m.reply_sequence,FUTEX_WAKE,1,nullptr,nullptr,0);}
+@@ -105,7 +100,7 @@
+ inline std::string json(const Result& r,const Backend& b,const Config& c){
+  std::ostringstream o;o.precision(17);o<<"{\"tokens\":[";for(size_t i=0;i<r.tokens.size();++i)o<<(i?",":"")<<r.tokens[i];
+  double duration=r.rows.size()>1?(r.rows.back().stamp-r.rows.front().stamp)*1000:0;
+- o<<"],\"stats\":{\"guesses\":"<<r.guesses_count<<",\"hits\":"<<r.hits<<",\"misses\":"<<r.misses<<",\"no_guess\":"<<r.no_guess<<",\"redo_ms\":"<<r.redo_ms<<"},\"prompt_wall_ms\":"<<r.prompt_ms<<",\"decode_wall_ms\":"<<duration<<",\"decode_intervals\":"<<(r.tokens.empty()?0:r.tokens.size()-1)<<",\"decode_numerator\":"<<(r.tokens.empty()?0:r.tokens.size()-1)<<",\"prompt_overlap\":"<<(c.overlap?"true":"false")<<",\"controller\":\"native\",\"bounded_spin_iterations\":null,\"bounded_spin_us\":250,\"work_start\":"<<r.start<<",\"work_end\":"<<r.end<<",\"timing_rows\":[";
++ o<<"],\"stats\":{\"guesses\":"<<r.guesses_count<<",\"hits\":"<<r.hits<<",\"misses\":"<<r.misses<<",\"no_guess\":"<<r.no_guess<<",\"redo_ms\":"<<r.redo_ms<<"},\"prompt_wall_ms\":"<<r.prompt_ms<<",\"decode_wall_ms\":"<<duration<<",\"decode_intervals\":"<<(r.tokens.empty()?0:r.tokens.size()-1)<<",\"decode_numerator\":"<<(r.tokens.empty()?0:r.tokens.size()-1)<<",\"prompt_overlap\":"<<(c.overlap?"true":"false")<<",\"controller\":\"native\",\"bounded_spin_iterations\":null,\"wait_policy\":\""<<(p56x::sleep20?"sleep20":"spin")<<"\",\"spin_before_sleep_us\":"<<(p56x::sleep20?250:0)<<",\"yield_iterations\":256,\"work_start\":"<<r.start<<",\"work_end\":"<<r.end<<",\"timing_rows\":[";
+  for(size_t i=0;i<r.rows.size();++i)o<<(i?",":"")<<"{\"generated_index\":"<<i+1<<",\"token_id\":"<<r.rows[i].token<<",\"completed_monotonic\":"<<r.rows[i].stamp<<"}";
+  o<<"],\"guess_sequence\":[";for(size_t i=0;i<r.guess_sequence.size();++i){o<<(i?",":"");if(r.guess_sequence[i]<0)o<<"null";else o<<r.guess_sequence[i];}
+  o<<"],\"draft_rows\":[";for(size_t i=0;i<r.draft_rows.size();++i){auto& d=r.draft_rows[i];o<<(i?",":"")<<"{\"position\":"<<d.position<<",\"sequence\":"<<d.sequence<<",\"guess\":"<<(d.guess<0?"null":std::to_string(d.guess))<<",\"provider_error\":"<<d.error<<",\"draft_wall_ms\":"<<d.wall_ms<<",\"draft_gpu_ms\":"<<d.gpu_ms<<",\"rank0_idle_waiting_for_guess_ms\":"<<d.wait_ms<<",\"draft_started_monotonic\":"<<d.started<<",\"rank1_half_started_monotonic\":"<<d.half_started<<",\"rank1_before_half_ms\":"<<(d.half_started-d.started)*1000<<",\"actual\":"<<d.actual<<",\"hit\":"<<(d.hit<0?"null":d.hit?"true":"false")<<",\"target_completed_monotonic\":"<<d.completed;if(d.cycle_ms>=0)o<<",\"cycle_ms\":"<<d.cycle_ms;o<<"}";}
+--- experiments/own-xpu-runtime/stage2/packet56w-spin/single_device.cpp
++++ experiments/own-xpu-runtime/stage2/packet56x-wait/single_device.cpp
+@@ -110,11 +110,7 @@
+     return event(e).get_info<sycl::info::event::command_execution_status>()==sycl::info::event_command_status::complete;
+   }
+   bool wait(Event e,Deadline deadline) override {
+-    p56w::spin([&]{return complete(e);},[&]{check_error();},deadline);
+-    while(!complete(e)) {
+-      check_error(); if(std::chrono::steady_clock::now()>=deadline) return false;
+-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+-    }
++    if(!p56x::wait([&]{return complete(e);},[&]{check_error();},deadline)) return false;
+     event(e).wait_and_throw(); check_error(); return true;
+   }
+   void synchronize() override {queue_->wait_and_throw(); check_error();}
+--- experiments/own-xpu-runtime/stage2/packet56w-spin/native_mailbox_fault_test.cpp
++++ experiments/own-xpu-runtime/stage2/packet56x-wait/native_mailbox_fault_test.cpp
+@@ -18,5 +18,5 @@
+   require(failed&&!executed,"queued command executed after peer abort");
+   Backend b(box,memory.data(),2,[&](const Request&){executed=true;return Reply{};},[]{});failed=false;
+   try{b.start(0,half);}catch(const std::exception&){failed=true;}require(failed&&!executed,"local command executed after peer abort");++gates;}
+- std::cout<<"{\"passed\":true,\"device_executed\":false,\"gates\":"<<gates<<",\"repeated_requests\":32,\"spin_iterations\":null,\"bounded_spin_us\":250}"<<std::endl;
++ std::cout<<"{\"passed\":true,\"device_executed\":false,\"gates\":"<<gates<<",\"repeated_requests\":32}"<<std::endl;
+ }catch(const std::exception& ex){std::cerr<<ex.what()<<"\n";return 1;}return 0;}
+--- experiments/own-xpu-runtime/stage2/packet56w-spin/main.cpp
++++ experiments/own-xpu-runtime/stage2/packet56x-wait/main.cpp
+@@ -1,3 +1,4 @@
++#include "host_spin.hpp"
+ #include "p30_submit.hpp"
+ #include "p33_submit.hpp"
+ #include "p33r2.hpp"
+@@ -740,7 +741,7 @@
+     ++host_waits;auto t0=std::chrono::steady_clock::now();
+     if(progress_callback) {
+       auto end=std::chrono::steady_clock::now()+std::chrono::seconds(a.wait_seconds);
+-      while(!dev(c).complete(e)){if(progress_pending)progress_callback();guard();require(std::chrono::steady_clock::now()<end,"operation drain timeout; retain owner");std::this_thread::yield();}
++      require(p56x::wait([&]{return dev(c).complete(e);},[&]{if(progress_pending)progress_callback();guard();},end),"operation drain timeout; retain owner");
+       if(progress_pending)progress_callback();
+     }
+     require(dev(c).wait(e, std::chrono::seconds(a.wait_seconds)),

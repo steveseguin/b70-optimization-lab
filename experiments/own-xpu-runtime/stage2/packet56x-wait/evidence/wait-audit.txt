@@ -1,0 +1,10 @@
+experiments/own-xpu-runtime/stage2/packet56x-wait/mtp.hpp:201:  if(e.a.draft_fault=="error"||e.a.draft_fault=="stall"){if(e.a.draft_fault=="stall"){auto until=std::chrono::steady_clock::now()+std::chrono::milliseconds(50);while(std::chrono::steady_clock::now()<until){e.guard();poll(nullptr,0,5);}}throw ProviderError("cooperative injected provider failure before submission");}
+experiments/own-xpu-runtime/stage2/packet56x-wait/rank.hpp:27:  int rc=::poll(fds,pipeline_stop_fd>=0?2:1,int(std::min<int64_t>(left,100)));
+experiments/own-xpu-runtime/stage2/packet56x-wait/rank.hpp:200: pollfd fd{pipeline_stop_fd,POLLIN,0};int rc=::poll(&fd,1,0);
+experiments/own-xpu-runtime/stage2/packet56x-wait/rank.hpp:278:   else if(r.op==stall){auto until=std::chrono::steady_clock::now()+std::chrono::seconds(a.seconds);while(std::chrono::steady_clock::now()<until){pipeline_cancel_check();poll(nullptr,0,10);}throw std::runtime_error("bounded injected stall");}
+experiments/own-xpu-runtime/stage2/packet56x-wait/host_spin.hpp:14:  std::this_thread::yield();
+experiments/own-xpu-runtime/stage2/packet56x-wait/host_spin.hpp:31:      std::this_thread::sleep_for(delay);
+experiments/own-xpu-runtime/stage2/packet56x-wait/host_spin.hpp:34:      if (++iterations % yield_iterations == 0) std::this_thread::yield();
+experiments/own-xpu-runtime/stage2/packet56x-wait/single_device.cpp:114:    event(e).wait_and_throw(); check_error(); return true;
+experiments/own-xpu-runtime/stage2/packet56x-wait/single_device.cpp:116:  void synchronize() override {queue_->wait_and_throw(); check_error();}
+experiments/own-xpu-runtime/stage2/packet56x-wait/owner.cpp:21: if(::poll(&fd,1,0)<0 || (fd.revents&(POLLIN|POLLHUP|POLLERR|POLLNVAL)))throw std::runtime_error("cooperative owner stop");
