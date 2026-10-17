@@ -83,3 +83,51 @@ Its failed source, transformed mirror and compiler log are preserved under
 historical. Independent review confirms identical geometry and arithmetic.
 The device build now passes without execution. GNU and CPU evidence are
 being refreshed against this final source identity before sanitizers and seal.
+
+## Final CPU preparation, 06:42 UTC
+
+GNU, device compilation and ASAN/UBSAN builds now pass on the same final
+159-source identity. All ten fresh GNU fixture runs and six ownership suites
+pass. New route/HC/attention fixtures pass 384 checks across two GNU and two
+sanitizer processes. The two fresh actual-engine CPU runs each pass 36 cases
+and 5,472 comparisons. The unchanged expert fixtures pass 192 GNU/sanitizer
+checks; split32 sanitizer fixtures pass 176. Both state gates pass 31 cases
+and 26 checks. All 56 Python tests pass, including waiting-queue STOP,
+cross-chain admission and exact sanitizer archive restoration tests.
+The final seal and verification pass: 39 live artifacts and 451 source pins.
+
+The retained build is 539,704,546 bytes. The final storage receipt records
+20,465,577,984 root bytes free and 20,375,904,414 required: 89,673,570 bytes
+above the combined budget. Both requested chains fit, preserving the 8 GB
+free floor, the entire 5,818,804,480-byte pending packet49b model reserve,
+500 MB oracle growth, and a 650 MB retained-build cap. The small margin
+requires a fresh live check before every queue launch.
+
+Cleanup removed only our 350,250,872 regenerable object bytes after hashing.
+The 848,599,576 sanitizer executable bytes are retained exactly as
+100,224,902 gzip bytes, verified against original build hashes before source
+removal; GNU and device binaries remain directly runnable. Restore is
+documented. All observed preparation sizes stayed below 2.5 GB. No existing
+packet scratch was removed. If later unrelated writes consume the margin,
+the exact closed-object fallback lists 477 objects totaling 210,435,768 bytes
+in packets 40/37/35/36; the coordinator must recheck and hash selected files,
+never delete whole trees or retained packet17 numerical evidence.
+
+The waiting packet49b queue releases its only chain-local flock on STOP exit.
+Historical lock/state files do not block packet49c. The tested switch requires
+49c's own early passes, packet49b still waiting with no KD child, STOP, exit
+and lock-release verification, then a new 49c model queue with `--wait-oracle`.
+There is no shared atomic launch lock: oracle readiness during early 49c is
+a scheduling risk that the coordinator must control. STOP never frees the
+protected packet49b disk reserve or cancels an already-running GPU window.
+
+See [the exact early and switch commands](../experiments/own-xpu-runtime/stage2/packet49c-round2/WINDOW.md)
+and [the preparation closeout](../experiments/own-xpu-runtime/stage2/packet49c-round2/CPU-PREPARATION-CLOSEOUT.md).
+No device execution or full-model gate was performed here; no speed claim
+or record update follows from these CPU results. The oracle and packet49b
+units, all predecessor packets and host settings remain untouched.
+
+Pushed checkpoints: `70acc005b` preregistration, `8a9f609f3` integration,
+`81d055cba` prepared-range compile correction. The final commit adds these
+CPU receipts, archive retention, seal and handoff; each carries the requested
+Codex co-author trailer.

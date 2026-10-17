@@ -10,7 +10,7 @@ for f in sorted(B.rglob('*.o')):
  with f.open('rb') as stream:
   for b in iter(lambda:stream.read(1048576),b''):h.update(b)
  rows.append(dict(path=str(f.relative_to(P)),bytes=f.stat().st_size,sha256=h.hexdigest()))
-receipt=dict(reason='Regenerable compiler objects removed to reserve CPU fixture scratch under 4 GB; compiled binaries and compile/link commands retained.',objects=rows,bytes=sum(r['bytes'] for r in rows))
+receipt=dict(reason='Regenerable packet49c compiler objects removed after CPU gates to fit both registered chains; compiled binaries (sanitizers retained as verified gzip) and compile/link commands retained. CPU preparation peak is capped at 2.5 GB.',objects=rows,bytes=sum(r['bytes'] for r in rows))
 (P/'object-cleanup-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
 for r in rows:(P/r['path']).unlink()
 print(receipt['bytes'],'regenerable object bytes removed')

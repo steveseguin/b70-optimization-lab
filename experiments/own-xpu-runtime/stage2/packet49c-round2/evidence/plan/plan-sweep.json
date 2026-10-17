@@ -1,0 +1,4508 @@
+[
+  {
+    "plan": "target",
+    "context": 4096,
+    "draft_rank": 1,
+    "target_split": 23,
+    "rank": 0,
+    "dispatch": "dr0",
+    "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+    "result": {
+      "passed": true,
+      "groups": 41,
+      "followers": 87,
+      "launches": 716
+    },
+    "expert_planes": {
+      "gate_sites": 22,
+      "down_sites": 23,
+      "banks": 67,
+      "raw_bytes": 22675456000,
+      "stored_bytes": 22675456000,
+      "allocation_delta_bytes": 0
+    },
+    "round2_sites": {
+      "route_sites": 23,
+      "gate_sites": 46,
+      "low_sites": 46,
+      "attention_sites": 23,
+      "low_tagged": 46,
+      "attention_tagged": 23
+    },
+    "group_census": {
+      "ffn": 23,
+      "shared": 0,
+      "tag1": 23,
+      "tag2": 46,
+      "tag4": 23,
+      "tag7": 22
+    },
+    "write_set": {
+      "scratch_bound": 1609936,
+      "plan_output_bytes": 84751742,
+      "plan_output_count": 966,
+      "context": 4096,
+      "budget": 2048,
+      "qsa_rows": [
+        {
+          "name": "blk.11.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.11.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.11.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.11.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.15.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.15.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.15.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.15.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.19.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.19.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.19.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.19.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.3.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.3.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.3.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.3.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.7.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.7.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.7.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.7.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        }
+      ],
+      "redo_banks": [
+        {
+          "name": "blk.0.gdn.history",
+          "first_writer": "blk.0.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.0.gdn.state",
+          "first_writer": "blk.0.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.1.gdn.history",
+          "first_writer": "blk.1.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.1.gdn.state",
+          "first_writer": "blk.1.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.1.ple.history",
+          "first_writer": "blk.1.ple.conv",
+          "bytes": 184320,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.10.gdn.history",
+          "first_writer": "blk.10.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.10.gdn.state",
+          "first_writer": "blk.10.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.12.gdn.history",
+          "first_writer": "blk.12.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.12.gdn.state",
+          "first_writer": "blk.12.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.13.gdn.history",
+          "first_writer": "blk.13.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.13.gdn.state",
+          "first_writer": "blk.13.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.14.gdn.history",
+          "first_writer": "blk.14.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.14.gdn.state",
+          "first_writer": "blk.14.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.16.gdn.history",
+          "first_writer": "blk.16.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.16.gdn.state",
+          "first_writer": "blk.16.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.17.gdn.history",
+          "first_writer": "blk.17.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.17.gdn.state",
+          "first_writer": "blk.17.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.18.gdn.history",
+          "first_writer": "blk.18.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.18.gdn.state",
+          "first_writer": "blk.18.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.2.gdn.history",
+          "first_writer": "blk.2.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.2.gdn.state",
+          "first_writer": "blk.2.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.20.gdn.history",
+          "first_writer": "blk.20.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.20.gdn.state",
+          "first_writer": "blk.20.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.21.gdn.history",
+          "first_writer": "blk.21.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.21.gdn.state",
+          "first_writer": "blk.21.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.22.gdn.history",
+          "first_writer": "blk.22.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.22.gdn.state",
+          "first_writer": "blk.22.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.4.gdn.history",
+          "first_writer": "blk.4.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.4.gdn.state",
+          "first_writer": "blk.4.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.5.gdn.history",
+          "first_writer": "blk.5.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.5.gdn.state",
+          "first_writer": "blk.5.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.6.gdn.history",
+          "first_writer": "blk.6.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.6.gdn.state",
+          "first_writer": "blk.6.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.8.gdn.history",
+          "first_writer": "blk.8.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.8.gdn.state",
+          "first_writer": "blk.8.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.9.gdn.history",
+          "first_writer": "blk.9.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.9.gdn.state",
+          "first_writer": "blk.9.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        }
+      ],
+      "sites_count": 716,
+      "sites_sha256": "9d58dca426c198d1c5899b0bf2722c5216ab0a5b62b8eb0354bf94a15673e08b"
+    },
+    "scratch_allocation": {
+      "bytes": 8388608,
+      "draft_private": false,
+      "reduced": true,
+      "kernel_read_write_requirements_checked": true,
+      "reference_preserved": true
+    },
+    "sparse_workspace": {
+      "passed": true,
+      "device_executed": false,
+      "scratch_peak_bytes": 1609936,
+      "workspace_peak_bytes": 4096000,
+      "owner_checks": 1144,
+      "negative_controls": 3,
+      "maximum_copy": 4096000
+    }
+  },
+  {
+    "plan": "target",
+    "context": 4096,
+    "draft_rank": 1,
+    "target_split": 23,
+    "rank": 0,
+    "dispatch": "speed6",
+    "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "result": {
+      "passed": true,
+      "groups": 41,
+      "followers": 87,
+      "launches": 716
+    },
+    "expert_planes": {
+      "gate_sites": 22,
+      "down_sites": 23,
+      "banks": 67,
+      "raw_bytes": 22675456000,
+      "stored_bytes": 22675456000,
+      "allocation_delta_bytes": 0
+    },
+    "round2_sites": {
+      "route_sites": 23,
+      "gate_sites": 46,
+      "low_sites": 46,
+      "attention_sites": 23,
+      "low_tagged": 46,
+      "attention_tagged": 23
+    },
+    "group_census": {
+      "ffn": 23,
+      "shared": 0,
+      "tag1": 23,
+      "tag2": 46,
+      "tag4": 23,
+      "tag7": 22
+    },
+    "write_set": {
+      "scratch_bound": 1609936,
+      "plan_output_bytes": 84751742,
+      "plan_output_count": 966,
+      "context": 4096,
+      "budget": 2048,
+      "qsa_rows": [
+        {
+          "name": "blk.11.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.11.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.11.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.11.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.15.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.15.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.15.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.15.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.19.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.19.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.19.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.19.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.3.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.3.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.3.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.3.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.7.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.7.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.7.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.7.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        }
+      ],
+      "redo_banks": [
+        {
+          "name": "blk.0.gdn.history",
+          "first_writer": "blk.0.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.0.gdn.state",
+          "first_writer": "blk.0.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.1.gdn.history",
+          "first_writer": "blk.1.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.1.gdn.state",
+          "first_writer": "blk.1.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.1.ple.history",
+          "first_writer": "blk.1.ple.conv",
+          "bytes": 184320,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.10.gdn.history",
+          "first_writer": "blk.10.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.10.gdn.state",
+          "first_writer": "blk.10.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.12.gdn.history",
+          "first_writer": "blk.12.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.12.gdn.state",
+          "first_writer": "blk.12.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.13.gdn.history",
+          "first_writer": "blk.13.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.13.gdn.state",
+          "first_writer": "blk.13.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.14.gdn.history",
+          "first_writer": "blk.14.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.14.gdn.state",
+          "first_writer": "blk.14.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.16.gdn.history",
+          "first_writer": "blk.16.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.16.gdn.state",
+          "first_writer": "blk.16.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.17.gdn.history",
+          "first_writer": "blk.17.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.17.gdn.state",
+          "first_writer": "blk.17.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.18.gdn.history",
+          "first_writer": "blk.18.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.18.gdn.state",
+          "first_writer": "blk.18.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.2.gdn.history",
+          "first_writer": "blk.2.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.2.gdn.state",
+          "first_writer": "blk.2.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.20.gdn.history",
+          "first_writer": "blk.20.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.20.gdn.state",
+          "first_writer": "blk.20.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.21.gdn.history",
+          "first_writer": "blk.21.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.21.gdn.state",
+          "first_writer": "blk.21.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.22.gdn.history",
+          "first_writer": "blk.22.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.22.gdn.state",
+          "first_writer": "blk.22.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.4.gdn.history",
+          "first_writer": "blk.4.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.4.gdn.state",
+          "first_writer": "blk.4.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.5.gdn.history",
+          "first_writer": "blk.5.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.5.gdn.state",
+          "first_writer": "blk.5.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.6.gdn.history",
+          "first_writer": "blk.6.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.6.gdn.state",
+          "first_writer": "blk.6.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.8.gdn.history",
+          "first_writer": "blk.8.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.8.gdn.state",
+          "first_writer": "blk.8.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.9.gdn.history",
+          "first_writer": "blk.9.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.9.gdn.state",
+          "first_writer": "blk.9.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        }
+      ],
+      "sites_count": 716,
+      "sites_sha256": "9d58dca426c198d1c5899b0bf2722c5216ab0a5b62b8eb0354bf94a15673e08b"
+    },
+    "scratch_allocation": {
+      "bytes": 8388608,
+      "draft_private": false,
+      "reduced": true,
+      "kernel_read_write_requirements_checked": true,
+      "reference_preserved": true
+    },
+    "sparse_workspace": {
+      "passed": true,
+      "device_executed": false,
+      "scratch_peak_bytes": 1609936,
+      "workspace_peak_bytes": 4096000,
+      "owner_checks": 1144,
+      "negative_controls": 3,
+      "maximum_copy": 4096000
+    }
+  },
+  {
+    "plan": "target",
+    "context": 4096,
+    "draft_rank": 1,
+    "target_split": 23,
+    "rank": 0,
+    "dispatch": "forced",
+    "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+    "result": {
+      "passed": true,
+      "groups": 41,
+      "followers": 87,
+      "launches": 668
+    },
+    "expert_planes": {
+      "gate_sites": 22,
+      "down_sites": 23,
+      "banks": 67,
+      "raw_bytes": 22675456000,
+      "stored_bytes": 22675456000,
+      "allocation_delta_bytes": 0
+    },
+    "round2_sites": {
+      "route_sites": 23,
+      "gate_sites": 46,
+      "low_sites": 46,
+      "attention_sites": 23,
+      "low_tagged": 46,
+      "attention_tagged": 23
+    },
+    "group_census": {
+      "ffn": 23,
+      "shared": 0,
+      "tag1": 23,
+      "tag2": 46,
+      "tag4": 23,
+      "tag5": 23,
+      "tag7": 23
+    },
+    "write_set": {
+      "scratch_bound": 1609936,
+      "plan_output_bytes": 84751742,
+      "plan_output_count": 966,
+      "context": 4096,
+      "budget": 2048,
+      "qsa_rows": [
+        {
+          "name": "blk.11.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.11.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.11.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.11.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.15.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.15.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.15.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.15.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.19.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.19.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.19.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.19.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.3.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.3.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.3.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.3.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.7.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.7.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.7.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.7.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        }
+      ],
+      "redo_banks": [
+        {
+          "name": "blk.0.gdn.history",
+          "first_writer": "blk.0.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.0.gdn.state",
+          "first_writer": "blk.0.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.1.gdn.history",
+          "first_writer": "blk.1.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.1.gdn.state",
+          "first_writer": "blk.1.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.1.ple.history",
+          "first_writer": "blk.1.ple.conv",
+          "bytes": 184320,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.10.gdn.history",
+          "first_writer": "blk.10.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.10.gdn.state",
+          "first_writer": "blk.10.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.12.gdn.history",
+          "first_writer": "blk.12.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.12.gdn.state",
+          "first_writer": "blk.12.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.13.gdn.history",
+          "first_writer": "blk.13.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.13.gdn.state",
+          "first_writer": "blk.13.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.14.gdn.history",
+          "first_writer": "blk.14.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.14.gdn.state",
+          "first_writer": "blk.14.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.16.gdn.history",
+          "first_writer": "blk.16.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.16.gdn.state",
+          "first_writer": "blk.16.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.17.gdn.history",
+          "first_writer": "blk.17.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.17.gdn.state",
+          "first_writer": "blk.17.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.18.gdn.history",
+          "first_writer": "blk.18.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.18.gdn.state",
+          "first_writer": "blk.18.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.2.gdn.history",
+          "first_writer": "blk.2.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.2.gdn.state",
+          "first_writer": "blk.2.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.20.gdn.history",
+          "first_writer": "blk.20.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.20.gdn.state",
+          "first_writer": "blk.20.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.21.gdn.history",
+          "first_writer": "blk.21.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.21.gdn.state",
+          "first_writer": "blk.21.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.22.gdn.history",
+          "first_writer": "blk.22.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.22.gdn.state",
+          "first_writer": "blk.22.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.4.gdn.history",
+          "first_writer": "blk.4.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.4.gdn.state",
+          "first_writer": "blk.4.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.5.gdn.history",
+          "first_writer": "blk.5.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.5.gdn.state",
+          "first_writer": "blk.5.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.6.gdn.history",
+          "first_writer": "blk.6.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.6.gdn.state",
+          "first_writer": "blk.6.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.8.gdn.history",
+          "first_writer": "blk.8.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.8.gdn.state",
+          "first_writer": "blk.8.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.9.gdn.history",
+          "first_writer": "blk.9.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.9.gdn.state",
+          "first_writer": "blk.9.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        }
+      ],
+      "sites_count": 668,
+      "sites_sha256": "6d68d46769586e884df58761e82a524489fc36a4a20e69b1d0e8e516670ef730"
+    },
+    "scratch_allocation": {
+      "bytes": 8388608,
+      "draft_private": false,
+      "reduced": true,
+      "kernel_read_write_requirements_checked": true,
+      "reference_preserved": true
+    },
+    "sparse_workspace": {
+      "passed": true,
+      "device_executed": false,
+      "scratch_peak_bytes": 1609936,
+      "workspace_peak_bytes": 4096000,
+      "owner_checks": 1098,
+      "negative_controls": 3,
+      "maximum_copy": 4096000
+    }
+  },
+  {
+    "plan": "target",
+    "context": 4096,
+    "draft_rank": 1,
+    "target_split": 23,
+    "rank": 1,
+    "dispatch": "dr0",
+    "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+    "result": {
+      "passed": true,
+      "groups": 43,
+      "followers": 93,
+      "launches": 772
+    },
+    "expert_planes": {
+      "gate_sites": 25,
+      "down_sites": 25,
+      "banks": 75,
+      "raw_bytes": 25231360000,
+      "stored_bytes": 25231360000,
+      "allocation_delta_bytes": 0
+    },
+    "round2_sites": {
+      "route_sites": 25,
+      "gate_sites": 50,
+      "low_sites": 50,
+      "attention_sites": 25,
+      "low_tagged": 50,
+      "attention_tagged": 25
+    },
+    "group_census": {
+      "ffn": 25,
+      "shared": 0,
+      "tag1": 25,
+      "tag2": 51,
+      "tag4": 25,
+      "tag7": 25
+    },
+    "write_set": {
+      "scratch_bound": 1609936,
+      "plan_output_bytes": 104931742,
+      "plan_output_count": 1053,
+      "context": 4096,
+      "budget": 2048,
+      "qsa_rows": [
+        {
+          "name": "blk.23.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.23.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.23.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.23.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.27.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.31.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.35.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.39.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.43.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.47.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        }
+      ],
+      "redo_banks": [
+        {
+          "name": "blk.24.gdn.history",
+          "first_writer": "blk.24.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.24.gdn.state",
+          "first_writer": "blk.24.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.25.gdn.history",
+          "first_writer": "blk.25.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.25.gdn.state",
+          "first_writer": "blk.25.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.26.gdn.history",
+          "first_writer": "blk.26.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.26.gdn.state",
+          "first_writer": "blk.26.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.28.gdn.history",
+          "first_writer": "blk.28.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.28.gdn.state",
+          "first_writer": "blk.28.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.29.gdn.history",
+          "first_writer": "blk.29.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.29.gdn.state",
+          "first_writer": "blk.29.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.30.gdn.history",
+          "first_writer": "blk.30.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.30.gdn.state",
+          "first_writer": "blk.30.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.32.gdn.history",
+          "first_writer": "blk.32.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.32.gdn.state",
+          "first_writer": "blk.32.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.33.gdn.history",
+          "first_writer": "blk.33.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.33.gdn.state",
+          "first_writer": "blk.33.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.34.gdn.history",
+          "first_writer": "blk.34.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.34.gdn.state",
+          "first_writer": "blk.34.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.36.gdn.history",
+          "first_writer": "blk.36.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.36.gdn.state",
+          "first_writer": "blk.36.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.37.gdn.history",
+          "first_writer": "blk.37.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.37.gdn.state",
+          "first_writer": "blk.37.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.38.gdn.history",
+          "first_writer": "blk.38.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.38.gdn.state",
+          "first_writer": "blk.38.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.40.gdn.history",
+          "first_writer": "blk.40.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.40.gdn.state",
+          "first_writer": "blk.40.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.41.gdn.history",
+          "first_writer": "blk.41.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.41.gdn.state",
+          "first_writer": "blk.41.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.42.gdn.history",
+          "first_writer": "blk.42.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.42.gdn.state",
+          "first_writer": "blk.42.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.44.gdn.history",
+          "first_writer": "blk.44.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.44.gdn.state",
+          "first_writer": "blk.44.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.45.gdn.history",
+          "first_writer": "blk.45.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.45.gdn.state",
+          "first_writer": "blk.45.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.46.gdn.history",
+          "first_writer": "blk.46.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.46.gdn.state",
+          "first_writer": "blk.46.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        }
+      ],
+      "sites_count": 772,
+      "sites_sha256": "50a884864fe8e00ebf4cc8e55da7adf38391e8b0cd0c2c699eaf9614bffe1898"
+    },
+    "scratch_allocation": {
+      "bytes": 8388608,
+      "draft_private": false,
+      "reduced": true,
+      "kernel_read_write_requirements_checked": true,
+      "reference_preserved": true
+    },
+    "sparse_workspace": {
+      "passed": true,
+      "device_executed": false,
+      "scratch_peak_bytes": 1609936,
+      "workspace_peak_bytes": 7946240,
+      "owner_checks": 1252,
+      "negative_controls": 3,
+      "maximum_copy": 7946240
+    }
+  },
+  {
+    "plan": "target",
+    "context": 4096,
+    "draft_rank": 1,
+    "target_split": 23,
+    "rank": 1,
+    "dispatch": "speed6",
+    "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "result": {
+      "passed": true,
+      "groups": 43,
+      "followers": 93,
+      "launches": 772
+    },
+    "expert_planes": {
+      "gate_sites": 25,
+      "down_sites": 25,
+      "banks": 75,
+      "raw_bytes": 25231360000,
+      "stored_bytes": 25231360000,
+      "allocation_delta_bytes": 0
+    },
+    "round2_sites": {
+      "route_sites": 25,
+      "gate_sites": 50,
+      "low_sites": 50,
+      "attention_sites": 25,
+      "low_tagged": 50,
+      "attention_tagged": 25
+    },
+    "group_census": {
+      "ffn": 25,
+      "shared": 0,
+      "tag1": 25,
+      "tag2": 51,
+      "tag4": 25,
+      "tag7": 25
+    },
+    "write_set": {
+      "scratch_bound": 1609936,
+      "plan_output_bytes": 104931742,
+      "plan_output_count": 1053,
+      "context": 4096,
+      "budget": 2048,
+      "qsa_rows": [
+        {
+          "name": "blk.23.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.23.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.23.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.23.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.27.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.31.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.35.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.39.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.43.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.47.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        }
+      ],
+      "redo_banks": [
+        {
+          "name": "blk.24.gdn.history",
+          "first_writer": "blk.24.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.24.gdn.state",
+          "first_writer": "blk.24.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.25.gdn.history",
+          "first_writer": "blk.25.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.25.gdn.state",
+          "first_writer": "blk.25.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.26.gdn.history",
+          "first_writer": "blk.26.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.26.gdn.state",
+          "first_writer": "blk.26.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.28.gdn.history",
+          "first_writer": "blk.28.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.28.gdn.state",
+          "first_writer": "blk.28.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.29.gdn.history",
+          "first_writer": "blk.29.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.29.gdn.state",
+          "first_writer": "blk.29.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.30.gdn.history",
+          "first_writer": "blk.30.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.30.gdn.state",
+          "first_writer": "blk.30.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.32.gdn.history",
+          "first_writer": "blk.32.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.32.gdn.state",
+          "first_writer": "blk.32.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.33.gdn.history",
+          "first_writer": "blk.33.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.33.gdn.state",
+          "first_writer": "blk.33.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.34.gdn.history",
+          "first_writer": "blk.34.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.34.gdn.state",
+          "first_writer": "blk.34.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.36.gdn.history",
+          "first_writer": "blk.36.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.36.gdn.state",
+          "first_writer": "blk.36.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.37.gdn.history",
+          "first_writer": "blk.37.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.37.gdn.state",
+          "first_writer": "blk.37.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.38.gdn.history",
+          "first_writer": "blk.38.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.38.gdn.state",
+          "first_writer": "blk.38.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.40.gdn.history",
+          "first_writer": "blk.40.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.40.gdn.state",
+          "first_writer": "blk.40.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.41.gdn.history",
+          "first_writer": "blk.41.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.41.gdn.state",
+          "first_writer": "blk.41.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.42.gdn.history",
+          "first_writer": "blk.42.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.42.gdn.state",
+          "first_writer": "blk.42.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.44.gdn.history",
+          "first_writer": "blk.44.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.44.gdn.state",
+          "first_writer": "blk.44.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.45.gdn.history",
+          "first_writer": "blk.45.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.45.gdn.state",
+          "first_writer": "blk.45.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.46.gdn.history",
+          "first_writer": "blk.46.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.46.gdn.state",
+          "first_writer": "blk.46.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        }
+      ],
+      "sites_count": 772,
+      "sites_sha256": "50a884864fe8e00ebf4cc8e55da7adf38391e8b0cd0c2c699eaf9614bffe1898"
+    },
+    "scratch_allocation": {
+      "bytes": 8388608,
+      "draft_private": false,
+      "reduced": true,
+      "kernel_read_write_requirements_checked": true,
+      "reference_preserved": true
+    },
+    "sparse_workspace": {
+      "passed": true,
+      "device_executed": false,
+      "scratch_peak_bytes": 1609936,
+      "workspace_peak_bytes": 7946240,
+      "owner_checks": 1252,
+      "negative_controls": 3,
+      "maximum_copy": 7946240
+    }
+  },
+  {
+    "plan": "target",
+    "context": 4096,
+    "draft_rank": 1,
+    "target_split": 23,
+    "rank": 1,
+    "dispatch": "forced",
+    "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+    "result": {
+      "passed": true,
+      "groups": 43,
+      "followers": 93,
+      "launches": 722
+    },
+    "expert_planes": {
+      "gate_sites": 25,
+      "down_sites": 25,
+      "banks": 75,
+      "raw_bytes": 25231360000,
+      "stored_bytes": 25231360000,
+      "allocation_delta_bytes": 0
+    },
+    "round2_sites": {
+      "route_sites": 25,
+      "gate_sites": 50,
+      "low_sites": 50,
+      "attention_sites": 25,
+      "low_tagged": 50,
+      "attention_tagged": 25
+    },
+    "group_census": {
+      "ffn": 25,
+      "shared": 0,
+      "tag1": 25,
+      "tag2": 51,
+      "tag4": 25,
+      "tag5": 25,
+      "tag7": 25
+    },
+    "write_set": {
+      "scratch_bound": 1609936,
+      "plan_output_bytes": 104931742,
+      "plan_output_count": 1053,
+      "context": 4096,
+      "budget": 2048,
+      "qsa_rows": [
+        {
+          "name": "blk.23.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.23.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.23.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.23.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.27.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.31.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.35.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.39.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.43.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.47.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        }
+      ],
+      "redo_banks": [
+        {
+          "name": "blk.24.gdn.history",
+          "first_writer": "blk.24.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.24.gdn.state",
+          "first_writer": "blk.24.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.25.gdn.history",
+          "first_writer": "blk.25.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.25.gdn.state",
+          "first_writer": "blk.25.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.26.gdn.history",
+          "first_writer": "blk.26.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.26.gdn.state",
+          "first_writer": "blk.26.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.28.gdn.history",
+          "first_writer": "blk.28.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.28.gdn.state",
+          "first_writer": "blk.28.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.29.gdn.history",
+          "first_writer": "blk.29.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.29.gdn.state",
+          "first_writer": "blk.29.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.30.gdn.history",
+          "first_writer": "blk.30.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.30.gdn.state",
+          "first_writer": "blk.30.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.32.gdn.history",
+          "first_writer": "blk.32.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.32.gdn.state",
+          "first_writer": "blk.32.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.33.gdn.history",
+          "first_writer": "blk.33.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.33.gdn.state",
+          "first_writer": "blk.33.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.34.gdn.history",
+          "first_writer": "blk.34.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.34.gdn.state",
+          "first_writer": "blk.34.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.36.gdn.history",
+          "first_writer": "blk.36.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.36.gdn.state",
+          "first_writer": "blk.36.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.37.gdn.history",
+          "first_writer": "blk.37.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.37.gdn.state",
+          "first_writer": "blk.37.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.38.gdn.history",
+          "first_writer": "blk.38.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.38.gdn.state",
+          "first_writer": "blk.38.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.40.gdn.history",
+          "first_writer": "blk.40.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.40.gdn.state",
+          "first_writer": "blk.40.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.41.gdn.history",
+          "first_writer": "blk.41.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.41.gdn.state",
+          "first_writer": "blk.41.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.42.gdn.history",
+          "first_writer": "blk.42.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.42.gdn.state",
+          "first_writer": "blk.42.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.44.gdn.history",
+          "first_writer": "blk.44.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.44.gdn.state",
+          "first_writer": "blk.44.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.45.gdn.history",
+          "first_writer": "blk.45.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.45.gdn.state",
+          "first_writer": "blk.45.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.46.gdn.history",
+          "first_writer": "blk.46.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.46.gdn.state",
+          "first_writer": "blk.46.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        }
+      ],
+      "sites_count": 722,
+      "sites_sha256": "447200d3800f03c927979e77e52f27d5a893c35b3b4190f0eacb6ecfaa1b245c"
+    },
+    "scratch_allocation": {
+      "bytes": 8388608,
+      "draft_private": false,
+      "reduced": true,
+      "kernel_read_write_requirements_checked": true,
+      "reference_preserved": true
+    },
+    "sparse_workspace": {
+      "passed": true,
+      "device_executed": false,
+      "scratch_peak_bytes": 1609936,
+      "workspace_peak_bytes": 7946240,
+      "owner_checks": 1202,
+      "negative_controls": 3,
+      "maximum_copy": 7946240
+    }
+  },
+  {
+    "plan": "KD",
+    "context": 4096,
+    "draft_rank": 1,
+    "target_split": 23,
+    "rank": 1,
+    "dispatch": "dr0",
+    "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+    "result": {
+      "passed": true,
+      "groups": 43,
+      "followers": 93,
+      "launches": 772
+    },
+    "expert_planes": {
+      "gate_sites": 25,
+      "down_sites": 25,
+      "banks": 75,
+      "raw_bytes": 25231360000,
+      "stored_bytes": 25231360000,
+      "allocation_delta_bytes": 0
+    },
+    "round2_sites": {
+      "route_sites": 25,
+      "gate_sites": 50,
+      "low_sites": 50,
+      "attention_sites": 25,
+      "low_tagged": 50,
+      "attention_tagged": 25
+    },
+    "group_census": {
+      "ffn": 25,
+      "shared": 0,
+      "tag1": 25,
+      "tag2": 51,
+      "tag4": 25,
+      "tag7": 25
+    },
+    "write_set": {
+      "scratch_bound": 1609936,
+      "plan_output_bytes": 104931742,
+      "plan_output_count": 1053,
+      "context": 4096,
+      "budget": 2048,
+      "qsa_rows": [
+        {
+          "name": "blk.23.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.23.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.23.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.23.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.27.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.31.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.35.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.39.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.43.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.47.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        }
+      ],
+      "redo_banks": [
+        {
+          "name": "blk.24.gdn.history",
+          "first_writer": "blk.24.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.24.gdn.state",
+          "first_writer": "blk.24.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.25.gdn.history",
+          "first_writer": "blk.25.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.25.gdn.state",
+          "first_writer": "blk.25.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.26.gdn.history",
+          "first_writer": "blk.26.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.26.gdn.state",
+          "first_writer": "blk.26.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.28.gdn.history",
+          "first_writer": "blk.28.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.28.gdn.state",
+          "first_writer": "blk.28.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.29.gdn.history",
+          "first_writer": "blk.29.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.29.gdn.state",
+          "first_writer": "blk.29.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.30.gdn.history",
+          "first_writer": "blk.30.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.30.gdn.state",
+          "first_writer": "blk.30.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.32.gdn.history",
+          "first_writer": "blk.32.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.32.gdn.state",
+          "first_writer": "blk.32.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.33.gdn.history",
+          "first_writer": "blk.33.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.33.gdn.state",
+          "first_writer": "blk.33.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.34.gdn.history",
+          "first_writer": "blk.34.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.34.gdn.state",
+          "first_writer": "blk.34.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.36.gdn.history",
+          "first_writer": "blk.36.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.36.gdn.state",
+          "first_writer": "blk.36.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.37.gdn.history",
+          "first_writer": "blk.37.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.37.gdn.state",
+          "first_writer": "blk.37.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.38.gdn.history",
+          "first_writer": "blk.38.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.38.gdn.state",
+          "first_writer": "blk.38.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.40.gdn.history",
+          "first_writer": "blk.40.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.40.gdn.state",
+          "first_writer": "blk.40.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.41.gdn.history",
+          "first_writer": "blk.41.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.41.gdn.state",
+          "first_writer": "blk.41.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.42.gdn.history",
+          "first_writer": "blk.42.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.42.gdn.state",
+          "first_writer": "blk.42.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.44.gdn.history",
+          "first_writer": "blk.44.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.44.gdn.state",
+          "first_writer": "blk.44.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.45.gdn.history",
+          "first_writer": "blk.45.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.45.gdn.state",
+          "first_writer": "blk.45.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.46.gdn.history",
+          "first_writer": "blk.46.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.46.gdn.state",
+          "first_writer": "blk.46.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        }
+      ],
+      "sites_count": 772,
+      "sites_sha256": "50a884864fe8e00ebf4cc8e55da7adf38391e8b0cd0c2c699eaf9614bffe1898"
+    },
+    "scratch_allocation": {
+      "bytes": 8388608,
+      "draft_private": false,
+      "reduced": true,
+      "kernel_read_write_requirements_checked": true,
+      "reference_preserved": true
+    },
+    "sparse_workspace": {
+      "passed": true,
+      "device_executed": false,
+      "scratch_peak_bytes": 1609936,
+      "workspace_peak_bytes": 7946240,
+      "owner_checks": 1252,
+      "negative_controls": 3,
+      "maximum_copy": 7946240
+    }
+  },
+  {
+    "plan": "KD",
+    "context": 4096,
+    "draft_rank": 1,
+    "target_split": 23,
+    "rank": 1,
+    "dispatch": "speed6",
+    "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "result": {
+      "passed": true,
+      "groups": 43,
+      "followers": 93,
+      "launches": 772
+    },
+    "expert_planes": {
+      "gate_sites": 25,
+      "down_sites": 25,
+      "banks": 75,
+      "raw_bytes": 25231360000,
+      "stored_bytes": 25231360000,
+      "allocation_delta_bytes": 0
+    },
+    "round2_sites": {
+      "route_sites": 25,
+      "gate_sites": 50,
+      "low_sites": 50,
+      "attention_sites": 25,
+      "low_tagged": 50,
+      "attention_tagged": 25
+    },
+    "group_census": {
+      "ffn": 25,
+      "shared": 0,
+      "tag1": 25,
+      "tag2": 51,
+      "tag4": 25,
+      "tag7": 25
+    },
+    "write_set": {
+      "scratch_bound": 1609936,
+      "plan_output_bytes": 104931742,
+      "plan_output_count": 1053,
+      "context": 4096,
+      "budget": 2048,
+      "qsa_rows": [
+        {
+          "name": "blk.23.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.23.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.23.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.23.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.27.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.31.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.35.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.39.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.43.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.47.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        }
+      ],
+      "redo_banks": [
+        {
+          "name": "blk.24.gdn.history",
+          "first_writer": "blk.24.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.24.gdn.state",
+          "first_writer": "blk.24.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.25.gdn.history",
+          "first_writer": "blk.25.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.25.gdn.state",
+          "first_writer": "blk.25.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.26.gdn.history",
+          "first_writer": "blk.26.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.26.gdn.state",
+          "first_writer": "blk.26.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.28.gdn.history",
+          "first_writer": "blk.28.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.28.gdn.state",
+          "first_writer": "blk.28.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.29.gdn.history",
+          "first_writer": "blk.29.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.29.gdn.state",
+          "first_writer": "blk.29.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.30.gdn.history",
+          "first_writer": "blk.30.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.30.gdn.state",
+          "first_writer": "blk.30.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.32.gdn.history",
+          "first_writer": "blk.32.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.32.gdn.state",
+          "first_writer": "blk.32.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.33.gdn.history",
+          "first_writer": "blk.33.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.33.gdn.state",
+          "first_writer": "blk.33.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.34.gdn.history",
+          "first_writer": "blk.34.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.34.gdn.state",
+          "first_writer": "blk.34.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.36.gdn.history",
+          "first_writer": "blk.36.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.36.gdn.state",
+          "first_writer": "blk.36.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.37.gdn.history",
+          "first_writer": "blk.37.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.37.gdn.state",
+          "first_writer": "blk.37.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.38.gdn.history",
+          "first_writer": "blk.38.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.38.gdn.state",
+          "first_writer": "blk.38.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.40.gdn.history",
+          "first_writer": "blk.40.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.40.gdn.state",
+          "first_writer": "blk.40.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.41.gdn.history",
+          "first_writer": "blk.41.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.41.gdn.state",
+          "first_writer": "blk.41.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.42.gdn.history",
+          "first_writer": "blk.42.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.42.gdn.state",
+          "first_writer": "blk.42.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.44.gdn.history",
+          "first_writer": "blk.44.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.44.gdn.state",
+          "first_writer": "blk.44.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.45.gdn.history",
+          "first_writer": "blk.45.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.45.gdn.state",
+          "first_writer": "blk.45.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.46.gdn.history",
+          "first_writer": "blk.46.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.46.gdn.state",
+          "first_writer": "blk.46.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        }
+      ],
+      "sites_count": 772,
+      "sites_sha256": "50a884864fe8e00ebf4cc8e55da7adf38391e8b0cd0c2c699eaf9614bffe1898"
+    },
+    "scratch_allocation": {
+      "bytes": 8388608,
+      "draft_private": false,
+      "reduced": true,
+      "kernel_read_write_requirements_checked": true,
+      "reference_preserved": true
+    },
+    "sparse_workspace": {
+      "passed": true,
+      "device_executed": false,
+      "scratch_peak_bytes": 1609936,
+      "workspace_peak_bytes": 7946240,
+      "owner_checks": 1252,
+      "negative_controls": 3,
+      "maximum_copy": 7946240
+    }
+  },
+  {
+    "plan": "KD",
+    "context": 4096,
+    "draft_rank": 1,
+    "target_split": 23,
+    "rank": 1,
+    "dispatch": "forced",
+    "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+    "result": {
+      "passed": true,
+      "groups": 43,
+      "followers": 93,
+      "launches": 722
+    },
+    "expert_planes": {
+      "gate_sites": 25,
+      "down_sites": 25,
+      "banks": 75,
+      "raw_bytes": 25231360000,
+      "stored_bytes": 25231360000,
+      "allocation_delta_bytes": 0
+    },
+    "round2_sites": {
+      "route_sites": 25,
+      "gate_sites": 50,
+      "low_sites": 50,
+      "attention_sites": 25,
+      "low_tagged": 50,
+      "attention_tagged": 25
+    },
+    "group_census": {
+      "ffn": 25,
+      "shared": 0,
+      "tag1": 25,
+      "tag2": 51,
+      "tag4": 25,
+      "tag5": 25,
+      "tag7": 25
+    },
+    "write_set": {
+      "scratch_bound": 1609936,
+      "plan_output_bytes": 104931742,
+      "plan_output_count": 1053,
+      "context": 4096,
+      "budget": 2048,
+      "qsa_rows": [
+        {
+          "name": "blk.23.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.23.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.23.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.23.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.27.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.27.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.31.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.31.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.35.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.35.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.39.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.39.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.43.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.43.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.47.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.47.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        }
+      ],
+      "redo_banks": [
+        {
+          "name": "blk.24.gdn.history",
+          "first_writer": "blk.24.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.24.gdn.state",
+          "first_writer": "blk.24.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.25.gdn.history",
+          "first_writer": "blk.25.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.25.gdn.state",
+          "first_writer": "blk.25.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.26.gdn.history",
+          "first_writer": "blk.26.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.26.gdn.state",
+          "first_writer": "blk.26.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.28.gdn.history",
+          "first_writer": "blk.28.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.28.gdn.state",
+          "first_writer": "blk.28.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.29.gdn.history",
+          "first_writer": "blk.29.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.29.gdn.state",
+          "first_writer": "blk.29.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.30.gdn.history",
+          "first_writer": "blk.30.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.30.gdn.state",
+          "first_writer": "blk.30.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.32.gdn.history",
+          "first_writer": "blk.32.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.32.gdn.state",
+          "first_writer": "blk.32.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.33.gdn.history",
+          "first_writer": "blk.33.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.33.gdn.state",
+          "first_writer": "blk.33.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.34.gdn.history",
+          "first_writer": "blk.34.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.34.gdn.state",
+          "first_writer": "blk.34.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.36.gdn.history",
+          "first_writer": "blk.36.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.36.gdn.state",
+          "first_writer": "blk.36.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.37.gdn.history",
+          "first_writer": "blk.37.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.37.gdn.state",
+          "first_writer": "blk.37.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.38.gdn.history",
+          "first_writer": "blk.38.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.38.gdn.state",
+          "first_writer": "blk.38.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.40.gdn.history",
+          "first_writer": "blk.40.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.40.gdn.state",
+          "first_writer": "blk.40.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.41.gdn.history",
+          "first_writer": "blk.41.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.41.gdn.state",
+          "first_writer": "blk.41.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.42.gdn.history",
+          "first_writer": "blk.42.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.42.gdn.state",
+          "first_writer": "blk.42.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.44.gdn.history",
+          "first_writer": "blk.44.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.44.gdn.state",
+          "first_writer": "blk.44.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.45.gdn.history",
+          "first_writer": "blk.45.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.45.gdn.state",
+          "first_writer": "blk.45.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.46.gdn.history",
+          "first_writer": "blk.46.gdn.conv",
+          "bytes": 61440,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        },
+        {
+          "name": "blk.46.gdn.state",
+          "first_writer": "blk.46.gdn.recurrence",
+          "bytes": 1572864,
+          "full_byte_coverage": true,
+          "inputs_use_distinct_active_bank": true
+        }
+      ],
+      "sites_count": 722,
+      "sites_sha256": "447200d3800f03c927979e77e52f27d5a893c35b3b4190f0eacb6ecfaa1b245c"
+    },
+    "scratch_allocation": {
+      "bytes": 8388608,
+      "draft_private": false,
+      "reduced": true,
+      "kernel_read_write_requirements_checked": true,
+      "reference_preserved": true
+    },
+    "sparse_workspace": {
+      "passed": true,
+      "device_executed": false,
+      "scratch_peak_bytes": 1609936,
+      "workspace_peak_bytes": 7946240,
+      "owner_checks": 1202,
+      "negative_controls": 3,
+      "maximum_copy": 7946240
+    }
+  },
+  {
+    "plan": "draft",
+    "context": 4096,
+    "draft_rank": 1,
+    "target_split": 23,
+    "rank": 1,
+    "dispatch": "dr0",
+    "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+    "result": {
+      "passed": true,
+      "groups": 0,
+      "launches": 48,
+      "draft_uses_own_unfused_dispatch": true
+    },
+    "expert_planes": {
+      "gate_sites": 0,
+      "down_sites": 0,
+      "banks": 0,
+      "allocation_delta_bytes": 0,
+      "scope": "draft uses independent unfused kernels"
+    },
+    "round2_sites": {
+      "scope": "draft uses independent unfused kernels"
+    },
+    "group_census": {},
+    "write_set": {
+      "scratch_bound": 1609936,
+      "plan_output_bytes": 10595046,
+      "plan_output_count": 58,
+      "context": 4096,
+      "budget": 2048,
+      "qsa_rows": [
+        {
+          "name": "blk.0.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.0.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.0.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.0.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        }
+      ],
+      "redo_banks": [],
+      "sites_count": 48,
+      "sites_sha256": "49e52f0d5107f88994574b394dd3ed0a41dbb6194a5c6a368cb079543fd7bc2d"
+    },
+    "scratch_allocation": {
+      "bytes": 8388608,
+      "draft_private": true,
+      "reduced": false,
+      "kernel_read_write_requirements_checked": true,
+      "reference_preserved": true
+    },
+    "sparse_workspace": {
+      "passed": true,
+      "device_executed": false,
+      "scratch_peak_bytes": 1609936,
+      "workspace_peak_bytes": 7946240,
+      "owner_checks": 68,
+      "negative_controls": 3,
+      "maximum_copy": 7946240
+    }
+  },
+  {
+    "plan": "draft",
+    "context": 4096,
+    "draft_rank": 1,
+    "target_split": 23,
+    "rank": 1,
+    "dispatch": "speed6",
+    "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "result": {
+      "passed": true,
+      "groups": 0,
+      "launches": 48,
+      "draft_uses_own_unfused_dispatch": true
+    },
+    "expert_planes": {
+      "gate_sites": 0,
+      "down_sites": 0,
+      "banks": 0,
+      "allocation_delta_bytes": 0,
+      "scope": "draft uses independent unfused kernels"
+    },
+    "round2_sites": {
+      "scope": "draft uses independent unfused kernels"
+    },
+    "group_census": {},
+    "write_set": {
+      "scratch_bound": 1609936,
+      "plan_output_bytes": 10595046,
+      "plan_output_count": 58,
+      "context": 4096,
+      "budget": 2048,
+      "qsa_rows": [
+        {
+          "name": "blk.0.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.0.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.0.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.0.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        }
+      ],
+      "redo_banks": [],
+      "sites_count": 48,
+      "sites_sha256": "49e52f0d5107f88994574b394dd3ed0a41dbb6194a5c6a368cb079543fd7bc2d"
+    },
+    "scratch_allocation": {
+      "bytes": 8388608,
+      "draft_private": true,
+      "reduced": false,
+      "kernel_read_write_requirements_checked": true,
+      "reference_preserved": true
+    },
+    "sparse_workspace": {
+      "passed": true,
+      "device_executed": false,
+      "scratch_peak_bytes": 1609936,
+      "workspace_peak_bytes": 7946240,
+      "owner_checks": 68,
+      "negative_controls": 3,
+      "maximum_copy": 7946240
+    }
+  },
+  {
+    "plan": "draft",
+    "context": 4096,
+    "draft_rank": 1,
+    "target_split": 23,
+    "rank": 1,
+    "dispatch": "forced",
+    "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+    "result": {
+      "passed": true,
+      "groups": 0,
+      "launches": 48,
+      "draft_uses_own_unfused_dispatch": true
+    },
+    "expert_planes": {
+      "gate_sites": 0,
+      "down_sites": 0,
+      "banks": 0,
+      "allocation_delta_bytes": 0,
+      "scope": "draft uses independent unfused kernels"
+    },
+    "round2_sites": {
+      "scope": "draft uses independent unfused kernels"
+    },
+    "group_census": {},
+    "write_set": {
+      "scratch_bound": 1609936,
+      "plan_output_bytes": 10595046,
+      "plan_output_count": 58,
+      "context": 4096,
+      "budget": 2048,
+      "qsa_rows": [
+        {
+          "name": "blk.0.qsa.keys",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        },
+        {
+          "name": "blk.0.qsa.pooled",
+          "allocation_bytes": 262144,
+          "row_bytes": 256,
+          "pooled": true
+        },
+        {
+          "name": "blk.0.qsa.raw",
+          "allocation_bytes": 1048576,
+          "row_bytes": 256,
+          "pooled": false
+        },
+        {
+          "name": "blk.0.qsa.values",
+          "allocation_bytes": 4194304,
+          "row_bytes": 1024,
+          "pooled": false
+        }
+      ],
+      "redo_banks": [],
+      "sites_count": 48,
+      "sites_sha256": "49e52f0d5107f88994574b394dd3ed0a41dbb6194a5c6a368cb079543fd7bc2d"
+    },
+    "scratch_allocation": {
+      "bytes": 8388608,
+      "draft_private": true,
+      "reduced": false,
+      "kernel_read_write_requirements_checked": true,
+      "reference_preserved": true
+    },
+    "sparse_workspace": {
+      "passed": true,
+      "device_executed": false,
+      "scratch_peak_bytes": 1609936,
+      "workspace_peak_bytes": 7946240,
+      "owner_checks": 68,
+      "negative_controls": 3,
+      "maximum_copy": 7946240
+    }
+  }
+]

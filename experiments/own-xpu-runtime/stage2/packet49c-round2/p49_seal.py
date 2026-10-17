@@ -5,9 +5,13 @@ import build
 from storage import digest
 from seal_context import precise
 P=Path(__file__).resolve().parent;B=P/'build';ROOT=P.parents[3]
+SANITIZER_ARCHIVE_RETENTION='packet49c.asan-artifact-retention.v1'
 GATES=('p49-cpu-gates.json','p49-plan-gates.json','p49-snapshot-gates.json','p49-python-gates.json','p49-asan-gates.json','p49-asan-snapshot-gates.json','p49b-expert-gates.json','p49c-round2-gates.json','p49c-engine-gates.json','p49c-kernel-provenance.json')
 def checked():
     current=build.compiled_sources();artifacts={};modes={}
+    from retain_sanitizers import verify_retention
+    retention=verify_retention()
+    archived={row['original']:row for row in retention['artifacts']}
     from storage import BUILD_BASE_BUDGET
     storage=json.loads((P/'storage-precheck.json').read_text())
     assert storage['device_executed'] is False and storage['build_budget_bytes']==BUILD_BASE_BUDGET
@@ -26,7 +30,9 @@ def checked():
         for name,sha in row['link_files_sha256'].items():
             assert digest(B/name)==sha;precise((B/name).read_text(),mode=='device')
         for name,sha in row['artifacts_sha256'].items():
-            assert digest(B/name)==sha;artifacts[name]=sha
+            if mode=='asan':assert archived[name]['original_sha256']==sha
+            else:assert digest(B/name)==sha
+            artifacts[name]=sha
         for name in ('own-rt-iq3','nongemv-fixtures','k2-fixtures','p33-linked-fixtures','p49-qsa-fixtures','p49b-expert-fixtures','p49c-fixtures'):
             assert mode+'/'+name in artifacts
         modes[mode]=digest(path)
@@ -120,10 +126,11 @@ def checked():
     assert provenance['selected_arithmetic_body_exact'] is True
     assert digest(ROOT/provenance['source'])==provenance['source_sha256']
     assert digest(P/'p49c_kernel.hpp')==provenance['candidate_sha256']
+    for name,sha in provenance['qualification_receipts_sha256'].items():assert digest(ROOT/name)==sha
     from shared_oracle import static_binding
     shared_oracle=static_binding()
     sources=build.sources()
-    for name in ('coordinator_windows.sh','dispatch-speed6.json','dispatch-speed6-provenance.json','oracle-binding.json','storage-parent-binding.json','storage-precheck.json','object-cleanup-receipt.json'):
+    for name in ('coordinator_windows.sh','dispatch-speed6.json','dispatch-speed6-provenance.json','oracle-binding.json','storage-parent-binding.json','storage-precheck.json','object-cleanup-receipt.json','asan-artifact-retention.json'):
         sources[str((P/name).relative_to(ROOT))]=digest(P/name)
     from oracle.oracle_job import source_bindings
     oracle_build=source_bindings()
@@ -135,7 +142,8 @@ def checked():
             sources[str(file.relative_to(ROOT))]=digest(file)
     return dict(schema='packet49c.scoped-cpu-seal.v1',passed=True,device_executed=False,
         arithmetic='iq3-p49-split32-v1',parent_packet='packet49b-gemv',shared_oracle=shared_oracle,parent_commit='192ee28f2',sources=sources,
-        artifacts_sha256=artifacts,mode_receipts_sha256=modes,
+        artifacts_sha256={name:sha for name,sha in artifacts.items() if name not in archived}|{row['archive']:row['archive_sha256'] for row in retention['artifacts']},
+        original_artifacts_sha256=artifacts,sanitizer_artifact_retention_sha256=digest(P/'asan-artifact-retention.json'),mode_receipts_sha256=modes,
         oracle_inputs_sha256=oracle_inputs,oracle_binary_sha256=oracle_build['binary_sha256'],
         gates_sha256={name:digest(P/name) for name in GATES},
         official_manifest_sha256=digest(P/'mtp-manifest.tsv'),memory_plan=json.loads((P/'memory-plan.json').read_text()),

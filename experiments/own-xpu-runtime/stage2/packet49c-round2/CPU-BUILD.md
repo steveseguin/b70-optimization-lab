@@ -38,6 +38,7 @@ recorded cleanup, recheck storage, then seal and independently verify:
 
 ```bash
 cpu49c cleanup_objects.py
+cpu49c retain_sanitizers.py
 cpu49c storage_precheck.py
 cpu49c p49_seal.py
 cpu49c p49_seal.py --verify
@@ -45,3 +46,10 @@ cpu49c p49_seal.py --verify
 
 The final receipts, not inherited historical gate files, establish qualification.
 Do not invoke the shared oracle's build/run actions.
+
+The retention step verifies every compressed sanitizer executable against its
+original build hash before removing its uncompressed copy. The seal checks both
+compressed and restored hashes. GNU and device executables stay ready to run.
+For a later sanitizer rerun, `cpu49c retain_sanitizers.py --restore` restores
+the exact bytes and permissions, subject to fresh storage admission; run the
+retention step again afterward. No numerical gate is replaced by compression.

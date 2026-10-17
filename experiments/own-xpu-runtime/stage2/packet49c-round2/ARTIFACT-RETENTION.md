@@ -16,9 +16,12 @@ additional disk capacity. No predecessor, oracle or queued-chain file is removed
 
 The original 2.5 GB retained-build envelope would require 22,765,608,960
 bytes, more than the roughly 20.97 GB initially available. The new packet
-therefore requires a lean retained build, with sanitizer debug information
-and unreachable duplicate entrypoints omitted and its own regenerable objects
-removed after their identities are recorded. The 650 MB figure is an admission
+therefore requires a lean retained build. Sanitizer debug information and
+unreachable duplicate entrypoints are omitted, but sanitizer metadata still
+makes those executables large. After all sanitizer gates pass,
+`retain_sanitizers.py` stores their exact executable bytes in verified gzip
+archives and removes only this packet's original sanitizer binaries. Its own
+regenerable objects are removed after their identities are recorded. The 650 MB figure is an admission
 limit, not an estimate or a promise that an unfinished build fits.
 `storage_precheck.py` must pass against the completed build before any early
 or model window. The final receipt records actual free space and build bytes.
@@ -51,10 +54,31 @@ The planned switch stops its waiting queue before any model window starts;
 this packet does not claim to make all three historical queues runnable.
 
 Keep source, gates, seals, build receipts and compact evidence in Git.
-Keep all sealed executable artifacts in the external result tree. Objects
+Keep all sealed executable bytes in the external result tree, with sanitizer
+executables retained as gzip archives. `asan-artifact-retention.json` records
+each original path, byte count and SHA-256, plus the archive identity.
+Streamed decompression must reproduce every original byte before unlinking
+its source. Original mode and gate receipts continue to bind the raw binary
+SHA-256. The seal's `original_artifacts_sha256` preserves those identities;
+its live artifact map includes the archives that are actually on disk.
+Production GNU and device executables remain directly runnable.
+
+To restore sanitizer binaries for another CPU gate, use:
+
+```bash
+nice -n 19 taskset -c 4-15,20-31 python3 -B \
+  experiments/own-xpu-runtime/stage2/packet49c-round2/retain_sanitizers.py --restore
+```
+
+Restore refuses changed existing files, validates compressed and original
+hashes and checks the 2.5 GB CPU peak plus the protected disk reserves before
+writing. Restored binaries may exceed the 650 MB retained cap; reapply verified
+retention before device admission. This does not change compiler output or
+require a new numerical identity. Objects
 are reproducible from retained compiler/link commands and source identities;
 removing them must not remove an artifact enumerated by the seal. Inherited
-input fixtures and RoPE are read-only links. Shared-oracle outputs are neither
+input fixtures and the generated fusion RoPE header are read-only links;
+`rope.bf16` is the frozen local copy described below. Shared-oracle outputs are neither
 copied nor edited. A failed storage check is a coordinator review item,
 never permission to delete another packet's evidence or weaken the floor.
 

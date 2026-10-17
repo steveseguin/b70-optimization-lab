@@ -16,6 +16,7 @@ oracle](oracle-binding.json) is hash-bound, never rebuilt or relaunched.
 - [Both-chain storage budget](ARTIFACT-RETENTION.md).
 - [Independent kernel review](REVIEW-KERNELS.md).
 - [Preparation record](../../../../notes/2026-10-17-own-runtime-packet49c.md).
+- [CPU preparation closeout and remaining gates](CPU-PREPARATION-CLOSEOUT.md).
 
 CPU preparation is not device qualification. Packet51 operator gains are not
 integrated model gains. Full-model windows must pass against the completed

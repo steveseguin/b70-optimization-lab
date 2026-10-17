@@ -104,3 +104,50 @@ records and checks the immutable precheck's internally consistent status,
 including an explicit false readiness if space is unavailable. It does not
 claim a future disk snapshot is stable. The live queue repeats admission and
 refuses a failed storage check before creating or launching a chain.
+
+Sanitizer metadata remained large even without debug symbols. The chosen
+retention design stores only this packet's completed sanitizer executables
+in verified gzip archives, with `asan-artifact-retention.json` binding both
+compressed files and original bytes. `retain_sanitizers.py --restore`
+recreates their exact bytes under the CPU disk limits. Mode receipts and
+sanitizer gate receipts retain the original executable hashes; the seal
+separates `original_artifacts_sha256` from its live artifact map. No device
+executable is compressed. Streaming decompression verification before removing
+originals is required; this is lossless artifact retention, not a rebuild or
+a change to the tested model arithmetic.
+
+The retention helper and seal consumer were subsequently reviewed: path and
+symlink guards restrict operations to the local sanitizer tree, source build
+inventory and permissions are bound, decompression has an explicit extent
+limit and verifies gzip integrity, and all archives plus the receipt are
+verified before any original is removed. Restore uses a non-overwriting
+atomic install after byte and mode checks. Fifteen temporary-fixture tests
+cover successful round trips, budgets, mutation, corruption, permissions and
+path failures. The archive creation peak is admitted while originals still
+exist; no disk savings are assumed before their safe removal.
+
+## Final independent validation
+
+After the final builds, gates, object cleanup and sanitizer retention, an
+independent read-only run of
+`nice -n 19 taskset -c 4-15,20-31 python3 -B p49_seal.py --verify`
+passed with 39 live artifacts and 451 source bindings. It revalidated the
+original sanitizer bytes through their archives, all current source/build
+identities, native fixtures, engine comparisons, shared-oracle binding and
+retained evidence. No device program ran during this verification.
+
+The final recorded storage check passes with 539,704,546 retained build bytes,
+20,465,577,984 free bytes and 20,375,904,414 required free bytes, leaving
+89,673,570 bytes above the combined reservation. The 650 MB retained cap,
+8 GB free floor, complete 5,818,804,480-byte packet49b allowance and 500 MB
+oracle-growth allowance remain. The observed packet49b driver cache is only
+92,320 bytes; its existence is not a guarantee of future cache size. Recheck
+space immediately before each new queue.
+
+The final CPU closeout accurately limits its claims to synthetic CPU
+qualification and compilation. Its acknowledged initial lost compiler log,
+attention workspace scope, legacy-engine adapter limit, small storage margin,
+oracle-completion scheduling race and pending device/model gates are explicit.
+The final runbook's STOP/exit/flock/KD checks and fresh registered-chain commands
+match the reviewed implementation. No unresolved code-review blocker remains;
+the coordinator still owns actual early execution and the conditional switch.
