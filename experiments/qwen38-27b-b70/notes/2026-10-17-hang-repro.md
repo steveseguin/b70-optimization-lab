@@ -259,3 +259,9 @@ waiting) now runs arms of 20 minutes each, stopping at the first hang:
   cleared at that rate, and the model's prompt-step kernels are next.
 - **Fix, if B hangs and C is clean:** the server takes the chunking threshold (lossless: an all-gather only moves
   bytes), after the packed stress and a prompt-reading speed check on the context-lane server.
+
+**14:00 EDT: the packed stress is cut to 60 minutes** (ends 14:42 instead of 15:42) so the exchange arms get the
+cards sooner: arm B tests the leading mechanism directly, and another hour of the packed stress would add only
+~4,000 first steps (~35 % chance of a hang at one in ~10,000). The stop is mine: at 14:42 I end the stress client
+(pid 3187238) with SIGTERM, so the runner's "stress client stopped with a failed request" line at that time is that
+stop, not a failure; the result is read from `stress-L.jsonl` (every request it logs completed).
