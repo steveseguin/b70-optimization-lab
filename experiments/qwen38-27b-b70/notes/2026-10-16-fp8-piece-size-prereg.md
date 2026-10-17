@@ -63,3 +63,7 @@ references; the lab's published context results stay on 832 until re-run. Speed 
 If no arm qualifies, the lever closes with these numbers; the next candidates are a split-key prompt-attention kernel
 with fixed split points, and skipping the drafter's four discarded single-token passes on non-final prompt chunks
 (estimated 1-5 s at 200K).
+
+Launched 20:07:53 EDT (unit `fp8-piece1`, log `data/2026-10-16-r314-piece-size/run.log`). The edit probe needs the
+`tokenizers` library, which the host's system Python lacked; it was copied at 20:09, before the first probe ran, from
+`/mnt/fast-ai/venvs/minimax-h3` (0.23.2, same Python 3.12.3) into `~/.local/lib/python3.12/site-packages`.
