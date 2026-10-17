@@ -67,3 +67,40 @@ Changes to the plan, not to the running hour: the hour continues as registered (
 hang, the next run is not "double the endings" but **idle before every request**: the same client with a pause before
 each request drawn from 0.5-60 s, so that every request is a first step after an idle. If the cards are seen to
 runtime-suspend while the server holds them, that is fixed first (`power/control=on` for the run) and recorded.
+
+## Amendment 12:40 EDT (hour still running, no result read): no idle before the hang; a replay of c28e is next
+
+**The 40 s idle did not happen.** The keeper's own call log for c28e
+(`/mnt/fast-ai/bench-results/context-longrun-20261016/proxy-state/c28e-K32-repair-s2x/5693d81e7626fa3b/calls.jsonl`)
+has the last good call ending at 06:22:18.363 and the next one sent at 06:22:18.571, 0.2 s later, failing after
+42.6 s. So the server was hung, not idle, from 06:22:18.6: the first step of that request (443 new tokens after a
+4,160-token hit, per the engine's dump) started and never finished. Nothing noticed for 42 s because the exec queue
+has no job timeout; the engine reset at 06:23:00.65 is 0.65 s after the minute changed, which fits the desktop clock on
+card 03:00.0 being redrawn at 06:23:00 (gnome-shell renders on card 03; its jobs are in the xe trace below) and the
+GuC failing to switch the spinning context out within the 640 ms preempt timeout. The desktop detected the hang; it
+started 42 s before. The 12:29 reading (first step of the new request, not the dropped step) stands; the idle part
+of it is withdrawn, so "idle before every request" is dropped from the plan.
+
+**Observed beside the hour (host only):** both cards stay `active` through 20-44 s pauses (no runtime suspend while
+the server holds them); the xe tracepoints (`xe_sched_job_*`, exec-queue and runtime-PM events, scratchpad trace)
+show the user-mode driver restarting each card's compute ring about every 2 s during requests (new kernel jobs on
+ccs guc_id 15 / 14, the same ids as at 06:23), a copy-engine job per step on each card, and gnome-shell's render and
+bind jobs on card 03 only.
+
+**Next run, registered now: replay of c28e** (`scripts/run-20261017-hang-replay.sh`, starts after the hour's unit
+ends and only if the kernel log is clean). The same runner, queue line, flags and server as c28e, with the
+exact-cache overlay at 0.2.0 as c28e ran it (frozen copy `overlays/b70-prefix-cache-exact-020`, byte-identical to
+c28e's stage copy) and b70-step-breadcrumbs 0.2.0 (now also counting each worker's torch.distributed calls per step,
+to show a cross-card exchange one card never joined). c28d (same server, killed by the memory guard at call 6) made
+the same first 6 calls as c28e, so the call sequence is reproducible from a fresh server.
+
+- **Prediction (stated before the run):** the replay makes the same calls as c28e (`scripts/compare-call-sequences.py`
+  against c28e's call log) up to call 132; I expect it does **not** hang there (one hang in ~2,000 requests and no
+  data-dependent loop found suggest a race, not the inputs).
+- **If it hangs at call 132:** the hang follows from the inputs; the breadcrumbs and the saved request make it a
+  deterministic case to bisect offline (overlays off one at a time on that one request).
+- **If it passes call 132 with the same sequence:** the inputs alone do not cause it; the evidence for a race
+  (cross-card exchange, ring restart, driver) is what the breadcrumbs and xe trace of the next real hang must
+  separate, and the stress continues with them on.
+- **If the sequence diverges before call 132:** the replay is not exact; it still counts as agent traffic with
+  breadcrumbs on, and the 132 check is void.

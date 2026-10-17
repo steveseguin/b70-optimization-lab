@@ -310,7 +310,7 @@ systemd-run --user --unit=ctx-fp8-tp2-server --collect -p WorkingDirectory=$LAB 
   --overlay b70-allgather-allreduce --extra-env B70_ALLGATHER_ALLREDUCE=1 \
   --overlay b70-chunked-upload --extra-env B70_CHUNKED_UPLOAD=1 \
   --serve-arg=--enable-auto-tool-choice --serve-arg=--tool-call-parser=qwen3_coder --serve-arg=--reasoning-parser=qwen3 \
-  --prefix-cache align --overlay b70-prefix-cache-exact --extra-env B70_PREFIX_CACHE_EXACT=1 \
+  --prefix-cache align --overlay ${EXACT_OVERLAY:-b70-prefix-cache-exact} --extra-env B70_PREFIX_CACHE_EXACT=1 \
   --serve-arg=--prefix-cache-retention-interval=$RET \
   --overlay b70-spec-resume-accepted --extra-env B70_SPEC_RESUME_ACCEPTED=1 \
   --overlay b70-gdn-state-width --extra-env B70_GDN_STATE_WIDTH=1 \
