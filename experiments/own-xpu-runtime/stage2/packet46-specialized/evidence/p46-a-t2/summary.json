@@ -1,0 +1,156 @@
+{
+  "passed": true,
+  "device_executed": true,
+  "microbenchmark_only": true,
+  "model_speed_claim": false,
+  "layers": {
+    "ordinary_gdn": {
+      "current_gpu_us": {
+        "median": 665.7315,
+        "p10": 657.61,
+        "p90": 671.984
+      },
+      "specialized_gpu_us": {
+        "median": 669.115,
+        "p10": 662.398,
+        "p90": 676.144
+      },
+      "paired_saved_gpu_us": {
+        "median": -4.218999999999994,
+        "p10": -17.80899999999997,
+        "p90": 8.857999999999947
+      },
+      "class_median_gpu_us": {
+        "current": {
+          "attention": 57.708,
+          "expsact": 4.687,
+          "expsdown": 91.875,
+          "expsgate": 81.771,
+          "ffn.combine": 11.25,
+          "gdn.conv": 7.5,
+          "gdn.gated": 5.677,
+          "gdn.qkv": 100.104,
+          "gdn.recurrence": 35.729,
+          "gdn.z": 39.791,
+          "hc.a.gate": 19.896,
+          "hc.a.inject": 13.229,
+          "hc.a.low": 15.832999999999998,
+          "hc.a.mix": 9.219000000000001,
+          "hc.a.norm": 10.104500000000002,
+          "hc.f.gate": 18.75,
+          "hc.f.inject": 12.083,
+          "hc.f.low": 15.0,
+          "hc.f.mix": 9.063,
+          "hc.f.norm": 7.291,
+          "moe": 6.354,
+          "route": 43.1255,
+          "shexpact": 3.958,
+          "shexpdown": 10.937,
+          "small.ffn.q6": 27.604,
+          "small.gdn.ab": 6.771
+        },
+        "specialized": {
+          "attention": 57.709,
+          "expsact": 5.625,
+          "expsdown": 91.771,
+          "expsgate": 81.771,
+          "gdn.conv": 7.6045,
+          "gdn.gated": 5.677,
+          "gdn.recurrence": 35.833,
+          "hc.a.inject": 13.542,
+          "hc.a.low": 15.937000000000001,
+          "hc.f.inject": 11.771,
+          "hc.f.low": 15.208,
+          "p46.gate_mix": 57.604,
+          "p46.gdn_projections": 134.166,
+          "p46.moe_tail": 9.271,
+          "p46.norm": 33.438,
+          "route": 43.125,
+          "shexpact": 3.855,
+          "shexpdown": 10.937,
+          "small.ffn.q6": 27.604,
+          "small.gdn.ab": 6.771
+        }
+      },
+      "integration_bar_us": 80,
+      "bar_passed": false,
+      "measured_pairs": 200
+    },
+    "qsa": {
+      "current_gpu_us": {
+        "median": 3181.7690000000002,
+        "p10": 3171.561,
+        "p90": 3191.146
+      },
+      "specialized_gpu_us": {
+        "median": 3175.3140000000003,
+        "p10": 3165.52,
+        "p90": 3183.542
+      },
+      "paired_saved_gpu_us": {
+        "median": 3.85550000000012,
+        "p10": -9.581000000000131,
+        "p90": 23.748000000000047
+      },
+      "class_median_gpu_us": {
+        "current": {
+          "attention": 58.854,
+          "expsact": 4.896,
+          "expsdown": 91.3545,
+          "expsgate": 81.667,
+          "ffn.combine": 11.354,
+          "hc.a.gate": 19.792,
+          "hc.a.inject": 13.75,
+          "hc.a.low": 19.0625,
+          "hc.a.mix": 9.323,
+          "hc.a.norm": 10.5205,
+          "hc.f.gate": 18.75,
+          "hc.f.inject": 11.562,
+          "hc.f.low": 15.0,
+          "hc.f.mix": 9.166,
+          "hc.f.norm": 7.5,
+          "moe": 6.146,
+          "qsa.attention": 2370.1040000000003,
+          "qsa.ik": 6.666,
+          "qsa.iq": 9.167,
+          "qsa.k": 9.167,
+          "qsa.pool": 4.583,
+          "qsa.prepare": 5.3645,
+          "qsa.qgate": 113.333,
+          "qsa.select": 180.209,
+          "qsa.v": 8.333,
+          "route": 43.019,
+          "shexpact": 3.958,
+          "shexpdown": 10.937,
+          "small.ffn.q6": 27.709
+        },
+        "specialized": {
+          "attention": 58.751,
+          "expsact": 5.834,
+          "expsdown": 91.354,
+          "expsgate": 81.7705,
+          "hc.a.inject": 13.906500000000001,
+          "hc.a.low": 19.0625,
+          "hc.f.inject": 11.562,
+          "hc.f.low": 15.208,
+          "p46.gate_mix": 57.812,
+          "p46.moe_tail": 9.167,
+          "p46.norm": 33.698,
+          "p46.qsa_projections": 130.208,
+          "qsa.attention": 2369.896,
+          "qsa.pool": 4.479,
+          "qsa.prepare": 5.468500000000001,
+          "qsa.select": 180.312,
+          "route": 42.917,
+          "shexpact": 3.958,
+          "shexpdown": 10.834,
+          "small.ffn.q6": 27.708
+        }
+      },
+      "integration_bar_us": 80,
+      "bar_passed": false,
+      "measured_pairs": 200
+    }
+  },
+  "timing_definition": "sum of unique completed compute-event end-start per full layer"
+}
