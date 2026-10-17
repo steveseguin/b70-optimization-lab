@@ -1,0 +1,9 @@
+{
+  "passed": false,
+  "device_executed": false,
+  "reason": "Test incorrectly required proposals during prompt reading, where packet56 deliberately skips the head. Actual generated proposals had zero provider errors; target bytes matched.",
+  "fix": "Require non-null proposals only from the generation boundary, retain zero-error check across all positions. Require hit and ordinary miss coverage.",
+  "retained": "build/failed-cpu-1",
+  "target_bytes_passed": true,
+  "generated_proposal_errors": 0
+}

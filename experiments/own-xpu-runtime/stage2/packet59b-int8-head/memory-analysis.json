@@ -1,0 +1,30 @@
+{
+  "schema": "packet59b.memory-analysis.v1",
+  "device_executed": false,
+  "census": [
+    {
+      "rank": 0,
+      "path": "experiments/own-xpu-runtime/stage2/screen/evidence/packet56-a/run/ranks/rank0/census.json",
+      "sha256": "6d1e126571de38e6a16b53af8d15711db697a5508926681988dc2c907760b45b",
+      "device_bytes": 26039514280,
+      "arena_free_bytes": 6172740440,
+      "draft_bytes": 0
+    },
+    {
+      "rank": 1,
+      "path": "experiments/own-xpu-runtime/stage2/screen/evidence/packet56-a/run/ranks/rank1/census.json",
+      "sha256": "8f65a66d23c03cd55e1812b53bb9265d460c09f5c7be8ae90939c289381ebdc0",
+      "device_bytes": 32122890400,
+      "arena_free_bytes": 89364320,
+      "draft_bytes": 3354364214
+    }
+  ],
+  "int8_codes_bytes": 233963520,
+  "fp32_scales_bytes": 365568,
+  "extra_bytes": 234329088,
+  "rank1_shortfall_bytes": 144964768,
+  "placement": "whole draft on rank0 via existing controller; separate INT8 prefix only, no duplicated full target head",
+  "arena_limit_bytes": 32212254720,
+  "target_head_rows": 248320,
+  "no_target_kv_state_shrink": true
+}
