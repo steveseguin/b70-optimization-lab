@@ -31,3 +31,29 @@ other per-row kernels as at depth 5. The one-launch verify has only been censuse
 - **Decision:** adopt for the context lane the deepest exact depth whose model time is at least 3 % below the next
   shallower depth's on both arms. The packages are not touched (their depth was chosen on general text; a change
   there needs its own sweep and the owner's go).
+
+## Result so far, depth 6 (c28a K32, 05:09-05:16 EDT)
+
+- Census before the servers: one launch = lone rows at every used length, 7 rows (all) and 8 rows (4,183 / 4,183).
+- **Not exact against depth 5:** 171 of 182 calls equal to c27a's; the first difference is call 63 (prompt 6,070
+  tokens, identical; depth 5 wrote 331 tokens, depth 6 wrote 345), and the stream re-joins after the next notes
+  update (calls 74 on equal). Score 39/39. Server totals: prompt 1,932,054 (c27a 1,932,094), generated 30,345 (30,313).
+- Acceptance as predicted: mean acceptance length 5.98 (5.27 at depth 5), sixth position 0.692. But model time fell
+  only 3.9 % (main -2.4 %, notes -6.4 %): each step costs about 7 % more at depth 6, not the 2-2.5 % assumed.
+- **Decision (as registered): depth 6 is not adopted; depth 7 is not run** (the wrapper skips it when c28a differs).
+  The lever is closed on speed alone too: under the 3 % bar on main calls, and depth 7 would add about 10 % tokens per
+  step for about 7 % more step time.
+
+## Which depth is right at call 63? (registered 05:18 EDT, before the run): campaign 28c
+
+The difference says some kernel treats a 7-row check step differently from plain decoding, or a 6-row one does and
+depth 6 happens to avoid it. The agent stream at depth 5 has never been compared with a server that does not draft.
+One server like c27a with `--mtp 0` (no drafter; everything else the same), K32 on the same stream, seed 0
+(`RUN=c28c MTP=0`, about 20-25 min: writing about 3x slower).
+
+- **Prediction:** no-MTP equals c27a (depth 5) in every call: depth 5 has been exact against no-MTP on every suite
+  run (strict 12/12, context, the 64/64 sequential oracle) and campaigns 24-27 repeat each other exactly.
+- **Decision:** no-MTP = depth 5 everywhere: depth 6's difference is a 7-row check defect, recorded as the reason
+  depth 6 is not exact (traced only if a later lever needs depth > 5). No-MTP = depth 6 at call 63: depth 5 has a
+  defect on this stream: the context lane's exactness claim is suspended until it is traced (call-63 request
+  captured and replayed). Neither: a third behaviour, traced the same way.
