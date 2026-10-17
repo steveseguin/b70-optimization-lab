@@ -155,3 +155,27 @@ Every fresh server repeats its round-1 twin within 0.2 s on every request (`edit
 Outcome: 1,280-token pieces are the faster long-document setting (a 200K read 34 s shorter, everything exact); the
 agent default waits for campaign 25. A separate lever this exposes: the cost of an edit near the end is set by the
 kept-state interval (memory per kept state against re-read length), untested here.
+
+### The drafter's discarded passes, sized on paper (22:05 EDT; no GPU run)
+
+R314 runs the drafter on every step, including steps where every request is a non-final prompt chunk
+(`gpu_model_runner.py` `sample_tokens`: `propose_draft_token_ids` is called whenever the input fits; no
+`_is_all_reqs_chunked_prefill` check, which is only used for pipeline-parallel broadcasts). Pass 1 must run (it
+writes the drafter's cache for the chunk); passes 2-5 are single-row passes whose drafts are thrown away. Their cost:
+the 2026-10-03 table puts all of speculation (five draft passes plus five extra verify rows) at 3.5 ms per step on
+two cards, so a single-row pass is under 0.7 ms, plus about 0.4 ms at 200K for the drafter layer's attention over
+the context. At 1,280-token pieces a 200K read is 156 chunks x 4 passes x about 1 ms = about 0.6 s of 118 s
+(0.5 %); at 832, about 1 s of 152 s. Below the 1-5 s guessed above, and below run-to-run noise on a single read. Not
+worth a GPU run alone; it can ride along with the next overlay change that needs a full exactness run anyway.
+
+### Where an agent stream's time goes (22:15 EDT, from campaign 24c's K32 call log, before part E's results)
+
+`proxy-state/c24c-K32-rules-s0/*/calls.jsonl` (182 calls, two-sequence server, 832 pieces), least-squares split of each
+call's time into reading the uncached prompt, writing, and a fixed part: main calls 289 s = reading 128 s (0.27 ms per
+uncached token) + writing 122 s (9.3 ms per token) + 39 s fixed; notes calls 182 s, almost all writing (17,146
+tokens, 11 ms each). So about two thirds of the run is writing and 28 % reading. Of the 481K uncached tokens in main
+calls, 179K are the short re-read after each hit (about 1,100 tokens per call: the rest of the last block plus the
+previous answer), which a bigger piece lengthens, and 70K are 20 whole-window re-reads of about 3.7K tokens right
+after each notes update (`cached 0`: the new window shares only the system prompt and rules, about 1.4K tokens, and
+no kept state lies inside them), about 30 s of 517. The piece size can move at most the reading part, so part E
+should show a few per cent either way.
