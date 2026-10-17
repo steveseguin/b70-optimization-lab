@@ -191,3 +191,41 @@ What follows, before any arm has run:
   passes come to about (38.5 - 29 - verify extra) / 5, roughly 1.5-1.9 ms each rather than 3. The clock's
   waits-versus-host split still decides; the sharpened prediction (draft time 8-15 ms per step) is withdrawn in favour
   of the original decision tree.
+
+## Amendment 11:32 EDT (L, N, M, P run; P0, L0, Lp not yet): the step is the same on all four, and the cards are busy
+
+**Write probe, ms per step (copy / story):**
+
+| arm | 1K | 8K | 16K | 30K |
+| --- | --- | --- | --- | --- |
+| L (context lane) | 38.14 / 38.18 | 39.14 / 39.17 | 40.46 / 40.49 | 42.50 / - |
+| N (no prefix cache) | 37.93 / 37.81 | 38.80 / 38.98 | 40.36 / 40.24 | 42.27 / 42.31 |
+| M (steps of 4,096) | 37.91 / 37.77 | 38.84 / 38.92 | 40.20 / 40.20 | 42.25 / 42.30 |
+| P (package flags, 33K) | 37.85 / 37.81 | 38.82 / 38.93 | 40.25 / 40.17 | 42.18 / 42.24 |
+
+**L - P = 0.3 ms at 1K: the registered branch "under 2 ms: a measurement difference".** The package's 33.0 ms was
+2.98 tokens per step / 90.3 tok/s, two summary statistics of different requests divided, never a timed step; on
+R314 the package's own flags give 37.85 ms. The prefix-cache family (L - N, 0.2 ms), the 832-token steps (N - M,
+0.0) and the window (M - P, 0.1) cost nothing measurable while writing.
+
+**The host clock's reading, and why it does not mean host-bound.** On every arm the event waits are about 0.05 ms
+(median) and "not waiting" equals the period (execute about 31 ms, sample about 6.8 ms of which draft about 6.0 ms):
+by the registered rule (waits under 2 ms, period 35 ms or more) that reads as host-bound. It is not:
+- **Added measurement (from 11:19, during arm N; nothing about the arms changed):** each card's compute and copy
+  engine busy cycles from the driver (`/proc/<pid>/fdinfo`, `drm-cycles-ccs` over `drm-total-cycles-ccs`, summed over
+  the GPU clients), sampled every 0.25 s with the server's token counters (`scripts/sample-xe-engine-busy.py`,
+  `scripts/report-xe-engine-busy.py`; read-only). Over every decode-only stretch of N, M and P (each answer of the
+  probe): **compute engine 98.7-100 % busy on both cards**, copy engine 45-56 %.
+- **Why the clock missed it:** the GDN metadata builder makes the drafting-step mask on the card from a CPU tensor
+  every step (R314 `vllm/v1/attention/backends/gdn_attn.py:248`); a blocking host-to-card copy on the in-order queue
+  returns only when all earlier work has finished, so the host's wait for the cards sits inside execute_model, where
+  the clock counts it as host time. The clock only sees the four explicit events.
+- So the step is set by the cards (or by work queued on them: a context waiting on a semaphore also counts as busy).
+  **Withdrawn: the drafter-graph and launch-trim candidates** (they shorten host time that is already hidden). This
+  agrees with R198 (graphs 1.2-1.4 % slower on this host).
+
+**Where 38 ms goes on the card (arithmetic, to be measured next):** weights read once per pass at about 540 GB/s
+(the census rate): target 13.5 GB per card, about 25 ms; its full LM head about 2.3 ms; five drafter passes (the MTP
+layer about 0.2 GB per card plus the 65K-row INT4 head) about 3-4 ms. About 31 ms at bandwidth, so about 7 ms of the
+38 is something else: the roughly 130-150 cross-card collectives per step (the copy engine is half busy), the
+recurrent layers' speculative kernels, attention, norms. The next measurement is a device-side split of one step.
