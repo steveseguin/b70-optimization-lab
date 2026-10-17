@@ -41,3 +41,10 @@ closure and runtime. It is deliberately retained byte-for-byte for local
 reproduction, not a generated cache. Restore it from the pinned packet70 copy;
 `parent-source-manifest.json` records its original SHA-256. Its size alone is
 not permission to discard it.
+
+The selection hardlinks were briefly included in commit `63988aff1` because
+the packet ignore rule covered only its top-level build directory. The next
+commit removes those ten index entries and ignores every nested build directory.
+It deletes no local file: all hardlinks and original bytes remain in place,
+with the same sealed hashes. The historical commit also retains the two unique
+binary blobs. This is tracking hygiene, not evidence disposal.
