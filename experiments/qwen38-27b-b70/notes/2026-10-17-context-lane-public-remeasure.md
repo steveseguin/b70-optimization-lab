@@ -33,4 +33,8 @@ reset on card e3:00.0 (`FAULT-20261017-c28d.json`; no page-fault or CAT lines; t
 the owner's call. Runner log lost: it was written into this folder, and the `git pull --rebase` at 05:56 replaced the
 file under the running job (live logs now go under `/mnt/fast-ai/bench-results` and are copied after).
 
-The re-measure is owed; it runs again unchanged once the owner has restarted the LAN service.
+06:06: one bounded health probe (`scripts/check-qwen36-xpu-xccl-health.sh`: both cards' compute smoke and the XCCL
+all-reduce) passed and the kernel log has no line after the reset, so per AGENTS.md rule 3 the work carries on
+(my first reading, that the restart was the owner's call, was wrong: that was the 2026-10-12 practice without sudo).
+The re-measure runs again unchanged as **campaign 28e** (same queue line, runner, flags and prediction; new run name
+because the c28d output folders exist), log under `/mnt/fast-ai/bench-results/context-longrun-20261016/c28e.log`.
