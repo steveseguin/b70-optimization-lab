@@ -48,3 +48,25 @@ copy/compute durations, route-known-to-resident wall latency and full transfer
 byte verification. Overlap is reported from duration envelopes inside a host
 wall span, without subtracting unrelated clock epochs. The synthetic source
 is already pinned; pageable-to-pinned staging remains a separate engine cost.
+
+## CPU expert byte gate passed
+
+The independently written row-vector AVX2 kernel passes both fresh CPU fixture
+processes: **54,001 checks each**, 18 complete experts, 80,640 BF16 values and
+60 raw NaN/Inf arithmetic cases. Gate/up, deterministic SiLU product and down
+match the packet49c production CPU arithmetic. The existing packet46 fixture
+digest also matches, `0ea0eeaa89bce627`. IQ3_S layer 2 is checked and benchmarked
+separately. [Build receipt](../experiments/own-xpu-runtime/stage2/packet55-feasibility/cpu/evidence/build-corrected/receipt.json),
+[two fresh byte checks](../experiments/own-xpu-runtime/stage2/packet55-feasibility/cpu/evidence/test-corrected/receipt.json).
+
+The first test harness incorrectly reduced the same mutable reference tree
+twice; its failure is retained. The fix stores the first reference result.
+No candidate arithmetic tolerance or output change was introduced.
+
+The [quiet CPU command](../experiments/own-xpu-runtime/stage2/packet55-feasibility/cpu/README.md)
+runs two fresh processes at each of 1, 4, 8, 12 and 16 threads, measuring both
+formats and actual 4/6/10-miss layer batches. The allowed affinity contains 12
+physical cores, so 16 threads means 12 physical cores plus four SMT siblings.
+Expected peak resident memory is 256 MiB, with zero pinned host memory. It must
+run only while all GPU windows remain stopped. No throughput run occurred.
+Actual device output and exception/status integration remain separate gates.

@@ -1,0 +1,25 @@
+In file included from ../../packet49c-round2/specialised.hpp:2,
+                 from ../../packet49c-round2/round2.hpp:2,
+                 from ../../packet49c-round2/p33_candidates.hpp:7,
+                 from ../../packet49c-round2/p39_fused.hpp:3,
+                 from row_expert.hpp:4,
+                 from fixtures.hpp:2,
+                 from benchmark.cpp:1:
+../../packet49c-round2/kernels.hpp: In instantiation of ‘void ng::norm_rope(Team, Get, Put, const Args&, int, int, int, int) [with Team = HostTeam; Get = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int)>; Put = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int, float)>]’:
+../../packet49c-round2/kernels.hpp:173:21:   required from ‘void ng::group(Shape, Args, int, Team) [with Team = HostTeam]’
+../../packet49c-round2/kernels.hpp:221:122:   required from here
+../../packet49c-round2/kernels.hpp:112:75: warning: unused variable ‘rotary’ [-Wunused-variable]
+  112 |  t.each(width,[&](int j){float v=t.x[j];if(j<64){int k=j%32;constexpr int rotary=64;float c=rope_constants::cos(static_cast<const uint16_t*>(a.p[16]),position,k),z=rope_constants::sin(static_cast<const uint16_t*>(a.p[16]),position,k);v=j<32?t.x[k]*c-t.x[k+32]*z:t.x[k+32]*c+t.x[k]*z;}put(j,v);});t.barrier();
+      |                                                                           ^~~~~~
+../../packet49c-round2/kernels.hpp: In instantiation of ‘void ng::norm_rope(Team, Get, Put, const Args&, int, int, int, int) [with Team = HostTeam; Get = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int)>; Put = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int, float)>]’:
+../../packet49c-round2/kernels.hpp:174:32:   required from ‘void ng::group(Shape, Args, int, Team) [with Team = HostTeam]’
+../../packet49c-round2/kernels.hpp:221:122:   required from here
+../../packet49c-round2/kernels.hpp:112:75: warning: unused variable ‘rotary’ [-Wunused-variable]
+../../packet49c-round2/kernels.hpp: In instantiation of ‘void ng::norm_rope(Team, Get, Put, const Args&, int, int, int, int) [with Team = HostTeam; Get = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int)>; Put = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int, float)>]’:
+../../packet49c-round2/kernels.hpp:175:23:   required from ‘void ng::group(Shape, Args, int, Team) [with Team = HostTeam]’
+../../packet49c-round2/kernels.hpp:221:122:   required from here
+../../packet49c-round2/kernels.hpp:112:75: warning: unused variable ‘rotary’ [-Wunused-variable]
+../../packet49c-round2/kernels.hpp: In instantiation of ‘void ng::norm_rope(Team, Get, Put, const Args&, int, int, int, int) [with Team = HostTeam; Get = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int)>; Put = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int, float)>]’:
+../../packet49c-round2/kernels.hpp:182:13:   required from ‘void ng::group(Shape, Args, int, Team) [with Team = HostTeam]’
+../../packet49c-round2/kernels.hpp:221:122:   required from here
+../../packet49c-round2/kernels.hpp:112:75: warning: unused variable ‘rotary’ [-Wunused-variable]
