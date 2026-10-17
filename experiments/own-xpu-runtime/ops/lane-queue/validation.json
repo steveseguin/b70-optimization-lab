@@ -1,0 +1,63 @@
+{
+  "schema": "lanequeue.cpu-validation.v1",
+  "utc": "2026-10-17T19:18:11.765871+00:00",
+  "device_executed": false,
+  "services_started": false,
+  "passed": true,
+  "checks": [
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "experiments/own-xpu-runtime/ops/lane-queue",
+        "-v"
+      ],
+      "rc": 0,
+      "seconds": 0.571,
+      "stdout": "",
+      "stderr": "test_changed_inflight_is_not_overwritten (test_lanequeue.Tests.test_changed_inflight_is_not_overwritten) ... ok\ntest_closed_environment_in_real_plan_call (test_lanequeue.Tests.test_closed_environment_in_real_plan_call) ... ok\ntest_coordinator_extras_only_setenv (test_lanequeue.Tests.test_coordinator_extras_only_setenv) ... ok\ntest_device_failure_stops (test_lanequeue.Tests.test_device_failure_stops) ... ok\ntest_duplicate_driver_lock_refuses (test_lanequeue.Tests.test_duplicate_driver_lock_refuses) ... ok\ntest_env_closed_and_all_unit_properties (test_lanequeue.Tests.test_env_closed_and_all_unit_properties) ... ok\ntest_execute_captures_returncode (test_lanequeue.Tests.test_execute_captures_returncode) ... ok\ntest_existing_output_and_stop_refuse_plan (test_lanequeue.Tests.test_existing_output_and_stop_refuse_plan) ... ok\ntest_fault_change_after_exit_stops (test_lanequeue.Tests.test_fault_change_after_exit_stops) ... ok\ntest_fault_change_prevents_launch (test_lanequeue.Tests.test_fault_change_prevents_launch) ... ok\ntest_gc_missing_receipt_is_not_success (test_lanequeue.Tests.test_gc_missing_receipt_is_not_success) ... ok\ntest_gc_unit_uses_durable_receipt_without_waiter (test_lanequeue.Tests.test_gc_unit_uses_durable_receipt_without_waiter) ... ok\ntest_inflight_blocks_restart (test_lanequeue.Tests.test_inflight_blocks_restart) ... ok\ntest_latch_retained (test_lanequeue.Tests.test_latch_retained) ... ok\ntest_library_parser_never_executes_shell (test_lanequeue.Tests.test_library_parser_never_executes_shell) ... ok\ntest_patterns_match_authority_and_ignore_deleted (test_lanequeue.Tests.test_patterns_match_authority_and_ignore_deleted) ... ok\ntest_pause_resume_reorder_and_append_at_boundary (test_lanequeue.Tests.test_pause_resume_reorder_and_append_at_boundary) ... ok\ntest_pause_then_stop_no_launch (test_lanequeue.Tests.test_pause_then_stop_no_launch) ... ok\ntest_plan_checks_later_lines_after_bad_line (test_lanequeue.Tests.test_plan_checks_later_lines_after_bad_line) ... ok\ntest_quick_plan_checks_all_outputs_and_readonly_seal (test_lanequeue.Tests.test_quick_plan_checks_all_outputs_and_readonly_seal) ... ok\ntest_rc_preserved_and_refused_fast_stops (test_lanequeue.Tests.test_rc_preserved_and_refused_fast_stops) ... ok\ntest_restart_observes_remaining_cooldown (test_lanequeue.Tests.test_restart_observes_remaining_cooldown) ... ok\ntest_review_placeholder_and_post_review_pause (test_lanequeue.Tests.test_review_placeholder_and_post_review_pause) ... ok\ntest_shell_plan_is_never_executed (test_lanequeue.Tests.test_shell_plan_is_never_executed) ... ok\ntest_stale_marker_and_live_marker_never_removed (test_lanequeue.Tests.test_stale_marker_and_live_marker_never_removed) ... ok\ntest_status_failure_stops_even_with_zero_rc (test_lanequeue.Tests.test_status_failure_stops_even_with_zero_rc) ... ok\ntest_stop_after_job_does_not_wait_gap (test_lanequeue.Tests.test_stop_after_job_does_not_wait_gap) ... ok\ntest_stoppost_receipt_helper_cpu_only (test_lanequeue.Tests.test_stoppost_receipt_helper_cpu_only) ... ok\n\n----------------------------------------------------------------------\nRan 28 tests in 0.494s\n\nOK\n"
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "A",
+        "--directory",
+        "experiments/own-xpu-runtime/ops/lane-queue/examples"
+      ],
+      "rc": 0,
+      "seconds": 8.567,
+      "stdout": "{\"name\": \"p67-quick-A\", \"plan\": \"passed\", \"seal\": \"checked by packet plan/wrapper\"}\n{\"name\": \"p69-quick-A\", \"plan\": \"passed\", \"seal\": \"checked by packet plan/wrapper\"}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "experiments/own-xpu-runtime/ops/lane-queue/examples"
+      ],
+      "rc": 0,
+      "seconds": 5.216,
+      "stdout": "{\"name\": \"p69-attribution-B\", \"plan\": \"passed\", \"seal\": \"checked by packet plan/wrapper\"}\n{\"name\": \"p69-quick-B\", \"plan\": \"passed\", \"seal\": \"checked by packet plan/wrapper\"}\n",
+      "stderr": ""
+    }
+  ],
+  "sha256": {
+    "lanequeue.py": "93cdc8d4254b4767385f6a56472c92532023325c329078a943a47556f90c51c2",
+    "test_lanequeue.py": "1dd8bdfd30a642d0b242df2e400a573a1d2559fc6f7dc70878428494c124c730",
+    "examples/queue-A.txt": "7399d8395e259e07d03b4357d55f09206154cb3f3942eb5a601fe777890af356",
+    "examples/queue-B.txt": "ffa040a62c749c129ec03dcffcad6a2a963d5d8268c00d3ad31ddd7bb1f3a952"
+  }
+}
