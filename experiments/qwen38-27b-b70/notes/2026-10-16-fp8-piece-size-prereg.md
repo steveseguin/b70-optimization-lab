@@ -125,3 +125,33 @@ the cold part reads about 12 % faster, each hit re-reads about 450 more tokens o
 c25b. Decision: switch the context lane's default piece to 1,280 only if K64 is faster and K32 no more than 3 %
 slower, both with full scores; otherwise 1,280 is kept as the long-document profile (reading 100K+ at once) and the
 agent default stays 832.
+
+## Result, rounds 2 and 2b (21:10-21:56 EDT, three more fresh servers, kernel log clean)
+
+Every fresh server repeats its round-1 twin within 0.2 s on every request (`edit-K832b/K1280b/K2048b.json`):
+
+| Request, 200K unless noted | K832 / K832b | K1280 / K1280b | K2048 / K2048b |
+| --- | ---: | ---: | ---: |
+| 120K cold | 69.4 / 69.6 | 56.4 / 56.2 | 54.6 / 54.6 |
+| cold | 152.1 / 152.2 | 118.1 / 118.1 | 114.1 / 114.1 |
+| same text again | 1.8 / 1.8 | 1.9 / 1.9 | 3.2 / 3.2 |
+| edit in the last block | 15.8 / 15.9 | 7.1 / 7.1 | 3.0 / 3.0 |
+| edit at 50 % | 102.9 / 103.0 | 79.5 / 79.5 | 113.9 / 114.1 |
+
+- **Exactness:** all six servers 15/15 cached = fresh; each piece size's two servers give the same 30 answers
+  (30/30), and the 30 answers are also the same across the three piece sizes.
+- **Cold reads:** 1,280 is 19 % faster than 832 at 120K and 22 % at 200K, on both servers; 2,048 is 21 % and 25 %.
+  Both meet the 10 % rule twice.
+- **The amendment's pick is 1,280:** its 200K repeat wait is 1.9 s against 3.2 s for 2,048 (1.3 s apart, more than
+  the 0.5 s allowance), at 4 s more on a 200K cold read.
+- **One registered gate is missed, by every arm but 2,048, the control worst:** "the last-block edit at 200K under
+  5 s". 1,280 takes 7.1 s, 832 takes 15.8 s. The gate assumed the re-read after a hit is at most two blocks; the
+  cached-token counts show it starts from the nearest kept state instead, at a multiple of the kept-state interval:
+  186,368 = 14 x 13,312 on 832 (13,138 tokens re-read), 192,000 = 15 x 12,800 on 1,280 (7,506), 196,608 =
+  16 x 12,288 on 2,048 (2,898). So that wait measures where the kept-state grid happens to fall against this text's
+  length, not the piece size (the same edited text sent again: 2.2 / 2.5 / 3.0 s). I do not re-read the rule to
+  pass 1,280; I record the miss and leave the choice of the agent default to part E, registered for that purpose.
+
+Outcome: 1,280-token pieces are the faster long-document setting (a 200K read 34 s shorter, everything exact); the
+agent default waits for campaign 25. A separate lever this exposes: the cost of an edit near the end is set by the
+kept-state interval (memory per kept state against re-read length), untested here.
