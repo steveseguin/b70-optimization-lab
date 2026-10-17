@@ -65,3 +65,8 @@ The final source/build check binds 489 files. Independent runtime and
 submission reviews have no unresolved blocking findings. Removing only this
 packet's regenerable object files leaves a 334.6 MB build; storage admission
 passes with about 2.54 GB above its declared reserves.
+
+Implementation commit: `44cb624cb1c06e278cde5e5843176e01d64ee821`. Final CPU
+seal `8c1d90e124fbdcd3d932dcfd31b8819674011137fbbded2a2a8340590a639cec` verifies in 0.59 seconds,
+and local submission pins bind that seal, runtime revision and prefix choice.
+The plan-only chain inspection passes. No K/device/model window was run.
