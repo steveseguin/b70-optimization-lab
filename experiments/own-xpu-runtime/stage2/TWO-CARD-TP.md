@@ -1,5 +1,13 @@
 # Two-card decode with an ordered exchange — Stage 2 design packet
 
+**October 17 navigation update:** this is the historical within-layer tensor-split
+design. The measured 39.422009 tok/s SPEED6 path instead uses a **23/25 layer
+pipeline with MTP on rank 1**. Read the [current speed roadmap](../../../notes/2026-10-17-own-runtime-iq3-speed-roadmap.md)
+for its timing budget, measured replay result and later rejected split study,
+and the [one-card design](../ONE-CARD-DESIGN.md) for CPU expert misses.
+The old capacity/speed projections below are preserved under their original
+identities; the current separate MTP layer is not present in this old GGUF census.
+
 October 11, 2026. **Design, CPU tests and compilation only. No device run.**
 Target: the separate Unsloth Flash-Next UD-IQ3_XXS quantized compressed version,
 revision `766911a6b7369840a91dbcd95f9f997acaab6cd6`, on two B70s. No weights,
