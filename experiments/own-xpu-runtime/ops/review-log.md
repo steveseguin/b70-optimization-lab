@@ -45,3 +45,25 @@ STOP-doing items applied:
 - no single-lane v1 screens while the other lane runs (v3 replaces this);
 - packet 58b waits for a no-compile window;
 - K0-KD reuse for host-only changes is noted for the chain tooling.
+
+## Review 3, 16:08 UTC: **ACT**
+
+Key finding: after packet 61, **rank 1 is the bottleneck**. Its half is 15.2-15.5 ms against rank 0's speculative 13.7 ms; the hit cycle is rank 1's half plus the draft (about 1.9 ms on rank 1). Placement options were ranked on outdated packet 56 timings.
+
+Actions, 16:08-16:15 UTC:
+1. **Placement screens (draft rank / target split) as sealed plan fields in screen v3.** Codex job `placement` is preparing four placements of packet 61x, two lanes each: 1-split23 (control), 0-split23, 0, 1. Packet 63's 22/26 premise was wrong-way; it will measure and report, and its draft-HC option still stands.
+2. **Lane-aware chain admission:** the whole-host hold is kept only for speed windows. Codex job `laneadmit` is building it for the next chains.
+3. **Packet 62 kept minimal:** `control` vs `batch`, once per lane, queued for after the chain. Close the line if the gain is under 0.5%.
+4. **Chain time used for CPU work:**
+   - three Codex jobs running (placement, laneadmit, p63);
+   - helper DEVICE regex fixed (`p\d+\S*`);
+   - a post-chain driver (`fn-run/post-p61x-chain.sh`) runs packet 61x submission prep and both dry-runs automatically, then restarts both lanes.
+5. **Packet 58b:** gets a planned whole-host slot with no compiles: the boundary before the next chain, or tonight.
+
+STOP-doing items applied:
+- re-rank levers from the newest receipts after each win;
+- cleanups only with `check_inputs.py` and exact directories;
+- `--plan` every job line before queuing;
+- bundle placement and packet 62 into the next chain;
+- compare within a lane only;
+- no record chains on lane B.

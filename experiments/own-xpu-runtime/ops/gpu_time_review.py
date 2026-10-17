@@ -17,7 +17,7 @@ import re
 import subprocess
 
 # Units that hold or wait for GPUs: device windows, chains and drivers.
-DEVICE = re.compile(r'^(packet\d+\S*|p49\S*|p5\d\S*|screen\S*)\.service$')
+DEVICE = re.compile(r'^(packet\d+\S*|p\d+\S*|screen\S*)\.service$')  # p61x-chain etc. (review 3 fix)
 # Driver units that only wait (no GPU work while they wait) are reported, but
 # not counted as busy.
 # Only units that purely wait (no device work of their own). Chain drivers such as
