@@ -1,0 +1,12 @@
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet54-compute/build/host
+[ 25%] Building CXX object CMakeFiles/compute-bench.dir/source/bench.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet54-compute/bench.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet54-compute/recurrence.hpp: In function ‘p54::RecurrenceBindingSet<T> p54::recurrence_bindings_impl(const integrated::Spec&, std::span<const T>)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet54-compute/recurrence.hpp:192:18: error: ‘flash::Op’ has not been declared
+  192 |  if(s.op!=flash::Op::gdn||s.ni!=4||s.no!=2||s.nw!=2||
+      |                  ^~
+gmake[2]: *** [CMakeFiles/compute-bench.dir/build.make:79: CMakeFiles/compute-bench.dir/source/bench.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:90: CMakeFiles/compute-bench.dir/all] Error 2
+gmake: *** [Makefile:91: all] Error 2

@@ -1,0 +1,83 @@
+{
+  "schema": "ownrt.packet54.manifest.v1",
+  "classes": [
+    "route",
+    "gdn.recurrence",
+    "hc.inject_mix_norm",
+    "ffn.combine"
+  ],
+  "variants": [
+    "route-rank4",
+    "route-exp32-rank4",
+    "rows4-shared",
+    "rows8-shared",
+    "mix-vector4"
+  ],
+  "class_variants": {
+    "route": [
+      "route-rank4",
+      "route-exp32-rank4"
+    ],
+    "gdn.recurrence": [
+      "rows4-shared",
+      "rows8-shared"
+    ],
+    "hc.inject_mix_norm": [
+      "mix-vector4"
+    ],
+    "ffn.combine": []
+  },
+  "exact_fixtures": 2,
+  "warmup": 10,
+  "iterations": 210,
+  "expected_buffers": {
+    "route": 8,
+    "gdn.recurrence": 5,
+    "hc.inject_mix_norm": 11,
+    "ffn.combine": 4
+  },
+  "expected_bytes": {
+    "route": 4684,
+    "gdn.recurrence": 1585164,
+    "hc.inject_mix_norm": 53788,
+    "ffn.combine": 20492
+  },
+  "expected_events": {
+    "route": {
+      "control": 4,
+      "route-rank4": 4,
+      "route-exp32-rank4": 4
+    },
+    "gdn.recurrence": {
+      "control": 1,
+      "rows4-shared": 1,
+      "rows8-shared": 1
+    },
+    "hc.inject_mix_norm": {
+      "control": 10,
+      "mix-vector4": 10
+    },
+    "ffn.combine": {
+      "control": 1
+    }
+  },
+  "m_values": [
+    1,
+    2
+  ],
+  "routes": 10,
+  "m2": "two serial rows; recurrence row1 consumes row0 BF16 state",
+  "gate_threshold_us": 25,
+  "banked_p53b_owner_us": [
+    23.4385,
+    23.4375
+  ],
+  "integration_threshold_us": 40,
+  "fixture_domain": "finite synthetic production shapes; small proofs add controls, nonfinite values and ties; separate same-backend HC mix nonfinite comparison",
+  "production_control": "packet49c dispatch-speed6; p51 selected route; unchanged p45 recurrence/HC/FFN bodies",
+  "decision": "one common per-class selection maximizing minimum owner saving; own >=25us and separately banked+own >=40us in BOTH owners",
+  "no_new_oracle": true,
+  "control_only_classes": [
+    "ffn.combine"
+  ]
+}

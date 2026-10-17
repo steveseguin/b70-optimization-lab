@@ -1,0 +1,15 @@
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet54-compute/build/host
+[ 25%] Building CXX object CMakeFiles/compute-bench.dir/source/bench.cpp.o
+[ 50%] Linking CXX executable compute-bench
+[ 50%] Built target compute-bench
+[ 75%] Building CXX object CMakeFiles/cpu-identity-test.dir/source/cpu_identity_test.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet54-compute/cpu_identity_test.cpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet54-compute/hc_ffn_test.hpp: In function ‘unsigned int test_hc_ffn(std::vector<unsigned char>&)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet54-compute/hc_ffn_test.hpp:13:89: error: assigning to an array from an initializer list
+   13 |   integrated::Spec s;s.special=integrated::Special::normal;s.g.context=4096;s.site.shape={4,2560};s.no=1;
+      |                                                                             ~~~~~~~~~~~~^~~~~~~~~
+gmake[2]: *** [CMakeFiles/cpu-identity-test.dir/build.make:79: CMakeFiles/cpu-identity-test.dir/source/cpu_identity_test.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:122: CMakeFiles/cpu-identity-test.dir/all] Error 2
+gmake: *** [Makefile:91: all] Error 2
