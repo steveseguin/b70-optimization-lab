@@ -1,0 +1,208 @@
+#ifndef OWN_RT_HOST_ONLY
+#define OWN_RT_HOST_ONLY
+#endif
+#include "expert_order.hpp"
+#include <openssl/evp.h>
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <sstream>
+
+// Independent scalar address/decode traversal. Candidate lane functions are
+// checked against this, and against the unchanged production p48 arithmetic.
+namespace {
+using iq3::Type;
+size_t checks=0,rows_checked=0;
+uint64_t random_state=0x5320261017ull;
+uint32_t random_word(){random_state^=random_state<<13;random_state^=random_state>>7;random_state^=random_state<<17;return uint32_t(random_state);}
+struct Digest {
+ EVP_MD_CTX* ctx=EVP_MD_CTX_new();
+ Digest(){if(!ctx||EVP_DigestInit_ex(ctx,EVP_sha256(),nullptr)!=1)throw std::runtime_error("digest init");}
+ ~Digest(){EVP_MD_CTX_free(ctx);}
+ void add(const void*p,size_t n){if(EVP_DigestUpdate(ctx,p,n)!=1)throw std::runtime_error("digest update");}
+ std::string finish(){std::array<unsigned char,32>b{};unsigned n=0;if(EVP_DigestFinal_ex(ctx,b.data(),&n)!=1||n!=32)throw std::runtime_error("digest final");std::ostringstream s;for(auto v:b)s<<std::hex<<std::setfill('0')<<std::setw(2)<<unsigned(v);return s.str();}
+} digest;
+void require(bool ok,const std::string&label){++checks;if(!ok)throw std::runtime_error(label);}
+template<class T>void byte_equal(const T&a,const T&b,const std::string&label){require(std::memcmp(&a,&b,sizeof(T))==0,label);digest.add(&a,sizeof(T));digest.add(&b,sizeof(T));}
+uint16_t read16(const uint8_t*p){return uint16_t(p[0])|(uint16_t(p[1])<<8);}
+template<Type T,unsigned K>float scalar_decode(const uint8_t*w,unsigned k){
+ constexpr auto layout=p48::layout(T,K);
+ if constexpr(T==Type::IQ2_S){
+  unsigned block=k/256,i=k%256,q=i/8;
+  unsigned low=w[block*64+q*2];
+  unsigned high=(w[layout.high+block*8+q/4]>>(2*(q%4)))&3;
+  unsigned sign=(w[block*64+q*2+1]>>(i%8))&1;
+  unsigned scale_code=(w[layout.scales+block*8+i/32]>>(4*((i/16)%2)))&15;
+  float d=iq3::half(read16(w+layout.halves+2*block));
+  float scale=(d*(.5f+float(scale_code)))*.25f;
+  int magnitude=p28::iq2_bytes[(low+256*high)*8+i%8];
+  return scale*float(sign?-magnitude:magnitude);
+ }else{
+  unsigned block=k/32,i=k%32;
+  unsigned code=(w[block*16+i%16]>>(4*(i/16)))&15;
+  return iq3::half(read16(w+layout.halves+2*block))*float(p28::iq4_bytes[code]);
+ }
+}
+template<Type T,unsigned K>std::array<float,32> scalar_lanes(const uint8_t*w,const uint16_t*x){
+ std::array<float,32> sums{};
+ // Walk scalar positions, not the production lane loop. Positions mapping to
+ // each lane arrive in exactly the original per-lane order.
+ for(unsigned k=0;k<K;++k){float value=scalar_decode<T,K>(w,k);float product=value*iq3::bits_float(uint32_t(x[k])<<16);unsigned logical=(k/8)%32;sums[logical]=sums[logical]+product;}
+ return sums;
+}
+float scalar_tree(std::array<float,32> values){
+ for(unsigned width=1;width<32;width*=2)for(unsigned logical=0;logical<32;logical+=width*2)values[logical]=values[logical]+values[logical+width];
+ return values[0];
+}
+// Adjacent virtual logical lanes live in one physical lane. The low tree
+// levels are register additions; the remaining levels select physical peers.
+// This model explicitly snapshots each shuffle round, avoiding an accidental
+// sequential in-place dependency on another lane's newly updated value.
+template<unsigned V>float virtual_tree(const std::array<float,32>&logical){
+ static_assert(V==1||V==2||V==4);
+ constexpr unsigned P=32/V;
+ std::array<std::array<float,V>,P> lanes{};
+ for(unsigned p=0;p<P;++p)for(unsigned v=0;v<V;++v)lanes[p][v]=logical[p*V+v];
+ for(unsigned width=1;width<V;width*=2)for(unsigned p=0;p<P;++p)for(unsigned v=0;v<V;v+=2*width)lanes[p][v]=lanes[p][v]+lanes[p][v+width];
+ for(unsigned width=1;width<P;width*=2){auto before=lanes;for(unsigned p=0;p<P;p+=2*width)lanes[p][0]=before[p][0]+before[p+width][0];}
+ return lanes[0][0];
+}
+template<Type T,unsigned K>void fill_row(uint8_t*w,unsigned seed){
+ constexpr auto layout=p48::layout(T,K);
+ for(size_t j=0;j<layout.row_bytes;++j)w[j]=uint8_t(random_word()+seed);
+ constexpr unsigned blocks=K/(T==Type::IQ2_S?256:32);
+ // Finite scale encodings include both zeros, smallest/largest subnormals,
+ // the normal transition, both signs, and the largest finite half value.
+ constexpr std::array<uint16_t,14> scales{0,0x8000,1,0x8001,0x03ff,0x83ff,0x0400,0x8400,0x2400,0xa400,0x3c00,0xbc00,0x7bff,0xfbff};
+ for(unsigned b=0;b<blocks;++b){uint16_t h=scales[(b+seed)%scales.size()];w[layout.halves+b*2]=uint8_t(h);w[layout.halves+b*2+1]=uint8_t(h>>8);}
+}
+template<unsigned K>void fill_input(uint16_t*x,unsigned pattern,unsigned token){
+ for(unsigned k=0;k<K;++k){
+  if(pattern==0)x[k]=iq3::bf16_bits(float(int(random_word()%257)-128)/128.f);
+  else if(pattern==1)x[k]=(k+token)%2?0x8000:0;
+  else if(pattern==2)x[k]=iq3::bf16_bits((k%8<4?1.f:-1.f)*float((k/8)%3==0?65536.f:1.f/65536.f));
+  else if(pattern==3)x[k]=uint16_t((k+token)%2?0x8001:1);
+  else x[k]=iq3::bf16_bits((k+token)%2?1.f:-1.f);
+ }
+}
+
+template<Type T,unsigned K,unsigned V>void check_virtual(const uint8_t*w,const uint16_t*x,const std::array<float,32>&expected,const uint32_t*table){
+ std::array<float,32> observed{};
+ for(unsigned p=0;p<32/V;++p){auto values=p53::lane_chains<T,K,V>(w,x,p,table);for(unsigned v=0;v<V;++v){observed[p*V+v]=values[v];byte_equal(expected[p*V+v],values[v],"candidate logical lane V"+std::to_string(V));}}
+ float sum=scalar_tree(expected);
+ byte_equal(sum,virtual_tree<V>(observed),"virtual mapped FP32 sum");
+ byte_equal(sum,p53::host_row<T,K,V>(w,x,table),"shared candidate FP32 sum");
+ byte_equal(iq3::bf16_bits(sum),iq3::bf16_bits(p53::host_row<T,K,V>(w,x,table)),"shared candidate BF16 bytes");
+}
+template<unsigned V>void check_paired(const uint8_t*w,const uint8_t*peer,const uint16_t*x,const std::array<float,32>&expected,const std::array<float,32>&expected_peer,const uint32_t*table){
+ std::array<float,32> actual{},actual_peer{};
+ for(unsigned p=0;p<32/V;++p){auto values=p53::gate_chains<V>(w,peer,x,p,table);for(unsigned v=0;v<V;++v){unsigned lane=p*V+v;actual[lane]=values[0][v];actual_peer[lane]=values[1][v];byte_equal(expected[lane],values[0][v],"paired gate logical FP32 chain");byte_equal(expected_peer[lane],values[1][v],"paired up logical FP32 chain");}}
+ byte_equal(scalar_tree(expected),virtual_tree<V>(actual),"paired gate FP32 tree");byte_equal(scalar_tree(expected_peer),virtual_tree<V>(actual_peer),"paired up FP32 tree");
+}
+template<Type T,unsigned K,unsigned Rows>void routed_rows(){
+ constexpr auto layout=p48::layout(T,K);
+ constexpr unsigned experts=16,slots=10;
+ // Real production row/expert strides, including untouched padding rows.
+ // Only selected rows are populated/evaluated so this gate stays CPU-light.
+ std::vector<uint8_t> weights(experts*Rows*layout.row_bytes);
+ std::array<uint16_t,K*slots> input{};
+ std::array<iq3::Route,slots> routes{};
+ std::array<uint32_t,2048> local_table{};
+ std::copy(p42expert::iq2_words.begin(),p42expert::iq2_words.end(),local_table.begin());
+ constexpr std::array<unsigned,5> sample_rows{0,1,31,Rows/2,Rows-1};
+ for(unsigned stream=0;stream<(T==Type::IQ2_S?2u:1u);++stream){
+  for(unsigned expert=0;expert<experts;++expert)for(unsigned row:sample_rows)fill_row<T,K>(weights.data()+(size_t(expert)*Rows+row)*layout.row_bytes,expert+row+stream*23);
+  // M=1 is one serial row; M=2 is two distinct serial activation/route rows.
+  for(unsigned m:{1u,2u})for(unsigned token=0;token<m;++token){
+   std::array<bool,experts> seen{};
+   for(unsigned slot=0;slot<slots;++slot){unsigned id=(3*slot+5*token+7*(m-1))%experts;routes[slot]={id,0,Rows};require(!seen[id],"ten routes distinct");seen[id]=true;digest.add(&routes[slot],sizeof(routes[slot]));}
+   for(unsigned pattern=0;pattern<5;++pattern){
+    for(unsigned slot=0;slot<slots;++slot)fill_input<K>(input.data()+slot*K,pattern,token+slot);
+    for(unsigned slot=0;slot<slots;++slot)for(unsigned row:sample_rows){
+     auto*w=weights.data()+(size_t(routes[slot].expert_id)*Rows+routes[slot].row_begin+row)*layout.row_bytes;
+     auto*x=input.data()+(T==Type::IQ4_NL?slot*K:0);
+     auto expected=scalar_lanes<T,K>(w,x);
+     for(unsigned lane=0;lane<32;++lane){float actual=p48::lane<T,K>(w,x,0,K,lane);byte_equal(expected[lane],actual,"independent versus production lane");}
+     byte_equal(scalar_tree(expected),iq3::tree32(expected.data()),"production FP32 tree");
+     check_virtual<T,K,1>(w,x,expected,nullptr);check_virtual<T,K,2>(w,x,expected,nullptr);check_virtual<T,K,4>(w,x,expected,nullptr);
+     if constexpr(T==Type::IQ2_S){
+      check_virtual<T,K,1>(w,x,expected,local_table.data());check_virtual<T,K,2>(w,x,expected,local_table.data());check_virtual<T,K,4>(w,x,expected,local_table.data());
+      auto*peer=weights.data()+(size_t((routes[slot].expert_id+1)%experts)*Rows+row)*layout.row_bytes;auto expected_peer=scalar_lanes<T,K>(peer,x);
+      for(unsigned lane=0;lane<32;++lane){auto reference=p48::gate_lane<T,K>(w,peer,x,0,K,lane);byte_equal(reference[0],expected[lane],"paired production gate chain");byte_equal(reference[1],expected_peer[lane],"paired production up chain");}
+      for(auto*table:{static_cast<const uint32_t*>(nullptr),static_cast<const uint32_t*>(local_table.data())}){check_paired<1>(w,peer,x,expected,expected_peer,table);check_paired<2>(w,peer,x,expected,expected_peer,table);check_paired<4>(w,peer,x,expected,expected_peer,table);}
+     }
+     ++rows_checked;
+    }
+   }
+  }
+ }
+}
+void decode_checks(){
+ constexpr unsigned K=2560;constexpr auto l=p48::layout(Type::IQ2_S,K);
+ alignas(16)std::array<uint8_t,l.row_bytes>w{};
+ std::array<uint32_t,2048> table{};
+ for(unsigned i=0;i<table.size();++i){table[i]=p42expert::iq2_words[i];for(unsigned j=0;j<4;++j)byte_equal(uint8_t(table[i]>>(8*j)),p28::iq2_bytes[i*4+j],"full SLM codebook copy");}
+ auto check=[&](){float global[8],local[8],production[8];p53::decode_iq2<K>(w.data(),0,global);p53::decode_iq2<K>(w.data(),0,local,table.data());p48::decode8<Type::IQ2_S,K>(w.data(),0,production);for(unsigned j=0;j<8;++j){float independent=scalar_decode<Type::IQ2_S,K>(w.data(),j);byte_equal(independent,production[j],"scalar IQ2 decode");byte_equal(independent,global[j],"global IQ2 decode");byte_equal(independent,local[j],"SLM IQ2 decode");}};
+ w[l.halves+1]=0x3c;
+ for(unsigned index=0;index<1024;++index)for(unsigned signs=0;signs<256;++signs){w[0]=uint8_t(index);w[1]=uint8_t(signs);w[l.high]=uint8_t(index>>8);w[l.scales]=uint8_t(index);check();}
+ constexpr std::array<uint16_t,14> scales{0,0x8000,1,0x8001,0x03ff,0x83ff,0x0400,0x8400,0x2400,0xa400,0x3c00,0xbc00,0x7bff,0xfbff};
+ for(uint16_t h:scales)for(unsigned nibble=0;nibble<16;++nibble)for(unsigned index=0;index<1024;index+=31){w[0]=uint8_t(index);w[1]=uint8_t(index+17);w[l.high]=uint8_t(index>>8);w[l.scales]=uint8_t(nibble);w[l.halves]=uint8_t(h);w[l.halves+1]=uint8_t(h>>8);check();}
+}
+template<unsigned K,unsigned V>void chain_census(){
+ std::array<unsigned,K> visits{};
+ for(unsigned p=0;p<32/V;++p)for(unsigned v=0;v<V;++v){unsigned logical=p*V+v,steps=0;for(unsigned k=8*logical;k<K;k+=256){++steps;for(unsigned j=0;j<8;++j)++visits[k+j];}require(steps==(K==640?(logical<16?3u:2u):10u),"exact K-dependent logical chain lengths");}
+ for(unsigned count:visits)require(count==1,"each scalar assigned to exactly one logical chain");
+}
+template<unsigned V>void schedule_census(unsigned total,unsigned arm){
+ unsigned groups=p53::group_count(total,arm);std::vector<unsigned> visits(total);
+ for(unsigned group=0;group<groups;++group)for(unsigned sub=0;sub<8;++sub)for(unsigned iteration=0;;++iteration){
+  unsigned base=p53::scheduled_row<V>(group,sub,0,iteration,groups);if(base>=total)break;
+  for(unsigned rr=0;rr<V;++rr){unsigned row=p53::scheduled_row<V>(group,sub,rr,iteration,groups);require(row==base+rr,"subgroup rows adjacent");if(row<total)++visits[row];}
+  if(!p53::variants[arm].persistent)break;
+ }
+ for(unsigned count:visits)require(count==1,"persistent scheduler visits every output exactly once");
+}
+template<Type T,unsigned K>void kernel_controls(){
+ constexpr unsigned rows=5,experts=16,slots=10;constexpr auto layout=p48::layout(T,K);
+ std::vector<uint8_t>w(experts*rows*layout.row_bytes),peer(w.size());
+ for(unsigned row=0;row<experts*rows;++row){fill_row<T,K>(w.data()+row*layout.row_bytes,row);fill_row<T,K>(peer.data()+row*layout.row_bytes,row+17);}
+ std::array<uint16_t,K*slots>x{};for(unsigned slot=0;slot<slots;++slot)fill_input<K>(x.data()+slot*K,0,slot);
+ for(unsigned token=0;token<2;++token)for(unsigned control=0;control<7;++control){
+  std::array<iq3::Route,slots>routes{};for(unsigned slot=0;slot<slots;++slot)routes[slot]={(3*slot+token*5)%experts,0,rows};
+  if(control==1)routes[3].expert_id=experts;
+  if(control==2)routes[2].row_begin=rows;
+  if(control==3)routes[0].row_count=rows-2;
+  if(control==4||control==5)routes[7].expert_id=experts;
+  if(control==6){routes[5].row_begin=1;routes[5].row_count=rows-1;}
+  std::array<uint16_t,rows*slots>expected{},expected_peer{};expected.fill(0xa5a5);expected_peer.fill(0x5a5a);
+  std::array<uint32_t,slots>status{},peer_status{};status.fill(13);peer_status.fill(17);
+  uint32_t error=control==5?7:0,active=control==4?0:1;
+  std::array<void*,10>ref{w.data(),peer.data(),x.data(),expected.data(),expected_peer.data(),routes.data(),status.data(),peer_status.data(),&error,&active};
+  p48b::Kernel<T,K> production;production.rows=rows;production.count=slots;production.experts=experts;production.run(ref);
+  for(unsigned arm=0;arm<p53::variants.size();++arm){if(!p53::valid_variant(T,arm))continue;
+   std::array<uint16_t,rows*slots>observed{},observed_peer{};observed.fill(0xa5a5);observed_peer.fill(0x5a5a);
+   std::array<uint32_t,slots>observed_status{},observed_peer_status{};observed_status.fill(13);observed_peer_status.fill(17);uint32_t observed_error=control==5?7:0;
+   std::array<void*,10>args{w.data(),peer.data(),x.data(),observed.data(),observed_peer.data(),routes.data(),observed_status.data(),observed_peer_status.data(),&observed_error,&active};
+   p53::Kernel<T,K> candidate;candidate.rows=rows;candidate.count=slots;candidate.experts=experts;candidate.variant=arm;candidate.run(args);
+   byte_equal(expected,observed,"whole-kernel output/control bytes");byte_equal(expected_peer,observed_peer,"whole-kernel peer bytes");byte_equal(status,observed_status,"route status");byte_equal(peer_status,observed_peer_status,"peer route status");byte_equal(error,observed_error,"active and sticky error");
+  }
+ }
+}
+void candidate_checks(){
+ chain_census<2560,1>();chain_census<2560,2>();chain_census<2560,4>();chain_census<640,1>();chain_census<640,2>();chain_census<640,4>();
+ for(unsigned total:{1u,3u,50u,511u,513u,6400u,6401u,25600u,25601u})for(unsigned arm=0;arm<p53::variants.size();++arm){unsigned v=p53::variants[arm].virtualization;if(v==1)schedule_census<1>(total,arm);else if(v==2)schedule_census<2>(total,arm);else schedule_census<4>(total,arm);}
+ decode_checks();routed_rows<Type::IQ2_S,2560,640>();routed_rows<Type::IQ4_NL,640,2560>();kernel_controls<Type::IQ2_S,2560>();kernel_controls<Type::IQ4_NL,640>();
+}
+void tree_adversaries(){
+ for(unsigned test=0;test<128;++test){std::array<float,32> v{};for(unsigned j=0;j<32;++j){
+  if(test==0)v[j]=iq3::bits_float(j%2?0x80000000u:0u);
+  else if(test==1)v[j]=(j%4==0?1e20f:j%4==1?1.f:j%4==2?-1e20f:-1.f);
+  else v[j]=std::ldexp(float(int(random_word()%4097)-2048),int(random_word()%41)-20);
+ }float expected=scalar_tree(v);byte_equal(expected,iq3::tree32(v.data()),"independent adjacent tree");byte_equal(expected,virtual_tree<1>(v),"V1 adjacent tree");byte_equal(expected,virtual_tree<2>(v),"V2 adjacent tree");byte_equal(expected,virtual_tree<4>(v),"V4 adjacent tree");}
+ // Demonstrate that the proof would reject the packet52-style reordering.
+ std::array<float,32> v{};v[0]=1e20f;v[1]=1.f;v[2]=-1e20f;v[3]=1.f;
+ float wrong=(v[0]+v[2])+(v[1]+v[3]);float right=scalar_tree(v);
+ require(std::bit_cast<uint32_t>(wrong)!=std::bit_cast<uint32_t>(right),"tree negative control catches reordering");
+}
+}
+int main(){try{tree_adversaries();candidate_checks();std::cout<<"{\"schema\":\"ownrt.packet53.cpu_identity.v1\",\"passed\":true,\"device_executed\":false,\"checks\":"<<checks<<",\"rows_checked\":"<<rows_checked<<",\"output_sha256\":\""<<digest.finish()<<"\"}\n";return 0;}catch(const std::exception&e){std::cout<<"{\"passed\":false,\"checks\":"<<checks<<",\"error\":\""<<e.what()<<"\"}\n";return 1;}}
