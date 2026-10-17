@@ -1,0 +1,33 @@
+{
+  "schema": "own-xpu-runtime.packet4.owner-window.v1",
+  "authorized": true,
+  "halt_resolved": true,
+  "host": "steve-b70s",
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "issued_unix": 1792197213,
+  "expires_unix": 1792200813,
+  "previous_teardown_completed_unix": 1792197213.0,
+  "preregistration_sha256": "db83805e9a2b4099a0f6bdb005d0d08310009d474ce62546356f3c505e9f65b9",
+  "purpose": "a367-diagnostic-census",
+  "census_arm": "graph-census",
+  "census_preregistration_sha256": "18a68e09d5c0066319d51caa21aaa07b558a7d53889955655366b1b7fa9eb085",
+  "census_seal_sha256": "f9ba14c2e697b41efebb537bea9462d8551a1f12fa2ab273f98243b49bd1bc4b",
+  "admission_revision_sha256": null,
+  "health_path": "/home/steve/llm-optimizations/data/2026-10-17-flash-next-a367-census-reseal/window-20261017T002647Z/health.json",
+  "health_sha256": "bfc366da5be937164555335985a7e7b8a256225e50907c8261274080c6243d60",
+  "payload_sha256": "698154ce02eb428d21855f0f96eae06c0c3bd3df862a2f7b9193bcdaef75db6c",
+  "output": "/mnt/raid-models/bench-results/a367c-20261017T002647Z",
+  "firmware": "GuC 70.44.1 (xe/bmg_guc_70.bin), HuC 8.2.10 (xe/bmg_huc.bin); observed in the kernel log of this boot",
+  "pci_ids": [
+    "0000:23:00.0",
+    "0000:27:00.0",
+    "0000:43:00.0",
+    "0000:47:00.0"
+  ],
+  "census_memory_exception": {
+    "approved": true,
+    "approved_by": "owner",
+    "minimum_mem_available_kib": 114840824,
+    "owner_approval_text": "I authorize one A367 diagnostic census on steve-b70s with a census-only MemAvailable start floor of 114840824 KiB, a 0.5-second watchdog and the 12000000 KiB live reserve, under preregistration SHA256 18a68e09d5c0066319d51caa21aaa07b558a7d53889955655366b1b7fa9eb085 and seal SHA256 f9ba14c2e697b41efebb537bea9462d8551a1f12fa2ab273f98243b49bd1bc4b. Tracing is diagnostic and makes no speed claim. This accepts the unmeasured tracer and generation-memory risk, does not lower the packet-4 fixture floor, and does not resolve the halt or authorize another launch."
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "schema": "own-xpu-runtime.packet4.a367-census.v1",
+  "passed": false,
+  "ready": false,
+  "clean_exit": false,
+  "gap_complete": true,
+  "all_owners_gone": true,
+  "gpu_fault_lines": 0,
+  "expected_tracer_exit_crash": {
+    "classification": "expected_tracer_exit_crash",
+    "server_returncode": 1,
+    "signatures": [
+      "ucs_handle_error",
+      "Segmentation fault"
+    ],
+    "microtest_evidence": "data/2026-10-17-flash-next-trace-feasibility/20261017T001502Z/",
+    "census_validity_requires_complete_traces_and_requests": true
+  },
+  "trace_capture": {
+    "schema": "a367-census-capture-resume.v1",
+    "loaded_ranks": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "resume_attempts": 1,
+    "acknowledged": true,
+    "capture_before_acknowledgement": false,
+    "valid_for_graph_attribution": true,
+    "failure": null,
+    "acknowledgement": {
+      "action": "resume",
+      "unix": 1792198307.6217408,
+      "monotonic": 41015.490313335,
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "[INFO] Session A367Cb5d04972479e7575d44c is resumed\n"
+    },
+    "ordering_rule": "Any capture bytes observed through the post-ack log read invalidate; conservative on races."
+  },
+  "census_validity": "pending offline four-rank trace analysis",
+  "client": {
+    "attempted": false
+  },
+  "comparison": null,
+  "failure": "ValueError: server exited before plateau completed",
+  "summary": null,
+  "samples_sha256": "01eb39738a32733ac09b1396e28a3d9bcde5c45ff0d19f830be72cf6ca4566d3",
+  "identity_sha256": "5559d3dab4b45baafe4a9d922b50fd7e828ca0d4958688109c514d4da00a177f",
+  "mock": false,
+  "stop_sha256": "108a19a3dddaf134bc138760c29bb57c95cbf8657df2c0a88996c908d1b2f105"
+}
