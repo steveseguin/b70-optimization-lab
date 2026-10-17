@@ -1,0 +1,77 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "scope": "Read-only prior placement census plus model allocation ledger; no packet64 device measurement. Batch descriptors fit existing reserve. BF16 cache unchanged.",
+  "placements": [
+    {
+      "placement": "1",
+      "target_split": 0,
+      "draft_rank": 1,
+      "census_original": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3/evidence/p61x-pl-1-B/run/ranks/rank0/census.json",
+      "census_sha256": "128920cfb72982b0d7b0968f1a5fcebea84eaf13a946e6e1a50e7fb4dbf1221e",
+      "census_archive": "evidence/batch-memory-1-census.json.gz",
+      "census_archive_sha256": "98474911d86b2f94a12c0534824576be8b0b91a83dbc3231001f78ed2e2fbb39",
+      "census_allocation_count": 1677,
+      "snapshot_capacity": 373633560,
+      "descriptor_bytes_bound": 53760,
+      "ranks": [
+        {
+          "rank": 0,
+          "target_layers": 24,
+          "modeled_arena_bytes": 27685361748,
+          "batch_extra_bound_bytes": 65536,
+          "arena_headroom_bytes": 4526827436,
+          "reserve_bytes": 46500548,
+          "minimum_free_bytes": 1500000000,
+          "passed": true
+        },
+        {
+          "rank": 1,
+          "target_layers": 24,
+          "modeled_arena_bytes": 31267162826,
+          "batch_extra_bound_bytes": 0,
+          "arena_headroom_bytes": 945091894,
+          "reserve_bytes": 1228800,
+          "minimum_free_bytes": 1500000000,
+          "passed": true
+        }
+      ],
+      "passed": true
+    },
+    {
+      "placement": "1-split23",
+      "target_split": 23,
+      "draft_rank": 1,
+      "census_original": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3/evidence/p61x-pl-1split23-A/run/ranks/rank0/census.json",
+      "census_sha256": "6d1e126571de38e6a16b53af8d15711db697a5508926681988dc2c907760b45b",
+      "census_archive": "evidence/batch-memory-1-split23-census.json.gz",
+      "census_archive_sha256": "a72aafd44917c62b48189baaae1a0a98608cd8452d57cf0ec62c976fe8815410",
+      "census_allocation_count": 1605,
+      "snapshot_capacity": 103607362,
+      "descriptor_bytes_bound": 51392,
+      "ranks": [
+        {
+          "rank": 0,
+          "target_layers": 23,
+          "modeled_arena_bytes": 26039514280,
+          "batch_extra_bound_bytes": 65536,
+          "arena_headroom_bytes": 6172674904,
+          "reserve_bytes": 46500548,
+          "minimum_free_bytes": 1500000000,
+          "passed": true
+        },
+        {
+          "rank": 1,
+          "target_layers": 25,
+          "modeled_arena_bytes": 32122890400,
+          "batch_extra_bound_bytes": 0,
+          "arena_headroom_bytes": 89364320,
+          "reserve_bytes": 1228800,
+          "minimum_free_bytes": 1500000000,
+          "passed": true
+        }
+      ],
+      "passed": true
+    }
+  ]
+}

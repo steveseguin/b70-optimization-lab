@@ -1,0 +1,18 @@
+{
+  "placement": "1-split23",
+  "draft_rank": 1,
+  "target_split": 23,
+  "layer_boundary": 23,
+  "binary_sha256": "aeda7568a61544c344857e47ca03a35d1fcd77a5f25a2db45f4486ceed0b30de",
+  "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+  "engine_sources": {
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/main.cpp": "3c5b7cdb2a28bf3944c2998c9d5da589168837d95a27a799c9c4a87fb72cbe7c",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/rank.hpp": "7e12a444f329a069156eef0bbd00ed19f2fe9e249f43a452da78586f989c1817",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/mtp.hpp": "bcab74d124719cf7a21c45da1b1e818d83d71d2c245ac3bde82b0de173824688",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/p56_config.hpp": "830eeed71e2298f6c0160147f92440ec5cdb784b1b108a7feecd3629174fbb9d",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/p56_prefix.hpp": "0bea4bf778614cedfa8a179c3965cef73ce0a48bc764a942a85bd556a68dfd0e",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/strict_snapshot.hpp": "043717f1e5d1d975ae9ee8c5d0260ca314aa182280d210af1b4b763f04fbc94b",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/p49d_submit.cpp": "1ce56f12c5c61a16c85c785e5ed6c1997e47c53b3ed8c51321f33eaf50c712c7"
+  },
+  "rationale": "Both placements retain the shared full head on rank1. K2 dispatch keys are operator classes, independent of layer ownership; full chain still requires fresh exactness."
+}
