@@ -1,0 +1,144 @@
+{
+  "schema": "ownrt.packet52.manifest.v1",
+  "classes": [
+    "expsgate",
+    "gdn.qkv",
+    "expsdown",
+    "attention",
+    "hc.low_gate",
+    "small.ffn.q6",
+    "gdn.z"
+  ],
+  "variants": [
+    "row16-v8",
+    "row8-dual-v8",
+    "split4-row16-v8",
+    "row16-dual-local",
+    "row32-quad-v8"
+  ],
+  "exact_fixtures": 2,
+  "warmup": 10,
+  "iterations": 210,
+  "expected_buffers": {
+    "expsgate": 4,
+    "gdn.qkv": 1,
+    "expsdown": 2,
+    "attention": 2,
+    "hc.low_gate": 6,
+    "small.ffn.q6": 4,
+    "gdn.z": 1
+  },
+  "expected_events": {
+    "expsgate": {
+      "control": 1,
+      "row16-v8": 1,
+      "row8-dual-v8": 1,
+      "split4-row16-v8": 2,
+      "row16-dual-local": 1,
+      "row32-quad-v8": 1
+    },
+    "gdn.qkv": {
+      "control": 1,
+      "row16-v8": 1,
+      "row8-dual-v8": 1,
+      "split4-row16-v8": 2,
+      "row16-dual-local": 1,
+      "row32-quad-v8": 1
+    },
+    "expsdown": {
+      "control": 1,
+      "row16-v8": 1,
+      "row8-dual-v8": 1,
+      "split4-row16-v8": 2,
+      "row16-dual-local": 1,
+      "row32-quad-v8": 1
+    },
+    "attention": {
+      "control": 2,
+      "row16-v8": 1,
+      "row8-dual-v8": 1,
+      "split4-row16-v8": 2,
+      "row16-dual-local": 1,
+      "row32-quad-v8": 1
+    },
+    "hc.low_gate": {
+      "control": 4,
+      "row16-v8": 4,
+      "row8-dual-v8": 4,
+      "split4-row16-v8": 8,
+      "row16-dual-local": 4,
+      "row32-quad-v8": 4
+    },
+    "small.ffn.q6": {
+      "control": 1,
+      "row16-v8": 1,
+      "row8-dual-v8": 1,
+      "split4-row16-v8": 2,
+      "row16-dual-local": 1,
+      "row32-quad-v8": 1
+    },
+    "gdn.z": {
+      "control": 1,
+      "row16-v8": 1,
+      "row8-dual-v8": 1,
+      "split4-row16-v8": 2,
+      "row16-dual-local": 1,
+      "row32-quad-v8": 1
+    }
+  },
+  "m_values": [
+    1,
+    2
+  ],
+  "m2": "two independent serial M=1 production token rows",
+  "routes": 10,
+  "fixture_domain": "finite weights and activations, valid distinct routes, active=1,error=0,position=4095",
+  "timing_payload": "packet51 deterministic synthetic bytes, production row formats and strides",
+  "variant_orders": [
+    {
+      "name": "row16-v8",
+      "lanes": 16,
+      "accumulators": 1,
+      "split": 1,
+      "local_iq2_table": false
+    },
+    {
+      "name": "row8-dual-v8",
+      "lanes": 8,
+      "accumulators": 2,
+      "split": 1,
+      "local_iq2_table": false
+    },
+    {
+      "name": "split4-row16-v8",
+      "lanes": 16,
+      "accumulators": 1,
+      "split": 4,
+      "local_iq2_table": false
+    },
+    {
+      "name": "row16-dual-local",
+      "lanes": 16,
+      "accumulators": 2,
+      "split": 1,
+      "local_iq2_table": true
+    },
+    {
+      "name": "row32-quad-v8",
+      "lanes": 32,
+      "accumulators": 4,
+      "split": 1,
+      "local_iq2_table": false
+    }
+  ],
+  "restoration": "4 initial snapshots; each timed arm restores only class operand/output/control allocations, excludes workspace/scratch",
+  "expected_bytes": {
+    "expsgate": 25680,
+    "gdn.qkv": 20480,
+    "expsdown": 51240,
+    "attention": 25600,
+    "hc.low_gate": 43520,
+    "small.ffn.q6": 3586,
+    "gdn.z": 12288
+  }
+}

@@ -1,0 +1,183 @@
+{
+  "schema": "own-runtime.packet52.cpu-gates.v1",
+  "passed": true,
+  "device_executed": false,
+  "build_receipt_sha256": "21534376fb096b90437d66883b84d6b34efaec7fab97f9042b0c8595d274e3bc",
+  "intel_build_receipt_sha256": "df07208db747632bebf09ae26aa107a3f050ecf5c09809756146f460d9b17644",
+  "artifacts": {
+    "experiments/own-xpu-runtime/stage2/packet52-freeorder/build/host/freeorder-bench": "5ca52741f10e46033e7b1a2f2d67c995b84e9ee7ce88b0f04fd4bcbd391cbaa9",
+    "experiments/own-xpu-runtime/stage2/packet52-freeorder/build/intel-host/freeorder-bench": "b21a7e13cb11f65d9374a7fc696b54a5b0221ff964ead331f71282dab86843bf"
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet52-freeorder/cpu_gate.py": "b4fe8537d64d62f5e0f617540dbfb47822eb3104c0ca22226c7cb44bd908e487"
+  },
+  "admission": {
+    "nice": 19,
+    "affinity": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "build_bytes": 66813313,
+    "free_bytes": 20372897792,
+    "planned_write_bytes": 8000000
+  },
+  "runs": [
+    {
+      "compiler": "host",
+      "binary_sha256": "5ca52741f10e46033e7b1a2f2d67c995b84e9ee7ce88b0f04fd4bcbd391cbaa9",
+      "repeat": 0,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet52-freeorder/build/host/freeorder-bench",
+        "--mode",
+        "cpu",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/host-1792226504933021372-0"
+      ],
+      "elapsed_seconds": 0.037866792001295835,
+      "output": "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/host-1792226504933021372-0",
+      "files": {
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/host-1792226504933021372-0/comparisons.jsonl": "9d9dd5028de57a2b427b858a10f4abe1c188bc9dbb5e11c0c610c09f5ec2ccb0",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/host-1792226504933021372-0/native.log": "3f84e23d09afb2fc0d4a03cfa66fc5d6c5dfe452aafb8d11251ff60b95da1ec3",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/host-1792226504933021372-0/receipt.json": "3f84e23d09afb2fc0d4a03cfa66fc5d6c5dfe452aafb8d11251ff60b95da1ec3"
+      },
+      "checks": 35,
+      "comparisons_sha256": "9d9dd5028de57a2b427b858a10f4abe1c188bc9dbb5e11c0c610c09f5ec2ccb0"
+    },
+    {
+      "compiler": "host",
+      "binary_sha256": "5ca52741f10e46033e7b1a2f2d67c995b84e9ee7ce88b0f04fd4bcbd391cbaa9",
+      "repeat": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet52-freeorder/build/host/freeorder-bench",
+        "--mode",
+        "cpu",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/host-1792226504933021372-1"
+      ],
+      "elapsed_seconds": 0.037598677998175845,
+      "output": "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/host-1792226504933021372-1",
+      "files": {
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/host-1792226504933021372-1/comparisons.jsonl": "9d9dd5028de57a2b427b858a10f4abe1c188bc9dbb5e11c0c610c09f5ec2ccb0",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/host-1792226504933021372-1/native.log": "3f84e23d09afb2fc0d4a03cfa66fc5d6c5dfe452aafb8d11251ff60b95da1ec3",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/host-1792226504933021372-1/receipt.json": "3f84e23d09afb2fc0d4a03cfa66fc5d6c5dfe452aafb8d11251ff60b95da1ec3"
+      },
+      "checks": 35,
+      "comparisons_sha256": "9d9dd5028de57a2b427b858a10f4abe1c188bc9dbb5e11c0c610c09f5ec2ccb0"
+    },
+    {
+      "compiler": "intel-host",
+      "binary_sha256": "b21a7e13cb11f65d9374a7fc696b54a5b0221ff964ead331f71282dab86843bf",
+      "repeat": 0,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet52-freeorder/build/intel-host/freeorder-bench",
+        "--mode",
+        "cpu",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/intel-host-1792226504933021372-0"
+      ],
+      "elapsed_seconds": 0.037567167993984185,
+      "output": "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/intel-host-1792226504933021372-0",
+      "files": {
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/intel-host-1792226504933021372-0/comparisons.jsonl": "9d9dd5028de57a2b427b858a10f4abe1c188bc9dbb5e11c0c610c09f5ec2ccb0",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/intel-host-1792226504933021372-0/native.log": "3f84e23d09afb2fc0d4a03cfa66fc5d6c5dfe452aafb8d11251ff60b95da1ec3",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/intel-host-1792226504933021372-0/receipt.json": "3f84e23d09afb2fc0d4a03cfa66fc5d6c5dfe452aafb8d11251ff60b95da1ec3"
+      },
+      "checks": 35,
+      "comparisons_sha256": "9d9dd5028de57a2b427b858a10f4abe1c188bc9dbb5e11c0c610c09f5ec2ccb0"
+    },
+    {
+      "compiler": "intel-host",
+      "binary_sha256": "b21a7e13cb11f65d9374a7fc696b54a5b0221ff964ead331f71282dab86843bf",
+      "repeat": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet52-freeorder/build/intel-host/freeorder-bench",
+        "--mode",
+        "cpu",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/intel-host-1792226504933021372-1"
+      ],
+      "elapsed_seconds": 0.03797008599212859,
+      "output": "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/intel-host-1792226504933021372-1",
+      "files": {
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/intel-host-1792226504933021372-1/comparisons.jsonl": "9d9dd5028de57a2b427b858a10f4abe1c188bc9dbb5e11c0c610c09f5ec2ccb0",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/intel-host-1792226504933021372-1/native.log": "3f84e23d09afb2fc0d4a03cfa66fc5d6c5dfe452aafb8d11251ff60b95da1ec3",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/intel-host-1792226504933021372-1/receipt.json": "3f84e23d09afb2fc0d4a03cfa66fc5d6c5dfe452aafb8d11251ff60b95da1ec3"
+      },
+      "checks": 35,
+      "comparisons_sha256": "9d9dd5028de57a2b427b858a10f4abe1c188bc9dbb5e11c0c610c09f5ec2ccb0"
+    }
+  ],
+  "full_runs": [
+    {
+      "repeat": 0,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet52-freeorder/build/host/freeorder-bench",
+        "--mode",
+        "cpu-full",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-0"
+      ],
+      "elapsed_seconds": 9.028673409004114,
+      "output": "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-0",
+      "files": {
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-0/comparisons.jsonl": "f62c1f53c522dbf65c68be6bce6ce65b9d2eb046f1ef0bbcd7c69cc5a90db400",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-0/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-0/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-0/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-0/native.log": "37d6908ec331a2eea8a154313833f0f1be2623e78807ccf0d4343fc89127ddca",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-0/receipt.json": "a27da30068bc3d8074e9d872c9396a85a27c429d9a2aa9ad4ed863eb0a51b7cc",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-0/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-0/iterations.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "checks": 42,
+      "comparisons_sha256": "f62c1f53c522dbf65c68be6bce6ce65b9d2eb046f1ef0bbcd7c69cc5a90db400"
+    },
+    {
+      "repeat": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet52-freeorder/build/host/freeorder-bench",
+        "--mode",
+        "cpu-full",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-1"
+      ],
+      "elapsed_seconds": 8.977613087001373,
+      "output": "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-1",
+      "files": {
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-1/comparisons.jsonl": "f62c1f53c522dbf65c68be6bce6ce65b9d2eb046f1ef0bbcd7c69cc5a90db400",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-1/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-1/progress.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-1/native.log": "37d6908ec331a2eea8a154313833f0f1be2623e78807ccf0d4343fc89127ddca",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-1/receipt.json": "a27da30068bc3d8074e9d872c9396a85a27c429d9a2aa9ad4ed863eb0a51b7cc",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-1/prefill-timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence-cpu/full-host-1792226504933021372-1/iterations.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "checks": 42,
+      "comparisons_sha256": "f62c1f53c522dbf65c68be6bce6ce65b9d2eb046f1ef0bbcd7c69cc5a90db400"
+    }
+  ],
+  "scope": "bounded real-K independent CPU traversals and full-shape M1 fixture; device and M2 exactness remain E gates"
+}
