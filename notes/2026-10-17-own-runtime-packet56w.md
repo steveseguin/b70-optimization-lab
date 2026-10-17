@@ -157,3 +157,37 @@ and [SUBMISSION.md](../experiments/own-xpu-runtime/stage2/packet56w-chain/SUBMIS
 The implementation commit is followed by its immutable chain seal, submission
 pins and saved CPU plan verification. Device qualification and a real record
 remain the coordinator's next work, after storage admission passes.
+
+
+### Final chain seal and handoff
+
+Implementation commit **7462ccc84** was pushed immediately. The final chain
+seal is **47e97a92d0aee2ba8705adfb5e5c5b748809ef9072992480536e66364e5d0569**.
+It preserves screen seal
+`ce0b53bc4fa84a41fb7597fd001da7435b307a29a3ba65de3416ae2cdcba4988`
+and the original screened engine hash above. Independent seal verification
+passed in 0.27 seconds. Two in-memory negative checks also refused a changed
+screen-seal digest and a changed engine digest; no real file was altered.
+
+The saved [chain plan](../experiments/own-xpu-runtime/stage2/packet56w-chain/evidence/chain-plan.json)
+passed all eleven command mappings, live immutable oracle completion checks,
+parent head prerequisites, pinned dispatch and source/binary identities.
+The [printed queue plan](../experiments/own-xpu-runtime/stage2/packet56w-chain/evidence/queue-plan.txt)
+contains each exact underlying window command. The [CPU validation receipt](../experiments/own-xpu-runtime/stage2/packet56w-chain/evidence/cpu-validation.json)
+records the test commands/counts, seal and plan hashes, and negative controls.
+
+The final plan's storage sample was **11,927,687,168 bytes
+free**, requiring **15,446,804,480 bytes**, a
+**3,519,117,312-byte shortfall**. Plan success is not
+storage admission. The coordinator's exact chain command is documented but
+will refuse until the existing budget fits. No new device window, generated
+real payload, external dry-run or submission exists. The chain output path
+has not been created.
+
+Git retention checks found no new artifact at or above 1 MiB. The only
+inherited generated source outside Git is packet45's `fusion-rope.hpp`, already
+covered by packet56w-spin's hash-checked
+[restoration instructions](../experiments/own-xpu-runtime/stage2/packet56w-spin/ARTIFACT-RETENTION.md).
+All other source-closure paths are retained in Git. Parent and screen trees
+remain unchanged. The final seal/pins/evidence commit is pushed immediately
+as well. No owner decision is requested.

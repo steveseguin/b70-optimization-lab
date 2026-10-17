@@ -1,0 +1,59 @@
+{
+  "schema": "packet56w.chain-cpu-validation.v1",
+  "passed": true,
+  "device_executed": false,
+  "implementation_commit": "7462ccc84",
+  "build_receipt_sha256": "47e97a92d0aee2ba8705adfb5e5c5b748809ef9072992480536e66364e5d0569",
+  "screen_seal_sha256": "ce0b53bc4fa84a41fb7597fd001da7435b307a29a3ba65de3416ae2cdcba4988",
+  "native_engine_sha256": "b6a78f44a7174ad2d4b22da804227cd4c4f9668cd230368a5ccbb2338c95c169",
+  "local_tests": {
+    "passed": 29,
+    "files": [
+      "test_submission56.py",
+      "test_queue_runner.py",
+      "test_packet56.py",
+      "test_spin_boundary.py"
+    ]
+  },
+  "shared_submission_tests": {
+    "passed": 128,
+    "subtests_passed": 29,
+    "files": [
+      "scripts/tests/test_packet49_submission.py",
+      "scripts/tests/test_localmaxxing_metric_accounting.py",
+      "scripts/tests/test_promotion_evidence.py",
+      "scripts/tests/test_localmaxxing_owner_scope.py",
+      "scripts/tests/test_localmaxxing_speed6_scope.py"
+    ]
+  },
+  "test_python": "/home/steve/.venvs/vllm-xpu/bin/python3",
+  "python_flags": [
+    "-B",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider"
+  ],
+  "shared_test_env": {
+    "PYTHONPATH": "scripts"
+  },
+  "nice": 19,
+  "affinity": "8-15,24-31",
+  "seal_negative_controls": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/screen-seal.json",
+      "refused": true,
+      "reason": "screen seal changed"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-chain/build/device/own-rt-iq3",
+      "refused": true,
+      "reason": "sealed bytes changed: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-chain/build/device/own-rt-iq3"
+    }
+  ],
+  "chain_plan_sha256": "0f993e0299705cea71119ea6274bf8d33cafa6f27f34b8c0f1f1b760bfc56400",
+  "queue_plan_sha256": "4710852bfdc932f3706a8fe620bb7ceaddae713ad43ddd84baaf877c5d937db3",
+  "chain_started": false,
+  "scope": "Preparation only; device qualification, real payload generation and external submission pending"
+}
