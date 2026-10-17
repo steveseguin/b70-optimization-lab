@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**October 17, packet76 attribution on CPU:** Most of rank1's reported 1.61 ms
+residual is host housekeeping, with substantial measurement overhead. The saved
+trace cannot isolate all transfer and late-submission costs. A new packet will
+screen cheaper event cleanup while preserving kernels and output checks. No GPU
+or service ran. [Evidence and next step](notes/2026-10-17-own-runtime-packet76.md).
+
 **October 17, packet58c prepared on CPU:** The one-card wrapper now counts completed pinned experts separately from remaining GPUActive growth. It keeps the same host admission, reserve and safety stops, and checks the combined memory total. All 57 CPU checks pass; native sources and binaries are unchanged. The old evidence fits the double-counting explanation but lacks the failing sample, so the new wrapper saves every sample. No GPU or service ran. The coordinator reviews the retained 58b latch, then starts the fresh card-0 chain at K1a; existing rules forbid reusing K1 across the new seal. [Task note and command](notes/2026-10-17-own-runtime-packet58c.md).
 
 **October 17, packet73 sealed on CPU:** Five choices now share one engine: packet70 production, shared-load HC, two expert follow-ups, and HC with the smaller IQ4 span. Both compilers agree on every operator byte check; accepted kernels have no offline spills. The private v4 wrapper passes 82 mock checks, all lane plans pass, and queue proposals were checked in a temporary copy. No GPU or model ran. The coordinator can screen lane A, then test its exact improving winner between fresh lane-B controls. [Task note and commands](notes/2026-10-17-own-runtime-packet73.md).
