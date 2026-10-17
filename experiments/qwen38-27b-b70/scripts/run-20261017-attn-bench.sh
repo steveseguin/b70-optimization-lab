@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # 2026-10-17 prompt-attention kernel timing (registered in notes/2026-10-17-fp8-prompt-attention-kernel.md).
 # Gemma stopped first, the R314 image's attention kernel timed alone on card 0, Gemma back unless a GPU fault line.
+# BENCH= picks the bench script (default bench-chunk-prefill-attn.py), DATA= the output folder.
 #   SUDO_ASKPASS=... systemd-run --user --unit=attn-bench ... bash run-20261017-attn-bench.sh
 set -uo pipefail
 LAB=/home/steve/b70-optimization-lab
 cd "$LAB"
 export SUDO_ASKPASS=${SUDO_ASKPASS:?set SUDO_ASKPASS}
 IMAGE=${IMAGE:-neural-download/vllm-openai-xpu:qwen38-fp8-v0290-r314-state-stride}
-D=$LAB/experiments/qwen38-27b-b70/data/2026-10-17-attn-bench
+D=${DATA:-$LAB/experiments/qwen38-27b-b70/data/2026-10-17-attn-bench}
 S=$LAB/experiments/qwen38-27b-b70/scripts
 LABEL=${LABEL:-r314}
 START=$(date '+%F %T')
@@ -39,7 +40,7 @@ pgrep -x llama-server >/dev/null && { say "ABORT: llama-server still running"; e
 sleep 5
 say "timing $IMAGE ($LABEL)"
 docker run --rm --name attn-bench --device /dev/dri:/dev/dri --group-add render --memory 6g --ulimit core=0 \
-  -e ONEAPI_DEVICE_SELECTOR=level_zero:0 -v "$S/bench-chunk-prefill-attn.py:/tmp/b.py:ro" -v "$D:/out" \
+  -e ONEAPI_DEVICE_SELECTOR=level_zero:0 -v "$S/${BENCH:-bench-chunk-prefill-attn.py}:/tmp/b.py:ro" -v "$D:/out" \
   ${EXTRA_DOCKER:-} --workdir /tmp --entrypoint python3 "$IMAGE" /tmp/b.py --out "/out/attn-$LABEL.json" ${BENCH_ARGS:-} \
   2>&1 | grep -v "^\s*$" | tail -40
 say "bench exit ${PIPESTATUS[0]}"
