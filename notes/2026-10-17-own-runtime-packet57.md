@@ -90,6 +90,27 @@ budget; no packet 57 device duration has been measured.
 - [Independent review](../experiments/own-xpu-runtime/stage2/packet57-attribution/REVIEW.md).
 
 Timeline implementation and receipts were committed and pushed as
-`a962cdeac`. Seven timeline tests pass. Validation, final build size and seal
-identity will be recorded after preparation is complete. Target-oracle
-equality and the measured instrumentation perturbation remain device-run gates.
+`a962cdeac`. The independently reviewed instrumentation, analysis and window
+implementation was committed and pushed as
+`07ff6be275c356186de2f197bd4ec20ca88cc80b`.
+
+The final GNU host and SYCL builds pass. Four fresh host-only miniature Engine
+runs (packet 56 control, packet 57 control, and two instrumented repeats)
+match all 24 target tokens, draft proposals, hit/miss counts and 96 retained
+layer fixtures per run. Five recorder/admission checks, seven timeline checks
+and seven paired-analysis checks pass. The latter include incomplete/zero
+events, wrong-rank or missing samples, and excluding partial cancelled layers
+from complete-layer costs. The CPU plan-only coordinator inspection also passes.
+
+The independently rechecked final seal is
+`dcbbb5594f120a73e6ae34898472c939098a38ef442aca0883658283f3e0631b`,
+binding 27 binaries and 496 source files. Retained build files total
+**336,332,092 bytes**, below the 1 GB cap. Cleanup removed only this packet's
+58,593,368 bytes of regenerable compiler objects. The final read-only storage
+check admits the future 3 GB diagnostic output budget while retaining the
+8 GB free-space floor; admission must be checked again at launch.
+
+No device executable was run. Packet 56 and its seal remain unchanged, and
+concurrent packet 55 changes were excluded from this task's commits.
+Target-oracle equality, actual class costs and instrumentation perturbation
+remain device-run gates. [CPU preparation closeout](../experiments/own-xpu-runtime/stage2/packet57-attribution/CPU-PREPARATION-CLOSEOUT.md).

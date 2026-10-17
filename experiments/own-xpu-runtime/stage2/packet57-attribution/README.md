@@ -4,6 +4,8 @@ This packet measures where the two-card pipeline spends time. It keeps
 packet 56's numerical kernels, 91,392-row draft prefix, 23/25 target split,
 rank-1 draft, BF16 KV and packet 49 target oracle. It is **diagnostic only**.
 The current measured record remains packet 56's **46.962697 tok/s**.
+The model is the separate Unsloth UD-IQ3_XXS quantized compressed version of
+Qwen3.8 Flash-Next.
 
 The existing receipts put rank 0 on the critical path most often. They do
 not contain usable per-layer or draft-kernel event measurements. The new
@@ -16,6 +18,8 @@ operator savings are not treated as engine savings.
   still needed from the diagnostic run.
 - [Coordinator window](WINDOW.md): exact command, duration and gates.
 - [Independent review](REVIEW.md): observation-only changes and admission checks.
+- [CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md): completed checks and
+  pending device evidence.
 - [Task note](../../../../notes/2026-10-17-own-runtime-packet57.md).
 
 Only the new packet's documented entry points are operational instructions.
