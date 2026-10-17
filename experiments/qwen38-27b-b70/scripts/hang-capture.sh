@@ -56,7 +56,7 @@ while [[ ! -e $OUT/STOP ]]; do
   fi
   if [[ -n $why ]] && (( armed && captures < 5 )); then
     d=$OUT/capture-$(date +%H%M%S); echo "$(date +%T) CAPTURE ($why) -> $d"
-    capture "$d/pass1"; sleep 10; capture "$d/pass2"
+    capture "$d/pass1"; sleep 10; capture "$d/pass2"; chown -R 1000:1000 "$d"
     captures=$((captures + 1)); armed=0; last_capture=$(date +%s); [[ -n $PROG && -f $PROG ]] && last_size=$(stat -c %s "$PROG")
     echo "$(date +%T) CAPTURE done ($(ls "$d/pass1" | wc -l) files)"
   fi
