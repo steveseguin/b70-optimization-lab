@@ -42,3 +42,86 @@ commands are retained in the packet, along with its CPU closeout.
 - [Exact screen and chain commands](../experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/WINDOW.md)
 - [Submission commands](../experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/SUBMISSION.md)
 - [CPU closeout](../experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/CPU-PREPARATION-CLOSEOUT.md)
+
+
+## Packet61x — pure-spin waits, October 17 CPU preparation
+
+Packet61x is built, sealed and ready for coordinator device windows. Its hook
+required a minimal host rebuild in
+`experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/`.
+All covered waits now use packet56x variant (a): pure PAUSE spin with yield
+every 256 iterations, including mailbox, device completion and pending-draft
+progress waits. Deadlines, cancellation, peer abort and callbacks remain.
+No parent packet was edited.
+
+The embedded kernel bundle is byte-identical to packet61: 5,355,244 bytes,
+SHA256 `14e449bbcefbf8e076c8ddcb2c477460117b6db3a6075361e44b46c4e8b41afe`.
+All 71 reused link objects are unchanged hardlinks. The final device binary is
+`c846812c97251df126152f7584bfca301771f3ec404f3dba42d5edf6808c0f49`.
+Both builds pass. All 1,123 controller cases, seven wait checks, five mailbox
+fault checks and 33 chain/submission tests pass. Target fixtures match packet56
+exactly: 96 fixtures and 24 tokens; HC fixture equality covers 878,040 bytes.
+The screen seal is accepted by v3 plans on both lanes. Full-chain admission,
+shared oracle, parent prefix windows, output registration and submission pins
+pass. The current floor remains dynamically checked; the strict 512-token gate
+remains false for the owner-scoped 128-token chain.
+
+No GPU, model load, service, sudo, setting change or external submission ran.
+CPU work used nice19, cores 8–15 and 24–31, and Python `-B`. Build retention is
+about 108 MB logically. Storage passed with 4.45 GB above its required reserve;
+launch must recheck. The initial build finalization found a stale primitive
+sub-receipt hash; using packet61's verified final build receipt resolved it.
+The system Python lacked pytest, so tests used the existing venv without any
+installation. Device quality and speed remain pending; the v1 gains are not
+assumed additive.
+
+[CPU closeout](../experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/CPU-PREPARATION-CLOSEOUT.md),
+[kernel byte proof](../experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/evidence/kernel-bundle-identity.json),
+[submission commands](../experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/SUBMISSION.md).
+
+### Exact coordinator commands
+
+These device commands were not executed. Run each v3 lane in its own admitted
+nice0 `screen-*` unit, using the coordinator's approved library path and a
+fresh reviewed fault receipt. The full chain requires its own exclusive
+admission. Both screen and chain use the identical sealed 61x executable.
+
+Lane A, physical cards 0+1:
+
+```bash
+P=experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait
+V=experiments/own-xpu-runtime/stage2/screen/v3
+taskset -c 0-3,16-19 env -i \
+  PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" \
+  python3 -B "$V/screen.py" --profile tp2 --lane A \
+  --lineage "$P" --seal "$P/screen-seal.json" \
+  --binary "$P/build/device/own-rt-iq3" --dispatch "$P/dispatch-speed6.json" \
+  --authorized-device-window --fault-review "$FAULT_REVIEW" \
+  --output "$V/evidence/packet61x-A-01"
+```
+
+Lane B, physical cards 2+3:
+
+```bash
+P=experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait
+V=experiments/own-xpu-runtime/stage2/screen/v3
+taskset -c 4-7,20-23 env -i \
+  PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH="$LD_LIBRARY_PATH" \
+  python3 -B "$V/screen.py" --profile tp2 --lane B \
+  --lineage "$P" --seal "$P/screen-seal.json" \
+  --binary "$P/build/device/own-rt-iq3" --dispatch "$P/dispatch-speed6.json" \
+  --authorized-device-window --fault-review "$FAULT_REVIEW" \
+  --output "$V/evidence/packet61x-B-01"
+```
+
+Full chain, physical cards 0+1, inside the admitted nice0 unit on cores 0–3,16–19 with `OMP_NUM_THREADS=2`:
+
+```bash
+P=experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait
+HEAD=experiments/own-xpu-runtime/stage2/packet56-draft-prefix
+OUT=/home/steve/own-xpu-runtime-results/packet61x-spin-hcfusion-wait/build/device-cards01-a
+bash "$P/coordinator_windows.sh" --phase all --output-root "$OUT" --wait-oracle \
+  --prefix-windows "$HEAD/evidence/head-k-a/window.json" "$HEAD/evidence/head-k-b/window.json"
+```
+
+The chain is K0 → K1a → K1b → K2 → W0p → KD → W2m → WS → WSs → WS128x → WS128. [All CPU preflight and plan commands](../experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/WINDOW.md) are retained beside the packet.
