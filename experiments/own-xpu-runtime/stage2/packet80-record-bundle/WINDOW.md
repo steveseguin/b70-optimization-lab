@@ -1,17 +1,21 @@
-# Packet75 coordinator handoff
+# Packet80 coordinator handoff
 
-CPU preparation only; no launch performed. Run the helper after the packet73
-and packet74 A grids and best-of-A B confirmations finish:
+Preparation only. Do not launch a chain from this note. The one-shot helper
+in ../../ops/packet80-orchestration/orchestrate.py writes ready.json containing
+its exact print-only systemd command after all prechecks pass. verify_ready.py
+checks the boot, source/result hashes, selected seal and unused chain output.
 
-```bash
-nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/ops/packet80-orchestration/orchestrate.py </dev/null
-```
+The fresh chain has11 windows: K0, K1a, K1b, K2, W0p, KD, W2m, WS, WSs,
+WS128x, WS128. Each gap is90 seconds. The pinned shared v4 lane admission,
+whole-host timing reservation, graceful teardown and release-before-report
+remain. No automatic retry, restart or return to a resident service.
 
-It emits `ready.json` with the exact command. Launch only that verified command.
-All windows use the shared hash-pinned v4 lane-admission code. The chain holds
-the whole host during timing windows. Every gap is90seconds.
+The four placements are explicit in bundle_selection.py. Rank0 placement0 is
+24/24, never historical22/26. Rank1 ordered cleanup is independent of draft
+placement. No target arithmetic, weights, oracle, cache precision or prompt
+reuse change. Component screening is diagnostic; the composed chain must
+establish its own exactness and speed.
 
-The prepared baseline is dense=production, HC=production, experts=wide64,
-with draft-HC, batched rollback, 24/24 layers, rank1 draft and full BF16 KV.
-The helper chooses improvements only from both-lane exact confirmations.
-No packet70/73/74 receipt can be imported into this merged binary.
+Submission/resume entry remains submission_cli.py; it rejects another packet's
+binary/source identity. Fast reseal selects only existing sealed choices and
+refuses after a chain starts.

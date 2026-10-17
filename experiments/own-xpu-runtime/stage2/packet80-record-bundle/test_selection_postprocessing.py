@@ -66,7 +66,7 @@ class SelectionPostprocessing(unittest.TestCase):
                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == 'get' and node.args and isinstance(node.args[0], ast.Constant) and node.args[0].value == 'choices':
                     readers.add(path.name)
         self.assertEqual(readers, {'p49_dispatch.py', 'p49d_k2.py', 'selection_gate.py',
-            'chain_seal.py', 'packet56_submission.py', 'prepare_selections.py', 'prepare_packet.py', 'bundle_selection.py', 'full_shape.py'})
+            'chain_seal.py', 'packet56_submission.py', 'prepare_selections.py', 'prepare_packet.py', 'bundle_selection.py', 'full_shape.py', 'mini_gate.py'})
         # Every registered window shares this selection identity gate. K2 is the
         # only additional choices-reading postprocessor; it is replayed above.
         from packet56_submission import validate_bundle
@@ -75,10 +75,9 @@ class SelectionPostprocessing(unittest.TestCase):
         for name in commands(B/'device-cards01-a'):
             self.assertIn(name, EARLY + LATE)
             for view,v in bundle_selection.views().items():
-                selection = json.loads((P/'selections'/view/'selection.json').read_text())
-                validate_bundle(dict(bundle,dense=v[0],hc=v[1],experts=v[2],name=view),selection)
+                for placement,(dr,split,boundary) in bundle_selection.PLACEMENTS.items():
+                    b=dict(bundle,**dict(zip(bundle_selection.KEYS,v)),name=view,placement=placement,draft_rank=dr,target_split=split,layer_boundary=boundary)
+                    selection=json.loads((bundle_selection.view_path(b)/'selection.json').read_text())
+                    validate_bundle(b,selection)
 
-
-
-if __name__ == '__main__':
-    unittest.main()
+if __name__=='__main__':unittest.main()

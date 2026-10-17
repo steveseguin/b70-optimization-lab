@@ -4,7 +4,8 @@ import pytest
 import queue_runner as q
 import window as w
 
-CHAIN=Path('/home/steve/own-xpu-runtime-results/packet80-record-bundle/build/device-cards01-a')
+from storage import B,REGISTERED_CHAIN
+CHAIN=B/REGISTERED_CHAIN
 
 def test_registered_chain_window_paths():
     assert q.admitted_output(CHAIN)==CHAIN

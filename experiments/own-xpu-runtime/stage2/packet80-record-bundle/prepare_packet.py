@@ -1,13 +1,22 @@
 """Seal all CPU-checked compositions/placements; never start a device."""
-import gzip,importlib.util,json,os
+import argparse,gzip,hashlib,importlib.util,json,os
 from build_engine import P,ROOT,B,sha,save,limits
 from bundle_selection import PLACEMENTS,views,choices
 from chain_seal import check_map
 
 def main():
     limits()
+    ap=argparse.ArgumentParser();ap.add_argument('--refresh',action='store_true');args=ap.parse_args()
     from stopped_archive import require_fresh_chain
     require_fresh_chain(B)
+    if args.refresh:
+        previous={str(f.relative_to(P)):f.read_text() for f in (P/'selections').glob('*/*.json')}
+        if previous:
+            raw=json.dumps(previous,sort_keys=True).encode()
+            archive=P/'evidence'/('pre-refresh-seals-'+hashlib.sha256(raw).hexdigest()+'.json.gz')
+            if not archive.exists():archive.write_bytes(gzip.compress(raw,mtime=0))
+            assert gzip.decompress(archive.read_bytes())==raw
+            for f in (P/'selections').glob('*/screen-seal.json'):f.unlink()
     from bootstrap import install
     install()
     names=('cpu-byte-identity.json','retirement-byte-identity.json','protocol.json','full-shape.json','memory-admission.json','cpu-gates.json')
@@ -23,6 +32,10 @@ def main():
     assert set(reports['cpu-byte-identity.json']['views'])==set(views())
     sources=dict(build['sources'])
     for r in reports.values():sources.update(r['sources'])
+    for run in reports['cpu-gates.json']['rows']:
+        path=P/'evidence'/('mini-'+run['label']+'.json')
+        assert sha(path)==run['identity_sha256']
+        sources[str(path.relative_to(ROOT))]=sha(path)
     sources.update(json.loads((P/'dependency-pins.json').read_text()))
     extras=[*P.glob('*.py'),P/'placement-policy.json',P/'dependency-pins.json',P/'selection-template.json',P/'shared-wrapper-pin.json',*[P/'evidence'/n for n in names]]
     sources.update({str(f.relative_to(ROOT)):sha(f) for f in extras})

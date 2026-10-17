@@ -63,7 +63,7 @@ def main():
         checks=[('cpu-dry-run',[P/'dry_run.py','--verify']),('seal',[P/'chain_seal.py','--verify']),('inputs',[P/'check_inputs.py']),('storage',[P/'storage_precheck.py']),('plans',[P/'plan_gate.py']),('queue-plan',[P/'queue_runner.py','--plan','--output-root',P/'build/device-cards01-a'])]
         for name,args in checks:run(name,args)
         row['checks']={name:sha(O/(name+'.log')) for name,_ in checks}
-        row['pins']={str(f.relative_to(ROOT)):sha(f) for f in [P/'build-receipt.json',P/'bundle-selection.json',P/'submission-pins.json',P/'shared-wrapper-pin.json',*sorted(O.glob('*.py')),O/'device-entry.sh']}
+        row['pins']={str(f.relative_to(ROOT)):sha(f) for f in [P/'build-receipt.json',P/'bundle-selection.json',P/'submission-pins.json',P/'shared-wrapper-pin.json',P/'evidence/dry-run.json',*sorted(O.glob('*.py')),O/'device-entry.sh']}
         row['ready']=True
     except (ValueError,OSError,subprocess.SubprocessError) as error:row['reason']=str(error)
     save(O/'ready.json',row)

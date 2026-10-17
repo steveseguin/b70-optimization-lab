@@ -14,7 +14,7 @@ class QueueTests(unittest.TestCase):
         commands = q.commands(Path('/test'))
         self.assertEqual(tuple(commands), q.EARLY + q.LATE)
         for name, command in commands.items():
-            for flag, value in (('--card', '0'), ('--context', '4096'), ('--draft-rank', '1'), ('--target-split', str(__import__('bundle_selection').selected()['target_split']))):
+            for flag, value in (('--card', '0'), ('--context', '4096'), ('--draft-rank', str(__import__('bundle_selection').selected()['draft_rank'])), ('--target-split', str(__import__('bundle_selection').selected()['target_split']))):
                 self.assertEqual(command[command.index(flag) + 1], value)
             self.assertNotIn('--diagnostic-unsealed', command)
             self.assertEqual(command[:3] == ['nice', '-n', '19'], name.startswith('K'))
@@ -41,7 +41,7 @@ class QueueTests(unittest.TestCase):
             (out / 'K0').mkdir()
             receipt = out / 'K0/window.json'
             row = dict(window='K0', passed=True, device_executed=True, qualifying=True,
-                       card=0, context=4096, draft_rank=1, target_split=__import__('bundle_selection').selected()['target_split'])
+                       card=0, context=4096, draft_rank=__import__('bundle_selection').selected()['draft_rank'], target_split=__import__('bundle_selection').selected()['target_split'])
             receipt.write_text(json.dumps(row))
             q.validate_success('K0', out, 0)
             with self.assertRaises(RuntimeError):

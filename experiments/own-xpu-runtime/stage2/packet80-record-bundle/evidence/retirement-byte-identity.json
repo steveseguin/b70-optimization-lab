@@ -1,0 +1,141 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "cpu_model_executed": false,
+  "runs": [
+    {
+      "compiler": "gnu",
+      "repeat": 1,
+      "native": {
+        "passed": true,
+        "device_executed": false,
+        "cpu_model_executed": false,
+        "byte_values": 3072,
+        "production_queries": 3072,
+        "ordered_queries": 4,
+        "negative_cases": 6
+      },
+      "command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/retirement_test.cpp",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/owner.cpp",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/owner_retire.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/build/cpu-gnu/retirement-test"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet80-record-bundle/build/cpu-gnu/repeat-1",
+      "expected_sha256": "46deb3624b31a9afced144fbc69caa517f34f614119a134c889122ebbc6a7aa2",
+      "candidate_sha256": "46deb3624b31a9afced144fbc69caa517f34f614119a134c889122ebbc6a7aa2"
+    },
+    {
+      "compiler": "gnu",
+      "repeat": 2,
+      "native": {
+        "passed": true,
+        "device_executed": false,
+        "cpu_model_executed": false,
+        "byte_values": 3072,
+        "production_queries": 3072,
+        "ordered_queries": 4,
+        "negative_cases": 6
+      },
+      "command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/retirement_test.cpp",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/owner.cpp",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/owner_retire.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/build/cpu-gnu/retirement-test"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet80-record-bundle/build/cpu-gnu/repeat-2",
+      "expected_sha256": "46deb3624b31a9afced144fbc69caa517f34f614119a134c889122ebbc6a7aa2",
+      "candidate_sha256": "46deb3624b31a9afced144fbc69caa517f34f614119a134c889122ebbc6a7aa2"
+    },
+    {
+      "compiler": "intel",
+      "repeat": 1,
+      "native": {
+        "passed": true,
+        "device_executed": false,
+        "cpu_model_executed": false,
+        "byte_values": 3072,
+        "production_queries": 3072,
+        "ordered_queries": 4,
+        "negative_cases": 6
+      },
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/retirement_test.cpp",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/owner.cpp",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/owner_retire.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/build/cpu-intel/retirement-test"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet80-record-bundle/build/cpu-intel/repeat-1",
+      "expected_sha256": "46deb3624b31a9afced144fbc69caa517f34f614119a134c889122ebbc6a7aa2",
+      "candidate_sha256": "46deb3624b31a9afced144fbc69caa517f34f614119a134c889122ebbc6a7aa2"
+    },
+    {
+      "compiler": "intel",
+      "repeat": 2,
+      "native": {
+        "passed": true,
+        "device_executed": false,
+        "cpu_model_executed": false,
+        "byte_values": 3072,
+        "production_queries": 3072,
+        "ordered_queries": 4,
+        "negative_cases": 6
+      },
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/retirement_test.cpp",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/owner.cpp",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/owner_retire.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/build/cpu-intel/retirement-test"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet80-record-bundle/build/cpu-intel/repeat-2",
+      "expected_sha256": "46deb3624b31a9afced144fbc69caa517f34f614119a134c889122ebbc6a7aa2",
+      "candidate_sha256": "46deb3624b31a9afced144fbc69caa517f34f614119a134c889122ebbc6a7aa2"
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/retirement_gate.py": "e5b595a0c39f6faa0c9a16820de278b5afefb231185ce54b0fd7249012f2a136",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/retirement_test.cpp": "f5db41f8fd3650f4e5dff2d1245a4b865ee2a03f932d410e62ae1dc6fecbe868",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/owner.cpp": "8e82affd2c119ef2ef13df14c11063f60ec8ba641ed643b7f2c652e7c256e94b",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/owner.hpp": "ee69610bda3e786e2aecf9888430541879af2d4c51cb64329784cb58d3ba1faf",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/owner_api.hpp": "819d24483877eb31b211312330e6709c9d283a4fe0ec7b8bf016eeb8122c76ed",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/owner_retire.cpp": "b68b7f90faf2a19388f09848196cbda72fe788c8e5e936724c977e7127a5d23c",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/ordered_queue.hpp": "ccef2713ecce48237e9ecd929cc04567982f311cb6344dd8013a04b847b480eb",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/argument_block.hpp": "f2cc8a5709ae443e2fcaa755cfb86e36080a710e9964422b12d3a8425433db35"
+  }
+}

@@ -1,10 +1,12 @@
 # Packet80 combined record bundle
 
-CPU preparation in progress. Copied from frozen packet75, with packet76 rank1
-ordered retirement, packet78 route/norm choices and packet79 rank0 draft prefix.
-The GNU host and Intel SYCL binaries compile. No GPU, service or chain runs in
-preparation. CPU fixture, full-shape, placement and consumer gates must all pass
-before the preparation helper can mark this bundle ready.
+CPU arithmetic, allocation and protocol gates passed. Copied from frozen
+packet75, with packet76 rank1 ordered retirement, packet78 route/norm choices
+and packet79 rank0 draft prefix. GNU host and Intel SYCL builds pass. All16
+compositions pass2096 numerical cases twice under each compiler. All128
+full-shape post-load mocks pass, and all64 configurations match packet75 target
+and draft bytes in two fresh native miniature runs. Final shared-wrapper and
+chain-window plans are in progress. No GPU, service or chain ran.
 
 Independent choices: host production/ordered, route production/fast, norm
 production/fused, HC production/hc-wide. Experts stay wide64; dense stays

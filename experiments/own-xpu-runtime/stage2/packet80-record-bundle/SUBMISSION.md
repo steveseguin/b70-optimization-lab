@@ -1,17 +1,16 @@
-# Packet75 submission
+# Packet80 submission
 
-`submission_cli.py` retains packet70's registered-chain or pinned-resume
-validation. Only a complete packet75 chain can produce a payload. The frozen
-packet49 oracle remains authoritative; record comparison uses the current
-monotonic threshold file, currently54.162021859952475tok/s.
+The resume-capable packet75 tool is copied locally. Only a complete qualified
+packet80 chain, or its own pinned resume, can produce a submission payload.
+Packet49 remains the quality oracle. The current monotonic threshold file is
+read when pinning and preparing a result; historical records remain intact.
 
-Notes disclose all inherited and selected changes and are limited to2000
-characters. Packed target weights retain exact dequantization and the existing
-expanded draft prefix; HC and expert load scheduling choices are named and
-explained. Full BF16 KV and unchanged target verification are explicit.
-Resumed runs disclose imported hash-bound early receipts.
+Notes disclose host, route, norm, HC, placement, fixed wide64 experts and
+production dense, plus inherited spin, HC fusion, draft prefix and rollback.
+Both fresh and resumed notes must fit2000 characters. Every allowed combination
+and placement is exercised by the synthetic evidence/payload tests. No secret,
+external API or submission is accessed during this preparation.
 
-Preparation does not submit, validate against an external API, or read secrets.
-Use `python3 -B <packet>/submission_cli.py --help` for the retained interface.
-The strict512-token gate stays false; the inherited named128-token exception
-and all independent quality gates remain required.
+The strict512 gate stays false. The inherited named128-token scope exception
+and every independent quality/identity gate remain required. A combined CPU
+seal or component screen result is not a qualified record result.

@@ -1,40 +1,36 @@
-# Retention
+# Packet80 retention and rebuilding
 
-Keep the new GNU/device binaries, compiler objects and full-shape mock evidence
-under ignored `build/`. Build cap is 1.2 GB and each process has an 8 GiB address
-space cap. Parent object reuse is recorded in `evidence/object-identity.json`;
-new translation units compile serially. The checked compiler mirror and source
-pins reconstruct the binary. CPU fixtures rerun with `cpu_gate.py`; the real
-production initialization path is instrumented only in generated test copies
-by `full_shape.py`. No model payload or numerical device memory is allocated.
-The mock reserves logical extents and validates all copy bounds.
+Keep the ignored build directory, including GNU/device binaries, inherited
+objects and parent fixture links. This is a lab packet with pinned local parent
+objects, not a standalone public recipe. The maximum build size is1.5GB, each
+process is limited to8GiB, and compiles are serial at nice19 on8-15,24-31.
 
-Reconstruction order, before any chain starts: `build_engine.py`, `cpu_gate.py`,
-`composed_cpu.py`, `full_shape.py`, `prepare_chain.py`, `prepare_packet.py`, then
-`fast_reseal.py --dense production --hc production --experts wide64`.
-Run Python with `-B`, nice 19, CPUs `8-15,24-31`, stdin `/dev/null`, and an
-8 GiB process limit. Compile serially. `all_view_plans.py` runs all 264 real
-window plans and restores the starting selection. `plan_gate.py` checks
-the selected chain, input census, storage, oracle and prefix prerequisites.
-These scripts depend on the pinned local parent objects and fixtures; this is
-a lab packet, not a standalone public recipe. Keep those parent artifacts.
+Fresh preparation order: build_engine.py, cpu_gate.py, full_shape.py,
+memory_census.py, retirement_gate.py, protocol_gate.py, mini_gate.py (with
+OMP_NUM_THREADS=2), prepare_chain.py, prepare_packet.py, fast_reseal.py,
+dry_run.py. All use python3 -B and stdin /dev/null. Existing sealed views are
+selected with fast_reseal.py; a changed CPU helper requires prepare_packet.py
+--refresh, which archives original seals and refuses any started chain.
 
-Tracked CPU receipts, test logs and generated source hashes preserve positive
-and failed attempts. Previous preliminary selection seals are retained as
-byte-verified gzip archives; prior chain seals are retained under `evidence/`.
-The numerical fixture uses 90 cases per composed view and includes the selected
-choice identity in its byte stream. Expected and candidate bytes agree across
-GNU, Intel and two fresh executions of each. The production-shape mock is a
-separate structural test, not a model-output or device-speed measurement.
+The exact2096-case operator fixture is retained once as a content-addressed
+.bin.gz under evidence. It exceeds1MiB because it includes full outputs and
+scratch for2048 route and40 norm scenarios plus8 HC fixtures; it is not a
+headline measurement. Per-view ignored fixture links refer to identical bytes.
+Every original numerical output was byte-verified before gzip compression.
 
-The two `evidence/pre-composition-seals-*.json.gz` archives are about 8.5 MB
-each. Retain them as exact historical selection identities from before the
-per-view execution gate was strengthened. They were never launched. The
-[retention manifest](evidence/archive-retention.json) records compressed hashes,
-uncompressed sizes and every original member hash. To inspect or restore,
-decompress with Python `gzip.decompress`, verify the raw SHA-256 against the
-filename, then parse JSON: each key is a relative original filename and each
-value its exact UTF-8 content. Write into a separate inspection directory under
-`build/`, verify each member against the manifest, and never overwrite active
-selections. Full member bytes were verified during archive creation. These
-archives preserve superseded evidence, not additional runtime dependencies.
+retain_build.py archives exact generated sources, the checked compiler mirror,
+full-shape allocation censuses and CPU logs in evidence/build-sources.tar.gz.
+The adjacent build-retention.json lists each original member's byte count and
+SHA256; archive creation verifies every member and deletes nothing.
+restore_links.py restores missing archived bytes, verifies existing files and
+recreates only pinned parent/fixture/binary links. It never runs a model.
+Larger pre-refresh seal archives retain exact previous JSON strings and carry
+the decompressed SHA256 in their filenames. They were never used on a device.
+
+Both numerical compilers run twice for each of16 compositions. All64 placement
+configurations receive a real post-load memory census on both ranks and two
+native miniature target/draft comparisons. Reverse handoff and ordered queue
+failures also run under GNU and Intel. These CPU proofs do not establish device
+residency, real-model parity or speed; the coordinator's fresh chain must do so.
+Only the documented preparation, chain and submission entries are supported;
+other copied helpers preserve earlier source history.

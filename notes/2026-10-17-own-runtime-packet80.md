@@ -26,3 +26,30 @@ Sources: [bundle](../experiments/own-xpu-runtime/stage2/packet80-record-bundle/R
 The helper will select only each packet's own both-lane confirmed exact winner;
 missing evidence leaves its choices at production. It prints a chain command,
 never launches it. Submission notes disclose all choices and enforce2000 chars.
+
+Milestone2: all16 numerical compositions pass2096 exact output/scratch cases,
+twice per compiler under GNU and Intel (64 executions). All128 real full-shape
+post-load allocation/capture mocks pass. The four placement censuses pass the
+unchanged arena and physical-capacity gates; rank1 draft at23/25 has the
+smallest arena margin,89,364,320 bytes. That is a mock allocation census, not a
+claim about measured driver residency.
+
+The native miniature engine matches packet75 in all64 configurations, twice
+each: target tokens,96 target-state fixtures per run, draft proposals and draft
+state all agree. Ordered retirement's error/refusal tests and20 reverse-handoff
+protocol cases pass twice with both compilers. Chain tests pass197 tests plus
+24 subtests, including the actual packet70 K2 archive replay, dispatch merge,
+all64 submission configurations and pinned resumes. Nine orchestration tests
+pass. Two copied archive tests described an older stopped packet rather than
+packet80's fresh-chain policy; they now test the actual refusal rule. The
+miniature harness initially refused before launch because OMP_NUM_THREADS=2
+was absent; the corrected closed environment is used for all recorded runs.
+
+A read-only audit found no C++ composition defect. It caught a missing binding
+for the orchestration source files tested by the final dry run; those hashes
+and the dry-run receipt itself are now required by readiness. Initial CPU seals
+are retained in a byte-verified archive before refreshing the helper bindings.
+The final128 shared-wrapper plans and704 chain-window plans are underway.
+No GPU or service ran. Packet76 now has both-lane confirmation; the current
+reader selects ordered host cleanup plus hc-wide. Packet78/79 remain production
+until their own exact improving B confirmations are present.
