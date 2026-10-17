@@ -67,3 +67,22 @@ STOP-doing items applied:
 - bundle placement and packet 62 into the next chain;
 - compare within a lane only;
 - no record chains on lane B.
+
+## Review 4, 17:05 UTC: **ACT**
+
+Evidence: 83% device-in-flight over 2 h. Cards 2+3 were busy only about 12 of the last 60 min. No Codex job had been running since 16:57, and nothing was queued after packet 64. The 305 s cooldowns outlast the 3-min windows.
+
+Actions, 17:06-17:15 UTC:
+1. **Two Codex jobs started:**
+   - **packet 65**, routed-expert class occupancy. Experts run at about 150 GB/s against 555 GB/s dense, so likely bytes in flight. Order-preserving, with an in-engine bar of 30% faster, worth about +6% if met.
+   - **packet64-attribution**, in-engine event recording on the current line, runnable as a lane-B screen.
+2. **Cooldown 305 → 90 s:** deferred to the chain after packet 64, so packet 64 isn't resealed under time pressure.
+3. **Packet 64 orchestration:** Codex job `p64orch` (new folder `ops/packet64-orchestration/`) handles screens, the preregistered selection rule (beat `1-production-control` on both lanes, 13/13 exact), fast reseal, all chain pre-checks and the chain. It runs a protocol-correct lane-B companion during the chain (23/25 control and a second 24/24 sample), and every exit path is logged.
+4. **Lane driver:** `fn-run/v3-lane3.sh` was replaced (new file, then mv). It logs a sub-10 s pre-device refusal as REFUSED-fast and continues; only a device-stage failure or a fault change stops the lane. A watcher alerts if the lanes haven't started 5 min after the packet 61x post-chain job ends.
+5. **Packet 58b one-card:** whole-host block tonight after packet 64's chain, on a driver. A K1 smoke on card 2 only if its plan accepts the lane protocol.
+
+STOP-doing items applied:
+- frozen trees are named in every brief;
+- the Codex count does not drop to 0 during chains;
+- lanes are compared within a lane only;
+- no silent driver exits.
