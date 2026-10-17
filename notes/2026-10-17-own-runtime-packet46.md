@@ -58,6 +58,15 @@ packed bank preserves the 47:1 ordinary/exceptional layer mix. Source review
 found no arithmetic mismatch; that is not a compiled exactness result.
 Nonfinite device-oracle parity is explicitly unqualified.
 
+The specialized layer source and coordinator windows are now written. The
+static launch plan is GDN **35 → 28** and QSA **41 → 30**; these are expected
+counts to assert on device, not measured speedups. The six exact cases include
+changing positions/inputs and inactive, sticky-error and out-of-range controls.
+Full mutable snapshots include scratch and padding without masks. Every timed
+input pair also checks complete state and a clean error flag outside timing.
+Six CPU-only wrapper/accounting tests passed in 0.644 seconds; compilation,
+full-shape CPU arithmetic and device work have not yet run.
+
 Implementation, CPU tests, throughput measurements, independent review and
 final seal are pending. Device correctness, device speed and one-card fit
 remain unmeasured by this task. The device coordinator retains ownership.

@@ -52,7 +52,7 @@ def main():
         if any(sha(p)!=pins[str(p.relative_to(HERE.parent))] for p in sources):
             raise RuntimeError("diagnostic source changed during gate")
         result=dict(schema="ownrt.packet46.diagnostic-cpu-receipt.v1",passed=True,
-                    device_ran=False,model_weights_read=False,limits=limits,
+                    device_ran=False,device_executed=False,model_weights_read=False,limits=limits,
                     compiler=compiler,binary_sha256=sha(binary),source_sha256=pins,
                     fresh_process_repeats_equal=True,validator_results=gates,
                     trace_sha256=sha(args.output/"mock-0.stdout"),
