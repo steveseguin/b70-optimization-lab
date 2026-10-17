@@ -45,7 +45,7 @@
   "schema": "packet64.chain-cpu-seal.v1",
   "runtime_revision": "53ffe460517c585b21be1c3b69ce22b7e9f195a0",
   "parent_seal_sha256": "8c1d90e124fbdcd3d932dcfd31b8819674011137fbbded2a2a8340590a639cec",
-  "screen_seal_sha256": "7057f1a07cc3617c6ae1b8dbe548b061838178dec856f971cea8caa3cb707a08",
+  "screen_seal_sha256": "885ee702d76ef30e56eeea11f3b7a9900751fd151e6e1bbe22c2e7c3edf78d62",
   "controller_spin": {
     "wait_policy": "spin",
     "yield_iterations": 256,
@@ -63,15 +63,15 @@
     "arithmetic_unchanged": true
   },
   "bundle_selection": {
-    "name": "1-production-control",
+    "name": "1-draft-hc-batch",
     "placement": "1",
-    "draft": "production",
-    "miss": "control",
+    "draft": "draft-hc",
+    "miss": "batch",
     "draft_rank": 1,
     "target_split": 0,
     "layer_boundary": 24,
-    "selection_sha256": "987b3b758a81be39e820bd1f5a1b16a5496bf8b42136185ba64f2f8230d2c6aa",
-    "screen_seal_sha256": "7057f1a07cc3617c6ae1b8dbe548b061838178dec856f971cea8caa3cb707a08"
+    "selection_sha256": "22f44eea9121ce684d1900fd7597cb6bee2aee34f343f455307ab298488fc486",
+    "screen_seal_sha256": "885ee702d76ef30e56eeea11f3b7a9900751fd151e6e1bbe22c2e7c3edf78d62"
   },
   "memory_plan": {
     "schema": "own-runtime.packet45.memory-plan.v1",
@@ -1662,12 +1662,12 @@
     ]
   },
   "selection": {
-    "selection_sha256": "987b3b758a81be39e820bd1f5a1b16a5496bf8b42136185ba64f2f8230d2c6aa",
+    "selection_sha256": "22f44eea9121ce684d1900fd7597cb6bee2aee34f343f455307ab298488fc486",
     "choices": {
       "route": "route-exp32-rank4",
       "recurrence": "rows4-shared",
       "hc": "production",
-      "miss": "control"
+      "miss": "batch"
     }
   },
   "fixture_inputs_sha256": {
@@ -3695,11 +3695,11 @@
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/seal_packet.py": "9667ee79caf61285883a63702e66e56a06187a1ba2ca8898ad881809942e9d70",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/build-device-receipt.json": "94585a3998a02ad5a21254d2f98e90e292a1567ca5eed4a418169686d8cf9155",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/evidence/cpu-gates.json": "adeaf720ca30953d508085ba627b67ddd1c3ff7fd192d40ced538fb8fa9e3c06",
-    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-production-control/selection.json": "987b3b758a81be39e820bd1f5a1b16a5496bf8b42136185ba64f2f8230d2c6aa",
-    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-production-control/selection-decision.json": "f3e6ab8638e137f4539f2ed04751c4710ae636d9bdbc2dcb1aa4361da578b919",
-    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-production-control/memory-plan.json": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
-    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-production-control/dispatch-speed6.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
-    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-production-control/placement-audit.json": "9ed6592d0d0538f11e7469f83c49758e18cd904b0cadde0bb6c4235fb45206cf",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/selection.json": "22f44eea9121ce684d1900fd7597cb6bee2aee34f343f455307ab298488fc486",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/selection-decision.json": "f3e6ab8638e137f4539f2ed04751c4710ae636d9bdbc2dcb1aa4361da578b919",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/memory-plan.json": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/dispatch-speed6.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/placement-audit.json": "9ed6592d0d0538f11e7469f83c49758e18cd904b0cadde0bb6c4235fb45206cf",
     "experiments/own-xpu-runtime/stage1/packet4-prep/driver/window_driver.py": "41a57d623b87d5de4726bfa739d4bacf97d41dabf2759d1aa381ed90b14d14c8",
     "experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/suite_check.py": "f33fd0d4a28943df90137b19a47c3ef2d176e3b352526f1037ec4757ef10ae93",
     "experiments/own-xpu-runtime/stage2/packet56-draft-prefix/memory-plan.json": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
@@ -3808,7 +3808,7 @@
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/oracle-binding.json": "3c270c8b3734ee5782875d8c1eb505dcc3d21adcc4cc66e96d7e8fb9960789c1",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/test_spin_boundary.py": "66900e89fe79093566aad735435b60404cc5b722696fd4decd5383fab5cc2c69",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/storage_precheck.py": "821733479ac37835003e752642c21285228943f6867fd578d390a59cc5743f20",
-    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/bundle-selection.json": "9adadeff2d1e824496d3d7e1fc2f50c34f91e006dc31f323399506395535bc00",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/bundle-selection.json": "22781816c5788d71e9408d90e7358ca1f9385d971b1c4e70c9231ffa7adae49c",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selection-decision.json": "f3e6ab8638e137f4539f2ed04751c4710ae636d9bdbc2dcb1aa4361da578b919",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/test_p49d_cpu_gate.py": "bccdd73f5b7dc4e7e0e34f54f228766c97763b61ee796494c80512f9259c1d7c",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/diagnostic_mode.py": "4b82ce51e0b2d0624f0e80db67ca4459641d9502d3afe8547786c221575c7fc5",
@@ -3846,10 +3846,10 @@
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/dispatch-speed6-provenance.json": "bfbc1198f69a7480d06d47b88b735c8f10633da3a53c89d9197965379c1a1ba9",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/dispatch-speed6.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/memory_gate.py": "3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232",
-    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/screen-seal.json": "7057f1a07cc3617c6ae1b8dbe548b061838178dec856f971cea8caa3cb707a08",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/screen-seal.json": "885ee702d76ef30e56eeea11f3b7a9900751fd151e6e1bbe22c2e7c3edf78d62",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/prepare_inputs.py": "fed0557c02cdc2871f0ff8b8d4ad7caa216bc26980c4b9b08687f90b95b4e322",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/drain_gate.py": "3653fac95f6ea831b6c67fa0c71e0cbb070628a0a11a5e75ef4e8b3fa16c3714",
-    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selection.json": "987b3b758a81be39e820bd1f5a1b16a5496bf8b42136185ba64f2f8230d2c6aa",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selection.json": "22f44eea9121ce684d1900fd7597cb6bee2aee34f343f455307ab298488fc486",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/cpu_gates.py": "8bb85938d549a1e9890324988f2bec25612695944fb7b56c6a98a734bf4ebc49",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/fast_reseal.py": "512805d2b9123ff0f78b60a46a88d025762418eb39aae1d6481ae7e2f5fa2bd2",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/p56_head_summary.py": "d86c9c8933bfdd1e1a27d22863c6ff05758d16794ec07c7f411efe8812569885",
@@ -3879,7 +3879,7 @@
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/kernel-registry.json": "a09c46ffc844c09551c21ea04e6c254a292f27ace658de6b18026443e9f561b4",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/p49d_k2.py": "7116f79b0980465f02d7ce31f82e054bd7b30e402b4f069af027705b0dd43a9b",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/dispatch-p45.json": "8d696e7f9cc7853dfdcc1e8774a50ce69b3afd94d1dc7dfa49fa804a125dd1c6",
-    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-production-control/screen-seal.json": "7057f1a07cc3617c6ae1b8dbe548b061838178dec856f971cea8caa3cb707a08",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/screen-seal.json": "885ee702d76ef30e56eeea11f3b7a9900751fd151e6e1bbe22c2e7c3edf78d62",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/calibration/selection.json": "aa841860347076a8c0887303ea6fa428fc3b7c54af3218477ad5abb2d6abd273",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/calibration/preregistration.json": "61f036c6b0aa54409d1a4af2c101cbfd37092d93c4304e3354852f07500cf147",
     "experiments/own-xpu-runtime/stage2/packet64-record-bundle/oracle/suite_check.py": "f33fd0d4a28943df90137b19a47c3ef2d176e3b352526f1037ec4757ef10ae93"
