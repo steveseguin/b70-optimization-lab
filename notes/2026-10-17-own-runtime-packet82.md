@@ -40,3 +40,16 @@ builds and shared wrapper/packet Python checks pass. Candidate offline kernels
 have 128 configured GRFs and no scratch spills; flag spills increase and could
 hurt device speed. No speed claim follows from the CPU work. Next: seal and
 check shared lane plans and temporary queue proposals.
+
+## Sealed preparation complete
+
+Three seals, all four lane-A plans, all six possible lane-B plans and both
+temporary queue plans pass. Lane B refuses anything except the exact improving
+A winner. The shared pinned wrapper and live queues are untouched. Build
+storage is about 203 MiB and peak compiler memory about 709 MiB. Analysis and
+candidate preparation both finished within their time boxes.
+
+[CPU closeout](../experiments/own-xpu-runtime/stage2/packet82-recurrence/CPU-PREPARATION-CLOSEOUT.md)
+and [proposed jobs](../experiments/own-xpu-runtime/stage2/packet82-recurrence/WINDOW.md)
+contain the evidence and commands. The coordinator's device checks and speed
+comparison are next. CPU results alone do not qualify either candidate.
