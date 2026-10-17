@@ -10,6 +10,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from receipt_qualification import require_qualifying
+from packet49_submission import is_packet49, scope_problems as packet49_scope_problems
 
 
 API_URL = "https://www.localmaxxing.com/api/speed-tests"
@@ -72,6 +73,8 @@ OWNER_128_RESULTS = {
 
 def owner_128_scope_problems(item: dict) -> list[str]:
     """Fail closed outside the exactly pinned owner-authorized run-1 headlines."""
+    if is_packet49(item):
+        return packet49_scope_problems(item, REPO_ROOT)
     payload = item.get("payload") or {}
     engine = payload.get("engineFlags") or {}
     problem = "invalid owner-authorized 128-token scope exception"
@@ -213,7 +216,7 @@ def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[s
         engine.get("realisticSuiteGatePassed") is True
         or engine.get("freshRealisticSuiteGatePassed") is True
     )
-    if ("realisticSuiteScopeException" in engine
+    if (is_packet49(item) or "realisticSuiteScopeException" in engine
         or (engine.get("promotionIdentity") or {}).get("runtime_revision") in OWNER_128_RESULTS
         or label in {r["label"] for r in OWNER_128_RESULTS.values()}):
         exception_problems = owner_128_scope_problems(item)

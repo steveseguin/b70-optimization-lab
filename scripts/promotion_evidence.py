@@ -125,7 +125,9 @@ def validate_promotion_attestation(
                 failures.append(f"gate_{gate}_has_no_bound_evidence")
 
     performance_data = json.loads(performance_path.read_text()) if performance_path.suffix == '.json' else {}
-    if 'packet45' in json.dumps([performance_data, identity]).lower():
+    if performance_data.get('schema') == 'lab.packet49.realistic-suite-result.v1':
+        validate_packet49_device_evidence(performance_data, evidence, attestation_path)
+    elif 'packet45' in json.dumps([performance_data, identity]).lower():
         # Packet45 seal6 explicitly defers real-model authority to device windows.
         validate_packet45_device_evidence(performance_data, evidence, attestation_path)
     if failures:
@@ -134,6 +136,15 @@ def validate_promotion_attestation(
             + ", ".join(failures)
         )
     return data
+
+
+def validate_packet49_device_evidence(performance, evidence, attestation_path):
+    """Replay portable raw receipts, oracle equality and timing for the 49 lineage."""
+    from packet49_submission import replay_result
+    replay_result(performance, REPO_ROOT)
+    expected = dict(performance['evidence_bundle'], supports=list(REQUIRED_GATES))
+    if evidence != [expected]:
+        raise ValueError('packet49 quality evidence must bind the replayed evidence bundle')
 
 
 def validate_packet45_device_evidence(performance, evidence, attestation_path):
