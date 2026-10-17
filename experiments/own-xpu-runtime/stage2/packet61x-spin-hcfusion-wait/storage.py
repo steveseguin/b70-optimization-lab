@@ -82,9 +82,16 @@ def early_retention_gate(out):
         raise RuntimeError('packet56 early retained evidence exceeds registered 128 MB cap; preserve evidence and review storage')
     return dict(early_retained_bytes=used, limit_bytes=EARLY_RETAINED_LIMIT)
 
+def stored_build_size():
+    # Screen binaries and restored fixtures can live in a local build while
+    # chain outputs live externally. Count both, without following aliases.
+    local = P / 'build'
+    return build_size(B) + (build_size(local) if local.resolve() != B.resolve() else 0)
+
+
 def precheck():
     free = shutil.disk_usage(B).free
-    used = build_size(B)
+    used = stored_build_size()
     # No credit for actual build smaller than its registered 1.5 GB maximum.
     parent = parent_pending_bytes()
     chain_used = build_size(B / REGISTERED_CHAIN)
@@ -121,7 +128,7 @@ def cpu_build_admit(extra=0):
     Write admission preserves the root floor and this packet's own chain.
     Finished/superseded parent chains have no future-write reserve. Packet49c finishes before this packet's device windows.
     """
-    used = build_size(B) - build_size(B / REGISTERED_CHAIN)
+    used = stored_build_size() - build_size(B / REGISTERED_CHAIN)
     if used + extra >= CPU_BUILD_LIMIT:
         raise RuntimeError('Packet56 CPU build exceeds 1.5 GB peak: '+str(dict(used=used,extra=extra)))
     return admit(extra)
@@ -142,7 +149,7 @@ def admit(extra=0, *, build_extra=None):
     result = subprocess.run(['nice', '-n', '19', 'ionice', '-c', '3',
                              'df', '-B1', '/'], capture_output=True, text=True, check=True)
     free = int(result.stdout.splitlines()[-1].split()[3])
-    used = build_size(B)
+    used = stored_build_size()
     build_extra = extra if build_extra is None else build_extra
     return budget(free,used,extra,build_extra)
 

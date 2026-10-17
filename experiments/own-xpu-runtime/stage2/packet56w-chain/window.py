@@ -105,7 +105,8 @@ def live_owner_pids(watch):
     return sorted(set(device+cpu))
 
 def output_path(path,*,cpu_rehearsal=False):
-    out=Path(path).resolve();boundary=B.resolve()
+    from storage import B as output_build, REGISTERED_CHAIN
+    out=Path(path).resolve();boundary=output_build / REGISTERED_CHAIN
     require(boundary in out.parents and not out.exists(),'new output beneath packet40 required')
     return out
 
@@ -309,8 +310,8 @@ def run_fixtures(a,out,env,watch):
             watch.check();admit_output(out,projected_write_bytes('K2',context=a.context) if a.window=='K2' else 550_000_000 if a.window!='K0' else 16_000_000);binary=B/binary_group/name
             dest=out/directory;log=(out/f'fixture{index}.log').open('w');logs.append(log)
             cmd=[str(binary),*([] if cpu_rehearsal else ['--authorized-device-window']),'--card',str(card),'--output',str(dest)]
-            if name in ('nongemv-fixtures','k2-fixtures'):cmd+=['--context',str(a.context)]
-            if cpu_rehearsal and name in ('nongemv-fixtures','k2-fixtures'):cmd+=['--validate-only','--fixtures',str(B/'fusion-fixtures')]
+            if name in ('nongemv-fixtures','k2-fixtures'):cmd+=['--context',str(a.context),'--fixtures',str(B/'fusion-fixtures')]
+            if cpu_rehearsal and name in ('nongemv-fixtures','k2-fixtures'):cmd+=['--validate-only']
             if a.window=='K0':cmd+=['--cards','1']
             else:cmd+=['--stop-fd',str(stop_r)]
             if name in ('p33-linked-fixtures','p49-qsa-fixtures','p49b-expert-fixtures','p49c-fixtures','p49d-fixtures'):cmd+=['--seconds',str(watchdog(a.window,a.seconds,a.context))]

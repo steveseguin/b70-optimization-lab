@@ -31,3 +31,6 @@ Only the coordinator may run the device screens and full chain.
 Only the lean build/gate and documented coordinator entry points apply.
 Inherited historical helper/CMake files are dependencies, not rebuild recipes.
 This is a lab candidate with retained local build inputs, not a public package.
+
+**October 17 input repair:** K1/K2 fixture paths are explicit and pinned; all
+eleven windows have CPU-only input preflight. See the [repair closeout](INPUT-REPAIR-CLOSEOUT.md).

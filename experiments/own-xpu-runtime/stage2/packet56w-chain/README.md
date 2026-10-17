@@ -45,3 +45,6 @@ memory information still fails. Native wait policy and binary bytes are unchange
 Only the documented entry points apply. Copied historical helper entry points
 are dependencies, not instructions to rebuild or run additional campaigns.
 No service, GPU, external validation or submission is started by preparation.
+
+**October 17 input repair:** K1/K2 fixture paths are explicit and pinned; all
+eleven windows have CPU-only input preflight. See the [repair closeout](INPUT-REPAIR-CLOSEOUT.md).

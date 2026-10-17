@@ -18,7 +18,11 @@ def main():
     if os.getpriority(os.PRIO_PROCESS, 0) != 19 or not set(os.sched_getaffinity(0)) <= set(range(8, 16)) | set(range(24, 32)):
         raise ValueError('nice19 and helper cores required')
     seal = verify()
-    root = q.admitted_output(Path('/home/steve/own-xpu-runtime-results/packet61-spin-hcfusion/build/device-cards01-a'))
+    root = q.admitted_output(Path('/home/steve/own-xpu-runtime-results/packet61-spin-hcfusion/build/device-cards01-b'))
+    from check_inputs import check, summary
+    inputs = check(root)
+    if not inputs['passed']:
+        raise ValueError('input check failed: ' + str(inputs['errors']))
     commands = q.commands(root)
     assert tuple(commands) == ('K0', 'K1a', 'K1b', 'K2', 'W0p', 'KD', 'W2m', 'WS', 'WSs', 'WS128x', 'WS128')
     for name, command in commands.items():
@@ -40,7 +44,7 @@ def main():
     row = dict(passed=True, device_executed=False, windows=list(commands),
                commands=commands, build_receipt_sha256=digest(q.P / 'build-receipt.json'),
                engine_sha256=seal['artifacts_sha256']['device/own-rt-iq3'],
-               oracle=oracle, prefix_prerequisites=prefixes, storage=precheck(),
+               oracle=oracle, prefix_prerequisites=prefixes, input_check=summary(inputs), storage=precheck(),
                scope='Plan and identity only; storage and device admission remain mandatory at launch')
     if args.output:
         with args.output.open('x') as output:

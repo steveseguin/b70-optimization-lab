@@ -14,7 +14,7 @@ OUT=/home/steve/own-xpu-runtime-results/packet56w-spin/build/device-cards01-a
 nice -n 19 taskset -c 8-15,24-31 python3 -B "$P/storage_precheck.py"
 ```
 
-**Storage currently refuses admission.** The unchanged packet56 budget requires
+**Historical preparation snapshot (superseded by the input-repair check below): storage refused admission.** The unchanged packet56 budget requires
 15,446,804,480 free bytes before this new chain; about 11.96 GB was available
 during preparation, a shortfall of about 3.48 GB. The 8 GB free floor, 1.5 GB
 build reserve and complete chain reserve are retained. Recheck at launch;
@@ -60,3 +60,30 @@ plan never overrides a failed storage admission. It launches no binary,
 queries no device and creates no chain output. To restore missing local build
 links before a chain starts, use `nice -n 19 taskset -c 8-15,24-31 python3 -B
 "$P/prepare_chain.py"`. Seals are never overwritten.
+
+## October 17 input repair: required CPU preflight
+
+Run this before handing the chain to the coordinator:
+
+```bash
+P=experiments/own-xpu-runtime/stage2/packet56w-chain
+nice -n 19 taskset -c 8-15,24-31 python3 -B "$P/check_inputs.py"
+```
+
+`queue_runner.py --plan` now runs this check, and execution checks all static
+inputs before creating the output directory. Every window also rechecks its
+inputs and requires its earlier windows' generated receipts and dispatch before
+launch. The complete oracle must therefore already be available, even when
+planning the early phase. A plan never creates device outputs.
+
+K1 and K2 now receive an explicit packet-local `--fixtures` path. The 72
+fixtures, `cases.txt` and original fixture manifest were restored from the
+hash-verified archive of packet56's shared input directory. No parent path or
+binary was changed. `prepare_inputs.py` restores these exact bytes or hardlinks
+an already verified local copy; it refuses changes after this registered chain
+starts. The chain seal binds every fixture hash. Storage admission counts the
+local build and external chain outputs, preserving its reserve.
+
+See [input repair closeout](INPUT-REPAIR-CLOSEOUT.md) for the exact scope,
+checks, preserved evidence and current storage snapshot. Device admission,
+boot/fault review, environment and correctness gates remain required.

@@ -4,7 +4,7 @@ import pytest
 import queue_runner as q
 import window as w
 
-CHAIN=Path('/home/steve/own-xpu-runtime-results/packet61-spin-hcfusion/build/device-cards01-a')
+CHAIN=Path('/home/steve/own-xpu-runtime-results/packet61-spin-hcfusion/build/device-cards01-b')
 
 def test_registered_chain_window_paths():
     assert q.admitted_output(CHAIN)==CHAIN

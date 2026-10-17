@@ -60,6 +60,9 @@ def checked():
     require(static_binding() == parent['shared_oracle'], 'shared oracle changed')
     require((B / 'input').resolve() == (PARENT / 'build/input').resolve(), 'input tree changed')
     require(digest(B / 'input/input.json') == parent['input_sha256'], 'input identity changed')
+    fixture_manifest = json.loads((P / 'input-fixtures.json').read_text())
+    fixture_hashes = {name: item['sha256'] for name, item in fixture_manifest['files'].items()}
+    check_map(B / 'fusion-fixtures', fixture_hashes)
     sources = dict(parent['sources'], **screen['sources'])
     for folder,key in (('packet60-hc-fusion','hc_parent_seal_sha256'),('packet56w-spin','spin_parent_seal_sha256')):
         sources[str((P.parent/folder/'screen-seal.json').relative_to(ROOT))]=binding[key]
@@ -82,7 +85,7 @@ def checked():
                 runtime_revision=json.loads((P / 'runtime-revision.json').read_text())['runtime_revision'],
                 parent_seal_sha256=binding['parent_seal_sha256'],
                 screen_seal_sha256=binding['screen_seal_sha256'], controller_spin=SPIN, hc_fusion=HC_FUSION,
-                sources=sources, artifacts_sha256=artifacts, original_artifacts_sha256=artifacts,
+                fixture_inputs_sha256=fixture_hashes, sources=sources, artifacts_sha256=artifacts, original_artifacts_sha256=artifacts,
                 device_admission_ready=True,
                 scope=dict(full_model_qualification='Pending full coordinator chain; screen is diagnostic only',
                            fixture_binaries='Unchanged packet56 fixtures and CPU draft reference',
@@ -95,14 +98,46 @@ def verify():
     return row
 
 
+def reseal_wrapper():
+    """Owner-authorized input repair; immutable engine/screen seals must agree."""
+    from storage import B as output_build, REGISTERED_CHAIN
+    require(not (output_build / REGISTERED_CHAIN).exists(), 'registered chain already started')
+    path = P / 'build-receipt.json'
+    old = json.loads(path.read_text())
+    row = checked()
+    allowed = {'sources', 'fixture_inputs_sha256'}
+    require({k: v for k, v in old.items() if k not in allowed}
+            == {k: v for k, v in row.items() if k not in allowed},
+            'wrapper reseal cannot change binary, arithmetic, oracle or screen identity')
+    wrappers = {'window.py', 'queue_runner.py', 'storage.py', 'prepare_chain.py',
+                'prepare_inputs.py', 'check_inputs.py', 'plan_gate.py', 'chain_seal.py',
+                'test_queue_runner.py', 'test_check_inputs.py', 'test_packet61.py', 'input-fixtures.json'}
+    changed = {name for name in old['sources'].keys() | row['sources'].keys()
+               if old['sources'].get(name) != row['sources'].get(name)}
+    require(all((ROOT / name).parent == P and Path(name).name in wrappers for name in changed),
+            'unexpected source change in wrapper reseal: ' + str(sorted(changed)))
+    backup = P / 'evidence' / ('chain-seal-before-input-repair-' + digest(path) + '.json')
+    if not backup.exists():
+        backup.write_bytes(path.read_bytes())
+    path.write_text(json.dumps(row, indent=2) + '\n')
+    from packet56_submission import pin_resealed_packet56
+    pin_resealed_packet56(repo=ROOT)
+    return row
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--verify', action='store_true')
+    parser.add_argument('--reseal-wrapper', action='store_true',
+                        help='Input repair only; preserve old seal, reject any binary/identity change')
     args = parser.parse_args()
     require(os.getpriority(os.PRIO_PROCESS, 0) == 19, 'nice19 required')
     require(set(os.sched_getaffinity(0)) <= set(range(8, 16)) | set(range(24, 32)), 'CPU helper affinity required')
     start = time.monotonic()
-    if args.verify:
+    require(not (args.verify and args.reseal_wrapper), 'choose verify or wrapper reseal')
+    if args.reseal_wrapper:
+        row = reseal_wrapper()
+    elif args.verify:
         row = verify()
     else:
         require(not (P / 'build-receipt.json').exists() and not (B / 'device-cards01-a').exists(), 'never overwrite a seal or started chain')

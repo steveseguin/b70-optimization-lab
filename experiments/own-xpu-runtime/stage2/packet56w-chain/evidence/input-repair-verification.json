@@ -1,0 +1,58 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_payload_read": false,
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-chain/chain_seal.py",
+        "--verify"
+      ],
+      "returncode": 0,
+      "output": "input-repair-seal-check.json"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-chain/queue_runner.py",
+        "--phase",
+        "all",
+        "--output-root",
+        "/home/steve/own-xpu-runtime-results/packet56w-spin/build/device-cards01-a",
+        "--plan"
+      ],
+      "returncode": 0,
+      "output": "input-repair-queue-plan.txt"
+    }
+  ],
+  "tests": {
+    "argv": [
+      "/home/steve/.venvs/vllm-xpu/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "test_check_inputs.py",
+      "test_queue_runner.py",
+      "test_packet56.py",
+      "test_submission56.py",
+      "test_spin_boundary.py"
+    ],
+    "returncode": 0,
+    "output": "...................................                                      [100%]\n35 passed in 0.81s"
+  },
+  "engine_artifacts_unchanged": true,
+  "screen_seal_unchanged": true,
+  "registered_output_absent": true,
+  "old_build_receipt_sha256": "47e97a92d0aee2ba8705adfb5e5c5b748809ef9072992480536e66364e5d0569",
+  "new_build_receipt_sha256": "019a66d2b6ef6f367465e9a62dbffe96f1099b78eef69b9461dabf97c329ce46",
+  "restored_fixture_files": 74,
+  "restored_cases": 72,
+  "restored_logical_bytes": 211592427,
+  "all_fixtures_hardlinked_to_packet61": true
+}

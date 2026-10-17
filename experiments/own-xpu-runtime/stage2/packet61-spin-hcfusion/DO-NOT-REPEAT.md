@@ -13,3 +13,8 @@
   chain, unchanged oracle, fresh quality windows and current record-floor gate.
 - Preserve parent seals and other workers' folders. See the
   [CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md).
+
+- A fixture directory existing does not establish input readiness. Require the
+  full `check_inputs.py` closure and explicit K1/K2 fixture paths; preserve
+  stopped outputs and use only the registered fresh chain. See
+  [input repair closeout](INPUT-REPAIR-CLOSEOUT.md).

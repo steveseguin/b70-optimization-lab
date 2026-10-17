@@ -1,0 +1,59 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_payload_read": false,
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/chain_seal.py",
+        "--verify"
+      ],
+      "returncode": 0,
+      "output": "input-repair-seal-check.json"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/queue_runner.py",
+        "--phase",
+        "all",
+        "--output-root",
+        "/home/steve/own-xpu-runtime-results/packet61x-spin-hcfusion-wait/build/device-cards01-a",
+        "--plan"
+      ],
+      "returncode": 0,
+      "output": "input-repair-queue-plan.txt"
+    }
+  ],
+  "tests": {
+    "argv": [
+      "/home/steve/.venvs/vllm-xpu/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "test_check_inputs.py",
+      "test_queue_runner.py",
+      "test_packet56.py",
+      "test_submission56.py",
+      "test_spin_boundary.py",
+      "test_packet61.py"
+    ],
+    "returncode": 0,
+    "output": ".......................................                                  [100%]\n39 passed in 0.96s"
+  },
+  "engine_artifacts_unchanged": true,
+  "screen_seal_unchanged": true,
+  "registered_output_absent": true,
+  "old_build_receipt_sha256": "4a46028189732632eb757000dcab0140fc6d4b2e15e936fd3e39a4c17dab98b4",
+  "new_build_receipt_sha256": "058ff125dc1ebf37a7c120a3df4e105edef129fcd2f6eb43982d96915c06556f",
+  "restored_fixture_files": 74,
+  "restored_cases": 72,
+  "restored_logical_bytes": 211592427,
+  "all_fixtures_hardlinked_to_packet61": true
+}

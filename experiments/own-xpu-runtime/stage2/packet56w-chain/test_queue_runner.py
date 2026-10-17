@@ -66,8 +66,9 @@ class QueueTests(unittest.TestCase):
                 q.journal()
 
     def test_plan_never_launches(self):
-        with patch('sys.argv', ['queue_runner.py', '--plan', '--phase', 'early', '--output-root', '/test']), patch.object(q, 'run') as launch, patch('builtins.print'):
+        with patch('sys.argv', ['queue_runner.py', '--plan', '--phase', 'early', '--output-root', '/test']), patch.object(q, 'input_preflight') as check, patch.object(q, 'run') as launch, patch('builtins.print'):
             q.main()
+            check.assert_called_once()
             launch.assert_not_called()
 
     def test_unauthorized_refuses(self):

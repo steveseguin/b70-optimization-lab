@@ -9,3 +9,8 @@
 - CPU checks and screen admission are not full-model quality or speed evidence.
 - Preserve packet49 oracle, packet56 target fixtures, full 16-bit KV and current
   submission-floor checks. Screen results cannot qualify a record.
+
+- A fixture directory existing does not establish input readiness. Require the
+  full `check_inputs.py` closure and explicit K1/K2 fixture paths; preserve
+  stopped outputs and use only the registered fresh chain. See
+  [input repair closeout](INPUT-REPAIR-CLOSEOUT.md).

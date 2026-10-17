@@ -65,7 +65,7 @@ Inside the coordinator's admitted nice-0 unit on cores **0–3,16–19**, with
 ```bash
 P=experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion
 HEAD=experiments/own-xpu-runtime/stage2/packet56-draft-prefix
-OUT=/home/steve/own-xpu-runtime-results/packet61-spin-hcfusion/build/device-cards01-a
+OUT=/home/steve/own-xpu-runtime-results/packet61-spin-hcfusion/build/device-cards01-b
 bash "$P/coordinator_windows.sh" --phase all --output-root "$OUT" --wait-oracle \
   --prefix-windows "$HEAD/evidence/head-k-a/window.json" "$HEAD/evidence/head-k-b/window.json"
 ```
@@ -82,7 +82,7 @@ HC's integrated CPU gate is screen-bound, and full device model correctness
 still requires the fresh chain's packet49 comparisons.
 
 The chain output is external; binaries stay under this packet's local `build`
-so the screen's repository path guard stays intact. `build/device-cards01-a`
+so the screen's repository path guard stays intact. `build/device-cards01-b`
 is only a link to the registered external output. `prepare_chain.py` restores
 verified parent fixture/input links and refuses changes after the chain starts.
 
@@ -93,3 +93,30 @@ nice -n 19 taskset -c 8-15,24-31 python3 -B "$P/queue_runner.py" \
 ```
 
 These last two commands are CPU-only and create no device window.
+
+## October 17 input repair: required CPU preflight
+
+Run this before handing the chain to the coordinator:
+
+```bash
+P=experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion
+nice -n 19 taskset -c 8-15,24-31 python3 -B "$P/check_inputs.py"
+```
+
+`queue_runner.py --plan` now runs this check, and execution checks all static
+inputs before creating the output directory. Every window also rechecks its
+inputs and requires its earlier windows' generated receipts and dispatch before
+launch. The complete oracle must therefore already be available, even when
+planning the early phase. A plan never creates device outputs.
+
+K1 and K2 now receive an explicit packet-local `--fixtures` path. The 72
+fixtures, `cases.txt` and original fixture manifest were restored from the
+hash-verified archive of packet56's shared input directory. No parent path or
+binary was changed. `prepare_inputs.py` restores these exact bytes or hardlinks
+an already verified local copy; it refuses changes after this registered chain
+starts. The chain seal binds every fixture hash. Storage admission counts the
+local build and external chain outputs, preserving its reserve.
+
+See [input repair closeout](INPUT-REPAIR-CLOSEOUT.md) for the exact scope,
+checks, preserved evidence and current storage snapshot. Device admission,
+boot/fault review, environment and correctness gates remain required.

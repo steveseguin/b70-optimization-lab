@@ -4,7 +4,7 @@ import json
 import os
 from pathlib import Path
 
-from storage import digest
+from storage import digest, REGISTERED_CHAIN
 
 P = Path(__file__).resolve().parent
 PARENT = P.parent / 'packet56-draft-prefix'
@@ -26,7 +26,7 @@ def link(path, target):
 def main():
     if os.getpriority(os.PRIO_PROCESS, 0) != 19 or not set(os.sched_getaffinity(0)) <= set(range(8, 16)) | set(range(24, 32)):
         raise ValueError('nice19 and helper cores 8-15,24-31 required')
-    if (DEST / 'device-cards01-a').exists():
+    if (DEST / REGISTERED_CHAIN).exists():
         raise ValueError('started chain; never change its build view')
     binding = json.loads((P / 'chain-binding.json').read_text())
     for directory, leaf, key in ((PARENT, 'build-receipt.json', 'parent_seal_sha256'),
@@ -51,6 +51,8 @@ def main():
     link(P / 'build', DEST)
     for name, target in links.items():
         link(DEST / name, target)
+    from prepare_inputs import restore
+    restore()
     print(json.dumps(dict(passed=True, device_executed=False, links=len(links), build=str(DEST))))
 
 

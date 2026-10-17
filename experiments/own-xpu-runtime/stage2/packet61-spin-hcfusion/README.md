@@ -46,3 +46,6 @@ Only those documented entry points apply. Copied historical helper functions
 are dependencies, not instructions to run additional experiments or rebuild a
 sealed parent. The screen binary and full-chain device binary are identical:
 `a8f58e768e9adca9fdee5a6e53d7ccccdba4939b0fd2098cc4f12b12ffe7e590`.
+
+**October 17 input repair:** K1/K2 fixture paths are explicit and pinned; all
+eleven windows have CPU-only input preflight. See the [repair closeout](INPUT-REPAIR-CLOSEOUT.md).

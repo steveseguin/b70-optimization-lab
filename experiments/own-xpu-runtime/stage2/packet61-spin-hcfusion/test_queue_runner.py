@@ -66,8 +66,9 @@ class QueueTests(unittest.TestCase):
                 q.journal()
 
     def test_plan_never_launches(self):
-        with patch('sys.argv', ['queue_runner.py', '--plan', '--phase', 'early', '--output-root', '/test']), patch.object(q, 'run') as launch, patch('builtins.print'):
+        with patch('sys.argv', ['queue_runner.py', '--plan', '--phase', 'early', '--output-root', '/test']), patch.object(q, 'input_preflight') as check, patch.object(q, 'run') as launch, patch('builtins.print'):
             q.main()
+            check.assert_called_once()
             launch.assert_not_called()
 
     def test_unauthorized_refuses(self):
@@ -98,8 +99,8 @@ class QueueTests(unittest.TestCase):
 
     def test_output_matches_window_build_boundary(self):
         base = Path('/home/steve/own-xpu-runtime-results/packet61-spin-hcfusion/build')
-        self.assertEqual(q.admitted_output(base / 'device-cards01-a'), base / 'device-cards01-a')
-        for path in (base / 'another-chain', base, base.parent / 'device-cards01-a', Path('/tmp/packet49')):
+        self.assertEqual(q.admitted_output(base / 'device-cards01-b'), base / 'device-cards01-b')
+        for path in (base / 'another-chain', base, base.parent / 'device-cards01-b', Path('/tmp/packet49')):
             with self.assertRaises(ValueError):
                 q.admitted_output(path)
 

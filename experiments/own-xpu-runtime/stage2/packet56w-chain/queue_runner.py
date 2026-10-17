@@ -141,6 +141,16 @@ def prefix_prerequisites(paths):
                 windows=[dict(path=str(path.resolve()),sha256=digest(path)) for path in paths])
 
 
+def input_preflight(args, window=None):
+    command = ['nice', '-n', '19', 'taskset', '-c', '8-15,24-31',
+               'python3', '-B', str(P / 'check_inputs.py'), '--output-root', str(args.output_root)]
+    if args.prefix_windows:
+        command += ['--prefix-windows', *map(str, args.prefix_windows)]
+    if window:
+        command += ['--window', window]
+    subprocess.run(command, check=True)
+
+
 def run(args):
     if not args.authorized_device_window:
         raise ValueError('--authorized-device-window required to execute')
@@ -149,6 +159,7 @@ def run(args):
     user_unit_gate(Path('/proc/self/cgroup').read_text())
     from p49_seal import verify
     verify()  # Selection/device decision must be sealed before any queue write or launch.
+    input_preflight(args)
     prefix_windows = prefix_prerequisites(args.prefix_windows)
     out = admitted_output(args.output_root)
     from storage import precheck
@@ -189,6 +200,7 @@ def run(args):
                 cursor = journal(cursor)
                 from storage import early_retention_gate
                 early_retention_gate(out)
+                input_preflight(args, name)
                 cmd = commands(out)[name]
                 atomic_json(out / 'running.json', {'window': name, 'argv': cmd, 'started': time.time()})
                 with (out / (name + '.log')).open('x') as log:
@@ -220,6 +232,7 @@ def main():
                         help='Two fresh packet56 head K-window receipts; required to execute')
     args = parser.parse_args()
     if args.plan:
+        input_preflight(args)
         chosen = EARLY if args.phase == 'early' else LATE if args.phase == 'model' else EARLY + LATE
         for name, cmd in commands(args.output_root).items():
             if name in chosen:

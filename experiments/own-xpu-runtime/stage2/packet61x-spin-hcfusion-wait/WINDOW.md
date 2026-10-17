@@ -77,3 +77,30 @@ CPU-only queue command preview:
 nice -n 19 taskset -c 8-15,24-31 python3 -B "$P/queue_runner.py" \
   --phase all --output-root "$OUT" --plan
 ```
+
+## October 17 input repair: required CPU preflight
+
+Run this before handing the chain to the coordinator:
+
+```bash
+P=experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait
+nice -n 19 taskset -c 8-15,24-31 python3 -B "$P/check_inputs.py"
+```
+
+`queue_runner.py --plan` now runs this check, and execution checks all static
+inputs before creating the output directory. Every window also rechecks its
+inputs and requires its earlier windows' generated receipts and dispatch before
+launch. The complete oracle must therefore already be available, even when
+planning the early phase. A plan never creates device outputs.
+
+K1 and K2 now receive an explicit packet-local `--fixtures` path. The 72
+fixtures, `cases.txt` and original fixture manifest were restored from the
+hash-verified archive of packet56's shared input directory. No parent path or
+binary was changed. `prepare_inputs.py` restores these exact bytes or hardlinks
+an already verified local copy; it refuses changes after this registered chain
+starts. The chain seal binds every fixture hash. Storage admission counts the
+local build and external chain outputs, preserving its reserve.
+
+See [input repair closeout](INPUT-REPAIR-CLOSEOUT.md) for the exact scope,
+checks, preserved evidence and current storage snapshot. Device admission,
+boot/fault review, environment and correctness gates remain required.

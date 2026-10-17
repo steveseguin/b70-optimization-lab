@@ -1,0 +1,1 @@
+Completed CPU-only input repair, 2026-10-17. See INPUT-REPAIR-CLOSEOUT.md and evidence/input-repair-verification.json. Only the coordinator may launch the fresh registered device chain. Sealed engine and screen bytes remain unchanged.
