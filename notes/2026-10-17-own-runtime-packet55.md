@@ -174,3 +174,34 @@ H2D-a refused before any device work: "memory fence 53–57 changed". The live s
 - **Wrapper change:** `h2d/window.py` `memory_fence` (also used by the route window) now refuses unless 54 and 56 are offline, and records all five states in every receipt. The unit test covers the margin-online and failing-online cases.
 - **Evidence:** the refused `h2d/evidence/h2d-a` is retained. The rerun uses new output names.
 - **Owner note:** to get block 57 offline, offline it at boot before the USB model disk is mounted and read.
+
+## Device results (2026-10-17 13:18-13:44 UTC, boot 2cba7160, no new fault lines)
+
+Compact receipts: `experiments/own-xpu-runtime/stage2/packet55-feasibility/evidence-copy/`.
+
+**Exact CPU experts (quiet window, GPUs idle).** Byte identity with the GPU order passed. The best rate is **5.6-6.5 GB/s at 12 threads**, about 350 µs per expert amortized. Per-layer latency is 1.4 / 2.1 / 3.5 ms for 4 / 6 / 10 misses. One thread does 0.48 GB/s; 16 threads drop to 4.7 GB/s, plausibly because of SMT siblings. **The CPU-exact miss path is about 10x too slow.** It is set aside as not viable on this host.
+
+**H2D on card 2 (two fresh windows, after one refusal on the fence check).** Bandwidth is 24.6 GB/s for 4 experts (7.9 MB) and **27.7 GB/s for 10 (19.7 MB)**, about 72 µs per 1.97 MB expert. The copy engine overlapped synthetic compute almost completely: concurrent ≈ copy + 10 µs.
+
+**Route locality (cards 2+3).**
+- **Run:** the sanity prompt matched the oracle. 24 independent calibration prompts × 256 tokens were all generated and the scope is complete; 12 train and 12 held-out test prompts. The draft is the existing p49c MTP head.
+- **Two analysis fixes:**
+  - `route/convert.py` and `analysis/locality.py` read `generated_tokens` from each request's result.json. It is null there; the count lives in `output_tokens` and in the window summary. Both now take the window summary's count and require it to equal `output_tokens` and the token-list length.
+  - A partial output from the failed first conversion is kept as `routes.jsonl.gz.failed-partial-20261017`.
+
+Decode-phase byte hit rate on the held-out prompts:
+
+| Cache | LRU | LFU | static per-layer |
+|---|---:|---:|---:|
+| 8 GB | 0.766 | 0.582 | 0.445 |
+| 12 GB | 0.850 | 0.690 | 0.577 |
+| **18 GB** | **0.925** (0.75 missed experts, 1.49 MB per layer visit) | 0.809 | 0.722 |
+| 24 GB | 0.958 | 0.891 | 0.825 |
+
+Recency dominates: routes are strongly temporally local.
+
+**Decision: the one-card design is a GPU expert cache, 18 GB LRU, with exact H2D streaming of misses on the copy engine.**
+- About 1.5 MB per layer at 27 GB/s is about 55 µs per layer, mostly hideable behind post-router work.
+- Planning projection: about 34 ms GPU plus 1-3 ms exposed streaming per token, so **about 27 tok/s** without batched MTP verification. The llama.cpp one-card reference is 15.9-21.6 tok/s.
+- Every expert, hit or miss, runs on the GPU with today's kernels, so the packet 49 oracle stays valid.
+- Next: packet 58 builds this engine.

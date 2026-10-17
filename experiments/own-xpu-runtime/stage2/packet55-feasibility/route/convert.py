@@ -40,7 +40,12 @@ def convert(root,output):
         for prompt in manifest['prompts']:
             request=root/'requests'/prompt['prompt_id'];result=json.loads((request/'result.json').read_text())
             if not result.get('passed') or not result.get('completed') or result['prompt_id']!=prompt['prompt_id']:raise ValueError('incomplete request')
-            count=result['generated_tokens'];expected_positions=set(range(prompt['prompt_tokens']+count-1))
+            # 2026-10-17 amendment: per-request result.json stores the count as output_tokens (generated_tokens
+            # is null); the window summary's per-request generated_tokens is authoritative. All three must agree.
+            listed={r['prompt_id']:r for r in window['requests']}[prompt['prompt_id']]['generated_tokens']
+            count=listed
+            if result.get('generated_tokens') not in (None,count) or result.get('output_tokens')!=count or len(result['tokens'])!=count:raise ValueError('generated-token count disagreement')
+            expected_positions=set(range(prompt['prompt_tokens']+count-1))
             if not 1<=count<=256:raise ValueError('generated count')
             positions={i:set() for i in range(48)};draft=set();rows=0;files={};commands={};timings={};timing_hashes={}
             streams=[]

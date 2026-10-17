@@ -179,8 +179,10 @@ def inputs(window, trace):
         result = json.loads(result_path.read_text())
         require(result.get('passed') is True and result.get('completed') is True, 'incomplete request')
         require(result['prompt_id'] == p['prompt_id'] and r['split'] == p['split'], 'request identity')
-        require(result['generated_tokens'] == r['generated_tokens'] and 1 <= r['generated_tokens'] <= 256,
-                'generated-token binding')
+        # 2026-10-17 amendment: result.json carries output_tokens (generated_tokens is null).
+        require(result.get('generated_tokens') in (None, r['generated_tokens'])
+                and result.get('output_tokens') == r['generated_tokens'] == len(result['tokens'])
+                and 1 <= r['generated_tokens'] <= 256, 'generated-token binding')
         for rank in (0, 1):
             path = result_path.parent / f'rank{rank}/routes.p55bin'
             require(sha(path) == r['binary_sha256'][str(rank)], 'native route binding')
