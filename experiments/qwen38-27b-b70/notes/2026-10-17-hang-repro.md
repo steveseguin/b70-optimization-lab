@@ -104,3 +104,22 @@ the same first 6 calls as c28e, so the call sequence is reproducible from a fres
   separate, and the stress continues with them on.
 - **If the sequence diverges before call 132:** the replay is not exact; it still counts as agent traffic with
   breadcrumbs on, and the 132 check is void.
+
+## Hour result (12:20-13:20 EDT): no hang in 1,792 requests
+
+1,792 requests in 60.0 min, none failed (`data/2026-10-17-hang-repro/stress-L.jsonl`): every one a new request's
+first step after a prefix-cache hit (95 % of prompt tokens cached, prompts up to 41,888 tokens), 46 pauses of 5-45 s,
+slowest request 3.6 s, no request slower than 1.03 x its expected time, no breadcrumb stall, kernel log clean, cards
+left empty. At one hang in ~2,000 requests the hour expected ~0.9 hangs; seeing none has a probability of ~0.4, so the
+hour says little by itself, as predicted. What it does add: the synthetic stream at this rate does not hang often, so a
+hang needs ~2,000 first steps or something the agent stream has and this one lacks (chat template with tool calls and
+the reasoning parser, notes requests, the exact-cache tail switch extending drafting hits, which needs model-written
+tokens in the reused history).
+
+Correction to the 06:23 reading (`ROW_INSTDONE`): on the live healthy server every engine snapshot reads
+`ROW_INSTDONE` 0 on all rows, idle or busy, so "a kernel still running on all 32 rows" was not shown by that register.
+What the dump does show is `RING_INSTDONE` 0xffdefffe with the command streamer on STATE_COMPUTE_MODE; healthy busy
+snapshots read 0xffdeffff/0xffdfffff with that instruction and 0xffdefffe only while on a semaphore wait (60
+snapshots, 13:15-13:17). So at 06:23 the compute pipeline had unfinished work, without saying which kind.
+
+The replay of c28e started at 13:20:57 as registered (12:40).
