@@ -1,0 +1,10 @@
+calls: 137 (reference) 199 (replay); identical leading calls: 18
+fields: ('kind', 'messages', 'prompt', 'cached', 'written', 'finish')
+15 ('main', 32, 14446, 12480, 65, 'tool_calls') | ('main', 32, 14446, 12480, 65, 'tool_calls') 
+16 ('main', 34, 15039, 14144, 1161, 'tool_calls') | ('main', 34, 15039, 14144, 1161, 'tool_calls') 
+17 ('main', 36, 16409, 14976, 235, 'tool_calls') | ('main', 36, 16409, 14976, 235, 'tool_calls') 
+18 ('notes', 37, 16874, 15808, 417, 'stop') | ('notes', 37, 16874, 15808, 452, 'stop') <- differs
+19 ('main', 5, 1848, 832, 168, 'tool_calls') | ('main', 5, 1883, 832, 137, 'tool_calls') 
+20 ('main', 7, 2083, 1664, 61, 'tool_calls') | ('main', 7, 2087, 1664, 58, 'tool_calls') 
+21 ('main', 10, 2288, 1664, 154, 'tool_calls') | ('main', 10, 2289, 1664, 74, 'tool_calls') 
+first failed call: reference 132, replay None

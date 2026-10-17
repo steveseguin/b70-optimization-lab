@@ -1,0 +1,20 @@
+### 13:20:57 campaign 28 (c28r, depth 5, piece 832, one launch 1, tail 1) start; queue /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE28d.txt (1 lines); MemAvailable 13254 MiB
+### 13:20:57 queue checked: K32 repair 2x 3600;
+### 13:20:57 stopping the Gemma service (front door state: down down)
+### 13:21:02 cards free; MemAvailable 13203 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: 1fd96e33ee5249f084ec2118e9f6c645
+### 13:24:18 server ready after ~165 s; MemAvailable 2477 MiB
+Running as unit: ctx-keeper-proxy.service; invocation ID: 29c20bb809794b329388350130c826e0
+### 13:24:19 [K32__repair-n40-s2x] start (cap 3600s); MemAvailable 2445 MiB; server totals: prompt 15 cached 0 generated 64
+### 13:34:09 [K32__repair-n40-s2x] done rc=0 in 9 min 51 s; MemAvailable 2142 MiB; server totals: prompt 2096436 cached 1900288 generated 50907
+   repair score 1.0000 fixed 40/40 clean 40/40 rules R1 38/38 R2 33/33 R3 27/27 stray_unmarked=0 tests_touched=0 tickets=44 void=False audit 7/7
+   RESULT fixed 40/40  clean 40/40  rules R1 38/38  R2 33/33  R3 27/27  tests touched 0  AUDIT 7/7
+   proxy: cuts 6 (in place 6, failed 0, asked again 0), archived 368, recalls 1, full-rewrite failed 0, notes read 107955 cached 102336 written 4849; background started 0 applied 0 discarded 0 waited 0 s; upstream 531.351 s (background 0 s); restarts 0
+   calls: main 193 calls 488 s read 1988466 cached 1797952 written 45994; notes 6 calls 44 s read 107955 cached 102336 written 4849; largest call (read + written) 20756 tokens
+### 13:34:12 queue empty after 1 lines; waiting up to 5s for more lines in /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE28d.txt
+### 13:34:22 no new line for 5s; ending
+### 13:34:22 stopping the server; MemAvailable 2188 MiB
+server state: stopped None stop_confirmed True
+host memory available while the server ran: min 1.75  1% 1.77  median 1.89 GiB  (1545 samples)
+### 13:34:50 RESTORE=0: cards left empty for the next server
+### 13:34:50 campaign 28 (c28r) complete

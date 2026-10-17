@@ -123,3 +123,49 @@ snapshots read 0xffdeffff/0xffdfffff with that instruction and 0xffdefffe only w
 snapshots, 13:15-13:17). So at 06:23 the compute pipeline had unfinished work, without saying which kind.
 
 The replay of c28e started at 13:20:57 as registered (12:40).
+
+## Replay result (13:24-13:34 EDT) and amendment 13:38 EDT: the hung step was a first step; next run packs first steps
+
+**Replay c28r: no hang in 199 calls** (9 min 51 s, `data/2026-10-17-hang-replay/`): no failed call, no breadcrumb
+stall, kernel log clean, cards left empty. It was not an exact replay: it matched c28e for 18 calls and diverged at
+call 18 (a notes request writing 417 vs 452 tokens), because the agent's tool output contains measured test times
+(1.595 / 1.639 / 1.568 s), so the conversations differ from there on. As registered, the call-132 check is void; the
+replay counts as 199 more agent calls with breadcrumbs 0.2.0 on.
+
+**Ring-restart lead withdrawn.** On the replay's compute queues (card 03 guc 15: 77 kernel-driver jobs, card e3
+guc 14: 80, in 10 minutes) only 2 of 76 main calls were followed within 50 ms by a new compute job on both cards.
+The user-mode ring is restarted at other times, not at a request's first step.
+
+**History.** Since the 2026-10-03 boot the kernel log has one live compute timeout ("Timedout job" on a ccs queue),
+06:23 today. Every other compute engine reset (10-09 02:11, 10-12 19:56, 10-14 09:59, 10-17 05:59) came at a
+container stop (work in flight when a server is killed). Requests served since 10-16 by server folder: about 6,150
+TP2 agent calls before one-launch verify, then about 2,050 agent calls plus the 1,792-request stress hour with it.
+One-launch verify is not what hung, though: it only takes calls with 2-8 query rows, and the hung step had none.
+
+**The hung step, from the engine's own dump at 06:23:01.** A new request (4,603 prompt tokens, 4,160 cached, 443
+scheduled), no draft tokens, one new attention block to zero (425). Only the TP0 worker (card 03) raised: its output
+thread on that step's copy event and its next `execute_model` on that step's accepted-count event. The TP1 worker
+(card e3) wrote nothing until shutdown, so it was blocked without an error. In agent traffic a request's first step
+is about 5 % of GPU time (one prompt step against 50-200 drafting steps of 38 ms), so a race that can hit any step
+would land in a first step about 1 time in 20. The one hang we have is in a first step, which points at something in
+that step: the prompt-step kernels after a cache hit (GDN prompt kernel from a cached state, prompt attention over
+cached keys, the block zeroing), or collectives at prompt size (4.5 MB each instead of 61 KB).
+
+**Next run, registered now (13:38): first steps packed.** About 10,000 first steps have run on this stack with one
+hang, so a test needs about 10,000 first steps per hour, not 1,800. The step-floor runner, arm L as in the hour
+(current overlays, breadcrumbs 0.2.0 with collective counts, host step clock), `STRESS_MIN=120`, client options
+`--answers 1,2,4,8,16 --tail-words 20,700 --gap 0.05,0.3 --pause-share 0`: tiny answers so nearly every step is a
+prompt step after a cache hit, new tails of 30-1,000 tokens, and the agent's 0.05-0.3 s idle before every request.
+Host samplers beside it as in the hour (xe job trace, engine-register ring, power states). Evidence:
+`data/2026-10-17-hang-repro2/`.
+
+- **Prediction:** about 8,000-12,000 requests an hour. At one hang in about 10,000 first steps, at least one hang in
+  the two hours is 80-90 % likely.
+- **If it hangs:** both ranks' last steps and collective counts (`scripts/analyze-hang-evidence.py`), the
+  engine snapshots and the dumps name the step and whether the two cards were in the same collective; the fix
+  follows from that.
+- **If not (16,000+ first steps clean):** this synthetic stream's first-step hang rate is below about 1 in 8,000. Then
+  the cause needs something only the agent stream has (chat template with tools, notes requests), and the next run
+  replays agent queues with breadcrumbs. In parallel the context lane gets fast detection and automatic recovery
+  (a stalled step noticed in seconds, the server restarted, the keeper retrying the call), because a hang at one in
+  ~10,000 requests must not end a long task.

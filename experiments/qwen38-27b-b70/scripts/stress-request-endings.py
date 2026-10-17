@@ -28,10 +28,12 @@ ap.add_argument('--log', required=True)
 ap.add_argument('--timeout', type=float, default=180)
 ap.add_argument('--answers', default='8,16,32,64,128,200,300', help='max_tokens values drawn per request (comma list)')
 ap.add_argument('--tail-words', default='20,400', help='new words added before each request: min,max')
+ap.add_argument('--gap', default='0,0', help='idle seconds before each request, drawn uniformly: min,max (agent traffic: 0.1-0.3)')
 a = ap.parse_args()
 rng = random.Random(a.seed)
 ANSWERS = tuple(int(x) for x in a.answers.split(','))
 TAIL = tuple(int(x) for x in a.tail_words.split(','))
+GAP = tuple(float(x) for x in a.gap.split(','))
 WORDS = ('time person year way day thing man world life hand part child eye woman place work week case point number '
          'group problem fact file test value error line code check build run state cache block step token answer '
          'record table field index list queue server client model layer write read call open close start stop '
@@ -76,6 +78,8 @@ with open(a.log, 'a') as log:
         c['text'] += '\n' + chunk(rng.randrange(*TAIL)) + '\nQuestion: list the next records.\nAnswer:'
         max_tokens = rng.choice(ANSWERS)
         stop = ['\nRecord 0'] if rng.random() < 0.3 else None
+        if GAP[1] > 0:
+            time.sleep(rng.uniform(*GAP))
         t0 = time.time()
         try:
             out = complete(model, c['text'], max_tokens, stop)
