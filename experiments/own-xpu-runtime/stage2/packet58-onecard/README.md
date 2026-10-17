@@ -3,7 +3,7 @@
 Target-only greedy decode on one selected B70, with all 48 target layers,
 head, full BF16 KV and recurrent state on that card. This is a separate source
 copy of packet56 with the unchanged `iq3-p49-split32-v1` arithmetic/oracle.
-CPU qualification is in progress; device correctness, fit and speed are pending.
+CPU qualification and both builds pass; device correctness, fit and speed are pending.
 MTP is not included in this first milestone.
 
 Experts are packed once into 48,627,712,000 bytes of pinned host memory.
@@ -24,6 +24,8 @@ executes the same expert kernels. Two fresh small K1 windows select the path.
 
 - [Exact memory budget and admission](MEMORY.md).
 - [CPU cache, lifetime and expert gates](CACHE-CPU-GATES.md).
+- [Build commands and final CPU checks](CPU-BUILD.md).
+- [CPU preparation closeout and remaining risks](CPU-PREPARATION-CLOSEOUT.md).
 - [Independent cache/queue review](REVIEW-CACHE.md).
 - [Coordinator window commands and durations](WINDOW.md).
 - [One-GPU submission tooling and remaining scope gate](SUBMISSION.md).

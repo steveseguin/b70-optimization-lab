@@ -95,3 +95,29 @@ MTP is deferred: the initial passive snapshot had only 1,953,649,648 B beyond
 the conservative target-only host admission floor, less than the 3,354,364,214 B
 draft residency alone would add to the reserved shadow. It needs a new admitted
 budget and measured serial-draft benefit. No draft weights were read here.
+
+## Final CPU handoff
+
+GNU host and Intel native compilation pass with 173 source hashes per build.
+The final tree occupies 147,167,317 bytes. All 44 Python checks, eight fresh
+cache/expert runs, the production-submit CPU fixture and the persistent-reset
+comparison pass. The final seal binds 232 source files, four binaries and six
+gate receipts. The read-only launch build gate, packet49 oracle binding and
+queue plan also pass. No device binary ran. The build revision identifies
+the implementation commit; the source hashes bind the final documentation
+overlay as well.
+
+Pushed preparation commits are `5739a1ef8` (scope), `cca980ed0` (memory and
+windows) and `653021460` (engine, gates and submission preparation). The final
+handoff commit records the updated authority and refreshed seal. Only this
+packet, this note and CURRENT.md were changed by this task.
+
+The coordinator's serial chain plans 6,440 seconds including cooldowns
+(about 107 minutes); watchdog allowances total 17,000 seconds including those
+cooldowns. These are scheduling bounds, not measured run times. Fresh host
+admission remains mandatory. Unsupported host USM fails closed at K1;
+supported but slow zero-copy selects the implemented streamed fallback.
+Fills are fenced and charged to token timing, with no overlap claim.
+No matching submitted one-card IQ3 record was found in the pinned ledger.
+Submission output remains an offline draft until device gates and the new
+lineage's external 128-token scope review are complete.
