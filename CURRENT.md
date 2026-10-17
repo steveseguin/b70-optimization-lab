@@ -1,5 +1,7 @@
 # Current Workspace State
 
+**October 17, lane-aware chain admission prepared on CPU:** Future chain wrappers can keep cards 0+1 while a masked screen uses cards 2+3 for exactness work. WS128, WSs and W2m still hold the whole host until their owners exit and postflight passes. The reusable code, chain patch and companion B-screen patch pass 55 CPU tests. Existing packets and running jobs were not changed by this preparation. Both sides need fresh seals before the coordinator tests device overlap; the current memory floors, watchdogs and shared drain spacing remain. [Protocol, adoption steps and evidence](notes/2026-10-17-own-runtime-lane-aware-chain.md).
+
 **October 17, packet63 CPU preparation complete:** The draft HC group is built
 on packet61x, with sealed control and candidate selections sharing one binary.
 Both pass the target fixture and draft repeat checks; all four screen plans
