@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet68b-batched-rows/screen_probe.py", line 11, in <module>
+    if __name__=='__main__':raise SystemExit(screen.main())
+                                             ^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3-packet64-lanes/screen.py", line 239, in main
+    return screen_main(argv)  # no locks, flags, journal or device activity
+           ^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3-packet64-lanes/screen.py", line 112, in screen_main
+    require(args.output.is_relative_to(HERE / 'evidence') and not args.output.exists(), 'new screen evidence output required')
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet34-replay-bench/window.py", line 27, in require
+    raise ValueError(reason)
+ValueError: new screen evidence output required
