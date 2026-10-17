@@ -65,14 +65,14 @@ stream-combine bytes match. Fixtures exercise both block alignments,17 rows,
 SG32 and split4, signed zeros, subnormal and maximal finite half scales.
 [Byte evidence](../experiments/own-xpu-runtime/stage2/packet74-packed-dense/evidence/cpu-byte-identity.json).
 Both engine builds pass, as does the coordinator-only microbenchmark compile.
-The microbenchmark uses full248320×2560 head and10240×2560 QKV shapes,
+The microbenchmark uses full248,320 × 2,560 head and10,240 × 2,560 QKV shapes,
 one timed launch, matching SG32 arithmetic, separate FP32 device equality,
 alternating control/candidate samples and event plus submission/wait timing.
 It has not run. Initial compile caught a missing dependent-template keyword;
 fixed before its successful build.
 
 The head-only view preserves the draft's existing expanded arithmetic/kernel
-by keeping only its91392-row expanded prefix in a separate allocation.
+by keeping only its91,392-row expanded prefix in a separate allocation.
 Therefore net resident saving is8,944,640 bytes, not317,849,600: claiming the
 latter would omit the prefix. Target-head traffic still falls34.375 percent.
 The dense view covers QKV, Z, Q-gate, K/V, attention output, PLE projections
@@ -80,3 +80,28 @@ and shared down where their type is Q6_K/Q8_0. Fused HC and small-FFN tuples
 retain their expanded storage and kernels; raw F32/BF16 routers cannot be
 converted to GGUF Q6/Q8 without changing weights. No full-model speed or
 device quality is claimed. Seals and coordinator screen plans follow.
+
+## Sealed screen milestone
+
+All four views are sealed around one engine binary. The copied v4 wrapper
+passes 79 mock checks. All 14 possible screen plans pass (five A screens and
+three possible three-screen B sandwiches); only the winning B sandwich will
+execute. Both proposed queue files pass the existing lanequeue planner on a
+private copy. Live queues and frozen packet/screen trees were not edited.
+
+Dense packing saves661,749,760 resident bytes on rank0 and673,382,400 on
+rank1 by calculation. Combined saves661,749,760 and 682,327,040, including
+the separately retained expanded draft prefix. Measured peak VRAM is pending.
+The coordinator's B job requires all five A screens exact and picks the best
+candidate only if it beats both controls. No win means no B launch. All
+13 original exact requests, masking, leases, shared drains,90-second gaps and
+release before reporting remain. Screens stay diagnostic at 128 output tokens.
+
+[Handoff and queue proposals](../experiments/own-xpu-runtime/stage2/packet74-packed-dense/WINDOW.md),
+[final CPU verification](../experiments/own-xpu-runtime/stage2/packet74-packed-dense/evidence/final-validation.json),
+[preparation closeout](../experiments/own-xpu-runtime/stage2/packet74-packed-dense/CPU-PREPARATION-CLOSEOUT.md).
+The retained build is 125,278,746 logical bytes; engine compiler peak RSS
+726,688 KiB, fixture315,576 KiB and microbenchmark356,388 KiB. Root remains
+at 28 GB free. No GPU, model, service, privileged operation, setting change or
+cleanup of another job's artifacts ran. Device execution stays with the
+coordinator; device parity, determinism, actual memory and speed remain open.
