@@ -1,0 +1,28 @@
+{
+  "schema": "a367-glue01-resolved-fault.v1",
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "count": 2,
+  "fault_lines": [
+    {
+      "text": "2026-10-16T21:09:16-04:00 steve-b70s kernel: xe 0000:47:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+      "sha256": "de1e9e4e8b88012de8085cea275164ceeff2ce0662e51e1671d5d4d59d9b4c0a"
+    },
+    {
+      "text": "2026-10-16T21:09:16-04:00 steve-b70s kernel: xe 0000:47:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=36, state=0x289",
+      "sha256": "6adc280575e9f37513ff0866dfb342f57cd3a8d1f2ebc55a56b26f48790a7a71"
+    }
+  ],
+  "fault_lines_sha256": "1532ca269718ceca502cf1428205bc3171209e72c72f59bce479ca5538581c85",
+  "fault_lines_serialization": "ordered full UTF-8 lines, each followed by LF",
+  "kernel_window_path": "data/2026-10-17-flash-next-trace-feasibility/fault-20261017T010916Z/kernel-window.log",
+  "kernel_window_sha256": "ec8953ed6cee0cc70d06b53bcd35e970fa1ba85374e9d4c2c5e3f195aec12832",
+  "probe_receipt_path": "data/2026-10-17-flash-next-trace-feasibility/fault-20261017T010916Z/health-probe.json",
+  "probe_receipt_sha256": "70751b4c39f8fe971555f74151e8fa7ff84631d1b4bf2de54142d9aea2bd77a2",
+  "probe_start_utc": "2026-10-17 01:09:46 UTC",
+  "probe_end_utc": "2026-10-17 01:09:51 UTC",
+  "standing_rule": {
+    "path": "AGENTS.md",
+    "section": "Owner\u2019s Standing Rules / 3. Keep the machine safe / One fault does not end the session",
+    "quote": "If it passes and the kernel log stays clean, carry on with the work and note the fault in CURRENT.md. Do not ask first. If the probe fails, or a second fault follows on the same boot, stop and tell the owner that a reboot is needed."
+  }
+}

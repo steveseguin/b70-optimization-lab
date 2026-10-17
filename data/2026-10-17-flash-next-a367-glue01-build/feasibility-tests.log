@@ -1,0 +1,32 @@
+START graph-control, budget 0.01s
+OVERRUN graph-control: waiting for cooperative exit; no kill
+END graph-control: rc=0, 1.002s, failed
+START graph-paused, budget 120s
+END graph-paused: rc=2, 1.003s, failed
+START graph-control, budget 90s
+START graph-paused, budget 120s
+END graph-paused: rc=0, 2.520s, passed
+test_ambiguous_marker_is_partial (test_cpu.AnalysisTests.test_ambiguous_marker_is_partial) ... ok
+test_begin_end_markers (test_cpu.AnalysisTests.test_begin_end_markers) ... ok
+test_full_graph_visibility (test_cpu.AnalysisTests.test_full_graph_visibility) ... ok
+test_missing_timestamp_is_partial (test_cpu.AnalysisTests.test_missing_timestamp_is_partial) ... ok
+test_name_mismatch_is_partial (test_cpu.AnalysisTests.test_name_mismatch_is_partial) ... ok
+test_no_trace_or_run_is_incomplete (test_cpu.AnalysisTests.test_no_trace_or_run_is_incomplete) ... ok
+test_submit_only_replay_is_no (test_cpu.AnalysisTests.test_submit_only_replay_is_no) ... ok
+test_trace_files_and_stage_comparison (test_cpu.AnalysisTests.test_trace_files_and_stage_comparison) ... ok
+test_unnamed_device_events_cannot_pass (test_cpu.AnalysisTests.test_unnamed_device_events_cannot_pass) ... ok
+test_argument_order_and_exact_environment (test_cpu.DriverTests.test_argument_order_and_exact_environment) ... ok
+test_ccl_resume_order_and_pause_before_destroy_with_fake_torch (test_cpu.DriverTests.test_ccl_resume_order_and_pause_before_destroy_with_fake_torch) ... ok
+test_cpu_child_overrun_waits_and_records_rc (test_cpu.DriverTests.test_cpu_child_overrun_waits_and_records_rc) ... ok
+test_failed_resume_releases_waiter_cooperatively (test_cpu.DriverTests.test_failed_resume_releases_waiter_cooperatively) ... ok
+test_launch_failure_recorded (test_cpu.DriverTests.test_launch_failure_recorded) ... ok
+test_only_completed_paused_control_sigsegv_allows_next_step (test_cpu.DriverTests.test_only_completed_paused_control_sigsegv_allows_next_step) ... ok
+test_only_refuses_unknown_duplicate_and_empty (test_cpu.DriverTests.test_only_refuses_unknown_duplicate_and_empty) ... ok
+test_only_selects_registered_order_and_reproduction_flag (test_cpu.DriverTests.test_only_selects_registered_order_and_reproduction_flag) ... ok
+test_paused_handshake_and_ack_with_cpu_fakes (test_cpu.DriverTests.test_paused_handshake_and_ack_with_cpu_fakes) ... ok
+test_summary_rejects_false_success (test_cpu.DriverTests.test_summary_rejects_false_success) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 4.664s
+
+OK

@@ -1,0 +1,257 @@
+{
+  "schema": "a367-glue01-cpu-build.v1",
+  "native_executed": false,
+  "model_weights_read": false,
+  "owner_window_created": false,
+  "nice": 19,
+  "affinity": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "suites": [
+    {
+      "suite": "glue01",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/a367-glue01",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "tests": 148,
+      "passed": true,
+      "returncode": 0,
+      "log": "glue01-tests.log",
+      "log_sha256": "db8952e83ab1aeed7ea94d2d781d14a084025c8c326a51e87d81e0496ccb6cd6"
+    },
+    {
+      "suite": "census",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/a367-census",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "tests": 206,
+      "passed": true,
+      "returncode": 0,
+      "log": "census-tests.log",
+      "log_sha256": "8d55cfa96b299c10bad0a4f50ee59e5d61101413b1b578fddbb5c6d5ad8bec3c"
+    },
+    {
+      "suite": "replay",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/a367-replay",
+        "-p",
+        "test_replay.py",
+        "-v"
+      ],
+      "tests": 84,
+      "passed": true,
+      "returncode": 0,
+      "log": "replay-tests.log",
+      "log_sha256": "d6a16e0bfdc11dab61b9b59fee96abf6485a5ad1309e0b028f97351fbed823dc"
+    },
+    {
+      "suite": "calibration",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate",
+        "-p",
+        "test_calibrate.py",
+        "-v"
+      ],
+      "tests": 75,
+      "passed": true,
+      "returncode": 0,
+      "log": "calibration-tests.log",
+      "log_sha256": "bd94cfe332e3a1bd18d3181556b98033306a2b6b7377eee5d1f5614a13bef2ec"
+    },
+    {
+      "suite": "driver",
+      "command": [
+        "/home/steve/.venvs/vllm-xpu/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/driver",
+        "-p",
+        "test_driver.py",
+        "-v"
+      ],
+      "tests": 59,
+      "passed": true,
+      "returncode": 0,
+      "log": "driver-tests.log",
+      "log_sha256": "0d655008f19e29040ace08bb77129a5a3b48c5112cada1655ca27d516b749049"
+    },
+    {
+      "suite": "payload",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/scripts",
+        "-p",
+        "test_verify_flash_next_a367_launch_payload.py",
+        "-v"
+      ],
+      "tests": 6,
+      "passed": true,
+      "returncode": 0,
+      "log": "payload-tests.log",
+      "log_sha256": "6e670a98276a480965a3efe817803231c1cac17cb4202a3aa3ca5c885c097bd6"
+    },
+    {
+      "suite": "tree",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/scripts",
+        "-p",
+        "test_verify_qwen38_flash_next_fp8_tree.py",
+        "-v"
+      ],
+      "tests": 9,
+      "passed": true,
+      "returncode": 0,
+      "log": "tree-tests.log",
+      "log_sha256": "a6b00ece83590f495b11720eeffffae9cdee44b16e03aeb6dab86fbfadf80ed1"
+    },
+    {
+      "suite": "feasibility",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/a367-census/feasibility",
+        "-p",
+        "test_cpu.py",
+        "-v"
+      ],
+      "tests": 19,
+      "passed": true,
+      "returncode": 0,
+      "log": "feasibility-tests.log",
+      "log_sha256": "435a60e642f08bc526e9683ce8823ceb50a7ff126048c80e3d5161c556f589bd"
+    }
+  ],
+  "seals": [
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet4-prep/a367-glue01/seal.json",
+      "sha256": "2b7f8c767b554d37d9607f87534e6fe9f9ddaef0d64667e0896936248e77f736",
+      "files": 127,
+      "mismatches": []
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet4-prep/a367-census/seal.json",
+      "sha256": "b0c48ad16b44898e66135f8ec43d6c1e6d435b94bbed6c6f41db9e3c20aadbca",
+      "files": 85,
+      "mismatches": []
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet4-prep/a367-replay/seal.json",
+      "sha256": "bb473f8e923f63b0ef1f1b7d57727063cb941a3c6cf492ecbf9e26e557a1203b",
+      "files": 36,
+      "mismatches": []
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet4-prep/a367-calibrate/seal.json",
+      "sha256": "b75d9f86ace2bbeaa7cde7b94a91a15230ed1676823446c238e25edf502514b0",
+      "files": 16,
+      "mismatches": []
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage1/packet4-prep/driver/driver-seal.json",
+      "sha256": "e29fe31176a529879642e0e8bfea45e2266359304374d7d770c18e9129463c7a",
+      "files": 9,
+      "mismatches": []
+    }
+  ],
+  "plans": [
+    {
+      "arm": "control",
+      "path": "control-plan.json",
+      "sha256": "6e878620201251d226a38304b85998fcb18505783c3fb7ec82c5d8bd3badf788"
+    },
+    {
+      "arm": "candidate",
+      "path": "candidate-plan.json",
+      "sha256": "185068160d5647c4c38e247a0235303d6b379b6d1f1b86f9e19ac6aabfc7aa1c"
+    }
+  ],
+  "export_verification": {
+    "files": 6814,
+    "changed_files": {
+      "vllm/distributed/device_communicators/xpu_communicator.py": {
+        "before": "8a30e5973e8025a68eb36cbb4438ca017ddfc58f18400fcc30dde2775acd7c3d",
+        "after": "535aece99342e578a9785beb63e4bbe86dcc737269da6a7335061bf0b83bb5e2"
+      }
+    },
+    "passed": true
+  },
+  "operator_cpu_cases": 144,
+  "operator_device_qualified": false,
+  "tests": 606,
+  "seal_mismatches": 0,
+  "preregistration_sha256": "a38e2d41f6d4a7b4a952574c6366614e1e853eb8451c447b3ededd026eede8a0",
+  "seal_sha256": "2b7f8c767b554d37d9607f87534e6fe9f9ddaef0d64667e0896936248e77f736",
+  "approval_sentence": "I authorize the A367 glue01 row-copy screen on steve-b70s: one control then one candidate, each once on a fresh server, with a MemAvailable start floor of 114840824 KiB, a 0.5-second watchdog and the 12000000 KiB live reserve, under preregistration SHA256 a38e2d41f6d4a7b4a952574c6366614e1e853eb8451c447b3ededd026eede8a0 and seal SHA256 2b7f8c767b554d37d9607f87534e6fe9f9ddaef0d64667e0896936248e77f736. The coordinator records this approval under the owner standing instruction. Each arm requires its own fresh health receipt, owner window and 305-second gap. This accepts unmeasured generation-memory risk, does not lower the packet-4 fixture floor and permits only the single hash-bound resolved fault.",
+  "passed": true
+}

@@ -1,0 +1,148 @@
+{
+  "schema": "own-xpu-runtime.packet4.a367-glue01-preregistration.v1",
+  "status": "CPU BUILD ONLY; no device work run; coordinator records standing approval in fresh per-arm windows",
+  "recipe": "A367 glue01 row-copy screen",
+  "generation_requests": "Each arm: cold full 12-prompt/512-cap realistic suite first, checker, then complete A367 battery; no request/server retries",
+  "sample_interval_seconds": 0.5,
+  "ready_plateau_seconds": 20,
+  "load_and_plateau_seconds": 1800,
+  "teardown_soft_seconds": 300,
+  "post_teardown_gap_seconds": 305,
+  "default_start_floor_kib": null,
+  "live_reserve_kib": 12000000,
+  "identity_deltas": [
+    {
+      "change": "OMP_NUM_THREADS=1; normal server priority; no server CPU affinity restriction; frozen clean base environment and PATH",
+      "reason": "Restore record identity from calibration OMP2/nice19/taskset; execute refuses wrong inherited profile",
+      "speed_risk": "Removes calibration scheduling deltas; actual speed remains unmeasured"
+    },
+    {
+      "change": "TORCH_TRACE and --cudagraph-metrics retained; trace path relocated to run directory",
+      "reason": "Both are present in frozen A367; not calibration-only diagnostics",
+      "speed_risk": "Same diagnostics; storage timing may differ"
+    },
+    {
+      "change": "Fixed record client once; 20s plateau then full record 30s health delay; client nice0 on cores 4-15,20-31",
+      "reason": "Bound generation after proven lifecycle readiness; prevent client starvation",
+      "speed_risk": "Client affinity and added plateau can affect timing; no prompt warmup"
+    },
+    {
+      "change": "0.5s memory sampler, journal watcher, 12000000 KiB live reserve and admission gates retained",
+      "reason": "Preserve current-boot safety; client watchdog latches at 2700s without killing",
+      "speed_risk": "Monitor CPU/I/O overhead remains; measured speed only"
+    },
+    {
+      "change": "One API PID SIGINT, guarded entry/spawn shutdown guards, all-session exit, 305s watch",
+      "reason": "Reuse calibration lifecycle; no retry, hard kill or resident server",
+      "speed_risk": "No intended arithmetic change; startup/shutdown overhead"
+    },
+    {
+      "change": "Fresh local ext4 scratch/cache/tmp/RPC; short a367r run name; ESRCH skip retained",
+      "reason": "Preserve all three calibration fixes; reject non-ext4 scratch",
+      "speed_risk": "Cold compilation and cache placement may affect startup/first-use timing"
+    },
+    {
+      "change": "Clean byte-identical source export; guarded entry and driver/prep PYTHONPATH prefixes; PACKET4_* bindings",
+      "reason": "Protect shared trees and install cooperative guards; preserve source/stage/model byte checks",
+      "speed_risk": "Import overhead possible; no intended compute difference"
+    },
+    {
+      "change": "Pinned reconciliation and calibration dependency scope; omit historical launcher bookkeeping env",
+      "reason": "Keep fresh payload verification; do not admit changed fixture arithmetic or fake attempt367 metadata",
+      "speed_risk": "No compute selectors omitted; no expected compute effect"
+    },
+    {
+      "change": "114840824 KiB exception only, default refuse, four-field hash-bound owner sentence",
+      "reason": "Measured 102840824 KiB load need plus 12000000 reserve; generation demand unmeasured",
+      "speed_risk": "Memory pressure could change speed or stop the run; owner risk acceptance required"
+    },
+    {
+      "change": "Historical host-controlled wrapper omitted; no power/swap/page-cache changes",
+      "reason": "Current host rules and safe calibration lifecycle",
+      "speed_risk": "Host/cache/driver state differs from historical record; one replay does not establish a new record"
+    },
+    {
+      "change": "candidate export contains only patch01; one selector enabled before import/capture",
+      "reason": "test row-copy glue only; GEMM, GDN, KV, model, placement and collectives frozen",
+      "speed_risk": "allocation/offset/capture behavior needs exact byte and output gates"
+    },
+    {
+      "change": "candidate-only synthetic byte gate at warmup, existing communicator; no device profiler",
+      "reason": "qualify changed row offset and graph input immutability independently of tokens",
+      "speed_risk": "extra startup work; no prompt/KV reuse"
+    },
+    {
+      "change": "hardened census sampler/local async writer/independent attribution thread",
+      "reason": "remove blocking proc reads and RAID writes from timed sample path",
+      "speed_risk": "monitor overhead shared by both arms"
+    },
+    {
+      "change": "timed full realistic suite first, battery afterward",
+      "reason": "preserve cold performance and every old quality/depth pin",
+      "speed_risk": "none from later battery; inherits time budgets"
+    },
+    {
+      "change": "single exact-set resolved fault admission in this new packet only",
+      "reason": "owner standing recovery rule after recorded bounded pass",
+      "speed_risk": "new faults still trip; historical packet gates unchanged"
+    }
+  ],
+  "approved_exception_floor_kib": 114840824,
+  "client_wall_budget_seconds": 2700,
+  "post_plateau_client_delay_seconds": 30,
+  "record_class_balanced_median_tok_s": 46.85425,
+  "localmaxxing_record": "cmtzask41000nlq011f16bpbc",
+  "pass_rule": "Exact full realistic token/text/stop/prompt pins, all inherited battery pins, 16 repeats, needle, both exact depth pins twice, candidate four-rank byte gate, clean session exit/watch. Speed is not a gate.",
+  "owner_window": "At most3600 seconds per arm, unchanged. 2700s client budget. Expiry may preempt complete battery; no renewal/retry. Candidate needs new health after control305s gap.",
+  "arms": [
+    "control",
+    "candidate"
+  ],
+  "candidate_source": "/home/steve/src/vllm-flashnext-a367-glue01-20261017",
+  "patch": {
+    "path": "patches/flash-next-m2-glue-fusion-01-row-copy.patch",
+    "sha256": "9a31076b55f5e6298226c9caa8c2ddf34a0ed479508512ad70be7de089c1c912",
+    "selector": "Q38_M2_GLUE_ROW_COPY=1"
+  },
+  "resolved_fault": {
+    "policy": "one sealed resolution only; exact multiset including duplicates; every line before successful probe; no other boot faults; fresh launch health may contain exactly 2 prior lines",
+    "artifact": "resolved-fault.json"
+  },
+  "operator_gate": {
+    "cpu_cases": 144,
+    "device_cases_per_rank": 72,
+    "ranks": 4,
+    "when": "candidate server compile_or_warm_up_model, using existing TP communicator, before normal warmup and cold suite",
+    "required": "raw bytes per row, unchanged inputs, fresh outputs, same group/row shape/stride/alignment, row1 offset5120, M1/M2, BF16 special patterns, changed-input graph replay and same-input repeats",
+    "algorithm_evidence": "fixed twoshots/4096 settings and same-call metadata; native internal algorithm is not separately traced"
+  },
+  "depth_fixture": {
+    "path": "data/qwen27-exact-depth/qwen38-flash-next-bcd9f01-exact-depth-v1.json",
+    "sha256": "c44fccbaf600cc506d8ed0cc7357161057b86abc44469b611be71db97558061d",
+    "capacity": 4352,
+    "output_tokens": 128,
+    "repeats_each": 2,
+    "cached_tokens": 0,
+    "finish_reason": "length",
+    "pins": {
+      "2048": "afffd2110812762164862b6388f054bb56696ee57b07eadce411a702c40bc714",
+      "4096": "1d833e5f463366223a669aa15495840d1337b173e675a9ea04f00a5ae339d5cc"
+    }
+  },
+  "reporting": [
+    "class-balanced conventional99-interval median",
+    "all-prompt median",
+    "TTFT",
+    "acceptance",
+    "M1/M2 counts if available else explicit unavailable",
+    "full-response wall time",
+    "whole-cycle/target/rank critical time only if measured, never inferred"
+  ],
+  "sampler_origin": {
+    "commit": "7a5176c5dd9ab4bad6597653d07cf8a95078edca",
+    "packet": "a367-census",
+    "timed_path": "host meminfo and in-memory queue only; no RAID I/O",
+    "attribution": "separate thread, cmdline once per known worker"
+  },
+  "qualification_limit": "One control/candidate pair is a rejection screen; not candidate fresh-server determinism or promotion. Flat inside about3% closes lever; no grids."
+}
