@@ -79,3 +79,25 @@ of unique BF16 weights. HC injection is only 81,920 weight bytes yet takes
 than another bandwidth-only head campaign. These are prior diagnostic costs,
 not measured savings from the new candidates. Target-head timing, device
 exactness, acceptance and speed remain for the coordinator.
+
+## Device attribution (coordinator, 2026-10-17 20:25–20:30 UTC, lane B via lane-queue)
+
+`screen/attr/evidence/p69-attribution-B-a`: passed, faults 2. Rank 1 (the bottleneck half, 14.65 ms control) spends 3.09 ms outside layers:
+
+| Part | Time | Notes |
+|---|---|---|
+| **Target head** | **1.40 ms** | 794.6 MB of expanded resident bytes at 566 GB/s: at the bandwidth limit for its expanded format |
+| Host wait/submission/unattributed | 1.61 ms | |
+| Final norm/merge | 0.05 ms | |
+| Argmax | 0.02 ms | |
+
+The draft:
+
+| Draft part | Time |
+|---|---|
+| Head prefix (at 561 GB/s) | 508 µs |
+| Attention | 379 µs |
+| HC | 328 µs |
+| Experts | 245 µs |
+
+**Next lever:** the runtime expands Q6_K weights to about 10 bits per weight (signed 8-bit codes plus an F32 scale per 16), against 6.56 bits packed. Reading packed blocks with bit-identical dequantization (packet 74) could remove about a third of the head's and the dense projections' bytes.
