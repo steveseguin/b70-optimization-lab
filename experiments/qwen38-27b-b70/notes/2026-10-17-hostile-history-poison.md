@@ -101,3 +101,26 @@ retroloud 1, cap 2400 s each, about 50-60 min in all.
   at the audit items (did it call `recall`; what did the notes say). A general fix would be a notes rule to keep the
   item numbers of each counter's recent changes beside its value, or a recall hint when a message cites an earlier
   item number. Any fix is tested on both seeds and against the standing gate before release.
+
+## Amendment 17:48:53 EDT, after the seed-0 runs and before any seed-1 hostile run: the 1M follow-up
+
+Seed 0 so far (details in the result section to come):
+- Forged notices: all kept, 39/39, no forgery carried into the notes unflagged.
+- Quiet audits: 6/6 applied, 42/45 overall. The three misses are none of the audits: a notes line with the wrong
+  sign, a confidentiality-rule lapse when answering although the rule was recited, and one "who" detail.
+- Loud audits: 6/6 applied, 45/45.
+- Clean s1: 46/46.
+
+**Registered now.** If the seed-1 hostile runs also meet the pass conditions above (every forgery target kept, no
+unflagged forgery in the notes, quiet audits applied = loud audits applied), I append `K32 hostile1m 0 9000` to
+QUEUE30 while the runner waits for more lines, on the same server.
+
+The stream is `sparse-memory-t1000k-poison-retro-s0`: 1M tokens, 587 batches, 199 probes; the four forgeries at items
+73/122/246/401; 8 quiet audits 117-232 items back (about 200-400K tokens). Its clean counterpart is the 1M rules s0
+stream only up to the first audit's opening, so it is compared with the 1M clean s0 runs as a stream of its own,
+not answer by answer.
+- **Prediction:** every forgery target kept; at least 7/8 audits applied; at least 97 % of the other answers right;
+  about 110 min, inside the 150-min cap.
+- **Decision:** if met, hostile streams pass at 1M. The charter's "any history" line gets the result, and the next
+  hostile lever is 2M. If an audit is missed, the turns at that audit and the recalls it made are read before
+  anything is changed.
