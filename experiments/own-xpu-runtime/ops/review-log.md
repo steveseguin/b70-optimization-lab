@@ -211,3 +211,39 @@ STOP-doing items applied:
 - no full grids on both lanes;
 - no kernel rewrites without in-engine bandwidth evidence;
 - Codex count above 0 during chains.
+
+## Review 8, 21:07 UTC: **ACT**
+
+**Evidence:**
+- Device in flight 90% over 2 h (91% over 6 h).
+- **Since 19:00, 10 of 17 device units plus 4 REFUSED-fast starts failed before or at rank startup.** All were software or packaging bugs (fault count stayed 2):
+
+| Packets | Failure |
+|---|---|
+| p72, p73, p74 | lane-A window policy |
+| p69 | head row stride |
+| p71, p71b | packaging, router config |
+| p58b | GPUActive accounting |
+| p58c | allocation lifetime |
+| p70 | K2 validator |
+
+- Only one Codex job was running, with about 2 h of screens queued.
+- The p69 grid was queued on both lanes.
+
+**Actions, 21:07–21:12 UTC:**
+1. **Packet 75 record bundle:** Codex `p75`. One binary from packet 70 sources with the packet 74 packed-dense views and packet 73 HC/experts views as independent choices. Orchestration reads both lanes' receipts, selects exact both-lane winners, fast reseals with 90 s gaps and writes `ready.json`. Uses the shared, pinned v4 wrapper and a full-shape dry run.
+2. **Queue A trimmed** to p74, p73, p72-r2. The `p69-quick-A-r3` duplicate grid was removed; lane B runs the p69 r3 grid, and a ≥ 1.5% winner gets a control/best/control confirmation on A.
+3. **Rank-1 host residual (1.61 ms per half, about 11%):** Codex `p76`. Attribution first (device idle / cross-card transfer wait / host issue), then a scheduling-only fix (device-side waits, recorded command lists or moved syncs), screenable with v4.
+4. **One-card:** Codex `p58d` (running) fixes the allocation lifetime bug. The follow-up for 90 s gaps, starting at lane boundaries only, and measured-memory concurrency for the exactness windows is deferred to the next 58 brief, after p58d's evidence. p71b is deprioritized behind p74/p73/p75 (marginal at about 1.43 vs 1.45 break-even).
+5. **Brief rules** (memory note `cpu-plans-must-exercise-device-startup-paths`):
+   - a shared, pinned v4 wrapper, never per-packet modified copies;
+   - a full-shape CPU dry run through real admission, imports, allocation and config paths;
+   - selection-key consumer tests;
+   - a device smoke for new engine paths.
+
+**STOP-doing items applied:**
+- no duplicate full grids on both lanes;
+- 2+ Codex jobs while screens are queued (now p58d, p75, p76);
+- 90 s gaps in new chains;
+- p71b deferred;
+- lane-B best jobs only after lane-A results (`laneB-followups`).
