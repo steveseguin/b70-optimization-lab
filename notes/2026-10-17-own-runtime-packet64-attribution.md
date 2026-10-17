@@ -107,6 +107,8 @@ The draft on rank 1:
 | Shared expert | 43 µs |
 | Argmax | 21 µs |
 
+Raw evidence (about 114 MB: per-rank `sites.jsonl`, summaries, driver caches) stays outside Git at `experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/`. Only the report, window receipt and small JSON receipts are tracked. Commit `ec20324c9` briefly tracked the whole folder; `HEAD` untracks it (history was not rewritten).
+
 **Implied lever order:**
 1. GDN attention (the largest single class);
 2. routed experts (packet 65 in flight);
