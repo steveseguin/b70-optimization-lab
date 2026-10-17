@@ -14,7 +14,7 @@ from common import write_json
 
 HERE = Path(__file__).resolve().parent
 PYTHON = '/home/steve/.venvs/vllm-xpu/bin/python'
-UNITRACE = '/home/steve/src/pti-gpu/build-unitrace/unitrace'
+UNITRACE = '/home/steve/src/pti-gpu/build-unitrace-itt/unitrace'  # ITT-enabled build (pinned build has BUILD_WITH_ITT=0)
 SOURCE = Path('/home/steve/src/vllm-flashnext-a367-clean-20261016')
 FLAGS = ['--chrome-kernel-logging', '--chrome-itt-logging', '--verbose', '--pid',
          '--chrome-event-buffer-size', '4096']

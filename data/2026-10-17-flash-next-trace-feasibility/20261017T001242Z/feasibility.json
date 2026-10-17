@@ -1,0 +1,150 @@
+{
+  "ccl": {
+    "max_observed_init_stage_s": null,
+    "paused_init_observations": [],
+    "paused_tracer_ccl_init_stall": null,
+    "per_rank_comparison": [
+      {
+        "rank": 0,
+        "stages": {}
+      },
+      {
+        "rank": 1,
+        "stages": {}
+      },
+      {
+        "rank": 2,
+        "stages": {}
+      },
+      {
+        "rank": 3,
+        "stages": {}
+      }
+    ],
+    "runs": {
+      "ccl-control": [
+        {
+          "complete": false,
+          "issues": [
+            "missing rank log"
+          ],
+          "stages": {},
+          "stalls": []
+        },
+        {
+          "complete": false,
+          "issues": [
+            "missing rank log"
+          ],
+          "stages": {},
+          "stalls": []
+        },
+        {
+          "complete": false,
+          "issues": [
+            "missing rank log"
+          ],
+          "stages": {},
+          "stalls": []
+        },
+        {
+          "complete": false,
+          "issues": [
+            "missing rank log"
+          ],
+          "stages": {},
+          "stalls": []
+        }
+      ],
+      "ccl-paused": [
+        {
+          "complete": false,
+          "issues": [
+            "missing rank log"
+          ],
+          "stages": {},
+          "stalls": []
+        },
+        {
+          "complete": false,
+          "issues": [
+            "missing rank log"
+          ],
+          "stages": {},
+          "stalls": []
+        },
+        {
+          "complete": false,
+          "issues": [
+            "missing rank log"
+          ],
+          "stages": {},
+          "stalls": []
+        },
+        {
+          "complete": false,
+          "issues": [
+            "missing rank log"
+          ],
+          "stages": {},
+          "stalls": []
+        }
+      ]
+    },
+    "scope": "init_process_group plus first 4 KiB all_reduce while paused; control required; not proof of causation",
+    "status": "incomplete",
+    "threshold_s": 120.0
+  },
+  "census_scope": "microtest feasibility only; no full-model admission, rank/step attribution, memory or quality gate waived",
+  "graph": {
+    "graph-paused": {
+      "attribution": "synchronized, single-process iteration containment; not valid for asynchronous census spans",
+      "device_events_outside_iterations": 0,
+      "eager": {
+        "complete_markers": false,
+        "iterations": [],
+        "timestamped_kernel_events": 0
+      },
+      "issues": [
+        "expected exactly one graph marker trace; found 0"
+      ],
+      "lifecycle_status": "pending",
+      "names_match": false,
+      "replay": {
+        "complete_markers": false,
+        "iterations": [],
+        "timestamped_kernel_events": 0
+      },
+      "traces": [],
+      "visibility": "partial"
+    },
+    "graph-traced": {
+      "attribution": "synchronized, single-process iteration containment; not valid for asynchronous census spans",
+      "device_events_outside_iterations": 0,
+      "eager": {
+        "complete_markers": false,
+        "iterations": [],
+        "timestamped_kernel_events": 0
+      },
+      "issues": [
+        "expected exactly one graph marker trace; found 0"
+      ],
+      "lifecycle_status": "failed",
+      "names_match": false,
+      "replay": {
+        "complete_markers": false,
+        "iterations": [],
+        "timestamped_kernel_events": 0
+      },
+      "traces": [],
+      "visibility": "partial"
+    }
+  },
+  "schema": "a367-tracefeas-analysis-v1",
+  "verdict": {
+    "ccl_status": "incomplete",
+    "graph_replay_kernel_visibility": "partial",
+    "paused_ccl_max_init_stage_s": null,
+    "paused_tracer_ccl_init_stall": null
+  }
+}

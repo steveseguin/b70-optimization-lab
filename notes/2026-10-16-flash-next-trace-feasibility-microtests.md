@@ -106,3 +106,36 @@ coordinator's device window. No substitute or claimed pass is recorded.
 Repeat CPU checks with `nice -n 19 taskset -c 4-15,20-31 python3 -B -m unittest
 discover -s experiments/own-xpu-runtime/stage1/packet4-prep/a367-census/feasibility
 -p test_cpu.py -v` (one shell command).
+
+## Device results, 2026-10-17 (coordinator)
+
+**First run (`a367-tracefeas-20261017T001242Z`).**
+
+- The untraced graph control passed.
+- The traced arm failed in 0.5 s: `[ERROR] Failed to launch target application: --chrome-itt-logging`. The pinned unitrace (`build-unitrace`, SHA256 `5aaca1f4…`) was built with `BUILD_WITH_ITT=0`.
+- That also invalidates the census packet's ITT step-marker plan as built.
+
+**ITT build.** A new build with ITT, `/home/steve/src/pti-gpu/build-unitrace-itt/unitrace` (unitrace SHA256 prefix `def24ca5…`, `libunitrace_tool.so` `114242e3…`):
+
+- same PTI source `a5bab309`, the same options, plus `-DBUILD_WITH_ITT=1`;
+- built at nice 19 on cores 4-15,20-31 in about 1 min;
+- the pinned build was left untouched;
+- `run_driver.py` now points at the ITT build.
+
+**Second run (`a367-tracefeas-20261017T001502Z`).** Zero GPU fault lines this boot.
+
+| Step | Result |
+|---|---|
+| graph-control | passed, 3.0 s |
+| graph-traced (tracer active during capture) | passed. **Replay: 50/50 iterations, 8/8 kernels each, with device timestamps.** Eager: 8/8 |
+| graph-paused (paused during capture, resumed before replay) | passed. Eager 8/8, **replay 0 kernels** |
+| ccl-control | passed, 5.5 s |
+| ccl-paused (4 ranks, A367 CCL env) | Every stage completed: init about 1 ms; 4 KB all_reduce about 1.0 s, the same as control; 64 MB all_reduce completed. **Then all four ranks hit SIGSEGV at exit** (`ucs_handle_error`, address 0x40). The untraced control exited cleanly |
+
+**Verdicts.**
+
+1. unitrace with ITT **can** see kernels inside XPU graph replay, **but only for graphs captured while tracing is active**. The census must resume tracing before graph capture: after "Model loading took" on all four ranks, not after readiness.
+2. A paused tracer does **not** stall oneCCL init on this stack. The Laguna 15-minute stall did not reproduce with these flags.
+3. A traced 4-rank oneCCL process segfaults at exit after its work completes. That is tracer-induced; there were zero kernel fault lines. A census run must therefore expect non-zero worker exits after the measurement. It must judge census validity on trace completeness plus zero GPU faults, and must still wait for every owner to exit.
+
+Evidence: `data/2026-10-17-flash-next-trace-feasibility/`.
