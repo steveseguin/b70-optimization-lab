@@ -7,9 +7,9 @@ remain unmeasured; the coordinator owns the prepared screens.
 - [Kernel arithmetic and offline compiler evidence](OCCUPANCY.md).
 - [Four fresh GNU/Intel operator checks](evidence/cpu-byte-identity.json).
 - [Built selector checks](evidence/selection-gate.json).
-- [79 private v4 wrapper tests](screen/placement-validation/tests.log).
-- [LaneA four-screen job](screen/jobs-A.txt), [conditional laneB three-screen job](screen/jobs-B.txt).
-- [Coordinator commands and queue proposals](WINDOW.md), [passing queue plans](evidence/queue-plans.json).
+- [82 private v4 wrapper tests](screen/placement-validation/tests.log).
+- [LaneA four-screen job](screen/jobs-A-r2.txt), [conditional laneB three-screen job](screen/jobs-B.txt).
+- [Coordinator commands and queue proposals](WINDOW.md), [revision-2 checks](evidence/reseal-r2/validation.json).
 
 The three sealed views are `production`, `attention-out` and `combined`, all
 sharing one device binary. Production is packet70's selected configuration:
@@ -28,7 +28,7 @@ CPU planning from the repository root:
 
 ```sh
 P=experiments/own-xpu-runtime/stage2/packet72-occupancy
-nice -n 19 taskset -c 8-15,24-31 python3 -B "$P/screen/run.py" --lane A --jobs "$P/screen/jobs-A.txt" --plan </dev/null
+nice -n 19 taskset -c 8-15,24-31 python3 -B "$P/screen/run.py" --lane A --jobs "$P/screen/jobs-A-r2.txt" --plan </dev/null
 nice -n 19 taskset -c 8-15,24-31 python3 -B "$P/screen/run.py" --lane B --jobs "$P/screen/jobs-B.txt" --plan </dev/null
 ```
 

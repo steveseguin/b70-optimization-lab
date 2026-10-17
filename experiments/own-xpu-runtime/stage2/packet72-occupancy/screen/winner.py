@@ -15,6 +15,6 @@ def choose(rows):
 def verify_lane_a():
  a=P/'selections/attention-out';b=P/'selections/combined'
  require(read(a/'selection.json')==read(b/'selection.json'),'combined is no longer the same single mechanism')
- result=choose([load(r,'A') for r in jobs(HERE/'jobs-A.txt','A')])
+ result=choose([load(r,'A') for r in jobs(HERE/'jobs-A-r2.txt','A')])
  print('lane-A exact winner verified: '+result['choice'],flush=True)
  return result

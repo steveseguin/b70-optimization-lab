@@ -24,9 +24,9 @@ def main():
   assert identity['placement']['supported'];views.append(dict(name=name,seal_sha256=sha(v/'screen-seal.json'),binary_sha256=identity['binary_sha256']))
  assert len({v['binary_sha256'] for v in views})==1
  for lane,n in [('A',4),('B',3)]:
-  plans=read(P/'evidence'/f'plans-{lane}.json');assert len(plans['plans'])==n and all(p['supported'] for p in plans['plans'])
- assert read(P/'evidence/queue-plans.json')['passed']
+  plans=read(P/'evidence/reseal-r2'/f'plans-{lane}.json');assert len(plans['plans'])==n and all(p['supported'] and p['reservation_scope']=='lane-'+lane for p in plans['plans'])
+ assert read(P/'evidence/reseal-r2/validation.json')['passed']
  size=sum(f.stat().st_size for f in (P/'build').rglob('*') if f.is_file());assert size<1_000_000_000
- save(P/'evidence/final-validation.json',dict(passed=True,device_executed=False,cpu_model_executed=False,views=views,cpu_runs=runs,wrapper_tests=79,screen_plans=7,queue_plans=2,build_logical_bytes=size,build_peak_rss_kib=build['max_rss_kib'],cpu_fixture_peak_rss_kib=fixture['max_rss_kib'],actual_dram_counters='unavailable',device_quality='pending',device_speed='unmeasured'))
- print('PASS: three views, one binary, four CPU lifetimes, seven screen plans, two queue plans; build bytes',size)
+ save(P/'evidence/final-validation.json',dict(passed=True,device_executed=False,cpu_model_executed=False,views=views,cpu_runs=runs,wrapper_tests=82,screen_plans=7,queue_plans=1,build_logical_bytes=size,build_peak_rss_kib=build['max_rss_kib'],cpu_fixture_peak_rss_kib=fixture['max_rss_kib'],actual_dram_counters='unavailable',device_quality='pending',device_speed='unmeasured'))
+ print('PASS: three views, one binary, four CPU lifetimes, seven screen plans, revision-2 queue plan; build bytes',size)
 if __name__=='__main__':main()

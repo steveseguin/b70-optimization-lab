@@ -17,7 +17,7 @@ from chain_devices import require, process_identity
 
 DEFAULT_ROOT = Path('/home/steve/own-xpu-runtime-results/coordination/chain-lanes-v1')
 EXACT_WINDOWS = frozenset(('K0', 'K1a', 'K1b', 'K2', 'KD', 'W0p', 'WS',
-                           'WS64x', 'WS128x', 'W2m-exact'))
+                           'WS64x', 'WS128x', 'W2m-exact', 'screen'))
 TIMING_WINDOWS = frozenset(('WS128', 'WS64', 'WSs', 'W2m', 'W2m-speed', 'W2mc',
                             'W2s', 'W2n', 'W2x', 'W2d', 'W2c'))
 

@@ -73,7 +73,7 @@ def baseline(rows):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('--jobs-A', type=Path, default=QUICK / 'jobs-A.txt')
+    ap.add_argument('--jobs-A', type=Path, default=QUICK / 'jobs-A-r2.txt')
     ap.add_argument('--jobs-B', type=Path, default=QUICK / 'jobs-B.txt')
     args = ap.parse_args()
     cpu_gate()

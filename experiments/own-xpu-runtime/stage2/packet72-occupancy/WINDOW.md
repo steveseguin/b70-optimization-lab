@@ -4,7 +4,7 @@ No device work was run during packet72 preparation. The coordinator installs
 the proposed JSON lines into the live queues after review; this packet never
 edits those queues or starts a unit.
 
-1. [LaneA proposal](../../ops/lane-queue/proposed-p72-A.txt): production →
+1. [LaneA proposal](../../ops/lane-queue/proposed-p72-r2-A.txt): production →
    attention-out → combined → production. Four fresh screens, one model load
    each, expected about3.5 minutes each plus three90-second gaps.
 2. Only after laneA succeeds,

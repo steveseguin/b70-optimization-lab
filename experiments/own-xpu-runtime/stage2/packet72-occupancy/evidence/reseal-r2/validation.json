@@ -1,0 +1,55 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "cpu_model_executed": false,
+  "live_queues_modified": false,
+  "wrapper_tests": 82,
+  "plans": {
+    "A": {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet72-occupancy/screen/run.py",
+        "--lane",
+        "A",
+        "--jobs",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet72-occupancy/screen/jobs-A-r2.txt",
+        "--plan"
+      ],
+      "plans_sha256": "d21f9df0ad12d22f01bfe7a652b6827f2491e325076322b2a47d6bda246ec5ed"
+    },
+    "B": {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet72-occupancy/screen/run.py",
+        "--lane",
+        "B",
+        "--jobs",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet72-occupancy/screen/jobs-B.txt",
+        "--plan"
+      ],
+      "plans_sha256": "8111437f21191179c487567ebba2c77376dd0483679acb3dd70bf08f10fecf26"
+    }
+  },
+  "views": [
+    {
+      "name": "attention-out",
+      "binary_sha256": "54cbe6ac3233d3d887ba39ca364913756fcef8136d5181c74f10b9dcd51c6d4b",
+      "screen_seal_sha256": "f366eed9623df10cb3535d53d2d3fd9f5e14ac2c060da08455f5c9edb2faa236"
+    },
+    {
+      "name": "combined",
+      "binary_sha256": "54cbe6ac3233d3d887ba39ca364913756fcef8136d5181c74f10b9dcd51c6d4b",
+      "screen_seal_sha256": "8dc55b78cfd2f3518ee4fe299fdb855bc0360230243f9a5751fb5dfe27d3f251"
+    },
+    {
+      "name": "production",
+      "binary_sha256": "54cbe6ac3233d3d887ba39ca364913756fcef8136d5181c74f10b9dcd51c6d4b",
+      "screen_seal_sha256": "391307f4b255b1fd3024c66b0bb7d85caa179d5377bcf7fee9858d3bc2b2108d"
+    }
+  ],
+  "proposal_sha256": "6652a9c4a4710fe4de05374aec8f1ac7b2026e1d8f2e846789c8d167695f8333",
+  "queue_plan_sha256": "7f05d0c5f52ad5483462c999269f48edffc1e780ed4a3bee0939fb57c9e2fa23",
+  "cpu_byte_gate_sha256": "9cdff5d1d12945c1e469d82c864f3b46a7e9394764c8a95abe38b680094e8c32"
+}

@@ -111,6 +111,9 @@ def pair_barrier(args, identity, reasons):
 def screen_main(argv=None, *, release=None):
     args = parser().parse_args(argv)
     cpu_gate() if args.plan else lane_gate(args.lane)
+    # Run the execution admission predicate during every job plan. Constructing
+    # a reservation checks policy but acquires no lock and creates no marker.
+    reservation_scope = Reservation(args.lane, window='screen').scope
     args.lineage, args.output = args.lineage.resolve(), args.output.resolve()
     require(args.output.is_relative_to(HERE / 'evidence') and not args.output.exists(), 'new screen evidence output required')
     identity = sealed(args)
@@ -124,7 +127,7 @@ def screen_main(argv=None, *, release=None):
                               planned_write_bytes=WRITES[args.profile],
                               physical_cards=LANES[args.lane]['cards'], native_card_arguments=[0, 1],
                               device_mask=mask_for(args.lane), timing=args.timing,
-                              reservation_scope='lane-' + args.lane), indent=2))
+                              reservation_scope=reservation_scope), indent=2))
         return 0 if identity['placement']['supported'] else 2
     require(identity['placement']['supported'], identity['placement']['reason'])
     require(args.authorized_device_window, 'coordinator authorization required')

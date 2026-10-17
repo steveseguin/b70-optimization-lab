@@ -44,3 +44,28 @@ directory. Live queues were not edited. [Coordinator handoff and proposals](../e
 are ready; device execution stays with the coordinator. Generated executable
 paths remain unchanged locally and recoverable by commit/hash, but are excluded
 from the current Git index. Small CPU reference/candidate bytes are retained.
+
+## Lane-A admission repair and revision 2 (CPU only)
+
+The device wrapper refused `screen` because this private copy omitted packet65's
+diagnostic lane-A window. Added that one policy entry locally. Every individual
+job plan now constructs the same `Reservation(lane, window='screen')` used by
+execution and reports its actual scope, without entering a lease or writing a
+marker. A regression test removes the new entry and verifies planning fails.
+Timing windows still require the whole host; unknown lane-A windows still refuse.
+
+All **82 wrapper tests**, four fresh GNU/Intel operator runs, seven screen plans,
+and the proposed lane-A queue plan pass. All three engine artifact hashes,
+selection bytes and fixture hashes are unchanged. Prior seals and their test log
+are retained under `evidence/reseal-r2/previous/`; the wrapper and three selection
+views have fresh seals. Device correctness and speed remain pending.
+
+Use `screen/jobs-A-r2.txt`, with four fresh `-r2` outputs. Lane B's winner check
+now reads those four revision-2 lane-A receipts. The queue proposal is
+`experiments/own-xpu-runtime/ops/lane-queue/proposed-p72-r2-A.txt`.
+`validate_r2.py` plans it on a temporary copy of the queue directory; it does
+not modify live queues. [Validation](../experiments/own-xpu-runtime/stage2/packet72-occupancy/evidence/reseal-r2/validation.json)
+and [queue log](../experiments/own-xpu-runtime/stage2/packet72-occupancy/evidence/reseal-r2/queue-plan-A.log)
+retain the commands and hashes. Recheck with `validate_r2.py` and
+`final_check.py`, under `OMP_NUM_THREADS=2 nice -n 19 taskset -c 8-15,24-31
+python3 -B`, stdin `/dev/null`. No GPU, model, service or host setting was touched.
