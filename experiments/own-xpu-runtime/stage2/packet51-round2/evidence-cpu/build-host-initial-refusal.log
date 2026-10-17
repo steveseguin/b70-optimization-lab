@@ -1,0 +1,29 @@
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/g++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.13")
+-- Configuring done (0.2s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/build/host
+[ 25%] Building CXX object CMakeFiles/layer-bench.dir/source/layer_bench.cpp.o
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/layer_bench.cpp: In member function ‘void p51bench::Fixture::execute(const p51bench::Group&, bool)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/layer_bench.cpp:90:71: error: no matching function for call to ‘Engine::finish(int, integrated::Launch)’
+   90 |   if(candidate&&cls=="route") {const auto&b=e.prepared.at(&l);e.finish(0,p51::route_submit(e.dev(0),b.spec,b.bindings));return;}
+      |                                                               ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/layer_bench.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/main.cpp:610:8: note: candidate: ‘void Engine::finish(int, integrated::Launch, bool)’
+  610 |   void finish(int, Launch l, bool gemv) {
+      |        ^~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/main.cpp:610:8: note:   candidate expects 3 arguments, 2 provided
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/main.cpp:615:8: note: candidate: ‘void Engine::finish(int, ownrt::Event)’
+  615 |   void finish(int c, ownrt::Event event) { finish(c,{event,event,1},false); }
+      |        ^~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/main.cpp:615:35: note:   no known conversion for argument 2 from ‘integrated::Launch’ {aka ‘iq3::kopt3::Launch’} to ‘ownrt::Event’ {aka ‘long unsigned int’}
+  615 |   void finish(int c, ownrt::Event event) { finish(c,{event,event,1},false); }
+      |                      ~~~~~~~~~~~~~^~~~~
+gmake[2]: *** [CMakeFiles/layer-bench.dir/build.make:79: CMakeFiles/layer-bench.dir/source/layer_bench.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:90: CMakeFiles/layer-bench.dir/all] Error 2
+gmake: *** [Makefile:91: all] Error 2

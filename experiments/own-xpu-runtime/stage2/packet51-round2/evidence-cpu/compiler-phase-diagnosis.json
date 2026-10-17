@@ -1,0 +1,37 @@
+{
+  "device_executed": false,
+  "all_same_compiler_candidate_vs_control_checks_pass": true,
+  "source_runs": [
+    "experiments/own-xpu-runtime/stage2/packet51-round2/evidence-cpu/20261017T054436Z/gnu-1.log",
+    "experiments/own-xpu-runtime/stage2/packet51-round2/evidence-cpu/20261017T054436Z/intel-1.log"
+  ],
+  "matching_phases": [
+    "attention",
+    "codebook_all_signs_finite_scale",
+    "gate",
+    "hc_gate",
+    "hc_inject_diagnostic",
+    "hc_low",
+    "qkv",
+    "route",
+    "weight_half_0",
+    "weight_half_1",
+    "weight_half_1023",
+    "weight_half_1024",
+    "weight_half_15360",
+    "weight_half_31743",
+    "weight_half_31744",
+    "weight_half_32768",
+    "weight_half_32769",
+    "weight_half_48128",
+    "weight_half_64511",
+    "weight_half_64512"
+  ],
+  "differing_phases": {
+    "weight_half_32257": {
+      "gnu": "a0aa90c6e4672820c5b1f63043e37f6324539ca6d92f2ba1304b897012c94f3c",
+      "intel": "1996359948ebc592c8f0463da0739aa9385889224eefbbceef78a4eba9e1a0b3"
+    }
+  },
+  "diagnosis": "Only direct 0x7e01 weight NaN differs across the unchanged compiler-specific p48 oracle. Existing repacker refuses these before any writes; no admitted weight domain changed."
+}

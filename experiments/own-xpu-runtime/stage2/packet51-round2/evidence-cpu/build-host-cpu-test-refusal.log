@@ -1,0 +1,286 @@
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/build/host
+[ 25%] Building CXX object CMakeFiles/layer-bench.dir/source/layer_bench.cpp.o
+[ 50%] Linking CXX executable layer-bench
+[ 50%] Built target layer-bench
+[ 75%] Building CXX object CMakeFiles/candidate-cpu-test.dir/source/candidate_cpu_test.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:4,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate_cpu_test.cpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48b-production/candidate.hpp:11:12: error: ‘integrated’ does not name a type
+   11 | using Base=integrated::HostOperation;
+      |            ^~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48b-production/candidate.hpp:15:53: error: expected class-name before ‘{’ token
+   15 | template<Type T,unsigned K>struct Kernel final:Base {
+      |                                                     ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48b-production/candidate.hpp:19:18: error: ‘std::span’ has not been declared
+   19 |  p39::Bound bind(std::span<void*const>p)const {
+      |                  ^~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48b-production/candidate.hpp:19:27: error: expected ‘,’ or ‘...’ before ‘<’ token
+   19 |  p39::Bound bind(std::span<void*const>p)const {
+      |                           ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48b-production/candidate.hpp:31:11: error: ‘std::span’ has not been declared
+   31 |  void run(std::span<void*const>p)const override {
+      |           ^~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48b-production/candidate.hpp:31:20: error: expected ‘,’ or ‘...’ before ‘<’ token
+   31 |  void run(std::span<void*const>p)const override {
+      |                    ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48b-production/candidate.hpp: In member function ‘p39::Bound p48b::Kernel<T, K>::bind(int) const’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48b-production/candidate.hpp:21:35: error: ‘p’ was not declared in this scope
+   21 |   b.w=static_cast<const uint8_t*>(p[0]);b.peer=static_cast<const uint8_t*>(p[1]);
+      |                                   ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48b-production/candidate.hpp: In member function ‘void p48b::Kernel<T, K>::run(int) const’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48b-production/candidate.hpp:32:15: error: ‘p’ was not declared in this scope
+   32 |   auto b=bind(p);
+      |               ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp: At global scope:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:8:18: error: ‘Base’ in namespace ‘p48b’ does not name a type
+    8 | using Base=p48b::Base;
+      |                  ^~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:59:30: error: expected class-name before ‘{’ token
+   59 | struct GateKernel final:Base {
+      |                              ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:66:7: error: ‘void p51::GateKernel::run(std::span<void* const>) const’ marked ‘override’, but does not override
+   66 |  void run(std::span<void*const>p)const override {
+      |       ^~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:96:55: error: expected class-name before ‘{’ token
+   96 | template<unsigned Stage>struct RouteKernel final:Base {
+      |                                                       ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp: In instantiation of ‘struct p51::RouteKernel<0>’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:124:54:   required from ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 0]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:30:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:99:7: error: ‘void p51::RouteKernel<Stage>::run(std::span<void* const>) const [with unsigned int Stage = 0]’ marked ‘override’, but does not override
+   99 |  void run(std::span<void*const>p)const override {auto a=route42::bind(spec,p);if constexpr(Stage==2)route_rank_host(a);else for(unsigned i=0;i<(Stage==4?1:32);++i)route42::phase<Stage,512,10>(a,i);}
+      |       ^~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp: In instantiation of ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 0]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:30:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:124:117: error: no matching function for call to ‘ownrt::Device::compute(p51::RouteKernel<0>&, std::span<const long unsigned int>&, std::span<const long unsigned int>)’
+  124 |  auto issue=[&]<unsigned Stage>(){RouteKernel<Stage> op;op.spec=s;std::array after{result.last};auto event=d.compute(op,a,result.last?std::span<const ownrt::Event>(after):deps);if(!result.first)result.first=event;result.last=event;++result.passes;};
+      |                                                                                                            ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/runtime_kernels.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/performance.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/adapter.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/route42.hpp:5,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:5:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9: note: candidate: ‘template<class T>  requires (is_base_of_v<ownrt::Operation, T>) && !(is_same_v<ownrt::Operation, T>) ownrt::Event ownrt::Device::compute(const T&, std::span<const long unsigned int>, std::span<const long unsigned int>)’
+  156 |   Event compute(const T& op, std::span<const Allocation> ids, std::span<const Event> deps) {
+      |         ^~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9: note:   template argument deduction/substitution failed:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9: note: constraints not satisfied
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp: In substitution of ‘template<class T>  requires (is_base_of_v<ownrt::Operation, T>) && !(is_same_v<ownrt::Operation, T>) ownrt::Event ownrt::Device::compute(const T&, std::span<const long unsigned int>, std::span<const long unsigned int>) [with T = p51::RouteKernel<0>]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:124:117:   required from ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 0]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:30:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9:   required by the constraints of ‘template<class T>  requires (is_base_of_v<ownrt::Operation, T>) && !(is_same_v<ownrt::Operation, T>) ownrt::Event ownrt::Device::compute(const T&, std::span<const long unsigned int>, std::span<const long unsigned int>)’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:155:36: note: the expression ‘is_base_of_v<ownrt::Operation, T> [with T = p51::RouteKernel<0>]’ evaluated to ‘false’
+  155 |   template<class T> requires (std::is_base_of_v<Operation,T> && !std::is_same_v<Operation,T>)
+      |                               ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp: In instantiation of ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 0]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:30:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:154:9: note: candidate: ‘ownrt::Event ownrt::Device::compute(const ownrt::Operation&, std::span<const long unsigned int>, std::span<const long unsigned int>)’
+  154 |   Event compute(const Operation&, std::span<const Allocation>, std::span<const Event>);
+      |         ^~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:154:17: note:   no known conversion for argument 1 from ‘p51::RouteKernel<0>’ to ‘const ownrt::Operation&’
+  154 |   Event compute(const Operation&, std::span<const Allocation>, std::span<const Event>);
+      |                 ^~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp: In instantiation of ‘struct p51::RouteKernel<1>’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:124:54:   required from ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 1]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:61:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:99:7: error: ‘void p51::RouteKernel<Stage>::run(std::span<void* const>) const [with unsigned int Stage = 1]’ marked ‘override’, but does not override
+   99 |  void run(std::span<void*const>p)const override {auto a=route42::bind(spec,p);if constexpr(Stage==2)route_rank_host(a);else for(unsigned i=0;i<(Stage==4?1:32);++i)route42::phase<Stage,512,10>(a,i);}
+      |       ^~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp: In instantiation of ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 1]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:61:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:124:117: error: no matching function for call to ‘ownrt::Device::compute(p51::RouteKernel<1>&, std::span<const long unsigned int>&, std::span<const long unsigned int>)’
+  124 |  auto issue=[&]<unsigned Stage>(){RouteKernel<Stage> op;op.spec=s;std::array after{result.last};auto event=d.compute(op,a,result.last?std::span<const ownrt::Event>(after):deps);if(!result.first)result.first=event;result.last=event;++result.passes;};
+      |                                                                                                            ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9: note: candidate: ‘template<class T>  requires (is_base_of_v<ownrt::Operation, T>) && !(is_same_v<ownrt::Operation, T>) ownrt::Event ownrt::Device::compute(const T&, std::span<const long unsigned int>, std::span<const long unsigned int>)’
+  156 |   Event compute(const T& op, std::span<const Allocation> ids, std::span<const Event> deps) {
+      |         ^~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9: note:   template argument deduction/substitution failed:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9: note: constraints not satisfied
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp: In substitution of ‘template<class T>  requires (is_base_of_v<ownrt::Operation, T>) && !(is_same_v<ownrt::Operation, T>) ownrt::Event ownrt::Device::compute(const T&, std::span<const long unsigned int>, std::span<const long unsigned int>) [with T = p51::RouteKernel<1>]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:124:117:   required from ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 1]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:61:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9:   required by the constraints of ‘template<class T>  requires (is_base_of_v<ownrt::Operation, T>) && !(is_same_v<ownrt::Operation, T>) ownrt::Event ownrt::Device::compute(const T&, std::span<const long unsigned int>, std::span<const long unsigned int>)’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:155:36: note: the expression ‘is_base_of_v<ownrt::Operation, T> [with T = p51::RouteKernel<1>]’ evaluated to ‘false’
+  155 |   template<class T> requires (std::is_base_of_v<Operation,T> && !std::is_same_v<Operation,T>)
+      |                               ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp: In instantiation of ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 1]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:61:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:154:9: note: candidate: ‘ownrt::Event ownrt::Device::compute(const ownrt::Operation&, std::span<const long unsigned int>, std::span<const long unsigned int>)’
+  154 |   Event compute(const Operation&, std::span<const Allocation>, std::span<const Event>);
+      |         ^~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:154:17: note:   no known conversion for argument 1 from ‘p51::RouteKernel<1>’ to ‘const ownrt::Operation&’
+  154 |   Event compute(const Operation&, std::span<const Allocation>, std::span<const Event>);
+      |                 ^~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp: In instantiation of ‘struct p51::RouteKernel<2>’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:124:54:   required from ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 2]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:92:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:99:7: error: ‘void p51::RouteKernel<Stage>::run(std::span<void* const>) const [with unsigned int Stage = 2]’ marked ‘override’, but does not override
+   99 |  void run(std::span<void*const>p)const override {auto a=route42::bind(spec,p);if constexpr(Stage==2)route_rank_host(a);else for(unsigned i=0;i<(Stage==4?1:32);++i)route42::phase<Stage,512,10>(a,i);}
+      |       ^~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp: In instantiation of ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 2]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:92:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:124:117: error: no matching function for call to ‘ownrt::Device::compute(p51::RouteKernel<2>&, std::span<const long unsigned int>&, std::span<const long unsigned int>)’
+  124 |  auto issue=[&]<unsigned Stage>(){RouteKernel<Stage> op;op.spec=s;std::array after{result.last};auto event=d.compute(op,a,result.last?std::span<const ownrt::Event>(after):deps);if(!result.first)result.first=event;result.last=event;++result.passes;};
+      |                                                                                                            ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9: note: candidate: ‘template<class T>  requires (is_base_of_v<ownrt::Operation, T>) && !(is_same_v<ownrt::Operation, T>) ownrt::Event ownrt::Device::compute(const T&, std::span<const long unsigned int>, std::span<const long unsigned int>)’
+  156 |   Event compute(const T& op, std::span<const Allocation> ids, std::span<const Event> deps) {
+      |         ^~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9: note:   template argument deduction/substitution failed:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9: note: constraints not satisfied
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp: In substitution of ‘template<class T>  requires (is_base_of_v<ownrt::Operation, T>) && !(is_same_v<ownrt::Operation, T>) ownrt::Event ownrt::Device::compute(const T&, std::span<const long unsigned int>, std::span<const long unsigned int>) [with T = p51::RouteKernel<2>]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:124:117:   required from ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 2]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:92:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9:   required by the constraints of ‘template<class T>  requires (is_base_of_v<ownrt::Operation, T>) && !(is_same_v<ownrt::Operation, T>) ownrt::Event ownrt::Device::compute(const T&, std::span<const long unsigned int>, std::span<const long unsigned int>)’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:155:36: note: the expression ‘is_base_of_v<ownrt::Operation, T> [with T = p51::RouteKernel<2>]’ evaluated to ‘false’
+  155 |   template<class T> requires (std::is_base_of_v<Operation,T> && !std::is_same_v<Operation,T>)
+      |                               ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp: In instantiation of ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 2]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:92:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:154:9: note: candidate: ‘ownrt::Event ownrt::Device::compute(const ownrt::Operation&, std::span<const long unsigned int>, std::span<const long unsigned int>)’
+  154 |   Event compute(const Operation&, std::span<const Allocation>, std::span<const Event>);
+      |         ^~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:154:17: note:   no known conversion for argument 1 from ‘p51::RouteKernel<2>’ to ‘const ownrt::Operation&’
+  154 |   Event compute(const Operation&, std::span<const Allocation>, std::span<const Event>);
+      |                 ^~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp: In instantiation of ‘struct p51::RouteKernel<4>’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:124:54:   required from ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 4]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:123:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:99:7: error: ‘void p51::RouteKernel<Stage>::run(std::span<void* const>) const [with unsigned int Stage = 4]’ marked ‘override’, but does not override
+   99 |  void run(std::span<void*const>p)const override {auto a=route42::bind(spec,p);if constexpr(Stage==2)route_rank_host(a);else for(unsigned i=0;i<(Stage==4?1:32);++i)route42::phase<Stage,512,10>(a,i);}
+      |       ^~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp: In instantiation of ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 4]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:123:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:124:117: error: no matching function for call to ‘ownrt::Device::compute(p51::RouteKernel<4>&, std::span<const long unsigned int>&, std::span<const long unsigned int>)’
+  124 |  auto issue=[&]<unsigned Stage>(){RouteKernel<Stage> op;op.spec=s;std::array after{result.last};auto event=d.compute(op,a,result.last?std::span<const ownrt::Event>(after):deps);if(!result.first)result.first=event;result.last=event;++result.passes;};
+      |                                                                                                            ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9: note: candidate: ‘template<class T>  requires (is_base_of_v<ownrt::Operation, T>) && !(is_same_v<ownrt::Operation, T>) ownrt::Event ownrt::Device::compute(const T&, std::span<const long unsigned int>, std::span<const long unsigned int>)’
+  156 |   Event compute(const T& op, std::span<const Allocation> ids, std::span<const Event> deps) {
+      |         ^~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9: note:   template argument deduction/substitution failed:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9: note: constraints not satisfied
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp: In substitution of ‘template<class T>  requires (is_base_of_v<ownrt::Operation, T>) && !(is_same_v<ownrt::Operation, T>) ownrt::Event ownrt::Device::compute(const T&, std::span<const long unsigned int>, std::span<const long unsigned int>) [with T = p51::RouteKernel<4>]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:124:117:   required from ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 4]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:123:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:156:9:   required by the constraints of ‘template<class T>  requires (is_base_of_v<ownrt::Operation, T>) && !(is_same_v<ownrt::Operation, T>) ownrt::Event ownrt::Device::compute(const T&, std::span<const long unsigned int>, std::span<const long unsigned int>)’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:155:36: note: the expression ‘is_base_of_v<ownrt::Operation, T> [with T = p51::RouteKernel<4>]’ evaluated to ‘false’
+  155 |   template<class T> requires (std::is_base_of_v<Operation,T> && !std::is_same_v<Operation,T>)
+      |                               ~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp: In instantiation of ‘p51::route_submit(ownrt::Device&, const integrated::Spec&, std::span<const long unsigned int>, std::span<const long unsigned int>)::<lambda()> [with unsigned int Stage = 4]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:125:123:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:154:9: note: candidate: ‘ownrt::Event ownrt::Device::compute(const ownrt::Operation&, std::span<const long unsigned int>, std::span<const long unsigned int>)’
+  154 |   Event compute(const Operation&, std::span<const Allocation>, std::span<const Event>);
+      |         ^~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/owner_api.hpp:154:17: note:   no known conversion for argument 1 from ‘p51::RouteKernel<4>’ to ‘const ownrt::Operation&’
+  154 |   Event compute(const Operation&, std::span<const Allocation>, std::span<const Event>);
+      |                 ^~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp:165:102: error: expected class-name before ‘{’ token
+  165 | template<Type T,unsigned K,unsigned Split,p39::Kind E,unsigned Stage=0>struct DenseKernel final:Base {
+      |                                                                                                      ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48b-production/candidate.hpp: In instantiation of ‘struct p48b::Kernel<iq3::Type::IQ2_S, 2560>’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate_cpu_test.cpp:36:35:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48b-production/candidate.hpp:31:7: error: ‘void p48b::Kernel<T, K>::run(int) const [with iq3::Type T = iq3::Type::IQ2_S; unsigned int K = 2560]’ marked ‘override’, but does not override
+   31 |  void run(std::span<void*const>p)const override {
+      |       ^~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate_cpu_test.cpp: In function ‘void {anonymous}::gate_test()’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate_cpu_test.cpp:36:102: error: cannot convert ‘std::array<void*, 10>’ to ‘int’
+   36 |   p48b::Kernel<iq3::Type::IQ2_S,K>base;base.rows=rows;base.count=slots;base.experts=experts;base.run(oracle);
+      |                                                                                                      ^~~~~~
+      |                                                                                                      |
+      |                                                                                                      std::array<void*, 10>
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48b-production/candidate.hpp:31:11: note:   initializing argument 1 of ‘void p48b::Kernel<T, K>::run(int) const [with iq3::Type T = iq3::Type::IQ2_S; unsigned int K = 2560]’
+   31 |  void run(std::span<void*const>p)const override {
+      |           ^~~~~~~~~
+In file included from /usr/include/c++/13/string:51,
+                 from /usr/include/c++/13/stdexcept:39,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/p28/expert.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/p33_candidates.hpp:5,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48-gemv/gemv.hpp:4,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48b-production/candidate.hpp:3:
+/usr/include/c++/13/bits/stl_algobase.h: In instantiation of ‘constexpr bool std::__equal_aux1(_II1, _II1, _II2) [with _II1 = array<short unsigned int, 50>; _II2 = const char*]’:
+/usr/include/c++/13/bits/stl_algobase.h:1227:31:   required from ‘constexpr bool std::__equal_aux(_II1, _II1, _II2) [with _II1 = array<short unsigned int, 50>; _II2 = const char*]’
+/usr/include/c++/13/bits/stl_algobase.h:1557:30:   required from ‘constexpr bool std::equal(_II1, _II1, _II2) [with _II1 = array<short unsigned int, 50>; _II2 = const char*]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate_cpu_test.cpp:38:8:   required from here
+/usr/include/c++/13/bits/stl_algobase.h:1215:58: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<short unsigned int, 50> >’
+ 1215 |       typedef typename iterator_traits<_II1>::value_type _ValueType1;
+      |                                                          ^~~~~~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h:1216:58: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<short unsigned int, 50> >’
+ 1216 |       const bool __simple = ((__is_integer<_ValueType1>::__value
+      |                                                          ^~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h:1217:61: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<short unsigned int, 50> >’
+ 1217 |                               || __is_pointer<_ValueType1>::__value)
+      |                                                             ^~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h: In instantiation of ‘constexpr bool std::__equal_aux1(_II1, _II1, _II2) [with _II1 = array<unsigned int, 10>; _II2 = const char*]’:
+/usr/include/c++/13/bits/stl_algobase.h:1227:31:   required from ‘constexpr bool std::__equal_aux(_II1, _II1, _II2) [with _II1 = array<unsigned int, 10>; _II2 = const char*]’
+/usr/include/c++/13/bits/stl_algobase.h:1557:30:   required from ‘constexpr bool std::equal(_II1, _II1, _II2) [with _II1 = array<unsigned int, 10>; _II2 = const char*]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate_cpu_test.cpp:38:72:   required from here
+/usr/include/c++/13/bits/stl_algobase.h:1215:58: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<unsigned int, 10> >’
+ 1215 |       typedef typename iterator_traits<_II1>::value_type _ValueType1;
+      |                                                          ^~~~~~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h:1216:58: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<unsigned int, 10> >’
+ 1216 |       const bool __simple = ((__is_integer<_ValueType1>::__value
+      |                                                          ^~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h:1217:61: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<unsigned int, 10> >’
+ 1217 |                               || __is_pointer<_ValueType1>::__value)
+      |                                                             ^~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h: In instantiation of ‘constexpr bool std::__equal_aux1(_II1, _II1, _II2) [with _II1 = array<int, 10>; _II2 = const char*]’:
+/usr/include/c++/13/bits/stl_algobase.h:1227:31:   required from ‘constexpr bool std::__equal_aux(_II1, _II1, _II2) [with _II1 = array<int, 10>; _II2 = const char*]’
+/usr/include/c++/13/bits/stl_algobase.h:1557:30:   required from ‘constexpr bool std::equal(_II1, _II1, _II2) [with _II1 = array<int, 10>; _II2 = const char*]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate_cpu_test.cpp:50:8:   required from here
+/usr/include/c++/13/bits/stl_algobase.h:1215:58: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<int, 10> >’
+ 1215 |       typedef typename iterator_traits<_II1>::value_type _ValueType1;
+      |                                                          ^~~~~~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h:1216:58: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<int, 10> >’
+ 1216 |       const bool __simple = ((__is_integer<_ValueType1>::__value
+      |                                                          ^~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h:1217:61: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<int, 10> >’
+ 1217 |                               || __is_pointer<_ValueType1>::__value)
+      |                                                             ^~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h: In instantiation of ‘constexpr bool std::__equal_aux1(_II1, _II1, _II2) [with _II1 = array<float, 10>; _II2 = const char*]’:
+/usr/include/c++/13/bits/stl_algobase.h:1227:31:   required from ‘constexpr bool std::__equal_aux(_II1, _II1, _II2) [with _II1 = array<float, 10>; _II2 = const char*]’
+/usr/include/c++/13/bits/stl_algobase.h:1557:30:   required from ‘constexpr bool std::equal(_II1, _II1, _II2) [with _II1 = array<float, 10>; _II2 = const char*]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate_cpu_test.cpp:50:46:   required from here
+/usr/include/c++/13/bits/stl_algobase.h:1215:58: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<float, 10> >’
+ 1215 |       typedef typename iterator_traits<_II1>::value_type _ValueType1;
+      |                                                          ^~~~~~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h:1216:58: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<float, 10> >’
+ 1216 |       const bool __simple = ((__is_integer<_ValueType1>::__value
+      |                                                          ^~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h:1217:61: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<float, 10> >’
+ 1217 |                               || __is_pointer<_ValueType1>::__value)
+      |                                                             ^~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h: In instantiation of ‘constexpr bool std::__equal_aux1(_II1, _II1, _II2) [with _II1 = array<int, 30>; _II2 = const char*]’:
+/usr/include/c++/13/bits/stl_algobase.h:1227:31:   required from ‘constexpr bool std::__equal_aux(_II1, _II1, _II2) [with _II1 = array<int, 30>; _II2 = const char*]’
+/usr/include/c++/13/bits/stl_algobase.h:1557:30:   required from ‘constexpr bool std::equal(_II1, _II1, _II2) [with _II1 = array<int, 30>; _II2 = const char*]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate_cpu_test.cpp:50:100:   required from here
+/usr/include/c++/13/bits/stl_algobase.h:1215:58: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<int, 30> >’
+ 1215 |       typedef typename iterator_traits<_II1>::value_type _ValueType1;
+      |                                                          ^~~~~~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h:1216:58: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<int, 30> >’
+ 1216 |       const bool __simple = ((__is_integer<_ValueType1>::__value
+      |                                                          ^~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h:1217:61: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<int, 30> >’
+ 1217 |                               || __is_pointer<_ValueType1>::__value)
+      |                                                             ^~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h: In instantiation of ‘constexpr bool std::__equal_aux1(_II1, _II1, _II2) [with _II1 = array<float, 1088>; _II2 = const char*]’:
+/usr/include/c++/13/bits/stl_algobase.h:1227:31:   required from ‘constexpr bool std::__equal_aux(_II1, _II1, _II2) [with _II1 = array<float, 1088>; _II2 = const char*]’
+/usr/include/c++/13/bits/stl_algobase.h:1557:30:   required from ‘constexpr bool std::equal(_II1, _II1, _II2) [with _II1 = array<float, 1088>; _II2 = const char*]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet51-round2/candidate_cpu_test.cpp:50:180:   required from here
+/usr/include/c++/13/bits/stl_algobase.h:1215:58: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<float, 1088> >’
+ 1215 |       typedef typename iterator_traits<_II1>::value_type _ValueType1;
+      |                                                          ^~~~~~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h:1216:58: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<float, 1088> >’
+ 1216 |       const bool __simple = ((__is_integer<_ValueType1>::__value
+      |                                                          ^~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h:1217:61: error: no type named ‘value_type’ in ‘struct std::iterator_traits<std::array<float, 1088> >’
+ 1217 |                               || __is_pointer<_ValueType1>::__value)
+      |                                                             ^~~~~~~
+gmake[2]: *** [CMakeFiles/candidate-cpu-test.dir/build.make:79: CMakeFiles/candidate-cpu-test.dir/source/candidate_cpu_test.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:122: CMakeFiles/candidate-cpu-test.dir/all] Error 2
+gmake: *** [Makefile:91: all] Error 2

@@ -28,7 +28,7 @@ measured DRAM traffic. The 550 GB/s reference is the owner's planning ceiling.
 |---|---:|---:|---:|---:|---:|---|
 | HC set, both sides, mixed compute | 130.001 | 15.155 | 27.555 | **at most 102.446** | at most 4.917 | 48; at most 4.917 |
 | IQ2_S expsgate pair | 77.292 | 10.496 | 19.084 | **58.208** | 2.794 | 47; 2.736 |
-| Route, compute/ranking | 43.644 | 0 | not a bandwidth model | **less than 43.644**, compute floor unmeasured | less than 2.095 | 48; less than 2.095 |
+| Route, compute/ranking; stages 1+2 changed | 43.644 | 0 | **6.876 measured unchanged-stage subtotal** | **less than 36.667** | less than 1.760 | 48; less than 1.760 |
 | IQ4_NL expsdown, already improved | 54.375 | 9.216 | 16.756 | 37.619 | 1.806 | 48; 1.806 |
 | GDN QKV, Q6_K | 96.667 | 32.768 | 59.578 | 37.089 | 1.780 | **35**; **1.298** |
 | Attention output projection/combine | 57.812 | 19.661 | 35.747 | 22.065 | 1.059 | 48; 1.059 |
@@ -52,20 +52,76 @@ QSA and has 48 matches. These multiplications are hypothetical serial
 per-target-position savings; they cannot be converted to emitted tok/s or
 added as though the two engine halves had no overlap.
 
+The whole-HC ceiling above ranks the wider opportunity; the implemented
+packet51 arm changes only low and gate. Its narrower bound is **42.459 us**
+per layer, **2.038 ms** across 48. The measured unaffected HC work and route
+stages provide the more useful compute bounds below.
+
 Other remaining compute classes:
 
 | Class | Time us | Compute/state diagnosis | Honest time budget |
 |---|---:|---|---|
-| GDN recurrence | 35.938 | 48 × 128 state rows, each 128 wide; two normalization dots, prediction/output dots, decay and BF16 state update; tokens are recurrent | Less than 35.938 us/call; less than 1.294 ms across its 36 layers; no calibrated compute floor |
-| FFN combine | 11.198 | Ordered stream blend and sigmoid, BF16 boundaries; little weight traffic | Less than 11.198 us/call, less than 0.538 ms across 48 |
+| GDN recurrence | 35.938 | 48 × 128 state rows, each 128 wide; two normalization dots, prediction/output dots, decay and BF16 state update; tokens are recurrent | Unchanged in packet51: **zero candidate savings**, entire measured time retained |
+| FFN combine | 11.198 | Ordered stream blend and sigmoid, BF16 boundaries; little weight traffic | Unchanged in packet51: **zero candidate savings**, entire measured time retained |
 | HC norm/mix subset | 35.939 | Four-stream ordered mix plus reductions and nonlinear operations | Included in HC above, never add twice |
 
-No sustained instruction/divide/transcendental rate was measured for these
-classes. Assigning a numeric compute floor from an unrelated peak-FLOP number
-would invent precision. Their ceilings above explicitly leave positive
-arithmetic time unpriced. Source operation counts below identify mechanisms
-that can reduce work without changing the model; coordinator timings decide
-the recoverable fraction.
+No sustained instruction/divide/transcendental rate was measured. Assigning a
+compute floor from an unrelated peak-FLOP number would invent precision.
+Instead, bound each implemented candidate by its **measured changed stages**,
+retain the measured unchanged work, and use source operation counts to explain
+what fraction of the changed stage has actually been removed.
+
+### Measured unaffected compute and candidate-specific bounds
+
+The retained p48b event records have four route events per ordinary GDN arm,
+in submission order 0, 1, 2, 4 from `route42_submit.cpp`. For each fresh owner,
+the following uses all 200 non-warmup specialized-arm layer-4 iterations.
+Subtotals are medians of sums within each iteration, not sums of medians.
+
+| Measurement, us | T1 | T2 | Packet51 treatment |
+|---|---:|---:|---|
+| Route stage 0, block maxima | 3.646 | 3.698 | Same arithmetic and work |
+| Route stage 1, exponential/block sums | 19.895 | 19.792 | Same exp and sum arithmetic, parallelized per value |
+| Route stage 2, normalized rank/output | 16.771 | 16.771 | Changed; positive residual compute remains |
+| Route stage 4, selected-weight normalization | 3.125 | 3.125 | Same arithmetic and work |
+| Route unaffected stages 0+4, per-iteration sum | **6.876** | **6.876** | Measured retained-work floor under unchanged timing |
+| Route changed stages 1+2, per-iteration sum | **36.667** | **36.563** | Candidate opportunity before positive remaining work |
+| HC low+gate, both sides, per-iteration sum | **69.270** | **69.271** | Changed dense load/row scheduling |
+| HC inject+mix+norm, both sides, per-iteration sum | **60.623** | **60.311** | Measured retained-work floor under unchanged timing |
+
+The route candidate cannot recover all 43.644 us: it changes exponential/sum
+stage 1 and normalized-rank stage 2. Their per-iteration subtotal has a
+36.667-us median in T1. Even an impossible zero-time replacement leaves
+about 6.876 us in stages 0 and 4. The same 512 deterministic exponentials,
+block-sum additions, all rank comparisons, local-memory traffic, barriers
+and output work remain, so the saving is strictly smaller than 36.667 us.
+Stage 1 is the largest individual route stage; its exact-order
+parallelization is now included in this implementation.
+
+HC low+gate reads 14,745,600 useful weight bytes across the two sides.
+At 550 GB/s that is 26.810 us, giving a selected-arm optimistic gap
+`69.2695 - 26.8101818 = 42.4593182 us` in T1 and 42.461 us in T2.
+The unchanged 60.623-us subtotal plus that weight floor gives an 87.434-us
+retained HC budget in T1 before accounting for the changed kernels' own
+nonlinear work and ordered arithmetic. The candidate preserves those
+operations; it does not claim to eliminate their compute cost. These are
+planning bounds, not physical minimum timings: cache residency and owner
+drift can change unchanged-stage timings in the next experiment.
+
+Extraction sources, retained outside Git, with their exact byte identities:
+
+- `/home/steve/own-xpu-runtime-results/packet48b-production/evidence/p48b-a-t1/run/iterations.jsonl`,
+  SHA256 `6d435ca8fa81f667f21762b015988fb8d384d0f1d74ab1910dde73eb07cf1a24`.
+- `/home/steve/own-xpu-runtime-results/packet48b-production/evidence/p48b-a-t2/run/iterations.jsonl`,
+  SHA256 `598a7aac53e74c89c73b829172f60ee3cb1aefc9f9b63bb7f5cd42e1c03d8864`.
+
+For reproducibility, parse one JSON object per line; select `layer == 4`,
+`mode == "specialized"`, and `warmup == false`. Select events with
+`class == "route"`, require exactly four, and compute each
+`(end_ns-start_ns)/1000` in order. Take medians of the individual positions
+and of positions 0+3 (unchanged), or 1+2 (changed). For HC sum `classes_ns` entries beginning `hc.` and
+ending `gate`/`low`, or `inject`/`mix`/`norm`, within each row before dividing
+by 1000 and taking the median. No new device experiment produced these values.
 
 ## Execution priority
 
@@ -77,14 +133,18 @@ the recoverable fraction.
 2. **HC**, treating its 102-us ceiling as a mixed-work budget. Prioritize
    repeated instructions and undersized occupancy; blanket launch fusion
    already had a neutral result in packet46.
-3. **Route**, whose current denominator/ranking repetition supplies a
-   concrete compute lever. It can contribute meaningfully to the combined
-   40-us bar without pretending that zero weight bytes imply zero cost.
+3. **Route**, whose two selected stages have less than 1.760 ms of corrected
+   headroom. Sharing rank inputs and parallelizing exact exponentials
+   address measured compute work without changing the four-stage protocol.
 4. **GDN QKV**, ahead of attention on corrected headroom (1.298 vs 1.059 ms).
-   This is a modest reordering of the brief's last two targets. Target load
-   and row geometry; the existing tree is fixed.
+   Target load and row geometry; the existing tree is fixed.
 5. **Attention output/combine**, where per-row repeated sigmoid evaluation
    is a separate lever from dense loads.
+This order ranks the implemented arms' corrected optimistic headroom. The
+whole-route budget is narrowed to its two changed stages; the unaffected
+block maxima and selected-weight normalization are retained. All five arms
+remain registered together; this ranking does not require extra exploratory
+device windows.
 
 Keep expsdown as the accepted p48b control for this round. It has a useful
 remaining budget but already gained 1.68x; the classes requested for round2
@@ -143,6 +203,31 @@ controls and existing scratch bytes where the complete-state gate observes
 them. Early stop once rank reaches ten is integer-only and possible, but
 needs device timing to decide whether divergence costs more than it saves.
 
+The implemented stage 1 assigns one exact deterministic exponential to each
+of 512 work items, replacing 32 items that each evaluate 16 exponentials.
+The **512 exp evaluations remain unchanged**; the serial per-item work drops
+from 16 evaluations to one. Each half subgroup preserves one original
+adjacent 16-value sum tree: 32 trees, 15 additions each, **480 additions
+unchanged**. No approximate exponential or alternative reduction is used.
+The scan of 32 block maxima runs once per 256-item workgroup, so the GPU
+candidate has **2 scans instead of 32**, or 64 source maximum operations
+instead of 1,024. It adds one local-memory barrier per workgroup and retains
+the same exponential and block-sum scratch values. Parallelism and reduced
+maximum scans are hypotheses for lower latency, not a claim of 16x speed.
+
+The implemented packet51 stage 2 uses 64 workgroups of 256 items, sharing a
+512-probability array across eight ranked outputs per workgroup. In source
+this reduces ranking denominator trees from **16,384 to 64** (256x), or
+507,904 to 1,984 additions for those 31-add trees. Ranking probability
+divisions fall from **278,528 to 32,768** (8.5x): baseline computes one
+candidate plus 16 competitors per lane, while the candidate computes 512
+probabilities per workgroup. The ten winning-output denominator trees and
+divisions remain unchanged. All **262,144 comparisons**, lower-index ties,
+512 integer rank reductions and final top-ten normalization remain. The new
+workgroups also add local-memory loads and two barriers. These are source
+work counts before compiler hoisting/broadcast, not issued-instruction
+measurements; neither the 256x nor 8.5x ratio predicts kernel speedup.
+
 **GDN QKV:** [p33_candidates.hpp](../packet45-merged3/p33_candidates.hpp)
 `dense_lane` and the selected `p33.dense.segment` work at 10240×2560 Q6.
 Useful expanded bytes are 32.768 MB, not the 21.504-MB packed GGUF. Each
@@ -169,18 +254,26 @@ QSA attention; packet47's split32 QSA kernel is separate and protected.
 
 ## M=2 accounting and qualification limits
 
-The engine uses two changing token rows, not merely a four-row workgroup.
-Dense/HC unique weights stay constant at M=2; serial engine calls read them
-twice logically. Routed gate/up and down have 10–20 unique expert IDs across
-two rows, so M=2 tests must cover identical, shifted partial-overlap and
-disjoint selections, not assume perfect reuse. Same-slot reuse is not
-cross-slot reuse. Input, outputs, state and control cases remain separate per
-token. GDN recurrence must advance token 1 from token 0's rounded state.
+Packet51 M=2 is **two independent changing rows through serial production
+engine calls**, each with independently restored state and different input.
+It is not a joint weight-reuse kernel or a continuous recurrent two-token
+test. The timing must sum both actual row calls. All original per-row shapes
+and exact controls remain in use; no speed or equality claim is made for
+feeding the first row's recurrent state into the second. Continuous model
+recurrence remains in packet49's model qualification scope.
+
+Dense/HC unique weight identity stays constant, but these serial calls read
+the weights twice logically. Routed gate/up and down may have 10–20 unique
+expert IDs across two rows. That union does not reduce the serial source
+reads and must not be presented as measured reuse. Identical, shifted
+partial-overlap and disjoint expert selections are useful future joint-kernel
+cases; packet51's independently generated row routes do not promise each
+overlap class. Same-slot reuse would not prove cross-slot reuse either.
 
 M=2 timing is absent from the starting p48b summary. No M=1 doubling or
-bandwidth calculation is a measured M=2 result. Packet51 must label whether
-its M=2 observation is two sequential engine rows or a joint kernel and
-report both timed rows, with exact controls and fresh-owner repeats.
+bandwidth calculation is a measured M=2 result. Packet51's row-count-2
+receipts must record both measured serial rows, exact controls and
+fresh-owner repeats under that limited definition.
 
 No candidate in this ranking is adopted by source inspection. E1/E2 must
 prove byte equality at producer and complete-state boundaries before T1/T2.

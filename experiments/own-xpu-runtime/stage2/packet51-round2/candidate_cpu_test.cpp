@@ -1,0 +1,97 @@
+#ifndef OWN_RT_HOST_ONLY
+#define OWN_RT_HOST_ONLY
+#endif
+#include "candidate.hpp"
+#include <iostream>
+#include <string>
+#include <openssl/evp.h>
+#include <iomanip>
+#include <sstream>
+#include <map>
+
+namespace {
+size_t checks=0;
+struct OutputDigest {
+ EVP_MD_CTX* context=EVP_MD_CTX_new();
+ OutputDigest(){if(!context||EVP_DigestInit_ex(context,EVP_sha256(),nullptr)!=1)throw std::runtime_error("SHA256 init");}
+ ~OutputDigest(){EVP_MD_CTX_free(context);}
+ void add(const void*p,size_t n){if(EVP_DigestUpdate(context,p,n)!=1)throw std::runtime_error("SHA256 update");}
+ std::string checkpoint(){OutputDigest copy;if(EVP_MD_CTX_copy_ex(copy.context,context)!=1)throw std::runtime_error("SHA256 copy");return copy.finish();}
+ void reset(){if(EVP_DigestInit_ex(context,EVP_sha256(),nullptr)!=1)throw std::runtime_error("SHA256 reset");}
+ std::string finish(){std::array<unsigned char,EVP_MAX_MD_SIZE>out{};unsigned n=0;if(EVP_DigestFinal_ex(context,out.data(),&n)!=1||n!=32)throw std::runtime_error("SHA256 final");std::ostringstream text;for(unsigned i=0;i<n;++i)text<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(out[i]);return text.str();}
+} output_digest,phase_digest;
+std::map<std::string,std::string> phase_hashes;
+void phase(const std::string&name){phase_hashes[name]=phase_digest.checkpoint();phase_digest.reset();}
+void add_bytes(const void*p,size_t n){output_digest.add(p,n);phase_digest.add(p,n);}
+void require(bool value,const std::string& what){++checks;if(!value)throw std::runtime_error(what);}
+template<class T>void byte_equal(const T&a,const T&b,const std::string&what){require(sizeof(a)==sizeof(b)&&std::memcmp(&a,&b,sizeof(a))==0,what);add_bytes(&a,sizeof(a));add_bytes(&b,sizeof(b));}
+void bytes(const void*a,const void*b,size_t n,const std::string&what){require(std::memcmp(a,b,n)==0,what);add_bytes(a,n);add_bytes(b,n);}
+uint64_t rng=0x51e20261017ull;
+uint32_t next(){rng^=rng<<13;rng^=rng>>7;rng^=rng<<17;return uint32_t(rng);}
+void table_test(){
+ constexpr auto layout=p48::layout(iq3::Type::IQ2_S,2560);alignas(16)std::array<uint8_t,layout.row_bytes> row{};
+ for(unsigned index=0;index<1024;++index){for(unsigned j=0;j<8;++j){unsigned code=(p51::iq2_codes[index]>>(2*j))&3;unsigned magnitude=code==0?8:code==1?25:43;byte_equal(magnitude,unsigned(p28::iq2_bytes[index*8+j]),"all IQ2 codebook magnitudes");}
+  for(unsigned signs=0;signs<256;++signs){row[0]=index&255;row[1]=signs;row[layout.high]=index>>8;row[layout.halves]=0;row[layout.halves+1]=0x34;row[layout.scales]=uint8_t(signs);float a[8],b[8];p48::decode8<iq3::Type::IQ2_S,2560>(row.data(),0,a);p51::iq2_decode8<2560>(row.data(),0,b);bytes(a,b,sizeof(a),"all IQ2 sign masks");}
+ }
+ phase("codebook_all_signs_finite_scale");
+ for(uint16_t half:{0u,0x8000u,1u,0x8001u,0x03ffu,0x0400u,0x3c00u,0xbc00u,0x7bffu,0xfbffu,0x7c00u,0xfc00u,0x7e01u}){for(unsigned scale=0;scale<16;++scale)for(unsigned index=0;index<1024;index+=31){
+  row[0]=index&255;row[1]=uint8_t(index);row[layout.high]=index>>8;row[layout.halves]=half&255;row[layout.halves+1]=half>>8;row[layout.scales]=uint8_t(scale);float a[8],b[8];p48::decode8<iq3::Type::IQ2_S,2560>(row.data(),0,a);p51::iq2_decode8<2560>(row.data(),0,b);bytes(a,b,sizeof(a),"IQ2 scale decode half="+std::to_string(half)+" nibble="+std::to_string(scale)+" index="+std::to_string(index));
+ }
+ phase("weight_half_"+std::to_string(half));}
+}
+void repack_admission_test(){
+ // The candidate receives p48's admitted compact layout. All 2,048 signed
+ // infinity/NaN FP16 encodings must be rejected before any destination write.
+ // The direct NaN decoder phase above remains an unchanged diagnostic: its
+ // original p48 oracle has a compiler-dependent payload/sign choice for 0x7e01.
+ constexpr unsigned K=2560;constexpr auto layout=p48::layout(iq3::Type::IQ2_S,K);
+ std::array<uint8_t,K/256*82>source{};
+ alignas(16)std::array<uint8_t,layout.row_bytes>destination{},before{};before.fill(0xa5);destination=before;
+ for(unsigned sign=0;sign<2;++sign)for(unsigned fraction=0;fraction<1024;++fraction){
+  uint16_t half=uint16_t((sign<<15)|0x7c00|fraction);source[0]=uint8_t(half);source[1]=uint8_t(half>>8);bool rejected=false;
+  try{p48::repack_row(iq3::Type::IQ2_S,K,source.data(),destination.data());}catch(const std::invalid_argument&e){rejected=std::string(e.what())=="p48 nonfinite weight scale";}
+  require(rejected,"all nonfinite FP16 scales rejected");byte_equal(destination,before,"rejected repack leaves destination unchanged");add_bytes(&half,sizeof(half));
+ }
+ phase("repack_reject_all_nonfinite_encodings");
+}
+void gate_test(){
+ constexpr unsigned rows=5,experts=32,slots=10,K=2560;constexpr auto layout=p48::layout(iq3::Type::IQ2_S,K);
+ std::vector<uint8_t>w(rows*experts*layout.row_bytes),peer(w.size());for(auto* bank:{&w,&peer})for(unsigned row=0;row<rows*experts;++row){auto*p=bank->data()+row*layout.row_bytes;for(size_t j=0;j<layout.row_bytes;++j)p[j]=uint8_t(next());for(unsigned block=0;block<K/256;++block){uint16_t scale=uint16_t(0x1000+(next()%0x4000));std::memcpy(p+layout.halves+block*2,&scale,2);}}
+ std::array<uint16_t,K>x{};std::array<iq3::Route,slots>routes{};
+ for(unsigned overlap=0;overlap<3;++overlap)for(unsigned token=0;token<2;++token)for(unsigned control=0;control<6;++control){
+  for(auto&v:x)v=iq3::bf16_bits(float(int(next()%257)-128)/128.f);
+  for(unsigned j=0;j<slots;++j)routes[j]={j+(token?(overlap==0?0:overlap==1?5:10):0),0,rows};
+  if(control==1)routes[3].expert_id=experts;if(control==2)routes[2].row_begin=rows;if(control==3)routes[0].row_count=rows-2;
+  std::array<uint16_t,rows*slots>y{},py{},oldy{},oldpy{};std::array<uint32_t,slots>status{},ps{},olds{},oldps{};
+  uint32_t error=control==5?7:0,olderror=error,active=control==4?0:1;
+  std::array<void*,10> p{w.data(),peer.data(),x.data(),y.data(),py.data(),routes.data(),status.data(),ps.data(),&error,&active};
+  auto oracle=p;oracle[3]=oldy.data();oracle[4]=oldpy.data();oracle[6]=olds.data();oracle[7]=oldps.data();oracle[8]=&olderror;
+  p48b::Kernel<iq3::Type::IQ2_S,K>base;base.rows=rows;base.count=slots;base.experts=experts;base.run(oracle);
+  p51::GateKernel candidate;candidate.rows=rows;candidate.count=slots;candidate.experts=experts;candidate.run(p);
+  byte_equal(y,oldy,"M2 gate outputs");byte_equal(py,oldpy,"M2 up outputs");byte_equal(status,olds,"route status");byte_equal(ps,oldps,"peer status");byte_equal(error,olderror,"sticky error");
+ }
+ for(uint16_t special:{0u,0x8000u,1u,0x8001u,0x7f80u,0xff80u,0x7fc1u}){x.fill(0x3f80);x[17]=special;for(unsigned lane=0;lane<32;++lane){auto expected=p48::gate_lane<iq3::Type::IQ2_S,K>(w.data(),peer.data(),x.data(),0,K,lane);byte_equal(expected[0],p51::gate_lane<K>(w.data(),x.data(),lane),"nonfinite activation gate lane");byte_equal(expected[1],p51::gate_lane<K>(peer.data(),x.data(),lane),"nonfinite activation up lane");}}
+}
+struct RouteFixture {
+ std::array<uint16_t,512>input{};std::array<int32_t,10>ids{};std::array<float,10>prob{};std::array<int32_t,30>gate{},down{};std::array<float,1088>scratch{};uint32_t error=0,active=1;
+ route42::Args args(){route42::Args a{};a.input=input.data();a.output[0]=ids.data();a.output[1]=prob.data();a.output[2]=gate.data();a.output[3]=down.data();a.scratch=scratch.data();a.error=&error;a.active=&active;a.input_type=flash::Scalar::bf16;a.output_type[0]=flash::Scalar::i32;a.output_type[1]=flash::Scalar::f32;a.output_type[2]=flash::Scalar::i32;a.output_type[3]=flash::Scalar::i32;a.n=512;a.top=10;a.mid=640;a.h=2560;a.no=4;return a;}
+};
+void route_test(){
+ for(unsigned test=0;test<24;++test){RouteFixture a;for(unsigned j=0;j<512;++j)a.input[j]=iq3::bf16_bits(test==0?0.f:test==1?float(j%4):test==2?float(j%2)*-200.f:float(int(next()%4097)-2048)/128.f);a.scratch.fill(-7.25f);a.ids.fill(-7);a.prob.fill(-6);a.gate.fill(-5);a.down.fill(-4);
+  if(test==3)a.input[237]=0x7fc1;if(test==4)a.input[511]=0x7f80;if(test==5)a.input[0]=0xff80;if(test==6)a.active=0;if(test==7)a.error=5;
+  auto b=a;route42::host(a.args());auto args=b.args();for(unsigned j=0;j<32;++j)route42::phase<0,512,10>(args,j);p51::route_exp_host(args);p51::route_rank_host(args);route42::phase<4,512,10>(args,0);
+  byte_equal(a.ids,b.ids,"route ties/index");byte_equal(a.prob,b.prob,"route normalized probabilities");byte_equal(a.gate,b.gate,"gate descriptors");byte_equal(a.down,b.down,"down descriptors");byte_equal(a.scratch,b.scratch,"route global scratch preserved");byte_equal(a.error,b.error,"route invalid/inactive/sticky controls");
+ }
+ // Direct Stage2 adversary: distinct positive exponents can collapse to ties
+ // after normalization. Comparing exponentials instead would select index1.
+ RouteFixture a;a.scratch.fill(0);a.scratch[32]=3e30f;a.scratch[64]=1e-30f;a.scratch[65]=2e-30f;auto b=a;auto aa=a.args();for(unsigned j=0;j<512;++j){unsigned rank=0;for(unsigned lane=0;lane<32;++lane)rank+=route42::rank_lane<512>(aa,j,lane);route42::output<512,10>(aa,j,rank);}p51::route_rank_host(b.args());byte_equal(a.ids,b.ids,"division-induced ties");byte_equal(a.prob,b.prob,"division-induced probabilities");require(b.ids[0]==0,"rank normalized values before comparison");
+}
+template<iq3::Type T,unsigned K,unsigned Split>void dense_test(){
+ constexpr unsigned rows=5;size_t rb=iq3::expanded::row_bytes(T,K);std::vector<uint8_t>w(rows*rb);for(auto&v:w)v=uint8_t(next());
+ if constexpr(T==iq3::Type::F32){for(size_t k=0;k<w.size();k+=4){float f=float(int(next()%257)-128)/128.f;std::memcpy(w.data()+k,&f,4);}}
+ else {constexpr unsigned group=T==iq3::Type::Q6_K?16:32;for(unsigned r=0;r<rows;++r)for(unsigned j=0;j<K/group;++j){float f=float(int(next()%257)-128)/256.f;std::memcpy(w.data()+r*rb+K+4*j,&f,4);}}
+ std::array<uint16_t,K>x{};for(auto&v:x)v=iq3::bf16_bits(float(int(next()%257)-128)/64.f);
+ for(unsigned token=0;token<2;++token){x[token]=token?0x8000:0;for(unsigned row=0;row<rows;++row){float partial[4]{};for(unsigned part=0;part<Split;++part){auto bounds=iq3::kopt2::bounds(K,part,Split);float vals[32];for(unsigned lane=0;lane<32;++lane){float expected=p28::dense_lane<T,K>(w.data()+row*rb,x.data(),bounds.first,bounds.second,lane);float actual=p51::dense_lane<T,K>(w.data()+row*rb,x.data(),bounds.first,bounds.second,lane);byte_equal(expected,actual,"dense per-lane byte identity");vals[lane]=actual;}partial[part]=iq3::tree32(vals);}float actual=Split==1?partial[0]:(partial[0]+partial[1])+(partial[2]+partial[3]);byte_equal(actual,p28::dense_row<T,K>(w.data()+row*rb,x.data(),Split),"dense original split tree");}}
+}
+}
+int main(){try{table_test();repack_admission_test();gate_test();phase("gate");route_test();phase("route");dense_test<iq3::Type::Q8_0,320,1>();phase("hc_gate");dense_test<iq3::Type::Q8_0,10240,4>();phase("hc_low");dense_test<iq3::Type::F32,10240,4>();phase("hc_inject_diagnostic");dense_test<iq3::Type::Q6_K,6144,4>();phase("attention");dense_test<iq3::Type::Q6_K,2560,1>();phase("qkv");auto digest=output_digest.finish();std::cout<<"{\"schema\":\"ownrt.packet51.candidate.cpu.v1\",\"passed\":true,\"device_executed\":false,\"checks\":"<<checks<<",\"output_sha256\":\""<<digest<<"\",\"phase_sha256\":{";bool first=true;for(const auto&[name,value]:phase_hashes){std::cout<<(first?"":",")<<"\""<<name<<"\":\""<<value<<"\"";first=false;}std::cout<<"}}\n";return 0;}catch(const std::exception&e){std::cout<<"{\"passed\":false,\"checks\":"<<checks<<",\"error\":\""<<e.what()<<"\"}\n";return 1;}}
