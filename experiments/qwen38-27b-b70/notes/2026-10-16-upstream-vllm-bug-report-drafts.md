@@ -312,9 +312,9 @@ new row 4, the fix gives 1.
 - Bugs 1-3 cite the committed overlay 0.2.0 and 0.3.0 only (a 0.4.0 with optional draft keeping is being
   tested separately and is not part of any report); bug 4 cites 0.5.0 (`54747d7d6`).
 - Bug 3 residual, 2026-10-16 16:36: with 0.3.0 a 2-user drafting + prefix-caching server flipped one long answer out
-  of 128 at a near tie (`notes/2026-10-04-fp8-multiuser-prereg.md`, 16:29 result). 19:35 update: the probable cause
-  is bug 4 (added below, found the same evening); the two-user re-check with the bug-4 fix (arm C2) decides it.
-  Settle it before filing bug 3 with a "0 of 36" claim.
+  of 128 at a near tie (`notes/2026-10-04-fp8-multiuser-prereg.md`, 16:29 result). Settled 19:58: it was bug 4
+  (added below). With the bug-4 fix the same two-user check gave 192/192 (without it 188/192), so bug 3's "0 of 36"
+  stands for the overlapped case; file bugs 3 and 4 together.
 - Bug 4 (2026-10-16 evening): fully explained by the both-ranks trace (prereg note, part D). Lab data:
   `experiments/qwen38-27b-b70/data/2026-10-16-r314-pcorder/`.
 - Related but not drafted: R307 "Defect 3" (`docker/rebase-v0290/r307-gdn-state-handoff.py`). A one-token step right
