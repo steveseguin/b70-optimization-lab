@@ -117,6 +117,17 @@ def main():
             top.append(dict(rank=rank,site=site,excess_us_per_half=sum(r['excess_us_per_half'] for r in members),
                  measured_us_per_half=sum(r['measured_call_median_us']*r['occurrences_per_half'] for r in members)))
     top.sort(key=lambda r:(r['rank'],-r['excess_us_per_half']))
+    # Inventory every actual layer too: layer0 is not the sampled layer22.
+    # Do not manufacture per-layer timings for its different tensor formats.
+    inventory=[]
+    for layer in range(48):
+        rank=layer//24;kind='QSA' if layer%4==3 else 'GDN'
+        for sample in (r for r in rows if r['rank']==rank and r['kind']==kind):
+            pos=int(statistics.median(sample['positions']));v=account(layer,sample['site'],pos)
+            inventory.append(dict(rank=rank,layer=layer,site=sample['site'],position_for_context_bytes=pos,
+                measured_call_median_us=sample['measured_call_median_us'] if layer==sample['layer'] else None,**v))
+    save(P/'all-layer-bytes.json',dict(schema='packet67.all-layer-bytes.v1',rows=inventory,
+        scope='all48 actual GGUF tensor types; unsampled layer times are null; context-dependent bytes use representative sampled position, no unmeasured speed points'))
     outside=[]
     def out(rank,site,names,ar,aw,note,host=False):
         packed,wr,ts=weights(names) if names else (0,0,[])
@@ -153,6 +164,7 @@ def main():
       'CPU header/source accounting against the October 17 lane-B packet64 attribution. No model payload or device was read. **These are useful-byte lower bounds, not measured DRAM traffic or achievable speedups.** Exact HBM bytes require device counters; cached duplicate loads, codebooks, control words and line overfetch are not measurable from these receipts.',
       '', 'The model headers match all '+str(len(tensors))+' tensors in the admitted census. [Header identities](header-census.json), [reproducer](audit.py), [full counts/formulas and raw event hashes](roofline.json).',
       '', 'Q6_K/Q8_0 dense matrices run as expanded codes plus F32 scales. Count K+K/4 and K+K/8 bytes per row respectively; preserved packed metadata in the allocation is not loaded by these kernels. Routed IQ2_S/IQ3_S/IQ4_NL remain compact. The filename is not a tensor type.',
+      '', '[All 48 layers’ byte inventories](all-layer-bytes.json) retain their actual types. Layer0 differs: QKV/Z and shared gate/up are Q8_0, and routed gate/up are IQ3_S. The remaining 35 GDN QKV/Z and 47 shared pairs are Q6_K; 47 routed pairs are IQ2_S. The ranking below scales sampled call costs, so it is only an estimate for these mixed-format sites, not a measured all-layer total. HC and recurrence—the chosen sites—have the same formats and geometry throughout both halves.',
       '', '540 GB/s is the requested practical mixed-traffic reference. [Earlier copy evidence](../../../../notes/2026-10-15-p45-roofline-and-structural-levers.md) reports 528–545 GB/s read+write, and 589–601 GB/s streaming read. Use (reads+writes)/540000 for microseconds, not a copy-payload denominator. Compute/reduction/decode floors remain unmeasured.',
       '', '**Timing correction:** sum all events per (prompt, rank, fixture, label) before taking a median. `attention` has two kernels, `route` four, `moe` two, and QSA attention three. The brief’s ~23 us attention median mixes the ~41 us producer and ~5 us finish; its complete call costs roughly twice that. No scaled control/instrumented estimates are used here.',
       '', '## Ranked per-half excess (common sites combine 18 GDN and 6 QSA occurrences)', '',

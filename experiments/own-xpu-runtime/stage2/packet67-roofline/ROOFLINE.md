@@ -6,6 +6,8 @@ The model headers match all 1224 tensors in the admitted census. [Header identit
 
 Q6_K/Q8_0 dense matrices run as expanded codes plus F32 scales. Count K+K/4 and K+K/8 bytes per row respectively; preserved packed metadata in the allocation is not loaded by these kernels. Routed IQ2_S/IQ3_S/IQ4_NL remain compact. The filename is not a tensor type.
 
+[All 48 layers’ byte inventories](all-layer-bytes.json) retain their actual types. Layer0 differs: QKV/Z and shared gate/up are Q8_0, and routed gate/up are IQ3_S. The remaining 35 GDN QKV/Z and 47 shared pairs are Q6_K; 47 routed pairs are IQ2_S. The ranking below scales sampled call costs, so it is only an estimate for these mixed-format sites, not a measured all-layer total. HC and recurrence—the chosen sites—have the same formats and geometry throughout both halves.
+
 540 GB/s is the requested practical mixed-traffic reference. [Earlier copy evidence](../../../../notes/2026-10-15-p45-roofline-and-structural-levers.md) reports 528–545 GB/s read+write, and 589–601 GB/s streaming read. Use (reads+writes)/540000 for microseconds, not a copy-payload denominator. Compute/reduction/decode floors remain unmeasured.
 
 **Timing correction:** sum all events per (prompt, rank, fixture, label) before taking a median. `attention` has two kernels, `route` four, `moe` two, and QSA attention three. The brief’s ~23 us attention median mixes the ~41 us producer and ~5 us finish; its complete call costs roughly twice that. No scaled control/instrumented estimates are used here.
