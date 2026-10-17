@@ -1,0 +1,24 @@
+### 05:29:03 campaign 28 (c28c, depth 0, piece 832, one launch 1, tail 1) start; queue /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE28c.txt (1 lines); MemAvailable 13548 MiB
+### 05:29:03 queue checked: K32 rules 0 3600;
+### 05:29:03 stopping the Gemma service (front door state: 0 0)
+### 05:29:09 cards free; MemAvailable 13748 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: 3824c6c993cf45728f89de66dcbbfab4
+### 05:31:24 server ready after ~150 s; MemAvailable 3743 MiB
+Running as unit: ctx-keeper-proxy.service; invocation ID: 0628cec8bf9141f2b3879cc62422b0d9
+### 05:31:26 [K32__sparse-memory-t240k-s0] start (cap 3600s); MemAvailable 3729 MiB; server totals: prompt 15 cached 0 generated 64
+### 05:50:13 [K32__sparse-memory-t240k-s0] done rc=0 in 18 min 49 s; MemAvailable 3248 MiB; server totals: prompt 1932094 cached 1564160 generated 30313
+   ledger score 1.0000 raw 1.0000 ({'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}) void=False [] delivery={'items_total': 147, 'items_delivered': 147, 'items_broken_pipe': 0, 'items_to_file': 0, 'it
+   RESULT 39/39 void=False violations=0 counts={'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}
+   client: calls 154 (main loop 154), written 11339, prompt 1534852 cached 1194752
+   proxy: cuts 17 (in place 17, failed 0, asked again 3), archived 292, recalls 10, full-rewrite failed 0, notes read 342682 cached 321984 written 17146; background started 0 applied 0 discarded 0 waited 0 s; upstream 1075.736 s (background 0 s); restarts 0
+   calls: main 162 calls 523 s read 1589397 cached 1242176 written 13103; notes 20 calls 552 s read 342682 cached 321984 written 17146; largest call (read + written) 18997 tokens
+### 05:50:16 queue empty after 1 lines; waiting up to 5s for more lines in /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE28c.txt
+### 05:50:26 no new line for 5s; ending
+### 05:50:26 stopping the server; MemAvailable 3301 MiB
+server state: stopped None stop_confirmed True
+host memory available while the server ran: min 2.75  1% 2.82  median 2.96 GiB  (2585 samples)
+### 05:50:54 kernel log clean since 2026-10-17 05:29:03; restoring Gemma (throughput)
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 05:55:25 campaign 28 (c28c) complete

@@ -1,0 +1,31 @@
+### 05:06:36 stopping the Gemma service (front door state: 0 0)
+### 05:06:41 census, 7 rows, pages of 832
+{"page": 832, "points": 4209, "fast_all_equal": 1161, "fast_prediction_right": 3076, "pinned_used": 4187, "pinned_all_equal": 4187, "seconds": 6.3}
+pinned mismatches: []
+   census census-q7.json one launch = lone rows at every used length: True
+### 05:06:52 census, 8 rows, pages of 832
+{"page": 832, "points": 4209, "fast_all_equal": 1072, "fast_prediction_right": 3137, "pinned_used": 4183, "pinned_all_equal": 4183, "seconds": 7.1}
+pinned mismatches: []
+   census census-q8.json one launch = lone rows at every used length: True
+   RESULT 39/39 void=False violations=0 counts={'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}
+### 05:23:36 queue empty after 2 lines; waiting up to 5s for more lines in /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE28.txt
+### 05:23:46 no new line for 5s; ending
+### 05:23:46 stopping the server; MemAvailable 2199 MiB
+### 05:24:14 RESTORE=0: cards left empty for the next server
+### 05:24:14 campaign 28 (c28a) complete
+   c28a K32: calls 182 / 182; equal apart from time and cache 171; first differences [63, 64, 65, 66, 67]
+   c28a K32: cached: +0 tokens in all; calls gaining 0, losing 0; gains seen [0]
+   c28a K32: model time 367.3 s -> 353.0 s (-3.9 %)
+   c28a K32:   main: 227.8 s -> 222.4 s (-2.4 %)
+   c28a K32:   notes: 139.5 s -> 130.6 s (-6.4 %)
+   c28a K64: calls 174 / 174; equal apart from time and cache 174; first differences []
+   c28a K64: cached: +0 tokens in all; calls gaining 0, losing 0; gains seen [0]
+   c28a K64: model time 393.2 s -> 375.7 s (-4.5 %)
+   c28a K64:   main: 233.2 s -> 225.8 s (-3.2 %)
+   c28a K64:   notes: 160.0 s -> 149.9 s (-6.3 %)
+### 05:24:14 c28a differs from c27a: depth 7 not run
+### 05:24:14 kernel log clean since 2026-10-17 05:06:36; Gemma back on its throughput recipe
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 05:28:45 campaign 28 complete

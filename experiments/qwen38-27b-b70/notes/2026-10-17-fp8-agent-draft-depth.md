@@ -57,3 +57,16 @@ One server like c27a with `--mtp 0` (no drafter; everything else the same), K32 
   depth 6 is not exact (traced only if a later lever needs depth > 5). No-MTP = depth 6 at call 63: depth 5 has a
   defect on this stream: the context lane's exactness claim is suspended until it is traced (call-63 request
   captured and replayed). Neither: a third behaviour, traced the same way.
+
+## Result, campaign 28c: no drafting (05:31-05:50 EDT; `data/2026-10-17-context-campaign28/`)
+
+- **No-MTP equals depth 5 in all 182 calls** (everything but time and cached), 39/39, and the server totals are the
+  same to the token (prompt 1,932,094, cached 1,564,160, generated 30,313). Depth 5 with every overlay of the
+  context lane (one-launch verify, exact cache with tail, align cache) gives the same agent stream as a server that
+  does not draft at all: the first such comparison on a whole agent stream.
+- So depth 6's call 63 is a 7-row check defect (some kernel's row 7, or a 7-wide state path, is not plain decoding),
+  recorded as the reason depth 6 is not exact; not traced, since no lever needs depth > 5 now (the census rules out
+  the one-launch attention at 7 and 8 rows; the GEMMs are row-invariant to 16; candidates left: the GDN spec path
+  after a 7-token acceptance, the conv-state width 3 + 6, the drafting buffers).
+- What drafting is worth on this stream: model time 1,075.7 s without it, 367.3 s at depth 5 (2.9x); wall 18 min 49 s
+  against 6 min 58 s.
