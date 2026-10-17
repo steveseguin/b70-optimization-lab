@@ -1,0 +1,18 @@
+{
+  "schema": "own-runtime.packet48.latch-review.v1",
+  "reviewed_utc": "2026-10-17T03:33:37Z",
+  "latch_sha256": "4d6896a31113814fd848c0ba8ff0f63ed03a79c88b7b6301e0c61b39e289a70c",
+  "latch": {
+    "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+    "reason": "anonymous-memory sensor unavailable: missing/malformed RssAnon for pid 123636",
+    "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48-gemv/evidence/p48-a-e1",
+    "pid": 123636
+  },
+  "findings": [
+    "native receipt passed: 126/126 device byte comparisons; child exited (child_still_running false)",
+    "reason was the inherited packet34 RssAnon sensor reading the native child as a zombie at exit (no mm fields)",
+    "kernel fault lines this boot unchanged at the 2 resolved 01:09 lines; no process holds any render node",
+    "sensor fixed in f8fd9dd35 (zombie tasks skipped; live tasks without RssAnon still refuse)"
+  ],
+  "disposition": "archived beside the run evidence by the coordinator; not a GPU fault"
+}

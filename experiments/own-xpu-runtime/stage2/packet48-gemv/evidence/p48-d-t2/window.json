@@ -1,0 +1,116 @@
+{
+  "schema": "own-runtime.packet48.window.v1",
+  "seal_sha256": "8259d1c29ba449152408cd25e05a6f847a5e18437f092982559fd1fe6a089377",
+  "binary_sha256": "ab1c40a369daaacd44e9f449523c3e94e74c35986e2bb78874ebf7534c895188",
+  "card": 0,
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/umf/1.1/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin"
+  },
+  "mode": "timing",
+  "passed": true,
+  "device_executed": true,
+  "child_still_running": false,
+  "microbenchmark_only": true,
+  "model_speed_claim": false,
+  "started_utc_ns": 1792208069016110547,
+  "watchdog_seconds": 7200,
+  "cpu_affinity": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "coordinator_fault_review": "2026-10-17T03:33:00Z",
+  "systemd_cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/packet48-t2-p48-d.service\n",
+  "exactness_companions": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48-gemv/evidence/p48-d-e1/window.json",
+      "sha256": "9d07348f92617972488c13dac05d32be9eab2bc4cb970190abcfb0ebdf66459b"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48-gemv/evidence/p48-d-e2/window.json",
+      "sha256": "2bb746d0597cb33f9be60aa01cd9e94f6e8a6b4c58bfdaa97fc62f63d630760a"
+    }
+  ],
+  "host_memory": {
+    "MemFree": 107813412864,
+    "MemAvailable": 120746049536,
+    "SwapTotal": 8589930496,
+    "SwapFree": 8459997184
+  },
+  "storage_admission": {
+    "free_bytes": 23600750592,
+    "planned_write_bytes": 536870912,
+    "min_free_bytes": 8000000000
+  },
+  "foreign_clients": {
+    "visible_xe_clients": [],
+    "inaccessible_entries": 491,
+    "method": "passive /proc fdinfo only; no device discovery"
+  },
+  "stop_reasons": [],
+  "reviewed_fault_lines": 2,
+  "ldd": {
+    "returncode": 0,
+    "stdout": "\tlinux-vdso.so.1 (0x00007473f1cdf000)\n\tlibcrypto.so.3 => /lib/x86_64-linux-gnu/libcrypto.so.3 (0x00007473f1600000)\n\tlibze_loader.so.1 => /lib/x86_64-linux-gnu/libze_loader.so.1 (0x00007473f1b3e000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007473f1200000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007473f1517000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007473f14e9000)\n\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x00007473f0e00000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007473f0a00000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007473f1ce1000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007473f1b37000)\n\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x00007473efc00000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007473f1b32000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007473f1b2b000)\n\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x00007473ef600000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007473f14cd000)\n\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x00007473ede00000)\n\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x00007473f0d07000)\n\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x00007473f0ca4000)\n",
+    "stderr": ""
+  },
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48-gemv/build/device/bench",
+    "--mode",
+    "timing",
+    "--card",
+    "0",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48-gemv/evidence/p48-d-t2/run",
+    "--authorized-device-window"
+  ],
+  "pid": 124535,
+  "process_start_ticks": 5077723,
+  "anonymous_peak_bytes": 1100025856,
+  "anonymous_limit_bytes": 8589934592,
+  "anonymous_stop_bytes": 8053063680,
+  "memory_last_sample": {
+    "anonymous_bytes": 203522048,
+    "root_seen": true,
+    "processes": [
+      {
+        "pid": 124535,
+        "rss_anon_bytes": 203522048
+      }
+    ]
+  },
+  "returncode": 0,
+  "sigterm_sent": false,
+  "elapsed_seconds": 10.545262968000316,
+  "native_files": {
+    "run/receipt.json": "6df4999197874f2b45ef8ed0b9d7f6ae97951c41a03cf9307df7e8fd78d136c4",
+    "run/comparisons.jsonl": "2ec32f3c0067d11f923d3d65d3bbeb406d177389c38abecf3e7045f6a5a7ed8b",
+    "run/iterations.jsonl": "b06e01e3877bafb4068c4d9608fd7e25c67f36a0db1bec4b00efadc95b94e60b"
+  },
+  "summary_sha256": "272533ed7fe324c1a2400850d68daf9f97f0b361d061b956380fe337cb18403d",
+  "finished_utc_ns": 1792208079948304043
+}

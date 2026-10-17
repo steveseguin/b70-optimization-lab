@@ -1,0 +1,604 @@
+{
+  "schema": "ownrt.packet48.summary.v1",
+  "passed": true,
+  "device_qualified": true,
+  "both_performance_bars_met": true,
+  "integration_eligible": false,
+  "windows": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48-gemv/evidence/p48-d-t1/window.json",
+      "sha256": "0e05299350ca40925e7f302728805484de5ca1beb27e40bdfe2f370ee8874fd0"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet48-gemv/evidence/p48-d-t2/window.json",
+      "sha256": "10fe10359299b9be0334e1031bea078cc2b1079cba724bbc51d40e9ca9658005"
+    }
+  ],
+  "results": [
+    {
+      "schema": "ownrt.packet48.timing.v1",
+      "passed": true,
+      "classes": {
+        "expsgate.iq2": {
+          "1": {
+            "all": {
+              "old_us": 106.92699999999999,
+              "new_us": 100.938,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 10496000,
+              "new_useful_weight_read_bytes": 10496000,
+              "old_effective_GBs": 98.16042720734708,
+              "new_effective_GBs": 103.98462422477164,
+              "hardware_dram_counter": false
+            }
+          },
+          "2": {
+            "all": {
+              "old_us": 159.375,
+              "new_us": 147.8125,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 20992000,
+              "new_useful_weight_read_bytes": null,
+              "old_effective_GBs": 131.71450980392157,
+              "new_effective_GBs": null,
+              "hardware_dram_counter": false
+            },
+            "same_slots": {
+              "old_us": 156.8235,
+              "new_us": 103.8545,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 20992000,
+              "new_useful_weight_read_bytes": 10496000,
+              "old_effective_GBs": 133.85748947064693,
+              "new_effective_GBs": 101.06447000370711,
+              "hardware_dram_counter": false
+            },
+            "overlap5_no_same_slots": {
+              "old_us": 160.6245,
+              "new_us": 147.8125,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 20992000,
+              "new_useful_weight_read_bytes": 20992000,
+              "old_effective_GBs": 130.6899009802365,
+              "new_effective_GBs": 142.01775898520086,
+              "hardware_dram_counter": false
+            },
+            "disjoint": {
+              "old_us": 160.0525,
+              "new_us": 148.75,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 20992000,
+              "new_useful_weight_read_bytes": 20992000,
+              "old_effective_GBs": 131.15696412114775,
+              "new_effective_GBs": 141.12268907563026,
+              "hardware_dram_counter": false
+            }
+          }
+        },
+        "expsdown": {
+          "1": {
+            "all": {
+              "old_us": 93.542,
+              "new_us": 56.458,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 9216000,
+              "new_useful_weight_read_bytes": 9216000,
+              "old_effective_GBs": 98.52258878364799,
+              "new_effective_GBs": 163.23638811151653,
+              "hardware_dram_counter": false
+            }
+          },
+          "2": {
+            "all": {
+              "old_us": 184.42649999999998,
+              "new_us": 115.208,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 18432000,
+              "new_useful_weight_read_bytes": null,
+              "old_effective_GBs": 99.94225341802833,
+              "new_effective_GBs": null,
+              "hardware_dram_counter": false
+            },
+            "same_slots": {
+              "old_us": 181.9795,
+              "new_us": 83.69800000000001,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 18432000,
+              "new_useful_weight_read_bytes": 9216000,
+              "old_effective_GBs": 101.28613387771699,
+              "new_effective_GBs": 110.11015794881597,
+              "hardware_dram_counter": false
+            },
+            "overlap5_no_same_slots": {
+              "old_us": 184.42649999999998,
+              "new_us": 115.4685,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 18432000,
+              "new_useful_weight_read_bytes": 18432000,
+              "old_effective_GBs": 99.94225341802833,
+              "new_effective_GBs": 159.62795048000103,
+              "hardware_dram_counter": false
+            },
+            "disjoint": {
+              "old_us": 185.05200000000002,
+              "new_us": 115.521,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 18432000,
+              "new_useful_weight_read_bytes": 18432000,
+              "old_effective_GBs": 99.60443551001879,
+              "new_effective_GBs": 159.55540551068637,
+              "hardware_dram_counter": false
+            }
+          }
+        },
+        "gdn.qkv.q6": {
+          "1": {
+            "all": {
+              "old_us": 63.49,
+              "new_us": 57.7085,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 32768000,
+              "new_useful_weight_read_bytes": 32768000,
+              "old_effective_GBs": 516.1127736651441,
+              "new_effective_GBs": 567.8192987168268,
+              "hardware_dram_counter": false
+            }
+          },
+          "2": {
+            "all": {
+              "old_us": 115.26050000000001,
+              "new_us": 60.0525,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 65536000,
+              "new_useful_weight_read_bytes": 32768000,
+              "old_effective_GBs": 568.5902802781525,
+              "new_effective_GBs": 545.6558844344532,
+              "hardware_dram_counter": false
+            }
+          }
+        },
+        "gdn.z.q6": {
+          "1": {
+            "all": {
+              "old_us": 31.875,
+              "new_us": 30.052500000000002,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 19660800,
+              "new_useful_weight_read_bytes": 19660800,
+              "old_effective_GBs": 616.8094117647058,
+              "new_effective_GBs": 654.2151235338157,
+              "hardware_dram_counter": false
+            }
+          },
+          "2": {
+            "all": {
+              "old_us": 55.6245,
+              "new_us": 37.448,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 39321600,
+              "new_useful_weight_read_bytes": 19660800,
+              "old_effective_GBs": 706.9115228002049,
+              "new_effective_GBs": 525.0160222174749,
+              "hardware_dram_counter": false
+            }
+          }
+        },
+        "expsgate.iq3": {
+          "1": {
+            "all": {
+              "old_us": 87.24000000000001,
+              "new_us": 86.719,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 14080000,
+              "new_useful_weight_read_bytes": 14080000,
+              "old_effective_GBs": 161.3938560293443,
+              "new_effective_GBs": 162.36349588902087,
+              "hardware_dram_counter": false
+            }
+          },
+          "2": {
+            "all": {
+              "old_us": 170.938,
+              "new_us": 165.83350000000002,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 28160000,
+              "new_useful_weight_read_bytes": null,
+              "old_effective_GBs": 164.7380921737706,
+              "new_effective_GBs": null,
+              "hardware_dram_counter": false
+            },
+            "same_slots": {
+              "old_us": 168.49,
+              "new_us": 113.125,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 28160000,
+              "new_useful_weight_read_bytes": 14080000,
+              "old_effective_GBs": 167.13158050922902,
+              "new_effective_GBs": 124.46408839779005,
+              "hardware_dram_counter": false
+            },
+            "overlap5_no_same_slots": {
+              "old_us": 171.719,
+              "new_us": 165.989,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 28160000,
+              "new_useful_weight_read_bytes": 28160000,
+              "old_effective_GBs": 163.9888422364444,
+              "new_effective_GBs": 169.64979607082398,
+              "hardware_dram_counter": false
+            },
+            "disjoint": {
+              "old_us": 170.9375,
+              "new_us": 167.4475,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 28160000,
+              "new_useful_weight_read_bytes": 28160000,
+              "old_effective_GBs": 164.7385740402194,
+              "new_effective_GBs": 168.1721136475612,
+              "hardware_dram_counter": false
+            }
+          }
+        },
+        "gdn.qkv.q8": {
+          "1": {
+            "all": {
+              "old_us": 53.49,
+              "new_us": 48.073,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 29491200,
+              "new_useful_weight_read_bytes": 29491200,
+              "old_effective_GBs": 551.3404374649467,
+              "new_effective_GBs": 613.467018908743,
+              "hardware_dram_counter": false
+            }
+          },
+          "2": {
+            "all": {
+              "old_us": 97.9685,
+              "new_us": 56.5625,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 58982400,
+              "new_useful_weight_read_bytes": 29491200,
+              "old_effective_GBs": 602.0547420854663,
+              "new_effective_GBs": 521.3913812154697,
+              "hardware_dram_counter": false
+            }
+          }
+        },
+        "gdn.z.q8": {
+          "1": {
+            "all": {
+              "old_us": 29.479,
+              "new_us": 27.9165,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 17694720,
+              "new_useful_weight_read_bytes": 17694720,
+              "old_effective_GBs": 600.2483123579498,
+              "new_effective_GBs": 633.8445005641825,
+              "hardware_dram_counter": false
+            }
+          },
+          "2": {
+            "all": {
+              "old_us": 53.073,
+              "new_us": 35.052,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 35389440,
+              "new_useful_weight_read_bytes": 17694720,
+              "old_effective_GBs": 666.8068509411565,
+              "new_effective_GBs": 504.8134200616227,
+              "hardware_dram_counter": false
+            }
+          }
+        }
+      },
+      "expert_old_us": 200.781,
+      "expert_new_us": 157.344,
+      "expert_speedup": 1.2760639109212935,
+      "ordinary_gdn_saved_us": 51.9795,
+      "performance_bar_met": true,
+      "current_primary_controls_within_15pct": false,
+      "control_vs_p46_ratios": {
+        "expsgate.iq2": 1.306808599049167,
+        "expsdown": 1.0181442176870747,
+        "gdn.qkv.q6": 0.6342372221029025,
+        "gdn.z.q6": 0.801574228917026
+      },
+      "integration_eligible": false,
+      "model_speed_claim": false
+    },
+    {
+      "schema": "ownrt.packet48.timing.v1",
+      "passed": true,
+      "classes": {
+        "expsgate.iq2": {
+          "1": {
+            "all": {
+              "old_us": 106.667,
+              "new_us": 101.354,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 10496000,
+              "new_useful_weight_read_bytes": 10496000,
+              "old_effective_GBs": 98.39969250096094,
+              "new_effective_GBs": 103.55782702212049,
+              "hardware_dram_counter": false
+            }
+          },
+          "2": {
+            "all": {
+              "old_us": 159.0105,
+              "new_us": 147.44799999999998,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 20992000,
+              "new_useful_weight_read_bytes": null,
+              "old_effective_GBs": 132.01643916596703,
+              "new_effective_GBs": null,
+              "hardware_dram_counter": false
+            },
+            "same_slots": {
+              "old_us": 157.084,
+              "new_us": 103.38499999999999,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 20992000,
+              "new_useful_weight_read_bytes": 10496000,
+              "old_effective_GBs": 133.63550711721118,
+              "new_effective_GBs": 101.52343183247088,
+              "hardware_dram_counter": false
+            },
+            "overlap5_no_same_slots": {
+              "old_us": 160.3635,
+              "new_us": 147.44799999999998,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 20992000,
+              "new_useful_weight_read_bytes": 20992000,
+              "old_effective_GBs": 130.90260564280524,
+              "new_effective_GBs": 142.36883511475236,
+              "hardware_dram_counter": false
+            },
+            "disjoint": {
+              "old_us": 159.584,
+              "new_us": 148.594,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 20992000,
+              "new_useful_weight_read_bytes": 20992000,
+              "old_effective_GBs": 131.54200922398235,
+              "new_effective_GBs": 141.2708453907964,
+              "hardware_dram_counter": false
+            }
+          }
+        },
+        "expsdown": {
+          "1": {
+            "all": {
+              "old_us": 93.594,
+              "new_us": 56.5105,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 9216000,
+              "new_useful_weight_read_bytes": 9216000,
+              "old_effective_GBs": 98.46785050323739,
+              "new_effective_GBs": 163.08473646490475,
+              "hardware_dram_counter": false
+            }
+          },
+          "2": {
+            "all": {
+              "old_us": 184.167,
+              "new_us": 115.46799999999999,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 18432000,
+              "new_useful_weight_read_bytes": null,
+              "old_effective_GBs": 100.08307677271172,
+              "new_effective_GBs": null,
+              "hardware_dram_counter": false
+            },
+            "same_slots": {
+              "old_us": 182.1875,
+              "new_us": 83.5935,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 18432000,
+              "new_useful_weight_read_bytes": 9216000,
+              "old_effective_GBs": 101.1704974271012,
+              "new_effective_GBs": 110.24780634857973,
+              "hardware_dram_counter": false
+            },
+            "overlap5_no_same_slots": {
+              "old_us": 184.63549999999998,
+              "new_us": 115.521,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 18432000,
+              "new_useful_weight_read_bytes": 18432000,
+              "old_effective_GBs": 99.82912278516322,
+              "new_effective_GBs": 159.55540551068637,
+              "hardware_dram_counter": false
+            },
+            "disjoint": {
+              "old_us": 185.10399999999998,
+              "new_us": 115.729,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 18432000,
+              "new_useful_weight_read_bytes": 18432000,
+              "old_effective_GBs": 99.57645431757284,
+              "new_effective_GBs": 159.2686362104572,
+              "hardware_dram_counter": false
+            }
+          }
+        },
+        "gdn.qkv.q6": {
+          "1": {
+            "all": {
+              "old_us": 63.698,
+              "new_us": 57.7605,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 32768000,
+              "new_useful_weight_read_bytes": 32768000,
+              "old_effective_GBs": 514.4274545511634,
+              "new_effective_GBs": 567.3081084824404,
+              "hardware_dram_counter": false
+            }
+          },
+          "2": {
+            "all": {
+              "old_us": 115.1035,
+              "new_us": 60.104,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 65536000,
+              "new_useful_weight_read_bytes": 32768000,
+              "old_effective_GBs": 569.3658316211062,
+              "new_effective_GBs": 545.1883402103022,
+              "hardware_dram_counter": false
+            }
+          }
+        },
+        "gdn.z.q6": {
+          "1": {
+            "all": {
+              "old_us": 31.875,
+              "new_us": 29.844,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 19660800,
+              "new_useful_weight_read_bytes": 19660800,
+              "old_effective_GBs": 616.8094117647058,
+              "new_effective_GBs": 658.7856855649377,
+              "hardware_dram_counter": false
+            }
+          },
+          "2": {
+            "all": {
+              "old_us": 55.521,
+              "new_us": 37.2395,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 39321600,
+              "new_useful_weight_read_bytes": 19660800,
+              "old_effective_GBs": 708.2293186361917,
+              "new_effective_GBs": 527.9555310893004,
+              "hardware_dram_counter": false
+            }
+          }
+        },
+        "expsgate.iq3": {
+          "1": {
+            "all": {
+              "old_us": 87.031,
+              "new_us": 86.667,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 14080000,
+              "new_useful_weight_read_bytes": 14080000,
+              "old_effective_GBs": 161.78143420160632,
+              "new_effective_GBs": 162.46091361187072,
+              "hardware_dram_counter": false
+            }
+          },
+          "2": {
+            "all": {
+              "old_us": 170.10399999999998,
+              "new_us": 165.781,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 28160000,
+              "new_useful_weight_read_bytes": null,
+              "old_effective_GBs": 165.54578375582,
+              "new_effective_GBs": null,
+              "hardware_dram_counter": false
+            },
+            "same_slots": {
+              "old_us": 168.69799999999998,
+              "new_us": 114.00999999999999,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 28160000,
+              "new_useful_weight_read_bytes": 14080000,
+              "old_effective_GBs": 166.92551186143288,
+              "new_effective_GBs": 123.49793877730025,
+              "hardware_dram_counter": false
+            },
+            "overlap5_no_same_slots": {
+              "old_us": 170.72949999999997,
+              "new_us": 165.885,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 28160000,
+              "new_useful_weight_read_bytes": 28160000,
+              "old_effective_GBs": 164.9392752863448,
+              "new_effective_GBs": 169.7561563733912,
+              "hardware_dram_counter": false
+            },
+            "disjoint": {
+              "old_us": 170.885,
+              "new_us": 167.70850000000002,
+              "pairs": 8,
+              "old_useful_weight_read_bytes": 28160000,
+              "new_useful_weight_read_bytes": 28160000,
+              "old_effective_GBs": 164.7891857096878,
+              "new_effective_GBs": 167.9103921387407,
+              "hardware_dram_counter": false
+            }
+          }
+        },
+        "gdn.qkv.q8": {
+          "1": {
+            "all": {
+              "old_us": 53.2815,
+              "new_us": 48.0205,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 29491200,
+              "new_useful_weight_read_bytes": 29491200,
+              "old_effective_GBs": 553.4979308014977,
+              "new_effective_GBs": 614.1377120188253,
+              "hardware_dram_counter": false
+            }
+          },
+          "2": {
+            "all": {
+              "old_us": 98.0205,
+              "new_us": 56.5105,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 58982400,
+              "new_useful_weight_read_bytes": 29491200,
+              "old_effective_GBs": 601.735351278559,
+              "new_effective_GBs": 521.8711566876952,
+              "hardware_dram_counter": false
+            }
+          }
+        },
+        "gdn.z.q8": {
+          "1": {
+            "all": {
+              "old_us": 29.0625,
+              "new_us": 27.551499999999997,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 17694720,
+              "new_useful_weight_read_bytes": 17694720,
+              "old_effective_GBs": 608.8505806451612,
+              "new_effective_GBs": 642.2416202384626,
+              "hardware_dram_counter": false
+            }
+          },
+          "2": {
+            "all": {
+              "old_us": 52.448,
+              "new_us": 34.375,
+              "pairs": 24,
+              "old_useful_weight_read_bytes": 35389440,
+              "new_useful_weight_read_bytes": 17694720,
+              "old_effective_GBs": 674.7528981086028,
+              "new_effective_GBs": 514.7554909090909,
+              "hardware_dram_counter": false
+            }
+          }
+        }
+      },
+      "expert_old_us": 200.001,
+      "expert_new_us": 157.917,
+      "expert_speedup": 1.2664944242861758,
+      "ordinary_gdn_saved_us": 51.093500000000006,
+      "performance_bar_met": true,
+      "current_primary_controls_within_15pct": false,
+      "control_vs_p46_ratios": {
+        "expsgate.iq2": 1.3036310083961722,
+        "expsdown": 1.0187102040816325,
+        "gdn.qkv.q6": 0.6363150507719433,
+        "gdn.z.q6": 0.801574228917026
+      },
+      "integration_eligible": false,
+      "model_speed_claim": false
+    }
+  ],
+  "model_speed_claim": false
+}
