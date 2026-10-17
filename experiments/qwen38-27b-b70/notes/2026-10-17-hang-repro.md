@@ -205,7 +205,7 @@ ranks' Python stacks, and the runner saves thread states, engine registers and, 
 - **If not:** the exchange alone is cleared at that rate; the hang needs the model's own prompt-step kernels, and the
   next test runs those (GDN prompt kernel from a cached state, prompt attention over cached keys) at high rate.
 
-## Amendment 14:03 EDT (no result read): what oneCCL's "simple" all-gather is on these cards
+## Amendment 13:55 EDT (no result read): what oneCCL's "simple" all-gather is on these cards
 
 Read from oneCCL's source (uxlfoundation/oneCCL master, `src/coll/algorithms/allgatherv/sycl/allgatherv_sycl.cpp`,
 `allgatherv_pcie.cpp`, `src/common/env/env.cpp`; the image's oneCCL 2022.0.0 exports the same `allgatherv_ll_ring`):
