@@ -1,0 +1,51 @@
+diff --git a/experiments/own-xpu-runtime/stage2/packet58c-onecard/main.cpp b/experiments/own-xpu-runtime/stage2/packet58d-onecard/main.cpp
+index 7a9cd85c2..7c7b22e9a 100644
+--- a/experiments/own-xpu-runtime/stage2/packet58c-onecard/main.cpp
++++ b/experiments/own-xpu-runtime/stage2/packet58d-onecard/main.cpp
+@@ -849,11 +849,11 @@ public:
+     for(auto& [name,b]:expert_banks)for(int id=0;id<p.g.experts;++id){auto& e=experts[b.layer*p.g.experts+id];auto ptr=uint64_t(dev(0).arena.row(b.host).pointer)+id*b.expert_bytes;
+       if(b.projection==0){e.host_gate=ptr;e.gate_bytes=b.expert_bytes;}else if(b.projection==1){e.host_up=ptr;e.up_bytes=b.expert_bytes;}else{e.host_down=ptr;e.down_bytes=b.expert_bytes;}}
+     expert_cache=std::make_unique<p58::Cache>(std::move(experts),uint64_t(dev(0).arena.row(cache_arena).pointer),a.cache_bytes);
+-    table_staging=allocate(0,"cache-table-staging",expert_banks.size()*p.g.experts*sizeof(p58::Pointer),Category::pinned_slab,Lifetime::process,Memory::pinned);
++    table_staging=allocate(0,"cache-table-staging",expert_banks.size()*p.g.experts*sizeof(p58::Pointer),Category::pinned_slab,Lifetime::transfer,Memory::pinned);
+     publish_cache_table(expert_cache->table());
+     for(const auto& l:p.launches)if(l.op=="expert_gate_up")route_sources.emplace_back(std::stoi(l.label.substr(4)),buffers[0].at(l.inputs[1]).id);
+     require(route_sources.size()==48,"route census must cover every layer");
+-    route_log=allocate(0,"cache-route-readback",48*p.g.top*sizeof(iq3::Route),Category::pinned_slab,Lifetime::process,Memory::pinned);
++    route_log=allocate(0,"cache-route-readback",48*p.g.top*sizeof(iq3::Route),Category::pinned_slab,Lifetime::transfer,Memory::pinned);
+     cache_log.open(a.output/"cache.jsonl");
+   }
+   void cache_begin_position(){if(expert_cache&&a.miss_path=="zero-copy")cache_epoch=expert_cache->begin_position();}
+@@ -1628,7 +1628,17 @@ static void p58_reset_request(Engine& e,const fs::path& destination) {
+        std::to_string(allocations)+",\"bytes\":"+std::to_string(bytes)+"}\n");
+ }
+ 
++#ifdef OWN_RT_HOST_ONLY
++#include "postload_allocation_test.hpp"
++#endif
++
+ int main(int argc, char **argv) {
++#ifdef OWN_RT_HOST_ONLY
++  if(argc==3 && std::string(argv[1])=="--postload-allocation-test") {
++    try {return postload_allocation_test(argv[2]);}
++    catch(const std::exception& error){std::cerr<<error.what()<<"\n";return 1;}
++  }
++#endif
+   std::unique_ptr<Engine> e;
+   std::unique_ptr<Weights> w;
+   fs::path output;
+
+diff --git a/experiments/own-xpu-runtime/stage2/packet58c-onecard/owner.cpp b/experiments/own-xpu-runtime/stage2/packet58d-onecard/owner.cpp
+index a9d1a902f..49d353a6e 100644
+--- a/experiments/own-xpu-runtime/stage2/packet58c-onecard/owner.cpp
++++ b/experiments/own-xpu-runtime/stage2/packet58d-onecard/owner.cpp
+@@ -254,7 +254,8 @@ Receipt Device::shutdown(std::chrono::milliseconds timeout) {
+ Allocation Arena::allocate(std::string label,std::size_t bytes,Memory m,Category c,Lifetime l) {
+   owner_.admit(); name(m); name(c); name(l);
+   if(label.empty() || !bytes) throw std::invalid_argument("empty allocation");
+-  if(planned(c)!=l) throw std::logic_error("category lifetime violation");
++  if(planned(c)!=l) throw std::logic_error("category lifetime violation: label="+quote(label)+
++    " category="+name(c)+" requested="+name(l)+" planned="+name(planned(c)));
+   if((c==Category::pinned_slab && m!=Memory::pinned) || (c==Category::host_shadow && m!=Memory::shadow))
+     throw std::logic_error("category memory violation");
+   for(const auto& r:rows_) if(r.live && r.label==label) throw std::logic_error("duplicate allocation label");

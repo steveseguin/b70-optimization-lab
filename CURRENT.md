@@ -1,5 +1,7 @@
 # Current Workspace State
 
+**October 17, packet58d sealed on CPU:** The one-card engine loaded all 48 layers in 58c, then stopped because two pinned copy slabs requested the wrong lifetime. The new packet fixes both callers and keeps the strict check. Errors now identify the allocation. A CPU mock passes the complete post-load setup; both builds, 59 Python checks, K1 byte checks and request resets pass. The seal and card-0 queue plan pass. No GPU or service ran during preparation. The coordinator reviews the retained lineage stops and starts the fresh chain at K1a; device correctness and speed remain pending. [Task note and command](notes/2026-10-17-own-runtime-packet58d.md).
+
 **October 17, packet76 attribution on CPU:** Most of rank1's reported 1.61 ms
 residual is host housekeeping, with substantial measurement overhead. The saved
 trace cannot isolate all transfer and late-submission costs. A new packet will
