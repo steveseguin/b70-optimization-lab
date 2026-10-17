@@ -47,3 +47,52 @@ new packet is in.
 **Asked of the owner:** go or no-go for the package change. Gates 1-3 are research and can run before the answer;
 gates 4-5 and the public numbers wait for it. The one-card package ships 0.1.0 too, with its own `paged_decode_multiq`
 path past 4,096 keys; out of scope here.
+
+## Gate 1 result (03:38 EDT, R310, card 0; `data/2026-10-17-verify-census/attn-r310.json`)
+
+Census on the package image, split counts from the overlay file: one launch equal to the lone rows 6/6 at
+**4,190 / 4,190** lengths for pages of **64** and of 832 (the other 19 per page are split-count boundaries, where it
+falls back to per-row calls). The same as R314.
+
+## Gates 2-3 (registered 03:45 EDT, before the run): `scripts/run-20261017-tp2-one-launch-gates.sh`
+
+Servers: the comm-2 `tp2-ag-mtp5` research launch on R310 (the package's argv: block 64, 33,024 window, allgather
+overlay), in order. R0: no MTP, a long reference at 24,576 / 30,720 / 32,768 tokens (the September long corpus; the
+2K-16K corpus has only 22,933 tokens of code). C1: MTP5 + one launch, the gate suite (strict; context 2K/8K/16K;
+quality; vs the 2026-09-16 no-MTP references), strict again, then the long lengths against R0. O1, only if C1's long
+lengths differ: MTP5 on the per-row path, the same lengths.
+
+- **Predictions:** C1 strict 12/12 twice, context exact, quality pass with baseline match, long lengths equal to R0.
+  The context probe's writing speed (128-token answers) about the published 87.96 at 2K, 5-15 % above 114.01 at
+  8K, 15-30 % above 96.29 at 16K.
+- **Decision:** all exact: gates 1-3 pass and the proposal is ready for the owner (gates 4-5 wait for the go). If C1
+  differs and O1 does not, the new mode is at fault and the change stops. If both differ, an old near-tie at those
+  lengths is recorded, and the per-row path is no better.
+
+## Gates 2-3 result (03:45-04:05 EDT, R310, both cards, kernel log clean; `data/2026-10-17-tp2-one-launch-gates/`)
+
+| Gate | C1 (MTP5 + one launch) |
+| --- | --- |
+| Strict, run 1 / run 2, vs the no-MTP reference | **12/12 and 12/12**, 90.1 tok/s |
+| Context 2K / 8K / 16K, two repeats, vs the no-MTP reference | **exact**, 18 rows |
+| Chat quality, vs the no-MTP baseline | **pass**, every answer matched |
+| Long 24,576 / 30,720 / 32,768, two repeats, vs R0 (no MTP, recorded today) | **exact** |
+
+O1 (per-row path) was not needed. Writing speed in the context probe (tokens 1-100 of a 128-token answer, median per
+content type, then across types):
+
+| Prompt | Published (`r310-decode-vs-context-tp2-mtp5`) | C1, one launch | Change | No MTP (R0) |
+| ---: | ---: | ---: | ---: | ---: |
+| 2,048 | 87.96 | 92.68 | +5.4 % | |
+| 8,192 | 114.01 | 133.57 | +17.2 % | |
+| 16,384 | 96.29 | 123.57 | +28.3 % | |
+| 24,576 | | 80.14 | | 30.97 |
+| 30,720 | | 80.87 | | 30.43 |
+| 32,768 | | 97.33 | | 30.29 |
+
+The 24K-32K rows use the September long corpus (different text from the 2K-16K rows), so the two sets are not one
+curve. Predictions: 2K "about the published" (+5.4 %, a little more), 8K 5-15 % (+17.2 %, above), 16K 15-30 %
+(+28.3 %, inside). Prompt reading unchanged.
+
+**Decision (as registered): gates 1-3 pass.** The proposal is ready for the owner. Gates 4-5 (acceptance session from
+a pushed branch commit, new packet, CI) and the public numbers wait for the go.
