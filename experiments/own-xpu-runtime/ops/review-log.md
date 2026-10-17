@@ -171,3 +171,43 @@ STOP-doing items applied:
 - the decisive probe goes first;
 - 3+ Codex jobs;
 - the packet 70 launch is watched at about 19:35 (`lanes-v3.log` "packet70 decision").
+
+## Review 7, 20:07 UTC: **ACT**
+
+**Evidence:**
+- The helper's "100% in flight" was wrong. Lane B had done no device work since 19:28.
+- **Cause:** p67 B-6 finished its suite. Its teardown was then refused at 19:33 by the packet 70 K2 window's undrained `teardown-state.json`, before `transport.stop()`. Its ranks sat idle on cards 2+3 holding the lane-B lease.
+- The packet 70 chain's W2m (whole host) had been waiting since 20:05. It would have failed at about 20:30, either on its deadline or on the stale marker.
+- No Codex job had run since 19:40. Fault count 2.
+
+**Actions, 20:08–20:13 UTC:**
+1. **Recovery, in the order the reviewer gave:**
+   - **(a)** Stopped the CPU-only lane-B waiters (lanes-v3 bash pids by pid, `laneB-p68c`, `lanequeue-B`). The screen unit was untouched.
+   - **(b)** Archived `active-lane-B.json` (pid 474623) to `coordination/reviewed/` before stopping, so W2m would not refuse after the flock released.
+   - **(c)** Wrote `!` into the worker's stop pipe (`/proc/474650/fd/5`; both ranks' fd 3 is the same pipe). `pipeline_cancel_check` gives a cooperative rank stop.
+   - **(d)** Screen, worker and ranks exited within 7 s. The screen/v3 latch was archived after review: fault lines 2, no render-node holders.
+   - **(e)** **W2m was admitted at 20:09** and the chain proceeds. Lane B restarted under a single owner, `lanequeue-B2`: the p68c probe first (via `fn-run/p68c-probe-wrap.sh`), then p71 smoke, control, candidate and control-repeat. p69 lane-B jobs were dropped from the queue (rec 4).
+2. **Root-cause fix:** Codex `screenv4` builds `stage2/screen/v4-lanes/`:
+   - a refused teardown gate still stops and drains the worker's own ranks under `teardown.lock`;
+   - CPU post-processing comes after drain and lease release;
+   - tests;
+   - a chain-side patch template that marks drained once owners exit, before CPU post-processing.
+   
+   Frozen and queued trees are untouched.
+3. **Stuck-screen Monitor:** flags an active `screen-*` unit whose output has `failure.json` or `drain-error.json`, or no file written for 8 min.
+4. **Queues:**
+   - **p67 closed:** all four candidates slower on lane B (−6% to −22%); lane A stopped by rule. Closeout and DO-NOT-REPEAT row written (`1864eb9f9`).
+   - **p69:** all 8 screens on lane A via `lanequeue-A`, armed on `packet70-chain-k2fix` finishing. Lane B will run only control, best lane-A candidate, control.
+   - **58b:** PAUSE both queues at 21:40 (cron), slot at 21:55.
+5. **Next lever:** Codex **packet 72**:
+   - an in-engine achieved-bandwidth table first (from `sites.jsonl` and real tensor types);
+   - then wide64-style occupancy only for classes ≥ 0.3 ms per half below roofline;
+   - lane A full grid; lane B control/best/control.
+
+**STOP-doing items applied:**
+- one owner per lane (lane-queue);
+- before archiving a stale record, check every active screen for a `failure.json` it caused;
+- "unit active" ≠ "cards busy";
+- no full grids on both lanes;
+- no kernel rewrites without in-engine bandwidth evidence;
+- Codex count above 0 during chains.
