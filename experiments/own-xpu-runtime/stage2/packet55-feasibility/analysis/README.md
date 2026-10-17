@@ -23,7 +23,8 @@ and position totals are in the gzip companion. Keep full outputs with the
 window artifacts rather than committing an uncompressed large summary.
 
 The input requires the converter's `.gz.json` receipt, original window,
-tokenized calibration manifest, per-request results and compact native traces.
+tokenized calibration manifest, per-request results, native command timings and
+compact native traces.
 All are checked against the converter's SHA-256 bindings. Calibration must
 match the committed 24 independent prompts, with exactly 12 training and 12
 test prompts. The analyzer checks token containment against the bound packet49c
@@ -62,12 +63,29 @@ preload plus both phases' misses. That total is a byte-demand scenario, not a
 measured transfer cost or a statement that CPU handling transfers full slabs.
 
 The complete draft is assumed resident outside the target cache. Its route
-visits and selected expert evaluations are reported, with zero target-cache
+visits and observed expert selections are reported, with zero target-cache
 demand. Target routes remain in actual observed per-layer execution order;
 using per-layer quotas removes dependence on which split rank's clock appears
 first. This is not a prediction of global eviction order in a future one-card
 engine. Arithmetic, route probabilities and emitted tokens are untouched by
 this offline analysis.
+
+These bytes describe **observed route demand** under an explicit planned cache
+admission policy. A speculative rank-0 command can legitimately
+stop after a prefix of its layers. Its last router may be logged just before
+cancellation prevents those selected experts from running. The diagnostic D2H
+copies also change when cancellation occurs. Every observed selection remains
+charged here, and LRU/LFU complete every simulated admission even if its command
+is canceled. Those admissions change future cache hits, so the result is not a
+strict upper bound for an implementation with a different cancellation policy.
+The trace does not measure actual DMA or prove that every selected expert actually
+executed, or reproduce the uninstrumented engine's speculative work schedule.
+`completed_expert_execution_measured=false` makes this limit explicit in JSON.
+
+A static trained cache directly describes a design that computes every miss on
+the CPU and leaves GPU residency unchanged. Adaptive LRU/LFU residency requires
+H2D admissions: charge their bytes and latency even when the CPU computes the
+current miss. Changing GPU residency is not free in a CPU-miss projection.
 
 For each policy, cap, phase and layer, the output gives packed requested/hit/
 miss bytes, byte hit rate, missing-expert totals, and the actual histogram of
@@ -93,9 +111,10 @@ LRU/LFU behavior and bounded heap, simultaneous selected-route pinning, frozen
 static placement, no benchmark contamination, incomplete/bad-weight rejection,
 repeated speculative work with test-prompt reset and resident-draft exclusion,
 nearest-rank statistics, and a complete converter-to-analyzer contract check.
-The contract test creates 24 temporary synthetic requests with 2,328 native
+The contract test creates 24 temporary synthetic requests with 2,333 native
 records, runs the real converter and all twelve cache configurations, checks
-known byte demand and draft counts, and rejects tampering with the gzip trace,
-manifest, window, calibration source, request result or native binary. Its
+known byte demand and draft counts, preserves a canceled speculative command
+prefix, and rejects tampering with the gzip trace, manifest, window, calibration
+source, request result, native binary or command timings. Its
 temporary device flags imitate the converter input format only. All fixtures
 are synthetic accounting cases, not model output or device evidence.

@@ -1,0 +1,102 @@
+{
+  "schema": "packet55.route-cpu-smoke.v1",
+  "passed": true,
+  "device_executed": false,
+  "model_weight_bytes_read": 0,
+  "scope": "two fresh CPU synthetic engines, each two requests of two prompt and two generated tokens; reset and MTP route hook",
+  "records": [
+    {
+      "name": "baseline",
+      "binary_sha256": "0ecc7df413eb42ed0b24b5a5c83f2d35bc741999addd6ceb10fc8897884fe5dd",
+      "requests": [
+        {
+          "tokens": [
+            1,
+            1
+          ],
+          "guesses": [
+            1
+          ],
+          "stats": {
+            "guesses": 1,
+            "hits": 1,
+            "misses": 0,
+            "no_guess": 0
+          }
+        },
+        {
+          "tokens": [
+            0,
+            0
+          ],
+          "guesses": [
+            0
+          ],
+          "stats": {
+            "guesses": 1,
+            "hits": 1,
+            "misses": 0,
+            "no_guess": 0
+          }
+        }
+      ],
+      "routes": []
+    },
+    {
+      "name": "diagnostic",
+      "binary_sha256": "e16686c43089b56768dd18e9afce48559eb82a2c327e5372bdfd28937f901734",
+      "requests": [
+        {
+          "tokens": [
+            1,
+            1
+          ],
+          "guesses": [
+            1
+          ],
+          "stats": {
+            "guesses": 1,
+            "hits": 1,
+            "misses": 0,
+            "no_guess": 0
+          }
+        },
+        {
+          "tokens": [
+            0,
+            0
+          ],
+          "guesses": [
+            0
+          ],
+          "stats": {
+            "guesses": 1,
+            "hits": 1,
+            "misses": 0,
+            "no_guess": 0
+          }
+        }
+      ],
+      "routes": [
+        {
+          "request": 0,
+          "records": 14,
+          "draft_records": 2,
+          "target_commands": 6
+        },
+        {
+          "request": 1,
+          "records": 14,
+          "draft_records": 2,
+          "target_commands": 6
+        }
+      ]
+    }
+  ],
+  "state_identity": {
+    "passed": true,
+    "target_reset_boundary_buffers": 206,
+    "draft_buffers": 10,
+    "comparison": "target full buffer hashes plus exact decompressed draft bytes"
+  }
+}

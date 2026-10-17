@@ -1,0 +1,177 @@
+{
+  "schema": "packet55.calibration.v1",
+  "seed": null,
+  "split_policy": "First two of each of six classes train; remaining two test, fixed before collection",
+  "benchmark_training": false,
+  "token_cap": 256,
+  "prompts": [
+    {
+      "prompt_id": "p55-01-csv-stream",
+      "split": "train",
+      "category": "code",
+      "text": "<|im_start|>user\nWrite a Python generator that reads timestamp,value CSV rows from a file-like object, skips blank lines, rejects malformed numbers with a useful line number, and yields a running mean without storing all rows. Explain the handling of an empty file and provide two small examples.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-02-tree-walk",
+      "split": "train",
+      "category": "code",
+      "text": "<|im_start|>user\nImplement an iterative depth-first traversal of a directory tree in Rust using a stack. Explain how symbolic links and permission errors should be handled. Include a small unit test using a temporary tree and discuss resource ownership.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-03-lighthouse",
+      "split": "train",
+      "category": "prose",
+      "text": "<|im_start|>user\nWrite a scene in which a lighthouse keeper teaches a visiting schoolchild to recognize fog signals. Use precise sensory details and natural dialogue. The child misunderstands a signal, notices a clue, and corrects the mistake. Avoid a dramatic rescue ending.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-04-seed-library",
+      "split": "train",
+      "category": "prose",
+      "text": "<|im_start|>user\nWrite a welcoming article for a neighborhood newsletter about starting a seed library. Explain seed labeling, suitable containers, how beginners can participate, and how volunteers can keep records. Use an encouraging, practical tone without slogans.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-05-bus-schedule",
+      "split": "train",
+      "category": "analysis",
+      "text": "<|im_start|>user\nA rural bus runs every 45 minutes and a connecting train every 30 minutes. Both leave at 06:00. Travelers need 7 minutes to transfer, and the bus trip lasts 28 minutes. Compare two possible bus departure offsets for reducing expected train waiting time. State your assumptions and show the reasoning.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-06-water-study",
+      "split": "train",
+      "category": "analysis",
+      "text": "<|im_start|>user\nA school compares two water filters by measuring cloudiness before and after filtering samples from three ponds. Each filter is tested once per pond. Explain what this design can establish, what it cannot, and how to improve the experiment using a small budget. Distinguish repeated readings from independent samples.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-07-museum-inventory",
+      "split": "train",
+      "category": "structured",
+      "text": "<|im_start|>user\nCreate a JSON example for a small museum collection containing three objects, their accession IDs, materials, provenance notes, storage locations, and conservation status. Then describe validation rules for mandatory fields, unique IDs, dates, and unknown information. Do not invent historical claims about real artifacts.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-08-garden-calendar",
+      "split": "train",
+      "category": "structured",
+      "text": "<|im_start|>user\nCreate a Markdown planning table for a community garden with six tasks across spring, summer, and autumn. Include each task, its purpose, necessary tools, a dependency, and an observable completion condition. Follow the table with a short explanation of how rain changes the schedule.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-09-spanish-bread",
+      "split": "train",
+      "category": "multilingual",
+      "text": "<|im_start|>user\nExplica en español cómo ajustar una receta de pan cuando la cocina está fría. Distingue tiempo de fermentación, temperatura del agua e hidratación. Incluye un ejemplo con 500 gramos de harina y consejos para reconocer cuándo la masa está lista. Usa lenguaje cotidiano.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-10-japanese-map",
+      "split": "train",
+      "category": "multilingual",
+      "text": "<|im_start|>user\n日本語で、初めて町の図書館に来た人のための案内を書いてください。貸出カードの作り方、本の探し方、返却期限、静かな席と会話できる場所の違いを説明してください。架空の図書館として、具体的な短い例も入れてください。\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-11-probability-urn",
+      "split": "train",
+      "category": "math",
+      "text": "<|im_start|>user\nAn urn contains 4 red, 3 blue, and 2 green balls. Three balls are drawn without replacement. Calculate the probability of exactly two colors appearing. Show a counting argument, check it against the probabilities of one color and three colors, and explain the denominator.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-12-linear-system",
+      "split": "train",
+      "category": "math",
+      "text": "<|im_start|>user\nSolve the system 2x+3y-z=7, x-y+2z=4, and 3x+2y+z=11. Show row operations carefully. Determine whether the equations give a unique solution, infinitely many solutions, or no solution, and explain what the result means geometrically.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-13-bounded-queue",
+      "split": "test",
+      "category": "code",
+      "text": "<|im_start|>user\nDesign a TypeScript bounded asynchronous queue for one producer and one consumer. Explain behavior when full, empty, closed, or cancelled. Give a compact implementation outline and a worked trace of push, pop, close, and one attempted push after closure.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-14-sql-islands",
+      "split": "test",
+      "category": "code",
+      "text": "<|im_start|>user\nA SQL table holds sensor_id, sampled_at, and is_online for hourly observations. Explain how to find consecutive runs of offline observations with window functions. Include a small example input and its output. State how missing timestamps and duplicate timestamps affect the result.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-15-market-repair",
+      "split": "test",
+      "category": "prose",
+      "text": "<|im_start|>user\nWrite a short story about a bicycle mechanic working at an outdoor market. A customer wants an old bell repaired because it belonged to a friend. Let their conversation reveal the attachment without stating a moral. End with a concrete sound or gesture.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-16-public-footpath",
+      "split": "test",
+      "category": "prose",
+      "text": "<|im_start|>user\nWrite an informative sign for a public footpath through a restored wetland, followed by a paragraph for a visitor brochure. Explain why staying on the marked path protects ground-nesting birds and delicate plants. Avoid scolding visitors and avoid claiming that all birds nest on the ground.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-17-archive-storage",
+      "split": "test",
+      "category": "analysis",
+      "text": "<|im_start|>user\nA local archive has 12 TB of scanned documents and adds 600 GB annually. It needs onsite access and an offsite recovery copy. Compare rotating external disks with a remote backup service using a five-year horizon. Give formulas for storage growth, recovery time, and costs; label unknown prices rather than inventing them.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-18-survey-bias",
+      "split": "test",
+      "category": "analysis",
+      "text": "<|im_start|>user\nA city asks residents about a new park using a QR code posted only at the park entrance. Seventy percent of respondents favor more picnic tables. Explain likely sampling biases and propose two inexpensive ways to improve coverage. Distinguish a useful descriptive result from a citywide estimate.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-19-repair-checklist",
+      "split": "test",
+      "category": "structured",
+      "text": "<|im_start|>user\nWrite a YAML maintenance checklist for a small makerspace laser cutter. Include daily visual checks, weekly cleaning, monthly inspection, responsible role, evidence recorded, and stop conditions. Keep the checklist about documentation and trained inspection; refer adjustments and repairs to the manufacturer procedure.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-20-school-menu",
+      "split": "test",
+      "category": "structured",
+      "text": "<|im_start|>user\nCreate a five-day lunch menu for a fictional school in a Markdown table. Include a main dish, vegetable, fruit, and a clearly labeled vegetarian alternative. Add a short note about verifying allergens with suppliers and accommodating dietary needs. Do not make medical or nutritional adequacy claims.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-21-french-orchard",
+      "split": "test",
+      "category": "multilingual",
+      "text": "<|im_start|>user\nEn français, rédigez un petit guide pour observer un verger au fil des saisons. Décrivez la floraison, la pollinisation, le développement des fruits et la chute des feuilles. Proposez trois observations que des enfants peuvent noter sans abîmer les arbres.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-22-arabic-translation",
+      "split": "test",
+      "category": "multilingual",
+      "text": "<|im_start|>user\nاكتب بالعربية شرحًا مبسطًا لكيفية تنظيم مجموعة صغيرة لتبادل الكتب. تناول اختيار الموعد، وتسجيل الكتب، وطريقة الاستعارة والإرجاع، وحل مشكلة تأخر كتاب. أضف نموذج رسالة قصيرة تدعو الجيران للمشاركة، بلغة ودودة وواضحة.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-23-integer-squares",
+      "split": "test",
+      "category": "math",
+      "text": "<|im_start|>user\nFind all integer pairs (x,y) satisfying x squared minus y squared equals 45. Use factorization, account for parity, include negative solutions, and explain how you know the list is complete. Check at least two pairs by substitution.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    },
+    {
+      "prompt_id": "p55-24-geometry-box",
+      "split": "test",
+      "category": "math",
+      "text": "<|im_start|>user\nAn open-top box is made by cutting equal squares from the corners of a 30 cm by 20 cm sheet and folding the sides. Derive its volume as a function of the cut size, find the physically valid maximum, and verify why the other critical point is invalid. Include units throughout.\nGive a detailed response of about 300 words.\n<|im_end|>\n<|im_start|>assistant\n",
+      "max_new_tokens": 256
+    }
+  ]
+}

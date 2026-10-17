@@ -1,0 +1,63 @@
+{
+  "schema": "packet55.route-preparation-retention.v1",
+  "files": [
+    {
+      "path": "build/device/build-receipt.json",
+      "original_bytes": 125291,
+      "original_sha256": "a34f1a176772c9a93adefddea7a5fcffd4f2e6e9adb9256a3ca5f92f887bc090",
+      "retained": "device-build.json.gz",
+      "retained_sha256": "cea87ec6f97eb73f199b0be241133416abadba2f9ae3fc6e13a80b089616ec03"
+    },
+    {
+      "path": "build/gnu-host/build-receipt.json",
+      "original_bytes": 67724,
+      "original_sha256": "aa4a60a28da7c59740546499130adbe97896f21ca72e4b26b8b5e76c3e2393a0",
+      "retained": "gnu-host-build.json.gz",
+      "retained_sha256": "7f4acda071b6e7bb46061fe82f73ffb1385e3bbc410fff81b44f65d42730e355"
+    },
+    {
+      "path": "build/device/initial-build-receipt.json",
+      "original_bytes": 80152,
+      "original_sha256": "75b8a34ad38aa1e3e2739b236874e8632cdc505b5b98c5e62e9b4c6961efe8ef",
+      "retained": "device-initial-build.json.gz",
+      "retained_sha256": "8f9b9e02fe5cb9d3c8378a749477d45a1332206699ed01db2285ccf547fd09a4"
+    },
+    {
+      "path": "build/gnu-host/p39_fixture.cpp.log",
+      "original_bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "retained": "host-final-p39-fixture.log.gz",
+      "retained_sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    },
+    {
+      "path": "build/host-build.log",
+      "original_bytes": 1853,
+      "original_sha256": "2643f955e74cc7a7655c6649f6df797f7ab3ea3e5adf5b8373a7dd7f10502036",
+      "retained": "host-initial-build-failure.log.gz",
+      "retained_sha256": "86b3c7a2452bc55e8cf8947ddac88ef41643dfb6bc4a43a3e4a1632888023ab7"
+    },
+    {
+      "path": "build/cpu-smoke.log",
+      "original_bytes": 456,
+      "original_sha256": "d471a0fd2d5e1149fff066cbd6d7726dbb0633c38506476f416e93b8e5809b47",
+      "retained": "cpu-smoke-initial-test-failure.log.gz",
+      "retained_sha256": "0fe80d2a34832c873efc649780608b4a38dfe56d00047a23eee4a03570d9c43e"
+    }
+  ],
+  "corrections": [
+    {
+      "change": "128->256 diagnostic cap and per-owner command counter",
+      "validation": "native refresh traverses all TU include closures and rebuilds changed dependents; prior/current hashes retained"
+    },
+    {
+      "change": "private CPU validation-header remap",
+      "cause": "original validation header imported original checked headers alongside the isolated copy",
+      "validation": "native source/binary unchanged; remapped host compile passed"
+    },
+    {
+      "change": "mini smoke test expects ten routes, not two",
+      "cause": "miniature dimensions shrink hidden/layer count but retain top10",
+      "validation": "owners already exited; corrected tiny run matched tokens, 206 target-state hashes and ten draft byte buffers"
+    }
+  ]
+}

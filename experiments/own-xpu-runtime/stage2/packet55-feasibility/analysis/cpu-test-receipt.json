@@ -2,24 +2,26 @@
   "schema": "packet55.analysis-cpu-tests.v1",
   "passed": true,
   "tests": 9,
-  "elapsed_seconds": 1.549,
+  "elapsed_seconds": 1.521,
   "device_executed": false,
   "model_payload_bytes_read": 0,
   "synthetic_accounting_fixtures": true,
-  "synthetic_contract_route_records": 2328,
+  "synthetic_contract_route_records": 2333,
   "synthetic_contract_cache_configurations": 12,
+  "cancelled_speculative_prefixes_in_contract": 1,
   "tamper_refusals": [
     "converted trace",
     "calibration manifest",
     "window",
     "calibration source",
     "request result",
-    "native route binary"
+    "native route binary",
+    "native command timings"
   ],
   "command": "nice -n 19 taskset -c 4-15,20-31 python3 -B -m unittest discover -s experiments/own-xpu-runtime/stage2/packet55-feasibility/analysis -p test_*.py -v",
   "source_sha256": {
-    "locality.py": "5420ca42f0e7eaa1e11815abd01bf397b6adf5049900d8971d0db5efa1e75551",
-    "test_locality.py": "cb0ba1307cfdfe903e1bb459a848b78199e9c058050b0352702811e2243a1c5c",
-    "../route/convert.py": "57cb9397b05f98bc64f4438015a2c5537f81d46df78cc3cdfdea4cbbe82f30ca"
+    "locality.py": "8c7ce1f03e71e01bef8af57f1b9e6853d792caf9c8d6d145cd5e43c8cae15b58",
+    "test_locality.py": "fac74aee85c89e6a1806d851f3465e30630e1d8832e2e374ab2bdb289abd61cd",
+    "../route/convert.py": "8d70e5cafce37df21f0054f00c6bbc6fe8210c5a9a4746ceb850f0f89ceae03c"
   }
 }

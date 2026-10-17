@@ -86,6 +86,55 @@ Independent review caught a false-miss case when one selected expert evicted
 another from the same route. The corrected policy snapshots all ten hits and
 protects those slots before filling misses. Nine CPU tests now pass, including
 real binary conversion, provenance validation and all twelve cache settings
-on 2,328 temporary synthetic records. Six artifact-tampering checks refuse
+on 2,333 temporary synthetic records. Seven artifact-tampering checks refuse
 changed inputs. This establishes accounting behavior, not a measured hit rate.
 Early natural EOS is retained and marks the requested 24 × 256 scope incomplete.
+
+The final contract test includes a cancelled five-layer speculative prefix.
+The converter checks native completion/cancellation timings; interrupted
+speculation is retained without pretending it was a complete model pass.
+Replay assumes every observed cache admission completes, even after a cancelled
+route. Since fills change later hits, this is a declared policy scenario, not
+a universal upper bound or proof that all selected experts executed. A pure
+CPU-miss design can use the frozen static cache directly. Adaptive LRU/LFU
+also needs the GPU weight-fill cost; CPU computation cannot populate that slot.
+
+## Route preparation and final review complete
+
+The [separate route variant](../experiments/own-xpu-runtime/stage2/packet55-feasibility/route/README.md)
+builds for native device use and CPU use. It logs ordered target and draft
+IDs/weights to fixed 124-byte records after router timing. It preserves the
+production arithmetic and increases only this diagnostic's response cap to
+256. The 24 prompts are independent of the benchmark suite; admitted GGUF
+header reads total about 21.9 MB, with no tensor payload read.
+
+The CPU controller comparison passes two requests per fresh engine, including
+reset and MTP: tokens, guesses, **206 target-state hashes and 10 draft buffers**
+match the uninstrumented baseline. The diagnostic records 28 route observations,
+including four draft observations. Four wrapper/schema tests also pass.
+Native source closure binds 133 project dependencies and the host closure 126.
+The inherited CPU validation-header path caused a compile refusal; the isolated
+host header copy fixed it. Its failure and correction are retained.
+
+[Independent review](../experiments/own-xpu-runtime/stage2/packet55-feasibility/REVIEW-INDEPENDENT.md)
+closed the cache-admission, early-EOS scope and cancelled-prefix findings.
+[Final checks](../experiments/own-xpu-runtime/stage2/packet55-feasibility/preparation-check.json)
+verify current source/binary/test bindings and count **71,545,339 bytes** across
+the packet, comfortably below the 1 GB build limit. No GPU executable, service,
+throughput run or model tensor payload was used during preparation. Packet49d,
+sealed sources, the existing oracle and the memory fence remain untouched.
+
+The coordinator's commands and estimates are in the component runbooks:
+[route, 30–90 minutes](../experiments/own-xpu-runtime/stage2/packet55-feasibility/route/README.md),
+[quiet CPU, 10–20 minutes](../experiments/own-xpu-runtime/stage2/packet55-feasibility/cpu/README.md),
+[H2D, two fresh 1–3-minute windows](../experiments/own-xpu-runtime/stage2/packet55-feasibility/h2d/README.md),
+and [offline analysis, 2–10 minutes](../experiments/own-xpu-runtime/stage2/packet55-feasibility/analysis/README.md).
+The route command requires cards 2+3 and 97 GiB available host memory; free
+cards alone do not admit overlap with packet49d. The MTP source exception
+remains unanswered as of this preparation. The runner refuses without it.
+
+Build the exact one-layer streaming control first, then use measured misses,
+CPU latency and transfer latency to choose a full design. The feasibility
+document also keeps host staging/repacking explicit: original CPU GGUF rows
+and GPU compact rows have equal byte counts but different serialized layouts.
+No adaptive GPU fill, second host bank or same-card draft time is free.

@@ -24,6 +24,7 @@ All packet 55 code is independently written; no external runtime code is used.
 | One-card `A_l,G_l,F_l,D` | Nonexpert prefix, hit/shared and miss expert work, final combination, and same-card draft time | Not measured by packet 55 |
 | Work ratios `r_T,r_D` | Executed target positions and draft calls divided by emitted tokens; retain partial/rejected work | Pending route/controller receipts |
 | Mailbox `Q_l` and host contention | Input/route D2H, CPU wakeup and BF16 result return; shared CPU/DMA/PLE memory pressure | Not measured by packet 55 |
+| Host staging and packed layout | Pageable-bank gather and any raw-GGUF to production compact-row repack before DMA | Not measured by packet 55 |
 
 The three requested measurements choose a promising implementation. They do
 not establish its end-to-end speed without the remaining GPU, mailbox and
@@ -38,6 +39,14 @@ Ordinary complete experts are `B_l=1,971,200` packed bytes. Layer 2 uses
 `h = hit_payload_bytes / requested_payload_bytes`; weights do not weight this
 ratio, because every selected expert executes regardless of its route weight.
 For each observed layer visit `v`, `M_v = misses_v * B_layer(v)`.
+This counts route-known demand. A speculative rank-0 command may be cancelled
+after its last logged router and before that layer's experts execute. Such
+observations remain in the locality study under a policy that starts miss
+handling immediately and completes each cache admission even after cancellation.
+They are not proof of expert execution or actual weight transfers. Admissions
+change future hits, so this is not a strict upper bound for every cancellation
+policy. Integration must record cancellation and fill completion before using
+executed-work timings.
 
 The cache simulator charges the packet46 slot strides (1,974,272 ordinary,
 2,330,624 exceptional), 64 metadata bytes per slot and the fixed map/directory.
@@ -71,6 +80,11 @@ replaces `max` with addition. Threads above ten cannot be presumed useful from
 expert-only parallelism; the row-vector kernel must expose rows as well.
 `C_l` comes from measured dependent batches, not `m` times an isolated best
 expert. Packed-byte throughput is work processed, not a DRAM bandwidth reading.
+Use the frozen static cache for a pure CPU-miss scenario. LRU/LFU replay admits
+each miss into GPU residency: a CPU implementation using those changing hit
+rates must also pay for the corresponding H2D cache fills and their overlap.
+CPU computation alone does not populate a GPU weight slot. Such a policy is
+a hybrid and needs a measured admission schedule.
 
 **(b) GPU cache plus H2D misses.** For a conservative implementable schedule,
 start DMA and GPU hits/shared work after the route is known, then execute GPU
@@ -85,17 +99,29 @@ payload/bandwidth unless explicitly showing an ideal lower-bound scenario.
 The synthetic transfer source is already in a bounded pinned slab. Add the
 unmeasured bank-to-staging gather cost for a pageable weight-bank implementation;
 the microbenchmark does not justify pinning the whole bank or hiding that copy.
+Packet49c's ordinary GPU experts use a repacked compact row layout, while this
+CPU kernel reads original GGUF rows. Equal payload size does not mean identical
+serialization. Stream the qualified GPU layout: either charge bounded repacking
+or retain a prepacked bank with its startup and host-memory cost. Do not quietly
+keep two complete 48.6 GB expert banks; a future shared-layout CPU path needs
+its own exactness gate.
 The serial control adds `G_l + X_l + J_l`. A more finely pipelined slab schedule
 needs its own event-DAG measurement before reducing this estimate. Copy-engine
 overlap with a synthetic kernel does not prove overlap with actual expert work.
 
 **(c) Hybrid.** Assign `c` of the `m` misses to CPU and `s=m-c` to DMA. With
-independent workers and proven overlap, the schedule above becomes
+`f` additional CPU-handled experts admitted into the GPU cache, independent
+workers and proven overlap, the schedule above becomes
 
 ```
-T_HYBRID(l,m,c,t) = A_l
-  + max(Q_l(c) + C_l(c,t), max(G_l(10-m), X_l(s)) + J_l(s)) + F_l
+T_HYBRID(l,m,c,f,t) = A_l
+  + max(Q_l(c) + C_l(c,t), max(G_l(10-m), X_l(s+f)) + J_l(s)) + F_l
 ```
+
+The current LRU/LFU replay admits every miss, requiring `f=c`. For a frozen
+static cache with transient streaming slots, `f=0`. Selective admission needs
+its own replay; it cannot borrow the existing LRU/LFU hit rates. The schedule
+above waits for all admitted fills; deferring them needs a measured event DAG.
 
 Use simultaneous CPU/DMA measurements for `C_l` and `X_l`: they share host
 memory bandwidth, PLE traffic and issuing CPUs. Taking each component's isolated
@@ -106,8 +132,10 @@ only when the implementation performs no work for an empty branch.
 
 ## Turning work into emitted tokens
 
-Sum dependency-constrained layer times for **every executed visit** in the
-held-out trace, including rejected/corrected work. Charge head, rollback,
+Sum dependency-constrained layer times for **every executed visit**, including
+rejected/corrected work. Until cancellation/completion is instrumented, using
+every route observation supplies the declared complete-admission scenario above.
+Charge head, rollback,
 embedding/PLE, controller and cache initial fills separately. Keep prefill/TTFT
 separate from decode; report cold cache fill as its own cost, never hide it.
 

@@ -184,6 +184,8 @@ def inputs(window, trace):
         for rank in (0, 1):
             path = result_path.parent / f'rank{rank}/routes.p55bin'
             require(sha(path) == r['binary_sha256'][str(rank)], 'native route binding')
+            timing = result_path.parent / f'rank{rank}/timings.jsonl'
+            require(sha(timing) == r['timings_sha256'][str(rank)], 'native command timing binding')
     require(summary['records'] == sum(r['records'] for r in requests), 'record-count receipt')
     return manifest, summary, dict(calibration_manifest_sha256=sha(manifest_path),
         trace_sha256=sha(trace), conversion_receipt_sha256=sha(summary_path),
@@ -334,13 +336,20 @@ def analyze(trace, manifest, summary, details_path):
                     position=pos, **value), separators=(',', ':')) + '\n')
     return dict(schema='packet55.route-locality.v1', passed=True, device_executed=False,
         measured_token_speed=False, policy_scope='fixed per-layer quota; no cross-layer eviction',
+        demand_interpretation='observed router selections under assumed completed admissions; not completed expert execution or actual DMA',
+        admission_policy='LRU/LFU finish every observed-route miss admission even if its speculative command is canceled; changed residency affects future hits, so this is not a strict upper bound for other cancellation policies',
+        cpu_miss_policy_caveat='static cache directly models CPU-only misses; adaptive LRU/LFU residency requires H2D admission bytes and latency even when CPU computes the miss',
+        completed_expert_execution_measured=False,
+        cancellation_caveat='a terminal speculative router may be logged before its expert kernels are canceled; D2H instrumentation changes cancellation scheduling',
         replay_order='converter host monotonic timestamp; per-layer observed rank order',
         training='all target prefill and decode records of 12 train prompts; no test updates to initial state',
         evaluation='reset trained cache at each test prompt; charge preload, process prefill then decode; all speculative visits charged',
         percentile_definition='nearest-rank actual observation; no interpolation',
         draft=dict(residency='complete draft resident outside target cache', target_cache_demand_bytes=0,
-                   route_visits_by_phase=dict(draft_counts), selected_expert_evaluations=sum(draft_counts.values())*TOPK),
+                   route_visits_by_phase=dict(draft_counts), observed_selected_experts=sum(draft_counts.values())*TOPK),
         generated_tokens_test=test_tokens,
+        cancelled_route_prefixes_by_split={split: sum(r['cancelled_route_prefixes'] for r in summary['requests'] if r['split'] == split)
+                                           for split in ('train', 'test')},
         requested_scope_complete=all(r['generated_tokens'] == 256 for r in summary['requests']),
         requested_scope='24 prompts each generating 256 tokens; early EOS remains partial evidence',
         ended_early_test_prompts=[r['prompt_id'] for r in summary['requests'] if r['split']=='test' and r['generated_tokens']<256],

@@ -76,7 +76,7 @@ class LocalityTests(unittest.TestCase):
             rows += [dict(prompt_id=pid, split='test', role='draft', layer=0,
                           phase='decode', position=0, ids=list(range(20, 30)))]
         manifest = dict(prompts=[dict(prompt_id=p) for p in ('train', 'a', 'b')])
-        summary = dict(requests=[dict(prompt_id=p, split='test', generated_tokens=1) for p in ('a', 'b')])
+        summary = dict(requests=[dict(prompt_id=p, split='test', generated_tokens=1, cancelled_route_prefixes=0) for p in ('a', 'b')])
         with tempfile.TemporaryDirectory() as tmp:
             detail = Path(tmp) / 'detail.gz'
             with patch.object(loc, 'records', side_effect=lambda *args: iter(rows)), patch.object(loc, 'SIZES', (8,)):
@@ -164,6 +164,7 @@ class LocalityTests(unittest.TestCase):
                     path.parent.mkdir()
                     sequence = 0
                     ids = list(range(10 if i < 12 else 20))[-10:]
+                    timings = [dict(position=pos, speculative=False, cancelled=False) for pos in (0, 1)]
                     with path.open('wb') as f:
                         f.write(converter.MAGIC)
                         for pos in (0, 1):
@@ -171,33 +172,45 @@ class LocalityTests(unittest.TestCase):
                                 f.write(converter.RECORD.pack(sequence, 10000*pos+10*layer,
                                         pos, layer, 0, 10, pos+1, 0, 1, *ids, *([.1]*10)))
                                 sequence += 1
+                        if rank == 0 and i == 12:
+                            # A logged five-layer speculative prefix adds demand
+                            # even though its command was later canceled.
+                            for layer in range(5):
+                                f.write(converter.RECORD.pack(sequence, 20000+layer*10,
+                                        2, layer, 0, 10, 3, 1, 1, *ids, *([.1]*10)))
+                                sequence += 1
+                            timings.append(dict(position=2, speculative=True, cancelled=True))
                         if rank == 1:
                             f.write(converter.RECORD.pack(sequence, 20000, 0, 0, 1, 10,
                                     3, 0, 1, *ids, *([.1]*10)))
+                    (path.parent / 'timings.jsonl').write_text(''.join(json.dumps(t)+'\n' for t in timings))
             trace = root / 'routes.jsonl.gz'
             summary = converter.convert(window, trace)
-            self.assertEqual(summary['records'], 24 * 97)
+            self.assertEqual(summary['records'], 24 * 97 + 5)
             self.assertFalse(summary['requested_scope_complete'])
             with patch.object(loc, 'PACKET', packet), patch.object(loc, 'ROOT', root):
                 bound_manifest, bound_summary, bindings = loc.inputs(window, trace)
                 self.assertEqual(bindings['trace_sha256'], loc.sha(trace))
-                self.assertEqual(sum(1 for _ in loc.records(trace, bound_manifest, bound_summary)), 24*97)
+                self.assertEqual(sum(1 for _ in loc.records(trace, bound_manifest, bound_summary)), 24*97+5)
                 result = loc.analyze(trace, bound_manifest, bound_summary, root / 'positions.jsonl.gz')
                 self.assertFalse(result['requested_scope_complete'])
                 self.assertEqual(result['generated_tokens_test'], 12)
+                self.assertEqual(result['cancelled_route_prefixes_by_split'], {'train': 0, 'test': 1})
+                self.assertFalse(result['completed_expert_execution_measured'])
                 self.assertEqual(result['draft']['route_visits_by_phase'], {'decode': 12})
                 self.assertEqual(len(result['results']), 12)
                 for report in result['results']:
                     prefill, decode = report['phases']['prefill'], report['phases']['decode']
                     self.assertEqual(prefill['overall']['route_visits'], 48*12)
-                    self.assertEqual(decode['overall']['route_visits'], 48*12)
+                    self.assertEqual(decode['overall']['route_visits'], 48*12+5)
                     self.assertEqual(decode['overall']['miss_bytes'], 0)
                     misses = 0 if report['policy'] == 'static' else 949_760_000*12
                     self.assertEqual(prefill['overall']['miss_bytes'], misses)
                 paths = [(trace, 'output_sha256'), (manifest_path, 'manifest_sha256'),
                          (window_path, 'window_sha256'), (canonical_path, 'calibration source binding'),
                          (window / 'requests/synthetic-00/result.json', 'request result binding'),
-                         (window / 'requests/synthetic-00/rank0/routes.p55bin', 'native route binding')]
+                         (window / 'requests/synthetic-00/rank0/routes.p55bin', 'native route binding'),
+                         (window / 'requests/synthetic-00/rank0/timings.jsonl', 'native command timing binding')]
                 for path, message in paths:
                     with self.subTest(tampered=path.name):
                         original = path.read_bytes()
