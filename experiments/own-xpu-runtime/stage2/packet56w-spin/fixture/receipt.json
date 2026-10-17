@@ -1,0 +1,44 @@
+{
+  "schema": "own-runtime.screen.byte-fixture.v1",
+  "passed": true,
+  "device_executed": false,
+  "changed_class": "host mailbox/event waiting; unchanged controller target tokens and committed state",
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/cpu_gate.py"
+  ],
+  "build_receipt_sha256": "92923946f534e26e3f87123c43776b55609970baa7c768d0010cb24b00cf4dbb",
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet56w-spin/cpu_gate.py": "2d483727450c45b33b01a49acf74e414d43cbb256505fa0f6ae6c36a85658ace",
+    "experiments/own-xpu-runtime/stage2/packet56w-spin/build_spin.py": "13a7224bd8fbf9ae297b15d418421bfa847e36faf938dea07e28d83954638dd4",
+    "experiments/own-xpu-runtime/stage2/packet56w-spin/native_controller_gate.py": "7039f43ba28cb96d7dedc54b627565d4b3a552a08446acc5b619eeb851e82c7f",
+    "experiments/own-xpu-runtime/stage2/packet56w-spin/pipeline.py": "9917cd02edfcabfc493771117ac7783485e15e99c99ed57d8618eb6af92a028c",
+    "experiments/own-xpu-runtime/stage2/packet56w-spin/test_state_machine.py": "a92c0b8da6d974e3357f9211e513294eee15e0975e7ce48b40d331782c6b33d2",
+    "experiments/own-xpu-runtime/stage2/packet56w-spin/native_controller_test.cpp": "db276644ce9fcb90871533b141f768723361c78e52f28533aadb6c8769a587e7",
+    "experiments/own-xpu-runtime/stage2/packet56w-spin/native_mailbox_fault_test.cpp": "a1fb2d361ce14e98e8cb790d3ce49bed358cbcc98eac926756b7ff4acd7621da",
+    "experiments/own-xpu-runtime/stage2/packet56w-spin/native_controller.hpp": "4328eccc3b3b2f146b2642c4fb314fb6dcd2f5eeb108d072eb81395a7fab1549",
+    "experiments/own-xpu-runtime/stage2/packet56w-spin/host_spin.hpp": "717bc35523f6958e253b8eb1c02a5d88a20bdda7f0b347a403a50826519d9681",
+    "experiments/own-xpu-runtime/stage2/packet56w-spin/evidence/controller.json": "e1dca9c32e25eee4650e3df1681f6f1f41c6d7ffce3b56256f86e7f70f317f51",
+    "experiments/own-xpu-runtime/stage2/packet56w-spin/evidence/mailbox-faults.json": "ebb51c6d7d925c8d073dfc201a8e402205d0444cc83158705005e8dd64427f62",
+    "experiments/own-xpu-runtime/stage2/packet56w-spin/fixture/input.txt": "5e9c4a113c30d9c20e098aae4c07848fb2bf891743d244c803ddef3911df57f1",
+    "experiments/own-xpu-runtime/stage2/packet56w-spin/fixture/expected-raw.json": "10e964cb496653871d84f67c9adf2a0f2ff64ad5a717f891294938596b638514",
+    "experiments/own-xpu-runtime/stage2/packet56w-spin/fixture/actual-raw.json": "e8ce09b8e06930d839793ee8e1d172631c2ae23ae3d83d38a741ccd4cf3540d8"
+  },
+  "compared_fields": [
+    "tokens",
+    "state",
+    "fixtures",
+    "guess_sequence",
+    "counts"
+  ],
+  "compared_bytes": 765,
+  "expected": {
+    "path": "fixture/expected.bin",
+    "sha256": "0ac992ec8c913655471bca7279bd4d802d071ecbbc58720067968b2d97aa971e"
+  },
+  "actual": {
+    "path": "fixture/actual.bin",
+    "sha256": "0ac992ec8c913655471bca7279bd4d802d071ecbbc58720067968b2d97aa971e"
+  }
+}

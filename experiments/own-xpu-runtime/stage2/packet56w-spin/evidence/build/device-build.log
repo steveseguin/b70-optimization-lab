@@ -1,0 +1,179 @@
+[  2%] Building CXX object CMakeFiles/programs.dir/entry-main.cpp.o
+[  4%] Building CXX object CMakeFiles/programs.dir/entry-nongemv_fixture.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/device/entry-nongemv_fixture.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/nongemv_fixture.cpp:1:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/fixture_driver.cpp:277:73: warning: 'SHA256_Init' is deprecated [-Wdeprecated-declarations]
+  277 |  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+      |                                                                         ^
+/usr/include/openssl/sha.h:73:1: note: 'SHA256_Init' has been explicitly marked deprecated here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      | ^
+/usr/include/openssl/macros.h:182:49: note: expanded from macro 'OSSL_DEPRECATEDIN_3_0'
+  182 | #   define OSSL_DEPRECATEDIN_3_0                OSSL_DEPRECATED(3.0)
+      |                                                 ^
+/usr/include/openssl/macros.h:62:52: note: expanded from macro 'OSSL_DEPRECATED'
+   62 | #     define OSSL_DEPRECATED(since) __attribute__((deprecated))
+      |                                                    ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/device/entry-nongemv_fixture.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/nongemv_fixture.cpp:1:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/fixture_driver.cpp:277:172: warning: 'SHA256_Update' is deprecated [-Wdeprecated-declarations]
+  277 |  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+      |                                                                                                                                                                            ^
+/usr/include/openssl/sha.h:74:1: note: 'SHA256_Update' has been explicitly marked deprecated here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      | ^
+/usr/include/openssl/macros.h:182:49: note: expanded from macro 'OSSL_DEPRECATEDIN_3_0'
+  182 | #   define OSSL_DEPRECATEDIN_3_0                OSSL_DEPRECATED(3.0)
+      |                                                 ^
+/usr/include/openssl/macros.h:62:52: note: expanded from macro 'OSSL_DEPRECATED'
+   62 | #     define OSSL_DEPRECATED(since) __attribute__((deprecated))
+      |                                                    ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/device/entry-nongemv_fixture.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/nongemv_fixture.cpp:1:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/fixture_driver.cpp:277:247: warning: 'SHA256_Final' is deprecated [-Wdeprecated-declarations]
+  277 |  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+      |                                                                                                                                                                                                                                                       ^
+/usr/include/openssl/sha.h:76:1: note: 'SHA256_Final' has been explicitly marked deprecated here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      | ^
+/usr/include/openssl/macros.h:182:49: note: expanded from macro 'OSSL_DEPRECATEDIN_3_0'
+  182 | #   define OSSL_DEPRECATEDIN_3_0                OSSL_DEPRECATED(3.0)
+      |                                                 ^
+/usr/include/openssl/macros.h:62:52: note: expanded from macro 'OSSL_DEPRECATED'
+   62 | #     define OSSL_DEPRECATED(since) __attribute__((deprecated))
+      |                                                    ^
+3 warnings generated.
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/device/entry-nongemv_fixture.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/nongemv_fixture.cpp:1:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/fixture_driver.cpp:277:73: warning: 'SHA256_Init' is deprecated [-Wdeprecated-declarations]
+  277 |  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+      |                                                                         ^
+/usr/include/openssl/sha.h:73:1: note: 'SHA256_Init' has been explicitly marked deprecated here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      | ^
+/usr/include/openssl/macros.h:182:49: note: expanded from macro 'OSSL_DEPRECATEDIN_3_0'
+  182 | #   define OSSL_DEPRECATEDIN_3_0                OSSL_DEPRECATED(3.0)
+      |                                                 ^
+/usr/include/openssl/macros.h:62:52: note: expanded from macro 'OSSL_DEPRECATED'
+   62 | #     define OSSL_DEPRECATED(since) __attribute__((deprecated))
+      |                                                    ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/device/entry-nongemv_fixture.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/nongemv_fixture.cpp:1:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/fixture_driver.cpp:277:172: warning: 'SHA256_Update' is deprecated [-Wdeprecated-declarations]
+  277 |  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+      |                                                                                                                                                                            ^
+/usr/include/openssl/sha.h:74:1: note: 'SHA256_Update' has been explicitly marked deprecated here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      | ^
+/usr/include/openssl/macros.h:182:49: note: expanded from macro 'OSSL_DEPRECATEDIN_3_0'
+  182 | #   define OSSL_DEPRECATEDIN_3_0                OSSL_DEPRECATED(3.0)
+      |                                                 ^
+/usr/include/openssl/macros.h:62:52: note: expanded from macro 'OSSL_DEPRECATED'
+   62 | #     define OSSL_DEPRECATED(since) __attribute__((deprecated))
+      |                                                    ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/device/entry-nongemv_fixture.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/nongemv_fixture.cpp:1:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/fixture_driver.cpp:277:247: warning: 'SHA256_Final' is deprecated [-Wdeprecated-declarations]
+  277 |  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+      |                                                                                                                                                                                                                                                       ^
+/usr/include/openssl/sha.h:76:1: note: 'SHA256_Final' has been explicitly marked deprecated here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      | ^
+/usr/include/openssl/macros.h:182:49: note: expanded from macro 'OSSL_DEPRECATEDIN_3_0'
+  182 | #   define OSSL_DEPRECATEDIN_3_0                OSSL_DEPRECATED(3.0)
+      |                                                 ^
+/usr/include/openssl/macros.h:62:52: note: expanded from macro 'OSSL_DEPRECATED'
+   62 | #     define OSSL_DEPRECATED(since) __attribute__((deprecated))
+      |                                                    ^
+3 warnings generated.
+[  7%] Building CXX object CMakeFiles/programs.dir/entry-k2_fixture.cpp.o
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/device/entry-k2_fixture.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/k2_fixture.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/fixture_driver.cpp:277:73: warning: 'SHA256_Init' is deprecated [-Wdeprecated-declarations]
+  277 |  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+      |                                                                         ^
+/usr/include/openssl/sha.h:73:1: note: 'SHA256_Init' has been explicitly marked deprecated here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      | ^
+/usr/include/openssl/macros.h:182:49: note: expanded from macro 'OSSL_DEPRECATEDIN_3_0'
+  182 | #   define OSSL_DEPRECATEDIN_3_0                OSSL_DEPRECATED(3.0)
+      |                                                 ^
+/usr/include/openssl/macros.h:62:52: note: expanded from macro 'OSSL_DEPRECATED'
+   62 | #     define OSSL_DEPRECATED(since) __attribute__((deprecated))
+      |                                                    ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/device/entry-k2_fixture.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/k2_fixture.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/fixture_driver.cpp:277:172: warning: 'SHA256_Update' is deprecated [-Wdeprecated-declarations]
+  277 |  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+      |                                                                                                                                                                            ^
+/usr/include/openssl/sha.h:74:1: note: 'SHA256_Update' has been explicitly marked deprecated here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      | ^
+/usr/include/openssl/macros.h:182:49: note: expanded from macro 'OSSL_DEPRECATEDIN_3_0'
+  182 | #   define OSSL_DEPRECATEDIN_3_0                OSSL_DEPRECATED(3.0)
+      |                                                 ^
+/usr/include/openssl/macros.h:62:52: note: expanded from macro 'OSSL_DEPRECATED'
+   62 | #     define OSSL_DEPRECATED(since) __attribute__((deprecated))
+      |                                                    ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/device/entry-k2_fixture.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/k2_fixture.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/fixture_driver.cpp:277:247: warning: 'SHA256_Final' is deprecated [-Wdeprecated-declarations]
+  277 |  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+      |                                                                                                                                                                                                                                                       ^
+/usr/include/openssl/sha.h:76:1: note: 'SHA256_Final' has been explicitly marked deprecated here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      | ^
+/usr/include/openssl/macros.h:182:49: note: expanded from macro 'OSSL_DEPRECATEDIN_3_0'
+  182 | #   define OSSL_DEPRECATEDIN_3_0                OSSL_DEPRECATED(3.0)
+      |                                                 ^
+/usr/include/openssl/macros.h:62:52: note: expanded from macro 'OSSL_DEPRECATED'
+   62 | #     define OSSL_DEPRECATED(since) __attribute__((deprecated))
+      |                                                    ^
+3 warnings generated.
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/device/entry-k2_fixture.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/k2_fixture.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/fixture_driver.cpp:277:73: warning: 'SHA256_Init' is deprecated [-Wdeprecated-declarations]
+  277 |  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+      |                                                                         ^
+/usr/include/openssl/sha.h:73:1: note: 'SHA256_Init' has been explicitly marked deprecated here
+   73 | OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
+      | ^
+/usr/include/openssl/macros.h:182:49: note: expanded from macro 'OSSL_DEPRECATEDIN_3_0'
+  182 | #   define OSSL_DEPRECATEDIN_3_0                OSSL_DEPRECATED(3.0)
+      |                                                 ^
+/usr/include/openssl/macros.h:62:52: note: expanded from macro 'OSSL_DEPRECATED'
+   62 | #     define OSSL_DEPRECATED(since) __attribute__((deprecated))
+      |                                                    ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/device/entry-k2_fixture.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/k2_fixture.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/fixture_driver.cpp:277:172: warning: 'SHA256_Update' is deprecated [-Wdeprecated-declarations]
+  277 |  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+      |                                                                                                                                                                            ^
+/usr/include/openssl/sha.h:74:1: note: 'SHA256_Update' has been explicitly marked deprecated here
+   74 | OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
+      | ^
+/usr/include/openssl/macros.h:182:49: note: expanded from macro 'OSSL_DEPRECATEDIN_3_0'
+  182 | #   define OSSL_DEPRECATEDIN_3_0                OSSL_DEPRECATED(3.0)
+      |                                                 ^
+/usr/include/openssl/macros.h:62:52: note: expanded from macro 'OSSL_DEPRECATED'
+   62 | #     define OSSL_DEPRECATED(since) __attribute__((deprecated))
+      |                                                    ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/device/entry-k2_fixture.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/k2_fixture.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/fixture_driver.cpp:277:247: warning: 'SHA256_Final' is deprecated [-Wdeprecated-declarations]
+  277 |  std::ifstream input(out/"output.bin",std::ios::binary);SHA256_CTX hash;SHA256_Init(&hash);std::array<char,65536> block;while(input){input.read(block.data(),block.size());SHA256_Update(&hash,block.data(),input.gcount());}unsigned char digest[32];SHA256_Final(digest,&hash);std::ostringstream hex;for(auto b:digest)hex<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(b);
+      |                                                                                                                                                                                                                                                       ^
+/usr/include/openssl/sha.h:76:1: note: 'SHA256_Final' has been explicitly marked deprecated here
+   76 | OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
+      | ^
+/usr/include/openssl/macros.h:182:49: note: expanded from macro 'OSSL_DEPRECATEDIN_3_0'
+  182 | #   define OSSL_DEPRECATEDIN_3_0                OSSL_DEPRECATED(3.0)
+      |                                                 ^
+/usr/include/openssl/macros.h:62:52: note: expanded from macro 'OSSL_DEPRECATED'
+   62 | #     define OSSL_DEPRECATED(since) __attribute__((deprecated))
+      |                                                    ^
+3 warnings generated.
+[ 95%] Built target programs
+[ 97%] Building CXX object CMakeFiles/own-rt-iq3.dir/own-rt-iq3-entry.cpp.o
+[100%] Linking CXX executable own-rt-iq3
+[100%] Built target own-rt-iq3

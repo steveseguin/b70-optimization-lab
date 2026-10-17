@@ -1,0 +1,116 @@
+# native_controller.hpp: IDENTICAL
+
+# single_device.cpp: IDENTICAL
+
+--- experiments/own-xpu-runtime/stage2/packet56-draft-prefix/main.cpp	2026-10-17 07:49:12.560218074 -0400
++++ experiments/own-xpu-runtime/stage2/packet57-attribution/main.cpp	2026-10-17 09:38:00.434499372 -0400
+@@ -235 +235 @@
+-  require(a.timing=="token" || a.timing=="launch" || a.timing=="class","timing mode");
++  require(a.timing=="token" || a.timing=="launch" || a.timing=="class" || a.timing=="attribution","timing mode");
+@@ -556,0 +557 @@
++#include "attribution.hpp"
+@@ -568,0 +570 @@
++  p57::Recorder attribution;
+@@ -636 +638,2 @@
+-    if(profile_events||draft_timing)pending.push_back({l,gemv,current_cls}); tail=l.last; submitted+=l.passes;
++    if(profile_events||draft_timing||attribution.active())pending.push_back({l,gemv,current_cls});
++    if(attribution.active())for(auto event=l.first;event<=l.last;++event)attribution.record(event); tail=l.last; submitted+=l.passes;
+@@ -638,0 +642,22 @@
++  void attribution_row(ownrt::Event event,const ownrt::EventTiming& t) {
++    if(!attribution.enabled)return;
++    auto found=attribution.events.find(event);if(found==attribution.events.end())return;
++    const auto& site=found->second;
++    site_timings<<"{\"schema\":\"packet57.event.v1\",\"diagnostic\":true,\"rank\":"<<a.rank
++      <<",\"fixture\":"<<site.fixture<<",\"position\":"<<site.position
++      <<",\"speculative\":"<<(site.speculative?"true":"false")<<",\"label\":"<<ownrt::quote(site.label)
++      <<",\"class\":"<<ownrt::quote(p57::category(site.label))<<",\"event\":"<<event
++      <<",\"start_ns\":"<<t.start_ns<<",\"end_ns\":"<<t.end_ns
++      <<",\"device_ms\":"<<double(t.end_ns-t.start_ns)/1e6<<"}\n";
++    attribution.events.erase(found);
++  }
++  void attribution_copy(ownrt::Event event,const char* label,bool completed=false) {
++    if(!attribution.enabled||!p57::sample(attribution.current.fixture))return;
++    auto previous=attribution.current.label;attribution.current.label=label;attribution.record(event);attribution.current.label=previous;
++#ifndef OWN_RT_HOST_ONLY
++    if(completed){auto t=dev(0).timing(event);require(t.start_ns&&t.end_ns>=t.start_ns,"invalid transfer interval");attribution_row(event,t);}
++    else pending.push_back({{event,event,1},false,current_cls});
++#else
++    attribution.events.erase(event);
++#endif
++  }
+@@ -650,0 +676 @@
++        attribution_row(id,t);
+@@ -656 +682 @@
+-    pending.clear();tail=0;
++    pending.clear();attribution.events.clear();tail=0;
+@@ -666 +692 @@
+-      : w(source), a(args), class_timing(args.timing=="class"),profile_events(args.timing!="token"),resident(args.memory=="resident"),prepared_path(resident&&!args.legacy),p(std::move(q)),
++      : w(source), a(args), class_timing(args.timing=="class"),profile_events(args.timing=="class"||args.timing=="launch"),resident(args.memory=="resident"),prepared_path(resident&&!args.legacy),p(std::move(q)),
+@@ -669 +695 @@
+-                 std::chrono::seconds(a.seconds)) {pending.reserve(4096);prepared.reserve(p.launches.size());matrices.reserve(p.launches.size());gemv_choices.reserve(p.launches.size());
++                 std::chrono::seconds(a.seconds)) {attribution.enabled=args.timing=="attribution";pending.reserve(4096);prepared.reserve(p.launches.size());matrices.reserve(p.launches.size());gemv_choices.reserve(p.launches.size());
+@@ -769 +795,2 @@
+-      wait(c, copy.copy(dst, offset + i, slab[c], 0, k, {}));
++      auto event=copy.copy(dst, offset + i, slab[c], 0, k, {});wait(c,event);
++      attribution_copy(event,draft_timing?"draft.transfer.upload":attribution.current.label=="transfer.rollback"?"transfer.rollback.upload":"transfer.upload",true);
+@@ -781 +808,2 @@
+-      wait(c, copy.copy(slab[c], 0, src, i, k, {}));
++      auto event=copy.copy(slab[c], 0, src, i, k, {});wait(c,event);
++      attribution_copy(event,draft_timing?"draft.transfer.readback":attribution.current.label=="transfer.rollback"?"transfer.rollback.readback":"transfer.readback",true);
+@@ -870 +898 @@
+-    devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,profile_events||a.mtp||!a.draft_capture.empty())));
++    devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,profile_events||attribution.enabled||a.mtp||!a.draft_capture.empty())));
+@@ -1321,0 +1350 @@
++    if(attribution.enabled)attribution.current.label=p.launches[index].label;
+@@ -1326 +1355 @@
+-    for(const auto& cmd:site.commands){if(site.copy)drain();auto event=dev(c).issue(cmd);if(site.copy)tail=event;else finish(c,{event,event,1},site.family<=4);}
++    for(const auto& cmd:site.commands){if(site.copy)drain();auto event=dev(c).issue(cmd);if(site.copy){tail=event;attribution_copy(event,"transfer.target_site");}else finish(c,{event,event,1},site.family<=4);}
+@@ -1334,0 +1364 @@
++    if(attribution.enabled)attribution.current.label=l.label;
+
+--- experiments/own-xpu-runtime/stage2/packet56-draft-prefix/rank.hpp	2026-10-17 07:49:12.574218105 -0400
++++ experiments/own-xpu-runtime/stage2/packet57-attribution/rank.hpp	2026-10-17 09:38:00.434229807 -0400
+@@ -105,0 +106,2 @@
++ if(e.attribution.enabled){if(request.fixture>0)e.attribution.generation_origin=request.position-request.fixture;
++  e.attribution.current={"transfer.target_begin",request.fixture,request.position,bool(request.speculative)};}
+@@ -241,0 +244 @@
++    if(engine->attribution.enabled)engine->attribution.current={"draft.transfer.begin",engine->attribution.generation_origin<0?0:r.position-engine->attribution.generation_origin,r.position,false};
+@@ -258,0 +262 @@
++    if(engine->attribution.enabled)engine->attribution.current={"transfer.target_begin",r.fixture,r.position,bool(r.speculative)};
+@@ -265,0 +270 @@
++    if(engine->attribution.enabled)engine->attribution.current={"transfer.rollback",r.fixture,r.position,false};
+
+--- experiments/own-xpu-runtime/stage2/packet56-draft-prefix/mtp.hpp	2026-10-17 07:49:12.564218083 -0400
++++ experiments/own-xpu-runtime/stage2/packet57-attribution/mtp.hpp	2026-10-17 09:31:56.056800639 -0400
+@@ -47 +47 @@
+- struct Site { std::vector<ownrt::PreparedCompute> commands; bool gemv=false; int cls=0; bool head=false; };
++ struct Site { std::vector<ownrt::PreparedCompute> commands; bool gemv=false; int cls=0; bool head=false; std::string label; };
+@@ -67 +67 @@
+-   Site site;site.gemv=l.op=="gemv"||l.op=="routed_gemv"||l.op=="expert_gate_up";
++   Site site;site.label="draft."+l.label;site.gemv=l.op=="gemv"||l.op=="routed_gemv"||l.op=="expert_gate_up";
+@@ -202 +202 @@
+-  e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);ownrt::CopyEngine copy(e.dev(0));if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");e.upload(0,id("merge.hidden"),0,reverse_hidden,4*p.g.h*2);reverse_hidden=nullptr;}else e.tail=copy.copy(id("merge.hidden"),0,e.buffers[0].at("streams").id,0,4*p.g.h*2,{});e.drain();
++  e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);ownrt::CopyEngine copy(e.dev(0));if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");e.upload(0,id("merge.hidden"),0,reverse_hidden,4*p.g.h*2);reverse_hidden=nullptr;}else {e.tail=copy.copy(id("merge.hidden"),0,e.buffers[0].at("streams").id,0,4*p.g.h*2,{});e.attribution_copy(e.tail,"draft.transfer.hidden");}e.drain();
+@@ -208 +208 @@
+-    e.guard();e.current_cls=site.cls;
++    e.guard();e.current_cls=site.cls;if(e.attribution.enabled)e.attribution.current.label=site.label;
+@@ -212 +212 @@
+-   for(const auto& l:merge_plan){if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);}
++   for(const auto& l:merge_plan){if(e.a.timing=="class")e.set_class("draft."+l.label);if(e.attribution.enabled)e.attribution.current.label="draft."+l.label;direct(l);}
+@@ -215 +215 @@
+-    e.guard();if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);
++    e.guard();if(e.a.timing=="class")e.set_class("draft."+l.label);if(e.attribution.enabled)e.attribution.current.label="draft."+l.label;direct(l);
+@@ -221,2 +221,2 @@
+-   ownrt::CopyEngine copy(e.dev(0));copy.copy(publication,0,id("error"),0,4,{});
+-   publication_event=copy.copy(publication,4,id("next_token"),0,4,{});e.tail=publication_event;
++   ownrt::CopyEngine copy(e.dev(0));auto status_event=copy.copy(publication,0,id("error"),0,4,{});e.attribution_copy(status_event,"draft.transfer.status");
++   publication_event=copy.copy(publication,4,id("next_token"),0,4,{});e.tail=publication_event;e.attribution_copy(publication_event,"draft.transfer.proposal");
+@@ -260,2 +260,2 @@
+-  ownrt::CopyEngine copy(e.dev(0));copy.copy(e.buffers[0].at("token").id,0,half_staging,0,4,{});
+-  e.tail=copy.copy(e.buffers[0].at("streams").id,0,half_staging,4,4*p.g.h*2,{});
++  ownrt::CopyEngine copy(e.dev(0));auto token_event=copy.copy(e.buffers[0].at("token").id,0,half_staging,0,4,{});e.attribution_copy(token_event,"transfer.half_token");
++  e.tail=copy.copy(e.buffers[0].at("streams").id,0,half_staging,4,4*p.g.h*2,{});e.attribution_copy(e.tail,"transfer.half_streams");
+
+# owner.cpp: IDENTICAL
+
+# backend.hpp: IDENTICAL

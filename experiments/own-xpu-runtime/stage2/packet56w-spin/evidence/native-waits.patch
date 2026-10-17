@@ -1,0 +1,25 @@
+--- experiments/own-xpu-runtime/stage2/packet56-draft-prefix/native_controller.hpp	2026-10-17 07:49:12.564218083 -0400
++++ experiments/own-xpu-runtime/stage2/packet56w-spin/native_controller.hpp	2026-10-17 10:34:55.585693628 -0400
+@@ -7,0 +8 @@
++#include "host_spin.hpp"
+@@ -19,0 +21,2 @@
++ p56w::spin([&]{return load(n)!=old;},[&]{cancel();require(!load(m.abort),"native peer failed");},
++            std::chrono::steady_clock::now()+std::chrono::seconds(seconds));
+@@ -105 +108 @@
+- o<<"],\"stats\":{\"guesses\":"<<r.guesses_count<<",\"hits\":"<<r.hits<<",\"misses\":"<<r.misses<<",\"no_guess\":"<<r.no_guess<<",\"redo_ms\":"<<r.redo_ms<<"},\"prompt_wall_ms\":"<<r.prompt_ms<<",\"decode_wall_ms\":"<<duration<<",\"decode_intervals\":"<<(r.tokens.empty()?0:r.tokens.size()-1)<<",\"decode_numerator\":"<<(r.tokens.empty()?0:r.tokens.size()-1)<<",\"prompt_overlap\":"<<(c.overlap?"true":"false")<<",\"controller\":\"native\",\"bounded_spin_iterations\":0,\"work_start\":"<<r.start<<",\"work_end\":"<<r.end<<",\"timing_rows\":[";
++ o<<"],\"stats\":{\"guesses\":"<<r.guesses_count<<",\"hits\":"<<r.hits<<",\"misses\":"<<r.misses<<",\"no_guess\":"<<r.no_guess<<",\"redo_ms\":"<<r.redo_ms<<"},\"prompt_wall_ms\":"<<r.prompt_ms<<",\"decode_wall_ms\":"<<duration<<",\"decode_intervals\":"<<(r.tokens.empty()?0:r.tokens.size()-1)<<",\"decode_numerator\":"<<(r.tokens.empty()?0:r.tokens.size()-1)<<",\"prompt_overlap\":"<<(c.overlap?"true":"false")<<",\"controller\":\"native\",\"bounded_spin_iterations\":null,\"bounded_spin_us\":250,\"work_start\":"<<r.start<<",\"work_end\":"<<r.end<<",\"timing_rows\":[";
+
+--- experiments/own-xpu-runtime/stage2/packet56-draft-prefix/single_device.cpp	2026-10-17 07:49:12.588218135 -0400
++++ experiments/own-xpu-runtime/stage2/packet56w-spin/single_device.cpp	2026-10-17 10:34:08.540523631 -0400
+@@ -10,0 +11 @@
++#include "host_spin.hpp"
+@@ -111,0 +113 @@
++    p56w::spin([&]{return complete(e);},[&]{check_error();},deadline);
+
+--- experiments/own-xpu-runtime/stage2/packet56-draft-prefix/main.cpp	2026-10-17 07:49:12.560218074 -0400
++++ experiments/own-xpu-runtime/stage2/packet56w-spin/main.cpp	2026-10-17 10:40:23.993817976 -0400
+@@ -870 +870,3 @@
+-    devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,profile_events||a.mtp||!a.draft_capture.empty())));
++    // Match packet57 attribution's rank-0 queue completion configuration,
++    // without its event collection or timing reads. Submission order is intact.
++    devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,profile_events||a.rank==0||a.mtp||!a.draft_capture.empty())));

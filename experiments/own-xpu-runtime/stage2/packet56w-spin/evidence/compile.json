@@ -1,0 +1,78 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "commands": [
+    [
+      "cmake",
+      "-S",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/device",
+      "-DCMAKE_CXX_COMPILER=/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-DOWN_RT_HOST_ONLY=OFF"
+    ],
+    [
+      "cmake",
+      "--build",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/device",
+      "--target",
+      "own-rt-iq3",
+      "-j1"
+    ],
+    [
+      "g++",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-pthread",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/native_controller_test.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/native_controller_test"
+    ],
+    [
+      "g++",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-pthread",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/native_mailbox_fault_test.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/native_mailbox_fault_test"
+    ],
+    [
+      "g++",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-pthread",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/native_controller_test.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56w-spin/build/parent-controller"
+    ]
+  ],
+  "cpu_affinity": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "nice": 19,
+  "compiler_version": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/intel/oneapi/compiler/2026.0/bin/compiler\nConfiguration file: /opt/intel/oneapi/compiler/2026.0/bin/compiler/../icpx.cfg\n",
+  "compile_commands_sha256": "72dcc56b308e6f8527b951ec7764a4ce89e20040d1ba77fdc8d80e1cd69f2dbd",
+  "link_sha256": "324245821a15f96f1929dc25b8c0bfdb5271177c700d9eebe211aba112ad34d4"
+}
