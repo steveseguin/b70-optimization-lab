@@ -229,3 +229,33 @@ the algorithm cannot change any value): (1) `CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOL
 (`CCL_SYCL_ALLGATHERV_CHUNKING_THRESHOLD=1048576`), keeping every LL256 call inside the default range; (3) the same
 split done in b70-allgather-allreduce. The prompt-reading speed of each goes next to the result: (2) and (3) add
 per-call overhead to 134 gathers per prompt step.
+
+## Amendment 14:00 EDT (no result read): the exchange stress gets a card-03 load arm; two corrections
+
+**Corrections.** (1) The "simple" ring writes into the other card's ring buffer (`remote_ptrs` from oneCCL's IPC
+exchange), so "the simple path never issues a peer access" (2026-09-19 note) is wrong too; what the 4 GiB pin avoids
+is oneCCL's other kernels (`allgatherv_large`, the small/medium kernels), whose peer access faulted on 2026-09-17.
+DO-NOT-REPEAT forbids lifting the pin, so fix candidate (1) of 13:55 (threshold back to 1 MiB) is dropped. (2) From
+the protocol source (`proto_rt64_128.hpp`, `ring_transmit.hpp`, `allgatherv_pcie.hpp`): the receiver spins until
+a slot's flag equals the expected value exactly (no timeout); the ring has 4 slots; for all-gather there is no
+per-slot check that the receiver has read a slot before the sender reuses it; the launch is capped at
+`maxSS` work-groups of 64 threads (20 for Arc B-series, 32 for Arc A), and a message longer than one pass over the
+ring loops inside the kernel. Whether a lagging receiver can be overtaken depends on code these excerpts do not show
+(a sub-group that sends and receives in lockstep cannot be); the experiment decides, not the reading.
+
+**Why a load arm.** Only card 03 shares its execution units with another client, the desktop; a receiver that
+falls behind is most likely there, and 06:23's stuck context was card 03's. The runner
+(`scripts/run-20261017-xccl-stress.sh`, rewritten before it ever ran; its queued unit was stopped while still
+waiting) now runs arms of 20 minutes each, stopping at the first hang:
+
+- **A:** the exchange alone (as registered at 13:46, shortened from 60 to 20 minutes).
+- **B:** the same while `scripts/load-card-bursts.py` loads card 03 in bursts (1-20 ms of matmuls, 2-50 ms idle),
+  a stand-in for the desktop's work on that card.
+- **C (only if B hangs, started by hand):** B plus `CCL_SYCL_ALLGATHERV_CHUNKING_THRESHOLD=1048576`, so every LL256
+  ring call stays within oneCCL's 1 MiB default while the pin stays.
+
+- **Prediction:** A clean. If the mechanism is a lagging card being overtaken in a ring call longer than the ring, B
+  hangs within minutes and C does not; if B is also clean, the exchange, with or without a competing load, is
+  cleared at that rate, and the model's prompt-step kernels are next.
+- **Fix, if B hangs and C is clean:** the server takes the chunking threshold (lossless: an all-gather only moves
+  bytes), after the packed stress and a prompt-reading speed check on the context-lane server.
