@@ -59,3 +59,45 @@ server, the edit-cost probe at 30K / 120K / 200K (as 2026-10-16's K832 servers).
 - **Decision:** all equal and both arms at least 4 % faster: adopt for the context lane (every context-lane server
   adds `B70_PREFIX_CACHE_EXACT_TAIL=1`). Equal but under 4 % on either arm: keep it off, record. Neither TP2 nor
   one-card package ships the prefix cache, so no package change follows.
+
+## Result, campaign 27 agent arms (04:23-04:40 EDT, one server; `data/2026-10-17-context-campaign27/`)
+
+| Arm | c26a | c27a (tail) | change | score | calls equal (all fields but time and cached) | calls gaining a block |
+| --- | ---: | ---: | ---: | --- | --- | --- |
+| K32 | 7 min 51 s | 6 min 58 s | **-11.3 %** | 39/39 | 182 / 182 | 181 (+150,592 cached tokens) |
+| K64 | 8 min 21 s | 7 min 24 s | **-11.4 %** | 39/39 | 174 / 174 | 174 (+144,768) |
+
+- **Exact:** every call equal to c26a's in messages, prompt tokens, written tokens and finish; the server's prompt and
+  generated totals are equal after each arm (K32 1,932,094 / 30,313; after K64 5,210,811 / 60,132), only the cached
+  count is higher (1,413,568 -> 1,564,160; 4,198,272 -> 4,493,632).
+- **Every hit gained exactly one block** (832 tokens; the first call of the run has nothing to hit).
+- **Faster than predicted** (5-10 % / 4-9 %). Model time per kind: main calls -16.9 % (K32) and -18.1 % (K64), notes
+  calls -4.2 % and -2.5 % (they are mostly writing). The re-read block cost about 0.28 s a call, more than the 0.22 s
+  estimated from the least-squares split.
+
+## Result, edit-cost probe on the same server (04:50-05:01 EDT; `data/2026-10-17-context-campaign27/edit-c27a.json`)
+
+All 30 answers equal to `edit-K832.json`'s and `edit-K832b.json`'s (`scripts/compare-edit-probe.py`). Wait for the
+first token, 2026-10-16's K832 server -> this one (cached tokens in brackets):
+
+| Request | 30K | 120K | 200K |
+| --- | --- | --- | --- |
+| cold read | 11.50 -> 11.27 s | 69.43 -> 69.38 s | 152.11 -> 152.20 s |
+| same text again | 0.75 -> **0.37 s** (29,120) | 1.57 -> **0.88 s** (118,976) | 1.77 -> **0.78 s** (199,680) |
+| four lines removed 203 tokens from the end | 0.66 -> 0.29 s | 1.49 -> 0.80 s | 15.80 -> **1.22 s** (186,368 -> 198,848) |
+| edit at 90 % | 6.66 -> **1.35 s** (13,312 -> 26,624) | 10.94 -> 10.97 s | 30.61 -> 30.63 s |
+| edit at 50 % / 10 % | unchanged | unchanged | unchanged |
+| any edited text sent again | 0.66 -> 0.29 s | 1.50 -> 0.81 s | 2.21 -> 1.23 s |
+
+- Repeats land on the end-of-prompt boundary, as predicted (29,120 / 118,976 / 199,680), at half the wait or less.
+- The near-end edit at 200K resumes from the state one block before the edit (198,848) instead of the periodic one
+  13,138 tokens back: 13x faster, inside the 5 s gate that 2026-10-16's study missed with every piece size.
+- Not predicted: an edit just past a periodic kept state (30K at 90 %: the edit at about 26,800, a periodic state at
+  26,624) also lost a whole interval to the dropped block; it now resumes at 26,624 (6.66 -> 1.35 s). Edits further
+  from a kept state (120K and 200K at 90 %, and every 50 % / 10 % edit) are unchanged: they still resume from the
+  last periodic state before the edit.
+- Cold reads unchanged.
+
+**Decision (as registered): adopt for the context lane.** Every context-lane server adds
+`B70_PREFIX_CACHE_EXACT_TAIL=1` (campaign 27's runner defaults to it). The packages run without the prefix cache, so
+nothing changes there. Agent-run figures measured before today (campaigns 1-26) are without it.
