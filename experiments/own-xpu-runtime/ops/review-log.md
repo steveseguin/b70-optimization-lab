@@ -26,3 +26,22 @@ STOP-doing items applied:
 - the screen note no longer claims the owner was asked;
 - single-run rankings are replaced by two-lane A/B;
 - all Codex launches go through the stdin-safe launcher.
+
+## Review 2, 15:07 UTC: **ACT**
+
+Evidence: in the last 60 min, cards 0+1 were busy about 33 min and cards 2+3 about 6 min. Lane A's 15:01 v1 screen was refused because lane B's rank processes open all four cards. The two lanes agree within 0.1% (packet 56: A 46.79/46.80, B 46.75). Packet 56w measured 48.83 (+4.4%).
+
+Actions, 15:10-15:16 UTC:
+1. **Fill idle cards with paired screens.** Not possible as recommended: v2 refuses lean/selected lineages (it needs `suite.py`/`pipeline.py`), and the reviewer's admission assumption was wrong.
+   - Fix: Codex **screen v3**, with v1 lineage handling, v2 lanes and nice 0, and **per-lane device masking**, so the lanes run independently.
+   - Meanwhile lane A keeps running v1 screens: packet 60, then the 4 packet 59c selections.
+2. **Packet 56x:** removes the 1 ms `sleep_for` polling in `SyclDevice::wait()` and similar waits. Built on packet 56w, two variants. Codex launched.
+3. **Base for new candidates:** packet 56w (or 56x) from now on. Packet 59c and packet 60 winners will be rebuilt on it before any chain.
+4. **Draft-relocation line closed:** no new v2 memory profile for packet 59b. Packet 59c is limited to its 4 screens. Draft micro-kernels close unless one selection beats packet 56 by more than 1%. Codex time goes to the rank-0 out-of-layer gaps and the miss path next.
+5. **Disk cleanup:** a Codex job is freeing at least 10 GB from closed packets' regenerable scratch before the record chain.
+
+STOP-doing items applied:
+- the helper's commit count is fixed (exact `--since` timestamp; it showed 28 for 2 h, matching git);
+- no single-lane v1 screens while the other lane runs (v3 replaces this);
+- packet 58b waits for a no-compile window;
+- K0-KD reuse for host-only changes is noted for the chain tooling.

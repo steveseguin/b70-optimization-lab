@@ -104,7 +104,7 @@ def main():
             print(f'  {fmt(m)}  {os.path.basename(f)}  {os.path.getsize(f)//1024} KiB')
     running = subprocess.run(['pgrep', '-fc', 'codex-linux-x64/vendor'], capture_output=True, text=True).stdout.strip()
     print(f'  Codex processes running now: {running or 0}')
-    log = subprocess.run(['env', 'TZ=UTC', 'git', '-C', REPO, 'log', f'--since={a.hours} hours ago', '--format=%cd %h %an: %s', '--date=format-local:%H:%M'],
+    log = subprocess.run(['env', 'TZ=UTC', 'git', '-C', REPO, 'log', f"--since={begin.strftime('%Y-%m-%dT%H:%M:%SZ')}", '--format=%cd %h %an: %s', '--date=format-local:%H:%M'],
                          capture_output=True, text=True).stdout.splitlines()
     print(f'\nCommits in window: {len(log)}')
     for line in log[:25]:
