@@ -1,0 +1,100 @@
+{
+  "schema": "ownrt.packet48b.reconciliation.v1",
+  "device_executed": false,
+  "model_payload_read": false,
+  "production_geometry_matches": true,
+  "ordinary_experts": "IQ2_S gate/up, IQ4_NL down",
+  "ordinary_dense": "Q6_K K=2560, rows=10240/6144, split=1",
+  "direct_production_kernel_controls": [
+    "expsgate.iq2",
+    "expsdown"
+  ],
+  "adapted_control_wrappers": [
+    "gdn.qkv.q6",
+    "gdn.z.q6",
+    "expsgate.iq3",
+    "gdn.qkv.q8",
+    "gdn.z.q8"
+  ],
+  "known_confounders": [
+    "full-layer versus isolated scheduling/cache context",
+    "32 repeated synthetic blocks per tensor versus independently changing row bytes",
+    "10 warmup/200 pairs versus 4 warmup/24 pairs",
+    "actual p33 generic production submission versus compile-time non-routed dense wrapper"
+  ],
+  "single_cause_proven": false,
+  "controls": {
+    "expsgate.iq2": [
+      {
+        "p46_full_layer_current_us": 81.875,
+        "p48_isolated_current_us": 106.92699999999999,
+        "p48_isolated_candidate_us": 100.938,
+        "ratio": 1.3059786259541983
+      },
+      {
+        "p46_full_layer_current_us": 81.771,
+        "p48_isolated_current_us": 106.667,
+        "p48_isolated_candidate_us": 101.354,
+        "ratio": 1.3044600163872277
+      }
+    ],
+    "expsdown": [
+      {
+        "p46_full_layer_current_us": 91.875,
+        "p48_isolated_current_us": 93.542,
+        "p48_isolated_candidate_us": 56.458,
+        "ratio": 1.0181442176870747
+      },
+      {
+        "p46_full_layer_current_us": 91.875,
+        "p48_isolated_current_us": 93.594,
+        "p48_isolated_candidate_us": 56.5105,
+        "ratio": 1.0187102040816325
+      }
+    ],
+    "gdn.qkv.q6": [
+      {
+        "p46_full_layer_current_us": 100.105,
+        "p48_isolated_current_us": 63.49,
+        "p48_isolated_candidate_us": 57.7085,
+        "ratio": 0.6342340542430448
+      },
+      {
+        "p46_full_layer_current_us": 100.104,
+        "p48_isolated_current_us": 63.698,
+        "p48_isolated_candidate_us": 57.7605,
+        "ratio": 0.6363182290417966
+      }
+    ],
+    "gdn.z.q6": [
+      {
+        "p46_full_layer_current_us": 39.7395,
+        "p48_isolated_current_us": 31.875,
+        "p48_isolated_candidate_us": 30.052500000000002,
+        "ratio": 0.8020986675725663
+      },
+      {
+        "p46_full_layer_current_us": 39.791,
+        "p48_isolated_current_us": 31.875,
+        "p48_isolated_candidate_us": 29.844,
+        "ratio": 0.8010605413284412
+      }
+    ]
+  },
+  "integration_eligible": [],
+  "pending": "two fresh matched full-layer exactness and timing windows; no p48 speed claim admitted",
+  "source_and_evidence_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/evidence/p46-a-t1/run/iterations.jsonl": "3d408a4ca99b7efe5ae13133906337828bf7ccc9c5d7cedafef79ae2a4920f40",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/evidence/p46-a-t2/run/iterations.jsonl": "dfe682ba4ace352cfc99164812e61f05ca6f276d747529355452833acdc62308",
+    "experiments/own-xpu-runtime/stage2/packet48-gemv/evidence/p48-d-t1/summary.json": "40af21a612921c8d7387a32312f1f0aa02e935ee10d5394d861cc4879eb20457",
+    "experiments/own-xpu-runtime/stage2/packet48-gemv/evidence/p48-d-t2/summary.json": "272533ed7fe324c1a2400850d68daf9f97f0b361d061b956380fe337cb18403d",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/layer_bench.cpp": "a50824b9147050ce5e88ae84255bb9a4b8ee37e82e035bd6eb35a7f4906a31c4",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/fixture_bytes.hpp": "850b1722140a694bd5697c9ce53c050f58061bcd0885ebcc4c5195bf83547068",
+    "experiments/own-xpu-runtime/stage2/packet46-specialized/dispatch-baseline.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "experiments/own-xpu-runtime/stage2/packet48-gemv/bench.cpp": "740abe13b28c86c653228096270153fa82998b91ca0c9730a23f3e3e34d3b389",
+    "experiments/own-xpu-runtime/stage2/packet48-gemv/PREREGISTRATION.md": "d5abea34cf36dbb16efa94f87399e64f8f6abca938ede34db250fbceef25a64c",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p33_submit.cpp": "a7186a51ffc6deeee3874f8f812cc72f371b62bb574298be48b2a33a218354e5",
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/p39_sycl.hpp": "d29e4a9527e7e585ee739dad6726750bfa0f59176fa66a7cde8b2097fa2885c9",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/directory.tsv": "8352dc77cdb0e584068274b388b14bfba716ff315ff613bbe4ba67f62fd58507"
+  }
+}
