@@ -66,6 +66,18 @@ results must be compared to this as a scenario, not as a measured hit rate.
 Per-layer miss tails and the dependent layer boundaries remain the deciding
 test; aggregate GB/s alone does not qualify a one-card engine.
 
+The [October 17 CPU fixture benchmark](cpu-expert/README.md#october-17-cpu-results),
+run after 02:55 UTC, measured fresh-process medians of **1,957.456 and 2,691.348
+complete experts/s**, or **3.873152 and 5.325281 GB/s of packed expert bytes
+processed**. Both fresh CPU exactness gates passed. This AVX2 implementation
+falls roughly **9.3× and 6.7× short** of the uniform-cache scenario above; it
+cannot presently support that scenario's 60 target positions/s CPU demand.
+This is a measured implementation result, not a CPU hardware limit or measured
+DRAM bandwidth. The benchmark exposes more independent expert work than a
+single layer's at-most-ten misses, and real routing, per-layer tail latency,
+mailbox transfer and CPU/GPU overlap remain unmeasured. Preserve both process
+results and their spread; do not use the fastest sample as a one-card forecast.
+
 Credit Niko1221 / Strata for the publicly described GPU hot-expert cache and
 CPU miss arrangement already recorded in ONE-CARD-DESIGN. This refinement and
 its code are independently authored from the lab census; no Strata code was

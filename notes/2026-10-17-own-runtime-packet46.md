@@ -26,8 +26,8 @@ time alone cannot pass. The coordinator alone runs the card-0 windows.
 
 The CPU expert implementation must match the selected P39/P28 arithmetic using
 only existing fixture generation. This Threadripper PRO exposes AVX2 and no
-AVX-512 flags. Sustained CPU throughput and fresh-process CPU exactness results
-will be recorded after the time boundary. Route-ID and phase diagnostics are
+AVX-512 flags. Compilation started after the time boundary; sustained CPU throughput and
+fresh-process CPU exactness are recorded below. Route-ID and phase diagnostics are
 default-off and excluded from speed claims.
 
 ## Cache refinement
@@ -47,15 +47,17 @@ The default-off route/phase adapter and its strict JSONL validator are written
 in `packet46-specialized/diagnostics/`. An offline cache report separates
 accepted-token popularity from all executed work, including rejected work,
 and labels partial layer coverage. Five Python schema/report test groups pass
-in 0.002 seconds. C++ compilation and the two fresh mock processes are still
-pending the 02:55 UTC boundary. This adapter is not installed in packet45.
+in 0.002 seconds. After the boundary, the C++ mock compiled and two fresh processes produced
+identical nine-record traces; both strict validations passed. This adapter is not installed in packet45.
 
 The independently authored AVX2 CPU expert, exact arithmetic specification,
 existing-fixture oracle comparisons and sustained benchmark are written in
 `packet46-specialized/cpu-expert/`. The runner checks every worker's affinity,
 FP environment and source/binary identity. Its 284,928,000-byte synthetic
-packed bank preserves the 47:1 ordinary/exceptional layer mix. Source review
-found no arithmetic mismatch; that is not a compiled exactness result.
+packed bank preserves the 47:1 ordinary/exceptional layer mix. Both fresh compiled CPU tests passed 27,587 checks each, including 18 complete
+expert comparisons and 30 finite down-row edge cases. Their raw-output digest
+is identical. The [test receipt](../experiments/own-xpu-runtime/stage2/packet46-specialized/cpu-expert/evidence/test/receipt.json)
+binds the arithmetic sources and binary.
 Nonfinite device-oracle parity is explicitly unqualified.
 
 The specialized layer source and coordinator windows are now written. The
@@ -67,6 +69,23 @@ input pair also checks complete state and a clean error flag outside timing.
 Six CPU-only wrapper/accounting tests passed in 0.644 seconds; compilation,
 full-shape CPU arithmetic and device work have not yet run.
 
-Implementation, CPU tests, throughput measurements, independent review and
-final seal are pending. Device correctness, device speed and one-card fit
+The CPU expert benchmark ran at 02:55:39–02:56:00 UTC on the requested 24
+logical CPUs, nice 19, with five samples of at least two seconds per fresh
+process. The [full receipt](../experiments/own-xpu-runtime/stage2/packet46-specialized/cpu-expert/evidence/bench/receipt.json)
+retains every sample and worker affinity. Results:
+
+| Fresh process | Median packed GB/s | p10 packed GB/s | Median experts/s | p10 experts/s |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 3.873152 | 3.260361 | 1,957.456 | 1,647.757 |
+| 2 | 5.325281 | 4.742674 | 2,691.348 | 2,396.904 |
+
+These are processed packed bytes, not measured DRAM bandwidth or engine speed.
+The visible drift is retained; neither run is selected as a headline. Both
+fall far below the hypothetical uniform-miss requirement of 35.9268 GB/s
+and 18,157 experts/s. This CPU implementation cannot sustain that scenario.
+Actual route locality, dependent ten-slot layer tails and CPU/GPU overlap are
+still unknown. The next prerequisite is the opt-in IQ3 route census, followed
+by a faster exact CPU path if observed misses still demand it.
+
+Full-layer compilation, CPU comparisons and the final seal are pending. Device correctness, device speed and one-card fit
 remain unmeasured by this task. The device coordinator retains ownership.
