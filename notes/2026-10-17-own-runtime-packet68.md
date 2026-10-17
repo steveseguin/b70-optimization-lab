@@ -15,3 +15,16 @@ All work here is CPU-only, confined to the new packet and this requested
 note. The frozen trees and CURRENT.md remain with their owners.
 
 [Design](../experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/DESIGN.md).
+
+## Probe milestone
+
+The cost probe is **sealed and pushed; the coordinator can run it now while
+prototype CPU work continues**. Its build is 118 MB. Host/device builds, the
+six-row synthetic target byte comparison against packet64, discarded-state
+restoration, fresh repeats, the lean seal and lane-B plan pass. No GPU ran.
+
+Command: `bash experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/coordinator_probe.sh "$FAULT_REVIEW"`
+inside an admitted coordinator `screen-*` unit with approved `P49_LDP`.
+Expect roughly five minutes active, with a 3600-second watchdog. It uses
+23/25 because that is the frozen wrapper's admitted lean-lineage placement.
+All thirteen token checks remain mandatory. [Probe details](../experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/PROBE.md).

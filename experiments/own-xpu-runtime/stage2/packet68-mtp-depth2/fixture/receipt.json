@@ -1,0 +1,75 @@
+{
+  "schema": "own-runtime.screen.byte-fixture.v1",
+  "passed": true,
+  "device_executed": false,
+  "changed_class": "M=1/2/3 sequential target-half fixture versus frozen packet64; full plan-buffer, spare-bank, history, extent and shared-slot identity after discarded rows",
+  "command": [
+    "python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/cpu_gate.py"
+  ],
+  "build_receipt_sha256": "e611d652b6f4c3d82949107ac698972a1a0abfc68dba387a43e43edc32f190a7",
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/cpu_gate.py": "875c2ea5adc8e0129f3ca3f45cf74d5f96ebc8b9e76535433afc7353ae980edd",
+    "experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/probe_fixture.cpp": "7b8122df6519bf468856f0ad400a36e591f55c6adf3b2113f3d4c165c5a60e0b",
+    "experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/build/reference-fixture.cpp": "1e7f1f22a5bc7b08261beb11d8a92a9dd42f4ff717aaf95d2718c35d87f6a361",
+    "experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/build/reference-fixture": "d501a501667629546ee50c806c187968ec702ef89b1805f070152dcbb30a87c0",
+    "experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/rank.hpp": "d18b7e702f5216bad5164202b4454999e6d37cbbc66e5d10cd55499d5a6f5310"
+  },
+  "expected": {
+    "path": "fixture/expected.bin",
+    "sha256": "bd57401f563126fd0d993f611d95c06ed60c2aa717915b617014eb545ebc4a92"
+  },
+  "actual": {
+    "path": "fixture/actual.bin",
+    "sha256": "bd57401f563126fd0d993f611d95c06ed60c2aa717915b617014eb545ebc4a92"
+  },
+  "runs": [
+    {
+      "name": "reference",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/build/reference-fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/fixture/reference",
+        "off"
+      ],
+      "stdout": "{\"passed\":true,\"device_executed\":false,\"target_rows\":[1,2,3],\"discarded_rows\":6,\"full_model_runs\":0}\n",
+      "stderr": "context lifetime PASS: 646 destructions, native release last, zero late destructions\ncontext lifetime PASS: 976 destructions, native release last, zero late destructions\ncontext lifetime PASS: 1306 destructions, native release last, zero late destructions\n",
+      "sha256": "bd57401f563126fd0d993f611d95c06ed60c2aa717915b617014eb545ebc4a92"
+    },
+    {
+      "name": "off",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/build/probe-fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/fixture/off",
+        "off"
+      ],
+      "stdout": "{\"passed\":true,\"device_executed\":false,\"target_rows\":[1,2,3],\"discarded_rows\":6,\"full_model_runs\":0}\n",
+      "stderr": "context lifetime PASS: 646 destructions, native release last, zero late destructions\ncontext lifetime PASS: 976 destructions, native release last, zero late destructions\ncontext lifetime PASS: 1306 destructions, native release last, zero late destructions\n",
+      "sha256": "bd57401f563126fd0d993f611d95c06ed60c2aa717915b617014eb545ebc4a92"
+    },
+    {
+      "name": "on",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/build/probe-fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/fixture/on",
+        "on"
+      ],
+      "stdout": "{\"passed\":true,\"device_executed\":false,\"target_rows\":[1,2,3],\"discarded_rows\":6,\"full_model_runs\":0}\n",
+      "stderr": "context lifetime PASS: 840 destructions, native release last, zero late destructions\ncontext lifetime PASS: 1297 destructions, native release last, zero late destructions\ncontext lifetime PASS: 1754 destructions, native release last, zero late destructions\n",
+      "sha256": "bd57401f563126fd0d993f611d95c06ed60c2aa717915b617014eb545ebc4a92"
+    },
+    {
+      "name": "repeat",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/build/probe-fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet68-mtp-depth2/fixture/repeat",
+        "on"
+      ],
+      "stdout": "{\"passed\":true,\"device_executed\":false,\"target_rows\":[1,2,3],\"discarded_rows\":6,\"full_model_runs\":0}\n",
+      "stderr": "context lifetime PASS: 840 destructions, native release last, zero late destructions\ncontext lifetime PASS: 1297 destructions, native release last, zero late destructions\ncontext lifetime PASS: 1754 destructions, native release last, zero late destructions\n",
+      "sha256": "bd57401f563126fd0d993f611d95c06ed60c2aa717915b617014eb545ebc4a92"
+    }
+  ],
+  "full_cpu_model_runs": 0,
+  "limitations": "Synthetic two-layer half only; real model device exactness pending. M means sequential row count, not a batched kernel."
+}
