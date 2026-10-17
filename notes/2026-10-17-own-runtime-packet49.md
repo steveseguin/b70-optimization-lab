@@ -62,6 +62,30 @@ oracle completion without silently changing their seal.
 
 ## Qualification boundary
 
+The oracle launched at **2026-10-17 03:44:10 UTC** in the durable CPU-only
+unit **`own-iq3-p49-oracle-20261017b.service`**, with restart disabled. Initial
+completion estimate: **09:44–15:44 UTC**, central estimate about11:33 UTC.
+Outputs are under
+`/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results/`.
+The first attempt refused before reading model bytes because idle I/O priority
+was absent. Its output is preserved in `oracle/attempt1-io-admission`; the
+corrected one-off launch adds `ionice -c3` without changing sources or binary.
+[Exact unit receipt](../experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/unit-receipt.json).
+
+The independent scalar gate passed **135,168 bitwise pre-gate values**, and
+six CPU admission tests passed. Full-model completion and device parity are
+still pending. The coordinator must check completion using:
+
+```bash
+nice -n 19 taskset -c 4-15,20-31 python3 -B \
+  experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/oracle_job.py \
+  status --require-complete
+```
+
+Exit zero binds the full manifest, binary, sources, token/fixture results,
+fresh-process repeat and KD captures. `old-v-new.json` is produced only once
+the new suite exists; it compares against retained old outputs informationally.
+
 Build/CPU passes will not establish full-model device parity or speed.
 The coordinator chain will mirror K0/K1a/K1b/K2/W0p/KD/W2m/WS/WSs plus
 WS128x/WS128. Oracle-dependent windows must fail closed while outputs are

@@ -59,3 +59,21 @@ include-path header as source-relative; the corrected generator preserves
 ordinary include-path lookup. That initial raw log was overwritten accidentally;
 a labeled reconstruction from tool output is retained externally as
 `build-attempt1-diagnostic.txt`.
+
+The durable unit is `own-iq3-p49-oracle-20261017b.service`, started at
+**2026-10-17 03:44:10 UTC**. Its exact launch is in `unit-receipt.json`.
+It has no restart policy and continues independently of the agent session.
+The initial unit refused both children before any model bytes were read because
+idle IO was missing. Its entire result tree is retained as
+`attempt1-io-admission`; the corrected one-off launch added `ionice -c3` with no
+source or binary change.
+
+```bash
+systemctl --user status own-iq3-p49-oracle-20261017b.service
+journalctl --user -u own-iq3-p49-oracle-20261017b.service --no-pager
+```
+
+Native progress is in each prompt's `positions.jsonl`, `progress.jsonl` and
+`result.json`. Unit output is also retained in external `unit-b.log`. The initial
+estimated completion window is October17, 09:44–15:44 UTC; early position timings
+should refine this estimate before interpreting it as a deadline.
