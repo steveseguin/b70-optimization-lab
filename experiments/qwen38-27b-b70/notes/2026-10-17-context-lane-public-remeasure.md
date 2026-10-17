@@ -76,6 +76,14 @@ the prompt path can be excluded from this evidence. If a hang recurs after the r
 `B70_FA_VERIFY_ROWS_ONE_LAUNCH` off first (it is the newest GPU code in the stack; ~2 h of traffic today without a
 fault before this).
 
+A read-only Codex review of the one-launch path against the kernel sources (vllm-xpu-kernels 2dd55f3; saved as
+`data/2026-10-17-context-campaign28/codex-review-one-launch-hang.md`) found **no infinite loop or split-reduction wait
+for valid inputs**: the host split count is 1-32, empty splits are skipped, the reduction is a separate launch with no
+cross-work-group polling. Only malformed inputs (a key count far above the block table's reach) would give long loops
+or reads past the table, and nothing shows such an input. Also noted: the path is chosen for any one-request call of
+2-8 rows past 1,536 keys (so a 2-8-token last prompt piece too, the same in a cold and a cached read, as in 0.1.0).
+The hang stays unexplained.
+
 Not known: whether the 05:59 kill-induced reset left a card in a state that made this hang likely (the 06:06 health
 probe passed), or whether this is an independent hang. This server configuration ran campaigns 26-28c today
 (about 2 h of agent traffic) without a fault line.
