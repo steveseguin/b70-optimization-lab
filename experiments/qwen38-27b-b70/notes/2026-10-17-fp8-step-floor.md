@@ -326,7 +326,7 @@ the biggest single remainder is the cross-card exchange. Next measurement (cheap
 end-to-end latency per call at the decode shapes on the two cards, to confirm the 13-21 us figure before any
 transport idea is weighed against its fault risk.
 
-## Registered 12:08 EDT (before it runs): the all-gather's latency on the bare cards
+## Registered 12:05 EDT (before it runs): the all-gather's latency on the bare cards
 
 `scripts/bench-xccl-allgather-latency.py`, two processes (one per card) under `torch.distributed.run`, the server's
 oneCCL environment (the TP2 package's CCL_* settings), no server: for fp16 [1|6, 5120] and [1|6, 124160], the
@@ -336,7 +336,7 @@ median device time of one all-gather alone, and what one gather adds after a 50 
   transport goes into a design memo weighed against its fault risk (owner's call before any peer-visible kernel).
   Under 8 us: the no-kernel time is something else (event waits, the GDN copies); the profile's gaps get a closer look.
 
-## All-gather latency result (12:07 EDT): about 5-6 us per decode exchange, about 1 ms a step; registered branch "under 8 us"
+## All-gather latency result (12:06 EDT): about 5-6 us per decode exchange, about 1 ms a step; registered branch "under 8 us"
 
 `data/2026-10-17-step-floor/xccl-allgather-latency.json` (two cards, no server, kernel log clean). A first attempt
 synchronised after every call, so the two processes drifted apart and the gathers waited for the other host
