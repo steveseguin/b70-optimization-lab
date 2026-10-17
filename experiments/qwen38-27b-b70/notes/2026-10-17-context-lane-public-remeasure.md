@@ -38,3 +38,27 @@ all-reduce) passed and the kernel log has no line after the reset, so per AGENTS
 (my first reading, that the restart was the owner's call, was wrong: that was the 2026-10-12 practice without sudo).
 The re-measure runs again unchanged as **campaign 28e** (same queue line, runner, flags and prediction; new run name
 because the c28d output folders exist), log under `/mnt/fast-ai/bench-results/context-longrun-20261016/c28e.log`.
+
+## 28e result: void, a real second GPU fault on this boot (06:23 EDT); GPU work stopped, reboot needed
+
+Server ready 06:11:13 (2,977 MiB free), the repair task ran normally for 12 min (126 model calls, prefix-cache hit
+rate 89 %, acceptance ~5.1), the server idle from 06:22:20, then the first step of a new 4,603-token request
+(06:23:00) never finished: card 03:00.0 `Timedout job ... in python3 [2864707]` (the TP0 worker), engine reset and a
+device coredump; two seconds later card e3:00.0 engine reset, `Fault response: Unsuccessful -EINVAL` and a copy-engine
+`CAT error`. The worker died with `UR_RESULT_ERROR_DEVICE_LOST`; the agent got a 502 and the trial ended
+(`ended_by=EXC:BadGatewayError`, does not count). No memory-guard event this time (no `MEMORY-GUARD.json`;
+2.7 GiB free at the start of the task). The `page allocation failure: order:9` line is the coredump failing to get
+2 MB for the GuC log snapshot, a consequence, not a cause.
+
+Evidence (`data/2026-10-17-context-campaign28/`): `c28e-kernel-fault-lines.txt`, `c28e-devcoredump-03.00.0.txt`
+(copied before anything could clear it; also under `/mnt/fast-ai/bench-results/context-longrun-20261016/
+fault-20261017-0623/` with the full kernel log from 05:50), `c28e-server-log-end.txt`, `c28e-server-state.json`,
+`FAULT-20261017-c28e.json`, `c28e.log`, `c28e-K32-repair.summary.txt`.
+
+Not known: whether the 05:59 kill-induced reset left a card in a state that made this hang likely (the 06:06 health
+probe passed), or whether this is an independent hang. This server configuration ran campaigns 26-28c today
+(about 2 h of agent traffic) without a fault line.
+
+**Decision (AGENTS.md rule 3): a second fault followed on the same boot, so all GPU work stops and the owner is told
+that a reboot is needed.** No further launches, no driver reload, no probe loop. After the reboot: the boot's first
+GPU job is the bounded health probe, then campaign 28e again unchanged.

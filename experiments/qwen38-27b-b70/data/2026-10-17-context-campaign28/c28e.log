@@ -1,0 +1,18 @@
+### 06:08:37 campaign 28 (c28e, depth 5, piece 832, one launch 1, tail 1) start; queue /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE28d.txt (1 lines); MemAvailable 13429 MiB
+### 06:08:37 queue checked: K32 repair 2x 3600;
+### 06:08:37 stopping the Gemma service (front door state: down down)
+### 06:08:42 cards free; MemAvailable 13396 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: 1542900e7610454bbc75ef0e891d856c
+### 06:11:13 server ready after ~165 s; MemAvailable 2977 MiB
+Running as unit: ctx-keeper-proxy.service; invocation ID: d4b3beca3e2a43f091e49b0042a0c475
+### 06:11:14 [K32__repair-n40-s2x] start (cap 3600s); MemAvailable 2709 MiB; server totals: prompt 15 cached 0 generated 64
+### 06:23:28 [K32__repair-n40-s2x] done rc=0 in 12 min 15 s; MemAvailable 13525 MiB; server totals: prompt 0 cached 0 generated 0
+   no verifier result
+   proxy: cuts 5 (in place 5, failed 0, asked again 0), archived 244, recalls 1, full-rewrite failed 0, notes read 94029 cached 89024 written 2716; background started 0 applied 0 discarded 0 waited 0 s; upstream 635.617 s (background 0 s); restarts 0
+   calls: main 132 calls 651 s read 1258111 cached 1113216 written 58168; notes 5 calls 27 s read 94029 cached 89024 written 2716; largest call (read + written) 24350 tokens
+### 06:23:31 GPU fault line in the kernel log; no further arms
+### 06:23:31 stopping the server; MemAvailable 13519 MiB
+server state: failed RuntimeError: Kernel GPU fault; campaign latched stop_confirmed True
+host memory available while the server ran: min 1.90  1% 1.95  median 2.01 GiB  (1712 samples)
+### 06:23:36 RESTORE=0: cards left empty for the next server
+### 06:23:36 campaign 28 (c28e) complete
