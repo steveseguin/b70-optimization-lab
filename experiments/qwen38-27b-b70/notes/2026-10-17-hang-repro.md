@@ -401,3 +401,28 @@ without a competing load on card 03, the exchange alone at the server's sizes an
 the lane's rate (one in ~18,000) a clean result had about a 27 % chance. Arm C is not run (registered only if B hung;
 its 1 MiB chunking would not avoid the slot-overwrite pass counts anyway, 15:27). The search moves, as registered, to
 what only the context lane has, with the device marks so that the next hang names the stuck kernel.
+
+## Marks check result (15:51:33-15:56 EDT) and campaign 29 registered 15:55 EDT (before any run)
+
+**M1 (2 minutes, marks on):** 875 steps at 60 s and 1,779 at 120 s against arm A's 887 and 1,797 (same seed, same
+steps), 1.0-1.4 % fewer, all 28 byte checks equal. Prediction (within 5 %): yes. Two 4-byte copies around every gather
+cost about 1 % in a stress whose steps average ~67 ms.
+**M2 (marks plus the deliberate mismatch):** rank 0 "120,960 gathers issued, every issued gather finished" (it sat in
+the unmarked final barrier); rank 1 "121,095 issued (the whole extra step, 135 more), inside gather 120,961 (started on
+the card, not finished)". Prediction: yes, exactly. So on a hang the marks say, from host memory, which collective each
+card is in and whether a card is still in a kernel before it. (Engine registers and kernel log after M2: in the next
+section once read.)
+
+**Campaign 29a, registered now.** `scripts/longrun-campaign28.sh` with `RUN=c29a SEQS=1 MTP=5 RESTORE=0 MARKS=1`,
+queue `QUEUE29a.txt` (K32 rules stream, seed 0): c28f's server exactly, plus `B70_STEP_BREADCRUMBS_DEVICE_MARKS=1`.
+`scripts/hang-capture.sh` runs beside it (breadcrumbs trigger).
+- **Prediction:** 182 calls, 39/39; every call equal to c28f's apart from time and cache (`compare-campaign-calls.py`,
+  exit 0; the marks write only their own buffers); model time within 3 % of c28f's 367.1 s (the stress cost ~1 %; the
+  server's 38 ms drafting steps carry about 140 collectives, so up to ~2-3 % if each copy costs a few microseconds).
+  One server, one run: an estimate of the cost, not a speed verdict.
+- **Decision:** answers equal and cost at most 3 %: marks go on in every hang-hunting run and every agent stress of the
+  context lane (not in runs whose times are published unless the cost is under 1 %). Then one hour of the packed
+  first-step stress (`run-20261017-step-floor.sh` stress mode, `MARKS=1`, `STRESS_MIN=60`, the 13:38 client options),
+  about 4,000 first steps; after that the dedicated hunt stops (rule: decide within hours) and the marks plus
+  `hang-capture.sh` ride along with ordinary context-lane work, so the next hang, whenever it comes, names its kernel.
+  Any answer difference: marks off, the difference read first.
