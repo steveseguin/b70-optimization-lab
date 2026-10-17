@@ -1,0 +1,57 @@
+{
+  "schema": "neural.download.promotion-attestation.v1",
+  "identity": {
+    "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+    "runtime_revision": "192ee28f2",
+    "optimization_identity": "packet49c-round2-iq3-p49-split32-v1-tp2-c4096-target23-25-draft-rank1-seal-2ebe64adc810d7560c23f2674117c424caf360a4e7c3b75217eb25aa0b900dd7",
+    "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812",
+    "arithmetic": "iq3-p49-split32-v1"
+  },
+  "performance_evidence": {
+    "path": "experiments/own-xpu-runtime/stage2/packet49c-round2/submission/prepared/result.json",
+    "sha256": "47d5eeb021a00324eab5bcc2eb3ad1a92f93ca455a707abbbbe90992b761681b"
+  },
+  "quality_evidence": [
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet49c-round2/submission/prepared/evidence.json.gz",
+      "sha256": "2088f9055e02f595481e6b2e3a496f0d255e6fb36817f59e3d5ecd691ce77ba6",
+      "supports": [
+        "varied_task_quality_passed",
+        "exact_or_target_oracle_passed",
+        "deterministic_repeats_passed",
+        "fresh_server_repeat_passed",
+        "target_model_unchanged",
+        "no_quality_loss"
+      ]
+    }
+  ],
+  "gates": {
+    "varied_task_quality_passed": true,
+    "exact_or_target_oracle_passed": true,
+    "deterministic_repeats_passed": true,
+    "fresh_server_repeat_passed": true,
+    "target_model_unchanged": true,
+    "no_quality_loss": true,
+    "strict_512_token_final_gate_passed": false
+  },
+  "submission_scope": {
+    "owner_authorization": {
+      "rule": "packet45.speed3.owner-authorized-128-token-scope.2026-10-15",
+      "date": "2026-10-15",
+      "authorization_text": "authorized: submit under the same 128-token scope as the October 13 record.",
+      "reference_submission": "cmv6pugme0020oa01fjrho6nx",
+      "requested_max_new": 128,
+      "scope": "same fixed realistic 12-prompt suite; cold; cached_tokens=0; 128 generated tokens per prompt; primary metric over 99 intervals between events 1 and 100"
+    },
+    "raw_realistic_final_gate": {
+      "passed": false,
+      "reason": "measurement preparation only; cap below fixed 512 and no promotion attestation; repeats/partial suites never qualify"
+    },
+    "strict_512_gate_passed": false,
+    "owner_exception_authorized": true,
+    "requested_max_new": 128,
+    "prepared_only": true,
+    "real_submission_performed": false,
+    "authorization_extension": "Coordinator decision 2026-10-17: packet49c WS128 may use the existing owner-authorized 128-token scope only if all 12 prompts are exact against the packet49 CPU oracle and the class-balanced rate exceeds 39.422009. split32 QSA changes arithmetic identity to iq3-p49-split32-v1; lossless against this line's own CPU reference, not an assertion of equality to SPEED6. Preparation does not submit; the coordinator performs real submission."
+  }
+}
