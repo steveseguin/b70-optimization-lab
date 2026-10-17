@@ -282,3 +282,27 @@ STOP-doing items applied:
 - p71c is lane-B filler only;
 - placements re-ranked from current timings (packet 79);
 - 3 Codex jobs (p58e, p78, p79) plus `lqreport`.
+
+## Review 10, 23:09 UTC: **ACT**
+
+**Evidence:**
+- 98% device-in-flight over 2 h; fault count 2.
+- Depth 2 closed (p71c: 28.17 vs 52.90 control).
+- **p79 (draft on rank 0) lost on A:** 23/25 −2.3%, 24/24 −1.3%; misses +2.1 ms. Packet 45 had already measured this. The projection ignored the draft's dependency on rank 1's final state.
+- The p58f waiter (lane-A queue only) would have raced the p80 record chain at about 23:45.
+
+**Actions, 23:10–23:15 UTC:**
+1. **Chain before 58f:**
+   - The p58f waiter was stopped; it was CPU-only and had not paused lane A.
+   - `fn-run/p80-prep.sh` waits for p81-A and Codex p80, writes PAUSE-A, runs p80's one-shot orchestration and `verify_ready.py`, and reports.
+   - The coordinator launches the p80 chain, then 58f after the chain exits.
+2. **Lane B work:** `laneB-followup-p81` auto-appends p81's lane-B best job after p81-A is DONE. Future packets (p83) must ship full-grid job files for both lanes.
+3. **norm-fused stays out of p80:** at launch, the coordinator reseals with `--norm production` (p80's `fast_reseal.py` supports it), whatever p78-B's composite result is. route-fast goes in only if it is confirmed alone.
+4. **route-fast standalone lane-B confirmation skipped:** p78's B job builder would collide with the running p78-B outputs, and it is only +0.54% on A. It stays out unless confirmed.
+5. **p79 closed** (note + DO-NOT-REPEAT, `00af674d8`). Codex **p83** works on draft bytes: a census first, then preregistered candidates (a lower-bit draft head prefix, or a smaller prefix N from independent text), with acceptance measured and full-grid job files for both lanes.
+
+**STOP-doing items applied:**
+- waiters must see chain and packet58 units;
+- no composite confirmations that include a known-negative part;
+- check dependencies and the ledger before opening a lever (memory updated);
+- no hand-appended lane-B follow-ups.
