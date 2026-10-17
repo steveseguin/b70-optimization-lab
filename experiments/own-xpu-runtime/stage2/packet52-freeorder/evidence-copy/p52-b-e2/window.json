@@ -1,0 +1,107 @@
+{
+  "schema": "own-runtime.packet52.window.v1",
+  "seal_sha256": "70b9ddb5167720ba38ab50de3b045864e5f7b2d7da9aec290bddbb86b1a66ebc",
+  "binary_sha256": "773ef20a3fdc6c6382f37cc48b54a4b2fb2c638a686c9fb3f445415ba6f97f77",
+  "card": 0,
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/umf/1.1/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin"
+  },
+  "mode": "exact",
+  "passed": true,
+  "device_executed": true,
+  "child_still_running": false,
+  "microbenchmark_only": true,
+  "model_speed_claim": false,
+  "started_utc_ns": 1792227107757420992,
+  "watchdog_seconds": 1140,
+  "cpu_affinity": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "coordinator_fault_review": "2026-10-17T08:50:00Z",
+  "systemd_cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/packet52-b-e2.service\n",
+  "host_memory": {
+    "MemFree": 50387910656,
+    "MemAvailable": 119665762304,
+    "SwapTotal": 8589930496,
+    "SwapFree": 8467836928
+  },
+  "storage_admission": {
+    "free_bytes": 20342255616,
+    "planned_write_bytes": 67108864,
+    "min_free_bytes": 8000000000
+  },
+  "foreign_clients": {
+    "visible_xe_clients": [],
+    "inaccessible_entries": 493,
+    "method": "passive /proc fdinfo only; no device discovery"
+  },
+  "stop_reasons": [],
+  "reviewed_fault_lines": 2,
+  "ldd": {
+    "returncode": 0,
+    "stdout": "\tlinux-vdso.so.1 (0x0000733d3a952000)\n\tlibcrypto.so.3 => /usr/lib/x86_64-linux-gnu/libcrypto.so.3 (0x0000733d3a400000)\n\tlibze_loader.so.1 => /usr/lib/x86_64-linux-gnu/libze_loader.so.1 (0x0000733d3a27b000)\n\tlibstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x0000733d39e00000)\n\tlibm.so.6 => /usr/lib/x86_64-linux-gnu/libm.so.6 (0x0000733d3a192000)\n\tlibgcc_s.so.1 => /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 (0x0000733d3a91c000)\n\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x0000733d39a00000)\n\tlibc.so.6 => /usr/lib/x86_64-linux-gnu/libc.so.6 (0x0000733d39600000)\n\t/lib64/ld-linux-x86-64.so.2 (0x0000733d3a954000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x0000733d3a915000)\n\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x0000733d38800000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x0000733d3a179000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x0000733d3a172000)\n\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x0000733d38200000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x0000733d3a156000)\n\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x0000733d36a00000)\n\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x0000733d39907000)\n\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x0000733d3a0f3000)\n",
+    "stderr": ""
+  },
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet52-freeorder/build/device/freeorder-bench",
+    "--mode",
+    "exact",
+    "--card",
+    "0",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet52-freeorder/evidence/p52-b-e2/run",
+    "--authorized-device-window"
+  ],
+  "pid": 194784,
+  "process_start_ticks": 6981598,
+  "anonymous_peak_bytes": 377917440,
+  "anonymous_limit_bytes": 8589934592,
+  "anonymous_stop_bytes": 8053063680,
+  "memory_last_sample": {
+    "anonymous_bytes": 283455488,
+    "root_seen": true,
+    "processes": [
+      {
+        "pid": 194784,
+        "rss_anon_bytes": 283455488
+      }
+    ]
+  },
+  "returncode": 0,
+  "sigterm_sent": false,
+  "elapsed_seconds": 33.668357319009374,
+  "native_files": {
+    "run/receipt.json": "209b4942c8f8868dbe3d3c998bf39f655bb2ce5d37a1db14ba1f6acdb94f0ad1",
+    "run/comparisons.jsonl": "ed2b3cb18af48113e1aad684fa4f6b88e887de001e82cd2cc447ca19ed7008d7",
+    "run/iterations.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/manifest.json": "d529f308ae95bbd9ecf7c6170a935075d9605ac800d19b2d606e599ae686d593"
+  },
+  "exact_output_identity": "58442d26f9ccbb4f0cd6d3ac9b8b5293b3a220b07d783883a7bc8ecbd4c940a5",
+  "finished_utc_ns": 1792227141795986558
+}

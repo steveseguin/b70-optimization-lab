@@ -14,3 +14,15 @@
 These are preparation findings, not measured candidate speed failures. The
 arithmetic-v3 decision is pending the coordinator's E/T windows. See the
 [preparation closeout](CPU-PREPARATION-CLOSEOUT.md).
+
+## Device closeout, 2026-10-17
+
+The preparation-only statements above are historical. See the
+[device closeout](../../../../notes/2026-10-17-own-runtime-packet52.md#device-results--free-order-ceiling-closed-negative).
+
+| Arm | Measured outcome | Revisit condition |
+| --- | --- | --- |
+| Five-order grid across seven classes | Common selection saves only 10.4675/10.4160 us against 120 us; arithmetic v3 rejected | New mechanism with material headroom; no rerun of the same grid |
+| Per-short-workgroup 8 KB IQ2 staging (`row16-dual-local`) | Expsgate roughly 33 us slower; staging cost attribution unproven | Persistent workgroups amortize fill while retaining production arithmetic (packet53) |
+| All QKV, attention, HC and expsgate free-order arms | All regress in both owners | A new measured bottleneck, not more of the same geometry sweep |
+| Exit sensor recognizing only Z/X | p52-a-e1 wrapper refused after exit_mm removed RssAnon | Use PF_EXITING-tolerant sensor from b9745a557; keep live malformed-field rejection |
