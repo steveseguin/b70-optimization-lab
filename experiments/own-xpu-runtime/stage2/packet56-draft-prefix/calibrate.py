@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Apply the committed text-only rule; read admitted GGUF headers, never weights."""
+import argparse
 import collections
 import hashlib
 import json
@@ -17,13 +18,16 @@ def sha(raw):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--verify', action='store_true')
+    args = parser.parse_args()
     assert os.getpriority(os.PRIO_PROCESS, 0) == 19
     assert set(os.sched_getaffinity(0)) <= set(range(4, 16)) | set(range(20, 32))
     rule_raw = (P / 'calibration/preregistration.json').read_bytes()
     rule = json.loads(rule_raw)
     # Selection cannot be silently replaced after examining benchmark outputs.
     destination = P / 'calibration/selection.json'
-    assert not destination.exists(), 'selection already frozen'
+    assert args.verify or not destination.exists(), 'selection already frozen'
     sys.path.insert(0, str(ROOT / 'experiments/own-xpu-runtime/stage1/packet1b'))
     from loaders.headers import gguf_header
     tok_path = ROOT / 'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet2-cpu-oracle'
@@ -73,7 +77,10 @@ def main():
                   tokenizer_sha256=sha((tok_path / 'tokenizer.py').read_bytes()),
                   histogram={str(k): v for k, v in sorted(counts.items())},
                   scope='Independent local text tokens; not generated-target acceptance or benchmark coverage')
-    destination.write_text(json.dumps(result, indent=2) + '\n')
+    if args.verify:
+        assert json.loads(destination.read_text()) == result, 'sealed calibration differs'
+    else:
+        destination.write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps({k:v for k,v in result.items() if k not in ('sources','histogram')}))
 
 
