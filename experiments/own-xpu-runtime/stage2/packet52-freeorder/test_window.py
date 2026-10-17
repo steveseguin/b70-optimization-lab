@@ -94,6 +94,21 @@ class AdmissionTests(unittest.TestCase):
             self.assertEqual(result['anonymous_bytes'], 0)
             self.assertFalse(result['root_seen'])
 
+    def test_exiting_task_without_mm_is_tolerated_only_with_pf_exiting(self):
+        # p52-a-e1: the native child lost RssAnon in exit_mm() while still R.
+        with tempfile.TemporaryDirectory() as directory:
+            proc = Path(directory)
+            root = proc / '123'
+            root.mkdir()
+            (root / 'status').write_text('State:\tR (running)\n')
+            (root / 'stat').write_text('123 (freeorder bench) R 1 123 123 0 -1 4194560 0 0\n')
+            with self.assertRaisesRegex(ValueError, 'missing/malformed RssAnon'):
+                support.process_tree_anon(123, proc)
+            (root / 'stat').write_text('123 (freeorder bench) R 1 123 123 0 -1 4194564 0 0\n')
+            result = support.process_tree_anon(123, proc)
+            self.assertEqual(result['anonymous_bytes'], 0)
+            self.assertFalse(result['root_seen'])
+
     def test_seal_requires_each_passing_cpu_gate_and_bound_binary(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

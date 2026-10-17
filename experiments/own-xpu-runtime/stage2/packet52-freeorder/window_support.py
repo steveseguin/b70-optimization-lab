@@ -31,7 +31,18 @@ def _exited_status(proc, pid):
     except (FileNotFoundError, ProcessLookupError):
         return True
     state = [line.split()[1] for line in status.splitlines() if line.startswith('State:')]
-    return bool(state) and state[0] in ('Z', 'X')
+    if bool(state) and state[0] in ('Z', 'X'):
+        return True
+    # 2026-10-17 p52-a-e1: exit_mm() drops RssAnon before the task becomes a
+    # zombie, so a still-R/D task can lack it. Accept only the kernel's own
+    # PF_EXITING flag (0x4, /proc/PID/stat field 9); live tasks still fail.
+    try:
+        fields = (proc / str(pid) / 'stat').read_text().rsplit(')', 1)[1].split()
+    except (FileNotFoundError, ProcessLookupError):
+        return not (proc / str(pid)).exists()
+    except (IndexError, OSError):
+        return False
+    return len(fields) > 6 and fields[6].isdigit() and bool(int(fields[6]) & 0x4)
 
 
 def process_tree_anon(pid, proc=Path('/proc')):
