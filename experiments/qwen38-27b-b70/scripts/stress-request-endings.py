@@ -26,8 +26,12 @@ ap.add_argument('--max-context', type=int, default=30000, help='approximate toke
 ap.add_argument('--pause-share', type=float, default=0.03, help='share of requests followed by an idle pause')
 ap.add_argument('--log', required=True)
 ap.add_argument('--timeout', type=float, default=180)
+ap.add_argument('--answers', default='8,16,32,64,128,200,300', help='max_tokens values drawn per request (comma list)')
+ap.add_argument('--tail-words', default='20,400', help='new words added before each request: min,max')
 a = ap.parse_args()
 rng = random.Random(a.seed)
+ANSWERS = tuple(int(x) for x in a.answers.split(','))
+TAIL = tuple(int(x) for x in a.tail_words.split(','))
 WORDS = ('time person year way day thing man world life hand part child eye woman place work week case point number '
          'group problem fact file test value error line code check build run state cache block step token answer '
          'record table field index list queue server client model layer write read call open close start stop '
@@ -69,8 +73,8 @@ with open(a.log, 'a') as log:
         c = rng.choice(convs)
         if c['turn'] and len(c['text']) / 4.2 > a.max_context:
             c['text'], c['turn'] = chunk(rng.randrange(300, 2500)), 0
-        c['text'] += '\n' + chunk(rng.randrange(20, 400)) + '\nQuestion: list the next records.\nAnswer:'
-        max_tokens = rng.choice((8, 16, 32, 64, 128, 200, 300))
+        c['text'] += '\n' + chunk(rng.randrange(*TAIL)) + '\nQuestion: list the next records.\nAnswer:'
+        max_tokens = rng.choice(ANSWERS)
         stop = ['\nRecord 0'] if rng.random() < 0.3 else None
         t0 = time.time()
         try:

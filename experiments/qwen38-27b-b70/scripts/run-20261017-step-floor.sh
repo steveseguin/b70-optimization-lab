@@ -143,7 +143,7 @@ fi
 for arm in $ARMS; do
   OWNER=; start_server "$arm" || exit 1
   if [[ -n ${STRESS_MIN:-} ]]; then   # the hang reproduction: request endings instead of the write probe
-    python3 $S/stress-request-endings.py --base-url http://127.0.0.1:$PORT --minutes "$STRESS_MIN" \
+    python3 $S/stress-request-endings.py --base-url http://127.0.0.1:$PORT --minutes "$STRESS_MIN" ${STRESS_ARGS:-} \
       --log "$D/stress-$arm.jsonl" > "$D/stress-$arm.log" 2>&1 || {
       say "stress client stopped with a failed request on $arm; saving the evidence before anything else"
       sleep 5
