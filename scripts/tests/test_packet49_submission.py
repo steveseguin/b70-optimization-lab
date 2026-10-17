@@ -169,7 +169,7 @@ def test_computes_class_balanced_and_secondary_metrics():
     assert r['realistic_final_gate']['passed'] is False
 
 
-@pytest.mark.parametrize('packet', list(p.LINEAGE))
+@pytest.mark.parametrize('packet', [name for name, pin in p.LINEAGE.items() if pin is not None])
 def test_generic_lineage(packet):
     assert p.derive(fixture(packet), packet)['packet'] == packet
 
@@ -374,6 +374,7 @@ def test_collect_reads_synthetic_chain_without_copying_kd_binary(tmp_path):
     collected = p.collect(p.DEFAULT_PACKET, chain, oracle)
     assert collected.members['KD/owner0/row-1/sample.bf16']['retention'] == 'sha256-only'
     assert 'raw_base64' not in collected.members['KD/owner0/row-1/sample.bf16']
+    original.add('record-threshold.json', p.ROOT / p.THRESHOLD_FILE)
     assert p.derive(collected, p.DEFAULT_PACKET) == p.derive(original, p.DEFAULT_PACKET)
     collected.members['KD/owner0/row-1/sample.bf16']['sha256'] = '0' * 64
     with pytest.raises(ValueError, match='fixture hash mismatch'):
@@ -385,3 +386,210 @@ def test_fault_between_windows_refused():
     put(evidence, 'WS/kernel-preflight.txt', b'historical Fault response\nnew timestamp: xe engine reset\n')
     with pytest.raises(ValueError, match='fault-line change between windows'):
         p.derive(evidence, p.DEFAULT_PACKET)
+
+
+def policy(e, records=None):
+    value = json.loads((p.ROOT / p.THRESHOLD_FILE).read_bytes())
+    if records is not None:
+        value['records'] = records
+    put(e, 'record-threshold.json', value)
+    return value
+
+
+def next_record(rate=50):
+    return dict(reference_submission='submitted49c', threshold_tok_s=rate,
+                result=dict(path='experiments/submitted-result.json', sha256='a' * 64))
+
+
+def test_current_record_file_replaces_historical_floor():
+    e = fixture()
+    current = policy(e)
+    current['records'].append(next_record(52))
+    put(e, 'record-threshold.json', current)
+    with pytest.raises(ValueError, match='speed at or below 52'):
+        p.derive(e, p.DEFAULT_PACKET)
+    current['records'][-1]['threshold_tok_s'] = 50
+    digest = put(e, 'record-threshold.json', current)
+    comparison = p.derive(e, p.DEFAULT_PACKET)['comparison']
+    assert comparison['threshold_tok_s'] == 50
+    assert comparison['reference_submission'] == 'submitted49c'
+    assert comparison['threshold_file_sha256'] == digest
+
+
+@pytest.mark.parametrize('rate', [float('nan'), float('inf'), -1, True, '50', 39, 39.422009])
+def test_bad_or_lowered_threshold_refused(rate):
+    value = json.loads((p.ROOT / p.THRESHOLD_FILE).read_bytes())
+    value['records'].append(next_record(rate))
+    with pytest.raises(ValueError, match='finite and strictly increasing'):
+        p.validate_threshold(value)
+
+
+@pytest.mark.parametrize('change', ['schema', 'empty', 'anchor', 'duplicate', 'missing_result'])
+def test_threshold_history_structure_refused(change):
+    value = json.loads((p.ROOT / p.THRESHOLD_FILE).read_bytes())
+    value['records'].append(next_record())
+    if change == 'schema':
+        value['schema'] = 'wrong'
+    elif change == 'empty':
+        value['records'] = []
+    elif change == 'anchor':
+        value['records'][0]['threshold_tok_s'] -= 1
+    elif change == 'duplicate':
+        value['records'][-1]['reference_submission'] = p.REFERENCE_RECORD
+    else:
+        del value['records'][-1]['result']
+    with pytest.raises(ValueError):
+        p.validate_threshold(value)
+
+
+def test_threshold_change_between_collect_and_prepare_refused(tmp_path):
+    e = fixture()
+    value = policy(e)
+    path = tmp_path / p.THRESHOLD_FILE
+    path.parent.mkdir(parents=True)
+    value['records'].append(next_record())
+    path.write_bytes(p.encoded(value))
+    out = tmp_path / p.STAGE / p.DEFAULT_PACKET / 'submission/prepared'
+    with pytest.raises(ValueError, match='changed during preparation'):
+        p.write_prepared(e, p.DEFAULT_PACKET, out, tmp_path)
+    assert not out.exists()
+
+
+def d_fixture():
+    e = fixture()
+    old_seal = e.read('seal.json')
+    selection = {'schema': 'packet49d.selection.v1', 'route': 'route-rank4',
+                 'recurrence': 'rows4-shared', 'hc': 'mix-vector4'}
+    selected = put(e, 'selection.json', selection)
+    seal = copy.deepcopy(old_seal)
+    seal['runtime_revision'] = '123456789abc'
+    seal['device_admission_ready'] = True
+    source = str(p.STAGE / p.DEFAULT_PACKET / 'oracle/suite_check.py')
+    seal['sources'][str(p.STAGE / p.D_PACKET / 'oracle/suite_check.py')] = seal['sources'][source]
+    seal['sources'][str(p.STAGE / p.D_PACKET / 'selection.json')] = selected
+    seal_hash = put(e, 'seal.json', seal)
+    pin = dict(runtime_revision=seal['runtime_revision'], build_receipt_sha256=seal_hash, selection_sha256=selected)
+    put(e, 'submission-pins.json', dict(schema='lab.packet49.submission-pins.v1', lineages={p.D_PACKET: pin}))
+    policy(e)
+    for name in p.WINDOWS:
+        w = e.read(name + '/window.json')
+        w['schema'] = 'packet49d.window.v1'
+        w['build_receipt_sha256'] = seal_hash
+        w['selection_sha256'] = selected
+        for leaf in list(w['receipts']):
+            if leaf == 'host-reference-identity.json' or leaf in ('owner0/receipt.json', 'owner1/receipt.json') or leaf.endswith(('/rank0/receipt.json', '/rank1/receipt.json')):
+                native = e.read(name + '/' + leaf)
+                native['selection_sha256'] = selected
+                w['receipts'][leaf] = put(e, name + '/' + leaf, native)
+        if name == 'WS128':
+            w['exactness_companion']['sha256'] = p.sha(e.raw('WS128x/window.json'))
+        put(e, name + '/window.json', w)
+    return e
+
+
+def test_packet49d_own_lineage_selection_and_unchanged_oracle():
+    e = d_fixture()
+    result = p.derive(e, p.D_PACKET)
+    assert result['packet'] == p.D_PACKET
+    assert result['promotionIdentity']['runtime_revision'] == '123456789abc'
+    assert result['exactness']['oracle_arithmetic'] == p.ARITHMETIC
+    assert result['comparison']['threshold_file_sha256'] == p.sha(e.raw('record-threshold.json'))
+    assert 'packet49d' in result['submission_scope']['authorization_extension']
+
+
+@pytest.mark.parametrize('change', ['pending', 'selection', 'revision', 'seal', 'missing_threshold'])
+def test_packet49d_pin_mutation_refused(change):
+    e = d_fixture()
+    if change == 'pending':
+        pins = e.read('submission-pins.json')
+        pins['lineages'][p.D_PACKET] = None
+        put(e, 'submission-pins.json', pins)
+    elif change == 'selection':
+        put(e, 'selection.json', {'route': 'production'})
+    elif change == 'missing_threshold':
+        del e.members['record-threshold.json']
+    else:
+        pins = e.read('submission-pins.json')
+        pins['lineages'][p.D_PACKET]['runtime_revision' if change == 'revision' else 'build_receipt_sha256'] = '0' * (12 if change == 'revision' else 64)
+        put(e, 'submission-pins.json', pins)
+    with pytest.raises(ValueError):
+        p.derive(e, p.D_PACKET)
+
+
+def test_fast_reseal_pin_api_binds_final_runtime_and_selection(tmp_path):
+    e = d_fixture()
+    packet = tmp_path / p.STAGE / p.D_PACKET
+    packet.mkdir(parents=True)
+    (packet / 'build-receipt.json').write_bytes(e.raw('seal.json'))
+    (packet / 'selection.json').write_bytes(e.raw('selection.json'))
+    pins = tmp_path / p.PINS_FILE
+    pins.parent.mkdir(parents=True)
+    pins.write_bytes((p.ROOT / p.PINS_FILE).read_bytes())
+    result = p.pin_resealed_packet49d(repo=tmp_path)
+    assert result == e.read('submission-pins.json')['lineages'][p.D_PACKET]
+    (packet / 'selection.json').write_text('{}')
+    with pytest.raises(ValueError, match='not bound'):
+        p.pin_resealed_packet49d(repo=tmp_path)
+
+
+def test_record_update_is_bound_monotonic_and_historical_replay_survives(tmp_path):
+    output, _ = prepared(tmp_path)
+    path = tmp_path / p.THRESHOLD_FILE
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes((p.ROOT / p.THRESHOLD_FILE).read_bytes())
+    old = json.loads((output / 'result.json').read_bytes())
+    updated = p.update_record(output / 'result.json', 'submitted49c', repo=tmp_path)
+    assert updated['threshold_tok_s'] == pytest.approx(51.25)
+    assert updated['result']['sha256'] == p.sha((output / 'result.json').read_bytes())
+    p.replay_result(old, tmp_path)
+    with pytest.raises(ValueError, match='must improve'):
+        p.update_record(output / 'result.json', 'duplicate', repo=tmp_path)
+
+
+def test_packet49d_prepared_queue_uses_trusted_pin_and_current_threshold(tmp_path):
+    e = d_fixture()
+    current = e.read('record-threshold.json')
+    current['records'].append(next_record(50))
+    put(e, 'record-threshold.json', current)
+    for leaf, key in [(p.PINS_FILE, 'submission-pins.json'), (p.THRESHOLD_FILE, 'record-threshold.json')]:
+        path = tmp_path / leaf
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(e.raw(key))
+    out = tmp_path / p.STAGE / p.D_PACKET / 'submission/prepared'
+    result = p.write_prepared(e, p.D_PACKET, out, tmp_path)
+    item = json.loads((out / 'payload-queue.json').read_bytes())[0]
+    assert p.scope_problems(item, tmp_path) == []
+    text = (out / 'result-packet.md').read_text()
+    assert 'over 50 threshold' in text and '`runtime_revision`' in text
+    pins = json.loads((tmp_path / p.PINS_FILE).read_bytes())
+    pins['lineages'][p.D_PACKET]['build_receipt_sha256'] = '0' * 64
+    (tmp_path / p.PINS_FILE).write_bytes(p.encoded(pins))
+    assert p.scope_problems(item, tmp_path)
+    # Historical replay uses its original bound pin, not a newly resealed packet.
+    assert p.replay_result(result, tmp_path)['packet'] == p.D_PACKET
+
+
+@pytest.mark.parametrize('location', ['KD/window.json', 'KD/host-reference-identity.json',
+                                    'KD/owner0/receipt.json', 'KD/owner1/receipt.json',
+                                    'W2m/run/rank0/receipt.json', 'WS/run/ranks/rank1/receipt.json',
+                                    'WS128/run/repeat-1/incident-retrospective/receipt.json'])
+@pytest.mark.parametrize('missing', [False, True])
+def test_packet49d_native_observed_selection_hash_cannot_drift(location, missing):
+    e = d_fixture()
+    # Per-request pipeline receipts need no duplicate stamp: resident rank
+    # teardown receipts bind every request. Any present stamp must still agree.
+    if missing and '/repeat-1/' in location:
+        return
+    native = e.read(location)
+    if missing:
+        del native['selection_sha256']
+    else:
+        native['selection_sha256'] = '0' * 64
+    changed = put(e, location, native)
+    window, relative = location.split('/', 1)
+    if relative != 'window.json':
+        row = e.read(window + '/window.json')
+        row['receipts'][relative] = changed
+        put(e, window + '/window.json', row)
+    with pytest.raises(ValueError, match='native selection identity mismatch'):
+        p.derive(e, p.D_PACKET)

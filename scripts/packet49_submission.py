@@ -28,7 +28,7 @@ DEFAULT_PACKET = 'packet49c-round2'
 ARITHMETIC = 'iq3-p49-split32-v1'
 MODEL_REVISION = '766911a6b7369840a91dbcd95f9f997acaab6cd6'
 SUITE_SHA = '0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812'
-RECORD_FLOOR = 39.422009  # Owner's supplied comparison threshold, not a candidate score.
+RECORD_FLOOR = 39.422009  # Historical bundle fallback only; new preparation reads THRESHOLD_FILE.
 REFERENCE_RECORD = 'cmv9wjmtj013gle01v8k1yg4v'
 FROZEN_MANIFEST = STAGE / 'suite-inputs-20261012-cap128/suite-manifest.json'
 PRIMARY = 'median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft'
@@ -39,7 +39,11 @@ LINEAGE = {
     'packet49b-gemv': ('34c62b433', '000960bb7690119fbb99723c00abc23961aab3efb6b94bfeb8734624e3e71221'),
     'packet49c-round2': ('192ee28f2', '2ebe64adc810d7560c23f2674117c424caf360a4e7c3b75217eb25aa0b900dd7'),
 }
-# Only 49c has the coordinator's current submission authorization. No wildcard.
+D_PACKET = 'packet49d-round3'
+LINEAGE[D_PACKET] = None  # Filled only by a verified post-device fast reseal.
+PINS_FILE = Path('scripts/packet49_submission_pins.json')
+THRESHOLD_FILE = Path('scripts/packet49_record_threshold.json')
+# Historical 49c scope stays replayable; 49d uses its explicit sealed pin.
 OWNER_128_PACKET49 = {(LINEAGE[DEFAULT_PACKET]): DEFAULT_PACKET}
 CLASSES = {
     'incident-retrospective': 'operations', 'code-review': 'code',
@@ -71,6 +75,91 @@ def sha(raw):
 
 def encoded(value):
     return (json.dumps(value, indent=2, allow_nan=False) + '\n').encode()
+
+
+def validate_threshold(row):
+    require(isinstance(row, dict) and row.get('schema') == 'lab.packet49.record-threshold.v1', 'record threshold schema')
+    records = row.get('records')
+    require(isinstance(records, list) and records, 'record threshold history missing')
+    require(records[0] == dict(reference_submission=REFERENCE_RECORD, threshold_tok_s=39.422009), 'record threshold historical anchor changed')
+    previous = 0.
+    ids = set()
+    for record in records:
+        require(isinstance(record, dict), 'record threshold row must be an object')
+        value = record.get('threshold_tok_s')
+        require(type(value) in (int, float) and math.isfinite(value) and value > previous,
+                'record threshold must be finite and strictly increasing; lowering refused')
+        submission = record.get('reference_submission')
+        require(isinstance(submission, str) and re.fullmatch(r'[A-Za-z0-9_-]+', submission)
+                and submission not in ids, 'invalid or duplicate reference submission')
+        if previous:
+            ref = record.get('result', {})
+            require(isinstance(ref.get('path'), str) and not Path(ref['path']).is_absolute()
+                    and '..' not in Path(ref['path']).parts
+                    and re.fullmatch(r'[0-9a-f]{64}', str(ref.get('sha256', ''))), 'record result pin missing')
+        ids.add(submission)
+        previous = value
+    return records[-1]
+
+
+def threshold_policy(e):
+    if 'record-threshold.json' not in e.members:
+        return dict(reference_submission=REFERENCE_RECORD, threshold_tok_s=RECORD_FLOOR), None
+    row = e.read('record-threshold.json')
+    return validate_threshold(row), sha(e.raw('record-threshold.json'))
+
+
+def lineage_pin(e, packet):
+    require(packet in LINEAGE, 'unknown packet lineage')
+    if packet != D_PACKET:
+        revision, seal_hash = LINEAGE[packet]
+        return revision, seal_hash
+    pins = e.read('submission-pins.json')
+    require(pins.get('schema') == 'lab.packet49.submission-pins.v1', 'submission pins schema')
+    pin = pins.get('lineages', {}).get(packet)
+    require(isinstance(pin, dict), 'packet49d selection has not been resealed')
+    revision, seal_hash = pin.get('runtime_revision'), pin.get('build_receipt_sha256')
+    require(isinstance(revision, str) and re.fullmatch(r'[0-9a-f]{7,40}', revision)
+            and re.fullmatch(r'[0-9a-f]{64}', str(seal_hash)), 'packet49d runtime/seal pin invalid')
+    selection_hash = pin.get('selection_sha256')
+    require(re.fullmatch(r'[0-9a-f]{64}', str(selection_hash)), 'packet49d selection pin invalid')
+    e.raw('selection.json', selection_hash)
+    seal = e.read('seal.json', seal_hash)
+    require(seal.get('runtime_revision') == revision and seal.get('device_admission_ready') is True
+            and seal.get('sources', {}).get(str(STAGE / packet / 'selection.json')) == selection_hash,
+            'packet49d selection/runtime not bound by seal')
+    require('record-threshold.json' in e.members, 'packet49d requires current pinned record threshold')
+    return revision, seal_hash
+
+
+def pin_resealed_packet49d(*, repo=ROOT):
+    """Called AFTER p49d fast-reseal verifies and writes its final build receipt.
+
+    CPU checks remain the caller's responsibility. This pins the exact final
+    selection and runtime; it never builds, runs a device, or changes the floor.
+    """
+    packet = repo / STAGE / D_PACKET
+    seal_raw = (packet / 'build-receipt.json').read_bytes()
+    seal = json.loads(seal_raw)
+    selection_raw = (packet / 'selection.json').read_bytes()
+    selection_hash = sha(selection_raw)
+    require(seal.get('passed') is True and seal.get('device_executed') is False
+            and seal.get('arithmetic') == ARITHMETIC and seal.get('device_admission_ready') is True, 'incomplete packet49d final seal')
+    revision = seal.get('runtime_revision')
+    require(isinstance(revision, str) and re.fullmatch(r'[0-9a-f]{7,40}', revision), 'missing packet49d runtime revision')
+    require(seal.get('sources', {}).get(str(STAGE / D_PACKET / 'selection.json')) == selection_hash,
+            'selection is not bound by final seal')
+    pins = json.loads((repo / PINS_FILE).read_bytes())
+    require(pins.get('schema') == 'lab.packet49.submission-pins.v1'
+            and set(pins.get('lineages', {})) == {D_PACKET}, 'submission pins schema')
+    pins['lineages'][D_PACKET] = dict(runtime_revision=revision, build_receipt_sha256=sha(seal_raw),
+                                    selection_sha256=selection_hash)
+    (repo / PINS_FILE).write_bytes(encoded(pins))
+    return pins['lineages'][D_PACKET]
+
+
+def pin_packet49d(repo=ROOT):
+    return pin_resealed_packet49d(repo=repo)
 
 
 def token_hash(tokens):
@@ -142,7 +231,12 @@ def inside(root, value):
 def collect(packet, chain, oracle, repo=ROOT):
     """Read finished artifacts only; no glob of model trees or binary payloads."""
     e = Evidence()
+    e.add('record-threshold.json', repo / THRESHOLD_FILE)
+    validate_threshold(e.read('record-threshold.json'))
     directory = repo / STAGE / packet
+    if packet == D_PACKET:
+        e.add('submission-pins.json', repo / PINS_FILE)
+        e.add('selection.json', directory / 'selection.json')
     e.add('seal.json', directory / 'build-receipt.json')
     if packet != 'packet49-integrate':
         e.add('oracle-binding.json', directory / 'oracle-binding.json')
@@ -178,20 +272,26 @@ def collect(packet, chain, oracle, repo=ROOT):
     return e
 
 
-def scope():
+def scope(packet=DEFAULT_PACKET):
     from submit_localmaxxing_results import OWNER_128_AUTHORIZATION, OWNER_128_RAW_GATE
     return dict(owner_authorization=OWNER_128_AUTHORIZATION,
                 raw_realistic_final_gate=OWNER_128_RAW_GATE, strict_512_gate_passed=False,
                 owner_exception_authorized=True, requested_max_new=128,
                 prepared_only=True, real_submission_performed=False,
-                authorization_extension=EXTENSION)
+                authorization_extension=(EXTENSION if packet != D_PACKET else
+                    'Coordinator packet49d scope: same packet49 CPU oracle, all 12 prompts exact, '
+                    '128-token owner-authorized scope; unchanged iq3-p49-split32-v1 arithmetic; '
+                    'class-balanced speed must exceed the pinned current submitted record. '
+                    'Preparation does not submit; the coordinator performs real submission.'))
 
 
 def derive(e, packet):
     """Recompute the entire result from hash-bound, original receipt bytes."""
-    revision, seal_hash = LINEAGE[packet]
+    revision, seal_hash = lineage_pin(e, packet)
+    threshold, threshold_hash = threshold_policy(e)
+    floor = threshold['threshold_tok_s']
     seal = e.read('seal.json', seal_hash)
-    require(seal['passed'] is True and seal['parent_commit'] == revision
+    require(seal['passed'] is True and seal['runtime_revision' if packet == D_PACKET else 'parent_commit'] == revision
             and seal['arithmetic'] == ARITHMETIC, 'sealed runtime identity mismatch')
     completion = e.read('oracle/completion.json')
     require(completion['passed'] is True and completion['device_executed'] is False
@@ -258,9 +358,17 @@ def derive(e, packet):
     windows = {name: e.read(name + '/window.json') for name in WINDOWS}
     headline = windows['WS128']
     artifacts = seal['artifacts_sha256']
+    selected_hash = sha(e.raw('selection.json')) if packet == D_PACKET else None
+
+    def observed_selection(row, location, *, mandatory=False):
+        if selected_hash is not None and (mandatory or 'selection_sha256' in row):
+            require(row.get('selection_sha256') == selected_hash,
+                    'native selection identity mismatch: ' + location)
+
     seen_pids, checked = set(), {}
     initial_faults = {line for line in e.raw('KD/kernel-preflight.txt').decode().splitlines() if FAULT.search(line)}
     for name, w in windows.items():
+        observed_selection(w, name + '/window.json', mandatory=True)
         require(w['schema'] == packet.split('-')[0] + '.window.v1' and w['window'] == name
                 and w['passed'] is True and w['qualifying'] is True
                 and w['device_executed'] is True and w['cpu_rehearsal'] is False
@@ -290,17 +398,20 @@ def derive(e, packet):
             if relative.endswith('.json'):
                 r = e.read(name + '/' + relative, digest)
                 require(r.get('passed') is True, 'failed native receipt: ' + name + '/' + relative)
+                observed_selection(r, name + '/' + relative)
         if name == 'KD':
             mandatory = {'host-reference-identity.json', 'host-reference.jsonl.gz'} | {
                 f'owner{i}/{leaf}' for i in (0, 1) for leaf in ('receipt.json', 'fixture-comparison.json')}
             require(mandatory <= set(w['receipts']), 'KD mandatory receipts missing')
             host = e.read('KD/host-reference-identity.json')
+            observed_selection(host, 'KD/host-reference-identity.json', mandatory=True)
             require(host['passed'] is True and host['device_executed'] is False
                     and host['binary_sha256'] == artifacts['gnu-host/own-rt-iq3']
                     and host['dispatch_sha256'] == headline['dispatch_sha256'] and host['fixtures']
                     and host['capture_table_sha256'] == e.read('oracle/kd-capture.json')['table_sha256'], 'KD host identity mismatch')
             for owner in (0, 1):
                 native = e.read(f'KD/owner{owner}/receipt.json')
+                observed_selection(native, f'KD/owner{owner}/receipt.json', mandatory=True)
                 teardown = native['teardown']
                 require(native['device_executed'] is True and len(teardown) == 1
                         and teardown[0]['safe_to_exit'] is True and teardown[0]['live_bytes'] == 0
@@ -318,6 +429,7 @@ def derive(e, packet):
         for rank in (0, 1):
             key = f'{owner}/rank{rank}/receipt.json'
             native = e.read(name + '/' + key, w['receipts'][key])
+            observed_selection(native, name + '/' + key, mandatory=True)
             teardown = native['teardown']
             require(native['rank'] == rank and len(teardown) == 1
                     and teardown[0]['safe_to_exit'] is True and teardown[0]['live_bytes'] == 0
@@ -408,7 +520,7 @@ def derive(e, packet):
     classes = {c: statistics.median(r['submission_tok_s'] for r in rows if r['prompt_class'] == c)
                for c in sorted(set(CLASSES.values()))}
     headline_rate = statistics.median(classes.values())
-    require(headline_rate > RECORD_FLOOR, f'speed at or below {RECORD_FLOOR}: {headline_rate}')
+    require(headline_rate > floor, f'speed at or below {floor}: {headline_rate}')
     identity = dict(model_revision=MODEL_REVISION, runtime_revision=revision,
                     optimization_identity=f'{packet}-{ARITHMETIC}-tp2-c4096-target23-25-draft-rank1-seal-{seal_hash}',
                     suite_sha256=SUITE_SHA, arithmetic=ARITHMETIC)
@@ -426,9 +538,10 @@ def derive(e, packet):
                                oracle_arithmetic=ARITHMETIC, all_prompts_exact=True,
                                repeated_windows=list(SUITES), unchanged_target_verifier=True,
                                authority='hash-bound CPU oracle and independent device checker receipts; no tolerance'),
-                rows=rows, submission_scope=scope(), realistic_final_gate=scope()['raw_realistic_final_gate'],
-                comparison=dict(reference_submission=REFERENCE_RECORD, threshold_tok_s=RECORD_FLOOR,
-                                observed_increase_percent=(headline_rate / RECORD_FLOOR - 1) * 100),
+                rows=rows, submission_scope=scope(packet), realistic_final_gate=scope(packet)['raw_realistic_final_gate'],
+                comparison=dict(reference_submission=threshold['reference_submission'], threshold_tok_s=floor,
+                                observed_increase_percent=(headline_rate / floor - 1) * 100,
+                                **({'threshold_file_sha256': threshold_hash} if threshold_hash else {})),
                 limitations=['512-token natural completion and 512-input-token prefill not measured',
                              'New split32 arithmetic; exact to its own CPU reference, not claimed identical to SPEED6',
                              'One preregistered timed WS128; independent quality windows are not pooled speed repeats',
@@ -447,7 +560,7 @@ def payload_for(result, result_ref, attestation_ref, result_doc):
         buildReceiptSha256=result['build_receipt_sha256'], bootId=result['boot_id'],
         dispatchSha256=result['dispatch_sha256'], targetSplit=[23, 25], draftRank=1, deviceCards=[0, 1],
         realisticSuiteScopeException=OWNER_128_AUTHORIZATION,
-        scopeAuthorizationExtension=EXTENSION, rawRealisticFinalGate=result['realistic_final_gate'],
+        scopeAuthorizationExtension=result['submission_scope']['authorization_extension'], rawRealisticFinalGate=result['realistic_final_gate'],
         realisticSuiteGatePassed=False, strict512TokenFinalGatePassed=False, requestedMaxNew=128,
         realisticSuiteId='rapid-model-snapshots-b70-realistic-v1', realisticSuiteCachedTokensAllZero=True,
         realisticPromptTokenCounts=[r['prompt_tokens'] for r in rows],
@@ -515,18 +628,25 @@ def scope_problems(item, repo=ROOT):
         flags = item['payload']['engineFlags']
         identity = flags['promotionIdentity']
         pair = (identity['runtime_revision'], flags['buildReceiptSha256'])
-        require(pair in OWNER_128_PACKET49, 'packet49 runtime/seal pair not owner-authorized')
+        authorized = dict(OWNER_128_PACKET49)
+        if flags.get('packet49Evidence') is True and D_PACKET in identity.get('optimization_identity', ''):
+            pins = json.loads((repo / PINS_FILE).read_bytes())
+            require(pins.get('schema') == 'lab.packet49.submission-pins.v1', 'submission pins schema')
+            pin = pins.get('lineages', {}).get(D_PACKET)
+            require(isinstance(pin, dict), 'packet49d selection has not been resealed')
+            authorized[(pin['runtime_revision'], pin['build_receipt_sha256'])] = D_PACKET
+        require(pair in authorized, 'packet49 runtime/seal pair not owner-authorized')
         result_ref = dict(path=flags['benchmarkJson'], sha256=flags['benchmarkJsonSha256'])
         att_ref = dict(path=flags['promotionAttestation'], sha256=flags['promotionAttestationSha256'])
         result = json.loads(bound_file(result_ref, repo))
         att = json.loads(bound_file(att_ref, repo))
         require_qualifying(result)
         require_qualifying(att)
-        require(result['packet'] == OWNER_128_PACKET49[pair], 'packet pin mismatch')
+        require(result['packet'] == authorized[pair], 'packet pin mismatch')
         replay_result(result, repo)
         from promotion_evidence import REQUIRED_GATES, SCHEMA
         require(att['schema'] == SCHEMA and att['identity'] == result['promotionIdentity']
-                and att['performance_evidence'] == result_ref and att['submission_scope'] == scope()
+                and att['performance_evidence'] == result_ref and att['submission_scope'] == scope(result['packet'])
                 and att['gates'] == {**dict.fromkeys(REQUIRED_GATES, True), 'strict_512_token_final_gate_passed': False}
                 and att['quality_evidence'] == [dict(result['evidence_bundle'], supports=list(REQUIRED_GATES))],
                 'attestation identity, evidence or gates mismatch')
@@ -543,10 +663,16 @@ def is_packet49(item):
     return (flags.get('packet49Evidence') is True or 'packet49' in str(item.get('label', ''))
             or 'packet49' in str(identity.get('optimization_identity', ''))
             or identity.get('runtime_revision') == LINEAGE[DEFAULT_PACKET][0]
-            or flags.get('buildReceiptSha256') in {v[1] for v in LINEAGE.values()})
+            or flags.get('buildReceiptSha256') in {v[1] for v in LINEAGE.values() if v is not None})
 
 
 def write_prepared(e, packet, output, repo=ROOT):
+    if 'record-threshold.json' in e.members:
+        require((repo / THRESHOLD_FILE).read_bytes() == e.raw('record-threshold.json'),
+                'record threshold changed during preparation; collect again')
+    if packet == D_PACKET:
+        require((repo / PINS_FILE).read_bytes() == e.raw('submission-pins.json'),
+                'packet49d lineage pin changed during preparation')
     result = derive(e, packet)  # Refuse before writing any eligible output.
     output = output.absolute()
     require(output.resolve().is_relative_to(repo.resolve()), 'output must be inside repository')
@@ -567,7 +693,7 @@ def write_prepared(e, packet, output, repo=ROOT):
     att = dict(schema=SCHEMA, identity=result['promotionIdentity'], performance_evidence=result_ref,
                quality_evidence=[dict(result['evidence_bundle'], supports=list(REQUIRED_GATES))],
                gates={**dict.fromkeys(REQUIRED_GATES, True), 'strict_512_token_final_gate_passed': False},
-               submission_scope=scope())
+               submission_scope=scope(packet))
     att_ref = save('promotion-attestation.json', encoded(att))
     values = dict(packet=packet, revision=result['promotionIdentity']['runtime_revision'],
                   seal=result['build_receipt_sha256'], arithmetic=ARITHMETIC,
@@ -579,12 +705,15 @@ def write_prepared(e, packet, output, repo=ROOT):
                   ttft=str(result['secondary']['ttft_statistics']['median']),
                   wall=str(result['secondary']['wall_rate_statistics']['median']),
                   increase=str(result['comparison']['observed_increase_percent']),
-                  boot=result['boot_id'], reference=REFERENCE_RECORD, result_path=result_ref['path'])
+                  boot=result['boot_id'], reference=result['comparison']['reference_submission'], result_path=result_ref['path'])
     templates = ROOT / STAGE / DEFAULT_PACKET / 'submission'
     for name in ('result-packet', 'ledger-entry'):
         text = Template((templates / (name + '.md.in')).read_text()).substitute(values)
+        text = text.replace('over 39.422009 threshold', 'over ' + str(result['comparison']['threshold_tok_s']) + ' threshold')
+        if packet == D_PACKET:
+            text = text.replace("This comes from the seal's `parent_commit`", "This comes from the seal's `runtime_revision`")
         save(name + '.md', text.encode())
-    if packet == DEFAULT_PACKET:
+    if packet in (DEFAULT_PACKET, D_PACKET):
         item = payload_for(result, result_ref, att_ref, str((output / 'result-packet.md').relative_to(repo)))
         problems = scope_problems(item, repo)
         require(not problems, '; '.join(problems))
@@ -593,15 +722,47 @@ def write_prepared(e, packet, output, repo=ROOT):
     return result
 
 
+def update_record(result_path, submission_id, *, repo=ROOT):
+    """Append only a verified, faster result after the coordinator submits it.
+
+    The ID is the coordinator's receipt of real submission; this offline tool
+    never contacts the service or asserts that it observed that transaction.
+    """
+    path = Path(result_path).resolve()
+    require(path.is_relative_to(repo.resolve()), 'record result must be inside repository')
+    raw = path.read_bytes()
+    result = json.loads(raw)
+    replay_result(result, repo)
+    threshold_path = repo / THRESHOLD_FILE
+    before = threshold_path.read_bytes()
+    policy = json.loads(before)
+    current = validate_threshold(policy)
+    value = result['primary_metric']['value_tok_s']
+    require(value > current['threshold_tok_s'], 'record update must improve the current threshold')
+    policy['records'].append(dict(reference_submission=submission_id, threshold_tok_s=value,
+                                 result=dict(path=str(path.relative_to(repo.resolve())), sha256=sha(raw))))
+    validate_threshold(policy)
+    require(threshold_path.read_bytes() == before, 'record threshold changed during update')
+    threshold_path.write_bytes(encoded(policy))
+    return policy['records'][-1]
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--packet', choices=LINEAGE, default=DEFAULT_PACKET)
+    parser.add_argument('--update-record', type=Path, metavar='RESULT_JSON', help='Append a validated submitted result to the pinned record ledger')
+    parser.add_argument('--submission-id', help='Real submission ID supplied by coordinator after successful submission')
     parser.add_argument('--chain', type=Path, help='Finished registered device-cards01-a chain (read only)')
     parser.add_argument('--oracle', type=Path, default=Path('/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results'))
     parser.add_argument('--output', type=Path)
     args = parser.parse_args(argv)
     require(os.getpriority(os.PRIO_PROCESS, 0) == 19, 'nice -n 19 required')
     require(set(os.sched_getaffinity(0)) <= set(range(4, 16)) | set(range(20, 32)), 'reserved CPU cores forbidden')
+    if args.update_record:
+        require(args.submission_id and not args.chain and not args.output, '--update-record requires --submission-id and no chain/output')
+        print(json.dumps(update_record(args.update_record, args.submission_id)))
+        return 0
+    require(args.submission_id is None, '--submission-id requires --update-record')
     chain = args.chain or Path('/home/steve/own-xpu-runtime-results') / args.packet / 'build/device-cards01-a'
     # No cherry-picked repeat or card pair. Test fixtures exercise the pure API.
     require(chain.resolve() == (ROOT / STAGE / args.packet / 'build/device-cards01-a').resolve(), 'unregistered chain')
