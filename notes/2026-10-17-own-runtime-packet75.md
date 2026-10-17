@@ -61,3 +61,25 @@ Release-order review confirms the shared screen wrapper releases both locks
 before CPU report aggregation, as packet70 did. Chain windows retain the
 packet70 order: initial reports first, then drain/lease completion, then the
 final admission-bound receipt. No lane-wrapper code was copied and modified.
+
+## Final CPU milestone and screen snapshot
+
+All 264 real window plans pass: 24 composed views times 11 chain windows.
+The baseline selection was restored afterwards. Final seal, input, storage,
+selected-chain plan and queue-plan checks all pass. The orchestration tests
+also pass all 11 checks, including single-packet wins, incomplete screens,
+precheck failure, and the required precheck order. The build uses 649,893,864
+bytes. No registered chain output directory exists.
+
+At the final preparation snapshot, packet74 has a complete exact lane-A grid
+but no winner under its own best rule: none of its three candidates beats
+both production controls. Packet73 is still incomplete. Therefore production
+dense remains the only eligible dense setting for this attempt, and
+`ops/packet75-orchestration/ready.json` stays false pending packet73. The helper
+can select a packet73-only winner after its exact lane-B confirmation, reseal
+without compiling, and write the exact chain command. It never launches that
+command. No background waiter or service was started.
+
+Milestones are pushed to main: `40f98297b` (merged engine/initial gates) and
+`8e2611f7a` (all compositions and complete chain preparation). CPU work finished
+well inside the 75-minute limit. Device qualification remains the next gate.

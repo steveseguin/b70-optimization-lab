@@ -19,3 +19,11 @@ inputs, storage, every real window plan and queue plan. `ready.json` includes
 the exact systemd command for the coordinator. `device-entry.sh` rejects stale,
 changed or incomplete readiness; existing runtime admission owns GPU checks.
 No unit or background waiter is started by this helper.
+
+This is a one-shot preparation command: rerun it when the screen receipts
+finish. Exit 2 means readiness is false; the reason and exact print-only chain
+command are in `ready.json`. Packet75 already contains every eligible view,
+so selecting a confirmed winner requires no compile. The all-view CPU plans
+and production-shape mock checks are complete. The latest snapshot has no
+packet74 lane-A winner and an incomplete packet73 grid; a packet73-only win
+remains supported.
