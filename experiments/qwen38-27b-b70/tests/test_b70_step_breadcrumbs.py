@@ -226,14 +226,18 @@ class DeviceMarksTest(unittest.TestCase):
         r = self.runner(lines, make=card.make)
         for _ in range(5):
             self.assertEqual(self.fake.all_gather_into_tensor(Tensor(12, XPU), Tensor(6, XPU)), 'w')
-        card.land(3)
+        self.assertEqual(len(card.queue), 10)                 # one mark before and one after each collective
+        card.land(6)                                          # collectives 1-3 finished, the kernel before 4 not
         r._b70_crumbs.dump('STALL: test')
         head = lines[-1].split('\n')[0]
         self.assertIn('5 collectives issued', head)
-        self.assertIn('3 completed on this card', head)
+        self.assertIn('3 completed on this card; #4 not started on the card', head)
         self.assertIn('first not completed #4 all_gather_into_tensor 18 elems (step #0); 1 issued after it', head)
-        card.land(2)
+        card.land(1)                                          # collective 4 started on the card
+        self.assertIn('inside #4 (started on the card, not finished)', r._b70_crumbs.marks.report())
+        card.land(3)
         self.assertEqual(r._b70_crumbs.marks.completed(), 5)
+        self.assertIn('every issued collective finished', r._b70_crumbs.marks.report())
         self.assertNotIn('first not completed', r._b70_crumbs.marks.report())
         self.assertEqual(len(self.calls), 5)
 
@@ -252,10 +256,13 @@ class DeviceMarksTest(unittest.TestCase):
         m = crumbs.DeviceMarks(print, make=card.make)
         m.R = 8
         for _ in range(21):
-            m.after(1, (Tensor(12, XPU),), 12, 0)
-        card.land(15)                                   # exact while fewer than R are pending (6 < 8 here)
-        self.assertEqual(m.completed(), 15)
-        card.land(6)
+            self.assertTrue(m.start(1, (Tensor(12, XPU),), 12, 0))
+            m.finish()
+        card.land(36)                                   # exact while fewer than R marks are pending (6 < 8 here)
+        self.assertEqual(m.completed(), 18)
+        card.land(1)
+        self.assertIn('inside #19', m.report())
+        card.land(5)
         self.assertEqual(m.completed(), 21)
 
     def test_error_turns_marks_off_and_call_still_returns(self):

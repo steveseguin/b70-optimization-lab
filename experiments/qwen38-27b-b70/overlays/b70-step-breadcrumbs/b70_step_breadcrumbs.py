@@ -30,11 +30,13 @@ so no output can change. The four events are wrapped in a proxy that forwards ev
 0.3.0 (2026-10-17, notes/2026-10-17-hang-repro.md), only with B70_STEP_BREADCRUMBS_DEVICE_MARKS=1 (off by default):
 the host counts say what each card was given, not what its GPU finished. With the switch on, after every collective
 this worker issues on an XPU tensor, its queue copies the collective's running number (mod 65,536, from a table on
-the device) into 4 bytes of pinned host memory. The copy is ordered after the collective, so on a stall the block
-names, read from host memory without touching the stuck queue, how many collectives this card has completed and
-which issued ones have not (number, name, elements, step). Two cards whose completed counts differ by one point at a
-collective one card left early; equal counts with nothing pending point at a non-collective kernel. One 4-byte
-device-to-host copy per collective; it writes only its own buffers, so outputs cannot change. Calls with async_op are
+the device) into 4 bytes of pinned host memory, once before the collective (2k-1: lands when the kernel before it has
+finished) and once after it (2k: lands when it has finished on this card). On a stall the block names, read from host
+memory without touching the stuck queue, whether this card is inside collective k or still in a kernel before it, and
+which issued collectives have not completed (number, name, elements, step). Completed counts that differ by one
+between the two cards point at a collective one card left early; a card still in a kernel before the next collective
+points at that kernel. Two 4-byte device-to-host copies per collective; they write only their own buffers, so outputs
+cannot change. Calls with async_op are
 not marked (their copy would not be ordered after the collective).
 """
 import faulthandler
@@ -69,9 +71,10 @@ def first_device(args):
 
 
 class DeviceMarks:
-    """Per worker: after each collective on its card, a 4-byte copy of the collective's running number into pinned
-    host memory, ordered after the collective on the card's queue (B70_STEP_BREADCRUMBS_DEVICE_MARKS=1). The completed
-    count is exact while fewer than R collectives are pending (a step issues about 140)."""
+    """Per worker, around each collective k on its card: a 4-byte copy into pinned host memory of 2k-1 before it (lands
+    once the kernel before the collective has finished) and 2k after it (lands once the collective has finished),
+    ordered on the card's queue (B70_STEP_BREADCRUMBS_DEVICE_MARKS=1). Exact while fewer than R/2 collectives are
+    pending (a step issues about 140)."""
     R = 1 << 16
 
     def __init__(self, log, keep=256, make=None):
@@ -84,38 +87,66 @@ class DeviceMarks:
         return (torch.arange(self.R, dtype=torch.int32, device=device),
                 torch.full((1,), -1, dtype=torch.int32).pin_memory())
 
-    def after(self, index, args, elems, step):
+    def mark(self, v):
+        self.host.copy_(self.table[v % self.R:v % self.R + 1], non_blocking=True)
+
+    def start(self, index, args, elems, step):
+        """Before the collective: True if it is marked (then finish() must follow it)."""
         if self.off:
-            return
+            return False
         dev = first_device(args)
         if dev is None or getattr(dev, 'type', 'cpu') == 'cpu':
-            return
+            return False
         try:
             if self.device is None:
                 self.table, self.host = self.make(dev)
                 self.device = dev
             elif dev != self.device:
-                return
-            self.issued += 1
-            n = self.issued % self.R
-            self.host.copy_(self.table[n:n + 1], non_blocking=True)
-            self.recent.append((self.issued, index, elems, step))
+                return False
+            k = self.issued + 1
+            self.mark(2 * k - 1)
+            self.issued = k
+            self.recent.append((k, index, elems, step))
+            return True
         except Exception as e:     # diagnostic only: never fail a collective
             self.off = True
             self.log('b70_step_breadcrumbs: device marks off after %r' % (e,))
+            return False
+
+    def finish(self):
+        try:
+            self.mark(2 * self.issued)
+        except Exception as e:
+            self.off = True
+            self.log('b70_step_breadcrumbs: device marks off after %r' % (e,))
+
+    def landed(self):
+        """The last mark this card has passed, as its full number (-1 before the first)."""
+        if self.host is None:
+            return -1
+        v = int(self.host[0])
+        if v < 0:
+            return -1
+        top = 2 * self.issued
+        return top - ((top - v) % self.R)
 
     def completed(self):
-        if self.host is None:
-            return 0
-        v = int(self.host[0])
-        return 0 if v < 0 else self.issued - ((self.issued - v) % self.R)
+        return max(self.landed(), 0) // 2
 
     def report(self):
         if self.off or self.device is None:
             return 'device marks: %s' % ('off after an error' if self.off else 'no collective on a device yet')
-        done = self.completed()
-        pending = [r for r in self.recent if r[0] > done]
-        text = 'device marks: %d collectives issued on %s, %d completed on this card' % (self.issued, self.device, done)
+        full = self.landed()
+        k = (full + 1) // 2
+        text = 'device marks: %d collectives issued on %s, %d completed on this card' % (self.issued, self.device,
+                                                                                        max(full, 0) // 2)
+        if full % 2:
+            text += '; inside #%d (started on the card, not finished)' % k
+        elif k < self.issued:
+            text += '; #%d not started on the card (a kernel before it still running)' % (k + 1)
+        else:
+            text += '; every issued collective finished'
+        pending = [r for r in self.recent if r[0] > max(full, 0) // 2]
         if pending:
             n, index, elems, step = pending[0]
             text += '; first not completed #%d %s %d elems (step #%d); %d issued after it' % (
@@ -204,10 +235,9 @@ class Crumbs:
             s['sig'] = (s['sig'] * 1000003 + index * 7919 + n) & 0xffffffff
         return n
 
-    def collective_done(self, index, args, n):
-        """After the collective was issued: its device mark (B70_STEP_BREADCRUMBS_DEVICE_MARKS=1 only)."""
-        if self.marks is not None:
-            self.marks.after(index, args, n, self.steps[-1]['i'] if self.steps else -1)
+    def collective_start(self, index, args, n):
+        """Before the collective is issued: its first device mark (B70_STEP_BREADCRUMBS_DEVICE_MARKS=1 only)."""
+        return self.marks is not None and self.marks.start(index, args, n, self.steps[-1]['i'] if self.steps else -1)
 
     def event(self, name, what):
         with self.lock:
@@ -341,9 +371,11 @@ def count_collectives(module):
                     n = c.collective(_index, args)
                 except Exception:
                     pass
+            marked = c is not None and c.marks is not None and not kwargs.get('async_op') and \
+                c.collective_start(_index, args, n or 0)
             result = _original(*args, **kwargs)
-            if c is not None and c.marks is not None and not kwargs.get('async_op'):
-                c.collective_done(_index, args, n or 0)
+            if marked:
+                c.marks.finish()
             return result
         wrapper.__name__, wrapper.__doc__, wrapper.__wrapped__ = original.__name__, original.__doc__, original
         setattr(module, name, wrapper)

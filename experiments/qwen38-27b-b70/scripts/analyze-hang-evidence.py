@@ -29,13 +29,17 @@ STEP = re.compile(r'#(\d+) (\S+) tokens (\d+) fin (\d+) pre (\d+)( ONE-LAUNCH)? 
 blocks = []
 cur = None
 MARKS = re.compile(r'b70_step_breadcrumbs rank (\S+) device marks: (\d+) collectives issued on .*?, (\d+) completed on this '
-                   r'card(?:; first not completed #(\d+) (\w+) (\d+) elems \(step #(-?\d+)\); (\d+) issued after it)?')
+                   r'card; (inside #\d+|#\d+ not started|every issued collective finished)[^;]*'
+                   r'(?:; first not completed #(\d+) (\w+) (\d+) elems \(step #(-?\d+)\); (\d+) issued after it)?')
 marks = defaultdict(list)
 for line in open(a.log, errors='replace'):
     m = MARKS.search(line)
     if m:
-        marks[m.group(1)].append({'issued': int(m.group(2)), 'done': int(m.group(3)), 'first': m.group(4) and (
-            int(m.group(4)), m.group(5), int(m.group(6)), int(m.group(7)), int(m.group(8)))})
+        st = m.group(4)
+        marks[m.group(1)].append({'issued': int(m.group(2)), 'done': int(m.group(3)),
+                                  'state': 'inside' if st.startswith('inside') else 'kernel' if 'not started' in st
+                                  else 'all', 'first': m.group(5) and (int(m.group(5)), m.group(6), int(m.group(7)),
+                                                                       int(m.group(8)), int(m.group(9)))})
         continue
     m = re.search(r'b70_step_breadcrumbs rank (\S+) (STALL|FAILED)(.*?); last \d+ steps', line)
     if m:
@@ -83,25 +87,31 @@ if '0' in by_rank and '1' in by_rank:
 
 if marks:
     last = {r: v[-1] for r, v in marks.items()}
+    words = {'inside': 'inside the next collective', 'kernel': 'in a kernel before the next collective',
+             'all': 'every issued collective finished'}
     for r in sorted(last):
         v = last[r]
         f = v['first']
-        print('device marks rank %s: %d issued, %d completed%s' % (r, v['issued'], v['done'], (
-            '; first not completed #%d %s %d elems (step #%d), %d issued after it' % f) if f else '; nothing pending'))
+        print('device marks rank %s: %d issued, %d completed, %s%s' % (r, v['issued'], v['done'], words[v['state']], (
+            '; first not completed #%d %s %d elems (step #%d), %d issued after it' % f) if f else ''))
     if '0' in last and '1' in last:
-        d0, d1 = last['0']['done'], last['1']['done']
-        p0, p1 = bool(last['0']['first']), bool(last['1']['first'])
-        if not p0 and not p1:
-            print('reading: both cards completed every collective they were given; the stuck work is not a collective')
-        elif d0 == d1:
-            print('reading: both cards completed the same %d collectives and are stuck in the next one (or a kernel '
-                  'between them)' % d0)
-        elif abs(d0 - d1) == 1:
-            print('reading: rank %s completed one collective more than rank %s: the slower card never finished a '
-                  'collective the faster one finished (a lost or overwritten message)' % ('0' if d0 > d1 else '1',
-                                                                                         '1' if d0 > d1 else '0'))
+        x, y = last['0'], last['1']
+        if x['state'] == 'kernel' or y['state'] == 'kernel':
+            r = '0' if x['state'] == 'kernel' else '1'
+            print('reading: rank %s is still in a non-collective kernel (it never reached its next collective); the other '
+                  'card waits for it. Look at that kernel, not the exchange.' % r)
+        elif x['state'] == y['state'] == 'all':
+            print('reading: both cards finished every collective they were given; the stuck work is after the last one')
+        elif x['done'] == y['done']:
+            print('reading: both cards are inside collective #%d and neither finished it (both started it: a lost '
+                  'message or the two ranks in different collectives)' % (x['done'] + 1))
+        elif abs(x['done'] - y['done']) == 1:
+            hi, lo = ('0', '1') if x['done'] > y['done'] else ('1', '0')
+            print('reading: rank %s finished collective #%d, rank %s did not: the slower card never received a message '
+                  'the faster one sent (lost or overwritten), then the faster card waits in the next one' % (
+                      hi, max(x['done'], y['done']), lo))
         else:
-            print('reading: completed counts differ by %d: the ranks issued different collectives' % abs(d0 - d1))
+            print('reading: completed counts differ by %d: the ranks issued different collectives' % abs(x['done'] - y['done']))
 
 if a.hw:
     rows = defaultdict(list)

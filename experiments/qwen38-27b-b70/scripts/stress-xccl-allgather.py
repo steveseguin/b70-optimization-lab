@@ -57,9 +57,10 @@ gs = torch.empty((world * 832, HID), device=dev, dtype=torch.float16)
 lv = torch.randn(832, VOCAB, device=dev, dtype=torch.float16)
 gv = torch.empty((world * 832, VOCAB), device=dev, dtype=torch.float16)
 where = {'step': -1, 'rows': 0, 'gather': -1, 'done_at': time.time()}
-# Device progress marks (--marks): after each gather this rank's queue copies the gather's running number (mod R) from
-# a device table into pinned host memory. The copy runs only after the gather has finished on this card, so on a
-# stall the host reads, without touching the stuck queue, the last gather each card completed.
+# Device progress marks (--marks): around each gather k this rank's queue copies a number from a device table into
+# pinned host memory: 2k-1 before the gather (it lands once the kernel before the gather has finished) and 2k after it
+# (it lands once the gather has finished on this card). On a stall the host reads, without touching the stuck queue,
+# whether this card is inside gather k (odd value) or still in a kernel before it (even value, k-1 finished).
 R = 1 << 16
 issued = [0]
 if a.marks:
@@ -67,16 +68,32 @@ if a.marks:
     mark_host = torch.full((1,), -1, dtype=torch.int32).pin_memory()
 
 
-def completed():
+def mark(v):
+    mark_host.copy_(mark_table[v % R:v % R + 1], non_blocking=True)
+
+
+def card_state():
     v = int(mark_host[0])
-    return -1 if v < 0 else issued[0] - ((issued[0] - v) % R)
+    if v < 0:
+        return 'no mark landed yet'
+    top = 2 * issued[0] + 1   # the largest value already queued (the next gather's before-mark)
+    full = top - ((top - v) % R)
+    k = (full + 1) // 2
+    if full % 2:
+        return 'inside gather %d (started on the card, not finished)' % k
+    if k == issued[0]:
+        return 'every issued gather finished'
+    return 'gather %d finished; gather %d not started on the card (a kernel before it still running)' % (k, k + 1)
 
 
 def gather(out, inp):
-    dist.all_gather_into_tensor(out, inp)
-    issued[0] += 1
+    k = issued[0] + 1
     if a.marks:
-        mark_host.copy_(mark_table[issued[0] % R:issued[0] % R + 1], non_blocking=True)
+        mark(2 * k - 1)
+    dist.all_gather_into_tensor(out, inp)
+    issued[0] = k
+    if a.marks:
+        mark(2 * k)
 
 
 def watchdog():
@@ -87,7 +104,7 @@ def watchdog():
         if late > a.stall_s and not reported:
             print('STALL rank %d: no step finished for %.1f s; in step %d (%d rows), gather %d%s' % (
                 rank, late, where['step'] + 1, where['rows'], where['gather'],
-                '; marks: %d gathers issued, %d completed on this card' % (issued[0], completed()) if a.marks else ''),
+                '; marks: %d gathers issued, this card: %s' % (issued[0], card_state()) if a.marks else ''),
                 flush=True)
             faulthandler.dump_traceback(file=sys.stdout, all_threads=True)
             sys.stdout.flush()

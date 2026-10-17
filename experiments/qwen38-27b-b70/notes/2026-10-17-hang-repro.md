@@ -377,3 +377,16 @@ and a stuck model kernel (both cards completed the same gathers, nothing collect
 - **If both hold:** the marks go into `b70-step-breadcrumbs` 0.3.0 behind its own switch
   (`B70_STEP_BREADCRUMBS_DEVICE_MARKS=1`, off by default), with CPU tests, a speed check on the context-lane server,
   and then on in every context-lane run beside `scripts/hang-capture.sh`.
+
+**15:34 EDT, marks refined before M1/M2 ran (no result read).** A mark only after each gather cannot tell "both
+cards inside the next gather" from "one card still in a model kernel before it, the other waiting in the gather",
+which is exactly the choice between the two readings. So each gather k now gets two marks: 2k-1 queued before it
+(lands once the kernel before the gather has finished) and 2k after it. The stress prints, per card, "inside gather k",
+"gather k finished; gather k+1 not started on the card (a kernel before it still running)" or "every issued gather
+finished". The same two marks are in `b70-step-breadcrumbs` 0.3.0 (switch `B70_STEP_BREADCRUMBS_DEVICE_MARKS=1`, off
+by default; 9 CPU tests pass), and `scripts/analyze-hang-evidence.py` reads both ranks' lines and names the reading:
+a card in a kernel (look at that kernel), both inside the same collective, or one card a collective ahead (a message
+lost or overwritten). **M2 prediction, restated for two marks:** rank 0 (in the final barrier, which is not marked)
+"every issued gather finished"; rank 1 "inside gather n+1" where n is rank 0's issued count (the extra step's first
+gather started on the card and never finished). M1 now carries two copies per gather; its prediction stays within
+5 % of arm A's 1,797 steps in the first two minutes.
