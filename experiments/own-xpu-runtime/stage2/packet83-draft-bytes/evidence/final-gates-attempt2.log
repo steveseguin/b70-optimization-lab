@@ -1,0 +1,18 @@
+RUN cpu_gate.py
+production-1 target MATCH
+production-2 target MATCH
+q4-g32-1 target MATCH
+q4-g32-2 target MATCH
+prefix990-1 target MATCH
+prefix990-2 target MATCH
+prefix985-1 target MATCH
+prefix985-2 target MATCH
+RUN target_identity.py
+RUN python_gate.py
+shared admission, worker import, placement and packet tests PASS
+RUN seal.py
+four views sealed; original shared v4 pinned; no GPU
+RUN final_check.py
+4 seals; both full grids and all possible confirmations PASS; build bytes 160444769
+RUN queue_plan.py
+temporary A/B queue plans PASS; B remains winner-gated

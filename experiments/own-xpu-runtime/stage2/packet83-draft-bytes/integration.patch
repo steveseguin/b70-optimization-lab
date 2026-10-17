@@ -1,0 +1,141 @@
+--- a/mtp.hpp
++++ b/mtp.hpp
+@@ -3,6 +3,7 @@
+ #include "p59_draft.hpp"
+ #include "p59_hc.hpp"
+ #include "p56_prefix.hpp"
++#include "p83_head.hpp"
+ #include <cfenv>
+ #include <poll.h>
+ // Included after Engine. All mutable allocations below are private to the draft.
+@@ -55,6 +56,8 @@
+  std::chrono::steady_clock::time_point pending_start;
+  // Profiling remains owned by Engine::pending and is consumed once by drain().
+ 
++ bool q4_head()const{return e.sealed_selection.draft.at("head_format")=="q4-g32";}
++ unsigned prefix_rows()const{return p83::rows(p.g.vocab,e.a.mini,e.sealed_selection.draft.at("head_prefix"));}
+  bool selected(const std::string& key)const{return e.sealed_selection.draft.at(key)=="packet59";}
+  bool changed(const flash::Launch& l)const{auto i=p59c::sites.find(l.label);return i!=p59c::sites.end()&&selected(i->second);}
+  bool fused(const flash::Launch& l)const{auto i=p59c::consumers.find(l.label);return i!=p59c::consumers.end()&&selected(i->second);}
+@@ -99,8 +102,8 @@
+    e.upload(0,w.id,0,raw.data(),raw.size());}weights[name]=w;
+  }
+  void matrix(const flash::Launch& l){const auto& w=weights.at(l.weights[0]);
+-  if(l.label=="logits"){integrated::Matrix m{};m.w=w.id;m.type=w.type;m.x=id(l.inputs[0]);m.y=id(l.outputs[0]);m.rows=w.rows;m.columns=w.cols;m.span=m.rows;m.workspace=head_workspace;
+-   p56::restrict_matrix(m,p56::rows(p.g.vocab,e.a.mini));
++  if(l.label=="logits"){if(q4_head()){e.finish(0,p83::submit(e.dev(0),w.id,id(l.inputs[0]),id(l.outputs[0]),prefix_rows(),w.cols),true);return;}integrated::Matrix m{};m.w=w.id;m.type=w.type;m.x=id(l.inputs[0]);m.y=id(l.outputs[0]);m.rows=w.rows;m.columns=w.cols;m.span=m.rows;m.workspace=head_workspace;
++   p56::restrict_matrix(m,prefix_rows());
+    if((head_candidate.starts_with("p25.")||head_candidate.starts_with("p27."))&&!e.a.mini){Allocation prepared_input=0;if(head_candidate=="p27.fp32_input"){e.finish(0,packet26::p25bridge::prepare_input(e.dev(0),m.x,head_fp32,m.columns),true);prepared_input=head_fp32;}e.finish(0,packet26::p25bridge::submit(e.dev(0),{m},head_candidate,false,head_variant,prepared_input),true);return;}
+    if(!e.a.mini && (head_candidate.starts_with("p33.")||head_candidate.starts_with("p29."))){
+     e.finish(0,head_candidate.starts_with("p33.")?p33::submit(e.dev(0),{m},head_candidate,false,head_variant):p29::submit(e.dev(0),{m},head_candidate,false,head_variant),true);return;
+@@ -143,7 +146,7 @@
+   if(l.op=="begin")s.special=Special::begin;else if(l.op=="commit")s.special=Special::commit;else if(l.op=="check_status")s.special=Special::check_status;else s.op=ops.at(l.op);
+   std::vector<Allocation> a;int k=0;for(auto n:l.inputs){auto b=buffers.at(n);s.sizes[k]=b.n;s.types[k++]=b.type;a.push_back(b.id);++s.ni;}for(auto n:l.outputs){auto b=buffers.at(n);require(mutable_ids.count(b.id),"draft output aliases immutable or target allocation");s.sizes[k]=b.n;s.types[k++]=b.type;a.push_back(b.id);++s.no;}
+   for(auto n:l.weights){auto w=weights.at(n);a.push_back(w.id);s.grids[s.nw]=w.type;s.weight_elements[s.nw++]=size_t(w.rows)*w.cols;}
+-  if(l.op=="argmax")p56::restrict_argmax(s,p56::rows(p.g.vocab,e.a.mini));
++  if(l.op=="argmax")p56::restrict_argmax(s,prefix_rows());
+   s.implementation=packet26::dispatch.implementation_for(l.label,s.op);
+   if(!e.a.mini&&l.op=="qsa_attention"&&changed(l))s.implementation=12;
+   a.push_back(scratch);a.push_back(id("error"));a.push_back(id("position"));a.push_back(id("active"));a.push_back(e.ropes[0]);return {s,a};
+@@ -173,9 +176,14 @@
+   const flash::Launch* head=nullptr;for(const auto& l:p.launches)if(l.label=="logits")head=&l;require(head,"draft head absent");head_variant=selected_variant(e.w,e.a,p,*head);head_candidate=packet26::dispatch.gemv_for(head->label);
+   auto t=e.w.directory.at("output.weight");Weight hw;hw.rows=p.g.vocab;hw.cols=p.g.h;hw.type=flash::grid_type(t.grid);
+   if(!e.a.mini){if(e.a.draft_capture.empty())require(e.a.memory=="resident"&&e.weights[0].count("output.weight"),"packet56 production requires the shared resident head");require(head_candidate=="p33.dense.segment"&&head_variant==6,"packet56 requires unchanged expanded Q6 head kernel");}
+-  if(e.a.memory=="resident"&&e.weights[0].count("output.weight")&&!e.packed_weight("output.weight"))hw.id=e.weights[0].at("output.weight");else {auto fmt=iq3::layout(hw.type);size_t rb=hw.cols/fmt.elements*fmt.bytes,er=arithmetic::row_bytes(hw.type,hw.cols,head_variant);if(e.packed_weight("output.weight"))hw.rows=p56::rows(p.g.vocab,e.a.mini);hw.id=alloc("shared-head-host",size_t(hw.rows)*er,Category::weights);mutable_ids.erase(hw.id);
++  if(q4_head()){
++   const size_t rb=hw.cols/iq3::layout(hw.type).elements*iq3::layout(hw.type).bytes,er=p83::row_bytes(hw.cols);hw.rows=prefix_rows();
++   hw.id=alloc("q4-head",size_t(hw.rows)*er,Category::weights);mutable_ids.erase(hw.id);
++   const size_t chunk=std::max(size_t(1),size_t(4194304)/std::max(rb,er));
++   for(size_t row=0;row<hw.rows;row+=chunk){auto n=std::min(chunk,size_t(hw.rows)-row);auto source=e.w.read("output.weight",row*rb,n*rb);auto raw=p83::quantize(hw.type,source.data(),n,hw.cols);e.upload(0,hw.id,row*er,raw.data(),raw.size());}
++  }else if(e.a.memory=="resident"&&e.weights[0].count("output.weight")&&!e.packed_weight("output.weight"))hw.id=e.weights[0].at("output.weight");else {auto fmt=iq3::layout(hw.type);size_t rb=hw.cols/fmt.elements*fmt.bytes,er=arithmetic::row_bytes(hw.type,hw.cols,head_variant);if(e.packed_weight("output.weight"))hw.rows=prefix_rows();hw.id=alloc("shared-head-host",size_t(hw.rows)*er,Category::weights);mutable_ids.erase(hw.id);
+    size_t nr=std::max(size_t(1),size_t(4194304)/std::max(rb,er));for(size_t row=0;row<hw.rows;row+=nr){auto n=std::min(nr,size_t(hw.rows)-row);auto raw=e.w.read("output.weight",row*rb,n*rb);if(arithmetic::is_expanded(head_variant))raw=iq3::expanded::expand(hw.type,raw.data(),raw.size(),hw.cols);e.upload(0,hw.id,row*er,raw.data(),raw.size());}}
+-  save(e.a.output/"draft-prefix.json","{\"schema\":\"packet56.draft-prefix.v1\",\"rows\":"+std::to_string(p56::rows(p.g.vocab,e.a.mini))+",\"full_rows\":"+std::to_string(p.g.vocab)+",\"calibration_sha256\":\""+p56::calibration_sha256+"\",\"target_head_unchanged\":true,\"extra_weight_bytes\":"+std::to_string(e.packed_weight("output.weight")?size_t(hw.rows)*arithmetic::row_bytes(hw.type,hw.cols,head_variant):0)+",\"head_scope\":\"resident-shared-or-existing-isolated-KD\"}");
++  save(e.a.output/"draft-prefix.json","{\"schema\":\"packet83.draft-prefix.v1\",\"rows\":"+std::to_string(prefix_rows())+",\"full_rows\":"+std::to_string(p.g.vocab)+",\"calibration_sha256\":\""+p83::coverage_sha256+"\",\"target_head_unchanged\":true,\"extra_weight_bytes\":"+std::to_string(q4_head()?size_t(hw.rows)*p83::row_bytes(hw.cols):e.packed_weight("output.weight")?size_t(hw.rows)*arithmetic::row_bytes(hw.type,hw.cols,head_variant):0)+",\"head_scope\":\"draft-only-Q4-or-resident-shared\"}");
+   weights["output.weight"]=hw;
+   for(const auto& l:p.launches)if(l.op!="gemv"&&l.op!="routed_gemv"&&l.op!="expert_gate_up")prepared.emplace(&l,bind(l));
+   if(store){require(store->reads.size()==3101,"not all official draft tensors read");std::ostringstream o;o<<"{";bool comma=false;for(auto& [n,h]:store->reads){o<<(comma?",":"")<<ownrt::quote(n)<<":"<<ownrt::quote(h);comma=true;}o<<"}";save(e.a.output/"draft-tensor-reads.json",o.str());}
+@@ -198,7 +206,7 @@
+   for(const auto& l:merge_plan)record(l);for(const auto& l:p.launches)record(l);
+   choices<<"}}";save(e.a.output/"draft-kernel-choices.json",choices.str());
+   prepare_commands();
+-  save(e.a.output/"draft-memory.json","{\"device_allocation_bytes\":"+std::to_string(allocated)+",\"cache_bytes\":"+std::to_string(size_t(p.g.context)*(2*p.g.kvh*p.g.ad+p.g.id)*2+size_t((p.g.context+3)/4)*p.g.id*2)+",\"head_weight_shared\":"+(e.a.memory=="resident"&&e.weights[0].count("output.weight")?"true":"false")+"}");
++  save(e.a.output/"draft-memory.json","{\"device_allocation_bytes\":"+std::to_string(allocated)+",\"cache_bytes\":"+std::to_string(size_t(p.g.context)*(2*p.g.kvh*p.g.ad+p.g.id)*2+size_t((p.g.context+3)/4)*p.g.id*2)+",\"head_weight_shared\":"+(!q4_head()&&e.a.memory=="resident"&&e.weights[0].count("output.weight")?"true":"false")+"}");
+  }
+  void admit_position() {
+   require(position>=0&&position<p.g.context,"draft capacity position admission");
+@@ -295,6 +303,6 @@
+   out<<"}}";save(path/"all-state.json",out.str());
+  }
+  void dump(const fs::path& path,bool logits=false){fs::create_directories(path);for(auto n:{"blk.0.qsa.keys","blk.0.qsa.values","blk.0.qsa.raw","blk.0.qsa.pooled","position"}){auto s=buffers.at(n);size_t elements=s.n;if(logits&&std::string(n)!="position")elements=size_t(std::string(n).ends_with(".pooled")?position/4:position)*(std::string(n).ends_with(".keys")||std::string(n).ends_with(".values")?p.g.kvh*p.g.ad:p.g.id);auto raw=e.readback(0,s.id,elements*flash::scalar_bytes(s.type));std::ofstream f(path/(std::string(n)+".bin"),std::ios::binary);f.write(reinterpret_cast<const char*>(raw.data()),raw.size());}
+-  if(logits)for(auto n:{"final.mix","logits"}){auto s=buffers.at(n);size_t elements=std::string(n)=="logits"?p56::rows(p.g.vocab,e.a.mini):s.n;auto raw=e.readback(0,s.id,elements*flash::scalar_bytes(s.type));std::ofstream f(path/(std::string(n)+".bf16"),std::ios::binary);f.write(reinterpret_cast<const char*>(raw.data()),raw.size());}}
++  if(logits)for(auto n:{"final.mix","logits"}){auto s=buffers.at(n);size_t elements=std::string(n)=="logits"?prefix_rows():s.n;auto raw=e.readback(0,s.id,elements*flash::scalar_bytes(s.type));std::ofstream f(path/(std::string(n)+".bf16"),std::ios::binary);f.write(reinterpret_cast<const char*>(raw.data()),raw.size());}}
+ };
+ }
+--- a/p59c_select.hpp
++++ b/p59c_select.hpp
+@@ -34,11 +34,12 @@
+ };
+ inline std::map<std::string,std::string> defaults(){
+  std::map<std::string,std::string> m;for(auto&[label,key]:sites)m.emplace(key,"production");
+- for(auto&[key,producer]:dependencies)m.emplace(key,"production");return m;
++ for(auto&[key,producer]:dependencies)m.emplace(key,"production");m.emplace("head_format","production");m.emplace("head_prefix","production");return m;
+ }
+ inline void validate(const std::map<std::string,std::string>&m){
+  auto registered=defaults();if(m.size()!=registered.size())throw std::invalid_argument("p59c incomplete draft selection");
+- for(auto&[key,value]:m)if(!registered.contains(key)||(value!="production"&&value!="packet59"))throw std::invalid_argument("p59c unknown draft choice: "+key);
++ for(auto&[key,value]:m)if(!registered.contains(key)||(key=="head_format"?(value!="production"&&value!="q4-g32"):key=="head_prefix"?(value!="production"&&value!="coverage990"&&value!="coverage985"):(value!="production"&&value!="packet59")))throw std::invalid_argument("p59c unknown draft choice: "+key);
++ if(m.at("head_format")!="production"&&m.at("head_prefix")!="production")throw std::invalid_argument("p83 unregistered combined draft head");
+  for(auto&[key,producer]:dependencies)if(m.at(key)=="packet59"&&m.at(producer)!="packet59")throw std::invalid_argument("p59c fusion requires packet59 producer: "+key);
+ }
+ }
+--- /dev/null
++++ b/p83_head.hpp
+@@ -0,0 +1,48 @@
++#pragma once
++// Draft-only symmetric Q4; target never calls this code.
++#include "p59_draft.hpp"
++#include <cfenv>
++namespace p83 {
++inline constexpr char coverage_sha256[]="3a7edc24aebf0352cd78781f0ed4ae273fa5f606b06c0157b00d0673e579580c";
++inline size_t row_bytes(unsigned k){if(!k||k%2)throw std::invalid_argument("p83 even columns");return k/2+4*((k+31)/32);}
++inline unsigned rows(unsigned vocab,bool mini,const std::string& choice){
++ if(mini)return vocab;
++ if(vocab!=248320)throw std::invalid_argument("p83 vocabulary");
++ if(choice=="production")return 91392;
++ if(choice=="coverage990")return 80128;
++ if(choice=="coverage985")return 74752;
++ throw std::invalid_argument("p83 prefix selection");
++}
++inline std::vector<uint8_t> quantize(iq3::Type type,const uint8_t* raw,unsigned nr,unsigned k){
++ if(std::fegetround()!=FE_TONEAREST)throw std::invalid_argument("p83 requires nearest-even");
++ auto fmt=iq3::layout(type);if(k%fmt.elements)throw std::invalid_argument("p83 source shape");
++ const size_t src=k/fmt.elements*fmt.bytes,rb=row_bytes(k);std::vector<uint8_t> out(nr*rb);
++ for(unsigned r=0;r<nr;++r)for(unsigned g=0;g<(k+31)/32;++g){float vals[32]{},maximum=0;
++  for(unsigned j=0;j<32&&g*32+j<k;++j){unsigned c=g*32+j;float v=iq3::decode(type,raw+r*src+(c/fmt.elements)*fmt.bytes,c%fmt.elements);if(!std::isfinite(v))throw std::invalid_argument("p83 nonfinite weight");vals[j]=v;maximum=std::max(maximum,std::abs(v));}
++  float scale=maximum==0?1.f:maximum/7.f;std::memcpy(out.data()+r*rb+k/2+g*4,&scale,4);
++  for(unsigned j=0;j<32&&g*32+j<k;++j){unsigned c=g*32+j;int q=std::clamp(int(std::nearbyint(vals[j]/scale)),-7,7);out[r*rb+c/2]|=uint8_t(q+8)<<(4*(c%2));}
++ }return out;
++}
++inline float value(const uint8_t*w,unsigned k,unsigned c){const auto*s=w+k/2+(c/32)*4;return iq3::bits_float(iq3::u32(s))*float(int((w[c/2]>>(4*(c%2)))&15)-8);}
++template<unsigned K> inline float lane(const uint8_t*w,const uint16_t*x,unsigned l){float sum=0;for(unsigned c=l;c<K;c+=32){float product=value(w,K,c)*iq3::bits_float(uint32_t(x[c])<<16);sum=sum+product;}return sum;}
++template<unsigned K>struct Head final:p59::Base{
++ unsigned rows{};
++#ifdef OWN_RT_HOST_ONLY
++ void run(std::span<void*const>p)const override{auto w=static_cast<const uint8_t*>(p[0]);auto x=static_cast<const uint16_t*>(p[1]);auto y=static_cast<uint16_t*>(p[2]);const size_t rb=row_bytes(K);
++  for(unsigned r=0;r<rows;++r){float sums[32];for(unsigned l=0;l<32;++l)sums[l]=lane<K>(w+r*rb,x,l);y[r]=iq3::bf16_bits(iq3::tree32(sums));}}
++#else
++ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
++  auto w=static_cast<const uint8_t*>(p[0]);auto x=static_cast<const uint16_t*>(p[1]);auto y=static_cast<uint16_t*>(p[2]);auto n=rows;const size_t rb=row_bytes(K);
++  return q.submit([&](sycl::handler&h){h.depends_on(deps);h.parallel_for(sycl::nd_range<1>(((size_t(n)+3)/4)*128,128),[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
++   auto sg=it.get_sub_group();unsigned l=sg.get_local_linear_id(),r=it.get_global_linear_id()/32;if(r>=n)return;float sum=lane<K>(w+size_t(r)*rb,x,l);
++   for(unsigned width=1;width<32;width*=2){float rhs=sycl::select_from_group(sg,sum,(l+width)%32);if(l%(2*width)==0)sum=sum+rhs;}
++   if(l==0)y[r]=iq3::bf16_bits(sum);
++  });});}
++#endif
++};
++inline integrated::Launch submit(ownrt::Device&d,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,unsigned nr,unsigned k){
++ if(!nr||nr>248320||(k!=16&&k!=2560))throw std::invalid_argument("p83 head shape");
++ p59::extent(d,w,size_t(nr)*row_bytes(k));p59::extent(d,x,k*2);p59::extent(d,y,nr*2);std::array ids{w,x,y};ownrt::Event e;
++ if(k==16){Head<16> op;op.rows=nr;e=d.compute(op,ids,{});}else{Head<2560>op;op.rows=nr;e=d.compute(op,ids,{});}return {e,e,1};
++}
++}
