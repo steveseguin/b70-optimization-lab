@@ -14,6 +14,10 @@ the 30 GiB arena cap, reserve policy, and device host-core placement.
 Change QSA decode attention to packet47 split32 for both M=1 and M=2.
 The changed reduction tree gets a separate full-model CPU oracle; old output
 differences are informational and the old oracle is never overwritten.
+The exact SPEED6 non-QSA dispatch is also pinned. Fresh K2 results are retained
+as measurements and a separate recommendation; a different timing winner does
+not silently change this packet's unrelated production kernels. The pinned
+choices still need fresh K2 exactness coverage before model windows can run.
 
 Packet48 candidates require production reconciliation before adoption.
 The source audit finds matching shapes and quantization classes. Ordinary GDN

@@ -19,8 +19,13 @@ A `STOP` file requires coordinator review; rerunning never overwrites a window.
 
 The **K0 → K1a → K1b → K2 → W0p** phase needs no new full-model oracle.
 K1a and K1b include the actual integrated split32 bridge's M=1/M=2 checks
-against its CPU reference. K2 retains the registered old kernel-selection
-comparisons; production QSA attention is explicitly overridden by split32.
+against its CPU reference. K2 retains the registered comparisons and saves its
+fresh recommendation as `dispatch-k2-recommendation.json`, with the unmodified
+measurement summary in `summary-k2-measured.json`. The downstream
+`dispatch-measured.json` filename is kept for compatibility but contains the
+pinned SPEED6 production choices, with an explicit policy record and fresh K2
+exactness coverage. Production QSA attention is overridden by split32;
+unrelated kernels do not change.
 W0p is the oracle-free two-owner transport canary. These windows require the
 finished packet49 build/CPU seal and normal coordinator admission.
 
@@ -29,7 +34,7 @@ both phases:
 
 ```bash
 P=experiments/own-xpu-runtime/stage2/packet49-integrate
-OUT=/home/steve/own-xpu-runtime-results/packet49-integrate/device-cards01-a
+OUT=/home/steve/own-xpu-runtime-results/packet49-integrate/build/device-cards01-a
 bash "$P/coordinator_windows.sh" --phase early --output-root "$OUT"
 ```
 

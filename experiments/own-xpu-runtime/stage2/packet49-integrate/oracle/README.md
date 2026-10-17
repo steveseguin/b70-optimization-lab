@@ -39,7 +39,7 @@ separate receipt and never alters the seal.
 From repository root, the coordinator checks completion with:
 
 ```bash
-nice -n19 taskset -c4-15,20-31 python3 -B \
+nice -n 19 taskset -c 4-15,20-31 python3 -B \
   experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/oracle_job.py \
   status --require-complete
 ```

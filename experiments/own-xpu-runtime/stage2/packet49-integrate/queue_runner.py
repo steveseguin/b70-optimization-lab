@@ -112,16 +112,23 @@ def validate_success(name, out, rc):
         raise RuntimeError(f'{name} lacks successful current-scope device receipt')
 
 
+def admitted_output(path):
+    out = path.resolve()
+    allowed = (P / 'build').resolve()
+    if allowed != Path('/home/steve/own-xpu-runtime-results/packet49-integrate/build'):
+        raise ValueError('packet49 build must resolve to its admitted external build directory')
+    if not out.is_relative_to(allowed) or out == allowed:
+        raise ValueError('output must be a named chain below packet49 external build directory')
+    return out
+
+
 def run(args):
     if not args.authorized_device_window:
         raise ValueError('--authorized-device-window required to execute')
     if os.getpriority(os.PRIO_PROCESS, 0) != 0 or set(os.sched_getaffinity(0)) != DEVICE_CORES:
         raise ValueError('run inside admitted nice-0 coordinator unit on cores 0-3,16-19')
     user_unit_gate(Path('/proc/self/cgroup').read_text())
-    out = args.output_root.resolve()
-    allowed = Path('/home/steve/own-xpu-runtime-results/packet49-integrate').resolve()
-    if not out.is_relative_to(allowed) or out == allowed:
-        raise ValueError('output must be a named chain below packet49 external results')
+    out = admitted_output(args.output_root)
     out.mkdir(parents=True, exist_ok=True)
     with (out / 'queue.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)

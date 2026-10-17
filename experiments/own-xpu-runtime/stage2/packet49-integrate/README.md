@@ -4,6 +4,9 @@ This is a separate integration derived from packet45 SPEED6 at `34c62b433`.
 It preserves the recorded 23/25 target split, draft rank1, capacity4096,
 write-set snapshot rules, 30GiB arena cap, memory reserve, and pinned host cores.
 Packet45 and its 39.422tok/s result (`cmv9wjmtj013gle01v8k1yg4v`) are untouched.
+The exact SPEED6 non-QSA dispatch is pinned in `dispatch-speed6.json`. K2
+retains its fresh measurements and recommendation separately; it verifies the
+pinned kernels without selecting unrelated new changes for the model run.
 
 The production QSA attention path uses packet47's split32 reduction.
 The independently expressed full-model CPU reference has arithmetic identity
