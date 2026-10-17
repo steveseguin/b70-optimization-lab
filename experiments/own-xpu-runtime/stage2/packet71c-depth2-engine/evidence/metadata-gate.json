@@ -1,0 +1,145 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_payload_read": false,
+  "plan": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/incident-retrospective/plan.tsv",
+  "plan_sha256": "9926b7a266ba2774f02fe00583257ab2aaff96ee0313d350d3ba54602ae2a656",
+  "classes": {
+    "attention": {
+      "batched_tensors": 12,
+      "serial_fallback_tensors": 0,
+      "fallback": [],
+      "tensors": 12,
+      "types_and_shapes": [
+        "(14, (6144, 2560))"
+      ],
+      "mode": "production-M2"
+    },
+    "expsdown": {
+      "batched_tensors": 48,
+      "serial_fallback_tensors": 0,
+      "fallback": [],
+      "tensors": 48,
+      "types_and_shapes": [
+        "(20, (640, 2560, 512))"
+      ],
+      "mode": "production-M2"
+    },
+    "expsgate": {
+      "batched_tensors": 94,
+      "serial_fallback_tensors": 2,
+      "fallback": [
+        "blk.2.ffn_gate_exps.weight",
+        "blk.2.ffn_up_exps.weight"
+      ],
+      "tensors": 96,
+      "types_and_shapes": [
+        "(21, (2560, 640, 512))",
+        "(22, (2560, 640, 512))"
+      ],
+      "mode": "production-M2"
+    },
+    "gdn.qkv": {
+      "batched_tensors": 36,
+      "serial_fallback_tensors": 0,
+      "fallback": [],
+      "tensors": 36,
+      "types_and_shapes": [
+        "(14, (2560, 10240))",
+        "(8, (2560, 10240))"
+      ],
+      "mode": "production-M2"
+    },
+    "gdn.z": {
+      "batched_tensors": 36,
+      "serial_fallback_tensors": 0,
+      "fallback": [],
+      "tensors": 36,
+      "types_and_shapes": [
+        "(14, (2560, 6144))",
+        "(8, (2560, 6144))"
+      ],
+      "mode": "production-M2"
+    },
+    "hc.a.gate": {
+      "batched_tensors": 48,
+      "serial_fallback_tensors": 0,
+      "fallback": [],
+      "tensors": 48,
+      "types_and_shapes": [
+        "(8, (320, 10240))"
+      ],
+      "mode": "production-M2"
+    },
+    "hc.f.gate": {
+      "batched_tensors": 48,
+      "serial_fallback_tensors": 0,
+      "fallback": [],
+      "tensors": 48,
+      "types_and_shapes": [
+        "(8, (320, 10240))"
+      ],
+      "mode": "production-M2"
+    },
+    "logits": {
+      "batched_tensors": 1,
+      "serial_fallback_tensors": 0,
+      "fallback": [],
+      "tensors": 1,
+      "types_and_shapes": [
+        "(14, (2560, 248320))"
+      ],
+      "mode": "production-M2"
+    },
+    "ple.key": {
+      "batched_tensors": 1,
+      "serial_fallback_tensors": 0,
+      "fallback": [],
+      "tensors": 1,
+      "types_and_shapes": [
+        "(8, (2560, 10240))"
+      ],
+      "mode": "production-M2"
+    },
+    "qsa.qgate": {
+      "batched_tensors": 12,
+      "serial_fallback_tensors": 0,
+      "fallback": [],
+      "tensors": 12,
+      "types_and_shapes": [
+        "(14, (2560, 12288))"
+      ],
+      "mode": "production-M2"
+    },
+    "route": {
+      "batched_tensors": 48,
+      "serial_fallback_tensors": 0,
+      "fallback": [],
+      "tensors": 48,
+      "types_and_shapes": [
+        "(0, (2560, 512))"
+      ],
+      "mode": "production-M2"
+    },
+    "router": {
+      "batched_tensors": 48,
+      "serial_fallback_tensors": 0,
+      "fallback": [],
+      "tensors": 48,
+      "types_and_shapes": [
+        "(0, (2560, 512))"
+      ],
+      "mode": "production-M2"
+    },
+    "shexpdown": {
+      "batched_tensors": 48,
+      "serial_fallback_tensors": 0,
+      "fallback": [],
+      "tensors": 48,
+      "types_and_shapes": [
+        "(8, (640, 2560))"
+      ],
+      "mode": "production-M2"
+    }
+  }
+}

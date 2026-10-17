@@ -1,0 +1,88 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_executed": false,
+  "results": [
+    {
+      "compiler": "gnu-host",
+      "result": {
+        "passed": true,
+        "byte_checks": 80,
+        "device_executed": false,
+        "model_executed": false
+      },
+      "hashes": {
+        "expected": "0bc7fd7305c8cd9cd0f713cb68d33ef4857972c5b27d10922e8a842ea2aa9ada",
+        "actual": "0bc7fd7305c8cd9cd0f713cb68d33ef4857972c5b27d10922e8a842ea2aa9ada"
+      },
+      "compile_command": [
+        "/usr/bin/g++",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/validation",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/../../stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/../packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/../packet2/loader",
+        "-std=gnu++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-O3",
+        "-march=native",
+        "-fopenmp",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-Wl,--gc-sections",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/unfused_fixture.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host-unfused"
+      ],
+      "binary_sha256": "0d9880b13e351178f6894a73b6f1969b93110677996f5aae9b9138dacc309c48"
+    },
+    {
+      "compiler": "intel-host",
+      "result": {
+        "passed": true,
+        "byte_checks": 80,
+        "device_executed": false,
+        "model_executed": false
+      },
+      "hashes": {
+        "expected": "0bc7fd7305c8cd9cd0f713cb68d33ef4857972c5b27d10922e8a842ea2aa9ada",
+        "actual": "0bc7fd7305c8cd9cd0f713cb68d33ef4857972c5b27d10922e8a842ea2aa9ada"
+      },
+      "compile_command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/validation",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/../../stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/../packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/../packet2/loader",
+        "-std=gnu++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-O3",
+        "-march=native",
+        "-fopenmp",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-Wl,--gc-sections",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/unfused_fixture.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/intel-host-unfused"
+      ],
+      "binary_sha256": "1e7e47281d5603ab7c7c2aaff24cc68415443a3c2af93dc5b7e95fceeaaba750"
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/unfused_fixture.cpp": "eafd8a9046f3e8c57c3364f083017c7a045f07885168ed743e9cb40510ca68a7",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/unfused_gate.py": "962154b48aa097df38cac1f44fc449dcdb4bf7f17a6f305b0ebf57b013d54f8a",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/p30_small.hpp": "4304140e67c89512773d3adefa306f2153d1dd13585224e2ce0bb61182ca4261",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/arithmetic.hpp": "ea9a853c66b3a22eff01e7b53243da0c5a2a33d5306dd4f09faf06c447a4c1ae",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/dispatch-speed6.json": "28f83f86f546a2a7b1ce43c21940ce955bba05b9fc004d11b6d2d14782e71497"
+  }
+}

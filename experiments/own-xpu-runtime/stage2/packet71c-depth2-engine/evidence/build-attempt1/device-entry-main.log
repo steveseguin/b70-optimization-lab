@@ -1,0 +1,214 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1534:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank.hpp:212:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dependent_rows.hpp:6:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:3:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/p60_kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:5:46: error: redefinition of 'capture_size'
+    5 | template<class F> inline const unsigned char capture_size[sizeof(F)] __attribute__((used)) = {};
+      |                                              ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:5:46: note: previous definition is here
+    5 | template<class F> inline const unsigned char capture_size[sizeof(F)] __attribute__((used)) = {};
+      |                                              ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1534:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank.hpp:212:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dependent_rows.hpp:6:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:3:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/p60_kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:6:21: error: redefinition of 'checked'
+    6 | template<class F> F checked(F f) {
+      |                     ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:6:21: note: previous definition is here
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1534:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank.hpp:212:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dependent_rows.hpp:6:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/p60_kernels.hpp:14:47: error: no matching function for call to 'checked'
+   14 |   h.parallel_for(p35_range0,packet26::checked(packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                                               ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/p60_kernels.hpp:14:65)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1534:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank.hpp:212:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dependent_rows.hpp:6:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/p60_kernels.hpp:34:47: error: no matching function for call to 'checked'
+   34 |   h.parallel_for(p35_range0,packet26::checked(packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                                               ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/p60_kernels.hpp:34:65)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1534:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank.hpp:212:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dependent_rows.hpp:6:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/p60_kernels.hpp:49:47: error: no matching function for call to 'checked'
+   49 |   h.parallel_for(p35_range0,packet26::checked(packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                                               ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/p60_kernels.hpp:49:65)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1534:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank.hpp:212:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dependent_rows.hpp:7:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_router.hpp:24:30: error: no matching function for call to 'checked'
+   24 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                              ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_router.hpp:24:48)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1534:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank.hpp:212:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dependent_rows.hpp:7:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_router.hpp:41:30: error: no matching function for call to 'checked'
+   41 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it){unsigned row=it.get_global_linear_id();if(row<n)for(unsigned r=0;r<2;++r){auto v=b.scratch[r]+row*4;b.y[r][row]=iq3::bf16_bits((v[0]+v[1])+(v[2]+v[3]));}}));});
+      |                              ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_router.hpp:41:48)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1534:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank.hpp:213:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank_canary.hpp:10:149: error: no matching function for call to 'checked'
+   10 |   auto x=static_cast<uint32_t*>(p[0]);return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(64)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> i){++x[i];}));});
+      |                                                                                                                                                     ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank_canary.hpp:10:167)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1534:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank.hpp:212:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dependent_rows.hpp:6:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:26:31: error: no matching function for call to 'checked'
+   26 |     h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                               ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:25:98: note: while substituting into a lambda expression here
+   25 |    return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(40*256,256)](sycl::handler& h){sycl::local_accessor<float,1> partial(264,h);sycl::local_accessor<uint32_t,1> control(2,h);
+      |                                                                                                  ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:7:27: note: in instantiation of member function 'p68c::HCKernel<0>::submit' requested here
+    7 | template<int Stage>struct HCKernel final:Base {
+      |                           ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:26:49)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1534:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank.hpp:212:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dependent_rows.hpp:6:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:43:31: error: no matching function for call to 'checked'
+   43 |     h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                               ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:42:111: note: while substituting into a lambda expression here
+   42 |    return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>((p60::L+p60::S)*128,128)](sycl::handler& h){sycl::local_accessor<float,1> partial(8,h);
+      |                                                                                                               ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:7:27: note: in instantiation of member function 'p68c::HCKernel<1>::submit' requested here
+    7 | template<int Stage>struct HCKernel final:Base {
+      |                           ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:43:49)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1534:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank.hpp:212:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dependent_rows.hpp:6:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:52:31: error: no matching function for call to 'checked'
+   52 |     h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                               ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:51:106: note: while substituting into a lambda expression here
+   51 |    return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>((p60::H/2)*256,256)](sycl::handler& h){sycl::local_accessor<uint16_t,1> gates(16,h);
+      |                                                                                                          ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:7:27: note: in instantiation of member function 'p68c::HCKernel<2>::submit' requested here
+    7 | template<int Stage>struct HCKernel final:Base {
+      |                           ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/batched_hc.hpp:52:49)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1534:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank.hpp:212:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dependent_rows.hpp:8:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:24:63: error: no matching function for call to 'checked'
+   24 |    if constexpr(Stage==0||Stage==4){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1>id){for(unsigned r=0;r<2;++r)route42::phase<Stage,512,10>(a[r],id[0]);}));}
+      |                                                               ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:23:190: note: while substituting into a lambda expression here
+   23 |   auto a=bind(p);return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(Stage==4?1:32),p35_range1=sycl::nd_range<1>(512,32),p35_range2=sycl::nd_range<1>(16*256,256)](sycl::handler& h){
+      |                                                                                                                                                                                              ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:58:47: note: in instantiation of member function 'p71b::Route<0>::submit' requested here
+   58 |  auto issue=[&]<unsigned Stage>(){Route<Stage>op;op.spec=s;op.stride=a.size();std::array after{out.last};auto e=d.compute(op,ids,out.last?std::span<const ownrt::Event>(after):std::span<const ownrt::Event>{});if(!out.first)out.first=e;out.last=e;++out.passes;};
+      |                                               ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:24:81)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1534:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank.hpp:212:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dependent_rows.hpp:8:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:26:31: error: no matching function for call to 'checked'
+   26 |     h.parallel_for(p35_range1,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                               ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:23:190: note: while substituting into a lambda expression here
+   23 |   auto a=bind(p);return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(Stage==4?1:32),p35_range1=sycl::nd_range<1>(512,32),p35_range2=sycl::nd_range<1>(16*256,256)](sycl::handler& h){
+      |                                                                                                                                                                                              ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:58:47: note: in instantiation of member function 'p71b::Route<1>::submit' requested here
+   58 |  auto issue=[&]<unsigned Stage>(){Route<Stage>op;op.spec=s;op.stride=a.size();std::array after{out.last};auto e=d.compute(op,ids,out.last?std::span<const ownrt::Event>(after):std::span<const ownrt::Event>{});if(!out.first)out.first=e;out.last=e;++out.passes;};
+      |                                               ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:26:49)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1534:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank.hpp:212:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dependent_rows.hpp:8:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:36:31: error: no matching function for call to 'checked'
+   36 |     h.parallel_for(p35_range2,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                               ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:23:190: note: while substituting into a lambda expression here
+   23 |   auto a=bind(p);return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(Stage==4?1:32),p35_range1=sycl::nd_range<1>(512,32),p35_range2=sycl::nd_range<1>(16*256,256)](sycl::handler& h){
+      |                                                                                                                                                                                              ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:58:47: note: in instantiation of member function 'p71b::Route<2>::submit' requested here
+   58 |  auto issue=[&]<unsigned Stage>(){Route<Stage>op;op.spec=s;op.stride=a.size();std::array after{out.last};auto e=d.compute(op,ids,out.last?std::span<const ownrt::Event>(after):std::span<const ownrt::Event>{});if(!out.first)out.first=e;out.last=e;++out.passes;};
+      |                                               ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:36:49)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1534:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/rank.hpp:212:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dependent_rows.hpp:8:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:24:63: error: no matching function for call to 'checked'
+   24 |    if constexpr(Stage==0||Stage==4){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1>id){for(unsigned r=0;r<2;++r)route42::phase<Stage,512,10>(a[r],id[0]);}));}
+      |                                                               ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:23:190: note: while substituting into a lambda expression here
+   23 |   auto a=bind(p);return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(Stage==4?1:32),p35_range1=sycl::nd_range<1>(512,32),p35_range2=sycl::nd_range<1>(16*256,256)](sycl::handler& h){
+      |                                                                                                                                                                                              ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:58:47: note: in instantiation of member function 'p71b::Route<4>::submit' requested here
+   58 |  auto issue=[&]<unsigned Stage>(){Route<Stage>op;op.spec=s;op.stride=a.size();std::array after{out.last};auto e=d.compute(op,ids,out.last?std::span<const ownrt::Event>(after):std::span<const ownrt::Event>{});if(!out.first)out.first=e;out.last=e;++out.passes;};
+      |                                               ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/production_route.hpp:24:81)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+15 errors generated.

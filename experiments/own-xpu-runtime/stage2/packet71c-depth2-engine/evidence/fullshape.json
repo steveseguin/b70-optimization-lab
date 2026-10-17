@@ -1,0 +1,455 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "cpu_model_executed": false,
+  "commands": [
+    [
+      "/usr/bin/g++",
+      "-DOWN_RT_HOST_ONLY",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/validation",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/../../stage1/packet3-prep/src",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/../packet2/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/../packet2/loader",
+      "-std=gnu++20",
+      "-Werror=return-type",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-march=native",
+      "-fopenmp",
+      "-O0",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test.o",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test.cpp"
+    ],
+    [
+      "/usr/bin/g++",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fopenmp",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/650f30580f79-p49d_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/a7977507c30a-af504b0aa72a-2d74e8dcdd35-931447b289ba-p49d_expert_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/2df9025bb45a-e971f045b082-3d4662b7a8e1-7258de64d120-p49c_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/4cddb8a717fb-6cd25906942c-48e0912b2bff-e7f6725ff84c-p49b_expert_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/6cb5f4cc4056-fd1c0349608a-4827a8cdbf45-dd3fe83164f7-p49_qsa_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/4b6ae833ee22-87e707a47556-720e35b289b9-adf2b5a8f3ec-p39_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/b0110af3c37a-41d3226df94e-649ecdb83388-a8b76a5aaefb-p39_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/a943e3b493fd-9836c7c776b1-a787c281735b-66b9acec72b5-route42_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/749fce04a85a-31758dd066a2-351ca077111d-b096fb3deb15-p42_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/ba28681e1125-5918cd95ab06-78d17e6ffba1-a887e2f17924-p30_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/5f0435142c81-5b2198890f19-7f445c54ca41-7fe00edacb14-mtp_kernels.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/a665f57c4bfb-041777358bf1-f398d6bf103e-1bf31e00af83-p33_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/42304aa2d058-ce0256371cd4-d1df9ba61a4b-fadc41d19a64-p33r2.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/f0b55e298146-1597daf59a69-1baa01931d50-05f62427b363-submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/904dfc899fff-41c3704d5d32-4da274ebc82d-80c5be9f8e62-expert_down.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/6f906662dec8-f9bea326a1f2-56363b721e23-223383c5fd57-round2_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/2ee63ec39c04-01a4704fdf1f-a1753931e596-84461f568174-small_gemv.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/15a5b80c43cf-f4f921be6036-640df8460433-3e4f50a8c71c-small_gemv_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/49788aef79dc-8f920220a636-bae5aee863a6-1d87bbff48f0-p25_bridge.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/564cc4d239ed-8e840f7c116f-40727737505b-33e04660e9b8-gemv_timing.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/418ffd9aae66-b74e2ce2e3f6-eb3f20934fcf-5af6922e74be-adapter_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/a200ff83d1a3-59405fbdc454-f93770bfac06-53937d4d075a-performance.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/cb486a1dd5a8-0da6b9a243bc-2f59e733d4ff-a0a95539031a-adapter.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/bcf1c7d0fe04-35e778110a5e-c545afc7abed-504e2f6b4fea-specialised_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/6aa37d275eb5-9ba03e6dd860-5d60edc0f9e4-333c9a3673dd-runtime_kernels.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/ab655ee0da37-71f33ba80296-e1b4d7f94b48-c54cf2dec7dc-owner.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/61853fb85422-1346bd560fab-5b990ba1490a-7bd2e7f15632-owner_retire.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/cfb5817ad892-c8498c60aa60-bf7aefab963e-ba99d9e2967c-gguf.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/9c0144b06f0d-b4558c6fc734-cc25ca237a56-a1788b72f6f9-entry-nongemv_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/936a2e7aa4a0-9ec06cf0cc62-1c1e23a41e1f-b7851df5e164-entry-k2_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/a081b7433999-7bca660d9234-222506e19033-c90c56d8dc23-p60_submit.o",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test",
+      "-Wl,-rpath,/usr/lib/x86_64-linux-gnu",
+      "/usr/lib/x86_64-linux-gnu/libcrypto.so",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host/inherited/eb1bfd31f503-417ab0b9139f-host_wait_mode.o"
+    ]
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/fullshape_gate.py": "3228ee977965c7ba6b0dfa675d1d2cf88a692043bf64b57dd9453e9d4824a546",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/fullshape_test.cpp": "fbafc6d58cedf3bbb740533d4bbfb6cd7492ef7fff9aed4f784ed686e8846598",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build-device-receipt.json": "18200f1c10695ab829a1984b9b238f7470fe9ca0767b4e9695b7a293be268de5",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/main.cpp": "5d4c47fd5e44ce93e697c6cd6eff8dd4a5e87a1dd8f097c4c51544c12be0ef2f",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/mtp.hpp": "0dc9ef0fcda733acc0ad3909eac4610aa50c4718cb01c476264ac8c9588110b5",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test.cpp": "4cee68368800a639f3085830a0e42d0b1c491b64505d635db4dd80384d0eb80b",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/selection.json": "22f44eea9121ce684d1900fd7597cb6bee2aee34f343f455307ab298488fc486",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/dispatch-speed6.json": "28f83f86f546a2a7b1ce43c21940ce955bba05b9fc004d11b6d2d14782e71497",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/memory-plan.json": "6f723e6845401f98c3815590c0b911e8365906b1ffaff3d22310bc4fbf8d0430",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/selection.json": "22f44eea9121ce684d1900fd7597cb6bee2aee34f343f455307ab298488fc486",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/dispatch-speed6.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/memory-plan.json": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+    "experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/selection.json": "22f44eea9121ce684d1900fd7597cb6bee2aee34f343f455307ab298488fc486",
+    "experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dispatch-speed6.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/memory-plan.json": "6f723e6845401f98c3815590c0b911e8365906b1ffaff3d22310bc4fbf8d0430"
+  },
+  "results": [
+    {
+      "choice": "smoke-B",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/smoke-B-verified",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/selection.json",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/dispatch-speed6.json",
+        "production"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "cpu_model_executed": false,
+        "rank": 0,
+        "target_split": 0,
+        "prepared_commands": 749,
+        "postload_device_allocations": 4090,
+        "backing_bytes": 4194304,
+        "ordered_retirement": false
+      },
+      "census": "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/smoke-B-verified/rank0/census.json"
+    },
+    {
+      "choice": "smoke-B",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/smoke-B-verified",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/selection.json",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/dispatch-speed6.json",
+        "production"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "cpu_model_executed": false,
+        "rank": 1,
+        "target_split": 0,
+        "prepared_commands": 742,
+        "postload_device_allocations": 2136,
+        "backing_bytes": 4214796,
+        "ordered_retirement": false
+      },
+      "census": "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/smoke-B-verified/rank1/census.json"
+    },
+    {
+      "choice": "candidate-B",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/candidate-B-verified",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/selection.json",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/dispatch-speed6.json",
+        "production"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "cpu_model_executed": false,
+        "rank": 0,
+        "target_split": 0,
+        "prepared_commands": 749,
+        "postload_device_allocations": 4090,
+        "backing_bytes": 4194304,
+        "ordered_retirement": false
+      },
+      "census": "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/candidate-B-verified/rank0/census.json"
+    },
+    {
+      "choice": "candidate-B",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/candidate-B-verified",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/selection.json",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/dispatch-speed6.json",
+        "production"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "cpu_model_executed": false,
+        "rank": 1,
+        "target_split": 0,
+        "prepared_commands": 742,
+        "postload_device_allocations": 2136,
+        "backing_bytes": 4214796,
+        "ordered_retirement": false
+      },
+      "census": "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/candidate-B-verified/rank1/census.json"
+    },
+    {
+      "choice": "serial-smoke-B",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/serial-smoke-B-verified",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/selection.json",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/dispatch-speed6.json",
+        "serial"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "cpu_model_executed": false,
+        "rank": 0,
+        "target_split": 0,
+        "prepared_commands": 749,
+        "postload_device_allocations": 4090,
+        "backing_bytes": 4194304,
+        "ordered_retirement": false
+      },
+      "census": "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/serial-smoke-B-verified/rank0/census.json"
+    },
+    {
+      "choice": "serial-smoke-B",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/serial-smoke-B-verified",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/selection.json",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/dispatch-speed6.json",
+        "serial"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "cpu_model_executed": false,
+        "rank": 1,
+        "target_split": 0,
+        "prepared_commands": 742,
+        "postload_device_allocations": 2136,
+        "backing_bytes": 4214796,
+        "ordered_retirement": false
+      },
+      "census": "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/serial-smoke-B-verified/rank1/census.json"
+    },
+    {
+      "choice": "control-B",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/control-B-verified",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/selection.json",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/dispatch-speed6.json",
+        "off"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "cpu_model_executed": false,
+        "rank": 0,
+        "target_split": 0,
+        "prepared_commands": 677,
+        "postload_device_allocations": 0,
+        "backing_bytes": 4194304,
+        "ordered_retirement": false
+      },
+      "census": "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/control-B-verified/rank0/census.json"
+    },
+    {
+      "choice": "control-B",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/control-B-verified",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/selection.json",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/dispatch-speed6.json",
+        "off"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "cpu_model_executed": false,
+        "rank": 1,
+        "target_split": 0,
+        "prepared_commands": 670,
+        "postload_device_allocations": 104,
+        "backing_bytes": 4214796,
+        "ordered_retirement": false
+      },
+      "census": "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/control-B-verified/rank1/census.json"
+    },
+    {
+      "choice": "control-repeat-B",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/control-repeat-B-verified",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/selection.json",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/dispatch-speed6.json",
+        "off"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "cpu_model_executed": false,
+        "rank": 0,
+        "target_split": 0,
+        "prepared_commands": 677,
+        "postload_device_allocations": 0,
+        "backing_bytes": 4194304,
+        "ordered_retirement": false
+      },
+      "census": "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/control-repeat-B-verified/rank0/census.json"
+    },
+    {
+      "choice": "control-repeat-B",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/control-repeat-B-verified",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/selection.json",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/dispatch-speed6.json",
+        "off"
+      ],
+      "result": {
+        "passed": true,
+        "device_executed": false,
+        "cpu_model_executed": false,
+        "rank": 1,
+        "target_split": 0,
+        "prepared_commands": 670,
+        "postload_device_allocations": 104,
+        "backing_bytes": 4214796,
+        "ordered_retirement": false
+      },
+      "census": "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/control-repeat-B-verified/rank1/census.json"
+    },
+    {
+      "choice": "negative-71b",
+      "expected_refusal": true,
+      "passed": true,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/test",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/fullshape/negative-71b-verified",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/selection.json",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/dispatch-speed6.json",
+        "production"
+      ]
+    }
+  ],
+  "admissions": [
+    {
+      "rank": 0,
+      "draft_rank": 1,
+      "context_capacity": 4096,
+      "device_allocation_bytes": 28136072020,
+      "capacity_bytes": 34242297856,
+      "planned_maximum_bytes": 28874810136,
+      "planned_free_bytes": 6106225836,
+      "minimum_free_bytes": 1500000000,
+      "passed": true,
+      "scope": "allocation admission; driver overhead/residency unmeasured"
+    },
+    {
+      "rank": 1,
+      "draft_rank": 1,
+      "context_capacity": 4096,
+      "device_allocation_bytes": 31520354352,
+      "capacity_bytes": 34242297856,
+      "planned_maximum_bytes": 31873419978,
+      "planned_free_bytes": 2721943504,
+      "minimum_free_bytes": 1500000000,
+      "passed": true,
+      "scope": "allocation admission; driver overhead/residency unmeasured"
+    },
+    {
+      "rank": 0,
+      "draft_rank": 1,
+      "context_capacity": 4096,
+      "device_allocation_bytes": 28136072020,
+      "capacity_bytes": 34242297856,
+      "planned_maximum_bytes": 28874810136,
+      "planned_free_bytes": 6106225836,
+      "minimum_free_bytes": 1500000000,
+      "passed": true,
+      "scope": "allocation admission; driver overhead/residency unmeasured"
+    },
+    {
+      "rank": 1,
+      "draft_rank": 1,
+      "context_capacity": 4096,
+      "device_allocation_bytes": 31520354352,
+      "capacity_bytes": 34242297856,
+      "planned_maximum_bytes": 31873419978,
+      "planned_free_bytes": 2721943504,
+      "minimum_free_bytes": 1500000000,
+      "passed": true,
+      "scope": "allocation admission; driver overhead/residency unmeasured"
+    },
+    {
+      "rank": 0,
+      "draft_rank": 1,
+      "context_capacity": 4096,
+      "device_allocation_bytes": 28136072020,
+      "capacity_bytes": 34242297856,
+      "planned_maximum_bytes": 28874810136,
+      "planned_free_bytes": 6106225836,
+      "minimum_free_bytes": 1500000000,
+      "passed": true,
+      "scope": "allocation admission; driver overhead/residency unmeasured"
+    },
+    {
+      "rank": 1,
+      "draft_rank": 1,
+      "context_capacity": 4096,
+      "device_allocation_bytes": 31520354352,
+      "capacity_bytes": 34242297856,
+      "planned_maximum_bytes": 31873419978,
+      "planned_free_bytes": 2721943504,
+      "minimum_free_bytes": 1500000000,
+      "passed": true,
+      "scope": "allocation admission; driver overhead/residency unmeasured"
+    },
+    {
+      "rank": 0,
+      "draft_rank": 1,
+      "context_capacity": 4096,
+      "device_allocation_bytes": 27685394516,
+      "capacity_bytes": 34242297856,
+      "planned_maximum_bytes": 27731862296,
+      "planned_free_bytes": 6556903340,
+      "minimum_free_bytes": 1500000000,
+      "passed": true,
+      "scope": "allocation admission; driver overhead/residency unmeasured"
+    },
+    {
+      "rank": 1,
+      "draft_rank": 1,
+      "context_capacity": 4096,
+      "device_allocation_bytes": 31267162826,
+      "capacity_bytes": 34242297856,
+      "planned_maximum_bytes": 31268391626,
+      "planned_free_bytes": 2975135030,
+      "minimum_free_bytes": 1500000000,
+      "passed": true,
+      "scope": "allocation admission; driver overhead/residency unmeasured"
+    },
+    {
+      "rank": 0,
+      "draft_rank": 1,
+      "context_capacity": 4096,
+      "device_allocation_bytes": 27685394516,
+      "capacity_bytes": 34242297856,
+      "planned_maximum_bytes": 27731862296,
+      "planned_free_bytes": 6556903340,
+      "minimum_free_bytes": 1500000000,
+      "passed": true,
+      "scope": "allocation admission; driver overhead/residency unmeasured"
+    },
+    {
+      "rank": 1,
+      "draft_rank": 1,
+      "context_capacity": 4096,
+      "device_allocation_bytes": 31267162826,
+      "capacity_bytes": 34242297856,
+      "planned_maximum_bytes": 31268391626,
+      "planned_free_bytes": 2975135030,
+      "minimum_free_bytes": 1500000000,
+      "passed": true,
+      "scope": "allocation admission; driver overhead/residency unmeasured"
+    }
+  ],
+  "binary_sha256": "4395aaa2aacc6b5ecb0e902bc6f5196cf7a4c6cb7a4f064c8322183706354e38"
+}

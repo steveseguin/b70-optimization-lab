@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 17, packet71c sealed on CPU:** The depth-two screen's router refused
+its grouped configuration in 71b. The new candidate separates those projections
+while keeping their arithmetic; production and controls are unchanged. Both
+compilers pass all byte checks. Full-size native startup and two-row setup now
+run on CPU for every plan, and reproduce the old refusal as a regression check.
+Seals and all four temporary queue plans pass. No GPU or service ran. The
+coordinator next runs smoke, then control/candidate/control; device correctness
+and speed remain pending. [Evidence and proposed jobs](notes/2026-10-17-own-runtime-packet71c.md).
+
 **October 17, packet77 prepared on CPU:** A new lane-B screen can measure where
 time goes in packet70's wide64 record selection. It compares observation off
 and on in one load, then reports both cards' class costs and the second card's
