@@ -89,5 +89,31 @@ class SelectionTests(unittest.TestCase):
                     s.verify_selection()
 
 
+    def test_coordinator_amendment_admits_observed_30us_only(self):
+        # Real p54 owners: selected 6.5645/6.564 with banked 23.4385/23.4375.
+        row = decision((6.5645, 6.564))
+        row['packet49d_trigger'] = False
+        choices, values = s.decision_choices(row)
+        self.assertEqual(choices['route'], 'route-rank4')
+        self.assertTrue(all(30 <= x < 40 for x in values))
+        low = decision((6.5, 6.5)); low['packet49d_trigger'] = False
+        with self.assertRaisesRegex(ValueError, 'reach 30'):
+            s.decision_choices(low)
+        lied = decision((6.5645, 6.564))  # trigger True although below the original 40
+        with self.assertRaisesRegex(ValueError, 'decision differs'):
+            s.decision_choices(lied)
+
+    def test_amendment_tamper_and_absence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fake = Path(tmp)/'coordinator-amendment.json'
+            fake.write_text(s.AMENDMENT.read_text().replace('30', '10'))
+            with patch.object(s, 'AMENDMENT', fake), self.assertRaisesRegex(ValueError, 'amendment changed'):
+                s.integration_threshold()
+            with patch.object(s, 'AMENDMENT', Path(tmp)/'missing.json'):
+                self.assertEqual(s.integration_threshold(), (40, None))
+                row = decision((6.5645, 6.564)); row['packet49d_trigger'] = False
+                with self.assertRaisesRegex(ValueError, 'reach 40'):
+                    s.decision_choices(row)
+
 if __name__ == '__main__':
     unittest.main()

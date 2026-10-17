@@ -18,6 +18,25 @@ CHOICES = {'route': ('production', 'route-rank4', 'route-exp32-rank4'),
            'recurrence': ('production', 'rows4-shared', 'rows8-shared'),
            'hc': ('production', 'mix-vector4')}
 CLASS_MAP = {'route': 'route', 'recurrence': 'gdn.recurrence', 'hc': 'hc.inject_mix_norm'}
+ORIGINAL_THRESHOLD_US = 40
+# Coordinator amendment of 2026-10-17 10:58 UTC (commit 57ccb5e53): the 40 us
+# trigger was a resource gate for the device chain; it is lowered to 30 us,
+# hash-bound below. Exactness and the record-floor checks are unchanged.
+AMENDMENT = P / 'coordinator-amendment.json'
+AMENDMENT_SHA = 'ca892530d3b0f3d8fe9072e74b30d02f8c6067b76b65322a6facd8598c0947cd'
+
+
+def integration_threshold():
+    if not AMENDMENT.exists():
+        return ORIGINAL_THRESHOLD_US, None
+    require(digest(AMENDMENT) == AMENDMENT_SHA, 'coordinator amendment changed')
+    row = json.loads(AMENDMENT.read_text())
+    require(row.get('schema') == 'packet49d.coordinator-amendment.v1'
+            and row.get('original_integration_threshold_us') == ORIGINAL_THRESHOLD_US
+            and type(row.get('amended_integration_threshold_us')) in (int, float)
+            and 0 < row['amended_integration_threshold_us'] <= ORIGINAL_THRESHOLD_US,
+            'invalid coordinator amendment')
+    return row['amended_integration_threshold_us'], AMENDMENT_SHA
 
 
 def require(ok, reason):
@@ -73,11 +92,13 @@ def decision_choices(decision):
     require(savings == decision['owner_saved_us'], 'selected savings do not sum to decision')
     banked_values = banked['owner_saved_us']
     combined = [a + b for a, b in zip(banked_values, savings)]
-    require(len(combined) == 2 and all(x >= 40 for x in combined),
-            'banked plus selected savings must reach40 microseconds in BOTH owners')
+    threshold, _ = integration_threshold()
+    require(len(combined) == 2 and all(x >= threshold for x in combined),
+            f'banked plus selected savings must reach {threshold} microseconds in BOTH owners')
     require(decision['banked_p53b_owner_us'] == banked_values
             and decision['combined_owner_us'] == combined
-            and decision['integration_threshold_us'] == 40 and decision['packet49d_trigger'] is True,
+            and decision['integration_threshold_us'] == ORIGINAL_THRESHOLD_US
+            and decision['packet49d_trigger'] is (all(x >= ORIGINAL_THRESHOLD_US for x in combined)),
             'packet54 combined decision differs')
     return selected, combined
 
@@ -98,7 +119,8 @@ def verify_selection():
     choices, combined = decision_choices(observed)
     require(row['choices'] == choices, 'selection differs from common packet54 decision')
     return dict(selection_sha256=digest(P / 'selection.json'), decision_sha256=digest(source),
-                choices=choices, combined_owner_us=combined, threshold_us=40,
+                choices=choices, combined_owner_us=combined, threshold_us=integration_threshold()[0],
+                original_threshold_us=ORIGINAL_THRESHOLD_US, coordinator_amendment_sha256=integration_threshold()[1],
                 banked_evidence_sha256=BANKED_SHA, packet54_seal_sha256=P54_SEAL_SHA,
                 timing_windows=[{'path': w, 'sha256': digest(Path(w))} for w in observed['windows']])
 
