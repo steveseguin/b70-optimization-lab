@@ -1,0 +1,109 @@
+{
+  "schema": "own-runtime.packet47.window.v1",
+  "seal_sha256": "79117013f0f0acfb350acdf243cef9f2ff055c315d6dc30519afcb1d95cbc7d7",
+  "binary_sha256": "606a5ced2f6e253042cd60de666fef4b449f69b271a5a5c6d29870705bc7b4d4",
+  "card": 0,
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/compiler/2026.0/lib:/opt/intel/oneapi/umf/1.1/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+    "ZE_PCI_ID_DEVICE_ORDER": "1"
+  },
+  "mode": "exact",
+  "passed": true,
+  "device_executed": true,
+  "child_still_running": false,
+  "microbenchmark_only": true,
+  "model_speed_claim": false,
+  "started_utc_ns": 1792207571502575393,
+  "watchdog_seconds": 7200,
+  "cpu_affinity": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "coordinator_fault_review": "2026-10-17T03:25:44Z",
+  "systemd_cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/packet47-e2-p47-b.service\n",
+  "host_memory": {
+    "MemFree": 108150628352,
+    "MemAvailable": 121043476480,
+    "SwapTotal": 8589930496,
+    "SwapFree": 8459976704
+  },
+  "storage_admission": {
+    "free_bytes": 23623847936,
+    "planned_write_bytes": 536870912,
+    "min_free_bytes": 8000000000
+  },
+  "foreign_clients": {
+    "visible_xe_clients": [],
+    "inaccessible_entries": 486,
+    "method": "passive /proc fdinfo only; no device discovery"
+  },
+  "stop_reasons": [],
+  "reviewed_fault_lines": 2,
+  "ldd": {
+    "returncode": 0,
+    "stdout": "\tlinux-vdso.so.1 (0x00007f76ecd16000)\n\tlibcrypto.so.3 => /lib/x86_64-linux-gnu/libcrypto.so.3 (0x00007f76ec600000)\n\tlibze_loader.so.1 => /lib/x86_64-linux-gnu/libze_loader.so.1 (0x00007f76ecb75000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007f76ec200000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f76ec517000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f76ecb47000)\n\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x00007f76ebe00000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f76eba00000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007f76ecd18000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f76ecb40000)\n\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x00007f76eac00000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f76ecb3b000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007f76ecb34000)\n\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x00007f76ea600000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007f76ecb18000)\n\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x00007f76e8e00000)\n\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x00007f76ebd07000)\n\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x00007f76ec4b4000)\n",
+    "stderr": ""
+  },
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet47-qsa-attn/build/device/qsa-bench",
+    "--mode",
+    "exact",
+    "--card",
+    "0",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet47-qsa-attn/evidence/p47-b-e2/run",
+    "--authorized-device-window"
+  ],
+  "pid": 121453,
+  "process_start_ticks": 5027972,
+  "anonymous_peak_bytes": 613990400,
+  "anonymous_limit_bytes": 8589934592,
+  "anonymous_stop_bytes": 8053063680,
+  "memory_last_sample": {
+    "anonymous_bytes": 106373120,
+    "root_seen": true,
+    "processes": [
+      {
+        "pid": 121453,
+        "rss_anon_bytes": 106373120
+      }
+    ]
+  },
+  "returncode": 0,
+  "sigterm_sent": false,
+  "elapsed_seconds": 16.565851478000695,
+  "native_files": {
+    "run/receipt.json": "879e9eb0050f0c0f0da53d535132f7fd33c8b1a2c1bfdc26231ba6725fa3b35b",
+    "run/comparisons.jsonl": "6dc7896dd8f060031d204408cc9f0b363fd6a63c5df9d8b2dec8d8920c670884",
+    "run/iterations.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "run/differences.jsonl": "13ad0b12e339506f2f50a7421d08ccede1dd5ca4ecfab95938574f8dd366462e"
+  },
+  "exact_output_identity": "6dc7896dd8f060031d204408cc9f0b363fd6a63c5df9d8b2dec8d8920c670884",
+  "finished_utc_ns": 1792207588432540859
+}

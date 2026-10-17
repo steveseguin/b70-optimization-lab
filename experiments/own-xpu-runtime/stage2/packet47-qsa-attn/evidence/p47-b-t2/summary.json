@@ -1,0 +1,769 @@
+{
+  "passed": true,
+  "device_executed": true,
+  "model_speed_claim": false,
+  "microbenchmark_only": true,
+  "shapes": {
+    "c1024-m1": {
+      "classes_gpu_us": {
+        "current": {
+          "qsa.attention": {
+            "median": 1194.375,
+            "p10": 1193.125,
+            "p90": 1196.354
+          },
+          "qsa.select": {
+            "median": 53.854,
+            "p10": 53.542,
+            "p90": 54.167
+          },
+          "qsa.qgate": {
+            "median": 76.146,
+            "p10": 75.625,
+            "p90": 76.563
+          }
+        },
+        "ordered": {
+          "qsa.attention": {
+            "median": 2226.354,
+            "p10": 2157.291,
+            "p90": 2302.187
+          },
+          "qsa.select": {
+            "median": 53.854,
+            "p10": 53.542,
+            "p90": 54.062
+          },
+          "qsa.qgate": {
+            "median": 100.625,
+            "p10": 100.0,
+            "p90": 101.25
+          }
+        },
+        "split32": {
+          "qsa.attention": {
+            "median": 225.833,
+            "p10": 224.375,
+            "p90": 227.188
+          },
+          "qsa.select": {
+            "median": 53.854,
+            "p10": 53.646,
+            "p90": 54.063
+          },
+          "qsa.qgate": {
+            "median": 81.042,
+            "p10": 80.625,
+            "p90": 81.459
+          }
+        }
+      },
+      "variants": {
+        "ordered": {
+          "paired_attention_speedup": {
+            "median": 0.5366665275589395,
+            "p10": 0.5193856661819851,
+            "p90": 0.5528328434179963
+          },
+          "bar_passed": false,
+          "order_preference_passed": false
+        },
+        "split32": {
+          "paired_attention_speedup": {
+            "median": 5.290235737641328,
+            "p10": 5.2589312426306245,
+            "p90": 5.324656330956745
+          },
+          "bar_passed": true,
+          "order_preference_passed": false
+        }
+      },
+      "measured_pairs": 200
+    },
+    "c1024-m2": {
+      "classes_gpu_us": {
+        "current": {
+          "qsa.attention": {
+            "median": 2366.823,
+            "p10": 2364.896,
+            "p90": 2369.479
+          },
+          "qsa.select": {
+            "median": 53.853,
+            "p10": 53.646,
+            "p90": 53.959
+          },
+          "qsa.qgate": {
+            "median": 143.854,
+            "p10": 143.333,
+            "p90": 144.375
+          }
+        },
+        "ordered": {
+          "qsa.attention": {
+            "median": 3452.3955,
+            "p10": 3342.707,
+            "p90": 3555.624
+          },
+          "qsa.select": {
+            "median": 53.854,
+            "p10": 53.645,
+            "p90": 54.167
+          },
+          "qsa.qgate": {
+            "median": 168.229,
+            "p10": 167.917,
+            "p90": 168.646
+          }
+        },
+        "split32": {
+          "qsa.attention": {
+            "median": 310.8325,
+            "p10": 309.062,
+            "p90": 312.812
+          },
+          "qsa.select": {
+            "median": 53.75,
+            "p10": 53.542,
+            "p90": 53.959
+          },
+          "qsa.qgate": {
+            "median": 149.792,
+            "p10": 149.479,
+            "p90": 150.312
+          }
+        }
+      },
+      "variants": {
+        "ordered": {
+          "paired_attention_speedup": {
+            "median": 0.6856395869987251,
+            "p10": 0.6652604437364581,
+            "p90": 0.7071035498349213
+          },
+          "bar_passed": false,
+          "order_preference_passed": false
+        },
+        "split32": {
+          "paired_attention_speedup": {
+            "median": 7.61684446954362,
+            "p10": 7.572641367547624,
+            "p90": 7.6590224700566365
+          },
+          "bar_passed": true,
+          "order_preference_passed": false
+        }
+      },
+      "measured_pairs": 200
+    },
+    "c2048-m1": {
+      "classes_gpu_us": {
+        "current": {
+          "qsa.attention": {
+            "median": 2379.2704999999996,
+            "p10": 2375.52,
+            "p90": 2383.229
+          },
+          "qsa.select": {
+            "median": 97.084,
+            "p10": 96.25,
+            "p90": 97.813
+          },
+          "qsa.qgate": {
+            "median": 79.167,
+            "p10": 78.646,
+            "p90": 80.521
+          }
+        },
+        "ordered": {
+          "qsa.attention": {
+            "median": 3927.188,
+            "p10": 3750.416,
+            "p90": 4038.021
+          },
+          "qsa.select": {
+            "median": 96.5625,
+            "p10": 96.146,
+            "p90": 96.876
+          },
+          "qsa.qgate": {
+            "median": 102.396,
+            "p10": 101.875,
+            "p90": 102.916
+          }
+        },
+        "split32": {
+          "qsa.attention": {
+            "median": 417.344,
+            "p10": 413.959,
+            "p90": 421.355
+          },
+          "qsa.select": {
+            "median": 97.0315,
+            "p10": 96.25,
+            "p90": 97.605
+          },
+          "qsa.qgate": {
+            "median": 85.521,
+            "p10": 84.583,
+            "p90": 86.563
+          }
+        }
+      },
+      "variants": {
+        "ordered": {
+          "paired_attention_speedup": {
+            "median": 0.6054351787159727,
+            "p10": 0.5890833853003818,
+            "p90": 0.6333296225197028
+          },
+          "bar_passed": false,
+          "order_preference_passed": false
+        },
+        "split32": {
+          "paired_attention_speedup": {
+            "median": 5.702778006364829,
+            "p10": 5.6406225884196655,
+            "p90": 5.747538260766402
+          },
+          "bar_passed": true,
+          "order_preference_passed": false
+        }
+      },
+      "measured_pairs": 200
+    },
+    "c2048-m2": {
+      "classes_gpu_us": {
+        "current": {
+          "qsa.attention": {
+            "median": 4717.812,
+            "p10": 4711.98,
+            "p90": 4722.916
+          },
+          "qsa.select": {
+            "median": 97.864,
+            "p10": 97.084,
+            "p90": 98.437
+          },
+          "qsa.qgate": {
+            "median": 147.917,
+            "p10": 147.084,
+            "p90": 148.646
+          }
+        },
+        "ordered": {
+          "qsa.attention": {
+            "median": 5907.290999999999,
+            "p10": 5745.521,
+            "p90": 6031.772
+          },
+          "qsa.select": {
+            "median": 97.813,
+            "p10": 97.5,
+            "p90": 98.125
+          },
+          "qsa.qgate": {
+            "median": 169.8435,
+            "p10": 169.479,
+            "p90": 170.209
+          }
+        },
+        "split32": {
+          "qsa.attention": {
+            "median": 586.145,
+            "p10": 583.333,
+            "p90": 589.687
+          },
+          "qsa.select": {
+            "median": 97.709,
+            "p10": 97.292,
+            "p90": 98.125
+          },
+          "qsa.qgate": {
+            "median": 156.875,
+            "p10": 156.25,
+            "p90": 157.708
+          }
+        }
+      },
+      "variants": {
+        "ordered": {
+          "paired_attention_speedup": {
+            "median": 0.7984306784312474,
+            "p10": 0.7818161695240892,
+            "p90": 0.8207238681655008
+          },
+          "bar_passed": false,
+          "order_preference_passed": false
+        },
+        "split32": {
+          "paired_attention_speedup": {
+            "median": 8.04618573192849,
+            "p10": 7.999325925875617,
+            "p90": 8.091588069216131
+          },
+          "bar_passed": true,
+          "order_preference_passed": false
+        }
+      },
+      "measured_pairs": 200
+    },
+    "c4096-m1": {
+      "classes_gpu_us": {
+        "current": {
+          "qsa.attention": {
+            "median": 2376.771,
+            "p10": 2373.854,
+            "p90": 2380.938
+          },
+          "qsa.select": {
+            "median": 183.854,
+            "p10": 183.021,
+            "p90": 184.582
+          },
+          "qsa.qgate": {
+            "median": 78.75,
+            "p10": 77.708,
+            "p90": 81.146
+          }
+        },
+        "ordered": {
+          "qsa.attention": {
+            "median": 3401.1459999999997,
+            "p10": 3305.416,
+            "p90": 3489.063
+          },
+          "qsa.select": {
+            "median": 183.43650000000002,
+            "p10": 183.021,
+            "p90": 183.958
+          },
+          "qsa.qgate": {
+            "median": 102.813,
+            "p10": 102.396,
+            "p90": 103.125
+          }
+        },
+        "split32": {
+          "qsa.attention": {
+            "median": 416.0415,
+            "p10": 413.125,
+            "p90": 418.957
+          },
+          "qsa.select": {
+            "median": 183.749,
+            "p10": 183.021,
+            "p90": 184.375
+          },
+          "qsa.qgate": {
+            "median": 86.458,
+            "p10": 85.312,
+            "p90": 87.812
+          }
+        }
+      },
+      "variants": {
+        "ordered": {
+          "paired_attention_speedup": {
+            "median": 0.6986707424418943,
+            "p10": 0.6813551374681397,
+            "p90": 0.7186793534445376
+          },
+          "bar_passed": false,
+          "order_preference_passed": false
+        },
+        "split32": {
+          "paired_attention_speedup": {
+            "median": 5.713676481262409,
+            "p10": 5.673798388136994,
+            "p90": 5.75439938420724
+          },
+          "bar_passed": true,
+          "order_preference_passed": false
+        }
+      },
+      "measured_pairs": 200
+    },
+    "c4096-m2": {
+      "classes_gpu_us": {
+        "current": {
+          "qsa.attention": {
+            "median": 4750.208,
+            "p10": 4745.73,
+            "p90": 4754.478
+          },
+          "qsa.select": {
+            "median": 188.959,
+            "p10": 188.436,
+            "p90": 189.583
+          },
+          "qsa.qgate": {
+            "median": 149.896,
+            "p10": 149.479,
+            "p90": 150.313
+          }
+        },
+        "ordered": {
+          "qsa.attention": {
+            "median": 5341.3545,
+            "p10": 5225.939,
+            "p90": 5471.666
+          },
+          "qsa.select": {
+            "median": 189.166,
+            "p10": 188.438,
+            "p90": 189.583
+          },
+          "qsa.qgate": {
+            "median": 170.104,
+            "p10": 169.792,
+            "p90": 170.521
+          }
+        },
+        "split32": {
+          "qsa.attention": {
+            "median": 587.812,
+            "p10": 585.833,
+            "p90": 589.686
+          },
+          "qsa.select": {
+            "median": 188.958,
+            "p10": 188.438,
+            "p90": 189.583
+          },
+          "qsa.qgate": {
+            "median": 157.604,
+            "p10": 157.083,
+            "p90": 158.125
+          }
+        }
+      },
+      "variants": {
+        "ordered": {
+          "paired_attention_speedup": {
+            "median": 0.8895842409121788,
+            "p10": 0.8677179477256947,
+            "p90": 0.9084628145061743
+          },
+          "bar_passed": false,
+          "order_preference_passed": false
+        },
+        "split32": {
+          "paired_attention_speedup": {
+            "median": 8.081668440784307,
+            "p10": 8.055629781346644,
+            "p90": 8.108713959451126
+          },
+          "bar_passed": true,
+          "order_preference_passed": false
+        }
+      },
+      "measured_pairs": 200
+    },
+    "c8192-m1": {
+      "classes_gpu_us": {
+        "current": {
+          "qsa.attention": {
+            "median": 2344.0105,
+            "p10": 2339.063,
+            "p90": 2351.563
+          },
+          "qsa.select": {
+            "median": 364.89549999999997,
+            "p10": 364.063,
+            "p90": 365.833
+          },
+          "qsa.qgate": {
+            "median": 115.938,
+            "p10": 115.521,
+            "p90": 116.458
+          }
+        },
+        "ordered": {
+          "qsa.attention": {
+            "median": 3396.5615,
+            "p10": 3312.395,
+            "p90": 3483.647
+          },
+          "qsa.select": {
+            "median": 364.375,
+            "p10": 363.854,
+            "p90": 364.792
+          },
+          "qsa.qgate": {
+            "median": 120.208,
+            "p10": 119.791,
+            "p90": 120.625
+          }
+        },
+        "split32": {
+          "qsa.attention": {
+            "median": 412.813,
+            "p10": 410.0,
+            "p90": 416.354
+          },
+          "qsa.select": {
+            "median": 364.896,
+            "p10": 364.167,
+            "p90": 365.729
+          },
+          "qsa.qgate": {
+            "median": 119.94800000000001,
+            "p10": 118.646,
+            "p90": 120.938
+          }
+        }
+      },
+      "variants": {
+        "ordered": {
+          "paired_attention_speedup": {
+            "median": 0.6912610864301116,
+            "p10": 0.6731347095138877,
+            "p90": 0.7096603991221385
+          },
+          "bar_passed": false,
+          "order_preference_passed": false
+        },
+        "split32": {
+          "paired_attention_speedup": {
+            "median": 5.678738648955312,
+            "p10": 5.633227974271894,
+            "p90": 5.733621897567046
+          },
+          "bar_passed": true,
+          "order_preference_passed": false
+        }
+      },
+      "measured_pairs": 200
+    },
+    "c8192-m2": {
+      "classes_gpu_us": {
+        "current": {
+          "qsa.attention": {
+            "median": 4707.917,
+            "p10": 4701.355,
+            "p90": 4715.104
+          },
+          "qsa.select": {
+            "median": 718.541,
+            "p10": 717.604,
+            "p90": 719.48
+          },
+          "qsa.qgate": {
+            "median": 184.48,
+            "p10": 184.063,
+            "p90": 185.0
+          }
+        },
+        "ordered": {
+          "qsa.attention": {
+            "median": 5324.844499999999,
+            "p10": 5204.374,
+            "p90": 5446.563
+          },
+          "qsa.select": {
+            "median": 718.646,
+            "p10": 717.916,
+            "p90": 719.687
+          },
+          "qsa.qgate": {
+            "median": 187.188,
+            "p10": 186.875,
+            "p90": 187.604
+          }
+        },
+        "split32": {
+          "qsa.attention": {
+            "median": 585.521,
+            "p10": 583.854,
+            "p90": 588.125
+          },
+          "qsa.select": {
+            "median": 718.959,
+            "p10": 718.021,
+            "p90": 720.104
+          },
+          "qsa.qgate": {
+            "median": 188.125,
+            "p10": 186.979,
+            "p90": 189.063
+          }
+        }
+      },
+      "variants": {
+        "ordered": {
+          "paired_attention_speedup": {
+            "median": 0.8849053598590839,
+            "p10": 0.8633254272278931,
+            "p90": 0.9045493202178437
+          },
+          "bar_passed": false,
+          "order_preference_passed": false
+        },
+        "split32": {
+          "paired_attention_speedup": {
+            "median": 8.041204999229766,
+            "p10": 7.993623804463337,
+            "p90": 8.063902855321468
+          },
+          "bar_passed": true,
+          "order_preference_passed": false
+        }
+      },
+      "measured_pairs": 200
+    },
+    "c32768-m1": {
+      "classes_gpu_us": {
+        "current": {
+          "qsa.attention": {
+            "median": 2692.5525,
+            "p10": 2367.396,
+            "p90": 2815.73
+          },
+          "qsa.select": {
+            "median": 6111.2495,
+            "p10": 5560.209,
+            "p90": 6649.479
+          },
+          "qsa.qgate": {
+            "median": 119.5835,
+            "p10": 118.75,
+            "p90": 120.729
+          }
+        },
+        "ordered": {
+          "qsa.attention": {
+            "median": 3505.625,
+            "p10": 3387.707,
+            "p90": 3601.354
+          },
+          "qsa.select": {
+            "median": 6237.031999999999,
+            "p10": 6223.646,
+            "p90": 6253.021
+          },
+          "qsa.qgate": {
+            "median": 121.667,
+            "p10": 121.146,
+            "p90": 122.084
+          }
+        },
+        "split32": {
+          "qsa.attention": {
+            "median": 451.406,
+            "p10": 410.936,
+            "p90": 492.916
+          },
+          "qsa.select": {
+            "median": 6104.0105,
+            "p10": 5561.771,
+            "p90": 6646.562
+          },
+          "qsa.qgate": {
+            "median": 120.36449999999999,
+            "p10": 119.375,
+            "p90": 121.146
+          }
+        }
+      },
+      "variants": {
+        "ordered": {
+          "paired_attention_speedup": {
+            "median": 0.7501235118924466,
+            "p10": 0.6674584095707249,
+            "p90": 0.814633822640054
+          },
+          "bar_passed": false,
+          "order_preference_passed": false
+        },
+        "split32": {
+          "paired_attention_speedup": {
+            "median": 6.015537818585393,
+            "p10": 4.809166654832355,
+            "p90": 6.849398512499909
+          },
+          "bar_passed": true,
+          "order_preference_passed": false
+        }
+      },
+      "measured_pairs": 200
+    },
+    "c32768-m2": {
+      "classes_gpu_us": {
+        "current": {
+          "qsa.attention": {
+            "median": 5212.5525,
+            "p10": 4755.625,
+            "p90": 5651.771
+          },
+          "qsa.select": {
+            "median": 11827.448,
+            "p10": 11024.583,
+            "p90": 12657.292
+          },
+          "qsa.qgate": {
+            "median": 179.27100000000002,
+            "p10": 178.125,
+            "p90": 180.209
+          }
+        },
+        "ordered": {
+          "qsa.attention": {
+            "median": 5530.99,
+            "p10": 5420.939,
+            "p90": 5647.604
+          },
+          "qsa.select": {
+            "median": 11204.167000000001,
+            "p10": 11044.27,
+            "p90": 11468.332
+          },
+          "qsa.qgate": {
+            "median": 182.708,
+            "p10": 182.395,
+            "p90": 183.125
+          }
+        },
+        "split32": {
+          "qsa.attention": {
+            "median": 643.5944999999999,
+            "p10": 587.084,
+            "p90": 699.896
+          },
+          "qsa.select": {
+            "median": 11993.697,
+            "p10": 11028.438,
+            "p90": 12951.042
+          },
+          "qsa.qgate": {
+            "median": 180.05200000000002,
+            "p10": 179.167,
+            "p90": 180.833
+          }
+        }
+      },
+      "variants": {
+        "ordered": {
+          "paired_attention_speedup": {
+            "median": 0.9371331113211302,
+            "p10": 0.8486645504018432,
+            "p90": 1.0347940644407465
+          },
+          "bar_passed": false,
+          "order_preference_passed": false
+        },
+        "split32": {
+          "paired_attention_speedup": {
+            "median": 8.203620740608082,
+            "p10": 6.798267227678623,
+            "p90": 9.622926283563004
+          },
+          "bar_passed": true,
+          "order_preference_passed": false
+        }
+      },
+      "measured_pairs": 200
+    }
+  },
+  "timing_definition": "sum of unique completed GPU command_end-command_start by class"
+}
