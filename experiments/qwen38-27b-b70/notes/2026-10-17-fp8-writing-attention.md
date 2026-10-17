@@ -171,7 +171,7 @@ happens at 130 of the 260,603 lengths from 1,542 to 262,144 (0.05 %).
   key/value heads, the lone-row split count is the same for 20 and 32 cores at every length up to 262,144 (checked),
   so the census result does not depend on it.
 
-## Result, server comparison (03:00-03:12 EDT, server W832o; `data/2026-10-17-write-rate/write-W832o.json`)
+## Result, server comparison (03:00-03:06 EDT, server W832o; `data/2026-10-17-write-rate/write-W832o.json`)
 
 Same flags as W832 plus `B70_FA_VERIFY_ROWS_ONE_LAUNCH=1` (log: "enabled (one launch per verify call)"):
 
