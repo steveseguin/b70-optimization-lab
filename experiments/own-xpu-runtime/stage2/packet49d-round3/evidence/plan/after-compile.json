@@ -1,0 +1,26 @@
+{
+  "command": [
+    "g++",
+    "-std=c++20",
+    "-O0",
+    "-DOWN_RT_HOST_ONLY",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-Wl,--gc-sections",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49d-round3",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49d-round3/build/p49-plan/after.cpp",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49d-round3/small_gemv.cpp",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp",
+    "-o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet49d-round3/build/p49-plan/after"
+  ],
+  "exit_code": 0,
+  "main_sha256": "4904448aa1a1259aabbe8486d0af8b68c1313ad8256266b8a261353da354f6e7",
+  "rank_sha256": "5e385d6a242cecaaec69206c54cf53226eeac1916bf0c24b986935558df00801",
+  "mtp_sha256": "e9587829d78c599270983ce450755c9fe1aae0b7e98c2ba25a6a5b897a69fd0b",
+  "generated_sha256": "a56f2970a0cd2389d6f70927a997afd3ff18c390df01cdd93a09ddd9dacb4732"
+}

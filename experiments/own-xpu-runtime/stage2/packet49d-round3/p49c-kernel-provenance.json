@@ -1,0 +1,30 @@
+{
+  "schema": "packet49c.selected-kernel-provenance.v1",
+  "passed": true,
+  "device_executed": false,
+  "source": "experiments/own-xpu-runtime/stage2/packet51-round2/candidate.hpp",
+  "source_sha256": "68226856f6d6b2c1174cf35bfce5eb7f1a7b8cd27aa38b5fb207bcaef4335e86",
+  "candidate_sha256": "9dab3015bcaf7adc873c523fbfd13a321b4c19516689861d4a4121eb2feee961",
+  "selected_arithmetic_body_exact": true,
+  "normalizations": [
+    "namespace p51 to p49c",
+    "local identical load32 helper namespace",
+    "route exception text prefix only",
+    "replace block-local constexpr wg=256 with identical literal256 in launch range so prepared-submission capture can hoist the expression"
+  ],
+  "excluded": [
+    "IQ2 GateKernel",
+    "GDN QKV dispatch",
+    "HC inject",
+    "final HC low/gate"
+  ],
+  "launch_geometry_unchanged": true,
+  "compile_refusal_evidence": "evidence/device-compile-refusal",
+  "qualification_receipts_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet51-round2/evidence-copy/p51-a-e1/receipt.json": "c57d81546e6860a10a948170497c751b83e1d56ae6219d065d37c13ff60d8692",
+    "experiments/own-xpu-runtime/stage2/packet51-round2/evidence-copy/p51-a-e2/receipt.json": "c57d81546e6860a10a948170497c751b83e1d56ae6219d065d37c13ff60d8692",
+    "experiments/own-xpu-runtime/stage2/packet51-round2/evidence-copy/p51-a-t1/receipt.json": "53db97025dce7dbb0da3ab06eeed7aab4562c84f7c9367fef727d36f3b51e740",
+    "experiments/own-xpu-runtime/stage2/packet51-round2/evidence-copy/p51-a-t2/receipt.json": "53db97025dce7dbb0da3ab06eeed7aab4562c84f7c9367fef727d36f3b51e740",
+    "experiments/own-xpu-runtime/stage2/packet51-round2/evidence-copy/p51-a-summary.json": "5f4f3f0af3ac4dc492542d787a3089fb427cb134cf195456830ffb4b17a79c78"
+  }
+}

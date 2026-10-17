@@ -1,0 +1,223 @@
+"""Packet49 scoped CPU/build seal. Completion of the oracle never reseals it."""
+import argparse, json
+from pathlib import Path
+import build
+from storage import digest
+from seal_context import precise
+P=Path(__file__).resolve().parent;B=P/'build';ROOT=P.parents[3]
+SANITIZER_ARCHIVE_RETENTION='packet49c.asan-artifact-retention.v1'
+GATES=('p49-cpu-gates.json','p49-plan-gates.json','p49-snapshot-gates.json','p49-python-gates.json','p49-asan-gates.json','p49-asan-snapshot-gates.json','p49b-expert-gates.json','p49c-round2-gates.json','p49c-engine-gates.json','p49c-kernel-provenance.json','p49d-cpu-gates.json')
+def checked():
+    current=build.compiled_sources();artifacts={};modes={}
+    from retain_sanitizers import verify_retention
+    retention=verify_retention()
+    archived={row['original']:row for row in retention['artifacts']}
+    from storage import BUILD_BASE_BUDGET
+    storage=json.loads((P/'storage-precheck.json').read_text())
+    assert storage['device_executed'] is False and storage['build_budget_bytes']==BUILD_BASE_BUDGET
+    assert storage['root_free_bytes']-storage['required_free_bytes']==storage['margin_bytes']
+    assert storage['retained_build_fits'] is (storage['retained_build_bytes']<=BUILD_BASE_BUDGET)
+    assert storage['passed'] is (storage['margin_bytes']>=0 and storage['retained_build_fits'])
+    for mode in ('gnu-host','device','asan'):
+        path=P/f'build-{mode}-receipt.json';row=json.loads(path.read_text())
+        assert row['passed'] and row['device_executed'] is False and row['mode']==mode
+        assert row['compiled_sources_sha256']==current,'stale '+mode+' build'
+        assert row.get('checked_mirror_sha256'),'missing actual compiler input binding'
+        for name,sha in row['checked_mirror_sha256'].items():assert digest(B/name)==sha,'compiler mirror changed'
+        assert row['compile_commands_sha256']==digest(B/mode/'compile_commands.json')
+        for command in json.loads((B/mode/'compile_commands.json').read_text()):
+            precise(command.get('arguments',command.get('command')),mode=='device')
+        for name,sha in row['link_files_sha256'].items():
+            assert digest(B/name)==sha;precise((B/name).read_text(),mode=='device')
+        for name,sha in row['artifacts_sha256'].items():
+            if mode=='asan':assert archived[name]['original_sha256']==sha
+            else:assert digest(B/name)==sha
+            artifacts[name]=sha
+        if mode=='asan':assert set(row['requested_targets'])=={'own-rt-iq3','p49-qsa-fixtures','p49b-expert-fixtures','p49c-fixtures','p49d-fixtures'} and set(row['actual_artifact_targets'])==set(row['requested_targets'])
+        required=('own-rt-iq3','p49-qsa-fixtures','p49b-expert-fixtures','p49c-fixtures','p49d-fixtures')
+        if mode!='asan':required+=('nongemv-fixtures','k2-fixtures','p33-linked-fixtures')
+        for name in required:assert mode+'/'+name in artifacts
+        modes[mode]=digest(path)
+    gates={name:json.loads((P/name).read_text()) for name in GATES}
+    for name,row in gates.items():assert row['passed'] and row.get('device_executed',False) is False,name
+    cpu=gates['p49-cpu-gates.json'];assert cpu['compiled_sources_sha256']==current
+    assert len(cpu['fixtures'])==10 and len(cpu['owner_suites'])==6
+    for row in cpu['owner_suites']:
+        assert row['passed'] and row['binary_sha256']==artifacts['gnu-host/'+row['name']]
+    outputs={}
+    for row in cpu['fixtures']:
+        assert row['binary_sha256']==artifacts['gnu-host/'+row['name']]
+        assert row['receipt']['output_sha256']==row['output_sha256']==digest(Path(row['output'])/'output.bin')
+        from p49_cpu_gate import summarize_receipt
+        assert row['native_receipt_sha256']==digest(Path(row['output'])/'receipt.json')
+        assert row['receipt']==summarize_receipt(json.loads((Path(row['output'])/'receipt.json').read_text()))
+        outputs.setdefault(row['name'],[]).append(row['output_sha256'])
+    assert all(len(v)==2 and len(set(v))==1 for v in outputs.values())
+    plan=gates['p49-plan-gates.json'];assert plan['plan_dispatch_rows']==12 and plan['weight_bytes_read']==0
+    assert plan['binary_sha256']==digest(B/'p49-plan/after')
+    assert plan['generated_sha256']==digest(B/'p49-plan/after.cpp')
+    assert plan['writer_sites']['sha256']==digest(P/plan['writer_sites']['path'])
+    for name,sha in plan['sources_sha256'].items():assert digest(P/name)==sha
+    for mode,name in (('gnu-host','p49-snapshot-gates.json'),('asan','p49-asan-snapshot-gates.json')):
+        snapshot=gates[name];assert snapshot['build']['binary_sha256']==artifacts[mode+'/own-rt-iq3']
+        assert snapshot['cases']==31 and snapshot['gate_count']==26
+        if mode=='asan':assert snapshot['sanitizer_options']=={'ASAN_OPTIONS':'halt_on_error=1:detect_leaks=1','UBSAN_OPTIONS':'halt_on_error=1:print_stacktrace=1'}
+        for name,sha in snapshot['source_sha256'].items():assert digest(P/name)==sha
+    for row in gates['p49-asan-gates.json']['rows']:
+        assert row['binary_sha256']==artifacts['asan/p49-qsa-fixtures']
+        assert row['receipt']['checks']==88 and row['receipt']['reference_exact']
+        assert row['output_sha256']==outputs['p49-qsa-fixtures'][0]
+        assert digest(Path(row['output'])/'output.bin')==row['output_sha256']
+        assert digest(Path(row['output'])/'receipt.json')==row['native_receipt_sha256']
+        assert row['receipt']==summarize_receipt(json.loads((Path(row['output'])/'receipt.json').read_text()))
+    assert len(gates['p49-asan-gates.json']['rows'])==2
+    assert gates['p49-python-gates.json']['tests']>0 and gates['p49-python-gates.json']['failures']==gates['p49-python-gates.json']['errors']==0
+    for name,sha in gates['p49-python-gates.json']['sources_sha256'].items():assert digest(P/name)==sha
+    expert=gates['p49b-expert-gates.json'];assert expert['compiled_sources_sha256']==current
+    for row in expert['rows']:
+        assert row['binary_sha256']==artifacts[row['mode']+'/p49b-expert-fixtures']
+        assert row['receipt']['checks']==48 and row['receipt']['reference_exact']
+        assert row['sanitizer_options']=={'ASAN_OPTIONS':'halt_on_error=1:detect_leaks=1','UBSAN_OPTIONS':'halt_on_error=1:print_stacktrace=1'}
+        assert row['output_sha256']==outputs['p49b-expert-fixtures'][0]
+        assert digest(Path(row['output'])/'output.bin')==row['output_sha256']
+        assert digest(Path(row['output'])/'receipt.json')==row['native_receipt_sha256']
+        assert row['receipt']==summarize_receipt(json.loads((Path(row['output'])/'receipt.json').read_text()))
+    assert len(expert['rows'])==4 and sorted(r['mode'] for r in expert['rows'])==['asan','asan','gnu-host','gnu-host']
+    round2=gates['p49c-round2-gates.json'];assert round2['compiled_sources_sha256']==current
+    for row in round2['rows']:
+        assert row['binary_sha256']==artifacts[row['mode']+'/p49c-fixtures']
+        assert row['receipt']['checks']==96 and row['receipt']['reference_exact']
+        assert row['receipt']['canonical_output_excludes']==['attention.split4.workspace'] and row['receipt']['same_backend_workspace_compared'] is True
+        assert row['sanitizer_options']=={'ASAN_OPTIONS':'halt_on_error=1:detect_leaks=1','UBSAN_OPTIONS':'halt_on_error=1:print_stacktrace=1'}
+        assert row['output_sha256']==outputs['p49c-fixtures'][0]
+        assert digest(Path(row['output'])/'output.bin')==row['output_sha256']
+        assert digest(Path(row['output'])/'receipt.json')==row['native_receipt_sha256']
+        assert row['receipt']==summarize_receipt(json.loads((Path(row['output'])/'receipt.json').read_text()))
+    assert len({row['output'] for row in round2['rows']})==4
+    for row in round2['rows']:
+        native=row['receipt'];assert native['schema']=='packet49c.round2-fixtures.v1' and native['passed'] is True and native['device_executed'] is False and native['card']==0
+        t=native['teardown'];assert t['safe_to_exit'] is True and t['exit_code']==t['live_bytes']==t['in_flight']==0
+    assert len(round2['rows'])==4 and sorted(r['mode'] for r in round2['rows'])==['asan','asan','gnu-host','gnu-host']
+    engine=gates['p49c-engine-gates.json']
+    assert engine['compiled_sources_sha256']==current and engine['model_weights_read'] is False
+    for name,expected in engine['source_hashes'].items():assert digest(ROOT/name)==expected
+    cleanup=json.loads((P/'object-cleanup-receipt.json').read_text())
+    removed={r['path']:r['sha256'] for r in cleanup['objects']}
+    for name,expected in engine['baseline_objects'].items():
+        assert digest(P/name)==expected if (P/name).exists() else removed.get(name)==expected
+    assert len(engine['fresh_processes'])==2
+    assert [r['repeat'] for r in engine['fresh_processes']]==[0,1]
+    assert len({r['output'] for r in engine['fresh_processes']})==2
+    engine_outputs=[]
+    for row in engine['fresh_processes']:
+        root=Path(row['output']);native=json.loads((root/'receipt.json').read_text())
+        assert digest(root/'receipt.json')==row['receipt_sha256'] and native==row['receipt']
+        assert native['passed'] and native['safe_to_exit'] and not native['device_executed'] and native['cpu_mock']
+        assert native['schema']=='packet49c.engine-fixtures.v1' and native['arithmetic']=='iq3-p49-split32-v1' and native['mode']=='exact' and native['card']==-1
+        assert len(native['teardown'])==2
+        for t in native['teardown']:assert t['safe_to_exit'] is True and t['exit_code']==t['live_bytes']==t['in_flight']==0
+        assert row['cases']==36 and native['checks']==5472
+        assert digest(root/'comparisons.jsonl')==row['comparison_sha256']==native['exact_output_identity']
+        engine_outputs.append(row['comparison_sha256'])
+    assert len(set(engine_outputs))==1
+    engine_root=Path(engine['fresh_processes'][0]['output']).parent
+    assert digest(engine_root/'engine-fixtures')==engine['binary_sha256']
+    assert digest(engine_root/'adapter.cpp')==engine['rendered_source_sha256']
+    artifacts[str((engine_root/'engine-fixtures').relative_to(B))]=engine['binary_sha256']
+    provenance=gates['p49c-kernel-provenance.json']
+    assert provenance['selected_arithmetic_body_exact'] is True
+    assert digest(ROOT/provenance['source'])==provenance['source_sha256']
+    assert digest(P/'p49c_kernel.hpp')==provenance['candidate_sha256']
+    for name,sha in provenance['qualification_receipts_sha256'].items():assert digest(ROOT/name)==sha
+    from p49d_cpu_gate import verify as verify_round3
+    round3=verify_round3(verified_retention=retention)
+    from shared_oracle import static_binding
+    shared_oracle=static_binding()
+    sources=build.sources()
+    # Bind the code called by fast reseal, but leave its coordinator-maintained
+    # pins and record ledger outside the immutable CPU preparation closure.
+    for name in ('scripts/packet49_submission.py','scripts/receipt_qualification.py'):
+        sources[name]=digest(ROOT/name)
+    for name in ('coordinator_windows.sh','dispatch-speed6.json','dispatch-speed6-provenance.json','oracle-binding.json','storage-precheck.json','object-cleanup-receipt.json','asan-artifact-retention.json','runtime-revision.json'):
+        sources[str((P/name).relative_to(ROOT))]=digest(P/name)
+    from oracle.oracle_job import source_bindings
+    oracle_build=source_bindings()
+    oracle_inputs={name:digest(P/'oracle'/name) for name in ('arithmetic.json','build-receipt.json','cpu-proof.json')}
+    oracle_proof=json.loads((P/'oracle/cpu-proof.json').read_text())
+    assert oracle_proof['passed'] and oracle_proof['device_executed'] is False
+    for file in (P/'oracle').rglob('*'):
+        if file.is_file() and file.suffix in ('.py','.hpp','.cpp') and 'results' not in file.parts and 'build' not in file.parts:
+            sources[str(file.relative_to(ROOT))]=digest(file)
+    return dict(schema='packet49d.scoped-cpu-seal.v1',passed=True,device_executed=False,
+        arithmetic='iq3-p49-split32-v1',parent_packet='packet49c-round2',shared_oracle=shared_oracle,parent_commit='8d43f6e775209693907e2ee36fb8d5ac8667e9cf',runtime_revision=json.loads((P/'runtime-revision.json').read_text())['runtime_revision'],sources=sources,
+        artifacts_sha256={name:sha for name,sha in artifacts.items() if name not in archived}|{row['archive']:row['archive_sha256'] for row in retention['artifacts']},
+        original_artifacts_sha256=artifacts,sanitizer_artifact_retention_sha256=digest(P/'asan-artifact-retention.json'),mode_receipts_sha256=modes,
+        oracle_inputs_sha256=oracle_inputs,oracle_binary_sha256=oracle_build['binary_sha256'],
+        gates_sha256={name:digest(P/name) for name in GATES},
+        official_manifest_sha256=digest(P/'mtp-manifest.tsv'),memory_plan=json.loads((P/'memory-plan.json').read_text()),
+        input_sha256=digest(B/'input/input.json'),
+        p33_linked_fixture_host_sha256=outputs['p33-linked-fixtures'][0],
+        p49_qsa_fixture_host_sha256=outputs['p49-qsa-fixtures'][0],
+        p49b_expert_fixture_host_sha256=outputs['p49b-expert-fixtures'][0],
+        p49d_fixture_host_sha256=round3['output_sha256'],
+        p49c_fixture_host_sha256=outputs['p49c-fixtures'][0],
+        nongemv_fixture_host_sha256_by_context={'4096':outputs['nongemv-fixtures'][0]},
+        scope=dict(storage_admission_at_seal=storage['passed'],storage_note='Live queue precheck is required even if static CPU-preparation storage passed',context=4096,draft_rank=1,target_split=23,first_card=0,
+            host_compilers=['GNU','GNU ASAN/UBSAN'],device_execution_pending=True,full_model_oracle_pending=False,
+            full_model_qualification='Coordinator windows against independent completed oracle required',
+            p51_integrated=['route','hc.a.gate','hc.f.gate','hc.a.low','hc.f.low','attention'],p48_integrated=True,p48_reason='P48b exact compact expert layout retained; banked53b schedules replace its execution geometry',
+            banked_p53b=['expsgate:virtual8-split-stream','expsdown:virtual16','small.ffn.q6:virtual4'],
+            selectable_p54={'route':['production','route-rank4','route-exp32-rank4'],'recurrence':['production','rows4-shared','rows8-shared'],'hc':['production','mix-vector4']},
+            sanitizer_targets=['own-rt-iq3','p49-qsa-fixtures','p49b-expert-fixtures','p49c-fixtures','p49d-fixtures']))
+def verify_cpu():
+    row=json.loads((P/'cpu-preparation-seal.json').read_text())
+    assert row==checked(),'CPU seal differs from current source/build/gate bindings'
+    return row
+
+def selected_seal():
+    base=verify_cpu()
+    from selection_gate import verify_selection
+    selection=verify_selection()
+    sources=dict(base['sources'])
+    for name in ('selection.json','selection-decision.json'):
+        sources[str((P/name).relative_to(ROOT))]=digest(P/name)
+    return dict(base,sources=sources,selection=selection,
+                cpu_preparation_seal_sha256=digest(P/'cpu-preparation-seal.json'),
+                device_admission_ready=True)
+
+def verify():
+    row=json.loads((P/'build-receipt.json').read_text())
+    assert row==selected_seal(),'final packet49d seal differs from selected bindings'
+    return row
+
+def main():
+    import os,time
+    parser=argparse.ArgumentParser()
+    modes=parser.add_mutually_exclusive_group()
+    modes.add_argument('--verify',action='store_true')
+    modes.add_argument('--verify-cpu',action='store_true')
+    modes.add_argument('--fast-reseal',action='store_true')
+    a=parser.parse_args()
+    assert os.getpriority(os.PRIO_PROCESS,0)==19
+    assert set(os.sched_getaffinity(0))<=set(range(4,16))|set(range(20,32))
+    started=time.monotonic()
+    if a.verify:row=verify()
+    elif a.verify_cpu:row=verify_cpu()
+    elif a.fast_reseal:
+        assert not (B/'device-cards01-a').exists(),'never reseal a started device chain'
+        assert not (P/'build-receipt.json').exists(),'final seal already exists'
+        row=selected_seal()
+        (P/'build-receipt.json').write_text(json.dumps(row,indent=2)+'\n')
+        # Submission tooling separately pins this exact runtime/seal/selection.
+        import sys
+        sys.path.insert(0,str(ROOT/'scripts'))
+        from packet49_submission import pin_packet49d
+        pin_packet49d(ROOT)
+    else:
+        assert not (P/'build-receipt.json').exists(),'final seal already exists'
+        row=checked()
+        (P/'cpu-preparation-seal.json').write_text(json.dumps(row,indent=2)+'\n')
+    print(json.dumps(dict(passed=True,device_executed=False,artifacts=len(row['artifacts_sha256']),
+                         sources=len(row['sources']),elapsed_seconds=time.monotonic()-started,
+                         device_admission_ready=row.get('device_admission_ready',False))))
+if __name__=='__main__':main()
