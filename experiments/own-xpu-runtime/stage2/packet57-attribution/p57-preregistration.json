@@ -1,0 +1,62 @@
+{
+  "schema": "packet57.in-engine-attribution.v1",
+  "diagnostic": true,
+  "qualifying": false,
+  "no_speed_claim": true,
+  "cards": [
+    0,
+    1
+  ],
+  "target_split": 23,
+  "draft_rank": 1,
+  "context": 4096,
+  "target_oracle": "iq3-p49-split32-v1",
+  "draft_vocab_rows": 91392,
+  "target_kv": "BF16 unchanged",
+  "sample_generated_indices": [
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "sample_target_layers": {
+    "rank0": {
+      "19": "QSA",
+      "22": "GDN"
+    },
+    "rank1": {
+      "23": "QSA",
+      "24": "GDN"
+    }
+  },
+  "arms": [
+    "control",
+    "attribution"
+  ],
+  "control": "packet57 --timing token; preserves packet56 existing deferred draft event timing and queue profiling; extra attribution disabled",
+  "requests": "all 12 packet49 suite prompts, 128-token cap, one cold request per arm; fresh rank pair for each arm",
+  "quality": "Every target token must equal packet49 CPU oracle and matched control; unchanged arithmetic/kernel/controller source proof plus CPU miniature gate",
+  "measurement": "GPU command_end minus command_start per kernel/copy event; recorded at existing drains, no extra kernel barriers; clocks never compare ranks",
+  "perturbation": "Per-prompt paired sample hit/miss cycle medians and full-request medians; event category shares may be scaled by matched control/instrumented cycle ratio as estimates, never measured savings",
+  "host_transfer": "Draft reuses a target embedding row and merge projections; it does not recompute target PLE. CPU embedding decode/file read are only host draft wall cost, not invented GPU event time. embedding_ple is a shared category; draft PLE is absent.",
+  "draft_experts": "Existing FP8 publisher MTP weights requantized by unchanged grouped INT8 route path; not IQ3 target expert kernels",
+  "window_order": [
+    "K0",
+    "KD",
+    "W57-control",
+    "W57-attribution"
+  ],
+  "expected_seconds": 5265,
+  "watchdog_seconds": 28800,
+  "cooldown_seconds": {
+    "K0": 90,
+    "KD": 305,
+    "W57-control": 305,
+    "W57-attribution": 305
+  },
+  "inherited_device_checks": "packet56 K1a/K1b/K2/W0p receipts pinned and required; observation-only native sources reviewed, all kernel/controller bytes unchanged"
+}

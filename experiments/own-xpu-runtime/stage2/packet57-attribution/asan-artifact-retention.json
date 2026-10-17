@@ -1,0 +1,57 @@
+{
+  "schema": "packet49c.asan-artifact-retention.v1",
+  "passed": true,
+  "device_executed": false,
+  "build_receipt": "build-asan-receipt.json",
+  "build_receipt_sha256": "2f73fe471ac0867c8859c1a5de0ec9af2eb58e21f172bfe6b3ff923b9d57318e",
+  "artifacts": [
+    {
+      "original": "asan/own-rt-iq3",
+      "original_sha256": "148436612286b138f4bfbe6e68b9199a623f0ef355db14e8b67cfcf765b1cb8b",
+      "bytes": 117009112,
+      "archive": "asan/retained/own-rt-iq3.gz",
+      "mode_permissions": 509,
+      "archive_sha256": "6fd42809e3a133418e3a55bad61b795c70c574372e0ad588e17dd3ba81adca9b",
+      "archive_bytes": 15477689
+    },
+    {
+      "original": "asan/p49-qsa-fixtures",
+      "original_sha256": "f1b960dd1dac893cf1b91af71794ef3dc10a6725c8ce57ec5e283f59f157c204",
+      "bytes": 96137584,
+      "archive": "asan/retained/p49-qsa-fixtures.gz",
+      "mode_permissions": 509,
+      "archive_sha256": "19e8361108f7485b40c046a7a7421f7628f9ae98877441bc25eeb7f4103307bc",
+      "archive_bytes": 10084972
+    },
+    {
+      "original": "asan/p49b-expert-fixtures",
+      "original_sha256": "402937c2577c9e8bacab9ade0745a29430639dd6e40167511fc772d0cf929c07",
+      "bytes": 96183072,
+      "archive": "asan/retained/p49b-expert-fixtures.gz",
+      "mode_permissions": 509,
+      "archive_sha256": "aa3c7a748a31c32a14f07e4f3835e3d493cc459c5a419d77fe1d1eafdf48d3d8",
+      "archive_bytes": 10143961
+    },
+    {
+      "original": "asan/p49c-fixtures",
+      "original_sha256": "4d72e9cf6f6eba898977ae6f92605187d58bab7d5fbe8b6fb977d75dd66ef575",
+      "bytes": 101065568,
+      "archive": "asan/retained/p49c-fixtures.gz",
+      "mode_permissions": 509,
+      "archive_sha256": "c471c333aa01a40c4add27e5a3226d7c17c41aec9b27853c94f4a24ef8c7c090",
+      "archive_bytes": 11107291
+    },
+    {
+      "original": "asan/p49d-fixtures",
+      "original_sha256": "494bb925a8cdfe668c2b1d88a86a258edb3f170b64c268b8b2983ba7236a3666",
+      "bytes": 103098024,
+      "archive": "asan/retained/p49d-fixtures.gz",
+      "mode_permissions": 509,
+      "archive_sha256": "4b09ea4848e58ab68a7456918c84765b420c61d9047f13fb0936969600c805af",
+      "archive_bytes": 11735734
+    }
+  ],
+  "original_bytes": 513493360,
+  "archive_bytes": 58549647,
+  "restore_command": "python3 -B retain_sanitizers.py --restore"
+}
