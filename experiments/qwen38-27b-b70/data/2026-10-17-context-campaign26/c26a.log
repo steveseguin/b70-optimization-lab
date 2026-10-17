@@ -1,0 +1,32 @@
+### 03:09:43 campaign 26 (c26a, piece 832, one launch 1) start; queue /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE26.txt (2 lines); MemAvailable 13094 MiB
+### 03:09:43 queue checked: K32 rules 0 2400;K64 rules 0 2400;
+### 03:09:43 stopping the Gemma service (front door state: 0 0)
+### 03:12:48 cards free; MemAvailable 13658 MiB
+Running as unit: ctx-fp8-tp2-server.service; invocation ID: 0145fcf372f940328ebd9e2ef5b1b614
+### 03:15:19 server ready after ~165 s; MemAvailable 2538 MiB
+Running as unit: ctx-keeper-proxy.service; invocation ID: ba30bc95cf5d448eb527ccbd79d1def8
+### 03:15:20 [K32__sparse-memory-t240k-s0] start (cap 2400s); MemAvailable 2555 MiB; server totals: prompt 15 cached 0 generated 64
+### 03:23:10 [K32__sparse-memory-t240k-s0] done rc=0 in 7 min 51 s; MemAvailable 2316 MiB; server totals: prompt 1932094 cached 1413568 generated 30313
+   ledger score 1.0000 raw 1.0000 ({'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}) void=False [] delivery={'items_total': 147, 'items_delivered': 147, 'items_broken_pipe': 0, 'items_to_file': 0, 'it
+   RESULT 39/39 void=False violations=0 counts={'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}
+   client: calls 154 (main loop 154), written 11339, prompt 1534852 cached 1067456
+   proxy: cuts 17 (in place 17, failed 0, asked again 3), archived 292, recalls 10, full-rewrite failed 0, notes read 342682 cached 305344 written 17146; background started 0 applied 0 discarded 0 waited 0 s; upstream 419.774 s (background 0 s); restarts 0
+   calls: main 162 calls 274 s read 1589397 cached 1108224 written 13103; notes 20 calls 146 s read 342682 cached 305344 written 17146; largest call (read + written) 18997 tokens
+Running as unit: ctx-keeper-proxy.service; invocation ID: 85d4a744b194412eb0a2d29b5e6a74ca
+### 03:23:14 [K64__sparse-memory-t240k-s0] start (cap 2400s); MemAvailable 2265 MiB; server totals: prompt 1932094 cached 1413568 generated 30313
+### 03:31:34 [K64__sparse-memory-t240k-s0] done rc=0 in 8 min 21 s; MemAvailable 2342 MiB; server totals: prompt 5210811 cached 4198272 generated 60132
+   ledger score 1.0000 raw 1.0000 ({'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}) void=False [] delivery={'items_total': 147, 'items_delivered': 147, 'items_broken_pipe': 0, 'items_to_file': 0, 'it
+   RESULT 39/39 void=False violations=0 counts={'correct': 39, 'blank': 0, 'wrong': 0, 'stale': 0}
+   client: calls 157 (main loop 157), written 9905, prompt 2799466 cached 2335424
+   proxy: cuts 8 (in place 8, failed 0, asked again 3), archived 288, recalls 6, full-rewrite failed 0, notes read 360952 cached 340288 written 18319; background started 0 applied 0 discarded 0 waited 0 s; upstream 448.876 s (background 0 s); restarts 0
+   calls: main 163 calls 285 s read 2917765 cached 2444416 written 11500; notes 11 calls 164 s read 360952 cached 340288 written 18319; largest call (read + written) 36397 tokens
+### 03:31:37 queue empty after 2 lines; waiting up to 30s for more lines in /mnt/fast-ai/bench-results/context-longrun-20261016/QUEUE26.txt
+### 03:32:17 no new line for 30s; ending
+### 03:32:17 stopping the server; MemAvailable 2333 MiB
+server state: stopped None stop_confirmed True
+host memory available while the server ran: min 1.88  1% 1.91  median 2.03 GiB  (2369 samples)
+### 03:32:45 kernel log clean since 2026-10-17 03:09:43; restoring Gemma (throughput)
+backend 19350: slots 8 x 4096 tokens
+backend 19351: slots 8 x 4096 tokens
+frontdoor: throughput-ctx32768-parallel8-4k-slots-nospec-2gpu active 0 queued 0
+### 03:37:11 campaign 26 (c26a) complete

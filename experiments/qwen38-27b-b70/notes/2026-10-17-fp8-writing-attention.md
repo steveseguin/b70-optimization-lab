@@ -197,3 +197,41 @@ Same flags as W832 plus `B70_FA_VERIFY_ROWS_ONE_LAUNCH=1` (log: "enabled (one la
   26 at 246K) were this overlay's cost.
 - Not affected: prompt reading (first-token times equal within 0.1 s at every length), calls under 1,536 keys, and
   batches of several requests (the overlay only touches one-request verify calls).
+
+## Campaign 26: the agent stream with one launch (registered 03:09 EDT, before the run)
+
+Runner `scripts/longrun-campaign26.sh` (campaign 25's runner plus `ONE_LAUNCH=1`); one server like c25a (piece 832,
+one sequence, MTP5, campaign 24's flags) plus `B70_FA_VERIFY_ROWS_ONE_LAUNCH=1`. Queue as c25a: ctxkeeper 1.1.0 on
+the 240K rules stream, seed 0, K32 and K64.
+
+- **Predictions:** both 39/39, and the same transcript as c25a. The one launch is the same arithmetic, so every model
+  call should see the same prompt and write the same text: K32 154 calls, 11,339 tokens written, 1,534,852 prompt
+  tokens; K64 157 calls, 9,905 written, 2,799,466 prompt tokens. Wall time: K32 518 s -> 420-470 s, K64 592 s ->
+  440-505 s (writing is most of an agent stream; per token about 30 % less at 32K and 40 % at 64K).
+- **Decision:** identical transcripts and both arms 10 % or more faster: the agent figures quoted for the context
+  lane are re-measured with one launch from now on (public pages: the owner's call). Any transcript difference stops
+  the change and is traced first (call by call against `calls-c25a-*.jsonl`).
+
+## Result, campaign 26 (03:09-03:32 EDT, one server, kernel log checked at the end)
+
+| Arm | c25a (0.1.0) | c26a (one launch) | change | score | calls equal (all fields but time) | server totals |
+| --- | ---: | ---: | ---: | --- | --- | --- |
+| K32 | 8 min 42 s | 7 min 51 s | **-9.8 %** | 39/39 | 182 / 182 | identical |
+| K64 | 9 min 56 s | 8 min 21 s | **-15.9 %** | 39/39 | 174 / 174 | identical |
+
+Time inside model calls, by kind (sum of the proxy's per-call seconds):
+
+| Arm | main calls | notes calls |
+| --- | --- | --- |
+| K32 | 288 -> 274 s (-5.0 %) | 181 -> 146 s (-19.7 %) |
+| K64 | 312 -> 285 s (-8.6 %) | 233 -> 164 s (-29.5 %) |
+
+- **Same transcript:** every one of the 356 model calls saw the same messages and prompt, hit the same cached tokens
+  and wrote the same text; the two server totals (prompt, cached, generated tokens) are equal to the token. The change
+  is exact on the agent stream too.
+- **Predictions:** K64 inside its range (440-505 s; 501). K32 just outside (420-470 s; 471). Main calls gain little:
+  they are mostly reading plus short replies, at contexts mostly under 32K. Notes calls, which write more, gain
+  20-30 %.
+- **Decision (as registered): not met, by 0.2 points.** K32 is 9.8 % faster, under the 10 % line. So the published
+  agent figures are not re-quoted on the strength of this run. The lane keeps one launch (adopted on the server
+  comparison above), and this run confirms again that it does not change the answers.
