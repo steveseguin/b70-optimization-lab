@@ -170,3 +170,30 @@ happens at 130 of the 260,603 lengths from 1,542 to 262,144 (0.05 %).
   0.2.0 compared the two and would have refused to start. It now uses `gpu_subslice_count`. For one sequence with 2
   key/value heads, the lone-row split count is the same for 20 and 32 cores at every length up to 262,144 (checked),
   so the census result does not depend on it.
+
+## Result, server comparison (03:00-03:12 EDT, server W832o; `data/2026-10-17-write-rate/write-W832o.json`)
+
+Same flags as W832 plus `B70_FA_VERIFY_ROWS_ONE_LAUNCH=1` (log: "enabled (one launch per verify call)"):
+
+| Context | ms per step, 0.1.0 | one launch | change | copy tok/s | story tok/s |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1K | 38.6 | 38.5 | -0.3 % | 136.5 -> 136.9 | 70.5 -> 70.8 |
+| 32K | 61.5 | 42.9 | **-30 %** | 80.0 -> 114.7 | 41.5 -> 59.6 |
+| 64K | 81.1 | 47.6 | **-41 %** | 67.0 -> 114.3 | 29.8 -> 50.8 |
+| 100K | 101.8 | 52.9 | **-48 %** | 55.2 -> 106.2 | 23.3 -> 44.8 |
+| 137K | 123.4 | 58.4 | **-53 %** | 45.5 -> 96.2 | 18.6 -> 39.3 |
+| 200K | 160.8 | 67.3 | **-58 %** | 34.9 -> 83.4 | 13.9 -> 32.9 |
+| 246K | 188.2 | 75.0 | **-60 %** | 28.9 -> 72.5 | 13.2 -> 33.2 |
+
+- **Exact:** all 14 answers (512 tokens each) are bitwise equal to W832's. The step counts and accepted tokens are
+  identical too.
+- **Faster than predicted** (predicted 20-35 %, about 46 / 72 / 108 ms at 32K / 100K / 200K; measured 42.9 / 52.9 /
+  67.3). Growth above 1K is now 0.15 ms per 1,000 tokens. The attention kernel alone predicts 0.13 (16 layers of the
+  one-launch call, plus the drafter's layer). So the unexplained 0.24 ms per 1,000 tokens in W832 was the per-row path
+  too: its calls ran slower in the server than one call does alone. Nothing is left to profile on this question.
+- **Decision (as registered): adopt for the context lane.** Every context-lane server from now on runs with
+  `B70_FA_VERIFY_ROWS_ONE_LAUNCH=1`. Propose the same for the TP2 package; that package ships the same 0.1.0
+  overlay, so the change needs its own gates and the owner's go before release. The 10-05 figures (41 tok/s at 137K,
+  26 at 246K) were this overlay's cost.
+- Not affected: prompt reading (first-token times equal within 0.1 s at every length), calls under 1,536 keys, and
+  batches of several requests (the overlay only touches one-request verify calls).

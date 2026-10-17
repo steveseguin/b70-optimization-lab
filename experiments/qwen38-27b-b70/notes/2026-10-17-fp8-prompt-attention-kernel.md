@@ -105,7 +105,7 @@ TFLOPS per card, prompt kernel alone, median of nine calls (ratio = variant / co
   the registered bar it sits right at the line at 1,280 (two of three points under 10 % vs control; 9.1-11.3 % vs the
   mean of the image arms).
 
-## Round 2 (registered 02:25 EDT, before the run)
+## Round 2 (registered 02:18 EDT, before the run)
 
 Same script, card and inputs; steps 832 and 1,280 at 25K, 100K, 150K, 200K; fifteen calls per point; arms in the order
 image, control, k64, control, k64, image. Round 1 is not pooled in.
