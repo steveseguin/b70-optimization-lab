@@ -247,3 +247,38 @@ STOP-doing items applied:
 - 90 s gaps in new chains;
 - p71b deferred;
 - lane-B best jobs only after lane-A results (`laneB-followups`).
+
+## Review 9, 22:03 UTC: **ACT**
+
+**Evidence:**
+- Device busy 89% over 2 h and 95% over 6 h. Since 21:07, only 1 of 4 device jobs failed, and that was its report step (packet 77, `KeyError 'binary_sha256'`; the device run passed).
+- Lane B idle 21:44–21:56 with packet 77 ready.
+- **Lever weakness:** every result since 21:07 is under 1%:
+  - p74: −0.8% to −2.9%;
+  - p69 r3: +0.82%;
+  - p73 `hc-wide`: +0.98% on A;
+  - p73 experts2: slower.
+- **Packet 77's control arm** shows the hit cycle = draft 1.72 ms + rank-1 half 14.18 ms, serialized on rank 1. Rank 0 (13.61 ms) idles about 2.3 ms per hit, and rank 1 finishes last in 97 of 108 cycles.
+
+**Actions, 22:03–22:10 UTC:**
+1. **Draft on rank 0:** Codex **packet 79** on packet 75's bundle sources (composes with `hc-wide`):
+   - existing reverse handoff;
+   - prefix head kept on rank 0;
+   - placements `0-split23`, `0` and control `1`, with the real per-card memory census;
+   - a full-shape dry run including the handoff state machine;
+   - screens lane A grid, lane B best.
+   - Projection: about +5% at 23/25 dr0.
+2. **Record path:**
+   - `packet72-quick-A-r2` removed from queue A (lowest expected value).
+   - Packet 73's lane-B `hc-wide` confirmation is running. When it ends, the waiter runs packet 75's orchestration. If `hc-wide` confirms (≥ +0.5% over both B controls), the coordinator launches the packet 75 chain on lane A after packet 76-A (about 22:28) for about 54.6.
+   - Any packet 76 winner goes to the next bundle with packet 79.
+3. **Lane-queue REPORT-FAILED:** Codex `lqreport` adds a non-blocking outcome when the device passed, the lease was released, faults and latches are unchanged, and only the report failed. Packet 77's `report.py` was already fixed by the coordinator (`b6037a838`); its lever table is in `attribution-summary.md`.
+4. **Next kernel lever:** packet 78 (`route` top-k about 19.6 µs per layer; HC norms) is building. An exact-order expert-throughput packet follows after packet 78; experts are still about 31% of reference (1.88 ms per half of headroom).
+5. **One-card:** skip the 58d run (58e replaces it). Packet 58e's first windows go into queue A after the packet 75 chain, under its measured admission.
+
+**STOP-doing items applied:**
+- report-only failures no longer block (once `lqreport` lands);
+- marginal levers (p72-r2) removed;
+- p71c is lane-B filler only;
+- placements re-ranked from current timings (packet 79);
+- 3 Codex jobs (p58e, p78, p79) plus `lqreport`.
