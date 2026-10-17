@@ -1,5 +1,7 @@
 # Current Workspace State
 
+**October 17, packet58e prepared on CPU:** The one-card chain now uses 90-second gaps. Its exactness windows can share the host with lane-B screens when 85.57 GB is available; the 8 GiB live reserve and full cache/KV budgets remain. Card 0 holds lane A. Timing still holds both lanes and requires 118.31 GB. Both builds, the full post-load setup, all 70 Python checks and the card-0 plan pass. No GPU or service ran. The coordinator starts a fresh chain at K1a; complete device memory, exactness and speed remain pending. [Evidence and commands](notes/2026-10-17-own-runtime-packet58e.md).
+
 **October 17, packet71c sealed on CPU:** The depth-two screen's router refused
 its grouped configuration in 71b. The new candidate separates those projections
 while keeping their arithmetic; production and controls are unchanged. Both
