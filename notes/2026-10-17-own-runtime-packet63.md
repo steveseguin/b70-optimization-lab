@@ -152,3 +152,14 @@ For a CPU-only plan, replace the entire `taskset ... env ...` prefix with
 `nice -n 19 taskset -c 8-15,24-31 python3 -B`, retain the script and selection/lane
 arguments, add `--plan`, and omit `--authorized-device-window --fault-review ...`.
 The four retained plans live in each selection's `plan-A.json` / `plan-B.json`.
+
+## Git handoff
+
+Packet63's staged source/evidence/note files were included by the concurrent
+shared-index commit `a20f40e4013a6ddc3dbfe872dd1b2ddc7d2fcc63`, together with
+the coordinator's v3 placement work, and pushed to `main`. That commit is
+preserved. The immediate packet63 follow-up records its `CURRENT.md` entry and
+this handoff; no history was rewritten. Repository hygiene over the combined
+commit passes with zero warnings and zero errors. The packet's four plans were
+independently rechecked and match their retained bytes; seals and binaries are
+unchanged ([final verification](../experiments/own-xpu-runtime/stage2/packet63-balance/evidence/final-verification.json)).

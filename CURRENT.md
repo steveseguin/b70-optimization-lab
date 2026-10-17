@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 17, packet63 CPU preparation complete:** The draft HC group is built
+on packet61x, with sealed control and candidate selections sharing one binary.
+Both pass the target fixture and draft repeat checks; all four screen plans
+pass. The proposed 22/26 split is skipped: current screens put rank1 last in
+every complete cycle, with its target half already longer than rank0. No GPU
+or service ran, and packet61x's record chain was untouched. Next is the
+coordinator's matched screen; device quality and speed remain unmeasured.
+[Task note, measured halves and exact commands](notes/2026-10-17-own-runtime-packet63.md).
+
 **October 17, packet61x placement plans prepared (CPU only):** All four requested placements fit their own memory plans. The control and draft-on-rank-1 24/24 split are supported on both lanes. Both rank-0 draft options are blocked by the sealed engine's missing resident output head, so they refuse before launch. All eight plan checks and 32 CPU tests give the expected results. No GPU or service ran; the running packet61x chain and sealed packets were untouched. Next is the coordinator's supported placement comparison, with the same 13 exact requests. [Job lines, reasons and evidence](experiments/own-xpu-runtime/stage2/screen/v3/PLACEMENT-CLOSEOUT.md).
 
 **October 17, packet61 full-chain input repair complete (CPU only):** The K1 failure came from missing archived fixture files. All 72 fixtures and their list are restored with original hashes; packet61x and packet56w have the same repair. All eleven windows now check their nested inputs before any device launch. The three input checks, storage checks and 111 focused tests pass. Packet61 uses fresh `device-cards01-b`; the failed `device-cards01-a` and STOP remain unchanged. Engine binaries and screen seals are unchanged. No GPU or service ran. The coordinator owns the next chain and device quality is still pending. [Exact commands and evidence](experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/INPUT-REPAIR-CLOSEOUT.md).
