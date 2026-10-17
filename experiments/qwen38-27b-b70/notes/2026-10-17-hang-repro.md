@@ -36,3 +36,34 @@ the server log end before stopping the server.
 - **If it does not hang in the hour:** a second hour with one-launch verify off is not informative by itself (no
   hang in an hour proves little); instead the next run doubles the ending rate (shorter answers, more
   conversations), and the dropped-step inputs are checked offline from the breadcrumbs of normal endings.
+
+## Amendment 12:29 EDT (run in progress, no result read yet): the hung step is probably the new request's first step
+
+Re-reading the 06:23 evidence against the vLLM 0.29 code changes which step is suspected. On the main stream a step
+records `num_accepted_tokens_event` in `sample_tokens` (after the sampler and the GDN align bookkeeping), then runs the
+drafter, then the output copy stream waits on the main stream and copies the sampled tokens (`async_copy_ready_event`).
+The request that ended at about 06:22:19 got its 200 OK, so that step's copy finished and with it everything before it
+on the main stream, including its accepted-count event. When nothing is left to schedule, the engine core blocks on the
+oldest step in its batch queue (`step_with_batch_queue`), so it could only have sent TP0 a new `execute_model` after the
+dropped step's output came back. TP0 died inside `execute_model` -> `_prepare_inputs` waiting on an accepted-count
+event (`b70_spec_resume_accepted.py:315` -> `gpu_model_runner.py:2132`) while its output thread waited on a step's
+copy. The consistent reading: the dropped step finished; the next request arrived after about 40 s idle; its first step
+M was issued and never finished; TP0 was already in step M+1 waiting for M.
+
+The detection time fits that. The exec queue in the dump has no job timeout (`Timeout: 0 (ms)`), so a spinning kernel
+is only caught when the GuC has to switch it out; the engine reset came 0.65 s after 06:23:00 with the preempt
+timeout set to 640 ms. The job number fits as well: job 82 after 12 minutes of serving (thousands of steps) means the
+user-mode driver submits through a ring of its own and starts a new kernel-driver job only after an idle; step M is the
+first work in a newly started job (`Start seqno: 82`).
+
+Agent traffic between requests is idle 0.1-0.3 s (calls logs of c28a/c28c/c28f, 941 calls, longest gap 1.7 s); the gap
+before the 06:23 request, about 40 s, was unusual. What a long idle can change: the user-mode ring is stopped and
+restarted, the cards could runtime-suspend (both have `power/control=auto`, autosuspend delay 1 s, `d3cold_allowed=1`),
+clocks and power states drop.
+
+Changes to the plan, not to the running hour: the hour continues as registered (it has 3 % pauses of 5-45 s, so about
+30 restarts after idle, and every request is a new request's first step). A power-state sampler
+(`runtime_status`/`runtime_suspended_time` of both cards every 0.5 s) runs beside it, host only. If the hour does not
+hang, the next run is not "double the endings" but **idle before every request**: the same client with a pause before
+each request drawn from 0.5-60 s, so that every request is a first step after an idle. If the cards are seen to
+runtime-suspend while the server holds them, that is fixed first (`power/control=on` for the run) and recorded.
