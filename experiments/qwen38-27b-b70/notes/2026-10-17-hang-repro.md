@@ -322,3 +322,14 @@ next, 40 minutes** (about 17,000 prompt-size steps with card 03 under bursty loa
   search to what only the context lane has (one sequence with prefix-cache hits in align mode, the exact-cache
   overlays, a 262,144-token window), and `scripts/hang-capture.sh` runs beside every context-lane server from now on
   so the next hang leaves stacks from both ranks.
+
+**15:12 EDT, correction to "What is known": ROW_INSTDONE says nothing on these cards.** The 06:23 reading "a kernel
+still running on all 32 rows (ROW_INSTDONE 0)" is wrong. The engine-register sampler's 60 snapshots taken during arm
+B (both cards, `gt0/hw_engines`) show `ROW_INSTDONE[0..31] = 0x00000000` in every one of them, including the 12 taken
+while no context was loaded on the compute engine at all (`CURRENT_LRCA 0`), and the arm A mismatch at 15:06 (both
+cards inside spinning oneCCL kernels) reads the same. What still stands from 06:23: job seqno 82 never signalled, no
+command error, no page fault, IPEHR at STATE_COMPUTE_MODE (0x61050001), which is where the command streamer sits in
+7 of 30 normal busy snapshots on card 03, i.e. just past a kernel launch. So the dump cannot say whether the stuck
+kernel was a collective or a model kernel, and no register in it tells the 20-work-group ring kernel apart from a
+full-card one. MI_SEMAPHORE_WAIT (IPEHR 0x0e009003) is the most common normal state on both cards (the runtime's
+user-mode ring waiting for work).
