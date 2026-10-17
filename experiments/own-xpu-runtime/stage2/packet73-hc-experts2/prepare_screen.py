@@ -21,7 +21,7 @@ edit('screen.py',"HERE.parent / ('fault-'", "SHARED / ('fault-'")
 edit('test_reporting.py',"stack.enter_context(patch.object(s,'HERE',here))", "stack.enter_context(patch.object(s,'HERE',here))\n            stack.enter_context(patch.object(s,'SHARED',shared.parent))")
 edit('run.py',"    require(args.authorized_device_window and args.fault_review", "    if args.lane == 'B':\n        from winner import verify_lane_a\n        verify_lane_a()\n    require(args.authorized_device_window and args.fault_review")
 edit('compare.py',"sha(QUICK / 'wrapper-seal.json')", "sha(QUICK / 'placement-validation/wrapper-seal.json')")
-for lane,order in {'A':('production','attention-out','combined','production'),'B':('production','attention-out','production')}.items():
+for lane,order in {'A':('production','hc-wide','experts2-a','experts2-b','combined','production'),'B':('production','best-of-lane-A','production')}.items():
  lines=['# out|lineage|seal|binary|dispatch|placement']
  for i,name in enumerate(order,1):
   v=P/'selections'/name

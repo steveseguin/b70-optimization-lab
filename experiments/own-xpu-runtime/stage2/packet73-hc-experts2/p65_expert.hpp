@@ -185,23 +185,23 @@ template<Type T,unsigned K,unsigned V>inline std::array<float,V> p73_deep_chains
 template<Type T,unsigned K,unsigned V>inline std::array<float,V> p73_down_chains(const uint8_t*w,const uint16_t*x,unsigned physical){
  constexpr auto l=p49bgemv::layout(T,K);std::array<float,V> sums{};
  for(unsigned step=0;step<(K+255)/256;++step){
-  {
+  for(unsigned pair=0;pair<2;++pair){
    static_assert(V==16);
-   unsigned tilefirst=step*256+8*physical*V;if(tilefirst>=K)continue;
-   uint32_t raw[16];uint16_t halves[4];
+   unsigned tilefirst=step*256+8*physical*V+pair*64;if(tilefirst>=K)continue;
+   uint32_t raw[8];uint16_t halves[2];
 #if defined(__SYCL_DEVICE_ONLY__)
-   sycl::vec<uint32_t,16> words;words.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(reinterpret_cast<const uint32_t*>(w+(tilefirst/32)*16)));
-   sycl::vec<uint16_t,4> scales;scales.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(reinterpret_cast<const uint16_t*>(w+l.halves+2*(tilefirst/32))));
-   for(unsigned i=0;i<16;++i)raw[i]=words[i];for(unsigned i=0;i<4;++i)halves[i]=scales[i];
+   sycl::vec<uint32_t,8> words;words.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(reinterpret_cast<const uint32_t*>(w+(tilefirst/32)*16)));
+   sycl::vec<uint16_t,2> scales;scales.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(reinterpret_cast<const uint16_t*>(w+l.halves+2*(tilefirst/32))));
+   for(unsigned i=0;i<8;++i)raw[i]=words[i];for(unsigned i=0;i<2;++i)halves[i]=scales[i];
 #else
-   for(unsigned i=0;i<16;++i)raw[i]=p49bgemv::load32(w+(tilefirst/32)*16+4*i);for(unsigned i=0;i<4;++i)halves[i]=p49bgemv::load16(w+l.halves+2*(tilefirst/32+i));
+   for(unsigned i=0;i<8;++i)raw[i]=p49bgemv::load32(w+(tilefirst/32)*16+4*i);for(unsigned i=0;i<2;++i)halves[i]=p49bgemv::load16(w+l.halves+2*(tilefirst/32+i));
 #endif
    #pragma unroll
-   for(unsigned block_in_lane=0;block_in_lane<V/4;++block_in_lane){
-    unsigned first=step*256+8*(physical*V+block_in_lane*4);if(first>=K)continue;
+   for(unsigned block_in_lane=0;block_in_lane<2;++block_in_lane){
+    unsigned first=step*256+8*(physical*V+pair*8+block_in_lane*4);if(first>=K)continue;
     const uint32_t* codes=raw+block_in_lane*4;uint16_t half=halves[block_in_lane];
     #pragma unroll
-    for(unsigned c=0;c<4;++c){unsigned chain=block_in_lane*4+c,k=first+8*c;RawTile t;t.a=codes[(c%2)*2];t.b=codes[(c%2)*2+1];t.half=half;
+    for(unsigned c=0;c<4;++c){unsigned chain=pair*8+block_in_lane*4+c,k=first+8*c;RawTile t;t.a=codes[(c%2)*2];t.b=codes[(c%2)*2+1];t.half=half;
      float values[8];decode_tile<T>(t,k,values);
 #if defined(__SYCL_DEVICE_ONLY__)
      sycl::vec<uint16_t,8> inputs;inputs.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(x+k));

@@ -31,3 +31,24 @@ Route fusion is deferred: preserving its globally normalized selection and
 ties would require a separate synchronization design, beyond this short task.
 The next performance measurement is in-engine v4-lanes, never a microbenchmark
 speed claim. CPU byte identity and seals do not establish device quality or speed.
+
+## Offline decisions and CPU byte gates
+
+The first HC layout spilled flags even after correcting the offline device
+library link. It was rejected. The accepted HC path keeps the original
+32-lane arithmetic and computes two adjacent rows per subgroup, sharing their
+raw inputs and widening code reads. It has no spill metadata or spill/fill
+messages. A stride error in its first implementation was caught by the GNU
+fixture and fixed before acceptance; the expanded row includes twenty bytes
+of preserved metadata.
+
+Expert A's deeper IQ2 load pipeline passes without spills (54 static loads
+versus 51 in wide64). Expert B's smaller IQ4 shared span passes without spills
+and cuts static loads from 79 to 43; its larger span spilled and is retained
+as a rejection. Combined means HC plus B, chosen from offline evidence.
+These numbers describe code, not speed or measured occupancy.
+
+Both compilers pass 44 small operator cases in two fresh processes each,
+including 118,784 raw FP32 chain checks and 3,456 raw tree checks per repeat.
+All compared bytes match production. No CPU model ran. The engine build and
+v4 screen preparation follow these gates. [Offline decision and limitations](../experiments/own-xpu-runtime/stage2/packet73-hc-experts2/OCCUPANCY.md).

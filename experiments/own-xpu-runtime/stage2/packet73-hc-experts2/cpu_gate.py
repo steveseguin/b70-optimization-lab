@@ -17,7 +17,7 @@ def main():
    dest=out/f'repeat-{repeat}';dest.mkdir(exist_ok=True)
    with (dest/'run.log').open('w') as f:subprocess.run([str(out/'fixture'),str(dest)],stdout=f,stderr=subprocess.STDOUT,stdin=subprocess.DEVNULL,check=True,timeout=300)
    native=json.loads((dest/'native.json').read_text());a=sha(dest/'expected.bin');b=sha(dest/'candidate.bin')
-   assert native['passed'] and native['cases']==24 and a==b
+   assert native['passed'] and native['cases']==44 and a==b
    result['runs'].append(dict(compiler=name,command=cmd,repeat=repeat,native=native,expected_sha256=a,candidate_sha256=b,path=str(dest.relative_to(ROOT))))
    print(name,repeat,'PASS',flush=True)
  assert len({r['candidate_sha256'] for r in result['runs']})==1

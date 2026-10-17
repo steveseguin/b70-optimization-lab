@@ -1,7 +1,6 @@
 #pragma once
 #include "p60_math.hpp"
 #ifndef OWN_RT_HOST_ONLY
-#include "kernel_guard.hpp"
 namespace p60 {
 inline uint32_t failed(Bound b){return sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(*b.error).load();}
 inline void fail(Bound b){sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(*b.error).store(1);}
