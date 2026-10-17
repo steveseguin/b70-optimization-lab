@@ -2,7 +2,8 @@
 
 Frozen before any device execution. Operator screen only. Physical Level Zero
 card index 0, unfiltered enumeration, one queue/context and no model payload.
-The receipt records its PCI address and driver. This is not Linux DRM card0.
+Before context creation require PCI 0000:23:00.0. The receipt records its PCI
+address and driver. This is not Linux DRM card0.
 The coordinator verifies this mapping and owns current health/admission.
 
 Primary arm: compact aligned SoA repack, paired gate/up, same output ownership
@@ -16,10 +17,13 @@ E1/E2 are independent fresh processes. Each covers seven classes, M=1 and 2,
 nine deterministic changing inputs, different route sets, same-slot equal
 routes, partial rows, invalid IDs, inactive control, preexisting sticky error,
 invalid route plus preexisting error, signed zero, infinity and NaN inputs.
-Exact fixtures also include infinity/NaN weight scales. Compare every output
+Repacking rejects infinity/NaN weight scales before any destination write.
+The retained initial GNU/Intel failures showed different NaN payload selection;
+those banks must retain the current implementation in any later integration.
+No model payload was scanned to infer finite-scale admission. Compare every output
 byte, both gate/up buffers, route and peer status, and sticky error, including
 poisoned unused buffers. No tolerances, no NaN canonicalization. Both complete
-capture identities must agree across E1/E2. CPU scale/lane/tree tests separately
+capture identities must agree across E1/E2. CPU rejection/lane/tree tests separately
 cover both compilers, five consecutive distinct rows and split1/split4.
 
 T1/T2 each require both E companions with the identical seal, binary,
@@ -48,7 +52,7 @@ Required primary performance bar in **both** fresh timing owners, at M=1:
 Use median per-iteration sums, not sums of independent medians, for the bar.
 Also report each class and M2 stratum separately; M2 cannot satisfy an M1 bar.
 Do not use the whole-GDN 40-us saving for QSA layers. For the reused current
-expert control, compare its M1 medians to packet46 T1/T2: if either differs
+expert and Q6 GDN controls, compare their M1 medians to packet46 T1/T2: if any differs
 by more than 15%, record the new isolated result but withhold an in-layer
 performance qualification until matched full-layer confirmation. A failed
 class is not silently dropped. A pass is eligibility for later integration,
@@ -60,7 +64,8 @@ service launch or hard kill. Drain cooperatively; retain an uncertain busy
 child and its evidence for the coordinator. No device runs in preparation.
 
 Conditional effect: 1.5x on packet46's 173.75-us expert sum saves 57.92 us per
-ordinary layer, about 1.33/1.45 ms per 23/25-layer half if the IQ3 exception
-also qualifies. The 40-us ordinary-GDN bar applies to 18 GDN layers per half:
-0.72 ms, plus only separately measured expert savings in QSA. Overlapping
+ordinary layer, about 1.27/1.45 ms for the 22/25 ordinary expert layers per half. The IQ3
+exception needs separate timing. The 40-us ordinary-GDN bar applies to
+17/18 Q6 GDN layers per half: 0.68/0.72 ms, plus only separately measured
+savings in QSA and the Q8 GDN exception. Overlapping
 halves cannot be added into a per-token gain. See the final note for ranges.

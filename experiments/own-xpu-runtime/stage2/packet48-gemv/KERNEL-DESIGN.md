@@ -49,9 +49,19 @@ an integer multiple of the 16-byte-aligned row stride, so a loaded expert ID
 cannot destroy the proved alignment. The decoder uses naturally aligned
 16/32-bit reads; BF16 activation groups contain eight contiguous values. This
 explicit contract is required even when the compiler does not infer divisibility
-from a value loaded from memory. Packet6/packet7's earlier audits record that they
-could not locate the exact historical phrase about Triton loaded offsets; this
-packet does not invent a source citation for that phrase.
+from a value loaded from memory. The [September 5 FP8 lab note](../../../qwen38-flash-next-fp8-b70/notes/2026-09-05-day-summary.md)
+at “23:50 per-expert placement” records that `tl.multiple_of(off, 256)` restored
+vector loads and reference speed; without it resident rows were three times
+slower. That is an alignment lesson, not a measured benefit for this IQ kernel.
+Here typed 16/32-bit reads and the row-stride invariant expose natural alignment
+even when the expert ID is loaded dynamically. Wider lowering remains a device
+compiler/timing question, not an instruction-count speed claim.
+
+Keep compile-time shapes and formats. Packet24's descriptor-interpreting fusion
+was exact but roughly 50–100 times slower in major projections (QKV 8,804 versus
+101 microseconds in the retained diagnostic). Packet48 introduces no descriptor
+interpreter or whole-layer serial workgroup. See the [roadmap](../../../../notes/2026-10-17-own-runtime-iq3-speed-roadmap.md)
+for the underlying packet24 evidence and the single-CCS overlap limits.
 
 | Format and production K | Original runtime bytes/row | Candidate bytes/row | Layout |
 | --- | ---: | ---: | --- |
@@ -85,11 +95,24 @@ widths 1, 2, 4, 8 and 16 and the final BF16 store. Ordinary GDN QKV/Z uses one
 split. The extra CPU compatibility test also checks the original split-four
 finish `(p0+p1)+(p2+p3)`; it does not redefine the ordinary GDN oracle.
 
-IQ sign handling retains the exceptional-scale magnitude-then-sign expression.
 Finite values retain the existing signed-magnitude integer conversion before
 scaling. No NaN canonicalization, tolerance gate, FMA contraction or reduction
 reassociation is introduced. Dense candidate scales are copied as bits from the
-runtime's current expanded format.
+runtime's current expanded format. The initial unrestricted candidate failed
+strict CPU NaN-byte tests: GNU selected a weight NaN where the baseline selected
+an input NaN; Intel also differed in a decoded nonfinite value. The rejected
+sources and binaries are retained in `evidence/nonfinite-rejected/` and the
+corresponding ignored build directories. These are actual failures, not a
+tolerance pass.
+
+The revised repack boundary rejects a row with any nonfinite weight scale before
+writing its destination. It preserves all admitted finite scale bits, including
+both signs of zero. It does not repair or canonicalize rejected weights. A future
+loader must run this checked admission and keep the existing source path for a
+rejected bank; this packet has not scanned model weights or changed the runtime.
+The generated gates still compare nonfinite activations exactly. The retained
+exceptional decoder expression is not evidence that rejected nonfinite banks
+are supported.
 
 `gate_lane` computes gate/up together with one activation load.
 `lanes2` shares only decoded weights, then maintains independent ordered
@@ -120,8 +143,13 @@ rows and independent peer rows rather than only row zero.
 
 The generated CPU fixtures check every decoded FP32 bit, all lane results,
 independent M2 inputs, paired gate/up, adjacent reductions and final BF16 bytes.
-They include changing finite data, infinities and NaN scale/input payloads.
-These are arithmetic gates, not device performance evidence. Device E1/E2,
+They include changing finite scales, signed-zero scales, and infinity/NaN input
+payloads. Every one of the 2,048 nonfinite FP16 bit patterns is rejected for each
+expert format; dense rejection covers both signs of infinity and signaling/quiet
+NaNs with boundary payloads. Each rejected call must leave its destination
+unchanged. GNU and Intel diagnostic unit builds each pass 503,656 checks under
+the revised admitted domain. These are arithmetic gates, not device performance
+evidence. Device E1/E2,
 fresh-process repetition and T1/T2 remain separate requirements. Synthetic
 fixture timing is screening evidence and cannot promote a model throughput
 headline.
