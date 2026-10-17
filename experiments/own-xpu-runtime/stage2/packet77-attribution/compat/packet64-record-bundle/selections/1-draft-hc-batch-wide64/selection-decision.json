@@ -1,0 +1,273 @@
+{
+  "schema": "own-runtime.packet54.two-owner-timing.v1",
+  "passed": true,
+  "device_executed": true,
+  "model_speed_claim": false,
+  "windows": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet54-compute/evidence/p54-a-t1/window.json",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet54-compute/evidence/p54-a-t2/window.json"
+  ],
+  "fresh_owners": [
+    {
+      "passed": true,
+      "device_executed": true,
+      "microbenchmark_only": true,
+      "model_speed_claim": false,
+      "classes": {
+        "route": {
+          "route-rank4": {
+            "1": {
+              "control_us": 24.375,
+              "candidate_us": 18.9575,
+              "median_paired_saved_us": 5.519500000000001,
+              "p10_paired_saved_us": 5.208000000000002,
+              "p90_paired_saved_us": 5.728999999999999,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 49.064,
+              "candidate_us": 38.23,
+              "median_paired_saved_us": 10.732,
+              "p10_paired_saved_us": 10.416999999999994,
+              "p90_paired_saved_us": 11.251999999999995,
+              "measured_pairs": 200
+            }
+          },
+          "route-exp32-rank4": {
+            "1": {
+              "control_us": 24.583,
+              "candidate_us": 19.061,
+              "median_paired_saved_us": 5.522499999999999,
+              "p10_paired_saved_us": 5.312999999999999,
+              "p90_paired_saved_us": 5.833000000000002,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 48.749,
+              "candidate_us": 38.123,
+              "median_paired_saved_us": 10.625,
+              "p10_paired_saved_us": 10.312000000000005,
+              "p90_paired_saved_us": 11.038000000000004,
+              "measured_pairs": 200
+            }
+          }
+        },
+        "gdn.recurrence": {
+          "rows4-shared": {
+            "1": {
+              "control_us": 36.146,
+              "candidate_us": 35.104,
+              "median_paired_saved_us": 1.0420000000000016,
+              "p10_paired_saved_us": 0.625,
+              "p90_paired_saved_us": 1.458999999999996,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 72.396,
+              "candidate_us": 70.313,
+              "median_paired_saved_us": 1.9795000000000016,
+              "p10_paired_saved_us": 1.144999999999996,
+              "p90_paired_saved_us": 2.605000000000004,
+              "measured_pairs": 200
+            }
+          },
+          "rows8-shared": {
+            "1": {
+              "control_us": 36.041,
+              "candidate_us": 35.625,
+              "median_paired_saved_us": 0.4170000000000016,
+              "p10_paired_saved_us": -0.2079999999999984,
+              "p90_paired_saved_us": 0.9369999999999976,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 72.187,
+              "candidate_us": 71.355,
+              "median_paired_saved_us": 0.8855000000000004,
+              "p10_paired_saved_us": -0.1039999999999992,
+              "p90_paired_saved_us": 1.6659999999999968,
+              "measured_pairs": 200
+            }
+          }
+        },
+        "hc.inject_mix_norm": {
+          "mix-vector4": {
+            "1": {
+              "control_us": 51.147,
+              "candidate_us": 84.999,
+              "median_paired_saved_us": -33.75,
+              "p10_paired_saved_us": -34.480000000000004,
+              "p90_paired_saved_us": -33.019999999999996,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 101.668,
+              "candidate_us": 169.48,
+              "median_paired_saved_us": -67.708,
+              "p10_paired_saved_us": -69.16500000000002,
+              "p90_paired_saved_us": -66.56099999999999,
+              "measured_pairs": 200
+            }
+          }
+        },
+        "ffn.combine": {}
+      },
+      "timing_definition": "sum of all completed compute-event durations for each class; M2 sums both serial rows"
+    },
+    {
+      "passed": true,
+      "device_executed": true,
+      "microbenchmark_only": true,
+      "model_speed_claim": false,
+      "classes": {
+        "route": {
+          "route-rank4": {
+            "1": {
+              "control_us": 24.376,
+              "candidate_us": 18.958,
+              "median_paired_saved_us": 5.52,
+              "p10_paired_saved_us": 5.209000000000003,
+              "p90_paired_saved_us": 5.728999999999999,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 49.062,
+              "candidate_us": 38.23,
+              "median_paired_saved_us": 10.831499999999998,
+              "p10_paired_saved_us": 10.314,
+              "p90_paired_saved_us": 11.249000000000002,
+              "measured_pairs": 200
+            }
+          },
+          "route-exp32-rank4": {
+            "1": {
+              "control_us": 24.583,
+              "candidate_us": 19.061,
+              "median_paired_saved_us": 5.5219999999999985,
+              "p10_paired_saved_us": 5.4140000000000015,
+              "p90_paired_saved_us": 5.833000000000002,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 48.75,
+              "candidate_us": 38.124,
+              "median_paired_saved_us": 10.625999999999998,
+              "p10_paired_saved_us": 10.310000000000002,
+              "p90_paired_saved_us": 10.939999999999998,
+              "measured_pairs": 200
+            }
+          }
+        },
+        "gdn.recurrence": {
+          "rows4-shared": {
+            "1": {
+              "control_us": 36.146,
+              "candidate_us": 35.104,
+              "median_paired_saved_us": 1.0420000000000016,
+              "p10_paired_saved_us": 0.625,
+              "p90_paired_saved_us": 1.4579999999999984,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 72.188,
+              "candidate_us": 70.312,
+              "median_paired_saved_us": 1.875,
+              "p10_paired_saved_us": 1.25,
+              "p90_paired_saved_us": 2.603999999999999,
+              "measured_pairs": 200
+            }
+          },
+          "rows8-shared": {
+            "1": {
+              "control_us": 36.041,
+              "candidate_us": 35.625,
+              "median_paired_saved_us": 0.3130000000000024,
+              "p10_paired_saved_us": -0.3130000000000024,
+              "p90_paired_saved_us": 0.8329999999999984,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 72.0835,
+              "candidate_us": 71.25,
+              "median_paired_saved_us": 0.8340000000000032,
+              "p10_paired_saved_us": -0.1039999999999992,
+              "p90_paired_saved_us": 1.5630000000000024,
+              "measured_pairs": 200
+            }
+          }
+        },
+        "hc.inject_mix_norm": {
+          "mix-vector4": {
+            "1": {
+              "control_us": 51.248,
+              "candidate_us": 84.89750000000001,
+              "median_paired_saved_us": -33.852,
+              "p10_paired_saved_us": -34.479,
+              "p90_paired_saved_us": -33.021,
+              "measured_pairs": 200
+            },
+            "2": {
+              "control_us": 101.6695,
+              "candidate_us": 169.376,
+              "median_paired_saved_us": -67.761,
+              "p10_paired_saved_us": -69.16399999999999,
+              "p90_paired_saved_us": -66.453,
+              "measured_pairs": 200
+            }
+          }
+        },
+        "ffn.combine": {}
+      },
+      "timing_definition": "sum of all completed compute-event durations for each class; M2 sums both serial rows"
+    }
+  ],
+  "selected_classes": {
+    "route": {
+      "variant": "route-exp32-rank4",
+      "owner_saved_us": [
+        5.522499999999999,
+        5.5219999999999985
+      ]
+    },
+    "gdn.recurrence": {
+      "variant": "rows4-shared",
+      "owner_saved_us": [
+        1.0420000000000016,
+        1.0420000000000016
+      ]
+    },
+    "hc.inject_mix_norm": {
+      "variant": "control",
+      "owner_saved_us": [
+        0.0,
+        0.0
+      ]
+    },
+    "ffn.combine": {
+      "variant": "control",
+      "owner_saved_us": [
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "owner_saved_us": [
+    6.564500000000001,
+    6.564
+  ],
+  "threshold_us": 25,
+  "compute_proceeds": false,
+  "banked_p53b_owner_us": [
+    23.4385,
+    23.4375
+  ],
+  "combined_owner_us": [
+    30.003,
+    30.0015
+  ],
+  "integration_threshold_us": 40,
+  "packet49d_trigger": false,
+  "decision_metric": "sum of per-class paired median savings using one common selection; ordinary M1 only",
+  "oracle_started": false,
+  "engine_integrated": false
+}

@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 17, packet77 prepared on CPU:** A new lane-B screen can measure where
+time goes in packet70's wide64 record selection. It compares observation off
+and on in one load, then reports both cards' class costs and the second card's
+head, final norm, argmax and remaining time. Both builds, full-shape allocation,
+real admission, 80 Python checks and temporary queue planning pass. The shared
+v4 wrapper is unchanged. No GPU or service ran; current costs and lever ranking
+await the coordinator's screen. [Evidence and proposed job](notes/2026-10-17-own-runtime-packet77.md).
+
 **October 17, packet58d sealed on CPU:** The one-card engine loaded all 48 layers in 58c, then stopped because two pinned copy slabs requested the wrong lifetime. The new packet fixes both callers and keeps the strict check. Errors now identify the allocation. A CPU mock passes the complete post-load setup; both builds, 59 Python checks, K1 byte checks and request resets pass. The seal and card-0 queue plan pass. No GPU or service ran during preparation. The coordinator reviews the retained lineage stops and starts the fresh chain at K1a; device correctness and speed remain pending. [Task note and command](notes/2026-10-17-own-runtime-packet58d.md).
 
 **October 17, packet76 sealed on CPU:** Most of rank1's reported 1.61 ms
