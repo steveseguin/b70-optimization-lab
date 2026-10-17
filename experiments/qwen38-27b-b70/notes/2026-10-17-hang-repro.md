@@ -169,3 +169,38 @@ Host samplers beside it as in the hour (xe job trace, engine-register ring, powe
   replays agent queues with breadcrumbs. In parallel the context lane gets fast detection and automatic recovery
   (a stalled step noticed in seconds, the server restarted, the keeper retrying the call), because a hang at one in
   ~10,000 requests must not end a long task.
+
+## Amendment 13:58 EDT (packed stress running, no result read): its rate, stack capture, and the exchange alone next
+
+**Rate below the prediction.** The first 95 requests ran at about 4,400 an hour (median 0.58 s per request plus the
+idle before it; the prompt tails reach two 832-token pieces), not 8,000-12,000. Two hours give about 8,800 first
+steps, so at one hang in ~10,000 the chance of seeing one is about 55-60 %, not 80-90 %. The run is left as started.
+
+**Stack capture added beside it (host only).** A watcher (scratchpad `stallcap.sh`, run as root) takes, if the stress
+log stops growing for 15 s (normal worst case ~4 s), two captures 10 s apart into `data/2026-10-17-hang-repro2/stall-*`:
+py-spy 0.4.0 Python stacks (non-blocking, 0.01 s, 9 MB) of the engine core and both workers, and every thread's
+kernel state (wait channel, syscall, kernel stack). At 06:23 the hang ran 42 s before the desktop's redraw exposed
+it and the TP1 worker printed nothing; this shows where each worker, and oneCCL's own threads, were waiting.
+
+**Next run, registered now: the exchange alone** (`scripts/run-20261017-xccl-stress.sh`, starts when the packed
+stress ends and only if the kernel log is clean since 13:39). Why: the only work in a step known to wait on something
+outside the card is the two-card all-gather (134 per step plus the vocabulary gather), and the server's environment
+sends prompt-size gathers (> 1 MiB per rank; the 06:23 step's are 4.5 MB) down oneCCL's "simple" path, which oneCCL's
+default uses only up to 1 MiB (we set 4 GiB because the non-simple kernels need peer memory access, which faulted
+both cards on 2026-09-17). `scripts/stress-xccl-allgather.py`, R314 image, the server's CCL_*/FI_* environment, no
+model, 60 min: server-like steps of 134 fp16 [rows, 5120] gathers, each after a [rows, 5120] x [5120, 5120] matmul,
+plus a [1-6, 124160] gather and a host wait per step; half the steps prompt-size (30-832 rows), half decode-size
+(1-6); each card adds its own random extra matmuls before a quarter of the gathers, so the two cards reach a gather
+at different times; 10 % of steps followed by a 0.05-0.3 s idle. Watchdog: no step for 10 s prints STALL and both
+ranks' Python stacks, and the runner saves thread states, engine registers and, on a fault, the coredumps.
+
+- **Prediction:** on the order of 15,000+ prompt-size steps in the hour (2M+ prompt-size gathers), more than all
+  first steps served so far (~10,000, one hang). If the hang is the exchange alone at those sizes, at least one hang
+  in the hour is likely (~85 %).
+- **If it hangs:** the cause is in oneCCL's simple path or below it (runtime, driver), and it reproduces without the
+  model. Then lossless fixes, one at a time on the same stress: the allgather's simple threshold back to oneCCL's
+  default of 1 MiB (all-gather moves bytes, no arithmetic, so any algorithm gives the same result; it must not
+  reach the peer-access kernels that faulted, which is checked first), or prompt-size gathers split into pieces of
+  at most 1 MiB in b70-allgather-allreduce.
+- **If not:** the exchange alone is cleared at that rate; the hang needs the model's own prompt-step kernels, and the
+  next test runs those (GDN prompt kernel from a cached state, prompt attention over cached keys) at high rate.
