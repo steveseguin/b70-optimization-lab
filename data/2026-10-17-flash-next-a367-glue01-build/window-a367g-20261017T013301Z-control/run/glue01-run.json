@@ -1,0 +1,245 @@
+{
+  "schema": "own-xpu-runtime.packet4.a367-glue01.v1",
+  "passed": true,
+  "ready": true,
+  "clean_exit": true,
+  "gap_complete": true,
+  "all_owners_gone": true,
+  "gpu_fault_lines": 0,
+  "client": {
+    "attempted": true,
+    "launches": 1,
+    "returncode": 0,
+    "command": [
+      "taskset",
+      "-c",
+      "4-15,20-31",
+      "/usr/bin/python3",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/a367-glue01/battery_client.py",
+      "--output",
+      "/mnt/raid-models/bench-results/a367g-20261017T013301Z-control",
+      "--arm",
+      "control",
+      "--base-url",
+      "http://127.0.0.1:19980"
+    ],
+    "budget_seconds": 2700,
+    "pid": 95496
+  },
+  "comparison": {
+    "M1_steps": null,
+    "M2_steps": null,
+    "acceptance": {
+      "accepted_tokens": 2572.0,
+      "draft_tokens": 3398.0,
+      "ratio": 0.7569158328428487,
+      "scope": "timed realistic suite only; null means endpoint counters unavailable"
+    },
+    "all_prompt_99_interval_median_tok_s": 44.00721666892473,
+    "arm": "control",
+    "battery_wall_s": 494.19906307900237,
+    "class_balanced_99_interval_median_tok_s": 44.525603814183185,
+    "class_medians_tok_s": {
+      "analysis": 48.179936985731715,
+      "code": 44.335905929851776,
+      "documentation": 44.7153016985146,
+      "operations": 42.93590861425854,
+      "prose": 46.40360749869697,
+      "structured-writing": 39.44702747279319
+    },
+    "counter_deltas": {
+      "vllm:spec_decode_num_accepted_tokens_created{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 0.0,
+      "vllm:spec_decode_num_accepted_tokens_per_pos_created{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\",position=\"0\"}": 0.0,
+      "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\",position=\"0\"}": 2572.0,
+      "vllm:spec_decode_num_accepted_tokens_total{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 2572.0,
+      "vllm:spec_decode_num_draft_tokens_created{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 0.0,
+      "vllm:spec_decode_num_draft_tokens_total{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 3398.0,
+      "vllm:spec_decode_num_drafts_created{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 0.0,
+      "vllm:spec_decode_num_drafts_total{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 3398.0
+    },
+    "exact": true,
+    "exact_depth_repeats": {
+      "2048": 2,
+      "4096": 2
+    },
+    "full_response_wall_median_s": 11.666779025497817,
+    "full_response_wall_s": [
+      91.17080436900142,
+      64.98894835900137,
+      8.242337613002746,
+      11.379844565002713,
+      11.835536521000904,
+      11.92640500300331,
+      11.384502232998784,
+      30.37218174100417,
+      11.366410413000267,
+      84.53665676800301,
+      11.311504076998972,
+      11.49802152999473
+    ],
+    "full_response_wall_total_s": 360.0131531920124,
+    "jobs": [
+      {
+        "name": "realistic-suite-v1-result",
+        "returncode": 0
+      },
+      {
+        "name": "check-replay-result",
+        "returncode": 0
+      },
+      {
+        "name": "quality-current",
+        "returncode": 1
+      },
+      {
+        "name": "bench-short-r1",
+        "returncode": 0
+      },
+      {
+        "name": "bench-short-r2",
+        "returncode": 0
+      },
+      {
+        "name": "bench-short-r3",
+        "returncode": 0
+      },
+      {
+        "name": "exact-depth-2k-r1",
+        "returncode": 0
+      },
+      {
+        "name": "exact-depth-2k-r2",
+        "returncode": 0
+      },
+      {
+        "name": "exact-depth-4k-r1",
+        "returncode": 0
+      },
+      {
+        "name": "exact-depth-4k-r2",
+        "returncode": 0
+      }
+    ],
+    "limitation": "One control/candidate pair is a screen, not fresh-candidate determinism or a record.",
+    "metric_endpoints": [
+      {
+        "first_s": 78.48065446300461,
+        "last_s": 82.06074279800669,
+        "prompt_id": "incident-retrospective"
+      },
+      {
+        "first_s": 53.51914417799708,
+        "last_s": 55.89836168599868,
+        "prompt_id": "code-review"
+      },
+      {
+        "first_s": 0.5597557069995673,
+        "last_s": 2.846175694001431,
+        "prompt_id": "customer-email"
+      },
+      {
+        "first_s": 0.5703390300041065,
+        "last_s": 2.673969714996929,
+        "prompt_id": "sql-debugging"
+      },
+      {
+        "first_s": 0.7220180529984646,
+        "last_s": 3.0151153830011026,
+        "prompt_id": "release-plan"
+      },
+      {
+        "first_s": 0.5330949490016792,
+        "last_s": 2.720474813999317,
+        "prompt_id": "benchmark-analysis"
+      },
+      {
+        "first_s": 0.5206192299956456,
+        "last_s": 2.5754164379977738,
+        "prompt_id": "architecture-tradeoff"
+      },
+      {
+        "first_s": 19.084290546001284,
+        "last_s": 21.390052859998832,
+        "prompt_id": "bug-report-synthesis"
+      },
+      {
+        "first_s": 0.5368148479974479,
+        "last_s": 2.7508220499948948,
+        "prompt_id": "technical-guide"
+      },
+      {
+        "first_s": 72.80557114200201,
+        "last_s": 75.3152659490006,
+        "prompt_id": "risk-register"
+      },
+      {
+        "first_s": 0.35010825299832504,
+        "last_s": 2.381483938996098,
+        "prompt_id": "performance-hypotheses"
+      },
+      {
+        "first_s": 0.3881242649949854,
+        "last_s": 2.3877977179945447,
+        "prompt_id": "decision-memo"
+      }
+    ],
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "metric_numerator": 99,
+    "promotion_eligible": false,
+    "quality": {
+      "exact_cases_passed": 6,
+      "known_code_execution_30_exception": true,
+      "needle": true,
+      "repeats": 16
+    },
+    "speed_is_pass_gate": false,
+    "step_count_status": "not exposed by the unchanged untraced record runtime; raw graph counters retained if available",
+    "ttft_median_s": 0.5650473685018369,
+    "ttft_s": [
+      78.48065446300461,
+      53.51914417799708,
+      0.5597557069995673,
+      0.5703390300041065,
+      0.7220180529984646,
+      0.5330949490016792,
+      0.5206192299956456,
+      19.084290546001284,
+      0.5368148479974479,
+      72.80557114200201,
+      0.35010825299832504,
+      0.3881242649949854
+    ],
+    "logged_graph_dispatch": {
+      "M1_steps": 0,
+      "M2_steps": 4178,
+      "scope": "Logged FULL scheduler dispatches across entire server window, including post-suite battery; not per-rank operator counts.",
+      "coverage": "Only flushed log tables are counted; absent tables mean unavailable.",
+      "table_rows": 70,
+      "server_log_sha256": "ce59997413b09bca67967ca3f9b091d8c32661626cc1af5f17c738816287e543"
+    }
+  },
+  "failure": null,
+  "summary": {
+    "baseline_available_bytes": 121619193856,
+    "minimum_available_bytes": 13632856064,
+    "observed_need_bytes": 107986337792,
+    "observed_need_kib": 105455408,
+    "max_sample_gap_seconds": 0.5245973290002439,
+    "sample_count": 3286,
+    "phase_min_available_bytes": {
+      "plateau": 16937689088,
+      "baseline": 121619193856,
+      "generation": 13632856064,
+      "loading": 17001861120,
+      "client_wait": 16940179456,
+      "shutdown": 14103470080
+    },
+    "scope": "sampled startup/ready/generation/shutdown need; fixture demand unmeasured"
+  },
+  "samples_sha256": "27802d4c3eb410b7c57f2ee5a3748b42c941d20946496852481daa65bf30c303",
+  "identity_sha256": "ef1ab809388a911d82dee8985bdd897ea7c051f0dea99bbf1e0fae5a3d8ca9c1",
+  "mock": false,
+  "stop_sha256": "234ac52384870797c353630e265dbd2c043a8945ad1877e2a27e6582211b6084"
+}

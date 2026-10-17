@@ -1,0 +1,399 @@
+{
+  "battery_passed_both_arms": true,
+  "candidate": {
+    "M1_steps": null,
+    "M2_steps": null,
+    "acceptance": {
+      "accepted_tokens": 2572.0,
+      "draft_tokens": 3398.0,
+      "ratio": 0.7569158328428487,
+      "scope": "timed realistic suite only; null means endpoint counters unavailable"
+    },
+    "all_prompt_99_interval_median_tok_s": 45.032204399368,
+    "arm": "candidate",
+    "battery_wall_s": 490.8516567629995,
+    "class_balanced_99_interval_median_tok_s": 44.70165168700133,
+    "class_medians_tok_s": {
+      "analysis": 49.12187262080573,
+      "code": 43.431723159983534,
+      "documentation": 45.672825871101615,
+      "operations": 43.730477502901046,
+      "prose": 47.55855147200472,
+      "structured-writing": 41.29750286568513
+    },
+    "counter_deltas": {
+      "vllm:spec_decode_num_accepted_tokens_created{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 0.0,
+      "vllm:spec_decode_num_accepted_tokens_per_pos_created{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\",position=\"0\"}": 0.0,
+      "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\",position=\"0\"}": 2572.0,
+      "vllm:spec_decode_num_accepted_tokens_total{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 2572.0,
+      "vllm:spec_decode_num_draft_tokens_created{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 0.0,
+      "vllm:spec_decode_num_draft_tokens_total{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 3398.0,
+      "vllm:spec_decode_num_drafts_created{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 0.0,
+      "vllm:spec_decode_num_drafts_total{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 3398.0
+    },
+    "exact": true,
+    "exact_depth_repeats": {
+      "2048": 2,
+      "4096": 2
+    },
+    "full_response_wall_median_s": 11.432501752999087,
+    "full_response_wall_s": [
+      90.53673432899814,
+      65.229744749995,
+      8.07059688699519,
+      11.15918949800107,
+      11.618983262000256,
+      11.685222487001738,
+      11.155873494004481,
+      30.24448691499856,
+      11.142987736995565,
+      84.29011826100032,
+      11.061856348002038,
+      11.246020243997918
+    ],
+    "full_response_wall_total_s": 357.4418142119903,
+    "jobs": [
+      {
+        "name": "realistic-suite-v1-result",
+        "returncode": 0
+      },
+      {
+        "name": "check-replay-result",
+        "returncode": 0
+      },
+      {
+        "name": "quality-current",
+        "returncode": 1
+      },
+      {
+        "name": "bench-short-r1",
+        "returncode": 0
+      },
+      {
+        "name": "bench-short-r2",
+        "returncode": 0
+      },
+      {
+        "name": "bench-short-r3",
+        "returncode": 0
+      },
+      {
+        "name": "exact-depth-2k-r1",
+        "returncode": 0
+      },
+      {
+        "name": "exact-depth-2k-r2",
+        "returncode": 0
+      },
+      {
+        "name": "exact-depth-4k-r1",
+        "returncode": 0
+      },
+      {
+        "name": "exact-depth-4k-r2",
+        "returncode": 0
+      }
+    ],
+    "limitation": "One control/candidate pair is a screen, not fresh-candidate determinism or a record.",
+    "logged_graph_dispatch": {
+      "M1_steps": 0,
+      "M2_steps": 4178,
+      "coverage": "Only flushed log tables are counted; absent tables mean unavailable.",
+      "scope": "Logged FULL scheduler dispatches across entire server window, including post-suite battery; not per-rank operator counts.",
+      "server_log_sha256": "9a9d31c47dc6e697b054251ff87a477fcad9f7c5ed517d9be42400b06ae6067d",
+      "table_rows": 70
+    },
+    "metric_endpoints": [
+      {
+        "first_s": 77.86181636299443,
+        "last_s": 81.61388024699409,
+        "prompt_id": "incident-retrospective"
+      },
+      {
+        "first_s": 53.78897853199305,
+        "last_s": 56.34526147399447,
+        "prompt_id": "code-review"
+      },
+      {
+        "first_s": 0.5600784799971734,
+        "last_s": 2.7902309879937093,
+        "prompt_id": "customer-email"
+      },
+      {
+        "first_s": 0.5659493779967306,
+        "last_s": 2.6226503790021525,
+        "prompt_id": "sql-debugging"
+      },
+      {
+        "first_s": 0.7293284449988278,
+        "last_s": 2.9714519230037695,
+        "prompt_id": "release-plan"
+      },
+      {
+        "first_s": 0.5343216160035809,
+        "last_s": 2.680907276000653,
+        "prompt_id": "benchmark-analysis"
+      },
+      {
+        "first_s": 0.5185923440003535,
+        "last_s": 2.5339878230006434,
+        "prompt_id": "architecture-tradeoff"
+      },
+      {
+        "first_s": 19.20662039900344,
+        "last_s": 21.47048774400173,
+        "prompt_id": "bug-report-synthesis"
+      },
+      {
+        "first_s": 0.5378392639977392,
+        "last_s": 2.7054301259995555,
+        "prompt_id": "technical-guide"
+      },
+      {
+        "first_s": 72.87013053699775,
+        "last_s": 75.26736991299549,
+        "prompt_id": "risk-register"
+      },
+      {
+        "first_s": 0.3492127880017506,
+        "last_s": 2.341743615004816,
+        "prompt_id": "performance-hypotheses"
+      },
+      {
+        "first_s": 0.38766039699839894,
+        "last_s": 2.3393407339972327,
+        "prompt_id": "decision-memo"
+      }
+    ],
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "metric_numerator": 99,
+    "promotion_eligible": false,
+    "quality": {
+      "exact_cases_passed": 6,
+      "known_code_execution_30_exception": true,
+      "needle": true,
+      "repeats": 16
+    },
+    "speed_is_pass_gate": false,
+    "step_count_status": "not exposed by the unchanged untraced record runtime; raw graph counters retained if available",
+    "ttft_median_s": 0.563013928996952,
+    "ttft_s": [
+      77.86181636299443,
+      53.78897853199305,
+      0.5600784799971734,
+      0.5659493779967306,
+      0.7293284449988278,
+      0.5343216160035809,
+      0.5185923440003535,
+      19.20662039900344,
+      0.5378392639977392,
+      72.87013053699775,
+      0.3492127880017506,
+      0.38766039699839894
+    ]
+  },
+  "candidate_over_control": 1.0039538570561073,
+  "change_percent": 0.39538570561072905,
+  "control": {
+    "M1_steps": null,
+    "M2_steps": null,
+    "acceptance": {
+      "accepted_tokens": 2572.0,
+      "draft_tokens": 3398.0,
+      "ratio": 0.7569158328428487,
+      "scope": "timed realistic suite only; null means endpoint counters unavailable"
+    },
+    "all_prompt_99_interval_median_tok_s": 44.00721666892473,
+    "arm": "control",
+    "battery_wall_s": 494.19906307900237,
+    "class_balanced_99_interval_median_tok_s": 44.525603814183185,
+    "class_medians_tok_s": {
+      "analysis": 48.179936985731715,
+      "code": 44.335905929851776,
+      "documentation": 44.7153016985146,
+      "operations": 42.93590861425854,
+      "prose": 46.40360749869697,
+      "structured-writing": 39.44702747279319
+    },
+    "counter_deltas": {
+      "vllm:spec_decode_num_accepted_tokens_created{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 0.0,
+      "vllm:spec_decode_num_accepted_tokens_per_pos_created{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\",position=\"0\"}": 0.0,
+      "vllm:spec_decode_num_accepted_tokens_per_pos_total{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\",position=\"0\"}": 2572.0,
+      "vllm:spec_decode_num_accepted_tokens_total{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 2572.0,
+      "vllm:spec_decode_num_draft_tokens_created{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 0.0,
+      "vllm:spec_decode_num_draft_tokens_total{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 3398.0,
+      "vllm:spec_decode_num_drafts_created{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 0.0,
+      "vllm:spec_decode_num_drafts_total{engine=\"0\",model_name=\"qwen38-flash-next-fp8-tp4\"}": 3398.0
+    },
+    "exact": true,
+    "exact_depth_repeats": {
+      "2048": 2,
+      "4096": 2
+    },
+    "full_response_wall_median_s": 11.666779025497817,
+    "full_response_wall_s": [
+      91.17080436900142,
+      64.98894835900137,
+      8.242337613002746,
+      11.379844565002713,
+      11.835536521000904,
+      11.92640500300331,
+      11.384502232998784,
+      30.37218174100417,
+      11.366410413000267,
+      84.53665676800301,
+      11.311504076998972,
+      11.49802152999473
+    ],
+    "full_response_wall_total_s": 360.0131531920124,
+    "jobs": [
+      {
+        "name": "realistic-suite-v1-result",
+        "returncode": 0
+      },
+      {
+        "name": "check-replay-result",
+        "returncode": 0
+      },
+      {
+        "name": "quality-current",
+        "returncode": 1
+      },
+      {
+        "name": "bench-short-r1",
+        "returncode": 0
+      },
+      {
+        "name": "bench-short-r2",
+        "returncode": 0
+      },
+      {
+        "name": "bench-short-r3",
+        "returncode": 0
+      },
+      {
+        "name": "exact-depth-2k-r1",
+        "returncode": 0
+      },
+      {
+        "name": "exact-depth-2k-r2",
+        "returncode": 0
+      },
+      {
+        "name": "exact-depth-4k-r1",
+        "returncode": 0
+      },
+      {
+        "name": "exact-depth-4k-r2",
+        "returncode": 0
+      }
+    ],
+    "limitation": "One control/candidate pair is a screen, not fresh-candidate determinism or a record.",
+    "logged_graph_dispatch": {
+      "M1_steps": 0,
+      "M2_steps": 4178,
+      "coverage": "Only flushed log tables are counted; absent tables mean unavailable.",
+      "scope": "Logged FULL scheduler dispatches across entire server window, including post-suite battery; not per-rank operator counts.",
+      "server_log_sha256": "ce59997413b09bca67967ca3f9b091d8c32661626cc1af5f17c738816287e543",
+      "table_rows": 70
+    },
+    "metric_endpoints": [
+      {
+        "first_s": 78.48065446300461,
+        "last_s": 82.06074279800669,
+        "prompt_id": "incident-retrospective"
+      },
+      {
+        "first_s": 53.51914417799708,
+        "last_s": 55.89836168599868,
+        "prompt_id": "code-review"
+      },
+      {
+        "first_s": 0.5597557069995673,
+        "last_s": 2.846175694001431,
+        "prompt_id": "customer-email"
+      },
+      {
+        "first_s": 0.5703390300041065,
+        "last_s": 2.673969714996929,
+        "prompt_id": "sql-debugging"
+      },
+      {
+        "first_s": 0.7220180529984646,
+        "last_s": 3.0151153830011026,
+        "prompt_id": "release-plan"
+      },
+      {
+        "first_s": 0.5330949490016792,
+        "last_s": 2.720474813999317,
+        "prompt_id": "benchmark-analysis"
+      },
+      {
+        "first_s": 0.5206192299956456,
+        "last_s": 2.5754164379977738,
+        "prompt_id": "architecture-tradeoff"
+      },
+      {
+        "first_s": 19.084290546001284,
+        "last_s": 21.390052859998832,
+        "prompt_id": "bug-report-synthesis"
+      },
+      {
+        "first_s": 0.5368148479974479,
+        "last_s": 2.7508220499948948,
+        "prompt_id": "technical-guide"
+      },
+      {
+        "first_s": 72.80557114200201,
+        "last_s": 75.3152659490006,
+        "prompt_id": "risk-register"
+      },
+      {
+        "first_s": 0.35010825299832504,
+        "last_s": 2.381483938996098,
+        "prompt_id": "performance-hypotheses"
+      },
+      {
+        "first_s": 0.3881242649949854,
+        "last_s": 2.3877977179945447,
+        "prompt_id": "decision-memo"
+      }
+    ],
+    "metric_events": 100,
+    "metric_intervals": 99,
+    "metric_numerator": 99,
+    "promotion_eligible": false,
+    "quality": {
+      "exact_cases_passed": 6,
+      "known_code_execution_30_exception": true,
+      "needle": true,
+      "repeats": 16
+    },
+    "speed_is_pass_gate": false,
+    "step_count_status": "not exposed by the unchanged untraced record runtime; raw graph counters retained if available",
+    "ttft_median_s": 0.5650473685018369,
+    "ttft_s": [
+      78.48065446300461,
+      53.51914417799708,
+      0.5597557069995673,
+      0.5703390300041065,
+      0.7220180529984646,
+      0.5330949490016792,
+      0.5206192299956456,
+      19.084290546001284,
+      0.5368148479974479,
+      72.80557114200201,
+      0.35010825299832504,
+      0.3881242649949854
+    ]
+  },
+  "exact": true,
+  "fresh_server_determinism_proven": false,
+  "interpretation": "One control and one candidate screen; within ~3% drift closes this small lever. No headline or record from this pair.",
+  "lifecycle_both_arms_passed": true,
+  "operator_gate": "candidate four-rank byte/input-immutability/graph-replay receipts passed",
+  "promotion_eligible": false,
+  "schema": "a367-glue01-comparison-v1",
+  "speed_is_pass_gate": false
+}
