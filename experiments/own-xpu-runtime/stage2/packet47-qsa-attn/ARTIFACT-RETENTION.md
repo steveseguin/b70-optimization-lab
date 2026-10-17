@@ -19,7 +19,7 @@ the exact pinned source/compiler identities. A new run uses a new timestamped
 directory and never overwrites prior evidence. The authoritative stored bytes
 remain the committed gzip files; a future compiler's agreement is not assumed.
 
-The approximately 150 KiB host test executables and the device binary are
+The host test executables (about 291 KiB combined) and the device binary are
 ignored build products. Source, build commands, compiler versions and binary
 hashes remain in `build-host.json` and `build-device.json`. No weights, copied
 runtime tree or intermediate compiler object collection is retained here.

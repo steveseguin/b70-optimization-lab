@@ -1,0 +1,32 @@
+{
+  "schema": "own-runtime.packet47.python-gates.v1",
+  "passed": true,
+  "device_executed": false,
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet47-qsa-attn/window_support.py": "e2c8fd055a29415d0092795f94a019e37852c8006841981648b402ff33a0d136",
+    "experiments/own-xpu-runtime/stage2/packet47-qsa-attn/test_window.py": "11e2afd1ce9d015a92929f09d2430b58643f0da87fae04e1965f2ea7e965030e",
+    "experiments/own-xpu-runtime/stage2/packet47-qsa-attn/build.py": "d83ea0ea8fdfe0265a2281ac211c7acb479dd576cec124c22f52cdbf89e4c6ed",
+    "experiments/own-xpu-runtime/stage2/packet47-qsa-attn/summarize.py": "5ff677ab45ba5ca1f40ebf61b23e5d31e53079d5b7c5d0361623ac613c686ba1",
+    "experiments/own-xpu-runtime/stage2/packet47-qsa-attn/test_summary.py": "9438d9c5e3138d482a065aa80844a795c18fa922221bc270497cd592b9c9da25",
+    "experiments/own-xpu-runtime/stage2/packet47-qsa-attn/cpu_checks.py": "6e279b1bb3a20f382e438c36fe1015596422d529a2308a6b3a73f74f5752c0a5",
+    "experiments/own-xpu-runtime/stage2/packet47-qsa-attn/window.py": "1457f9c4f608d2414aa91710f648d41fb5c8c12ac421d131cf879a831420283a",
+    "experiments/own-xpu-runtime/stage2/packet47-qsa-attn/cpu_gate.py": "b9a62d9d17f18f831716d530b1330924160119061e55266e410093e4f03bd5fb",
+    "experiments/own-xpu-runtime/stage2/packet47-qsa-attn/seal.py": "d36de70246e0070d37b26151a5c5fe10a55aff670992b5878639fb739cb1404b",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/window.py": "20426ac90dd439953fbb4857fa2afca05f233fd6b08e326eb1abb48c03d10017"
+  },
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet47-qsa-attn",
+    "-p",
+    "test_*.py",
+    "-v"
+  ],
+  "returncode": 0,
+  "stdout": "",
+  "stderr": "test_exact_matrix_cannot_be_shortened_or_duplicated (test_summary.SummaryTests.test_exact_matrix_cannot_be_shortened_or_duplicated) ... ok\ntest_timing_full_matrix_accounting_and_bar (test_summary.SummaryTests.test_timing_full_matrix_accounting_and_bar) ... ok\ntest_closed_environment (test_window.AdmissionTests.test_closed_environment) ... ok\ntest_fresh_exact_companions (test_window.AdmissionTests.test_fresh_exact_companions) ... ok\ntest_sealed_paths_and_changed_source (test_window.AdmissionTests.test_sealed_paths_and_changed_source) ... ok\ntest_specific_fault_signatures (test_window.AdmissionTests.test_specific_fault_signatures) ... ok\ntest_supervisor_never_hard_kills (test_window.AdmissionTests.test_supervisor_never_hard_kills) ... ok\ntest_full_mock_exact_window (test_window.CoordinatorRehearsalTests.test_full_mock_exact_window) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 2.295s\n\nOK\n"
+}
