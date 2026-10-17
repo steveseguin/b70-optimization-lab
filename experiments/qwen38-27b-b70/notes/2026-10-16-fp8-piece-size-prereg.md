@@ -67,3 +67,13 @@ with fixed split points, and skipping the drafter's four discarded single-token 
 Launched 20:07:53 EDT (unit `fp8-piece1`, log `data/2026-10-16-r314-piece-size/run.log`). The edit probe needs the
 `tokenizers` library, which the host's system Python lacked; it was copied at 20:09, before the first probe ran, from
 `/mnt/fast-ai/venvs/minimax-h3` (0.23.2, same Python 3.12.3) into `~/.local/lib/python3.12/site-packages`.
+
+## Amendment, 21:00 EDT (after round 1's edit probes, before round 2 ran)
+
+Round 1 cold reads at 200K: K832 152.1 s, K1280 118.1 s, K2048 114.1 s; all three arms 15/15 cached = cold. The
+round-2 rule picks K2048 (fastest cold read), but K2048 almost doubles the cost of a hit (repeat at 200K 3.2 s against
+1.8 s on K832 and 1.9 s on K1280), and agent traffic is mostly hits. So the choice between 1,280 and 2,048 must weigh
+the repeat cost, and both need a second fresh server: **round 2b** adds a fresh K1280b server with the edit-cost probe
+only, run right after round 2 (`scripts/run-20261016-fp8-piece-size-r2b.sh`, unit `fp8-piece2b`). Decision: the
+arm adopted for the context lane is the one with the lower 200K repeat wait among those that meet the 10 % cold-read
+rule on both rounds; 2,048 only if its repeat wait is within 0.5 s of 1,280's.
