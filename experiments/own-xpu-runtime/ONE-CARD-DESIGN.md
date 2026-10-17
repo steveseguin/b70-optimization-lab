@@ -1,6 +1,6 @@
 # One-card IQ3 Flash-Next: cached experts and exact CPU misses
 
-2026-10-17. **Design only: no fit, CPU-throughput or device result.** Target:
+2026-10-17. **Design only: no one-card fit or device result.** Target:
 one 32 GB B70, the Unsloth UD-IQ3_XXS **quantized compressed version** at
 revision `766911a6b7369840a91dbcd95f9f997acaab6cd6`, unchanged
 `iq3-p17-detmath-v2` oracle and full 16-bit KV. The
@@ -8,6 +8,15 @@ revision `766911a6b7369840a91dbcd95f9f997acaab6cd6`, unchanged
 two-card timing evidence and priorities. The older
 [target-only plan](stage2/ONE-CARD-PLAN.md) remains historical; this design
 adds the now-qualified separate MTP weights and current expanded allocations.
+
+Packet46 now supplies the [refined cache budget](stage2/packet46-specialized/CACHE-BUDGET.md)
+and [exact AVX2 CPU result](stage2/packet46-specialized/CPU-EXPERT-CLOSEOUT.md).
+Its two fresh medians are 3.87 and 5.33 GB/s of packed bytes processed,
+well below this design's hypothetical uniform-miss requirement. Actual route
+locality is still unmeasured. The original sizing discussion below is retained;
+use packet46's corrected PLE history, aligned slots and explicit placement for
+the current budget. CPU/device exceptional parity and engine integration remain
+open.
 
 Credit **Niko1221 / Strata** for the publicly described GPU hot-expert cache,
 pinned host experts with parallel CPU computation of misses, host/SSD PLE,

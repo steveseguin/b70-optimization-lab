@@ -21,6 +21,7 @@ GPU timing owners, after every-intermediate/full-state raw-byte gates.
 | Route/phase schema and adapter | [diagnostics](diagnostics/README.md) |
 | Card-0 coordinator command files | [WINDOW.md](WINDOW.md) |
 | Results and remaining risks | [October 17 note](../../../../notes/2026-10-17-own-runtime-packet46.md) |
+| Closed CPU throughput question | [closeout](CPU-EXPERT-CLOSEOUT.md), [negative-result index](DO-NOT-REPEAT.md) |
 
 This is a lab packet, not a portable model package or speed claim. The layer
 build validates and relinks existing packet45 dependency objects read-only;

@@ -128,3 +128,103 @@ scope. This is conditional on the subsequently generated build, relink and CPU
 gate receipts passing under these exact sources. Compiled CPU exactness,
 throughput, device qualification, measured 80-microsecond savings, actual cache
 fit and complete engine integration remain unmeasured at this review boundary.
+
+## Review of retained CPU receipts after the cutoff
+
+Read-only review of CPU expert build/test/benchmark receipts and the diagnostic
+mock receipts following commit `7dda925e2`. No test, compiler, native program or
+device was rerun for this review. Small-file hash and sample arithmetic checks
+were performed under nice 19 on the requested CPU set.
+
+The expert build began at **02:55:17.730599 UTC**, after the protected cutoff.
+Its 22 recorded local source hashes match the current files; the recorded
+binary hash matches the 170,872-byte executable. Build, exactness and throughput
+receipts have the identical build identity. The throughput prerequisite hash
+also matches the retained local exactness receipt. The build evidence directory
+is now visible under the anchored `/build/` ignore rule and must accompany the
+next evidence commit; compiled output remains ignored.
+
+Both fresh exactness owners passed **27,587 checks**, including **18 complete
+expert comparisons** and **30 dedicated finite down-row edge cases**. Their
+output digest is `ea0eeaa89bce627`. This resolves the prior pending CPU build/test
+and down-edge coverage items for the admitted finite fixtures. It does not
+qualify nonfinite device semantics; both receipts explicitly keep that gate
+false.
+
+Independent recomputation from batch counts, 144 experts, 284,928,000 packed
+bytes and elapsed sample times agrees with all recorded rates. Both processes
+have five samples lasting at least two seconds; all 24 reported worker masks
+stay within CPUs 4–15,20–31. The two medians are:
+
+| Fresh process | Complete experts/s | Packed bytes processed, GB/s |
+| --- | ---: | ---: |
+| 0 | 1,957.45567193 | 3.87315228953 |
+| 1 | 2,691.34804509 | 5.32528066522 |
+
+The p10 values are actual nearest-rank samples, and the tables retain both
+processes. The ten samples span 1,647.75669672–2,780.77116014 experts/s; this
+spread remains unexplained and is not hidden by a selected best run. The
+reported 9.3×/6.7× shortfall against the hypothetical uniform-cache scenario is
+consistent with its 18,157 experts/s demand. Documentation correctly restricts
+this conclusion to this implementation and scenario. These measurements are
+neither DRAM bandwidth nor a CPU hardware limit, and their independent expert
+parallelism does not establish ten-slot layer latency or CPU/GPU overlap.
+
+The diagnostic receipt's seven source hashes and binary hash match current
+files. Both raw nine-record mock traces hash to
+`1799af75d8723a10d0f73eff2a3049868e1b44f8bee27787dd3a89667a3fc3a5`.
+The trace identifies `cpu-mock`, `fixture-only` and `dataset_role=mock`, and
+explicitly sets `speed_claim_eligible=false`. It includes ordered expert IDs,
+two synthetic GPU-event records, host timing, a rejected speculative command
+and an accepted corrected command. The two validators agree. Those timestamp
+values are mock schema evidence, not device timing or actual IQ3 route evidence.
+Compilation and mock execution started at 02:56:21 UTC, after the cutoff.
+
+No concrete blocking finding was identified in these CPU expert/diagnostic
+receipts or their current claims. Full-layer build/relink gates, CPU layer
+comparison, seal completion, device windows and live one-card fit remain
+separate pending work at this review boundary.
+
+## Final independent seal and layer-evidence verification
+
+The completed CPU-preparation seal independently passed `sealed_gate()`:
+
+`ab9760f3f787dbb5bb35c01be97967b17f28654c6e5fa90635ca010cca479104`
+
+All **317 source identities, five artifacts and seven named gates** match the
+current retained bytes. Each gate records `passed=true` and
+`device_executed=false`. The verification only read and hashed files; it did
+not execute any native program, query a device or rebuild anything.
+
+The host and device build provenance was also checked separately. All **23
+host** and **31 device** reused dependency-object hashes match their receipts.
+Both independently relinked parent binaries match their sealed packet45 parent
+binary byte-for-byte. Source closures, candidate artifacts and baseline
+provenance hashes match. Host build completed at 02:57:12 UTC and device build
+at 02:58:14 UTC. The compiled device artifact is
+`613062382676d0df036deafdf08fdd99a903308aa1949ab8ee0f72444c8d1b41`;
+it remains unexecuted by this task.
+
+The CPU leaf receipt passes **3,079 raw comparisons**. Both fresh complete
+layer CPU owners pass **1,866 comparisons across 12 cases** each. Independently
+re-running the Python evidence validator against the frozen manifest succeeds
+for both retained result directories. Each manifest has **606 producer ranges,
+660 full mutable-allocation ranges and 600 logical-state ranges**. Both owners
+record safe teardown, three distinct expert route sets for each layer, and
+exactly this comparison-file identity:
+
+`ee48f54c99d01d793e8a1de73169681dc40955a03c59d36540c005924dbb1785`
+
+The retained native receipts equal their copies in the CPU gate; comparison
+file hashes and both per-run manifests match the frozen packet manifest.
+
+The packet is now **ready for the coordinator's four card-0 windows using
+WINDOW.md**. No blocking finding remains in this review's CPU, provenance,
+window or seal scope. Readiness means the CPU gates and compiled device binary
+are sealed; it does not mean device arithmetic or performance has passed.
+Two fresh every-intermediate/state device exactness windows and then two fresh
+GPU timing owners still must run, with at least 80 microseconds saved per
+qualifying layer. Nonfinite CPU/device parity, actual IQ3 route locality,
+CPU-miss layer latency, complete one-card allocation and integrated engine
+qualification remain open. The CPU throughput limitation already measured
+above remains unchanged.

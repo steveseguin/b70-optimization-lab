@@ -1,0 +1,74 @@
+In file included from ../../packet45-merged3/p28/dense.hpp:2,
+                 from ../../packet45-merged3/p33_candidates.hpp:6,
+                 from ../../packet45-merged3/p39_fused.hpp:3,
+                 from expert_avx2.hpp:4,
+                 from fixtures.hpp:2,
+                 from main.cpp:1:
+../../packet45-merged3/p28/../../packet10-kopt5/expanded.hpp: In function ‘float iq3::expanded::row(iq3::Type, const uint8_t*, const uint16_t*, iq3::Type, size_t, unsigned int)’:
+../../packet45-merged3/p28/../../packet10-kopt5/expanded.hpp:90:2: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   90 |  if(split!=1 && split!=4)throw std::invalid_argument("split");float part[4]{};
+      |  ^~
+../../packet45-merged3/p28/../../packet10-kopt5/expanded.hpp:90:63: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   90 |  if(split!=1 && split!=4)throw std::invalid_argument("split");float part[4]{};
+      |                                                               ^~~~~
+In file included from ../../packet45-merged3/specialised.hpp:2,
+                 from ../../packet45-merged3/round2.hpp:2,
+                 from ../../packet45-merged3/p33_candidates.hpp:7:
+../../packet45-merged3/kernels.hpp: In function ‘void ng::group(Shape, Args, int, Team)’:
+../../packet45-merged3/kernels.hpp:207:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  207 |   if(!n)return;float m=-INFINITY;for(int k=0;k<n;++k)m=std::max(m,a.f(6)[group*slots+k]);
+      |   ^~
+../../packet45-merged3/kernels.hpp:207:16: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  207 |   if(!n)return;float m=-INFINITY;for(int k=0;k<n;++k)m=std::max(m,a.f(6)[group*slots+k]);
+      |                ^~~~~
+../../packet45-merged3/kernels.hpp:217:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  217 |   if(!n)return;float value=tree(t,n,[&](int j){int id=safe_id(j);return a.f(7)[(r*24+h)*slots+j]*a.b(3,(id*2+h/12)*256+k);});t.barrier();
+      |   ^~
+../../packet45-merged3/kernels.hpp:217:16: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  217 |   if(!n)return;float value=tree(t,n,[&](int j){int id=safe_id(j);return a.f(7)[(r*24+h)*slots+j]*a.b(3,(id*2+h/12)*256+k);});t.barrier();
+      |                ^~~~~
+../../packet45-merged3/round2.hpp: In function ‘void round2::gdn_host(ng::Shape, ng::Args)’:
+../../packet45-merged3/round2.hpp:53:2: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+   53 |  if(!a.i(18)[0]||a.i(15)[0])return;int pos=a.i(17)[0];if(pos<0||pos>ng::position_limit(s)-s.tokens){a.i(15)[0]=1;return;}
+      |  ^~
+../../packet45-merged3/round2.hpp:53:36: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+   53 |  if(!a.i(18)[0]||a.i(15)[0])return;int pos=a.i(17)[0];if(pos<0||pos>ng::position_limit(s)-s.tokens){a.i(15)[0]=1;return;}
+      |                                    ^~~
+main.cpp: In function ‘void {anonymous}::cases()’:
+main.cpp:62:4: warning: this ‘for’ clause does not guard... [-Wmisleading-indentation]
+   62 |    for(unsigned k=0;k<hidden;++k)x[k]=special[k%(mode?8:2)];lane_checks<T>(weights,x);}
+      |    ^~~
+main.cpp:62:61: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘for’
+   62 |    for(unsigned k=0;k<hidden;++k)x[k]=special[k%(mode?8:2)];lane_checks<T>(weights,x);}
+      |                                                             ^~~~~~~~~~~
+main.cpp: In lambda function:
+main.cpp:127:5: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  127 |     if(!execute(bank[id],input,outputs[id],sticky))++failures;hashes[id]=digest(outputs[id]);}
+      |     ^~
+main.cpp:127:63: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  127 |     if(!execute(bank[id],input,outputs[id],sticky))++failures;hashes[id]=digest(outputs[id]);}
+      |                                                               ^~~~~~
+main.cpp:129:3: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  129 |   if(failures)throw std::runtime_error("benchmark expert rejected");++iteration;
+      |   ^~
+main.cpp:129:69: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  129 |   if(failures)throw std::runtime_error("benchmark expert rejected");++iteration;
+      |                                                                     ^~
+../../packet45-merged3/kernels.hpp: In instantiation of ‘void ng::norm_rope(Team, Get, Put, const Args&, int, int, int, int) [with Team = HostTeam; Get = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int)>; Put = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int, float)>]’:
+../../packet45-merged3/kernels.hpp:173:21:   required from ‘void ng::group(Shape, Args, int, Team) [with Team = HostTeam]’
+../../packet45-merged3/kernels.hpp:221:122:   required from here
+../../packet45-merged3/kernels.hpp:112:75: warning: unused variable ‘rotary’ [-Wunused-variable]
+  112 |  t.each(width,[&](int j){float v=t.x[j];if(j<64){int k=j%32;constexpr int rotary=64;float c=rope_constants::cos(static_cast<const uint16_t*>(a.p[16]),position,k),z=rope_constants::sin(static_cast<const uint16_t*>(a.p[16]),position,k);v=j<32?t.x[k]*c-t.x[k+32]*z:t.x[k+32]*c+t.x[k]*z;}put(j,v);});t.barrier();
+      |                                                                           ^~~~~~
+../../packet45-merged3/kernels.hpp: In instantiation of ‘void ng::norm_rope(Team, Get, Put, const Args&, int, int, int, int) [with Team = HostTeam; Get = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int)>; Put = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int, float)>]’:
+../../packet45-merged3/kernels.hpp:174:32:   required from ‘void ng::group(Shape, Args, int, Team) [with Team = HostTeam]’
+../../packet45-merged3/kernels.hpp:221:122:   required from here
+../../packet45-merged3/kernels.hpp:112:75: warning: unused variable ‘rotary’ [-Wunused-variable]
+../../packet45-merged3/kernels.hpp: In instantiation of ‘void ng::norm_rope(Team, Get, Put, const Args&, int, int, int, int) [with Team = HostTeam; Get = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int)>; Put = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int, float)>]’:
+../../packet45-merged3/kernels.hpp:175:23:   required from ‘void ng::group(Shape, Args, int, Team) [with Team = HostTeam]’
+../../packet45-merged3/kernels.hpp:221:122:   required from here
+../../packet45-merged3/kernels.hpp:112:75: warning: unused variable ‘rotary’ [-Wunused-variable]
+../../packet45-merged3/kernels.hpp: In instantiation of ‘void ng::norm_rope(Team, Get, Put, const Args&, int, int, int, int) [with Team = HostTeam; Get = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int)>; Put = group<HostTeam>(Shape, Args, int, HostTeam)::<lambda(int, float)>]’:
+../../packet45-merged3/kernels.hpp:182:13:   required from ‘void ng::group(Shape, Args, int, Team) [with Team = HostTeam]’
+../../packet45-merged3/kernels.hpp:221:122:   required from here
+../../packet45-merged3/kernels.hpp:112:75: warning: unused variable ‘rotary’ [-Wunused-variable]

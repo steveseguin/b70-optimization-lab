@@ -66,8 +66,15 @@ counts to assert on device, not measured speedups. The six exact cases include
 changing positions/inputs and inactive, sticky-error and out-of-range controls.
 Full mutable snapshots include scratch and padding without masks. Every timed
 input pair also checks complete state and a clean error flag outside timing.
-Six CPU-only wrapper/accounting tests passed in 0.644 seconds; compilation,
-full-shape CPU arithmetic and device work have not yet run.
+The final short Python gates pass all 17 tests (three budget, nine window and
+five diagnostic groups). Both host and native builds pass. Each reused parent
+object set reproduced its pinned packet45 binary byte-for-byte before reuse.
+The CPU leaf gate passes 3,079 raw checks. Two fresh complete-layer processes
+each pass 1,866 intermediate, logical-state and full-allocation comparisons;
+each layer selects three distinct route sets. Both processes have identical
+SHA256 `ee48f54c99d01d793e8a1de73169681dc40955a03c59d36540c005924dbb1785`
+and retire safely. [Layer gate and retained files](../experiments/own-xpu-runtime/stage2/packet46-specialized/cpu-layer-gates.json).
+The native program was compiled only and never executed.
 
 The CPU expert benchmark ran at 02:55:39–02:56:00 UTC on the requested 24
 logical CPUs, nice 19, with five samples of at least two seconds per fresh
@@ -87,5 +94,26 @@ Actual route locality, dependent ten-slot layer tails and CPU/GPU overlap are
 still unknown. The next prerequisite is the opt-in IQ3 route census, followed
 by a faster exact CPU path if observed misses still demand it.
 
-Full-layer compilation, CPU comparisons and the final seal are pending. Device correctness, device speed and one-card fit
-remain unmeasured by this task. The device coordinator retains ownership.
+The [CPU preparation seal](../experiments/own-xpu-runtime/stage2/packet46-specialized/seal.json)
+passes with 317 source pins, five compiled artifacts and seven gate receipts.
+Seal SHA256:
+`ab9760f3f787dbb5bb35c01be97967b17f28654c6e5fa90635ca010cca479104`.
+Native binary SHA256:
+`613062382676d0df036deafdf08fdd99a903308aa1949ab8ee0f72444c8d1b41`.
+All layer build/proof/mirror output totals about 53 MB; retained CPU layer
+evidence is about 1.5 MB, with no individual new evidence file over 1 MiB.
+The root disk still has about 23.7 GB free. No protected source was edited.
+
+The coordinator can use the exact script-file commands in
+[WINDOW.md](../experiments/own-xpu-runtime/stage2/packet46-specialized/WINDOW.md):
+E1 and E2 on card 0, then T1 and T2 only after both exactness receipts pass.
+The diagnostic adapter is ready for attachment to a future unsealed two-card
+owner; it is not installed in packet45 or enabled in these timing windows.
+
+Open risks: device intermediate/state agreement, actual native launch counts,
+GPU timing and the 80-microsecond bar; the QSA tuple's serial split work may
+cost performance. CPU nonfinite parity, actual cache hit rates, dependent
+miss tails, live one-card memory peaks and engine integration are unqualified.
+No model speed or one-card fit is claimed. The device coordinator retains
+ownership. The [CPU expert closeout](../experiments/own-xpu-runtime/stage2/packet46-specialized/CPU-EXPERT-CLOSEOUT.md)
+records the measured shortfall and the next conditions for revisiting it.

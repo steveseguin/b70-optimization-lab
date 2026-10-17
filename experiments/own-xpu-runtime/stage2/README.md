@@ -8,6 +8,7 @@ separate and pending.
 
 | Packet | Status | Evidence |
 | --- | --- | --- |
+| 46 — Specialized GDN/QSA layers and one-card prerequisites | **CPU gates and host/native builds pass; sealed for coordinator card-0 windows. CPU expert throughput is below the hypothetical uniform-miss requirement; no device run here.** | [Packet and retained CPU results](packet46-specialized/README.md), [exact coordinator commands](packet46-specialized/WINDOW.md) |
 | 1 — Local identity, tensors, exact oracle and placement arithmetic | **CPU exit gate PASS, 2026-10-10** | [Packet and receipt](packet1/README.md) |
 | 1b — CPU reference math and Stage 2 plan | **37 synthetic checks PASS; device parity UNVERIFIED, 2026-10-10** | [Packet/receipts](packet1b/README.md), [plan and owner decisions](../STAGE2-PLAN.md) |
 | 1c — Actual Unsloth mixed-grid header census | **CPU census PASS; IQ3 first, IQ4 weight-only rejection corrected; MTP absent** | [Census, comparison and fetch receipt](packet1c/README.md) |
