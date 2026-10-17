@@ -52,3 +52,24 @@ Both compilers pass 44 small operator cases in two fresh processes each,
 including 118,784 raw FP32 chain checks and 3,456 raw tree checks per repeat.
 All compared bytes match production. No CPU model ran. The engine build and
 v4 screen preparation follow these gates. [Offline decision and limitations](../experiments/own-xpu-runtime/stage2/packet73-hc-experts2/OCCUPANCY.md).
+
+## Sealed handoff
+
+All five views are sealed with one device binary. The private v4 wrapper passes
+82 mock checks. Six lane-A plans and all twelve possible lane-B plans pass;
+both proposed queue files pass `lanequeue.py plan` in a private copy. No live
+queue, frozen screen or parent packet was edited by this task, and no GPU,
+CPU model, service, sudo or host-setting operation ran.
+
+Lane A brackets the four candidates with production. Lane B resolves its
+middle job only after all six A screens are exact and an improving winner
+exists. It then brackets that candidate with fresh controls. Combined is HC
+plus expert B. The 3,600-second per-screen watchdog exceeds four times the
+210-second estimate; inter-screen gaps stay 90 seconds. Speed is still pending.
+
+The final build is 302,710,656 bytes (about 303 MB). Engine compile peak RSS
+is 726,108 KiB. [Final verification](../experiments/own-xpu-runtime/stage2/packet73-hc-experts2/evidence/final-validation.json),
+[commands](../experiments/own-xpu-runtime/stage2/packet73-hc-experts2/WINDOW.md),
+[CPU closeout](../experiments/own-xpu-runtime/stage2/packet73-hc-experts2/CPU-PREPARATION-CLOSEOUT.md).
+Both queue proposals are under `experiments/own-xpu-runtime/ops/lane-queue/`,
+with `proposed-p73-A.txt` and `proposed-p73-B.txt`; neither was enqueued here.
