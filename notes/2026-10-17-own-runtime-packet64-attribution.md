@@ -71,3 +71,45 @@ All CPU programs used nice19, cores 8–15,24–31, Python `-B`, OMP2 where need
 and stdin from `/dev/null`. Device execution and measured costs remain pending.
 `CURRENT.md` and every existing runtime tree were preserved, as requested;
 this task's state and handoff live only in the new folders and this note.
+
+## Device result (coordinator, 2026-10-17 17:48–17:55 UTC, lane B cards 2+3)
+
+The screen `v3-attr/evidence/packet64-attribution-B-a` ran on the device for 397 s with no new fault lines (count 2). The report step refused with `invalid event timestamps`. 1,696 of 21,196 events were small copies (`transfer.*`, `draft.transfer.*`) whose device start and end timestamps were equal at timer resolution. They had zero duration; the data was not corrupt. The validator required `start < end`. It now allows `start == end` only for transfer events (coordinator fix in `summarize.py`); the report was regenerated on CPU from the retained raw evidence.
+
+Current line (packet 64 production 24/24, placement 1), per card-half, control means:
+- rank 0 speculative 14.23 ms;
+- rank 0 corrected 12.99 ms;
+- rank 1 target 14.69 ms.
+
+Rank 1 is still the bottleneck, by about 0.45 ms.
+
+Largest buckets per half (estimates, 18 GDN + 6 QSA layers):
+
+| Bucket | Cost per half |
+|---|---|
+| GDN attention | 3.55 ms (197 µs/layer) |
+| GDN routed experts | 3.35 ms (186 µs/layer) |
+| Outside layers | 2.94 ms (rank 1) / 2.24 ms (rank 0 speculative) |
+| GDN HC norm/merge | 1.53 ms (85 µs/layer) |
+| QSA attention | 1.28 ms (213 µs/layer) |
+| QSA routed experts | 1.11 ms |
+| QSA HC norm/merge | 0.51 ms |
+
+The draft on rank 1:
+
+| Draft part | Cost |
+|---|---|
+| Head prefix | 510 µs |
+| Attention | 380 µs |
+| HC norm/merge | 330 µs |
+| Experts | 246 µs |
+| Embedding | 60 µs |
+| Shared expert | 43 µs |
+| Argmax | 21 µs |
+
+**Implied lever order:**
+1. GDN attention (the largest single class);
+2. routed experts (packet 65 in flight);
+3. the outside-layer remainder, especially on rank 1 (unexplained 2.9 ms);
+4. HC norm/merge;
+5. draft attention and HC.

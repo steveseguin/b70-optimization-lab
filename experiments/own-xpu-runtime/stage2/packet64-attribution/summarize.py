@@ -45,7 +45,8 @@ def validate_event(e, rank):
     require(type(e.get('position')) is int and type(e.get('speculative')) is bool, 'bad event identity')
     require(type(e.get('event')) is int and e['event'] > 0, 'bad event ID')
     require(type(e.get('start_ns')) is int and type(e.get('end_ns')) is int
-            and 0 < e['start_ns'] < e['end_ns'], 'invalid event timestamps')
+            and 0 < e['start_ns'] <= e['end_ns'] and (e['start_ns'] < e['end_ns'] or 'transfer' in e['label']),
+            'invalid event timestamps')  # small copies can resolve to equal device timestamps (zero duration)
     require(isinstance(e.get('device_ms'), (int,float)) and math.isfinite(e['device_ms'])
             and math.isclose(e['device_ms'], (e['end_ns']-e['start_ns'])/1e6, rel_tol=1e-5),
             'invalid event duration')
