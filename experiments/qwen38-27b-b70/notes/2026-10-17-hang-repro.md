@@ -437,3 +437,18 @@ health probe passed (smoke on both cards, barrier, all-reduce 2.0) with no new k
 `data/2026-10-17-xccl-stress/fault-155552/` (kernel log, the engine-register sampler's frozen 60 s, the probe log).
 Consequence for the server: with marks on, ending a hung server will also log copy-engine lines on teardown; a normal
 stop drains the queue first (M1 ended clean). Campaign 29a proceeds as registered.
+
+## Campaign 29a result (16:00:24-16:07:29 EDT): marks on the real server change no answer and cost about 2 %
+
+K32 rules stream, seed 0, on c28f's server plus device marks (log: "b70_step_breadcrumbs 0.3.0 ... device marks ON",
+no "marks off" line): 39/39, 7 min 6 s (c28f 6 min 59 s); server totals identical to c28f's (prompt 1,932,094,
+cached 1,564,160, generated 30,313); `compare-campaign-calls.py` c28f -> c29a: 182/182 calls equal apart from time,
+cached tokens identical in every call, model time 367.1 -> 374.4 s (+2.0 %; main +1.7 %, notes +2.4 %). Predictions
+(equal calls; within 3 %): yes, yes. One server, one run: an estimate, not a verdict. Decision as registered: marks
+on in hang-hunting runs and agent stresses of the context lane, off in runs whose times are published (cost over
+1 %). No stall, no fault line. Calls: `data/2026-10-17-context-campaign29/calls-c29a-K32.jsonl`. I ended the
+runner's 10-minute wait for more queue lines with `STOP-CAMPAIGN28` at 16:08 (removed again after the stop). Next,
+as registered: the packed first-step stress for 60 minutes with marks (`run-20261017-step-floor.sh`, `ARMS=L
+CENSUS=0 MARKS=1 STRESS_MIN=60`, client `--answers 1,2,4,8,16 --tail-words 20,700 --gap 0.05,0.3 --pause-share 0`,
+evidence `data/2026-10-17-hang-repro3/`), `hang-capture.sh` beside it; prediction about 4,000 first steps, a hang
+about a one-in-three chance at one per ~10,000; after it the dedicated hunt stops.
