@@ -390,3 +390,14 @@ lost or overwritten). **M2 prediction, restated for two marks:** rank 0 (in the 
 "every issued gather finished"; rank 1 "inside gather n+1" where n is rank 0's issued count (the extra step's first
 gather started on the card and never finished). M1 now carries two copies per gather; its prediction stays within
 5 % of arm A's 1,797 steps in the first two minutes.
+
+## Arm B result (15:11:16-15:51:31 EDT): no hang in 29,440 steps with card 03 under load
+
+29,440 steps (14,711 prompt-size, 30-832 rows), 3,974,400 gathers, 460 byte checks all equal, no stall, kernel log
+clean, rc 0, cards left empty. The loader ran on 03:00.0 (its process's `drm-pdev`), and the stress ran about 20 %
+slower than arm A (12.2 against 14.6 steps a second), so the two contexts did share card 03. As registered: with or
+without a competing load on card 03, the exchange alone at the server's sizes and environment did not hang in about
+23,500 prompt-size steps (A 8,750, B 14,711), roughly 1.3 times the context lane's prompt steps since 2026-10-03; at
+the lane's rate (one in ~18,000) a clean result had about a 27 % chance. Arm C is not run (registered only if B hung;
+its 1 MiB chunking would not avoid the slot-overwrite pass counts anyway, 15:27). The search moves, as registered, to
+what only the context lane has, with the device marks so that the next hang names the stuck kernel.

@@ -1,0 +1,61 @@
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+2026:10:17-19:11:18:   23 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:10:17-19:11:18:   23 |CCL_WARN| value of CCL_RECV changed to be direct (default:)
+2026:10:17-19:11:18:   23 |CCL_WARN| value of CCL_SEND changed to be direct (default:)
+2026:10:17-19:11:18:   23 |CCL_WARN| value of CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD changed to be 4294967296 (default:4194304)
+2026:10:17-19:11:18:   23 |CCL_WARN| value of CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD changed to be 4294967296 (default:8388608)
+2026:10:17-19:11:18:   23 |CCL_WARN| value of CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD changed to be 4294967296 (default:1048576)
+2026:10:17-19:11:18:   23 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:10:17-19:11:18:   23 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:10:17-19:11:18:   24 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:10:17-19:11:19:   34:[0] |CCL_WARN| no membind support for NUMA node 0, skip thread membind
+2026:10:17-19:11:19:   33:[1] |CCL_WARN| no membind support for NUMA node 0, skip thread membind
+2026:10:17-19:11:19:   23:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+/opt/venv/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+/opt/venv/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+XCCL-STRESS 735 steps (373 prompt-size), 99225 gathers, bytes checks 12 bad 0
+XCCL-STRESS 1507 steps (750 prompt-size), 203445 gathers, bytes checks 24 bad 0
+XCCL-STRESS 2275 steps (1112 prompt-size), 307125 gathers, bytes checks 36 bad 0
+XCCL-STRESS 2990 steps (1459 prompt-size), 403650 gathers, bytes checks 47 bad 0
+XCCL-STRESS 3753 steps (1830 prompt-size), 506655 gathers, bytes checks 59 bad 0
+XCCL-STRESS 4512 steps (2207 prompt-size), 609120 gathers, bytes checks 71 bad 0
+XCCL-STRESS 5212 steps (2572 prompt-size), 703620 gathers, bytes checks 82 bad 0
+XCCL-STRESS 5943 steps (2927 prompt-size), 802305 gathers, bytes checks 93 bad 0
+XCCL-STRESS 6728 steps (3301 prompt-size), 908280 gathers, bytes checks 106 bad 0
+XCCL-STRESS 7468 steps (3693 prompt-size), 1008180 gathers, bytes checks 117 bad 0
+XCCL-STRESS 8220 steps (4059 prompt-size), 1109700 gathers, bytes checks 129 bad 0
+XCCL-STRESS 8967 steps (4426 prompt-size), 1210545 gathers, bytes checks 141 bad 0
+XCCL-STRESS 9710 steps (4806 prompt-size), 1310850 gathers, bytes checks 152 bad 0
+XCCL-STRESS 10411 steps (5189 prompt-size), 1405485 gathers, bytes checks 163 bad 0
+XCCL-STRESS 11158 steps (5535 prompt-size), 1506330 gathers, bytes checks 175 bad 0
+XCCL-STRESS 11931 steps (5929 prompt-size), 1610685 gathers, bytes checks 187 bad 0
+XCCL-STRESS 12706 steps (6304 prompt-size), 1715310 gathers, bytes checks 199 bad 0
+XCCL-STRESS 13437 steps (6673 prompt-size), 1813995 gathers, bytes checks 210 bad 0
+XCCL-STRESS 14218 steps (7068 prompt-size), 1919430 gathers, bytes checks 223 bad 0
+XCCL-STRESS 14883 steps (7397 prompt-size), 2009205 gathers, bytes checks 233 bad 0
+XCCL-STRESS 15614 steps (7755 prompt-size), 2107890 gathers, bytes checks 244 bad 0
+XCCL-STRESS 16363 steps (8131 prompt-size), 2209005 gathers, bytes checks 256 bad 0
+XCCL-STRESS 17095 steps (8499 prompt-size), 2307825 gathers, bytes checks 268 bad 0
+XCCL-STRESS 17829 steps (8859 prompt-size), 2406915 gathers, bytes checks 279 bad 0
+XCCL-STRESS 18552 steps (9228 prompt-size), 2504520 gathers, bytes checks 290 bad 0
+XCCL-STRESS 19279 steps (9587 prompt-size), 2602665 gathers, bytes checks 302 bad 0
+XCCL-STRESS 20013 steps (9956 prompt-size), 2701755 gathers, bytes checks 313 bad 0
+XCCL-STRESS 20743 steps (10330 prompt-size), 2800305 gathers, bytes checks 325 bad 0
+XCCL-STRESS 21456 steps (10679 prompt-size), 2896560 gathers, bytes checks 336 bad 0
+XCCL-STRESS 22194 steps (11054 prompt-size), 2996190 gathers, bytes checks 347 bad 0
+XCCL-STRESS 22937 steps (11405 prompt-size), 3096495 gathers, bytes checks 359 bad 0
+XCCL-STRESS 23690 steps (11769 prompt-size), 3198150 gathers, bytes checks 371 bad 0
+XCCL-STRESS 24390 steps (12121 prompt-size), 3292650 gathers, bytes checks 382 bad 0
+XCCL-STRESS 25119 steps (12484 prompt-size), 3391065 gathers, bytes checks 393 bad 0
+XCCL-STRESS 25834 steps (12846 prompt-size), 3487590 gathers, bytes checks 404 bad 0
+XCCL-STRESS 26553 steps (13223 prompt-size), 3584655 gathers, bytes checks 415 bad 0
+XCCL-STRESS 27265 steps (13593 prompt-size), 3680775 gathers, bytes checks 427 bad 0
+XCCL-STRESS 27990 steps (13962 prompt-size), 3778650 gathers, bytes checks 438 bad 0
+XCCL-STRESS 28720 steps (14335 prompt-size), 3877200 gathers, bytes checks 449 bad 0
+XCCL-STRESS 29431 steps (14708 prompt-size), 3973185 gathers, bytes checks 460 bad 0
+XCCL-STRESS DONE 29440 steps (14711 prompt-size), 3974400 gathers, bytes checks 460 bad 0
