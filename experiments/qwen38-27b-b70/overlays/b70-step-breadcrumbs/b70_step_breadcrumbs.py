@@ -230,6 +230,14 @@ class CrumbEvent:
         return getattr(self._event, attr)
 
 
+def compiling():
+    try:
+        import torch
+        return torch.compiler.is_compiling()
+    except Exception:
+        return False
+
+
 def count_collectives(module):
     """Wrap the torch.distributed functions in `module` so each call is counted into this process's Crumbs."""
     if getattr(module, '_b70_step_breadcrumbs', False):
@@ -240,7 +248,7 @@ def count_collectives(module):
             continue
 
         def wrapper(*args, _original=original, _index=index, **kwargs):
-            if CURRENT:
+            if CURRENT and not compiling():      # under torch.compile tracing: the original call only, same graph
                 try:
                     CURRENT[0].collective(_index, args)
                 except Exception:
