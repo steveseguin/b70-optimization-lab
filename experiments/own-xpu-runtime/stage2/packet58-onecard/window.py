@@ -106,17 +106,43 @@ def prerequisite(path, name, identity):
     row = json.loads(path.read_text())
     require(row.get('schema') == 'own-runtime.packet58.window.v1' and row.get('passed') is True
             and row.get('device_executed') is True and row.get('child_still_running') is False
-            and row.get('window') == name, 'invalid prerequisite ' + name)
+            and row.get('window') == name and row.get('stop_reasons') == []
+            and row.get('qualifying') is (name != 'K1'), 'invalid prerequisite ' + name)
     for key in ('boot_id', 'build_receipt_sha256', 'artifacts_sha256', 'environment', 'card', 'context', 'gpu_count'):
         require(row.get(key) == identity.get(key), 'prerequisite differs: ' + key)
-    require(isinstance(row.get('pid'), int) and isinstance(row.get('process_start_ticks'), int), 'fresh owner identity missing')
+    require(type(row.get('pid')) is int and row['pid'] > 0
+            and type(row.get('process_start_ticks')) is int and row['process_start_ticks'] > 0, 'fresh owner identity missing')
+    closure = {'summary.json', 'kernel-before.jsonl', 'kernel-window.jsonl'}
+    if name == 'K1':
+        closure |= {'run/k1.json', 'run/k1-cases.jsonl'}
+    else:
+        closure |= {str(p.relative_to(path.parent)) for p in (path.parent/'run').rglob('*') if p.is_file()}
+        require({'run/receipt.json', 'run/summary.json', 'run/run/receipt.json'} <= closure, 'model prerequisite receipt closure missing')
+    require(set(row.get('native_files', {})) == closure, 'prerequisite native closure incomplete')
     verify_files(path.parent, row.get('native_files'))
+    for leaf in ('kernel-before.jsonl', 'kernel-window.jsonl'):
+        require(not S.FAULT.search((path.parent/leaf).read_text()), 'prerequisite kernel fault')
     return row
 
 
-def k1_summary(native):
+def cpu_k1_digest():
+    row = json.loads((HERE/'k1-cpu.json').read_text())
+    require(row.get('passed') is True and row.get('device_executed') is False,
+            'CPU production fixture receipt missing')
+    return row.get('exact_output_sha256')
+
+
+def k1_summary(native, cpu_digest=None):
     require(native.get('passed') is True and native.get('zero_copy_bytes_equal') is True
-            and native.get('mixed_bytes_equal') is True, 'K1 byte equality failed')
+            and native.get('mixed_bytes_equal') is True and native.get('streamed_bytes_equal') is True, 'K1 byte equality failed')
+    require(native.get('safe_to_exit') is True and native.get('device_executed') is True
+            and native.get('zero_copy_supported') is True, 'K1 device support or teardown unproved')
+    digest = native.get('exact_output_sha256')
+    require(isinstance(digest, str) and len(digest) == 64
+            and all(c in '0123456789abcdef' for c in digest), 'K1 exact output hash missing')
+    require(digest == (cpu_k1_digest() if cpu_digest is None else cpu_digest), 'K1 differs from CPU production kernel bytes')
+    require(native.get('cold_rotation') is True and type(native.get('working_set_bytes')) is int
+            and native['working_set_bytes'] >= 128*1024**2, 'K1 must rotate cold host backing')
     size = native.get('bytes_per_iteration')
     require(isinstance(size, int) and size > 0, 'K1 useful bytes missing')
     times = {k: native.get(k) for k in ('host_ms', 'vram_ms', 'streamed_ms')}
@@ -133,6 +159,7 @@ def selected_miss_path(paths, identity):
     rows = [prerequisite(path, 'K1', identity) for path in paths]
     require(len({(r['pid'], r['process_start_ticks']) for r in rows}) == 2, 'K1 owners not fresh')
     summaries = [k1_summary(json.loads((Path(path).parent / 'run/k1.json').read_text())) for path in paths]
+    require(summaries[0]['exact_output_sha256'] == summaries[1]['exact_output_sha256'], 'K1 fresh-process output bytes differ')
     return 'zero-copy' if all(r['selected_miss_path'] == 'zero-copy' for r in summaries) else 'streamed'
 
 
@@ -265,7 +292,7 @@ def main(argv=None):
             require(not reasons and child.returncode == 0, 'native window failed or interrupted')
             if args.window == 'K1':
                 summary = k1_summary(json.loads((output/'run/k1.json').read_text()))
-                record['native_files'] = {'run/k1.json':sha(output/'run/k1.json')}
+                record['native_files'] = {name:sha(output/name) for name in ('run/k1.json', 'run/k1-cases.jsonl')}
             else:
                 receipt = json.loads((output/'run/receipt.json').read_text())
                 require(receipt.get('passed') is True and receipt.get('safe_to_exit') is True
@@ -274,6 +301,8 @@ def main(argv=None):
                 record['native_files'] = {str(p.relative_to(output)):sha(p) for p in (output/'run').rglob('*') if p.is_file()}
             save(output/'summary.json', summary)
             record['native_files']['summary.json'] = sha(output/'summary.json')
+            for leaf in ('kernel-before.jsonl', 'kernel-window.jsonl'):
+                record['native_files'][leaf] = sha(output/leaf)
             record.update(passed=True, qualifying=args.window!='K1', finished_utc_ns=time.time_ns())
             persist()
             return 0

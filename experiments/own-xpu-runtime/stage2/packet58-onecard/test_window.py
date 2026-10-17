@@ -34,15 +34,15 @@ class WindowTests(unittest.TestCase):
             (pid/'stat').write_text('42 (worker name) R 1 1 1 1 1 0 0 0')
             self.assertFalse(W.SUPPORT._exited_status(root,42))
     def test_k1_selection(self):
-        row=dict(passed=True,zero_copy_bytes_equal=True,mixed_bytes_equal=True,bytes_per_iteration=25_000_000,host_ms=1,vram_ms=.1,streamed_ms=1.1)
-        self.assertEqual(W.k1_summary(row)['selected_miss_path'],'zero-copy')
+        row=dict(cold_rotation=True,working_set_bytes=128*1024**2,passed=True,safe_to_exit=True,device_executed=True,zero_copy_supported=True,streamed_bytes_equal=True,exact_output_sha256='a'*64,zero_copy_bytes_equal=True,mixed_bytes_equal=True,bytes_per_iteration=25_000_000,host_ms=1,vram_ms=.1,streamed_ms=1.1)
+        self.assertEqual(W.k1_summary(row,cpu_digest='a'*64)['selected_miss_path'],'zero-copy')
         row['host_ms']=3
-        self.assertEqual(W.k1_summary(row)['selected_miss_path'],'streamed')
+        self.assertEqual(W.k1_summary(row,cpu_digest='a'*64)['selected_miss_path'],'streamed')
         row['zero_copy_bytes_equal']=False
-        with self.assertRaises(ValueError):W.k1_summary(row)
+        with self.assertRaises(ValueError):W.k1_summary(row,cpu_digest='a'*64)
     def test_nonfinite_k1_time(self):
-        row=dict(passed=True,zero_copy_bytes_equal=True,mixed_bytes_equal=True,bytes_per_iteration=1,host_ms=float('nan'),vram_ms=1,streamed_ms=1)
-        with self.assertRaises(ValueError):W.k1_summary(row)
+        row=dict(cold_rotation=True,working_set_bytes=128*1024**2,passed=True,safe_to_exit=True,device_executed=True,zero_copy_supported=True,streamed_bytes_equal=True,exact_output_sha256='a'*64,zero_copy_bytes_equal=True,mixed_bytes_equal=True,bytes_per_iteration=1,host_ms=float('nan'),vram_ms=1,streamed_ms=1)
+        with self.assertRaises(ValueError):W.k1_summary(row,cpu_digest='a'*64)
     def test_selected_card_passive(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);fd=root/'42/fdinfo';fd.mkdir(parents=True)
@@ -71,9 +71,11 @@ class WindowTests(unittest.TestCase):
             with self.assertRaises(ValueError):W.safe_path(Path('/tmp/packet'),p)
     def test_prerequisite_tamper_and_owner(self):
         with tempfile.TemporaryDirectory() as d:
-            root=Path(d);native=root/'native.json';native.write_text('{}')
+            root=Path(d);(root/'run').mkdir();native=root/'run/k1.json';native.write_text('{}')
+            for leaf in ('run/k1-cases.jsonl','summary.json','kernel-before.jsonl','kernel-window.jsonl'):(root/leaf).write_text('{}')
+            files={str(p.relative_to(root)):W.sha(p) for p in root.rglob('*') if p.is_file()}
             identity=dict(boot_id='boot',build_receipt_sha256='seal',artifacts_sha256={'binary':'hash'},environment={'x':'y'},card=0,context=4096,gpu_count=1)
-            row=dict(identity,schema='own-runtime.packet58.window.v1',passed=True,device_executed=True,child_still_running=False,window='K1',pid=42,process_start_ticks=123,native_files={'native.json':W.sha(native)})
+            row=dict(identity,schema='own-runtime.packet58.window.v1',passed=True,device_executed=True,child_still_running=False,window='K1',qualifying=False,stop_reasons=[],pid=42,process_start_ticks=123,native_files=files)
             p=root/'window.json';p.write_text(json.dumps(row))
             self.assertEqual(W.prerequisite(p,'K1',identity)['pid'],42)
             with self.assertRaises(ValueError):W.prerequisite(p,'K1',dict(identity,card=2))

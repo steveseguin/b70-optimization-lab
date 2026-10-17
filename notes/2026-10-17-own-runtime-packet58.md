@@ -49,3 +49,49 @@ card only. K1 gets two fresh processes. Full-model windows require both K1
 receipts and the preceding successful gate. Each full-suite window has a
 one-hour graceful watchdog, never an automatic retry. Commands are in
 `experiments/own-xpu-runtime/stage2/packet58-onecard/WINDOW.md`.
+
+## Engine and CPU gates
+
+The single-card engine now holds all 48 target layers. It packs the full
+expert bank into pinned host storage only inside an admitted native window,
+with exact production byte layouts. All expert kernels use device pointer
+tables for either host memory or the 18 GB device arena. The normal path reads
+routes after each complete position; the streamed fallback reads each layer's
+routes before use. Both use a dedicated copy-only queue with fenced table
+publication. Fill waits are included in token latency; overlap is not claimed.
+
+The cache begins empty and survives requests. A persistent suite loop clears
+all mutable model state for each request. CPU comparison of a prompt after a
+different prompt matches two fresh processes, including 40 retained files.
+Request-reset work is included in TTFT. Cold load/pin time and cache fills are
+recorded separately. There is no target prompt/KV/response reuse.
+
+Eight fresh CPU cache/expert runs pass, including ASan/UBSan: randomized LRU
+and lifetime fences, generation/ABA rejection, failed fills, and 36 complete
+expert cases comparing hit/miss/mixed pointers to frozen production kernels.
+The production-submit CPU adapter additionally passes 24 placement comparisons
+across the three expert grid formats. GPU pointer accessibility and timings
+remain unmeasured.
+
+Independent review fixed an untracked DMA error path, required both queues
+to drain before propagating errors, corrected pinned-byte reporting, tightened
+prerequisite evidence coverage and prevented sibling-window substitution. K1
+uses distinct timed host regions so GPU cache cannot masquerade as PCIe speed.
+Both device K1 runs must match the CPU golden hash and one another.
+
+A CPU replay of 403,168 retained packet55 route records supports testing global
+LRU: 93.64% decode byte hit versus 92.46% for the fixed layer quotas. The replay
+uses two-card/speculative observations and layer-by-layer admission, so neither
+number is a measured packet58 hit rate. Fragmentation and empty persistent
+placement are retained in CACHE-POLICY.md and its compact JSON.
+
+The new offline submission helper reconstructs the primary 99-interval rate
+and exactness from original receipts, using only a matching 1-GPU record floor.
+It prepares a payload draft and hash-bound quality attestation after device
+gates. It never posts. The 128-token scope has strict_512_gate_passed=false;
+a two-card external exception is not silently reused for this new lineage.
+
+MTP is deferred: the initial passive snapshot had only 1,953,649,648 B beyond
+the conservative target-only host admission floor, less than the 3,354,364,214 B
+draft residency alone would add to the reserved shadow. It needs a new admitted
+budget and measured serial-draft benefit. No draft weights were read here.

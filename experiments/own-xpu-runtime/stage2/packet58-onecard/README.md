@@ -1,27 +1,39 @@
 # Packet 58: one-card IQ3 engine
 
-CPU preparation in progress. No device result or speed claim exists yet.
-Packet 56 is the immutable source baseline; packet 49 is the unchanged
-`iq3-p49-split32-v1` oracle. All 48 target layers, head, full BF16 KV and
-state use one selected card (0, or 2 under coordinator ownership).
+Target-only greedy decode on one selected B70, with all 48 target layers,
+head, full BF16 KV and recurrent state on that card. This is a separate source
+copy of packet56 with the unchanged `iq3-p49-split32-v1` arithmetic/oracle.
+CPU qualification is in progress; device correctness, fit and speed are pending.
+MTP is not included in this first milestone.
 
-The first milestone is plain greedy decoding. Target experts retain their
-original packed bytes in pinned host memory and an 18 decimal GB device LRU
-cache. Device kernels resolve each expert through a pointer table. The small
-K1 window must establish host-USM access correctness and actual speed before
-selecting zero-copy or copy-before-use misses. CPU fixtures do not establish
-PCIe performance. Cache contents are immutable weights only; request state
-and KV reset, and initial placement is content-independent.
+Experts are packed once into 48,627,712,000 bytes of pinned host memory.
+An 18 decimal GB global LRU arena caches immutable expert weights. Every
+production expert kernel resolves its weight pointer from a device table;
+its arithmetic and summation order are unchanged. The cache starts empty,
+persists across requests and never retains prompt, KV or response state.
+[Independent route replay](CACHE-POLICY.md) supports testing global LRU but
+does not predict the new engine's hit rate.
 
-Full host pinning and every device window belong to the coordinator. CPU
-work uses nice 19, cores 4–15/20–31, Python -B, no model payload reads and
-no large pinned allocations. Keep build output below 1.5 GB. Packet 57 and
-all sealed parents are protected. No host setting, service or power change.
+The zero-copy path reads misses directly from pinned host memory. After each
+position completes, the host reads all routes, updates LRU, fills victim
+slots on a dedicated copy-only queue and publishes the table behind fences.
+The next position cannot see an old table with overwritten slots. These waits
+are charged to timing; copy/compute overlap is not yet claimed. The streamed
+fallback reads each layer's routes, copies missing experts before use and
+executes the same expert kernels. Two fresh small K1 windows select the path.
 
-Credit Niko1221 / Strata for the hot-expert cache idea. This implementation
-is independently written lab code; no external runtime code is imported.
+- [Exact memory budget and admission](MEMORY.md).
+- [CPU cache, lifetime and expert gates](CACHE-CPU-GATES.md).
+- [Independent cache/queue review](REVIEW-CACHE.md).
+- [Coordinator window commands and durations](WINDOW.md).
+- [One-GPU submission tooling and remaining scope gate](SUBMISSION.md).
+- [Build and source retention](ARTIFACT-RETENTION.md).
+- [Task notes](../../../../notes/2026-10-17-own-runtime-packet58.md).
 
-The 1-GPU record is separate from the 2-GPU record. The local submission
-ledger contains no submitted matching 1-GPU IQ3 record as inspected on
-2026-10-17. The llama.cpp 15.9–21.6 tok/s reference is contextual evidence,
-not a same-runtime exactness oracle or submitted record threshold.
+Preparation is CPU-only, nice 19 on cores 4–15/20–31, Python -B, serial builds
+under 1.5 GB, no model payload reads or large pins. Full pinning and every GPU
+window belong to the coordinator. Blocks 54/56 must remain offline; margin
+blocks are recorded. Sealed packets and packet57 remain untouched.
+
+Credit Niko1221 / Strata for the hot-expert cache idea. This implementation is
+independently written lab code; no external runtime source was imported.

@@ -61,7 +61,9 @@ the current window. Expired drain budgets retain the busy child for the
 coordinator. PF_EXITING distinguishes a task dropping its memory map during
 exit from a broken memory sensor.
 
-Both K1 passes must prove exact bytes. Zero-copy is chosen only when both
+Both K1 passes must prove exact bytes, safe teardown and the same exact output
+hash across fresh processes. A device without accessible host USM currently
+fails closed at K1; it does not reach full-model pinning. Zero-copy is chosen only when both
 fresh runs sustain at least 12.5 GB/s of useful expert bytes, half packet55's
 measured 25 GB/s copy floor. Otherwise the full chain selects copy-before-use
 streaming. Timing never waives byte equality. This is a preregistered path
