@@ -9,3 +9,5 @@
 | Dense view claimed to cover every dense tensor | Scope is explicitly listed; fused HC/small-FFN and raw matrices stay unchanged. |
 | Lane B before complete exact A / selected slower than either control | Refused by best.py/winner.py; fixed ties, no retries. |
 | CPU preparation called device qualification | [Closeout](CPU-PREPARATION-CLOSEOUT.md); packet49 device parity and speed pending. |
+
+| 2026-10-17 | packet74 packed Q6_K/Q8_0 dense + head reads (head-packed, dense-packed, combined) | -0.8% / -2.4% / -2.9% on lane A, 13/13 exact | in-register unpack costs more than the ~34% byte saving | no repeat without a new unpack mechanism |

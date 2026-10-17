@@ -121,3 +121,15 @@ All 5 lane-A screen plans and the proposed lane-A queue pass; both packets
 also pass together in a temporary queue. No live queue, GPU, model, service,
 sudo or host setting was touched. Packets 69 and 72 were left to their other
 job. [Repair receipts, plans and prior seals](../experiments/own-xpu-runtime/stage2/packet74-packed-dense/evidence/admission-repair/).
+
+## Device result and closeout (coordinator, 2026-10-17 21:04–21:30 UTC, lane A)
+
+All screens exact 13/13. Class-balanced tok/s, with production the mean of the two controls (53.986 / 54.194 = 54.09):
+
+| View | tok/s | vs production |
+|---|---:|---:|
+| `head-packed` | 53.674 | −0.8% |
+| `dense-packed` | 52.809 | −2.4% |
+| `combined` | 52.508 | −2.9% |
+
+**Closed: no promotion.** Reading packed Q6_K/Q8_0 and unpacking in registers costs more ALU/latency than the about-34% byte saving recovers on B70 in the real composition. This is consistent with the packet 9/10/25 packed-kernel losses. The lane-B best-of-lane-A confirmation was dropped (no winner). DO-NOT-REPEAT: packed-format dense reads with in-register unpack, unless a new mechanism removes the unpack cost (for example a pre-swizzled 6-bit layout with a different dequant schedule).
