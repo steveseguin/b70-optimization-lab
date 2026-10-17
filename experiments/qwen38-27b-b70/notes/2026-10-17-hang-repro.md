@@ -452,3 +452,20 @@ as registered: the packed first-step stress for 60 minutes with marks (`run-2026
 CENSUS=0 MARKS=1 STRESS_MIN=60`, client `--answers 1,2,4,8,16 --tail-words 20,700 --gap 0.05,0.3 --pause-share 0`,
 evidence `data/2026-10-17-hang-repro3/`), `hang-capture.sh` beside it; prediction about 4,000 first steps, a hang
 about a one-in-three chance at one per ~10,000; after it the dedicated hunt stops.
+
+## Hang-repro3 result (16:11:50-17:12:01 EDT): 4,107 first steps with device marks, no hang
+
+`run-20261017-step-floor.sh` with `ARMS=L CENSUS=0 MARKS=1 STRESS_MIN=60`, stress client as registered:
+- 4,107 requests in 60.0 min, 0 failed (4,062 cut at 4 tokens, 45 stopped).
+- Every request started with a prompt-size read after a cache hit: median 1,309 new tokens, from 112 to 33,598, so
+  every first step sent prompt-size gathers (331 requests had 300-600 new tokens, the 06:23 step's class).
+- No breadcrumb STALL or FAILED block (`crumbs-L.txt` empty), no hang capture, kernel log clean from 16:08:49.
+- Server stopped cleanly; cards left empty.
+
+Prediction: about 4,000 first steps (yes, 4,107); a hang was about a one-in-three chance (none). With arms A and B, about
+27,600 prompt-size steps on the exchange alone or the server have now run without a hang since 06:23.
+
+Decision, as registered: the dedicated hunt stops. Device marks (`MARKS=1`) and `hang-capture.sh` ride along with
+the context lane's ordinary runs from campaign 30 on (not in runs whose times are published). The next hang will
+show which card was where without a dedicated run. The heavy samplers (engine-register ring, power states, PCIe
+residency, xe tracepoints) are stopped. Evidence: `data/2026-10-17-hang-repro3/`.
