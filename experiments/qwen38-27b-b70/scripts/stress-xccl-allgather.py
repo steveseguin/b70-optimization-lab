@@ -76,8 +76,14 @@ log = open(a.out, 'a') if rank == 0 else None
 end = time.time() + a.minutes * 60
 steps = prompt_steps = gathers = checked = bad = 0
 t_report = time.time()
+go, gos = torch.ones(1, device=dev, dtype=torch.int32), torch.empty(world, device=dev, dtype=torch.int32)
 dist.barrier()
-while time.time() < end:
+while True:
+    if steps % 64 == 0:  # stop together: each rank reads its own clock, so a per-rank stop can mismatch collectives
+        go.fill_(1 if time.time() < end else 0)
+        dist.all_gather_into_tensor(gos, go)
+        if int(gos.min()) == 0:
+            break
     prompt = shared.random() < a.prompt_share
     rows = shared.randint(30, 832) if prompt else shared.randint(1, 6)
     sampled = shared.randint(1, 6)

@@ -299,3 +299,26 @@ key-value store found no non-loopback interface ("can't find interface to get ho
 (bridge network, SYS_PTRACE, `label=disable`, 8 GB shm, rendezvous at 127.0.0.1). First minute of arm A: 887 steps
 (445 prompt-size), 119,745 gathers, byte checks all equal: about 9,000 prompt-size steps per 20-minute arm, half
 the context lane's prompt steps since 2026-10-03 in each arm.
+
+## Arm A result (14:46:40-15:06:44 EDT) and amendment 15:10 EDT: clean through 17,518 steps; the end stall was my bug
+
+Arm A ran 17,518 steps (about 8,750 prompt-size, 30-832 rows), about 2.35 million gathers, 274 byte checks, all
+equal, kernel log clean. At 15:06:44, four seconds after the arm's 20 minutes were up, both watchdogs reported a
+stall, and the stacks show why: rank 0's main thread was in the final `dist.barrier()` (`stress-xccl-allgather.py`
+line 116), rank 1's was in step 17,519's `torch.xpu.synchronize()` (line 102). Each rank compared its own clock
+with its own end time, so rank 0 stopped after step 17,518 while rank 1 began one more step; a barrier against a
+gather never completes. That is my stop condition, not a reproduction (`attempt4-stop-mismatch/`). Both cards'
+`gt0/hw_engines` showed no context left on any engine afterwards. Fixed: every 64th step both ranks exchange a
+"keep going" flag and stop together when either says stop.
+
+What A says: at the context lane's own rate (one hang in roughly 18,000 prompt steps since 2026-10-03), 8,750
+prompt-size exchange steps had about a 60 % chance of being clean anyway, so A alone clears little. **Arm B runs
+next, 40 minutes** (about 17,000 prompt-size steps with card 03 under bursty load), A is not rerun.
+
+- **Prediction (unchanged mechanism reading):** if a lagging card 03 being overtaken in a long ring call is the
+  cause, B hangs within minutes; C (chunking at 1 MiB) is then run by hand.
+- **If B is clean:** A and B together are about 26,000 prompt-size steps, so the exchange, with or without a load
+  on card 03, would have a roughly 25 % chance of being clean at the lane's rate. That is not proof but moves the
+  search to what only the context lane has (one sequence with prefix-cache hits in align mode, the exact-cache
+  overlays, a 262,144-token window), and `scripts/hang-capture.sh` runs beside every context-lane server from now on
+  so the next hang leaves stacks from both ranks.

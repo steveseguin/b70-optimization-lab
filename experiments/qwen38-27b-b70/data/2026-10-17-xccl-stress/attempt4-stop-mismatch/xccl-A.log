@@ -1,0 +1,101 @@
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+2026:10:17-18:46:43:   23 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:10:17-18:46:43:   23 |CCL_WARN| value of CCL_RECV changed to be direct (default:)
+2026:10:17-18:46:43:   23 |CCL_WARN| value of CCL_SEND changed to be direct (default:)
+2026:10:17-18:46:43:   23 |CCL_WARN| value of CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD changed to be 4294967296 (default:4194304)
+2026:10:17-18:46:43:   23 |CCL_WARN| value of CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD changed to be 4294967296 (default:8388608)
+2026:10:17-18:46:43:   23 |CCL_WARN| value of CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD changed to be 4294967296 (default:1048576)
+2026:10:17-18:46:43:   23 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:10:17-18:46:43:   23 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:10:17-18:46:43:   24 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:10:17-18:46:44:   33:[0] |CCL_WARN| no membind support for NUMA node 0, skip thread membind
+2026:10:17-18:46:44:   34:[1] |CCL_WARN| no membind support for NUMA node 0, skip thread membind
+2026:10:17-18:46:44:   23:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+/opt/venv/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+/opt/venv/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+XCCL-STRESS 887 steps (445 prompt-size), 119745 gathers, bytes checks 14 bad 0
+XCCL-STRESS 1797 steps (876 prompt-size), 242595 gathers, bytes checks 29 bad 0
+XCCL-STRESS 2661 steps (1301 prompt-size), 359235 gathers, bytes checks 42 bad 0
+XCCL-STRESS 3542 steps (1722 prompt-size), 478170 gathers, bytes checks 56 bad 0
+XCCL-STRESS 4459 steps (2185 prompt-size), 601965 gathers, bytes checks 70 bad 0
+XCCL-STRESS 5267 steps (2605 prompt-size), 711045 gathers, bytes checks 83 bad 0
+XCCL-STRESS 6159 steps (3033 prompt-size), 831465 gathers, bytes checks 97 bad 0
+XCCL-STRESS 7073 steps (3478 prompt-size), 954855 gathers, bytes checks 111 bad 0
+XCCL-STRESS 7950 steps (3931 prompt-size), 1073250 gathers, bytes checks 125 bad 0
+XCCL-STRESS 8853 steps (4359 prompt-size), 1195155 gathers, bytes checks 139 bad 0
+XCCL-STRESS 9726 steps (4815 prompt-size), 1313010 gathers, bytes checks 152 bad 0
+XCCL-STRESS 10541 steps (5260 prompt-size), 1423035 gathers, bytes checks 165 bad 0
+XCCL-STRESS 11475 steps (5683 prompt-size), 1549125 gathers, bytes checks 180 bad 0
+XCCL-STRESS 12366 steps (6147 prompt-size), 1669410 gathers, bytes checks 194 bad 0
+XCCL-STRESS 13258 steps (6583 prompt-size), 1789830 gathers, bytes checks 208 bad 0
+XCCL-STRESS 14168 steps (7044 prompt-size), 1912680 gathers, bytes checks 222 bad 0
+XCCL-STRESS 14956 steps (7435 prompt-size), 2019060 gathers, bytes checks 234 bad 0
+XCCL-STRESS 15823 steps (7860 prompt-size), 2136105 gathers, bytes checks 248 bad 0
+XCCL-STRESS 16711 steps (8294 prompt-size), 2255985 gathers, bytes checks 262 bad 0
+STALL rank 0: no step finished for 10.1 s; in step 17518 (4 rows), gather 134
+Current thread 0x00007a1258af16c0 (most recent call first):
+  File "/tmp/s.py", line 67 in watchdog
+  File "/usr/lib/python3.12/threading.py", line 1010 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Thread 0x00007a12ea2fc140 (most recent call first):
+  File "/opt/venv/lib/python3.12/site-packages/torch/distributed/distributed_c10d.py", line 5349 in barrier
+  File "/opt/venv/lib/python3.12/site-packages/torch/distributed/c10d_logger.py", line 83 in wrapper
+  File "/tmp/s.py", line 116 in <module>
+STALL rank 1: no step finished for 10.2 s; in step 17519 (3 rows), gather 134
+Current thread 0x00007e89d72e06c0 (most recent call first):
+  File "/tmp/s.py", line 67 in watchdog
+  File "/usr/lib/python3.12/threading.py", line 1010 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Thread 0x00007e937b941140 (most recent call first):
+  File "/opt/venv/lib/python3.12/site-packages/torch/xpu/__init__.py", line 702 in synchronize
+  File "/tmp/s.py", line 102 in <module>
+W1017 19:07:53.249000 1 torch/distributed/elastic/multiprocessing/api.py:1028] Sending process 24 closing signal SIGTERM
+E1017 19:07:53.313000 1 torch/distributed/elastic/multiprocessing/api.py:1002] failed (exitcode: 3) local_rank: 0 (pid: 23) of binary: /opt/venv/bin/python3
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/venv/lib/python3.12/site-packages/torch/distributed/run.py", line 1032, in <module>
+    main()
+  File "/opt/venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 367, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/opt/venv/lib/python3.12/site-packages/torch/distributed/run.py", line 1028, in main
+    run(args)
+  File "/opt/venv/lib/python3.12/site-packages/torch/distributed/run.py", line 1019, in run
+    elastic_launch(
+  File "/opt/venv/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 194, in __call__
+    return launch_agent(
+           ^^^^^^^^^^^^^
+  File "/opt/venv/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 383, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/tmp/s.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2026-10-17_19:07:53
+  host      : 62f96df14051
+  rank      : 1 (local_rank: 1)
+  exitcode  : -15 (pid: 24)  (SIGTERM)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 24
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-10-17_19:07:53
+  host      : 62f96df14051
+  rank      : 0 (local_rank: 0)
+  exitcode  : 3 (pid: 23) 
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
