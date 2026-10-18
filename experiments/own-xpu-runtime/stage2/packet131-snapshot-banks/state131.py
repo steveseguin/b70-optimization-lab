@@ -22,15 +22,23 @@ def main():
   row['choices']['route']='route-exp32-rank4';row['choices']['recurrence']='rows4-shared';save(selection,row)
  def execute(job):
   compiler,repeat,view,binary=job;selection=P/'selections'/view/'mini.json'
+  receipt=P/'evidence'/f'state-{compiler}-{repeat}-{view}.json'
+  run_sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'state131.py',P/'state131.cpp',P/'strict_snapshot.hpp',P/'rank.hpp',P/'main.cpp',P/'request_reset.hpp',selection,binary]}
+  try:
+   prior_run=json.loads(receipt.read_text());assert prior_run['passed'] and prior_run['sources']==run_sources
+   assert sha(ROOT/prior_run['artifact'])==prior_run['artifact_sha256']
+  except (OSError,KeyError,AssertionError):pass
+  else:print(compiler,repeat,view,'unchanged saved state receipt verified',flush=True);return prior_run
   dest=out/f'{compiler}-{repeat}-{view}'
   if dest.exists():dest.rename(out/(dest.name+'-incomplete-'+str(time.time_ns())))
   dest.mkdir();cmd=[str(binary),str(selection),sha(selection),str(dest),view]
   log=P/'evidence'/f'state-{compiler}-{repeat}-{view}.log'
-  launch=[sys.executable,'-B',str(P/'state131.py'),'--cpu-worker',*cmd]
+  launch=['/usr/bin/env','OMP_NUM_THREADS=2','LD_LIBRARY_PATH=/opt/intel/oneapi/compiler/2026.0/lib',sys.executable,'-B',str(P/'state131.py'),'--cpu-worker',*cmd]
   with log.open('w') as stream:cp=subprocess.run(launch,stdin=subprocess.DEVNULL,stdout=stream,stderr=subprocess.STDOUT,timeout=1200)
   assert cp.returncode==0,str(log)
   result=json.loads((dest/'result.json').read_text());raw=dest/'cases.txt';archive=P/'evidence'/f'state-{compiler}-{repeat}-{view}.txt.gz';archive.write_bytes(gzip.compress(raw.read_bytes(),mtime=0))
-  result.update(compiler=compiler,repeat=repeat,view=view,command=launch,artifact=str(archive.relative_to(ROOT)),artifact_sha256=sha(archive),snapshot=json.loads((dest/'speculative-snapshot.json').read_text()))
+  result.update(compiler=compiler,repeat=repeat,view=view,command=launch,artifact=str(archive.relative_to(ROOT)),artifact_sha256=sha(archive),snapshot=json.loads((dest/'speculative-snapshot.json').read_text()),sources=run_sources)
+  save(receipt,result)
   shutil.rmtree(dest);print(compiler,repeat,view,'state PASS',flush=True);return result
  # No compilers run alongside this phase. Four CPU-only children each have a
  # 1.5-GiB address-space ceiling: at most 6 GiB plus the small Python parent.

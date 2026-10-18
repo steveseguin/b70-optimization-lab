@@ -5,7 +5,7 @@ then queue131.py and ready131.py. Runtime imports never set process limits.
 """
 import argparse,datetime,subprocess,sys
 from build131 import P,save,cpu_main,limits
-STAGES=('build131','census131','state131','extra131','mini131','startup131','python131','extended_queue131','seal131','arguments131')
+STAGES=('build131','census131','state131','extra131','mini131','startup131','python131','extended_queue131','inherited_gate131','oracle131','seal131','arguments131')
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--start',choices=STAGES,default=STAGES[0]);a=ap.parse_args()
  attempt=datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')

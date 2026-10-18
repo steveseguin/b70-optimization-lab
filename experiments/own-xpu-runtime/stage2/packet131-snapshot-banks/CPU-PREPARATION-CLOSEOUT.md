@@ -1,56 +1,63 @@
-# Packet124c oracle authority and queue admission — closeout
+# Packet131 CPU preparation
 
 <!-- campaign-closeout -->
 
 ## Question and identity
 
-October 18, four-card host, CPU only. Repair bundle7's clean pre-KD stop
-without changing packet124b/124/118, oracle authority, native binaries,
-selection or `iq3-p49-split32-v1` arithmetic. Require the actual queue's
-pre-window checks before coordinator handoff.
+Can bundle7 avoid rank0's recurrent rollback capture on every speculative
+cycle, preserving `iq3-p49-split32-v1` outputs and committed state? This is a
+new symlink-preserving copy of frozen packet124c on October 18. Control uses
+`batch`; candidate uses the dormant local packet62 `banks-batch` mechanism.
+Every other production choice, including 24/24 placement, stays identical.
 
 ## Outcome
 
-Accepted for CPU readiness. Nine symlinks restored; both runtime binaries and
-207 native source/configuration files match packet124b. The real oracle status
-subprocess refuses packet124b's copied directory and accepts packet124c.
-All eleven window paths and eleven queue windows pass; 31 native arguments
-are intercepted, twelve input preflights and six oracle checks execute, and
-55 invalid receipt/exit cases refuse. All 65 tests and 11 subtests pass.
-Readiness is true using unchanged packet118 smoke/composites and native identity.
-The fresh chain is unlaunched; no new device output or speed is claimed.
+CPU qualification and both new seals pass; [readiness](evidence/ready131.json)
+binds the completed gates. All eight 491-case state transcripts match exactly
+across GNU/Intel, control/candidate and two fresh runs. Both selections pass
+all eleven startup paths. Device correctness and speed remain pending. The production census
+removes 29,601,792 of 48,627,432 capture bytes per cycle (60.87%). Extra private
+bank storage exactly replaces removed backup storage: zero increase in owned
+device allocation. No GPU, service, live queue or host setting changed.
 
 ## What worked
 
-Preserve symlinks during copying and compare both packet103 and packet97.
-Exercise `queue_runner.run` in temporary scratch instead of checking only
-individual window entry points. Use real authority, storage, input, prefix,
-retention and receipt validators. Keep the existing native interception gate,
-K2 receipt replay, strict selection validation, drain and exec-limit checks.
+Keep committed and old-spare bytes intact, write the alternate destination,
+and choose among six prebound physical pairs. Continue the existing flat
+capture for QSA and nonbank outputs. Audit captured production pointers and
+full-overwrite behavior, not only reduced fixture outputs. Include old spare
+bytes, older QSA rows, cancellation, terminal fallback, reset and fresh repeats
+in the state oracle. Preserve the actual oracle authority symlink.
 
 ## What failed or remains uncertain
 
-The original copied oracle fails before KD. Initial local sealing also refused
-external fixture/oracle paths after links were restored. `seal_view.py` keeps
-the frozen sealer's boundary rule and creates byte-identical local seal inputs;
-chain admission compares them with the real linked targets again. The first
-local seal failure remains in `evidence/prepare_packet.py.log`.
-No device chain was run, so full-chain correctness and speed remain pending.
-The inherited 128-token submission scope stays distinct from strict512.
+An Intel CPU fixture required its own linker, a non-PIE link and the explicit
+compiler library path. An overly small auxiliary CPU cap refused K2; startup
+is run separately within the allowed 8-GiB process cap. These were CPU harness
+issues; their logs are retained. GNU and Intel's original recurrence kernels
+differ in NaN payloads for the explicit NaN fixture, while the candidate
+matches its unchanged same-compiler reference byte for byte.
+
+The original capture already uses two submissions. Its 0.523-ms sampled
+compute event does not establish a bandwidth-only bottleneck or a promised
+speed gain. Bank rotation drains the queue, which could offset the saved work.
+CPU allocation accounting is not a new driver-residency measurement.
 
 ## Evidence and patches
 
-- [Copy/symlink audit](../../ops/packet124c-orchestration/inputs/symlink-audit.json)
-- [Native and helper identity](../../ops/packet124c-orchestration/evidence/packet124b-identity.json)
-- [Extended argument/queue gate](../../ops/packet124c-orchestration/evidence/argument-gate.json)
-- [CPU audit](../../ops/packet124c-orchestration/cpu-final.json)
-- [Readiness](../../ops/packet124c-orchestration/ready.json)
-- [Runbook](../../ops/packet124c-orchestration/README.md)
-- [Retention and restoration](RETENTION.md)
+- [Census](CENSUS.md) and [all capture extents](capture-extents.csv).
+- [Exactness argument](EXACTNESS.md) and [source delta](snapshot-banks.patch).
+- [Gate entry points and reproduction](README.md).
+- [State receipt](evidence/state131.json), [production recurrence](evidence/recurrence131.json),
+  and [reset regression](evidence/reset-regression.json).
+- [Work note](../../../../notes/2026-10-18-own-runtime-packet131.md) and
+  [retention/restoration](RETENTION.md).
 
 ## When to revisit
 
-The coordinator may run the fresh chain after `verify_ready.py` and normal live
-admission. Any changed source, lost symlink or changed target bytes invalidates
-CPU readiness. New native arithmetic or selection requires new quality and
-matched performance evidence; this repair cannot authorize a new composition.
+After CPU admission, the coordinator may admit the sealed lane-B 12 × 64
+smoke, then the fresh-load C/X/C/X/C screen. Both candidate loads must match
+the device oracle and acceptance counts, beat the controls, and satisfy the
+control-drift gate. Allocation differences prevent a v5 runtime switch.
+The short screen cannot establish a strict512 result or an external record.
+Any changed sealed source or dependency invalidates admission.

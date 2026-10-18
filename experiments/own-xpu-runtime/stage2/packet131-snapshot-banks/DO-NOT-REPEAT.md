@@ -1,4 +1,21 @@
-# Packet124 boundaries
+# Packet131 boundaries and inherited constraints
+
+- Capture occurs every speculative cycle. Packet121's restore-on-miss
+  estimate does not answer this question.
+- The baseline already batches 1,021 extents into two submissions. Do not
+  describe them as 1,021 device-copy commands or promise a 0.523-ms gain.
+- Preserve both logical active and old-spare state. Only proven full-overwrite
+  GDN/conv destinations may rotate; QSA and remaining mutable outputs retain
+  the flat snapshot.
+- Keep the Intel CPU fixture's own linker, non-PIE link and explicit compiler
+  library path. Run heavy K2 startup separately from the capped state workers.
+- Production NaN diagnostics do not permit normalized candidate/reference
+  comparisons. Raw same-compiler bytes and repeats remain mandatory.
+- Only new `ready131.json` and seals admit CPU preparation. Historical copied
+  receipts cannot qualify this candidate. Device smoke and two fresh candidate
+  loads remain required. See [closeout](CPU-PREPARATION-CLOSEOUT.md).
+
+## Inherited packet124 boundaries
 
 - BASE is exactly bundle7; one sealed composition. Never retune N=80,128.
 - Never edit packet118 or pin its mutable build receipt, ready file or chain output.

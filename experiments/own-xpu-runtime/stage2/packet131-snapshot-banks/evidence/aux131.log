@@ -1,17 +1,29 @@
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
-Waiting for compiler turn: [(-1, 'hold-lane-B'), (-1, 'active-lane-A.json')]
+recurrence-GNU PASS
+GNU production recurrence all six banks PASS
+recurrence-Intel PASS
+Intel production recurrence all six banks PASS
+GNU: reset bug detected; repair passes 21 cases twice
+Intel: reset bug detected; repair passes 21 cases twice
+K0 shared CPU fixture startup PASS
+K1a shared CPU fixture startup PASS
+K1b shared CPU fixture startup PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/aux131.py", line 11, in <module>
+    resource.setrlimit(resource.RLIMIT_AS,(1536*1024**2,1536*1024**2));main()
+                                                                       ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/aux131.py", line 6, in main
+    extra131.main();startup131.main()
+                    ^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/startup131.py", line 20, in main
+    with patch.object(w,'B',BASE/'build'):shared=g.shared_fixtures()
+                                                 ^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/startup103.py", line 101, in shared_fixtures
+    receipts=w.run_fixtures(a,dest,dict(os.environ,OMP_NUM_THREADS='2'),watch)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/window.py", line 313, in run_fixtures
+    wait_for_children()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/window.py", line 290, in wait_for_children
+    check_child_failures()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/window.py", line 286, in check_child_failures
+    raise pp.DeviceOwnerFailure('fixture rank failed with exit '+str(child.returncode), out/entry['directory'])
+chain_pipeline.DeviceOwnerFailure: fixture rank failed with exit 1

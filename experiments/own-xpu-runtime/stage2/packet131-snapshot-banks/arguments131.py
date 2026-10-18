@@ -11,6 +11,10 @@ from build131 import P,ROOT,sha,save,limits
 class Reached(BaseException):pass
 class Forbidden(BaseException):pass
 class LimitRefusal(BaseException):pass
+def sources():
+ names=('arguments131.py','run131.py','smoke_worker.py','grid_worker.py','worker.py','exec_limits.py','bootstrap.py','placement.py','placement-policy.json','dependency-pins.json','shared-wrapper-pin.json')
+ files=[*(P/n for n in names),*(P/'selections'/v/n for v in ('control','candidate') for n in ('selection.json','screen-seal.json'))]
+ return {str(f.relative_to(ROOT)):sha(f) for f in files}
 
 def probe(check_limits=False,index=-1):
  import exec_limits
@@ -46,14 +50,32 @@ def probe(check_limits=False,index=-1):
   monitor=SimpleNamespace(poll=lambda **k:None,register=lambda pid:None)
   from devices import masked_environment
   spec=importlib.util.spec_from_file_location("p128_queue",P.parents[1]/"ops/lane-queue/lanequeue.py");q=importlib.util.module_from_spec(spec);spec.loader.exec_module(q);ldp=q.library_path()
+  guard_observations=[]
+  original_check=exec_limits.check
+  def checked_limits(baseline):
+   try:return original_check(baseline)
+   except AssertionError as error:
+    if 'RLIMIT_AS' not in str(error):raise
+    assert not observations and not guard_observations
+    # Escape the worker's normal device-error teardown in this CPU-only test.
+    # The real guard has already rejected the unchanged limit check.
+    raise LimitRefusal(str(error)) from error
   with patch.object(subprocess,'Popen',side_effect=capture),patch.object(worker,'DeviceMonitor',return_value=monitor),patch.object(worker,'masked_environment',side_effect=lambda lane,*a,**k:masked_environment(lane,{'PATH':'/usr/bin:/bin','OMP_NUM_THREADS':'2','LD_LIBRARY_PATH':ldp})):
+   if check_limits:
+    exec_limits.check=checked_limits
+    exec_limits.install(lambda argv,baseline:guard_observations.append(dict(argv=argv,limits=baseline)))
    try:worker.run(identity,tmp/'run',1800 if index==-1 else 3600)
    except Reached:pass
+   except AssertionError as error:
+    if check_limits and 'RLIMIT_AS' in str(error):raise LimitRefusal(str(error)) from error
+    raise
   assert len(observations)==2
   for rank,cmd in enumerate(observations):
    for key,value in [('--rank',str(rank)),('--timing','token'),('--max-new','64' if index==-1 else '128'),('--seconds','1800' if index==-1 else '3600'),('--selection-sha256',sha(VIEW/'selection.json')),('--draft-rank','1'),('--target-split','0'),('--context','4096'),('--retain-steps','none')]:assert cmd[cmd.index(key)+1]==value,(key,cmd)
    assert '--authorized-device-window' in cmd and '--mini' not in cmd
-  return dict(passed=True,device_executed=False,native_exec_intercepted=True,argv=observations,operational_admission_synthetic=True,limits_checked=check_limits,inherited_limits=inherited,final_limits=exec_limits.snapshot())
+  if check_limits:
+   assert len(guard_observations)==2 and all(row['limits']==inherited for row in guard_observations)
+  return dict(passed=True,index=index,device_executed=False,native_exec_intercepted=True,argv=observations,operational_admission_synthetic=True,limits_checked=check_limits,actual_guard_observations=guard_observations,inherited_limits=inherited,final_limits=exec_limits.snapshot())
 
 
 def main():
@@ -64,17 +86,17 @@ def main():
   assert cp.returncode==0,cp.stderr
   result=json.loads(next(x.removeprefix('ARGUMENT_RESULT=') for x in cp.stdout.splitlines() if x.startswith('ARGUMENT_RESULT=')))
   result['index']=index;results.append(result)
- save(P/'evidence/arguments131.json',dict(passed=True,device_executed=False,windows=results,sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'arguments131.py',P/'run131.py',P/'smoke_worker.py',P/'worker.py',P/'exec_limits.py']}))
+ save(P/'evidence/arguments131.json',dict(passed=True,device_executed=False,windows=results,sources=sources()))
  print('All six registered windows reach both intercepted native argv')
 if __name__=='__main__':
  if '--limits-probe' in sys.argv:
-  print('LIMITS_RESULT='+json.dumps(probe(check_limits=True)))
+  print('LIMITS_RESULT='+json.dumps(probe(check_limits=True,index=int(sys.argv[-1]))))
  elif '--finite-negative' in sys.argv:
   resource.setrlimit(resource.RLIMIT_AS,(8*1024**3,resource.RLIM_INFINITY))
-  try:probe(check_limits=True)
+  try:probe(check_limits=True,index=int(sys.argv[-1]))
   except LimitRefusal as e:
    assert 'RLIMIT_AS' in str(e)
-   print('LIMITS_RESULT='+json.dumps(dict(passed=True,negative_control=True,refusal=str(e),device_executed=False)))
+   print('LIMITS_RESULT='+json.dumps(dict(passed=True,index=int(sys.argv[-1]),negative_control=True,refusal=str(e),device_executed=False)))
   else:raise AssertionError('finite cap not refused')
  else:
   from build131 import cpu_main

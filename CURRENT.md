@@ -21,13 +21,14 @@ cover a smoke and a one-load comparison; both are unlaunched. The build is
 No GPU, service, live queue or host setting changed.
 [Work note](notes/2026-10-18-own-runtime-packet130.md).
 
-**October 18, packet131 recurrent snapshot preparation on CPU:** A new copy
-tests keeping the old recurrent state in a spare buffer instead of copying it
-on every speculative cycle. Both builds and the production memory/binding
-checks pass: capture copies about 61% fewer bytes, with no increase in owned
-device allocation. Full-state checks are still in progress. Compilation respects the coordinator's whole-host
-reservation. No GPU, service, live queue or host setting changed. Device
-correctness and speed remain pending.
+**October 18, packet131 recurrent snapshot sealed on CPU:** A new copy keeps
+the old recurrent state in a spare buffer instead of copying it every cycle.
+Capture copies about 61% fewer bytes, with no increase in owned device
+allocation. All eight GNU/Intel state transcripts match byte for byte; reset,
+production bindings, startup, queue, drain and launch-limit checks pass.
+Two new lane-B proposals cover the exact smoke and five fresh-load comparison.
+They remain unlaunched. No GPU, service, live queue or host setting changed.
+Device correctness and speed remain pending; no speed gain is claimed.
 [Work note](notes/2026-10-18-own-runtime-packet131.md).
 
 **October 18, packet129 draft acceptance diagnostic prepared on CPU:** The new
