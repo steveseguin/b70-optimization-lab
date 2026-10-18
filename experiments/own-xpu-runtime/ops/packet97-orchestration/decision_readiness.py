@@ -204,7 +204,13 @@ def verify(row):
     assert row['schema'] == 'packet97.ready.v1', 'readiness schema differs'
     assert row['ready'] is True and row['preparation_passed'] is True, 'CPU preparation incomplete'
     assert row['device_executed'] is False and row['evidence_rule'] == RULE
-    assert row['chain_command'] == o.command()
+    if row.get('chain_entry')=='packet97e':
+        from fresh_chain import command, startup
+        assert row['chain_command']==command(row['chain_output'])
+        assert json.loads((o.P/'chain-registration.json').read_text())['output']==row['chain_output']
+        startup()
+    else:
+        assert row['chain_command'] == o.command()
     assert row['boot_id'] == Path('/proc/sys/kernel/random/boot_id').read_text().strip()
     assert set(row['checks']) == {'cpu-dry-run', 'seal', 'inputs', 'storage', 'queue-plan'}
     for key, digest in row['pins'].items():
@@ -220,7 +226,7 @@ def verify(row):
     assert json.loads((o.P/'composition-selection.json').read_text()) == preparation_config(config, decision), 'prepared selection or evaluator pins changed'
     result = matched(config)
     assert result == row['composition'] and result['passed'] and result['chain_policy_passed'], 'identical-selection evidence changed or failed'
-    assert not (o.P/'build/device-cards01-a').exists(), 'chain already started'
+    assert not (o.P/'build'/row.get('chain_output','device-cards01-a')).exists(), 'chain already started'
     return row
 
 
@@ -228,6 +234,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--decision', type=Path, required=True)
     parser.add_argument('--snapshot-only', action='store_true')
+    parser.add_argument('--chain-output', help='Fresh directory for the unchanged decision; e.g. device-cards01-b')
     args = parser.parse_args()
     o.limits()
     decision = args.decision.resolve()
@@ -236,6 +243,9 @@ def main():
                boot_id=Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
                chain_command=o.command(), decision=o.pin_path(decision))
     try:
+        if args.chain_output:
+            from fresh_chain import command
+            row.update(chain_entry='packet97e',chain_output=args.chain_output,chain_command=command(args.chain_output))
         config = json.loads(decision.read_text())
         assert decision.stem == c.identity(config), 'decision filename identity differs'
         validate(config)
@@ -245,14 +255,20 @@ def main():
             raise ValueError('snapshot only; no preparation changed')
         row['composition'] = matched(config)
         assert row['composition']['chain_policy_passed'], row['composition']['reason']
-        from stopped_archive import require_fresh_chain
-        require_fresh_chain(o.P/'build')
-        o.save(o.P/'composition-selection.json', preparation_config(config, decision))
-        o.run('composition-queue-plan', [o.P/'queue_plan.py'])
-        o.run('reseal', [o.P/'fast_reseal.py', *[x for k, v in config['candidate'].items() for x in ('--'+k, v)]])
+        if args.chain_output:
+            from fresh_chain import prepare
+            o.save(o.P/'composition-selection.json', preparation_config(config, decision))
+            chain_output=prepare(config,args.chain_output)
+        else:
+            from stopped_archive import require_fresh_chain
+            require_fresh_chain(o.P/'build')
+            o.save(o.P/'composition-selection.json', preparation_config(config, decision))
+            o.run('composition-queue-plan', [o.P/'queue_plan.py'])
+            o.run('reseal', [o.P/'fast_reseal.py', *[x for k, v in config['candidate'].items() for x in ('--'+k, v)]])
+            chain_output=o.P/'build/device-cards01-a'
         checks = [('cpu-dry-run', [o.P/'dry_run.py']), ('seal', [o.P/'chain_seal.py', '--verify']),
                   ('inputs', [o.P/'check_inputs.py']), ('storage', [o.P/'storage_precheck.py']),
-                  ('queue-plan', [o.P/'queue_runner.py', '--plan', '--output-root', o.P/'build/device-cards01-a'])]
+                  ('queue-plan', [*([o.P/'chain97e.py','queue'] if args.chain_output else [o.P/'queue_runner.py']), '--plan', '--output-root', chain_output])]
         for label, argv in checks:
             o.run(label, argv)
         row['checks'] = {label: o.sha(o.O/(label+'.log')) for label, _ in checks}

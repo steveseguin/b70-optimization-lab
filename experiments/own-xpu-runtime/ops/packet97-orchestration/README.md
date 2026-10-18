@@ -142,3 +142,29 @@ Tests:
 ```sh
 nice -n 19 taskset -c 8-15,24-31 /home/steve/.venvs/deepseek-v4-xpu/bin/python -B -m pytest -q -p no:cacheprovider experiments/own-xpu-runtime/ops/packet97-orchestration </dev/null
 ```
+
+## Packet97e: same decision, fresh directory
+
+The failed `device-cards01-a` remains history. Prepare a new directory without
+changing the selected composition or its screen seals:
+
+```bash
+nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/ops/packet97-orchestration/decision_readiness.py \
+  --decision experiments/own-xpu-runtime/ops/packet97-orchestration/decisions/f1e5d7f47fc0fe54.json \
+  --chain-output device-cards01-b </dev/null
+nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/ops/packet97-orchestration/verify_ready.py </dev/null
+```
+
+Use the exact `chain_command` in the resulting `ready.json`; preparation never
+runs it. The command binds the new output and uses a separate systemd unit.
+A later explicitly requested attempt can use `device-cards01-c`. An occupied
+output or any selection change is refused. The original no-reselection guard
+is unchanged.
+
+The chain entry requires the new 128-composition, eleven-window CPU startup
+receipt and installs the bounded KD reference repair. Target binaries and
+selection seals are unchanged. For later evidence preparation use the packet's
+`submission97e.py`; for the shared submission CLI use `submission_cli97e.py`.
+These retain strict target identities and validate KD's explicitly bound draft
+reference identity. Neither preparation nor this repair authorizes submission.
+See the [repair note](../../../../notes/2026-10-18-own-runtime-packet97.md#packet97e--kd-host-reference-repair-and-a-fresh-chain-directory).

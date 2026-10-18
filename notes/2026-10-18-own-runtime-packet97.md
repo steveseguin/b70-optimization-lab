@@ -188,3 +188,99 @@ receipts yet. No storage gate or full-chain requirement was waived.
 - The CPU gates (256 startup checks) never exercised KD's host-reference path with E1 selected.
 - Fault count unchanged (2). The coordinator drained the teardown record and archived the stale lane-A marker before lane B's running screen reached teardown (lane-A render nodes had no holders).
 - Codex 97e: fix the KD host reference for half-cache, add an every-window CPU startup gate for all 128 compositions, and allow a fresh chain folder for the same decision. Evidence in `build/device-cards01-a` is kept as history.
+
+## Packet97e — KD host-reference repair and a fresh chain directory
+
+The failure was a real unsupported startup combination, not a device fault.
+`draft_window.py` passed `--rank 1 --context 4096` but omitted `--memory` and
+`--draft-rank`. The native defaults were `layer-streaming` and draft rank 0;
+`Engine::prepared_path` was false. `run_draft_capture` constructs a rank-1
+24/24 target plan and then runs only `DraftRuntime` on the frozen captured target
+streams. E1's guard correctly requires resident, prepared, rank-1-draft, 24/24,
+r5/parallel, context4096. The earlier full-shape test explicitly supplied those
+working settings and therefore never tested KD's actual command.
+
+Simply switching this CPU reference to resident mode is not viable under the
+8 GiB bound. The selected rank-1 resident startup accounts for **31,581,735,626
+bytes** in the existing full-shape census. It loads the unused target half in
+addition to the draft. The CPU reference does not execute those target layers.
+The guard and both runtime binaries therefore remain unchanged.
+
+The new `kd_reference.py` binds a draft-only selection to the original target
+selection hash. It projects only target expert storage, target head storage,
+target HC norm fusion and target host retirement to their baseline choices.
+It preserves every draft choice, route/recurrence choice, dispatch, tensor,
+context and arithmetic operation. The draft uses its existing expanded Q6
+head and the same 91,392 computed rows. A packed target head may change how
+much unused head storage the standalone capture holds, never the computed
+prefix. The real target windows continue to use the full original selection.
+This is a bounded draft reference, not evidence that target E1 ran on the CPU.
+
+`kd_window97e.py` retains the original complete CPU-reference comparison,
+proposal-argmax check, two fresh owners, final-state comparison, safe teardown
+and memory watchdog. Each owner must also prove the exact projected hash,
+unchanged draft choices and no target mutable aliases. Its raw receipt keeps
+its true projected hash. `submission97e.py` extends the byte-pinned original
+replay validator: only the two KD native receipts can use that hash, and only
+after checking the receipt-bound target-to-reference mapping and matching draft
+kernel identities. All target/window, output, acceptance and timing gates remain
+in force. Use `submission97e.py` for later evidence preparation and
+`submission_cli97e.py` for a later submission of this new chain;
+no submission was made here.
+
+`chain97e.py` is a narrow entry adapter: it keeps the original queue/window
+code, changes the child entry to itself and installs the new KD implementation.
+This leaves the original files pinned by all 128 screen seals untouched. The
+fresh-chain preparer accepts a new `device-cards01-b` (or later `-c`) only for
+the already selected composition, saves the preceding chain seal, registers the
+new output, seals current chain tools, and reruns readiness. It never imports
+completed windows, changes a frozen decision or resumes an occupied directory.
+The old `device-cards01-a` is history.
+
+The new startup gate executes the original window parser, manifest-derived caps
+and retention guards, then obtains native argv from the real `Transport`.
+It uses production `parse`, `Engine`, `DraftRuntime`, allocation and capture
+with full dimensions (hidden 2560, vocabulary 248320, context4096); only payload
+reads and the backend are mocked. Every view gets every window. Selection-free
+K fixtures are shared after executing their real CPU paths; K0 explicitly uses
+its existing CPU structural shim because JIT has no CPU analogue. K2's host
+fixture cannot request device timing, so it runs its exact fixture path. The
+actual W0p CPU shared-memory handshake also runs. KD is checked for both host
+and device argument sets, and its draft-kernel identity must equal that of the
+selected resident draft. The old unprojected E1 command must refuse with the
+original guard message. Sources are snapshotted before the gate and must remain
+unchanged until it finishes.
+
+The initial pull refused the shared checkout's unrelated edits. Fetch showed
+`main` equal to `origin/main`; nothing was stashed or reset. Read-only parallel
+review caught the suite-cap and submission-replay gaps before final readiness;
+both have regression coverage. No GPU, service, sudo, setting or live queue ran.
+The frozen decisions, 128 screen seals, both binaries and old chain files have
+414 recorded identities for a final unchanged-byte check.
+
+Final CPU gate: **1,408/1,408 windows passed** (128 compositions × eleven
+windows) in **756.482 seconds (12 minutes 36 seconds)**; maximum child RSS
+was **1,249,832 KiB (about 1.2 GiB)**. The required old E1 startup refused
+before the repaired path passed. The new fixture build occupies about 22 MB;
+the original host/device binaries were not rebuilt. The focused combined
+Python suite passed **152 tests**. The standalone submission entry points also
+passed their CLI checks; no evidence was submitted.
+
+Readiness is **true** for unchanged decision `f1e5d7f47fc0fe54`, with
+`chain_output=device-cards01-b` and unit `packet97-chain-b`. All five preparation
+checks and identical-selection evidence pass. The output directory remains
+absent until the coordinator explicitly launches it. Later `-c` is supported
+by the same fresh-folder preparation; an occupied directory is rejected.
+The exact executable manual command is the `chain_command` string in
+`experiments/own-xpu-runtime/ops/packet97-orchestration/ready.json`.
+
+Evidence: `stage2/packet97-record-bundle/startup97e.json` and
+`evidence/startup97e-runs.json.gz` contain the full coverage and source hashes;
+`evidence/startup97e.log` retains progress, and
+`evidence/packet97e-old-e1-refusal.json` retains the regression trigger.
+The new readiness and verification logs are under `ops/packet97-orchestration/`.
+The CPU fixture proves guards, shapes and draft-kernel identity, not device
+output equality. The full unchanged device exactness chain remains pending.
+
+[Packet97e closeout](../experiments/own-xpu-runtime/stage2/packet97-record-bundle/PACKET97E-CLOSEOUT.md)
+records the repair's scope and revisit conditions.
