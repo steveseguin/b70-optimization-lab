@@ -18,6 +18,7 @@ import subprocess
 import sys
 import time
 import uuid
+import pin_guard
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
@@ -566,6 +567,7 @@ def report_failure_evidence(job):
 
 
 def plan_job(job, ldp, invoke=subprocess.run):
+    check_pins(job)
     script = job_script(job)
     argv = job.get('argv', ['/usr/bin/bash', str(script)])
     output = option(argv, '--output')
@@ -629,6 +631,10 @@ def plan_job(job, ldp, invoke=subprocess.run):
         metadata = {}
     return dict(name=job['name'], plan='passed', seal='checked by packet plan/wrapper',
                 host_required_available_bytes=host_requirement(job, metadata))
+
+
+def check_pins(job):
+    return pin_guard.check_job(job, ROOT, STAGE)
 
 
 class Queue:
@@ -762,6 +768,32 @@ class Queue:
                            for r in queued if r['name'] not in dropped))
         self.active.unlink()
 
+    def refuse_pins(self, job, exc):
+        """No child was launched: persist that proof, then use normal pruning.
+
+        This is queue-owned evidence, not a claim inferred from a child's fast
+        exit. Do not write inside the sealed packet or manufacture PID samples.
+        """
+        with lock(self.directory / f'edit-{self.lane}.lock'):
+            rows = read_queue(self.directory, self.lane)
+            if self.active.exists():
+                require(json.loads(self.active.read_text())['job'] == job,
+                        'pin refusal conflicts with inflight job')
+            elif not rows or rows[0] != job:
+                return
+            self.backend.guards(self.lane)
+            receipt = self.directory / (job['name'] + '-' + uuid.uuid4().hex + '.pin-refusal.json')
+            save(receipt, dict(job=job, utc=utc(), **exc.receipt))
+            record = dict(outcome='REFUSED-PREDEVICE', rc=1, end_unix=time.time(),
+                          end_utc=utc(), duration_seconds=0, device_executed=False,
+                          launch_attempted=False, receipt=str(receipt),
+                          predevice_evidence=exc.receipt)
+            save(self.active, dict(job=job, **record))
+        self.finish(job, record)
+        self.event('REFUSED-PREDEVICE', name=job['name'], receipt=str(receipt))
+        self.event('ALERT', name=job['name'], dropped_dependencies=record['dropped_dependencies'],
+                   reason='Pin guard refused before launch; dependent rows dropped; continuing to an independent job; no retry')
+
     def run(self):
         with lock(self.directory / f'driver-{self.lane}.lock', nonblocking=True):
             require(not os.path.lexists(self.active), 'unfinished driver record exists; inspect unit and evidence, never retry automatically')
@@ -786,7 +818,11 @@ class Queue:
                     require(job['name'] not in names, 'job already completed; no automatic replay')
                 self.backend.guards(self.lane)
                 ldp = library_path()
-                plan = plan_job(job, ldp)
+                try:
+                    plan = plan_job(job, ldp)
+                except pin_guard.PinRefusal as exc:
+                    self.refuse_pins(job, exc)
+                    continue
                 required = plan.get('host_required_available_bytes', 0)
                 deadline = admission_deadlines.setdefault(job['name'], self.now() + HOST_WAIT_LIMIT)
                 if not self.wait_host_admission(job, required, deadline):
@@ -796,6 +832,14 @@ class Queue:
                 if not self.wait_drain_spacing(job):
                     continue
                 if not self.wait_host_admission(job, required, deadline):
+                    continue
+                # Review/admission may have waited while another agent edited
+                # a pin. Rehash now, then recheck stop/memory/queue state under
+                # the edit lock so time spent hashing cannot bypass a pause.
+                try:
+                    check_pins(job)
+                except pin_guard.PinRefusal as exc:
+                    self.refuse_pins(job, exc)
                     continue
                 with lock(self.directory / f'edit-{self.lane}.lock'):
                     current = read_queue(self.directory, self.lane)
@@ -909,6 +953,8 @@ def main():
                 row = plan_job(job, ldp)
             except (ValueError, TypeError, SyntaxError, OSError, subprocess.SubprocessError) as exc:
                 row = dict(name=name, line=number, plan='FAILED', reason=str(exc))
+                if isinstance(exc, pin_guard.PinRefusal):
+                    row['refusal_receipt'] = exc.receipt
                 failed = True
             print(json.dumps(row), flush=True)
         return int(failed)

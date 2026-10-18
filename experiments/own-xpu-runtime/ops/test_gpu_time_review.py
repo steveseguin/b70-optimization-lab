@@ -191,6 +191,90 @@ class ReviewTest(unittest.TestCase):
             review.main()
         return output.getvalue()
 
+    def test_review29_onecard_chain_and_bracket_card_minutes(self):
+        begin = review.timestamp('2026-10-18T17:40:00Z')
+        now = review.timestamp('2026-10-18T18:40:00Z')
+        # Review 29's two reported ranges. These clock fixtures represent
+        # occupancy, not a hardware compute-utilization measurement.
+        ranges = [('packet58w-onecard-record', 'card0-58w-a/WS128', '18:12', '18:37'),
+                  ('packet58v-async-cache', 'card0-async-a/overlap/WSCREEN', '17:43', '18:04')]
+        for packet, output, first, last in ranges:
+            self.write_json(review.RESULTS / packet / 'evidence' / output / 'window.json',
+                            dict(device_executed=True, card=0,
+                                 started_utc_ns=int(review.timestamp(f'2026-10-18T{first}:00Z').timestamp()*1e9),
+                                 finished_utc_ns=int(review.timestamp(f'2026-10-18T{last}:00Z').timestamp()*1e9)))
+        cards = {}
+        spans, lanes, holds = review.chain_windows(begin, now, set(), cards)
+        self.assertEqual(len(spans), 2)
+        self.assertEqual(set(cards.values()), {(0,)})
+        self.assertEqual(review.accounting(holds, begin, now)[0], 46*60)
+        busy, available, unknown = review.card_minutes(spans, lanes, cards, begin, now)
+        self.assertEqual((busy, available, unknown), (46, 240, 0))
+        text = self.report(now)
+        self.assertIn('46.0 / 240.0 = 19.2%', text)
+        for lane in 'AB':
+            self.assertIn(f'Lane {lane} (cards {"0+1" if lane == "A" else "2+3"}) busy/held: 0.77 h = 77%', text)
+        self.assertNotIn('17:40-18:40 UTC  60 min', text)
+
+    def test_onecard_queue_and_window_overlap_counts_only_one_card(self):
+        output = review.RESULTS / 'packet58x-capacity/evidence/card0-capacity-a/smoke'
+        self.write_json(output / 'WSCREEN/window.json', dict(
+            device_executed=True, card=0, start_utc=minute(10).isoformat(), end_utc=minute(20).isoformat()))
+        self.write_json(self.root / 'lane-queue/done-A.txt', dict(
+            job=dict(name='packet58x-smoke-A', lane='A', argv=['runner.py', '--output', str(output)]),
+            start_utc=minute(5).isoformat(), end_utc=minute(25).isoformat()))
+        text = self.report(NOW)
+        self.assertIn('20.0 / 240.0 = 8.3%', text)
+        self.assertIn('Lane B (cards 2+3) busy/held: 0.33 h = 33%', text)
+
+    def test_today_saved_chain_clocks_preserve_interwindow_gaps(self):
+        # Exact fields from packet58w/evidence/card0-58w-a/*/window.json.
+        # The chain spans 18:12–18:37; the 90-second interwindow waits are not
+        # fabricated device work. All seven windows must be discovered.
+        clocks = {
+            'K1a': (1792347131459984298, 1792347141923397448),
+            'K1b': (1792347232280628518, 1792347242731081389),
+            'KD': (1792347333069857030, 1792347469722552774),
+            'W2m': (1792347560062297751, 1792347703116237825),
+            'WS': (1792347793497836977, 1792347991951304299),
+            'WS128x': (1792348082339605957, 1792348308550206408),
+            'WS128': (1792348398922281644, 1792348607398843245),
+        }
+        root = review.RESULTS / 'packet58w-onecard-record/evidence/card0-58w-a'
+        for name, (first, last) in clocks.items():
+            self.write_json(root / name / 'window.json', dict(
+                device_executed=True, card=0, started_utc_ns=first, finished_utc_ns=last))
+        begin = review.timestamp('2026-10-18T18:12:00Z')
+        now = review.timestamp('2026-10-18T18:37:00Z')
+        cards = {}
+        intervals, lanes, holds = review.chain_windows(begin, now, set(), cards)
+        self.assertEqual(len(intervals), 7)
+        expected_minutes = sum(last-first for first, last in clocks.values()) / 60e9
+        busy, available, _ = review.card_minutes(intervals, lanes, cards, begin, now)
+        self.assertAlmostEqual(busy, expected_minutes, places=6)
+        self.assertEqual(available, 100)
+        self.assertEqual(review.accounting(holds, begin, now)[1], [])
+
+    def test_onecard_windows_clip_deduplicate_and_exclude_cpu_refusal(self):
+        root = review.RESULTS / 'packet58w-test/evidence/card0-a'
+        row = dict(card=0, device_executed=True, start_utc=minute(-5).isoformat(), end_utc=minute(65).isoformat())
+        self.write_json(root / 'WS/window.json', row)
+        self.write_json(root / 'WS128/window.json', row)
+        self.write_json(root / 'CPU/window.json', {**row, 'cpu_rehearsal': True})
+        self.write_json(root / 'refusal/window.json', {**row, 'device_executed': False})
+        cards = {}
+        intervals, lanes, holds = review.chain_windows(BEGIN, NOW, set(), cards)
+        self.assertEqual(len(intervals), 2)
+        self.assertEqual(review.card_minutes(intervals, lanes, cards, BEGIN, NOW), (60, 240, 0))
+        self.assertEqual(review.accounting(holds, BEGIN, NOW)[0], 3600)
+
+    def test_card_minutes_two_lanes_and_unknown_identity(self):
+        intervals = [(minute(0), minute(30), 'A', ''),
+                     (minute(15), minute(45), 'B', ''),
+                     (minute(45), minute(60), 'unknown', '')]
+        self.assertEqual(review.card_minutes(intervals, {'A': 'A', 'B': 'B'}, {}, BEGIN, NOW),
+                         (120, 240, 15))
+
     def test_review26_onecard_holds_from_archived_receipts_and_events(self):
         # Actual review-26 UTC ranges. Job scope lives in its saved queue plan,
         # not the events or the archived done record.

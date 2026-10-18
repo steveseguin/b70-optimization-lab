@@ -58,6 +58,7 @@ class QueueTestCase(unittest.TestCase):
         patch.object(q, 'BOOT_ID_PATH', boot_path).start()
         patch.object(q, 'library_path', return_value='/literal/libraries').start()
         patch.object(q, 'plan_job', return_value={'plan': 'passed'}).start()
+        patch.object(q, 'check_pins', return_value={'passed': True}).start()
         self.events = []
         self.queue.event = lambda kind, **kw: self.events.append((kind, kw))
 

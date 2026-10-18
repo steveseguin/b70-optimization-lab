@@ -41,6 +41,7 @@ class DeviceAccountingTest(unittest.TestCase):
         stack = contextlib.ExitStack()
         self.addCleanup(stack.close)
         for mock in (patch.object(review, 'PROC', self.proc),
+                     patch.object(review, 'OPS', self.root / 'ops'),
                      patch.object(review, 'RESULTS', self.root),
                      patch.object(review, 'receipt_paths', return_value=[self.window]),
                      patch.object(review.time, 'monotonic', return_value=4200),

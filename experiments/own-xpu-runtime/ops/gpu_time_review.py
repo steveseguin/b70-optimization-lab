@@ -108,11 +108,53 @@ def job_scope(job):
     return None
 
 
-def queue_events(now, notes, holds=None):
+def busy_cards(row, path=None):
+    """Explicit card identity, including one-card paths in older receipts."""
+    card = row.get('card')
+    if type(card) is int and card in range(4):
+        return (card,)
+    argv = row.get('argv', [])
+    if isinstance(argv, list):
+        for i, arg in enumerate(argv):
+            value = argv[i + 1] if arg == '--card' and i + 1 < len(argv) else (
+                arg.split('=', 1)[1] if isinstance(arg, str) and arg.startswith('--card=') else None)
+            if value in ('0', '1', '2', '3'):
+                return (int(value),)
+        for arg in argv:
+            if isinstance(arg, str):
+                match = re.search(r'/evidence/card([0-3])-', arg)
+                if match:
+                    return (int(match[1]),)
+    if path:
+        match = re.search(r'/evidence/card([0-3])-', str(path))
+        if match:
+            return (int(match[1]),)
+    for key in ('job', 'plan', 'lane_admission', 'coordination', 'reservation'):
+        nested = row.get(key)
+        if isinstance(nested, dict):
+            cards = busy_cards(nested)
+            if cards:
+                return cards
+    return None
+
+
+def window_cards(row, path):
+    # A rank receipt can name card 0 while belonging to a two-card job. Only
+    # the one-card window schema/path or an explicit count proves exclusivity.
+    if (re.search(r'/evidence/card[0-3]-', str(path))
+            or str(row.get('schema', '')).startswith('own-runtime.packet58.')
+            or row.get('gpu_count') == 1):
+        return busy_cards(row, path)
+    return None
+
+
+def queue_events(now, notes, holds=None, cards=None):
     """Count job lifetimes; optionally collect whole-host holds for both lanes."""
     starts, intervals, lanes = {}, [], {}
     if holds is None:
         holds = []
+    if cards is None:
+        cards = {}
     root = OPS / 'lane-queue'
     scopes = {}
     receipts = []
@@ -131,6 +173,9 @@ def queue_events(now, notes, holds=None):
         scope = job_scope(row) or job_scope(job)
         if scope:
             scopes[job['name']] = scope
+        identity = busy_cards(row) or busy_cards(job)
+        if identity:
+            cards['screen-' + job['name'] + '.service'] = identity
     # START events do not embed the job. Proposals provide scope for jobs whose
     # terminal receipt is not yet available, without counting unstarted plans.
     for path in sorted(root.glob('proposed-*.txt')):
@@ -139,6 +184,8 @@ def queue_events(now, notes, holds=None):
                 scope = job_scope(job)
                 if scope:
                     scopes[job['name']] = scope
+            if isinstance(job.get('name'), str) and busy_cards(job):
+                cards.setdefault('screen-' + job['name'] + '.service', busy_cards(job))
 
     def add(start, end, name, lane, kind, scope=None):
         if lane not in ('A', 'B') or end <= start:
@@ -146,7 +193,7 @@ def queue_events(now, notes, holds=None):
         unit = 'screen-' + name + '.service'
         intervals.append((start, end, unit, kind))
         lanes[unit] = lane
-        if (scope or scopes.get(name)) == 'whole-host':
+        if (scope or scopes.get(name)) == 'whole-host' or len(cards.get(unit, ())) == 1:
             holds.append((start, end))
 
     for row in receipts:
@@ -236,7 +283,7 @@ def receipt_paths():
     return sorted(paths)
 
 
-def chain_windows(begin, now, notes):
+def chain_windows(begin, now, notes, cards=None):
     """Count each completed chain window, excluding its admission wait.
 
     Older K receipts store clocks in the sibling lane-admission receipt's
@@ -244,6 +291,8 @@ def chain_windows(begin, now, notes):
     Those monotonic clocks are valid only on the recorded boot.
     """
     intervals, lanes, holds = [], {}, []
+    if cards is None:
+        cards = {}
     try:
         boot = (PROC / 'sys/kernel/random/boot_id').read_text().strip()
     except OSError:
@@ -251,8 +300,9 @@ def chain_windows(begin, now, notes):
     epoch = dt.datetime.now(dt.timezone.utc) - dt.timedelta(seconds=time.monotonic())
     paths = set()
     for root in (OPS.parent / 'stage2', RESULTS):
-        paths.update(p.resolve() for p in root.glob(
-            'packet*/build/device-cards01-*/*/window.json'))
+        for pattern in ('packet*/build/device-cards01-*/*/window.json',
+                        'packet*/evidence/card*-*/**/window.json'):
+            paths.update(p.resolve() for p in root.glob(pattern))
     for path in sorted(paths):
         row = read_json(path)
         if row.get('cpu_rehearsal') is True or row.get('device_executed') is False:
@@ -283,8 +333,11 @@ def chain_windows(begin, now, notes):
             continue
         unit = str(path.parent)
         intervals.append((start, end, unit, 'chain window receipt'))
-        lanes[unit] = 'A'
-        if scope == 'whole-host':
+        identity = window_cards(row, path)
+        lanes[unit] = ('A' if identity[0] < 2 else 'B') if identity else 'A'
+        if identity:
+            cards[unit] = identity
+        if scope == 'whole-host' or identity and len(identity) == 1:
             holds.append((start, end))
     return intervals, lanes, holds
 
@@ -312,7 +365,7 @@ def work_spans(row):
             yield from work_spans(value)
 
 
-def device_evidence(begin, now, notes):
+def device_evidence(begin, now, notes, cards=None):
     """Return (device intervals, lane map, actual whole-host spans, waits).
 
     Historical receipts lacking child exit clocks provide a conservative lower
@@ -321,6 +374,8 @@ def device_evidence(begin, now, notes):
     Monotonic receipts are usable only on their recorded boot.
     """
     intervals, lanes, holds, waits = [], {}, [], []
+    if cards is None:
+        cards = {}
     unclocked = 0
     try:
         boot = (PROC / 'sys/kernel/random/boot_id').read_text().strip()
@@ -384,6 +439,10 @@ def device_evidence(begin, now, notes):
         unit = next((part for part in re.split(r'[/\n]', cgroup)
                      if part.endswith('.service') and DEVICE.match(part)), None)
         unit = unit or str(path.parent)
+        identity_cards = window_cards(row, path)
+        if identity_cards:
+            cards[unit] = identity_cards
+            scope = 'whole-host'
         if coord and isinstance(drain, dict):
             # This is admission waiting, not a device interval. Drain entry is
             # recorded after the other lane released its lease.
@@ -535,6 +594,24 @@ def subtract(spans, busy):
     return result
 
 
+def card_minutes(intervals, lanes, cards, begin, now):
+    """Union assigned-card occupancy; held idle cards never earn busy credit."""
+    spans = {card: [] for card in range(4)}
+    unknown = []
+    for start, end, unit, _ in intervals:
+        if WAITERS.match(unit):
+            continue
+        identity = cards.get(unit) or {'A': (0, 1), 'B': (2, 3)}.get(lanes.get(unit))
+        if identity is None:
+            unknown.append((start, end))
+            continue
+        for card in identity:
+            spans[card].append((start, end))
+    busy = sum(accounting(rows, begin, now)[0] for rows in spans.values()) / 60
+    available = (now - begin).total_seconds() * 4 / 60
+    return busy, available, accounting(unknown, begin, now)[0] / 60
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--hours', type=float, default=6)
@@ -545,10 +622,11 @@ def main():
     begin = now - dt.timedelta(hours=a.hours)
     notes = set()
     queue_holds = []
-    queued, evidence = queue_events(now, notes, queue_holds)
+    cards = {}
+    queued, evidence = queue_events(now, notes, queue_holds, cards)
     wrappers = intervals
-    intervals, receipt_lanes, holds, waits = device_evidence(begin, now, notes)
-    windows, window_lanes, window_holds = chain_windows(begin, now, notes)
+    intervals, receipt_lanes, holds, waits = device_evidence(begin, now, notes, cards)
+    windows, window_lanes, window_holds = chain_windows(begin, now, notes, cards)
     intervals += queued + windows
     holds += queue_holds + window_holds
     evidence.update({u: lane for u, lane in receipt_lanes.items() if lane in ('A', 'B')})
@@ -570,6 +648,13 @@ def main():
     print(f'  ... also excluding *-model-* queues (they can sit waiting on a CPU oracle): {strict_s/3600:.2f} h = {100*strict_s/(a.hours*3600):.0f}%')
     print('NOTE: busy/held includes queue START-to-terminal lifetimes and chain windows; '
           'this is lane occupancy, not a GPU compute-utilization measurement.')
+    card_busy, card_available, unknown = card_minutes(intervals, lanes, cards, begin, now)
+    print(f'Busy card-minutes / available card-minutes: {card_busy:.1f} / '
+          f'{card_available:.1f} = {100 * card_busy / card_available:.1f}% '
+          '(assigned-card occupancy, not hardware compute counters)')
+    print('  One-card windows hold cards 0–3; only the selected card earns busy time.')
+    if unknown:
+        print(f'  Card identity unknown for {unknown:.1f} minutes; no card credit inferred.')
     for lane, cards in (('A', '0+1'), ('B', '2+3')):
         lane_spans = [(s, e) for s, e, u, _ in intervals
                       if not WAITERS.match(u) and lanes.get(u) == lane]
