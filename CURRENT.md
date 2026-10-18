@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, review15 cleanup and packet97 rule prepared on CPU:** The new
+cleanup tool can archive reviewed, closed screen caches and bundles after
+checking every live packet's references. Its dry run found 156.8 MB eligible;
+no real cleanup ran. New packet97 decisions exclude a source after a completed
+loss or inexact result on the record lane. Packet93 is excluded by its A loss;
+the two frozen decisions and their original tools remain unchanged. All 92 CPU
+tests pass. The coordinator runs cleanup after a fresh plan.
+[Instructions and evidence](notes/2026-10-18-own-runtime-review15-cleanup.md).
+
 **October 18, packet101 prepared on CPU:** Packet69's draft-HC settings are
 already active in packet97. Its draft attention option remains distinct, so
 the new packet prepares that choice alone. Both compilers pass repeated byte

@@ -1,4 +1,44 @@
-# Packet97 CPU orchestration — review 14 / packet97b
+# Packet97 CPU orchestration
+
+## Review 15: record-lane loss veto for new decisions
+
+Use `review15/orchestrate_review15.py` for new decisions. It rereads every source
+through its frozen loader and chooser, including lane-A confirmations of lane-B grid
+winners. A completed lane-A result excludes that source choice if it is inexact
+or is not strictly faster than both same-lane controls. A tie also loses.
+The latest completed matching A bracket governs; pending A evidence does not
+erase a completed result or hold up other sources. Packet93's head-transpose
+therefore cannot qualify from its B win after its A loss.
+
+The decision retains the exclusion reason, comparison rows, source and receipt
+hashes. All inspected source windows (including absent/incomplete windows) are
+checked again before a new decision is frozen. If any changes during collection,
+the helper refuses that decision and requires a fresh read.
+
+To record a new CPU-only decision without changing proposals, `ready.json`,
+`screens-current.json`, the live queues or runtime preparation:
+
+```sh
+nice -n 19 ionice -c3 taskset -c 8-15,24-31 python3 -B \
+  experiments/own-xpu-runtime/ops/packet97-orchestration/review15/orchestrate_review15.py \
+  --decision-only </dev/null
+```
+
+For later proposal/preparation work use the same new entry without
+`--decision-only`. `--snapshot-only`, baseline pins, closures and frozen-decision
+evaluation remain available. The matching `review15/verify_ready_review15.py` and
+`review15/device-entry-review15.sh` carry the exclusion evidence into the existing
+readiness gate. They do not launch a GPU during CPU preparation.
+
+The old decisions `d27742791d5b859d` and `f1e5d7f47fc0fe54` and every original
+Python tool they pin retain their original bytes. Their queued screen jobs
+still use the original validator. The review15 subdirectory also preserves the
+old tool inventory. The separate review-15 entry is necessary because editing
+those pinned tools would invalidate the already-frozen jobs.
+An old decision is evaluated as its original selection; it is never rewritten
+to apply a later source result. New composition decisions use review 15.
+
+## Historical review 14 / packet97b
 
 A source qualifies for composition after **one** completed first-lane grid:
 13/13 exact in every screen, unchanged per-prompt acceptance, and a candidate
