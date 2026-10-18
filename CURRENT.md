@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet131b oracle admission repaired on CPU:** Packet131's
+smoke refused before device execution because its source map crossed the
+oracle symlink outside the repository. The new copy checks that oracle through
+its original binding and complete-oracle check. Unsafe source maps now fail at
+gate creation. All six real entry paths reach both intercepted native launches;
+the original refusal is reproduced. Native binaries and all seven links are
+unchanged. New smoke/grid proposals pass temporary planning but remain
+unlaunched. No GPU, service, live queue or host setting changed here.
+[Work note and evidence](notes/2026-10-18-own-runtime-packet131.md#packet131b--repair-oracle-admission-before-device-execution-october-18).
+
 **October 18, packet132 second-candidate study closed on CPU:** Checking a
 second draft choice on uncertain cycles does not clear the required 3% gain.
 The main cost model chooses to leave it disabled; even counting only extra

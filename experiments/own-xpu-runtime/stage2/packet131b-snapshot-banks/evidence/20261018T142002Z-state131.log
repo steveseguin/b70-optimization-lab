@@ -1,0 +1,33 @@
+state-GNU-compile PASS
+state-GNU-link PASS
+state-Intel-compile PASS
+state-Intel-link PASS
+GNU 2 control state PASS
+GNU 2 candidate state PASS
+GNU 1 candidate state PASS
+GNU 1 control state PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/state131.py", line 45, in <module>
+    else:cpu_main();main()
+                    ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/state131.py", line 37, in main
+    with ThreadPoolExecutor(max_workers=4) as pool:runs=list(pool.map(execute,jobs))
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 619, in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 317, in _result_or_cancel
+    return fut.result(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/state131.py", line 31, in execute
+    assert cp.returncode==0,str(log)
+           ^^^^^^^^^^^^^^^^
+AssertionError: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/evidence/state-Intel-1-control.log
