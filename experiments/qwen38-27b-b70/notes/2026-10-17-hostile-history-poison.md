@@ -909,3 +909,71 @@ likely repeat the overwrite; the new first message changes every later token, so
   tumo56 blanks while it is removed may remain, and a re-check flip like p14_2's may recur once or twice.
 - **Decision:** met → hostile streams pass at 2M on 1.2.0.dev4 (with the clarified final rule), the charter's "any
   history" line gets it, and the next lever is 4M or the repair gate. Missed → read the misses before any change.
+
+## Campaign 41 (10:09-11:13 EDT): stopped by the memory guard at request 973; read 2026-10-18 11:20:32 EDT
+
+The guard stopped the busy server at 11:13:03 (available 1.59 GiB, floor 1.6) after 61 min 56 s and 973 of about
+1,300 requests (109 cuts, all in place). Ending the busy server logged the usual teardown lines: copy-engine page
+faults and CAT errors on both cards (11:13:04), no coredump. The first health probe passed both one-card smokes and
+hung on the two-card all-reduce; its timeout made the driver reset both GTs (11:18:19, coredumps copied first). The
+second probe (11:19) passed with the kernel log clean. A software fault, so the work goes on. Evidence
+`/mnt/fast-ai/bench-results/context-longrun-20261016/fault-20261018-1113/`. No score: the run did not finish.
+
+Why the room ran out this time and not in campaign 40 (same stream length, same keeper, same server):
+- At the same point (about 63 min in), campaign 40 had 2,006 MiB available and campaign 41 had 1,670.
+  - Of the 336 MiB difference: the desktop's update-manager window (open since October 10) came back from swap at
+    11:12 (84 MiB); the two server workers were 95 MiB larger; the rest is spread thin.
+  - My session was not the difference at that point (668 against 655 MiB).
+- Campaign 40 lost another 250 MiB in its last 22 minutes (2,006 at 63 min, minimum 1.76 GiB near the end), so
+  closing update-manager alone would leave campaign 41 near 1.5 GiB at the end.
+- The GPU's share of host memory (`GPUActive`) is 1.22 GiB in every guard record since campaign 33: fixed, not
+  growing. Anonymous memory is 10.5 GiB at every stop, and nearly all of it is the server: two workers at about
+  4.0 GiB each, the API process at 1.5 GiB and the engine core at 1.0 GiB.
+
+## Campaign 42: room census, registered 2026-10-18 11:20:32 EDT (before any run)
+
+A diagnostic, not a score. One queue line, `K32H rules 0 2400` (the 240K rules stream, 7 min; its own server),
+run `c42`, with `scratchpad/mem-census.sh` as root beside it: every 30 s, `smaps_rollup` and swap for each server
+process and the other large processes; every minute, the ten largest anonymous mappings of one worker and its
+anonymous memory by mapping name. Copies go to `data/2026-10-18-room-census/`.
+- **Question:** which part of the server's 9.5-10 GiB of host memory is anonymous memory we can give back without
+  changing a computation (host copies kept after loading, staging buffers, caches), and how large is it.
+- **Prediction:** most of each worker's 4 GiB is runtime and library state; I expect a single reducible part of at
+  least 300 MiB in the workers or the API process, which would be enough to give the 2M run campaign 40's room.
+- **Decision:** a part of 300 MiB or more that we allocate → reduce it, check that answers stay byte-identical on
+  the rules arm, then rerun 2M. Nothing that large → the 2M rerun goes ahead with update-manager closed and the
+  floor question goes to the owner in one line. The rules arm's score is recorded too (registered bar 39/39).
+
+## Campaign 42 (run `c42b`, 11:22-11:32 EDT): room census, read 2026-10-18 11:34:49 EDT
+
+The first try (`c42`, 11:21) did not start a server: the launcher refuses while `server/FAULT.json` is set. After the
+passing probe the latch was kept as `server/FAULT-20261018-c41.json` (as after earlier faults) and the queue ran as
+`c42b`.
+
+**Rules arm: 39/39**, 7 min 0 s, server totals prompt 1,932,486, cached 1,560,832, generated 30,330: the same numbers
+as campaign 40's rules arm, so the server and cards behave identically after the 11:13 fault. Server ready with
+2,436 MiB available (campaign 40: 2,436; campaign 41: 2,168); minimum 1.89 GiB.
+
+**Census** (`data/2026-10-18-room-census/`; anonymous = private memory that only that process holds):
+
+| process | resident | anonymous | notes |
+|---|---|---|---|
+| each worker | 3.95-4.01 GiB | 3.61-3.67 GiB | main heap 1.18 GiB at ready, 1.28 at the end; one 526 MiB block made during loading, then unchanged; one block growing 468 -> 513 MiB; 63-MiB allocator pools; the libraries' own pages under 10 MB each |
+| API process | 1.41 GiB | 1.41 GiB | flat |
+| engine core | 0.95 GiB | 0.86 GiB | flat |
+| my session | 0.61 GiB | 0.57 GiB (+0.14 swapped) | 0.50 at campaign 40's start, 0.75 just before campaign 41 |
+
+- Over campaign 41's 62 minutes the server processes grew 35 MiB in all. What shrinks the room during a 2M run is
+  the client side as the history grows: the keeper proxy 30 -> 110 MiB, the client 132 -> 180, my session
+  +35 (the 5 s samples, `fault-20261017-1831/ps-c32.txt`).
+- Campaign 41 started 270 MiB short because my session had grown to 0.75 GiB in the analysis just before its
+  launch. The campaign 42 server came up with campaign 40's room again.
+- Fewer allocator pools (`MALLOC_ARENA_MAX=2`) were already tried in campaign 33b and changed nothing. The 526 MiB
+  block appears during loading, when the upload overlay copies in 128 MiB pieces and keeps no buffer of its own, so
+  it is most likely the GPU runtime's staging pool: not something our code holds.
+
+**Decision (as registered): nothing of 300 MiB or more that we allocate**, so campaign 41 runs again as `c41b`
+(same queue line, task, keeper, server and registration). Before it: the update-manager window is closed (it came
+back from swap in the last minute of campaign 41), and nothing runs in my session from the launch to the end except
+the waiter. The guard floor (1.6 GiB) is the owner's setting; lowering it to 1.4 GiB would give every long run
+0.2 GiB more, so the question goes to the owner, and the work does not wait for the answer.
