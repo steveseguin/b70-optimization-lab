@@ -40,7 +40,7 @@ math. All weight transformations must reproduce the original decoded FP32 bits.
 
 | ID / priority | Mechanism | Expected saving / half | Risk and gate |
 | --- | --- | --- | --- |
-| E1 **build now, #1 expert** `exp-halfcache` | During the existing IQ2 gate/up repack, replace each 16-bit half-scale with its exact decoded FP32 value. Decode once per immutable weight block. Keep codes/grid/signs, `(d*(0.5+q))*0.25`, products, sums and wide64 geometry unchanged. IQ4 down unchanged. | 0.15–0.55 ms; zero/regression possible | +314,572,800 bytes/rank, more traffic and possible compiler CSE already doing most work; exhaustive finite-half byte gate and actual stride/extent startup test |
+| E1 **build now, #1 expert** `exp-halfcache` | During the existing IQ2 gate/up repack, replace each 16-bit half-scale with its exact decoded FP32 value. Decode once per immutable weight block. Keep codes/grid/signs, `(d*(0.5+q))*0.25`, products, sums and wide64 geometry unchanged. IQ4 down unchanged. | 0.15–0.55 ms; zero/regression possible | +301,465,600 bytes on rank 0 / +314,572,800 on rank 1, more traffic and possible compiler CSE already doing most work; exhaustive finite-half byte gate and actual stride/extent startup test |
 | E2 `exp-scalecache` | Store the sixteen exact FP32 effective IQ2 scales per 256-weight block, evaluating the original two multiplications at load time; runtime loads same bits | 0.25–0.80 ms if scale-bound | Large resident growth exceeds current margin if applied to all gate/up weights. Design only: must prove admission via bounded per-layer device preparation before sealing; extra launch/read may erase benefit |
 | E3 `exp-grid-prefetch` | Issue the next IQ2 grid-word load before consuming the current tile, buffering only two raw grid words per logical chain; no FP32 sums moved | 0.20–0.65 ms if dependent lookup latency dominates | Register/flag spill, p73 raw-code lookahead was not this grid-dependency mechanism; require linked register census before device screen |
 | E4 `exp-slot-coalesce` | Group only duplicate expert IDs within the **current token**; compute each identical gate/up projection once and scatter to original slot outputs/status. Down still uses distinct per-slot activations | 0–0.45 ms, zero if router guarantees unique IDs | Production router likely selects unique experts: prove duplicate frequency on existing evidence first; otherwise close. Never cross-token reuse or altered route order |
@@ -96,8 +96,10 @@ exact screen; do not silently substitute incomplete diagnostic rows.
 4. Seal every view with exact source/binary/fixture/placement bindings. Use only
    the hash-pinned shared `screen/v4-lanes` wrapper. Plan proposed queue files
    on a temporary queue; do not enqueue or launch them.
-5. Coordinator first runs 1 prompt ×32-token smoke through each new engine path,
-   then production/candidate/candidate/production full screens on one lane,
+5. Coordinator uses the pinned wrapper’s built-in **one prompt ×64-token**
+   startup oracle gate for each new path before any timed suite (stronger token
+   coverage than the memory note’s 32-token minimum; no modified wrapper).
+   Then production / exp-halfcache / hc-weightcache / production full screens on lane A,
    exact improving winner bracketed on the other. Complete fixed-suite oracle,
    status, acceptance and no-regression checks required; two fresh owners before
    speed verdict. No retries and no automatic chain promotion.
@@ -106,3 +108,8 @@ Closed: p67 roofline-picked/four-stream HC, p74 packed dense, p81 packed
 activation load-count, p83 draft bytes. Read their DO-NOT-REPEAT records before
 this preregistration. No external code or model download. Candidate saving and
 device correctness remain unmeasured until coordinator-owned exact screens.
+
+Implementation review before sealing: both caches reject unsupported runtime
+modes before device creation; the combined layout is refused. HC nonfinite
+weight scales explicitly refuse at load (matching the IQ2 finite-scale boundary),
+not silently converted. Native plan bytes and full-size arena bytes must agree.
