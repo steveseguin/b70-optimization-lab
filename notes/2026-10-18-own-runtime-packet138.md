@@ -96,3 +96,13 @@ defect. It identified two analysis safeguards, both added before real replay:
 positive candidates must still pass with windows shortened by their projected
 acceleration, and replay outputs must bind their source/library identity so
 simulation rejects stale results after code changes. Capture sources stayed fixed.
+
+Capture returned and released cleanly at about 17:11 UTC. All 624 output tokens
+matched their pinned references, including 48 against the packet49 CPU oracle.
+Raw capture contains 26 rank files; the complete capture tree is about 880 MB.
+The preparer did not launch or queue device work. CPU replay then checked all
+27,648 same-layer rows (14,155,776 BF16 logits and 276,480 expert IDs), with zero
+mismatches. Next-layer router-input recall is 66.47% / 72.46% / 79.93% at widths
+10 / 12 / 16. The best residual stream is stream 3, at 53.84% / 59.21% / 66.89%.
+All five registered predictors remain in the matched simulation; no winner is
+selected by benchmarking, and no speed result is claimed from this capture.

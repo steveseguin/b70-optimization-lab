@@ -10,19 +10,17 @@ queued. The unchanged legacy K2 startup receipt is reused within the CPU memory
 limit. Device quality and speed remain pending. No GPU, service, live queue or
 host setting changed. [Work note](notes/2026-10-18-own-runtime-packet137.md).
 
-**October 18, packet138 capture prepared on CPU:** A new lane-B diagnostic
-will collect expert routes and the hidden states needed to test next-layer
-prefetch prediction. It uses twelve independent held-out prompts and a separate
-packet49 sanity check, with all outputs checked against their pinned references.
-Both builds, byte checks, full-size startup, launch guards and the temporary
-queue plan pass. The external coordinator has queued the capture; the CPU
-preparer did not edit a live queue. Capture, prediction accuracy and projected
-gain remain pending; no GPU, service or live queue changed by this preparer.
-The CPU router and cache analysis are ready: compiler repeats agree and the
-cache model matches the original allocator. Timing windows are explicit
-assumptions because the old receipts lack layer clocks. Phase-2 design
-requires at least 3% projected gain over the 58v control with traffic fitting the
-available layer time. [Work note](notes/2026-10-18-own-runtime-packet138.md).
+**October 18, packet138 capture and exact CPU replay passed:** The external
+coordinator completed the lane-B capture and released its cards cleanly.
+All 624 output tokens match their pinned references. CPU replay also matches
+every router logit and expert choice across 27,648 rows. Using one layer's
+router input to predict the next finds 66.47% of its experts with ten guesses,
+or 79.93% with sixteen. The one-card cache simulation is running to determine
+whether that saves enough time after charging wrong guesses and copy traffic.
+Timing windows are explicit assumptions because the old receipts lack layer
+clocks. Phase-2 design requires at least 3% projected gain over the modeled 58v
+control with traffic fitting the available time. The preparer did not queue or
+launch device work. [Work note](notes/2026-10-18-own-runtime-packet138.md).
 
 **October 18, packet58v async cache prepared on CPU:** The one-card record
 spends 6.99 ms per token maintaining its cache. The new copy plans while the

@@ -1,6 +1,8 @@
 # Packet138 — cross-layer expert prefetch, phase 1
 
-CPU-prepared capture diagnostic. **No capture or GPU experiment has run here.**
+The coordinator completed the lane-B capture on October 18. **All 624 captured
+output tokens match their references.** CPU replay matches every same-layer
+router logit and route across 27,648 rows, with no mismatches.
 The one-card record remains packet58p's 26.228599 tok/s. No phase-2 design is
 admitted until the real-capture simulation clears the preregistered +3% gate.
 
@@ -68,8 +70,8 @@ checks establish preparation, not device output equality or speed.
 
 Only the coordinator may consume the proposal. After clean release,
 `capture_inputs.py` binds the complete capture; analysis requires those real bytes.
-The later CPU replay must first reproduce same-layer router logits and routes
-exactly, then report next-layer recall at widths 10, 12 and 16. A residual prediction
+The CPU replay first reproduces same-layer router logits and routes
+exactly, then reports next-layer recall at widths 10, 12 and 16. A residual prediction
 is available later than the router-input prediction and gets only its remaining
 causal transfer window. Wrong and late prefetches cost traffic too.
 
