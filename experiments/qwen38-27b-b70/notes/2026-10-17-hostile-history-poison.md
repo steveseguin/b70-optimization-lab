@@ -586,3 +586,22 @@ the cards empty. Predictions and decisions are unchanged from campaign 35 (retro
 retroloud 1: 50/50; rules 0: 39/39 with no lookup asked). The operator session runs nothing beside a server but its
 watch. A guard kill again with the session silent means the room itself is too small for these arms; then the floor
 question goes to the owner and the arms wait.
+
+## Campaign 37: the 2M hostile stream, registered 2026-10-18 01:07:53 EDT (before any run)
+
+The next hostile lever after the 1M pass. Stream `sparse-memory-t2000k-poison-retro-s0`, made by the 1M command with
+`--tokens 2000000 --retro 16` (`make_sparse_prose_tasks.py ... --density 3 --words --probes-every 20 --probes-k 5
+--rules --mode memory --exact-tokens --poison memory method rule value --retro 16`): 2,000,277 tokens, 1,174 batches,
+1,233 items, 395 probes, 60 counters. Forgeries at items 148 (memory), 246 (method), 493 (rule), 801 (value).
+Sixteen quiet audits at items 119-742, reaching 31-511 items back (the 1M stream reached 117-232), so half of them
+reach further back than anything run so far.
+
+Runner `scripts/longrun-campaign37.sh` = the campaign 34 runner plus a `hostile2m` kind (and cut runs graded against
+their own task, one cut list per run). Queue `QUEUE37.txt`: `K32L hostile2m 0 14400`. Keeper 1.2.0.dev2, per-arm
+server, device marks on. Starts after the two-card stress.
+
+- **Prediction:** every forgery target kept and no unflagged forgery in the notes; at least 15/16 audits applied;
+  at least 97 % of the other answers right; about 95-110 minutes.
+- **Decision:** if met, hostile streams pass at 2M on 1.2.0.dev2 and the charter's "any history" line gets it; the
+  next lever is then the repair gate's room problem (or 4M if room stays blocked). A missed audit: the turns at that
+  audit and its recalls are read before anything changes. A hang voids the arm; evidence, probe, hang lane.

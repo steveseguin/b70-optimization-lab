@@ -550,3 +550,23 @@ selector found nothing (`No XPU devices are available`). Card 1 was started agai
 `level_zero:0` and the mask 1 (`card1b.log`, 19 min, seed 20261019). Card 0 runs as registered. The rate is about
 2,200 calls a second per card (p50 0.42 ms), so each card makes about 2.5 million calls, more than the registered
 million.
+
+## Two-card GDN hang stress, registered 2026-10-18 01:07:53 EDT (before any run; runs only if the one-card stress is clean)
+
+`scripts/run-20261018-gdn-tp2-hang-stress.sh` (`OUT=data/2026-10-18-gdn-tp2-hang-stress`, `MINUTES=20`, `LAYERS=16`):
+one container with both cards and the server's docker flags and oneCCL environment, two torchrun ranks
+(`scripts/qwen38-gdn-tp2-hang-stress.py`). Each step, on the same 300-600 tokens on both ranks, runs 16 layer
+stand-ins: an fp16 input projection (5120 -> 8192), the fused prompt kernel from a cached state (TP2 shapes), an fp16
+output projection (3072 -> 5120), and the server's all-reduce (`all_gather_into_tensor` + fixed-order add), with one
+synchronize per step. Compute queues have no job timeout, so on the first `STUCK` line (a step not done after 5 s) the
+runner reads both cards' `gt0/hw_engines` (now and 20 s later), copies any new coredump, and kills the container. It
+runs after campaign 36b, before the 2M run.
+
+- **Scale:** expected about 15-25 ms per step, so roughly 50,000-80,000 steps and 0.8-1.3 million kernel calls and
+  gathers per rank. The server hung about once per 250,000-500,000 GDN calls.
+- **If it hangs:** the trigger is in kernel + exchange; next, the same harness with one piece taken out at a time
+  (projections off, gathers on the copy engine vs. compute engine) to name the pair.
+- **If it is clean:** the trigger needs more of the real server (FP8 projections, full-attention layers, draft passes,
+  the host side); next, a server-level prompt stress: one server, a client sending 300-600-token prompt steps on
+  cached states back to back for 20 minutes, breadcrumbs and device marks on.
+- Either way the 2M hostile run goes ahead after it (a hang there costs that run, not the cards).
