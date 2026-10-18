@@ -81,7 +81,9 @@ def probe(variant,kind,negative=None):
     import launch_env
     def bad_env():row=apply();os.environ['PYTHONDONTWRITEBYTECODE']='1';return row
     stack.enter_context(patch.object(launch_env,'apply',side_effect=bad_env))
-   try:bracket_job.main(['--variant',variant,'--kind',kind,'--lane','B','--output',str(out),'--fault-review',str(tmp/'review.json'),'--authorized-device-window'])
+   try:
+    code=bracket_job.main(['--variant',variant,'--kind',kind,'--lane','B','--output',str(out),'--fault-review',str(tmp/'review.json'),'--authorized-device-window'])
+    assert code==0,original_read(out/'window.json') if (out/'window.json').exists() else str(code)
    except Reached:pass
    except (ValueError,AssertionError) as e:
     if negative:

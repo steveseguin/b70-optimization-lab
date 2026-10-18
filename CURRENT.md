@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet142 class-layout preparation is in progress on CPU:**
+The packet136 copy has three exact allocation-order candidates. Byte checks,
+full-size allocation checks, submission rehearsal and the memory audit pass.
+Six new proposal files are present but unqueued and not yet finally planned.
+The final rebuild is waiting behind a whole-host hold marker; its recorded
+owner has exited, but the marker is left for the coordinator. Final entry,
+planning and seal checks remain. No GPU, service or live queue was changed.
+Only classes flagged by packet141 may be selected afterwards.
+[Work note](notes/2026-10-18-own-runtime-packet142.md).
+
 **October 18, packet141b early exit repaired on CPU:** The first probe stopped
 before any model step because an Intel loader library was missing. The repaired
 copy includes that library and prints rank errors directly. Both native entry

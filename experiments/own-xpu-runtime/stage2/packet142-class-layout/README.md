@@ -49,6 +49,17 @@ Smoke is budgeted 240–360 s; each bracket 720–1200 s. Both watchdogs are 480
 (at least four times the upper estimate). They are estimates, not measurements.
 Host admission is the inherited 97 GiB plus 1200 MiB for both class banks.
 The existing per-rank 30 GiB arena ceiling and device headroom rules remain.
+The final conservative rank1 arena margin is 155,895,078 bytes. Actual copied
+coverage and allocation margins are in `v5/evidence/admission.json`:
+
+| Candidate | Weight tensors per rank | Copied bytes rank0 / rank1 | Actual arena headroom rank0 / rank1 |
+| --- | --- | --- | --- |
+| Attention | 27 / 27 | 617,431,040 / 623,001,600 | 3,450,641,292 / 163,267,878 |
+| Expert gate/up | 2 / 2 (one layer each) | 550,502,400 / 550,502,400 | 3,517,569,932 / 235,767,078 |
+| HC gate/low | 96 / 96 (24 layers each) | 373,555,200 / 373,555,200 | 3,694,517,132 / 412,714,278 |
+
+These are CPU allocation-census bytes, not observed GPU residency. A negative
+expert result only covers one layer per rank; it cannot close whole-class placement.
 
 ## Evidence and restoration
 

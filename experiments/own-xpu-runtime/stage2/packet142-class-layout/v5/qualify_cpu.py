@@ -1,7 +1,7 @@
 """Reproducible serial CPU qualification. Stops at the first refusal."""
 import argparse,subprocess,sys,resource
 from build_engine import P,LOCAL,ROOT,limits
-STEPS=[('build',P/'build_engine.py',[]),('shape',P/'full_shape.py',[]),('bytes',P/'byte_gate.py',[]),('limits',P/'exec_gate.py',[]),('safety',P/'safety_gate.py',[]),('seal',P/'cpu_seal.py',['--seal']),('entry',P/'entry_gate.py',[]),('launch-limits',P/'launch_limit_gate.py',[]),('worker',P/'worker_gate.py',[]),('queue',P/'queue_plan.py',[]),('pins',P/'pin_gate.py',[])]
+STEPS=[('build',P/'build_engine.py',[]),('shape',P/'full_shape.py',[]),('bytes',P/'byte_gate.py',[]),('limits',P/'exec_gate.py',[]),('safety',P/'safety_gate.py',[]),('admission',P/'admission_gate.py',[]),('seal',P/'cpu_seal.py',['--seal']),('entry',P/'entry_gate.py',[]),('launch-limits',P/'launch_limit_gate.py',[]),('worker',P/'worker_gate.py',[]),('queue',P/'queue_plan.py',[]),('pins',P/'pin_gate.py',[])]
 def main():
  assert resource.getrlimit(resource.RLIMIT_AS)==(-1,-1)
  ap=argparse.ArgumentParser();ap.add_argument('--start',choices=[r[0] for r in STEPS],default='build');a=ap.parse_args()

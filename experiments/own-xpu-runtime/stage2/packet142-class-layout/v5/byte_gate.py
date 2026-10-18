@@ -15,5 +15,5 @@ def main():
    result=json.loads(r.stdout);assert result['passed'];digest=sha(raw);compressed=P/'evidence'/(label+str(repeat)+'-bytes.bin.gz');data=raw.read_bytes();compressed.write_bytes(gzip.compress(data,mtime=0));assert gzip.decompress(compressed.read_bytes())==data;raw.unlink()
    rows.append(dict(compiler=label,repeat=repeat,sha256=digest,artifact=str(compressed.relative_to(ROOT)),artifact_sha256=sha(compressed),result=result));print(label,repeat,'PASS',flush=True)
  assert len({r['sha256'] for r in rows})==1
- save(P/'evidence/bytes.json',dict(passed=True,device_executed=False,runs=rows,binaries=binaries,max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss,sources={str(f.relative_to(ROOT)):sha(f) for f in (LOCAL/'layout_bytes.cpp',P/'byte_gate.py')}));limits()
+ save(P/'evidence/bytes.json',dict(passed=True,device_executed=False,runs=rows,binaries=binaries,max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss,sources={str(f.relative_to(ROOT)):sha(f) for f in [LOCAL/'layout_bytes.cpp',LOCAL/'kernel_guard.hpp',P/'byte_gate.py',*(f for f in (LOCAL/'native-base').rglob('*') if f.is_file())]}));limits()
 if __name__=='__main__':resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()

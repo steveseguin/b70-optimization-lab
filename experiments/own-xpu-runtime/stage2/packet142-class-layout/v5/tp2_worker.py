@@ -61,6 +61,8 @@ def run(identity, output, seconds, pair_dir=None):
     sys.path.insert(0, str(P56))
     import pipeline
     import suite
+    # Vendor metadata paths are repository-relative after bound oracle admission.
+    suite.ROOT = ROOT
     import storage
     manifest = D.oracle_inputs()
     entries = manifest['prompts']

@@ -66,3 +66,31 @@ kernel_guard.hpp. They now name the byte-identical local copy. Historical metada
 and inactive v5 helpers are retained under lineage-inputs rather than treated as
 current pins. The compiler, active runtime and wrapper source closures are local;
 only allowed oracle/model inputs and hash-pinned frozen binaries remain external.
+
+The explicit six-row admission receipt corrects the intermediate arena-margin
+arithmetic above: the conservative rank1 margin is **155,895,078 bytes**.
+Actual rank1 margins are 163,267,878 / 235,767,078 / 412,714,278 bytes for
+attention / expert gate-up / HC gate-low. Coverage is 27 / 2 / 96 weight tensors
+per rank respectively. The expert arm covers one layer per rank, while HC gate/low
+covers all 24 layers per rank. This coverage limits any future negative inference.
+All 182 inherited symbolic-link objects and every allowed external binary hash
+passed the closure audit. No foreign process or stale coordination marker was touched.
+
+## Entry preparation while the compiler waits
+
+The final native rebuild waits through ops/compile_turn.py behind the whole-host
+hold. Its recorded owner has exited; the marker remains coordinator-owned and
+was not changed. Preliminary CPU-only probes simulate only the missing final
+composition predecessor, and are explicitly **not** final readiness receipts.
+They exercise the real unit/environment checks and intercept both native launches,
+then cover all 65 bracket requests and corrupted-output cooperative teardown.
+The first entry probe found a doubled vendor-root path in the inherited suite
+loader. The packet142 worker now resolves its bound metadata against the real
+repository root. The oracle authority itself is unchanged. The metadata helper
+also keeps plan stdout to one JSON object while retaining the full authority check.
+The preliminary plan parses with 4800 s watchdog and 720–1200 s estimate.
+
+All six new proposal files now exist under ops/lane-queue and have local mirrors.
+No live queue was edited. Final real-seal entry tests and temporary queue planning
+remain pending. This intermediate state is published so the coordinator can see
+why the final marker is absent; it grants no device-launch readiness.
