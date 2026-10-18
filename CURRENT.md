@@ -78,8 +78,10 @@ command is in [ready.json](experiments/own-xpu-runtime/ops/packet97-orchestratio
 committed fix, the new bundle includes down-tile16 and draft attention with
 all earlier choices. Both binaries compile; CPU preparation uses about 145 MB.
 The source decision selects both new options and rechecks later lane-A losses.
-Operator bytes and 529 submission replay checks pass. All 1024 full-size rank allocation checks pass; every-window startup checks
-are repeating after a temporary-file cleanup fix. No device or live queue ran.
+Operator bytes and 529 submission replay checks pass. All 1024 full-size rank
+allocation checks and all 5632 startup-window checks pass on finalized sources.
+Required-view sealing and temporary queue rehearsals are now running. No device
+or live queue ran.
 [Work note](notes/2026-10-18-own-runtime-packet103.md).
 
 **October 18, packet100b route capture prepared on CPU:** The new lane-B job

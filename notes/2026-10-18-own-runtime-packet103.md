@@ -6,7 +6,9 @@ draft attention. The refreshed decision also selects down-tile16 after packet100
 exact lane-B engine bracket passed; later lane-A losses are rechecked before
 proposals and launch. Packet93's completed A loss excludes its head.
 Closed packets92/94/95 remain excluded; their archived build dependencies are
-not treated as fresh qualification. The recorded frontier remains 55.686963.
+not treated as fresh qualification. The initial frontier was 55.686963;
+packet97 has since raised the submitted record to 56.087
+(`cmvdgjqwj000rrf013ay3ew6t`). Packet103 has no measured composite result yet.
 
 The readers use packet101's fresh resealed views and packet100b's actual route
 capture and unchanged packet100 microqualification. They retain 13 exact
@@ -106,3 +108,10 @@ wide64+halfcache, production head, tile16 DOWN and split32 draft attention.
 Packet97's submitted 56.087 result remains the record; this preparation makes
 no composite speed claim. Pull again refused unrelated shared-checkout edits;
 fetch confirmed main and origin/main equal. No foreign change was stashed.
+
+Finalized-source startup repeat completed at 07:35 UTC: all 512 compositions
+pass all eleven windows (5,632 window records), including both KD startup paths
+and the old half-cache command's required refusal. The source-bound receipt
+and compressed per-window archive verify. Runtime was 2,868.55 seconds; peak
+child RSS was 1,250,804 KiB. No device ran. Required-view sealing and temporary
+queue rehearsals follow using these unchanged sources.
