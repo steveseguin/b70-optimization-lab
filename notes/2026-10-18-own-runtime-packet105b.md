@@ -57,3 +57,60 @@ This milestone is shipped before the combined matrix. Packet106b byte and
 controller gates pass; its remaining combined validation and proposals continue.
 The new builds link frozen object and fixture inputs without changing their
 bytes. This keeps the combined build footprint inside the 250 MB budget.
+
+## Completed CPU handoff
+
+Packet106b's unchanged production runtime passes fresh GNU/Intel byte checks,
+the target reset regression, hit/miss controller and combined transfer/reset
+mocks. All six rank allocation checks and all 33 startup windows pass. Together
+the two copies retain 55 individual source-bound window receipts. The final
+audit verifies every receipt and all five view seals. Only `p105_runtime.hpp`
+differs among packet105's existing C++ runtime files; packet106's existing C++
+runtime files are byte-identical in 106b.
+
+The 106b mock initially tried the intentionally excluded draft-only view.
+Its harness now checks the combined view that will actually run. The unused
+draft-only selection was not materialized. The incremental build also found
+that the parent's rebuilt helper objects were bound through its linked binary,
+not listed individually as source inputs; the new receipt pins those immutable
+input object bytes explicitly. Neither issue involved a device.
+
+The actual smoke worker loop has CPU protocol tests for all twelve reset/request
+pairs and for rejection of the old wrong token. Two tests pass in each packet.
+Nine additional 106b tests cover views, memory deltas, changed proposals,
+missing smoke, incomplete B evidence and a grid with no improving exact winner.
+No final-gate or performance headline is claimed from these tests.
+
+All five proposed files pass the real queue planner on private copies:
+
+| Proposal under `experiments/own-xpu-runtime/ops/lane-queue/` | Jobs | Execution prerequisite |
+| --- | ---: | --- |
+| `proposed-p105b-micro-B.txt` | 1 | Normal coordinator device admission and fault review |
+| `proposed-p105b-smoke-B.txt` | 1 | Exact completed, drained micro with zero mismatches |
+| `proposed-p106b-smoke-B.txt` | 1 | Same micro; combined candidate, all twelve prompts and real draft suffix activity |
+| `proposed-p105b-B-grid.txt` | 4 | Both complete twelve-prompt smokes and micro |
+| `proposed-p105b-A-confirm.txt` | 3 | Both smokes plus complete same-boot exact B grid with a candidate faster than both controls |
+
+The B grid uses 106b's production / head-split / head+draft-split / production.
+A chooses the best qualified B winner before each fresh run. Packet105b's own
+target-only smoke protects its distinct asynchronous transfer binary. The extra
+106b combined smoke ensures that binary is validated before the grid as well.
+Plan mode does not bypass these execution refusals.
+
+Final combined new build footprint: **240,850,266 bytes**, below 250,000,000.
+The two source/receipt archives are 4,313,023 and 4,591,353 bytes; all 261/269
+members were independently re-hashed after archiving, with originals retained.
+`RETENTION.md` explains why they are needed and how to restore missing generated
+files. Frozen object/fixture inputs remain individually hash-bound links.
+
+Final audits:
+[105b](../experiments/own-xpu-runtime/stage2/packet105b-head-split/evidence/final-verification.json),
+[106b](../experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/final-verification.json).
+The first copy/fix milestone is `5a7ca1e3b`; micro preparation shipped in
+`857518118`, and the complete target smoke shipped in `369cf4627`, before the
+combined matrix was finished. Each milestone was pushed immediately.
+
+**Device micro, model smokes, grids, residency, repeats and speed are still
+pending coordinator execution.** No GPU, service, sudo, live queue, existing
+packet, existing screen, power/memory/swap/page-cache setting, or reboot was
+used or changed by this task. No process was killed.

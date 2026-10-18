@@ -6,13 +6,13 @@ import gzip,hashlib,io,json,tarfile
 from build_engine import P,ROOT,B,sha,save,limits
 def main():
  limits();wanted=set()
- for report in [P/'build-device-receipt.json',*(P/'evidence').glob('*.json')]:
+ for report in [P/'build-device-receipt.json',P/'startup97e.json',*(P/'evidence').glob('*.json')]:
   try:r=json.loads(report.read_text())
   except (ValueError,UnicodeError):continue
   for n in r.get('sources',{}):
    path=ROOT/n
-   if path.is_relative_to(B) and path.is_file() and path.suffix not in ('.o',):wanted.add(path)
- for folder in ('mini','operators','protocol','cpu-gnu','cpu-intel','real-head','full-shape','negative'):
+   if path.is_relative_to(B) and path.is_file() and path.suffix in ('.cpp','.hpp','.inc','.py','.json','.log','.d','.tsv'):wanted.add(path)
+ for folder in ('cpu','controller','runtime-mock','full-shape','startup97e'):
   for f in (B/folder).rglob('*'):
    if f.is_file() and not f.is_symlink() and f.suffix in ('.json','.jsonl','.log','.cpp','.hpp','.d','.bf16','.bin','.f32','.u32'):wanted.add(f)
  members={str(f.relative_to(B)):dict(sha256=sha(f),bytes=f.stat().st_size) for f in sorted(wanted)}

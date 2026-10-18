@@ -50,7 +50,12 @@ def main():
    stem=next((s for s in rebuilt if Path(arg).name in (s+'.o',s+'.cpp.o') or Path(arg).name.endswith('-'+s+'.cpp.o') or Path(arg).name.endswith('-'+s+'.o')),None)
    if stem:link[i]=str(dest/(stem+'.o'));replaced.append(stem)
    else:
-    src=Path(arg);assert parent['sources'][str(src.relative_to(ROOT))]==sha(src),src
+    src=Path(arg)
+    # Parent built helpers were pinned through its linked binary, not as source
+    # objects. Bind these immutable copied inputs explicitly in this receipt.
+    key=str(src.relative_to(ROOT))
+    if key in parent['sources']:assert parent['sources'][key]==sha(src),src
+    sources[key]=sha(src)
     target=dest/'inherited'/(hashlib.sha256(arg.encode()).hexdigest()[:12]+'-'+src.name);target.parent.mkdir(exist_ok=True)
     if not target.exists():os.link(src,target)
     assert sha(src)==sha(target);sources[str(target.relative_to(ROOT))]=sha(target)

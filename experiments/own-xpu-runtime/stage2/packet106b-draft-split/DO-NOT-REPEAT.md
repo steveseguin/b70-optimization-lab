@@ -1,5 +1,11 @@
 # Packet106 boundaries
 
+Packet106b addendum: only production, head split and combined head/draft split
+are scheduled. Do not materialize the unused draft-only view to satisfy an
+inherited mock loop. Both twelve-prompt smokes and the device micro precede the
+B grid. A requires an exact improving B winner. CPU evidence and remaining
+device steps are in the [closeout](CPU-PREPARATION-CLOSEOUT.md).
+
 - Keep all 91,392 draft prefix rows available on rank1 for misses. No draft
   trunk relocation, compressed head or changed prefix is part of this arm.
 - A speculative flag is not a verified hit. Only the controller's confirmed

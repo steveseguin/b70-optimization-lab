@@ -1,65 +1,49 @@
-# Packet106 CPU preparation — closeout
+# Reset repair CPU preparation — closeout
 
 <!-- campaign-closeout -->
 
 ## Question and identity
 
-Can rank0 evaluate the unchanged draft prefix's last 45,056 rows only after a
-verified hit, while rank1 retains the complete miss path? October 18, 2026;
-Unsloth Flash-Next UD-IQ3_XXS quantized compressed version, arithmetic oracle
-`iq3-p49-split32-v1`, BF16 KV, intended two-B70 24/24 target and rank1 draft.
-Frozen source parent: packet105 commit `339d7017a`; implementation milestone
-`e53b46b5b`. Production is the same fixed route-fast / rec-both-plus /
-wide64+halfcache / HC-wide / ordered baseline across all four views.
+October 18: copy frozen packets105/106 and validate the request-reset suffix
+repair without GPU work. Source identity is in `copy-lineage.json`; selected
+views retain the unchanged model, weights, arithmetic and BF16 KV. Intended
+device hardware is the four-card host's B pair, then independent A confirmation.
 
 ## Outcome
 
-CPU preparation passes. GNU and Intel match every finite proposal byte in two
-fresh runs each, including lowest-global-index ties; nonfinite rows refuse.
-Eight full-size allocation checks and nine layout refusals pass. All eleven
-startup windows pass for all four views (44 checks). Four seals and three
-temporary queue plans pass. No device or model performance result is claimed.
-Packet87t's +0.7749% remains modeled.
+CPU repair, byte, allocation, mock and every-window startup checks pass for
+the scheduled views. Proposed device jobs plan successfully on temporary
+queues only. No device equality, model speed or record improvement is measured.
 
 ## What worked
 
-An explicit verified-hit flag selects the short rank1 prefix and separate
-rank0 suffix. Misses retain the original full prefix. Separate target/draft
-mailboxes and scratch permit composition; the target verifies every token.
-Actual transfer mocks preserve private target state and check both reset
-controls and per-request trace ownership. The final build is 261,302,180 bytes.
+Restoring the private active flag after reset permits the suffix reduction.
+The negative control detects the old skip. Full-vocabulary byte checks and
+all-window startup validate distinct parts of the path. Per-window receipts
+are persisted immediately and bound to their exact source identities.
 
 ## What failed or remains uncertain
 
-Review found that inherited request reset clears suffix active controls. The
-local services restore them; transfer logs now follow the new request output.
-The first seal refused an external-resolving manifest alias; a byte-identical
-local snapshot resolves it without changing the gate identity. No existing
-packet was edited. Runtime mock backends do not prove device event behavior,
-residency, output determinism or speed. The host rendezvous may erase the
-modeled saving. The full record chain and promotion gates remain unqualified.
+Inherited fixture permissions and harness loops covering an excluded view
+needed local preparation fixes; they are described in the work note. Neither
+was a GPU fault. CPU success cannot prove device correctness, transfer ordering,
+real residency or performance. The device micro and full twelve-prompt smoke
+must complete exactly before any grid. No automatic retries are configured.
 
 ## Evidence and patches
 
-- [Design and frozen lineage](DESIGN.md), [copy hashes](copy-lineage.json).
-- [GNU/Intel repeated byte gate](evidence/cpu-byte-identity.json),
-  [native scheduling](evidence/controller.json), [real transfer mocks](evidence/runtime-mock.json).
-- [Allocation and refusal gate](evidence/full-shape.json),
-  [every-window receipt](startup97e.json), [compressed full commands/results](evidence/startup97e-runs.json.gz).
-- [Final seal verification](evidence/final-verification.json),
-  [temporary queue plans](evidence/queue-plans.json), [retained build evidence](RETENTION.md).
-- [Task record](../../../../notes/2026-10-18-own-runtime-packet106.md).
-
-Implementation and helpers remain in this packet; generated source and small
-CPU evidence are round-trip verified in the retained archive. Model weights
-and the shared full oracle outputs remain outside Git, as before.
+[Reset regression](evidence/reset-regression.json),
+[byte identity](evidence/cpu-byte-identity.json),
+[allocation gate](evidence/full-shape.json),
+[transfer mock](evidence/runtime-mock.json),
+[startup summary](startup97e.json), [retention](RETENTION.md),
+[work note](../../../../notes/2026-10-18-own-runtime-packet105b.md).
+Generated source and individual receipts are member-hashed in the retained
+archive. Model weights and original oracle captures remain local external inputs.
 
 ## When to revisit
 
-The coordinator first runs [the B smoke proposal](../../ops/lane-queue/proposed-p106-smoke-B.txt):
-one prompt, 64 tokens, combined candidate only, with fault review and graceful
-drain. A passing smoke unlocks [the B grid](../../ops/lane-queue/proposed-p106-B-grid.txt).
-An exact candidate beating both controls unlocks [A confirmation](../../ops/lane-queue/proposed-p106-A-confirm.txt).
-Require unchanged draft proposals and acceptance counts. Preserve all gates;
-no retry loop or automatic server restoration. Further optimization follows
-actual device evidence, not the projection.
+Coordinator execution of the proposed micro and complete candidate smokes is
+the next step. Only matching exact evidence admits the B grid; only an exact
+improving B winner admits fresh A confirmation. Any mismatch needs a retained
+device trace and a new copy, not mutation of these completed seals.

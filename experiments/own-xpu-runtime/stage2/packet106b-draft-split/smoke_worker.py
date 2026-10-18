@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Internal screen worker: one rank pair, one prompt, exactly 64 tokens, candidate only."""
+"""Internal screen worker: one rank pair, all twelve prompts, exactly 64 tokens, candidate only."""
 import argparse
 import os
 from pathlib import Path
@@ -60,7 +60,8 @@ def run(identity, output, seconds, pair_dir=None):
     import suite
     import storage
     manifest = D.oracle_inputs()
-    entries = manifest['prompts'][:1]
+    entries = manifest['prompts']
+    require(len(entries)==12, 'complete twelve-prompt suite required')
     adapter = output / 'adapter'
     (adapter / 'build').mkdir(parents=True)
     for name in ('selection.json', 'memory-plan.json'):
@@ -99,7 +100,7 @@ def run(identity, output, seconds, pair_dir=None):
     try:
         pipeline.Transport.__init__(transport, args, ranks, environment, check, launch_hook=monitor.register)
         monitor.poll(ready=True)
-        requests = [('incident64', entries[0], 64)]
+        requests = [(entry['prompt_id']+'64', entry, 64) for entry in entries]
         for name, entry, count in requests:
             check()
             dest = output / name
@@ -111,7 +112,7 @@ def run(identity, output, seconds, pair_dir=None):
             result.update(prompt_id=entry['prompt_id'], prompt_class=D.METRICS.PROMPT_CLASSES[entry['prompt_id']],
                           repeat=1, exact_oracle=True, prompt_token_sha256=D.token_hash(prompt))
             save(dest / 'receipt.json', label(result))
-            if count == 64:
+            if entry['prompt_id']=='incident-retrospective':
                 incident = dict(passed=True, tokens_compared=64, mode='separate-reset-request',
                                 receipt_sha256=sha(dest / 'receipt.json'))
                 save(output / 'incident64.json', incident)

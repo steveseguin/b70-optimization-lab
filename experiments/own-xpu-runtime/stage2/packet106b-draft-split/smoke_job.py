@@ -1,4 +1,4 @@
-"""Coordinator-only first use: combined candidate, one prompt, 64 tokens."""
+"""Coordinator-only first use: combined candidate, all twelve prompts, 64 tokens."""
 import argparse
 from pathlib import Path
 from screen_jobs import P,verify,view,smoke_output
@@ -8,12 +8,14 @@ def main(argv=None):
  from bootstrap import install
  install()
  import smoke_screen as screen
- screen.command=lambda args,identity,manifest:['/usr/bin/python3','-B',str(P/'smoke_worker.py'),'--identity',str(args.output/'identity.json'),'--output',str(args.output/'run'),'--seconds','900']
- screen.WATCHDOG={'tp2':900};screen.WRITES={'tp2':300_000_000}
+ screen.command=lambda args,identity,manifest:['/usr/bin/python3','-B',str(P/'smoke_worker.py'),'--identity',str(args.output/'identity.json'),'--output',str(args.output/'run'),'--seconds','1800']
+ screen.WATCHDOG={'tp2':1800};screen.WRITES={'tp2':1_100_000_000}
  lineage=view('head-split+draft-split');cmd=['--profile','tp2','--lane','B','--placement','1','--timing','token','--lineage',str(lineage),'--seal',str(lineage/'screen-seal.json'),'--output',str(smoke_output())]
  if a.plan:cmd+=['--plan']
  else:
   assert a.authorized_device_window and a.fault_review
+  from device_gate import require_micro
+  require_micro()
   cmd+=['--fault-review',a.fault_review,'--authorized-device-window']
  return screen.main(cmd)
 if __name__=='__main__':raise SystemExit(main())

@@ -1,5 +1,12 @@
 # Packet105 guardrails
 
+Packet105b addendum: never accept a one-prompt smoke or a skipped private suffix
+active flag. The repaired gate must detect the old post-reset failure. Require
+the zero-mismatch suffix-heavy device micro and all twelve cold 64-token prompts
+before a grid. See [CPU closeout](closeout.md). Frozen fixture copies with lost
+execute permission are replaced only by byte-verified links inside the new
+packet; never chmod or rewrite the frozen parent to repair a test harness.
+
 - Keep packet97e's fixed target arithmetic and draft choices. Parent selection and
   orchestration outputs are mutable and must never enter this packet's seals.
 - Never use rank0 speculative streams for the suffix. Only rank1's verified,

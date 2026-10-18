@@ -1,59 +1,49 @@
-# Packet105 CPU implementation — closeout
+# Reset repair CPU preparation — closeout
 
 <!-- campaign-closeout -->
 
 ## Question and identity
 
-Can packet87t's exact target-head row split be implemented on the frozen
-packet97e source copy without changing iq3-p49-split32-v1 outputs or the draft?
-The target keeps its Q6 head weights and BF16 row arithmetic. Rank1 owns
-[0,202240); rank0 owns [202240,248320). October18 work is CPU only; two-card
-B70 lane B and independent lane-A confirmation remain proposed.
+October 18: copy frozen packets105/106 and validate the request-reset suffix
+repair without GPU work. Source identity is in `copy-lineage.json`; selected
+views retain the unchanged model, weights, arithmetic and BF16 KV. Intended
+device hardware is the four-card host's B pair, then independent A confirmation.
 
 ## Outcome
 
-The implementation and CPU checks pass. Three views are sealed and ten proposed
-jobs pass temporary queue plans. No device result or measured speed gain is claimed. Packet87t's
-+1.0685% is a prediction, not a measurement.
+CPU repair, byte, allocation, mock and every-window startup checks pass for
+the scheduled views. Proposed device jobs plan successfully on temporary
+queues only. No device equality, model speed or record improvement is measured.
 
 ## What worked
 
-Existing p33 row arithmetic and round2 selection can be reused unchanged with
-partition-local extents and a global-index merge. The native controller has a
-safe service point after rank0's speculative half and before its remote wait.
-A separate copy-only queue can receive the current final.mix dependency while
-rank1 submits the prefix head. The all-window CPU harness catches KD reference
-startup defects that an ordinary model allocation check misses.
+Restoring the private active flag after reset permits the suffix reduction.
+The negative control detects the old skip. Full-vocabulary byte checks and
+all-window startup validate distinct parts of the path. Per-window receipts
+are persisted immediately and bound to their exact source identities.
 
 ## What failed or remains uncertain
 
-The first census caught a category/lifetime mismatch and unwanted private
-scratch snapshots; both were fixed before any device launch. Dedicated BCS
-availability, real queue overlap, driver residency, exact device output and
-both lane speeds remain untested. Nonfinite diagnostic indices are not emitted
-outputs; the gate checks raw logit bytes, finite argmax bytes and invalid-output
-refusal. There is no permission to promote this CPU evidence as a GPU result.
+Inherited fixture permissions and harness loops covering an excluded view
+needed local preparation fixes; they are described in the work note. Neither
+was a GPU fault. CPU success cannot prove device correctness, transfer ordering,
+real residency or performance. The device micro and full twelve-prompt smoke
+must complete exactly before any grid. No automatic retries are configured.
 
 ## Evidence and patches
 
-The implementation is in this directory, copied from packet97 after97e.
-[Copy lineage](copy-lineage.json), [build receipt](build-device-receipt.json),
-[CPU byte gate](evidence/cpu-byte-identity.json),
-[allocation census](evidence/full-shape.json),
-[actual-runtime mock](evidence/runtime-mock.json),
-[native-controller mock](evidence/controller.json), and
-[all-window receipt](startup97e.json) retain the identity and checks.
-The [refusal checks](evidence/startup-refusals.json),
-[guardrails](evidence/guardrails.json), and
-[temporary queue plans](evidence/queue-plans.json) also pass.
-The work note is [here](../../../../notes/2026-10-18-own-runtime-packet105.md).
-Build objects are local caches, restored with build_engine.py using the pinned
-packet97 object/source closure; no weights or binary caches are added to Git.
-Retained compressed transcripts keep exact bytes from earlier CPU iterations.
+[Reset regression](evidence/reset-regression.json),
+[byte identity](evidence/cpu-byte-identity.json),
+[allocation gate](evidence/full-shape.json),
+[transfer mock](evidence/runtime-mock.json),
+[startup summary](startup97e.json), [retention](RETENTION.md),
+[work note](../../../../notes/2026-10-18-own-runtime-packet105b.md).
+Generated source and individual receipts are member-hashed in the retained
+archive. Model weights and original oracle captures remain local external inputs.
 
 ## When to revisit
 
-The coordinator may review the new proposed lane-B
-and lane-A grids. Device execution requires its normal live fault and residency
-admission. A winning lane-B placement still requires an independent lane-A
-bracket and the existing full chain quality gates before any record claim.
+Coordinator execution of the proposed micro and complete candidate smokes is
+the next step. Only matching exact evidence admits the B grid; only an exact
+improving B winner admits fresh A confirmation. Any mismatch needs a retained
+device trace and a new copy, not mutation of these completed seals.

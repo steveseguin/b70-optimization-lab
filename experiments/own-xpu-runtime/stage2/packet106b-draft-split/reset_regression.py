@@ -42,7 +42,7 @@ def main():
     (P / 'proposed-fix.patch').write_text(patch)
     sources = {str((SOURCE / f).relative_to(ROOT)): sha(SOURCE / f)
                for f in ('request_reset.hpp', 'p105_runtime.hpp', 'round2_submit.cpp',
-                         'p105_submit.cpp', 'p105_common.hpp', 'runtime_mock.py')}
+                         'p105_submit.cpp', 'p105_common.hpp')}
     runs = []
     commands = []
     for name, compiler in [('GNU', '/usr/bin/g++'),

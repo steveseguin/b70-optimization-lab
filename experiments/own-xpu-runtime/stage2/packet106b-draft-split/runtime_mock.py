@@ -79,7 +79,7 @@ int main(int argc,char**argv){try{
  for i,cmd in enumerate(commands):
   with turn(),(S/f'build-{i}.log').open('w') as log:subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=600)
  runs=[]
- for choice in ('draft-split','head-split+draft-split'):
+ for choice in ('head-split+draft-split',):
   dest=S/'scratch';cmd=[str(S/'fixture'),str(P/'selections'/choice/'selection.json'),str(dest)]
   r=subprocess.run(cmd,stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120)
   assert r.returncode==0,r.stderr

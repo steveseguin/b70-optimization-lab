@@ -7,22 +7,22 @@ from memory_plans import plan
 from build_engine import P
 class Packet106(unittest.TestCase):
  def test_views(self):
-  self.assertEqual(set(aliases()),{'production','head-split','draft-split','head-split+draft-split'})
+  self.assertEqual(set(aliases()),{'production','head-split','head-split+draft-split'})
   rows=[selection(v) for v in aliases().values()]
   self.assertTrue(all(r['draft']==rows[0]['draft'] for r in rows))
  def test_exact_memory_deltas(self):
   rows={k:plan(v)['placements']['1']['capacities']['4096']['ranks'] for k,v in aliases().items()}
-  for label,delta in [('head-split',(157322272,-155750384)),('draft-split',(153826336,16)),('head-split+draft-split',(311148608,-155750368))]:
+  for label,delta in [('head-split',(157322272,-155750384)),('head-split+draft-split',(311148608,-155750368))]:
    for r in (0,1):self.assertEqual(rows[label][r]['arena_device_bytes']-rows['production'][r]['arena_device_bytes'],delta[r])
  def test_smoke_refused_if_missing(self):
   import screen_jobs
   with patch.object(screen_jobs,'smoke_output',return_value=P/'build/no-such-smoke'):
    with self.assertRaises(FileNotFoundError):screen_jobs.require_smoke()
- def test_one_prompt_smoke_source(self):
-  tree=ast.parse((P/'smoke_worker.py').read_text())
-  requests=[n.value for n in ast.walk(tree) if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='requests' for t in n.targets)]
-  self.assertEqual(len(requests),1);self.assertIsInstance(requests[0],ast.List);self.assertEqual(len(requests[0].elts),1)
-  self.assertEqual(ast.literal_eval(requests[0].elts[0].elts[-1]),64)
+ def test_confirmation_refuses_no_improving_winner(self):
+  import screen_jobs,compare
+  rows=[dict(choice=c,index=i,rate=60 if i in (0,3) else 50,all_13_exact=True,exact=True,exact_count=13,boot_id='same',lane='B',started_utc_ns=2*i,finished_utc_ns=2*i+1,acceptance_counts=[1],proposal_sequences=[[1,2]],acceptance=.5) for i,c in enumerate(screen_jobs.ORDER)]
+  with patch.object(screen_jobs,'jobs',return_value=rows),patch.object(compare,'load',side_effect=lambda r:r):
+   with self.assertRaisesRegex(AssertionError,'no exact improving winner'):screen_jobs.qualified_winner()
  def test_grid_requires_smoke(self):
   import screen_job
   from screen_jobs import output,jobs

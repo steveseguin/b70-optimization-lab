@@ -119,7 +119,7 @@ def screen_main(argv=None, *, release=None):
     cmd = command(args, identity, manifest)
     if args.plan:
         print(json.dumps(dict(evidence_label='screen', device_executed=False, supported=identity['placement']['supported'], identity=identity,
-                              command=cmd, model_lifetimes=1, request_count=1, tokens=64, candidate_only=True, watchdog_seconds=WATCHDOG[args.profile],
+                              command=cmd, model_lifetimes=1, request_count=12, tokens=64, candidate_only=True, watchdog_seconds=WATCHDOG[args.profile],
                               planned_write_bytes=WRITES[args.profile],
                               physical_cards=LANES[args.lane]['cards'], native_card_arguments=[0, 1],
                               device_mask=mask_for(args.lane), timing=args.timing,
@@ -230,16 +230,20 @@ def screen_main(argv=None, *, release=None):
             proof = read(args.output / 'run/report-inputs.json')
             require(proof.get('passed') is True and proof.get('device_isolation', {}).get('passed') is True,
                     'screen exactness/isolation unproven')
-            require(proof['lane'] == args.lane and len(proof['requests']) == 1
+            require(proof['lane'] == args.lane and len(proof['requests']) == 12
                     and proof['incident64'].get('passed') is True
                     and all(r.get('passed') is True and r.get('exact_oracle') is True for r in proof['requests']),
                     'screen quality incomplete')
-            request=proof['requests'][0]
-            require(len(request['tokens'])==64 and request['prompt_id']=='incident-retrospective', 'smoke must be one prompt / 64 tokens')
-            transfers=[read_line for f in (args.output/'run').rglob('p106-transfers.jsonl') for line in f.read_text().splitlines() if line for read_line in [json.loads(line)]]
+            require([r['prompt_id'] for r in proof['requests']]==[e['prompt_id'] for e in manifest['prompts']], 'full ordered suite required')
+            require(all(len(r['tokens'])==64 and r.get('cached_tokens')==0 for r in proof['requests']), 'twelve cold 64-token requests required')
+            suffix_winners=sum(t>=202240 for r in proof['requests'] for t in r['tokens'])
+            require(suffix_winners>0, 'smoke never selected a target suffix winner')
+            architecture=next(r for r in proof['requests'] if r['prompt_id']=='architecture-tradeoff')
+            require(architecture['tokens'][30]==215495, 'known failing token31 not exercised')
+            transfers=[json.loads(line) for f in (args.output/'run').rglob('p106-transfers.jsonl') for line in f.read_text().splitlines() if line]
             suffixes=sum(r.get('leg')=='best-export' for r in transfers)
             require(suffixes>0, 'smoke did not exercise draft suffix')
-            result=dict(passed=True,smoke=True,diagnostic=True,submission_eligible=False,requests=proof['requests'],incident64=proof['incident64'],request_count=1,tokens=64,draft_suffixes=suffixes)
+            result=dict(passed=True,smoke=True,diagnostic=True,submission_eligible=False,requests=proof['requests'],incident64=proof['incident64'],request_count=12,tokens=64,target_suffix_winners=suffix_winners,draft_suffixes=suffixes,cached_tokens=0)
             result.update(placement=proof['placement'], lane=args.lane, conditions=LANES[args.lane],
                           timing=identity['timing'], device_isolation=proof['device_isolation'])
             save(args.output / 'run/summary.json', result)

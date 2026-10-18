@@ -10,6 +10,8 @@ def main():
   assert r['passed'] and r['device_executed'] is False,leaf
   check_map(ROOT,r['sources']);sources.update(r['sources']);sources[str((P/leaf).relative_to(ROOT))]=sha(P/leaf)
  startup=reports['startup97e.json'];assert startup['compositions']==3 and startup['windows_per_composition']==11 and startup['total_windows']==33
+ from startup_receipt97e import verify as verify_startup
+ verify_startup()
  archive=startup['archive'];assert sha(ROOT/archive['path'])==archive['sha256'];sources[archive['path']]=archive['sha256']
  shape=reports['evidence/full-shape.json'];assert len(shape['runs'])==6
  for r in shape['runs']:

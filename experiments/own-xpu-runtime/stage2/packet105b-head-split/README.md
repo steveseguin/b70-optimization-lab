@@ -1,70 +1,51 @@
-# Packet105: exact target head row split
+# Packet105b: reset repair and suffix-heavy validation
 
-CPU-only implementation, copied from packet97 after the committed
-97e startup repair (386faa9ee). Parent packets and orchestration remain frozen.
-Rank1 keeps rows [0,202240); rank0 evaluates [202240,248320) from the verified
-current normalized final.mix, after its own target half. No speculative hidden
-state or draft arithmetic changes. Compute-queue and copy-engine transfer
-placements are separate candidates. All device quality and speed are pending.
+New copy of frozen packet105. The only production runtime delta is the private
+rank0 `active=1` upload before suffix submissions, after the verified hidden
+import. Packet105x proved why request reset otherwise skips the suffix argmax.
+No weight, logit arithmetic, merge tie rule, KV precision or speculative state
+changes. The original packet and all old evidence remain frozen.
 
-The 1.0685% gain is packet87t’s prediction, never a measured result.
+CPU gates pass: GNU/Intel exact logit and winner bytes in two fresh processes
+each, old-failure/new-fix regression (21 cases per process), controller and
+loader/transfer mocks, four rank allocation checks, and all eleven startup
+windows for production and compute head split (22 total). Only these views
+will run. BCS is outside this task. Each completed window has an immediate
+source-bound receipt under `build/startup97e/receipts/`, retained in the evidence
+archive. A rerun reuses matching receipts; changed inputs invalidate them.
 
-The prefix and suffix call the existing p33 Q6 kernel and round2 argmax.
-The merge keeps the lowest global index on ties. Every logit's reduction and
-BF16 rounding stay unchanged. Nonfinite logits retain production's sticky
-error and block output; invalid diagnostic indices are not emitted tokens.
+The device micro compiles but has NOT run. It uses the exact production head,
+argmax and pack kernels on synthetic expanded Q6 weights and 4,096 hidden
+vectors. Scaling sentinel coordinates forces suffix winners. It requires at
+least 2,000 suffix winners, 256 boundary ties, 768 NaN/+Inf/-Inf row cases,
+256 batch resets, one detected old-bug negative control and zero repaired
+mismatches. Full logit bytes and finite winner payloads must agree; invalid
+rows must refuse token publication. This is a diagnostic operator test, not a
+model performance measurement or a model quality pass. It uses one B-lane card;
+the full model smoke tests the actual two-rank path.
 
-Rank1 starts a 5120-byte pinned copy after the verified final.mix producer,
-submits its prefix head, then publishes the completed hidden bytes. Rank0
-services that request after its own speculative half and returns a 16-byte
-best-value/index/status payload. Position, fixture and sequence must match.
-Suffix scratch is private and excluded from model rollback. The BCS choice
-uses a dedicated copy-only Level Zero queue and refuses a missing engine.
-The compute choice is the matched transfer-placement control.
+The new proposed files are under `../../ops/lane-queue/`:
 
-The six full-size allocation checks account for an extra 157322272 device
-bytes on rank0, including 155750400 weight bytes, and 155750384 fewer bytes on
-rank1. This checks the existing arena limit and reserve, not actual residency.
-Driver paging or insufficient live headroom must refuse a screen.
+1. `proposed-p105b-micro-B.txt`: coordinator-owned device diagnostic.
+2. `proposed-p105b-smoke-B.txt`: candidate only, all twelve prompts, 64 tokens
+   each, reset before every request. Execution refuses until the micro passes.
+   Every token must match the oracle, including architecture-tradeoff token31
+   (215495), and a suffix winner must be observed. No warmup prompt is run.
 
-CPU gates are in [evidence/](evidence/) and [startup97e.json](startup97e.json).
-They cover both compilers with fresh repeats, all 248320 loader rows, verified
-hidden bytes on hit and miss paths, stale/cancel/peer-exit refusals, and all
-eleven chain windows for each of the three choices. KD keeps packet97e's
-draft-only host-reference projection. K0's CPU path is a structural check;
-device JIT and GPU arithmetic remain pending.
+Both proposals pass the real planner on temporary queues. Neither is installed
+in a live queue. The model smoke is capped screening evidence, never a final
+realistic-suite headline. Device equality, repeats and speed remain pending.
+The combined grid and conditional A confirmation live in [packet106b](../packet106b-draft-split/README.md).
 
-The two proposed grids use production / compute split / production / BCS split /
-production. Each placement must beat its own two fresh controls with exact
-outputs and unchanged acceptance. Lane A independently confirms lane B and
-remains the record lane. Temporary queue plans never install or execute jobs.
-Per-leg JSON timing files distinguish transfer placement; hidden-export timing
-includes the producer dependency wait and is not a pure DMA latency number.
+CPU commands run from the repository root using
+`nice -n 19 taskset -c 8-15,24-31 python3 -B <packet/script.py> </dev/null`.
+Scripts impose an 8 GiB address-space cap and serialize compilation through
+packet94's compiler turn. Run `build_engine.py`, `reset_regression.py`, then
+`cpu_milestone.py cpu_gate.py controller_gate.py full_shape.py runtime_mock.py
+startup97e.py`. `prepare_packet.py` creates seals only in new unsealed views;
+it refuses to replace them. `build_microbench.py`, `propose_micro.py` and
+`propose_smoke.py` compile/plan only. Read the [retention instructions](RETENTION.md)
+before restoring local build inputs. Remaining copied preparation scripts are
+historical parent utilities, not an alternative launch path for this packet.
 
-For CPU reproduction, run the following scripts one at a time from this
-directory with `nice -n 19 taskset -c 8-15,24-31 python3 -B SCRIPT </dev/null`:
-`build_engine.py`, `cpu_gate.py`, `controller_gate.py`, `full_shape.py`,
-`runtime_mock.py`, `startup_refusals.py`, and `startup97e.py`.
-They use packet94's compiler lock and an 8 GiB address-space limit.
-`test_p105.py` checks admission and comparisons and saves its receipt.
-`prepare_packet.py` creates new immutable view seals only after all gates;
-`queue_plan.py` writes only the new proposed files and plans temporary queues.
-Do not overwrite a sealed view after changing its sources.
-
-Local build caches stay below 300 MB. Rebuilds require the pinned packet97
-object/source closure described in [copy-lineage.json](copy-lineage.json) and
-[build-device-receipt.json](build-device-receipt.json). Fixture entry objects
-are removed after linking; hash-bound fixtures and sources remain. Large raw
-transcripts are retained compressed with exact hashes, including prior CPU
-iterations. No model weights or binary caches are committed.
-The shared CPU fixtures under `build/gnu-host` are local byte-identical copies
-of the frozen packet56 fixtures, not links outside the repository. Their names
-and hashes are in [the localization receipt](evidence/localized-static-files.json).
-When restoring caches, copy those fixture bytes from packet56, the frozen
-packet97 `build/fusion-fixtures` and `build/input` inputs, then verify the gate
-hashes. The oracle manifest is a tracked local copy; full frozen oracle captures
-remain external lab evidence reached through the retained static links.
-
-[CPU closeout and remaining device gates](closeout.md) ·
-[Do not repeat](DO-NOT-REPEAT.md) ·
-[Work note](../../../../notes/2026-10-18-own-runtime-packet105.md)
+[CPU closeout](closeout.md) · [work note](../../../../notes/2026-10-18-own-runtime-packet105b.md)

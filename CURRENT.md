@@ -8,12 +8,13 @@ binaries occupy 39.53 MB; all 76 CPU checks and three temporary queue plans
 pass. The full submission chain stays in 58j. No GPU, service, live queue or
 host setting changed. [Work note](notes/2026-10-18-own-runtime-packet58k.md).
 
-**October 18, packet105b reset repair prepared on CPU:** The new copy restores
-the suffix search after a request reset. Both binaries compile, and repeated
-CPU byte and reset checks pass. All 22 startup windows pass. The new device
-microbenchmark and twelve-prompt smoke proposals both plan successfully. They
-stress suffix winners, ties, nonfinite rows, resets and the known failing token.
-Device execution is pending; combined head/draft grid preparation continues.
+**October 18, packet105b/106b reset repair ready on CPU:** The new copies
+restore or preserve the suffix search after request reset. Repeated byte and
+reset checks, allocation/transfer checks and all 55 startup windows pass, with
+one saved receipt per window. The micro, both twelve-prompt candidate smokes,
+B grid and conditional A confirmation all plan successfully. The grid refuses
+until the device micro and complete smokes pass; A also needs an exact B winner.
+The combined new build is 240.9 MB. All device results and speed remain pending.
 No GPU, service or live queue changed.
 [Work note](notes/2026-10-18-own-runtime-packet105b.md).
 
