@@ -124,6 +124,54 @@ class InPlace(unittest.TestCase):
         self.assertEqual(s.state["notes_cached_tokens"], 900 * len(model.notes_requests))
         self.assertGreater(len((Path(self.dir.name) / next(iter(keeper.sessions)) / "notes-history.jsonl").read_text().splitlines()), 1)
 
+    def test_lookups_show_the_archived_entry_a_line_waits_on(self):
+        """Campaign 32 (quiet audits, seed 1): a reversal waited 55 items as `250 + (amount of the decrease entered in
+        item 32) = unknown`, and the model's own sum at the end was one off. With --lookups the line is asked again,
+        once, with what the archive says about the name in that item; the amount found there counts as stated."""
+        audit = "An audit found that the change of abcd03 entered in item 3 was a mistake, and it has now been reversed."
+
+        def talk(n):
+            msgs = conversation(n)
+            for m in msgs:
+                if m.get("role") == "tool" and m["content"].startswith("ITEM 12:"):
+                    m["content"] = m["content"].replace("ITEM 12: ", "ITEM 12: " + audit + " ", 1)
+            return msgs
+
+        class Auditor(LedgerModel):
+            def __call__(self, body):
+                last = str(body["messages"][-1].get("content") or "")
+                if last.startswith("Some lines of your CHANGES wait"):
+                    self.requests.append(body)
+                    self.notes_requests.append(body)
+                    out = reply("NEW RULES\n(none)\nCHANGES\nabcd03: 21 - 21 = 0\nOPEN\n- keep going")
+                    out["usage"] = {"prompt_tokens": 10, "completion_tokens": 5}
+                    return out
+                out = super().__call__(body)
+                text = out["choices"][0]["message"]["content"]
+                moved = [m for m in body["messages"] if m.get("role") == "tool" and audit in str(m.get("content"))]
+                if moved and last.startswith("[[Message from the context keeper") and "CHANGES\n" in text:
+                    out["choices"][0]["message"]["content"] = text.replace(
+                        "CHANGES\n", "CHANGES\nabcd03: 21 (reversal of the entry in item 3, amount not yet known, must recall item 3)\n", 1)
+                return out
+
+        def run(**kw):
+            model = Auditor()
+            keeper = self.keeper(model, recall_label=r"(?m)^ITEM (\d+):", recall_unit="item", notes_checks="near", **kw)
+            for n in range(1, 25):
+                keeper.complete({"model": "m", "messages": talk(n)})
+            return model, next(iter(keeper.sessions.values()))
+
+        model, s = run(lookups=True)
+        asked = [r for r in model.notes_requests if str(r["messages"][-1].get("content")).startswith("Some lines of your CHANGES wait")]
+        self.assertEqual(len(asked), 1)
+        self.assertIn("item 3: ITEM 3: the clerk moved counter abcd03 to 21.", asked[0]["messages"][-1]["content"])
+        self.assertIn("abcd03: 0", s.state["notes"])
+        events = [json.loads(l) for l in (s.dir / "events.jsonl").read_text().splitlines()]
+        self.assertEqual([e["units"] for e in events if e.get("why") == "waits on archived entries"], [[3]])
+        model, s = run()                                                           # off by default: never asked
+        self.assertFalse([r for r in model.notes_requests if str(r["messages"][-1].get("content")).startswith("Some lines")])
+        self.assertIn("abcd03: 21 (reversal of the entry in item 3", s.state["notes"])
+
     def test_inplace_fit_takes_notes_in_place_in_a_window_too_small_for_the_threshold(self):
         """Campaign 21: at 8K and 12K the 0.458 x budget threshold never fitted beside the largest turn, so every
         cut was an ordinary one with the notes rewritten in full. --inplace-fit lowers it to the room left."""

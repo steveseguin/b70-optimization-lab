@@ -53,7 +53,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.1.1.dev1"
+__version__ = "1.2.0.dev0"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -199,6 +199,15 @@ RECALL_ROOM_NOTE = ("[[There is no room left in this turn for another archive se
                     "after that step for anything still missing.]]")
 RECALL_NONE_NOTE = "recall: not run, no room left in this turn"
 RECALLED_CHARS = 120_000                             # how much recent archive-search text the note checks may cite
+# --lookups: a CHANGES line that says it waits on an archived entry ("amount not yet known, must recall item 32") is
+# asked again once, with what that entry says about the name
+WAITS = re.compile(r"\b(not (yet )?known|unknown|must (be )?recall(ed)?|to (be )?recall(ed)?|recall (it|the|that|item)|"
+                   r"look(ed)? up|pending|from (the )?archive)\b", re.I)
+LOOKUP_RETRY = ("Some lines of your CHANGES wait on entries that are in the archive. Here is what those {unit}s say about "
+                "each name, word for word:\n{entries}\nApply each entry to the value the NOTES hold and write the line "
+                "with its working (`name: 250 + 15 = 265`); leave a line waiting only if its entry does not settle it. "
+                "Then reply with the three complete sections again.")
+LOOKUP_CHARS = 4000                                  # at most this much archived text in one such question
 RECALL_CUT_NOTE = "\n[cut here: no more room in this turn; narrow the search with `before` / `after` / `last`]"
 CARRY_HEAD = ("[[Message from the context keeper, not part of the task. Your last turn ended without a command. These "
               "are the archive searches you made in it and what they returned; they were not saved anywhere else, "
@@ -659,7 +668,8 @@ class Keeper:
                  empty_retry: bool = True, think_cap: int = 0, ask_notes=None, notes_model: str | None = None,
                  notes_system: str | None = None, notes_kwargs: dict | None = None, notes_prepass: int = 0,
                  notes_async: str | None = None, prewarm: bool = False, log_calls: bool = False,
-                 inplace_fit: bool = False, notes_extra: dict | None = None, notes_prefill: bool = False) -> None:
+                 inplace_fit: bool = False, notes_extra: dict | None = None, notes_prefill: bool = False,
+                 lookups: bool = False) -> None:
         self.ask, self.root = ask, Path(state_dir)
         # ask_notes: a separate keeper model's server for the notes calls (--notes-upstream), with notes_model as its
         # model name, notes_system as its system message (default KEEPER_SYSTEM), notes_kwargs as its
@@ -733,6 +743,8 @@ class Keeper:
             raise ValueError("--recall-label needs one group for the number, such as '(?m)^ITEM (\\d+)/'")
         self.recall_unit = recall_unit if recall_label else "message"
         self.recall_tool = recall_tool(self.recall_unit) if recall_label else RECALL_TOOL
+        # lookups (needs recall_label): see waiting()
+        self.lookups = bool(lookups) and self.recall_label is not None
         self.sessions: dict[str, Session] = {}
         self.clock = threading.local()                 # per request thread: seconds spent in the model server
         self.lock = threading.Lock()
@@ -1049,12 +1061,13 @@ class Keeper:
         seen = nd.numbers_in("\n".join(nd.TRAILER.sub("", text_of(m)) for m in noted))
         strict = self.notes_checks in ("count", "near")
         thinking, asked_count, asked_working, asked_layout = self.notes_thinking, not strict, False, False
+        asked_lookup, looked = False, []             # --lookups: asked once; the archived entries shown (evidence)
         rules_seen: list[str] = []
         earlier: dict | None = None                  # the reply before an asked-for one (see notesdelta.merge_replies)
         spelt: dict[str, str] = {}                   # misspelled names of this cut and what was meant (notesdelta.respell)
         why, new, info, near = "no reply", "", {}, None
         delta: dict | None = None
-        for attempt in (1, 2, 3, 4):
+        for attempt in (1, 2, 3, 4, 5):
             out: dict[str, Any] = {"model": self.notes_model or model, "messages": req,
                                    "max_tokens": self.notes_max_tokens, "temperature": 0}
             if tools:
@@ -1099,7 +1112,7 @@ class Keeper:
                 # The reply before it stands, without the lines whose number the turns do not state.
                 log({"event": "in-place notes: no usable second reply, the first stands", "attempt": attempt})
                 kept = self.supported(earlier, texts, strict)
-                near = nd.numbers_near(nd.state_keys(notes) + [k for k, _ in kept["changes"]], texts + list(s.recalled)) if self.notes_checks == "near" else None
+                near = nd.numbers_near(nd.state_keys(notes) + [k for k, _ in kept["changes"]], texts + list(s.recalled) + looked) if self.notes_checks == "near" else None
                 delta, dropped = nd.without_doubtful(notes, dict(kept, rules=list(rules_seen)), seen, strict, near)
                 new, info = nd.apply_delta(notes, delta, seen, strict=strict, near=near)
                 info.pop("steps", None)
@@ -1142,7 +1155,7 @@ class Keeper:
             if delta.get("unsupported"):
                 log({"event": "in-place notes: lines for names the turns do not mention left out", "names": delta["unsupported"][:20]})
             known = nd.state_keys(notes) + [k for k, _ in delta["changes"]]
-            near = nd.numbers_near(known, texts + list(s.recalled)) if self.notes_checks == "near" else None
+            near = nd.numbers_near(known, texts + list(s.recalled) + looked) if self.notes_checks == "near" else None
             new, info = nd.apply_delta(notes, delta, seen, strict=strict, near=near)
             steps = info.pop("steps")
             missing = [] if asked_count else nd.under_accounted(nd.mention_counts(known + nd.identifiers_in(texts), texts), steps)
@@ -1152,6 +1165,20 @@ class Keeper:
                 log({"event": "in-place notes asked again", "why": "mentions not accounted for", "names": missing[:30]})
                 req = req + [{"role": "assistant", "content": text},
                              {"role": "user", "content": nd.COUNT_RETRY.format(names=", ".join(missing[:30]))}]
+                continue
+            wait = self.waiting(s, delta["changes"], texts) if self.lookups and not asked_lookup else []
+            if wait:
+                # asked once, with what the archived entries the lines wait on say; for the checks of the reply that
+                # counts as stated (numbers only), as an archive search's result does
+                asked_lookup = True
+                counts["inplace_reasks"] += 1
+                found = "\n".join(t for _, _, t in wait)[:LOOKUP_CHARS]
+                looked.append(found)
+                log({"event": "in-place notes asked again", "why": "waits on archived entries", "names": [n for n, _, _ in wait],
+                     "units": sorted({k for _, ks, _ in wait for k in ks}), "entries": found})
+                req = req + [{"role": "assistant", "content": text},
+                             {"role": "user", "content": LOOKUP_RETRY.format(unit=self.recall_unit, entries=found)}]
+                thinking = True if self.notes_thinking is not None else None
                 continue
             if info["mismatch"] and not asked_working:
                 # asked once more, with thinking and with the lines named; the second reply stands (the check has
@@ -1181,6 +1208,33 @@ class Keeper:
         res.update(why=why, new=new, info=info, seconds=round(time.monotonic() - began, 3),
                    tokens=self.tokens(s, noted) if noted else 0, turns=len(noted))
         return res
+
+    def waiting(self, s: Session, changes: list[tuple[str, str]], texts: list[str]) -> list[tuple[str, list[int], str]]:
+        """--lookups: the CHANGES lines that say they wait on an archived entry, each with the numbers of the units
+        (recall_unit) it names and what those say about the name: every sentence that names it, with the sentence
+        after it (where a pronoun may carry the amount). What the turns being noted say already is not looked up.
+        Campaign 32 (quiet audits, seed 1): a reversal waited 55 items as `250 + (amount of the decrease entered in
+        item 32) = unknown`; the model's own sum over the whole history at the end was one off (266 for 265)."""
+        unit = re.compile(rf"\b{re.escape(self.recall_unit)}s?[\s#-]*\d+(?:\s*(?:/|,|&|and|or|to|-|\u2013|\u2014)\s*\d+)*", re.I)
+        rows = [r for r in s.archive.labelled(self.recall_label) if r["role"] in ("tool", "user")]
+        here = "\n".join(texts)
+        out = []
+        for name, value in changes:
+            if not WAITS.search(value):
+                continue
+            numbers = sorted({int(x) for m in unit.finditer(value) for x in re.findall(r"\d+", m.group(0))})[:4]
+            said = []
+            for k in numbers:
+                for r in (r for r in rows if r["k"] == k):
+                    parts = [x.strip() for x in re.split(r"(?<=[.!?])\s+|\n+", r["text"]) if x.strip()]
+                    for i, x in enumerate(parts):
+                        if re.search(rf"(?<![\w-]){re.escape(name)}(?![\w-])", x, re.I):
+                            got = " ".join(parts[i:i + 2])[:400]
+                            if got not in here:
+                                said.append(f"{self.recall_unit} {k}: {got}")
+            if said:
+                out.append((name, numbers, "\n".join(dict.fromkeys(said))))
+        return out[:8]
 
     def inplace_settle(self, s: Session, res: dict[str, Any], extra: dict[str, Any] | None = None) -> None:
         """Counts and logs of a notes result, once, whether it is applied or not."""
@@ -1650,6 +1704,10 @@ def main() -> None:
     ap.add_argument("--recall-label", help="a pattern whose first group is the content's own number, such as '(?m)^ITEM (\\d+)/': "
                                           "`recall` then shows and takes that number instead of message numbers")
     ap.add_argument("--recall-unit", default="item", help="what --recall-label counts, as the model is told (default: item)")
+    ap.add_argument("--lookups", action="store_true",
+                    help="with --notes-mode inplace and --recall-label: a CHANGES line that says it waits on an archived "
+                         "entry ('amount not yet known, must recall item 32') is asked again once, with what that entry "
+                         "says about the name (off by default)")
     ap.add_argument("--notes-scan", help="with --notes-checks count or near: read only the tool results and user messages "
                                          "matching this regular expression for mentions and stated numbers")
     ap.add_argument("--think-cap", type=int, default=0, metavar="TOKENS",
@@ -1731,7 +1789,8 @@ def main() -> None:
                     notes_model=a.notes_model, notes_system=system,
                     notes_kwargs=json.loads(a.notes_kwargs) if a.notes_kwargs else None, notes_prepass=a.notes_prepass,
                     notes_extra=json.loads(a.notes_extra) if a.notes_extra else None, notes_prefill=a.notes_prefill,
-                    notes_async=a.notes_async, prewarm=a.prewarm, log_calls=a.log_calls, inplace_fit=a.inplace_fit)
+                    notes_async=a.notes_async, prewarm=a.prewarm, log_calls=a.log_calls, inplace_fit=a.inplace_fit,
+                    lookups=a.lookups)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper {__version__}" + (f" (recipe {a.recipe})" if a.recipe else "")
           + f": http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"

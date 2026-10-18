@@ -194,6 +194,7 @@ the notes no longer had room to be written in place. Bigger windows are slower: 
 | `--think-when REGEX`, `--think-until REGEX` | turn thinking on only around matching messages (Qwen-style `enable_thinking`) |
 | `--notes-checks near` | extra checks for ledger-like state with names such as `abcd12` (the lab's memory streams); leave it off for ordinary agent work |
 | `--recall-label REGEX` | let `recall` use your content's own numbering (e.g. `'(?m)^ITEM (\d+)/'`) instead of message numbers |
+| `--lookups` | with `--recall-label`: a notes line that waits on an archived item is asked again with what that item says (off by default) |
 | `--state-dir DIR` | where archives and notes are kept |
 | `--no-memory-note` | do not add the short paragraph that tells the model about its notes and `recall` |
 
@@ -273,6 +274,13 @@ answers 200 and sends the same call again, at most N times; a refusal (HTTP 4xx)
 tasks on a server that may be restarted under them (for example by a supervisor after a GPU fault): a greedy call
 to an exact server gets the answer the failed one would have had, so the task loses only the time. Not measured
 yet on a real restart.
+
+Unreleased (1.2.0.dev0, 2026-10-17), a new option, off by default: `--lookups` (with `--notes-mode inplace` and
+`--recall-label`). A CHANGES line that says it waits on an archived entry (`amount not yet known, must recall item
+32`) is asked again, once per cut. The question shows what that item says about the name: each sentence that names
+it, with the next one, word for word. The note checks count what is shown as stated, as they do an archive
+search's result. In-place notes calls cannot search the archive themselves. Lab campaign 32: such a line waited
+55 items, and the model's own sum over the whole history at the end was one off.
 
 Also unreleased (1.1.1.dev1, 2026-10-17): a NOTES line whose new value states no number of its own (only item or
 ticket numbers, as in `audit reversal of the entry in item 4, amount not yet known, must recall items 4/5`) no longer
