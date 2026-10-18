@@ -66,3 +66,32 @@ CPU regression checks:
 nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest discover \
   -s experiments/own-xpu-runtime/ops/lane-queue -v < /dev/null
 ```
+
+## Drain-fix check before chain readiness
+
+Every new bundle's CPU preparation must run this command from the repository
+root and retain its result before declaring any chain ready:
+
+```bash
+nice -n 19 taskset -c 8-15,24-31 python3 -B scripts/check_drain_fix.py \
+  experiments/own-xpu-runtime/stage2/<packet> < /dev/null
+```
+
+It must exit zero. The check reads every `drain_gate.py` and other files with
+the cooldown sleep pattern, including nested copies. Every recognized sleep
+must have a nonnegative argument, such as
+`max(0.0, min(.25, until - self.now()))`. Unknown forms fail closed; comments
+and quoted examples in Python do not count as executable sleeps. This is a
+static check of that race, not a general runtime or chain-readiness certificate.
+
+An `UNFIXED` copy blocks new-bundle chain readiness. Frozen bundles stay
+unchanged; **bundles that fail need the other lane paused throughout their
+chains**, including internal window transitions. The queue's 61-second spacing
+alone does not protect those transitions. This policy does not change queues
+or pause markers automatically.
+
+The read-only [all-packet report](../drain-fix-report.json) records FIXED/UNFIXED
+per path, source hashes and sleep line numbers. Regenerate it with
+`scripts/check_drain_fix.py --all --json` under the same CPU restrictions;
+exit one is expected while historical unfixed copies remain. Exit two means
+an invalid/empty scan or a scan error, never a pass.
