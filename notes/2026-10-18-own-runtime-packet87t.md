@@ -53,3 +53,10 @@ The earlier note's token omission describes the first shipped build. The final
 calibration includes the token upload; full model acceptance/state checks remain
 outside this tiny transport diagnostic. No GPU, service, live queue, frozen
 packet, settings or pre-existing dirty file was changed by this preparation.
+
+Git provenance: `944963d2c` contains the final packet87t validation, but another
+agent staged 128 additional packet102/related paths between the scoped staged
+review and commit. The shared-index commit therefore also captured that work.
+This task did not edit those files. The commit was already pushed; no published
+history was rewritten and no other agent's files were reverted. The follow-up
+provenance commit is restricted with `git commit --only` to this task note.
