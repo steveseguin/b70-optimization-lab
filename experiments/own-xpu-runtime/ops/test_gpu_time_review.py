@@ -121,7 +121,8 @@ class ReviewTest(unittest.TestCase):
         with (self.root / 'lane-queue/events-A.jsonl').open('a') as stream:
             stream.write('{partial\n')
         notes = set()
-        with patch.object(review, 'active', side_effect=lambda u: u == 'screen-live.service'):
+        with patch.object(review, 'active', side_effect=lambda u: u == 'screen-live.service'), \
+             patch.object(review, 'first_device', side_effect=lambda job, start, end, observed: start):
             holds = []
             spans, lanes = review.queue_events(NOW, notes, holds)
         self.assertEqual(len(spans), 8)
@@ -179,7 +180,8 @@ class ReviewTest(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(row))
 
-    def report(self, now, hours=1, device=([], {}, [], [])):
+    def report(self, now, hours=1, device=None):
+        device = ([], {}, [], []) if device is None else device
         output = io.StringIO()
         with patch.object(review, 'parse', return_value=([], now)), \
              patch.object(review, 'device_evidence', return_value=device), \
@@ -224,8 +226,8 @@ class ReviewTest(unittest.TestCase):
             job=dict(name='packet58x-smoke-A', lane='A', argv=['runner.py', '--output', str(output)]),
             start_utc=minute(5).isoformat(), end_utc=minute(25).isoformat()))
         text = self.report(NOW)
-        self.assertIn('20.0 / 240.0 = 8.3%', text)
-        self.assertIn('Lane B (cards 2+3) busy/held: 0.33 h = 33%', text)
+        self.assertIn('15.0 / 240.0 = 6.2%', text)
+        self.assertIn('Lane B (cards 2+3) busy/held: 0.25 h = 25%', text)
 
     def test_today_saved_chain_clocks_preserve_interwindow_gaps(self):
         # Exact fields from packet58w/evidence/card0-58w-a/*/window.json.
@@ -285,6 +287,7 @@ class ReviewTest(unittest.TestCase):
             start, end = [f'2026-10-18T{t}Z' for t in (first, last)]
             output = self.root / name
             self.write_json(output / 'queue.json', {'plan': {'scope': 'whole-host'}})
+            self.write_json(output / 'window.json', {'start_utc': start, 'end_utc': end})
             receipts.append({'job': {'name': name, 'lane': 'A',
                                       'argv': ['runner.py', '--output', str(output)]},
                              'start_utc': start, 'end_utc': end, 'outcome': 'DONE'})
@@ -323,7 +326,8 @@ class ReviewTest(unittest.TestCase):
                          'scope': 'whole-host', 'start_utc': minute(30).isoformat(),
                          'end_utc': minute(40).isoformat()})
         holds = []
-        spans, lanes = review.queue_events(NOW, set(), holds)
+        with patch.object(review, 'first_device', side_effect=lambda job, start, end, observed: start):
+            spans, lanes = review.queue_events(NOW, set(), holds)
         self.assertEqual(len(spans), 2)
         self.assertEqual(review.accounting(holds, BEGIN, NOW)[0], 20 * 60)
         self.assertNotIn('screen-unused.service', lanes)
@@ -333,7 +337,8 @@ class ReviewTest(unittest.TestCase):
         self.write_json(self.root / 'lane-queue/done-A-reviewed.txt',
                         {'job': {'name': 'reused', 'lane': 'A'},
                          'start_utc': minute(5).isoformat(), 'end_utc': minute(10).isoformat()})
-        with patch.object(review, 'active', return_value=False):
+        with patch.object(review, 'active', return_value=False), \
+             patch.object(review, 'first_device', side_effect=lambda job, start, end, observed: start):
             spans, _ = review.queue_events(NOW, set())
         self.assertEqual([(s, e) for s, e, _, _ in spans], [(minute(5), minute(10))])
 
@@ -409,10 +414,10 @@ class ReviewTest(unittest.TestCase):
         device = ([(minute(15), minute(25), 'screen-a.service', 'device')], {}, [],
                   [(minute(0), minute(12), 'wait-A', 'A')])
         text = self.report(NOW, device=device)
-        self.assertIn('union, excl. pure waiters): 0.50 h = 50%', text)
-        self.assertIn('Lane A (cards 0+1) busy/held: 0.42 h = 42%', text)
-        self.assertIn('Lane B (cards 2+3) busy/held: 0.33 h = 33%', text)
-        self.assertIn('Lane A idle_admission_wait: 10.0 min', text)
+        self.assertIn('union, excl. pure waiters): 0.33 h = 33%', text)
+        self.assertIn('Lane A (cards 0+1) busy/held: 0.33 h = 33%', text)
+        self.assertIn('Lane B (cards 2+3) busy/held: 0.25 h = 25%', text)
+        self.assertIn('Lane A idle_admission_wait: 15.0 min', text)
         self.assertIn('Lane B whole-host holds included: 15.0 min', text)
 
 
@@ -422,6 +427,68 @@ class ReviewTest(unittest.TestCase):
                                          [(minute(0), minute(20)),
                                           (minute(25), minute(30))]),
                          [(minute(20), minute(25)), (minute(30), minute(40))])
+
+
+    def test_packet141b_review30_wait_is_not_busy(self):
+        start = review.timestamp('2026-10-18T19:32:12.399043Z')
+        first = review.timestamp('2026-10-18T19:56:48.092595Z')
+        end = review.timestamp('2026-10-18T20:01:06.704363Z')
+        output = self.root / 'probe-B-repair141b'
+        output.mkdir()
+        job = dict(name='packet141b-probe-B', lane='B',
+                   argv=['runner.py', '--output', str(output)])
+        self.write_json(self.root / 'lane-queue/done-B-reviewed.txt', dict(
+            job=job, start_utc=start.isoformat(), end_utc=end.isoformat(),
+            admission_cause='hold-lane-B'))
+        self.write_json(output / 'window.json', dict(started_utc_ns=int(first.timestamp()*1e9)))
+        waits, holds, causes = [], [], {}
+        with patch.object(review, 'creation_time', return_value=first):
+            spans, lanes = review.queue_events(end, set(), holds, {}, waits, causes)
+            text = self.report(end)
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0][:2], (first, end))
+        self.assertAlmostEqual((waits[0][1]-waits[0][0]).total_seconds()/60, 24.5948925)
+        self.assertEqual(holds, [])
+        self.assertEqual(causes, {'screen-packet141b-probe-B.service': 'hold-lane-B'})
+        self.assertEqual(lanes, {'screen-packet141b-probe-B.service': 'B'})
+        self.assertIn('Lane B (cards 2+3) busy/held: 0.07 h = 7%', text)
+        self.assertIn('Lane B idle_admission_wait: 24.6 min', text)
+        self.assertIn('cause=hold-lane-B: 24.6 min', text)
+
+    def test_first_entry_birth_window_log_and_reused_directory(self):
+        output = self.root / 'entry'
+        output.mkdir()
+        log = output / 'rank0.log'
+        log.touch()
+        job = dict(name='entry', argv=['worker', '--output='+str(output)])
+        with patch.object(review, 'creation_time', side_effect=lambda p:
+                          minute(-5) if p == output else minute(12)):
+            self.assertEqual(review.first_device(job, minute(10), minute(30)), minute(12))
+            self.write_json(output / 'window.json', dict(started_utc_ns=int(minute(11).timestamp()*1e9)))
+            self.assertEqual(review.first_device(job, minute(10), minute(30)), minute(11))
+            self.write_json(output / 'window.json', dict(cpu_rehearsal=True))
+            self.assertIsNone(review.first_device(job, minute(10), minute(30)))
+
+    def test_creation_clock_never_uses_mtime(self):
+        with patch.object(review.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, '-\n')):
+            self.assertIsNone(review.creation_time(self.root))
+
+    def test_unobserved_job_no_busy_and_active_wait_is_clipped(self):
+        self.events('B', [(-10, 'START', 'waiting')])
+        with patch.object(review, 'active', return_value=True):
+            text = self.report(NOW)
+        self.assertIn('Lane B (cards 2+3) busy/held: 0.00 h = 0%', text)
+        self.assertIn('Lane B idle_admission_wait: 60.0 min', text)
+        self.assertIn('device entry unobserved', text)
+
+    def test_whole_host_hold_cannot_hide_another_jobs_admission_wait(self):
+        self.events('B', [(10, 'START', 'blocked'), (30, 'DONE', 'blocked')])
+        root = review.RESULTS / 'packet1/evidence/card0-chain'
+        self.write_json(root / 'WS/window.json', dict(card=0, device_executed=True,
+                        start_utc=minute(0).isoformat(), end_utc=minute(40).isoformat()))
+        text = self.report(NOW)
+        self.assertIn('Lane B admission_wait (including overlap with other work/holds): 20.0 min', text)
+        self.assertIn('Lane B idle_admission_wait: 0.0 min', text)
 
 
 if __name__ == '__main__':

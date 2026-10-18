@@ -56,3 +56,41 @@ The owner instituted this on 2026-10-17 after the coordinator let the GPUs sit m
   - why it keeps losslessness and host safety.
 - Include a "STOP DOING" list if applicable.
 - Do not take actions yourself: no launches, kills, edits, commits or submissions. The coordinator acts on the recommendations immediately.
+
+## Device-entry checklist (opsreview4, October 18)
+
+Every **READY-FOR-DEVICE** needs both gates, with retained CPU receipts:
+
+1. Run `ops/rehearse_entry.py <proposal>` from this own-runtime tree using
+   `nice -n 19 taskset -c 8-15,24-31 python3 -B`, stdin `/dev/null` and at most
+   2 GiB RAM. It reconstructs lanequeue's `env -i` and `screen-<job>` identity,
+   checks each native binary with `ldd`, and exercises its own help/version or
+   argument parser. It starts no service. `--json` gives per-binary failure
+   phases; missing libraries, stale binaries and unavailable safe entry paths
+   fail the job. It confines probes to library/binary reads, with model and
+   device paths denied. No unsandboxed fallback is allowed.
+2. Run the packet's **real arm sequence on CPU**, including its actual
+   prepared-launch/state machine, reset/reprepare transitions and launch
+   arguments. Verify sibling pins, latch handling and DRM byte/KiB/MiB units.
+   Separate mocked arms or `ldd` alone do not satisfy this gate. Keep synthetic
+   operational state and outputs in temporary paths, away from live queues.
+
+New packets import `ops/launch_env.py` or vendor it with `entry_sandbox.py`.
+It preserves the recorded working oneAPI path, including `umf` and `tcm`;
+existing sealed packets stay frozen. The rehearsal reads the exact lanequeue
+environment and also tests an explicit packet `--library-path` override.
+Its default native inventory comes from the packet's build receipt. A new
+proposal can supply `plan.entry_rehearsal.binaries` with each binary's `path`,
+`sha256`, safe parser `args`, expected `returncode` and expected output
+`contains`. This is data, never an imported packet or an executed launch plan.
+Script coordinators need a packet-specific inner-environment rehearsal and
+are reported FAIL here; an unsupported wrapper must never receive a false PASS.
+
+For time reviews, queue START is admission entry, not device entry. Report
+START → first output-directory/log birth or window start as admission wait;
+busy/held time starts at that first evidence. Total admission wait includes
+overlap with another job's work/holds; `idle_admission_wait` excludes it.
+Missing entry evidence earns no busy credit and is labeled unconfirmed.
+Report named blocker causes only when recorded, otherwise `unknown`; do not
+infer a historical hold from the current marker. These are occupancy proxies,
+not GPU hardware utilization measurements.

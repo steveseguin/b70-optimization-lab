@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read-only time accounting for the hourly efficiency review.
 
-Reconstructs per-lane and combined busy/held time from queue job lifetimes,
+Reconstructs per-lane and combined busy/held time from device-backed queue jobs,
 chain window receipts and live device children over the last N hours. Journal
 wrappers alone do not establish occupancy. Admission waits count as idle. It also
 lists idle gaps, Codex activity, recent commits and the record floor.
@@ -148,15 +148,96 @@ def window_cards(row, path):
     return None
 
 
-def queue_events(now, notes, holds=None, cards=None):
-    """Count job lifetimes; optionally collect whole-host holds for both lanes."""
+def job_output(job):
+    argv = job.get('argv', [])
+    if not isinstance(argv, list):
+        return None
+    for i, arg in enumerate(argv):
+        value = (argv[i + 1] if arg == '--output' and i + 1 < len(argv)
+                 else arg.split('=', 1)[1] if isinstance(arg, str)
+                 and arg.startswith('--output=') else None)
+        if isinstance(value, str) and value:
+            path = Path(value)
+            return path if path.is_absolute() else Path(REPO) / path
+    return None
+
+
+def creation_time(path):
+    """Linux birth time, never mtime/ctime (both move when logs are updated)."""
+    try:
+        result = subprocess.run(['/usr/bin/stat', '-c', '%w', '--', str(path)],
+                                capture_output=True, text=True, timeout=5,
+                                stdin=subprocess.DEVNULL)
+        if result.returncode == 0 and result.stdout.strip() != '-':
+            return timestamp(result.stdout.strip())
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        pass
+    return None
+
+
+def first_device(job, start, end, observed=()):
+    """Earliest evidence in this attempt; old/reused outputs earn no credit.
+
+    Output/log creation is an entry proxy, not proof of GPU compute. Explicit
+    window clocks survive copies/archives where birth time is unavailable.
+    Read metadata and small window receipts only, never native/model payloads.
+    """
+    unit = 'screen-' + job['name'] + '.service'
+    candidates = [s for s, e, u, _ in observed if u == unit and start <= s <= end]
+    output = job_output(job)
+    if output and output.is_dir():
+        windows = sorted(output.rglob('window.json'))
+        rows = [(p, read_json(p)) for p in windows]
+        excluded = [p.parent for p, row in rows if row.get('cpu_rehearsal') is True
+                    or row.get('device_executed') is False]
+        def allowed(path):
+            return not any(path == root or root in path.parents for root in excluded)
+        # Prefer the recorded clock when present; birth time still covers the
+        # admitted setup before that first window starts.
+        for path, row in rows:
+            if not allowed(path):
+                continue
+            try:
+                if finite(row.get('started_utc_ns')):
+                    candidates.append(dt.datetime.fromtimestamp(row['started_utc_ns'] / 1e9, dt.timezone.utc))
+                elif row.get('start_utc'):
+                    candidates.append(timestamp(row['start_utc']))
+            except (ValueError, TypeError, OverflowError, OSError):
+                pass
+        paths = [output, *output.rglob('native.log'), *output.rglob('rank*.log')]
+        for path in paths:
+            if allowed(path):
+                birth = creation_time(path)
+                if birth is not None:
+                    candidates.append(birth)
+    return min((t for t in candidates if start <= t <= end), default=None)
+
+
+def wait_cause(row):
+    """Only named coordination causes, never arbitrary log or environment text."""
+    for key in ('admission_cause', 'cause', 'blocker'):
+        value = row.get(key)
+        if isinstance(value, dict):
+            value = value.get('source')
+        if value in ('hold-lane-B', 'active-lane-A.json', 'active-lane-B.json',
+                     'teardown-state.json', 'lane-lock', 'host-memory'):
+            return value
+    return None
+
+
+def queue_events(now, notes, holds=None, cards=None, waits=None, causes=None, observed=(), begin=None):
+    """Split job lifetimes into admission waiting and device-backed occupancy."""
     starts, intervals, lanes = {}, [], {}
     if holds is None:
         holds = []
     if cards is None:
         cards = {}
+    if waits is None:
+        waits = []
+    if causes is None:
+        causes = {}
     root = OPS / 'lane-queue'
-    scopes = {}
+    scopes, jobs, attempts = {}, {}, []
     receipts = []
     for lane in ('A', 'B'):
         # Reviewed done files remain evidence after the live done file is rotated.
@@ -170,6 +251,10 @@ def queue_events(now, notes, holds=None, cards=None):
         job = row.get('job', row)
         if not isinstance(job, dict) or not isinstance(job.get('name'), str):
             continue
+        jobs[job['name']] = job
+        cause = wait_cause(row) or wait_cause(job)
+        if cause:
+            causes['screen-' + job['name'] + '.service'] = cause
         scope = job_scope(row) or job_scope(job)
         if scope:
             scopes[job['name']] = scope
@@ -180,6 +265,8 @@ def queue_events(now, notes, holds=None, cards=None):
     # terminal receipt is not yet available, without counting unstarted plans.
     for path in sorted(root.glob('proposed-*.txt')):
         for job in json_lines(path, notes):
+            if isinstance(job.get('name'), str):
+                jobs.setdefault(job['name'], job)
             if isinstance(job.get('name'), str) and job['name'] not in scopes:
                 scope = job_scope(job)
                 if scope:
@@ -193,12 +280,13 @@ def queue_events(now, notes, holds=None, cards=None):
         unit = 'screen-' + name + '.service'
         intervals.append((start, end, unit, kind))
         lanes[unit] = lane
-        if (scope or scopes.get(name)) == 'whole-host' or len(cards.get(unit, ())) == 1:
-            holds.append((start, end))
+        if scope:
+            scopes[name] = scope
 
     for row in receipts:
         try:
             job = row.get('job', row)
+            attempts.append((timestamp(row['start_utc']), timestamp(row['end_utc']), job))
             add(timestamp(row['start_utc']), timestamp(row['end_utc']),
                 job['name'], job['lane'], 'queue exit receipt', scope_of(row))
         except (ValueError, KeyError, TypeError, AttributeError, OverflowError):
@@ -213,6 +301,9 @@ def queue_events(now, notes, holds=None, cards=None):
                 stamp = timestamp(row['utc'])
                 kind = row['event']
                 lanes[unit] = lane
+                cause = wait_cause(row)
+                if cause:
+                    causes[unit] = cause
                 if scope_of(row):
                     scopes[name] = scope_of(row)
                 if kind == 'START':
@@ -232,7 +323,26 @@ def queue_events(now, notes, holds=None, cards=None):
             add(start, now, name, lane, 'still active')
         else:
             notes.add(f'{unit}: unfinished queue event; active state unconfirmed, end unknown.')
-    return intervals, lanes
+    busy = []
+    for start, end, unit, kind in intervals:
+        if begin is not None and (end <= begin or start >= now):
+            continue
+        name = unit[len('screen-'):-len('.service')]
+        job = next((job for s, e, job in attempts if isinstance(job, dict)
+                    and job.get('name') == name and s <= start <= e),
+                   jobs.get(name, {'name': name}))
+        first = first_device(job, start, end, observed)
+        wait_end = first if first is not None else end
+        if wait_end > start:
+            waits.append((start, wait_end, unit, lanes[unit]))
+        if first is None:
+            notes.add(f'{unit}: device entry unobserved; lifetime is unconfirmed admission wait, not busy time.')
+            continue
+        if first < end:
+            busy.append((first, end, unit, kind))
+            if scopes.get(name) == 'whole-host' or len(cards.get(unit, ())) == 1:
+                holds.append((first, end))
+    return busy, lanes
 
 
 def unit_lane(unit, evidence):
@@ -623,9 +733,10 @@ def main():
     notes = set()
     queue_holds = []
     cards = {}
-    queued, evidence = queue_events(now, notes, queue_holds, cards)
     wrappers = intervals
     intervals, receipt_lanes, holds, waits = device_evidence(begin, now, notes, cards)
+    causes = {}
+    queued, evidence = queue_events(now, notes, queue_holds, cards, waits, causes, intervals, begin)
     windows, window_lanes, window_holds = chain_windows(begin, now, notes, cards)
     intervals += queued + windows
     holds += queue_holds + window_holds
@@ -637,7 +748,7 @@ def main():
     intervals = [(s, e, u, 'busy/held evidence') for u in sorted({r[2] for r in intervals})
                  for s, e in union((s, e) for s, e, unit, _ in intervals if unit == u)]
     notes.add(f'{len(wrappers)} wrapper intervals retained for attribution only; '
-              'queue jobs and completed chain windows count as busy/held time.')
+              'queue jobs count only after first device evidence; completed chain windows also count.')
     spans = [(s, e) for s, e, u, _ in intervals if not WAITERS.match(u)]
     busy_s, gaps = accounting(spans + holds, begin, now)
     fmt = lambda t: t.strftime('%H:%M')
@@ -646,7 +757,7 @@ def main():
                               if not WAITERS.match(u) and '-model-' not in u] + holds, begin, now)
     print(f'Device units in flight (union, excl. pure waiters): {busy_s/3600:.2f} h = {100*busy_s/(a.hours*3600):.0f}% of wall time')
     print(f'  ... also excluding *-model-* queues (they can sit waiting on a CPU oracle): {strict_s/3600:.2f} h = {100*strict_s/(a.hours*3600):.0f}%')
-    print('NOTE: busy/held includes queue START-to-terminal lifetimes and chain windows; '
+    print('NOTE: busy/held includes first-device-to-terminal queue intervals and chain windows; '
           'this is lane occupancy, not a GPU compute-utilization measurement.')
     card_busy, card_available, unknown = card_minutes(intervals, lanes, cards, begin, now)
     print(f'Busy card-minutes / available card-minutes: {card_busy:.1f} / '
@@ -668,7 +779,15 @@ def main():
             print(f'    {fmt(s)}-{fmt(e)} UTC  {(e-s).total_seconds()/60:.0f} min')
         if not idle:
             print('    none')
-        admission_idle = subtract([(s, e) for s, e, _, owner in waits if owner == lane], lane_spans)
+        lane_waits = [(max(s, begin), min(e, now)) for s, e, _, owner in waits
+                      if owner == lane and e > begin and s < now]
+        wait_s, _ = accounting(lane_waits, begin, now)
+        print(f'  Lane {lane} admission_wait (including overlap with other work/holds): {wait_s/60:.1f} min')
+        for cause in sorted({causes.get(unit, 'unknown') for _, _, unit, owner in waits if owner == lane}):
+            cause_s, _ = accounting([(s, e) for s, e, unit, owner in waits
+                                     if owner == lane and causes.get(unit, 'unknown') == cause], begin, now)
+            print(f'    cause={cause}: {cause_s/60:.1f} min (union within cause)')
+        admission_idle = subtract(lane_waits, lane_spans)
         idle_s, _ = accounting(admission_idle, begin, now)
         print(f'  Lane {lane} idle_admission_wait: {idle_s/60:.1f} min')
         for s, e in admission_idle:
