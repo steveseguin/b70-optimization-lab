@@ -29,11 +29,11 @@
       "bytes": 6154
     }
   ],
-  "prompts": "First and last 128 tokens of each of the five pinned independent documents; 10 requests, each 128 generated target tokens. No chat template. All 127 verified proposals per request count.",
+  "prompts": "First and last 128 tokens of each of the five pinned independent documents; all 10 requests, each up to 128 generated target tokens with natural EOS. Score every verified production proposal; never continue after EOS or select prompts by results.",
   "secondary": "12 fixed suite prompts, 128 generated tokens; never used for decisions",
   "kill_gate": {
     "independent_acceptance_gain_points": 1.5,
-    "minimum_verified_proposals": 1270
+    "minimum_verified_proposals": 512
   },
   "production": "packet124c bundle7, INT8-group16 draft experts, 80128-row Q6 prefix",
   "policy": "Production draft drives every step. Shadow candidate must never affect target, production proposal, persistent draft state or selection. One load; no speed claim. Candidate selection and corpus fixed before measurements.",
@@ -42,5 +42,7 @@
     1800
   ],
   "watchdog_seconds": 7200,
-  "gpu_executed": false
+  "gpu_executed": false,
+  "revision": 2,
+  "revision_reason": "Before any device result: respect natural EOS rather than require every independent continuation to exhaust its cap. Text/token selection and candidate unchanged."
 }

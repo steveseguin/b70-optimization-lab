@@ -25,7 +25,7 @@ expert-to-head suffix on the same inputs; production mutable state is restored
 before its proposal is published. No diagnostic timing is a speed claim.
 
 The independent set uses the first and last 128 tokens of each of packet114's
-five original pinned general documents, with 128 generated target tokens per
+five original pinned general documents, with a 128-token generation cap per
 request. The full twelve-prompt suite is secondary only. Keep the candidate
 only at an independent acceptance gain of at least 1.5 percentage points;
 otherwise close it. No prefix or corpus tuning from suite outcomes is allowed.
@@ -34,3 +34,43 @@ The coordinator owns the eventual lane-B load. This session launches no GPU,
 service or native device process and changes no host settings. Candidate
 adoption, full new-format KD gates and a timing bracket remain conditional on
 the actual independent acceptance result.
+
+## Compiled diagnostic and proposal milestone
+
+Preregistration `05f436d86` was pushed before any acceptance measurement.
+Before device results, revision 2 clarified natural EOS: do not force
+continuation after completion; all ten independent requests remain mandatory,
+and at least 512 verified proposals are needed for a decision. The text windows,
+tokens, single candidate and +1.5-point threshold are unchanged. The suite has
+no role in selection or the acceptance decision.
+
+GNU and Intel pass all 254 finite FP8 codes, both routed matrix widths,
+paired/unpaired outputs, repeated expert IDs and invalid-route bounds, twice
+per compiler. Four fresh miniature runs preserve 96 target fixtures, 24 output
+tokens, production proposals and persistent draft state. Three requests in one
+CPU load verify resets and shadow restoration. These are CPU checks, not device
+quality or speed results.
+
+Full-size mocked initialization keeps rank0 at 28,144,182,388 device bytes and
+rank1 at 31,475,905,242, leaving 736,349,478 bytes below rank1's 30 GiB arena cap.
+Actual device residency remains unmeasured. The selected-expert shadow banks
+add 49,920,000 bytes; the full production INT8 bank stays untouched.
+
+The real worker emits both native argument vectors. The actual native parser
+and full-size startup accept them on CPU; only rank1 receives the shadow flag.
+The real oracle CLI accepts the preserved authority symlink. Acceptance tests,
+drain race/negative controls and the recursive drain scan pass. The first parser
+attempt lacked OMP_NUM_THREADS=2; rerunning through the CPU entry wrapper fixed
+that environment issue without changing runtime behavior.
+
+The new proposed file is `ops/lane-queue/proposed-p129-accept-B.txt` under this
+runtime lane. The real queue planner passes it in a temporary queue copy.
+One load covers independent text first, then the complete secondary suite.
+Expected duration is 15–30 minutes, with a 7,200-second watchdog and cooperative
+drain; timings remain diagnostic. No live queue was edited.
+
+The [packet](../experiments/own-xpu-runtime/stage2/packet129-draft-acceptance/README.md)
+retains format costs, exact input pins, native source, reused-object hashes,
+CPU gates and queue plan. Build size at this milestone is 108,901,401 bytes.
+No device acceptance result exists, so candidate adoption and the conditional
+v5 timing proposal have not been prepared.

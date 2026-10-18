@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet129 draft acceptance diagnostic prepared on CPU:** The new
+copy compares publisher FP8 draft experts against the current INT8 draft on the
+same inputs. Production guesses still drive the unchanged target. Both compilers
+pass exact arithmetic checks; target/state, reset, memory, launch arguments and
+temporary queue planning pass. Ten independent text inputs decide the +1.5-point
+acceptance gate; the twelve-prompt suite is secondary. The single lane-B proposal
+is ready for coordinator admission. Device acceptance is pending, and no speed
+gain is claimed. No GPU, service, live queue or host setting changed here.
+[Work note](notes/2026-10-18-own-runtime-packet129.md).
+
 **October 18, packet128b sampled timing job prepared on CPU:**
 Packet128's every-token recorder slowed the line to 42.21 tok/s, so its timing
 ranking remains blocked. The new copy records tokens 9–16 and keeps copy clocks
