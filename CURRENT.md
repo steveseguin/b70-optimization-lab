@@ -36,10 +36,10 @@ command is in [ready.json](experiments/own-xpu-runtime/ops/packet97-orchestratio
 
 **October 18, packet103 bundle built on CPU:** Copied after packet97e’s
 committed fix, the new bundle includes down-tile16 and draft attention with
-all earlier choices. Both binaries compile; the current build is 113 MB.
+all earlier choices. Both binaries compile; CPU preparation uses about145 MB.
 The source decision selects both new options and rechecks later lane-A losses.
 Operator bytes and 529 submission replay checks pass. All 1024 full-size rank allocation checks pass; every-window startup checks
-are still running. No device or live queue ran.
+are repeating after a temporary-file cleanup fix. No device or live queue ran.
 [Work note](notes/2026-10-18-own-runtime-packet103.md).
 
 **October 18, packet100b route capture prepared on CPU:** The new lane-B job

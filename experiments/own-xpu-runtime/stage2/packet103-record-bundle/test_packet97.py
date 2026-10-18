@@ -54,6 +54,7 @@ def test_recurrence_dispatch_normalization(tmp_path,monkeypatch):
   result,policy=d.pin_production_dispatch(run,json.loads((ARCHIVE/'K2/run0/summary.json').read_text()),round3_root=ARCHIVE/'K2/round3-timing')
   assert result['passed'] and policy['packet49d_measured_selection']['passed']
   assert (run/'dispatch-measured.json').read_bytes()==(P/'dispatch-speed6.json').read_bytes()
+  shutil.rmtree(run)  # Bound real K2 replay scratch to one selection, not all512.
 
 def test_future_slot_and_unsupported_compositions_refuse():
  for values in (('production','hc-wide','input-packed','ordered','fast','production','rec-parallel','production'),('production','hc-wide','wide64','ordered','fast','production','rec-both','production')):

@@ -5,7 +5,9 @@ It can run before the packet build or seals exist. Source qualification needs
 one exact winning lane, and any completed lane-A loss excludes that source.
 The first CPU dry run happened before any proposal or launcher was armed.
 
-After the exhaustive packet CPU gates pass, run `prepare_views.py` to seal
+After the exhaustive packet CPU gates pass, run `prepare_cpu.py` to perform
+the full CPU rehearsal and proposal sequence. Its first step runs
+`prepare_views.py` to seal
 the control, candidate, leave-one-out, largest-allocation and all-dimensions views. This keeps disk
 space for the chain. It freezes the source decision. Run `orchestrate.py` to use
 an immutable decision and write the six composite jobs in
@@ -42,3 +44,8 @@ All CPU commands use nice19, cores8–15/24–31, Python -B and /dev/null. Compi
 commands take the copied packet94 lock. Packet build has a 300 MB cap and CPU
 processes an 8 GiB address-space cap. Full model exactness, fresh-device repeats
 and speed remain device gates against iq3-p49-split32-v1.
+
+`prepare_cpu.py` is CPU-only. It writes a step-by-step preparation-report.json
+with exact commands and log hashes, and records a storage refusal without
+weakening the guard. The coordinator’s queue inputs are the composite proposals;
+proposed-p103-A/B are retained for the packet’s internal compatibility rehearsal.
