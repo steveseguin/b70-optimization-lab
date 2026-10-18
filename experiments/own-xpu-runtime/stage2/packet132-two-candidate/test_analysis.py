@@ -44,6 +44,14 @@ class ModelTests(unittest.TestCase):
         self.assertEqual(m['flags'], 0)
         self.assertGreater(m['delta_ms'], 0)  # enabled collection still costs
 
+    def test_affordable_cost_is_the_three_percent_boundary(self):
+        policy = dict(feature='margin', tau=1)
+        m = metrics(self.rows, policy, self.scenario)
+        boundary = dict(self.scenario, extra_half_ms=m['maximum_extra_half_ms_for_three_percent'])
+        self.assertAlmostEqual(metrics(self.rows, policy, boundary)['gain_percent'], 3)
+        boundary['extra_half_ms'] += .1
+        self.assertLess(metrics(self.rows, policy, boundary)['gain_percent'], 3)
+
     def test_five_sources_no_duplicates_or_gaps(self):
         rows = [row(str(i), 0, 1, 2, 2, 1) for i in range(1, 6)]
         validate_rows(rows)

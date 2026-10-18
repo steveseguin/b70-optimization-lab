@@ -98,6 +98,7 @@ def metrics(rows, policy, scenario):
     benefit = scenario['rescued_miss_ms'] - scenario['rescued_state_selection_ms']
     delta = f / n * scenario['extra_half_ms'] - r / n * benefit + overhead
     projected_ms = ANCHOR + delta
+    affordable = (r/n*benefit - (ANCHOR-ANCHOR/1.03) - overhead)/(f/n) if f else None
     # An interval after token i pays the speculation for i+1. No cross-prompt edge.
     intervals = []
     for i in range(n - 1):
@@ -120,6 +121,7 @@ def metrics(rows, policy, scenario):
                 rescued_fraction_of_all_misses=r/misses if misses else None,
                 rescue_per_flag=r/f if f else None, acceptance_with_two_candidates=(sum(hits)+r)/n,
                 delta_ms=delta, projected_ms=projected_ms, projected_tok_s=1000/projected_ms,
+                maximum_extra_half_ms_for_three_percent=affordable,
                 gain_percent=100*(ANCHOR/projected_ms-1),
                 finite_intervals=len(intervals), finite_delta_ms=finite_delta,
                 finite_gain_percent=100*(ANCHOR/(ANCHOR+finite_delta)-1) if intervals else None,
@@ -196,12 +198,19 @@ def analyze(rows):
         pooled = min(choices, key=lambda r: (r['pooled']['delta_ms'], r['pooled']['flags']))
         active = min((r for r in choices if r['pooled']['flags']),
                      key=lambda r: (r['pooled']['delta_ms'], r['pooled']['flags']))
+        affordable = max((r for r in choices if r['pooled']['flags']),
+                         key=lambda r: r['pooled']['maximum_extra_half_ms_for_three_percent'])
         decisions.append(dict(scenario=scenario, train_selected=selected, pooled_best_in_sample=pooled,
-                              pooled_best_active_in_sample=active))
+                              pooled_best_active_in_sample=active,
+                              pooled_most_affordable_cost_in_sample=affordable))
         sweep.extend(choices)
     primary = decisions[0]['train_selected']
     passed = decisions[0]['pooled_best_in_sample']['pooled']['gain_percent'] >= 3
     return dict(schema='lab.packet132.cpu-projection.v1', performance_claim=False,
+                device_executed=False, implementation_built=False,
+                target_arithmetic='iq3-p49-split32-v1', draft_prefix_rows=80128,
+                draft_scope='packet31 CPU INT8 semantic reference; device numerical parity unestablished',
+                realistic_final_gate=dict(passed=False, reason='CPU acceptance/cost projection; no device benchmark or implementation quality gate'),
                 anchor_ms=ANCHOR, anchor_tok_s=1000/ANCHOR, required_saving_ms=ANCHOR-ANCHOR/1.03,
                 budget=budget, decisions=decisions, gate_passed=passed,
                 heldout_robustness_passed=primary['heldout']['gain_percent'] >= 3,
@@ -211,7 +220,7 @@ def analyze(rows):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--rows', type=Path, default=P/'captures/rows.json')
+    parser.add_argument('--rows', type=Path, default=P/'evidence/capture/rows.json')
     parser.add_argument('--check', action='store_true')
     args = parser.parse_args()
     assert os.getpriority(os.PRIO_PROCESS, 0) == 19
@@ -220,8 +229,23 @@ def main():
     data = json.loads(args.rows.read_text())
     rows = data if isinstance(data, list) else data['rows']
     complete = validate_capture(args.rows, rows)
+    audit = json.loads((P/'evidence/source-audit.json').read_text())
+    assert audit['passed'] and audit['device_executed'] is False
+    assert audit['capture_receipt_sha256'] == sha(args.rows.parent/'build-receipt.json')
     result, sweep = analyze(rows)
+    frozen_path = P/'evidence/training-selection.json'
+    frozen = json.loads(frozen_path.read_text())
+    assert frozen['heldout_confidence_rows_read'] is False
+    assert frozen['positions'] == sum(r['source_index'] <= 3 for r in rows)
+    for source, digest in frozen['sources'].items():
+        assert sha(args.rows.parent/f'doc-{int(source)-1}/draft-rows.jsonl') == digest
+    for old, decision in zip(frozen['decisions'], result['decisions'], strict=True):
+        assert old['scenario'] == decision['scenario']['name']
+        assert old['policy'] == decision['train_selected']['policy']
+        assert old['train'] == decision['train_selected']['train']
+    result['training_selection_sha256'] = sha(frozen_path)
     result['capture'] = complete
+    result['source_audit_sha256'] = sha(P/'evidence/source-audit.json')
     result['rows_sha256'] = sha(args.rows)
     for name, obj in [('result.json', result), ('thresholds.json.gz', sweep)]:
         raw = (json.dumps(obj, indent=2, ensure_ascii=False, allow_nan=False)+'\n').encode()
@@ -239,7 +263,7 @@ def main():
                      'flagged_fraction', 'top1_hits', 'misses', 'flagged_misses',
                      'rescued_misses', 'rescued_fraction_of_all_misses',
                      'acceptance_with_two_candidates', 'projected_tok_s', 'gain_percent',
-                     'finite_gain_percent'])
+                     'finite_gain_percent', 'maximum_extra_half_ms_for_three_percent'])
     for record in sweep:
         for group in ('train', 'heldout', 'pooled'):
             m = record[group]
@@ -247,7 +271,7 @@ def main():
                              *[m[k] for k in ('positions', 'flags', 'flagged_fraction', 'top1_hits', 'misses',
                                              'flagged_misses', 'rescued_misses', 'rescued_fraction_of_all_misses',
                                              'acceptance_with_two_candidates', 'projected_tok_s', 'gain_percent',
-                                             'finite_gain_percent')]])
+                                             'finite_gain_percent', 'maximum_extra_half_ms_for_three_percent')]])
     raw = out.getvalue().encode()
     if args.check:
         assert (P/'thresholds.csv').read_bytes() == raw
