@@ -226,6 +226,25 @@ class SpeculativeImage {
   (restore?restore_submissions:capture_submissions)+=submissions;
  }
 public:
+#ifdef OWN_RT_HOST_ONLY
+ // CPU census only: exact descriptor geometry, no payload read/device contact.
+ void census131(const fs::path& path,int position) const {
+  std::ostringstream out;size_t total=0,extents=0,omitted=0;
+  out<<"{\"position\":"<<position<<",\"capacity\":"<<capacity<<",\"table_capacity\":"<<table_capacity<<",\"sources\":[";
+  bool comma=false;
+  for(const auto& s:sources){size_t bytes=s.write_bytes,offset=0;
+   if(s.bank&&e.miss_banks()){omitted+=s.bytes;bytes=0;}
+   if(s.kv){size_t rows=s.pooled?size_t((e.p.g.context+3)/4):size_t(e.p.g.context);
+    offset=(s.pooled?size_t(position/4):size_t(position))*(s.bytes/rows);
+    bytes=s.single_row?s.bytes/rows:s.bytes-offset;
+   }
+   if(bytes)++extents;total+=bytes;
+   std::string label=s.name.empty()?e.dev(0).arena.row(s.standalone).label:s.name;
+   out<<(comma?",":"")<<"{\"name\":"<<ownrt::quote(label)<<",\"allocation_bytes\":"<<s.bytes<<",\"copy_bytes\":"<<bytes<<",\"offset\":"<<offset<<",\"bank\":"<<(s.bank?"true":"false")<<",\"kv\":"<<(s.kv?"true":"false")<<"}";comma=true;
+  }
+  out<<"],\"capture_bytes\":"<<total<<",\"extents\":"<<extents<<",\"bank_bytes_avoided\":"<<omitted<<",\"capture_submissions\":2}";save(path,out.str());
+ }
+#endif
  explicit SpeculativeImage(Engine& owner):e(owner) {
   if(e.a.rank!=0)return;
   std::set<std::string> outputs{"token","position","token_history"},kv;

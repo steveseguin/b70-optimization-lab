@@ -8,6 +8,7 @@ class Forbidden(BaseException):pass
 
 def probe(kind):
  row=identity(kind)
+ oracle_command=['nice','-n','19','taskset','-c','8-15,24-31','python3','-B',str(P.parent/'shared_oracle.py'),'--require-complete'];oracle_calls=[]
  import tp2_worker as worker,bracket
  from common import D,P56
  sys.path.insert(0,str(P56));import pipeline,suite
@@ -22,6 +23,8 @@ def probe(kind):
     path=Path(os.fsdecode(args[0])).absolute()
     if str(path).startswith('/dev/dri/'):raise Forbidden('device open forbidden')
     if (args[2] or 0)&(os.O_WRONLY|os.O_RDWR|os.O_CREAT|os.O_TRUNC|os.O_APPEND) and path!=Path('/dev/null') and not path.resolve().is_relative_to(tmp):raise Forbidden('write outside CPU scratch: '+str(path))
+   if event in ('subprocess.Popen','os.posix_spawn') and list(args[1])==oracle_command:
+    oracle_calls.append(oracle_command);return
    if event in ('subprocess.Popen','os.system','os.exec','os.posix_spawn'):raise Forbidden('execution forbidden')
   sys.addaudithook(audit);trace=[];bad=[False]
   class Transport:
@@ -57,7 +60,8 @@ def probe(kind):
    code=worker.run(row,tmp/'negative',4800)
    assert code==1 and trace.count('load')==1 and trace.count('request:64')==1 and trace[-2:]==['stop','close-failure'],trace
    assert not (tmp/'negative/report-inputs.json').exists()
-   return dict(passed=True,device_executed=False,kind=kind,positive_trace=positive,negative_trace=trace,requests=n*13,all_view_requests=True,native_execution_forbidden=True,synthetic_device_receipts_retained=False)
+   assert len(oracle_calls)>=2
+   return dict(passed=True,device_executed=False,kind=kind,positive_trace=positive,negative_trace=trace,requests=n*13,all_view_requests=True,real_oracle_commands=oracle_calls,native_execution_forbidden=True,synthetic_device_receipts_retained=False)
 
 def read_choice(view):return json.loads(Path(view['selection']).read_text())['choices']['token_input']
 

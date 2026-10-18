@@ -26,8 +26,8 @@ class Tests(unittest.TestCase):
  def test_bracket_requires_smoke(self):
   with patch.object(cpu_seal,'verify',return_value={}),patch('readiness.verify_ready',return_value={}),patch.object(bracket_job,'smoke_gate',side_effect=ValueError('missing smoke')):
    with self.assertRaisesRegex(ValueError,'missing smoke'):bracket_job.main(['--kind','bracket','--lane','B','--output','/tmp/p137-no-write'])
- def test_bundle7_exact_baseline(self):
-  parent=json.loads((P.parents[1]/'packet124c-record-bundle/selection.json').read_text());parent['choices'].update({k:self.base['choices'][k] for k in ('token_input','token_table_path','token_table_sha256')});self.assertEqual(parent,self.base)
+ def test_bundle8_exact_baseline(self):
+  parent=json.loads((P.parents[1]/'packet136-record-bundle/selection.json').read_text());parent['choices'].update({k:self.base['choices'][k] for k in ('token_input','token_table_path','token_table_sha256')});self.assertEqual(parent,self.base)
  def test_imports_preserve_limits(self):
   before={k:resource.getrlimit(k) for k in common.module('limit_kinds',P/'exec_limits.py').KINDS}
   __import__('screen');__import__('tp2_worker')

@@ -269,20 +269,23 @@ public:
   if(e.a.draft_fault=="error"||e.a.draft_fault=="stall"){if(e.a.draft_fault=="stall"){auto until=std::chrono::steady_clock::now()+std::chrono::milliseconds(50);while(std::chrono::steady_clock::now()<until){e.guard();poll(nullptr,0,5);}}throw ProviderError("cooperative injected provider failure before submission");}
   e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);ownrt::CopyEngine copy(e.dev(0));if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");e.upload(0,id("merge.hidden"),0,reverse_hidden,4*p.g.h*2);reverse_hidden=nullptr;}else e.tail=copy.copy(id("merge.hidden"),0,e.buffers[0].at("streams").id,0,4*p.g.h*2,{});e.drain();
   last_embedding_token=confirmed;
+  const bool use_table=table_enabled();
   // Bounded target embedding row only. No target PLE/history/token preparation.
-  if(table_enabled()){
+  if(use_table){
+   auto transfer_started=std::chrono::steady_clock::now();
    auto* staging=e.dev(0).arena.row(embedding_staging).pointer;
    std::memcpy(staging,static_cast<const uint8_t*>(projection_table)+size_t(confirmed)*p.g.h*2,p.g.h*2);
    ownrt::CopyEngine copy(e.dev(0));e.tail=copy.copy(id("merge.embedding_projected"),0,embedding_staging,0,p.g.h*2,{});e.drain();
+   e.transfer_ms+=Engine::ms(transfer_started);
   }else original_embedding(confirmed);
   if(captured) {
-   for(const auto& site:issue_sites){if((!head&&site.head)||(table_enabled()&&site.token_only))continue;
+   for(const auto& site:issue_sites){if((!head&&site.head)||(use_table&&site.token_only))continue;
     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
     e.guard();e.current_cls=site.cls;
     for(const auto& cmd:site.commands){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);}
    }
   } else {
-   for(const auto& l:merge_plan){if(table_enabled()&&embedding_site(l.label))continue;if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);}
+   for(const auto& l:merge_plan){if(use_table&&embedding_site(l.label))continue;if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);}
    for(const auto& l:p.launches){if(!head&&(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax"))continue;
     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
     e.guard();if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);

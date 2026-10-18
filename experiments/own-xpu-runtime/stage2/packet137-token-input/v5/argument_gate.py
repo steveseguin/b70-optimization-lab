@@ -24,6 +24,8 @@ def identity(kind):
 def probe(kind,check_limits=False):
  import exec_limits
  inherited=exec_limits.snapshot();row=identity(kind)
+ oracle_command=['nice','-n','19','taskset','-c','8-15,24-31','python3','-B',str(P.parent/'shared_oracle.py'),'--require-complete']
+ original_popen=subprocess.Popen;oracle_calls=[]
  import tp2_worker as worker
  with tempfile.TemporaryDirectory(prefix='p137-argv-') as directory:
   tmp=Path(directory)
@@ -32,9 +34,12 @@ def probe(kind,check_limits=False):
     path=Path(os.fsdecode(args[0])).absolute()
     if str(path).startswith('/dev/dri/'):raise Forbidden('device open forbidden')
     if (args[2] or 0)&(os.O_WRONLY|os.O_RDWR|os.O_CREAT|os.O_TRUNC|os.O_APPEND) and path!=Path('/dev/null') and not path.resolve().is_relative_to(tmp):raise Forbidden('write outside scratch: '+str(path))
+   if event in ('subprocess.Popen','os.posix_spawn') and list(args[1])==oracle_command:return
    if event in ('subprocess.Popen','os.system','os.exec','os.posix_spawn'):raise Forbidden('execution forbidden')
   sys.addaudithook(audit);seen=[]
   def capture(cmd,*a,**kw):
+   if list(map(str,cmd))==oracle_command:
+    oracle_calls.append(oracle_command);return original_popen(cmd,*a,**kw)
    if check_limits:
     try:exec_limits.check(inherited)
     except AssertionError as e:raise LimitRefusal(str(e)) from e
@@ -48,11 +53,11 @@ def probe(kind,check_limits=False):
   with patch.object(subprocess,'Popen',side_effect=capture),patch.object(worker,'DeviceMonitor',return_value=monitor),patch.object(worker,'masked_environment',side_effect=lambda lane,*a,**k:masked_environment(lane,env)):
    try:worker.run(row,tmp/'run',4800)
    except Reached:pass
-  assert len(seen)==2
+  assert len(seen)==2 and oracle_calls
   for rank,cmd in enumerate(seen):
    for key,value in [('--rank',str(rank)),('--context','4096'),('--max-new','64' if kind=='smoke' else '128'),('--seconds','4800'),('--draft-rank','1'),('--target-split','0'),('--retain-steps','none'),('--selection-sha256',sha(P/'lineage/selection.json'))]:assert cmd[cmd.index(key)+1]==value,(key,cmd)
    assert '--authorized-device-window' in cmd and '--mini' not in cmd
-  return dict(passed=True,kind=kind,device_executed=False,native_exec_intercepted=True,argv=seen,limits_checked=check_limits,inherited_limits=inherited,final_limits=exec_limits.snapshot(),operational_admission_synthetic=True)
+  return dict(passed=True,kind=kind,device_executed=False,native_exec_intercepted=True,argv=seen,real_oracle_commands=oracle_calls,limits_checked=check_limits,inherited_limits=inherited,final_limits=exec_limits.snapshot(),operational_admission_synthetic=True)
 
 def native(cmd,selection):
  cmd=list(cmd);binary=str(P/'build/device/own-rt-iq3');cmd=cmd[cmd.index(binary):]

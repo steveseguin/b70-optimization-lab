@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/queue_plan.py", line 29, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/queue_plan.py", line 25, in main
+    assert r.returncode==0,log.read_text();logs.append(dict(command=cmd,path=str(log.relative_to(ROOT)),sha256=sha(log)))
+           ^^^^^^^^^^^^^^^
+AssertionError: {"name": "packet137-smoke-B", "line": 1, "plan": "FAILED", "reason": "CPU plan failed (seal, inputs or fresh outputs); inspect packet plan directly"}
+{"name": "packet137-bracket-B", "line": 2, "plan": "FAILED", "reason": "CPU plan failed (seal, inputs or fresh outputs); inspect packet plan directly"}
+

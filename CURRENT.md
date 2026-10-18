@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet137 token input prepared on CPU:** The new packet136-based
+copy replaces repeated draft projection with a complete read-only lookup table
+and gives the target fixed token-preparation buffers. Every vocabulary row
+matches under both compilers; draft proposals, rollback and state checks pass.
+Launch, queue and final seal checks pass. Three proposals cover the lane-B
+smoke and five-view comparisons on lanes B and A; they are planned but not
+queued. The unchanged legacy K2 startup receipt is reused within the CPU memory
+limit. Device quality and speed remain pending. No GPU, service, live queue or
+host setting changed. [Work note](notes/2026-10-18-own-runtime-packet137.md).
+
 **October 18, packet138 capture prepared on CPU:** A new lane-B diagnostic
 will collect expert routes and the hidden states needed to test next-layer
 prefetch prediction. It uses twelve independent held-out prompts and a separate

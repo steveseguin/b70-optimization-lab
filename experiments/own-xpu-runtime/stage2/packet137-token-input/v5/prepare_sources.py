@@ -2,7 +2,7 @@
 import hashlib,json,sys
 from pathlib import Path
 P=Path(__file__).resolve().parent;ROOT=P.parents[4];STAGE=P.parents[1]
-BASE=STAGE/'packet124c-record-bundle';LOCAL=P.parent
+BASE=STAGE/'packet136-record-bundle';LOCAL=P.parent
 CHECKED=LOCAL/'build/checked'/LOCAL.relative_to(ROOT)
 def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def save(p,row):p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(row,indent=2)+'\n')

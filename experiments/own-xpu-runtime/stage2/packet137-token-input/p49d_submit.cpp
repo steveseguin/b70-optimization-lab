@@ -69,7 +69,7 @@ Submit resolve(std::string_view cls,std::string_view choice){
   choice=p100::gate_choice(choice);
  }
  if(cls=="experts"&&(choice=="production"||choice=="wg64"||choice=="wg128"||choice=="prefetch64"||choice=="wide64"||choice=="experts2-a"||choice=="experts2-b"||choice=="input-packed"||choice=="gate-input-packed"||choice=="down-input-packed"||choice=="exp-halfcache"||choice=="exp-grid-prefetch"||choice=="exp-grid-prefetch+halfcache"))return production;
- if(cls=="miss"&&(choice=="control"||choice=="batch"))return production;
+ if(cls=="miss"&&(choice=="control"||choice=="batch"||choice=="banks-batch"))return production;
  if(cls=="route"){if(choice=="route-fast")return route_fast;if(choice=="production")return production_route;if(choice=="route-rank4")return route<256>;if(choice=="route-exp32-rank4")return route<32>;}
  if(cls=="recurrence"){if(choice=="rec-both")return recurrence82<true>;if(choice=="rec-both-plus")return recurrence82b;if(choice=="rec-gates")return recurrence82<false>;if(choice=="rec-parallel")return recurrence82<true>;if(choice=="production")return production;if(choice=="rows4-shared")return recurrence<4>;if(choice=="rows8-shared")return recurrence<8>;}
  if(cls=="hc"){if(choice=="production")return production;if(choice=="mix-vector4")return mix;}

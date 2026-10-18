@@ -22,7 +22,7 @@ def compatible(selections):
                 require(view['choices'][key] in DOMAINS[key], 'unsupported switch value: ' + key)
             else:
                 require(view['choices'][key] == value, 'load-time/unsupported choice differs: ' + key)
-        require(not view['choices']['miss'].startswith('banks'), 'third banks are not qualified')
+        require(view['choices']['miss']=='banks-batch', 'packet136 fixed bank layout required')
     return True
 
 def load_config(path):

@@ -4,6 +4,8 @@ from pathlib import Path
 from common import HERE,ROOT,read,require,sha,save,verify_map
 GATES=('argument-gate','legacy-windows','all-windows','worker-gate','launch-limits','queue-plan','queue-gate')
 def verify_ready():
+ from preplan import verify as verify_preplan
+ verify_preplan()
  from cpu_seal import verify
  seal=verify();row=read(HERE/'evidence/qualification.json')
  require(row['passed'] is True and row['device_executed'] is False and row['device_quality_and_speed_pending'] is True,'CPU qualification incomplete')

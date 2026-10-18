@@ -2,7 +2,7 @@
 import hashlib,importlib.util,json,os,resource,shutil,subprocess,time,sys
 from pathlib import Path
 P=Path(__file__).resolve().parent; ROOT=P.parents[4]; STAGE=P.parents[1]
-BASE=STAGE/'packet124c-record-bundle'; LOCAL=P.parent; B=P/'build'
+BASE=STAGE/'packet136-record-bundle'; LOCAL=P.parent; B=P/'build'
 CHECKED=LOCAL/'build/checked'/LOCAL.relative_to(ROOT)
 def sha(path):
  h=hashlib.sha256()

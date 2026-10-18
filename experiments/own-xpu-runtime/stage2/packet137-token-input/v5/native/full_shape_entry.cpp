@@ -9,7 +9,18 @@ static std::string capture_digest(const Engine& e) {
   for(auto id:cmd.ids)ownrt::arguments::append(bytes,id);
   bytes.insert(bytes.end(),cmd.operation_bytes.begin(),cmd.operation_bytes.end());
  }};
- add(e.issue_sites);add(e.alternate_issue_sites);require(!bytes.empty(),"empty target captures");return hash(bytes);
+ if(e.miss_banks()){
+  require(e.active_bank==0&&e.spare_bank==1&&e.bank_parity==0&&e.bank_cache_ready,"noncanonical bank capture");
+  for(int a=0;a<3;++a)for(int b=0;b<3;++b)if(a!=b){
+   const auto& c=e.bank_cache.at(a*3+b);const bool current=a==e.active_bank&&b==e.spare_bank;
+   require(c.ready&&(current?e.context_extent:c.extent)==32,"bank capture extent");
+   ownrt::arguments::append(bytes,a);ownrt::arguments::append(bytes,b);
+   ownrt::arguments::append(bytes,current?e.context_extent:c.extent);
+   const auto& sites=current?e.issue_sites:c.sites;require(!sites.empty(),"empty bank pair");add(sites);
+  }
+  require(e.alternate_context_extent==32,"alternate bank extent");ownrt::arguments::append(bytes,e.alternate_context_extent);
+ }else {add(e.issue_sites);add(e.alternate_issue_sites);}
+ require(!bytes.empty(),"empty target captures");return hash(bytes);
 }
 static void census(Engine& e,const fs::path& dest){
  std::ofstream f(dest);f<<"[";bool first=true;
@@ -58,7 +69,10 @@ int main(int argc,char**argv){if(argc>1&&std::string(argv[1])=="--startup109")re
   auto dest=a.output/("view"+std::to_string(view));fs::create_directories(dest);
   e->lookup_ids["poison"]={7,8};e->history0=e->history1=123;e->selected[0]={9};e->loaded_layer[0]=12;
   e->fp32_sources[0]=e->scratch[0];e->fp32_extents[0]=123;
-  e->admit_position(100);if(a.rank==0){e->swap_state_banks();e->admit_position(200);}
+  e->admit_position(100);if(a.rank==0){
+   if(e->miss_banks())for(int i=0;i<view+1;++i){if(i%2==0)e->rotate_spare_bank();else e->swap_state_banks();}
+   else e->swap_state_banks();e->admit_position(200);
+  }
   p98_writes.clear();p80_operations.clear();
   auto reset=dest/"reset.txt",meta=dest/"switch.txt",receipt=dest/"boundary.json";
   save(reset,dest.string()+"\n\n");save(meta,selection+"\n"+digest+"\n"+reset.string()+"\n"+receipt.string()+"\n");

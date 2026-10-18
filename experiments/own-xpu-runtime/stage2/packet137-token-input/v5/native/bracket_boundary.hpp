@@ -11,8 +11,10 @@ static void bracket_boundary(Engine& e,Candidate& candidate,mtp36::DraftRuntime*
          bool(std::getline(input,reset_file))&&bool(std::getline(input,receipt)),"bracket metadata");
  require(fs::path(selection).is_absolute()&&fs::path(reset_file).is_absolute()&&fs::path(receipt).is_absolute(),"bracket absolute paths");
  const auto arena=e.bracket_arena_hash(),weights=e.bracket_arena_hash(true);
- e.bracket_select(selection,digest);
+ e.bracket_select(selection,digest,true);
+ // Retain completed state with its old selection and physical bank roles.
  request_reset(e,candidate,provider,reset_file,accepted);accepted=0;
+ e.bracket_select(selection,digest);
  // request_reset covers KV, both recurrent banks, speculative backup, scratch,
  // draft mutable allocations and host histories. Also reset capture metadata.
  if(provider)provider->bracket_reset_metadata();

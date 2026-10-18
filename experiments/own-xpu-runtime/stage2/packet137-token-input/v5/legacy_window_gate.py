@@ -7,7 +7,7 @@ validator are exercised by all_window_gate, not claimed as a new execution.
 Every model argv runs on the new production-shape payload/backend mock.
 No legacy chain is registered for device launch by this packet.
 """
-import importlib.util,json,os,resource,shutil,subprocess,sys,tempfile
+import gzip,hashlib,importlib.util,json,os,resource,shutil,subprocess,sys,tempfile
 from pathlib import Path
 from types import SimpleNamespace
 from build_engine import P,ROOT,BASE,sha,save,limits
@@ -33,6 +33,17 @@ def main():
  failure=legacy.S/'shared-K2/run0/gemv-failure.json'
  kept=P/'evidence/legacy-K2-cap-failure.json';save(kept,json.loads(failure.read_text()))
  shared['K2']=dict(executed=False,numerical_rerun_passed=False,reason='unchanged fixture exceeds CPU-only 4 GiB address-space cap',failure=str(kept.relative_to(ROOT)),failure_sha256=sha(kept),replacement='all_window_gate: real K2 argv plus retained measurement validator replay')
+ parent=BASE.with_name('packet124c-record-bundle');proof_path=parent/'startup103.json'
+ proof=json.loads(proof_path.read_text());archive=ROOT/proof['archive']['path']
+ assert proof['passed'] and proof['device_executed'] is False and sha(archive)==proof['archive']['sha256']
+ raw=gzip.decompress(archive.read_bytes());assert hashlib.sha256(raw).hexdigest()==proof['archive']['uncompressed_sha256']
+ external={}
+ prior=json.loads(raw)['shared_fixtures']['K2'];reused={str(f.relative_to(ROOT)):sha(f) for f in (proof_path,archive)}
+ for entry in prior['children']['entries']:
+  binary=BASE/'build/gnu-host'/entry['binary'];assert sha(binary)==entry['binary_sha256']
+  assert binary.is_symlink()
+  external[str(binary.relative_to(ROOT))]=dict(link=str(binary.readlink()),resolved=str(binary.resolve()),sha256=sha(binary))
+ shared['K2'].update(reused_unchanged=True,fresh_native_run=False,original_fixture=prior,reused_sources=reused)
  runs=[]
  from kd_reference import prepare,command
  import window as w
@@ -42,6 +53,7 @@ def main():
   stripped=json.loads(target.read_text());schedule=stripped['choices'].pop('token_input')
   stripped['choices'].pop('token_table_path');stripped['choices'].pop('token_table_sha256')
   assert schedule in ('original','draft_table','target_buffers','both') and stripped==json.loads((BASE/'selection.json').read_text())
+  stripped['choices']['miss']='batch'
   target124=legacy.S/'kd-target124.json';save(target124,stripped)
   ref,binding=prepare(target124,sha(target124),legacy.S)
   # KD deliberately has no target head; the schedule is inert there.
@@ -59,7 +71,9 @@ def main():
    else:entry['startup']=[startup(cmd) for cmd in legacy.rank_commands(name,target)]
    runs.append(entry)
   print(choice,'all eleven constructors PASS; unchanged K2 numeric rerun remains excluded',flush=True)
- save(P/'evidence/legacy-windows.json',dict(passed=True,device_executed=False,model_payload_read=False,runs=runs,total_windows=len(runs),registered_device_chain=False,sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'legacy_window_gate.py',BASE/'startup103.py',BASE/'window.py',BASE/'kd_reference.py',BASE/'chain_pipeline.py',BASE/'queue_runner.py',P/'lineage/selection.json',P/'lineage/candidate.json']}))
+ sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'legacy_window_gate.py',BASE/'startup103.py',BASE/'window.py',BASE/'kd_reference.py',BASE/'chain_pipeline.py',BASE/'queue_runner.py',*P.joinpath('lineage').glob('*.json'),*P.joinpath('evidence').glob('legacy-*.json')] if f.name not in ('screen-seal.json','legacy-windows.json')}
+ sources.update(reused)
+ save(P/'evidence/legacy-windows.json',dict(passed=True,device_executed=False,model_payload_read=False,runs=runs,total_windows=len(runs),registered_device_chain=False,external_legacy_binaries=external,sources=sources))
 
 def startup(cmd):
  cmd=list(map(str,cmd));cmd[0]=str(P/'build/full-shape/fixture');cmd.insert(1,'--startup109')

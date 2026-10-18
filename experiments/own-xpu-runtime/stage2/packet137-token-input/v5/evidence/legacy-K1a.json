@@ -1,0 +1,144 @@
+{
+  "receipts": {
+    "run0/receipt.json": "96515cbc59fccb97195a8c2983c428b2690180e3bd41a9a52a7c78064f20a22b",
+    "linked/receipt.json": "c7d173cd5e2e631958fac331522332f33a3b512bafdb66d77fffe335eacd55ec",
+    "linked/output.bin": "691a9ad3760a339b8334daef5d822e8743663c82eba92d05d002633e07f3f8ff",
+    "qsa/receipt.json": "93ad554a8dde177c35b90623153b8c406a68770911c7b7749cd54960f5b18cf9",
+    "qsa/output.bin": "bfba50bfd43acebef6ba26cdaa5102c5674e71811bcb16cfc0d51211b0f209dd",
+    "expert/receipt.json": "5e81b43db34089c9c79dca34bb712ebd59ab6c83d21ff793d7839f740f778bb8",
+    "expert/output.bin": "51c49d962c2c97f99b2d4056709ae720ba2695eb87330582aabe9620fa3fe379",
+    "round2/receipt.json": "c3b86d16620e1d3228adb9934c6c8ee7e1124cdd98e173a4434ecbf421108f06",
+    "round2/output.bin": "e08f9dcaa743f5ff5dfa0b8c93b1503d87b7ff65922b132fbf73efcb69966fc1",
+    "round3/receipt.json": "dc3fad0aee922c8f0050b211ee3e7f78923b4685c4952396855cb86bba7740fd",
+    "round3/cases.jsonl": "8f6000d40fe640dbc22de5d7badf5214cd09bf0615cd95a79706140c1e76735c",
+    "round3/timings.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "round3/output.bin": "14bc87455add73a2dd92bba670da41d6bdf286f6724621c8028c5201d36a57e4"
+  },
+  "seconds": 18.15147656397312,
+  "children": {
+    "pids": [
+      1480805,
+      1480894,
+      1480895,
+      1480931,
+      1480938,
+      1480982
+    ],
+    "entries": [
+      {
+        "binary": "nongemv-fixtures",
+        "binary_sha256": "e120d89d966ec38d99410093e3d09b86140b484f023fa60a9260c407e3f0276d",
+        "card": 0,
+        "directory": "run0",
+        "pid": 1480805,
+        "argv": [
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124c-record-bundle/build/gnu-host/nongemv-fixtures",
+          "--card",
+          "0",
+          "--output",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/build/legacy-startup/shared-K1a/run0",
+          "--context",
+          "4096",
+          "--fixtures",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124c-record-bundle/build/fusion-fixtures",
+          "--validate-only",
+          "--stop-fd",
+          "3",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124c-record-bundle/dispatch-p45.json"
+        ]
+      },
+      {
+        "binary": "p33-linked-fixtures",
+        "binary_sha256": "8dfe7d7950c7eee2816547aa76311ea38aae2705766581c380804ea7dba821cc",
+        "card": 0,
+        "directory": "linked",
+        "pid": 1480894,
+        "argv": [
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124c-record-bundle/build/gnu-host/p33-linked-fixtures",
+          "--card",
+          "0",
+          "--output",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/build/legacy-startup/shared-K1a/linked",
+          "--stop-fd",
+          "3",
+          "--seconds",
+          "10800"
+        ]
+      },
+      {
+        "binary": "p49-qsa-fixtures",
+        "binary_sha256": "1ab8188de741958e2ff40982cc7f8a693c4b0599fecd5fefb7084cf2b4de6ec8",
+        "card": 0,
+        "directory": "qsa",
+        "pid": 1480895,
+        "argv": [
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124c-record-bundle/build/gnu-host/p49-qsa-fixtures",
+          "--card",
+          "0",
+          "--output",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/build/legacy-startup/shared-K1a/qsa",
+          "--stop-fd",
+          "3",
+          "--seconds",
+          "10800"
+        ]
+      },
+      {
+        "binary": "p49b-expert-fixtures",
+        "binary_sha256": "fa0595061413784c13d62e15bbaf666acf6ccd16d837e88455bc7b741223c7da",
+        "card": 0,
+        "directory": "expert",
+        "pid": 1480931,
+        "argv": [
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124c-record-bundle/build/gnu-host/p49b-expert-fixtures",
+          "--card",
+          "0",
+          "--output",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/build/legacy-startup/shared-K1a/expert",
+          "--stop-fd",
+          "3",
+          "--seconds",
+          "10800"
+        ]
+      },
+      {
+        "binary": "p49c-fixtures",
+        "binary_sha256": "c038da1b3dbe3546f1dce4b0604100481e4820aa998c9e08269a3dc735bf0325",
+        "card": 0,
+        "directory": "round2",
+        "pid": 1480938,
+        "argv": [
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124c-record-bundle/build/gnu-host/p49c-fixtures",
+          "--card",
+          "0",
+          "--output",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/build/legacy-startup/shared-K1a/round2",
+          "--stop-fd",
+          "3",
+          "--seconds",
+          "10800"
+        ]
+      },
+      {
+        "binary": "p49d-fixtures",
+        "binary_sha256": "994f19fb165b0d50bb1bf5a2df3ffa3f2fb889dfbf9efbc14d8443b888f201b5",
+        "card": 0,
+        "directory": "round3",
+        "pid": 1480982,
+        "argv": [
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124c-record-bundle/build/gnu-host/p49d-fixtures",
+          "--card",
+          "0",
+          "--output",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/build/legacy-startup/shared-K1a/round3",
+          "--stop-fd",
+          "3",
+          "--seconds",
+          "10800"
+        ]
+      }
+    ],
+    "signals_sent": 0
+  }
+}

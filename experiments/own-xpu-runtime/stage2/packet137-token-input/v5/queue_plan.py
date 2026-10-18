@@ -4,7 +4,9 @@ from pathlib import Path
 from build_engine import P,ROOT,sha,save,limits
 QUEUE=P.parents[2]/'ops/lane-queue'
 def proposal(kind,lane):
- return dict(name='packet137-'+kind+'-'+lane,lane=lane,argv=['/usr/bin/python3','-B',str((P/'bracket_job.py').relative_to(ROOT)),'--kind',kind,'--lane',lane,'--output',str(P/'evidence'/('device-'+('smoke' if kind=='smoke' else 'v5')+'-'+lane)),'--fault-review','{REVIEW}','--authorized-device-window'],env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)))
+ plan=dict(host_required_available_bytes=97*1024**3+1_271_398_400+5120+32768,expected_seconds=[240,360] if kind=='smoke' else [720,1200],watchdog_seconds=4800)
+ assert plan['watchdog_seconds']>=4*plan['expected_seconds'][1]
+ return dict(name='packet137-'+kind+'-'+lane,lane=lane,argv=['/usr/bin/python3','-B',str((P/'bracket_job.py').relative_to(ROOT)),'--kind',kind,'--lane',lane,'--output',str(P/'evidence'/('device-'+('smoke' if kind=='smoke' else 'v5')+'-'+lane)),'--fault-review','{REVIEW}','--authorized-device-window'],env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)),plan=plan)
 def main():
  limits();paths=[];logs=[]
  for kind,lane in (('smoke','B'),('bracket','B'),('bracket','A')):

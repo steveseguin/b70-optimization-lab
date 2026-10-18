@@ -18,7 +18,7 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;std::unique_ptr<mtp36::D
  fs::create_directories(a.output);Weights w(a);
  e=std::make_unique<Engine>(w,a,pipeline::split(plan(w,a),a.rank,true,1,0));e->initialize();
  if(a.rank==0)pipeline::banks(*e);else{e->prepare_plan();e->prepare_commands();}
- size_t verified=0,rollback_checks=0;
+ size_t verified=0,rollback_checks=0,bank_resets=0;
  {pipeline::SpeculativeImage image(*e);if(a.rank==1)draft=std::make_unique<mtp36::DraftRuntime>(*e);
  e->bracket_weights_locked=true;auto weight_bytes=bytes(*e,true);
  std::map<Allocation,std::string> clean;
@@ -65,12 +65,24 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;std::unique_ptr<mtp36::D
    ++rollback_checks;
   }
  }
+ if(e->miss_banks())for(int state=0;state<6;++state){
+  for(int i=0;i<state;++i){if(i%2==0)e->rotate_spare_bank();else e->swap_state_banks();}
+  e->admit_position(40);
+  auto dest=a.output/('b'+std::to_string(state));fs::create_directories(dest);
+  auto reset=dest/"reset.txt",meta=dest/"switch.txt",receipt=dest/"boundary.json";
+  save(reset,dest.string()+"\n\n");save(meta,std::string(argv[1])+"\n"+argv[2]+"\n"+reset.string()+"\n"+receipt.string()+"\n");
+  pipeline::Candidate candidate;int accepted=0;
+  pipeline::bracket_boundary(*e,candidate,draft.get(),image,meta,accepted);
+  require(e->active_bank==0&&e->spare_bank==1&&e->bank_parity==0&&e->bank_cache_ready,"canonical bank reset");
+  for(int a=0;a<3;++a)for(int b=0;b<3;++b)if(a!=b)require(e->bank_cache.at(a*3+b).ready&&e->bank_cache.at(a*3+b).extent==32,"all six bank captures reset");
+  require(bytes(*e,false)==clean,"bank reset bytes differ");++bank_resets;
+ }
  // Locked weight uploads fail before changing bytes.
  auto id=e->weights[0].begin()->second;uint8_t value=7;bool refused=false;
  try{e->upload(0,id,0,&value,1);}catch(const std::exception&){refused=true;}
  require(refused&&bytes(*e,true)==weight_bytes,"immutable weight guard failed");
  draft.reset();}
- save(a.output/"result.json","{\"passed\":true,\"device_executed\":false,\"views\":5,\"all_mutable_byte_hashes_equal\":true,\"weights_byte_identical\":true,\"poison_negative_control\":true,\"weight_write_refused\":true,\"rollback_checks\":"+std::to_string(rollback_checks)+",\"allocation_checks\":"+std::to_string(verified)+"}");
+ save(a.output/"result.json","{\"passed\":true,\"device_executed\":false,\"views\":5,\"all_mutable_byte_hashes_equal\":true,\"weights_byte_identical\":true,\"poison_negative_control\":true,\"weight_write_refused\":true,\"bank_resets\":"+std::to_string(bank_resets)+",\"rollback_checks\":"+std::to_string(rollback_checks)+",\"allocation_checks\":"+std::to_string(verified)+"}");
  e->shutdown();e.reset();return 0;
  }catch(const std::exception&x){std::cerr<<x.what()<<'\n';draft.reset();if(e){try{e->shutdown();}catch(...){}e.reset();}return 1;}
 }

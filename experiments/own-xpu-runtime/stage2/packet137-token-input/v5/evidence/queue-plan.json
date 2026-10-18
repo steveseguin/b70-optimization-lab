@@ -1,0 +1,64 @@
+{
+  "sources": {
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p137-smoke-B.txt": "996f1ffbbc9604ed7e75242eedb8bc6d76dd0da5a0cca80d68884c0340870bd5",
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p137-v5-B.txt": "870a967f82fe1db664bb5a9884f59589d2065870f9cdbc08135ef87c38fc0134",
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p137-v5-A.txt": "829f0af7eb87e2e70415ae7f5c0c9ea187d87b4e1374f88775dd7b23175f8a91",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/queue_plan.py": "ee6a968e3ab2f9ad321ca3683a59f3add104dcabcf6d0fa9ae706ebe1a54f05f",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/evidence/queue-plan-B.log": "c45601533dfa598349453e5834dec94c795e065a06ce167bae8a345fdd19d211",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/evidence/queue-plan-A.log": "aed5e35781aa2bd3ebe1f22c6da8fcb6a22a1d3638517999b76ab88fe5c4ccc6"
+  },
+  "passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "proposals": {
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p137-smoke-B.txt": "996f1ffbbc9604ed7e75242eedb8bc6d76dd0da5a0cca80d68884c0340870bd5",
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p137-v5-B.txt": "870a967f82fe1db664bb5a9884f59589d2065870f9cdbc08135ef87c38fc0134",
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p137-v5-A.txt": "829f0af7eb87e2e70415ae7f5c0c9ea187d87b4e1374f88775dd7b23175f8a91"
+  },
+  "logs": [
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/tmp/p137-plan-vbyg5w16"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/evidence/queue-plan-B.log",
+      "sha256": "c45601533dfa598349453e5834dec94c795e065a06ce167bae8a345fdd19d211"
+    },
+    {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "A",
+        "--directory",
+        "/tmp/p137-plan-m5n67ojl"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/evidence/queue-plan-A.log",
+      "sha256": "aed5e35781aa2bd3ebe1f22c6da8fcb6a22a1d3638517999b76ab88fe5c4ccc6"
+    }
+  ],
+  "expected_seconds": {
+    "smoke": [
+      240,
+      360
+    ],
+    "bracket": [
+      720,
+      1200
+    ]
+  },
+  "watchdog_seconds": 4800,
+  "unqueued_lanes": [
+    "A",
+    "B"
+  ],
+  "conditional_on": "full exact 12x64 both smoke, CPU seal, coordinator live admission"
+}

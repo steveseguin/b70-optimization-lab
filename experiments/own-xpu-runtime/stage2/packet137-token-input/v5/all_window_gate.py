@@ -14,7 +14,7 @@ def probe(name):
  spec=importlib.util.spec_from_file_location('frozen124c_argument',OPS/'argument_gate.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
  if name=='k2-replay':return m.replay()
  if name=='queue':
-  from queue_gate import probe as queue
+  from inherited_queue_probe import probe as queue
   return queue()
  if name=='oracle':
   from queue_gate import oracle_probe
@@ -37,7 +37,7 @@ def main():
  assert len(next(r['result'] for r in rows if r['window']=='oracle')['calls'])==1
  extended=json.loads((P/'evidence/legacy-windows.json').read_text())
  assert extended['passed'] and extended['total_windows']==44
- sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'all_window_gate.py',P/'evidence/legacy-windows.json',*OPS.glob('*.py'),*OPS.joinpath('inputs/k2-replay').glob('*'),*(P.parents[1]/'packet124c-record-bundle').glob('*.py')]}
+ sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'all_window_gate.py',P/'inherited_queue_probe.py',P/'evidence/legacy-windows.json',*OPS.glob('*.py'),*OPS.joinpath('inputs/k2-replay').glob('*'),*(P.parents[1]/'packet124c-record-bundle').glob('*.py')]}
  save(P/'evidence/all-windows.json',dict(passed=True,device_executed=False,windows=rows,extended_token_input_views=['original','draft_table','target_buffers','both'],real_queue_loop=True,oracle_via_original_binding=True,sources=sources))
 if __name__=='__main__':
  resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3))

@@ -28,8 +28,7 @@ def main(argv=None):
   from readiness import verify_ready
   verify_ready()
  if a.kind=='bracket':
-  if a.plan:print(json.dumps(dict(device_executed=False,conditional_on='exact twelve-prompt 64-token candidate smoke; checked again at launch')))
-  else:smoke_gate()
+  if not a.plan:smoke_gate()
  import screen
  args=['--lane',a.lane,'--placement','1','--lineage',str(HERE/'lineage'),'--bracket',str(HERE/'configs'/(a.kind+'.json')),'--output',str(a.output)]
  if a.plan:args+=['--plan']

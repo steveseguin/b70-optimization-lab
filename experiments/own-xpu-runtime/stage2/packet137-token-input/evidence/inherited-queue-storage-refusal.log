@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/all_window_gate.py", line 44, in <module>
+    if '--probe' in sys.argv:print('RESULT='+json.dumps(probe(sys.argv[-1])))
+                                                        ^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/all_window_gate.py", line 18, in probe
+    return queue()
+           ^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet124c-orchestration/queue_gate.py", line 139, in probe
+    q.run(args)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124c-record-bundle/queue_runner.py", line 175, in run
+    raise RuntimeError('registered-chain storage precheck refused: '+str(storage))
+RuntimeError: registered-chain storage precheck refused: {'passed': False, 'device_executed': False, 'root_free_bytes': 35580981248, 'required_free_bytes': 30335353830, 'margin_bytes': 5245627418, 'build_bytes': 1811450650, 'build_budget_bytes': 1200000000, 'retained_build_bytes': 1811450650, 'retained_build_fits': False, 'cpu_build_peak_limit_bytes': 250000000, 'free_floor_bytes': 25000000000, 'parent_model_reserve_bytes': 0, 'parent_model_maximum_reserve_bytes': 0, 'oracle_growth_reserve_bytes': 0, 'early_retained_limit_bytes': 128000000, 'own_chain_peak_bytes': 5946804480, 'full_chain_uncompressed_bytes': 10582804480}

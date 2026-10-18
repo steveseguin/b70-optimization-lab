@@ -11,7 +11,7 @@ All 182 parent symlinks are retained verbatim. The parent and other live work
 are untouched. A read-only helper audited the original draft arithmetic and
 launch gates while the host was busy.
 
-Implementation is in progress. The new runtime has a full-vocabulary read-only
+At the first milestone, implementation was in progress. The new runtime has a full-vocabulary read-only
 projection table path, bounded pinned draft row, and fixed target lookup buffers.
 The original draft path uses the unmodified norm tree and 32-lane projection
 sum. Target decoding hoists block setup without moving a rounding boundary.
@@ -50,7 +50,7 @@ checks passed; these CPU mocks do not qualify device output or speed.
 
 The initial GNU/Intel pilot exposed a missing Intel OpenMP runtime path;
 the builder now embeds the library rpath. Its earlier failure log remains
-under the build directory. An unchanged legacy K2 numerical fixture exceeded
+in `evidence/table-pilot-intel-runtime-failure.log`. An unchanged legacy K2 numerical fixture exceeded
 the mandatory 4 GiB CPU cap. The cap was not raised. Its failure receipt is
 retained, and the all-window gate uses the real K2 argument path and the
 frozen measurement-validator replay. K0/K1a/K1b ran locally. K2 is explicitly
@@ -58,7 +58,99 @@ not claimed as a new successful numerical run.
 
 The native review removed repeated mode lookups from the per-kernel loop
 and restored transfer-time accounting for the direct staged row upload.
-The final qualification is being rerun after those changes. Device proposals
+The numerical qualification was rerun after those changes. Device proposals
 will require the 32-row original-device-chain check before readiness, exact
 target output, identical per-prompt proposal sequences and acceptance across
 the bracket, and the original oracle binding. No GPU was used.
+
+## Stack with packet136
+
+Packet136 committed as `3dfcff0ca` while this task was running. Before final
+qualification, packet137 adopted that parent: fixed `miss=banks-batch` in all
+four selections, its unchanged arithmetic objects and memory plan, and its
+two native source deltas. `parent136-binding.json` pins the exact inputs.
+The original 182 symlinks still match both parents. The table proof remains
+applicable because neither checkpoint nor embedding arithmetic changed.
+
+The bank layout never switches within the bracket. At each boundary the
+runtime validates the next selection, retains and clears the completed state
+under its old physical roles, then restores active/spare roles 0/1 and
+rebuilds all six existing captures. It allocates no new banks. The full-shape
+gate hashes all six captured argument sequences, and byte-reset regression
+starts from all six pairings. The 491-case inherited cancellation/redo test
+passed under GNU and Intel for original/both. Only obsolete host
+`lookup_ids` staging is omitted from that test's cross-mode serialization;
+all model, device and host-history bytes remain compared.
+
+The bank reserve replaces an equal-size snapshot region: net device arena
+change is zero (29,601,792 bytes move from backup to reserve). The extra
+host admission is the 1,271,398,400-byte table, 5,120-byte pinned staging and
+a conservative 32,768-byte target-buffer reserve above the inherited 97 GiB.
+The plan exposes the exact total to the queue's admission parser.
+
+## Final numerical and wrapper checks
+
+All four 491-case cancellation/redo runs passed: GNU and Intel, original and
+both. Each covers 43 position classes, a 98-step live sequence and three
+corruption controls. The compressed transcripts have identical SHA-256
+`b1e3349b148cc71e9473ce2920ee87c6702f76e48cbdfd15b432cff2c88535d0`.
+Maximum child RSS for that gate was 967,368 KiB. The tests ran serially.
+Full-shape startup checks all six captured bank pairs; reset tests start from
+all six pairings and verify five host/device history rollbacks per rank0 run.
+
+The first launch-argument rehearsal intercepted the real oracle subprocess
+as if it were a native GPU launch. The corrected harness permits only the
+exact original `shared_oracle.py --require-complete` command, executes it,
+and still intercepts both native launches. The original refusal is retained
+in `evidence/argument-oracle-interception-failure.log`.
+
+The inherited queue rehearsal then found 1.811 GB in an older packet's local
+build against its 1.2 GB allowance after redirecting queue output to scratch.
+That refusal is retained in `evidence/inherited-queue-storage-refusal.log`;
+no older build was deleted and no old allowance changed. A packet137-local
+copy of that probe checks our actual 300 MB build budget separately and uses
+the disposable directory for both queue output and its storage accounting.
+The real storage check, input checks, oracle subprocesses, queue loop and
+malformed-receipt refusals still run. This is a synthetic scheduling test,
+not admission of the older chain or a claim that its build now fits.
+
+The first real proposal plan also refused two unchanged K2 fixture symlinks
+that resolve outside the repository. They are now an explicit external-binary
+proof with exactly two allowed logical paths, literal link targets, resolved
+paths and SHA-256 hashes, verified during both planning and final readiness.
+They are excluded from repository source maps. Their frozen startup archive
+still supplies their expected bytes; oracle authority remains separate.
+The initial plan refusal is retained in
+`evidence/queue-plan-legacy-path-refusal.log`.
+
+## CPU handoff complete, 17:02 UTC
+
+The final CPU seal and extended qualification pass. All 44 token-input/window
+constructions, eleven real legacy queue windows, twelve input preflights and
+six complete-oracle checks pass. Both real worker launch paths, all 78
+synthetic worker requests, corrupted-output abort, drain and unchanged native
+resource-limit checks pass. Temporary queue tests cover success and failed
+children for both registered jobs, with no retry or service execution.
+
+The three new proposals pass the real planner on disposable queue copies:
+
+- `ops/lane-queue/proposed-p137-smoke-B.txt`: twelve 64-token requests with both.
+- `ops/lane-queue/proposed-p137-v5-B.txt`: one-load original/both/original/both/original.
+- `ops/lane-queue/proposed-p137-v5-A.txt`: the same bracket, unqueued on lane A.
+
+Paths above are relative to `experiments/own-xpu-runtime/`. All three remain
+unqueued. Each bracket view has twelve 128-token requests and the separate
+incident64 sanity check. Smoke is expected to take 240–360 seconds and the
+bracket 720–1,200 seconds; the 4,800-second watchdog meets the four-times rule.
+Host admission requires 105,424,393,216 available bytes. The final build uses
+150,459,412 bytes; root had 35.54 GB free. The table remains mode 0444 outside
+Git. All 182 original symlink targets remain intact.
+
+The bracket requires the exact lane-B device smoke, including 32 original-path
+table samples before readiness, and coordinator live admission. No GPU or
+service was started, no live queue was edited, and no host settings changed.
+Device output/proposal identity and speed remain pending; no record or
+promotion changed. The preparation finished within the 2.5-hour time box.
+
+[CPU preparation closeout](../experiments/own-xpu-runtime/stage2/packet137-token-input/CPU-PREPARATION-CLOSEOUT.md)
+links the retained proofs and the conditions for continuing.

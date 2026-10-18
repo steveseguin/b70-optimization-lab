@@ -8,6 +8,7 @@ STEPS=[
  ('full-shape',P/'full_shape.py',[]),
  ('reset-bytes',P/'reset_gate.py',[]),
  ('protocol',P/'protocol_gate.py',[]),
+ ('state-regression',P/'state_regression.py',[]),
  ('exec-limits',P/'exec_gate.py',[]),
  ('policy',P/'test_v5.py',[]),
  ('safety',P/'safety_gate.py',[]),
