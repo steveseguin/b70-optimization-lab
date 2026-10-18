@@ -93,28 +93,42 @@ def run(identity, output, seconds, pair_dir=None):
             monitor.poll()
     handlers = {s: signal.signal(s, lambda n, f: stopped.append(n))
                 for s in (signal.SIGTERM, signal.SIGINT)}
+    drain_started = False
     transport = pipeline.Transport.__new__(pipeline.Transport)
     try:
         pipeline.Transport.__init__(transport, args, ranks, environment, check, launch_hook=monitor.register)
         monitor.poll(ready=True)
-        requests = [('incident64', entries[0], 64)] + [(e['prompt_id'], e, 128) for e in entries]
-        for name, entry, count in requests:
-            check()
-            dest = output / name
-            suite.reset(transport, dest)
-            prompt = snapshots[entry['prompt_id']][1]
-            result = suite.run_request(transport, args, prompt, count)
-            expected = D.CHECK.token_record(D.ORACLE / 'results' / entry['prompt_id'])
-            compare_tokens(result['tokens'], expected, count, name)
-            result.update(prompt_id=entry['prompt_id'], prompt_class=D.METRICS.PROMPT_CLASSES[entry['prompt_id']],
-                          repeat=1, exact_oracle=True, prompt_token_sha256=D.token_hash(prompt))
-            save(dest / 'receipt.json', label(result))
-            if count == 64:
-                incident = dict(passed=True, tokens_compared=64, mode='separate-reset-request',
-                                receipt_sha256=sha(dest / 'receipt.json'))
-                save(output / 'incident64.json', incident)
-            else:
-                rows.append(result)
+        if identity.get('bracket'):
+            from bracket import execute_views, switch_reset
+            class Backend:
+                def check(self): check()
+                def switch_reset(self, view, destination):
+                    return switch_reset(transport, view, destination, suite)
+                def reset(self, destination): suite.reset(transport, destination)
+                def request(self, entry, count):
+                    return suite.run_request(transport, args, snapshots[entry['prompt_id']][1], count)
+                def prompt_hash(self, entry): return D.token_hash(snapshots[entry['prompt_id']][1])
+            view_rows = execute_views(Backend(), identity['bracket']['views'], entries, output)
+            rows, incident = view_rows[-1]['requests'], view_rows[-1]['incident64']
+        else:
+            requests = [('incident64', entries[0], 64)] + [(e['prompt_id'], e, 128) for e in entries]
+            for name, entry, count in requests:
+                check()
+                dest = output / name
+                suite.reset(transport, dest)
+                prompt = snapshots[entry['prompt_id']][1]
+                result = suite.run_request(transport, args, prompt, count)
+                expected = D.CHECK.token_record(D.ORACLE / 'results' / entry['prompt_id'])
+                compare_tokens(result['tokens'], expected, count, name)
+                result.update(prompt_id=entry['prompt_id'], prompt_class=D.METRICS.PROMPT_CLASSES[entry['prompt_id']],
+                              repeat=1, exact_oracle=True, prompt_token_sha256=D.token_hash(prompt))
+                save(dest / 'receipt.json', label(result))
+                if count == 64:
+                    incident = dict(passed=True, tokens_compared=64, mode='separate-reset-request',
+                                    receipt_sha256=sha(dest / 'receipt.json'))
+                    save(output / 'incident64.json', incident)
+                else:
+                    rows.append(result)
         monitor.poll(ready=True)
         suite.reset(transport, output / 'after-suite')
         if pair_dir is not None:
@@ -132,13 +146,16 @@ def run(identity, output, seconds, pair_dir=None):
         save(output / 'report-inputs.json', dict(passed=True, requests=rows, incident64=incident,
              placement=placement, lane=identity['lane'], timing=identity['timing'],
              device_isolation=read(output / 'device-isolation.json')))
+        if identity.get('bracket'):
+            save(output / 'bracket-inputs.json', dict(passed=True, views=view_rows, kind=identity['bracket']['kind']))
         monitoring = False  # FINISH legitimately closes rank FDs and PIDs.
+        drain_started = True
         drain(transport, output, True)
         return 0
     except Exception as error:
         save(output / 'failure.json', label(dict(passed=False, error=str(error))))
         if hasattr(transport, 'stop_write') and not getattr(transport, 'closed', False):
-            if not getattr(transport, 'teardown_refused', False):
+            if not drain_started and not getattr(transport, 'teardown_refused', False):
                 try:
                     drain(transport, output, False, error)
                 except Exception as drain_error:

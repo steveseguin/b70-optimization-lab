@@ -46,6 +46,9 @@ def verify_map(root, entries):
 def sealed(args):
     """Check existing receipts, never regenerate them or rerun CPU campaigns."""
     root = args.lineage.resolve()
+    if root == HERE / 'lineage':
+        from bracket_config import sealed_identity
+        return sealed_identity(args)
     receipt = (args.seal or root / 'build-receipt.json').resolve()
     row = read(receipt)
     require(row.get('passed') is True and row.get('device_executed') is False,

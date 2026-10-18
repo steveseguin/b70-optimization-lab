@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import signal
+import shutil
 import subprocess
 import time
 
@@ -36,6 +37,7 @@ def parser():
     ap.add_argument('--output', type=Path, required=True)
     ap.add_argument('--fault-review', type=Path)
     ap.add_argument('--authorized-device-window', action='store_true')
+    ap.add_argument('--bracket', type=Path)
     ap.add_argument('--plan', action='store_true')
     return ap
 
@@ -114,16 +116,24 @@ def screen_main(argv=None, *, release=None):
     require(args.output.is_relative_to(HERE / 'evidence') and not args.output.exists(), 'new screen evidence output required')
     identity = sealed(args)
     identity.update(lane=args.lane, conditions=LANES[args.lane])
+    if args.bracket:
+        from bracket import load_config
+        require(args.pair_dir is None and args.lineage == HERE / 'lineage', 'bracket requires private lineage and single lane')
+        identity['bracket'] = load_config(args.bracket)
+        identity['bracket_config'] = str(args.bracket.resolve())
+        identity['bracket_config_sha256'] = sha(args.bracket)
     manifest = D.oracle_inputs()
     require(manifest['prompts'][0]['prompt_id'] == 'incident-retrospective', 'incident must be first')
     cmd = command(args, identity, manifest)
+    planned_writes = WRITES[args.profile] * len(identity.get('bracket', {}).get('views', [None]))
     if args.plan:
         print(json.dumps(dict(evidence_label='screen', device_executed=False, supported=identity['placement']['supported'], identity=identity,
                               command=cmd, model_lifetimes=1, watchdog_seconds=WATCHDOG[args.profile],
-                              planned_write_bytes=WRITES[args.profile],
+                              planned_write_bytes=planned_writes,
                               physical_cards=LANES[args.lane]['cards'], native_card_arguments=[0, 1],
                               device_mask=mask_for(args.lane), timing=args.timing,
-                              reservation_scope=scope), indent=2))
+                              reservation_scope=scope, views=len(identity.get('bracket', {}).get('views', [None])),
+                              target_loads=1, draft_loads=1, teardown_count=1), indent=2))
         return 0 if identity['placement']['supported'] else 2
     require(identity['placement']['supported'], identity['placement']['reason'])
     require(args.authorized_device_window, 'coordinator authorization required')
@@ -147,7 +157,10 @@ def screen_main(argv=None, *, release=None):
     for path in (args.lineage / 'build/FAULT.json', args.lineage / ('fault-' + boot + '.json')):
         if path.exists():
             require(read(path).get('boot_id') != boot, 'lineage fault latch requires coordinator recovery')
-    SUPPORT.storage(args.output, WRITES[args.profile])
+    SUPPORT.storage(args.output, planned_writes)
+    if args.bracket:
+        require(shutil.disk_usage('/').free - planned_writes >= 12_000_000_000,
+                'bracket would breach 12 GB free-storage floor')
     memory_admit(args.profile)
     review, boot_log, fresh_log, cursor = fault_review.validate(args.fault_review)
     args.output.mkdir(parents=True)
@@ -187,7 +200,10 @@ def screen_main(argv=None, *, release=None):
             record['ldd'] = S.ldd_preflight(Path(identity['binary']), env)
             record['memory_admission'] = memory = memory_admit(args.profile)
             record['memory_fence'] = W.memory_fence()
-            record['storage_admission'] = SUPPORT.storage(args.output, WRITES[args.profile])
+            record['storage_admission'] = SUPPORT.storage(args.output, planned_writes)
+            if args.bracket:
+                require(shutil.disk_usage('/').free - planned_writes >= 12_000_000_000,
+                        'bracket would breach 12 GB free-storage floor')
             record['command'] = cmd
             handlers = {s: signal.signal(s, lambda n, f: reasons.append('coordinator stop ' + str(n)))
                         for s in (signal.SIGTERM, signal.SIGINT)}
@@ -239,6 +255,9 @@ def screen_main(argv=None, *, release=None):
                           timing=identity['timing'], device_isolation=proof['device_isolation'])
             save(args.output / 'run/summary.json', result)
             save(args.output / 'summary.json', label(result))
+            if identity.get('bracket'):
+                from compare import finish_bracket
+                finish_bracket(args.output, record, identity, coordination)
             record.update(passed=True, finished_utc_ns=time.time_ns(),
                           elapsed_seconds=(time.time_ns()-record['started_utc_ns'])/1e9,
                           files={str(p.relative_to(args.output)):sha(p) for p in args.output.rglob('*')
@@ -275,6 +294,8 @@ def main(argv=None):
     from cpu_seal import verify
     verify()
     fault_review.validate(args.fault_review)
+    # A predictable memory refusal must precede marker creation and handlers.
+    memory_admit(args.profile)
     _, cursor = S.journal()
     stopped = []
     def check():
@@ -299,7 +320,16 @@ def main(argv=None):
                 return dict(
                     schema='own-runtime.screen-lane.v4', passed=True, reservation=lease.record,
                     clients_after_drain=clients, released_before_report=True)
-            return screen_main(argv, release=release)
+            try:
+                return screen_main(argv, release=release)
+            finally:
+                # A race can lower memory after initial admission. If this call
+                # never launched a child there is no owner to retain. No stale
+                # reservation is left by a prelaunch refusal or plan/seal error.
+                path = args.output.resolve() / 'window.json'
+                row = read(path) if path.exists() else {}
+                if not lease.completed and not row.get('device_executed'):
+                    lease.complete(drained=True)
     finally:
         for sig, handler in handlers.items():
             signal.signal(sig, handler)

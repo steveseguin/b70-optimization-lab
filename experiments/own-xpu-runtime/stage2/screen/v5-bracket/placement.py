@@ -80,5 +80,9 @@ def verify_identity(identity):
     require(all(identity.get(key) == value for key, value in expected.items()),
             'sealed screen identity/placement changed')
     placement = expected['placement']
+    if identity.get('bracket'):
+        from bracket import load_config
+        require(sha(identity['bracket_config']) == identity['bracket_config_sha256'] and
+                load_config(identity['bracket_config']) == identity['bracket'], 'bracket configuration changed')
     require(placement['supported'], placement['reason'])
     return placement, admission_gate(args.lineage)[1]

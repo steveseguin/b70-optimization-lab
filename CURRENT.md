@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, packet98 CPU preparation:** A separate v5 screen wrapper now keeps
+one rank pair for a whole bracket. Both native builds, full-size startup and
+reset checks, real miniature byte checks and rank-message tests pass. V4 and
+existing packets are untouched. No GPU or service ran. The first device step
+will be a two-view packet84 A/A smoke on lane B; only after it passes may the
+five-view packet91 comparison run. Device output parity and wall-time savings
+remain unmeasured. [Task note](notes/2026-10-18-own-runtime-packet98.md).
+
 **October 18, packet97b composition gate updated on CPU:** A source now needs one exact winning lane before joining the composite. Packet91's old rejection was an unfinished screen being labeled failed; its completed A grid now qualifies, together with packet93's head transpose and packet90's half-cache. The helper freezes that set and prepares both composite brackets plus conditional leave-one-out views from existing sealed selections. Pending sources do not delay the decision. Record readiness stays false until the composite's own two-lane checks and the unchanged full chain pass. No GPU, service, live queue or other packet tree changed. [Decision, diagnosis and validation](notes/2026-10-18-own-runtime-packet97.md#packet97b--review-14-screen-the-composite-first).
 
 **October 18, packet58h one-card MTP feasibility closed on CPU:** The draft shares the existing head, but its own weights still need more host RAM than the saved admission snapshots allow. Both device layouts fit; whole-host timing needs about 121.65 GB available with the reserve intact. The main timing model predicts 24.62 tokens per second, below the required 28.8. No runtime was built or queued; frozen packets and live work were untouched. A passive read found blocks 53–56 offline and 57 online, differing from the brief's stated 10 GiB exclusion; no setting changed. Revisit only with a faster complete verification path and a host budget with margin. [Analysis and closeout](notes/2026-10-18-own-runtime-packet58h.md).
