@@ -697,3 +697,41 @@ STOP DOING acknowledged:
 - one-card holds ahead of ready 2-card speed screens;
 - growing p143 beyond what brackets select;
 - dropping a brief without re-issuing its scope (p142b's lane-A scope moves to p145).
+
+## Review 32 (2026-10-18 ~22:05 UTC): ACT
+
+All four cards were idle from 21:52 UTC with nothing queued. The class-layout line had closed (attention, router and gdn.z order600 all null, exact). packet58ac and packet58aa closed on CPU estimates for lack of separated device costs. packet148 was a CPU-only 2-card study while lane B was dark. Over 2 h, 25.9% of card-minutes were assigned. Faults 2. The 1-card record moved to 29.26 at 21:18.
+
+Actions:
+1. **Codex p149 (2-card, lane B):** a vendored packet136 probe with `probe=xchg`. It adds the real per-layer exchange payloads a shared (both-rank) miss correction would need during corrected first halves, output-neutral, measured in a one-load v5. It also fixes the bracket report reader (the missing `p105-transfers.jsonl`), with a regression test on real retained packet145 bracket evidence. `stv5-p149` queues the smoke, then the v5, after p149 exits with a fresh READY.
+2. **Codex p58ad:** the one-card record chain for `hc=p60fusion`, prepared ahead and bound to packet58ab's build by hash. Readiness requires packet58ab's v5 under the warm-up rule and ≥ +2% over 29.260, and it must pass `fn-run/onecard-chain.sh --check`. `onecard-hold-p58ab2` now fires on a **stable** packet58ab READY (fresh, and no file in the packet changed for 3 min, or its Codex exited). In one hold it runs smoke → v5 (freezing only disk-heavy Codex) → the packet58ad chain if ready (its own gates) → the packet58ae arms.
+3. Bracket report-gate fix: in p149's copy; the report-only exit code stays as is because the v4 wrappers are frozen.
+4. **Codex p58ae:** two light, output-neutral one-card measurement arms (cache-publication split; per-layer miss-stall/overlap windows), proving under 2% overhead in-load, with preregistered decision rules. They run in the same hold.
+
+STOP DOING acknowledged:
+- CPU-only 2-card studies while lane B is dark;
+- closing levers for lack of evidence without queuing the probe that would provide it;
+- brackets from a lineage whose report step just failed;
+- holds gated on Codex exit instead of a stable READY;
+- further weight-layout variants.
+
+## Review 33 (2026-10-18 ~23:05 UTC): ACT
+
+Device occupancy over 2 h was 51% of wall time (21.7% of card-minutes); about 94 min over 6 h had nothing running on any card. One-card lever choice worked: packet58ab HC fusion +3.21% exact, and the packet58ad chain posted 30.396 (submitted, `cmvefq3ep009orf0186k21lba`).
+
+At 23:06 `onecard-hold-p58ab3` queued `packet58ae-combined-A` although its READY said `ready_for_device: false`. The lane-A driver exited on that row's fresh fault review, and the hold then waited, with no deadline, holding PAUSE-B. Fault count 2.
+
+Actions:
+1. **Deadlock cleared (23:07, before the verdict arrived):** hold3 stopped, the p58ae row removed, PAUSE-B removed, lane-A driver A29 started. packet149's lane-B smoke started at 23:07:32. Lesson in memory: waiters check READY contents.
+2. **Codex p150 (2-card):**
+   - (b) a vendored packet136 one-load skip/zero-input differencing probe splitting rank 0's out-of-layer time on the **current** build. It is device-ready ≤ 90 min with a separate READY, and `autoq-p150-split` queues it on lane B only when `ready_for_device` is true and stable.
+   - (a) if packet149's measured exchange cost is ≤ ~1 ms/miss, a shared-correction prototype that splits whole routed-expert output rows across the ranks, exact by construction, under its own seal.
+3. **Rule:** cap CPU feasibility at ~45 min. Candidates with a ≥ 3% ceiling and a build under 3 h go to a smoke plus a five-view one-load bracket. Forecasts miss in both directions; HC fusion measured +3.21% vs a 2.40–3.17% forecast.
+4. **Codex opswaiters:** `lanequeue.py` turns pre-START check failures into `REFUSED-PREDEVICE` and continues, instead of the driver exiting. A new `ops/coord_wait.py` provides `ready()` (`ready_for_device` true), deadline-bounded `wait_event`, a `hold` context that always removes its own PAUSE and thaws, and `driver_alive` alerts.
+
+STOP DOING acknowledged:
+- queuing packets whose READY says false;
+- unbounded waits holding PAUSE or freezes;
+- the Codex prep queue at 0–1 jobs when GPU work ends within 1 h;
+- CPU-only closures without a 15–20 min device test;
+- more class-layout/cold-gap micro levers.

@@ -44,6 +44,10 @@ def require(ok, message):
         raise ValueError(message)
 
 
+class SafetyStop(ValueError):
+    """A global admission failure must never become a skippable job refusal."""
+
+
 def utc():
     return datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
 
@@ -178,16 +182,22 @@ def resolve(value):
     return p if p.is_absolute() else ROOT / p
 
 
-def validate(job, lane):
+def validate_identity(job, lane):
+    """Enough structure to select/prune safely, without job-local file checks."""
     require(isinstance(job, dict), 'job must be an object')
-    require(set(job) <= {'name', 'argv', 'script', 'env_extra', 'review', 'lane',
-                         'depends_on', 'plan', 'admission'}, 'unknown job field')
     require(job.get('lane') == lane, 'job lane differs from queue')
     require(isinstance(job.get('name'), str) and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,100}', job['name']), 'invalid unit name')
     deps = job.get('depends_on', [])
     require(isinstance(deps, list) and all(isinstance(d, str) and
             re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,100}', d) and d != job['name']
             for d in deps), 'depends_on must list other job names')
+    return job
+
+
+def validate(job, lane):
+    validate_identity(job, lane)
+    require(set(job) <= {'name', 'argv', 'script', 'env_extra', 'review', 'lane',
+                         'depends_on', 'plan', 'admission'}, 'unknown job field')
     for key in ('plan', 'admission'):
         require(key not in job or isinstance(job[key], dict), key + ' must be an object')
     require(('argv' in job) != ('script' in job), 'choose argv or script')
@@ -220,7 +230,7 @@ def validate(job, lane):
     return job
 
 
-def read_queue(directory, lane):
+def read_queue(directory, lane, *, validate_jobs=True):
     path = directory / f'queue-{lane}.txt'
     rows = []
     if path.exists():
@@ -228,7 +238,8 @@ def read_queue(directory, lane):
             if not line.strip() or line.lstrip().startswith('#'):
                 continue
             try:
-                rows.append(validate(json.loads(line), lane))
+                check = validate if validate_jobs else validate_identity
+                rows.append(check(json.loads(line), lane))
             except (ValueError, TypeError) as exc:
                 raise ValueError(f'queue line {number}: {exc}') from None
     require(len({r['name'] for r in rows}) == len(rows), 'duplicate job name')
@@ -646,6 +657,15 @@ class Queue:
         self.active = directory / f'inflight-{lane}.json'
         self.done = directory / f'done-{lane}.txt'
 
+    def guards(self):
+        try:
+            faults = self.backend.guards(self.lane)
+            require(type(faults) is int and faults == BASE,
+                    'kernel fault count changed from reviewed base 2 or is unreadable')
+            return faults
+        except Exception as exc:
+            raise SafetyStop(str(exc)) from exc
+
     def event(self, kind, **values):
         row = dict(utc=utc(), lane=self.lane, event=kind, **values)
         text = json.dumps(row, sort_keys=True)
@@ -674,7 +694,7 @@ class Queue:
         while True:
             if self.launch_interrupted():
                 return False
-            self.backend.guards(self.lane)
+            self.guards()
             if self.launch_interrupted():
                 return False
             available = mem_available()
@@ -699,7 +719,7 @@ class Queue:
         while True:
             if self.launch_interrupted():
                 return False
-            self.backend.guards(self.lane)
+            self.guards()
             if self.launch_interrupted():
                 return False
             blocker = live_window_blocker(self.lane)
@@ -735,10 +755,10 @@ class Queue:
         with ExitStack() as stack:
             for lane in lanes:
                 stack.enter_context(lock(self.directory / f'edit-{lane}.lock'))
-            rows = read_queue(self.directory, self.lane)
+            rows = read_queue(self.directory, self.lane, validate_jobs=False)
             matching = [r for r in rows if r['name'] == job['name']]
             require(not matching or matching == [job], 'inflight job was edited; completion retained, queue not overwritten')
-            queues = {lane: read_queue(self.directory, lane) for lane in lanes}
+            queues = {lane: read_queue(self.directory, lane, validate_jobs=False) for lane in lanes}
             dropped = dependent_names([r for rs in queues.values() for r in rs], job) if predevice else {job['name']}
             if predevice:
                 for lane in lanes:
@@ -768,31 +788,36 @@ class Queue:
                            for r in queued if r['name'] not in dropped))
         self.active.unlink()
 
-    def refuse_pins(self, job, exc):
+    def refuse_prestart(self, job, exc):
         """No child was launched: persist that proof, then use normal pruning.
 
         This is queue-owned evidence, not a claim inferred from a child's fast
         exit. Do not write inside the sealed packet or manufacture PID samples.
         """
         with lock(self.directory / f'edit-{self.lane}.lock'):
-            rows = read_queue(self.directory, self.lane)
+            rows = read_queue(self.directory, self.lane, validate_jobs=False)
             if self.active.exists():
                 require(json.loads(self.active.read_text())['job'] == job,
-                        'pin refusal conflicts with inflight job')
+                        'pre-START refusal conflicts with inflight job')
             elif not rows or rows[0] != job:
                 return
-            self.backend.guards(self.lane)
-            receipt = self.directory / (job['name'] + '-' + uuid.uuid4().hex + '.pin-refusal.json')
-            save(receipt, dict(job=job, utc=utc(), **exc.receipt))
+            faults = self.guards()
+            evidence = dict(getattr(exc, 'receipt', {}), reason=str(exc),
+                            refused=True, device_executed=False, launch_attempted=False,
+                            phase='before-START')
+            receipt = self.directory / (job['name'] + '-' + uuid.uuid4().hex + '.prestart-refusal.json')
+            save(receipt, dict(job=job, utc=utc(), **evidence))
             record = dict(outcome='REFUSED-PREDEVICE', rc=1, end_unix=time.time(),
                           end_utc=utc(), duration_seconds=0, device_executed=False,
                           launch_attempted=False, receipt=str(receipt),
-                          predevice_evidence=exc.receipt)
+                          reason=str(exc), faults_start=faults, faults_end=faults,
+                          predevice_evidence=evidence)
             save(self.active, dict(job=job, **record))
         self.finish(job, record)
-        self.event('REFUSED-PREDEVICE', name=job['name'], receipt=str(receipt))
+        self.event('REFUSED-PREDEVICE', name=job['name'], receipt=str(receipt), reason=str(exc))
         self.event('ALERT', name=job['name'], dropped_dependencies=record['dropped_dependencies'],
-                   reason='Pin guard refused before launch; dependent rows dropped; continuing to an independent job; no retry')
+                   reason='Pre-START check refused: ' + str(exc) +
+                          '; dependent rows dropped; continuing to an independent job; no retry')
 
     def run(self):
         with lock(self.directory / f'driver-{self.lane}.lock', nonblocking=True):
@@ -808,7 +833,7 @@ class Queue:
                     until += max(0, 90 - elapsed)
             while self.boundary(until):
                 with lock(self.directory / f'edit-{self.lane}.lock'):
-                    rows = read_queue(self.directory, self.lane)
+                    rows = read_queue(self.directory, self.lane, validate_jobs=False)
                 if not rows:
                     self.sleep(1)
                     continue
@@ -816,51 +841,52 @@ class Queue:
                 if self.done.exists():
                     names = {json.loads(line)['job']['name'] for line in self.done.read_text().splitlines() if line.strip()}
                     require(job['name'] not in names, 'job already completed; no automatic replay')
-                self.backend.guards(self.lane)
-                ldp = library_path()
+                self.guards()
                 try:
+                    validate(job, self.lane)
+                    ldp = library_path()
                     plan = plan_job(job, ldp)
-                except pin_guard.PinRefusal as exc:
-                    self.refuse_pins(job, exc)
-                    continue
-                required = plan.get('host_required_available_bytes', 0)
-                deadline = admission_deadlines.setdefault(job['name'], self.now() + HOST_WAIT_LIMIT)
-                if not self.wait_host_admission(job, required, deadline):
-                    continue
-                review = self.backend.review(job, self.directory) if job.get('review') else None
-                # Recheck after CPU preparation; no queue snapshot survives a pause.
-                if not self.wait_drain_spacing(job):
-                    continue
-                if not self.wait_host_admission(job, required, deadline):
-                    continue
-                # Review/admission may have waited while another agent edited
-                # a pin. Rehash now, then recheck stop/memory/queue state under
-                # the edit lock so time spent hashing cannot bypass a pause.
-                try:
+                    required = plan.get('host_required_available_bytes', 0)
+                    deadline = admission_deadlines.setdefault(job['name'], self.now() + HOST_WAIT_LIMIT)
+                    if not self.wait_host_admission(job, required, deadline):
+                        continue
+                    review = self.backend.review(job, self.directory) if job.get('review') else None
+                    # No queue snapshot survives a pause or admission wait.
+                    if not self.wait_drain_spacing(job):
+                        continue
+                    if not self.wait_host_admission(job, required, deadline):
+                        continue
+                    # Rehash after review/waits, then recheck under the edit lock.
                     check_pins(job)
-                except pin_guard.PinRefusal as exc:
-                    self.refuse_pins(job, exc)
-                    continue
-                with lock(self.directory / f'edit-{self.lane}.lock'):
-                    current = read_queue(self.directory, self.lane)
-                    if not current or current[0] != job:
-                        continue
-                    faults_start = self.backend.guards(self.lane)
-                    # A teardown or pause can arrive while taking the edit lock
-                    # or checking guards. Discard this preparation and recheck.
-                    if (self.launch_interrupted() or live_window_blocker(self.lane) is not None
-                            or self.now() < drain_spacing_deadline()
-                            or (required and mem_available() < required + HOST_HEADROOM)):
-                        continue
                     run_id = job['name'] + '-' + uuid.uuid4().hex
                     receipt = self.directory / (run_id + '.exit.json')
                     log = self.directory / (run_id + '.log')
-                    start, started = self.now(), utc()
-                    save(self.active, dict(job=job, start_utc=started, receipt=str(receipt), log=str(log),
-                                           review=review, faults_start=faults_start))
+                    # Command validation is also pre-START; no unit exists yet.
+                    cmd = command(job, review, receipt, ldp)
+                    with lock(self.directory / f'edit-{self.lane}.lock'):
+                        current = read_queue(self.directory, self.lane, validate_jobs=False)
+                        if not current or current[0] != job:
+                            continue
+                        faults_start = self.guards()
+                        if (self.launch_interrupted() or live_window_blocker(self.lane) is not None
+                                or self.now() < drain_spacing_deadline()
+                                or (required and mem_available() < required + HOST_HEADROOM)):
+                            continue
+                        start, started = self.now(), utc()
+                        save(self.active, dict(job=job, start_utc=started, receipt=str(receipt), log=str(log),
+                                               review=review, faults_start=faults_start))
+                except SafetyStop:
+                    raise
+                except Exception as exc:
+                    # This scope contains only preparation: execute is strictly
+                    # below START. Even an unexpected CPU-check error is proven
+                    # unlaunched; fresh global guards still have to pass.
+                    self.refuse_prestart(job, exc)
+                    admission_deadlines.pop(job['name'], None)
+                    continue
                 self.event('START', name=job['name'])
                 self.backend.device_observation = None
-                rc = self.backend.execute(command(job, review, receipt, ldp), log)
+                rc = self.backend.execute(cmd, log)
                 duration = self.now() - start
                 ended, end_unix = utc(), time.time()
                 status = self.backend.status(job['name'], receipt)

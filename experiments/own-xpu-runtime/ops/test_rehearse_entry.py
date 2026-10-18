@@ -199,5 +199,157 @@ class ReportRehearsalTest(unittest.TestCase):
         self.assertFalse(result['passed'])
 
 
+class OnecardReportTest(unittest.TestCase):
+    PACKET = Path('experiments/own-xpu-runtime/stage2/packet58ab-onecard-hcfusion')
+
+    def proposal(self, packet='58ab', arm='smoke'):
+        path = entry.OPS / 'lane-queue' / f'proposed-p{packet}-{arm}-A.txt'
+        return next(json.loads(s) for s in path.read_text().splitlines() if s.startswith('{'))
+
+    def source_copy(self, root, relative=None):
+        relative = relative or self.PACKET
+        packet = entry.ROOT / relative
+        sources = [*packet.glob('*.py'), packet / 'admission.json',
+                   packet / 'host-admission/memory_plan.py',
+                   packet.parent / 'packet49-integrate/oracle/suite_check.py']
+        for source in sources:
+            if not source.exists():
+                continue
+            target = root / source.relative_to(entry.ROOT)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(source.read_bytes())
+        job = self.proposal()
+        job['argv'][2] = str(root / relative / 'queue_runner.py')
+        return job
+
+    def test_screen_proposals_and_first_view_warmup_policy(self):
+        for packet in ('58x', '58ab'):
+            for arm in ('smoke', 'v5'):
+                with self.subTest(packet=packet, arm=arm):
+                    result = entry.rehearse_report(self.proposal(packet, arm), launch_env.environment())
+                    self.assertTrue(result['passed'], result)
+                    smoke, bracket = result['kinds']
+                    self.assertEqual((smoke['request_count'], bracket['request_count']), (12, 60))
+                    self.assertTrue(all(r['real_entry_main'] and not r['admission_executed']
+                                        and not r['device_executed'] for r in result['kinds']))
+                    self.assertTrue(bracket['candidate_beats_all_controls'])
+                    self.assertEqual(bracket['comparison_controls'], ['A1', 'A2'])
+                    self.assertEqual(bracket['warmup_view']['rate'], 10.)
+                    self.assertTrue(bracket['warmup_view']['exact'])
+
+    def test_packet58v_real_import_failure_is_not_hidden(self):
+        # Its launch_identity imports today's lanequeue by file without adding
+        # lanequeue's directory. The new pin_guard import genuinely fails in
+        # the real entry environment; the rehearsal must not repair sys.path.
+        result = entry.rehearse_report(self.proposal('58v'), launch_env.environment())
+        self.assertFalse(result['passed'], result)
+        self.assertTrue(all(r['error_type'] == 'ModuleNotFoundError' for r in result['kinds']), result)
+        self.assertTrue(all(r['locations'][-1]['file'] == 'lanequeue.py' for r in result['kinds']), result)
+
+    def test_packet58v_report_schema_with_private_import_path_fixture(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            copied = self.source_copy(root, self.PACKET.parent / 'packet58v-async-cache')
+            job = self.proposal('58v')
+            job['argv'][2] = copied['argv'][2]
+            for name in ('packet56-draft-prefix/p56_head_support.py',
+                         'packet56-draft-prefix/suite_metrics.py', 'packet34-replay-bench/window.py'):
+                source = entry.ROOT / self.PACKET.parent / name
+                target = root / source.relative_to(entry.ROOT)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(source.read_bytes())
+            for name in ('lanequeue.py', 'pin_guard.py'):
+                source = entry.OPS / 'lane-queue' / name
+                target = root / source.relative_to(entry.ROOT)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(source.read_bytes())
+            script = Path(job['argv'][2])
+            # Fixture-only repair of the known import failure above, so the
+            # older comparison policy itself is covered. Live packet unchanged.
+            script.write_text('import sys\nfrom pathlib import Path\nsys.path.append('
+                'str(Path(__file__).resolve().parents[2] / "ops/lane-queue"))\n' + script.read_text())
+            result = entry.rehearse_report(job, launch_env.environment(), root)
+            self.assertTrue(result['passed'], result)
+            self.assertFalse(result['kinds'][1]['candidate_beats_all_controls'])
+            self.assertIsNone(result['kinds'][1]['warmup_view'])
+
+    def test_packet58z_record_window_reports(self):
+        script = entry.ROOT / self.PACKET.parent / 'packet58z-onecard-record/queue_runner.py'
+        job = dict(name='packet58z-report-A', lane='A', argv=[
+            '/usr/bin/python3', '-B', str(script), '--output-root', '/must-not-write',
+            '--view', 'down-tile16'])
+        result = entry.rehearse_report(job, launch_env.environment())
+        self.assertTrue(result['passed'], result)
+        self.assertEqual([r['kind'] for r in result['kinds']], ['WS128x', 'WS128'])
+        self.assertTrue(all(r['report_completed'] and r['request_count'] == 12 for r in result['kinds']))
+
+    def test_late_import_collision_fails_on_private_source_copy(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            job = self.source_copy(root)
+            script = Path(job['argv'][2])
+            self.assertTrue(entry.rehearse_report(job, launch_env.environment(), root)['passed'])
+            shadow = script.parent / 'shadow'
+            shadow.mkdir()
+            (shadow / 'compare_bracket.py').write_text('VALUE = 1\n')
+            script.write_text('import sys\nfrom pathlib import Path\nsys.path.insert(0, '
+                              'str(Path(__file__).parent / "shadow"))\n' + script.read_text())
+            result = entry.rehearse_report(job, launch_env.environment(), root)
+            self.assertFalse(result['passed'], result)
+            # Smoke imports compare even though it does not call it.
+            self.assertTrue(all(r['error_type'] == 'ImportError' for r in result['kinds']), result)
+
+    def test_unused_collision_and_report_isolation_fail(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            job = self.source_copy(root)
+            script = Path(job['argv'][2])
+            shadow = script.parent / 'shadow'
+            shadow.mkdir()
+            for target in (script.parent, shadow):
+                (target / 'unused.py').write_text('VALUE = 1\n')
+            source = script.read_text()
+            script.write_text('import sys\nfrom pathlib import Path\nsys.path.append('
+                              'str(Path(__file__).parent / "shadow"))\n' + source)
+            result = entry.rehearse_report(job, launch_env.environment(), root)
+            self.assertFalse(result['passed'], result)
+            self.assertTrue(all(r['report_completed'] and r['collisions'] for r in result['kinds']), result)
+            script.write_text(source)
+            driver = script.with_name('suite_driver.py')
+            source = driver.read_text()
+            for statement, error in [
+                    ("raise KeyError('secret-error-text')", 'KeyError'),
+                    ("open('/mnt/model.safetensors', 'rb')", 'PermissionError'),
+                    ("__import__('subprocess').run(['/usr/bin/true'])", 'PermissionError'),
+                    ("open('/tmp/opsreview6-forbidden-write', 'w')", 'PermissionError')]:
+                with self.subTest(statement=statement):
+                    driver.write_text(source.replace('    views=[];arenas=set();weights=set();signature=None',
+                        '    ' + statement + '\n    views=[];arenas=set();weights=set();signature=None'))
+                    result = entry.rehearse_report(job, launch_env.environment(), root)
+                    self.assertFalse(result['passed'], result)
+                    self.assertTrue(all(r['error_type'] == error for r in result['kinds']), result)
+                    self.assertNotIn('secret-error-text', json.dumps(result))
+
+    def test_a0_tokens_still_checked_and_window_tail_is_real(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            job = self.source_copy(root)
+            driver = Path(job['argv'][2]).with_name('suite_driver.py')
+            source = driver.read_text()
+            driver.write_text(source.replace("    result=read(actual/'result.json')",
+                "    result=read(actual/'result.json')\n    if actual.parent.name == 'A0': result['tokens'][0] = 999"))
+            result = entry.rehearse_report(job, launch_env.environment(), root)
+            self.assertTrue(result['kinds'][0]['passed'], result)
+            self.assertFalse(result['kinds'][1]['passed'], result)
+            self.assertEqual(result['kinds'][1]['error_type'], 'ValueError')
+            driver.write_text(source)
+            window = driver.with_name('window.py')
+            window.write_text(window.read_text().replace("            summary['evidence_label'] = 'screen'",
+                "            raise KeyError('secret-error-text')\n            summary['evidence_label'] = 'screen'"))
+            result = entry.rehearse_report(job, launch_env.environment(), root)
+            self.assertFalse(result['passed'], result)
+            self.assertTrue(all(r['error_type'] == 'KeyError' for r in result['kinds']), result)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -31,8 +31,7 @@ class AdmissionTests(QueueTestCase):
     def test_timeout_never_starts_or_creates_inflight(self):
         self.write([self.job()])
         with patch.object(q, 'plan_job', return_value={'host_required_available_bytes': self.required}), patch.object(q, 'HOST_WAIT_LIMIT', 3):
-            with self.assertRaisesRegex(ValueError, 'host admission wait timed out'):
-                self.queue.run()
+            self.assert_prestart_refusal('host admission wait timed out')
         self.assertEqual(self.clock[0], 3)
         self.assertFalse(self.queue.active.exists())
         self.assertEqual(self.backend.runs, [])
@@ -116,8 +115,7 @@ class AdmissionTests(QueueTestCase):
         self.memory(self.required + q.HOST_HEADROOM)
         self.backend.review = lambda *_: (self.memory(0), '/review')[1]
         with patch.object(q, 'plan_job', return_value={'host_required_available_bytes': self.required}), patch.object(q, 'HOST_WAIT_LIMIT', 2):
-            with self.assertRaisesRegex(ValueError, 'host admission wait timed out'):
-                self.queue.run()
+            self.assert_prestart_refusal('host admission wait timed out')
         self.assertEqual(self.backend.runs, [])
 
 

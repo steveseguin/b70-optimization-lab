@@ -1,0 +1,143 @@
+{
+  "schema": "packet58ac.host-probe.v1",
+  "host_probes": {
+    "gnu": {
+      "result": {
+        "protocol": {
+          "passed": true,
+          "transactions": 480,
+          "generation_only_revocations": 6241,
+          "evictions": 6057
+        },
+        "benchmarks": {
+          "full_pack_hot": {
+            "min_ms": 0.0587028,
+            "median_ms": 0.0591261,
+            "p90_ms": 0.0597538,
+            "max_ms": 0.0599364
+          },
+          "full_pack_rotating_8": {
+            "min_ms": 0.0592762,
+            "median_ms": 0.0595098,
+            "p90_ms": 0.0596522,
+            "max_ms": 0.0598618
+          },
+          "cpu_memcpy_1179648": {
+            "min_ms": 0.0219569,
+            "median_ms": 0.0220126,
+            "p90_ms": 0.0220465,
+            "max_ms": 0.0221548
+          },
+          "cpu_scatter_144_banks": {
+            "min_ms": 0.289978,
+            "median_ms": 0.290069,
+            "p90_ms": 0.290207,
+            "max_ms": 0.290211
+          },
+          "delta_pack_32": {
+            "min_ms": 2.41875e-05,
+            "median_ms": 2.60625e-05,
+            "p90_ms": 2.63828e-05,
+            "max_ms": 2.84922e-05
+          },
+          "delta_pack_64": {
+            "min_ms": 4.51641e-05,
+            "median_ms": 4.57109e-05,
+            "p90_ms": 4.61016e-05,
+            "max_ms": 8.44531e-05
+          },
+          "delta_pack_128": {
+            "min_ms": 9.25156e-05,
+            "median_ms": 9.29141e-05,
+            "p90_ms": 9.31484e-05,
+            "max_ms": 9.77656e-05
+          }
+        },
+        "checksum": 32
+      },
+      "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+      "flags": [
+        "-std=c++20",
+        "-O3",
+        "-march=native",
+        "-fno-fast-math",
+        "-ffp-contract=off"
+      ],
+      "binary_sha256": "5eafc159863e54b8aea7805d6b11fe540757661f8acb29b440931f76183d72ca"
+    },
+    "intel_host": {
+      "result": {
+        "protocol": {
+          "passed": true,
+          "transactions": 480,
+          "generation_only_revocations": 6241,
+          "evictions": 6057
+        },
+        "benchmarks": {
+          "full_pack_hot": {
+            "min_ms": 0.0525955,
+            "median_ms": 0.0526581,
+            "p90_ms": 0.0534308,
+            "max_ms": 0.0535825
+          },
+          "full_pack_rotating_8": {
+            "min_ms": 0.0526481,
+            "median_ms": 0.0527415,
+            "p90_ms": 0.0527811,
+            "max_ms": 0.053332
+          },
+          "cpu_memcpy_1179648": {
+            "min_ms": 0.0475799,
+            "median_ms": 0.0476109,
+            "p90_ms": 0.0476391,
+            "max_ms": 0.0477373
+          },
+          "cpu_scatter_144_banks": {
+            "min_ms": 0.32853,
+            "median_ms": 0.328669,
+            "p90_ms": 0.328758,
+            "max_ms": 0.329022
+          },
+          "delta_pack_32": {
+            "min_ms": 4.15625e-05,
+            "median_ms": 4.59453e-05,
+            "p90_ms": 4.61797e-05,
+            "max_ms": 4.63359e-05
+          },
+          "delta_pack_64": {
+            "min_ms": 8.10938e-05,
+            "median_ms": 8.21094e-05,
+            "p90_ms": 8.25781e-05,
+            "max_ms": 9.25937e-05
+          },
+          "delta_pack_128": {
+            "min_ms": 0.0001675,
+            "median_ms": 0.000168367,
+            "p90_ms": 0.000169852,
+            "max_ms": 0.000206563
+          }
+        },
+        "checksum": 32
+      },
+      "compiler_version": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)",
+      "flags": [
+        "-std=c++20",
+        "-O3",
+        "-march=native",
+        "-fno-fast-math",
+        "-ffp-contract=off"
+      ],
+      "binary_sha256": "87ef4367c53ed497ab1b4395b4528ed2d9eb54fed43892aab75895d2ff245d7b"
+    }
+  },
+  "source_sha256": {
+    "archive:experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/build/native/main.cpp": "846111843195398047f1edef02f082061c1d760af7ba865c8142d02e75ef0fa6",
+    "archive:experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/native/cache_table.hpp": "cb3062c07de59548fbc02f16e65ddd135f0192d780dd8895f286fac7ec4dba88",
+    "archive:experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/native/cache_protocol.hpp": "0f66d8862c7c1dec7f9346f4c07c7f07a7126a5865de9f071ed449ecd72be813",
+    "archive:experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/native/publish.hpp": "26e92623e731d6121a7fea507bca62d8e7675f268ed089f3a0b14bc78ec91e01",
+    "archive:experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/async_source.py": "dc5626c4c7fe50acefe5d9c9b98a51819dce264400762e84fc9d16868b74675a",
+    "experiments/own-xpu-runtime/stage2/packet58ac-cache-publication/host_probe.cpp": "13a13af3a4df303edc7b2778a28563e3a033644518e0f6a4c924ab2990f46fc4"
+  },
+  "max_rss_kib_children": 284916,
+  "measured_at_utc": "2026-10-18 21:54 UTC"
+}

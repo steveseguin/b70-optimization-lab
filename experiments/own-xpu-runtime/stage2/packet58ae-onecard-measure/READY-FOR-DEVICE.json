@@ -1,0 +1,64 @@
+{
+  "schema": "own-runtime.packet58ae.ready.v1",
+  "created_utc": "2026-10-18T22:23:17.505727+00:00",
+  "implementation_commit": "dec2e9920d07ae491fd6d5bef172384d3c0d0ae8",
+  "passed": false,
+  "ready_for_device": false,
+  "cpu_preparation_complete": false,
+  "device_executed": false,
+  "services_started": false,
+  "queued": false,
+  "live_queue_changed": false,
+  "last_content_write": true,
+  "build_receipt_sha256": "a3db54ed030697ce0d428f9d881153e896aece01dc04d9bfd2a13f7ad3bc9638",
+  "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58ae-combined-A.txt",
+  "proposal_sha256": "cadbd46946fbbd2ea6f770abaf2a9a8ae8741692e260652c4f93afbd66b814b1",
+  "completed": {
+    "host_and_sycl_compile": true,
+    "frozen_parent_relinks": true,
+    "miniature_byte_repeats": true,
+    "oracle_failure_before_next_view": true,
+    "analyzer_negative_tests": 14,
+    "shared_entry_report": true,
+    "temporary_queue_plan": true,
+    "pin_guard": {
+      "passed": true,
+      "packet": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ae-onecard-measure",
+      "pins": 384,
+      "manifests": 27,
+      "model_hashes_deferred": []
+    }
+  },
+  "missing": [
+    "Arm 2 separate miss-stall, resident-slot compute and overlap windows",
+    "changed-engine full-size startup and real queue-to-native argument validation",
+    "device off/on overhead strictly below 2 percent and every-token device oracle parity"
+  ],
+  "blockers": [
+    "Mixed expert events cannot identify separate resident/miss intervals; nullable fields remain unknown.",
+    "The device entry has an explicit capability refusal; a saved ready boolean cannot override it."
+  ],
+  "planned": {
+    "model_loads": 1,
+    "views": [
+      "A0-off",
+      "B0-arm1",
+      "A1-off",
+      "B1-arm2",
+      "A2-off"
+    ],
+    "prompts_per_view": 12,
+    "token_cap": 64,
+    "total_expected_seconds_max": 900,
+    "watchdog_seconds": 3600,
+    "lane": "A",
+    "scope": "whole-host",
+    "hold": "existing packet58ab hold only"
+  },
+  "storage": {
+    "build_bytes": 65858782,
+    "build_cap_bytes": 300000000,
+    "root_stop_floor_bytes": 25000000000
+  },
+  "qualification": "Incomplete CPU preparation. No device run, measured overhead, speed or quality claim."
+}

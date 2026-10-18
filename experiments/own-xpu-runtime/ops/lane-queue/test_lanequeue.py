@@ -77,6 +77,20 @@ class QueueTestCase(unittest.TestCase):
     def done(self):
         return [json.loads(s) for s in (self.root / 'done-A.txt').read_text().splitlines()]
 
+    def assert_prestart_refusal(self, reason):
+        original = self.queue.event
+        def event(kind, **values):
+            original(kind, **values)
+            if kind == 'REFUSED-PREDEVICE':
+                self.queue.stopped = True
+        self.queue.event = event
+        self.assertEqual(self.queue.run(), 0)
+        record = self.done()[0]
+        self.assertEqual(record['outcome'], 'REFUSED-PREDEVICE')
+        self.assertIn(reason, record['reason'])
+        self.assertFalse(record['launch_attempted'])
+        self.assertEqual(q.read_queue(self.root, 'A'), [])
+
 
 class Tests(QueueTestCase):
     def test_env_closed_and_all_unit_properties(self):
@@ -529,8 +543,7 @@ class DrainSpacingTests(QueueTestCase):
             self.sleep(seconds)
             self.drain(completed=self.clock[0])
         self.queue.sleep = sleep
-        with self.assertRaisesRegex(ValueError, 'spacing wait timed out'):
-            self.queue.run()
+        self.assert_prestart_refusal('spacing wait timed out')
         self.assertEqual(self.clock[0], 100.0 + q.DRAIN_WAIT_LIMIT)
         self.assertEqual(self.backend.runs, [])
         self.assertFalse(self.queue.active.exists())
@@ -705,8 +718,7 @@ class LiveWindowTests(QueueTestCase):
     def test_live_wait_bounded_without_inflight(self):
         self.owner()
         with patch.object(q, 'LIVE_WAIT_LIMIT', 5):
-            with self.assertRaisesRegex(ValueError, 'other lane live wait timed out'):
-                self.queue.run()
+            self.assert_prestart_refusal('other lane live wait timed out')
         self.assertEqual(self.clock[0], 105.0)
         self.assertEqual(self.backend.runs, [])
         self.assertFalse(self.queue.active.exists())
@@ -720,8 +732,7 @@ class LiveWindowTests(QueueTestCase):
                 self.clock[0] += 6
         self.queue.event = event
         with patch.object(q, 'LIVE_WAIT_LIMIT', 5):
-            with self.assertRaisesRegex(ValueError, 'other lane live wait timed out'):
-                self.queue.run()
+            self.assert_prestart_refusal('other lane live wait timed out')
         self.assertEqual(self.backend.runs, [])
         self.assertFalse(self.queue.active.exists())
 

@@ -1,5 +1,52 @@
 # Current Workspace State
 
+**October 18, disk8 archive pass recovered 0.413 GB; reserve still short:**
+Two verified archives preserve 595 closed, unused compiler outputs, logs and
+private cache files on RAID. Root had 29.771 GB free at the final file check,
+below the requested 38 GB. The remaining reviewed bulk is referenced,
+protected, or lacks clear closure. All 22,120 retained files and links passed,
+including 8,883 JSON/JSONL receipts. No device work or service was changed.
+[Archive paths, verification and restore instructions](experiments/own-xpu-runtime/stage2/DISK-CLEANUP-20261018.md).
+
+**October 18, packet58ad HC-fusion record chain prepared ahead on CPU:** The
+new seven-window chain binds packet58ab's final engine by hash, keeping
+tile16, overlap and the 21.55 GB cache. All 129 policy tests, seven entry paths,
+native parser and loader checks, submission rehearsal, seals and pin admission
+pass. The submission path bug is fixed in the new copy. The coordinator must
+retain the smoke/bracket's whole-host hold; launch still refuses until those
+results are complete, exact and clear the 2% gate. The parent's marker also
+records its unresolved shared report-tool check. Nothing was launched, queued
+or submitted here; the 29.259764 record is unchanged.
+[Work note](notes/2026-10-18-own-runtime-packet58ad.md).
+
+**October 18, packet58ab one-card HC fusion prepared on CPU; report gate blocked:**
+The private packet58z copy switches between production HC and packet60's
+three-stage HC within one load. GNU and Intel agree byte for byte; full-size
+switch/reset checks and 111 policy tests pass. The shared entry checker accepts
+both native binaries but cannot rehearse this one-card report layout. Its
+failure is retained, so the final marker says not ready for device work.
+The smoke and five-view proposals remain unqueued. No GPU, service or host
+setting changed, and the 29.259764 record is unchanged.
+[Work note](notes/2026-10-18-own-runtime-packet58ab.md).
+
+**October 18, packet58ac cache publication feasibility closed on CPU:** Sparse
+updates preserve the two-phase pointer and generation rules in both host
+compiler checks. Packing the full tables takes only 0.053–0.060 ms, far short
+of the required 0.739 ms saving. Existing receipts do not separate the remaining
+device and wait costs well enough to support 60% net removal. No build brief
+or device work was started. The 29.259764 one-card record stays unchanged.
+Reopen with a measured cost split supporting a complete safe boundary below
+0.493 ms. [Analysis and work note](notes/2026-10-18-own-runtime-packet58ac.md).
+
+**October 18, packet58aa one-card MTP re-check closed on CPU:** The measured
+host policy removes the old RAM blocker, but a resident draft cuts target
+cache from 21.55 to 18.22 GB. Saved-route projections give 25.03–29.16 tok/s,
+below the 30.723 needed for a build. Even a favorable shared-cache estimate
+is only 30.62 before draft misses and cache pollution. No build or device work
+was started. The 29.259764 one-card receipt remains unchanged. Reopen with
+evidence for a faster complete verification cycle, including draft and cache
+costs. [Analysis and work note](notes/2026-10-18-own-runtime-packet58aa.md).
+
 **October 18, packet145 router and GDN z layouts prepared on CPU:** The new
 packet142c copy preserves exact row bytes and arithmetic. Both compilers,
 full-size startup/reset checks, both-lane entry/report tests and all eight
@@ -850,6 +897,8 @@ coordinator's matched screen; device quality and speed remain unmeasured.
 **October 17, packet 58 CPU preparation complete:** The separate one-card IQ3 engine is built and sealed. It keeps all target layers on one card, uses an 18 GB cache for expert weights, and can read missing weights from pinned host memory or copy them before use. CPU byte comparisons, lifetime checks, request resets, sanitizer runs and all 44 wrapper/evidence checks pass. The build occupies 147 MB. The conservative plan requires 118.31 GB of available host RAM, including the possible GPU allocation shadow and an 8 GiB reserve; the passive snapshot had only 1.95 GB extra, so the optional draft is deferred. No GPU window, large pin, model payload read or host-setting change ran here; device ownership stays with the coordinator and packet 57 is untouched. Next is the coordinator's one-card K1 → KD/W2m → three-suite chain, after fresh admission: about 107 minutes planned including cooldowns. One-card exactness and speed remain unmeasured. [Task record](notes/2026-10-17-own-runtime-packet58.md), [CPU closeout](experiments/own-xpu-runtime/stage2/packet58-onecard/CPU-PREPARATION-CLOSEOUT.md), [exact commands and durations](experiments/own-xpu-runtime/stage2/packet58-onecard/WINDOW.md).
 
 **October 17, packet 57 CPU preparation complete:** The timing tools are built and sealed. Packet 56's saved traces show rank 0 finishing last in 93% of complete cycles; moving a whole layer does not look useful under the available average-cost estimates. The draft still takes about 1.90 ms, but its individual kernel costs remain unmeasured. Four fresh small CPU runs match the old engine exactly, all 19 focused checks pass, and both builds and the final seal pass. The retained build is about 336 MB. No GPU window ran and packet 55's work was left alone. Next is the coordinator's diagnostic run on cards 0+1, after the host is free: about 88 minutes planned, comparing ordinary timing with the new event recording against the same packet 49 answers. This is not a new speed result. [Task record](notes/2026-10-17-own-runtime-packet57.md), [timeline](experiments/own-xpu-runtime/stage2/packet57-attribution/TIMELINE.md), [exact command](experiments/own-xpu-runtime/stage2/packet57-attribution/WINDOW.md).
+
+**October 18, 23:10 UTC — 1-card IQ3 record 30.40 tok/s on one Arc Pro B70, submitted and approved (`cmvefq3ep009orf0186k21lba`).** Packet58ad = the packet58z line plus packet60's exact three-stage HC fusion ported to one card (packet58ab); all 12 prompts exact (+3.88% over 29.26). Bracket: p60fusion 30.52/30.55 vs production 29.57/29.48 (+3.21%). Chain ran in the same hold as the bracket via the generic waiter. Ledger: `results/localmaxxing-submissions.md`.
 
 **October 18, 21:20 UTC — 1-card IQ3 record 29.26 tok/s on one Arc Pro B70, submitted and approved (`cmvebtu5f009frf01gsnfi2eh`).** Packet58z = the packet58w line (tile16 + overlapped cache maintenance) with packet58x's 21.55 GB admitted device expert cache; all 12 prompts exact (+4.34% over 28.04). Bracket: max cache 29.57/29.36 vs warm 18 GB 28.16/28.20 (+4.13%). Chain 20:52–21:16 UTC (one pre-device refusal from a coordinator waiter filename slip; relaunched). Submission via `ops/packet58zs-submission/submit58z.py` (fixes only the vendored CLI's REPO_ROOT; sealed tree untouched). Ledger: `results/localmaxxing-submissions.md`.
 
