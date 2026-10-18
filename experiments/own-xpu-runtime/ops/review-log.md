@@ -654,3 +654,28 @@ STOP DOING acknowledged:
 - starting a one-card whole-host hold while the main line's only preparation is mid-compile;
 - freezing all Codex across a one-card chain's non-timing windows;
 - both queues empty with a single 2-card diagnostic in preparation.
+
+## Review 30 (2026-10-18 ~20:05 UTC): ACT
+
+No new 2-card device data since 18:10. Cards 2+3 had about 8.5 min of real work and card 1 was idle. The 1-card record moved to 28.04 at 19:09.
+
+Lost time:
+- packet141b waited 24.5 min behind a stale `hold-lane-B` left by the failed 58x smoke-c (a coordinator cleanup miss), which also blocked every compile on the host;
+- packet141b then failed on "stale prepared launch";
+- packet58x smoke-d refused on the packet-local latch.
+
+Faults 2.
+
+Actions:
+1. **p142 no longer waits on p141:** `autoq-p142-smokes` queues all three class smokes (attention, expert-gate-up, hc-gate-low order600) on lane B when p142's READY lands. Exact smokes go to one-load v5 brackets. packet141's probe runs only if p141c lands, as attribution, not a gate. No p141d.
+2. **Selective freeze:** during onecard-hold7's 58x bracket and 58y, `thaw-critical` thaws every Codex unit except disk7 (2-card critical path keeps running; compile_turn still blocks compiles during whole-host holds; briefs forbid model reads).
+3. **Stale-artifact sweep:** `fn-run/stale-sweep2.sh` (systemd `stale-sweep2`) archives dead-owner `active-lane-*`, `hold-lane-B`, an undrained teardown record, screen latches and recent untracked packet-local `fault-<boot>.json` latches within about 2 min. It requires the owner dead for 60 s or more, fault count == 2, the lane lock free and the lane's render nodes idle; any fault-count change halts it. A first version's glob also matched old closed-packet latches; it was stopped before archiving anything and restricted.
+4. Codex **opsreview4**: `gpu_time_review.py` counts START → first device evidence as admission wait, not busy.
+5. Also opsreview4: shared `ops/launch_env.py` (one oneAPI library path plus an `ldd` check) and `ops/rehearse_entry.py`, a device-entry rehearsal under the exact unit environment. Every READY-FOR-DEVICE needs it plus a CPU run of the real arm sequence.
+
+STOP DOING acknowledged:
+- holding prepared variants behind a twice-failed diagnostic;
+- dead-owner artifacts left more than 5 min;
+- freezing 2-card critical-path Codex for one-card brackets;
+- unit lifetime as busy time;
+- first device run as the environment and arm-sequence test.
