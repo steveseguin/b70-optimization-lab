@@ -181,3 +181,10 @@ exactly from its qualified sources. Receipts:
 [decision check](../experiments/own-xpu-runtime/ops/packet97-orchestration/decision-check.log).
 `composition_ready=true`; `ready=false` because the composite has no device
 receipts yet. No storage gate or full-chain requirement was waived.
+
+## Coordinator: packet97-chain KD refusal (2026-10-18 05:13 UTC)
+- The chain for decision `f1e5d7f47fc0fe54` launched at 04:53 after packet 97d's identical-selection readiness. K0, K1a, K1b, K2 and W0p passed.
+- **KD failed before any device execution.** Its host reference refused: "p90 cached layout requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path". KD's host-reference path does not accept E1's half-cache layout.
+- The CPU gates (256 startup checks) never exercised KD's host-reference path with E1 selected.
+- Fault count unchanged (2). The coordinator drained the teardown record and archived the stale lane-A marker before lane B's running screen reached teardown (lane-A render nodes had no holders).
+- Codex 97e: fix the KD host reference for half-cache, add an every-window CPU startup gate for all 128 compositions, and allow a fresh chain folder for the same decision. Evidence in `build/device-cards01-a` is kept as history.
