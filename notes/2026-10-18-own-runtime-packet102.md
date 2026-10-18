@@ -128,3 +128,8 @@ retry, model screen or record submission was launched by this task.
 The coordinator's retained boot-journal capture exceeds 1 MiB. It is required
 to audit fault review and clean drain under that exact boot; keep its original
 bytes with the window receipt. Restore it from this evidence commit.
+
+Git handoff: concurrent commit `944963d2c` consumed the staged packet102
+seal/proposal/evidence files while committing packet87t. Its published history
+is preserved. The following focused packet102 commit carries the final
+post-coordinator verification receipt; no history was rewritten.
