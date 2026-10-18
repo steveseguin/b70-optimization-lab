@@ -925,6 +925,30 @@ class Policy(unittest.TestCase):
         self.assertEqual(s.state["recalls"], 2)
         self.assertEqual(len(s.recalled), 1)                                      # "recall: nothing ... matches" is not kept
 
+    def test_the_models_own_text_in_a_search_result_is_not_kept_for_the_note_checks(self):
+        """Campaign 45 (2M, seed 2): a search also returned the model's own `keruba67 -128-56=-184`, and a later notes
+        line starting from -128 (the NOTES held -184) passed as starting from a value the turns set. Only the lines of
+        tool and user messages count."""
+        def talk(n):
+            msgs = conversation(n)
+            for m in msgs:
+                if m["role"] == "assistant" and m["content"] == "step 3":
+                    m["content"] = "step 3: so abcd03 is 999 now."
+            return msgs
+        for n in range(1, 31):
+            self.keeper.complete({"model": "m", "messages": talk(n)})
+        s = next(iter(self.keeper.sessions.values()))
+        self.model.recall_once = {"pattern": "abcd03"}
+        self.keeper.complete({"model": "m", "messages": talk(30) + [{"role": "user", "content": "What was counter abcd03 set to?"}]})
+        result = self.model.requests[-1]["messages"][-1]["content"]
+        self.assertIn("999", result)                                               # the model is shown its own text ...
+        self.assertEqual(len(s.recalled), 1)
+        self.assertIn("counter abcd03 to 21", s.recalled[0])
+        self.assertNotIn("999", s.recalled[0])                                     # ... the checks do not count it
+        self.assertEqual(ck.material_of('message 4 (tool):\nITEM 3: x.\n\nmessage 5 (assistant, "y (z)"): abcd03 is 999.\n'
+                                        'message 6 (user): abcd03 went up by 2.'),
+                         "message 4 (tool):\nITEM 3: x.\n\nmessage 6 (user): abcd03 went up by 2.")
+
     def test_recall_and_notes_at_use_the_contents_own_numbers_when_told_to(self):
         k = ck.Keeper(self.model, Path(self.dir.name) / "lab", budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5,
                       notes_cap=400, memory_note=False, recall_label=r"ITEM (\d+):", recall_unit="item")

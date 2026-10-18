@@ -324,6 +324,14 @@ back empty, the reply before it stood with `638 - (item 317 increase, amount unk
 in 95 NOTES versions: the audit and two questions about the counter were lost. Empty asked-for replies with thinking
 on came 42 times in 17 recorded sessions (one to six per long run); until now each one let the earlier reply stand.
 
+1.2.0.dev7 (2026-10-18), from lab campaign 45 (2M, seed 2, 411/423): of an archive search's result, only the lines of
+tool and user messages are kept for the note checks; the model's own earlier text is not (it is still shown to the
+model). In that run a search returned, besides the items, the model's own `keruba67 -128-56=-184`; a later notes line
+`keruba67: -128 - 51 = -179` (the NOTES held -184) then passed as starting from a value the turns set, and the counter
+stayed 56 off for 117 versions and five answers. Replayed through about 2,500 notes replies of 29 sessions, 23 get
+other verdicts: the wrong lines of that run, a reversal of campaign 43 written with a wrong amount, one false alarm
+(one more question) and swapped questions about the same line.
+
 Also unreleased (1.1.1.dev1, 2026-10-17): a NOTES line whose new value states no number of its own (only item or
 ticket numbers, as in `audit reversal of the entry in item 4, amount not yet known, must recall items 4/5`) no longer
 replaces a number the NOTES hold: the number stays and the line is kept as a remark on it. Before, the value became the

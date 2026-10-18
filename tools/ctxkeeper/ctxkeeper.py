@@ -53,7 +53,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.2.0.dev6"
+__version__ = "1.2.0.dev7"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -199,6 +199,23 @@ RECALL_ROOM_NOTE = ("[[There is no room left in this turn for another archive se
                     "after that step for anything still missing.]]")
 RECALL_NONE_NOTE = "recall: not run, no room left in this turn"
 RECALLED_CHARS = 120_000                             # how much recent archive-search text the note checks may cite
+RECALL_HEAD = re.compile(r"^\S+ \d+ \((assistant|tool|user|system)\b")   # `item 215 (assistant): ...` in a search's result
+
+
+def material_of(result: str) -> str:
+    """The lines of an archive search's result that the note checks may cite: those of tool and user messages (the
+    material), not the model's own earlier text, whose numbers are what it wrote then, right or wrong. Campaign 45
+    (2M, seed 2): a search for himo29 also returned the model's `keruba67 -128-56=-184` of item 215, and a later
+    notes line `keruba67: -128 - 51 = -179` (the NOTES held -184) passed as starting from a value the turns set; the
+    counter stayed 56 off for 117 versions and four answers."""
+    keep, role = [], None
+    for line in result.splitlines():
+        m = RECALL_HEAD.match(line)
+        if m:
+            role = m.group(1)
+        if role in ("tool", "user"):
+            keep.append(line)
+    return "\n".join(keep)
 # --lookups: a CHANGES line that cites an archived entry and waits on it ("amount not yet known, must recall item 32"),
 # is doubted by the checks, or works an amount out, is asked again once, with what that entry says about the name
 WAITS = re.compile(r"\b(not (yet )?known|unknown|must (be )?recall(ed)?|to (be )?recall(ed)?|recall (it|the|that|item)|"
@@ -1599,7 +1616,7 @@ class Keeper:
                     s.state["recalls"] += 1
                     s.log_event({"event": "recall", "args": args, "chars": len(text)})   # replays can rebuild s.recalled
                     if args.get("notes_at") is None and not text.startswith("recall:"):   # archive text, not old NOTES
-                        s.recalled.append(text)
+                        s.recalled.append(material_of(text))
                         while sum(map(len, s.recalled)) > RECALLED_CHARS and len(s.recalled) > 1:
                             s.recalled.pop(0)
                     results.append({"role": "tool", "tool_call_id": c.get("id"), "content": text})
