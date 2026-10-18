@@ -14,6 +14,13 @@ def threshold(candidate,controls):
  assert len(controls)>=2 and min(controls)>0
  return candidate/max(controls)>=1.005
 
+def lane_a_loss(result,choice):
+ rows=result.get('screens',result.get('views',[]))
+ controls=[r['rate'] for r in rows if r['choice'] in ('control','production')]
+ candidates=[r['rate'] for r in rows if r['choice']==choice]
+ assert len(controls)>=2 and candidates,'A evidence lacks matched controls/candidate'
+ return min(candidates)<max(controls)
+
 def read_sources():
  head=probe('head-B',[sys.executable,'-B',str(STAGE/'packet106b-draft-split/compare.py'),'--lane','B'])
  fusion=probe('fusion-B',[sys.executable,'-B',str(STAGE/'packet109-other-fusion/compare.py'),str(STAGE/'packet109-other-fusion/evidence/p109-v5-B')])
@@ -32,8 +39,12 @@ def read_sources():
  if any((r/'window.json').exists() for r in aroots):
   a=probe('head-A',[sys.executable,'-B',str(STAGE/'packet106b-draft-split/compare.py'),'--lane','A']);head['lane_A']=a
   if a['status']=='complete':
-   rows=a['result']['screens']
-   if rows[1]['choice']=='head-split' and rows[1]['rate']<max(rows[0]['rate'],rows[-1]['rate']):head.update(eligible=False,veto='lane A loss')
+   if lane_a_loss(a['result'],'head-split'):head.update(eligible=False,veto='lane A loss')
+ for path in sorted((STAGE/'packet109-other-fusion/evidence').glob('p109-v5-A*')):
+  if not (path/'window.json').exists():continue
+  a=probe('fusion-A',[sys.executable,'-B',str(STAGE/'packet109-other-fusion/compare.py'),str(path)])
+  fusion.setdefault('lane_A_brackets',[]).append(a)
+  if a['status']=='complete' and lane_a_loss(a['result'],'candidate'):fusion.update(eligible=False,veto='lane A loss')
  return {'target_head':head,'other_fusion':fusion}
 def decide(sources):
  return dict(other_fusion='fused' if sources['other_fusion']['eligible'] else 'production',target_head='split' if sources['target_head']['eligible'] else 'production')

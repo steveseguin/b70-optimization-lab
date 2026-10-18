@@ -1,0 +1,28 @@
+{
+  "schema": "packet111.ready.v1",
+  "ready": false,
+  "device_executed": false,
+  "evidence_rule": "identical-selection-v1",
+  "decision": "experiments/own-xpu-runtime/ops/packet111-orchestration/decisions/762f6ebd546b0092.json",
+  "decision_sha256": "c9c71d03bf297a0d53acba4e74694848991229e68b805efb25e537eec40216c8",
+  "selection": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64+halfcache",
+    "host": "ordered",
+    "route": "fast",
+    "norm": "production",
+    "recurrence": "rec-both-plus",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "down": "tile16",
+    "draft_attention": "split32",
+    "other_fusion": "production",
+    "target_head": "production"
+  },
+  "chain_output": "device-cards01-a",
+  "chain_command": "systemd-run --user --unit=packet111-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet111-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/device-cards01-a </dev/null",
+  "launch_limits_sha256": "73dd871278025c87ea10ea3e4cb8861030774498f7d3f9619c043201698feb18",
+  "reason": "no new dimension meets the +0.5% source rule; identical-selection proposals are plan-only"
+}

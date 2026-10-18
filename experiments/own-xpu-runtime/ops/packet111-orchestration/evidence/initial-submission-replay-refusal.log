@@ -1,0 +1,112 @@
+.........FFFF.........                                                   [100%]
+=================================== FAILURES ===================================
+__________________ test_four_composition_submission[config0] ___________________
+
+config = ('production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production-...t32--production--production', ('production', 'hc-wide', 'wide64+halfcache', 'ordered', 'fast', 'production', ...), '1')
+tmp_path = PosixPath('/tmp/pytest-of-steve/pytest-109/test_four_composition_submissi0')
+
+    @pytest.mark.parametrize('config',configurations())
+    def test_four_composition_submission(config,tmp_path):
+     name,values,placement=config
+     e=prefix_fixture(placement=placement,**dict(zip(KEYS,values)))
+>    result=p.derive(e,p.P56_PACKET)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/ops/packet111-orchestration/test_submission.py:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet111-record-bundle/packet56_submission.py:509: in derive
+    require(w['schema'] == packet.split('-')[0] + '.window.v1' and w['window'] == name
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False, message = 'failed/non-device window: KD'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: failed/non-device window: KD
+
+experiments/own-xpu-runtime/stage2/packet111-record-bundle/packet56_submission.py:79: ValueError
+__________________ test_four_composition_submission[config1] ___________________
+
+config = ('production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production-...-split32--production--split', ('production', 'hc-wide', 'wide64+halfcache', 'ordered', 'fast', 'production', ...), '1')
+tmp_path = PosixPath('/tmp/pytest-of-steve/pytest-109/test_four_composition_submissi1')
+
+    @pytest.mark.parametrize('config',configurations())
+    def test_four_composition_submission(config,tmp_path):
+     name,values,placement=config
+     e=prefix_fixture(placement=placement,**dict(zip(KEYS,values)))
+>    result=p.derive(e,p.P56_PACKET)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/ops/packet111-orchestration/test_submission.py:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet111-record-bundle/packet56_submission.py:509: in derive
+    require(w['schema'] == packet.split('-')[0] + '.window.v1' and w['window'] == name
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False, message = 'failed/non-device window: KD'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: failed/non-device window: KD
+
+experiments/own-xpu-runtime/stage2/packet111-record-bundle/packet56_submission.py:79: ValueError
+__________________ test_four_composition_submission[config2] ___________________
+
+config = ('production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production-...-split32--fused--production', ('production', 'hc-wide', 'wide64+halfcache', 'ordered', 'fast', 'production', ...), '1')
+tmp_path = PosixPath('/tmp/pytest-of-steve/pytest-109/test_four_composition_submissi2')
+
+    @pytest.mark.parametrize('config',configurations())
+    def test_four_composition_submission(config,tmp_path):
+     name,values,placement=config
+     e=prefix_fixture(placement=placement,**dict(zip(KEYS,values)))
+>    result=p.derive(e,p.P56_PACKET)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/ops/packet111-orchestration/test_submission.py:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet111-record-bundle/packet56_submission.py:509: in derive
+    require(w['schema'] == packet.split('-')[0] + '.window.v1' and w['window'] == name
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False, message = 'failed/non-device window: KD'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: failed/non-device window: KD
+
+experiments/own-xpu-runtime/stage2/packet111-record-bundle/packet56_submission.py:79: ValueError
+__________________ test_four_composition_submission[config3] ___________________
+
+config = ('production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--split', ('production', 'hc-wide', 'wide64+halfcache', 'ordered', 'fast', 'production', ...), '1')
+tmp_path = PosixPath('/tmp/pytest-of-steve/pytest-109/test_four_composition_submissi3')
+
+    @pytest.mark.parametrize('config',configurations())
+    def test_four_composition_submission(config,tmp_path):
+     name,values,placement=config
+     e=prefix_fixture(placement=placement,**dict(zip(KEYS,values)))
+>    result=p.derive(e,p.P56_PACKET)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+
+experiments/own-xpu-runtime/ops/packet111-orchestration/test_submission.py:11: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet111-record-bundle/packet56_submission.py:509: in derive
+    require(w['schema'] == packet.split('-')[0] + '.window.v1' and w['window'] == name
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = False, message = 'failed/non-device window: KD'
+
+    def require(value, message):
+        if not value:
+>           raise ValueError(message)
+E           ValueError: failed/non-device window: KD
+
+experiments/own-xpu-runtime/stage2/packet111-record-bundle/packet56_submission.py:79: ValueError
+=========================== short test summary info ============================
+FAILED experiments/own-xpu-runtime/ops/packet111-orchestration/test_submission.py::test_four_composition_submission[config0]
+FAILED experiments/own-xpu-runtime/ops/packet111-orchestration/test_submission.py::test_four_composition_submission[config1]
+FAILED experiments/own-xpu-runtime/ops/packet111-orchestration/test_submission.py::test_four_composition_submission[config2]
+FAILED experiments/own-xpu-runtime/ops/packet111-orchestration/test_submission.py::test_four_composition_submission[config3]
+4 failed, 18 passed in 2.99s

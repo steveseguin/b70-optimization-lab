@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet111 four-composition bundle prepared on CPU:** The copy
+includes the packet103 launch repair, other-fusion and target-head split.
+Both compilers pass exact-byte checks; all 44 startup windows and 23 policy
+and submission tests pass. The combined twelve-prompt smoke proposal shipped
+first. Both composite proposals plan, but neither added change reaches the
+required B gain of 0.5%: head is +0.37%, fusion +0.32%. They stay excluded and
+the record chain stays blocked. The build is 208 MB. Launch checks reject the
+old inherited memory cap. No GPU, service, live queue or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet111.md).
+
 **October 18, packet113 GDN row micro prepared on CPU:** The candidate gives
 each independent state row its own subgroup and removes workgroup barriers.
 Both compilers pass two fresh processes, each with 572 complete-layer checks

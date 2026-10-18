@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet111-orchestration/chain_adapter.py", line 35, in <module>
+    install();sys.argv[0]=str(P/script);runpy.run_path(str(P/script),run_name='__main__')
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 286, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/fast_reseal.py", line 62, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/fast_reseal.py", line 57, in main
+    pin_resealed_packet56();verify()
+    ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/packet56_submission.py", line 222, in pin_resealed_packet56
+    require(isinstance(revision, str) and re.fullmatch(r'[0-9a-f]{7,40}', revision),
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/packet56_submission.py", line 79, in require
+    raise ValueError(message)
+ValueError: invalid packet56 runtime revision

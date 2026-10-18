@@ -49,3 +49,51 @@ Exactly four views are sealed. The coordinator-visible
 queue. It requests +both, all twelve cold 64-token prompts, complete exact oracle
 comparison and the known suffix-token regression. This milestone is shipped
 before further CPU orchestration work. No GPU, service or live queue ran.
+
+## Final CPU orchestration milestone
+
+The source rule was dry-run against completed, validated receipts. Head split
+is 1.003696867 times the stronger B control (+0.3697%); other-fusion's weaker
+candidate is 1.003175762 times the strongest v5 control (+0.3176%). The completed
+head A confirmation is +0.5327%, but does not substitute for the B threshold.
+Neither dimension enters. Decision `762f6ebd546b0092` therefore selects base for
+both control and candidate. Both proposed control/candidate/control files pass
+the real planner on temporary queues; their execution explicitly refuses an
+identical selection. No misleading base/base speed claim can unlock readiness.
+
+The finalized orchestration binds exact selection, binary, oracle and policy
+hashes. A later lane-A loss vetoes either dimension. The registered chain folder
+`build/device-cards01-a` is fresh. `ready.json` is false with the exact source-rule
+reason; `verify_ready.py` rechecks current sources and all gates before execution.
+The coordinator command is stored, not executed. Composite evidence and smoke
+are still required before a qualifying candidate can unlock the chain.
+
+Both actual native rank exec points were intercepted for smoke, composites and
+the chain. All retain unlimited address space and unchanged resource limits.
+An expendable CPU child carrying the old 8 GiB limit is rejected. The harness
+blocks device opens, native execution and writes outside scratch. Only the
+CPU preparation CLI and this isolated negative harness call `setrlimit`.
+The full proof is [launch-limits.json](../experiments/own-xpu-runtime/ops/packet111-orchestration/evidence/launch-limits.json).
+
+Final submission replay covers all four compositions, prepared payloads, current
+pins, changed-pin refusal and evidence tampering: 23 tests pass overall. The
+copied chain retains `packet103.window.v1`; the final ops submission validator
+corrects that exact expected schema while preserving packet111 identities and
+all quality checks. The earlier failed replay is retained. Oracle helpers and
+manifest are byte-checked against the original packet49 authority through a
+chain-only adapter. Missing oracle links, initial chain-plan and runtime-revision
+refusals are retained. No native source or shipped smoke seal changed afterward.
+Use `ops/packet111-orchestration/prepare_submission.py` and `submission.py`, not
+the inherited stage submission entry. The strict 512-token flag remains false
+for inherited 128-token evidence; this preparation makes no promotion claim.
+
+Final [CPU audit](../experiments/own-xpu-runtime/ops/packet111-orchestration/cpu-final.json)
+passes all four seals, all 44 startup receipts, chain/policy seals, fresh output
+and unchanged smoke proposal. The build is **208,000,032 bytes**. Read-only
+storage admission sees 20,295,966,720 free bytes against 18,938,804,448 required;
+this snapshot is not a reservation and launch rechecks it. Larger retained files
+have explicit value/restoration notes. No GPU, service, live queue, host setting,
+sudo or reboot action was performed. All work is within the 90-minute box.
+
+[Preparation closeout](../experiments/own-xpu-runtime/stage2/packet111-record-bundle/CPU-PREPARATION-CLOSEOUT.md),
+[orchestration instructions](../experiments/own-xpu-runtime/ops/packet111-orchestration/README.md).
