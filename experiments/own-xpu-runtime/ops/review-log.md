@@ -459,3 +459,26 @@ STOP-doing items applied:
 - no lane hand-offs waiting on CPU-only work;
 - no new cross-card path at full grid size first;
 - briefs require `git commit --only -- <paths>`.
+
+## Review 18, 07:05 UTC (2026-10-18): **ACT**
+
+**Evidence:**
+- Last 2 h: 99% in flight (A 76%, B 59%). Lane A idle since the p105 failure at 06:55.
+- p103r is re-running its full 512 × 11 startup gate (about 07:32), so its composite lands about 07:50.
+- p103's storage check needs 19.00 GB and failed at 18.98 GB; root is 16.9 GB.
+- p105x found the head-split bug: a request reset zeroes rank 0's `active` flag, so the suffix argmax is skipped. The 12-prompt suite has only one suffix-winning token.
+- Fault count 2.
+
+**Actions, 07:05–07:09 UTC:**
+1. `p104b-confirm-waiter` queues p104b's lane-A confirm only after the B grid ends with a winner. The B grid showed no real gain (+0.01% at best; p104b closed). The confirm had started before it could be pulled and is allowed to finish (no GPU-process kills); the waiter rule now requires ≥ +0.5%.
+2. **Disk:** archived closed screens (p76/78/79/81/83/84s/86) and the submitted p80/p84 chain folders, with full verification. Codex `disk4` reclaims ≥ 4 GB from old closed build trees (pinned files kept).
+3. **Codex p105b:** the reset fix for p105 and p106, a device split-argmax microbenchmark with forced suffix winners, ties and NaN, then an all-12-prompt × 64-token smoke, then the grids. Gate receipts per composition so dead sessions resume.
+4. **Codex p58k:** a one-card single-launch screen (one load per arm, about 10–12 min each) so the one-card port fits a real gap.
+5. **Codex p107:** the first specialised per-layer subgraph experiment (one GDN and one QSA layer, exact, microbenchmark-gated at 80–160 µs per layer).
+
+**STOP-doing items applied:**
+- no exhaustive startup sweeps before screens: gate the views that will run first;
+- per-composition gate receipts;
+- 12-prompt short smokes instead of one-prompt smokes;
+- every confirm has a waiter;
+- storage checks before chains.
