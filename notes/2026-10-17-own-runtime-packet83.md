@@ -42,3 +42,15 @@ free; the task's explicit below1GB build budget was recorded and observed.
 The completed local build uses about160MB, compiler peak RSS about715MiB.
 
 [Complete evidence and limitations](../experiments/own-xpu-runtime/stage2/packet83-draft-bytes/CPU-PREPARATION-CLOSEOUT.md).
+
+## Device result and closeout (coordinator, 2026-10-17 23:37 – 2026-10-18 00:02 UTC, lane B grid)
+
+All exact. Production mean 54.198 tok/s (54.051 / 54.345):
+
+| View | tok/s | vs production | Acceptance |
+|---|---:|---:|---:|
+| `q4-g32` | 53.752 | −0.82% | 0.7795 (from 0.7874) |
+| `prefix990` | 53.975 | −0.41% | 0.7874 |
+| `prefix985` | 54.056 | −0.26% | 0.7795 |
+
+**Closed: no promotion.** The Q4 draft head costs acceptance (a lossy draft lowers agreement) and does not save enough. Smaller prefixes save too little (the head prefix is already about 0.5 ms at the bandwidth limit) and lose acceptance at 98.5%. The lane-A confirmation was not run. DO-NOT-REPEAT: lower-bit or smaller draft heads at the current acceptance trade.
