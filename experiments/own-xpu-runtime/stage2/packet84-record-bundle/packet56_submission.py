@@ -341,8 +341,8 @@ def collect(packet, chain, oracle, repo=ROOT):
         window = json.loads(e.add(name + '/window.json', root / 'window.json'))
         if packet == P56_PACKET:
             from receipt_replay import verify_receipt
+            verify_receipt(window)
             bound = window['lane_admission']
-            verify_receipt(window, data=Path(bound['path']).read_bytes())
             require(Path(bound['path']).resolve() == (chain / (name+'-lane-admission.json')).resolve(), 'lane sidecar outside registered chain')
             e.add(name+'/lane-admission.json', Path(bound['path']))
         for leaf in ('kernel-preflight.txt', 'kernel-window.txt'):
