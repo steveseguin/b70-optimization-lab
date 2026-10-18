@@ -408,3 +408,25 @@ STOP-doing items applied:
 5. **opsclean:** also amends the p97 rule so a completed exact loss on lane A excludes a source; sources are re-checked at decision time.
 
 **STOP-doing items applied:** no source set frozen while its record-lane result is pending or negative; no p93x follow-up (head=production for the record line); chain launch requires the storage check to pass; cleanups become standing, not emergencies; device microbenchmarks before long CPU programs for kernel ideas.
+
+## Review 16, 05:05 UTC (2026-10-18): **ACT**
+
+**Evidence:**
+- Last 2 h: 97% in use (A 75%, B 79%); 6 h 99%. Fault count 2. Root 18.8 GB.
+- Lane B runs dry at about 05:14; no sealed work behind the p101 B bracket until Codex finishes (p100b about 05:54, p102 about 06:54, p98c about 07:15).
+- The record path lost about 29 min at 04:24–04:53: the launcher's rule refused twice before Codex p97d changed it.
+- p101 pinned packet 97's mutable `selection.json` and needed a reseal. p99/p100 pin `packet97-record-bundle/evidence/object-identity.json` (still matching).
+- In-engine gaps between kernels are about zero, so launch-count fusions do not pay (p94 −23%).
+
+**Actions, 05:05–05:08 UTC:**
+1. `p102-micro-waiter` and `p87t-micro-waiter` (60-min deadlines) queue the p102 / p87t microbenchmarks on lane B the moment their job files exist and plan cleanly on a temp copy. The watcher now alerts on an unpaused lane with an empty queue for 2 min.
+2. Codex p87t: device microbenchmark of the head-split transfer legs (5,120-byte final-mix D2H/H2D, best-index return, ordered waits, overlap with compute), then re-run packet 87's model. It proceeds only at ≥ +0.5% (the model says +1.08% head / +0.77% draft prefix before transfer costs).
+3. **Next decision rule check:** before arming the next chain launcher (p101/p102 winners), run `orchestrate.py` on the CPU against the evidence present, including the lane-B drift case.
+4. **Pin audit:** after p97-post finishes, rerun `audit_parent_pins.py` before queuing p100/p102 screens. Briefs now forbid pinning another packet's orchestration outputs.
+
+**STOP-doing items applied:**
+- no queueing jobs their own packet marks as blocked (p100's grid needed its real-route microbenchmark);
+- no evaluator-gated launchers armed without a CPU dry evaluation;
+- no pins on mutable parent files;
+- no launch-count-only fusions;
+- microbenchmarks before full gates for kernel ideas.
