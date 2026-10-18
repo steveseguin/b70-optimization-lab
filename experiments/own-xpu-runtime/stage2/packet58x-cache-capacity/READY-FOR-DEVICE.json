@@ -1,0 +1,114 @@
+{
+  "schema": "own-runtime.packet58x.ready-for-device.v1",
+  "created_utc": "2026-10-18T18:13:59.744061+00:00",
+  "implementation_commit": "2fd7e32de2a649a48129d13aab0a7e6f27dbc278",
+  "admission_milestone_commit": "7cc07d7be3164af267cf043e5c343b8890e63357",
+  "passed": true,
+  "readiness": "CPU preparation complete; smoke proposal first",
+  "device_executed": false,
+  "services_started": false,
+  "queued": false,
+  "live_queue_changed": false,
+  "lane": "A",
+  "gpu_count": 1,
+  "whole_host": true,
+  "other_lane_requirement": "Lane B paused and drained for each device window",
+  "arithmetic": "iq3-p49-split32-v1",
+  "kv_dtype": "BF16",
+  "cache_allocation_bytes": 21552729600,
+  "cache_usage_caps_bytes": {
+    "18GB": 18000000000,
+    "max": 21552729600
+  },
+  "cache_maintenance_default": "serial",
+  "cache_maintenance_selectable": [
+    "serial",
+    "overlap"
+  ],
+  "device_admission_bound_bytes": 29963128848,
+  "device_reserve_bytes": 1500000000,
+  "driver_occupancy_allowance_bytes": 536870912,
+  "host_memavailable_required_bytes": 98989727744,
+  "build_receipt_sha256": "61456a50a68bc44325d1262ee8f80f80c18ae2f9465a874f7d984bc40da41034",
+  "admission_sha256": "f5e47c9eab8b6a6b2d9f44208922758d653f9b178c02df5e689e7880d1b877a4",
+  "maintenance_decision_sha256": "5bc6ab2b4a9d92aad7e1519d7f379803319ef9d35ebeeea7649656b3be7327f5",
+  "queue_plans_sha256": "caf4faa94a44f90113f011b5eea43cd3f885345ffd539eebe201bf105b0a94c1",
+  "proposals": [
+    {
+      "arm": "smoke",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58x-smoke-A.txt",
+      "proposal_sha256": "cbce8a5ac4f46c3996268fcf91c54fcb3a66f6493c49b05a21beb5e894f74891",
+      "plan": [
+        {
+          "name": "packet58x-smoke-A",
+          "plan": "passed",
+          "seal": "checked by packet plan/wrapper",
+          "host_required_available_bytes": 98989727744
+        }
+      ],
+      "expected_duration_seconds": [
+        600,
+        900
+      ],
+      "watchdog_seconds": 7200,
+      "log_sha256": "9a933fac6fa47cf18513fe06dd7a400028cba424116b74400875ed1ef7429a95"
+    },
+    {
+      "arm": "max",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58x-v5-A.txt",
+      "proposal_sha256": "5cdc8e80c38804c264def1f14bad6dbc8f27ab5ffb7454e964b223b083c8f732",
+      "plan": [
+        {
+          "name": "packet58x-v5-A",
+          "plan": "passed",
+          "seal": "checked by packet plan/wrapper",
+          "host_required_available_bytes": 98989727744
+        }
+      ],
+      "expected_duration_seconds": [
+        1200,
+        1800
+      ],
+      "watchdog_seconds": 7200,
+      "log_sha256": "030ec6fe5ac860105a97ed19be2a3f61f2307694e2d791fb42f042461ee2da1a"
+    }
+  ],
+  "cpu_gates": {
+    "passed": true,
+    "python_checks": 96,
+    "sealed_source_count": 550,
+    "scope": "CPU K1 mixed-source bytes, capacity protocol, full-shape startup, admission arithmetic, six real launch entry probes intercepted before native exec, reset/oracle, drain and source/artifact seals"
+  },
+  "limitations": [
+    "Larger allocation physical fit, device quality, determinism and speed remain unmeasured.",
+    "Replay speed estimate is conditional and is not a measured performance result.",
+    "Entry probes substitute operational locks, prior-device receipts, journal/memory fence and ldd boundaries; no device execution.",
+    "Serial remains default because packet58v original registered bracket did not pass its control-drift gate."
+  ],
+  "smoke": {
+    "prompts": 12,
+    "output_tokens": 64,
+    "cache_cap": "max",
+    "required_before_v5": true
+  },
+  "v5": {
+    "prompts_per_view": 12,
+    "output_tokens": 128,
+    "views": [
+      "18GB",
+      "max",
+      "18GB",
+      "max",
+      "18GB"
+    ],
+    "model_loads": 1
+  },
+  "storage": {
+    "root_free_bytes": 32852877312,
+    "build_bytes": 80586089,
+    "root_stop_floor_bytes": 25000000000,
+    "build_limit_bytes": 300000000
+  },
+  "last_content_write": true,
+  "next_action": "Run the proposed smoke through lanequeue only when lane A owns the whole host; do not queue from this preparation."
+}
