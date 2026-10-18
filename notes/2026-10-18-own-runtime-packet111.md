@@ -21,3 +21,31 @@ turn. Address-space caps belong only to the CPU preparation CLI. Every native
 device exec checks unlimited address space and unchanged inherited limits.
 The build budget is 250 MB. No GPU, service, sudo, live queue, power, host
 memory, swap, page-cache or reboot action is authorized or performed.
+
+## Smoke milestone
+
+Packet103x committed as `932df6642` at 08:38 UTC. The new source was copied only
+after that repair; original packets and orchestration remain untouched. The
+copied fusion route had a redundant generated guard include, caught by the
+first device compilation. Removing that include in this copy fixes compilation;
+its failure log and exact port hashes are retained. No native arithmetic changed.
+
+GNU and Intel each pass two fresh head and fusion byte runs. Both also detect
+the old skipped-suffix reset bug and pass the repaired 21-case regression twice.
+The four compositions pass all eight real-shape rank allocation checks and all
+44 chain startup/host-reference windows. The final startup gate takes 67.74 s.
+The inherited negative fixture now recognizes tile16's earlier refusal as well
+as half-cache's refusal; both reject the old invalid host command. Missing copied
+registry/initial-plan metadata was restored or generated before this final pass.
+
+The largest composition allocates 28,144,182,388 bytes on rank0 and
+31,425,985,242 bytes on rank1. Arena headroom is 4,068,072,332 and 786,269,478
+bytes respectively. This is CPU allocation admission; live driver residency is
+unmeasured. The new preparation build remains below 250 MB, including the
+executed fixture hard links (observed transient size 248,381,563 bytes).
+
+Exactly four views are sealed. The coordinator-visible
+`ops/lane-queue/proposed-p111-smoke-B.txt` passes the real planner on a temporary
+queue. It requests +both, all twelve cold 64-token prompts, complete exact oracle
+comparison and the known suffix-token regression. This milestone is shipped
+before further CPU orchestration work. No GPU, service or live queue ran.

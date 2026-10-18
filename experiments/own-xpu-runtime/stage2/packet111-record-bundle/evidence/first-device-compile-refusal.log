@@ -1,0 +1,339 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:570:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p109_fusion.hpp:4:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p109_route.hpp:1:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:5:46: error: redefinition of 'capture_size'
+    5 | template<class F> inline const unsigned char capture_size[sizeof(F)] __attribute__((used)) = {};
+      |                                              ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:5:46: note: previous definition is here
+    5 | template<class F> inline const unsigned char capture_size[sizeof(F)] __attribute__((used)) = {};
+      |                                              ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:570:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p109_fusion.hpp:4:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p109_route.hpp:1:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: error: redefinition of 'checked'
+    6 | template<class F> F checked(F f) {
+      |                     ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: previous definition is here
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:570:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p109_fusion.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/p78_route.hpp:52:51: error: no matching function for call to 'checked'
+   52 |       h.parallel_for(p35_range0,packet26::checked(packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                                                   ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/p78_route.hpp:52:69)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:570:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p109_fusion.hpp:77:43: error: no matching function for call to 'checked'
+   77 |    h.parallel_for(range,packet26::checked(packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+      |                                           ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p109_fusion.hpp:77:61)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:1562:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/mtp.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:118:410: error: no matching function for call to 'checked'
+  118 |  sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override {auto x=static_cast<const uint16_t*>(p[0]);auto gain=static_cast<const float*>(p[1]);auto y=static_cast<uint16_t*>(p[2]);auto nr=rows,n=width;return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(nr*256,256)](sycl::handler& h){sycl::local_accessor<float,1>s(256,h);h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it){unsigned l=it.get_local_linear_id(),row=it.get_group_linear_id();float sum=0;for(unsigned k=l;k<n;k+=256){float v=widen(x[row*n+k]);sum+=v*v;}s[l]=sum;it.barrier(sycl::access::fence_space::local_space);for(unsigned w=1;w<256;w*=2){if(l%(2*w)==0)s[l]+=s[l+w];it.barrier(sycl::access::fence_space::local_space);}float inv=detmath::rsqrt(s[0]/float(n)+1e-6f);for(unsigned k=l;k<n;k+=256)y[row*n+k]=iq3::bf16_bits((widen(x[row*n+k])*inv)*gain[row*n+k]);}));});}
+      |                                                                                                                                                                                                                                                                                                                                                                                                                          ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:118:428)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:1652:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/rank.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/strict_snapshot.hpp:24:30: error: no matching function for call to 'checked'
+   24 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::id<2> id){
+      |                              ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/strict_snapshot.hpp:24:48)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:1652:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/rank.hpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/strict_snapshot.hpp:60:30: error: no matching function for call to 'checked'
+   60 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> id){
+      |                              ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/strict_snapshot.hpp:60:48)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:1652:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/rank.hpp:234:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/rank_canary.hpp:10:149: error: no matching function for call to 'checked'
+   10 |   auto x=static_cast<uint32_t*>(p[0]);return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(64)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> i){++x[i];}));});
+      |                                                                                                                                                     ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/rank_canary.hpp:10:167)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:1562:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/mtp.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:30: error: no matching function for call to 'checked'
+   79 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                              ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:78:96: note: while substituting into a lambda expression here
+   78 |   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,wg)](sycl::handler& h){sycl::local_accessor<float,1> partial(2*Split,h);
+      |                                                                                                ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:92:155: note: in instantiation of member function 'p59::Dense<4, false, true, 1, 1>::submit' requested here
+   92 | template<unsigned K,bool I,bool Pair,unsigned V=1,unsigned Split=1>inline integrated::Launch issue(ownrt::Device&d,const Linear&a){Dense<K,I,Pair,V,Split>op;op.a=a;std::array<Allocation,11>ids{a.w,Pair?a.peer:a.w,a.x,a.y,Pair?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y,a.out?a.out:a.y,a.other?a.other:a.x,a.inject?a.inject:a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
+      |                                                                                                                                                           ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:95:21: note: in instantiation of function template specialization 'p59::issue<4U, false, true, 1U, 1U>' requested here
+   95 |  if(a.paired)return issue<K,false,true>(d,a);
+      |                     ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:109:2: note: in instantiation of function template specialization 'p59::typed<4U>' requested here
+  109 |  K(4);K(8);K(16);K(64);K(320);K(640);K(2560);K(6144);K(10240);
+      |  ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:108:28: note: expanded from macro 'K'
+  108 | #define K(n) case n:return typed<n>(d,a)
+      |                            ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:48)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:1562:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/mtp.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:30: error: no matching function for call to 'checked'
+   79 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                              ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:78:96: note: while substituting into a lambda expression here
+   78 |   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,wg)](sycl::handler& h){sycl::local_accessor<float,1> partial(2*Split,h);
+      |                                                                                                ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:92:155: note: in instantiation of member function 'p59::Dense<4, false, false, 1, 1>::submit' requested here
+   92 | template<unsigned K,bool I,bool Pair,unsigned V=1,unsigned Split=1>inline integrated::Launch issue(ownrt::Device&d,const Linear&a){Dense<K,I,Pair,V,Split>op;op.a=a;std::array<Allocation,11>ids{a.w,Pair?a.peer:a.w,a.x,a.y,Pair?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y,a.out?a.out:a.y,a.other?a.other:a.x,a.inject?a.inject:a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
+      |                                                                                                                                                           ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:98:9: note: in instantiation of function template specialization 'p59::issue<4U, false, false, 1U, 1U>' requested here
+   98 |  return issue<K,false,false>(d,a);
+      |         ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:109:2: note: in instantiation of function template specialization 'p59::typed<4U>' requested here
+  109 |  K(4);K(8);K(16);K(64);K(320);K(640);K(2560);K(6144);K(10240);
+      |  ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:108:28: note: expanded from macro 'K'
+  108 | #define K(n) case n:return typed<n>(d,a)
+      |                            ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:48)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:1562:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/mtp.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:30: error: no matching function for call to 'checked'
+   79 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                              ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:78:96: note: while substituting into a lambda expression here
+   78 |   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,wg)](sycl::handler& h){sycl::local_accessor<float,1> partial(2*Split,h);
+      |                                                                                                ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:92:155: note: in instantiation of member function 'p59::Dense<8, false, true, 1, 1>::submit' requested here
+   92 | template<unsigned K,bool I,bool Pair,unsigned V=1,unsigned Split=1>inline integrated::Launch issue(ownrt::Device&d,const Linear&a){Dense<K,I,Pair,V,Split>op;op.a=a;std::array<Allocation,11>ids{a.w,Pair?a.peer:a.w,a.x,a.y,Pair?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y,a.out?a.out:a.y,a.other?a.other:a.x,a.inject?a.inject:a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
+      |                                                                                                                                                           ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:95:21: note: in instantiation of function template specialization 'p59::issue<8U, false, true, 1U, 1U>' requested here
+   95 |  if(a.paired)return issue<K,false,true>(d,a);
+      |                     ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:109:7: note: in instantiation of function template specialization 'p59::typed<8U>' requested here
+  109 |  K(4);K(8);K(16);K(64);K(320);K(640);K(2560);K(6144);K(10240);
+      |       ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:108:28: note: expanded from macro 'K'
+  108 | #define K(n) case n:return typed<n>(d,a)
+      |                            ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:48)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:1562:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/mtp.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:30: error: no matching function for call to 'checked'
+   79 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                              ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:78:96: note: while substituting into a lambda expression here
+   78 |   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,wg)](sycl::handler& h){sycl::local_accessor<float,1> partial(2*Split,h);
+      |                                                                                                ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:92:155: note: in instantiation of member function 'p59::Dense<8, false, false, 1, 1>::submit' requested here
+   92 | template<unsigned K,bool I,bool Pair,unsigned V=1,unsigned Split=1>inline integrated::Launch issue(ownrt::Device&d,const Linear&a){Dense<K,I,Pair,V,Split>op;op.a=a;std::array<Allocation,11>ids{a.w,Pair?a.peer:a.w,a.x,a.y,Pair?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y,a.out?a.out:a.y,a.other?a.other:a.x,a.inject?a.inject:a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
+      |                                                                                                                                                           ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:98:9: note: in instantiation of function template specialization 'p59::issue<8U, false, false, 1U, 1U>' requested here
+   98 |  return issue<K,false,false>(d,a);
+      |         ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:109:7: note: in instantiation of function template specialization 'p59::typed<8U>' requested here
+  109 |  K(4);K(8);K(16);K(64);K(320);K(640);K(2560);K(6144);K(10240);
+      |       ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:108:28: note: expanded from macro 'K'
+  108 | #define K(n) case n:return typed<n>(d,a)
+      |                            ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:48)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:1562:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/mtp.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:30: error: no matching function for call to 'checked'
+   79 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                              ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:78:96: note: while substituting into a lambda expression here
+   78 |   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,wg)](sycl::handler& h){sycl::local_accessor<float,1> partial(2*Split,h);
+      |                                                                                                ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:92:155: note: in instantiation of member function 'p59::Dense<16, false, true, 1, 1>::submit' requested here
+   92 | template<unsigned K,bool I,bool Pair,unsigned V=1,unsigned Split=1>inline integrated::Launch issue(ownrt::Device&d,const Linear&a){Dense<K,I,Pair,V,Split>op;op.a=a;std::array<Allocation,11>ids{a.w,Pair?a.peer:a.w,a.x,a.y,Pair?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y,a.out?a.out:a.y,a.other?a.other:a.x,a.inject?a.inject:a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
+      |                                                                                                                                                           ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:95:21: note: in instantiation of function template specialization 'p59::issue<16U, false, true, 1U, 1U>' requested here
+   95 |  if(a.paired)return issue<K,false,true>(d,a);
+      |                     ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:109:12: note: in instantiation of function template specialization 'p59::typed<16U>' requested here
+  109 |  K(4);K(8);K(16);K(64);K(320);K(640);K(2560);K(6144);K(10240);
+      |            ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:108:28: note: expanded from macro 'K'
+  108 | #define K(n) case n:return typed<n>(d,a)
+      |                            ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:48)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:1562:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/mtp.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:30: error: no matching function for call to 'checked'
+   79 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                              ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:78:96: note: while substituting into a lambda expression here
+   78 |   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,wg)](sycl::handler& h){sycl::local_accessor<float,1> partial(2*Split,h);
+      |                                                                                                ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:92:155: note: in instantiation of member function 'p59::Dense<16, false, false, 1, 1>::submit' requested here
+   92 | template<unsigned K,bool I,bool Pair,unsigned V=1,unsigned Split=1>inline integrated::Launch issue(ownrt::Device&d,const Linear&a){Dense<K,I,Pair,V,Split>op;op.a=a;std::array<Allocation,11>ids{a.w,Pair?a.peer:a.w,a.x,a.y,Pair?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y,a.out?a.out:a.y,a.other?a.other:a.x,a.inject?a.inject:a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
+      |                                                                                                                                                           ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:98:9: note: in instantiation of function template specialization 'p59::issue<16U, false, false, 1U, 1U>' requested here
+   98 |  return issue<K,false,false>(d,a);
+      |         ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:109:12: note: in instantiation of function template specialization 'p59::typed<16U>' requested here
+  109 |  K(4);K(8);K(16);K(64);K(320);K(640);K(2560);K(6144);K(10240);
+      |            ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:108:28: note: expanded from macro 'K'
+  108 | #define K(n) case n:return typed<n>(d,a)
+      |                            ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:48)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:1562:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/mtp.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:30: error: no matching function for call to 'checked'
+   79 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                              ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:78:96: note: while substituting into a lambda expression here
+   78 |   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,wg)](sycl::handler& h){sycl::local_accessor<float,1> partial(2*Split,h);
+      |                                                                                                ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:92:155: note: in instantiation of member function 'p59::Dense<64, false, true, 1, 1>::submit' requested here
+   92 | template<unsigned K,bool I,bool Pair,unsigned V=1,unsigned Split=1>inline integrated::Launch issue(ownrt::Device&d,const Linear&a){Dense<K,I,Pair,V,Split>op;op.a=a;std::array<Allocation,11>ids{a.w,Pair?a.peer:a.w,a.x,a.y,Pair?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y,a.out?a.out:a.y,a.other?a.other:a.x,a.inject?a.inject:a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
+      |                                                                                                                                                           ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:95:21: note: in instantiation of function template specialization 'p59::issue<64U, false, true, 1U, 1U>' requested here
+   95 |  if(a.paired)return issue<K,false,true>(d,a);
+      |                     ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:109:18: note: in instantiation of function template specialization 'p59::typed<64U>' requested here
+  109 |  K(4);K(8);K(16);K(64);K(320);K(640);K(2560);K(6144);K(10240);
+      |                  ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:108:28: note: expanded from macro 'K'
+  108 | #define K(n) case n:return typed<n>(d,a)
+      |                            ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:48)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:1562:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/mtp.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:30: error: no matching function for call to 'checked'
+   79 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                              ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:78:96: note: while substituting into a lambda expression here
+   78 |   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,wg)](sycl::handler& h){sycl::local_accessor<float,1> partial(2*Split,h);
+      |                                                                                                ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:92:155: note: in instantiation of member function 'p59::Dense<64, false, false, 1, 1>::submit' requested here
+   92 | template<unsigned K,bool I,bool Pair,unsigned V=1,unsigned Split=1>inline integrated::Launch issue(ownrt::Device&d,const Linear&a){Dense<K,I,Pair,V,Split>op;op.a=a;std::array<Allocation,11>ids{a.w,Pair?a.peer:a.w,a.x,a.y,Pair?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y,a.out?a.out:a.y,a.other?a.other:a.x,a.inject?a.inject:a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
+      |                                                                                                                                                           ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:98:9: note: in instantiation of function template specialization 'p59::issue<64U, false, false, 1U, 1U>' requested here
+   98 |  return issue<K,false,false>(d,a);
+      |         ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:109:18: note: in instantiation of function template specialization 'p59::typed<64U>' requested here
+  109 |  K(4);K(8);K(16);K(64);K(320);K(640);K(2560);K(6144);K(10240);
+      |                  ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:108:28: note: expanded from macro 'K'
+  108 | #define K(n) case n:return typed<n>(d,a)
+      |                            ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:48)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:1562:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/mtp.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:30: error: no matching function for call to 'checked'
+   79 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                              ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:78:96: note: while substituting into a lambda expression here
+   78 |   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,wg)](sycl::handler& h){sycl::local_accessor<float,1> partial(2*Split,h);
+      |                                                                                                ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:92:155: note: in instantiation of member function 'p59::Dense<320, false, true, 1, 1>::submit' requested here
+   92 | template<unsigned K,bool I,bool Pair,unsigned V=1,unsigned Split=1>inline integrated::Launch issue(ownrt::Device&d,const Linear&a){Dense<K,I,Pair,V,Split>op;op.a=a;std::array<Allocation,11>ids{a.w,Pair?a.peer:a.w,a.x,a.y,Pair?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y,a.out?a.out:a.y,a.other?a.other:a.x,a.inject?a.inject:a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
+      |                                                                                                                                                           ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:95:21: note: in instantiation of function template specialization 'p59::issue<320U, false, true, 1U, 1U>' requested here
+   95 |  if(a.paired)return issue<K,false,true>(d,a);
+      |                     ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:109:24: note: in instantiation of function template specialization 'p59::typed<320U>' requested here
+  109 |  K(4);K(8);K(16);K(64);K(320);K(640);K(2560);K(6144);K(10240);
+      |                        ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:108:28: note: expanded from macro 'K'
+  108 | #define K(n) case n:return typed<n>(d,a)
+      |                            ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:48)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:1562:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/mtp.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:30: error: no matching function for call to 'checked'
+   79 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                              ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:78:96: note: while substituting into a lambda expression here
+   78 |   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,wg)](sycl::handler& h){sycl::local_accessor<float,1> partial(2*Split,h);
+      |                                                                                                ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:92:155: note: in instantiation of member function 'p59::Dense<320, false, false, 4, 1>::submit' requested here
+   92 | template<unsigned K,bool I,bool Pair,unsigned V=1,unsigned Split=1>inline integrated::Launch issue(ownrt::Device&d,const Linear&a){Dense<K,I,Pair,V,Split>op;op.a=a;std::array<Allocation,11>ids{a.w,Pair?a.peer:a.w,a.x,a.y,Pair?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y,a.out?a.out:a.y,a.other?a.other:a.x,a.inject?a.inject:a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
+      |                                                                                                                                                           ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:97:37: note: in instantiation of function template specialization 'p59::issue<320U, false, false, 4U, 1U>' requested here
+   97 |  if constexpr(K==320||K==640)return issue<K,false,false,4>(d,a);
+      |                                     ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:109:24: note: in instantiation of function template specialization 'p59::typed<320U>' requested here
+  109 |  K(4);K(8);K(16);K(64);K(320);K(640);K(2560);K(6144);K(10240);
+      |                        ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:108:28: note: expanded from macro 'K'
+  108 | #define K(n) case n:return typed<n>(d,a)
+      |                            ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:48)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/main.cpp:1562:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/mtp.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:30: error: no matching function for call to 'checked'
+   79 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                              ^~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:78:96: note: while substituting into a lambda expression here
+   78 |   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,wg)](sycl::handler& h){sycl::local_accessor<float,1> partial(2*Split,h);
+      |                                                                                                ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:92:155: note: in instantiation of member function 'p59::Dense<320, false, false, 1, 1>::submit' requested here
+   92 | template<unsigned K,bool I,bool Pair,unsigned V=1,unsigned Split=1>inline integrated::Launch issue(ownrt::Device&d,const Linear&a){Dense<K,I,Pair,V,Split>op;op.a=a;std::array<Allocation,11>ids{a.w,Pair?a.peer:a.w,a.x,a.y,Pair?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y,a.out?a.out:a.y,a.other?a.other:a.x,a.inject?a.inject:a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
+      |                                                                                                                                                           ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:98:9: note: in instantiation of function template specialization 'p59::issue<320U, false, false, 1U, 1U>' requested here
+   98 |  return issue<K,false,false>(d,a);
+      |         ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:109:24: note: in instantiation of function template specialization 'p59::typed<320U>' requested here
+  109 |  K(4);K(8);K(16);K(64);K(320);K(640);K(2560);K(6144);K(10240);
+      |                        ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:108:28: note: expanded from macro 'K'
+  108 | #define K(n) case n:return typed<n>(d,a)
+      |                            ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/kernel_guard.hpp:6:21: note: candidate template ignored: substitution failure [with F = (lambda at /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/p59_draft.hpp:79:48)]
+    6 | template<class F> F checked(F f) {
+      |                     ^
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+20 errors generated.

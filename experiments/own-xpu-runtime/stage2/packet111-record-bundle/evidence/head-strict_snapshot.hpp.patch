@@ -1,0 +1,13 @@
+--- strict_snapshot.hpp
++++ strict_snapshot.hpp
+@@ -243,6 +243,10 @@
+   for(const auto& [name,id]:e.state_spares)represented.insert(id);
+   for(const auto& [name,id]:e.state_reserves)represented.insert(id);
+   for(const auto& [id,owner]:e.allocations){const auto& row=e.dev(owner.first).arena.row(id);
++   if(e.head_auxiliary.contains(id)){
++    require(e.split_head()&&owner.first==0&&row.label.starts_with("card0:p105:")&&!represented.count(id),"p105 auxiliary cannot alias target state");
++    continue; // only the post-half suffix service reads/writes these allocations
++   }
+    if(!row.live||row.category==Category::weights||row.category==Category::pinned_slab||represented.count(id)||id==e.one[0])continue;
+    require(owner.first==0&&row.memory==Memory::device,"snapshot owner/memory");
+    Source source{{},id,row.bytes,false,false,false};source.write_bytes=id==e.scratch[0]?SnapshotWriteSet::scratch(e.p,row.bytes,e.a.nongemv=="parallel"):row.bytes;

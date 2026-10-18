@@ -1,0 +1,33 @@
+K0 shared CPU fixture startup PASS
+K1a shared CPU fixture startup PASS
+K1b shared CPU fixture startup PASS
+K2 shared CPU fixture startup PASS
+W0p actual CPU canary handshake PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/startup103.py", line 178, in rank_commands
+    try:transport.__init__(args,out,{'PATH':'/usr/bin:/bin','OMP_NUM_THREADS':'2'})
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/chain_pipeline.py", line 280, in __init__
+    configuration(json.loads((P/"memory-plan.json").read_text()),args.context,args.draft_rank,args.target_split)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/memory-plan.json'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/startup103.py", line 260, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/startup103.py", line 234, in main
+    row['ranks']=[native(cmd) for cmd in rank_commands(name,target)]
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/startup103.py", line 185, in rank_commands
+    transport.mapping.close();os.close(transport.stop_read);os.close(transport.stop_write)
+    ^^^^^^^^^^^^^^^^^
+AttributeError: 'Transport' object has no attribute 'mapping'

@@ -1,0 +1,17 @@
+K0 shared CPU fixture startup PASS
+K1a shared CPU fixture startup PASS
+K1b shared CPU fixture startup PASS
+K2 shared CPU fixture startup PASS
+W0p actual CPU canary handshake PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/startup103.py", line 260, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/startup103.py", line 230, in main
+    negative=native(old,old=True)
+             ^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/startup103.py", line 61, in native
+    assert r.returncode and 'p90 cached layout requires' in r.stderr, r.stderr
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: p100 locality requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path
+
