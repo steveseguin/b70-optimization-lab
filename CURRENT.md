@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, packet131 recurrent snapshot preparation on CPU:** A new copy
+tests keeping the old recurrent state in a spare buffer instead of copying it
+on every speculative cycle. The first builds pass; byte, memory and launch
+checks are still in progress. Compilation respects the coordinator's whole-host
+reservation. No GPU, service, live queue or host setting changed. Device
+correctness and speed remain pending.
+[Work note](notes/2026-10-18-own-runtime-packet131.md).
+
 **October 18, packet129 draft acceptance diagnostic prepared on CPU:** The new
 copy compares publisher FP8 draft experts against the current INT8 draft on the
 same inputs. Production guesses still drive the unchanged target. Both compilers
