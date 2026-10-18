@@ -42,3 +42,16 @@ Packet101's split32 draft compares exactly with its own fixed arithmetic
 reference, not the previous draft reduction. Unchanged target output and
 per-prompt acceptance remain mandatory on device. Factorized CPU operator
 bytes and joint startup checks alone are not a full model quality claim.
+
+Shared-index race: another concurrent commit (`6fbb16b9d`) included this
+packet's staged source milestone along with packet87t's files. The follow-up
+`295f4ea7f` records build evidence and retired-entrypoint repairs. Both are
+pushed; neither history nor another worker's files were rewritten. Later
+commits use explicit path-only commit selection to avoid shared-index mixing.
+
+Operator milestone: all 16 selected component keys pass two fresh repeats
+under GNU and Intel; 512 factorized composition byte records bind these exact
+transcripts. Split32's linked attention fixture passes 88 cases per run. All
+529 synthetic submission tests pass, including every selection and rejection
+cases. The 512 real-size two-rank allocation checks and 5632 chain startup
+checks are running, so no seal or ready claim is made yet.

@@ -1,9 +1,4 @@
-"""CPU-only packet103d evaluation of every identical sealed selection bracket.
-
-Frozen source decisions retain their original bytes. Only the two replaced CPU
-entry points may resolve to their byte-exact frozen97b copies; all runtime,
-source, receipt and seal pins still use the original strict validator.
-"""
+"""CPU-only readiness using every bracket with the same sealed selection."""
 import argparse
 import copy
 import json
@@ -23,14 +18,7 @@ IDENTITY_FIELDS = ('selection_sha256', 'binary_sha256', 'seal_sha256',
 
 
 def preserved_pins(config):
-    pins = dict(config['evidence_pins'])
-    for leaf in ('orchestrate.py', 'verify_ready.py'):
-        key = o.pin_path(o.O / leaf)
-        if key in pins and o.sha(o.O / leaf) != pins[key]:
-            archive = o.O / 'frozen97b' / leaf
-            assert o.sha(archive) == pins[key], 'unrecognized historical policy: ' + key
-            pins[o.pin_path(archive)] = pins.pop(key)
-    return pins
+    return dict(config['evidence_pins'])
 
 
 def validate(config):
@@ -240,7 +228,7 @@ def main():
     try:
         if args.chain_output:
             from fresh_chain import command
-            row.update(chain_entry='packet103e',chain_output=args.chain_output,chain_command=command(args.chain_output))
+            row.update(chain_entry='packet103',chain_output=args.chain_output,chain_command=command(args.chain_output))
         config = json.loads(decision.read_text())
         assert decision.stem == c.identity(config), 'decision filename identity differs'
         validate(config)
@@ -269,7 +257,7 @@ def main():
         row['checks'] = {label: o.sha(o.O/(label+'.log')) for label, _ in checks}
         files = [o.P/leaf for leaf in ('build-receipt.json', 'bundle-selection.json', 'submission-pins.json',
                  'screen-jobs-seal.json', 'composition-selection.json', 'evidence/dry-run.json', 'evidence/selection-dry-run.json')]
-        files += [*o.O.glob('*.py'), * (o.O/'frozen97b').glob('*.py'), o.O/'device-entry.sh', decision]
+        files += [*o.O.glob('*.py'), o.O/'device-entry.sh', decision]
         row['pins'] = {o.pin_path(path): o.sha(path) for path in files}
         row.update(preparation_passed=True, ready=True)
         verify(row)
