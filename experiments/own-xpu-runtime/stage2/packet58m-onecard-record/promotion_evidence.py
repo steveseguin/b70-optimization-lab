@@ -10,7 +10,7 @@ from typing import Any
 from receipt_qualification import require_qualifying, require_qualifying_file
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[4]
 SCHEMA = "neural.download.promotion-attestation.v1"
 REQUIRED_GATES = (
     "varied_task_quality_passed",

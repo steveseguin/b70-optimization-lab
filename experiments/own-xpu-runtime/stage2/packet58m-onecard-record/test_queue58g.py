@@ -6,15 +6,20 @@ import unittest
 from contextlib import ExitStack
 from unittest.mock import Mock, patch
 import queue_runner as Q
+import fault_review as F
+import verify_ready as R
 
 class QueueTests(unittest.TestCase):
     def run_chain(self, fail=None):
         with tempfile.TemporaryDirectory() as tmp:
             packet=Path(tmp)/'packet';packet.mkdir();(packet/'evidence').mkdir()
-            out=packet/'evidence/fresh-K1a';seen=[]
+            out=packet/'evidence/card0-58m-a';seen=[]
+            review=packet/'review.json';review.write_text('{}')
             def spawn(command,**kwargs):
                 name=Path(command[command.index('--output')+1]).name
                 seen.append(name);dest=out/name;dest.mkdir()
+                self.assertEqual(command[command.index('--faults-reviewed-through')+1],'2026-10-18T07:00:04.230449Z')
+                self.assertEqual(command[command.index('--view')+1],'port')
                 window='K1' if name.startswith('K1') else name
                 row=dict(window=window,passed=name!=fail,device_executed=True,
                     child_still_running=False,gpu_count=1,card=0,context=4096,boot_id='fixture')
@@ -28,9 +33,11 @@ class QueueTests(unittest.TestCase):
                     (Q.W,'closed_environment',lambda:{}),(Q.W,'build_gate',lambda:{}),
                     (Q.W.SUPPORT,'storage',lambda *a:{}),(Q.W.S,'journal',lambda *a,**k:('',None)),
                     (Q.os,'getpriority',lambda *a:0),(Q.os,'sched_getaffinity',lambda *a:{0,1,2,3,16,17,18,19}),
-                    (Q.subprocess,'Popen',spawn)]:stack.enter_context(patch.object(obj,key,value))
+                    (Q.subprocess,'Popen',spawn),
+                    (R,'verify',lambda:dict(boot_id='fixture')),
+                    (F,'validate',lambda path:(dict(boot_id='fixture',through_us=1792306806230449,through='2026-10-18T07:00:06.230449Z'),'','','cursor'))]:stack.enter_context(patch.object(obj,key,value))
                 rc=Q.main(['--output-root',str(out),'--card','0','--authorized-device-window',
-                    '--faults-reviewed-through','2026-01-01T00:00:00Z'])
+                    '--fault-review',str(review)])
             row=json.loads((out/'queue.json').read_text())
             self.assertEqual(rc,1 if fail else 0)
             self.assertEqual(seen,list(Q.ORDER[:3] if fail else Q.ORDER))

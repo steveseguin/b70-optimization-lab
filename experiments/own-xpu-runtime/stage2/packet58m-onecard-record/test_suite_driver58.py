@@ -44,7 +44,7 @@ class SuiteTests(unittest.TestCase):
     def test_native_mask_and_modes(self):
         bundle={'prompt_id':'incident-retrospective','input_bundle':'bundle'}
         D.save(self.bundle/'input.json',{'model_dir':'/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS'})
-        args=types.SimpleNamespace(window='WSCREEN',output=self.root,miss_mode='zerocopy')
+        args=types.SimpleNamespace(window='WS128',output=self.root,miss_mode='zerocopy')
         with patch.object(D,'ROOT',self.root),patch.object(D,'sha',return_value='a'*64):
             cmd=D.native_command(args,{'prompts':[bundle]},self.root/'table')
         self.assertEqual(cmd[cmd.index('--card')+1],'0')

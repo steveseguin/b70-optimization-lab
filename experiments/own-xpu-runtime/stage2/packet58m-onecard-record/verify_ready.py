@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Recompute readiness; emit a coordinator command, never run it."""
 import argparse
+from decimal import Decimal
 import json
 import math
 import os
@@ -37,10 +38,11 @@ def evaluate(rows, policy=None):
         rates.append(value)
     require(signatures[0] == signatures[1] == signatures[2], 'screen outputs or prompts differ')
     require(len({r['miss_path'] for r in rows}) == 1, 'unmatched miss paths')
-    gains = [rates[1]/rates[i]-1 for i in (0,2)]
-    # Multiplication implements inclusive >= 0.5% without a subtraction-rounding
-    # error at the exact threshold. No tolerance admits a below-threshold value.
-    require(all(rates[1] >= rates[i]*(1+policy['minimum_gain_each_control']) for i in (0,2)),
+    exact_rates = [Decimal(str(v)) for v in rates]
+    gains = [float(exact_rates[1]/exact_rates[i]-1) for i in (0,2)]
+    # Decimal input spellings preserve the inclusive boundary without a float
+    # subtraction error or tolerance that admits a below-threshold value.
+    require(all(exact_rates[1] >= exact_rates[i]*(1+Decimal(str(policy['minimum_gain_each_control']))) for i in (0,2)),
             'port must beat BOTH controls by at least 0.5%')
     drift = max(rates[0],rates[2])/min(rates[0],rates[2])-1
     require(drift <= policy['maximum_control_drift'], 'controls drift by more than 3%')
@@ -69,8 +71,12 @@ def verify():
     command = ['/usr/bin/nice','-n','19','/usr/bin/taskset','-c','8-15,24-31',
                '/usr/bin/python3','-B',str(P/'screen_gate.py')]
     run = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=180)
-    require(run.returncode == 0, '58k receipts pending or invalid: '+run.stderr.strip().splitlines()[-1] if run.stderr.strip() else '58k receipts pending or invalid')
+    detail = run.stderr.strip().splitlines()[-1] if run.stderr.strip() else 'screen checker returned no diagnostic'
+    require(run.returncode == 0, '58k receipts pending or invalid: '+detail)
     screen = json.loads(run.stdout)
+    require(screen['screen_selection_sha256'] == W.digest('port'), 'screen/chain port selection differs')
+    require(screen['screen_native_artifacts'] == {n:h for n,h in seal['artifacts'].items() if n.startswith('build/device/')},
+            'screen/chain native binaries differ')
     result = evaluate(screen['rows'])
     return dict(result, screen_sources=screen['sources'], screen_build_sha256=screen['screen_build_sha256'],
                 boot_id=screen['boot_id'], build_receipt_sha256=W.sha(P/'build-receipt.json'),

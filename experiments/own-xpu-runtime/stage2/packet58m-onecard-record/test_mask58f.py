@@ -181,12 +181,10 @@ class FullWindowTests(unittest.TestCase):
                     (W.M,'meminfo',lambda:{'MemAvailable':200*1024**3,'GPUActive':0}),
                     (A,'Admission',make_admission),(D,'onecard_topology',lambda:{}),
                     (W.subprocess,'Popen',spawn)]
-                if is_refusal:
-                    mocks += [(W.os,'getpriority',lambda *a:0),(W.os,'sched_getaffinity',lambda *a:{0,1,2,3,16,17,18,19})]
                 for obj,key,value in mocks:stack.enter_context(patch.object(obj,key,value))
                 stack.enter_context(patch.object(W.S,'ldd_preflight',side_effect=ValueError('preflight refusal') if failure=='preflight' else None,return_value={}))
                 stack.enter_context(patch.object(W,'k1_summary',side_effect=ValueError('CPU report failed') if failure=='report' else None,return_value={}))
-                rc=W.main(['--window','WSCREEN' if is_refusal else 'K1','--previous',str(previous),'--card','0','--output',str(output),
+                rc=W.main(['--window','KD' if is_refusal else 'K1','--previous',str(previous),'--card','0','--output',str(output),
                     '--faults-reviewed-through','2026-01-01T00:00:00Z','--authorized-device-window'])
             row=json.loads((output/'window.json').read_text())
             self.assertEqual(rc,0 if failure is None else 1)

@@ -27,7 +27,10 @@ def main():
     decision = C.decision(rows)
     print(json.dumps(dict(passed=True, device_executed=False, rows=rows, sources=pins,
                          boot_id=boots[0], inherited_decision=decision,
-                         screen_build_sha256=C.D.sha(K/'build-receipt.json'))))
+                         screen_build_sha256=C.D.sha(K/'build-receipt.json'),
+                         screen_selection_sha256=C.digest('port'),
+                         screen_native_artifacts={n:h for n,h in C.D.read(K/'build-receipt.json')['artifacts'].items()
+                                                  if n.startswith('build/device/')})))
 
 
 if __name__ == '__main__':

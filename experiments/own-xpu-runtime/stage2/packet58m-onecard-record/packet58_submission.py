@@ -447,7 +447,8 @@ def derive(e):
 
 
 def submission_notes(result):
-    text = (MODEL + '. Quantized compressed version, separate from FP8. Lab own Xe runtime, TP1, 1x Arc Pro B70. '
+    text = (MODEL + '. Quantized compressed version, separate from FP8. Lab own Xe runtime, TP1, physical card 0, 1x Arc Pro B70. '
+            'All 48 layers execute on XPU; weights are partly host-resident. '
             'Host-pinned expert weights; 18 GB device expert cache, copy-on-miss cache fills; down-tile16, route-fast, rec-both-plus; '
             f"fallback miss path={result['miss_path']}. BF16 KV at 4096. Plain greedy, no draft/MTP. "
             '12/12 cold prompts, 1536 tokens exact to packet49 CPU oracle iq3-p49-split32-v1; '
@@ -477,6 +478,8 @@ def payload_for(result, result_ref, att_ref):
                  kvCacheDtype='bf16', apiKvCacheDtype='auto', attentionBackend='own Xe split32 QSA', apiAttentionBackend='sdpa',
                  concurrency=1, tensorParallel=1, gpuLayers=48, temperature=0, specDecoding=False, mtpEnabled=False,
                  deviceCards=[0], immutableExpertWeightCacheBytes=18_000_000_000, hostPinnedExperts=True,
+                 weightPlacement='host-pinned expert bank plus 18 GB device cache; compute on card0',
+                 nativeTimingPlacement=dict(nice=0,cpuAffinity=[0,1,2,3,16,17,18,19]),
                  wholeHostTiming=True, freshTimingRepeatPassed=False,
                  commandSnippet='python3 -B ' + str(PACKET / 'queue_runner.py') +
                     ' --authorized-device-window --card 0 --view port --output-root ' + str(CHAIN) + ' --fault-review <validated-capture.json>',
@@ -608,6 +611,9 @@ def dry_run_existing_result(path):
                 evidence_bundle=result['evidence_bundle'], tok_s=replayed['primary_metric']['value_tok_s'],
                 exact_prompts=replayed['exactness']['prompts'], specNumTokens_omitted=True,
                 current_threshold_unchanged=True, source_path=str(path),
+                sources={str(f.relative_to(ROOT)):file_hash(f) for f in
+                         (path,Path(__file__),HERE/'legacy58g_submission.py',HERE/'submission_cli.py',
+                          HERE/'submit_localmaxxing_results.py',HERE/'suite_metrics.py')},
                 reason='58g is already submitted; this replays the captured chain, not a new eligible port result')
 
 

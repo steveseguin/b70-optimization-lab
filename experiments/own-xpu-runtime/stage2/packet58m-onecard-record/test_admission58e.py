@@ -74,7 +74,7 @@ class AdmissionTests(unittest.TestCase):
                 M.admit({'MemAvailable':required, 'GPUActive':0}, p)
                 with self.assertRaisesRegex(ValueError, 'host admission refused'):
                     M.admit({'MemAvailable':required-1, 'SwapFree':10**15}, p)
-                if name not in ('K1a','K1b','WS128','WSCREEN'):
+                if name not in ('K1a','K1b','WS128'):
                     c = p['exact_host_categories']
                     self.assertEqual(c['pinned_packed_experts'], 48627712000)
                     self.assertEqual(c['device_backing_expert_cache_arena'], 18000000000)
@@ -200,7 +200,7 @@ class AdmissionTests(unittest.TestCase):
     def test_card0_only_and_fixed_gaps(self):
         self.assertEqual(Q.GAP_SECONDS,90)
         with self.assertRaises(ValueError): Q.commands(Path('/tmp/unused'),2,'2026-01-01T00:00:00Z','')
-        self.assertEqual([L.window_scope(n) for n in Q.ORDER], ['whole-host']*3)
+        self.assertEqual([L.window_scope(n) for n in Q.ORDER], ['whole-host']*7)
         for name in Q.ORDER:
             cmd=Q.commands(Path('/tmp/unused'),0,'2026-01-01T00:00:00Z','')[name]
             self.assertEqual(cmd[cmd.index('--card')+1],'0')

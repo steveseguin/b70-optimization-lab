@@ -249,6 +249,16 @@ class SubmissionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'whole-host'):
             S.derive(self.e)
 
+    def test_all_windows_require_whole_host_and_port(self):
+        for name in S.ORDER:
+            with self.subTest(window=name):
+                e=S.Evidence(copy.deepcopy(self.fixture.members))
+                changed(e,name+'/window.json',lambda w:w['lane_admission'].update(scope='lane-A'))
+                with self.assertRaisesRegex(ValueError,'whole-host'): S.derive(e)
+                e=S.Evidence(copy.deepcopy(self.fixture.members))
+                changed(e,name+'/window.json',lambda w:w.update(view='production'))
+                with self.assertRaisesRegex(ValueError,'window identity'): S.derive(e)
+
     def test_oracle_not_interchangeable(self):
         changed(self.e, 'oracle/completion.json', lambda r: r.update(arithmetic='different'))
         with self.assertRaisesRegex(ValueError, 'CPU oracle'):
@@ -310,6 +320,11 @@ class SubmissionTests(unittest.TestCase):
             self.assertEqual(api_flags['kvCacheDtype'], 'auto')
             self.assertEqual(api_flags['gpuLayers'], 48)
             self.assertFalse(api_flags['specDecoding'])
+            self.assertNotIn('specNumTokens',api_flags)
+            self.assertNotIn('specNumTokens',item['payload']['engineFlags'])
+            self.assertIn('weights are partly host-resident',item['payload']['notes'])
+            self.assertIn('down-tile16, route-fast, rec-both-plus',item['payload']['notes'])
+            self.assertIn('WS128x is whole-host exactness-only',item['payload']['notes'])
             self.assertIn('gpuCount', output.getvalue())
             self.assertEqual(item['payload']['hardware']['gpuCount'], 1)
             self.assertEqual(item['payload']['engineFlags']['tensorParallel'], 1)
