@@ -41,11 +41,11 @@ class Flow(unittest.TestCase):
      out.extend([6000+layer*10+token%10]*512)
      ids.extend((layer*3+token+i)%512 for i in range(16))
     return out,ids
-   with patch.object(replay,'P',p),patch.object(replay,'ROOT',p),patch.object(replay,'Weights',Weights),patch.object(replay,'library',return_value=None),patch.object(replay,'run_router',side_effect=run),patch.object(capture_inputs,'require_ready',return_value=dict(rows=rows)),contextlib.redirect_stdout(io.StringIO()):
+   with patch.object(replay,'P',p),patch.object(replay,'ROOT',p),patch.object(replay,'analysis_identity',return_value='fixture-only'),patch.object(replay,'Weights',Weights),patch.object(replay,'library',return_value=None),patch.object(replay,'run_router',side_effect=run),patch.object(capture_inputs,'require_ready',return_value=dict(rows=rows)),contextlib.redirect_stdout(io.StringIO()):
     replay.main(None)
    result=json.loads(gzip.decompress((p/'evidence/router-replay.json.gz').read_bytes()))
    pred=json.loads(gzip.decompress((p/'evidence/predictions.json.gz').read_bytes()))
-   self.assertTrue(result['passed']);self.assertEqual(len(calls),48+47*5)
+   self.assertTrue(result['passed']);self.assertEqual(result['analysis_seal_sha256'],'fixture-only');self.assertEqual(len(calls),48+47*5)
    self.assertEqual(len(result['oracle']),48);self.assertEqual(len(result['per_prompt_layer']),12*47*5*3)
    self.assertEqual(len(pred['rows']),12*47*5);self.assertEqual(len(pred['truth']),12)
    self.assertTrue(all(r['recall']==1 for r in result['predictors']))

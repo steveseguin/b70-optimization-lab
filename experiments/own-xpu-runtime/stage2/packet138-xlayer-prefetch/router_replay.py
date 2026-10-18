@@ -8,6 +8,11 @@ def save(p,r):
  raw=(json.dumps(r,indent=2,allow_nan=False)+'\n').encode()
  Path(p).write_bytes(gzip.compress(raw,mtime=0) if str(p).endswith('.gz') else raw)
 
+def analysis_identity():
+ path=P/'evidence/analysis-seal.json';seal=json.loads(path.read_text());assert seal['passed']
+ for name,digest in seal['sources'].items():assert sha(ROOT/name)==digest,name
+ return sha(path)
+
 def library(name='gnu'):
  row=json.loads((P/'evidence/replay-build.json').read_text())
  for p,h in row['sources'].items():assert sha(ROOT/p)==h,p
@@ -77,6 +82,7 @@ def main(args):
  if not (P/'evidence/capture-inputs.json').exists():
   save(P/'evidence/analysis-status.json',dict(passed=False,status='pending_real_capture',recall=None,projected_tok_s=None,phase2_decision='pending',device_executed=False))
   print('Real capture pending; no recall or gain invented.');return
+ source_identity=analysis_identity()
  capture=require_ready();suite=json.loads((P/'suite.snapshot.json').read_text());entries=[e for e in suite['prompts'] if e['analysis_included']]
  maps={}
  for row in capture['rows']:
@@ -127,7 +133,7 @@ def main(args):
   for k in (10,12,16):
    group=[r for r in recalls if r['predictor']==pred and r['k']==k]
    by_predictor.append(dict(predictor=pred,k=k,recall=sum(r['matched_experts'] for r in group)/sum(r['target_experts'] for r in group)))
- result=dict(passed=True,device_executed=False,diagnostic_only=True,exact_same_layer=True,oracle=oracle,predictors=by_predictor,per_prompt_layer=recalls,
+ result=dict(passed=True,device_executed=False,diagnostic_only=True,exact_same_layer=True,analysis_seal_sha256=source_identity,oracle=oracle,predictors=by_predictor,per_prompt_layer=recalls,
   weights=weights.receipts,headers=weights.header_receipts,expert_sizes=weights.sizes(),capture_manifest_sha256=sha(P/'evidence/capture-inputs.json'),elapsed_seconds=time.monotonic()-start)
  save(P/'evidence/router-replay.json.gz',result)
  save(P/'evidence/predictions.json.gz',dict(passed=True,capture_manifest_sha256=result['capture_manifest_sha256'],router_replay_sha256=sha(P/'evidence/router-replay.json.gz'),truth=truth,rows=prediction_rows))

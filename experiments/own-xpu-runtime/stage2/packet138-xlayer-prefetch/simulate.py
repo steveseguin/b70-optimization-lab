@@ -1,9 +1,9 @@
 """Matched 18 GB cache simulations and explicit conditional rate ranges."""
 import gzip,json,resource,statistics,sys,time
-from dataclasses import asdict
+from dataclasses import asdict,replace
 from pathlib import Path
 from cache_sim import Scenario,Simulator,projection
-from router_replay import P,ROOT,sha,save,PREDICTORS
+from router_replay import P,ROOT,sha,save,PREDICTORS,analysis_identity
 
 def read(path):
  raw=Path(path).read_bytes();return json.loads(gzip.decompress(raw) if str(path).endswith('.gz') else raw)
@@ -17,6 +17,7 @@ def main():
  from capture_inputs import require_ready
  require_ready();pred=read(pred_path);replay_path=P/'evidence/router-replay.json.gz';replay=read(replay_path)
  assert pred['passed'] and replay['passed'] and replay['exact_same_layer']
+ assert replay['analysis_seal_sha256']==analysis_identity(),'replay analysis implementation changed'
  assert pred['capture_manifest_sha256']==sha(P/'evidence/capture-inputs.json')==replay['capture_manifest_sha256']
  assert pred['router_replay_sha256']==sha(replay_path)
  prefill_path=P/'evidence/prefill-inputs.json.gz';pre=read(prefill_path);assert pre['passed']
@@ -40,11 +41,12 @@ def main():
   scenario=Scenario(cfg['name'],timing['equal_share_remainder_ms'],cfg['pre_router_fraction'],cfg['bandwidth_GB_s']*1e6*cfg['dma_fraction'],
     cfg['predictor_ms'],cfg['publication_ms'],cfg['plan_extra_ms'],cfg['fill_submit_ms'],cfg['window_fraction'],
     timing['record_reciprocal_ms']-cfg['hidden_control_cache_fraction']*base['cache_wall_ms'],remote,False,penalties['2']/sizes[2])
-  def run(predictor=None,k=0):
+  def run(predictor=None,k=0,window_scale=1.):
    sim=Simulator(sizes,scenario);by_prompt=[]
    for e in entries:
-    name=e['prompt_id'];sim.reset_request()
+    name=e['prompt_id'];sim.reset_request();sim.s=scenario
     for token in pre['prompts'][name]:sim.token(token,record=False)
+    sim.s=replace(scenario,layer_ms=scenario.layer_ms*window_scale)
     start=len(sim.token_rows)
     for index,route in enumerate(pred['truth'][name]):
      assert len(route)==48 and all(len(ids)==10 and len(set(ids))==10 for ids in route)
@@ -56,7 +58,19 @@ def main():
   for predictor in PREDICTORS:
    for k in (10,12,16):
     candidate=run(predictor,k);rate=projection(control,candidate,scenario)
-    results.append(dict(scenario=cfg['name'],predictor=predictor,k=k,candidate=candidate,projection=rate))
+    original_gain=rate['gain_percent'];maximum_gain=max(0,original_gain);window_scale=1.;consistent=True;iterations=0
+    # A faster candidate has less compute time in which to hide its next copy.
+    # Retain the tightest window encountered, never enlarge it to obtain a pass.
+    if maximum_gain>0:
+     consistent=False
+     for iterations in range(1,6):
+      window_scale=1/(1+maximum_gain/100)
+      candidate=run(predictor,k,window_scale);rate=projection(control,candidate,scenario)
+      if rate['gain_percent']<=maximum_gain+1e-6:consistent=True;break
+      maximum_gain=rate['gain_percent']
+    rate['self_consistent_windows']=consistent
+    results.append(dict(scenario=cfg['name'],predictor=predictor,k=k,candidate=candidate,projection=rate,
+     initial_fixed_window_gain_percent=original_gain,candidate_window_scale=window_scale,window_rechecks=iterations))
     print(cfg['name'],predictor,k,'conditional gain',round(rate['gain_percent'],3),'percent; elapsed',round(time.monotonic()-started,1),flush=True)
     limits()
  ranges=[]
@@ -65,7 +79,7 @@ def main():
    rows=[r for r in results if r['predictor']==predictor and r['k']==k]
    ranges.append(dict(predictor=predictor,k=k,projected_tok_s_range=[min(r['projection']['candidate_tok_s'] for r in rows),max(r['projection']['candidate_tok_s'] for r in rows)],
     projected_gain_percent_range=[min(r['projection']['gain_percent'] for r in rows),max(r['projection']['gain_percent'] for r in rows)],
-    assumed_traffic_fits_all=all(r['projection']['traffic_fits_assumed_windows'] for r in rows)))
+    assumed_traffic_fits_all=all(r['projection']['traffic_fits_assumed_windows'] and r['projection']['self_consistent_windows'] for r in rows)))
  # Phase 1 is a projection gate, not a device performance certification. Require
  # the entire registered sensitivity range and every charged transfer to fit.
  modeled_pass=any(r['projected_gain_percent_range'][0]>=3 and r['assumed_traffic_fits_all'] for r in ranges)

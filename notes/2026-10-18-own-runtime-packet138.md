@@ -89,3 +89,10 @@ all three scenarios and fit every charged prefetch window. A passing result may
 recommend phase-2 design conditionally; actual layer timing and device equality
 must then be measured. Missing per-layer measurements alone are not a veto on
 a phase-1 projection. No measured 58v rate is invented; its control is modeled.
+
+The external coordinator started the capture at 17:07 UTC. While the GPUs were
+busy, the required read-only parallel audit found no arithmetic, LRU or layout
+defect. It identified two analysis safeguards, both added before real replay:
+positive candidates must still pass with windows shortened by their projected
+acceleration, and replay outputs must bind their source/library identity so
+simulation rejects stale results after code changes. Capture sources stayed fixed.

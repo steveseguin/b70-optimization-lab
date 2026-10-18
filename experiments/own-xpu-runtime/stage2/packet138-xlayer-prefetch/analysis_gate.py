@@ -17,6 +17,7 @@ def main():
  sources=[P/n for n in ('analysis_gate.py','build_replay.py','cache_cpu.cpp','cache_sim.py','prepare_prefill.py','replay_gate.py','router_cpu.cpp','router_replay.py','simulate.py','test_sim.py','test_replay_flow.py','timing_inputs.py','ANALYSIS.md')]
  sources += [P/'evidence'/n for n in ('replay-build.json','replay-cpu.json','router-weights.json','prefill-binding.json','prefill-inputs.json.gz','timing-inputs.json')]
  sources+=logs
+ sources.append(P/'finish_analysis.py')
  save(P/'evidence/analysis-seal.json',dict(schema='packet138.cpu-analysis-preparation.v1',passed=True,device_executed=False,
   sources={str(f.relative_to(ROOT)):sha(f) for f in sources},tests=10,actual_capture='pending',
   synthetic_fixtures_are_not_measurements=True,peak_test_child_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss,

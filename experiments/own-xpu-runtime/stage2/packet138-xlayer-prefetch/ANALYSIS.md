@@ -81,6 +81,15 @@ the failure and revisit conditions. With no capture, the decision stays pending.
 A positive recommendation is conditional on the timing model; device correctness
 and actual causal windows remain phase-2 work. No phase-2 code is part of this task.
 
+A candidate with projected positive gain is simulated again with proportionally
+shorter layer windows. Keep the tightest window encountered, up to five checks;
+an inconsistent window estimate cannot pass. This avoids granting a faster
+candidate the baseline's longer time to hide copies. Replay artifacts bind the
+analysis source seal and CPU library receipt; simulation refuses stale replay
+after an implementation change. `finish_analysis.py --until <UTC ISO deadline>`
+can wait for the coordinator's clean capture and run this CPU chain once within
+the task's time box. It never queues, starts or retries a device process.
+
 ## Idea credit
 
 The idea family is credited to Ranggi Hwang et al.,
