@@ -24,15 +24,35 @@ def compiler_turn():
     return mod.turn()
 
 def main():
-    limits();native=generate();commands=[];sources={};artifacts={}
+    limits();native=generate();commands=[];sources={};artifacts={};parent_relinks=[]
     # Source closure is verified against the frozen parent receipt before reuse.
     parent=json.loads((BASE/'build-receipt.json').read_text())
+    sources[str((BASE/'build-receipt.json').relative_to(ROOT))]=sha(BASE/'build-receipt.json')
     for name,digest in parent['sources'].items():
         assert sha(ROOT/name)==digest,name
         sources[name]=digest
     for mode in ('gnu-host','device'):
         base=BASE/'build'/mode;dest=B/mode;dest.mkdir(exist_ok=True)
         flags=dict(line.split(' = ',1) for line in (base/'CMakeFiles/programs.dir/flags.make').read_text().splitlines() if ' = ' in line)
+        # Reproduce the frozen binary with the exact objects we will reuse.
+        # A current object hash alone does not establish parent provenance.
+        link_file=base/'CMakeFiles/own-rt-iq3.dir/link.txt'
+        frozen=base/'own-rt-iq3';expected=parent['artifacts'][f'build/{mode}/own-rt-iq3']
+        assert sha(frozen)==expected,'frozen parent binary changed'
+        sources[str(frozen.relative_to(ROOT))]=expected
+        sources[str(link_file.relative_to(ROOT))]=sha(link_file)
+        relink=shlex.split(link_file.read_text())
+        for i,arg in enumerate(relink):
+            if arg.endswith('.o'):
+                obj=base/arg;relink[i]=str(obj);sources[str(obj.relative_to(ROOT))]=sha(obj)
+        reproduced=dest/'parent-relink'
+        relink[relink.index('-o')+1]=str(reproduced)
+        with compiler_turn(),(B/(mode+'-parent-relink.log')).open('w') as log:
+            subprocess.run(relink,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=1200)
+        actual=sha(reproduced)
+        assert actual==expected,'reused objects did not reproduce frozen parent '+mode
+        parent_relinks.append(dict(mode=mode,passed=True,command=relink,binary_sha256=actual))
+        reproduced.unlink();print(mode,'parent-relink PASS',flush=True)
         compiler='/usr/bin/g++' if mode=='gnu-host' else '/opt/intel/oneapi/compiler/2026.0/bin/icpx'
         compile_cmd=[compiler,*shlex.split(flags['CXX_DEFINES']+' '+flags['CXX_INCLUDES']+' '+flags['CXX_FLAGS']),
             '-MMD','-MF',str(dest/'entry-main.d'),'-o',str(dest/'entry-main.o'),'-c',str(native/'entry-main.cpp')]
@@ -62,7 +82,7 @@ def main():
     for f in [*native.glob('*'),*P.glob('native/*'),*P.glob('sources/*'),P/'build_engine.py',P/'native_source.py']:
         sources[str(f.relative_to(ROOT))]=sha(f)
     limits();save(P/'evidence/build.json',dict(passed=True,device_executed=False,sources=sources,artifacts=artifacts,commands=commands,
-        max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss))
+        parent_relinks=parent_relinks,max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss))
 
 if __name__=='__main__':
     resource.setrlimit(resource.RLIMIT_AS,(8*1024**3,8*1024**3))

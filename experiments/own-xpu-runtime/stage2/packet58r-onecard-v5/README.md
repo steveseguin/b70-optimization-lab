@@ -8,7 +8,8 @@ KV, context 4096, all 48 layers, 48,627,712,000 pinned expert bytes and the
 
 The native entry is a new copy of packet58j's checked engine (the binary base
 used by 58n and 58p). Its quiescent selection switch is adapted from frozen
-packet98c. All linked kernel objects are reused by exact hash. No parent,
+packet98c. Before reuse, unchanged GNU and Intel parent links must reproduce
+their frozen binary hashes; the kernel objects are then pinned by exact hash. No parent,
 screen, existing ops file or live queue is modified.
 
 | View | Route | Recurrence | Down layout |
@@ -90,6 +91,9 @@ owner after a reporting or post-compute error while keeping the experiment
 failed. No fault latch, stale marker or foreign owner is recovered. The generic
 scanner reports `NOT_VERIFIED` because this is neither its chain nor v4 template;
 the retained local integration regressions test this actual one-card adapter.
+Teardown precedes even memory-log hashing. The local launch guard reserves the
+25 GB root floor after expected writes, including a recheck after waiting for
+drain. Each fresh window explicitly installs the sealed driver fault patterns.
 
 ## CPU reproduction
 
@@ -120,6 +124,8 @@ Generated binaries/objects are ignored; [build evidence](evidence/build.json)
 pins actual compiler include dependencies and reused objects. CPU gates are
 sealed independently of mutable coordinator output. Never reseal after a
 bracket output directory exists.
+The oracle completion hash anchors its full request/input/result chain so
+regenerating an internally consistent replacement oracle invalidates the seal.
 
 [Work note](../../../../notes/2026-10-18-own-runtime-packet58r.md),
 [CPU closeout](CPU-PREPARATION-CLOSEOUT.md), [boundaries](DO-NOT-REPEAT.md).

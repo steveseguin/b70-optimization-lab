@@ -86,7 +86,7 @@ def main(argv=None):
     reviewed, _, _, _ = F.validate(args.fault_review)
     boundary = F.window_boundary(reviewed)
     cmds=commands(output,0,boundary,os.environ.get('LD_LIBRARY_PATH',''),view)
-    W.SUPPORT.storage(output,sum(W.WRITES['K1' if n.startswith('K1') else n] for n in ORDER))
+    W.storage(output,sum(W.WRITES['K1' if n.startswith('K1') else n] for n in ORDER))
     output.mkdir(parents=True)
     state=dict(schema='packet58n.arm.v1', passed=False, device_executed=False,
                view=view, arm=args.arm, commands=cmds, completed=[], plan=metadata,

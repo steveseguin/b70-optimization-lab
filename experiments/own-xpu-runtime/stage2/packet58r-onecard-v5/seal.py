@@ -27,6 +27,9 @@ def create():
             verify(ROOT,row['sources']);sources.update(row['sources'])
         gates[name]=sha(P/name)
     native=read(P/'evidence/build.json');artifacts=dict(native['artifacts'])
+    relinks=native['parent_relinks']
+    assert len(relinks)==2 and {r['mode'] for r in relinks}=={'gnu-host','device'}
+    assert all(r['passed'] is True for r in relinks)
     for mode in ('gnu-host','device'):
         name=f'build/{mode}/p58-cache-fixtures'
         parent=P.parent/'packet58j-onecard-port'/name
@@ -60,11 +63,17 @@ def create():
     budget=M.plan();sources.update(budget['allocation_inventory']['sources'])
     sources[budget['census']['source_path']]=budget['census']['source_sha256']
     sources.update(read(P/'oracle-binding.json')['files_sha256'])
+    from suite_driver import ORACLE,oracle_inputs
+    oracle_inputs()  # Verify every transitive result/input pin before anchoring it.
+    completion=ORACLE/'results/completion.json'
+    sources[str(completion.relative_to(ROOT))]=sha(completion)
     for name in ('packet94-hc-norm-fusion/compile_turn.py','packet56-draft-prefix/p56_head_support.py',
                  'packet56-draft-prefix/suite_metrics.py','packet34-replay-bench/window.py'):
         path=P.parent/name;sources[str(path.relative_to(ROOT))]=sha(path)
     for name in ('scripts/check_drain_fix.py','scripts/check_teardown_on_error.py'):
         sources[name]=sha(ROOT/name)
+    fault_driver=ROOT/'experiments/own-xpu-runtime/stage1/packet4-prep/driver/window_driver.py'
+    sources[str(fault_driver.relative_to(ROOT))]=sha(fault_driver)
     assert not any('/ops/' in n or n.endswith(('/ready.json','/queue.json','/submission-pins.json')) for n in sources)
     verify(ROOT,sources);verify(P,artifacts)
     size=sum(f.stat().st_size for f in (P/'build').rglob('*') if f.is_file())

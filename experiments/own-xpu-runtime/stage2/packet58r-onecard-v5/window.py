@@ -8,6 +8,7 @@ import math
 import os
 from pathlib import Path
 import signal
+import shutil
 import subprocess
 import time
 
@@ -29,6 +30,19 @@ PCI = {0: '0000:23:00.0', 2: '0000:43:00.0'}
 CONFIG = {'K1': (20, 600), 'WSCREEN': (1560, 7200)}
 WRITES = {'K1': 128*1024**2, 'WSCREEN': 1024*1024**2}
 PREVIOUS = {}  # Screening has no KD/layer-repeat/model-reload prerequisite.
+
+
+def storage(output, writes):
+    free=shutil.disk_usage('/').free
+    require(free-writes>=25_000_000_000,'root storage below 25 GB after reserved writes')
+    row=SUPPORT.storage(output,writes)
+    return dict(row,root_free_bytes=free,root_stop_floor_bytes=25_000_000_000)
+
+
+def install_fault_policy():
+    # Each window is a fresh Python process; queue imports do not carry over.
+    from fault_review import FaultFilter
+    S.FAULT=FaultFilter()
 
 
 
@@ -340,6 +354,7 @@ def finish_k1_devices(child, reasons, admission):
 
 
 def main(argv=None):
+    install_fault_policy()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--window', choices=tuple(CONFIG), required=True)
     parser.add_argument('--view', choices=VIEWS, default='route-rec')
@@ -363,7 +378,7 @@ def main(argv=None):
     # The definitive check follows the lane/whole-host wait. A live B screen
     # must be allowed to drain before WS128 tests its whole-host memory floor.
     memory = dict(pending_lane_admission=True, plan=budget)
-    storage = SUPPORT.storage(output, WRITES[args.window])
+    disk = storage(output, WRITES[args.window])
     build_bytes = sum(p.stat().st_size for p in (HERE/'build').rglob('*') if p.is_file())
     require(build_bytes <= 200_000_000, 'packet58r build exceeds 200 MB')
     review, through = S.fault_review(args.faults_reviewed_through, time.time_ns()//1000)
@@ -378,7 +393,7 @@ def main(argv=None):
                   artifacts_sha256=build['artifacts'], environment=dict(env, **A.D.onecard_mask()), coordinator_fault_review=review,
                   started_utc_ns=time.time_ns(), expected_seconds=CONFIG[args.window][0],
                   watchdog_seconds=CONFIG[args.window][1], memory_admission=memory,
-                  storage_admission=storage, systemd_cgroup=cgroup)
+                  storage_admission=disk, systemd_cgroup=cgroup)
     if args.window in PREVIOUS:
         previous = prerequisite(args.previous, PREVIOUS[args.window], record)
         record['previous'] = dict(path=str(args.previous.resolve()), sha256=sha(args.previous))
@@ -434,7 +449,7 @@ def main(argv=None):
             memory = M.admit(M.meminfo(), budget)
             record['memory_admission'] = memory
             record['memory_fence'] = memory_fence()
-            record['storage_admission'] = SUPPORT.storage(output, WRITES[args.window])
+            record['storage_admission'] = storage(output, WRITES[args.window])
             command = native_command(args, output, miss_path)
             record['command'] = command
             # Private inherited supervisor constants: full pinned experts are expected,
@@ -448,7 +463,7 @@ def main(argv=None):
                 memory = M.admit(M.meminfo(), budget)
                 record['memory_admission'] = memory
                 record['memory_fence'] = memory_fence()
-                record['storage_admission'] = SUPPORT.storage(output, WRITES[args.window])
+                record['storage_admission'] = storage(output, WRITES[args.window])
                 A.D.verify_onecard_environment(env)
             with (output/'native.log').open('w') as log, (output/'kernel-window.jsonl').open('w') as kernel, (output/'host-memory.jsonl').open('w') as sample_log:
                 A.D.verify_onecard_environment(env)
@@ -460,7 +475,6 @@ def main(argv=None):
                 sensor = lambda pid: live_memory_sensor(pid, memory['snapshot'].get('GPUActive',0), full_model=args.window!='K1', budget=budget, pinned_progress=pinned_progress, sample_log=sample_log, admission=admission)
                 record.update(S.supervise(child, CONFIG[args.window][1], cursor, kernel, reasons, latch, persist,
                     observe_memory=record.update, memory_sensor=sensor))
-            record['memory_samples_sha256'] = sha(output/'host-memory.jsonl')
             if record['child_still_running']:
                 record['child_retained'] = True
                 persist()
@@ -472,6 +486,7 @@ def main(argv=None):
                 # supervise has waited for exit and performed journal postflight.
                 # Reporting failure cannot leave a completed device job undrained.
                 finish_k1_devices(child, reasons, admission)
+            record['memory_samples_sha256'] = sha(output/'host-memory.jsonl')
             if args.window == 'K1':
                 summary = k1_summary(json.loads((output/'run/k1.json').read_text()))
                 record['native_files'] = {name:sha(output/name) for name in ('run/k1.json', 'run/k1-cases.jsonl')}

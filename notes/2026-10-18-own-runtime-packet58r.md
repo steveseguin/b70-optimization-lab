@@ -55,9 +55,16 @@ Both B repeats must beat every A by 0.5%, with control drift no more than 3%.
 This is a screen: independent fresh-load repeats, full-chain quality and the
 strict 512-token final gate remain pending. No record or public package changes.
 
-Native implementation and CPU checks are the first milestone; final seals and
-temporary proposal planning follow in the next milestone. Evidence and final
-handoff counts will be recorded below.
+Implementation milestone `c557854ee` was pushed immediately. Read-only review
+then closed these gaps in the new copy: pin the oracle completion chain;
+prove reused GNU/Intel objects by reproducing the frozen parent binaries;
+bind each view at both contexts; prove clean teardown before report hashing;
+seal the fault-pattern source and install it in each fresh window; enforce
+the 25 GB runtime disk floor again after drain waits. Both parent relinks
+reproduce exactly. All 79 Python tests, 12 argument paths, 6 native parser
+paths with 24 negative cases, 8 full-size binding checks and 6 miniature
+reset brackets pass. Final sealing and temporary queue planning follow the
+last Intel link, which respects the shared compiler/whole-host guard.
 
 No GPU job, service, sudo, power/memory/swap/page-cache setting, reboot, kill,
 live queue edit or external submission was performed. CPU work uses nice19,

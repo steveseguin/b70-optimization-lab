@@ -89,6 +89,11 @@ def generate():
       // must therefore explicitly represent the clean zero device-error word.
       std::memset(engine.dev(0).arena.row(engine.slab[0]).pointer,0,4);
       engine.bracket_select(path,hash(raw));require(arena==engine.bracket_arena_hash(),"fullshape switch allocations changed");
+      // Exercise the selected view at both startup and maximum context, then
+      // let the next real switch reset it from 4096 back to 32.
+      engine.context_extent=4096;engine.prepared.clear();engine.alternate_prepared.clear();
+      engine.issue_sites.clear();engine.matrices.clear();engine.prepare_plan();engine.prepare_commands();
+      require(arena==engine.bracket_arena_hash(),"full-context view allocations changed");
     }
     size_t commands=0;''')
     (out/'fullshape_submit_test.hpp').write_text('#define P58R_SELECTIONS '+json.dumps(str(P/'selections'))+'\n'+full)

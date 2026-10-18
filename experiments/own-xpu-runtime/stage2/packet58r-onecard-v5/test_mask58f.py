@@ -147,6 +147,7 @@ class FullWindowTests(unittest.TestCase):
             proc=root/'proc';proc.mkdir();drain=root/'drain';drain.mkdir()
             output=packet/'evidence/K1a';admission_type=A.Admission
             is_refusal=failure in ('refusal','refusal-fault','refusal-live')
+            is_model=is_refusal or failure=='model-memory-hash'
             previous=root/'previous.json';previous.write_text('{}')
             child=Mock();child.pid=42;child.returncode=1 if is_refusal else 0;child.poll.return_value=child.returncode
             captured={}
@@ -160,10 +161,12 @@ class FullWindowTests(unittest.TestCase):
                 owner=fixtures.AdmissionTests().proc_owner(proc,42,'0000:23:00.0')
                 captured['admission'].observe({'processes':[{'pid':42}]})
                 if failure!='refusal-live':shutil.rmtree(owner)
-                if is_refusal:
+                if is_model:
                     from test_refusal58g import proof
                     (output/'run/run').mkdir(parents=True)
-                    (output/'run/run/receipt.json').write_text(json.dumps(proof()))
+                    receipt=proof()
+                    if not is_refusal:receipt.update(passed=True,compute_started=True)
+                    (output/'run/run/receipt.json').write_text(json.dumps(receipt))
                 (output/'run').mkdir(exist_ok=True);(output/'run/k1.json').write_text('{}')
                 (output/'run/k1-cases.jsonl').write_text('{}')
                 return child
@@ -181,17 +184,25 @@ class FullWindowTests(unittest.TestCase):
                     (W.M,'meminfo',lambda:{'MemAvailable':200*1024**3,'GPUActive':0}),
                     (A,'Admission',make_admission),(D,'onecard_topology',lambda:{}),
                     (W.subprocess,'Popen',spawn)]
-                if is_refusal:
+                if is_model:
                     mocks += [(W.os,'getpriority',lambda *a:0),(W.os,'sched_getaffinity',lambda *a:{0,1,2,3,16,17,18,19})]
+                if failure in ('model-memory-hash','k1-memory-hash'):
+                    original_sha=W.sha
+                    def fail_memory_hash(path):
+                        if Path(path)==output/'host-memory.jsonl':raise ValueError('memory report hash failed')
+                        return original_sha(path)
+                    mocks.append((W,'sha',fail_memory_hash))
                 for obj,key,value in mocks:stack.enter_context(patch.object(obj,key,value))
                 stack.enter_context(patch.object(W.S,'ldd_preflight',side_effect=ValueError('preflight refusal') if failure=='preflight' else None,return_value={}))
                 stack.enter_context(patch.object(W,'k1_summary',side_effect=ValueError('CPU report failed') if failure=='report' else None,return_value={}))
-                rc=W.main(['--window','WSCREEN' if is_refusal else 'K1','--previous',str(previous),'--card','0','--output',str(output),
+                rc=W.main(['--window','WSCREEN' if is_model else 'K1','--previous',str(previous),'--card','0','--output',str(output),
                     '--faults-reviewed-through','2026-01-01T00:00:00Z','--authorized-device-window'])
             row=json.loads((output/'window.json').read_text())
             self.assertEqual(rc,0 if failure is None else 1)
             self.assertEqual(row['passed'],failure is None)
             self.assertEqual(row['qualifying'],False)
+            if failure in ('model-memory-hash','k1-memory-hash'):
+                self.assertIn('memory report hash failed',row['stop_reasons'])
             if failure=='preflight':
                 self.assertNotIn('environment',captured)
                 self.assertFalse((drain/'teardown-state.json').exists())
@@ -210,5 +221,7 @@ class FullWindowTests(unittest.TestCase):
     def test_actual_window_refusal_releases(self):self.run_window('refusal')
     def test_actual_window_refusal_fault_retains(self):self.run_window('refusal-fault')
     def test_actual_window_refusal_live_owner_retains(self):self.run_window('refusal-live')
+    def test_model_memory_hash_failure_after_teardown_releases(self):self.run_window('model-memory-hash')
+    def test_k1_memory_hash_failure_after_teardown_releases(self):self.run_window('k1-memory-hash')
 
 if __name__=='__main__':unittest.main()

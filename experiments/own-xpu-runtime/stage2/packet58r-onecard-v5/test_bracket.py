@@ -1,4 +1,4 @@
-import copy,json,tempfile,unittest
+import copy,json,tempfile,unittest,subprocess,sys
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -56,6 +56,19 @@ class BracketPolicyTests(unittest.TestCase):
         self.assertGreaterEqual(W.CONFIG['WSCREEN'][1],4*1800)
         self.assertEqual(W.M.window_plan('WSCREEN')['host_required_available_bytes'],118_308_908_048)
         self.assertEqual(W.M.plan()['device_owned_bound_bytes'],26_409_219_600)
+
+    def test_runtime_disk_reserve_at_25gb_boundary(self):
+        for free,allowed in ((24_999_999_999,False),(25_000_000_000,False),(25_000_001_024,True)):
+            with patch.object(W.shutil,'disk_usage',return_value=SimpleNamespace(free=free)),patch.object(W.SUPPORT,'storage',return_value={}):
+                if allowed:self.assertEqual(W.storage(Path('/scratch'),1024)['root_stop_floor_bytes'],25_000_000_000)
+                else:
+                    with self.assertRaisesRegex(ValueError,'25 GB'):W.storage(Path('/scratch'),1024)
+
+    def test_fresh_window_process_installs_full_fault_policy(self):
+        code=('import window as W; W.install_fault_policy(); '
+              'assert all(W.S.FAULT.search(s) for s in ("GuC reset", "GPU HANG", "wedged", "Fault response")); '
+              'assert not W.S.FAULT.search("ordinary progress")')
+        subprocess.run([sys.executable,'-B','-c',code],cwd=W.HERE,stdin=subprocess.DEVNULL,check=True,timeout=20)
 
 
 class SummaryTests(unittest.TestCase):
