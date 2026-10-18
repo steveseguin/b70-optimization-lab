@@ -1,0 +1,42 @@
+--- p118/main.cpp
++++ p120/main.cpp
+@@ -234,7 +234,8 @@
+   require(a.cancel_launch==-1,"forced cancellation is CPU diagnostic only");
+ #endif
+   require(a.draft_rank==0||a.draft_rank==1,"draft rank must be0 or1");
+-  require(a.target_split==0||a.target_split==23||a.target_split==24,"target split must be0 (placement default),23 or24");
++  require(a.target_split==0||a.target_split==23||a.target_split==24||a.target_split==25,"target split must be0 (placement default),23,24 or25");
++  require(a.target_split!=25||(a.context==4096&&a.draft_rank==1&&(!a.mini||a.pipeline_canary)),"25/23 requires real 4K rank1 draft");
+   require(a.target_split!=23||a.mini||a.context==4096||(a.draft_rank==0&&a.context==32768),"23/25 rank1 draft admitted at context4096 only; rank0 at4096/32768");
+   require(a.target_split!=24||a.draft_rank!=0||a.mini||a.context==4096,"24/24 rank0 draft admitted at context4096 only");
+   require(a.draft_head=="full","draft shortlist head not qualified; use full");
+@@ -717,14 +718,14 @@
+     else require(a.selection_sha256.empty(),"selection SHA256 requires selection file");
+     const auto down_choice=sealed_selection.choices.contains("experts")?sealed_selection.choices.at("experts"):"production";
+     if(down_choice.find("down-interleave")!=std::string::npos||down_choice.find("down-tile16")!=std::string::npos)
+-      require(!a.mini&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p100 locality requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
++      require(!a.mini&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&(a.target_split==0||a.target_split==25)&&a.context==4096&&!a.legacy,"p100 locality requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
+     const bool cached_expert=sealed_selection.choices.contains("experts")&&(p100::gate_choice(sealed_selection.choices.at("experts"))=="exp-halfcache"||p100::gate_choice(sealed_selection.choices.at("experts")).ends_with("+halfcache"));
+     const bool cached_hc=sealed_selection.choices.contains("hc_gate")&&sealed_selection.choices.at("hc_gate")=="hc-weightcache";
+     require(!(cached_expert&&cached_hc),"p90 combined caches are not admitted");
+-    if(!a.mini&&(cached_expert||cached_hc))require(a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p90 cached layout requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
++    if(!a.mini&&(cached_expert||cached_hc))require(a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&(a.target_split==0||a.target_split==25)&&a.context==4096&&!a.legacy,"p90 cached layout requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
+     const bool normfuse=sealed_selection.choices.contains("hc_norm")&&sealed_selection.choices.at("hc_norm")=="consumer";
+-    if(normfuse)require(!a.mini&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p94 fusion requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
+-    if(head_choice()!="production")require(!a.mini&&!a.legacy&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&a.context==4096&&a.draft_rank==1&&a.target_split==0&&sealed_selection.choices.at("packed_dense")=="production","p93 packed head requires sealed resident r5 parallel 4K rank1 draft 24/24");
++    if(normfuse)require(!a.mini&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&(a.target_split==0||a.target_split==25)&&a.context==4096&&!a.legacy,"p94 fusion requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
++    if(head_choice()!="production")require(!a.mini&&!a.legacy&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&a.context==4096&&a.draft_rank==1&&(a.target_split==0||a.target_split==25)&&sealed_selection.choices.at("packed_dense")=="production","p93 packed head requires sealed resident r5 parallel 4K rank1 draft 24/24");
+     const auto host_choice=sealed_selection.choices.contains("host_retire")?sealed_selection.choices.at("host_retire"):"production";
+     ordered_retirement=a.rank==1 && (host_choice=="ordered"||host_choice=="reply-first");
+     reply_report.enabled=a.rank==1 && host_choice=="reply-first";
+--- p118/rank.hpp
++++ p120/rank.hpp
+@@ -36,7 +36,7 @@
+  }
+ }
+ static flash::Plan split(flash::Plan p,int rank,bool mini,int draft_rank=1,int target_split=0) {
+- require(target_split==0||target_split==23||target_split==24,"unsupported target split");
++ require(target_split==0||target_split==23||target_split==24||target_split==25,"unsupported target split");
+  const int boundary=mini?2:(target_split?target_split:(draft_rank==0?22:24));
+  std::vector<flash::Launch> launches;
+  for(auto l:p.launches) {

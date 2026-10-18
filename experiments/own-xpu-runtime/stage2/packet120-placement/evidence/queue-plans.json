@@ -1,0 +1,43 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "plans": [
+    {
+      "lane": "B",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p120-B.txt",
+      "sha256": "d5f792197aca0efed6c704e11cc785a5d2e3604345c1f1876f7b027c3eb6df7e",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet120-placement/build/tmp/p120-plan-q0rdu10d"
+      ],
+      "log_sha256": "9f06509beafb522a7c7b8ab54dfb43eeb96f9ee8ad98c156584a818474dc6d3b",
+      "passed": true,
+      "conditional_on_B_win": false
+    },
+    {
+      "lane": "A",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p120-A.txt",
+      "sha256": "e77d236014dcb56cf137540feeb52faf84fc7138bf17d3a25ee496237b7fd010",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "A",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet120-placement/build/tmp/p120-plan-7ar3qcvr"
+      ],
+      "log_sha256": "a4949a3805e55a8efac039c22786d127936315cd207ba0d97ce9a06c10f1607c",
+      "passed": true,
+      "conditional_on_B_win": true
+    }
+  ]
+}

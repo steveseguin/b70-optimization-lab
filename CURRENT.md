@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 18, packet120 layer placement prepared on CPU:** Moving one target
+layer from rank1 to rank0 fits without changing the cache or head: the two
+rank arenas retain 2.73 and 1.78 GiB. Both compilers pass repeated byte checks,
+both views pass all startup windows, and the launch-limit and drain checks
+pass. The B screen and conditional A confirmation proposals pass temporary
+queue planning. Each compares production / 25-23 / production and requires
+at least 0.5% over both controls with exact output. The timing budget gives
+less spare time than the initial estimate, so a speed gain is uncertain.
+Device equality, residency and speed remain unmeasured. No GPU, service,
+live queue or host setting changed. The build is about 211 MB.
+[Work note](notes/2026-10-18-own-runtime-packet120.md).
+
 **October 18, packet119 DOWN-warming preparation complete on CPU:** Both
 compilers pass repeated exact-byte checks, and the compiled image retains the
 extra DOWN read with no extra stores or spills. The two proposed B micros use

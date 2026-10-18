@@ -47,3 +47,44 @@ duplicate main; the harness now removes both entry objects, as the parent
 full-shape harness does. No model operation changed. Census passes; proceed
 to two runtime placement views, exact CPU checks and sealed v4 proposals.
 No speed or real-model output result is claimed.
+
+## Sealed CPU preparation
+
+The new packet copy now selects `placement=1|25-23`. Both use the same bundle7
+operations; layer24 and the transfer boundary are the only placement changes.
+The [source/plan audit](../experiments/own-xpu-runtime/stage2/packet120-placement/evidence/source-audit.json)
+checks that layer24's operations and storage move intact and every other layer
+remains unchanged. GNU and Intel each pass two fresh exact-byte runs. Both
+views pass all eleven startup/host-reference windows with real shapes. The
+initial mini-canary refusal and a source-edit invalidation are retained; the
+final run passes without source changes during the proof.
+
+All thirteen policy/protocol tests pass, including the drain path when a
+failure hook or receipt writer raises. The CPU interception gate reaches both
+actual native exec boundaries for both views with unchanged limits and
+unlimited address space. Its isolated 8 GiB inherited-cap control refuses.
+Device imports install no resource cap.
+
+The new [B proposal](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p120-B.txt)
+and [conditional A proposal](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p120-A.txt)
+each plan on a temporary queue: production / 25-23 / production, fresh v4
+processes, twelve cold prompts × 128 exact tokens. A requires B to beat both
+controls by at least 0.5%; A must then clear the same threshold. The reader
+checks exact oracle tokens and identical acceptance, reports hit/miss means
+and per-rank command times, and recomputes admission from raw censuses. READY
+and after-suite DRM client counters are logged separately from allocator
+bytes. Missing or mismatched residency evidence refuses confirmation. A
+read-only review confirmed these stronger receipt checks and the v4 schemas.
+
+The [timing hypothesis](../experiments/own-xpu-runtime/stage2/packet120-placement/TIMING-HYPOTHESIS.md)
+corrects the initial expectation: the 1.78 ms draft wait is not spare time in
+the target race. Adding a whole layer to rank0 while removing it from rank1
+may exhaust the roughly 0.52 ms race slack and slow misses. The proposed
+bracket decides; there is no measured speed claim.
+
+[CPU closeout and evidence](../experiments/own-xpu-runtime/stage2/packet120-placement/CPU-PREPARATION-CLOSEOUT.md).
+The local build occupies about 211 MB, below 250 MB; root free space remains
+above 37 GB. Generated source and small CPU receipts are retained in a
+byte-verified archive. No GPU, service, live queue, host setting or other
+packet changed. Device equality and speed, actual VRAM residency, and strict512
+promotion remain pending for the authorized waiter.

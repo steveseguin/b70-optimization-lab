@@ -1,0 +1,18 @@
+K0 shared CPU fixture startup PASS
+K1a shared CPU fixture startup PASS
+K1b shared CPU fixture startup PASS
+K2 shared CPU fixture startup PASS
+W0p actual CPU canary handshake PASS
+production all 11 windows PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet120-placement/startup103.py", line 263, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet120-placement/startup103.py", line 237, in main
+    row['ranks']=[native(cmd) for cmd in rank_commands(name,target)]
+                  ^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet120-placement/startup103.py", line 65, in native
+    assert r.returncode==0,r.stderr
+           ^^^^^^^^^^^^^^^
+AssertionError: 25/23 requires real 4K rank1 draft
+
