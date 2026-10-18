@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, packet58v cache measurement on CPU:** The current one-card record
+spends 6.99 ms per token maintaining its expert cache, with about 33 fills
+and 65.46 MB copied. The separate time for its 144 pointer-table uploads was
+not recorded. This clears the requested measurement threshold for preparing
+an overlap candidate. CPU implementation and checks are next; no GPU, service
+or live queue was started or changed.
+[Work note](notes/2026-10-18-own-runtime-packet58v.md).
+
 **October 18, packet136 banked bundle8 prepared on CPU:** The new copy keeps
 all 182 parent links and seals bundle7 with either copied or banked rollback
 state. All 88 tests, 11 subtests and five worker tests pass, along with the
