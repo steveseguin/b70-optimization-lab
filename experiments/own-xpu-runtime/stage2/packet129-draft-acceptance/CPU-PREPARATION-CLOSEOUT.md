@@ -29,3 +29,9 @@ Revisit: only the coordinator's complete paired diagnostic can pass or close
 the candidate. At a pass, build and gate the resident format and its v5 bracket;
 at a failure, retain the evidence and close this candidate without tuning it on
 the suite. No speed or quality promotion follows from CPU checks alone.
+
+The final worker rehearsal covers all 22 requests and a corrupted-production
+negative control, with native execution forbidden and synthetic data discarded.
+Runtime imports preserve all inherited limits; the exec guard rejects the old
+finite CPU cap. The real temporary queue plan passes. All CPU preparation gates
+are complete; actual device acceptance remains pending.

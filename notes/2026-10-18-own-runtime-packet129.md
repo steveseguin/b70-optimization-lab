@@ -74,3 +74,21 @@ retains format costs, exact input pins, native source, reused-object hashes,
 CPU gates and queue plan. Build size at this milestone is 108,901,401 bytes.
 No device acceptance result exists, so candidate adoption and the conditional
 v5 timing proposal have not been prepared.
+
+## Final CPU lifecycle checks
+
+The diagnostic milestone was pushed as `ec146a530`. The complete worker then
+passed a CPU rehearsal through all 22 requests, 23 resets and one model load.
+Real selection, input and oracle checks ran; device transport, generated rows,
+monitoring and teardown permits were synthetic and confined to deleted temporary
+scratch. A changed-production-guess negative control failed after its first
+request and exercised cooperative failure drain. No synthetic acceptance result
+is retained or used for the candidate decision.
+
+Actual runtime imports preserve every inherited resource limit. An intercepted
+native launch passes with unlimited address space; a separate capped CPU child
+is refused before exec. The tiny byte fixtures used by the seals are explicitly
+retained alongside their hashes, even where repository-wide ignore rules would
+otherwise omit them. Native binaries and runtime source are unchanged from the
+diagnostic milestone. The only remaining dependency is the coordinator's device
+acceptance result; no GPU process was launched by this task.
