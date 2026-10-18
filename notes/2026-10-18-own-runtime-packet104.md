@@ -1,6 +1,6 @@
 # Packet104: extend the lossless tile16 transpose
 
-Started 2026-10-18 05:37 UTC; 2.5-hour CPU-only time box. Sources are copied
+Started 2026-10-18 around 05:37 UTC; 2.5-hour CPU-only time box. Sources are copied
 from packet100, never edited there. `source-origin.json` records their bytes.
 `git pull --rebase` refused the shared dirty tree; `git fetch origin main`
 then showed HEAD and origin/main identical (0 ahead / 0 behind). Foreign
@@ -25,7 +25,7 @@ The full 384-vector packet100b target-route snapshot is hash verified against
 its capture evidence. Both target gate variants consume those real IDs, with
 the operation's 640-row extent. The draft operator replays the same target
 IDs as an explicit proxy: packet100b did not capture draft routes. Even a
-15% proxy gain cannot qualify a draft screen without actual draft-route
+15% proxy gain cannot qualify a routed draft screen without actual draft-route
 evidence. Non-routed shared and HC operations use eight fixed input seeds.
 
 Each candidate compares full FP32 reductions, BF16 outputs, fused outputs,
@@ -48,10 +48,12 @@ this packet measures DRAM page hits or L3 reuse counters.
 Target IQ2 has eight output rows per subgroup, independent gate/up subgroups,
 16-byte code loads, two-byte high/scale reads, and two/four-byte half scales.
 The new tile transposes each of those planes separately. It leaves the IQ2
-lookup dependency intact. Draft INT8 has the same multi-row pattern (eight
-gate/up rows, sixteen down rows); its codes and exact FP32 scales are separate.
-Shared down has four output rows per subgroup. Shared gate/up has one and is
-a lower-confidence boundary measurement. HC Q8 has two output rows with its
+lookup dependency intact. The optional packet59 draft INT8 schedule has the
+same multi-row pattern, but **is not selected by packet100**. Its selected
+draft uses `mtp36::Dense` with one row per subgroup, WG128. Shared down uses
+`p33::Kernel<0,BF16,640,1>` with WG32; shared gate/up use mtp36, with separate
+activation. Those are lower-confidence boundary measurements, now measured
+against their actual selected operation. HC Q8 has two output rows with its
 lanes spread across columns; measurement may reject the transpose there.
 Dense attention uses one row per subgroup (with fixed split reductions), so
 does not match the down pattern and is not opened as another arm.
@@ -68,3 +70,27 @@ admission, sealed model integration, B grid and A confirmation. KD must use
 the same supported host-reference path as the selected composition. Parent
 orchestration outputs are not build or seal dependencies. Record chains run
 on A. No screens or record chain are admitted by this first milestone.
+
+## Dispatch audit and corrected micro
+
+The first build used the optional packet59 draft kernels. A source audit and
+independent read-only review caught the mismatch with packet100's selected
+draft. No micro job had been enqueued or run. The second build uses copies of
+the actual `mtp36::Dense` and packet33 shared-down bodies, with unchanged
+workgroup geometry and no added activation fusion. Selection and dispatch
+snapshots are now explicit build inputs. The old receipt and binary are
+retained as superseded preparation evidence, never a timing control.
+
+The corrected binary compiles. Twelve protocol checks pass, including a
+single slow route rejecting an otherwise winning candidate, malformed order,
+geometry, exactness, finite timing and drain checks. The real capture binding,
+closed-environment micro plan and a temporary lanequeue plan pass. These are
+preparation checks, not the conditional GNU/Intel byte-identity gate.
+
+The copied runtime sources now include load-time tile views and matching
+dispatch for down-tile16 plus each new candidate. They are **prepared,
+uncompiled, unqualified**; `integration-plan.json` says so. The half-cache arm
+has a separate half-cache control. KD gets a draft-only host selection with
+the target resident-only transpose removed, while keeping all selected draft
+choices. The eleven actual chain window names are registered from packet97e,
+including both KD startup paths. No model seal or runnable screen exists.

@@ -1,0 +1,49 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "long_cpu_gates_run": false,
+  "route_vectors": 384,
+  "proposal_sha256": "bf165d809049a715d2785d3654904e3747e7b4f3ce463c286e96b6d8ed386921",
+  "build_receipt_sha256": "60b761f6f352d986105fe50e1f63768a2040ef552f156996f422d24f012c0321",
+  "checks": [
+    {
+      "name": "protocol-tests",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "test_micro_gate",
+        "-v"
+      ],
+      "passed": true
+    },
+    {
+      "name": "micro-plan",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet104-tile-transpose/run_micro.py",
+        "--lane",
+        "B",
+        "--plan"
+      ],
+      "passed": true
+    },
+    {
+      "name": "temporary-queue-plan",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/tmp/p104-queue-plan-wzqfhp96"
+      ],
+      "passed": true
+    }
+  ]
+}

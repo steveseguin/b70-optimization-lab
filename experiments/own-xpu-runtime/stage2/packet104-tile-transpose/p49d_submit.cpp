@@ -59,10 +59,11 @@ Submit resolve(std::string_view cls,std::string_view choice){
  if(cls=="head"&&(choice=="production"||choice=="head-transpose"))return production;
  if(cls=="host_retire"&&(choice=="production"||choice=="ordered"||choice=="reply-first"))return production;
  if(cls=="hc_norm"&&(choice=="production"||choice=="subgroup"||choice=="consumer"))return production;
- if(cls=="hc_gate"&&(choice=="production"||choice=="wide"))return production;
+ if(cls=="hc_gate"&&(choice=="production"||choice=="wide"||choice=="wide-tile16"))return production;
  if(cls=="packed_dense"&&(choice=="production"||choice=="head-packed"||choice=="dense-packed"||choice=="combined"))return production;
  if(cls=="experts"){
   choice=p100::gate_choice(choice);
+  if(choice=="gate-tile16"||choice=="gate-halfcache-tile16")return production;
   if(choice=="exp-slm"||choice=="exp-compact-slm"||choice=="exp-compact-global"||choice=="exp-slm+halfcache"||choice=="exp-compact-slm+halfcache"||choice=="exp-compact-global+halfcache")return production;
  }
  if(cls=="experts"&&(choice=="production"||choice=="wg64"||choice=="wg128"||choice=="prefetch64"||choice=="wide64"||choice=="experts2-a"||choice=="experts2-b"||choice=="input-packed"||choice=="gate-input-packed"||choice=="down-input-packed"||choice=="exp-halfcache"||choice=="exp-grid-prefetch"||choice=="exp-grid-prefetch+halfcache"))return production;

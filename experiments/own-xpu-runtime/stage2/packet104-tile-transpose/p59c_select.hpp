@@ -38,7 +38,7 @@ inline std::map<std::string,std::string> defaults(){
 }
 inline void validate(const std::map<std::string,std::string>&m){
  auto registered=defaults();if(m.size()!=registered.size())throw std::invalid_argument("p59c incomplete draft selection");
- for(auto&[key,value]:m)if(!registered.contains(key)||(key=="head_format"?(value!="production"&&value!="q4-g32"):key=="head_prefix"?(value!="production"&&value!="coverage990"&&value!="coverage985"):(value!="production"&&value!="packet59")))throw std::invalid_argument("p59c unknown draft choice: "+key);
+ for(auto&[key,value]:m)if(!registered.contains(key)||(key=="head_format"?(value!="production"&&value!="q4-g32"):key=="head_prefix"?(value!="production"&&value!="coverage990"&&value!="coverage985"):(value!="production"&&value!="packet59"&&!(value=="tile16"&&(key=="gate_up"||key=="down"||key=="shared_gate"||key=="shared_up"||key=="shared_down")))))throw std::invalid_argument("p59c unknown draft choice: "+key);
  if(m.at("head_format")!="production"&&m.at("head_prefix")!="production")throw std::invalid_argument("p83 unregistered combined draft head");
  for(auto&[key,producer]:dependencies)if(m.at(key)=="packet59"&&m.at(producer)!="packet59")throw std::invalid_argument("p59c fusion requires packet59 producer: "+key);
 }

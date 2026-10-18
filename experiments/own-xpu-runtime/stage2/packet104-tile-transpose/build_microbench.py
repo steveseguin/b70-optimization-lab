@@ -16,7 +16,7 @@ def main():
  sources={str(Path(n).resolve().relative_to(ROOT)):sha(n) for n in deps if Path(n).is_file() and Path(n).resolve().is_relative_to(ROOT)}
  for src,dst in mapping.items():
   if str(dst.relative_to(ROOT)) in sources:sources[str(src.relative_to(ROOT))]=sha(src)
- for name in ('build_microbench.py','build_engine.py','compile_turn.py','compiler.snapshot.json','source-origin.json','derive.py','microbench.cpp','run_micro.py','micro_gate.py','qualification.py','route_inputs.py','shared-wrapper-pin.json','kernel_gate.py','math_gate.py','kernel_overlay.py','submission_overlay.py'):
+ for name in ('build_microbench.py','build_engine.py','compile_turn.py','compiler.snapshot.json','source-origin.json','derive.py','microbench.cpp','run_micro.py','micro_gate.py','qualification.py','route_inputs.py','shared-wrapper-pin.json','kernel_gate.py','math_gate.py','kernel_overlay.py','submission_overlay.py','baseline-selection.json','baseline-dispatch-speed6.json','evidence/route-inputs.json.gz','evidence/routes.bin'):
   sources[str((P/name).relative_to(ROOT))]=sha(P/name)
  size=sum(p.stat().st_size for p in B.rglob('*') if p.is_file());assert size<=300_000_000,size
  save(P/'evidence/microbench-build.json',dict(passed=True,device_executed=False,command=cmd,sources=sources,artifacts={'build/microbench':sha(B/'microbench')},binary_sha256=sha(B/'microbench'),build_logical_bytes=size,max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss))

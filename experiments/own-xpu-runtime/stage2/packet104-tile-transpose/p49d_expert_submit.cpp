@@ -5,6 +5,8 @@
 #include "p95_expert.hpp"
 #include "expert_down.hpp"
 #include "p100_down.hpp"
+#include "p104iq2.hpp"
+#include "p104iq2hc.hpp"
 #include "p99_expert.hpp"
 namespace p49d {
 using p39::Kind;using p39::Bindings;using iq3::Type;
@@ -13,11 +15,11 @@ template<Type T,unsigned K,Kind E,unsigned Split,unsigned Arm=0>integrated::Laun
  if constexpr(E==Kind::down_status)p29::validate(d,m,"p29.down.wg32",false,2);else
  p28::validate(d,m,E==Kind::expert_checks?"p28.paired.wg32":"p28.dense.wg32",E==Kind::expert_checks,(T==Type::Q6_K||T==Type::Q8_0?(Split==4?7:6):2));
  std::array<ownrt::Allocation,19> ids{a.w,peer.w,a.x,a.y,peer.y,a.routes?a.routes:a.x,a.status?a.status:a.y,peer.status?peer.status:peer.y,a.workspace,b.other?b.other:a.x,b.out?b.out:a.y,b.streams?b.streams:a.y,b.inject?b.inject:a.x,b.mixture?b.mixture:a.x,b.shared_gate?b.shared_gate:a.x,b.one?b.one:a.x,b.error,b.active,b.position};
- using OldCandidate=std::conditional_t<(Arm==11||Arm==12),p95exp::Kernel<T,K,64,false,true,0,Arm==12>,std::conditional_t<Arm==10,p90exp::Kernel<T,K,64,false,true>,std::conditional_t<Arm==0,p49dvirtual::Kernel<T,K,T==Type::IQ2_S?2:3>,p65::Kernel<T,K,Arm==2?128:64,Arm==3,Arm>=4,Arm>=5?Arm-4:0>>>>;using Candidate=std::conditional_t<(Arm==20||Arm==21),p100::Kernel<Arm-19>,std::conditional_t<(Arm>=13&&Arm<=18),p99::Kernel<T,K,1+(Arm-13)%3,(Arm>=16&&Arm<=18)>,OldCandidate>>;Candidate k;k.rows=a.rows;k.count=a.count;k.experts=a.experts;const auto rb=(Arm==10||Arm==12||(Arm>=16&&Arm<=18))?p90::expert_stride(K):p49bgemv::layout(T,K).row_bytes;
+ using OldCandidate=std::conditional_t<(Arm==11||Arm==12),p95exp::Kernel<T,K,64,false,true,0,Arm==12>,std::conditional_t<Arm==10,p90exp::Kernel<T,K,64,false,true>,std::conditional_t<Arm==0,p49dvirtual::Kernel<T,K,T==Type::IQ2_S?2:3>,p65::Kernel<T,K,Arm==2?128:64,Arm==3,Arm>=4,Arm>=5?Arm-4:0>>>>;using PriorCandidate=std::conditional_t<(Arm==20||Arm==21),p100::Kernel<Arm-19>,std::conditional_t<(Arm>=13&&Arm<=18),p99::Kernel<T,K,1+(Arm-13)%3,(Arm>=16&&Arm<=18)>,OldCandidate>>;using Candidate=std::conditional_t<Arm==22,p104iq2::Kernel<T,K,64,false,true>,std::conditional_t<Arm==23,p104iq2hc::Kernel<T,K,64,false,true>,PriorCandidate>>;Candidate k;k.rows=a.rows;k.count=a.count;k.experts=a.experts;const auto rb=(Arm==10||Arm==12||Arm==23||(Arm>=16&&Arm<=18))?p90::expert_stride(K):p49bgemv::layout(T,K).row_bytes;
  // Validate complete live allocations and byte ranges before any compute hook.
  std::array<void*,19>p;for(size_t j=0;j<ids.size();++j){const auto&r=d.arena.row(ids[j]);if(!r.live||r.memory!=ownrt::Memory::device)throw std::invalid_argument("p39 dead/nondevice binding");p[j]=r.pointer;}
- if constexpr(Arm==21){if(a.rows%16||uintptr_t(p[0])%16)throw std::invalid_argument("p100 tile extent/alignment");}
- auto bound=k.bind(p);bound.position=static_cast<const uint32_t*>(p[18]);bound.capacity=b.capacity;if constexpr(Arm==10||Arm==12||(Arm>=16&&Arm<=18))p90exp::validate<T,K,E,Split>(bound);else p39::validate<T,K,E,Split>(bound);
+ if constexpr(Arm==21||Arm==22||Arm==23){if(a.rows%16||uintptr_t(p[0])%16||uintptr_t(p[1])%16)throw std::invalid_argument("p100 tile extent/alignment");}
+ auto bound=k.bind(p);bound.position=static_cast<const uint32_t*>(p[18]);bound.capacity=b.capacity;if constexpr(Arm==10||Arm==12||Arm==23||(Arm>=16&&Arm<=18))p90exp::validate<T,K,E,Split>(bound);else p39::validate<T,K,E,Split>(bound);
  if(uintptr_t(bound.w)%4||uintptr_t(bound.peer)%4)throw std::invalid_argument("p49b weight alignment");
  auto extent=[&](ownrt::Allocation id,size_t n){if(d.arena.row(id).bytes<n)throw std::invalid_argument("p39 allocation extent");};
  size_t n=size_t(a.rows)*a.count;extent(a.w,size_t(a.experts)*a.rows*rb);extent(a.x,size_t(K)*(E==Kind::down_status?a.count:1)*2);extent(a.y,n*2);extent(b.error,4);extent(b.active,4);extent(b.position,4);
@@ -45,6 +47,8 @@ integrated::Launch expert(ownrt::Device&d,const std::vector<integrated::Matrix>&
   if(p100::tiled(choice))return issue<Type::IQ4_NL,640,Kind::down_status,1,21>(d,m,b);
  }
  choice=p100::gate_choice(choice);
+ if(choice=="gate-tile16")return chosen_expert<22>(d,m,kind,b);
+ if(choice=="gate-halfcache-tile16")return chosen_expert<23>(d,m,kind,b);
  if(choice=="exp-slm")return chosen_expert<13>(d,m,kind,b);
  if(choice=="exp-compact-slm")return chosen_expert<14>(d,m,kind,b);
  if(choice=="exp-compact-global")return chosen_expert<15>(d,m,kind,b);

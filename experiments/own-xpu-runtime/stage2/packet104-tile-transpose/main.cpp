@@ -1,4 +1,5 @@
 #include "p100_down.hpp"
+#include "p104_engine.hpp"
 #include "reply_first.hpp"
 #include "host_spin.hpp"
 #include "ordered_queue.hpp"
@@ -716,7 +717,7 @@ public:
     const auto down_choice=sealed_selection.choices.contains("experts")?sealed_selection.choices.at("experts"):"production";
     if(down_choice.find("down-interleave")!=std::string::npos||down_choice.find("down-tile16")!=std::string::npos)
       require(!a.mini&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p100 locality requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
-    const bool cached_expert=sealed_selection.choices.contains("experts")&&(p100::gate_choice(sealed_selection.choices.at("experts"))=="exp-halfcache"||p100::gate_choice(sealed_selection.choices.at("experts")).ends_with("+halfcache"));
+    const bool cached_expert=sealed_selection.choices.contains("experts")&&p104::gate_cached(sealed_selection.choices.at("experts"));
     const bool cached_hc=sealed_selection.choices.contains("hc_gate")&&sealed_selection.choices.at("hc_gate")=="hc-weightcache";
     require(!(cached_expert&&cached_hc),"p90 combined caches are not admitted");
     if(!a.mini&&(cached_expert||cached_hc))require(a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p90 cached layout requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
@@ -876,7 +877,7 @@ public:
     }return false;
   }
   bool p90_expert_weight(const std::string&name)const {
-    return !a.mini&&a.memory=="resident"&&(p100::gate_choice(sealed_selection.choices.at("experts"))=="exp-halfcache"||p100::gate_choice(sealed_selection.choices.at("experts")).ends_with("+halfcache"))&&p49b_weight(w,a,p,name)&&flash::grid_type(w.directory.at(name).grid)==iq3::Type::IQ2_S;
+    return !a.mini&&a.memory=="resident"&&p104::gate_cached(sealed_selection.choices.at("experts"))&&p49b_weight(w,a,p,name)&&flash::grid_type(w.directory.at(name).grid)==iq3::Type::IQ2_S;
   }
   bool p90_hc_weight(const std::string&name)const {
     return !a.mini&&a.memory=="resident"&&sealed_selection.choices.at("hc_gate")=="hc-weightcache"&&name.starts_with("blk.")&&(name.ends_with(".hc_attn_up.weight")||name.ends_with(".hc_ffn_up.weight"));
@@ -916,6 +917,14 @@ public:
         auto tiled=p100::transpose(packed.data(),n);upload(c,id,row*360,tiled.data(),tiled.size());
       }return;
     }
+    if(planes&&p104::gate_tiled(sealed_selection.choices.at("experts"))&&type==iq3::Type::IQ2_S){
+      require(t.shape.size()==3&&t.shape.back()==2560&&t.shape[1]==640,"p104 IQ2 tile shape");
+      constexpr size_t raw_stride=820;const size_t stride=halfcache?840:820,total=t.bytes/raw_stride,chunk=16*256;
+      for(size_t row=0;row<total;row+=chunk){guard();size_t n=std::min(chunk,total-row);auto raw=w.read(name,row*raw_stride,n*raw_stride);std::vector<uint8_t> packed(n*stride);
+        for(size_t r=0;r<n;++r){if(halfcache)p90::expert_repack(2560,raw.data()+r*raw_stride,packed.data()+r*stride);else p49bgemv::repack_row(type,2560,raw.data()+r*raw_stride,packed.data()+r*stride);}
+        auto tiled=halfcache?p104::iq2<true>(packed.data(),n):p104::iq2<false>(packed.data(),n);upload(c,id,row*stride,tiled.data(),tiled.size());
+      }return;
+    }
     if(planes){
       const unsigned k=t.shape.back();const size_t raw_stride=p49bgemv::source_row_bytes(type,k),stride=halfcache?p90::expert_stride(k):p49bgemv::layout(type,k).row_bytes;
       const size_t total=t.bytes/raw_stride,chunk=std::max(size_t(1),size_t(4*1024*1024)/std::max(raw_stride,stride));
@@ -931,9 +940,12 @@ public:
       auto fmt=iq3::layout(type);size_t rb=t.shape[1]/fmt.elements*fmt.bytes;
       size_t er=hccache?p90::hc_stride:arithmetic::row_bytes(type,t.shape[1],v);
       size_t rows_per=std::max(size_t(1),size_t(4*1024*1024)/std::max(rb,er));
+      const bool hctile=sealed_selection.choices.at("hc_gate")=="wide-tile16"&&name.starts_with("blk.")&&(name.ends_with(".hc_attn_up.weight")||name.ends_with(".hc_ffn_up.weight"));
+      if(hctile){require(type==iq3::Type::Q8_0&&t.shape[0]==10240&&t.shape[1]==320&&er==380,"p104 HC layout shape");rows_per=std::max(size_t(16),rows_per/16*16);}
       for(size_t row=0;row<size_t(t.shape[0]);row+=rows_per){
         auto nr=std::min(rows_per,size_t(t.shape[0])-row);auto raw=w.read(name,row*rb,nr*rb);
         auto expanded=hccache?p90::hc_repack(raw.data(),raw.size()):iq3::expanded::expand(type,raw.data(),raw.size(),t.shape[1]);
+        if(hctile)expanded=p104::hc(expanded.data(),nr);
         upload(c,id,row*er,expanded.data(),expanded.size());
       }
       return;
@@ -1363,7 +1375,7 @@ public:
       flash::grid_type(w.directory.at(wt+"down.weight").grid)==iq3::Type::Q8_0 &&
       flash::grid_type(w.directory.at(wt+"up.weight").grid)==iq3::Type::Q8_0,
       "packet60 production HC weight formats");
-    finish(c,p60::submit(dev(c),ids,stage,p.g.context,sealed_selection.choices.at("hc_gate")=="wide",sealed_selection.choices.at("hc_norm")=="subgroup",sealed_selection.choices.at("hc_gate")=="hc-weightcache",sealed_selection.choices.at("hc_norm")=="consumer"),stage!=0);
+    finish(c,p60::submit(dev(c),ids,stage,p.g.context,sealed_selection.choices.at("hc_gate")=="wide",sealed_selection.choices.at("hc_norm")=="subgroup",sealed_selection.choices.at("hc_gate")=="hc-weightcache",sealed_selection.choices.at("hc_norm")=="consumer",sealed_selection.choices.at("hc_gate")=="wide-tile16"),stage!=0);
     return true;
   }
   void execute_site(const flash::Launch& l) {int c=l.card;
@@ -1548,7 +1560,7 @@ static void write_plan(const fs::path &path, const flash::Plan &p,
                        const Weights &w, int cards, const Options& a) {
   p49d::Selection selected;
   if(!a.selection.empty())selected.load(a.selection.string(),a.selection_sha256);
-  const bool cached_expert=!a.mini&&selected.choices.contains("experts")&&(p100::gate_choice(selected.choices.at("experts"))=="exp-halfcache"||p100::gate_choice(selected.choices.at("experts")).ends_with("+halfcache"));
+  const bool cached_expert=!a.mini&&selected.choices.contains("experts")&&p104::gate_cached(selected.choices.at("experts"));
   const bool cached_hc=!a.mini&&selected.choices.contains("hc_gate")&&selected.choices.at("hc_gate")=="hc-weightcache";
   std::map<std::string, int> owner;
   std::map<std::string,size_t> stored;

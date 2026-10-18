@@ -1,6 +1,7 @@
 #include "p60_submit.hpp"
 #include "p60_kernels.hpp"
 #include "p73_hc.hpp"
+#include "p104_hc.hpp"
 #include "p78_norm.hpp"
 #include "p94_norm.hpp"
 #include "p90_hc.hpp"
@@ -18,28 +19,29 @@ using Base=integrated::HostOperation;
 #else
 using Base=ownrt::SyclOperation;
 #endif
-template<int Stage,bool Wide=false,bool Subgroup=false,bool Cached=false,bool Fused=false>struct Kernel final:Base {
+template<int Stage,bool Wide=false,bool Subgroup=false,bool Cached=false,bool Fused=false,bool Tiled=false>struct Kernel final:Base {
  unsigned capacity;
 #ifdef OWN_RT_HOST_ONLY
  void run(std::span<void*const> p)const override {
   auto b=bind(p,capacity);
   if constexpr(Stage==0){if constexpr(Subgroup)p78norm::host(b);else host_norm(b);}
   if constexpr(Stage==1){if constexpr(Fused)p94norm::host(b);else host_low_inject(b);}
-  if constexpr(Stage==2){if constexpr(Cached)p90hc::host(b);else if constexpr(Wide)p73hc::host(b);else host_gate_mix(b);}
+  if constexpr(Stage==2){if constexpr(Tiled)p104hc::host(b);else if constexpr(Cached)p90hc::host(b);else if constexpr(Wide)p73hc::host(b);else host_gate_mix(b);}
  }
 #else
  sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override {
   auto b=bind(p,capacity);
   if constexpr(Stage==0){if constexpr(Subgroup)return p78norm::device(q,b,deps);else return norm_kernel(q,b,deps);}
   if constexpr(Stage==1){if constexpr(Fused)return p94norm::device(q,b,deps);else return low_inject_kernel(q,b,deps);}
-  if constexpr(Stage==2){if constexpr(Cached)return p90hc::device(q,b,deps);else if constexpr(Wide)return p73hc::device(q,b,deps);else return gate_mix_kernel(q,b,deps);}
+  if constexpr(Stage==2){if constexpr(Tiled)return p104hc::device(q,b,deps);else if constexpr(Cached)return p90hc::device(q,b,deps);else if constexpr(Wide)return p73hc::device(q,b,deps);else return gate_mix_kernel(q,b,deps);}
  }
 #endif
 };
-template<int Stage,bool Wide=false,bool Subgroup=false,bool Cached=false,bool Fused=false>integrated::Launch issue(ownrt::Device&d,const IDs&ids,unsigned capacity) {
- Kernel<Stage,Wide,Subgroup,Cached,Fused> op;op.capacity=capacity;auto e=d.compute(op,ids,{});return {e,e,1};
+template<int Stage,bool Wide=false,bool Subgroup=false,bool Cached=false,bool Fused=false,bool Tiled=false>integrated::Launch issue(ownrt::Device&d,const IDs&ids,unsigned capacity) {
+ Kernel<Stage,Wide,Subgroup,Cached,Fused,Tiled> op;op.capacity=capacity;auto e=d.compute(op,ids,{});return {e,e,1};
 }
-integrated::Launch submit(ownrt::Device&d,const IDs&ids,int stage,unsigned capacity,bool wide,bool subgroup,bool cached,bool fused) {
+integrated::Launch submit(ownrt::Device&d,const IDs&ids,int stage,unsigned capacity,bool wide,bool subgroup,bool cached,bool fused,bool tiled) {
+ if(tiled&&cached)throw std::invalid_argument("p104 incompatible HC layouts");
  if(!capacity||capacity>4096)throw std::invalid_argument("packet60 capacity");
  const std::array<size_t,16> bytes{K*2,K*4,L*iq3::expanded::row_bytes(Type::Q8_0,K),
   K*(cached?p90::hc_stride:iq3::expanded::row_bytes(Type::Q8_0,L)),S*K*4,K*2,L*2,L*2,K*2,H*2,S*2,320*4,32*4,4,4,4};
@@ -49,7 +51,7 @@ integrated::Launch submit(ownrt::Device&d,const IDs&ids,int stage,unsigned capac
    throw std::invalid_argument("packet60 lifetime/extent/alignment");
   for(unsigned j=0;j<i;++j)if(ids[i]==ids[j])throw std::invalid_argument("packet60 binding alias");
  }
- switch(stage){case 0:return subgroup?issue<0,false,true>(d,ids,capacity):issue<0>(d,ids,capacity);case 1:return fused?issue<1,false,false,false,true>(d,ids,capacity):issue<1>(d,ids,capacity);case 2:if(cached)return issue<2,true,false,true>(d,ids,capacity);return wide?issue<2,true>(d,ids,capacity):issue<2>(d,ids,capacity);}
+ switch(stage){case 0:return subgroup?issue<0,false,true>(d,ids,capacity):issue<0>(d,ids,capacity);case 1:return fused?issue<1,false,false,false,true>(d,ids,capacity):issue<1>(d,ids,capacity);case 2:if(tiled)return issue<2,false,false,false,false,true>(d,ids,capacity);if(cached)return issue<2,true,false,true>(d,ids,capacity);return wide?issue<2,true>(d,ids,capacity):issue<2>(d,ids,capacity);}
  throw std::invalid_argument("packet60 stage");
 }
 }

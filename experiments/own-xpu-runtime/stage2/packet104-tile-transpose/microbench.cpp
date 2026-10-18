@@ -1,7 +1,10 @@
 // Packet100 real-route harness extended to packet104's copied operation bodies.
 #include "p104iq2.hpp"
 #include "p104iq2hc.hpp"
-#include "p104_draft.hpp"
+#include "p104_mtp.hpp"
+#include "p104_mtp_base.hpp"
+#include "p104_shared.hpp"
+#include "p104_shared_base.hpp"
 #include "p104_hc.hpp"
 #include "p59_draft.hpp"
 #include "p73_hc.hpp"
@@ -38,9 +41,9 @@ template<bool HC>struct Target {
  static sycl::event launch(sycl::queue&q,bool tile,const std::array<void*,19>&p){return tile?Tile{}.submit(q,p,{}):Prod{}.submit(q,p,{});}
 };
 template<unsigned Columns,bool Int8,bool Pair,unsigned V>struct Draft {
- static constexpr unsigned K=Columns,rows=K==2560?640:2560,count=Int8?10:1,experts=Int8?512:1,wg=256,lanes=32/V;
+ static constexpr unsigned K=Columns,rows=K==2560?640:2560,count=Int8?10:1,experts=Int8?512:1,wg=(!Int8&&K==640)?32:128,lanes=32;
  static constexpr size_t rb=Int8?K+K/16*4:K*2;static constexpr bool paired=Pair,routed=Int8;
- using Prod=p59::Dense<K,Int8,Pair,V,1>;using Tile=p104draft::Dense<K,Int8,Pair,V,1>;
+ using Prod=p104mtpbase::Dense<K,Int8,Pair>;using Tile=p104mtp::Dense<K,Int8,Pair>;
  static const char*name(){if constexpr(Int8)return Pair?"draft-gate-tile16":"draft-down-tile16";else return K==2560?"shared-gate-up-tile16":"shared-down-tile16";}
  static auto transpose(const uint8_t*p,size_t n){return p104::draft<K,Int8>(p,n);}
  template<class Next>static void initialize(std::vector<uint8_t>&v,Next next){
@@ -50,14 +53,18 @@ template<unsigned Columns,bool Int8,bool Pair,unsigned V>struct Draft {
   }
  }
  template<bool Tiled>static float raw(const uint8_t*w,const uint16_t*x,size_t row,unsigned lane){
-  if constexpr(Tiled)return Tile::chain(w,x,lane,0,row);else return Prod::chain(w+row*rb,x,lane,0);
+  if constexpr(!Int8&&K==640){if constexpr(Tiled)return p104shared::tile_lane<K>(w,x,0,K,lane,row);else return p33::dense_lane<iq3::Type::BF16,K>(w+row*rb,x,0,K,lane);}
+  else {if constexpr(Tiled)return p104mtp::lane<K,Int8>(w,x,lane,row);else return p104mtpbase::lane<K,Int8>(w+row*rb,x,lane);}
  }
  static sycl::event launch(sycl::queue&q,bool tile,const std::array<void*,19>&p){
-  p59::Linear a;a.rows=rows;a.columns=K;a.batch=count;a.experts=experts;a.int8=Int8;a.paired=Pair;
-  a.routes=Int8?ownrt::Allocation{1}:ownrt::Allocation{};
-  a.tail=(Pair||(!Int8&&K==2560))?p59::product:p59::none;
-  if(tile){Tile op;op.a.rows=rows;op.a.columns=K;op.a.batch=count;op.a.experts=experts;op.a.int8=Int8;op.a.paired=Pair;op.a.routes=a.routes;op.a.tail=decltype(op.a.tail)(a.tail);return op.submit(q,std::span<void*const>(p.data(),11),{});}
-  Prod op;op.a=a;return op.submit(q,std::span<void*const>(p.data(),11),{});
+  if constexpr(!Int8&&K==640){
+   if(tile){p104shared::Kernel<0,iq3::Type::BF16,K,1> op;op.b.rows=rows;op.b.count=1;op.b.experts=1;op.b.rb=rb;return op.submit(q,std::span<void*const>(p.data(),9),{});}
+   p104sharedbase::Kernel<0,iq3::Type::BF16,K,1> op;op.b.rows=rows;op.b.count=1;op.b.experts=1;op.b.rb=rb;return op.submit(q,std::span<void*const>(p.data(),9),{});
+  }else{
+   mtp36::Linear a;a.rows=rows;a.columns=K;a.batch=count;a.experts=experts;a.int8=Int8;a.paired=Pair;a.routes=Int8?ownrt::Allocation{1}:ownrt::Allocation{};
+   if(tile){Tile op;op.a=a;return op.submit(q,std::span<void*const>(p.data(),8),{});}
+   Prod op;op.a=a;return op.submit(q,std::span<void*const>(p.data(),8),{});
+  }
  }
 };
 // HC's actual fused gate+mix operation, including four streams and status guard.
@@ -137,8 +144,8 @@ int main(int argc,char**argv){try{
  std::signal(SIGTERM,stop);std::signal(SIGINT,stop);
  {sycl::queue q(sycl::gpu_selector_v,{sycl::property::queue::enable_profiling{},sycl::property::queue::in_order{}});
   benchmark<Target<false>>(q,rs);benchmark<Target<true>>(q,rs);
-  benchmark<Draft<2560,true,true,8>>(q,rs);benchmark<Draft<640,true,false,16>>(q,rs);
-  benchmark<Draft<2560,false,false,1>>(q,rs);benchmark<Draft<640,false,false,4>>(q,rs);benchmark<HC>(q,rs);
+  benchmark<Draft<2560,true,true,1>>(q,rs);benchmark<Draft<640,true,false,1>>(q,rs);
+  benchmark<Draft<2560,false,false,1>>(q,rs);benchmark<Draft<640,false,false,1>>(q,rs);benchmark<HC>(q,rs);
   q.wait_and_throw();guard();}
  std::cout<<"{\"kind\":\"summary\",\"passed\":true,\"drained\":true,\"candidate_count\":7,\"route_count\":384,\"diagnostic_only\":true}\n"<<std::flush;return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

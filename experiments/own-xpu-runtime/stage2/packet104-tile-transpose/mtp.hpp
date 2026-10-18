@@ -1,6 +1,7 @@
 #pragma once
 #include "mtp_kernels.hpp"
 #include "p59_draft.hpp"
+#include "p104_draft_submit.hpp"
 #include "p59_hc.hpp"
 #include "p56_prefix.hpp"
 #include "p83_head.hpp"
@@ -58,6 +59,15 @@ class DraftRuntime {
 
  bool q4_head()const{return e.sealed_selection.draft.at("head_format")=="q4-g32";}
  unsigned prefix_rows()const{return p83::rows(p.g.vocab,e.a.mini,e.sealed_selection.draft.at("head_prefix"));}
+ bool tiled_weight(const std::string&name)const{
+  static const std::map<std::string,std::string>keys{{"blk.0.ffn_gate_exps.weight","gate_up"},{"blk.0.ffn_up_exps.weight","gate_up"},{"blk.0.ffn_down_exps.weight","down"},{"blk.0.ffn_gate_shexp.weight","shared_gate"},{"blk.0.ffn_up_shexp.weight","shared_up"},{"blk.0.ffn_down_shexp.weight","shared_down"}};
+  auto i=keys.find(name);return i!=keys.end()&&e.sealed_selection.draft.at(i->second)=="tile16";
+ }
+ std::vector<uint8_t>tile_bytes(const std::vector<uint8_t>&raw,unsigned rows,unsigned cols,bool int8){
+  require(!e.a.mini&&rows%16==0,"p104 full draft layout required");
+  if(cols==2560)return int8?p104::draft<2560,true>(raw.data(),rows):p104::draft<2560,false>(raw.data(),rows);
+  require(cols==640,"p104 draft columns");return int8?p104::draft<640,true>(raw.data(),rows):p104::draft<640,false>(raw.data(),rows);
+ }
  bool selected(const std::string& key)const{return e.sealed_selection.draft.at(key)=="packet59";}
  bool changed(const flash::Launch& l)const{auto i=p59c::sites.find(l.label);return i!=p59c::sites.end()&&selected(i->second);}
  bool fused(const flash::Launch& l)const{auto i=p59c::consumers.find(l.label);return i!=p59c::consumers.end()&&selected(i->second);}
@@ -97,9 +107,9 @@ class DraftRuntime {
  std::vector<uint8_t> synthetic(const std::string& n,unsigned rows,unsigned cols,bool gain){std::vector<uint8_t> raw(size_t(rows)*cols*(gain?4:2));for(size_t i=0;i<size_t(rows)*cols;++i){float f=flash::mock::weight("draft:"+n,int(i/cols),int(i%cols));if(gain)f+=1;if(gain)std::memcpy(raw.data()+i*4,&f,4);else {auto b=iq3::bf16_bits(f);std::memcpy(raw.data()+i*2,&b,2);}}return raw;}
  void load(const std::string& name,unsigned rows,unsigned cols,bool gain=false,bool routed=false){if(weights.count(name))return;Weight w;w.rows=rows;w.cols=cols;w.experts=routed?p.g.experts:1;w.int8=routed&&!e.a.mini;w.type=gain?iq3::Type::F32:iq3::Type::BF16;
   size_t rb=w.int8?cols+cols/16*4:cols*(gain?4:2);w.id=alloc("weight:"+name,size_t(w.experts)*rows*rb,Category::weights);mutable_ids.erase(w.id);
-  if(routed){for(unsigned expert=0;expert<w.experts;++expert){std::vector<uint8_t> raw;if(e.a.mini)raw=synthetic(name+std::to_string(expert),rows,cols,false);else {std::string kind=name.find("gate_")!=std::string::npos?"gate":name.find("up_")!=std::string::npos?"up":"down";std::string prefix="mtp.layers.0.mlp.experts."+std::to_string(expert)+"."+kind+"_proj";raw=requant(store->read(prefix+".weight"),store->read(prefix+".weight_scale_inv"),rows,cols);}e.upload(0,w.id,size_t(expert)*rows*rb,raw.data(),raw.size());}}
+  if(routed){for(unsigned expert=0;expert<w.experts;++expert){std::vector<uint8_t> raw;if(e.a.mini)raw=synthetic(name+std::to_string(expert),rows,cols,false);else {std::string kind=name.find("gate_")!=std::string::npos?"gate":name.find("up_")!=std::string::npos?"up":"down";std::string prefix="mtp.layers.0.mlp.experts."+std::to_string(expert)+"."+kind+"_proj";raw=requant(store->read(prefix+".weight"),store->read(prefix+".weight_scale_inv"),rows,cols);}if(tiled_weight(name))raw=tile_bytes(raw,rows,cols,w.int8);e.upload(0,w.id,size_t(expert)*rows*rb,raw.data(),raw.size());}}
   else {std::vector<uint8_t> raw;if(e.a.mini)raw=synthetic(name,rows,cols,gain);else {auto full=store->read(official(name));if(name=="blk.0.indexer.q_proj.weight")raw={full.begin(),full.begin()+rows*cols*2};else if(name=="blk.0.indexer.k_proj.weight")raw={full.end()-rows*cols*2,full.end()};else raw=std::move(full);require(raw.size()==size_t(rows)*cols*2,"official draft dense shape "+name);if(gain){std::vector<uint8_t> converted(size_t(rows)*cols*4);for(size_t i=0;i<size_t(rows)*cols;++i){uint16_t b;std::memcpy(&b,raw.data()+i*2,2);float f=1.f+iq3::bits_float(uint32_t(b)<<16);std::memcpy(converted.data()+i*4,&f,4);}raw=std::move(converted);}}
-   e.upload(0,w.id,0,raw.data(),raw.size());}weights[name]=w;
+   if(tiled_weight(name))raw=tile_bytes(raw,rows,cols,w.int8);e.upload(0,w.id,0,raw.data(),raw.size());}weights[name]=w;
  }
  void matrix(const flash::Launch& l){const auto& w=weights.at(l.weights[0]);
   if(l.label=="logits"){if(q4_head()){e.finish(0,p83::submit(e.dev(0),w.id,id(l.inputs[0]),id(l.outputs[0]),prefix_rows(),w.cols),true);return;}integrated::Matrix m{};m.w=w.id;m.type=w.type;m.x=id(l.inputs[0]);m.y=id(l.outputs[0]);m.rows=w.rows;m.columns=w.cols;m.span=m.rows;m.workspace=head_workspace;
@@ -125,7 +135,7 @@ class DraftRuntime {
   // rows represented as separate matrices. INT8 draft experts have no matching
   // target IQ2/IQ4 format; their registered draft-only kernel remains explicit.
   const auto candidate=packet26::dispatch.gemv_for(l.label);
-  if(!e.a.mini&&l.op=="gemv"&&candidate=="p33.dense.segment") {
+  if(!tiled_weight(l.weights[0])&&!e.a.mini&&l.op=="gemv"&&candidate=="p33.dense.segment") {
    require(l.shape[0]==1,"selected draft projection expects one input row");
    integrated::Matrix m{};m.w=w.id;m.type=w.type;m.x=id(l.inputs[0]);m.y=id(l.outputs[0]);m.rows=w.rows;m.columns=w.cols;m.span=m.rows;m.workspace=head_workspace;
    e.finish(0,p33::submit(e.dev(0),{m},candidate,false,0),true);
@@ -135,7 +145,7 @@ class DraftRuntime {
   // the equivalent four-subgroup rows4 schedule in mtp36::linear.
   Linear a;a.w=w.id;a.x=id(l.inputs[0]);a.y=id(l.outputs[0]);a.rows=l.shape[1];a.columns=l.shape[2];a.batch=l.shape[0];a.experts=w.experts;a.int8=w.int8;
   if(l.op=="routed_gemv"||l.op=="expert_gate_up"){a.routes=id(l.inputs[1]);a.status=id(l.outputs[1]);if(l.op=="expert_gate_up"){a.paired=true;a.peer=weights.at(l.weights[1]).id;a.py=id(l.outputs[2]);a.ps=id(l.outputs[3]);}}
-  e.finish(0,mtp36::linear(e.dev(0),a),true);
+  e.finish(0,tiled_weight(l.weights[0])?p104draftsubmit::linear(e.dev(0),a):mtp36::linear(e.dev(0),a),true);
  }
  Engine::Prepared bind(const flash::Launch& l){Spec s;s.g=p.g;s.extent=(l.op=="qsa_select"||l.op=="qsa_attention")?std::min(p.g.context,context_extent):0;s.packed_heads=!e.a.mini;s.site.parameter=l.parameter;std::copy(l.shape.begin(),l.shape.end(),s.site.shape);s.implementation=1;
   static const std::map<std::string,Op> ops={

@@ -8,10 +8,10 @@ MICRO_DIRECTORY='evidence/micro-B'
 SHAPES={
  'target-gate-tile16':(640,2560,10,512,64,0),
  'target-gate-halfcache-tile16':(640,2560,10,512,64,0),
- 'draft-gate-tile16':(640,2560,10,512,256,0),
- 'draft-down-tile16':(2560,640,10,512,256,0),
- 'shared-gate-up-tile16':(640,2560,1,1,256,8),
- 'shared-down-tile16':(2560,640,1,1,256,8),
+ 'draft-gate-tile16':(640,2560,10,512,128,0),
+ 'draft-down-tile16':(2560,640,10,512,128,0),
+ 'shared-gate-up-tile16':(640,2560,1,1,128,8),
+ 'shared-down-tile16':(2560,640,1,1,32,8),
  'hc-gate-tile16':(10240,320,1,1,256,8),
 }
 def require(ok,message):

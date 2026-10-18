@@ -16,5 +16,5 @@ inline int stage(const std::string& label) {
  if(op=="act"||op=="mix"||op=="inject")return 3;
  return -1;
 }
-integrated::Launch submit(ownrt::Device&,const IDs&,int,unsigned,bool wide=false,bool subgroup=false,bool cached=false,bool fused=false);
+integrated::Launch submit(ownrt::Device&,const IDs&,int,unsigned,bool wide=false,bool subgroup=false,bool cached=false,bool fused=false,bool tiled=false);
 }
