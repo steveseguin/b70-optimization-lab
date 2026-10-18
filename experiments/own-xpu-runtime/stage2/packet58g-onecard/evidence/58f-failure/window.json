@@ -1,0 +1,680 @@
+{
+  "schema": "own-runtime.packet58.window.v1",
+  "window": "KD",
+  "passed": false,
+  "qualifying": false,
+  "device_executed": true,
+  "child_still_running": false,
+  "card": 0,
+  "pci_bdf": "0000:23:00.0",
+  "native_visible_card": 0,
+  "context": 4096,
+  "gpu_count": 1,
+  "decode_mode": "plain",
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "build_receipt_sha256": "d930f84554311cdeaed2c52e8e5d6d8814efd7536b4dbd47e4c56fcce5ad1fdb",
+  "artifacts_sha256": {
+    "build/device/own-rt-iq3": "e4aa567102d9a78d002ea38d765997cba7f56c1412314eb485e87d36c7c18930",
+    "build/device/p58-cache-fixtures": "65ee885a9be85e0201016c9d471551bcbb7ea5d71d0efd841567d3398811263a",
+    "build/gnu-host/own-rt-iq3": "997bd8428c0f54cf8886f913d13ed1e12d1df686e2add27be875ef3643ecfd54",
+    "build/gnu-host/p58-cache-fixtures": "f5df9ac80b9d7360b6b29d88f49d8d6e74cc6a93861934696331d64bfb286192"
+  },
+  "environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:23:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+  },
+  "coordinator_fault_review": "2026-10-17T22:00:03Z",
+  "started_utc_ns": 1792285335582166994,
+  "expected_seconds": 600,
+  "watchdog_seconds": 1800,
+  "memory_admission": {
+    "passed": true,
+    "available_bytes": 120563273728,
+    "required_bytes": 85565068816,
+    "margin_bytes": 34998204912,
+    "baseline_gpuactive_bytes": 15892480,
+    "snapshot": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 120563273728,
+      "SwapTotal": 8589930496,
+      "SwapFree": 8302698496,
+      "GPUActive": 15892480
+    },
+    "plan": {
+      "schema": "own-runtime.packet58.memory.v1",
+      "device_executed": false,
+      "admitted": false,
+      "context": 4096,
+      "gpu_count": 1,
+      "decode_mode": "plain",
+      "kv_dtype": "BF16",
+      "census": {
+        "pinned_expert_bytes": 48627712000,
+        "layers": [
+          {
+            "layer": 0,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 1,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 2,
+            "experts": 512,
+            "expert_bytes": 2329600,
+            "layer_bytes": 1192755200
+          },
+          {
+            "layer": 3,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 4,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 5,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 6,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 7,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 8,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 9,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 10,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 11,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 12,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 13,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 14,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 15,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 16,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 17,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 18,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 19,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 20,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 21,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 22,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 23,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 24,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 25,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 26,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 27,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 28,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 29,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 30,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 31,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 32,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 33,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 34,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 35,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 36,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 37,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 38,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 39,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 40,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 41,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 42,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 43,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 44,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 45,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 46,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          },
+          {
+            "layer": 47,
+            "experts": 512,
+            "expert_bytes": 1971200,
+            "layer_bytes": 1009254400
+          }
+        ],
+        "file_backed_nonexpert_bytes": 33323087360,
+        "source_path": "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json",
+        "source_sha256": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c"
+      },
+      "allocation_inventory": {
+        "target_nonexpert_bytes": 5815529984,
+        "recurrent_bytes": 59019280,
+        "kv_index_bytes": 116391936,
+        "sources": {
+          "experiments/own-xpu-runtime/stage2/packet45-merged3/evidence/audit6/W2m-c4096-dr1-r0/census.json": "4e1074519846cc27084e574c32f2ec923153237b1cd522d15196fac017344d49",
+          "experiments/own-xpu-runtime/stage2/packet45-merged3/evidence/audit6/W2m-c4096-dr1-r1/census.json": "29d020fc2b753636517655d1b9c9b226c595765a9ee350e0bce6951cd60cedb0"
+        }
+      },
+      "device_categories": {
+        "target_nonexpert": 5815529984,
+        "expert_cache_arena": 18000000000,
+        "expert_pointer_generation_tables": 2359296,
+        "target_recurrent": 59019280,
+        "target_4k_bf16_kv_index": 116391936,
+        "workspace_bound": 1073741824,
+        "control_transaction_bound": 1073741824,
+        "transfer_bound": 268435456
+      },
+      "device_owned_bound_bytes": 26409219600,
+      "arena_limit_bytes": 32212254720,
+      "card_capacity_floor_bytes": 32000000000,
+      "device_reserve_bytes": 1500000000,
+      "device_margin_bytes": 4090780400,
+      "host_categories": {
+        "pinned_packed_experts": 48627712000,
+        "gpuactive_shadow_bound": 26409219600,
+        "file_backed_nonexpert_and_lookup_bound": 33323087360,
+        "loader_staging_bound": 268435456,
+        "process_workspace_bound": 1073741824,
+        "cache_metadata_bound": 16777216
+      },
+      "host_reserve_bytes": 8589934592,
+      "host_required_available_bytes": 85565068816,
+      "file_backed_expert_duplicate_allowed": false,
+      "large_pinning_cpu_test_allowed": false,
+      "caveat": "Full device backing stays reserved even with a complete shadow sample. Clean lookup pages may reclaim naturally; exactness only, no timing claim.",
+      "admission_mode": "census-plus-measured-shadow",
+      "exact_host_categories": {
+        "pinned_packed_experts": 48627712000,
+        "device_backing_target_nonexpert": 5815529984,
+        "device_backing_expert_cache_arena": 18000000000,
+        "device_backing_expert_pointer_generation_tables": 2359296,
+        "device_backing_target_recurrent": 59019280,
+        "device_backing_target_4k_bf16_kv_index": 116391936,
+        "device_backing_workspace_bound": 1073741824,
+        "device_backing_control_transaction_bound": 1073741824,
+        "device_backing_transfer_bound": 268435456,
+        "observed_gpuactive_shadow": 579248128,
+        "loader_staging_bound": 268435456,
+        "process_workspace_bound": 1073741824,
+        "cache_metadata_bound": 16777216
+      },
+      "shadow_observation": {
+        "peak_shadow_bytes": 579248128,
+        "complete_postload": false,
+        "source": "58c KD supervisor; incomplete post-load setup",
+        "sources": {
+          "host-memory.jsonl": "8c0975c009d10b4ebd0227580497747c159b6c7e152189b5f01697aeec2ec7d2",
+          "window.json": "b98f761a6ec6c5204ce183cc66ecf2409fee8d3fbf9c8c113779df8aa2997aeb"
+        },
+        "method": "maximum of every retained sample; no future pin credit"
+      },
+      "timing_required_available_bytes": 118308908048,
+      "reclaimable_file_pages_bytes": 33323087360
+    }
+  },
+  "storage_admission": {
+    "free_bytes": 14823432192,
+    "planned_write_bytes": 536870912,
+    "min_free_bytes": 8000000000
+  },
+  "systemd_cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/packet58-onecard-58f-b.service\n",
+  "previous": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/evidence/card0-58f-a/K1b/window.json",
+    "sha256": "c4122dd6466b7ab7952538feb38c3e08b9bd7e354b5c128f465ce756b4cea42f"
+  },
+  "miss_path": "zero-copy",
+  "k1_refs": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/evidence/card0-58f-a/K1a/window.json",
+      "sha256": "682dba24e6d09a9fb65fdbd7e07d72cb23c5883ceae3189ce75f567fbee9a832",
+      "native_k1_sha256": "636ee4044277d3b2964284dd3345c07549fedcc9265ab762f8ed4efe9d3e4f72"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/evidence/card0-58f-a/K1b/window.json",
+      "sha256": "c4122dd6466b7ab7952538feb38c3e08b9bd7e354b5c128f465ce756b4cea42f",
+      "native_k1_sha256": "10dc287717afe605b88792f33d2336856b1b44a53361255f63bd1c72abb54e44"
+    }
+  ],
+  "device_topology": {
+    "mask": {
+      "NEOReadDebugKeys": "1",
+      "FilterBdfPath": "0000:23:00.0",
+      "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+      "ZE_AFFINITY_MASK": "0",
+      "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+    },
+    "native_indices": [
+      0
+    ],
+    "nodes": [
+      {
+        "pci": "0000:23:00.0",
+        "node": "/dev/dri/renderD130",
+        "path": "/dev/dri/by-path/pci-0000:23:00.0-render",
+        "driver": "xe"
+      }
+    ],
+    "device_nodes_opened": false
+  },
+  "native_environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:23:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+    "HOME": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/evidence/card0-58f-a/KD/native-home"
+  },
+  "stop_reasons": [
+    "native window failed or interrupted"
+  ],
+  "lane_admission": {
+    "passed": false,
+    "scope": "lane-A",
+    "card": 0,
+    "timing_claim_eligible": false,
+    "reservation": {
+      "schema": "own-runtime.chain-lanes.v1",
+      "token": "12ff34af24294486905e8d75ca822f54",
+      "lane": "A",
+      "window": "KD",
+      "scope": "lane-A",
+      "pid": 712087,
+      "start_ticks": 12804329,
+      "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+      "started_monotonic": 128043.485208734
+    },
+    "owners": {
+      "712105": {
+        "start_ticks": 12804389,
+        "seen": false,
+        "fds": []
+      },
+      "712107": {
+        "start_ticks": 12804395,
+        "seen": true,
+        "fds": [
+          {
+            "pid": 712107,
+            "fd": "10",
+            "driver": "xe",
+            "pci": "0000:23:00.0",
+            "client_id": "9785"
+          }
+        ]
+      }
+    },
+    "clients": {
+      "scope": "lane-A",
+      "blocked": [],
+      "other": [
+        {
+          "pid": 711682,
+          "fd": "13",
+          "driver": "xe",
+          "pci": "0000:47:00.0",
+          "client_id": "9769"
+        },
+        {
+          "pid": 711682,
+          "fd": "14",
+          "driver": "xe",
+          "pci": "0000:43:00.0",
+          "client_id": "9770"
+        },
+        {
+          "pid": 711683,
+          "fd": "13",
+          "driver": "xe",
+          "pci": "0000:47:00.0",
+          "client_id": "9771"
+        },
+        {
+          "pid": 711683,
+          "fd": "14",
+          "driver": "xe",
+          "pci": "0000:43:00.0",
+          "client_id": "9772"
+        }
+      ],
+      "inaccessible_processes": 516,
+      "hidden_clients_require_coordinator_ownership": true,
+      "device_nodes_opened": false
+    },
+    "clients_latest": {
+      "scope": "lane-A",
+      "blocked": [],
+      "other": [
+        {
+          "pid": 711682,
+          "fd": "13",
+          "driver": "xe",
+          "pci": "0000:47:00.0",
+          "client_id": "9769"
+        },
+        {
+          "pid": 711682,
+          "fd": "14",
+          "driver": "xe",
+          "pci": "0000:43:00.0",
+          "client_id": "9770"
+        },
+        {
+          "pid": 711683,
+          "fd": "13",
+          "driver": "xe",
+          "pci": "0000:47:00.0",
+          "client_id": "9771"
+        },
+        {
+          "pid": 711683,
+          "fd": "14",
+          "driver": "xe",
+          "pci": "0000:43:00.0",
+          "client_id": "9772"
+        }
+      ],
+      "inaccessible_processes": 533,
+      "hidden_clients_require_coordinator_ownership": true,
+      "device_nodes_opened": false
+    }
+  },
+  "memory_fence": {
+    "53": "offline",
+    "54": "offline",
+    "55": "offline",
+    "56": "offline",
+    "57": "online"
+  },
+  "clients": {
+    "selected": [],
+    "other": [
+      {
+        "pid": 711682,
+        "fd": "13",
+        "pci": "0000:47:00.0"
+      },
+      {
+        "pid": 711682,
+        "fd": "14",
+        "pci": "0000:43:00.0"
+      },
+      {
+        "pid": 711683,
+        "fd": "13",
+        "pci": "0000:47:00.0"
+      },
+      {
+        "pid": 711683,
+        "fd": "14",
+        "pci": "0000:43:00.0"
+      }
+    ],
+    "inaccessible_entries": 516,
+    "hidden_clients_require_coordinator_ownership": true
+  },
+  "ldd": {
+    "returncode": 0,
+    "stdout": "\tlinux-vdso.so.1 (0x0000714e2e4b8000)\n\tlibcrypto.so.3 => /usr/lib/x86_64-linux-gnu/libcrypto.so.3 (0x0000714e2de00000)\n\tlibze_loader.so.1 => /usr/lib/x86_64-linux-gnu/libze_loader.so.1 (0x0000714e2e32b000)\n\tlibstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x0000714e2da00000)\n\tlibm.so.6 => /usr/lib/x86_64-linux-gnu/libm.so.6 (0x0000714e2dd17000)\n\tlibgcc_s.so.1 => /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 (0x0000714e2dce9000)\n\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x0000714e2d600000)\n\tlibc.so.6 => /usr/lib/x86_64-linux-gnu/libc.so.6 (0x0000714e2d200000)\n\t/lib64/ld-linux-x86-64.so.2 (0x0000714e2e4ba000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x0000714e2dce4000)\n\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x0000714e2c400000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x0000714e2dcdd000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x0000714e2dcd8000)\n\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x0000714e2be00000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x0000714e2dcbc000)\n\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x0000714e2a600000)\n\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x0000714e2d507000)\n\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x0000714e2d4a4000)\n",
+    "stderr": ""
+  },
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/suite_driver.py",
+    "--window",
+    "KD",
+    "--card",
+    "0",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/evidence/card0-58f-a/KD/run",
+    "--miss-mode",
+    "zerocopy",
+    "--authorized-device-window"
+  ],
+  "pid": 712105,
+  "process_start_ticks": 12804389,
+  "anonymous_peak_bytes": 135716864,
+  "anonymous_limit_bytes": 52922679296,
+  "anonymous_stop_bytes": 52654243840,
+  "memory_last_sample": {
+    "anonymous_bytes": 131526656,
+    "root_seen": true,
+    "processes": [
+      {
+        "pid": 712105,
+        "rss_anon_bytes": 9953280
+      },
+      {
+        "pid": 712107,
+        "rss_anon_bytes": 121573376
+      }
+    ],
+    "sample_utc_ns": 1792285436910205678,
+    "host": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 117183569920,
+      "SwapTotal": 8589930496,
+      "SwapFree": 8300216320,
+      "GPUActive": 2809405440
+    },
+    "gpuactive_growth_bytes": 2793512960,
+    "pinned_expert_bytes": 48627712000,
+    "gpuactive_pinned_credit_bytes": 2793512960,
+    "gpuactive_shadow_bytes": 0,
+    "gpuactive_shadow_bound_bytes": 26409219600,
+    "host_accounted_bytes": 48759238656,
+    "host_accounted_bound_bytes": 76975134224
+  },
+  "returncode": 1,
+  "sigterm_sent": false,
+  "elapsed_seconds": 106.21004540700233,
+  "memory_samples_sha256": "6344335e04beaab9291fab9b844d19c3ccd6b548f15f2bbc0b8c84421a964617"
+}
