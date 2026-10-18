@@ -1,58 +1,54 @@
-# Packet97 CPU preparation closeout
+# Packet103 CPU preparation
 
 <!-- campaign-closeout -->
 
 ## Question and identity
 
-Can packet91's lineage select all in-flight exact levers, including their joint
-composition, without changing the iq3-p49-split32-v1 oracle or frozen sources?
-Quantized compressed Unsloth UD-IQ3_XXS; two B70s per eventual screen, rank1
-one-token draft, 24/24 target layers, full 16-bit KV, 4096 capacity. CPU only.
+Prepare record bundle 5 from committed packet97e with packet100 tile16 DOWN and
+packet101 split32 draft attention. Keep the iq3-p49-split32-v1 oracle, two-card
+rank1 draft placement, 24/24 target layers and full 16-bit KV. CPU only.
 
-## Outcome and useful mechanisms
+## Outcome
 
-The compiled binary supports 128 selections. GNU and Intel pass two fresh byte
-repeats per component. E3's grid-word prefetch composes with E1's FP32 decoded
-half cache without changing scale arithmetic or reduction order. All 256 joint
-startup/capture/allocation checks pass with actual memory admission. Full-model
-output and speed remain pending; the byte proof is factorized operator proof.
-All 128 selections are sealed. Largest and baseline CPU chain rehearsals pass;
-the baseline is restored. Packet/orchestration tests pass 305 tests plus 136
-subtests. Both temporary queue plans pass all six proposed jobs.
+Preparation is still running. Both binaries compile and all 512 factorized
+operator products pass. All 1,024 real-size rank startup/allocation checks pass,
+as do 529 synthetic submission cases. The final all-window source-bound startup
+receipt, seals and temporary queue rehearsal remain pending. No device result
+or speed improvement is claimed.
 
-## Corrections and uncertainty
+## What worked
 
-The recurrence fixture names its rec-parallel control `production`; the first
-CPU driver invocation used the selection name and refused. The corrected driver
-maps that fixture argument explicitly, then completes both compiler repeats.
-The real startup paths verify separate packed target/expanded draft heads.
+The runtime selects every registered dimension in one binary per compiler.
+Tile16 preserves the 360-byte DOWN row extent. Actual initialization/capture
+checks cover new down dispatch, draft attention and all other choices together.
+KD projects only unused target choices while preserving selected draft kernels.
+Immutable parent metadata is copied locally. The submission fix and placement
+and new-dimension disclosure are present before sealing.
 
-CPU fixture restoration initially asked for the entire future chain reserve.
-It now admits only the known CPU fixture writes; runtime launch/storage gates
-are unchanged. Root space presently fails the full-chain reserve by about 3.06 GB,
-so future readiness must remain false until actual storage admission passes.
-No unrelated evidence was removed to make that check green.
-The final source snapshot rejects packet91's A screen as unfinished/failed and
-leaves the other five sources pending. No invalid evidence is treated as a loss
-or silently closed. Initial broad pytest failures exposed four stale inherited
-expectations; those were updated for the new dimensions and placement disclosure
-before the final passing suite and seals.
+## What failed or remains uncertain
 
-## Retained evidence
+The inherited K2 regression retained over 1 GB of temporary copies across 512
+cases. It now removes each case after checking it. The first startup pass’s 357
+successful compositions are retained as diagnostic history; a full repeat binds
+the corrected sources. Draft split32 matches its own fixed reference; it is not
+a claim of parity with the old draft reduction. Full target-model equality,
+acceptance, repeats and speed remain device gates. A conservative disk refusal
+was recorded and must pass before launch.
 
-- [New build and inherited object identities](build-device-receipt.json).
-- [All operator bytes and complete selection products](evidence/cpu-byte-identity.json).
-- [All 256 full-size startup/admission checks](evidence/full-shape.json).
-- [Final verification and exact current storage shortfall](evidence/final-verification.json).
-- [Selected-consumer/submission regression tests](evidence/python-selected.log).
-- [Orchestration tests](../../ops/packet97-orchestration/python-tests.log).
-- [Submission tool](packet56_submission.py), including frozen admission bytes
-  and placement-aware packed-head disclosure before sealing.
+## Evidence and patches
 
-## Revisit conditions
+- [Build](build-device-receipt.json), [operator bytes](evidence/cpu-byte-identity.json)
+  and [arena admission](evidence/full-shape.json).
+- [Submission replay](evidence/submission-tests.log) and
+  [bounded dispatch regression](evidence/bounded-dispatch-test.log).
+- [Packet103 work note](../../../../notes/2026-10-18-own-runtime-packet103.md).
+- [Orchestration](../../ops/packet103-orchestration/README.md).
+- [Original-copy identities and historical archives](copy-lineage.json).
 
-Source screens must resolve through their own compare logic in either direction.
-Then measure the confirmed composition between fresh controls on both lanes.
-Require 13/13 exact output, unchanged acceptance, and a win over both controls.
-Only a qualifying composition and passing storage check may reach a fresh chain.
-A result does not authorize source/tool edits inside that chain's sealed lineage.
+## When to revisit
+
+Before device launch, require current source qualification, no later lane-A
+veto, matching composite brackets, unchanged oracle output/acceptance, current
+storage admission and a fresh chain folder. Any covered startup source change
+requires the full source-bound CPU gate again. Do not edit sealed consumers
+after a chain; create a new descendant with its own gates instead.

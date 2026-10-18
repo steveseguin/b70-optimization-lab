@@ -49,5 +49,5 @@ All 512 compositions receive the exhaustive CPU gate. With disk tight, only
 the control, candidate, leave-one-out, largest-allocation and all-dimensions view manifests are
 materialized by ops/packet103-orchestration/prepare_views.py. The unchanged
 seal_view API can materialize any other qualified view without recompiling.
-Running prepare_packet.py directly materializes all512 and is unnecessary
+Running prepare_packet.py directly materializes all 512 and is unnecessary
 for the proposed campaign.

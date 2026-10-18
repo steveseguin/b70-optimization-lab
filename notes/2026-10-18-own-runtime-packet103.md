@@ -70,19 +70,26 @@ the fresh-folder path regenerates the composition queue seal before sealing
 the chain, and producer/verifier both use the packet103 entry tag. A temporary
 end-to-end verifier regression brings the policy suite to 31 passing checks.
 To retain disk room for a chain, prepare_views seals only the control, candidate,
-leave-one-out, largest-allocation and all-dimensions views. All512 supported
+leave-one-out, largest-allocation and all-dimensions views. All 512 supported
 compositions still have the exhaustive byte/arena/startup gate; any additional
 view can be sealed later without compilation.
 
 Scratch correction before sealing: the inherited K2 postprocessing regression
-kept two approximately1.4 MB summaries for every selection. Its 512-case run
-would exceed the300 MB build limit. The new test deletes each case only after
-its checks; the complete512-selection regression passes in34.62 s. The first
+kept two approximately 1.4 MB summaries for every selection. Its 512-case run
+would exceed the 300 MB build limit. The new test deletes each case only after
+its checks; the complete 512-selection regression passes in 34.62 s. The first
 startup pass had357 successful compositions, including the full requested
 candidate. Its exact log is retained; only the owned CPU process was
 interrupted. The entire source-bound startup gate is repeated with the corrected
 test bytes before any view is sealed. This is not a GPU fault or a model run.
 
-A conservative storage check was23 MB short of its registered reserve at
+A conservative storage check was 23 MB short of its registered reserve at
 06:15 UTC. That guard is unchanged and will be rechecked at handoff. The new
 prepare_cpu.py records every final CPU command, log hash and refusal.
+
+Dependency review keeps the three actually imported shared submission-policy
+modules hash-bound at their executed source paths; only parent metadata and
+nonexecuted historical source snapshots move into local immutable inputs. The
+wrapper and policy hashes verify. Inherited closeouts are retained byte-for-byte
+in lineage-inputs with hashes in copy-lineage.json; the packet103 closeout now
+describes this preparation instead of repeating the parent’s old outcome.

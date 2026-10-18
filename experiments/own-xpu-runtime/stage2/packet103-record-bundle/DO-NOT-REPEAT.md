@@ -13,4 +13,4 @@
 - Every chain attempt uses a fresh folder; no automatic retry or device launch.
 
 - K2 postprocessing tests must remove each synthetic run after its assertions;
-  retaining both 1.4 MB summary copies for all512 choices breaks the build cap.
+  retaining both 1.4 MB summary copies for all 512 choices breaks the build cap.
