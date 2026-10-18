@@ -6,9 +6,10 @@ Control: hc-wide, wide64, ordered, rec-parallel, production route/norm/dense,
 draft HC, batch rollback, rank1 draft, 24/24, full BF16 KV. Arithmetic remains
 `iq3-p49-split32-v1`. No frozen packet, screen or live queue is edited.
 
-E3 `exp-grid-prefetch` issues next-block IQ2 dependent table reads before
-consuming current tiles. Each logical chain has only current/next raw 64-bit
-grid words. The original step/chain/j FP32 product/add order, adjacent tree,
+E3 `exp-grid-prefetch` issues next-tile IQ2 dependent table reads before
+consuming current tiles. The final implementation carries only current/next
+raw eight-magnitude grid words (two uint32 components each), at most two words
+total, hence never more than two per logical chain. The original step/chain/j FP32 product/add order, adjacent tree,
 BF16 boundaries, route validation and status/error behavior stay unchanged.
 IQ4 down is unchanged. This is not packet65 raw code lookahead, packet73 raw
 span residency or packet81 packed activation loads. A linked offline census
@@ -38,3 +39,10 @@ The same exact winner must beat both controls on confirmation. Shared pinned
 v4 supplies its 64-token incident oracle followed by twelve cold requests.
 All jobs retain 90-second gaps and zero retries; CPU success is neither device
 correctness nor a speed verdict. No automatic promotion or chain runs.
+
+Implementation refinement before sealing: all-next and per-chain next-block
+banks spilled 15,488 and 1,152 bytes. The bounded two-word next-tile form keeps
+step/chain/j order. Its first scalar-metadata version had an early wait; the
+final version reuses production wide metadata and keeps next-table reads
+outstanding during current arithmetic. These are compiler-gate refinements,
+not choices based on packet86 results. [Linked review](LINKED-CODE.md).

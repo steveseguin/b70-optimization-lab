@@ -1,5 +1,5 @@
 """Offline compiler report for the checked production and candidate TU."""
-import gzip,json,os,re,resource,subprocess
+import gzip,json,os,re,resource,subprocess,shutil
 from pathlib import Path
 from compile_turn import turn
 from build_engine import limits
@@ -12,6 +12,9 @@ def main():
  limits();import sys
  tu='offline';out=B/('offline-'+tu);out.mkdir(exist_ok=True)
  evidence=P/'evidence'/('registers-'+tu);evidence.mkdir(parents=True,exist_ok=True)
+ # This packet's previously archived offline dumps must not enter a new census.
+ for old in (out/'igc',out/'aot'):
+  if old.exists():shutil.rmtree(old)
  compiler=Path('/opt/intel/oneapi/compiler/2026.0/bin/icpx');translator=compiler.parent/'compiler/llvm-spirv'
  source=B/(tu+'.cpp');source.write_bytes((P/(tu+'.cpp')).read_bytes())
  parent=B/'checked'/P.relative_to(ROOT)
@@ -34,10 +37,10 @@ def main():
   grf=re.search(r'numGRF=(\d+)',data)
   instructions=re.search(r'//.instCount (\d+)',data)
   kernels.append(dict(name=name,configured_grf=int(grf[1]) if grf else None,spill_metadata=[l for l in data.splitlines()[:50] if l.startswith('//.spill')],scratch_messages=[l for l in data.splitlines() if any(x in l.lower() for x in ('scratch','spill to','fill from')) and not l.lstrip().startswith('//')],static_instructions=int(instructions[1]) if instructions else None,static_load_lines=[l.strip() for l in data.splitlines() if 'load.' in l and not l.lstrip().startswith('//')],assembly=str(artifact.relative_to(ROOT)),sha256=sha(artifact)))
- assert len(kernels)==2,kernels
+ assert len(kernels)==2,[(r['name'],r['configured_grf']) for r in kernels]
  for r in kernels:
-  assert not r['scratch_messages'],r
-  assert all(re.search(r'[: ]0$',x.strip()) for x in r['spill_metadata']),r
+  assert not r['scratch_messages'],(r['name'],r['spill_metadata'],len(r['scratch_messages']))
+  assert all(re.search(r'[: ]0$',x.strip()) for x in r['spill_metadata']),(r['name'],r['spill_metadata'])
  dependencies_extra={str((P/'inspect_registers.py').relative_to(ROOT)):sha(P/'inspect_registers.py'),str((P/'offline.cpp').relative_to(ROOT)):sha(P/'offline.cpp')}
 
  import shlex

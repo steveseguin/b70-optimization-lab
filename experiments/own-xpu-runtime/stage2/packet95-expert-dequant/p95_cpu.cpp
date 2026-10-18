@@ -118,10 +118,10 @@ void exhaustive(Recorder& rec){
   p90::expert_repack(256,src.data(),dst.data());p49bgemv::repack_row(Type::IQ2_S,256,src.data(),old.data());
   float d=iq3::half(uint16_t(h)),cached=iq3::bits_float(p49bgemv::load32(dst.data()+l.halves));
   require(std::bit_cast<uint32_t>(d)==std::bit_cast<uint32_t>(cached),"cached half bits");
-  for(unsigned nibble=0;nibble<16;++nibble){p65::RawTile t;t.a=0xa5ff;t.high=3;t.scale=nibble; t.half=h;float a[8],b[8];p65::decode_tile<Type::IQ2_S>(t,0,a);p90exp::decode_tile<Type::IQ2_S>(t,0,b,cached);require(std::memcmp(a,b,sizeof(a))==0,"all half/nibble decode bits");uint64_t grid=uint64_t(p42expert::iq2_words[2046])|(uint64_t(p42expert::iq2_words[2047])<<32);float c[8];p95exp::decode_grid(t,0,grid,c);require(std::memcmp(a,c,sizeof(a))==0,"E3 all half/nibble decode bits");}
+  for(unsigned nibble=0;nibble<16;++nibble){p65::RawTile t;t.a=0xa5ff;t.high=3;t.scale=nibble; t.half=h;float a[8],b[8];p65::decode_tile<Type::IQ2_S>(t,0,a);p90exp::decode_tile<Type::IQ2_S>(t,0,b,cached);require(std::memcmp(a,b,sizeof(a))==0,"all half/nibble decode bits");p95exp::GridWord grid{p42expert::iq2_words[2046],p42expert::iq2_words[2047]};float c[8];p95exp::decode_grid(t,0,grid,c);require(std::memcmp(a,c,sizeof(a))==0,"E3 all half/nibble decode bits");}
   const auto* a=reinterpret_cast<const uint8_t*>(&d);const auto* b=reinterpret_cast<const uint8_t*>(&cached);rec.compare({a,a+4},{b,b+4},"half decode");++finite;
  }
- for(unsigned index=0;index<1024;++index)for(unsigned signs=0;signs<256;++signs){p65::RawTile t;t.a=(index&255)|(signs<<8);t.high=index>>8;t.scale=0x5a;t.half=0xbc00;float a[8],b[8];uint64_t grid=uint64_t(p42expert::iq2_words[2*index])|(uint64_t(p42expert::iq2_words[2*index+1])<<32);p65::decode_tile<Type::IQ2_S>(t,0,a);p95exp::decode_grid(t,0,grid,b);require(std::memcmp(a,b,sizeof(a))==0,"E3 all grid/sign bits");}
+ for(unsigned index=0;index<1024;++index)for(unsigned signs=0;signs<256;++signs){p65::RawTile t;t.a=(index&255)|(signs<<8);t.high=index>>8;t.scale=0x5a;t.half=0xbc00;float a[8],b[8];p95exp::GridWord grid{p42expert::iq2_words[2*index],p42expert::iq2_words[2*index+1]};p65::decode_tile<Type::IQ2_S>(t,0,a);p95exp::decode_grid(t,0,grid,b);require(std::memcmp(a,b,sizeof(a))==0,"E3 all grid/sign bits");}
  require(finite==63488&&rejected==2048,"all half patterns covered");++rec.count;
  // HC production raw Q8 loader -> expanded scales -> exact FP32 cache.
  // Every signed code, eight zero/subnormal/normal/extreme signed half scales.

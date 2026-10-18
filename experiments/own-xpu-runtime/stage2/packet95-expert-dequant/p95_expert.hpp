@@ -1,24 +1,28 @@
 #pragma once
-// E3: next-block IQ2 table words, not raw-code lookahead or activation packing.
+// E3: next-tile IQ2 table words, not raw-code lookahead or activation packing.
 #include "p65_expert.hpp"
 namespace p95exp {
 using iq3::Type;
 // One 64-bit table word contains all eight magnitudes. No FP32 decoded bank.
-template<unsigned K>inline uint64_t grid_word(const uint8_t*w,unsigned k){
+struct GridWord {uint32_t a=0,b=0;};
+inline GridWord lookup(unsigned code,unsigned high,unsigned q){
+ unsigned index=(code&255)|(((high>>(2*(q%4)))&3)<<8);
+ return {p42expert::iq2_words[2*index],p42expert::iq2_words[2*index+1]};
+}
+template<unsigned K>inline GridWord grid_word(const uint8_t*w,unsigned k){
  constexpr auto l=p49bgemv::layout(Type::IQ2_S,K);
  unsigned block=k/256,q=(k%256)/8;
  unsigned code=p49bgemv::load16(w+block*64+q*2);
  unsigned high=w[l.high+block*8+q/4];
- unsigned index=(code&255)|(((high>>(2*(q%4)))&3)<<8);
- return uint64_t(p42expert::iq2_words[2*index])|(uint64_t(p42expert::iq2_words[2*index+1])<<32);
+ return lookup(code,high,q);
 }
-inline void decode_grid(const p65::RawTile&t,unsigned k,uint64_t grid,float(&v)[8]){
+inline void decode_grid(const p65::RawTile&t,unsigned k,GridWord grid,float(&v)[8]){
  float d=iq3::half(t.half);
  unsigned i=k%256,signs=t.a>>8;
  float scale=(d*(0.5f+float((t.scale>>(4*((i/16)%2)))&15)))*0.25f;
  bool exceptional=(std::bit_cast<uint32_t>(d)&0x7fffffff)>=0x7f800000||(std::bit_cast<uint32_t>(scale)&0x7fffffff)>0x7f800000;
  #pragma unroll
- for(unsigned j=0;j<8;++j){unsigned magnitude=(grid>>(8*j))&255;
+ for(unsigned j=0;j<8;++j){unsigned magnitude=((j<4?grid.a:grid.b)>>(8*(j%4)))&255;
   if(exceptional)v[j]=(scale*float(magnitude))*float((signs>>j)&1?-1:1);
   else {int signed_magnitude=(signs>>j)&1?-int(magnitude):int(magnitude);v[j]=scale*float(signed_magnitude);}
  }
@@ -26,16 +30,8 @@ inline void decode_grid(const p65::RawTile&t,unsigned k,uint64_t grid,float(&v)[
 template<unsigned K,unsigned V>inline std::array<float,V> grid_chains(const uint8_t*w,const uint16_t*x,unsigned physical){
  static_assert(V==8&&K==2560);
  constexpr auto l=p49bgemv::layout(Type::IQ2_S,K);std::array<float,V> sums{};
- uint64_t current[V];
- #pragma unroll
- for(unsigned chain=0;chain<V;++chain)current[chain]=grid_word<K>(w,8*(physical*V+chain));
+ GridWord current=grid_word<K>(w,8*physical*V);
  for(unsigned step=0;step<K/256;++step){
-  uint64_t next[V]{};
-  // Issue dependent next-table reads before consuming any current tile.
-  if(step+1<K/256){
-   #pragma unroll
-   for(unsigned chain=0;chain<V;++chain)next[chain]=grid_word<K>(w,(step+1)*256+8*(physical*V+chain));
-  }
   unsigned first=step*256+8*physical*V;
   uint32_t codes[4];
 #if defined(__SYCL_DEVICE_ONLY__)
@@ -45,11 +41,19 @@ template<unsigned K,unsigned V>inline std::array<float,V> grid_chains(const uint
 #else
   for(unsigned i=0;i<4;++i)codes[i]=p49bgemv::load32(w+step*64+physical*16+4*i);
 #endif
+  uint16_t high=p49bgemv::load16(w+l.high+step*8+physical*2);
   uint16_t scales=p49bgemv::load16(w+l.scales+step*8+physical*2);
   uint16_t half=p49bgemv::load16(w+l.halves+2*step);
   #pragma unroll
   for(unsigned chain=0;chain<V;++chain){unsigned k=first+chain*8;p65::RawTile t;t.a=(codes[chain/2]>>(16*(chain%2)))&65535;t.scale=(scales>>(8*(chain/4)))&255;t.half=half;
-   float values[8];decode_grid(t,k,current[chain],values);
+   // Prefetch the next logical-chain tile in unchanged step/chain order.
+   // At most two raw grid words total, hence at most two for any chain.
+   GridWord next;
+   if(chain+1<V){
+    unsigned nc=chain+1,code=(codes[nc/2]>>(16*(nc%2)))&65535;
+    next=lookup(code,(high>>(8*(nc/4)))&255,((k+8)%256)/8);
+   }else if(step+1<K/256)next=grid_word<K>(w,(step+1)*256+8*physical*V);
+   float values[8];decode_grid(t,k,current,values);
 #if defined(__SYCL_DEVICE_ONLY__)
    sycl::vec<uint16_t,8> inputs;inputs.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(x+k));
 #endif
@@ -62,7 +66,7 @@ template<unsigned K,unsigned V>inline std::array<float,V> grid_chains(const uint
 #endif
     float product=values[j]*iq3::bits_float(uint32_t(bits)<<16);sums[chain]=sums[chain]+product;
    }
-   current[chain]=next[chain];
+   current=next;
   }
  }
  return sums;

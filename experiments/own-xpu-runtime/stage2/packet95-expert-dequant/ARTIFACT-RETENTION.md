@@ -10,7 +10,8 @@ All commands run at nice19, cores8–15,24–31, `python3 -B`, stdin `/dev/null`
 execution, service, sudo, settings change or foreign cleanup is part of rebuild.
 
 Sequence: `e2_memory.py`, `cpu_gate.py`, `build_engine.py`, `full_shape.py`,
-`memory_plans.py`, `inspect_registers.py`, `python_gate.py`, `seal.py`,
+`memory_plans.py`, `cleanup_fixture.py`, `inspect_registers.py`,
+`inspect_schedule.py`, `python_gate.py`, `seal.py`,
 `propose_jobs.py`, `final_check.py`, `queue_plan.py`. Run compiles serially; the
 helper waits for existing compilers and whole-host lane holds. Do not recreate
 or overwrite an existing seal/build receipt: use retained immutable artifacts
@@ -24,3 +25,11 @@ Raw CPU comparison bytes and linked assembly are retained compressed, with
 hashes. Fixture payload scratch is deleted after its evidence is retained;
 source mirrors and generated full-size fixture sources stay because seals bind
 them. No existing packet's evidence or scratch is deleted.
+
+Large tracked artifact review: `rope.bf16` is a 4,194,304-byte fixed BF16 rotary
+constant table copied byte-for-byte from packet90. Native startup and the
+arithmetic identity need its exact bytes; it is not a generated compiler cache
+or model-weight payload. Restore it from packet90's `rope.bf16` and verify the
+SHA-256 in `parent-source-manifest.json`, or restore this packet's committed
+copy. Duplication is retained to keep the frozen source packet self-contained;
+no existing artifact was removed or consolidated.

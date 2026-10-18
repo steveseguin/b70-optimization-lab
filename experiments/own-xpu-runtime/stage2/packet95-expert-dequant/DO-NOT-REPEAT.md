@@ -12,3 +12,12 @@
 No FP32 accumulator reassociation, FMA, prompt cache, compressed KV, changed
 quantization or approximate scale. Gate/up metadata is independent. IQ4 down
 stays production. A no-fit design gets no runnable placeholder job.
+
+| E3 implementation refinement | Outcome | Revisit condition |
+| --- | --- | --- |
+| All-next raw grid bank | 15,488-byte linked spills; retained in `evidence/rejected-e3-all-next/` | New liveness mechanism, not more banks |
+| Per-chain next-block current bank | 1,152-byte linked spills; retained in `evidence/rejected-e3-next-block/` | Smaller live state |
+| Two words with scalar metadata | Exact, zero spills, but 69 static loads and an early destination wait; superseded | Distinct advantage over wide metadata |
+| Final two-word wide-metadata pipeline | Exact on CPU, zero spills; actual next-table scheduling confirmed; device result pending | Coordinator screen decides |
+
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md).

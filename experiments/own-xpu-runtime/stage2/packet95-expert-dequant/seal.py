@@ -15,7 +15,8 @@ def main():
  build=json.loads((P/'build-device-receipt.json').read_text());fixture=json.loads((P/'evidence/cpu-byte-identity.json').read_text());shape=json.loads((P/'evidence/full-shape.json').read_text());py=json.loads((P/'evidence/python-tests.json').read_text())
  admission=json.loads((P/'evidence/full-shape-admission.json').read_text())
  offline=json.loads((P/'register-report-offline.json').read_text());e2=json.loads((P/'evidence/e2-memory.json').read_text())
- for row in (build,fixture,shape,py,admission,offline,e2):
+ schedule=json.loads((P/'evidence/linked-schedule.json').read_text())
+ for row in (build,fixture,shape,py,admission,offline,e2,schedule):
   require(row['passed'] and not row['device_executed'],'CPU gate failed');verify_map(ROOT,row['sources'])
  verify_map(P,build['artifacts']);verify_map(ROOT,json.loads((P/'parent-source-manifest.json').read_text()))
  pin=json.loads((P/'shared-wrapper-pin.json').read_text());verify_map(ROOT,pin['sources'])
@@ -24,10 +25,24 @@ def main():
  require(all(r['passed'] and r['selection_key_consumers_verified'] and 0<r['postload_device_bytes']<=30*1024**3 for r in shape['runs']),'full shape result')
  require(len(shape['negative_allocations'])==8,'all startup negatives required')
  require(len(admission['runs'])==4,'all memory admissions required')
+ retained={}
+ for run in shape['runs']:
+  for key in ('census','native_plan'):
+   path=ROOT/run[key];require(sha(path)==run[key+'_sha256'],'startup archive changed')
+   retained[run[key]]=sha(path)
+ for row in offline['kernels']:
+  path=ROOT/row['assembly'];require(sha(path)==row['sha256'],'linked assembly changed')
+  retained[row['assembly']]=sha(path)
+ cleanup=json.loads((P/'evidence/fixture-cleanup.json').read_text());require(cleanup['passed'],'fixture cleanup proof')
+ for row in cleanup['retained']:
+  path=ROOT/row['path'];require(sha(path)==row['sha256'],'startup output archive changed')
+  retained[row['path']]=sha(path)
+ retained[str((P/'evidence/fixture-cleanup.json').relative_to(ROOT))]=sha(P/'evidence/fixture-cleanup.json')
+
  require(set(fixture['views'])==set(views()),'all CPU views required')
  spec=importlib.util.spec_from_file_location('p81_generic_seal',P.parent/'screen/seal.py');generic=importlib.util.module_from_spec(spec);spec.loader.exec_module(generic)
- extras=list(P.glob('*.py'))+[P/'register-report-offline.json',P/'evidence/e2-memory.json']+[P/'shared-wrapper-pin.json',P/'build-device-receipt.json',P/'evidence/cpu-byte-identity.json',P/'evidence/full-shape.json',P/'evidence/python-tests.json',P/'evidence/full-shape-admission.json',*[P/'evidence'/('memory-plan-'+n+'.json') for n in views()],WRAPPER/'wrapper-seal.json',WRAPPER/'placement-validation/wrapper-seal.json']
- sources={**offline['sources'],**e2['sources'],**build['sources'],**fixture['sources'],**shape['sources'],**py['sources'],**wrapper['sources'],**pin['sources'],**{str(f.relative_to(ROOT)):sha(f) for f in extras}}
+ extras=list(P.glob('*.py'))+[P/'register-report-offline.json',P/'evidence/e2-memory.json',P/'evidence/linked-schedule.json']+[P/'shared-wrapper-pin.json',P/'build-device-receipt.json',P/'evidence/cpu-byte-identity.json',P/'evidence/full-shape.json',P/'evidence/python-tests.json',P/'evidence/full-shape-admission.json',*[P/'evidence'/('memory-plan-'+n+'.json') for n in views()],WRAPPER/'wrapper-seal.json',WRAPPER/'placement-validation/wrapper-seal.json']
+ sources={**schedule['sources'],**retained,**offline['sources'],**e2['sources'],**build['sources'],**fixture['sources'],**shape['sources'],**py['sources'],**wrapper['sources'],**pin['sources'],**{str(f.relative_to(ROOT)):sha(f) for f in extras}}
  sources.update({str(f.relative_to(ROOT)):sha(f) for f in (P/'evidence/cpu-bytes').iterdir() if f.is_file()})
  job_sources={str(f.relative_to(ROOT)):sha(f) for f in extras}
  for name in views():
