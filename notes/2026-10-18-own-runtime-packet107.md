@@ -40,3 +40,23 @@ Synthetic weights/state are diagnostic, never a model speed result.
 
 Implementation and verification are in progress. Subsequent milestones append
 exact commands, code-derived traffic counts, evidence and limitations here.
+
+## Implementation milestone
+
+The first GNU complete-layer run passed GDN's four consecutive tokens, then
+refused the QSA binding contract: the planner appends active/error to its five
+inputs. Correcting that binding map passed **1,216 complete-layer byte checks**,
+with four different expert sets in each layer. The initial refusal is retained
+under `evidence/cpu-gnu-initial`; it did not touch a device.
+
+The stronger leaf gate passed both GNU arms. Intel exposed a GDN NaN payload
+change (`0x7fc1` to `0x7fc0`) after all finite cases passed. Keeping the original
+four-row loop and strict exception handling did not fix it. GDN is closed;
+its failed code and exact byte offsets are retained. The device entry refuses
+it, rather than hiding the difference behind the finite full-layer pass.
+QSA passes GNU and Intel leaf checks twice, including cross-compiler hashes.
+
+The proposal is narrowed to **QSA only**, two fresh lane-B processes. Both
+128-token and 4096-token cases use matching production/candidate launch extents.
+This is a deliberate quality-gate outcome, not completion of a lossless GDN
+implementation. The full per-layer specialisation objective remains open.
