@@ -1,7 +1,9 @@
 """Extend the v5 gate with all eleven frozen packet124c window constructors.
 
 Real parent window parser, Transport argv and KD reference projection execute.
-The four unchanged CPU fixture paths execute from their frozen parent binaries.
+K0/K1a/K1b retain this packet's completed CPU fixture receipts. K2's old
+numerical fixture exceeds the 4 GiB cap; its real argv and retained measurement
+validator are exercised by all_window_gate, not claimed as a new execution.
 Every model argv runs on the new production-shape payload/backend mock.
 No legacy chain is registered for device launch by this packet.
 """
@@ -23,18 +25,27 @@ def main():
    if (args[2] or 0)&(os.O_WRONLY|os.O_RDWR|os.O_CREAT|os.O_TRUNC|os.O_APPEND):
     assert path==Path('/dev/null') or path.resolve().is_relative_to(P) or path.resolve().is_relative_to(Path('/tmp')),path
  sys.addaudithook(audit)
- shared=legacy.shared_fixtures();runs=[]
+ shared={}
+ for name in ('K0','K1a','K1b'):
+  path=legacy.S/(name+'-startup.json');row=json.loads(path.read_text())
+  kept=P/'evidence'/('legacy-'+name+'.json');save(kept,row)
+  shared[name]=dict(executed=True,receipt=str(kept.relative_to(ROOT)),sha256=sha(kept))
+ failure=legacy.S/'shared-K2/run0/gemv-failure.json'
+ kept=P/'evidence/legacy-K2-cap-failure.json';save(kept,json.loads(failure.read_text()))
+ shared['K2']=dict(executed=False,numerical_rerun_passed=False,reason='unchanged fixture exceeds CPU-only 4 GiB address-space cap',failure=str(kept.relative_to(ROOT)),failure_sha256=sha(kept),replacement='all_window_gate: real K2 argv plus retained measurement validator replay')
+ runs=[]
  from kd_reference import prepare,command
  import window as w
- for choice in ('selection','candidate'):
+ for choice in ('selection','draft_table','target_buffers','candidate'):
   target=P/'lineage'/(choice+'.json')
   # The frozen strict projection accepts exactly its eleven-key bundle7.
   stripped=json.loads(target.read_text());schedule=stripped['choices'].pop('token_input')
-  assert schedule in ('production','both') and stripped==json.loads((BASE/'selection.json').read_text())
+  stripped['choices'].pop('token_table_path');stripped['choices'].pop('token_table_sha256')
+  assert schedule in ('original','draft_table','target_buffers','both') and stripped==json.loads((BASE/'selection.json').read_text())
   target124=legacy.S/'kd-target124.json';save(target124,stripped)
   ref,binding=prepare(target124,sha(target124),legacy.S)
   # KD deliberately has no target head; the schedule is inert there.
-  row=json.loads(ref.read_text());row['choices']['token_input']='production';save(ref,row)
+  row=json.loads(ref.read_text());row['choices'].update({k:json.loads(target.read_text())['choices'][k] for k in ('token_input','token_table_path','token_table_sha256')});save(ref,row)
   binding.update(reference_selection_sha256=sha(ref),target_selection_sha256=sha(target),selection_sha256=sha(target),token_input_projected='production');save(legacy.S/'draft-reference-binding.json',binding)
   inp=json.loads((BASE/'build/input/input.json').read_text())
   a=SimpleNamespace(card=0,draft_rank=1,context=4096,input=BASE/'build/input',dispatch=BASE/'dispatch-speed6.json')
@@ -47,7 +58,7 @@ def main():
     entry['startup']=[startup(cmd) for cmd in cmds]
    else:entry['startup']=[startup(cmd) for cmd in legacy.rank_commands(name,target)]
    runs.append(entry)
-  print(choice,'all eleven window constructors and CPU starts PASS',flush=True)
+  print(choice,'all eleven constructors PASS; unchanged K2 numeric rerun remains excluded',flush=True)
  save(P/'evidence/legacy-windows.json',dict(passed=True,device_executed=False,model_payload_read=False,runs=runs,total_windows=len(runs),registered_device_chain=False,sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'legacy_window_gate.py',BASE/'startup103.py',BASE/'window.py',BASE/'kd_reference.py',BASE/'chain_pipeline.py',BASE/'queue_runner.py',P/'lineage/selection.json',P/'lineage/candidate.json']}))
 
 def startup(cmd):

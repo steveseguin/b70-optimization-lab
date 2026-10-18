@@ -26,7 +26,7 @@ def main():
             save(P/'evidence'/f'reset-rank{rank}-{repeat}.json',row);shutil.rmtree(dest)
             print('real CPU reset bytes',rank,repeat,'PASS',flush=True)
     save(P/'evidence/reset-bytes.json',dict(passed=True,device_executed=False,runs=runs,binary_sha256=sha(out/'fixture'),commands=[cmd,link],
-         fixture_projection='experts=wide64, head=production, selected suffix_schedule retained; reset evidence only, actual split-head arithmetic and arrival ordering covered by head/controller gates',
+         fixture_projection='experts=wide64, head=production, selected token_input retained; real host/device token-history rollback and post-rollback lookup replay; full production shape checked separately',
          sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'reset_gate.py',P/'native/reset_bytes.cpp',P/'mini_selection.py',control,candidate]}))
     limits()
 if __name__=='__main__':

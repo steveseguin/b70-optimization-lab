@@ -27,7 +27,7 @@ class Packet124Tests(unittest.TestCase):
    s.validate_bundle(row,b.selection(v));note=s.submission_notes(row)
    self.assertIn('other_fusion='+row['other_fusion'],note);self.assertIn('target_head='+row['target_head'],note);self.assertLessEqual(len(note),2000)
  def test_exec_rejects_inherited_cap(self):
-  code="import resource;resource.setrlimit(resource.RLIMIT_AS,(8*1024**3,8*1024**3));import exec_limits;exec_limits.check(exec_limits.snapshot())"
+  code="import resource;resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));import exec_limits;exec_limits.check(exec_limits.snapshot())"
   p=subprocess.run([sys.executable,'-B','-c',code],cwd=P,stdin=subprocess.DEVNULL,capture_output=True,text=True)
   self.assertNotEqual(p.returncode,0);self.assertIn('refuses finite RLIMIT_AS',p.stderr)
  def test_exec_observes_actual_popen_boundary(self):

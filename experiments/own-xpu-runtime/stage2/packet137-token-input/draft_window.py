@@ -137,7 +137,7 @@ def _run(a,out,env,watch,build,*,cpu_rehearsal=False,host_lifecycle):
      try:
       from p56_head_support import process_tree_anon
       anon=process_tree_anon(child.pid)['anonymous_bytes']
-      require(anon<8*1024**3,'KD host anonymous memory exceeded8GiB')
+      require(anon<4*1024**3,'KD host anonymous memory exceeded8GiB')
      except FileNotFoundError:pass
      time.sleep(.1)
     require(child.returncode==0,'KD host reference failed')
@@ -179,7 +179,7 @@ def _run(a,out,env,watch,build,*,cpu_rehearsal=False,host_lifecycle):
       try:
        from p56_head_support import process_tree_anon
        anon=process_tree_anon(child.pid)['anonymous_bytes']
-       require(anon<8*1024**3,'KD anonymous memory exceeded8GiB')
+       require(anon<4*1024**3,'KD anonymous memory exceeded8GiB')
       except FileNotFoundError:pass
       time.sleep(.1)
      if child.returncode != 0:raise DeviceOwnerFailure('KD owner failed with exit '+str(child.returncode), dest)

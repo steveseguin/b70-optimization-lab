@@ -59,10 +59,10 @@ static void require(bool b, const std::string &s) {
   if (!b)
     throw std::runtime_error(s);
 }
-static std::string hash(const std::vector<uint8_t> &b) {
+static std::string hash_data(const void* data,size_t size) {
   unsigned char digest[32];
   unsigned n;
-  EVP_Digest(b.data(), b.size(), digest, &n, EVP_sha256(), nullptr);
+  require(EVP_Digest(data, size, digest, &n, EVP_sha256(), nullptr)==1,"SHA256 failed");
   std::string s;
   for (auto v : digest) {
     s += "0123456789abcdef"[v >> 4];
@@ -70,6 +70,7 @@ static std::string hash(const std::vector<uint8_t> &b) {
   }
   return s;
 }
+static std::string hash(const std::vector<uint8_t>& b){return hash_data(b.data(),b.size());}
 static void save(const fs::path &p, const std::string &s) {
   std::ofstream f(p);
   f << s;
@@ -274,7 +275,7 @@ struct Weights {
   std::map<std::string,std::unique_ptr<iq3::Slice>> lookup_mappings;
   std::string residency="{\"enabled\":false,\"reason\":\"one-card streaming or mini\"}";
   void warm_lookups() {
-    if(mini)return;
+    if(mini||!lookup_mappings.empty())return;
     auto start=std::chrono::steady_clock::now();struct rusage before{},after{};getrusage(RUSAGE_SELF,&before);
     uint64_t bytes=0,pages=0;unsigned checksum=0;size_t page=size_t(sysconf(_SC_PAGESIZE));
     for(const auto& [name,t]:directory)if(t.component=="embedding"||t.component=="ple_lookup") {
@@ -1124,7 +1125,7 @@ public:
       require(input.n<=16&&t.shape.back()<=2560,"bounded token preparation shape");
       const uint8_t* data=nullptr;
       if(w.mini)data=w.synthetic.at(t.name).data();
-      else {auto it=w.lookup_mappings.find(t.name);require(it!=w.lookup_mappings.end(),"p137 requires warm_lookups");data=it->second->data();}
+      else {w.warm_lookups();auto it=w.lookup_mappings.find(t.name);require(it!=w.lookup_mappings.end(),"p137 requires warm_lookups");data=it->second->data();}
       token_lookups.push_back({l.card,input.type==Scalar::i64,input.n,size_t(t.shape.back()),size_t(t.shape[0]),size_t(t.shape.back())/fmt.elements*fmt.bytes,type,data,buffers[l.card].at(l.outputs[0]).id,std::vector<uint16_t>(input.n*t.shape.back())});
     }
   }

@@ -70,7 +70,7 @@ def native(cmd, *, old=False):
     if (dest/'census.json').exists():
         census=json.loads((dest/'census.json').read_text())
         result['allocation_bytes']=census['totals']['device']
-        if '--draft-capture' in cmd:assert result['allocation_bytes']<8*1024**3
+        if '--draft-capture' in cmd:assert result['allocation_bytes']<4*1024**3
     shutil.rmtree(dest)
     return dict(command=cmd,result=result,artifacts=artifacts)
 

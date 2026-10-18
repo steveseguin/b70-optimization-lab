@@ -55,8 +55,9 @@ def memory_admit(profile):
     snapshot = M.meminfo()
     if profile == 'onecard':
         return M.admit(snapshot)
-    require(snapshot['MemAvailable'] >= 97 * M.GIB, 'tp2 screen requires 97 GiB available before load')
-    return dict(snapshot=snapshot, required_bytes=97 * M.GIB)
+    required=97*M.GIB+1_271_398_400+5120+32768
+    require(snapshot['MemAvailable'] >= required, 'packet137 host table and staging admission')
+    return dict(snapshot=snapshot, required_bytes=required, projection_table_bytes=1_271_398_400, pinned_staging_bytes=5120, target_buffer_reserve_bytes=32768)
 
 
 def memory_sensor(pid, profile, memory):
@@ -132,6 +133,7 @@ def screen_main(argv=None, *, release=None):
         print(json.dumps(dict(evidence_label='screen', device_executed=False, supported=identity['placement']['supported'], identity=identity,
                               command=cmd, model_lifetimes=1, watchdog_seconds=WATCHDOG[args.profile],
                               planned_write_bytes=planned_writes,
+                              host_memory_admission=dict(required_bytes=97*M.GIB+1_271_398_400+5120+32768,projection_table_bytes=1_271_398_400,pinned_staging_bytes=5120,checked_at_launch=True),
                               physical_cards=LANES[args.lane]['cards'], native_card_arguments=[0, 1],
                               device_mask=mask_for(args.lane), timing=args.timing,
                               reservation_scope=scope, views=len(identity.get('bracket', {}).get('views', [None])),

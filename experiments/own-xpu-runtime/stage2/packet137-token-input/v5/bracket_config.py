@@ -14,6 +14,8 @@ def prepare(candidate):
  save(LINEAGE/'selection.json',row)
  alt=copy.deepcopy(row);alt['choices']['token_input']=candidate
  save(LINEAGE/'candidate.json',alt)
+ for value in ('draft_table','target_buffers'):
+  view=copy.deepcopy(row);view['choices']['token_input']=value;save(LINEAGE/(value+'.json'),view)
  views=[]
  for choice in ('control','candidate','control','candidate','control'):
   p=LINEAGE/('selection.json' if choice=='control' else 'candidate.json')

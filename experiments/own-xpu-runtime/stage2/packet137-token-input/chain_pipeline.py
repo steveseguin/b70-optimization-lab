@@ -341,7 +341,7 @@ class Transport:
                 for line in Path(f"/proc/{proc.pid}/status").read_text().splitlines():
                     if line.startswith("RssAnon:"):anonymous+=int(line.split()[1])*1024
             except FileNotFoundError:pass
-        require(anonymous<8*1024**3,"aggregate rank anonymous memory exceeded 8 GiB")
+        require(anonymous<4*1024**3,"aggregate rank anonymous memory exceeded 8 GiB")
     def io(self,rank,payload=None,timeout=None):
         end=time.monotonic()+(timeout or self.a.wait_seconds);data=bytearray();sent=0;sock=self.sockets[rank]
         while (sent<len(payload) if payload is not None else len(data)<REPLY.size):

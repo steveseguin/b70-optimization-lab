@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/cpu_seal.py", line 81, in <module>
+    if '--seal' in sys.argv:seal()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/cpu_seal.py", line 58, in seal
+    rows,table,target=validate_receipts()
+                      ^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/cpu_seal.py", line 33, in validate_receipts
+    if row.get('sources'):verify_map(ROOT,safe_sources(row['sources']))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/common.py", line 43, in verify_map
+    require(sha(path) == digest, 'sealed file changed: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet34-replay-bench/window.py", line 27, in require
+    raise ValueError(reason)
+ValueError: sealed file changed: experiments/own-xpu-runtime/stage2/packet137-token-input/mtp.hpp

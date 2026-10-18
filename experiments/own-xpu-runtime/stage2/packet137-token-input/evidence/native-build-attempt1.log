@@ -1,0 +1,32 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/main.cpp:1599,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/native-src/entry-main.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/mtp.hpp: In member function ‘void mtp36::DraftRuntime::initialize_projection()’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/mtp.hpp:80:22: error: ‘hash’ is not a member of ‘packet26’
+   80 |    require(packet26::hash(projection_table,projection_bytes)==e.sealed_selection.choices.at("token_table_sha256"),"projection table hash mismatch");
+      |                      ^~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/mtp.hpp:80:22: note: suggested alternatives:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/main.cpp:62:20: note:   ‘hash’
+   62 | static std::string hash(const std::vector<uint8_t> &b) {
+      |                    ^~~~
+In file included from /usr/include/c++/13/string_view:42,
+                 from /usr/include/c++/13/bits/basic_string.h:47,
+                 from /usr/include/c++/13/string:54,
+                 from /usr/include/c++/13/bits/locale_classes.h:40,
+                 from /usr/include/c++/13/bits/ios_base.h:41,
+                 from /usr/include/c++/13/ios:44,
+                 from /usr/include/c++/13/istream:40,
+                 from /usr/include/c++/13/sstream:40,
+                 from /usr/include/c++/13/chrono:45,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/owner_api.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/owner.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/runtime_kernels.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/performance.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/adapter.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/p49d_expert.hpp:4,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/p65_expert.hpp:5,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/p100_down.hpp:3,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/main.cpp:1:
+/usr/include/c++/13/bits/functional_hash.h:59:12: note:   ‘std::hash’
+   59 |     struct hash;
+      |            ^~~~

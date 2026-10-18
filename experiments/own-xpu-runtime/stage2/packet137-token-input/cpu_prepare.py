@@ -3,7 +3,7 @@ import os,resource,subprocess,sys,time,json,shutil
 from pathlib import Path
 P=Path(__file__).resolve().parent
 if __name__=='__main__':
- resource.setrlimit(resource.RLIMIT_AS,(8*1024**3,8*1024**3))
+ resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3))
  assert os.getpriority(os.PRIO_PROCESS,0)==19
  assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
  os.environ['OMP_NUM_THREADS']='2'

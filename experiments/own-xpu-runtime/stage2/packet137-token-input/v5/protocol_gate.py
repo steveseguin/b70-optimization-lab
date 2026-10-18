@@ -33,13 +33,18 @@ def run(binary, views, output):
             else:proof=None
             suite.reset(transport,dest/'request')
             result=suite.run_request(transport,args,[1,2,3],8)
+            # Compare draft proposals, not just the unchanged target output.
+            draft_rows=[]
+            for file in sorted((dest/'request').rglob('draft-rows.jsonl')):
+                draft_rows += [{k:r[k] for k in ('draft_position','confirmed_token','guess','head')} for line in file.read_text().splitlines() if (r:=json.loads(line)).get('guess') is not None]
+            assert draft_rows,'CPU replay produced no draft proposal trace'
             suite.reset(transport,dest/'after-request')
             retained=suite.retained_state(dest/'request')
             byte_rows={name:row['sha256'] for name,row in retained.items()
                        if name.endswith('.bin') or name.endswith('/all-state.json')}
             assert byte_rows and any('draft-final-state' in name for name in byte_rows)
             state_sha=hashlib.sha256(json.dumps(byte_rows,sort_keys=True).encode()).hexdigest()
-            rows.append(dict(tokens=result['tokens'],cached_tokens=result['cached_tokens'],boundary=proof,
+            rows.append(dict(draft_proposals=draft_rows,tokens=result['tokens'],cached_tokens=result['cached_tokens'],boundary=proof,
                              state_bytes_sha256=state_sha,state_files=len(byte_rows)))
         suite.reset(transport,output/'after-suite');transport.close(True)
     except Exception as error:
@@ -55,7 +60,7 @@ def gate(config_name,config):
     for binary_name,binary in (('parent',BASE/'build/gnu-host/own-rt-iq3'),('v5',B/'gnu-host/own-rt-iq3'),('intel',B/'intel-host/own-rt-iq3')):
         for label,view in (('control',config['views'][0]),('candidate',config['views'][1])):
             if binary_name=='parent':
-                row=json.loads(Path(view['selection']).read_text());row['choices'].pop('token_input')
+                row=json.loads(Path(view['selection']).read_text());row['choices'].pop('token_input');row['choices'].pop('token_table_path');row['choices'].pop('token_table_sha256')
                 target=P/'lineage/parent-reference-selection.json';save(target,row)
                 view=dict(view,selection=str(target),selection_sha256=sha(target))
             dest=root/(binary_name+'-'+label)
@@ -69,6 +74,7 @@ def gate(config_name,config):
             references=[r['rows'][0]['tokens'] for r in runs if r['choice']==choice]
             assert all(actual['tokens']==ref for ref in references),'fresh parent/v5 token mismatch'
             assert all(actual['state_bytes_sha256']==r['rows'][0]['state_bytes_sha256'] for r in runs if r['choice']==choice),'fresh parent/v5 state byte mismatch'
+            assert all(actual['draft_proposals']==r['rows'][0]['draft_proposals'] for r in runs),'CPU draft proposal mismatch'
             assert actual['cached_tokens']==0
         results.append(row);shutil.rmtree(dest)
         print('real CPU bracket IPC, parent parity, fresh repeat',repeat,'PASS',flush=True)

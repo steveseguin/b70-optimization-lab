@@ -1,7 +1,24 @@
 """V4 request-schema adapter; bracket views share one explicitly labeled lifetime."""
-import json, math, statistics
+import hashlib, json, math, statistics
 from pathlib import Path
 from common import D, METRICS, read, require, sha, save, summary, label
+
+def proposal_identity(destination):
+    """Compare actual proposals, not only aggregate acceptance or target tokens."""
+    traces=list(Path(destination).glob('rank1/draft-rows.jsonl'))
+    require(len(traces)==1,'rank1 draft proposal trace missing')
+    rows=[json.loads(line) for line in traces[0].read_text().splitlines() if line.strip()]
+    keys=('draft_position','confirmed_token','guess','head')
+    values=[[r[k] for k in keys] for r in rows]
+    require(values and any(r[3] for r in values),'draft proposal sequence empty')
+    return dict(rows=len(values),sha256=hashlib.sha256(json.dumps(values,separators=(',',':')).encode()).hexdigest())
+
+def table_samples(output,identity):
+    row=read(output/'run/ranks/rank1/token-table-samples.json')
+    require(row.get('passed') is True and row.get('samples')==32 and row.get('before_ready') is True,'real table sample check missing')
+    from common import HERE
+    selection=read(HERE/'lineage/selection.json')['choices']
+    return dict(samples=32,table_sha256=selection['token_table_sha256'],receipt_sha256=sha(output/'run/ranks/rank1/token-table-samples.json'))
 
 def checked_requests(summary, oracle):
     rows = summary['requests']
@@ -39,6 +56,7 @@ def finish_bracket(output, window, identity, coordination):
     isolation = read(output / 'run/device-isolation.json')
     require(isolation.get('passed') is True, 'bracket isolation failed')
     if proof['kind']=='smoke':return finish_smoke(output,window,identity,proof,isolation,oracle)
+    samples=table_samples(output,identity)
     rows, descriptors = [], None
     for index, view in enumerate(views):
         selection = identity['bracket']['views'][index]
@@ -67,15 +85,17 @@ def finish_bracket(output, window, identity, coordination):
         metrics = checked_requests(result, oracle)
         save(dest / 'summary.json', result)
         save(dest / 'identity.json', dict(identity, view=selection, bracket_view=index))
-        rows.append(dict(index=index, choice=view['choice'], all_13_exact=True, exact_count=13,
+        proposals={name:proposal_identity(dest/name) for name in ['incident64',*D.CHECK.PROMPT_IDS]}
+        rows.append(dict(index=index, choice=view['choice'], all_13_exact=True, exact_count=13, draft_proposals=proposals,
                          lane=identity['lane'], boot_id=window['boot_id'], output=str(dest),
                          started_utc_ns=view['started_utc_ns'], finished_utc_ns=view['finished_utc_ns'], **metrics))
     controls = [r['rate'] for r in rows if r['choice'] == 'control']
     require(all(r['acceptance_counts']==rows[0]['acceptance_counts'] for r in rows), 'per-prompt acceptance changed across views')
+    require(all(r['draft_proposals']==rows[0]['draft_proposals'] for r in rows),'per-prompt draft proposals changed across views')
     drift = 100 * (max(controls) / min(controls) - 1)
     result = label(dict(schema='own-runtime.bracket.summary.v1', passed=True, kind=proof['kind'],
                         model_lifetimes=1, target_loads=1, draft_loads=1, teardown_count=1,
-                        views=rows, all_13_exact=True, control_drift_percent=drift,
+                        views=rows, all_13_exact=True, draft_proposals_identical=True, table_samples=samples, control_drift_percent=drift,
                         control_drift_limit_percent=3.0,
                         measured_wall_seconds=(__import__('time').time_ns()-window['started_utc_ns'])/1e9,
                         device_wall_savings_seconds=None,
@@ -120,7 +140,9 @@ def smoke_checked(output,identity,proof,oracle):
 
 def finish_smoke(output,window,identity,proof,isolation,oracle):
     checked=smoke_checked(output,identity,proof,oracle)
-    result=label(dict(passed=True,kind='smoke',model_lifetimes=1,request_count=12,max_new=64,views=proof['views'],smoke_identity=checked,timing_status='smoke only; no speed verdict'))
+    dest=output/'run/views/00-candidate'
+    proposals={name:proposal_identity(dest/name) for name in ['incident64',*D.CHECK.PROMPT_IDS]}
+    result=label(dict(passed=True,kind='smoke',model_lifetimes=1,request_count=12,max_new=64,views=proof['views'],smoke_identity=checked,table_samples=table_samples(output,identity),draft_proposals=proposals,timing_status='smoke only; no speed verdict; device proposal parity checked by bracket'))
     save(output/'bracket-summary.json',result);return result
 
 def load(output):
@@ -137,6 +159,7 @@ def load(output):
     result=read(output/'bracket-summary.json')
     require(result['passed'] is True and result['model_lifetimes']==1, 'bracket result failed')
     identity=read(output/'identity.json')
+    require(table_samples(output,identity)==result['table_samples'],'table sample receipt changed')
     require(window['identity']==identity, 'bracket window identity differs')
     from common import HERE
     require(window['wrapper_seal_sha256']==sha(HERE/'placement-validation/wrapper-seal.json'), 'wrapper seal changed')
@@ -148,11 +171,15 @@ def load(output):
         proof=read(output/'run/bracket-inputs.json')
         checked=smoke_checked(output,identity,proof,oracle)
         require(checked==result['smoke_identity'],'smoke identity changed')
+        dest=output/'run/views/00-candidate'
+        require({name:proposal_identity(dest/name) for name in ['incident64',*D.CHECK.PROMPT_IDS]}==result['draft_proposals'],'smoke draft proposals changed')
         return result
     for index,row in enumerate(result['views']):
         dest=output/'run/views'/f'{index:02d}-{row["choice"]}'
         checked=checked_requests(read(dest/'summary.json'),oracle)
         require(checked['rate']==row['rate'] and checked['acceptance_counts']==row['acceptance_counts'], 'changed view metrics')
+        proposals={name:proposal_identity(dest/name) for name in ['incident64',*D.CHECK.PROMPT_IDS]}
+        require(proposals==row['draft_proposals']==result['views'][0]['draft_proposals'],'draft proposal parity changed')
         incident=read(dest/'incident64/receipt.json')
         require(incident['tokens']==oracle(D.CHECK.PROMPT_IDS[0])[:64] and incident['cached_tokens']==0, 'changed incident')
     return result

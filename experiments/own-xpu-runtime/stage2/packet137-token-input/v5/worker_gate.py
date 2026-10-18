@@ -59,7 +59,7 @@ def probe(kind):
    assert not (tmp/'negative/report-inputs.json').exists()
    return dict(passed=True,device_executed=False,kind=kind,positive_trace=positive,negative_trace=trace,requests=n*13,all_view_requests=True,native_execution_forbidden=True,synthetic_device_receipts_retained=False)
 
-def read_choice(view):return json.loads(Path(view['selection']).read_text())['choices']['suffix_schedule']
+def read_choice(view):return json.loads(Path(view['selection']).read_text())['choices']['token_input']
 
 def main():
  limits();rows=[]

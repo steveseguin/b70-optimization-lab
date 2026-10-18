@@ -14,7 +14,7 @@ def main():
  limits()
  spec=importlib.util.spec_from_file_location('p137_queue',P.parents[2]/'ops/lane-queue/lanequeue.py')
  q=importlib.util.module_from_spec(spec);spec.loader.exec_module(q)
- proposals=[P.parents[2]/('ops/lane-queue/proposed-p137-'+kind+'-B.txt') for kind in ('smoke','bracket')]
+ proposals=[P.parents[2]/('ops/lane-queue/proposed-p137-'+kind+'-B.txt') for kind in ('smoke','v5')]
  results=[]
  for proposal in proposals:
   for rc in (0,1):

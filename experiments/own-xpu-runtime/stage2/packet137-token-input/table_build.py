@@ -36,9 +36,19 @@ def main():
  a=argparse.ArgumentParser();a.add_argument('--rows',type=int,default=248320);a.add_argument('--compile-only',action='store_true');args=a.parse_args()
  admission();B.mkdir(parents=True,exist_ok=True);OUT.mkdir(parents=True,exist_ok=True)
  from compile_turn import turn
+ import re
+ pending=[P/'table_cpu.cpp',P.parent/'packet2/loader/gguf.cpp'];closure=set()
+ while pending:
+  p=pending.pop().resolve()
+  if p in closure:continue
+  closure.add(p)
+  for n in re.findall(r'^\s*#include\s*"([^"\n]+)"',p.read_text(),re.M):
+   paths=[p.parent/n,P/n,P.parent/'packet2/kernels'/n,P.parents[1]/'stage1/packet3-prep/src'/n]
+   pending.append(next(x for x in paths if x.is_file()))
+ source_before={str(p.relative_to(ROOT)):sha(p) for p in closure|{P/'table_build.py',P/'compile_turn.py'}}
  commands=[]
  for label,compiler in [('GNU','/usr/bin/g++'),('Intel','/opt/intel/oneapi/compiler/2026.0/bin/icpx')]:
-  cmd=[compiler,'-std=c++20','-O3','-fno-fast-math','-ffp-contract=off','-fopenmp','-ffunction-sections','-fdata-sections','-Wl,--gc-sections','-I'+str(P.parent/'packet2/kernels'),'-I'+str(P.parents[1]/'stage1/packet3-prep/src'),str(P/'table_cpu.cpp'),str(P.parent/'packet2/loader/gguf.cpp'),'-o',str(B/label)]
+  cmd=[compiler,'-std=c++20','-O3','-fno-fast-math','-ffp-contract=off','-fopenmp','-ffunction-sections','-fdata-sections','-Wl,--gc-sections','-Wl,-rpath,/opt/intel/oneapi/compiler/2026.0/lib','-I'+str(P.parent/'packet2/kernels'),'-I'+str(P.parents[1]/'stage1/packet3-prep/src'),str(P/'table_cpu.cpp'),str(P.parent/'packet2/loader/gguf.cpp'),'-o',str(B/label)]
   with turn(),(B/(label+'-build.log')).open('w') as f:subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,check=True,timeout=600)
   commands.append(cmd);print(label+' compiled',flush=True)
  if args.compile_only:return
@@ -46,13 +56,16 @@ def main():
  partial=table.with_suffix('.partial');assert not partial.exists(),partial
  runs=[]
  for label,mode in [('GNU','generate'),('Intel','verify')]:
-  admission();start=time.monotonic();cmd=[str(B/label),mode,str(root),str(inp/'identity.tsv'),str(inp/'plan.tsv'),str(B/'norm.bf16'),str(B/'projection.bf16'),str(partial),str(args.rows)]
+  admission();assert authenticate()[2]==pins;start=time.monotonic();cmd=[str(B/label),mode,str(root),str(inp/'identity.tsv'),str(inp/'plan.tsv'),str(B/'norm.bf16'),str(B/'projection.bf16'),str(partial),str(args.rows)]
   with (B/(label+'-'+str(args.rows)+'.log')).open('w') as f:
    subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,check=True,timeout=5400)
+  assert authenticate()[2]==pins
   runs.append(dict(compiler=label,command=cmd,seconds=time.monotonic()-start,binary_sha256=sha(B/label),log_sha256=sha(B/(label+'-'+str(args.rows)+'.log'))));print(label+' replay complete',flush=True)
  assert partial.stat().st_size==args.rows*5120
  os.chmod(partial,0o444);partial.rename(table)
  sources={str(p.relative_to(ROOT)):sha(p) for p in (P/'table_cpu.cpp',P/'table_build.py',P/'token_input.hpp',P/'kernels.hpp',P/'p28/dense.hpp',P/'mtp-manifest.tsv',inp/'identity.tsv',inp/'plan.tsv')}
+ assert all(sha(ROOT/n)==h for n,h in source_before.items()),'sources changed during table build'
+ sources.update(source_before)
  row=dict(passed=True,complete=args.rows==248320,device_executed=False,rows=args.rows,bytes=table.stat().st_size,path=str(table),sha256=sha(table),sources=sources,pins=pins,runs=runs,commands=commands,max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
  save(P/'evidence'/('table.json' if row['complete'] else 'table-pilot.json'),row);print(json.dumps({k:row[k] for k in ('path','sha256','rows','max_rss_kib')}),flush=True)
 if __name__=='__main__':

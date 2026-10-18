@@ -1,6 +1,8 @@
 #pragma once
 #include "../packet2/kernels/math.hpp"
 #include <array>
+#include <cmath>
+#include <string>
 #include <bit>
 #include <cstdint>
 #include <stdexcept>

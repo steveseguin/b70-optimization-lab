@@ -5,6 +5,7 @@
 #include "p56_prefix.hpp"
 #include "p83_head.hpp"
 #include <cfenv>
+#include <fcntl.h>
 #include <poll.h>
 // Included after Engine. All mutable allocations below are private to the draft.
 // The target Engine supplies one lifetime owner, uploads and immutable weights.
@@ -50,11 +51,12 @@ class DraftRuntime {
  struct Site { std::vector<ownrt::PreparedCompute> commands; bool gemv=false; int cls=0; bool head=false; bool token_only=false; };
  std::vector<Site> issue_sites;
  std::vector<flash::Launch> merge_plan;
+ int last_embedding_token=-1;
  bool captured=false;int context_extent=32; const void* reverse_hidden=nullptr;
  Allocation publication{},half_staging{},embedding_staging{};
  void* projection_table=nullptr;size_t projection_bytes=0;
  std::vector<uint16_t> miniature_table;
- bool table_enabled()const{return p137::table_mode(e.sealed_selection.choices.at("token_input"))&&e.a.draft_capture.empty();}
+ bool table_enabled()const{return p137::table_mode(e.sealed_selection.choices.at("token_input"));}
  bool embedding_site(const std::string& label)const{return label=="merge.embedding_norm"||label=="merge.embedding_projected";}
  void original_embedding(int token){
   const auto& t=e.w.directory.at("token_embd.weight");auto type=flash::grid_type(t.grid);auto fmt=iq3::layout(type);
@@ -75,7 +77,7 @@ class DraftRuntime {
    if(fstat(fd,&st)||st.st_size!=p137::table_bytes){close(fd);throw std::runtime_error("projection table extent");}
    projection_bytes=p137::table_bytes;projection_table=mmap(nullptr,projection_bytes,PROT_READ,MAP_PRIVATE,fd,0);close(fd);
    require(projection_table!=MAP_FAILED,"projection table mmap");
-   require(packet26::hash(projection_table,projection_bytes)==e.sealed_selection.choices.at("token_table_sha256"),"projection table hash mismatch");
+   require(hash_data(projection_table,projection_bytes)==e.sealed_selection.choices.at("token_table_sha256"),"projection table hash mismatch");
    // Fixed vocabulary-wide samples, independent of suite tokens, before ready.
    // Run the existing single-row device chain, not a second reference kernel.
    for(unsigned i=0;i<32;++i){int token=i==0?0:i==31?p.g.vocab-1:int((uint64_t(i)*7919)%p.g.vocab);
@@ -264,20 +266,24 @@ public:
   require(!async_pending,"draft publication still pending");if(disabled)return -1;admit_position();require(confirmed>=0&&confirmed<p.g.vocab,"draft confirmed token bound");require(target_position==position+1,"draft confirmed position sequence");auto start=std::chrono::steady_clock::now();
   if(e.a.draft_fault=="error"||e.a.draft_fault=="stall"){if(e.a.draft_fault=="stall"){auto until=std::chrono::steady_clock::now()+std::chrono::milliseconds(50);while(std::chrono::steady_clock::now()<until){e.guard();poll(nullptr,0,5);}}throw ProviderError("cooperative injected provider failure before submission");}
   e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);ownrt::CopyEngine copy(e.dev(0));if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");e.upload(0,id("merge.hidden"),0,reverse_hidden,4*p.g.h*2);reverse_hidden=nullptr;}else e.tail=copy.copy(id("merge.hidden"),0,e.buffers[0].at("streams").id,0,4*p.g.h*2,{});e.drain();
+  last_embedding_token=confirmed;
+  const bool use_table=table_enabled();
   // Bounded target embedding row only. No target PLE/history/token preparation.
-  if(table_enabled()){
+  if(use_table){
+   auto transfer_started=std::chrono::steady_clock::now();
    auto* staging=e.dev(0).arena.row(embedding_staging).pointer;
    std::memcpy(staging,static_cast<const uint8_t*>(projection_table)+size_t(confirmed)*p.g.h*2,p.g.h*2);
    ownrt::CopyEngine copy(e.dev(0));e.tail=copy.copy(id("merge.embedding_projected"),0,embedding_staging,0,p.g.h*2,{});e.drain();
+   e.transfer_ms+=Engine::ms(transfer_started);
   }else original_embedding(confirmed);
   if(captured) {
-   for(const auto& site:issue_sites){if((!head&&site.head)||(table_enabled()&&site.token_only))continue;
+   for(const auto& site:issue_sites){if((!head&&site.head)||(use_table&&site.token_only))continue;
     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
     e.guard();e.current_cls=site.cls;
     for(const auto& cmd:site.commands){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);}
    }
   } else {
-   for(const auto& l:merge_plan){if(table_enabled()&&embedding_site(l.label))continue;if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);}
+   for(const auto& l:merge_plan){if(use_table&&embedding_site(l.label))continue;if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);}
    for(const auto& l:p.launches){if(!head&&(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax"))continue;
     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
     e.guard();if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);
@@ -336,10 +342,15 @@ public:
   uint32_t active=1;e.upload(0,id("active"),0,&active,4);e.drain();position=0;disabled=false;reverse_hidden=nullptr;
   std::memset(e.dev(0).arena.row(publication).pointer,0,8);std::memset(e.dev(0).arena.row(half_staging).pointer,0,4+4*p.g.h*2);
   std::memset(e.dev(0).arena.row(embedding_staging).pointer,0,p.g.h*2);
-  publication_event=0;e.progress_pending=false;e.progress_callback={};
+  last_embedding_token=-1;publication_event=0;e.progress_pending=false;e.progress_callback={};
   trace.close();trace.open(output/"draft-rows.jsonl");require(bool(trace),"draft reset trace");
  }
  void dump_all_state(const fs::path& path) {
+  // Diagnostic materialization is outside production drafting. The hot path
+  // uploads only the projected row. Retained intermediates keep their original
+  // meaning, which also allows byte-exact fresh-process state comparisons.
+  if(table_enabled()&&last_embedding_token>=0){e.drain();original_embedding(last_embedding_token);direct(merge_plan[0]);e.drain();}
+
   dump(path);std::ostringstream out;out<<"{\"position\":"<<position<<",\"disabled\":"<<(disabled?"true":"false")<<",\"mutable_sha256\":{";
   bool comma=false;for(auto allocation:mutable_ids){const auto& row=e.dev(0).arena.row(allocation);
    auto bytes=e.readback(0,allocation,row.bytes);out<<(comma?",":"")<<ownrt::quote(row.label)<<":"<<ownrt::quote(hash(bytes));comma=true;}

@@ -40,8 +40,14 @@ def prepare():
   src=BASE/name;sources[str(src.relative_to(ROOT))]=sha(src)
   dest=P/'lineage'/name;dest.parent.mkdir(exist_ok=True);dest.write_bytes(src.read_bytes())
  row=json.loads((BASE/'selection.json').read_text());row['choices']['token_input']='original'
- row['choices']['token_table_path']=str(LOCAL/'TABLE-PENDING')
- row['choices']['token_table_sha256']='0'*64
+ table_path=LOCAL/'evidence/table.json'
+ if table_path.exists():
+  table=json.loads(table_path.read_text());assert table['passed'] and table['complete'] and table['rows']==248320 and table['bytes']==1271398400
+ else:
+  # Build-only placeholder: table/CPU seal and every device --plan refuse it.
+  table=dict(path='/home/steve/own-xpu-runtime-results/packet137-token-input/draft-embedding.bf16',sha256='0'*64)
+ row['choices']['token_table_path']=table['path']
+ row['choices']['token_table_sha256']=table['sha256']
  save(P/'lineage/selection.json',row)
  sources[str((BASE/'selection.json').relative_to(ROOT))]=sha(BASE/'selection.json')
  save(P/'source-copy-provenance.json',dict(schema='packet137.v5.copy.v1',sources=sources,device_executed=False))

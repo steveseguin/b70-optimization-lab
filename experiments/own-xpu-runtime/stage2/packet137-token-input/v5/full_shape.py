@@ -24,6 +24,7 @@ def generate():
     fusion=fusion.replace('auto b=bind(p,capacity);','auto b=bind(p,n);').replace('k.capacity=capacity','k.n=capacity')
     (out/'p109_fusion.hpp').write_text(fusion)
     t=once(t,json.dumps(str(CHECKED/'p109_fusion.hpp')),json.dumps(str(out/'p109_fusion.hpp')))
+    t=t.replace('if(w.mini)data=w.synthetic.at(t.name).data();','if(true)data=nullptr;')
     t=once(t,'  void guard() {','#include '+json.dumps(str(P/'native/engine_bracket.hpp'))+'\n  void guard() {')
     t=once(t,'class Engine final', 'static std::map<Allocation,std::vector<std::pair<size_t,size_t>>> p98_writes;\nclass Engine final')
     t=once(t,'  void upload(int c, Allocation dst, size_t offset, const void *src, size_t n) {',
@@ -35,6 +36,12 @@ def generate():
     t=once(t,json.dumps(str(CHECKED/'rank.hpp')),json.dumps(str(out/'rank.hpp')))
     (out/'main.cpp').write_text(t)
     m=(out/'mtp.hpp').read_text()
+    m=parent.body(m,' void initialize_projection()', '''
+  embedding_staging=e.allocate(0,"draft:embedding-staging",p.g.h*2,Category::pinned_slab,Lifetime::transfer,Memory::pinned);
+  std::memset(e.dev(0).arena.row(embedding_staging).pointer,0,p.g.h*2);
+  projection_bytes=p137::table_bytes;
+''')
+
     m=once(m,' void dump_all_state(const fs::path& path) {',
         '#include '+json.dumps(str(P/'native/draft_bracket.hpp'))+'\n void dump_all_state(const fs::path& path) {')
     m=parent.body(m,' void dump_all_state(const fs::path& path)', '')
@@ -58,8 +65,9 @@ def generate():
     reset=once(reset,'#include '+json.dumps(str(CHECKED/'request_state_inventory.hpp')),
                'namespace pipeline {static void request_state_inventory(Engine&) {}}')
     (out/'request_reset.hpp').write_text(reset)
-    (out/'entry.cpp').write_text((P/'native/full_shape_entry.cpp').read_text()
-        .replace('P98_PARENT_PATH',json.dumps(str(BASE))))
+    (out/'entry.cpp').write_text((P/'native/full_shape_entry.cpp').read_text().replace('suffix_schedule','token_input').replace('layer-interleave','both').replace('e->suffix_interleave()==(choices.at("token_input")=="both")','choices.at("token_input")=="original"||choices.at("token_input")=="both"')
+        .replace('P98_PARENT_PATH',json.dumps(str(BASE)))
+        .replace('p137::table_mode(choices.at(\"token_input\"))==(view%2==1)', 'choices.at(\"token_input\")==\"original\"||choices.at(\"token_input\")==\"both\"'))
     return out
 
 def main():

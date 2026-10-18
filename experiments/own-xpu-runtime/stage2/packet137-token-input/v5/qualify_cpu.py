@@ -4,18 +4,17 @@ from pathlib import Path
 from build_engine import P,ROOT,limits
 STEPS=[
  ('build',P/'build_engine.py',[]),
- ('head',P.parent/'head_cpu_gate.py',[]),
- ('controller',P.parent/'controller_gate.py',[]),
- ('private-reset',P.parent/'reset_regression.py',[]),
+ ('target',P.parent/'target_gate.py',[]),
  ('full-shape',P/'full_shape.py',[]),
  ('reset-bytes',P/'reset_gate.py',[]),
  ('protocol',P/'protocol_gate.py',[]),
  ('exec-limits',P/'exec_gate.py',[]),
  ('policy',P/'test_v5.py',[]),
  ('safety',P/'safety_gate.py',[]),
- ('cpu-seal',P/'cpu_seal.py',['--operator-evidence',str(P.parent/'evidence/head-byte-identity.json')]),
+ ('cpu-seal',P/'cpu_seal.py',['--seal']),
  ('argument',P/'argument_gate.py',[]),
  ('legacy-windows',P/'legacy_window_gate.py',[]),
+ ('all-windows',P/'all_window_gate.py',[]),
  ('worker',P/'worker_gate.py',[]),
  ('launch-limits',P/'launch_limit_gate.py',[]),
  ('queue-plan',P/'queue_plan.py',[]),
@@ -25,7 +24,7 @@ def main():
  ap=argparse.ArgumentParser();ap.add_argument('--start',choices=[s[0] for s in STEPS],default='build');a=ap.parse_args()
  limits();assert os.environ.get('OMP_NUM_THREADS')=='2'
  # Keep native launch-limit probes unlimited. Heavy CPU children apply their
- # own 8 GiB cap in __main__; this small coordinator never allocates payloads.
+ # own 4 GiB cap in __main__; this small coordinator never allocates payloads.
  import resource
  assert resource.getrlimit(resource.RLIMIT_AS)==(-1,-1)
  start=next(i for i,s in enumerate(STEPS) if s[0]==a.start)
