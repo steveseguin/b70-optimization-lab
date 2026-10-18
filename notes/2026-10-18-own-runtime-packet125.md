@@ -55,3 +55,17 @@ Next: compile the small route-driven transfer/unchanged-expert micro, CPU
 check it and ship only a proposed lane-B queue. Two fresh processes must each
 reach at least 1.5× useful miss bandwidth with byte equality before any engine
 copy or whole-host proposal is prepared. No speed result is claimed.
+
+## Compiled micro proposal
+
+Seven transport paths compile for BMG-G31. Ten CPU policy tests pass, including
+missing/duplicate sample refusal, exact-byte failure, malformed masks, NaN
+latencies, the unchanged 1.5× bar and a separate post-initial-checkpoint gate.
+Both jobs pass the real planner on a temporary queue; the drain-spacing check
+passes. The [proposal](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p125-micro-B.txt)
+requests two fresh card2 processes, six minutes each and a thirty-minute
+watchdog, no model, 16 GiB available admission including an 8 GiB reserve.
+The [README](../experiments/own-xpu-runtime/stage2/packet125-miss-transfer/README.md)
+defines timings, bytes, memory and all seven arms. Effective route-to-output
+bandwidth is distinct from K1's device-event rate. Actual device equality,
+speed and overlap remain unmeasured; integration is blocked on both micros.
