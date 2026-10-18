@@ -614,3 +614,22 @@ STOP DOING acknowledged:
 - sub-1% chains while a several-times-larger ready lever waits;
 - more than 75 min of Codex on levers projected under ~1%;
 - a single Codex job preparing the next candidate.
+
+## Review 28 (2026-10-18 ~18:05 UTC): ACT
+
+Over 2 h, utilization was 60% (lane A 54%, lane B 28%). Lane B had no device work 17:11–18:06 (packet136 chain, then the packet58v one-card hold). The 58.80 record was submitted at 17:50. Packets 138 and 140 closed cheaply at their CPU kill gates. Only one Codex job (p58x) was preparing device work while both queues were about to run dry.
+
+Meanwhile packet58v's bracket landed: overlap 28.116 / 28.153 vs warm serial 26.053 / 26.079 (+7.8%), all exact. The first view (empty device cache) ran at 22.731, so packet58w's sealed drift rule refused the chain. Codex **p58wb** amends the rule before any chain: the first one-card bracket view is a cache warm-up, as in packet58t's precedent, and the amendment is disclosed. `p58w-chain2-waiter` reruns seal and readiness and then launches the hash-checked chain.
+
+Actions:
+1. Codex **p141**: a 2-card transfer-gap probe. One load compares the cold, in-order real half-kernel sequence against warm repeated micros, with a preregistered kill gate (≤ 1.15× close; ≥ 1.3× on a ≥ 0.5 ms/half class → layout/order brief). Device proposal due within 60 min; `autoq-ready-p141` queues it on lane B.
+2. Codex **p58y**: one-card attribution on the packet58v overlap engine with a +3% kill gate, to run in the same whole-host hold as packet58x's smoke and bracket.
+3. Packet139's lane-A composed smoke queued via `autoq-ready-p139` (18:06:56) to use idle lane-A time, so bundle 9 needs no extra preparation if both lanes go idle.
+4. Rule: the +2% chain threshold also applies to the one-card line. Packet58w (+7.8%) chains; packet58x (+2.2% projected) gets no chain of its own and stacks with the next one-card gain.
+5. Rule: every brief rehearses its own `prepare_submission` on a copy of the previous record chain's evidence before READY-FOR-DEVICE.
+
+STOP DOING acknowledged:
+- a single Codex job when both queues end within the hour;
+- a separate whole-host hold per one-card question;
+- separate one-card chains for gains under 2%;
+- re-deriving sub-3% body projections from the untested 20% transfer figure (p141 measures it).
