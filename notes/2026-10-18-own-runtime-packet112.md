@@ -114,3 +114,19 @@ seconds**, with a **1,200-second watchdog** and no retries. The inherited lane
 reservation, fault review, card isolation, graceful stop, drain and release
 checks remain. CPU memory caps apply only inside CPU CLI entrypoints; importing
 the device wrapper or helpers imposes none. Device equality and speed are pending.
+
+## Shipped milestone
+
+Commit `f7d5ea2c3` pushed the compiled micro and both planned proposals. The
+retained build is **10,284,057 bytes**, below 200 MB. All four final CPU
+processes produced
+`b49f59ab0cfd98cf51cddc7610efec21e6c2fbe349ec7c39937dc23819b0d36f`.
+Eleven qualification/import-safety tests and both direct/temporary queue
+plans pass. [CPU preparation closeout](../experiments/own-xpu-runtime/stage2/packet112-route-select/CPU-PREPARATION-CLOSEOUT.md)
+links the evidence and remaining gates.
+
+The p103x launch-limit fix landed independently in `932df6642` while this
+micro was being prepared. No device receipts have arrived, so no runtime
+dimension, model startup campaign or v5 bracket is opened prematurely.
+The next action is the coordinator-owned micro; its two-process kill gate
+decides whether integration is allowed.

@@ -45,3 +45,6 @@ published recipe. The standalone micro recompiles its actual header closure.
 
 After both clean device receipts, `python3 -B "$P/qualification.py"` recomputes
 the hash-bound gate. Integration is conditional on that result and p103x's fix.
+
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md). The p103x fix landed
+in `932df6642`; the device micro is still pending.

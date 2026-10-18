@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, packet112 route-selection micro prepared on CPU:** The 18.75
+microsecond route measurement already uses the fast route. The new candidate
+keeps its arithmetic and removes thirteen workgroup barriers from selection.
+GNU and Intel each pass 2,048 exact cases twice, including rejected NaN/Inf
+rows. Both fresh-process proposals pass temporary queue planning; the build
+is 10.3 MB. Each device process must halve route time before any integration.
+Device equality and speed remain unmeasured. No GPU, service, live queue or
+host setting changed. [Work note](notes/2026-10-18-own-runtime-packet112.md).
+
 **October 18, packet103x launch repair checked on CPU:** The first composite
 control failed because a Python import passed an 8 GiB address-space cap to
 the ranks. The cap now applies only to the CPU reader's CLI. The coordinator
