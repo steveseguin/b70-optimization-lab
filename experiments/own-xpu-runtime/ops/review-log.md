@@ -331,3 +331,20 @@ STOP-doing items applied:
 - waiters keyed on the real job names;
 - per-lane idle accounting (gpu_time_review per-lane: TODO);
 - act on lever rankings within minutes.
+
+## Review 12, 01:08 UTC (2026-10-18): **ACT**
+
+**Evidence:**
+- 58f-b's KD window failed at 01:04 at the native `p28 extent/alignment` check after the full 48-layer load. It left `screen/v3/teardown-state.json` undrained and a stale lane-A marker.
+- That undrained record made `p84s-B-3-control` refuse at its teardown step ("previous teardown incomplete; coordinator required") and stopped lane B. Both lanes idle from 01:04; 0 Codex jobs (p82b had finished at 00:54).
+- No new GPU fault lines (count 2). Prior 2 h: 100% combined, lane A 94%, lane B 73%.
+- Root disk 14.8 GB free; the p84 chain needs 14.32 GB at admission.
+
+**Actions, 01:05–01:12 UTC:**
+1. Reviewed and archived the 58f teardown record, both stale lane markers and the lane-B screen latch to `coordination/reviewed/` (owner pids gone, no render holders, fault lines 2). Removed PAUSE-A; started `lanequeue-B5`. Both lanes running p86 views from 01:06.
+2. Moved the refused B-3 evidence to `p84s-B-3-control-refused-58f-undrained` and requeued the closing control at the head of lane B (it runs after `packet86-production-B`). Queued `packet82b-grid-A` on lane A as filler after the p86 lane-A views.
+3. Disk: archiving packet 45's closed GPU window trees (≈6 GB) to `/mnt/raid-models/own-xpu-runtime-archive/packet45-merged3/` with a per-file SHA manifest, full content verification, then deleting them; the one file later packets reference (`speed6-…-cards01-gpu/K2/run0/dispatch-measured.json`) stays on root.
+4. Codex `p58g` (fix the one-card p28 refusal from the real arena rows; full-shape check of every submit-time extent check; refused-before-compute children drain their record; lane-A cores) and `p90` (preregister exact expert/HC candidates per possible p86 verdict; build the top two).
+5. Watcher re-armed: all lane events, stale markers, latches, undrained teardown, fault lines, Codex exits.
+
+**STOP-doing items applied:** state from `ps`/event files, not memory; one-card chains only after a full-shape check of the real submit-time checks; a lane-A failure must not hold the shared teardown record; p82b runs only as filler; check root free space against the next chain before builds.
