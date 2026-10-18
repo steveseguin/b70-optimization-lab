@@ -520,3 +520,14 @@ Actions:
 4. Next kernel brief targets the routed experts (1.76 ms per half above floor) with a mechanism distinct from packets 95/99/102/104/115, once packets 116/117 report.
 5. Codex **opsdrain**: `lanequeue.py` waits until 61 s after the latest shared teardown before starting any job, so the frozen wrappers never enter the buggy cooldown loop (chain runners are still protected by pausing the other lane).
 STOP DOING acknowledged (no full orchestrate re-run on idle cards when only the folder changes is noted for the next chain; Codex v5 prep stops as soon as its micro fails).
+
+## Review 22 (2026-10-18 ~11:08 UTC): ACT
+
+2 h: at least one lane busy 99%; lane A 79%, lane B 43% (lane B paused for chain-b 10:04–10:55). Record 57.55 submitted 10:57 (`cmvdpmbbo0022rf017ynt8i35`). Bundle 6 lane-A candidate 58.225 vs 57.570 (+1.14%).
+
+Actions:
+1. `p118-chain` waiter armed: after both bundle 7 composites → `orchestrate.py --evidence-only` → ready → waits (≤ 75 min) for lane B's sealed queue to drain → PAUSE-A+PAUSE-B (packet 118's `drain_gate.py` still lacks the fix) → ≥ 61 s after the last teardown → `verify_ready.py` → chain_command; then releases the pauses when clean and runs packet 118's own `prepare_submission.py` + `submission.py` dry-run/server-dry-run (no real submit). On a verify refusal it removes the pauses and alerts.
+2. Codex p121 stopped and closed (its own top lever ~0.017 ms per step, ceiling ~0.66%).
+3. Codex **p123**: move only layer 24's mixer or FFN to rank 0 (slack recomputed first on the bundle 7 line; v4 grid, drain fix required). The routed-expert lever p119 (L2 warming) is already queued; a second expert mechanism waits for its micro.
+4. Codex **drainguard**: `scripts/check_drain_fix.py` + policy: every new bundle must pass it before chain readiness, so its chain does not need the other lane paused; read-only report over all packets.
+STOP DOING acknowledged: no briefs for levers whose own budget projects < 0.3%; no chains of unfixed bundles without the pause; no fallback composites for bundles that will not chain; next-chain launches are waiter-driven.
