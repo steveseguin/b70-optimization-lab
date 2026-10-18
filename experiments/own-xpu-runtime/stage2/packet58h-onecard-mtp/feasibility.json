@@ -1,0 +1,499 @@
+{
+  "build_gate_passed": false,
+  "decision": "do-not-build",
+  "device_executed": false,
+  "memory": {
+    "admission_policy": "Use the most favorable retained KD/WS/WS128x available-memory snapshot; keep every original allowance and both reserves.",
+    "base_device_bytes": 24287732980,
+    "base_exact_host_categories": {
+      "cache_metadata_bound": 16777216,
+      "device_backing_control_transaction_bound": 1073741824,
+      "device_backing_expert_cache_arena": 18000000000,
+      "device_backing_expert_pointer_generation_tables": 2359296,
+      "device_backing_target_4k_bf16_kv_index": 116391936,
+      "device_backing_target_nonexpert": 5815529984,
+      "device_backing_target_recurrent": 59019280,
+      "device_backing_transfer_bound": 268435456,
+      "device_backing_workspace_bound": 1073741824,
+      "loader_staging_bound": 268435456,
+      "observed_gpuactive_shadow": 646889472,
+      "pinned_packed_experts": 48627712000,
+      "process_workspace_bound": 1073741824
+    },
+    "base_exactness_required_bytes": 85632710160,
+    "base_host_pinned_bytes": 48633091712,
+    "base_plan_device_bound_bytes": 26409219600,
+    "base_timing_required_bytes": 118308908048,
+    "draft_head_additional_bytes": 0,
+    "draft_kv_bytes": 9699328,
+    "draft_pinned_bytes": 20492,
+    "draft_weight_rows": [
+      {
+        "bytes": 40960,
+        "category": "weights",
+        "id": 2865,
+        "label": "card0:draft:weight:blk.0.hc_attn_norm.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 6553600,
+        "category": "weights",
+        "id": 2867,
+        "label": "card0:draft:weight:blk.0.hc_attn_down.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 6553600,
+        "category": "weights",
+        "id": 2870,
+        "label": "card0:draft:weight:blk.0.hc_attn_up.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 81920,
+        "category": "weights",
+        "id": 2873,
+        "label": "card0:draft:weight:blk.0.hc_attn_inject.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 62914560,
+        "category": "weights",
+        "id": 2875,
+        "label": "card0:draft:weight:blk.0.attn_q.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 2621440,
+        "category": "weights",
+        "id": 2891,
+        "label": "card0:draft:weight:blk.0.attn_k.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 2621440,
+        "category": "weights",
+        "id": 2893,
+        "label": "card0:draft:weight:blk.0.attn_v.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 2621440,
+        "category": "weights",
+        "id": 2895,
+        "label": "card0:draft:weight:blk.0.indexer.q_proj.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 655360,
+        "category": "weights",
+        "id": 2897,
+        "label": "card0:draft:weight:blk.0.indexer.k_proj.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 1024,
+        "category": "weights",
+        "id": 2899,
+        "label": "card0:draft:weight:blk.0.attn_q_norm.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 1024,
+        "category": "weights",
+        "id": 2901,
+        "label": "card0:draft:weight:blk.0.attn_k_norm.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 512,
+        "category": "weights",
+        "id": 2903,
+        "label": "card0:draft:weight:blk.0.indexer.q_norm.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 512,
+        "category": "weights",
+        "id": 2905,
+        "label": "card0:draft:weight:blk.0.indexer.k_norm.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 31457280,
+        "category": "weights",
+        "id": 2907,
+        "label": "card0:draft:weight:blk.0.attn_output.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 40960,
+        "category": "weights",
+        "id": 2916,
+        "label": "card0:draft:weight:blk.0.hc_ffn_norm.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 6553600,
+        "category": "weights",
+        "id": 2918,
+        "label": "card0:draft:weight:blk.0.hc_ffn_down.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 6553600,
+        "category": "weights",
+        "id": 2921,
+        "label": "card0:draft:weight:blk.0.hc_ffn_up.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 81920,
+        "category": "weights",
+        "id": 2924,
+        "label": "card0:draft:weight:blk.0.hc_ffn_inject.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 2621440,
+        "category": "weights",
+        "id": 2926,
+        "label": "card0:draft:weight:blk.0.ffn_gate_inp.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 1048576000,
+        "category": "weights",
+        "id": 2928,
+        "label": "card0:draft:weight:blk.0.ffn_gate_exps.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 1048576000,
+        "category": "weights",
+        "id": 3179,
+        "label": "card0:draft:weight:blk.0.ffn_up_exps.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 1048576000,
+        "category": "weights",
+        "id": 3430,
+        "label": "card0:draft:weight:blk.0.ffn_down_exps.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 3276800,
+        "category": "weights",
+        "id": 3681,
+        "label": "card0:draft:weight:blk.0.ffn_gate_shexp.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 3276800,
+        "category": "weights",
+        "id": 3683,
+        "label": "card0:draft:weight:blk.0.ffn_up_shexp.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 3276800,
+        "category": "weights",
+        "id": 3685,
+        "label": "card0:draft:weight:blk.0.ffn_down_shexp.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 5120,
+        "category": "weights",
+        "id": 3687,
+        "label": "card0:draft:weight:blk.0.ffn_gate_inp_shexp.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 40960,
+        "category": "weights",
+        "id": 3689,
+        "label": "card0:draft:weight:output_hc_norm.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 6553600,
+        "category": "weights",
+        "id": 3691,
+        "label": "card0:draft:weight:output_hc_down.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 6553600,
+        "category": "weights",
+        "id": 3694,
+        "label": "card0:draft:weight:output_hc_up.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 10240,
+        "category": "weights",
+        "id": 3697,
+        "label": "card0:draft:weight:mtp.pre_fc_norm_embedding.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 40960,
+        "category": "weights",
+        "id": 3699,
+        "label": "card0:draft:weight:mtp.pre_fc_norm_hidden.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 13107200,
+        "category": "weights",
+        "id": 3701,
+        "label": "card0:draft:weight:mtp.fc_embedding.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      },
+      {
+        "bytes": 13107200,
+        "category": "weights",
+        "id": 3706,
+        "label": "card0:draft:weight:mtp.fc_hidden.weight",
+        "lifetime": "process",
+        "live": true,
+        "memory": "device"
+      }
+    ],
+    "draft_weights_by_group": {
+      "attention_and_norms": 102894592,
+      "experts": 3145728000,
+      "hc_and_norms": 39608320,
+      "input_merge_and_norms": 26265600,
+      "router_and_shared_expert": 12456960
+    },
+    "draft_workspace_bytes": 17711414,
+    "embedding_output_bytes_already_in_workspace": 5120,
+    "embedding_weight_additional_bytes": 0,
+    "historical_admission_available_bytes": {
+      "KD": 120565194752,
+      "WS": 120916029440,
+      "WS128x": 120528850944
+    },
+    "host_reserve_bytes": 8589934592,
+    "interpretation": "Exact payload arithmetic for declared conservative layout; no new allocation/device-fit test. Existing workspace/control allowances retained, not double charged.",
+    "largest_source_tensor_bytes": 62914560,
+    "measured_shadow_bytes": 646889472,
+    "official_draft_source_bytes": 2698026496,
+    "options": {
+      "resident_draft_experts": {
+        "cache_capacity_added_bytes": 0,
+        "device_margin_after_1_5GB_reserve_bytes": 754127600,
+        "exactness_required_bytes": 88969383452,
+        "expert_pool_added_bytes": 0,
+        "extra_device_payload_bytes": 4324083796,
+        "extra_direct_host_payload_bytes": 20492,
+        "extra_host_admission_bytes": 3336673292,
+        "fits_with_retained_allowances": false,
+        "pointer_table_admission_bytes": 0,
+        "pointer_table_device_bytes": 0,
+        "proposed_device_bound_bytes": 29745872400,
+        "proposed_device_payload_bytes": 28611816776,
+        "timing_margins_vs_observed_available_bytes": {
+          "KD": -1080386588,
+          "WS": -729551900,
+          "WS128x": -1116730396
+        },
+        "timing_required_bytes": 121645581340,
+        "timing_with_observed_shadow_bytes": 122292470812
+      },
+      "shared_cache_draft_experts": {
+        "cache_capacity_added_bytes": 0,
+        "device_margin_after_1_5GB_reserve_bytes": 3899806448,
+        "exactness_required_bytes": 88969457300,
+        "expert_pool_added_bytes": 3145728000,
+        "extra_device_payload_bytes": 1178380372,
+        "extra_direct_host_payload_bytes": 3145773188,
+        "extra_host_admission_bytes": 3336747140,
+        "fits_with_retained_allowances": false,
+        "pointer_table_admission_bytes": 49152,
+        "pointer_table_device_bytes": 24576,
+        "proposed_device_bound_bytes": 26600193552,
+        "proposed_device_payload_bytes": 25466113352,
+        "timing_margins_vs_observed_available_bytes": {
+          "KD": -1080460436,
+          "WS": -729625748,
+          "WS128x": -1116804244
+        },
+        "timing_required_bytes": 121645655188,
+        "timing_with_observed_shadow_bytes": 122292544660
+      }
+    },
+    "passed": false,
+    "prefix_rows": 91392,
+    "prefix_shared_bytes": 308904960,
+    "private_state_reservations": {
+      "draft_private_image": 27410742,
+      "target_and_draft_copy_tables": 262144,
+      "target_two_private_rows": 942046696
+    },
+    "target_mutable_row_bytes": 471023348,
+    "transaction_allowance_remaining_bytes": 104022242
+  },
+  "model_executed": false,
+  "schema": "packet58h.feasibility.v1",
+  "timing": {
+    "baseline_equivalent_ms": 41.64448452890514,
+    "baseline_scope": "WS128x shared-host exactness window, 128 output tokens; diagnostic timing only",
+    "baseline_tok_s": 24.01278371703478,
+    "caveat": "Cross-run diagnostic models, not a measured 58h rate. No extra draft feedback, cache miss, eviction, causal-copy or host overhead charged.",
+    "combined_M2_M1_ratio": 1.700306979525866,
+    "decision_policy": "Primary estimate transfers the differing-route M2/M1 ratio; constant-overhead and causal-command scenarios test sensitivity.",
+    "draft_ms": 1.7947473012216457,
+    "formula": "reward=1+a; hit cycle=D+V2; mean cycle=D+V2+(1-a)*R; no rank overlap",
+    "max_verify_ms": 60.26780737944326,
+    "measured_miss_mode": "zero-copy",
+    "passed": false,
+    "proxies": [
+      {
+        "H1_device_sum_ms": 12.5557,
+        "H1_wall_ms": 12.731,
+        "H2_device_sum_ms": 21.8869,
+        "H2_wall_ms": 22.1411,
+        "rank": 0,
+        "samples": 39
+      },
+      {
+        "H1_device_sum_ms": 13.863,
+        "H1_wall_ms": 14.1011,
+        "H2_device_sum_ms": 23.033,
+        "H2_wall_ms": 23.3429,
+        "rank": 1,
+        "samples": 39
+      }
+    ],
+    "required_tok_s": 28.8,
+    "required_verify_ratio": 1.4471978237024836,
+    "restore68_ms": 0.980923,
+    "scenarios": {
+      "causal71c_command_no_onecard_penalty": {
+        "clears_28_8": false,
+        "cycle_ms": 65.44171400861806,
+        "percent_vs_24": 13.803659859810868,
+        "predicted_tok_s": 27.312878366354607,
+        "rejection_restore_expectation_ms": 0,
+        "verify_ms": 63.646966707396416
+      },
+      "constant_onecard_overhead_device_no_rollback": {
+        "clears_28_8": true,
+        "cycle_ms": 61.94043183012678,
+        "percent_vs_24": 20.23659412166785,
+        "predicted_tok_s": 28.856782589200282,
+        "rejection_restore_expectation_ms": 0,
+        "verify_ms": 60.145684528905136
+      },
+      "constant_onecard_overhead_device_with_restore68": {
+        "clears_28_8": false,
+        "cycle_ms": 62.14897451516615,
+        "percent_vs_24": 19.833136745681657,
+        "predicted_tok_s": 28.759952818963598,
+        "rejection_restore_expectation_ms": 0.20854268503937015,
+        "verify_ms": 60.145684528905136
+      },
+      "constant_onecard_overhead_wall_no_rollback": {
+        "clears_28_8": false,
+        "cycle_ms": 62.091131830126784,
+        "percent_vs_24": 19.94477056812547,
+        "predicted_tok_s": 28.786744936350114,
+        "rejection_restore_expectation_ms": 0,
+        "verify_ms": 60.296384528905136
+      },
+      "constant_onecard_overhead_wall_with_restore68": {
+        "clears_28_8": false,
+        "cycle_ms": 62.29967451516615,
+        "percent_vs_24": 19.54326599036691,
+        "predicted_tok_s": 28.690383837688056,
+        "rejection_restore_expectation_ms": 0.20854268503937015,
+        "verify_ms": 60.296384528905136
+      },
+      "scale_device_ratio_no_rollback": {
+        "clears_28_8": false,
+        "cycle_ms": 72.603155004476,
+        "percent_vs_24": 2.5782772280440236,
+        "predicted_tok_s": 24.618786534730564,
+        "rejection_restore_expectation_ms": 0,
+        "verify_ms": 70.80840770325435
+      },
+      "serial_M1_no_rollback": {
+        "clears_28_8": false,
+        "cycle_ms": 85.08371635903192,
+        "percent_vs_24": -12.468485388518047,
+        "predicted_tok_s": 21.00756350675567,
+        "rejection_restore_expectation_ms": 0,
+        "verify_ms": 83.28896905781028
+      }
+    },
+    "transferred_acceptance": 0.7874015748031495
+  }
+}
