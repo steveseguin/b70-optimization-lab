@@ -53,7 +53,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.2.0.dev5"
+__version__ = "1.2.0.dev6"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -1088,10 +1088,11 @@ class Keeper:
         asked_rules = self.rule_scan is None         # --rule-scan: asked once
         rules_seen: list[str] = []
         earlier: dict | None = None                  # the reply before an asked-for one (see notesdelta.merge_replies)
+        bare_again = False                           # an empty asked-for reply asked once more without thinking
         spelt: dict[str, str] = {}                   # misspelled names of this cut and what was meant (notesdelta.respell)
         why, new, info, near = "no reply", "", {}, None
         delta: dict | None = None
-        for attempt in (1, 2, 3, 4, 5):
+        for attempt in (1, 2, 3, 4, 5, 6):        # the sixth for the retry without thinking (campaign 44)
             out: dict[str, Any] = {"model": self.notes_model or model, "messages": req,
                                    "max_tokens": self.notes_max_tokens, "temperature": 0}
             if tools:
@@ -1130,6 +1131,14 @@ class Keeper:
                 part = nd.parse_delta(text, need_changes=False)      # its rules still count, if that section is complete
                 if part and re.search(r"(?m)^\W*(CHANGES|OPEN)\W*$", text):
                     rules_seen += [r for r in part["rules"] if not any(nd.same_rule(r, x) for x in rules_seen)]
+            if delta is None and earlier is not None and thinking and (not text or finish == "length") and not bare_again:
+                # An asked-for reply that thought and wrote nothing: once more without thinking, as for a first reply,
+                # before the reply before it stands. (Campaign 44, 2M, seed 2: shown the archived entry `penike87 went
+                # up by seventy-two`, the reply came back empty, the reply before it stood with `638 - (item 317
+                # increase, amount unknown) = unknown`, and that line stayed in 95 versions: three answers lost.)
+                bare_again, thinking = True, False
+                log({"event": "in-place notes: an empty reply asked again without thinking", "attempt": attempt})
+                continue
             if delta is None and earlier is not None and (not text or finish == "length" or asked_layout):
                 # Asked about some lines of a reply that was in the layout, the model wrote nothing usable (X32n,
                 # seed 1: an empty reply, twice; the whole cut then went to the full rewrite, which lost a change).

@@ -316,6 +316,14 @@ a STATE line of its own and took every change, while the real name's line kept i
 four questions were answered from that stale line. Replayed through the 973 notes replies of ten earlier sessions,
 nothing changes; in the campaign 43 session, 61 replies get the join and nothing else.
 
+1.2.0.dev6 (2026-10-18), from lab campaign 44 (2M, seed 2, 411/423): when a notes reply that was asked for (after a
+check, or with the archived entries a line waits on) thinks and writes nothing, it is asked once more without
+thinking before the reply before it stands; the notes call may take six replies instead of five, so the retry
+leaves every check its turn. In that run the reply to the lookup that showed `penike87 went up by seventy-two` came
+back empty, the reply before it stood with `638 - (item 317 increase, amount unknown) = unknown`, and that line stayed
+in 95 NOTES versions: the audit and two questions about the counter were lost. Empty asked-for replies with thinking
+on came 42 times in 17 recorded sessions (one to six per long run); until now each one let the earlier reply stand.
+
 Also unreleased (1.1.1.dev1, 2026-10-17): a NOTES line whose new value states no number of its own (only item or
 ticket numbers, as in `audit reversal of the entry in item 4, amount not yet known, must recall items 4/5`) no longer
 replaces a number the NOTES hold: the number stays and the line is kept as a remark on it. Before, the value became the

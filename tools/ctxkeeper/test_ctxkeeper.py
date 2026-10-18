@@ -172,6 +172,29 @@ class InPlace(unittest.TestCase):
         self.assertFalse([r for r in model.notes_requests if str(r["messages"][-1].get("content")).startswith("Some lines")])
         self.assertIn("abcd03: 21 (reversal of the entry in item 3", s.state["notes"])
 
+        # Campaign 44 (2M, seed 2): the reply to the lookup thought and wrote nothing, and the reply before it, which
+        # waited on the entry, stood for the rest of the run. An empty asked-for reply is asked once more without thinking.
+        class Blank(Auditor):
+            def __call__(self, body):
+                last = str(body["messages"][-1].get("content") or "")
+                if last.startswith("Some lines of your CHANGES wait") and (body.get("chat_template_kwargs") or {}).get("enable_thinking"):
+                    self.requests.append(body)
+                    self.notes_requests.append(body)
+                    return reply("")
+                return super().__call__(body)
+
+        model = Blank()
+        keeper = self.keeper(model, recall_label=r"(?m)^ITEM (\d+):", recall_unit="item", notes_checks="near",
+                             notes_thinking=True, lookups=True)
+        for n in range(1, 25):
+            keeper.complete({"model": "m", "messages": talk(n)})
+        s = next(iter(keeper.sessions.values()))
+        asked = [r for r in model.notes_requests if str(r["messages"][-1].get("content")).startswith("Some lines of your CHANGES wait")]
+        self.assertEqual([r["chat_template_kwargs"]["enable_thinking"] for r in asked], [True, False])
+        self.assertIn("abcd03: 0", s.state["notes"])
+        self.assertNotIn("not yet known", s.state["notes"])
+        self.assertIn("an empty reply asked again without thinking", self.events(keeper))
+
     def test_lookups_show_the_archived_entry_a_doubted_line_cites(self):
         """Campaign 33b (quiet audits, seed 1): a reversal was written from memory with a wrong amount, `217 + 10 = 227
         (... the decrease of 10 entered in item 34)` for a decrease of 28; asked to read the item again, the model
@@ -790,7 +813,7 @@ class InPlace(unittest.TestCase):
         self.assertEqual(s.state["inplace_failed"], 0)
 
     def test_no_usable_second_reply_means_the_first_stands_without_the_questioned_line(self):
-        model = self.Tampering({1: ["abcd01: 999"]}, on_check=[""])
+        model = self.Tampering({1: ["abcd01: 999"]}, on_check=["", ""])            # empty with thinking and without
         keeper = self.keeper(model, notes_checks="near")
         s = self.run_conversation(keeper, 6)
         self.assertEqual((s.state["inplace_failed"], s.state["inplace_reasks"]), (0, 1))
@@ -800,6 +823,7 @@ class InPlace(unittest.TestCase):
         self.assertIn("abcd00: 0", s.state["notes"].splitlines())
         ev = self.events(keeper)
         self.assertIn("no usable second reply, the first stands", ev)
+        self.assertIn("an empty reply asked again without thinking", ev)
         self.assertIn("abcd01: 999", ev)
 
     def test_a_number_the_turns_do_not_state_is_left_out_after_the_second_reply(self):

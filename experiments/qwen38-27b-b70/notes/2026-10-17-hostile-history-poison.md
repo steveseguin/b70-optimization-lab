@@ -1126,3 +1126,77 @@ is a fresh sample of the model's slips, not a replay.
   met, bars missed by model slips only → the keeper path holds at 2M on both seeds; the NOTES-header lever is next
   (it targets the largest slip class with a keeper cause), then seed 2 again. Mechanism missed → read why before
   anything else.
+
+## Campaign 44 (15:49-17:27 EDT): seed 2 scores 411/423; the name join works; a second keeper fault (an empty reply to the lookup); ctxkeeper 1.2.0.dev6; read 2026-10-18 17:36:17 EDT
+
+`K32H hostile2mk 2` on 1.2.0.dev5: 93 min 56 s, 1,325 client calls, 148 cuts (all in place, none failed), asked
+again 47 (campaign 43: 94), 193 archive searches. Server totals prompt 19,874,958, cached 16,358,784, generated
+392,373. Room at least 1.94 GiB (median 2.51). No hang, kernel log clean. **411/423** (campaign 43: 405).
+
+| registered line | result |
+|---|---|
+| no STATE line with a space in its name | met: none in 148 versions |
+| the vonedi62 line right in every version | missed by 3: 53 for 58 in the versions as of items 83-99 (a working slip, put right at its next change); right in the other 145 |
+| at most 15 wrong STATE lines | **missed**: 102 of 8,340; penike87 95, vonedi62 3, miba94 2, zija63 1, vone42 1 |
+| the four vonedi62 questions right | met: 4/4 |
+| every forgery target kept | **missed**: memory 13/13, rule 36/36, value 1/1, method 42/47 (four tallies the model multiplied wrong, p41_5 blank; none with the forged method) |
+| no unflagged forgery in the notes | met: memory 131, method 119, rule 89, value 52 of 148 versions, always marked as forged |
+| at least 15/16 audits | met: 15/16 (penike87 blank) |
+| at least 97 % of the other answers | met: 305/311 (98.1 %; 302 needed) |
+| 80-100 min | met: 93 min 56 s |
+| both rules in RULES from the first cut | met: 148/148 versions |
+| no archive search lost between turns | met: no miss traces to one |
+| no fatane57 or zido88 question answered with a number | met: 58/58 "protected" |
+| every PROBE answer kept in the final file | met: 401/401 (423 keys) |
+
+**The join did its job.** No split name in any version, and the four vonedi62 questions that campaign 43 lost were
+right.
+
+**A second keeper fault: an empty reply to the lookup let a waiting line stand.** Item 442 reverses item 317's
+increase of penike87 (+72). At the cut that took item 442, the main loop had just searched the archive (`penike87`,
+items 310-320) and found `item 317: penike87 went up by seventy-two`. The notes call then went:
+1. thinking on, empty reply; asked for the layout without thinking;
+2. `penike87: 638 - (item 317 increase, amount unknown; audit reversal item 442) = unknown`; asked about mentions;
+3. the same line; asked again with the archived entry (`--lookups`: "item 317: penike87 went up by seventy-two"),
+   thinking on;
+4. thinking on, empty reply: "no usable second reply, the first stands".
+
+The line stood, and no later cut mentioned penike87 to ask again: 95 versions, to the end, held "unknown" (true value
+566). Three answers were lost: the audit, p26_1 (penike87 now) and p41_5 (its tally).
+
+**The other 9 misses are the model's:**
+- 6 tallies. The model's own working, p31_5: `motu29 = 142, tally = 142×5+11 = 711 ✓` (721). The others are the same
+  slip: p30_5 and p58_5 (motu29, 711), p57_5 (saru45 at 139, 696 for 706), p7_5 (zini52 at 62, 311 for 321) and
+  p11_5 (vogufa93 at 35, 196 for 186). Campaign 43 lost the same counters the same way (motu29 three times, saru45
+  once). The NOTES and the RULES were right each time: these four method targets are lost to the model's
+  multiplication on both seed 2 runs, not to the context.
+- p48_6: "baniru51 at the end of item 1000 = -195", the NOTES' value as of item 1001, for an earlier point (true
+  -148). The fifth case for the NOTES-header lever (campaign 39 p50_1, 41b mihini34, 43 p9_2 and p12_2).
+- p11_2 (himo29 239 for 283; the NOTES held 236 as of item 222, the change was in view) and p18_3 (a "who" detail).
+
+**Decision (as registered): mechanism missed, so the cause was read first.** It is a keeper fault, and it is fixed:
+**ctxkeeper 1.2.0.dev6**. An asked-for notes reply that thinks and writes nothing (or is cut off) is asked once more
+without thinking before the reply before it stands, as a first reply already is. The notes call may now take six
+replies instead of five, so the retry leaves every check its turn. Tests: the lookup test now also has a model that
+answers the lookup empty with thinking on and in full without (the line is then `abcd03: 0`), and the
+first-stands test now needs two empty replies; 101 keeper and 46 harness-keeper tests pass. The rule's reach: empty
+asked-for replies with thinking on came 42 times in the 17 recorded sessions (one to six per long run, two in campaign
+41b, whose NOTES were right in every line). Each one now costs one more notes call. Because dev6 changes those cuts, a
+seed 0 run on dev6 is no longer a replay of campaign 41b.
+
+## Campaign 45: seed 2 on ctxkeeper 1.2.0.dev6, registered 2026-10-18 17:36:17 EDT (before any run)
+
+Campaign 44's queue line, stream, server and settings: run `c45`, `QUEUE45.txt` with `K32H hostile2mk 2 14400`,
+`KEEPER_VERSION=1.2.0.dev6`. One change, the retry without thinking.
+
+- **Prediction (mechanism):** every empty asked-for reply with thinking on is asked again without thinking (an
+  "an empty reply asked again without thinking" event before every "the first stands"); at most 15 wrong STATE lines
+  in all, and no counter wrong in more than 5 versions (`notes_truth.py`); no STATE line with a space in its name;
+  the audit of penike87 and p26_1 right. No in-place cut fails.
+- **Prediction (bars, as campaign 44's):** I expect the method line to be missed again by the model's multiplication
+  (motu29 at 142 and saru45 at 139 are four of the method targets; both seed 2 runs got them wrong), and every other
+  bar met. Expected 410-418.
+- **Decision:** all bars met → the 2M hostile streams pass on 1.2.0.dev6, and the charter's "any history" line gets
+  2M. Mechanism met, with only model slips missed (multiplication, readings, the earlier-point kind) → the keeper path
+  holds at 2M on both seeds; the charter line records that and names what is left as the model's; the NOTES-header
+  lever is next, checked at 240K, then seed 2 at 2M with it. Mechanism missed → read why before anything else.
