@@ -94,3 +94,24 @@ Missing entry evidence earns no busy credit and is labeled unconfirmed.
 Report named blocker causes only when recorded, otherwise `unknown`; do not
 infer a historical hold from the current marker. These are occupancy proxies,
 not GPU hardware utilization measurements.
+
+## Post-run report checklist (opsreview5, October 18)
+
+Every **READY-FOR-DEVICE** also requires
+`ops/rehearse_entry.py <proposal> --report --json`, under the CPU limits above.
+Retain the receipt: both smoke and bracket reports must pass, as must the
+native-entry checks. A completed device run is not useful if its report fails.
+
+This gate runs the real Python entry and parsers with synthetic evidence in a
+temporary directory. It replaces admission and prior-smoke prerequisites,
+then executes the packet's unchanged report block and late imports. Each kind
+uses a fresh interpreter. It flags duplicate module names between the packet
+root and subdirectories on its import path, including unused names. It blocks
+model/device reads, subprocesses and writes outside scratch. Unknown report
+layouts or fixture schemas fail; extend the shared adapter and tests before
+calling those packets ready. The separate CPU arm-sequence gate still applies.
+
+The oracle import prelude stops before reading its live evidence. This tests
+its preceding import/path changes, not oracle seals or later data-dependent
+imports. New entry layouts must qualify that boundary in their regression test.
+Work note: `notes/2026-10-18-own-runtime-opsreview5.md`.

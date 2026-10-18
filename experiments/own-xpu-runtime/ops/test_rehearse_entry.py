@@ -102,5 +102,102 @@ class RehearsalTest(unittest.TestCase):
         self.assertFalse(result['passed'])
 
 
+class ReportRehearsalTest(unittest.TestCase):
+    PACKET = 'experiments/own-xpu-runtime/stage2/packet142-class-layout'
+    FIX = '3d08f0a2289b32e5bb892df60690287c12e4110b'
+
+    def job(self, script):
+        return dict(name='report-test-B', lane='B', argv=[
+            '/usr/bin/python3', '-B', str(script), '--variant', 'attention-order600',
+            '--kind', 'smoke', '--lane', 'B', '--output', '/must-not-write',
+            '--authorized-device-window'])
+
+    def historical_copy(self, root, revision):
+        # No checkout/worktree and no packet writes. Only source and its small
+        # import-time registry, never retained model/device/oracle evidence.
+        names = subprocess.check_output(['git', '-c', 'core.packedGitWindowSize=16m', '-c', 'core.packedGitLimit=64m', 'ls-tree', '-r', '--name-only',
+            revision, '--', self.PACKET,
+            'experiments/own-xpu-runtime/stage1/packet4-prep/driver/window_driver.py'], cwd=entry.ROOT, text=True).splitlines()
+        for name in names:
+            if not (name.endswith('.py') or name.endswith(('/kernel-registry.json', '/launch-environment.json'))):
+                continue
+            target = root / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(subprocess.check_output(['git', '-c', 'core.packedGitWindowSize=16m', '-c', 'core.packedGitLimit=64m', 'show', revision + ':' + name],
+                                                       cwd=entry.ROOT))
+        return root / self.PACKET / 'v5/bracket_job.py'
+
+    def test_history_before_fix_fails_and_after_fix_passes_both_reports(self):
+        for revision, passed in [(self.FIX + '^', False), (self.FIX, True)]:
+            with self.subTest(revision=revision), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                script = self.historical_copy(root, revision)
+                result = entry.rehearse_report(self.job(script), launch_env.environment(), root)
+                self.assertEqual(result['passed'], passed, result)
+                self.assertEqual([r['kind'] for r in result['kinds']], ['smoke', 'bracket'])
+                if passed:
+                    self.assertTrue(all(r['real_entry_main'] for r in result['kinds']), result)
+                if not passed:
+                    self.assertEqual(result['kinds'][0]['error_type'], 'ImportError', result)
+                    self.assertTrue(all(r['collisions'] for r in result['kinds']), result)
+
+    def test_collision_even_when_unused_schema_errors_and_no_model_reads(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            script = self.historical_copy(root, self.FIX)
+            job = self.job(script)
+            top = script.parent.parent / 'unused_collision.py'
+            shadow = script.parent / top.name
+            top.write_text('VALUE = 1\n')
+            shadow.write_text('VALUE = 2\n')
+            result = entry.rehearse_report(job, launch_env.environment(), root)
+            self.assertFalse(result['passed'])
+            self.assertTrue(all(r['report_completed'] for r in result['kinds']), result)
+            self.assertEqual(result['kinds'][0]['collisions'][0]['module'], 'unused_collision')
+            top.unlink()
+            shadow.unlink()
+            screen = script.with_name('screen.py')
+            source = screen.read_text()
+            for statement, error in [
+                    ("raise AttributeError('secret-error-text')", 'AttributeError'),
+                    ("raise KeyError('secret-error-text')", 'KeyError'),
+                    ("open('/mnt/model.safetensors', 'rb')", 'PermissionError'),
+                    ("__import__('subprocess').run(['/usr/bin/true'])", 'PermissionError'),
+                    ("open('/tmp/opsreview5-forbidden-write', 'w')", 'PermissionError')]:
+                with self.subTest(statement=statement):
+                    screen.write_text(source.replace('def report_completed(output, record, identity, coordination):',
+                        'def report_completed(output, record, identity, coordination):\n    ' + statement))
+                    result = entry.rehearse_report(job, launch_env.environment(), root)
+                    self.assertFalse(result['passed'], result)
+                    self.assertTrue(all(r['error_type'] == error for r in result['kinds']), result)
+                    self.assertNotIn('secret-error-text', json.dumps(result))
+
+    def test_report_gate_is_required_in_combined_result(self):
+        base = RehearsalTest()
+        base.setUp()
+        runner = lambda argv, **kw: subprocess.CompletedProcess(argv, 0, 'GNU coreutils', '')
+        with patch.object(entry, 'rehearse_report', return_value=dict(passed=False)) as report:
+            result = entry.rehearse(base.job, base.queue, launch_env.library_path(), runner, report=True)
+        self.assertFalse(result['passed'])
+        self.assertTrue(all(b['passed'] for b in result['binaries']))
+        report.assert_called_once()
+
+    def test_static_packages_and_off_path_directories(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for path in ('shared.py', 'v5/shared/__init__.py', 'unused/shared.py'):
+                target = root / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text('')
+            rows = entry.duplicate_modules(root, [str(root), str(root / 'v5')])
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0]['module'], 'shared')
+            self.assertEqual(rows[0]['shadow'], str(root / 'v5/shared/__init__.py'))
+
+    def test_unsupported_entry_fails(self):
+        result = entry.rehearse_report(dict(argv=['/usr/bin/true']), launch_env.environment())
+        self.assertFalse(result['passed'])
+
+
 if __name__ == '__main__':
     unittest.main()
