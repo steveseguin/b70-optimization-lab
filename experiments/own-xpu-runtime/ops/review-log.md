@@ -714,3 +714,24 @@ STOP DOING acknowledged:
 - brackets from a lineage whose report step just failed;
 - holds gated on Codex exit instead of a stable READY;
 - further weight-layout variants.
+
+## Review 33 (2026-10-18 ~23:05 UTC): ACT
+
+Device occupancy over 2 h was 51% of wall time (21.7% of card-minutes); about 94 min over 6 h had nothing running on any card. One-card lever choice worked: packet58ab HC fusion +3.21% exact, and the packet58ad chain posted 30.396 (submitted, `cmvefq3ep009orf0186k21lba`).
+
+At 23:06 `onecard-hold-p58ab3` queued `packet58ae-combined-A` although its READY said `ready_for_device: false`. The lane-A driver exited on that row's fresh fault review, and the hold then waited, with no deadline, holding PAUSE-B. Fault count 2.
+
+Actions:
+1. **Deadlock cleared (23:07, before the verdict arrived):** hold3 stopped, the p58ae row removed, PAUSE-B removed, lane-A driver A29 started. packet149's lane-B smoke started at 23:07:32. Lesson in memory: waiters check READY contents.
+2. **Codex p150 (2-card):**
+   - (b) a vendored packet136 one-load skip/zero-input differencing probe splitting rank 0's out-of-layer time on the **current** build. It is device-ready ≤ 90 min with a separate READY, and `autoq-p150-split` queues it on lane B only when `ready_for_device` is true and stable.
+   - (a) if packet149's measured exchange cost is ≤ ~1 ms/miss, a shared-correction prototype that splits whole routed-expert output rows across the ranks, exact by construction, under its own seal.
+3. **Rule:** cap CPU feasibility at ~45 min. Candidates with a ≥ 3% ceiling and a build under 3 h go to a smoke plus a five-view one-load bracket. Forecasts miss in both directions; HC fusion measured +3.21% vs a 2.40–3.17% forecast.
+4. **Codex opswaiters:** `lanequeue.py` turns pre-START check failures into `REFUSED-PREDEVICE` and continues, instead of the driver exiting. A new `ops/coord_wait.py` provides `ready()` (`ready_for_device` true), deadline-bounded `wait_event`, a `hold` context that always removes its own PAUSE and thaws, and `driver_alive` alerts.
+
+STOP DOING acknowledged:
+- queuing packets whose READY says false;
+- unbounded waits holding PAUSE or freezes;
+- the Codex prep queue at 0–1 jobs when GPU work ends within 1 h;
+- CPU-only closures without a 15–20 min device test;
+- more class-layout/cold-gap micro levers.
