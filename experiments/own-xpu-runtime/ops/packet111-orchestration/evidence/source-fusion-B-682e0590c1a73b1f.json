@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet109-other-fusion/compare.py",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet109-other-fusion/evidence/p109-v5-B"
+  ],
+  "returncode": 1,
+  "stdout": "",
+  "stderr": "Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet109-other-fusion/compare.py\", line 132, in <module>\n    print(json.dumps(load(args.output),indent=2))\n                     ^^^^^^^^^^^^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet109-other-fusion/compare.py\", line 103, in load\n    window=read(output/'window.json')\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet109-other-fusion/common.py\", line 36, in read\n    return json.loads(Path(path).read_text())\n                      ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/pathlib.py\", line 1029, in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/pathlib.py\", line 1015, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet109-other-fusion/evidence/p109-v5-B/window.json'\n",
+  "device_executed": false
+}
