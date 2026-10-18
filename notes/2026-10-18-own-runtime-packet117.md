@@ -51,8 +51,14 @@ The selection's `hc_gate=wide` dispatches `p73hc`, not the old single-row kernel
   different output count, arithmetic and epilogue. Similar useful bytes do
   not imply similar instruction or occupancy cost.
 
-Register/spill and occupancy conclusions await linked offline compiler
-metadata. No hardware occupancy or bandwidth counter is claimed.
+The final linked AOT report finds both HC kernels use 128 GRFs, one barrier,
+eight EU threads, no flag spills, no scratch messages and no per-thread
+private-memory allocation. The final candidate keeps 64 bytes of products
+plus 32 bytes of gates in local memory. This is compiler allocation metadata,
+not measured occupancy. No hardware occupancy or bandwidth counter is claimed.
+[HC-only extraction](../experiments/own-xpu-runtime/stage2/packet117-hc-gate/evidence/hc-register-summary.json)
+links the complete assembly and zeinfo report; unrelated emitted router kernels
+are not part of this claim.
 
 ## Distinct mechanism and exactness contract
 
@@ -69,9 +75,12 @@ keep `p73hc::chains`, its two-row pairing, original weight layout, SG32 tree,
 WG256 geometry and one launch. Broadcast the two already-reduced FP32 roots
 to existing lanes 0 and 1. Each computes one unchanged BF16-rounded gate,
 sigmoid and multiplication. Store sixteen independent FP32 products in
-64 bytes of local memory, then retain the same barrier and original
+64 bytes of local memory and retain the original 32-byte gate scratch,
+then keep the same barrier and original
 `(((0+p0)+p1)+p2)+p3`, divide-by-four, BF16 mix. Thus the longest serial
-sigmoid sequence becomes one call instead of four. No integer dot, changed
+sigmoid sequence becomes one call instead of four on finite inputs. Any
+nonfinite product takes the original scalar mix path for exact NaN payload
+selection. No integer dot, changed
 scale, new sum tree, weight cache, transposition, or large-GRF experiment.
 
 The expected value is enough to justify one micro: the supplied gate event
@@ -103,8 +112,38 @@ time uses packet94's compile-turn lock. Root free must stay >=25 GB and the
 whole packet build <=250 MB. Binaries and temporary mirrors are ignored;
 compact receipts, patches and source are retained.
 
-Status: implementation and queue receipts in progress; GNU initial checks
-passed. Intel and native compilation wait for the coordinator's whole-host
-hold to release. The initial waiting CPU build was stopped by its exact PID
-and restarted after the final device-only scheduling refinement; no GPU child
-existed. No queue proposal is ready until it compiles, seals and temp-plans.
+## Micro milestone
+
+The device binary compiles and both fresh B jobs pass the real coordinator
+planner on a temporary queue. The proposal is
+[`proposed-p117-micro-B.txt`](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p117-micro-B.txt).
+Expected duration is 2–4 minutes per process; watchdog 1,200 seconds, five
+times the upper estimate. No GPU binary ran here.
+
+Final GNU and Intel gates each pass **16 cases, 16,384 raw FP32 chain checks,
+and 409,600 exact output bytes per fresh process**, twice per compiler.
+The unchanged production itself chooses different exceptional NaN payloads
+between compilers in scenarios 8, 14 and 15. Each candidate matches its own
+compiler's unchanged production byte for byte; repeated outputs are stable,
+and finite outputs match across compilers. No tolerance or canonicalization
+was added. [Receipt](../experiments/own-xpu-runtime/stage2/packet117-hc-gate/evidence/cpu-byte-identity.json).
+
+The original eight cases missed a mixed-NaN failure. The expanded GNU test
+found the first differing mix byte at offset 20,480 in scenario 8. The
+unconditional product array and failing bytes are preserved under
+`evidence/rejected-unconditional-products/`; they are not qualified. The
+retained candidate recomputes the original scalar mix when a product is
+nonfinite. Its direct device tests include all sixteen control/exceptional
+cases and compare complete mutable state before timing. Native equality
+remains unmeasured until the coordinator executes the proposal.
+
+The first micro compile also exposed a missing explicit kernel-guard include;
+its log is retained and the corrected build passes. A source change while an
+earlier compile was waiting caused the source-hash guard to refuse that
+stale build. The final build regenerates the mirror inside its compiler turn.
+Eight fail-closed micro-receipt tests pass. The compiler's linked HC allocation
+report remains spill-free after the exceptional fallback.
+
+The v5 copy is still being validated in parallel. Its launch invokes micro
+qualification in a fresh Python process to avoid module-name collisions with
+its own wrapper. Full model exactness and speed remain pending.

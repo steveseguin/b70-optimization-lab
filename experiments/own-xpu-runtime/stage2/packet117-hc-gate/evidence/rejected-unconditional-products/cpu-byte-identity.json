@@ -1,0 +1,340 @@
+{
+  "schema": "packet117.cpu-byte-identity.v1",
+  "passed": false,
+  "device_executed": false,
+  "views": {
+    "p117": {
+      "runs": []
+    }
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/cpu.cpp": "8119236de79d919e34e7cdc5e2dda14cd46986b0bb52748dd5c8eee07779080c",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p65_expert.hpp": "44e357e7d8ec32ef116c54f8fb3c51d7074bf0acfc46289f721c79e9d902f22e",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p49d_expert.hpp": "f55602bde74c92b955911267b5de89011b8ac1e0778c787676e66cfa47c123f9",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/adapter.hpp": "ed38260c7ca1ddeab55f465e2635ae9f97f31970424b412d7e9ba9ca071a63be",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/performance.hpp": "97048551886ee82850180ef9a7981259d80569fb82981c16e8473793739b2137",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/runtime_kernels.hpp": "f56dff0f8aaa0647857d077dd1fd10ec1ed573403d1cdb7cdd2b4db194ce3538",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": "1044e1a57d101d35a1d02e7fd911c3db9e5faed41248255ac61af52528f98f74",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/owner.hpp": "ee69610bda3e786e2aecf9888430541879af2d4c51cb64329784cb58d3ba1faf",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/owner_api.hpp": "819d24483877eb31b211312330e6709c9d283a4fe0ec7b8bf016eeb8122c76ed",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/argument_block.hpp": "f2cc8a5709ae443e2fcaa755cfb86e36080a710e9964422b12d3a8425433db35",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/core_v2.hpp": "44a05d7d5cadc7a3de6e3d855f045a5d2156416ac2e463ca0d88d41a42357b1d",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/detmath.hpp": "d699920742292f623317537dbb25d25873b8f8e9afd4f4f329448921890714db",
+    "experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/rope.hpp": "83782198e96337883f7e226d5fc474360841f6ca26a00bce43a6d87f42b74929",
+    "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp": "5122c8e7115d94e0546d7b40fcd9a9a795c45717394a636ac3c806ad6d37dd6e",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp": "218ec7d39db6272038f05453c84e7823220f6e3d97f7272a17efa1cd9593c706",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp": "a4c24610451981c3d0d19289919e7b16521ed652605ba557f44c234bc413d54e",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp": "78f15ee1abaace582eff11e876e9f76a3e69d78159156655e1133dc2ed3aa8c0",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": "7532f67c6d9a0be2a9187ce149b2004d9f1ea045705327d0ce542a283ad5ed72",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": "f744a148509ed091d69a708262d0fcbc94c179da8ca5ed364791e8ba77a328af",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp": "efd7bb4c4dcdc0ee2afa24a7c1146e19a993f4f3cebd73cf025c84bc209053ed",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": "95bdc549c66d5cb72fd54cc73696187dae08568f15b19d206cc954ca290c85f4",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/arithmetic.hpp": "ea9a853c66b3a22eff01e7b53243da0c5a2a33d5306dd4f09faf06c447a4c1ae",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp": "b5a6c3b39d051853e49761491aaf69f55e7ad882cffef34ea8300a68c608176d",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p49b_expert_kernel.hpp": "c749f1d022b6cf19ad4e9078f08ef4a6874a59a24662a14c38aed603dbb9e804",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p49b_gemv.hpp": "fa47b999ef28343e725aed83ce4e8f7df3cf258ee7387794f07087ed77dc5d40",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p33_candidates.hpp": "17f835ea9642d004eebbeb71c4b68dec5e3b795dbf6166c39a08f08307313797",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p28/expert.hpp": "fe0edeb0afedccd2b835d636c9d5e53f7725c995c192be2c6526377cdb58f63b",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p28/dense.hpp": "bc6d77353fa71520e15f2b349db381ced4370d8413fae3b6687cefed56297b47",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/round2.hpp": "bd614a9944e33903a6f0c7c2d4a1dd1de4786f8b1cdc8418df73e6d54b7e38ef",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/specialised.hpp": "0d7489d31fb869a49db3a7a365dbe78af52931c0e7d5cdf38ff05b01e594c126",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/kernels.hpp": "715e38078abaf8e1ee38bbb650c946b754ad29f44e77e5dafbc8db1b077d530f",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p42_expert.hpp": "2027f73e732700f3c9814f55bcc539fc5fba5bde0cfe8b3a1f78e9e5720b3516",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p39_fused.hpp": "7d083b68b0f5ff665ed4688c871842bcab6dd5d2386b0516d9da79b8e94740b3",
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/hc_gate.hpp": "04a40a2f0c79cc394d4639f5f5c7344cde328fe158181dff4b920f3f02cc62a9",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p73_hc.hpp": "eb1071a4ccd9469d07d87746b3be363a79a5209b252105a3af5e9e13ee49c6ce",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p60_math.hpp": "b3b58a512aa3a79cee5edd7d68833c0e449a06124511603aadad6d837b219dd6",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p49c_kernel.hpp": "7e535f51446cb3d331c59a87b85159abd64dd27123e450354657acf6510e2202",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p74_packed.hpp": "231c528b06e3a2f50c9bcf470a711a25f7824bacd85180d78c6f93f53e202cd3",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/route42.hpp": "8c6bc5850573de86054c1447290911fa08d2be7c4b7603d1dc4c2e4f6e03753c",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p28/submit.hpp": "6d0bddcbb38d635c9d5194b73cba7624db27a7617754af5369bfa51e731c5bbf",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p28/registry.hpp": "add5690af080348ac78cbc3a19e41ac4e46fcef133cc6c2a162e3089ea377d85"
+  },
+  "generated_sources": {
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/cpu.cpp": {
+      "sha256": "58baf7fd1f2834d04b4eec8d3fb74ac4d5cc0f4db2dba55ccaf8ffaccb78db3d",
+      "source": "experiments/own-xpu-runtime/stage2/packet117-hc-gate/cpu.cpp",
+      "source_sha256": "8119236de79d919e34e7cdc5e2dda14cd46986b0bb52748dd5c8eee07779080c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p65_expert.hpp": {
+      "sha256": "3854d954dc2349e6c6bd4db9dfd66b24f0126002a29abd8bf7d97e1a0ac9f752",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p65_expert.hpp",
+      "source_sha256": "44e357e7d8ec32ef116c54f8fb3c51d7074bf0acfc46289f721c79e9d902f22e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p49d_expert.hpp": {
+      "sha256": "c242db46661f691163a81304491cc7c2eb2067cca9d17bed702600068ca7d9ee",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p49d_expert.hpp",
+      "source_sha256": "f55602bde74c92b955911267b5de89011b8ac1e0778c787676e66cfa47c123f9"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/adapter.hpp": {
+      "sha256": "65265c1e2c0254ff6ae6ebc7bb847817a650ad882d32d5d2278bcd4da49a1c16",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/adapter.hpp",
+      "source_sha256": "ed38260c7ca1ddeab55f465e2635ae9f97f31970424b412d7e9ba9ca071a63be"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/performance.hpp": {
+      "sha256": "ceec1749f92137bb19ad39381babb52d6c5c50948dcc4658a84c0341c303bbac",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/performance.hpp",
+      "source_sha256": "97048551886ee82850180ef9a7981259d80569fb82981c16e8473793739b2137"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/runtime_kernels.hpp": {
+      "sha256": "c12008ab4c0bfd239adf31b969dc4e1f70e798438a6989edccd89713148471e4",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/runtime_kernels.hpp",
+      "source_sha256": "f56dff0f8aaa0647857d077dd1fd10ec1ed573403d1cdb7cdd2b4db194ce3538"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": {
+      "sha256": "886214b5f080cee30688fd752490b0b5edfc2b6098b65ebb992101ec14b17d4d",
+      "source": "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp",
+      "source_sha256": "1044e1a57d101d35a1d02e7fd911c3db9e5faed41248255ac61af52528f98f74"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": {
+      "sha256": "0ed3ac2643af94f5f7afc0063cd247be7f268a411a1f285af5d819dfc79ddec6",
+      "source": "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp",
+      "source_sha256": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": {
+      "sha256": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+      "source": "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp",
+      "source_sha256": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/owner.hpp": {
+      "sha256": "436d2e96a94aac9f1f1cf39b1c4b7c6fc78167317f9520b3cf94d80fdf40bf09",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/owner.hpp",
+      "source_sha256": "ee69610bda3e786e2aecf9888430541879af2d4c51cb64329784cb58d3ba1faf"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/owner_api.hpp": {
+      "sha256": "92af192380a710646a5287fedf997affc28ca3388d9256a35ee05e3d162132b2",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/owner_api.hpp",
+      "source_sha256": "819d24483877eb31b211312330e6709c9d283a4fe0ec7b8bf016eeb8122c76ed"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/argument_block.hpp": {
+      "sha256": "550f977d31a0756eda2d0b42d6d1ef5bfdb4c3d1d785d22f0c9456dbffb2c0d2",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/argument_block.hpp",
+      "source_sha256": "f2cc8a5709ae443e2fcaa755cfb86e36080a710e9964422b12d3a8425433db35"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/core_v2.hpp": {
+      "sha256": "0d540adcd537696eb5f7d8b2423bbd2ed26af09948f533e8c223657538a6825c",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/core_v2.hpp",
+      "source_sha256": "44a05d7d5cadc7a3de6e3d855f045a5d2156416ac2e463ca0d88d41a42357b1d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/detmath.hpp": {
+      "sha256": "1090e8b2afa9cc552d15cfbd2908bab979ca2c039ca9cf19b15637567143c7d8",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/detmath.hpp",
+      "source_sha256": "d699920742292f623317537dbb25d25873b8f8e9afd4f4f329448921890714db"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp": {
+      "sha256": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc",
+      "source": "experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp",
+      "source_sha256": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/rope.hpp": {
+      "sha256": "83782198e96337883f7e226d5fc474360841f6ca26a00bce43a6d87f42b74929",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/rope.hpp",
+      "source_sha256": "83782198e96337883f7e226d5fc474360841f6ca26a00bce43a6d87f42b74929"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": {
+      "sha256": "d628afda7d12787019ae970f810442fe93c526c5a9df5432ca4075d2c0b7c0d2",
+      "source": "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp",
+      "source_sha256": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp": {
+      "sha256": "0db5ec8bb345b66b99e87459c5960978277f8c4cbd8eed09ad0f8fbe910e5de8",
+      "source": "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp",
+      "source_sha256": "5122c8e7115d94e0546d7b40fcd9a9a795c45717394a636ac3c806ad6d37dd6e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp": {
+      "sha256": "7fa14bc1566ed4c33cb1e1ab16f6889308aaa63ee4290659690d229f82242ef3",
+      "source": "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp",
+      "source_sha256": "218ec7d39db6272038f05453c84e7823220f6e3d97f7272a17efa1cd9593c706"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp": {
+      "sha256": "526d11bd83ec65f6ed68103a11e60fad8ae13f7b11adb3d572689a55c25cf200",
+      "source": "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp",
+      "source_sha256": "a4c24610451981c3d0d19289919e7b16521ed652605ba557f44c234bc413d54e"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp": {
+      "sha256": "ef156df7718150eec64d323d2d4c4e7fa26733a7434c976781354e20b1274afa",
+      "source": "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp",
+      "source_sha256": "78f15ee1abaace582eff11e876e9f76a3e69d78159156655e1133dc2ed3aa8c0"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": {
+      "sha256": "e0461aaa2afcc9743eafe0ebdb27e65e5978a2f3f67a2e6681417bfb557cd560",
+      "source": "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp",
+      "source_sha256": "7532f67c6d9a0be2a9187ce149b2004d9f1ea045705327d0ce542a283ad5ed72"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": {
+      "sha256": "ee3dc2c29bb831d68d3606d2496371417dcaf1066f727cfba8b293ed547dfe33",
+      "source": "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp",
+      "source_sha256": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": {
+      "sha256": "a9b2271a56510e38d4035e2c39714b7098cebc37e5144cb22ebdf1de1abaa765",
+      "source": "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp",
+      "source_sha256": "f744a148509ed091d69a708262d0fcbc94c179da8ca5ed364791e8ba77a328af"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": {
+      "sha256": "cfeca5c9f2147fc8983cf227460fdf77f573f07ef79d11ce34118fc3553b7323",
+      "source": "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp",
+      "source_sha256": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp": {
+      "sha256": "efd7bb4c4dcdc0ee2afa24a7c1146e19a993f4f3cebd73cf025c84bc209053ed",
+      "source": "experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp",
+      "source_sha256": "efd7bb4c4dcdc0ee2afa24a7c1146e19a993f4f3cebd73cf025c84bc209053ed"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": {
+      "sha256": "8c2f4c227dcc9c1e3143fbc640361fec97116e660956808810ed14fff4f18116",
+      "source": "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp",
+      "source_sha256": "95bdc549c66d5cb72fd54cc73696187dae08568f15b19d206cc954ca290c85f4"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": {
+      "sha256": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495",
+      "source": "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp",
+      "source_sha256": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/arithmetic.hpp": {
+      "sha256": "7c7c30c5e91e7e356934dd6170b11e24ceae337b4094f5e6fec43a94a8215be9",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/arithmetic.hpp",
+      "source_sha256": "ea9a853c66b3a22eff01e7b53243da0c5a2a33d5306dd4f09faf06c447a4c1ae"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": {
+      "sha256": "096b8f261d430fb993a9ae9cebee66002429afcfe9a02a67565f4b0f4443c6d0",
+      "source": "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp",
+      "source_sha256": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp": {
+      "sha256": "3420aad349a6e603ade1bfb30b6047dd1f589d5cdfad7c68eb67e7fe1ec795fb",
+      "source": "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp",
+      "source_sha256": "b5a6c3b39d051853e49761491aaf69f55e7ad882cffef34ea8300a68c608176d"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p49b_expert_kernel.hpp": {
+      "sha256": "3831d2daf481a29a62092f0e3f6ea844c4a83f77653879f79ccf20fe246359d4",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p49b_expert_kernel.hpp",
+      "source_sha256": "c749f1d022b6cf19ad4e9078f08ef4a6874a59a24662a14c38aed603dbb9e804"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p49b_gemv.hpp": {
+      "sha256": "11ba7d5748faf48b56193651ffec8cf51ca28e569fde85aa131b016dba177eb6",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p49b_gemv.hpp",
+      "source_sha256": "fa47b999ef28343e725aed83ce4e8f7df3cf258ee7387794f07087ed77dc5d40"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p33_candidates.hpp": {
+      "sha256": "bd9b371a76a7622f57711eb7964527b8a9d38bf845f65275743987609bdc54a4",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p33_candidates.hpp",
+      "source_sha256": "17f835ea9642d004eebbeb71c4b68dec5e3b795dbf6166c39a08f08307313797"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p28/expert.hpp": {
+      "sha256": "0a77ff309dbb014696eed61b07c4557cbc3c3964cd2ce7843c8d6cfa17688c2d",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p28/expert.hpp",
+      "source_sha256": "fe0edeb0afedccd2b835d636c9d5e53f7725c995c192be2c6526377cdb58f63b"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p28/dense.hpp": {
+      "sha256": "79c08b4c276bd1a38e3b24e5859628543abf58b6d6cf1a02a6581aa8a1916a01",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p28/dense.hpp",
+      "source_sha256": "bc6d77353fa71520e15f2b349db381ced4370d8413fae3b6687cefed56297b47"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/round2.hpp": {
+      "sha256": "8fd3f4e03560d8fbb59fd6af7b5f8baa9c300c2407ad81a61a053bca67e6244c",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/round2.hpp",
+      "source_sha256": "bd614a9944e33903a6f0c7c2d4a1dd1de4786f8b1cdc8418df73e6d54b7e38ef"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/specialised.hpp": {
+      "sha256": "c39ee2fbdfa7d307248c0375ef015ef4143f40222214f333fc2f5dcecdf7af6a",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/specialised.hpp",
+      "source_sha256": "0d7489d31fb869a49db3a7a365dbe78af52931c0e7d5cdf38ff05b01e594c126"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/kernels.hpp": {
+      "sha256": "d7f0ea382a24ed91d200ee16518c2a20a1069db8a5eb4baa59b685aabd734938",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/kernels.hpp",
+      "source_sha256": "715e38078abaf8e1ee38bbb650c946b754ad29f44e77e5dafbc8db1b077d530f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p42_expert.hpp": {
+      "sha256": "132c7718ade54357f729dd66d94a6f45cdf9ccb64f4c01fbaf3eda90d3aa511d",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p42_expert.hpp",
+      "source_sha256": "2027f73e732700f3c9814f55bcc539fc5fba5bde0cfe8b3a1f78e9e5720b3516"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p39_fused.hpp": {
+      "sha256": "2d096cae12325b05273af5cd05578645cc6376630c256342135515f0108ad6bd",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p39_fused.hpp",
+      "source_sha256": "7d083b68b0f5ff665ed4688c871842bcab6dd5d2386b0516d9da79b8e94740b3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/hc_gate.hpp": {
+      "sha256": "26d806cf054864cdc75b6d57b636eb7a7cf0f86460a083fe205404d916b89dc3",
+      "source": "experiments/own-xpu-runtime/stage2/packet117-hc-gate/hc_gate.hpp",
+      "source_sha256": "04a40a2f0c79cc394d4639f5f5c7344cde328fe158181dff4b920f3f02cc62a9"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p73_hc.hpp": {
+      "sha256": "8744a9b06630bc5d89b6e1541355ca9d8bef5971f71a477eadb333edbd43efde",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p73_hc.hpp",
+      "source_sha256": "eb1071a4ccd9469d07d87746b3be363a79a5209b252105a3af5e9e13ee49c6ce"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p60_math.hpp": {
+      "sha256": "b36b9df213167438873fde083bef2c182d5ee6b904cd319e0ed4ddfbee741839",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p60_math.hpp",
+      "source_sha256": "b3b58a512aa3a79cee5edd7d68833c0e449a06124511603aadad6d837b219dd6"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p49c_kernel.hpp": {
+      "sha256": "006ba680800e09902f009b81a293913f049be647b22425980a64847e2c5f76cc",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p49c_kernel.hpp",
+      "source_sha256": "7e535f51446cb3d331c59a87b85159abd64dd27123e450354657acf6510e2202"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p74_packed.hpp": {
+      "sha256": "85852f86ac2d830d1c47f03c1a3222a1d998c9938d117137d3bc0137229f836e",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p74_packed.hpp",
+      "source_sha256": "231c528b06e3a2f50c9bcf470a711a25f7824bacd85180d78c6f93f53e202cd3"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/route42.hpp": {
+      "sha256": "4cc0f9a7f1f470e5bead181ecf7f929fde595c01d3351534fa93af4f4edb8250",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/route42.hpp",
+      "source_sha256": "8c6bc5850573de86054c1447290911fa08d2be7c4b7603d1dc4c2e4f6e03753c"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p28/submit.hpp": {
+      "sha256": "9002cfe3c1b87f325edfb08b107b590a30dd73fba425969843bf52476e963db2",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p28/submit.hpp",
+      "source_sha256": "6d0bddcbb38d635c9d5194b73cba7624db27a7617754af5369bfa51e731c5bbf"
+    },
+    "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p28/registry.hpp": {
+      "sha256": "6b385de9aa7fc2d021d7f0be1a91c2357614f331ed5592fd99a3c6138156a70c",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/p28/registry.hpp",
+      "source_sha256": "add5690af080348ac78cbc3a19e41ac4e46fcef133cc6c2a162e3089ea377d85"
+    }
+  },
+  "compilers": [
+    {
+      "name": "GNU",
+      "compiler": "/usr/bin/g++",
+      "binary": "experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/cpu/fixture-GNU",
+      "binary_sha256": "916c79f15f55db63a257b1f9f23ff98b600c6864345f3e0047325e69be7729d0",
+      "compile_log": "experiments/own-xpu-runtime/stage2/packet117-hc-gate/evidence/cpu-GNU-compile.log",
+      "compile_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "commands": [
+    [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-O1",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-DOWN_RT_HOST_ONLY",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+      "-MMD",
+      "-MF",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/cpu/GNU.d",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/cpu.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/cpu/fixture-GNU"
+    ]
+  ],
+  "error": "CalledProcessError(1, ['/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/cpu/fixture-GNU', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/cpu/p117/GNU/1'], '', 'hc scenario=8 byte mismatch at 20480\\n')"
+}

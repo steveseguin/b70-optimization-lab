@@ -35,6 +35,7 @@ def prepare(entry):
             if target is None:raise ValueError(f'include unresolved: {src}: {name}')
             return '#include '+json.dumps(str(copy(target)))
         text=re.sub(r'^\s*#include\s*"([^"\n]+)"',include,text,flags=re.M)
+        text='#line 1 '+json.dumps(str(src))+'\n'+text
         dest.parent.mkdir(parents=True,exist_ok=True)
         if not dest.exists() or dest.read_text()!=text:dest.write_text(text)
         return dest

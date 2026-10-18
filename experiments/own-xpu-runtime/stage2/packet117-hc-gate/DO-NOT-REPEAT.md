@@ -14,3 +14,8 @@
   cannot satisfy the gate.
 - GNU/Intel CPU agreement is not device equality. Synthetic micros and
   128-token one-load screens are not full realistic promotion evidence.
+
+| Attempt | Outcome | Revisit condition |
+| --- | --- | --- |
+| Unconditional product-array mix | GNU mixed-NaN case8 changes first mix payload; rejected bytes/source retained in evidence/rejected-unconditional-products | Original scalar exceptional path plus both compiler and device byte gates; never tolerance |
+| Only original eight HC cases | Misses mixed gate/norm NaN operand selection | Use all sixteen cases and fresh repeats |

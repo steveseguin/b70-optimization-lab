@@ -1,0 +1,61 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/layer_bench.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/hc_submit.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p60_kernels.hpp:13:29: error: use of undeclared identifier 'packet26'; did you mean 'packet18'?
+   13 |   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                             ^~~~~~~~
+      |                             packet18
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/adapter.hpp:3:11: note: 'packet18' declared here
+    3 | namespace packet18 {
+      |           ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/layer_bench.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/hc_submit.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p60_kernels.hpp:13:29: error: no member named 'checked' in namespace 'packet18'; did you mean 'p28::checked'?
+   13 |   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                             ^~~~~~~~~~~~~~~~~
+      |                             p28::checked
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p28/submit.hpp:10:21: note: 'p28::checked' declared here
+   10 | template<class F> F checked(F f){static_assert(sizeof(F)<=1024,"packet28 kernel capture exceeds 1024 bytes");return f;}
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/layer_bench.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/hc_submit.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p60_kernels.hpp:33:29: error: use of undeclared identifier 'packet26'; did you mean 'packet18'?
+   33 |   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                             ^~~~~~~~
+      |                             packet18
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/adapter.hpp:3:11: note: 'packet18' declared here
+    3 | namespace packet18 {
+      |           ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/layer_bench.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/hc_submit.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p60_kernels.hpp:33:29: error: no member named 'checked' in namespace 'packet18'; did you mean 'p28::checked'?
+   33 |   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                             ^~~~~~~~~~~~~~~~~
+      |                             p28::checked
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p28/submit.hpp:10:21: note: 'p28::checked' declared here
+   10 | template<class F> F checked(F f){static_assert(sizeof(F)<=1024,"packet28 kernel capture exceeds 1024 bytes");return f;}
+      |                     ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/layer_bench.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/hc_submit.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p60_kernels.hpp:48:29: error: use of undeclared identifier 'packet26'; did you mean 'packet18'?
+   48 |   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                             ^~~~~~~~
+      |                             packet18
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/adapter.hpp:3:11: note: 'packet18' declared here
+    3 | namespace packet18 {
+      |           ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/layer_bench.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/main.cpp:1:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/hc_submit.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p60_kernels.hpp:48:29: error: no member named 'checked' in namespace 'packet18'; did you mean 'p28::checked'?
+   48 |   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+      |                             ^~~~~~~~~~~~~~~~~
+      |                             p28::checked
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet110-class-roofline/p28/submit.hpp:10:21: note: 'p28::checked' declared here
+   10 | template<class F> F checked(F f){static_assert(sizeof(F)<=1024,"packet28 kernel capture exceeds 1024 bytes");return f;}
+      |                     ^
+6 errors generated.

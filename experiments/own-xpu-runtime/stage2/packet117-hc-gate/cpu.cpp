@@ -79,6 +79,13 @@ void run_hc(Recorder& rec,unsigned scenario,bool wide=true){
  if(scenario==5){x[0]=0x7f80;x[8]=0xff80;}
  if(scenario==6){x[0]=1;x[1]=0x8001;x[8]=0;x[9]=0x8000;}
  if(scenario==7){for(auto&v:x)v=0;}
+ if(scenario>=8){
+  constexpr uint16_t edge[]{0x7fc1,0xffd5,0x7f80,0xff80,0x0001,0x8001,0x0000,0x8000};
+  norm[0]=edge[scenario-8];norm[2560]=edge[(scenario-8+1)%8];
+  norm[5120]=edge[(scenario-8+2)%8];norm[7680]=edge[(scenario-8+3)%8];
+  x[0]=edge[(scenario-8+4)%8];x[8]=edge[(scenario-8+5)%8];
+ }
+
  uint32_t active=scenario==1?0:1,error=scenario==2?7:0,position=scenario==3?4096:0;
  std::vector<uint16_t> expected(10240+2560,0x7e31),actual(expected);
  p60::Bound b{};b.act=x.data();b.norm=norm.data();b.gate_w=weights.data();b.active=&active;b.error=&error;b.position=&position;
@@ -86,7 +93,7 @@ void run_hc(Recorder& rec,unsigned scenario,bool wide=true){
  b.gate=actual.data();b.mix=actual.data()+10240;if(wide)p117hc::host(b);else p73hc::host(b);
  auto bytes=[](const auto& v){const auto*p=reinterpret_cast<const uint8_t*>(v.data());return std::vector<uint8_t>(p,p+v.size()*2);};
  rec.compare(bytes(expected),bytes(actual),"hc scenario="+std::to_string(scenario));
- rec.cases<<"{\"candidate\":\"hc-wide\",\"scenario\":"<<scenario<<",\"compared_bytes\":"<<expected.size()*2<<",\"passed\":true}\n";++rec.count;
+ rec.cases<<"{\"candidate\":\"p117\",\"scenario\":"<<scenario<<",\"compared_bytes\":"<<expected.size()*2<<",\"passed\":true}\n";++rec.count;
  // Test complete logical FP32 chains before any BF16 boundary.
  for(unsigned r=0;r<32;r+=2)for(unsigned lane=0;lane<32;++lane){
   auto c=p73hc::chains(weights.data()+r*rb,x.data(),lane);
@@ -99,9 +106,9 @@ void run_hc(Recorder& rec,unsigned scenario,bool wide=true){
 }
 int main(int argc,char** argv){try{
  require(argc==2,"usage: p65_cpu OUTPUT_DIR");std::filesystem::path out=argv[1];std::filesystem::create_directories(out);Recorder r(out);
- for(unsigned scenario=0;scenario<8;++scenario)run_hc(r,scenario);
+ for(unsigned scenario=0;scenario<16;++scenario)run_hc(r,scenario);
  r.expected.close();r.actual.close();r.cases.close();require(bool(r.expected)&&bool(r.actual)&&bool(r.cases),"output flush");
- require(r.count==8,"case count");
+ require(r.count==16,"case count");
  std::ofstream receipt(out/"native.json");receipt<<"{\"schema\":\"packet117.cpu-byte-identity.v1\",\"passed\":true,\"device_executed\":false,\"cases\":"<<r.count<<",\"raw_fp32_chain_checks\":"<<r.chain_checks<<",\"raw_fp32_tree_checks\":"<<r.tree_checks<<",\"nan_tolerance\":false}\n";
  std::cout<<r.count<<" cases, "<<r.chain_checks<<" raw chains, "<<r.tree_checks<<" raw trees PASS\n";return 0;
  }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

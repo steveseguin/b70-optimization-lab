@@ -10,13 +10,17 @@ inline void host(p60::Bound b){
    for(unsigned lane=0;lane<32;++lane){auto v=chains(b.gate_w+r*rb,b.act,lane);for(unsigned row=0;row<2;++row)lanes[row][lane]=v[row];}
    for(unsigned row=0;row<2;++row){gates[row][s]=iq3::bf16_bits(iq3::tree32(lanes[row]));b.gate[r+row]=gates[row][s];if(p60::enabled(b))products[row][s]=ng::sigmoid(p39::widen(gates[row][s]))*p60::get(b.norm,s*2560+k+row);}
   }
-  if(p60::enabled(b))for(unsigned row=0;row<2;++row){float sum=0.f;for(unsigned s=0;s<4;++s)sum=sum+products[row][s];b.mix[k+row]=iq3::bf16_bits(sum/4.f);}
+  if(p60::enabled(b))for(unsigned row=0;row<2;++row){
+   bool exceptional=false;for(unsigned stream=0;stream<4;++stream)exceptional|=(std::bit_cast<uint32_t>(products[row][stream])&0x7f800000u)==0x7f800000u;
+   if(exceptional)p60::mix_output(b,k+row,gates[row]);
+   else {float sum=0.f;for(unsigned stream=0;stream<4;++stream)sum=sum+products[row][stream];b.mix[k+row]=iq3::bf16_bits(sum/4.f);}
+  }
  }
 }
 #ifndef OWN_RT_HOST_ONLY
 inline sycl::event device(sycl::queue&q,p60::Bound b,const std::vector<sycl::event>&deps){
  const auto rb=iq3::expanded::row_bytes(iq3::Type::Q8_0,320);
- return q.submit([&](sycl::handler&h){h.depends_on(deps);sycl::local_accessor<float,1> products(16,h);
+ return q.submit([&](sycl::handler&h){h.depends_on(deps);sycl::local_accessor<float,1> products(16,h);sycl::local_accessor<uint16_t,1> gates(16,h);
  h.parallel_for(sycl::nd_range<1>(640*256,256),[=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
   unsigned local=it.get_local_linear_id(),sub=local/32,lane=local%32,stream=sub%4,base=it.get_group_linear_id()*4+(sub/4)*2,r=stream*2560+base;auto sg=it.get_sub_group();
   auto sums=chains(b.gate_w+r*rb,b.act,lane);
@@ -25,14 +29,18 @@ inline sycl::event device(sycl::queue&q,p60::Bound b,const std::vector<sycl::eve
   // Each paired row uses one existing lane for its independent expensive
   // sigmoid/product. Both broadcasts preserve the original leader's FP32 bits.
   float root0=sycl::select_from_group(sg,v0,0),root1=sycl::select_from_group(sg,v1,0);
-  if(lane<2){uint16_t y=iq3::bf16_bits(lane==0?root0:root1);b.gate[r+lane]=y;
+  if(lane<2){uint16_t y=iq3::bf16_bits(lane==0?root0:root1);b.gate[r+lane]=y;gates[(sub/4)*8+lane*4+stream]=y;
    auto error=sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(*b.error);
    if(*b.active&&!error.load()&&*b.position<b.capacity)
     products[(sub/4)*8+lane*4+stream]=ng::sigmoid(p39::widen(y))*p60::get(b.norm,r+lane);
   }
   it.barrier(sycl::access::fence_space::local_space);
   auto error=sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(*b.error);
-  if(local<4&&*b.active&&!error.load()&&*b.position<b.capacity){unsigned out=it.get_group_linear_id()*4+local;float sum=0.f;for(unsigned s=0;s<4;++s)sum=sum+products[local*4+s];b.mix[out]=iq3::bf16_bits(sum/4.f);}
+  if(local<4&&*b.active&&!error.load()&&*b.position<b.capacity){unsigned out=it.get_group_linear_id()*4+local;bool exceptional=false;for(unsigned s=0;s<4;++s)exceptional|=(std::bit_cast<uint32_t>(products[local*4+s])&0x7f800000u)==0x7f800000u;
+   float sum=0.f;
+   if(exceptional){for(unsigned s=0;s<4;++s)sum=sum+ng::sigmoid(p39::widen(gates[local*4+s]))*p60::get(b.norm,s*2560+out);}
+   else {for(unsigned s=0;s<4;++s)sum=sum+products[local*4+s];}
+   b.mix[out]=iq3::bf16_bits(sum/4.f);}
  });});
 }
 #endif
