@@ -337,8 +337,8 @@ def collect(packet, chain, oracle, repo=ROOT):
         window = json.loads(e.add(name + '/window.json', root / 'window.json'))
         if packet == P56_PACKET:
             from receipt_replay import verify_receipt
-            verify_receipt(window)
             bound = window['lane_admission']
+            verify_receipt(window, data=Path(bound['path']).read_bytes())
             require(Path(bound['path']).resolve() == (chain / (name+'-lane-admission.json')).resolve(), 'lane sidecar outside registered chain')
             e.add(name+'/lane-admission.json', Path(bound['path']))
         for leaf in ('kernel-preflight.txt', 'kernel-window.txt'):
@@ -673,7 +673,9 @@ def submission_notes(bundle, *, resumed=False):
         f"route={bundle['route']} (packet78 exact probability/index sort); norm={bundle['norm']} (original HC reduction tree); "
         f"HC={bundle['hc']} (packet73 wide loads); experts={bundle['experts']}; dense={bundle['dense']}. "
         f"Placement={bundle['placement']}: {bundle['layer_boundary']}/{48-bundle['layer_boundary']} target layers, rank-{bundle['draft_rank']} one-token MTP. "
-        'Draft prefix 91,392/248,320 rows; private prefix only on rank0, shared head on rank1. unchanged full target verifies all accepted tokens. '
+        + ('Draft on rank1: proposals use prefix rows [0,91,392) of the shared 248,320-row head on rank1. ' if int(bundle['draft_rank'])==1
+           else 'Draft on rank0: private 91,392-row prefix copy on rank0; full head on rank1. ')
+        + 'Unchanged full target verifies all accepted tokens. '
         'BF16 KV, 4096 capacity; target arithmetic iq3-p49-split32-v1 unchanged, exact to packet49 CPU oracle, not equality to SPEED6/FP8. '
         'Controller spin: pure PAUSE spin, yield256; rank0 queue profiling without timing reads. Packet60 HC fusion: three exact-order kernels per side; packet59 draft-HC; batched rollback, no third bank/overlap. '
         '12 cold prompts/1536 tokens exact, fresh WS/WSs/WS128x/WS128; no prompt/KV/response/history reuse, cached_tokens=0. '

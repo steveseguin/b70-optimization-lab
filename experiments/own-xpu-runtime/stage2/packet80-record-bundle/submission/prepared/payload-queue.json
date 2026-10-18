@@ -1,0 +1,215 @@
+[
+  {
+    "label": "qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-packet80-record-bundle-realistic-20261017",
+    "payload": {
+      "hfId": "unsloth/Qwen3.8-Flash-Next-GGUF",
+      "modelRevision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+      "engineName": "custom",
+      "engineVersion": "own-xpu-runtime packet80-record-bundle sealed base e2e3bed9cc48c172c50ca1100a638ce4e482583b; device binary sha256 b984e05293217b88c338171afffa620755342d6086754b0eed3f22108266f517",
+      "backend": "xpu",
+      "quantization": "UD-IQ3_XXS (GGUF)",
+      "hardware": {
+        "hwClass": "DISCRETE_GPU",
+        "gpuName": "Intel Arc Pro B70",
+        "gpuCount": 2,
+        "vramGb": 32,
+        "cpu": "AMD Ryzen Threadripper PRO 5955WX 16-Cores",
+        "ramGb": 128,
+        "os": "Ubuntu 24.04.4 LTS"
+      },
+      "contextLength": 4096,
+      "batchSize": 1,
+      "promptTokens": 68,
+      "outputTokens": 128,
+      "tokSOut": 55.18991716741779,
+      "tokSTotal": 39.33248906980643,
+      "ttftMs": 936.7901745063136,
+      "notes": "Quantized compressed Unsloth UD-IQ3_XXS, separate from FP8. Two B70 cards 0+1. Packet80: host=ordered (rank1 ordered-prefix retirement when selected); route=production (packet78 exact probability/index sort); norm=production (original HC reduction tree); HC=hc-wide (packet73 wide loads); experts=wide64; dense=production. Placement=1: 24/24 target layers, rank-1 one-token MTP. Draft on rank1: proposals use prefix rows [0,91,392) of the shared 248,320-row head on rank1. Unchanged full target verifies all accepted tokens. BF16 KV, 4096 capacity; target arithmetic iq3-p49-split32-v1 unchanged, exact to packet49 CPU oracle, not equality to SPEED6/FP8. Controller spin: pure PAUSE spin, yield256; rank0 queue profiling without timing reads. Packet60 HC fusion: three exact-order kernels per side; packet59 draft-HC; batched rollback, no third bank/overlap. 12 cold prompts/1536 tokens exact, fresh WS/WSs/WS128x/WS128; no prompt/KV/response/history reuse, cached_tokens=0. WS128: median of six class medians, 99 intervals between events1-100. Owner-authorized 128-token scope; strict512 gate false. 512-token natural completion and standard prefill unmeasured. Whole host held for timing; 90s chain gaps; graceful drain and lease release before report. Wall rate: output tokens/(last timestamp-request start). ",
+      "engineFlags": {
+        "draftHeadPrefix": {
+          "rows": 91392,
+          "full_head_rows": 248320,
+          "unchanged_full_target_verifier": true
+        },
+        "controllerSpin": {
+          "wait_policy": "spin",
+          "yield_iterations": 256,
+          "mailbox_fallback_us": 0,
+          "device_fallback_us": 0,
+          "progress_callback_wait": true,
+          "rank0_queue_profiling": true,
+          "timing_reads": false
+        },
+        "targetHCFusion": {
+          "packet": "packet60-hc-fusion",
+          "kernels_per_side": 3,
+          "sides": 2,
+          "rows": "M1 and both serial M2",
+          "arithmetic_unchanged": true
+        },
+        "draftHCFusion": {
+          "packet": "packet59",
+          "schedules": 8,
+          "fusions": 6
+        },
+        "missPath": {
+          "mode": "batch",
+          "third_bank": false,
+          "overlap": false
+        },
+        "chainGapSeconds": 90,
+        "packet80Changes": {
+          "host": "ordered",
+          "route": "production",
+          "norm": "production",
+          "hc": "hc-wide",
+          "placement": "1",
+          "experts": "wide64",
+          "dense": "production"
+        },
+        "benchmarkJson": "experiments/own-xpu-runtime/stage2/packet80-record-bundle/submission/prepared/result.json",
+        "benchmarkJsonSha256": "1c029fa5e280f6570b83db633ade8cc52198726efadf0cd2e2cd52cd7510442b",
+        "promotionAttestation": "experiments/own-xpu-runtime/stage2/packet80-record-bundle/submission/prepared/promotion-attestation.json",
+        "promotionAttestationSha256": "6b6f79372e49338b808c490ebf6af7b72375319661a16bbad6c2c2dfccb9f382",
+        "promotionIdentity": {
+          "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+          "runtime_revision": "e2e3bed9cc48c172c50ca1100a638ce4e482583b",
+          "optimization_identity": "packet80-record-bundle-iq3-p49-split32-v1-tp2-c4096-target24-24-draft-rank1-seal-60aec5968c169e502f39aedebbeb51efb5db1488e3c1787fe9e0a528fcb0fc9e",
+          "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812",
+          "arithmetic": "iq3-p49-split32-v1"
+        },
+        "packet49Evidence": true,
+        "buildReceiptSha256": "60aec5968c169e502f39aedebbeb51efb5db1488e3c1787fe9e0a528fcb0fc9e",
+        "bootId": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+        "dispatchSha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "targetSplit": [
+          24,
+          24
+        ],
+        "draftRank": 1,
+        "packet80Selection": {
+          "name": "production--hc-wide--wide64--ordered--production--production",
+          "placement": "1",
+          "draft": "draft-hc",
+          "miss": "batch",
+          "draft_rank": 1,
+          "target_split": 0,
+          "layer_boundary": 24,
+          "experts": "wide64",
+          "dense": "production",
+          "hc": "hc-wide",
+          "host": "ordered",
+          "route": "production",
+          "norm": "production",
+          "selection_sha256": "a374b96f32df502e477b98bdde5246bf8bb8442c7126d3cad0880837f9f5aae1",
+          "screen_seal_sha256": "46f84ea466d3d2ba542112269f98d04fbedfa4fc9e7315eb849b92f52a7778a4"
+        },
+        "denseKernelChoice": "production",
+        "hcKernelChoice": "hc-wide",
+        "expertKernelChoice": "wide64",
+        "deviceCards": [
+          0,
+          1
+        ],
+        "realisticSuiteScopeException": {
+          "rule": "packet45.speed3.owner-authorized-128-token-scope.2026-10-15",
+          "date": "2026-10-15",
+          "authorization_text": "authorized: submit under the same 128-token scope as the October 13 record.",
+          "reference_submission": "cmv6pugme0020oa01fjrho6nx",
+          "requested_max_new": 128,
+          "scope": "same fixed realistic 12-prompt suite; cold; cached_tokens=0; 128 generated tokens per prompt; primary metric over 99 intervals between events 1 and 100"
+        },
+        "scopeAuthorizationExtension": "Coordinator packet80-record-bundle scope: same packet49 CPU oracle, all 12 prompts exact, 128-token owner-authorized scope; unchanged iq3-p49-split32-v1 arithmetic; class-balanced speed must exceed the pinned current submitted record. Preparation does not submit; the coordinator performs real submission.",
+        "rawRealisticFinalGate": {
+          "passed": false,
+          "reason": "measurement preparation only; cap below fixed 512 and no promotion attestation; repeats/partial suites never qualify"
+        },
+        "realisticSuiteGatePassed": false,
+        "strict512TokenFinalGatePassed": false,
+        "requestedMaxNew": 128,
+        "realisticSuiteId": "rapid-model-snapshots-b70-realistic-v1",
+        "realisticSuiteCachedTokensAllZero": true,
+        "realisticPromptTokenCounts": [
+          87,
+          90,
+          77,
+          83,
+          68,
+          65,
+          67,
+          71,
+          69,
+          61,
+          64,
+          60
+        ],
+        "realisticOutputTokenCounts": [
+          128,
+          128,
+          128,
+          128,
+          128,
+          128,
+          128,
+          128,
+          128,
+          128,
+          128,
+          128
+        ],
+        "promptSha256": [
+          "0e8aeaa6723fb6ba0d7a0511d0053781d770bb5c8b941784347f2f0708fb9f65",
+          "9e6ad72c32c2d6b4dbe97cf62644ba44c473fbeef06a64ed07b2f7b594f4aadf",
+          "cd4de3e32560ca1a5756e61c366481f68d504641072f087026a26c47cfcc4159",
+          "791445526ecacd084631b2215b15ab680906a5e1538e687bef6867f4e8592864",
+          "466cfd6f8976bae8942a22058a04f8338f0af6277d007ef8c693543c310cb722",
+          "6624c9e57c12daa8503f6a126c9cc55d31b8d0c072c0515014f4edb588f6e486",
+          "3a4c95e71c132b784793baf2cb01e26e24c36aa7611033de216f4d83350588b6",
+          "60c346711612db30297d1fa965183c3c11056eba3b53496197e2c92d68ec7e30",
+          "e0905edc75468b5ff1bc9406bdece26f943775dbb143ef87cd01d8ef623962e4",
+          "f529f8c55263f081453caba062336e8773826b1ee70bb23c4a86384d78c7879b",
+          "da95147318bcd05894fa2a7e837759c4c0fc6a702a5d43d05435f2bd38524eaf",
+          "675381fb5feed4030c25b74a7d368da547087a4c90207cb91ebd81eabf567381"
+        ],
+        "outputSha256": [
+          "600ef261fcbd149acb7b195d952a049266d31e939613f7bfdd71fdae8fde4dd6",
+          "62d27d5b0fb5c86d23e52e95e18747e3b256b4fdf05959c1c558617b4f14ed3d",
+          "d8580f7e7fe31002e0c61238a8febe26c3cc3329a23f9fa65aa7c563499fb911",
+          "21ece70fdb6196db8b17f9090bbaa35fe3c7fee4e83d21d63a73981b99ce115e",
+          "2edaf06363b09ed0ab61354acb5a23721a1349ab19bb86d9f0a8ea4f9fcc7457",
+          "771fb1eaa17ec6caad47ee3e78dc592987f33d284a9fdcea4675c598cf636db5",
+          "53c36ed93a7d7c295524091601183531e5abf739c2f806fa791083a97c6a881f",
+          "2d03d7759a068aa237c9bcc75aa45892bf4ddf6f2085745cb72f14cd87764a10",
+          "9221f3fa44af09880cf70941782691a83e5ffaf97adf7417d462db88f06368e5",
+          "433223eea9e2ddefec25946728ef6476b71d67538a9b99565aed1a9fe19dd362",
+          "6c3fef0e1c4c6b08646a338240616ad60e171601f97e9999769c5d3cef0bed97",
+          "0147e4c77ef197186fa45a7112b8422eaf9b3cfdf8bee92d86682738757eec08"
+        ],
+        "primaryMetricName": "median_of_prompt_class_medians_tok_s_1_100_intervals_after_ttft",
+        "primaryMetricAccounting": "inter-token-intervals",
+        "primaryMetricAggregation": "median-of-prompt-class-medians",
+        "metricWindowGeneratedTokens": 100,
+        "metricWindowIntervals": 99,
+        "prefixCaching": false,
+        "responseReuse": false,
+        "contextCheckpoints": 0,
+        "historyAccelerated": false,
+        "targetModelVerifiedAcceptedTokens": true,
+        "kvCacheDtype": "bf16",
+        "apiKvCacheDtype": "auto",
+        "attentionBackend": "own Xe split32 QSA",
+        "apiAttentionBackend": "sdpa",
+        "concurrency": 1,
+        "tensorParallel": 2,
+        "temperature": 0,
+        "specDecoding": true,
+        "mtpEnabled": true,
+        "specMethod": "mtp",
+        "specNumTokens": 1,
+        "githubResultPacket": "https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/own-xpu-runtime/stage2/packet80-record-bundle/submission/prepared/result-packet.md",
+        "commandSnippet": "python3 -B experiments/own-xpu-runtime/stage2/packet80-record-bundle/window.py --authorized-device-window --window WS128 --card 0 --context 4096 --target-split 0 --draft-rank 1 --controller native --repeat 1 --retain-steps none --output <chain>/WS128 --suite-manifest <packet49-oracle>/suite-manifest.json --exactness-window <chain>/WS128x/window.json --k0 <K0> --k1a <K1a> --k1b <K1b> --k2 <K2> --w0p <W0p> --kd <KD> --dispatch <K2-dispatch>",
+        "commandSnippetFullInEvidence": "experiments/own-xpu-runtime/stage2/packet80-record-bundle/WINDOW.md"
+      }
+    }
+  }
+]
