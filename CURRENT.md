@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, packet58aa one-card MTP re-check closed on CPU:** The measured
+host policy removes the old RAM blocker, but a resident draft cuts target
+cache from 21.55 to 18.22 GB. Saved-route projections give 25.03–29.16 tok/s,
+below the 30.723 needed for a build. Even a favorable shared-cache estimate
+is only 30.62 before draft misses and cache pollution. No build or device work
+was started. The 29.259764 one-card receipt remains unchanged. Reopen with
+evidence for a faster complete verification cycle, including draft and cache
+costs. [Analysis and work note](notes/2026-10-18-own-runtime-packet58aa.md).
+
 **October 18, packet145 router and GDN z layouts prepared on CPU:** The new
 packet142c copy preserves exact row bytes and arithmetic. Both compilers,
 full-size startup/reset checks, both-lane entry/report tests and all eight
