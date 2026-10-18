@@ -531,3 +531,14 @@ Actions:
 3. Codex **p123**: move only layer 24's mixer or FFN to rank 0 (slack recomputed first on the bundle 7 line; v4 grid, drain fix required). The routed-expert lever p119 (L2 warming) is already queued; a second expert mechanism waits for its micro.
 4. Codex **drainguard**: `scripts/check_drain_fix.py` + policy: every new bundle must pass it before chain readiness, so its chain does not need the other lane paused; read-only report over all packets.
 STOP DOING acknowledged: no briefs for levers whose own budget projects < 0.3%; no chains of unfixed bundles without the pause; no fallback composites for bundles that will not chain; next-chain launches are waiter-driven.
+
+## Review 23 (2026-10-18 ~12:05 UTC): ACT
+
+2 h: lane A 85%, lane B 39%; ten exact levers closed with none ≥ +0.5% (p116 0.936×, p117 0.98×, p119 1.079×, p120 −3.9%, p121 ~0.1%, p122 ~0.1%, p125 1.27× vs 1.5× gate, p123/p126 inconclusive). Bundle 7 qualified (+1.48% A / +1.40% B, exact) but `packet124-chain-a` died at K2 (leaked `other_fusion` into K2's exact-key selection), cascading into a lane-B refusal; coordinator archived markers/latch/undrained teardown and restarted both lanes.
+
+Actions:
+1. `p124b-chain` waiter armed: packet 124b (K2 fix + drain fix; all-window argument gate passes: 11 windows, 31 launch argument sets; original K2 code fails) → waits for packet 58n's one-card arms to clear lane A → PAUSE-A only (no lane-B pause) → ≥ 61 s drain spacing → pre-launch hook (`argument_gate.py --verify` + `check_drain_fix.py`, both pass) → `verify_ready.py` → chain; post-chain prep with packet 124b's own tools.
+2. Codex **teardownfix**: shared copy-forward helper so a window that raises after its device children are gone still records a drained teardown and releases its marker (no cross-lane cascade); plus a checker.
+3. Codex **p128**: fresh in-engine per-class attribution of the bundle 7 line on both ranks, hits and misses, every layer, one lane-B load; levers re-ranked by ms on the critical path with a ≥ +0.5% projected bar.
+4. One-card: packet 58n's tile16-only screen runs now in the 124b gap; packet 58p (one-card chain for that view, gated ≥ +0.5%) is prepared to run after bundle 7's chain.
+STOP DOING acknowledged: startup-window passes are not chain readiness without the full argument gate; chain launches are pre-armed when the Codex job starts; no briefs below +0.5% projected in-engine gain; no lane-B pause for drain-fixed bundles.
