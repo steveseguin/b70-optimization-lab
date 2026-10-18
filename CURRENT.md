@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, packet124 bundle8 BASE sealed on CPU:** This is bundle7 with
+repaired host cooldown waiting and exactly the same native binaries and
+selection. Both compilers reproduce its saved output bytes; both ranks pass
+memory admission and all eleven startup windows pass. The clock-crossing test
+fails on the old drain code and passes on the fixed copies. The new chain
+folder is fresh. Orchestration and submission validation are being completed;
+no chain is declared ready yet. No GPU, service, live queue or host setting
+changed. [Work note](notes/2026-10-18-own-runtime-packet124.md).
+
 **October 18, packet123 partial-layer move held at its timing check:** The
 saved bundle7 traces appear to leave 0.483 ms on rank0, but that includes
 head work missing from the command trace. The logged copies alone use at
