@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/protocol_gate.py", line 18, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/protocol_gate.py", line 9, in main
+    with (out/(compiler+'-compile.log')).open('w') as f:subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,check=True,timeout=300)
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/usr/bin/g++', '-std=c++20', '-O2', '-pthread', '-fno-fast-math', '-ffp-contract=off', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/protocol_mock.cpp', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/host_wait_mode.cpp', '-o', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/build/protocol/GNU']' returned non-zero exit status 1.

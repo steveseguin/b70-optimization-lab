@@ -1,0 +1,105 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "arithmetic": "iq3-p49-split32-v1",
+  "source_sha256": {
+    "cpu_gate.py": "8d4e3cfefae235d5621ac6951668d6f58232cc2e8a017994d69216aaf5e3c5ee",
+    "cpu_leaf.cpp": "0b6777614c9ae933cd6b2adb6b1d4e53dcbc1bac25c47a0ff8d40ffbdc37e75e",
+    "p116_qsa_host.hpp": "049788fcfc7f8d16d9b0ad5df9ca805f1d8f4c2f977d3b6d99a42b30d073ce1f",
+    "p116_qsa_kernel.hpp": "5c7ccd982a86e24ea35c43819354e3dcb4154446c55b77562cf814402534802a",
+    "p116_qsa_submit.hpp": "a07ff0d9a25b12520dbc35bb1e3198ab4417b73ea7dfe4ee360351b3c987e0b2"
+  },
+  "compilers": [
+    {
+      "compiler": "GNU",
+      "command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/checked/experiments/own-xpu-runtime/stage2/packet111-record-bundle",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet116-qsa-schedule/cpu_leaf.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet116-qsa-schedule/build/leaf/GNU"
+      ],
+      "runs": [
+        {
+          "passed": true,
+          "device_executed": false,
+          "checks": 8764,
+          "bytes_compared": 243636816,
+          "output_sha256": "eb1af83b46e5e134c1fb15d99db87ed38d8d3cde4687f4dbd41ce23494e0905c",
+          "binary_sha256": "b7af506b137bfc8fcc3584d8866fae1d3e3a4ca4eae4aceec239fb13a4a83b04",
+          "command": [
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet116-qsa-schedule/build/leaf/GNU",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet116-qsa-schedule/evidence/leaf/GNU-1.bin"
+          ],
+          "owner": "1"
+        },
+        {
+          "passed": true,
+          "device_executed": false,
+          "checks": 8764,
+          "bytes_compared": 243636816,
+          "output_sha256": "eb1af83b46e5e134c1fb15d99db87ed38d8d3cde4687f4dbd41ce23494e0905c",
+          "binary_sha256": "b7af506b137bfc8fcc3584d8866fae1d3e3a4ca4eae4aceec239fb13a4a83b04",
+          "command": [
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet116-qsa-schedule/build/leaf/GNU",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet116-qsa-schedule/evidence/leaf/GNU-2.bin"
+          ],
+          "owner": "2"
+        }
+      ]
+    },
+    {
+      "compiler": "Intel",
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fno-associative-math",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/checked/experiments/own-xpu-runtime/stage2/packet111-record-bundle",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet116-qsa-schedule/cpu_leaf.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet116-qsa-schedule/build/leaf/Intel"
+      ],
+      "runs": [
+        {
+          "passed": true,
+          "device_executed": false,
+          "checks": 8764,
+          "bytes_compared": 243636816,
+          "output_sha256": "001c4c1bdd04977e658a5afa30fe4479e698e564f8d7bf0b90b2ed881514cea0",
+          "binary_sha256": "79d3e14a38233b0946114cade2a857dd5adaaa6945f5da04b7801c9c9ba2c3d3",
+          "command": [
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet116-qsa-schedule/build/leaf/Intel",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet116-qsa-schedule/evidence/leaf/Intel-1.bin"
+          ],
+          "owner": "1"
+        },
+        {
+          "passed": true,
+          "device_executed": false,
+          "checks": 8764,
+          "bytes_compared": 243636816,
+          "output_sha256": "001c4c1bdd04977e658a5afa30fe4479e698e564f8d7bf0b90b2ed881514cea0",
+          "binary_sha256": "79d3e14a38233b0946114cade2a857dd5adaaa6945f5da04b7801c9c9ba2c3d3",
+          "command": [
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet116-qsa-schedule/build/leaf/Intel",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet116-qsa-schedule/evidence/leaf/Intel-2.bin"
+          ],
+          "owner": "2"
+        }
+      ]
+    }
+  ],
+  "output_format": "FNV1a64 allocation digests AFTER complete memcmp; not cryptographic equality oracle",
+  "cross_compiler_identity_required": false,
+  "within_compiler_production_candidate_bytes": true
+}

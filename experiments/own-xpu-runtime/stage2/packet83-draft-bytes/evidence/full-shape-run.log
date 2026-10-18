@@ -1,0 +1,18 @@
+production 0 PASS
+production 1 PASS
+q4-g32 0 PASS
+q4-g32 1 PASS
+prefix990 0 PASS
+prefix990 1 PASS
+prefix985 0 PASS
+prefix985 1 PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet83-draft-bytes/full_shape.py", line 122, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet83-draft-bytes/full_shape.py", line 118, in main
+    assert r.returncode!=0 and 'p59 draft extent/lifetime' in r.stderr,r.stderr
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: copy extent/lifetime
+context lifetime PASS: 2057 destructions, native release last, zero late destructions
+

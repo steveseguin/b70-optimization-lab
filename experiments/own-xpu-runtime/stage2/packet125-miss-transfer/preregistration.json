@@ -1,0 +1,22 @@
+{
+ "schema":"packet125.micro.preregistration.v1",
+ "physical_card":2,
+ "lane":"B",
+ "model_loaded":false,
+ "cases":384,
+ "fresh_processes":2,
+ "process_order":["forward","reverse"],
+ "candidates":["tile16","bcs_serial3","bcs_inflight3","bcs_contiguous","bcs_aligned","bcs_pipeline3"],
+ "primary":"sum logical miss bytes / sum route-known-to-expert-output wall ns (decimal GB/s), same full ten-expert arithmetic in all paths; includes zero-miss cases and BCS route readback",
+ "kill_gate":"same candidate at least1.5x production in BOTH fresh processes, for ALL cases AND post-initial checkpoints; exact packed bytes and all output bytes",
+ "host_pinned_ceiling_bytes":7516192768,
+ "process_budget_bytes":8589934592,
+ "host_admission_bytes":17179869184,
+ "device_cache_scrub_bytes":536870912,
+ "expected_seconds_each":360,
+ "watchdog_seconds_each":1800,
+ "source_cache":"distinct host regions per case; each case visited once per alternative, explicit512MiB device-only cache scrub before each timed arm; no OS cache manipulation",
+ "route_scope":"real accepted target routes, simulated packet58 empty18GB cache and position-end publication; NOT actual one-card miss IDs",
+ "synthetic_weights":true,
+ "no_promoted_speed":true
+}

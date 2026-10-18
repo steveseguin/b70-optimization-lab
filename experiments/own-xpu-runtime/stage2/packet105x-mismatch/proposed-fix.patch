@@ -1,0 +1,11 @@
+--- a/experiments/own-xpu-runtime/stage2/packet105-head-split/p105_runtime.hpp
++++ b/experiments/own-xpu-runtime/stage2/packet105-head-split/p105_runtime.hpp
+@@ -60,7 +60,7 @@
+   e.drain(); // local speculative half has completed; no model-state writes below.
+   std::memcpy(e.dev(0).arena.row(staging).pointer,box.hidden,hidden_bytes);
+   transfer(hidden,staging,hidden_bytes,"hidden-import");
+-  uint32_t zero=0;e.upload(0,error,0,&zero,4);
++  uint32_t zero=0,one=1;e.upload(0,error,0,&zero,4);e.upload(0,active,0,&one,4);
+   for(const auto& command:suffix_commands)e.tail=e.dev(0).issue(command);
+   e.drain();transfer(staging,best,16,"best-export");
+   std::memcpy(&box.best,e.dev(0).arena.row(staging).pointer,16);check();publish(box.reply,seq);

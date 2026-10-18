@@ -1,0 +1,25 @@
+{
+  "schema": "packet67.placement-audit.v1",
+  "placement": "1",
+  "draft_rank": 1,
+  "target_split": 0,
+  "target_layers": [
+    24,
+    24
+  ],
+  "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+  "binary_sha256": "c01c999be7e8af0745f9f3d6fe3ec2912ba8ac206a4b98d610a8ecfacf3e5b1a",
+  "engine_sources": {
+    "experiments/own-xpu-runtime/stage2/packet67-roofline/main.cpp": "c6affdd3cb0846d6815cad1cf8c9076ef501c8c1e091e73fb54659464804a2d0",
+    "experiments/own-xpu-runtime/stage2/packet67-roofline/rank.hpp": "7e12a444f329a069156eef0bbd00ed19f2fe9e249f43a452da78586f989c1817",
+    "experiments/own-xpu-runtime/stage2/packet67-roofline/mtp.hpp": "bcab74d124719cf7a21c45da1b1e818d83d71d2c245ac3bde82b0de173824688",
+    "experiments/own-xpu-runtime/stage2/packet67-roofline/p56_config.hpp": "830eeed71e2298f6c0160147f92440ec5cdb784b1b108a7feecd3629174fbb9d",
+    "experiments/own-xpu-runtime/stage2/packet67-roofline/p56_prefix.hpp": "0bea4bf778614cedfa8a179c3965cef73ce0a48bc764a942a85bd556a68dfd0e",
+    "experiments/own-xpu-runtime/stage2/packet67-roofline/p49d_submit.cpp": "af59a7390348b9995e75f4a0a5b79ae026977e49ae0bf5b9fe09c2941e16d46a",
+    "experiments/own-xpu-runtime/stage2/packet67-roofline/p60_submit.cpp": "8f88ed43db8f2c76e6449724353c60905da6b7e36f13698e5630d620a2c48e4e",
+    "experiments/own-xpu-runtime/stage2/packet67-roofline/p67_hc.hpp": "d3da330c1f6a9ffa85a468811345d249bde29225d33ed76a6468a19e91e71f1f",
+    "experiments/own-xpu-runtime/stage2/packet67-roofline/p67_recurrence.hpp": "b919f2446763e02eb899c115501b2bdc747455d9141434aefa271552eb809950",
+    "experiments/own-xpu-runtime/stage2/packet67-roofline/strict_snapshot.hpp": "743a1f84f7b0651a43c3b9bd8094144094dc367089885ce9f8548bb84d19c02a"
+  },
+  "rationale": "same 24/24 packet64 production placement; 49920-byte head scratch fits existing QSA-dominated arena; no new allocation; device parity pending"
+}

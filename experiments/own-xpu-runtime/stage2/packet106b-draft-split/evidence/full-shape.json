@@ -1,0 +1,676 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_payload_read": false,
+  "runs": [
+    {
+      "view": "production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production",
+      "placement": "1",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/selection.json",
+        "6c58206cad748a8385b41389d5b9c05ff1891340b4bd0b12ce3611b5cddca739",
+        "0",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/scratch",
+        "positive",
+        "1",
+        "0"
+      ],
+      "selection_key_consumers_verified": true,
+      "memory": {
+        "rank": 0,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 27986860116,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 28033360664,
+        "planned_free_bytes": 6255437740,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "artifacts": {
+        "census.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-f69f2575ad38671afa458131fb3e1a8d00eb4a3ca236d1f5b370472ea0408859-census.json.gz",
+          "sha256": "ae81660e4f0bb7706438804345bcc45ad68283d0c330410879e7af1e992173d6"
+        },
+        "selected-operations.txt": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-39a63d71dc57f606561fbe1752c679e47a182cddd77cb361178915d1758aa10e-selected-operations.txt.gz",
+          "sha256": "ca0ac9f204a22d66ddbb934baf2f6854ea586d093cb477ba9c974519b82b2004"
+        },
+        "native-plan.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-a81a935bf469db75b46366be1b80e86180a8b41fbb78e168bb0bb8c0a683ee85-native-plan.json.gz",
+          "sha256": "716ddc1f855f7ceecea1234bc22486c6944cb3f99094f1fec8c355c4cfe880e3"
+        },
+        "result.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-83e35dd10ef9f09f9b693f422b3db07c39ca2a48482308a9822ea4c29cb274f7-result.json.gz",
+          "sha256": "2cedbc27b95f093825631b7a9e1f78fda3737e2f58d2a3d11802cbfc0f2914bc"
+        }
+      },
+      "target_head_bytes": 0,
+      "draft_prefix_bytes": 0,
+      "arena_headroom_bytes": 4225394604,
+      "passed": true,
+      "device_executed": false,
+      "rank": 0,
+      "postload_device_bytes": 27986860116,
+      "expanded_head_stride": 3380
+    },
+    {
+      "view": "production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production",
+      "placement": "1",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/selection.json",
+        "6c58206cad748a8385b41389d5b9c05ff1891340b4bd0b12ce3611b5cddca739",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/scratch",
+        "positive",
+        "1",
+        "0"
+      ],
+      "selection_key_consumers_verified": true,
+      "memory": {
+        "rank": 1,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 31581735626,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 31582964426,
+        "planned_free_bytes": 2660562230,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "artifacts": {
+        "census.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-e15b7f7c0124099ad1fbf784164e01917174ae99e291912418c405c243de04aa-census.json.gz",
+          "sha256": "3b8dcb1af75f8548085dedbebeec0fb2590d2e1b7135dc47cf241ca92b7c4f90"
+        },
+        "selected-operations.txt": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-9a2afd85b5ec7acd6b9eceea771f1c1457e128f546d2f3c43cc78fb057849295-selected-operations.txt.gz",
+          "sha256": "00773d538daba9fda7a9ef403d44ae05419f736c4f599cfeb58da938988b9968"
+        },
+        "draft-prefix.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-3b013653a802a29bb99919147e684a41a85e00224aa758e4f30a910767ffb983-draft-prefix.json.gz",
+          "sha256": "7ff6e8f15ad614d30905cf4e8126a5b2c013f172d11ad3d8c5a389bed8bda574"
+        },
+        "draft-memory.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-6ab5c5d535c3ba9ceaae0bdf8737306eb756f969a432e2d10f7d1fce283a6a5a-draft-memory.json.gz",
+          "sha256": "949d85810fdb02973a3734de376122c76c4fbebd254cd6e0dc3234355456694f"
+        },
+        "native-plan.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-96b18b43b1763d14b292dd957100773c22e96fe9bfdb71f0363b78c507e5e80d-native-plan.json.gz",
+          "sha256": "6aa69a98c38db0e6d7b58ac599e3aa8f8587cc2b3d2b901d12fd03b56d24f734"
+        },
+        "result.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-1355f1e36603e998a26bef4e9d3e5ab376a8199da0c3611a28b192fea57d6ffa-result.json.gz",
+          "sha256": "a7c8f39fb9689c83f394d2ecf523823991655c780dbf6b08347b3eb0274eab39"
+        }
+      },
+      "target_head_bytes": 839321600,
+      "draft_prefix_bytes": 0,
+      "arena_headroom_bytes": 630519094,
+      "passed": true,
+      "device_executed": false,
+      "rank": 1,
+      "postload_device_bytes": 31581735626,
+      "expanded_head_stride": 3380
+    },
+    {
+      "view": "production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--head-split-compute--production",
+      "placement": "1",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/selection.json",
+        "47e4918fc4ec8c32bb3483e7628fc481ff31fbf51443b465c94935746ae1e63b",
+        "0",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/scratch",
+        "positive",
+        "1",
+        "0"
+      ],
+      "selection_key_consumers_verified": true,
+      "memory": {
+        "rank": 0,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 28144182388,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 28190682936,
+        "planned_free_bytes": 6098115468,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "artifacts": {
+        "census.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-ab825c135700b7e9abf2ac9ba3bc8865e0d280ccc7191bd1b5a711c26fa77b9b-census.json.gz",
+          "sha256": "a8b4bd3360f576eae463ec97fefec46e9ee2ea88008ade75a773db1cee6cac56"
+        },
+        "selected-operations.txt": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-0c9effdb6df179a83e57851bcca46626ab02d943eb0c9a6eb6c9f266beb707c4-selected-operations.txt.gz",
+          "sha256": "b3b5651deba7c49f61fb4519b9ce1271d16cc8d2abc228c173ff8043a194c3b4"
+        },
+        "native-plan.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-a81a935bf469db75b46366be1b80e86180a8b41fbb78e168bb0bb8c0a683ee85-native-plan.json.gz",
+          "sha256": "716ddc1f855f7ceecea1234bc22486c6944cb3f99094f1fec8c355c4cfe880e3"
+        },
+        "result.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-d7885c07e37fb05c9c2c8804d0e018935f9a141f95729ce29b336e26ae127c1e-result.json.gz",
+          "sha256": "c5a3b349041b9e2cd02aa1b4dbb8c1d1c765b77546da407acc2a17c8639c3991"
+        }
+      },
+      "target_head_bytes": 155750400,
+      "draft_prefix_bytes": 0,
+      "arena_headroom_bytes": 4068072332,
+      "passed": true,
+      "device_executed": false,
+      "rank": 0,
+      "postload_device_bytes": 28144182388,
+      "expanded_head_stride": 3380
+    },
+    {
+      "view": "production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--head-split-compute--production",
+      "placement": "1",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/selection.json",
+        "47e4918fc4ec8c32bb3483e7628fc481ff31fbf51443b465c94935746ae1e63b",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/scratch",
+        "positive",
+        "1",
+        "0"
+      ],
+      "selection_key_consumers_verified": true,
+      "memory": {
+        "rank": 1,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 31425985242,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 31427214042,
+        "planned_free_bytes": 2816312614,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "artifacts": {
+        "census.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-5e84965b9a9fda318ab34dc6b3355eb550660f1dd03d1cf6810140a454ce17b2-census.json.gz",
+          "sha256": "a18e5839406ce58e9bcd78b67aaa7cb57fe56605a9a2da604e562255f90e11e2"
+        },
+        "selected-operations.txt": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-9a2afd85b5ec7acd6b9eceea771f1c1457e128f546d2f3c43cc78fb057849295-selected-operations.txt.gz",
+          "sha256": "00773d538daba9fda7a9ef403d44ae05419f736c4f599cfeb58da938988b9968"
+        },
+        "draft-prefix.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-3b013653a802a29bb99919147e684a41a85e00224aa758e4f30a910767ffb983-draft-prefix.json.gz",
+          "sha256": "7ff6e8f15ad614d30905cf4e8126a5b2c013f172d11ad3d8c5a389bed8bda574"
+        },
+        "draft-memory.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-6ab5c5d535c3ba9ceaae0bdf8737306eb756f969a432e2d10f7d1fce283a6a5a-draft-memory.json.gz",
+          "sha256": "949d85810fdb02973a3734de376122c76c4fbebd254cd6e0dc3234355456694f"
+        },
+        "native-plan.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-e8ed8572c1d4781ec67db31a351006600a01c187ed84236c63e412f34e16acc9-native-plan.json.gz",
+          "sha256": "a917f0dec9343fde9b96fb84962ee59bc4976f50d0b08ee0f59fd69487306c31"
+        },
+        "result.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-23c364f77151d6a7cf602f61e63a0f95aa8c2eee5862f1b88d3bbd1d6d69fd4c-result.json.gz",
+          "sha256": "f46e40d1507e22beff2219d20cad5ee14a3010fb7cf369f0901c6011b69c1a8f"
+        }
+      },
+      "target_head_bytes": 683571200,
+      "draft_prefix_bytes": 0,
+      "arena_headroom_bytes": 786269478,
+      "passed": true,
+      "device_executed": false,
+      "rank": 1,
+      "postload_device_bytes": 31425985242,
+      "expanded_head_stride": 3380
+    },
+    {
+      "view": "production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--head-split+draft-split--production",
+      "placement": "1",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/selection.json",
+        "d5663eb8514bd2872aab8250f306a44d94188dc72419e47e2374748e1c1b403b",
+        "0",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/scratch",
+        "positive",
+        "1",
+        "0"
+      ],
+      "selection_key_consumers_verified": true,
+      "memory": {
+        "rank": 0,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 28298008724,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 28344509272,
+        "planned_free_bytes": 5944289132,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "artifacts": {
+        "census.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-9ee8be807879921cc5c3d6abf871b72448e48599f19489b081e1d6cf4909a5e4-census.json.gz",
+          "sha256": "52f8f02d6f5142013953f02178191e6c1c3d71b621bd4d2c9d9085a6a6a3378c"
+        },
+        "selected-operations.txt": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-e6b77eb718b3b8c53fb28a6f02d6031606edc950f12ed06a4f5bb29229345cb3-selected-operations.txt.gz",
+          "sha256": "1c1014eec39713198a0ce51373061ece6ea3c6dd1c84b4966fe01f3fd95e12ab"
+        },
+        "native-plan.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-a81a935bf469db75b46366be1b80e86180a8b41fbb78e168bb0bb8c0a683ee85-native-plan.json.gz",
+          "sha256": "716ddc1f855f7ceecea1234bc22486c6944cb3f99094f1fec8c355c4cfe880e3"
+        },
+        "result.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-a705222aed2e96f64c3a023b27b10665bf11e9cb4332d89c6c4dc195faf5de75-result.json.gz",
+          "sha256": "ac82ce00cbe35ff5206f035baa127ae17a3a148d4f06d3b05f4d85639f7ce183"
+        }
+      },
+      "target_head_bytes": 155750400,
+      "draft_prefix_bytes": 0,
+      "arena_headroom_bytes": 3914245996,
+      "passed": true,
+      "device_executed": false,
+      "rank": 0,
+      "postload_device_bytes": 28298008724,
+      "expanded_head_stride": 3380
+    },
+    {
+      "view": "production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--head-split+draft-split--production",
+      "placement": "1",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/selection.json",
+        "d5663eb8514bd2872aab8250f306a44d94188dc72419e47e2374748e1c1b403b",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/scratch",
+        "positive",
+        "1",
+        "0"
+      ],
+      "selection_key_consumers_verified": true,
+      "memory": {
+        "rank": 1,
+        "draft_rank": 1,
+        "context_capacity": 4096,
+        "device_allocation_bytes": 31425985258,
+        "capacity_bytes": 34242297856,
+        "planned_maximum_bytes": 31427214058,
+        "planned_free_bytes": 2816312598,
+        "minimum_free_bytes": 1500000000,
+        "passed": true,
+        "scope": "allocation admission; driver overhead/residency unmeasured"
+      },
+      "artifacts": {
+        "census.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-ddb96ec914b97f7dc3f25e521134d8b705c10fb27fbf329b4c2a4f492ecd287e-census.json.gz",
+          "sha256": "9974122b3a8e003be9466013856a588974cd66682fc9263fa47f3aab657a82b8"
+        },
+        "selected-operations.txt": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-f9f65fa58fc32d0031a3680e3c4d61d32a59742b747b7ef09875385b9c3e7f1f-selected-operations.txt.gz",
+          "sha256": "b874d11cd9cd043918ffe8e8c10d04c191bb5fdf2343a54f9d0a5cec542bfe09"
+        },
+        "draft-prefix.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-3b013653a802a29bb99919147e684a41a85e00224aa758e4f30a910767ffb983-draft-prefix.json.gz",
+          "sha256": "7ff6e8f15ad614d30905cf4e8126a5b2c013f172d11ad3d8c5a389bed8bda574"
+        },
+        "draft-memory.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-6ab5c5d535c3ba9ceaae0bdf8737306eb756f969a432e2d10f7d1fce283a6a5a-draft-memory.json.gz",
+          "sha256": "949d85810fdb02973a3734de376122c76c4fbebd254cd6e0dc3234355456694f"
+        },
+        "native-plan.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-e8ed8572c1d4781ec67db31a351006600a01c187ed84236c63e412f34e16acc9-native-plan.json.gz",
+          "sha256": "a917f0dec9343fde9b96fb84962ee59bc4976f50d0b08ee0f59fd69487306c31"
+        },
+        "result.json": {
+          "path": "experiments/own-xpu-runtime/stage2/packet106b-draft-split/evidence/shape-d38b25351dcbc6f01743a5a898812d7002edfee6a10f3852bd83283bd5f3d77b-result.json.gz",
+          "sha256": "41e21ebb6f68f675948a0459caaaeea31a5dc8507e6c1274538f8f24283e5e6e"
+        }
+      },
+      "target_head_bytes": 683571200,
+      "draft_prefix_bytes": 0,
+      "arena_headroom_bytes": 786269462,
+      "passed": true,
+      "device_executed": false,
+      "rank": 1,
+      "postload_device_bytes": 31425985258,
+      "expanded_head_stride": 3380
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp": "e5e68fd9aa3c9baaa34811b74c58f6ff8311f6bd18fae787fe80ccef2d6e3a32",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp": "94db5f67e518d4b4940811c9f381f3e1add47c403fca134cad11d84d4d2e626b",
+    "experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp": "296eeb3fdf685b698cb7bb35da86157fbb12f97ff215f61ab7ad90f207364c9b",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp": "f3b311c18744091930ed4a038db8acb4fd4b30d8e348a62a0c25d377d309f1fc",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp": "b5a6c3b39d051853e49761491aaf69f55e7ad882cffef34ea8300a68c608176d",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/adapter.cpp": "45ce2adbb57d2828b4147126f18eb75d3b2fe96dcc95b3fd3e5fdfa3891c4434",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/adapter.hpp": "ed38260c7ca1ddeab55f465e2635ae9f97f31970424b412d7e9ba9ca071a63be",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/adapter_fixture.cpp": "dec9e3135a555d899524a48f63b1d8f51744fc52a7f459fae80bc413bb92a2ed",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/adapter_fixture.hpp": "3073e6e8a9a4c18516acdff31109324888bfe50f6680aa1f54a7abe3ebb7b003",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/argument_block.hpp": "f2cc8a5709ae443e2fcaa755cfb86e36080a710e9964422b12d3a8425433db35",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/arithmetic.hpp": "ea9a853c66b3a22eff01e7b53243da0c5a2a33d5306dd4f09faf06c447a4c1ae",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/authority_test.cpp": "d15d1e01a7b27fce68c5ca6ed03574aff3d2db05a638c7070496e27723d18fe1",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/fusion-rope.hpp": "1bbb9d0ff339bd4ed20f02505aeaef484d906e8162d20ea247bae3889ecd7428",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/chain_test.cpp": "ad003ecd4336f09a643950894bada31c76fece436a0f7c5d2d72bddda5f670d4",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/core_v2.hpp": "44a05d7d5cadc7a3de6e3d855f045a5d2156416ac2e463ca0d88d41a42357b1d",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/detmath.hpp": "d699920742292f623317537dbb25d25873b8f8e9afd4f4f329448921890714db",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/dispatch.hpp": "ef8e349932fac5a0936eee5f0aae3730011d154cbd49cbb0fd348262f56502bc",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/dispatch_registry.hpp": "c5fd99027bd3b1c24b174c20a67fd94779025587a3441276d8c347107ec3f4f2",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/expert_down.cpp": "027dd4750e4d285b55dd83e4289c19bee59398fbe84ca54e63d139866e1451ba",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/expert_down.hpp": "eb327fb716344751870064c00c843ec3147219f996dfd89a8818c70fede03ffb",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/failure.hpp": "7b02ca42a4d27a0aa47e9db0fb478194998cbe26dfc38670b80f0f36252e5c36",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/fixture_driver.cpp": "265e57de5c02f468ad316404310a294cbeaf1b168f6b24be7b5241e35aaad975",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/fixture_validation.hpp": "747bb6149c2783bffaa5df2fc3d48ac61f5fc87bbfb03ed7c08bcf33ea4f0858",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/gemv_timing.cpp": "8b93bd16a832f334621cd6c525580c91963eeca637d3fb9751d171576740f80a",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/host_spin.hpp": "5f56024f2678d7ab90eb5b1818c34d2241066b4c7dff74fb7a5a4ccc388b799e",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/jit_smoke.cpp": "e55ed2bfe8baaf3e976cd5a1334aee3bd901ba45fdcb8769e37b66db5324e0da",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/k2_failure.hpp": "0b5edc160fe37e77e7293ffa937eac531ec29773275c517627a57e930a1ac900",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/k2_fixture.cpp": "d579d8599c0941759b54a4afcae6d0b5dfe3169c84b4ebfd268ee3860ff16030",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/k2_incumbents.hpp": "0443bb11aced12e3c9c96745f285e02779e217f991c57d7092b72832a7849616",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/kernels.hpp": "715e38078abaf8e1ee38bbb650c946b754ad29f44e77e5dafbc8db1b077d530f",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/lifetime_mock.hpp": "97afe6f81d53824d2c5636a0d34aa924c63d11e3c2263e950812d464d79dfa62",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/lifetime_test.cpp": "c812297c867bd719ef0ce1ea29b71f0e9a82218ff79da2d3f4ad976ecc66121a",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/main.cpp": "e3e02f4857aeca0feb7d8f89984abf3b2af6914a65cd3264593a1c8590b37c09",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/mock_order.hpp": "d2b1f370518ad0181a0d1f81b370374ceee4e9177abd3531439bd94017980149",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/mtp.hpp": "6d962f1812524bce21dc25e76fbd20c594710365a2dd09f6715ead35c47cda4e",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/mtp_kernels.cpp": "1b179214aecb9e4910cc414c5ecb272510143f02d9edf4a1de5ae44d455370b4",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/mtp_kernels.hpp": "f6ae6a4781051e85dbc82b429b3eb06d2f07a625237138d67ffacd6992a2a674",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/native.cpp": "4e8f5683b6ad8fe2a8a9b44fd1a0cba7dfc6c90616eb06cd583bc0d7ba087b8d",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/native.hpp": "c0b710b43748dfeb23bb317254053106d68fc967d9ecdfe43f17f56a80d372b4",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/native_controller.hpp": "7253188548a1a2b7ccd5d1ee12fd35b912fc90cdbb650a7a18f2aa6a75e79ef4",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/nongemv_fixture.cpp": "acc4c0a6d2aed8b377fadf5b35f59adf67510b44b9229f8e765f51ab46f374a9",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/ordered_queue.hpp": "ccef2713ecce48237e9ecd929cc04567982f311cb6344dd8013a04b847b480eb",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/owner.cpp": "8e82affd2c119ef2ef13df14c11063f60ec8ba641ed643b7f2c652e7c256e94b",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/owner.hpp": "ee69610bda3e786e2aecf9888430541879af2d4c51cb64329784cb58d3ba1faf",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/owner_api.hpp": "819d24483877eb31b211312330e6709c9d283a4fe0ec7b8bf016eeb8122c76ed",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/owner_retire.cpp": "b68b7f90faf2a19388f09848196cbda72fe788c8e5e936724c977e7127a5d23c",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p105_common.hpp": "8856d3e7b983c25bab743acfafaa8669109501adf1b3930279523427ef452e5e",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p105_runtime.hpp": "b9ab1d78512f8227f0cfe7c0b63d50464455670e439dd8a1ee327be1b58327cf",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p105_submit.cpp": "5818567ffc2a6dca12a56b81a591aaaee5eb3dfe8780999b0e36e0136d3971b8",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p105_submit.hpp": "92de3b78df60ee78df549716f21875832d9c3e91f1d16e10cad3a5b95d77a457",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p106_common.hpp": "171b725d16c8ad604c127e713da7843fd0bc9e69f6abbfcf55cd7eaa481ec5ef",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p106_runtime.hpp": "279987b6aa7f44518ec554a8de34b05a9741680a54d88df42053e2013b10c9cb",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p25_bridge.cpp": "b6bbeedea17c3d52e32f1a9adcc9d9be0876d300f55ab1756b2a481fbb874905",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p25_bridge.hpp": "c5d1765997de414df8df8df3a0c19de29f5d0250fbe387e5dc303762ef0bff80",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p25_candidates.hpp": "98d34f0ac7ce729410780c61016e88f6789baf5e2ec5510c79142ea33888df57",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p28/dense.hpp": "bc6d77353fa71520e15f2b349db381ced4370d8413fae3b6687cefed56297b47",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p28/expert.hpp": "fe0edeb0afedccd2b835d636c9d5e53f7725c995c192be2c6526377cdb58f63b",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p28/registry.hpp": "add5690af080348ac78cbc3a19e41ac4e46fcef133cc6c2a162e3089ea377d85",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p28/submit.cpp": "10ba4dee0b311c7d0f487d11159d06d8f16304ff3f9e745e62950d5ff54aa92d",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p28/submit.hpp": "6d0bddcbb38d635c9d5194b73cba7624db27a7617754af5369bfa51e731c5bbf",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p30_attention.cpp": "72403adc474cad4c112e59b2f2ffbff7fe0e52dba2874a36feb8c41df829e815",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p30_attention.hpp": "9d5eb89f4aa6515922a74b144a4bc3d19813169261f1cb1bb2ce6bf042608ddf",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p30_small.cpp": "fe8eee300850e3531ceeeecfff9c25300a99b7c7ef4202c3bda791e0f7f9733a",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p30_small.hpp": "4304140e67c89512773d3adefa306f2153d1dd13585224e2ce0bb61182ca4261",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p30_submit.cpp": "dab72a991d33df0becdedd69e1e659720ad725465940d704d3badb15c689449f",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p30_submit.hpp": "16502b1bf1d7c2f6669bd60d59ecb0885274958907371851a8d82951654f3fbd",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p33_candidates.hpp": "17f835ea9642d004eebbeb71c4b68dec5e3b795dbf6166c39a08f08307313797",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p33_linked_fixture.cpp": "1abb466123de8a71898ade5d65cf35aee16395481331cf99836e33d6051b4fe6",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p33_submit.cpp": "a7186a51ffc6deeee3874f8f812cc72f371b62bb574298be48b2a33a218354e5",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p33_submit.hpp": "b6833e2d825934c64d58d03e5b274e4bd1e87e7bd13082b8ca9caf01e3e302c8",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p33r2.cpp": "f6ad0f6150aff1d337264bda76e7f30afecd4b20558af601bcf2231b6fde25c4",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p33r2.hpp": "f7d736727f5c77bd78a2eff8460c1b56e7984ef7bbb21c4cd803507df73c6895",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p39_fixture.cpp": "f4e27e1b73f2653848750014e72779e92b01d200c0a31273c24ae9e1e5a3f8a0",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p39_fixture_data.hpp": "0ca39c7e72601c3225bfb025eec058289efb29a90e5579d49ee65c225cc61bb2",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p39_fused.hpp": "7d083b68b0f5ff665ed4688c871842bcab6dd5d2386b0516d9da79b8e94740b3",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p39_plan.hpp": "fec70f9aa95dfd71fea8dac927419373ce3172c73e76d4a3510d52b595eb855c",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p39_submit.cpp": "1dd79a46abd60340b2385f74d0f8a261776c7636f121a8f4abd366bcc8f0b015",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p39_submit.hpp": "f4ac85a5e48b3cf5990b1948fcf75629601b18af6373eedbf4bcc0058a9f697b",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p39_sycl.hpp": "d29e4a9527e7e585ee739dad6726750bfa0f59176fa66a7cde8b2097fa2885c9",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p42_cooperative.hpp": "9a1f1687ebfaae90b4b9b77067cf047daae1c6a6a92c83e0ffadf5d2c1c802fa",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p42_expert.hpp": "2027f73e732700f3c9814f55bcc539fc5fba5bde0cfe8b3a1f78e9e5720b3516",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p42_gdn.hpp": "7ad0798feb98a47512ca9273a6dcb0ec3f39c5b25b72d3bd307efa0be243fe90",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p42_gdn.inc": "695c96a963151ae947892e7134edffde2c6149437f1451c19c27989191c8a07b",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p42_submit.cpp": "c911a5c31512034131ca19f7afdac3aa4f3a65d346e1d077b6c934cb39055ce6",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p42_submit.hpp": "7f978d09377425ba53986594c3905023ced8ca9966b8f34814b375e5c8c06520",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p42_tiny.hpp": "4c7d29dfa6511160c01f284a620f1bbe27c511338c1ae0b857109f11bba38357",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49_qsa_fixture.cpp": "5db3dbe015fca723bb33dc482e039ac397cc4bec0b4d4ffe01044606218ba0f6",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49_qsa_kernel.hpp": "2b073e9c8f680a2050a52d692dccf7fc07522d3933660094631bf68ff6f773dc",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49_qsa_reference.hpp": "06879f38145119df87f89d96a07552de34a53cfec2e209c29e622c45da469991",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49_qsa_submit.cpp": "5a49cef5628827c72d82e30132e8e2d3927e34cdf1e1f5548f74aa8db131d9d5",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49_qsa_submit.hpp": "ef4feea0408fd85413b81c9af13efc37385a054a81caac4bd001bd4f6e6489e1",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49b_expert_fixture.cpp": "708ed40794cb77c0e1daf43faa87e7f6043300147d595922a01d7520d841f17d",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49b_expert_kernel.hpp": "c749f1d022b6cf19ad4e9078f08ef4a6874a59a24662a14c38aed603dbb9e804",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49b_expert_submit.cpp": "546230defe0b358fd2b01aa9ae56a0f8f645f8f05689c9ab93ce6bc19950cb3c",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49b_expert_submit.hpp": "56a5e57dd1f04e6a02c003cda3862173d2c364c31f5495680359cc9ea356a68e",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49b_gemv.hpp": "fa47b999ef28343e725aed83ce4e8f7df3cf258ee7387794f07087ed77dc5d40",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49c_fixture.cpp": "314b574eb1c7a7e1eb3f2a12be8a67210a90f2f35fa94c1509d59b5099cae176",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49c_kernel.hpp": "7e535f51446cb3d331c59a87b85159abd64dd27123e450354657acf6510e2202",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49c_submit.cpp": "2faeb6560dca467a4bdf3f93f1dfa93dd137b58b9b16db923bfa6ea3afa459e3",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49c_submit.hpp": "70fd247ee656781b7d5d8c859ed8dd63599b5535d55aa64e11ba1ef9687a1c9d",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49d_expert.hpp": "f55602bde74c92b955911267b5de89011b8ac1e0778c787676e66cfa47c123f9",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49d_expert_submit.cpp": "ada8ac883e7adebcd172603511853c483f1cbac4340a44cb8cccdb9e6ff2a3c7",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49d_fixture.cpp": "624ec7d12cb2a87e0ccc62e2cf92268325cce2c7ec3eb44cf59e864e7b553f7f",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49d_mix.hpp": "b5cbbdf12ae15ca1e77e11d87a35902077ba1f72ca854dfc0c66ff9fb3c74f77",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49d_recurrence.hpp": "a46b57c3522917fcc8abb9551c9f210953c8fbff0f334aea4f0b0a573729390e",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49d_route.hpp": "4ca3c7631c62d0770a00fce9ff655d045ae9fe0e89980ed63afa30f5e778ee6a",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49d_small.hpp": "2fb3372745a1b561709bf44dc985dc40674cc09adfe1b1ff203bb3138aae36fb",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49d_submit.cpp": "76b1e1d7039efaf167a32b1034943e61656041a3706921f03d26aaf7fd396fd7",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p49d_submit.hpp": "6b95f6e2baf63ef22a49208f1b9643a0d50d89f1261eb3580a8de3aad03072e3",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p56_config.hpp": "830eeed71e2298f6c0160147f92440ec5cdb784b1b108a7feecd3629174fbb9d",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p56_head_fixture.cpp": "8782edb9d7762aeb5de2300bef7741093eb8b35b793eb5eb63d67262f2744282",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p56_prefix.hpp": "0bea4bf778614cedfa8a179c3965cef73ce0a48bc764a942a85bd556a68dfd0e",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p59_draft.hpp": "2c01b784a7d52e8ca51a12da34e560fbaf62b8af0140d9527948f176231337e2",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p59_hc.hpp": "4053586325d2fcd1be271066b5dc01c37e6498bc417e04d51deb5c255e54d2ed",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p59c_select.hpp": "801351ffe23a69c9d8d50ff07eeafc2b39a94ee9a10b176d1f7b5a30d2afa79f",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p60_kernels.hpp": "9f3eb510d57c95291f54214e2b5e3d12148838e92811d89377a57fa01006a843",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p60_math.hpp": "b3b58a512aa3a79cee5edd7d68833c0e449a06124511603aadad6d837b219dd6",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p60_submit.cpp": "c4a80a5f303a65a612213f2f166def60f913c688fd45f78744ebb65558826e93",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p60_submit.hpp": "863a1d0eb34742a9ab2e2c11258db7041050634a1058661f83cb184f84adf5c6",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p65_attribution.hpp": "94e3e9b46c5e91f38f747e64a8ba975e75816817a1abe904fc791072406e791a",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p65_expert.hpp": "44e357e7d8ec32ef116c54f8fb3c51d7074bf0acfc46289f721c79e9d902f22e",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p73_hc.hpp": "eb1071a4ccd9469d07d87746b3be363a79a5209b252105a3af5e9e13ee49c6ce",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p74_packed.hpp": "231c528b06e3a2f50c9bcf470a711a25f7824bacd85180d78c6f93f53e202cd3",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p74_submit.cpp": "fc058536aae1a9548544900f08475855a0fa74fad34c912bceb9a223bbf9fa31",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p74_submit.hpp": "2cb9f7184d7d9ec61b5b5d2ced93bdd5f737ff3d34cbad16533b7e99d5254e3b",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p78_norm.hpp": "4fc1ffeb5f5594fbc729e1561e0a5167bdea5fc0c5b5f3a79a283c83b3ffc957",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p78_route.hpp": "e0ef1a4ba725e49d0182bf26bf885a446a205373b6a5a59308e9fd6efc986210",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p82_recurrence.hpp": "ea77cd2365f442a36888a582f955d40f67215c3db9b95d39a813fc26be080547",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p82b_recurrence.hpp": "5376b4e152fbf62c1fed4a894f7fdcb418d0f566dbbcaf0ca567f9596a72ef70",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p83_head.hpp": "02e8238ef561a81946f8f30627d75ae8c70de18a35c1229b6d99610e1e782d90",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p90_expert.hpp": "17c976c49f71abeaafd08ad57f7c39251d39ba03ea947b75f7351e69f224e32b",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p90_hc.hpp": "57fa33d5bd0a793034a1d8a1a78517bbaeec09c87d9df30a53589c046a9a0b33",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p90_layout.hpp": "67ef0a3faaabaeaff0edbf4f359d5d86b0f88e398337d31b856f4a817f8313b0",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p93_head.hpp": "7870d95b0afab07eca62b9e407cc8f1780f020de885a9b1ac447c76b9029fc9d",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p93_kernel.hpp": "3dce97dbfa401b74589211e7e32e7ee62ba78ddfe56f844c3c3a40641aa8a46d",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p93_submit.cpp": "057fa07dae3ec562ea242970873ea3c16c161be8b0bb075a1552632a219d2a59",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p93_submit.hpp": "ebf6146c2d017da6041dca21ba50601bcd54b6d4223c1dc5f8c0d3aada2043b9",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p94_norm.hpp": "5d4580e7126f4bdcc083fd9d05025f96b480e12bb4e993feda0c2a6b21f7cfbb",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p95_expert.hpp": "58facf76f9aa212caad7495fbb1c28b839972c1fcc9dc094fe039231fe628897",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/performance.cpp": "9f0b52da35dff6d71a4f4eea72b0cfee26a9796934aa033295cf73256bca04d1",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/performance.hpp": "97048551886ee82850180ef9a7981259d80569fb82981c16e8473793739b2137",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/prepared_invalidation_test.cpp": "b082a461f27c10b7e678e6c37f810e78fef6fa587645ae0e327a730ece01f27d",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/prepared_submission.hpp": "41405cfc3c10727e245536993f647601b99705cdc9ac070e29f2ef695ffed2b9",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/prototype/snapshot/core_v2.hpp": "279a51b16593f1a8432205ea65422b037a533783bdbd79152f17e2b4a9d8b6bb",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/prototype/snapshot/detmath.hpp": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/prototype/snapshot/kernels.hpp": "804c720eb7339e1d90c786ca43c8399fbe52999dd668ea43c30ad7a559a677f1",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/prototype/snapshot/reference.hpp": "41ff760abf1a4f7234f02ee209e232f4be2071273a3c703935472350a4db668b",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/prototype/snapshot/rope.hpp": "1cef648de09ac4b115f1966033f2e341c870203a7415a39d58a8bbe2adb6c643",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/queue_test.cpp": "92864c3a1ab28b9432f9fea437698259f9286fe7fde818573ab2975488906a1b",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/rank.hpp": "59fdc6893d42970cc0d4950d1f14edaaed43a57897e9dbf3712d64c3904b66fc",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/rank_canary.hpp": "e5ac0589c32fde6e25ab57da94f90fd4e3d1608a4a70f5d3382a490d105e303d",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/reply_first.hpp": "4388ba38ed4dc27cf890fc30b23a435b9b8e236e621dd32c516d18300e0232e3",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/request_reset.hpp": "b35ad7753e3b2155e62e9d02700c24c52292f773c5f0b5f496914c705b6fbe99",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/request_state_inventory.hpp": "afae20532c6d9f9215a8f9d0bb629a7bb68a3bc7d66dabf57aee3fc72634f340",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/rope.hpp": "83782198e96337883f7e226d5fc474360841f6ca26a00bce43a6d87f42b74929",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/round2.hpp": "bd614a9944e33903a6f0c7c2d4a1dd1de4786f8b1cdc8418df73e6d54b7e38ef",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/round2_submit.cpp": "9376df1464877b7e5f0e24eb56000df350ade782582bd42ad18cc5cbb2a7c45b",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/round2_submit.hpp": "d9231c86021695fb1e6f0e84f833380bc5e5d685d6a92f52292ffe191718a7ad",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/route42.hpp": "8c6bc5850573de86054c1447290911fa08d2be7c4b7603d1dc4c2e4f6e03753c",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/route42_submit.cpp": "67068801a7c05a7345f6925dc5b140ab633cb6adb858cff21e19de675f5c0deb",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/runtime_kernels.cpp": "ff95284fda68e0097c35e7ee0b03851563b77cf935602b4e2ea0d5ba526f37f0",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/runtime_kernels.hpp": "f56dff0f8aaa0647857d077dd1fd10ec1ed573403d1cdb7cdd2b4db194ce3538",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/single_device.cpp": "891359cc58e9b607d04c6faca78fe4dc85bb2751b5168f7f06b88cfb01378705",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/small_gemv.cpp": "36f250c15ef6de5081f934bbb85daf7476c9b36efb70f0708ef0bba2b39123af",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/small_gemv.hpp": "8da011c8025e8a3fec2c7d8e4e23eec08d212ad85be649ad0fc1009d75d4e872",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/small_gemv_fixture.cpp": "eabb9be3ad02ffa3794a8d2591634c2f538e7cbd1ad99f05a2076c17b98c4338",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/small_gemv_fixture.hpp": "8bd00ce4476cd9427c1f1bc9d222c3ee6ec66c41fb95d3fedbf663323a690180",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/specialised.hpp": "0d7489d31fb869a49db3a7a365dbe78af52931c0e7d5cdf38ff05b01e594c126",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/specialised_submit.cpp": "46f74d87620ff9f627a098905b8d6cfca7e2d2ebb3077a32ed906060442ade7d",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/specialised_submit.hpp": "bfbff1b46cf52ef5dd07ab0ea78350295af8932d3d18379623ab0b95967b742a",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/strict_snapshot.hpp": "007fcb599c0ad95ec83e7f91f172175e41992d990b5136b782f46d81d9b4513b",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/synthetic.hpp": "0f3285642055d61ff84790f668b7e19fdf347b2c7875aed804a88db5f9c06f35",
+    "experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.cpp": "021766a26c108dbdb830070bfb8c13c00934ca5a7df3f472aa3f10335309bb33",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": "1044e1a57d101d35a1d02e7fd911c3db9e5faed41248255ac61af52528f98f74",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp": "d2560c5530d56ca62b0ec43bcbd1668cd7c637d1743f51abfebfb96de56ee480",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp": "80647a747f697dd8131019ee2041ab42b1f6b772f735abdf116fa6e2036323f1",
+    "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
+    "experiments/own-xpu-runtime/stage2/packet3/model/directory.hpp": "535eea979a14d3a5eb9f4768edffb6e47c7d0aa61cfeeaf27e9dade75d19759f",
+    "experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp": "e8da06cfc064ef9dd5f154d4b313b0dfeb95244fb6e7cb1a073591e6e8497cfa",
+    "experiments/own-xpu-runtime/stage2/packet4/owner_test.cpp": "90b62340aff81aaa2c8bee620b6ddfea13d9d9231b1f64e94140139181d498b1",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.cpp": "5391274d85d8f62e0398e80297744bcd85f23a16ac8c252a9a925bacbd630e8f",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp": "78f15ee1abaace582eff11e876e9f76a3e69d78159156655e1133dc2ed3aa8c0",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.cpp": "2ea8d49225e539b31db9884b86c46bb80769935d9f6a4e23e78375e8d3178403",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp": "a4c24610451981c3d0d19289919e7b16521ed652605ba557f44c234bc413d54e",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": "7532f67c6d9a0be2a9187ce149b2004d9f1ea045705327d0ce542a283ad5ed72",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp": "efd7bb4c4dcdc0ee2afa24a7c1146e19a993f4f3cebd73cf025c84bc209053ed",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.cpp": "1094da5f48201e42fec563a0ea91018cd3d706d5ae5f80bcef17d28b002f4f64",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp": "218ec7d39db6272038f05453c84e7823220f6e3d97f7272a17efa1cd9593c706",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": "f744a148509ed091d69a708262d0fcbc94c179da8ca5ed364791e8ba77a328af",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.cpp": "ff0852ed39e4a33fb4002440a8bae301ca3003c4a391bcfce2feb946d589aa72",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp": "5122c8e7115d94e0546d7b40fcd9a9a795c45717394a636ac3c806ad6d37dd6e",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": "95bdc549c66d5cb72fd54cc73696187dae08568f15b19d206cc954ca290c85f4",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/full_shape.py": "197e38fb1990838856d86a175d2741266711eddd4abd54645901ae83e6fcd19c",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/memory_plans.py": "0e3c8157c1b35217272811ec189abd16083c2b630f18b8f8c5f32303fc13bdd1",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/memory_gate.py": "3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/bundle_selection.py": "8eafe1d6ece18e4c90dab8f9f9818aeb309219f757e164011d93f741b08ab8ae",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/selection-template.json": "1019e758650544220d0811a7e25f4ca5ffebc88b960423fb5a2cde0aa7767fd0",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/dispatch-speed6.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/main.cpp": "0e8279b549e548eb7298a1d0091e34a8ac8178d834f37e171381f9fd0a52e26d",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/mtp.hpp": "62843f884a4354e6c722d1ab7791123905bf128d8531af8ab3d0a97e1143e10a",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/entry.cpp": "8801c39c22750f7271add28b54e927aee3e442712030440ac37011764f40ff82"
+  },
+  "commands": [
+    [
+      "/usr/bin/g++",
+      "-DOWN_RT_HOST_ONLY",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/validation",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/../../stage1/packet3-prep/src",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/../packet2/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/../packet2/loader",
+      "-std=gnu++20",
+      "-Werror=return-type",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-march=native",
+      "-fopenmp",
+      "-O0",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/entry.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/entry.o"
+    ],
+    [
+      "/usr/bin/g++",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fopenmp",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/1debfefd27ca-p49d_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/c81bc734e0ea-83e7218d06aa-74dae9a977b5-p49d_expert_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/bf978c83786f-5b1341d3c9bd-2da2af621a95-85d35223e1cb-95a634abb866-65f127d435c4-p49c_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/8db197086b2d-99972e94cf3a-15deb6a28fe1-44725e3bef69-beef754eeb2f-f379f48c08fc-a68494e2e4c0-4cddb8a717fb-6cd25906942c-48e0912b2bff-e7f6725ff84c-p49b_expert_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/0d6a2de5989e-76e97bd4068e-b64a29125484-87ad21abc5d9-d00b11f53590-a3742032ed9a-f345eb3f3024-6cb5f4cc4056-fd1c0349608a-4827a8cdbf45-dd3fe83164f7-p49_qsa_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/95c19cb25c64-1e6ecd069ba8-ac32151bb352-835b26dccf1e-d05472ede328-e8968671e5d7-e0ea41f70509-4b6ae833ee22-87e707a47556-720e35b289b9-adf2b5a8f3ec-p39_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/3d9f342550a3-09e7767decc5-c48e68a0be9c-35f0dab87698-6b10ee64460c-c122e49e15d4-59bc2dba898a-b0110af3c37a-41d3226df94e-649ecdb83388-a8b76a5aaefb-p39_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/1c8d8673ce39-980c0b939bf2-7dbaca72f5c9-d96ae8b72f2c-b76b5e603ef9-47c5860d12b8-14d684459c4b-a943e3b493fd-9836c7c776b1-a787c281735b-66b9acec72b5-route42_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/933363f11d73-10ea1325bdfe-ef8c80aa1132-5cbc8d783f6b-db54394cf6db-9cfc73e45e28-0cc26f81fd96-749fce04a85a-31758dd066a2-351ca077111d-b096fb3deb15-p42_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/f1122bf3746e-f634f12e04d3-33518be76194-297901bafd80-a72e71523c23-f34e0651f285-cdb28d227ab1-ba28681e1125-5918cd95ab06-78d17e6ffba1-a887e2f17924-p30_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/a76fc3508af9-257ce5b3c6de-7f5954279018-71a1cff6c190-5e90c72adb80-74b23c90431d-9a5119b5252d-5f0435142c81-5b2198890f19-7f445c54ca41-7fe00edacb14-mtp_kernels.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/3b7b3d30db64-4cf3d8b97e1e-a907ae341d19-7abdd1e47b63-b3b5b364052c-29c06f745bff-fa3d727f09ba-a665f57c4bfb-041777358bf1-f398d6bf103e-1bf31e00af83-p33_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/59667bbf89a6-6cb117452ce9-1b963e614bf7-95d45d65d758-88dd092c4ac9-b6df9c549afe-a78fb9597cb9-42304aa2d058-ce0256371cd4-d1df9ba61a4b-fadc41d19a64-p33r2.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/c27efa8623a6-343ebd285e1e-bf0b1a8455d2-22ec62ddae27-693b39561366-932c8dade0f6-7bdb7da0eb10-f0b55e298146-1597daf59a69-1baa01931d50-05f62427b363-submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/e50fb5b6a449-18256f5be731-441535b1ecb7-8d22bc3cac9c-7470793bdabe-76c1f5cc6a93-a853d1b80369-904dfc899fff-41c3704d5d32-4da274ebc82d-80c5be9f8e62-expert_down.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/f296d0278d49-2d993ce607bb-67872a5eb05d-f29aa697be5c-b65fbcb0f497-ac9e0bc238c9-1fd214a63a82-6f906662dec8-f9bea326a1f2-56363b721e23-223383c5fd57-round2_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/ef62927a166e-bae7e289a5d9-16ef4594f6a3-b2270f8711cc-8690e14d583d-40f2243ba055-1d7ad6dff140-2ee63ec39c04-01a4704fdf1f-a1753931e596-84461f568174-small_gemv.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/738aa257e851-15ac977945e0-a1dfa246320d-d7f2c2875e3f-9fa243b0f070-c155e09c5450-0f3d227e7289-15a5b80c43cf-f4f921be6036-640df8460433-3e4f50a8c71c-small_gemv_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/ae14cd48971d-792b913cc94b-3dee407055bc-94f8fd08074d-bd0541f93576-445f5f1d29a8-12ab76812132-49788aef79dc-8f920220a636-bae5aee863a6-1d87bbff48f0-p25_bridge.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/f7a60a149a4b-a52283db3ea0-87cacc5a80f0-1f90412ecacf-74640c8c1dcf-8649468c9b21-e8ccd8a7a042-564cc4d239ed-8e840f7c116f-40727737505b-33e04660e9b8-gemv_timing.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/195c7ad8c389-7e4c8d35a93e-a1b5e21829d4-175bd37f001a-1f61722d0f9e-b6f920769952-1518629f79d8-418ffd9aae66-b74e2ce2e3f6-eb3f20934fcf-5af6922e74be-adapter_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/5db6ae8d1e2a-8ac1fe1daf5f-4e379386cec8-95566332736a-d4fe8f606e5c-ecfa061e2395-bbec72fc1a30-a200ff83d1a3-59405fbdc454-f93770bfac06-53937d4d075a-performance.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/cdfb788d2677-860dbb52fbf4-b0cb75e599d5-0ced092cc3ae-299e19fa71eb-0719ad38c087-f94248d6c910-cb486a1dd5a8-0da6b9a243bc-2f59e733d4ff-a0a95539031a-adapter.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/748aa05c4516-7fd6b28723e3-61a114e5523e-3f231205b58b-d697c81eb684-dd0e536caf97-b715c102884d-bcf1c7d0fe04-35e778110a5e-c545afc7abed-504e2f6b4fea-specialised_submit.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/38fce544b17e-de3805b144dc-e9743c4c7cae-441a629bd522-aec1ae8d60fa-106105cb53fa-0de4a1cc27ba-6aa37d275eb5-9ba03e6dd860-5d60edc0f9e4-333c9a3673dd-runtime_kernels.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/649412ecb38b-13d8cc78733b-ee670e7938fd-b304d4cc1e87-764eeb3ddeb9-678f78508314-e297e9148922-ab655ee0da37-71f33ba80296-e1b4d7f94b48-c54cf2dec7dc-owner.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/351d69b083db-0e48267b14ef-b398819ae50a-ff83379e311a-46da7a9ef952-owner_retire.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/25c6ca6013eb-f87c4132db56-8f6325199078-5867b182815f-a982ef5bada4-d7e8810f9bb8-fd24fc7c3daf-cfb5817ad892-c8498c60aa60-bf7aefab963e-ba99d9e2967c-gguf.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/46d7c67cbbe5-7a380c7b3604-0ce057c4ab88-fae88a10b728-f776945e8e3b-e6c29c7f2797-9cc58382bf12-9c0144b06f0d-b4558c6fc734-cc25ca237a56-a1788b72f6f9-entry-nongemv_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/23efdca49eda-a5a84571bc95-8f4c9da3bd39-71202298bb50-61934330e5e1-f4ccc78582fb-cfcba76ca8ef-936a2e7aa4a0-9ec06cf0cc62-1c1e23a41e1f-b7851df5e164-entry-k2_fixture.cpp.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/b07840bc037c-725e554864a4-01fd5e7591ef-p60_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/9cd0aa74e230-ac51b38f1ca3-9a6f3a807dbf-bc6146f0263b-e673a54be165-f4ef6437d0d1-p74_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/e26df5ee130c-faea86ed380a-3efaa7f633d9-p93_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/9465ca28a7ed-p105_submit.o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/entry.o",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/full-shape/fixture",
+      "-Wl,-rpath,/usr/lib/x86_64-linux-gnu",
+      "/usr/lib/x86_64-linux-gnu/libcrypto.so",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/gnu-host/inherited/e1aa9a8a2a46-283281710b28-c65155282bca-9f13b6fadbb6-07ffe95e124f-3d83b39c69a1-af51bd323cc4-eb1bfd31f503-417ab0b9139f-host_wait_mode.o"
+    ]
+  ],
+  "refusals": [
+    {
+      "case": "short",
+      "returncode": 1,
+      "error": "p28 extent/alignment\ncontext lifetime PASS: 1090 destructions, native release last, zero late destructions"
+    },
+    {
+      "case": "misaligned",
+      "returncode": 1,
+      "error": "p28 extent/alignment\ncontext lifetime PASS: 1090 destructions, native release last, zero late destructions"
+    },
+    {
+      "case": "serial",
+      "returncode": 1,
+      "error": "p90 cached layout requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path"
+    },
+    {
+      "case": "gemv",
+      "returncode": 1,
+      "error": "p90 cached layout requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path"
+    },
+    {
+      "case": "streaming",
+      "returncode": 1,
+      "error": "p90 cached layout requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path"
+    },
+    {
+      "case": "draft-rank",
+      "returncode": 1,
+      "error": "p90 cached layout requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path"
+    },
+    {
+      "case": "split",
+      "returncode": 1,
+      "error": "p90 cached layout requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path"
+    },
+    {
+      "case": "context",
+      "returncode": 1,
+      "error": "p90 cached layout requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path"
+    },
+    {
+      "case": "legacy",
+      "returncode": 1,
+      "error": "p90 cached layout requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path"
+    }
+  ],
+  "binary_sha256": "25aebd5c0de9fe196a76754a55e8b147c8f9ca9a5b03c07867aef40e12ef7707"
+}

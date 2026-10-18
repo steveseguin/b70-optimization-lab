@@ -1,0 +1,179 @@
+{
+  "schema": "packet67.offline-registers.v1",
+  "passed": true,
+  "device_executed": false,
+  "scope": "actual prepared TUs, offline BMG-G31; not measured occupancy or installed-driver JIT",
+  "commands": [
+    [
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-fsycl",
+      "-fsycl-device-only",
+      "-O2",
+      "-std=c++20",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fdenormal-fp-math=ieee",
+      "-foffload-fp32-prec-div",
+      "-foffload-fp32-prec-sqrt",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet67-roofline/build/checked/experiments/own-xpu-runtime/stage2/packet67-roofline/p60_submit.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet67-roofline/build/offline-p60_submit/kernels.bc"
+    ],
+    [
+      "/opt/intel/oneapi/compiler/2026.0/bin/compiler/llvm-spirv",
+      "--spirv-ext=+all,-SPV_INTEL_runtime_aligned,-SPV_KHR_untyped_pointers",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet67-roofline/build/offline-p60_submit/kernels.bc",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet67-roofline/build/offline-p60_submit/kernels.spv"
+    ],
+    [
+      "/usr/bin/ocloc",
+      "compile",
+      "-spirv_input",
+      "-file",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet67-roofline/build/offline-p60_submit/kernels.spv",
+      "-device",
+      "bmg-g31",
+      "-out_dir",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet67-roofline/build/offline-p60_submit/aot"
+    ],
+    [
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-fsycl",
+      "-fsycl-device-only",
+      "-O2",
+      "-std=c++20",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fdenormal-fp-math=ieee",
+      "-foffload-fp32-prec-div",
+      "-foffload-fp32-prec-sqrt",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet67-roofline/build/checked/experiments/own-xpu-runtime/stage2/packet67-roofline/p49d_submit.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet67-roofline/build/offline-p49d_submit/kernels.bc"
+    ],
+    [
+      "/opt/intel/oneapi/compiler/2026.0/bin/compiler/llvm-spirv",
+      "--spirv-ext=+all,-SPV_INTEL_runtime_aligned,-SPV_KHR_untyped_pointers",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet67-roofline/build/offline-p49d_submit/kernels.bc",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet67-roofline/build/offline-p49d_submit/kernels.spv"
+    ],
+    [
+      "/usr/bin/ocloc",
+      "compile",
+      "-spirv_input",
+      "-file",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet67-roofline/build/offline-p49d_submit/kernels.spv",
+      "-device",
+      "bmg-g31",
+      "-out_dir",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet67-roofline/build/offline-p49d_submit/aot"
+    ]
+  ],
+  "kernels": [
+    {
+      "name": "//.kernel _ZTSZZN3p6011norm_kernelERN4sycl3_V15queueENS_5BoundERKSt6vectorINS1_5eventESaIS6_EEENKUlRNS1_7handlerEE_clESC_EUlNS1_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill size 128",
+        "//.spill flag store 3",
+        "//.spill flag load 3"
+      ],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet67-roofline/evidence/registers/p60_submit/kernel-0.asm.gz",
+      "sha256": "de5e6c59591823241ae2289e43dfff64ec9f73dc843eba049749e626dbf7cd34"
+    },
+    {
+      "name": "//.kernel _ZTSZZN3p6017low_inject_kernelERN4sycl3_V15queueENS_5BoundERKSt6vectorINS1_5eventESaIS6_EEENKUlRNS1_7handlerEE_clESC_EUlNS1_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill size 64",
+        "//.spill flag store 1",
+        "//.spill flag load 2"
+      ],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet67-roofline/evidence/registers/p60_submit/kernel-1.asm.gz",
+      "sha256": "4577650f0f7925a69723c8b9222e18c9ec0e7512a38d84f088450801b109f86c"
+    },
+    {
+      "name": "//.kernel _ZTSZZN3p6015gate_mix_kernelERN4sycl3_V15queueENS_5BoundERKSt6vectorINS1_5eventESaIS6_EEENKUlRNS1_7handlerEE_clESC_EUlNS1_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill size 64"
+      ],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet67-roofline/evidence/registers/p60_submit/kernel-2.asm.gz",
+      "sha256": "abbe0cf0cc365facb47ffcb64857d61f48021cf2266faf7448fc39bbdd009b3f"
+    },
+    {
+      "name": "//.kernel _ZTSZZN5p67hc6deviceERN4sycl3_V15queueEN3p605BoundERKSt6vectorINS1_5eventESaIS7_EEENKUlRNS1_7handlerEE_clESD_EUlNS1_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill size 256",
+        "//.spill flag store 51",
+        "//.spill flag load 60"
+      ],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet67-roofline/evidence/registers/p60_submit/kernel-3.asm.gz",
+      "sha256": "fd9eb7efd255f2d4e1c8b65fdc261b685efa875151367f6feb66b879ae38a72f"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK7p49drec16RecurrenceKernelILj4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill size 256",
+        "//.spill flag store 10",
+        "//.spill flag load 14"
+      ],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet67-roofline/evidence/registers/p49d_submit/kernel-2.asm.gz",
+      "sha256": "ca6fb2ad8bc4157401a51cbc827833faed2f91c53435ceef50d4ccc5e8f96b87"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK7p49drec16RecurrenceKernelILj8EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill size 256",
+        "//.spill flag store 10",
+        "//.spill flag load 14"
+      ],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet67-roofline/evidence/registers/p49d_submit/kernel-7.asm.gz",
+      "sha256": "463aaa15552fb7b63fb137921ff02fb677b5cc458ae939c6eaf3e026e99cb157"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK6p67rec6KernelILb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill size 256"
+      ],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet67-roofline/evidence/registers/p49d_submit/kernel-14.asm.gz",
+      "sha256": "d2e21d77c7b3c79d5a77fb53d6abbb8fc617cad58c0b8b758f1452781bf7e388"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK6p67rec6KernelILb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 2",
+        "//.spill flag load 4"
+      ],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet67-roofline/evidence/registers/p49d_submit/kernel-15.asm.gz",
+      "sha256": "6d0210a05c180593fa17e25e833d7125a194db47171cbfa7b2faabce53d5fd34"
+    }
+  ],
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet67-roofline/build/checked/experiments/own-xpu-runtime/stage2/packet67-roofline/p60_submit.cpp": "9c5b99f605433cdd79e86bba40c2e1794f40107c4367eda9950846647a76b635",
+    "experiments/own-xpu-runtime/stage2/packet67-roofline/build/checked/experiments/own-xpu-runtime/stage2/packet67-roofline/p49d_submit.cpp": "196b56eae095692e25b84e6dba517dd2e2a15f6626e6f62cbd55e1c52df14548"
+  },
+  "tools": {
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx": "9fe05a4aef59abce8d8f0631964dd0f12932345d0d38fc9e9d6f6af844e94b33",
+    "/opt/intel/oneapi/compiler/2026.0/bin/compiler/llvm-spirv": "feed1c4e68bd0a8ba61e2ad6d6daec5bd2f02f03ea1dc9e37bbb35b821acd3fa",
+    "/usr/bin/ocloc": "56c987c47eba69ccd18ac7544eb15c2e421fed8fc0a51df877972b21bfa4e584"
+  },
+  "max_rss_kib": 408364
+}

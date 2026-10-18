@@ -1,0 +1,50 @@
+{
+  "schema": "packet58f.mask-cpu.v1",
+  "passed": true,
+  "device_executed": false,
+  "topology": {
+    "mask": {
+      "NEOReadDebugKeys": "1",
+      "FilterBdfPath": "0000:23:00.0",
+      "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+      "ZE_AFFINITY_MASK": "0",
+      "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+    },
+    "native_indices": [
+      0
+    ],
+    "nodes": [
+      {
+        "pci": "0000:23:00.0",
+        "node": "/dev/dri/renderD130",
+        "path": "/dev/dri/by-path/pci-0000:23:00.0-render",
+        "driver": "xe"
+      }
+    ],
+    "device_nodes_opened": false
+  },
+  "child_environment": {
+    "LD_LIBRARY_PATH": "/usr/lib/x86_64-linux-gnu",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:23:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+    "HOME": "<fresh empty private directory per window>",
+    "LC_CTYPE": "C.UTF-8"
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/mask_cpu_gate.py": "5e20e61d1a6a70665ec930b8776508ea8682b04d2bdae02ed33a2916ada42671",
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/test_mask58f.py": "735d095ace7451c31c583330c908d51d1772752c93f03d36d0e215299074fb55",
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/test_admission58e.py": "0ce2c1a67f78d199f9f1a5953e92159aaeb42a07752e8feb88afaba521dc33bb",
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/chain_devices.py": "c409060588c0e36d77af6caa0b6368c5b1653cd8f00cf37e240762b13487c9df",
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/onecard_admission.py": "c09309dcf02ad18570101e5b2e8e224c79d8c34f80b0a6018af4a38e56a31818",
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/window.py": "bbeb346492debeaa56f99a608bcc7570abeec495637ea20be3849b65b7e3b42d",
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/drain_gate.py": "3653fac95f6ea831b6c67fa0c71e0cbb070628a0a11a5e75ef4e8b3fa16c3714",
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/lane_admission.py": "f5c3a82925cb2cb1bea3df61206830e3e8fe9fd478c212370d5ced1252f6adab"
+  },
+  "proof_scope": "CPU child environment and passive single-BDF mapping; native driver FD proof awaits coordinator K1",
+  "render_access_policy": "Only card-0 Xe FDs accepted; not an OS device sandbox; no DRM node opened by this gate"
+}

@@ -1,0 +1,147 @@
+"""Read frozen source comparisons in their own import namespace; never writes."""
+import contextlib,io,json,sys,hashlib,math
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[4];STAGE=ROOT/'experiments/own-xpu-runtime/stage2'
+PACKETS={'90':'packet90-expert-hc','91':'packet91-record-bundle','92':'packet92-rank1-reply-first','93':'packet93-packed-head2','94':'packet94-hc-norm-fusion','95':'packet95-expert-dequant','100':'packet100-down-locality','101':'packet101-draft-geometry'}
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def require_finished(window, root):
+ # The wrapper writes passed=False at launch and only timestamps completion
+ # after reporting. A stop, retained child or reporting failure is never pending.
+ if window.get('stop_reasons') or window.get('child_retained') or window.get('report_failed'):
+  raise ValueError('failed source screen: '+str(root))
+ if not window.get('finished_utc_ns') and window.get('passed') is not True:
+  raise FileNotFoundError('source screen incomplete (no finished_utc_ns): '+str(root))
+def record_lane_veto(choice, checks):
+ # Finished invalid A evidence fails closed; valid brackets use the latest
+ # completion time for this specific choice, never a different grid winner.
+ errors=[c for c in checks if c.get('choice') in (choice,'*') and c.get('error')]
+ if errors:return dict(choice=choice,lane='A',reason='record lane A confirmation invalid: '+errors[-1]['error'])
+ matches=[c for c in checks if any(r['choice']==choice for r in c.get('rows',[])[1:-1])]
+ if not matches:return None
+ latest=max(matches,key=lambda c:c['rows'][-1]['finished_utc_ns'])
+ rows=latest['rows'];candidate=next(r for r in rows[1:-1] if r['choice']==choice)
+ exact=all(r['exact'] is True for r in rows)
+ ratio=candidate['rate']/max(rows[0]['rate'],rows[-1]['rate'])
+ if exact and ratio>1:return None
+ reason=('inexact completed result' if not exact else 'candidate not faster than both controls')
+ return dict(choice=choice,lane='A',kind=latest['kind'],ratio=ratio,
+             finished_utc_ns=rows[-1]['finished_utc_ns'],rows=rows,
+             reason='record lane A excludes '+choice+': '+reason)
+
+def collect(number):
+ p=STAGE/PACKETS[number];sys.path.insert(0,str(p))
+ if number=='101':
+  import screen_jobs_reseal as jobs
+  import compare_reseal as comp
+ else:
+  import screen_jobs as jobs
+  import compare as comp
+ if number=='100':
+  import subprocess
+  def qualify():
+   r=subprocess.run([sys.executable,'-B',str(Path(__file__).with_name('micro_source.py'))],stdin=subprocess.DEVNULL,capture_output=True,text=True,check=True)
+   qualified=json.loads(r.stdout)
+   result['receipts'].update(qualified['bindings'])
+   result['sources'].update(qualified['validation_sources'])
+   result['micro_qualification']=qualified
+   return tuple(qualified['qualified'])
+  jobs.qualified_candidates=qualify
+ boot=Path('/proc/sys/kernel/random/boot_id').read_text().strip();result=dict(packet=int(number),status='pending',receipts={},sources={},directions={},record_lane_checks=[],observed_windows={})
+ def pin(f,category):
+  if f.is_file():result[category][str(f.relative_to(ROOT))]=sha(f)
+ try:
+  seal=jobs.verify()
+  result['sources'].update(seal['sources'])
+  for leaf in (('screen-jobs-seal-reseal-20261018.json','compare_reseal.py','screen_jobs_reseal.py') if number=='101' else ('screen-jobs-seal.json','compare.py','screen_jobs.py')):pin(p/leaf,'sources')
+  qualified=('down-tile16',) if number=='100' and 'down-tile16' in jobs.qualified_candidates() else jobs.qualified_candidates() if number=='93' else None
+  if number=='100':
+   assert qualified == ('down-tile16',), 'tile16 not micro-qualified'
+   pin(STAGE/'packet100b-route-capture/evidence/micro-B/qualification.json','receipts')
+  if number=='93':
+   for f in (p/'evidence/micro-B2').rglob('*'):pin(f,'receipts')
+   pin(p/'evidence/microbench-build.json','receipts')
+  for direction in ('A-grid','B-grid'):
+   source,other=('A','B') if direction=='A-grid' else ('B','A');rows_by_lane={};d=dict(status='pending',lanes=rows_by_lane)
+   def load_rows(lane,entries):
+    rows=[]
+    for j in entries:
+     root=(jobs.output(j) if j['mode']=='grid' else jobs.WRAPPER/'evidence'/f'p91-{lane}-confirm-{j["index"]}') if number in ('91','101') else jobs.WRAPPER/'evidence'/j['out']
+     window_path=root/'window.json'
+     result['observed_windows'][str(window_path.relative_to(ROOT))]=sha(window_path) if window_path.is_file() else None
+     w=json.loads((root/'window.json').read_text())
+     if w.get('finished_utc_ns') or w.get('stop_reasons') or w.get('child_retained') or w.get('report_failed'):
+      for f in root.rglob('*.json'):pin(f,'receipts')
+     require_finished(w,root)
+     try:r=comp.load(j) if number in ('91','101') else comp.load(j,lane)
+     except FileNotFoundError as e:raise ValueError('finished source screen missing artifact: '+str(e)) from e
+     assert w['boot_id']==boot,'stale source screen boot'
+     r.update(exact_count=13 if r['exact'] else 0,all_13_exact=r['exact'],lane=lane,boot_id=boot,started_utc_ns=w['started_utc_ns'],finished_utc_ns=w['finished_utc_ns'],output=str(root))
+     assert math.isfinite(r['rate']) and r['rate']>0
+     for f in root.rglob('*.json'):
+      assert result['receipts'].get(str(f.relative_to(ROOT)))==sha(f),'source receipt changed while reading'
+     rows.append(r)
+    assert all(r['started_utc_ns']<r['finished_utc_ns'] for r in rows)
+    assert all(a['finished_utc_ns']<b['started_utc_ns'] for a,b in zip(rows,rows[1:])),'overlapping/out-of-order bracket'
+    assert all(r['acceptance_counts']==rows[0]['acceptance_counts'] for r in rows),'acceptance changed'
+    rows_by_lane[lane]=rows;return rows
+   try:
+    kwargs={'direction':direction}
+    if number in ('93','100'):kwargs['qualified']=qualified
+    if number=='95':kwargs['grid']='exp-grid-prefetch'
+    grid=load_rows(source,jobs.jobs(source) if number in ('91','101') else jobs.jobs(source,**kwargs))
+    if source=='A':result['record_lane_checks'].append(dict(kind='grid',rows=grid))
+    assert all(r['exact'] is True for r in grid),'13/13 exact required'
+    if number in ('91','101'):comp.compare(grid)
+    try:best=jobs.choose(grid,qualified) if number in ('93','100') else jobs.choose(grid,'exp-grid-prefetch') if number=='95' else jobs.choose(grid)
+    except (ValueError,AssertionError) as e:
+     if str(e).startswith(('no candidate beats both','candidate must beat both')):d.update(status='no-winner',reason=str(e));continue
+     raise
+    ratios={source:best['rate']/max(grid[0]['rate'],grid[-1]['rate'])}
+    assert ratios[source]>1,'must beat both same-lane controls'
+    d.update(status='winner',choice=best['choice'],ratios=ratios,
+             qualification='one exact first-lane bracket; composition only')
+    # A later record-lane confirmation overrides an earlier B screening win.
+    if source=='B':
+     try:
+      entries=jobs.jobs('A') if number=='101' else jobs.jobs('A',best['choice'],mode='confirm') if number=='91' else jobs.jobs('A',choice=best['choice'],**kwargs)
+      confirmation=load_rows('A',entries)
+      result['record_lane_checks'].append(dict(kind='confirmation',rows=confirmation))
+      d['confirmation_status']='complete'
+     except FileNotFoundError as e:d['confirmation_status']='pending';d['confirmation_reason']=str(e)
+     except (ValueError,AssertionError,KeyError,TypeError,OSError) as e:
+      d['confirmation_status']='failed';d['confirmation_reason']=str(e)
+      result['record_lane_checks'].append(dict(kind='confirmation',choice=best['choice'],error=str(e)))
+     # Confirmation is veto evidence, not an extra first-lane qualification.
+     rows_by_lane.pop('A',None)
+   except FileNotFoundError as e:d.update(status='pending',reason=str(e))
+   except (ValueError,AssertionError,KeyError,TypeError,OSError) as e:
+    d.update(status='failed',reason=str(e))
+    if source=='A' and not rows_by_lane.get('A'):
+     result['record_lane_checks'].append(dict(kind='grid',choice='*',error=str(e)))
+   finally:result['directions'][direction]=d
+  complete=[d for d in result['directions'].values() if d['status']=='winner'];failed=[d for d in result['directions'].values() if d['status']=='failed']
+  if failed and not complete:
+   a=result['directions'].get('A-grid',{})
+   if a.get('status')=='failed' and result['record_lane_checks']:
+    veto=dict(lane='A',reason='record lane A source excluded: '+a['reason'],checks=result['record_lane_checks'])
+    result.update(status='no-winner',reason=veto['reason'],record_lane_veto=veto)
+   else:result.update(status='failed',reason=failed[0]['reason'])
+  elif complete:
+   # First completed qualifying lane wins; no cross-lane rate ranking.
+   first=min(complete,key=lambda d:next(iter(d['lanes'].values()))[-1]['finished_utc_ns'])
+   result.update(status='winner',winner=first['choice'],lanes=first['lanes'],ratios=first['ratios'],
+                 qualification=first['qualification'])
+   veto=record_lane_veto(first['choice'],result['record_lane_checks'])
+   if veto:result.update(status='no-winner',reason=veto['reason'],record_lane_veto=veto)
+   elif failed:result.update(status='failed',reason=failed[0]['reason'])
+  elif any(d['status']=='no-winner' for d in result['directions'].values()):
+   result['status']='no-winner'
+   if result['directions']['A-grid']['status']=='no-winner':
+    veto=dict(lane='A',reason='record lane A source excluded: no candidate faster than both controls',checks=result['record_lane_checks'])
+    result.update(reason=veto['reason'],record_lane_veto=veto)
+ except FileNotFoundError as e:result['reason']=str(e)
+ except (ValueError,AssertionError,KeyError,TypeError,OSError) as e:result.update(status='failed',reason=str(e))
+ return result
+if __name__=='__main__':
+ with contextlib.redirect_stdout(io.StringIO()):r=collect(sys.argv[1])
+ print(json.dumps(r))

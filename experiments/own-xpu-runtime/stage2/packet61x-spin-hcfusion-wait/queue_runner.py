@@ -117,7 +117,7 @@ def admitted_output(path):
     allowed = Path('/home/steve/own-xpu-runtime-results/packet61x-spin-hcfusion-wait/build')
     from storage import REGISTERED_CHAIN
     if out != allowed / REGISTERED_CHAIN:
-        raise ValueError('output must be the registered packet56 chain '+REGISTERED_CHAIN)
+        raise ValueError('output must be the registered packet61x chain '+REGISTERED_CHAIN)
     return out
 
 
@@ -144,6 +144,8 @@ def input_preflight(args, window=None):
                'python3', '-B', str(P / 'check_inputs.py'), '--output-root', str(args.output_root)]
     if args.prefix_windows:
         command += ['--prefix-windows', *map(str, args.prefix_windows)]
+    if getattr(args, 'resume_from', None):
+        command += ['--resume-from', str(args.resume_from)]
     if window:
         command += ['--window', window]
     subprocess.run(command, check=True)
@@ -164,19 +166,25 @@ def run(args):
     storage = precheck()
     if not storage['passed']:
         raise RuntimeError('registered-chain storage precheck refused: '+str(storage))
+    if args.resume_from:
+        from resume_chain import prepare, validate
+        if out.exists():
+            validate(args.resume_from, out, prepared=True)
+        else:
+            prepare(args.resume_from, out)
     out.mkdir(parents=True, exist_ok=True)
     with (out / 'queue.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         stop = out / 'STOP'
         if stop.exists():
             raise RuntimeError('STOP exists; coordinator review required, no automatic restart')
-        windows = EARLY if args.phase == 'early' else LATE if args.phase == 'model' else EARLY + LATE
+        windows = selected_windows(args)
         if any((out / name).exists() for name in windows):
             raise RuntimeError('selected window already has output; no retry or overwrite')
         cursor = journal()
         state_path = out / 'queue-state.json'
         atomic_json(out / 'prefix-head-prerequisites.json', prefix_windows)
-        state = json.loads(state_path.read_text()) if state_path.exists() else {'last_stop': 0, 'gap': 0, 'completed': []}
+        state = json.loads(state_path.read_text()) if state_path.exists() else {'last_stop': time.time() if args.resume_from else 0, 'gap': 305 if args.resume_from else 0, 'completed': list(EARLY) if args.resume_from else []}
         try:
             for name in windows:
                 if name in LATE:
@@ -219,19 +227,42 @@ def run(args):
             raise
 
 
+def selected_windows(args):
+    if getattr(args, 'resume_from', None):
+        if args.phase == 'early':
+            raise ValueError('resume runs only fresh model windows; early phase is invalid')
+        return LATE
+    return EARLY if args.phase == 'early' else LATE if args.phase == 'model' else EARLY + LATE
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--phase', choices=('early', 'model', 'all'), default='all')
     parser.add_argument('--output-root', type=Path, required=True)
     parser.add_argument('--plan', action='store_true')
+    parser.add_argument('--resume-from', type=Path, help='Import exactly pinned passed early windows; model windows always fresh')
+    parser.add_argument('--prepare-resume', action='store_true', help='CPU-only copy and hash validation; no device execution')
     parser.add_argument('--authorized-device-window', action='store_true')
     parser.add_argument('--wait-oracle', action='store_true')
     parser.add_argument('--prefix-windows', type=Path, nargs=2,
                         help='Two fresh packet56 head K-window receipts; required to execute')
     args = parser.parse_args()
+    selected_windows(args)
+    if args.prepare_resume:
+        if not args.resume_from or args.plan:
+            raise ValueError('--prepare-resume needs --resume-from and cannot combine with --plan')
+        if os.getpriority(os.PRIO_PROCESS, 0) != 19 or not set(os.sched_getaffinity(0)) <= set(range(8,16)) | set(range(24,32)):
+            raise ValueError('CPU resume preparation requires nice19 and helper cores')
+        from chain_seal import verify
+        verify()
+        input_preflight(args)
+        from resume_chain import prepare
+        manifest = prepare(args.resume_from, admitted_output(args.output_root))
+        print(json.dumps(dict(passed=True, device_executed=False, imported=manifest['imported_windows'], next_window='KD')))
+        return
     if args.plan:
         input_preflight(args)
-        chosen = EARLY if args.phase == 'early' else LATE if args.phase == 'model' else EARLY + LATE
+        chosen = selected_windows(args)
         for name, cmd in commands(args.output_root).items():
             if name in chosen:
                 print(shlex.join(cmd))

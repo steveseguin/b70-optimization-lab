@@ -1,0 +1,752 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "measured_here": false,
+  "sources": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/architecture-tradeoff/rank1/sites.jsonl": "36c91f90a9ae6413aaf186ab9592cd54c8d7cad3bd029bd51bb237953aa0106d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/benchmark-analysis/rank1/sites.jsonl": "2cc4cf736b66f736b13d1f315e2a24779bfd9174b8b5fe482ba220a67806afe9",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/bug-report-synthesis/rank1/sites.jsonl": "5055f0e08daeaea9cd8a1895156c20567978da24e442b37e45e941ba2db5b384",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/code-review/rank1/sites.jsonl": "c7c75d2c157b9998cb0e1a1e5db1fb434f1cc2de5fc7b2ff0acfb414ca3ffcf5",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/customer-email/rank1/sites.jsonl": "b52625b1e6c05262bea1e97041babcb54a362a0160fdd15af2c4a3d6fd9f1ddf",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/decision-memo/rank1/sites.jsonl": "378e23d8ec85189048fd667b09ceb0236880e6629dc6a1706a6d2623aa7f3eb0",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/incident-retrospective/rank1/sites.jsonl": "b66f77a23c9cdd5d17e55822889cf41bab54060686f712c6a95662e80e2e4212",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/performance-hypotheses/rank1/sites.jsonl": "cd27450ea1a8324d9347bcf2065e82a62e463105d5f204776f432e33428ba8d1",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/release-plan/rank1/sites.jsonl": "15225247aac5d2dd4aa18dd89be0f6732c4f75fc773f4b68420a3003adb5faf4",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/risk-register/rank1/sites.jsonl": "efcbe3d4fa07beec1083cf61702313bf4b5613e8fed4fabd47a58a5fea01500f",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/sql-debugging/rank1/sites.jsonl": "0ac93098ad8afe866e0a705f2fd57a580bc3f1cb15e0834783e61dcb4c7a9541",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/technical-guide/rank1/sites.jsonl": "7b19ce86e82d45a2002a766290a4b0728adc0196f1d93734396652680ec8de68"
+  },
+  "manifest_sha256": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9",
+  "bandwidth_reference_GB_s": [
+    540,
+    590
+  ],
+  "sites": [
+    {
+      "label": "draft.argmax",
+      "count": 96,
+      "measured_mean_us": 21.047208333333334,
+      "tensor": null,
+      "logical_bytes": 182784,
+      "basis": "BF16 prefix logits read once; reduction workspace traffic excluded",
+      "logical_GB_s": 8.684477157501092,
+      "floor_us_at_540": 0.3384888888888889,
+      "floor_us_at_590": 0.3098033898305085
+    },
+    {
+      "label": "draft.begin.0",
+      "count": 96,
+      "measured_mean_us": 2.804875,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.attention",
+      "count": 96,
+      "measured_mean_us": 76.48979166666666,
+      "tensor": {
+        "name": "mtp.layers.0.self_attn.o_proj.weight",
+        "stored_bytes": 31457280,
+        "type": "BF16",
+        "rows": 2560,
+        "columns": 6144,
+        "sha256": "9d2fcf0ac6ac19de87f638f710cfd1af6ad14141e75b7d3d5d29fbd06f374219"
+      },
+      "logical_bytes": 31457280,
+      "basis": "one unique BF16 weight tensor read; activation traffic excluded; repeated row/batch reads may hit cache",
+      "logical_GB_s": 411.26115413004464,
+      "floor_us_at_540": 58.254222222222225,
+      "floor_us_at_590": 53.31742372881356
+    },
+    {
+      "label": "draft.blk.0.attn.combine",
+      "count": 96,
+      "measured_mean_us": 11.845666666666666,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.expsact",
+      "count": 96,
+      "measured_mean_us": 3.3386770833333332,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.expsdown",
+      "count": 96,
+      "measured_mean_us": 63.68488541666667,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.expsdown.check",
+      "count": 96,
+      "measured_mean_us": 3.2128958333333335,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.expsgate",
+      "count": 96,
+      "measured_mean_us": 82.38720833333333,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.expsgate.check",
+      "count": 96,
+      "measured_mean_us": 4.484625,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.expsup.check",
+      "count": 96,
+      "measured_mean_us": 3.2672395833333336,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.ffn.combine",
+      "count": 96,
+      "measured_mean_us": 11.0145,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.gather",
+      "count": 96,
+      "measured_mean_us": 23.357270833333335,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.hc.a.act",
+      "count": 96,
+      "measured_mean_us": 2.966625,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.hc.a.gate",
+      "count": 96,
+      "measured_mean_us": 27.748520833333334,
+      "tensor": {
+        "name": "mtp.layers.0.attn_hyper_connection.input_mix_weight_up.weight",
+        "stored_bytes": 6553600,
+        "type": "BF16",
+        "rows": 10240,
+        "columns": 320,
+        "sha256": "f80f1fd44e1183e7764ea496b11ff89ead9dd758f861d4e79a770bf54956b1a5"
+      },
+      "logical_bytes": 6553600,
+      "basis": "one unique BF16 weight tensor read; activation traffic excluded; repeated row/batch reads may hit cache",
+      "logical_GB_s": 236.17835485224813,
+      "floor_us_at_540": 12.136296296296296,
+      "floor_us_at_590": 11.107796610169492
+    },
+    {
+      "label": "draft.blk.0.hc.a.inject",
+      "count": 96,
+      "measured_mean_us": 47.82553125,
+      "tensor": {
+        "name": "mtp.layers.0.attn_hyper_connection.block_inject_weight.weight",
+        "stored_bytes": 81920,
+        "type": "BF16",
+        "rows": 4,
+        "columns": 10240,
+        "sha256": "c8afff64e7f54412d02120097c4255033c55245e1c1eed84cc630d428ccb864c"
+      },
+      "logical_bytes": 81920,
+      "basis": "one unique BF16 weight tensor read; activation traffic excluded; repeated row/batch reads may hit cache",
+      "logical_GB_s": 1.7128926299172056,
+      "floor_us_at_540": 0.1517037037037037,
+      "floor_us_at_590": 0.13884745762711864
+    },
+    {
+      "label": "draft.blk.0.hc.a.low",
+      "count": 96,
+      "measured_mean_us": 22.15175,
+      "tensor": {
+        "name": "mtp.layers.0.attn_hyper_connection.input_mix_weight_down.weight",
+        "stored_bytes": 6553600,
+        "type": "BF16",
+        "rows": 320,
+        "columns": 10240,
+        "sha256": "e80ac8bf3e270e9d5a949ec7c913329dc8de017d69851334820fae7b8c86a7f5"
+      },
+      "logical_bytes": 6553600,
+      "basis": "one unique BF16 weight tensor read; activation traffic excluded; repeated row/batch reads may hit cache",
+      "logical_GB_s": 295.8502149943007,
+      "floor_us_at_540": 12.136296296296296,
+      "floor_us_at_590": 11.107796610169492
+    },
+    {
+      "label": "draft.blk.0.hc.a.mix",
+      "count": 96,
+      "measured_mean_us": 6.791510416666666,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.hc.a.norm",
+      "count": 96,
+      "measured_mean_us": 8.280208333333333,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.hc.f.act",
+      "count": 96,
+      "measured_mean_us": 2.9036041666666668,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.hc.f.gate",
+      "count": 96,
+      "measured_mean_us": 27.233104166666667,
+      "tensor": {
+        "name": "mtp.layers.0.mlp_hyper_connection.input_mix_weight_up.weight",
+        "stored_bytes": 6553600,
+        "type": "BF16",
+        "rows": 10240,
+        "columns": 320,
+        "sha256": "40756866bf2a5e82c28e407f717b6fa07614d593f78e79c7ceb2cd4ffe6dda94"
+      },
+      "logical_bytes": 6553600,
+      "basis": "one unique BF16 weight tensor read; activation traffic excluded; repeated row/batch reads may hit cache",
+      "logical_GB_s": 240.64829186904115,
+      "floor_us_at_540": 12.136296296296296,
+      "floor_us_at_590": 11.107796610169492
+    },
+    {
+      "label": "draft.blk.0.hc.f.inject",
+      "count": 96,
+      "measured_mean_us": 19.749364583333335,
+      "tensor": {
+        "name": "mtp.layers.0.mlp_hyper_connection.block_inject_weight.weight",
+        "stored_bytes": 81920,
+        "type": "BF16",
+        "rows": 4,
+        "columns": 10240,
+        "sha256": "c5782dd92b479a1f8ef43d683fe9c917fd9e8fba81f23c1aae8817bfe4b476a6"
+      },
+      "logical_bytes": 81920,
+      "basis": "one unique BF16 weight tensor read; activation traffic excluded; repeated row/batch reads may hit cache",
+      "logical_GB_s": 4.147981554258866,
+      "floor_us_at_540": 0.1517037037037037,
+      "floor_us_at_590": 0.13884745762711864
+    },
+    {
+      "label": "draft.blk.0.hc.f.low",
+      "count": 96,
+      "measured_mean_us": 21.901104166666666,
+      "tensor": {
+        "name": "mtp.layers.0.mlp_hyper_connection.input_mix_weight_down.weight",
+        "stored_bytes": 6553600,
+        "type": "BF16",
+        "rows": 320,
+        "columns": 10240,
+        "sha256": "b71240036dea954e034d5ae04e097bcd7ac51cb28a44e4c93d198af3447278a1"
+      },
+      "logical_bytes": 6553600,
+      "basis": "one unique BF16 weight tensor read; activation traffic excluded; repeated row/batch reads may hit cache",
+      "logical_GB_s": 299.23605449877437,
+      "floor_us_at_540": 12.136296296296296,
+      "floor_us_at_590": 11.107796610169492
+    },
+    {
+      "label": "draft.blk.0.hc.f.mix",
+      "count": 96,
+      "measured_mean_us": 7.223322916666667,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.hc.f.norm",
+      "count": 96,
+      "measured_mean_us": 7.4132395833333335,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.moe",
+      "count": 96,
+      "measured_mean_us": 4.802583333333334,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.qsa.attention",
+      "count": 96,
+      "measured_mean_us": 116.01008333333333,
+      "tensor": null,
+      "logical_bytes": 207530.66666666666,
+      "basis": "unique BF16 K/V cache plus Q/gate/output lower bound; all sampled contexts below selection budget; excludes score/probability scratch and repeated per-head reads",
+      "logical_GB_s": 1.7889019704465345,
+      "floor_us_at_540": 0.384316049382716,
+      "floor_us_at_590": 0.35174689265536724
+    },
+    {
+      "label": "draft.blk.0.qsa.ik",
+      "count": 96,
+      "measured_mean_us": 7.4109791666666665,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.qsa.iq",
+      "count": 96,
+      "measured_mean_us": 8.288854166666667,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.qsa.k",
+      "count": 96,
+      "measured_mean_us": 8.87696875,
+      "tensor": {
+        "name": "mtp.layers.0.self_attn.k_proj.weight",
+        "stored_bytes": 2621440,
+        "type": "BF16",
+        "rows": 512,
+        "columns": 2560,
+        "sha256": "1a295dc2d6e633e808aeb19e00c97856a1817bbfcc83f5b610e2bfcacfcb8c38"
+      },
+      "logical_bytes": 2621440,
+      "basis": "one unique BF16 weight tensor read; activation traffic excluded; repeated row/batch reads may hit cache",
+      "logical_GB_s": 295.30801265916364,
+      "floor_us_at_540": 4.8545185185185185,
+      "floor_us_at_590": 4.4431186440677966
+    },
+    {
+      "label": "draft.blk.0.qsa.pool",
+      "count": 96,
+      "measured_mean_us": 3.5048125,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.qsa.prepare",
+      "count": 96,
+      "measured_mean_us": 5.447010416666666,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.qsa.qgate",
+      "count": 96,
+      "measured_mean_us": 127.28947916666667,
+      "tensor": {
+        "name": "mtp.layers.0.self_attn.q_proj.weight",
+        "stored_bytes": 62914560,
+        "type": "BF16",
+        "rows": 12288,
+        "columns": 2560,
+        "sha256": "5220aef3d288f40759f7356af9ef453e5ac0256a38749a9bb803a4e9db58150d"
+      },
+      "logical_bytes": 62914560,
+      "basis": "one unique BF16 weight tensor read; activation traffic excluded; repeated row/batch reads may hit cache",
+      "logical_GB_s": 494.26362973504456,
+      "floor_us_at_540": 116.50844444444445,
+      "floor_us_at_590": 106.63484745762712
+    },
+    {
+      "label": "draft.blk.0.qsa.select",
+      "count": 96,
+      "measured_mean_us": 14.676729166666666,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.qsa.v",
+      "count": 96,
+      "measured_mean_us": 8.273645833333333,
+      "tensor": {
+        "name": "mtp.layers.0.self_attn.v_proj.weight",
+        "stored_bytes": 2621440,
+        "type": "BF16",
+        "rows": 512,
+        "columns": 2560,
+        "sha256": "39cb12f5424e965fa71fb81db0ee230c701b7b1e0b72c36641fde7e0e41bff41"
+      },
+      "logical_bytes": 2621440,
+      "basis": "one unique BF16 weight tensor read; activation traffic excluded; repeated row/batch reads may hit cache",
+      "logical_GB_s": 316.8421821295026,
+      "floor_us_at_540": 4.8545185185185185,
+      "floor_us_at_590": 4.4431186440677966
+    },
+    {
+      "label": "draft.blk.0.route",
+      "count": 96,
+      "measured_mean_us": 43.18696875,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.router",
+      "count": 96,
+      "measured_mean_us": 8.593791666666666,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.shared_gate",
+      "count": 96,
+      "measured_mean_us": 5.876677083333333,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.shexpact",
+      "count": 96,
+      "measured_mean_us": 2.8971354166666665,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.shexpdown",
+      "count": 96,
+      "measured_mean_us": 14.708114583333334,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.shexpgate",
+      "count": 96,
+      "measured_mean_us": 10.381895833333333,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.blk.0.shexpup",
+      "count": 96,
+      "measured_mean_us": 10.272364583333333,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.commit.final",
+      "count": 96,
+      "measured_mean_us": 3.1207708333333333,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.final.act",
+      "count": 96,
+      "measured_mean_us": 2.9079270833333335,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.final.gate",
+      "count": 96,
+      "measured_mean_us": 27.182177083333332,
+      "tensor": {
+        "name": "mtp.hyper_connection_mixer.input_mix_weight_up.weight",
+        "stored_bytes": 6553600,
+        "type": "BF16",
+        "rows": 10240,
+        "columns": 320,
+        "sha256": "6565285f0ba2923703252763cfc11d8a9bda40ab42e7548e12464b04dbdbec13"
+      },
+      "logical_bytes": 6553600,
+      "basis": "one unique BF16 weight tensor read; activation traffic excluded; repeated row/batch reads may hit cache",
+      "logical_GB_s": 241.09915772781568,
+      "floor_us_at_540": 12.136296296296296,
+      "floor_us_at_590": 11.107796610169492
+    },
+    {
+      "label": "draft.final.low",
+      "count": 96,
+      "measured_mean_us": 21.5038125,
+      "tensor": {
+        "name": "mtp.hyper_connection_mixer.input_mix_weight_down.weight",
+        "stored_bytes": 6553600,
+        "type": "BF16",
+        "rows": 320,
+        "columns": 10240,
+        "sha256": "c633d2841fda463e82045e0b93fb8cb8d511ec0c9eda616020f01aca18d71947"
+      },
+      "logical_bytes": 6553600,
+      "basis": "one unique BF16 weight tensor read; activation traffic excluded; repeated row/batch reads may hit cache",
+      "logical_GB_s": 304.76456209800006,
+      "floor_us_at_540": 12.136296296296296,
+      "floor_us_at_590": 11.107796610169492
+    },
+    {
+      "label": "draft.final.mix",
+      "count": 96,
+      "measured_mean_us": 7.154947916666667,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.final.norm",
+      "count": 96,
+      "measured_mean_us": 7.65184375,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.logits",
+      "count": 96,
+      "measured_mean_us": 521.2999479166667,
+      "tensor": null,
+      "logical_bytes": 292454400,
+      "basis": "resident expanded Q6_K prefix: int8 plus F32 scale/16 (packed GGUF is 191923200 bytes)",
+      "logical_GB_s": 561.0098392849845,
+      "floor_us_at_540": 541.5822222222222,
+      "floor_us_at_590": 495.68542372881353
+    },
+    {
+      "label": "draft.merge.add",
+      "count": 96,
+      "measured_mean_us": 2.09859375,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.merge.embedding_norm",
+      "count": 96,
+      "measured_mean_us": 28.171635416666668,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.merge.embedding_projected",
+      "count": 96,
+      "measured_mean_us": 33.291020833333334,
+      "tensor": {
+        "name": "mtp.fc_embedding.weight",
+        "stored_bytes": 13107200,
+        "type": "BF16",
+        "rows": 2560,
+        "columns": 2560,
+        "sha256": "241d6e87ded317a61b1aeb3ca4e28c53f1caba09ad5be66092e91fe5e3e14751"
+      },
+      "logical_bytes": 13107200,
+      "basis": "one unique BF16 weight tensor read; activation traffic excluded; repeated row/batch reads may hit cache",
+      "logical_GB_s": 393.7157729593002,
+      "floor_us_at_540": 24.27259259259259,
+      "floor_us_at_590": 22.215593220338985
+    },
+    {
+      "label": "draft.merge.hidden_norm",
+      "count": 96,
+      "measured_mean_us": 7.854875,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    },
+    {
+      "label": "draft.merge.projected",
+      "count": 96,
+      "measured_mean_us": 58.509,
+      "tensor": {
+        "name": "mtp.fc_hidden.weight",
+        "stored_bytes": 13107200,
+        "type": "BF16",
+        "rows": 2560,
+        "columns": 2560,
+        "sha256": "97c8e427ad0177e2c713ed24a397d815b523eda15ef453f1ae6463f6c70a8f96"
+      },
+      "logical_bytes": 13107200,
+      "basis": "one unique BF16 weight tensor read; activation traffic excluded; repeated row/batch reads may hit cache",
+      "logical_GB_s": 224.02023620297732,
+      "floor_us_at_540": 24.27259259259259,
+      "floor_us_at_590": 22.215593220338985
+    },
+    {
+      "label": "draft.transfer.hidden",
+      "count": 96,
+      "measured_mean_us": 2.7994791666666665,
+      "tensor": null,
+      "logical_bytes": 20480,
+      "basis": "same-card BF16 hidden copy payload; not a host PCIe bandwidth measurement",
+      "logical_GB_s": 7.315646511627908,
+      "floor_us_at_540": 0.037925925925925925,
+      "floor_us_at_590": 0.03471186440677966
+    },
+    {
+      "label": "draft.transfer.proposal",
+      "count": 96,
+      "measured_mean_us": 0.0,
+      "tensor": null,
+      "logical_bytes": 4,
+      "basis": "int32 readback payload; zero-duration timestamps cannot yield bandwidth",
+      "logical_GB_s": null,
+      "floor_us_at_540": 7.4074074074074075e-06,
+      "floor_us_at_590": 6.779661016949153e-06
+    },
+    {
+      "label": "draft.transfer.status",
+      "count": 96,
+      "measured_mean_us": 0.0,
+      "tensor": null,
+      "logical_bytes": 4,
+      "basis": "int32 readback payload; zero-duration timestamps cannot yield bandwidth",
+      "logical_GB_s": null,
+      "floor_us_at_540": 7.4074074074074075e-06,
+      "floor_us_at_590": 6.779661016949153e-06
+    },
+    {
+      "label": "draft.transfer.upload",
+      "count": 96,
+      "measured_mean_us": 0.0,
+      "tensor": null,
+      "logical_bytes": null,
+      "basis": "not assigned: fused/elementwise/control site without a complete byte model",
+      "logical_GB_s": null,
+      "floor_us_at_540": null,
+      "floor_us_at_590": null
+    }
+  ],
+  "caveat": "Logical operand floors, not measured DRAM traffic. Small reductions and attention are not necessarily bandwidth limited. Missing target sites remain pending the attribution screen."
+}

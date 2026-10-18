@@ -1,0 +1,21 @@
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <https://debuginfod.ubuntu.com>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+Catchpoint 1 (throw)
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+
+Catchpoint 1 (exception thrown), 0x000079114e2bb35a in __cxa_throw () from /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+#0  0x000079114e2bb35a in __cxa_throw () from /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+#1  0x0000609de5482d38 in std::vector<unsigned char, std::allocator<unsigned char> > ownrt::arguments::block<p60::Kernel<0, false, false, false, false> >(p60::Kernel<0, false, false, false, false> const&) ()
+#2  0x0000609de547f384 in unsigned long ownrt::Device::compute<p60::Kernel<0, false, false, false, false> >(p60::Kernel<0, false, false, false, false> const&, std::span<unsigned long const, 18446744073709551615ul>, std::span<unsigned long const, 18446744073709551615ul>) ()
+#3  0x0000609de547dca2 in iq3::kopt3::Launch p60::issue<0, false, false, false, false>(ownrt::Device&, std::array<unsigned long, 16ul> const&, unsigned int) ()
+#4  0x0000609de547aaf6 in p60::submit(ownrt::Device&, std::array<unsigned long, 16ul> const&, int, unsigned int, bool, bool, bool, bool) ()
+#5  0x0000609de536e4a6 in Engine::fused_hc(flash::Launch const&) ()
+#6  0x0000609de536ea7b in Engine::execute_site(flash::Launch const&) ()
+#7  0x0000609de53702df in Engine::prepare_commands() ()
+#8  0x0000609de53151b8 in pipeline::banks(Engine&) ()
+#9  0x0000609de532b2ff in main ()

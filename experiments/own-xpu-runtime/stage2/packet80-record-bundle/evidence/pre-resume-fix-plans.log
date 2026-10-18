@@ -1,0 +1,41 @@
+production--production--wide64--production--production--production 1: 11 real window plans passed
+production--production--wide64--production--production--production 1-split23: 11 real window plans passed
+production--production--wide64--production--production--production 0: 11 real window plans passed
+production--production--wide64--production--production--production 0-split23: 11 real window plans passed
+production--production--wide64--production--production--fused 1: 11 real window plans passed
+production--production--wide64--production--production--fused 1-split23: 11 real window plans passed
+production--production--wide64--production--production--fused 0: 11 real window plans passed
+production--production--wide64--production--production--fused 0-split23: 11 real window plans passed
+production--production--wide64--production--fast--production 1: 11 real window plans passed
+production--production--wide64--production--fast--production 1-split23: 11 real window plans passed
+production--production--wide64--production--fast--production 0: 11 real window plans passed
+production--production--wide64--production--fast--production 0-split23: 11 real window plans passed
+production--production--wide64--production--fast--fused 1: 11 real window plans passed
+production--production--wide64--production--fast--fused 1-split23: 11 real window plans passed
+production--production--wide64--production--fast--fused 0: 11 real window plans passed
+production--production--wide64--production--fast--fused 0-split23: 11 real window plans passed
+production--production--wide64--ordered--production--production 1: 11 real window plans passed
+production--production--wide64--ordered--production--production 1-split23: 11 real window plans passed
+production--production--wide64--ordered--production--production 0: 11 real window plans passed
+production--production--wide64--ordered--production--production 0-split23: 11 real window plans passed
+production--production--wide64--ordered--production--fused 1: 11 real window plans passed
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/all_view_plans.py", line 32, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/all_view_plans.py", line 25, in main
+    result=subprocess.run(argv+['--plan'],stdin=subprocess.DEVNULL,capture_output=True,text=True,check=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 550, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 1209, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2115, in _communicate
+    ready = selector.select(timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/selectors.py", line 415, in select
+    fd_event_list = self._selector.poll(timeout)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

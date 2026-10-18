@@ -20,7 +20,7 @@ def packet_relative(path):
 FREE_FLOOR = 8_000_000_000
 BUILD_BASE_BUDGET = 1_500_000_000
 CPU_BUILD_LIMIT = 1_500_000_000
-REGISTERED_CHAIN = 'device-cards01-a'
+REGISTERED_CHAIN = 'device-cards01-b'
 CHAIN_WINDOWS = ('K0','K1a','K1b','K2','W0p','KD','W2m','WS','WSs','WS128x','WS128')
 
 def state_write_bytes(context):

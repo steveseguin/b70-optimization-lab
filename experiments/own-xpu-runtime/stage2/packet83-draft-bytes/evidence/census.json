@@ -1,0 +1,1658 @@
+{
+  "schema": "packet83.cpu-draft-byte-census.v1",
+  "sampled_hit_count": 76,
+  "measured": true,
+  "measurement_scope": "historical packet77 diagnostic events only",
+  "mean": {
+    "wall_us": 1746.4391710526315,
+    "event_us": 1544.6266842105263,
+    "envelope_gap_us": 129.70309210526315,
+    "residual_us": 201.81248684210524,
+    "classes_us": {
+      "argmax": 21.084157894736844,
+      "attention": 387.46436842105265,
+      "embedding_ple": 60.17135526315789,
+      "hc_norm_merge": 250.51121052631578,
+      "head_prefix": 520.7786052631579,
+      "moe_experts": 251.37419736842105,
+      "other": 6.185618421052632,
+      "shared_expert": 44.47636842105263,
+      "transfers": 2.5808026315789476
+    }
+  },
+  "weight_bytes": {
+    "embedding": 13117440,
+    "hc": 52756480,
+    "router": 2621440,
+    "shared": 9835520,
+    "attention": 102894592,
+    "hc_logical_four_hidden_streams": 92078080,
+    "selected_experts_top10": 61440000,
+    "all_experts_resident": 3145728000
+  },
+  "head": {
+    "rows": 91392,
+    "columns": 2560,
+    "gguf_type": "Q6_K",
+    "source_bytes_per_row": 2100,
+    "logical_read_bytes_per_row": 3200,
+    "allocated_bytes_per_row": 3380,
+    "logical_prefix_bytes": 292454400,
+    "equivalent_prefix_allocation_bytes": 308904960,
+    "full_shared_head_allocation_bytes": 839321600,
+    "q4_group_size": 32,
+    "q4_bytes_per_row": 1600
+  },
+  "candidates": [
+    {
+      "name": "q4g32",
+      "rows": 91392,
+      "coverage": 0.9951224521230169,
+      "acceptance_proxy": null,
+      "extra_allocation_bytes": 146227200,
+      "logical_weight_read_bytes": 146227200,
+      "projected_saved_us": 260.38930263157897,
+      "projected_hit_cycle_saving_percent": 1.6173248610657078
+    },
+    {
+      "name": "prefix990",
+      "rows": 80128,
+      "covered_tokens": 19285,
+      "coverage": 0.9901422190275709,
+      "acceptance_proxy": 0.7830613455783717,
+      "extra_allocation_bytes": 0,
+      "logical_weight_read_bytes": 256409600,
+      "projected_saved_us": 64.18559840778417,
+      "projected_hit_cycle_saving_percent": 0.39866831309182715
+    },
+    {
+      "name": "prefix985",
+      "rows": 74752,
+      "covered_tokens": 19196,
+      "coverage": 0.9855727268059763,
+      "acceptance_proxy": 0.7794475286348158,
+      "extra_allocation_bytes": 0,
+      "logical_weight_read_bytes": 239206400,
+      "projected_saved_us": 94.81963401149936,
+      "projected_hit_cycle_saving_percent": 0.5889418261583812
+    }
+  ],
+  "rank1_model": {
+    "context": 4096,
+    "capacity_bytes": 34242297856,
+    "baseline_free_bytes": 2973906230,
+    "baseline_arena_headroom_bytes": 945091894,
+    "q4_free_bytes": 2827679030,
+    "q4_arena_headroom_bytes": 798864694,
+    "actual_startup_gate_required": true
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/census.py": "3d84fbcafe8b37c289dd7900c239fe2d75ce530a0794b8b6215b8b36cbf03578",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/PREREGISTRATION.md": "34c2656647ad57e579471f62c9b16ec0be4dfb96214ca50f44ab35ed32469f1f",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/coverage.json": "3a7edc24aebf0352cd78781f0ed4ae273fa5f606b06c0157b00d0673e579580c",
+    "experiments/own-xpu-runtime/stage2/packet77-attribution/timeline.py": "6ac43fc15d060890faa598ecb211747d3cc5a805a64ea885b374e33da0c190e2",
+    "experiments/own-xpu-runtime/stage2/packet75-record-bundle/mtp.hpp": "a560afdec01e4e9780370828dde501a7d50aa54b1d4eeae7524346b5d84eacc1",
+    "experiments/own-xpu-runtime/stage2/packet75-record-bundle/arithmetic.hpp": "ea9a853c66b3a22eff01e7b53243da0c5a2a33d5306dd4f09faf06c447a4c1ae",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3",
+    "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/architecture-tradeoff/receipt.json": "bbb671b487dc375b72e35693a7da2ab2cc0789133c6e14d58d8000ceff8392da",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/architecture-tradeoff/rank1/sites.jsonl": "fed357be2b0065d020252cc6223cdb32208fefbff5c4b024893affddb1d71fcc",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/benchmark-analysis/receipt.json": "dc227e414bfe36dd6f321f355b615563f4721d6763b2f7bbe745bdfb492b12d1",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/benchmark-analysis/rank1/sites.jsonl": "d240285ac5ed8adedda0ac6d7aaac585a90494000ec16a2ac1a7c77d0445e0ea",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/bug-report-synthesis/receipt.json": "84179641214936ed3886d5c4f028c2650b16185d175d55c11532581f05e1bee9",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/bug-report-synthesis/rank1/sites.jsonl": "12fbce4c23de9e0830bc9e1ad4f191de75866a968cf65efc555ef7d9456a8add",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/code-review/receipt.json": "0b44b99486ccab9a1d8d868b9c1ccae5a27b79da0e4d78ad501c2889cf95852b",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/code-review/rank1/sites.jsonl": "f97890f0169802ed45417afb7aeaa753490d307939d9a7e6aa262b581e24092f",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/customer-email/receipt.json": "f026a9a8157a264b84ee596604c0028a30311f9a30745cc507608bf00bced645",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/customer-email/rank1/sites.jsonl": "dba3863b09a90eed2c0de430df2ba76372e96515e04f5dae5b442f833ca964a8",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/decision-memo/receipt.json": "8004ccb482ac5c951336649a78592b39c3cf0d845351319582f25010ca3d9a69",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/decision-memo/rank1/sites.jsonl": "df41a4e373ffab3525f3ba3af7a59d7484ccacb9596285dafdbc5cc3a2f70965",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/incident-retrospective/receipt.json": "d8c0eff6e1a7f46524eca4f3d000f63952510361ef30bef92823227daeb81682",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/incident-retrospective/rank1/sites.jsonl": "fde3499e605496a92949c5aa6804b7fdc93b5e71963cf4818629c169fe7412c6",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/performance-hypotheses/receipt.json": "a7378d8e17fa9a7d57a00ae6f9e217856d224f47a1e6f920baffd57c7e6da843",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/performance-hypotheses/rank1/sites.jsonl": "014508a1e77f0c4c644d8ac241fe64833976413948231dc88cc5deb1cd976526",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/release-plan/receipt.json": "486dcf5b71c6fad3b44520fd63d777f5a800dc2c30c85313eb5a20dce14dbd18",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/release-plan/rank1/sites.jsonl": "4d300138f8e257d6cac1bc35b9de9283845d27e0c7865b6a8ae5c9b39577ceee",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/risk-register/receipt.json": "a2bc892eee6cf01daa7ae56c79f8f26abc82af9c8be784e0afd2185a8ab7ffea",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/risk-register/rank1/sites.jsonl": "23e500f416ca9e3a4a58608f09ec6a47a9fe6b4f9fa083bdb97d217902f847cc",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/sql-debugging/receipt.json": "912ff64c87c18624add0cd95d84ff0ddc0c2e26e1d2ee591b1cc38a383ebcf08",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/sql-debugging/rank1/sites.jsonl": "ee4edff89c91f23454bd08237906951048387115cadd5ce74378a9affebfa083",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/technical-guide/receipt.json": "2d813cfc95cb1e8b05114d437af031a2a5eb0d4095fb20932423ca16f2edf03b",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/technical-guide/rank1/sites.jsonl": "1b0d4443ca2071942eafdc2e0e30f73b7f99974b3e5d6b9c212265368adeab3a",
+    "experiments/own-xpu-runtime/stage2/packet75-record-bundle/mtp-manifest.tsv": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9",
+    "experiments/own-xpu-runtime/stage2/packet56-draft-prefix/calibration/selection.json": "aa841860347076a8c0887303ea6fa428fc3b7c54af3218477ad5abb2d6abd273",
+    "experiments/own-xpu-runtime/stage2/packet75-record-bundle/memory-plan.json": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f"
+  },
+  "samples": [
+    {
+      "prompt_id": "architecture-tradeoff",
+      "position": 74,
+      "classes_us": {
+        "transfers": 1.875,
+        "embedding_ple": 59.062,
+        "hc_norm_merge": 250.729,
+        "other": 6.042,
+        "attention": 377.397,
+        "moe_experts": 249.99800000000002,
+        "shared_expert": 43.852999999999994,
+        "head_prefix": 521.355,
+        "argmax": 20.938000000000002
+      },
+      "event_us": 1531.249,
+      "wall_us": 1711.1860000000001,
+      "envelope_gap_us": 122.91699999999992,
+      "residual_us": 179.93700000000013,
+      "events": 62
+    },
+    {
+      "prompt_id": "architecture-tradeoff",
+      "position": 76,
+      "classes_us": {
+        "transfers": 2.083,
+        "embedding_ple": 59.271,
+        "hc_norm_merge": 252.189,
+        "other": 5.937,
+        "attention": 380.83500000000004,
+        "moe_experts": 253.01799999999997,
+        "shared_expert": 44.687,
+        "head_prefix": 520.729,
+        "argmax": 20.936999999999998
+      },
+      "event_us": 1539.6860000000001,
+      "wall_us": 1746.7930000000001,
+      "envelope_gap_us": 144.68899999999985,
+      "residual_us": 207.10699999999997,
+      "events": 62
+    },
+    {
+      "prompt_id": "architecture-tradeoff",
+      "position": 78,
+      "classes_us": {
+        "transfers": 2.292,
+        "embedding_ple": 60.417,
+        "hc_norm_merge": 249.37599999999998,
+        "other": 6.354,
+        "attention": 380.30899999999997,
+        "moe_experts": 252.49699999999996,
+        "shared_expert": 44.166,
+        "head_prefix": 520.105,
+        "argmax": 20.834
+      },
+      "event_us": 1536.35,
+      "wall_us": 1713.952,
+      "envelope_gap_us": 121.25400000000013,
+      "residual_us": 177.6020000000001,
+      "events": 62
+    },
+    {
+      "prompt_id": "architecture-tradeoff",
+      "position": 79,
+      "classes_us": {
+        "transfers": 4.583,
+        "embedding_ple": 63.541,
+        "hc_norm_merge": 252.81199999999998,
+        "other": 6.459,
+        "attention": 382.396,
+        "moe_experts": 254.687,
+        "shared_expert": 44.269,
+        "head_prefix": 520.729,
+        "argmax": 21.354
+      },
+      "event_us": 1550.8300000000002,
+      "wall_us": 1791.567,
+      "envelope_gap_us": 139.16999999999985,
+      "residual_us": 240.73699999999985,
+      "events": 62
+    },
+    {
+      "prompt_id": "architecture-tradeoff",
+      "position": 81,
+      "classes_us": {
+        "transfers": 2.083,
+        "embedding_ple": 58.646,
+        "hc_norm_merge": 251.355,
+        "other": 5.834,
+        "attention": 384.89500000000004,
+        "moe_experts": 252.18800000000005,
+        "shared_expert": 44.479000000000006,
+        "head_prefix": 520.729,
+        "argmax": 20.938000000000002
+      },
+      "event_us": 1541.1470000000002,
+      "wall_us": 1723.1689999999999,
+      "envelope_gap_us": 125.41599999999994,
+      "residual_us": 182.0219999999997,
+      "events": 62
+    },
+    {
+      "prompt_id": "benchmark-analysis",
+      "position": 72,
+      "classes_us": {
+        "transfers": 4.375,
+        "embedding_ple": 62.501000000000005,
+        "hc_norm_merge": 252.709,
+        "other": 6.25,
+        "attention": 381.24999999999994,
+        "moe_experts": 253.331,
+        "shared_expert": 43.958,
+        "head_prefix": 521.146,
+        "argmax": 21.041
+      },
+      "event_us": 1546.561,
+      "wall_us": 1772.17,
+      "envelope_gap_us": 122.60500000000002,
+      "residual_us": 225.60900000000015,
+      "events": 62
+    },
+    {
+      "prompt_id": "benchmark-analysis",
+      "position": 73,
+      "classes_us": {
+        "transfers": 1.979,
+        "embedding_ple": 58.437,
+        "hc_norm_merge": 248.95799999999997,
+        "other": 6.041,
+        "attention": 377.499,
+        "moe_experts": 251.14200000000002,
+        "shared_expert": 44.686,
+        "head_prefix": 520.729,
+        "argmax": 21.146
+      },
+      "event_us": 1530.617,
+      "wall_us": 1710.254,
+      "envelope_gap_us": 122.29999999999995,
+      "residual_us": 179.63699999999994,
+      "events": 62
+    },
+    {
+      "prompt_id": "benchmark-analysis",
+      "position": 74,
+      "classes_us": {
+        "transfers": 1.979,
+        "embedding_ple": 59.584,
+        "hc_norm_merge": 248.853,
+        "other": 5.521000000000001,
+        "attention": 378.125,
+        "moe_experts": 250.416,
+        "shared_expert": 43.542,
+        "head_prefix": 520.625,
+        "argmax": 21.25
+      },
+      "event_us": 1529.895,
+      "wall_us": 1705.355,
+      "envelope_gap_us": 119.58400000000006,
+      "residual_us": 175.46000000000004,
+      "events": 62
+    },
+    {
+      "prompt_id": "benchmark-analysis",
+      "position": 75,
+      "classes_us": {
+        "transfers": 1.875,
+        "embedding_ple": 58.646,
+        "hc_norm_merge": 244.16600000000003,
+        "other": 5.937,
+        "attention": 378.128,
+        "moe_experts": 251.251,
+        "shared_expert": 43.854,
+        "head_prefix": 520.625,
+        "argmax": 21.25
+      },
+      "event_us": 1525.732,
+      "wall_us": 1707.75,
+      "envelope_gap_us": 122.60100000000011,
+      "residual_us": 182.01800000000003,
+      "events": 62
+    },
+    {
+      "prompt_id": "benchmark-analysis",
+      "position": 76,
+      "classes_us": {
+        "transfers": 4.583,
+        "embedding_ple": 63.437,
+        "hc_norm_merge": 251.353,
+        "other": 6.25,
+        "attention": 384.583,
+        "moe_experts": 251.66699999999997,
+        "shared_expert": 43.853,
+        "head_prefix": 521.459,
+        "argmax": 21.25
+      },
+      "event_us": 1548.435,
+      "wall_us": 1777.6009999999999,
+      "envelope_gap_us": 122.606,
+      "residual_us": 229.16599999999994,
+      "events": 62
+    },
+    {
+      "prompt_id": "benchmark-analysis",
+      "position": 77,
+      "classes_us": {
+        "transfers": 1.875,
+        "embedding_ple": 59.166,
+        "hc_norm_merge": 251.14700000000005,
+        "other": 6.042,
+        "attention": 378.541,
+        "moe_experts": 250.31299999999993,
+        "shared_expert": 43.855000000000004,
+        "head_prefix": 520.73,
+        "argmax": 21.146
+      },
+      "event_us": 1532.815,
+      "wall_us": 1710.124,
+      "envelope_gap_us": 120.519,
+      "residual_us": 177.30899999999997,
+      "events": 62
+    },
+    {
+      "prompt_id": "benchmark-analysis",
+      "position": 78,
+      "classes_us": {
+        "transfers": 1.875,
+        "embedding_ple": 58.95700000000001,
+        "hc_norm_merge": 251.87300000000005,
+        "other": 6.041,
+        "attention": 380.939,
+        "moe_experts": 250.624,
+        "shared_expert": 44.269999999999996,
+        "head_prefix": 520.521,
+        "argmax": 21.146
+      },
+      "event_us": 1536.246,
+      "wall_us": 1713.2099999999998,
+      "envelope_gap_us": 119.89999999999986,
+      "residual_us": 176.96399999999971,
+      "events": 62
+    },
+    {
+      "prompt_id": "bug-report-synthesis",
+      "position": 81,
+      "classes_us": {
+        "transfers": 2.083,
+        "embedding_ple": 58.021,
+        "hc_norm_merge": 250.83299999999997,
+        "other": 6.459,
+        "attention": 384.8979999999999,
+        "moe_experts": 253.23,
+        "shared_expert": 44.376,
+        "head_prefix": 520.312,
+        "argmax": 21.25
+      },
+      "event_us": 1541.462,
+      "wall_us": 1731.564,
+      "envelope_gap_us": 127.28800000000001,
+      "residual_us": 190.1020000000001,
+      "events": 62
+    },
+    {
+      "prompt_id": "bug-report-synthesis",
+      "position": 82,
+      "classes_us": {
+        "transfers": 4.479,
+        "embedding_ple": 64.166,
+        "hc_norm_merge": 252.29399999999995,
+        "other": 6.353999999999999,
+        "attention": 387.08,
+        "moe_experts": 253.95499999999998,
+        "shared_expert": 44.480000000000004,
+        "head_prefix": 521.042,
+        "argmax": 21.459
+      },
+      "event_us": 1555.309,
+      "wall_us": 1784.924,
+      "envelope_gap_us": 127.81600000000003,
+      "residual_us": 229.615,
+      "events": 62
+    },
+    {
+      "prompt_id": "bug-report-synthesis",
+      "position": 83,
+      "classes_us": {
+        "transfers": 1.771,
+        "embedding_ple": 58.855000000000004,
+        "hc_norm_merge": 248.751,
+        "other": 5.937,
+        "attention": 382.708,
+        "moe_experts": 250.416,
+        "shared_expert": 43.646,
+        "head_prefix": 520.625,
+        "argmax": 20.729
+      },
+      "event_us": 1533.438,
+      "wall_us": 1727.447,
+      "envelope_gap_us": 135.9369999999999,
+      "residual_us": 194.0089999999998,
+      "events": 62
+    },
+    {
+      "prompt_id": "bug-report-synthesis",
+      "position": 84,
+      "classes_us": {
+        "transfers": 1.979,
+        "embedding_ple": 59.166,
+        "hc_norm_merge": 250.10200000000003,
+        "other": 5.937,
+        "attention": 387.5,
+        "moe_experts": 250.93599999999998,
+        "shared_expert": 44.166,
+        "head_prefix": 520.313,
+        "argmax": 20.938000000000002
+      },
+      "event_us": 1541.037,
+      "wall_us": 1720.5040000000001,
+      "envelope_gap_us": 120.94200000000001,
+      "residual_us": 179.4670000000001,
+      "events": 62
+    },
+    {
+      "prompt_id": "bug-report-synthesis",
+      "position": 85,
+      "classes_us": {
+        "transfers": 1.771,
+        "embedding_ple": 58.542,
+        "hc_norm_merge": 248.12800000000004,
+        "other": 6.459,
+        "attention": 390.2099999999999,
+        "moe_experts": 250.51799999999997,
+        "shared_expert": 43.751000000000005,
+        "head_prefix": 520.313,
+        "argmax": 20.938000000000002
+      },
+      "event_us": 1540.6299999999999,
+      "wall_us": 1720.895,
+      "envelope_gap_us": 122.70400000000018,
+      "residual_us": 180.2650000000001,
+      "events": 62
+    },
+    {
+      "prompt_id": "code-review",
+      "position": 97,
+      "classes_us": {
+        "transfers": 1.771,
+        "embedding_ple": 58.438,
+        "hc_norm_merge": 250.93699999999998,
+        "other": 6.042,
+        "attention": 411.14599999999996,
+        "moe_experts": 249.995,
+        "shared_expert": 43.956999999999994,
+        "head_prefix": 520.833,
+        "argmax": 20.938000000000002
+      },
+      "event_us": 1564.057,
+      "wall_us": 1756.3809999999999,
+      "envelope_gap_us": 127.6099999999999,
+      "residual_us": 192.32399999999984,
+      "events": 62
+    },
+    {
+      "prompt_id": "code-review",
+      "position": 98,
+      "classes_us": {
+        "transfers": 4.375,
+        "embedding_ple": 63.748999999999995,
+        "hc_norm_merge": 253.64600000000002,
+        "other": 6.561999999999999,
+        "attention": 412.91600000000005,
+        "moe_experts": 253.333,
+        "shared_expert": 43.333,
+        "head_prefix": 520.833,
+        "argmax": 21.25
+      },
+      "event_us": 1579.997,
+      "wall_us": 1822.0639999999999,
+      "envelope_gap_us": 134.8989999999999,
+      "residual_us": 242.06699999999978,
+      "events": 62
+    },
+    {
+      "prompt_id": "code-review",
+      "position": 99,
+      "classes_us": {
+        "transfers": 2.291,
+        "embedding_ple": 59.167,
+        "hc_norm_merge": 249.689,
+        "other": 6.147,
+        "attention": 409.79200000000003,
+        "moe_experts": 249.376,
+        "shared_expert": 43.541,
+        "head_prefix": 521.042,
+        "argmax": 20.938000000000002
+      },
+      "event_us": 1561.983,
+      "wall_us": 1753.085,
+      "envelope_gap_us": 126.8710000000001,
+      "residual_us": 191.1020000000001,
+      "events": 62
+    },
+    {
+      "prompt_id": "code-review",
+      "position": 100,
+      "classes_us": {
+        "transfers": 1.77,
+        "embedding_ple": 58.75,
+        "hc_norm_merge": 247.81199999999993,
+        "other": 6.2490000000000006,
+        "attention": 411.25100000000003,
+        "moe_experts": 251.146,
+        "shared_expert": 43.852999999999994,
+        "head_prefix": 520.834,
+        "argmax": 21.146
+      },
+      "event_us": 1562.811,
+      "wall_us": 1763.855,
+      "envelope_gap_us": 129.79300000000012,
+      "residual_us": 201.0440000000001,
+      "events": 62
+    },
+    {
+      "prompt_id": "code-review",
+      "position": 101,
+      "classes_us": {
+        "transfers": 1.875,
+        "embedding_ple": 59.062000000000005,
+        "hc_norm_merge": 250.10399999999996,
+        "other": 6.25,
+        "attention": 409.7899999999999,
+        "moe_experts": 248.856,
+        "shared_expert": 44.269999999999996,
+        "head_prefix": 521.042,
+        "argmax": 21.146
+      },
+      "event_us": 1562.395,
+      "wall_us": 1755.549,
+      "envelope_gap_us": 129.27199999999993,
+      "residual_us": 193.154,
+      "events": 62
+    },
+    {
+      "prompt_id": "code-review",
+      "position": 102,
+      "classes_us": {
+        "transfers": 4.479,
+        "embedding_ple": 62.813,
+        "hc_norm_merge": 251.87400000000002,
+        "other": 6.459,
+        "attention": 412.395,
+        "moe_experts": 251.87499999999994,
+        "shared_expert": 44.269999999999996,
+        "head_prefix": 521.563,
+        "argmax": 21.25
+      },
+      "event_us": 1576.9779999999998,
+      "wall_us": 1834.507,
+      "envelope_gap_us": 150.41700000000014,
+      "residual_us": 257.5290000000002,
+      "events": 62
+    },
+    {
+      "prompt_id": "code-review",
+      "position": 103,
+      "classes_us": {
+        "transfers": 1.979,
+        "embedding_ple": 59.062,
+        "hc_norm_merge": 247.81399999999996,
+        "other": 5.938000000000001,
+        "attention": 414.16700000000003,
+        "moe_experts": 251.24799999999996,
+        "shared_expert": 43.958,
+        "head_prefix": 520.417,
+        "argmax": 21.042
+      },
+      "event_us": 1565.625,
+      "wall_us": 1758.5539999999999,
+      "envelope_gap_us": 127.39599999999996,
+      "residual_us": 192.92899999999986,
+      "events": 62
+    },
+    {
+      "prompt_id": "code-review",
+      "position": 104,
+      "classes_us": {
+        "transfers": 2.084,
+        "embedding_ple": 59.792,
+        "hc_norm_merge": 247.91700000000003,
+        "other": 6.353999999999999,
+        "attention": 415.20799999999997,
+        "moe_experts": 250.729,
+        "shared_expert": 43.854,
+        "head_prefix": 520.625,
+        "argmax": 21.042
+      },
+      "event_us": 1567.605,
+      "wall_us": 1758.835,
+      "envelope_gap_us": 126.76999999999998,
+      "residual_us": 191.23000000000002,
+      "events": 62
+    },
+    {
+      "prompt_id": "customer-email",
+      "position": 84,
+      "classes_us": {
+        "transfers": 2.083,
+        "embedding_ple": 59.271,
+        "hc_norm_merge": 253.543,
+        "other": 5.833,
+        "attention": 387.605,
+        "moe_experts": 250.51999999999998,
+        "shared_expert": 44.584,
+        "head_prefix": 520.312,
+        "argmax": 21.041
+      },
+      "event_us": 1544.792,
+      "wall_us": 1738.096,
+      "envelope_gap_us": 127.91600000000017,
+      "residual_us": 193.3040000000001,
+      "events": 62
+    },
+    {
+      "prompt_id": "customer-email",
+      "position": 86,
+      "classes_us": {
+        "transfers": 2.083,
+        "embedding_ple": 60.0,
+        "hc_norm_merge": 248.02100000000002,
+        "other": 5.834,
+        "attention": 386.77000000000004,
+        "moe_experts": 249.79199999999997,
+        "shared_expert": 43.751000000000005,
+        "head_prefix": 520.938,
+        "argmax": 20.938000000000002
+      },
+      "event_us": 1538.127,
+      "wall_us": 1740.912,
+      "envelope_gap_us": 137.49800000000005,
+      "residual_us": 202.78500000000008,
+      "events": 62
+    },
+    {
+      "prompt_id": "customer-email",
+      "position": 87,
+      "classes_us": {
+        "transfers": 4.375,
+        "embedding_ple": 64.167,
+        "hc_norm_merge": 252.70800000000008,
+        "other": 6.771,
+        "attention": 389.79200000000003,
+        "moe_experts": 253.33300000000003,
+        "shared_expert": 44.375,
+        "head_prefix": 521.875,
+        "argmax": 21.251
+      },
+      "event_us": 1558.6470000000002,
+      "wall_us": 1797.318,
+      "envelope_gap_us": 132.08299999999986,
+      "residual_us": 238.67099999999982,
+      "events": 62
+    },
+    {
+      "prompt_id": "customer-email",
+      "position": 88,
+      "classes_us": {
+        "transfers": 2.083,
+        "embedding_ple": 59.896,
+        "hc_norm_merge": 252.39699999999996,
+        "other": 5.729,
+        "attention": 389.99899999999997,
+        "moe_experts": 251.14499999999995,
+        "shared_expert": 43.438,
+        "head_prefix": 520.417,
+        "argmax": 21.146
+      },
+      "event_us": 1546.25,
+      "wall_us": 1740.01,
+      "envelope_gap_us": 129.79199999999992,
+      "residual_us": 193.76,
+      "events": 62
+    },
+    {
+      "prompt_id": "customer-email",
+      "position": 89,
+      "classes_us": {
+        "transfers": 1.875,
+        "embedding_ple": 59.375,
+        "hc_norm_merge": 249.68499999999995,
+        "other": 6.042,
+        "attention": 388.54200000000003,
+        "moe_experts": 251.98000000000005,
+        "shared_expert": 44.269999999999996,
+        "head_prefix": 520.938,
+        "argmax": 21.042
+      },
+      "event_us": 1543.749,
+      "wall_us": 1750.3899999999999,
+      "envelope_gap_us": 141.35500000000002,
+      "residual_us": 206.64099999999985,
+      "events": 62
+    },
+    {
+      "prompt_id": "customer-email",
+      "position": 91,
+      "classes_us": {
+        "transfers": 2.083,
+        "embedding_ple": 60.209,
+        "hc_norm_merge": 248.438,
+        "other": 6.146,
+        "attention": 391.665,
+        "moe_experts": 250.62599999999998,
+        "shared_expert": 44.269999999999996,
+        "head_prefix": 521.146,
+        "argmax": 20.729
+      },
+      "event_us": 1545.312,
+      "wall_us": 1737.305,
+      "envelope_gap_us": 128.4380000000001,
+      "residual_us": 191.99300000000017,
+      "events": 62
+    },
+    {
+      "prompt_id": "decision-memo",
+      "position": 67,
+      "classes_us": {
+        "transfers": 1.77,
+        "embedding_ple": 58.854,
+        "hc_norm_merge": 250.20999999999998,
+        "other": 6.145,
+        "attention": 370.10300000000007,
+        "moe_experts": 249.37699999999998,
+        "shared_expert": 43.959,
+        "head_prefix": 520.521,
+        "argmax": 21.041
+      },
+      "event_us": 1521.98,
+      "wall_us": 1714.884,
+      "envelope_gap_us": 130.10300000000007,
+      "residual_us": 192.904,
+      "events": 62
+    },
+    {
+      "prompt_id": "decision-memo",
+      "position": 68,
+      "classes_us": {
+        "transfers": 4.271,
+        "embedding_ple": 62.5,
+        "hc_norm_merge": 251.14699999999996,
+        "other": 6.458,
+        "attention": 377.291,
+        "moe_experts": 253.749,
+        "shared_expert": 44.376000000000005,
+        "head_prefix": 521.354,
+        "argmax": 21.146
+      },
+      "event_us": 1542.292,
+      "wall_us": 1784.494,
+      "envelope_gap_us": 135.41700000000014,
+      "residual_us": 242.202,
+      "events": 62
+    },
+    {
+      "prompt_id": "decision-memo",
+      "position": 69,
+      "classes_us": {
+        "transfers": 1.667,
+        "embedding_ple": 59.480000000000004,
+        "hc_norm_merge": 252.395,
+        "other": 6.25,
+        "attention": 374.063,
+        "moe_experts": 251.14399999999998,
+        "shared_expert": 44.269,
+        "head_prefix": 520.416,
+        "argmax": 21.042
+      },
+      "event_us": 1530.726,
+      "wall_us": 1730.614,
+      "envelope_gap_us": 136.1489999999999,
+      "residual_us": 199.88799999999992,
+      "events": 62
+    },
+    {
+      "prompt_id": "decision-memo",
+      "position": 70,
+      "classes_us": {
+        "transfers": 1.563,
+        "embedding_ple": 58.958,
+        "hc_norm_merge": 246.354,
+        "other": 6.042,
+        "attention": 375.417,
+        "moe_experts": 250.41400000000002,
+        "shared_expert": 44.271,
+        "head_prefix": 520.625,
+        "argmax": 20.938000000000002
+      },
+      "event_us": 1524.582,
+      "wall_us": 1715.665,
+      "envelope_gap_us": 126.87699999999995,
+      "residual_us": 191.08299999999986,
+      "events": 62
+    },
+    {
+      "prompt_id": "decision-memo",
+      "position": 71,
+      "classes_us": {
+        "transfers": 1.771,
+        "embedding_ple": 58.542,
+        "hc_norm_merge": 250.00300000000004,
+        "other": 6.354,
+        "attention": 373.126,
+        "moe_experts": 250.20700000000002,
+        "shared_expert": 43.644,
+        "head_prefix": 520.937,
+        "argmax": 20.938000000000002
+      },
+      "event_us": 1525.5220000000002,
+      "wall_us": 1722.278,
+      "envelope_gap_us": 131.45699999999988,
+      "residual_us": 196.75599999999986,
+      "events": 62
+    },
+    {
+      "prompt_id": "decision-memo",
+      "position": 73,
+      "classes_us": {
+        "transfers": 2.083,
+        "embedding_ple": 59.063,
+        "hc_norm_merge": 250.73099999999994,
+        "other": 5.834,
+        "attention": 378.12800000000004,
+        "moe_experts": 252.814,
+        "shared_expert": 44.166,
+        "head_prefix": 520.521,
+        "argmax": 20.833
+      },
+      "event_us": 1534.173,
+      "wall_us": 1725.864,
+      "envelope_gap_us": 126.86899999999991,
+      "residual_us": 191.69100000000003,
+      "events": 62
+    },
+    {
+      "prompt_id": "decision-memo",
+      "position": 74,
+      "classes_us": {
+        "transfers": 4.479,
+        "embedding_ple": 62.813,
+        "hc_norm_merge": 251.35299999999998,
+        "other": 6.146,
+        "attention": 378.646,
+        "moe_experts": 251.354,
+        "shared_expert": 44.167,
+        "head_prefix": 521.146,
+        "argmax": 21.042
+      },
+      "event_us": 1541.146,
+      "wall_us": 1780.347,
+      "envelope_gap_us": 132.18700000000013,
+      "residual_us": 239.20100000000002,
+      "events": 62
+    },
+    {
+      "prompt_id": "incident-retrospective",
+      "position": 95,
+      "classes_us": {
+        "transfers": 2.084,
+        "embedding_ple": 64.792,
+        "hc_norm_merge": 252.29200000000003,
+        "other": 6.667,
+        "attention": 397.39799999999997,
+        "moe_experts": 254.37599999999995,
+        "shared_expert": 44.271,
+        "head_prefix": 521.667,
+        "argmax": 21.458
+      },
+      "event_us": 1565.0049999999999,
+      "wall_us": 1805.653,
+      "envelope_gap_us": 177.18300000000022,
+      "residual_us": 240.64800000000014,
+      "events": 62
+    },
+    {
+      "prompt_id": "incident-retrospective",
+      "position": 96,
+      "classes_us": {
+        "transfers": 2.187,
+        "embedding_ple": 58.646,
+        "hc_norm_merge": 248.22800000000004,
+        "other": 5.938000000000001,
+        "attention": 391.9770000000001,
+        "moe_experts": 249.06199999999998,
+        "shared_expert": 44.272000000000006,
+        "head_prefix": 520.625,
+        "argmax": 21.146
+      },
+      "event_us": 1542.0810000000001,
+      "wall_us": 1733.087,
+      "envelope_gap_us": 131.35599999999977,
+      "residual_us": 191.00599999999986,
+      "events": 62
+    },
+    {
+      "prompt_id": "incident-retrospective",
+      "position": 97,
+      "classes_us": {
+        "transfers": 1.875,
+        "embedding_ple": 58.333,
+        "hc_norm_merge": 251.35200000000003,
+        "other": 6.25,
+        "attention": 406.146,
+        "moe_experts": 251.66699999999994,
+        "shared_expert": 44.376000000000005,
+        "head_prefix": 520.73,
+        "argmax": 20.938000000000002
+      },
+      "event_us": 1561.667,
+      "wall_us": 1754.067,
+      "envelope_gap_us": 133.33300000000008,
+      "residual_us": 192.4000000000001,
+      "events": 62
+    },
+    {
+      "prompt_id": "incident-retrospective",
+      "position": 98,
+      "classes_us": {
+        "transfers": 1.771,
+        "embedding_ple": 58.644999999999996,
+        "hc_norm_merge": 248.95999999999998,
+        "other": 6.041,
+        "attention": 410.62399999999997,
+        "moe_experts": 252.29000000000002,
+        "shared_expert": 44.272000000000006,
+        "head_prefix": 520.208,
+        "argmax": 21.042
+      },
+      "event_us": 1563.8529999999998,
+      "wall_us": 1758.495,
+      "envelope_gap_us": 134.27200000000016,
+      "residual_us": 194.64200000000005,
+      "events": 62
+    },
+    {
+      "prompt_id": "incident-retrospective",
+      "position": 100,
+      "classes_us": {
+        "transfers": 2.187,
+        "embedding_ple": 59.27,
+        "hc_norm_merge": 250.31099999999998,
+        "other": 6.147,
+        "attention": 413.853,
+        "moe_experts": 249.58500000000004,
+        "shared_expert": 44.064,
+        "head_prefix": 520.833,
+        "argmax": 20.729
+      },
+      "event_us": 1566.979,
+      "wall_us": 1764.416,
+      "envelope_gap_us": 133.43799999999987,
+      "residual_us": 197.4369999999999,
+      "events": 62
+    },
+    {
+      "prompt_id": "incident-retrospective",
+      "position": 101,
+      "classes_us": {
+        "transfers": 4.583,
+        "embedding_ple": 63.230000000000004,
+        "hc_norm_merge": 253.75100000000003,
+        "other": 6.353,
+        "attention": 413.126,
+        "moe_experts": 251.56000000000006,
+        "shared_expert": 44.584,
+        "head_prefix": 521.25,
+        "argmax": 21.561999999999998
+      },
+      "event_us": 1579.999,
+      "wall_us": 1826.773,
+      "envelope_gap_us": 136.45900000000006,
+      "residual_us": 246.7739999999999,
+      "events": 62
+    },
+    {
+      "prompt_id": "performance-hypotheses",
+      "position": 72,
+      "classes_us": {
+        "transfers": 2.188,
+        "embedding_ple": 59.791,
+        "hc_norm_merge": 252.18399999999997,
+        "other": 6.145,
+        "attention": 377.813,
+        "moe_experts": 250.83399999999995,
+        "shared_expert": 43.958,
+        "head_prefix": 520.625,
+        "argmax": 21.04
+      },
+      "event_us": 1534.578,
+      "wall_us": 1732.587,
+      "envelope_gap_us": 133.33899999999994,
+      "residual_us": 198.00900000000001,
+      "events": 62
+    },
+    {
+      "prompt_id": "performance-hypotheses",
+      "position": 73,
+      "classes_us": {
+        "transfers": 4.479,
+        "embedding_ple": 62.291,
+        "hc_norm_merge": 251.875,
+        "other": 6.563,
+        "attention": 378.958,
+        "moe_experts": 252.08099999999996,
+        "shared_expert": 44.166,
+        "head_prefix": 521.563,
+        "argmax": 21.354
+      },
+      "event_us": 1543.33,
+      "wall_us": 1782.64,
+      "envelope_gap_us": 132.19100000000003,
+      "residual_us": 239.31000000000017,
+      "events": 62
+    },
+    {
+      "prompt_id": "performance-hypotheses",
+      "position": 74,
+      "classes_us": {
+        "transfers": 2.187,
+        "embedding_ple": 59.167,
+        "hc_norm_merge": 250.62300000000005,
+        "other": 5.938000000000001,
+        "attention": 379.373,
+        "moe_experts": 250.72799999999998,
+        "shared_expert": 43.438,
+        "head_prefix": 520.104,
+        "argmax": 21.042
+      },
+      "event_us": 1532.6000000000001,
+      "wall_us": 1733.4689999999998,
+      "envelope_gap_us": 137.19199999999978,
+      "residual_us": 200.8689999999997,
+      "events": 62
+    },
+    {
+      "prompt_id": "performance-hypotheses",
+      "position": 75,
+      "classes_us": {
+        "transfers": 1.771,
+        "embedding_ple": 58.75,
+        "hc_norm_merge": 251.668,
+        "other": 6.042,
+        "attention": 376.354,
+        "moe_experts": 249.16799999999995,
+        "shared_expert": 43.542,
+        "head_prefix": 520.729,
+        "argmax": 21.042
+      },
+      "event_us": 1529.066,
+      "wall_us": 1722.298,
+      "envelope_gap_us": 129.57999999999993,
+      "residual_us": 193.23199999999997,
+      "events": 62
+    },
+    {
+      "prompt_id": "performance-hypotheses",
+      "position": 76,
+      "classes_us": {
+        "transfers": 1.77,
+        "embedding_ple": 59.062,
+        "hc_norm_merge": 247.91699999999997,
+        "other": 6.25,
+        "attention": 382.083,
+        "moe_experts": 252.188,
+        "shared_expert": 43.229,
+        "head_prefix": 520.625,
+        "argmax": 20.729
+      },
+      "event_us": 1533.853,
+      "wall_us": 1746.804,
+      "envelope_gap_us": 141.66699999999992,
+      "residual_us": 212.95100000000002,
+      "events": 62
+    },
+    {
+      "prompt_id": "performance-hypotheses",
+      "position": 77,
+      "classes_us": {
+        "transfers": 4.687,
+        "embedding_ple": 63.541,
+        "hc_norm_merge": 248.854,
+        "other": 6.667,
+        "attention": 381.875,
+        "moe_experts": 252.605,
+        "shared_expert": 44.168000000000006,
+        "head_prefix": 521.042,
+        "argmax": 21.458
+      },
+      "event_us": 1544.897,
+      "wall_us": 1784.403,
+      "envelope_gap_us": 134.78999999999996,
+      "residual_us": 239.50600000000009,
+      "events": 62
+    },
+    {
+      "prompt_id": "performance-hypotheses",
+      "position": 78,
+      "classes_us": {
+        "transfers": 2.084,
+        "embedding_ple": 59.269999999999996,
+        "hc_norm_merge": 250.30799999999996,
+        "other": 6.2490000000000006,
+        "attention": 378.54200000000003,
+        "moe_experts": 250.62599999999998,
+        "shared_expert": 43.854,
+        "head_prefix": 520.208,
+        "argmax": 21.041
+      },
+      "event_us": 1532.182,
+      "wall_us": 1714.874,
+      "envelope_gap_us": 124.38100000000009,
+      "residual_us": 182.692,
+      "events": 62
+    },
+    {
+      "prompt_id": "release-plan",
+      "position": 75,
+      "classes_us": {
+        "transfers": 2.5,
+        "embedding_ple": 58.542,
+        "hc_norm_merge": 250.00099999999998,
+        "other": 6.042,
+        "attention": 382.18799999999993,
+        "moe_experts": 251.35299999999998,
+        "shared_expert": 44.272000000000006,
+        "head_prefix": 520.208,
+        "argmax": 21.25
+      },
+      "event_us": 1536.3559999999998,
+      "wall_us": 1713.3,
+      "envelope_gap_us": 119.89400000000023,
+      "residual_us": 176.9440000000002,
+      "events": 62
+    },
+    {
+      "prompt_id": "release-plan",
+      "position": 76,
+      "classes_us": {
+        "transfers": 4.479,
+        "embedding_ple": 63.748999999999995,
+        "hc_norm_merge": 252.706,
+        "other": 6.667,
+        "attention": 381.667,
+        "moe_experts": 252.70699999999994,
+        "shared_expert": 43.959,
+        "head_prefix": 521.25,
+        "argmax": 21.249
+      },
+      "event_us": 1548.433,
+      "wall_us": 1774.6550000000002,
+      "envelope_gap_us": 127.71299999999997,
+      "residual_us": 226.2220000000002,
+      "events": 62
+    },
+    {
+      "prompt_id": "release-plan",
+      "position": 79,
+      "classes_us": {
+        "transfers": 2.083,
+        "embedding_ple": 60.833,
+        "hc_norm_merge": 249.58299999999994,
+        "other": 6.458,
+        "attention": 380.4170000000001,
+        "moe_experts": 251.25199999999995,
+        "shared_expert": 43.958,
+        "head_prefix": 520.833,
+        "argmax": 20.938000000000002
+      },
+      "event_us": 1536.355,
+      "wall_us": 1718.54,
+      "envelope_gap_us": 122.70699999999988,
+      "residual_us": 182.18499999999995,
+      "events": 62
+    },
+    {
+      "prompt_id": "release-plan",
+      "position": 82,
+      "classes_us": {
+        "transfers": 2.188,
+        "embedding_ple": 59.063,
+        "hc_norm_merge": 252.81500000000005,
+        "other": 5.833,
+        "attention": 383.645,
+        "moe_experts": 251.56300000000002,
+        "shared_expert": 44.269,
+        "head_prefix": 520.937,
+        "argmax": 20.833
+      },
+      "event_us": 1541.146,
+      "wall_us": 1720.5140000000001,
+      "envelope_gap_us": 123.22900000000004,
+      "residual_us": 179.36800000000017,
+      "events": 62
+    },
+    {
+      "prompt_id": "risk-register",
+      "position": 68,
+      "classes_us": {
+        "transfers": 1.77,
+        "embedding_ple": 58.333,
+        "hc_norm_merge": 250.94099999999997,
+        "other": 5.73,
+        "attention": 372.706,
+        "moe_experts": 252.495,
+        "shared_expert": 43.75,
+        "head_prefix": 521.25,
+        "argmax": 20.936999999999998
+      },
+      "event_us": 1527.912,
+      "wall_us": 1711.0369999999998,
+      "envelope_gap_us": 123.33799999999997,
+      "residual_us": 183.12499999999977,
+      "events": 62
+    },
+    {
+      "prompt_id": "risk-register",
+      "position": 70,
+      "classes_us": {
+        "transfers": 4.479,
+        "embedding_ple": 63.125,
+        "hc_norm_merge": 252.19000000000003,
+        "other": 6.667,
+        "attention": 378.43800000000005,
+        "moe_experts": 252.29499999999996,
+        "shared_expert": 44.480000000000004,
+        "head_prefix": 521.458,
+        "argmax": 21.25
+      },
+      "event_us": 1544.382,
+      "wall_us": 1827.344,
+      "envelope_gap_us": 163.32600000000002,
+      "residual_us": 282.962,
+      "events": 62
+    },
+    {
+      "prompt_id": "risk-register",
+      "position": 71,
+      "classes_us": {
+        "transfers": 2.083,
+        "embedding_ple": 59.271,
+        "hc_norm_merge": 250.0,
+        "other": 6.562,
+        "attention": 374.69,
+        "moe_experts": 252.813,
+        "shared_expert": 43.854,
+        "head_prefix": 520.729,
+        "argmax": 21.041
+      },
+      "event_us": 1531.0430000000001,
+      "wall_us": 1713.261,
+      "envelope_gap_us": 123.1239999999998,
+      "residual_us": 182.21799999999985,
+      "events": 62
+    },
+    {
+      "prompt_id": "risk-register",
+      "position": 72,
+      "classes_us": {
+        "transfers": 1.771,
+        "embedding_ple": 59.375,
+        "hc_norm_merge": 251.35499999999996,
+        "other": 5.938000000000001,
+        "attention": 375.939,
+        "moe_experts": 251.35399999999998,
+        "shared_expert": 44.063,
+        "head_prefix": 520.0,
+        "argmax": 20.833
+      },
+      "event_us": 1530.628,
+      "wall_us": 1712.78,
+      "envelope_gap_us": 123.12200000000007,
+      "residual_us": 182.15200000000004,
+      "events": 62
+    },
+    {
+      "prompt_id": "risk-register",
+      "position": 73,
+      "classes_us": {
+        "transfers": 1.875,
+        "embedding_ple": 58.542,
+        "hc_norm_merge": 249.58100000000005,
+        "other": 6.041,
+        "attention": 376.7710000000001,
+        "moe_experts": 250.72900000000004,
+        "shared_expert": 43.751000000000005,
+        "head_prefix": 520.313,
+        "argmax": 20.729
+      },
+      "event_us": 1528.332,
+      "wall_us": 1719.632,
+      "envelope_gap_us": 133.2299999999998,
+      "residual_us": 191.29999999999995,
+      "events": 62
+    },
+    {
+      "prompt_id": "risk-register",
+      "position": 74,
+      "classes_us": {
+        "transfers": 4.271,
+        "embedding_ple": 63.334,
+        "hc_norm_merge": 251.77200000000002,
+        "other": 6.459,
+        "attention": 379.374,
+        "moe_experts": 253.022,
+        "shared_expert": 44.271,
+        "head_prefix": 521.146,
+        "argmax": 21.562
+      },
+      "event_us": 1545.211,
+      "wall_us": 1778.282,
+      "envelope_gap_us": 127.28899999999999,
+      "residual_us": 233.0709999999999,
+      "events": 62
+    },
+    {
+      "prompt_id": "sql-debugging",
+      "position": 90,
+      "classes_us": {
+        "transfers": 1.875,
+        "embedding_ple": 58.751000000000005,
+        "hc_norm_merge": 252.49799999999996,
+        "other": 6.146000000000001,
+        "attention": 388.01900000000006,
+        "moe_experts": 249.78999999999994,
+        "shared_expert": 43.647000000000006,
+        "head_prefix": 520.105,
+        "argmax": 20.833
+      },
+      "event_us": 1541.664,
+      "wall_us": 1720.604,
+      "envelope_gap_us": 122.50199999999995,
+      "residual_us": 178.94000000000005,
+      "events": 62
+    },
+    {
+      "prompt_id": "sql-debugging",
+      "position": 91,
+      "classes_us": {
+        "transfers": 4.375,
+        "embedding_ple": 62.709,
+        "hc_norm_merge": 250.00100000000003,
+        "other": 6.77,
+        "attention": 392.60400000000004,
+        "moe_experts": 253.43800000000002,
+        "shared_expert": 43.957,
+        "head_prefix": 520.729,
+        "argmax": 21.145
+      },
+      "event_us": 1555.728,
+      "wall_us": 1778.933,
+      "envelope_gap_us": 123.23000000000002,
+      "residual_us": 223.20499999999993,
+      "events": 62
+    },
+    {
+      "prompt_id": "sql-debugging",
+      "position": 92,
+      "classes_us": {
+        "transfers": 1.771,
+        "embedding_ple": 58.959,
+        "hc_norm_merge": 251.14600000000002,
+        "other": 6.25,
+        "attention": 391.8740000000001,
+        "moe_experts": 249.27,
+        "shared_expert": 44.06099999999999,
+        "head_prefix": 520.729,
+        "argmax": 21.042
+      },
+      "event_us": 1545.102,
+      "wall_us": 1725.021,
+      "envelope_gap_us": 120.83499999999981,
+      "residual_us": 179.91899999999987,
+      "events": 62
+    },
+    {
+      "prompt_id": "sql-debugging",
+      "position": 94,
+      "classes_us": {
+        "transfers": 2.188,
+        "embedding_ple": 59.792,
+        "hc_norm_merge": 252.813,
+        "other": 5.729,
+        "attention": 390.937,
+        "moe_experts": 250.20599999999996,
+        "shared_expert": 44.375,
+        "head_prefix": 520.729,
+        "argmax": 20.834
+      },
+      "event_us": 1547.603,
+      "wall_us": 1727.116,
+      "envelope_gap_us": 122.60500000000002,
+      "residual_us": 179.51299999999992,
+      "events": 62
+    },
+    {
+      "prompt_id": "sql-debugging",
+      "position": 95,
+      "classes_us": {
+        "transfers": 4.583,
+        "embedding_ple": 63.230000000000004,
+        "hc_norm_merge": 251.87499999999994,
+        "other": 6.458,
+        "attention": 396.35400000000004,
+        "moe_experts": 253.85500000000002,
+        "shared_expert": 44.583,
+        "head_prefix": 521.562,
+        "argmax": 21.458
+      },
+      "event_us": 1563.958,
+      "wall_us": 1800.313,
+      "envelope_gap_us": 135.625,
+      "residual_us": 236.35500000000002,
+      "events": 62
+    },
+    {
+      "prompt_id": "sql-debugging",
+      "position": 96,
+      "classes_us": {
+        "transfers": 2.188,
+        "embedding_ple": 59.167,
+        "hc_norm_merge": 250.519,
+        "other": 6.043,
+        "attention": 396.04299999999995,
+        "moe_experts": 250.93699999999998,
+        "shared_expert": 43.855000000000004,
+        "head_prefix": 520.313,
+        "argmax": 21.042
+      },
+      "event_us": 1550.107,
+      "wall_us": 1727.807,
+      "envelope_gap_us": 119.99800000000005,
+      "residual_us": 177.70000000000005,
+      "events": 62
+    },
+    {
+      "prompt_id": "sql-debugging",
+      "position": 97,
+      "classes_us": {
+        "transfers": 1.771,
+        "embedding_ple": 59.269999999999996,
+        "hc_norm_merge": 248.647,
+        "other": 5.938000000000001,
+        "attention": 408.22999999999996,
+        "moe_experts": 251.24799999999996,
+        "shared_expert": 43.959,
+        "head_prefix": 520.625,
+        "argmax": 21.042
+      },
+      "event_us": 1560.73,
+      "wall_us": 1738.027,
+      "envelope_gap_us": 119.6869999999999,
+      "residual_us": 177.29700000000003,
+      "events": 62
+    },
+    {
+      "prompt_id": "technical-guide",
+      "position": 76,
+      "classes_us": {
+        "transfers": 1.875,
+        "embedding_ple": 58.542,
+        "hc_norm_merge": 246.667,
+        "other": 6.041,
+        "attention": 378.231,
+        "moe_experts": 250.415,
+        "shared_expert": 44.167,
+        "head_prefix": 520.938,
+        "argmax": 21.145
+      },
+      "event_us": 1528.021,
+      "wall_us": 1710.035,
+      "envelope_gap_us": 123.43700000000013,
+      "residual_us": 182.01400000000012,
+      "events": 62
+    },
+    {
+      "prompt_id": "technical-guide",
+      "position": 77,
+      "classes_us": {
+        "transfers": 1.875,
+        "embedding_ple": 58.854,
+        "hc_norm_merge": 247.29199999999997,
+        "other": 6.042,
+        "attention": 377.086,
+        "moe_experts": 248.336,
+        "shared_expert": 44.375,
+        "head_prefix": 520.417,
+        "argmax": 21.042
+      },
+      "event_us": 1525.319,
+      "wall_us": 1714.844,
+      "envelope_gap_us": 130.30600000000004,
+      "residual_us": 189.5250000000001,
+      "events": 62
+    },
+    {
+      "prompt_id": "technical-guide",
+      "position": 78,
+      "classes_us": {
+        "transfers": 4.271,
+        "embedding_ple": 63.125,
+        "hc_norm_merge": 252.91499999999996,
+        "other": 6.563,
+        "attention": 383.02200000000005,
+        "moe_experts": 253.12100000000004,
+        "shared_expert": 43.855,
+        "head_prefix": 521.459,
+        "argmax": 21.459
+      },
+      "event_us": 1549.79,
+      "wall_us": 1783.953,
+      "envelope_gap_us": 130.62699999999995,
+      "residual_us": 234.163,
+      "events": 62
+    },
+    {
+      "prompt_id": "technical-guide",
+      "position": 79,
+      "classes_us": {
+        "transfers": 1.875,
+        "embedding_ple": 58.438,
+        "hc_norm_merge": 248.53700000000003,
+        "other": 6.041,
+        "attention": 380.205,
+        "moe_experts": 251.35499999999996,
+        "shared_expert": 43.854,
+        "head_prefix": 520.625,
+        "argmax": 21.354
+      },
+      "event_us": 1532.2839999999999,
+      "wall_us": 1715.916,
+      "envelope_gap_us": 124.27900000000022,
+      "residual_us": 183.63200000000006,
+      "events": 62
+    },
+    {
+      "prompt_id": "technical-guide",
+      "position": 80,
+      "classes_us": {
+        "transfers": 1.771,
+        "embedding_ple": 58.959,
+        "hc_norm_merge": 251.666,
+        "other": 5.937,
+        "attention": 381.87600000000003,
+        "moe_experts": 249.896,
+        "shared_expert": 76.354,
+        "head_prefix": 520.104,
+        "argmax": 20.937
+      },
+      "event_us": 1567.5,
+      "wall_us": 1750.29,
+      "envelope_gap_us": 123.02099999999996,
+      "residual_us": 182.78999999999996,
+      "events": 62
+    },
+    {
+      "prompt_id": "technical-guide",
+      "position": 81,
+      "classes_us": {
+        "transfers": 1.875,
+        "embedding_ple": 58.75,
+        "hc_norm_merge": 248.857,
+        "other": 6.146,
+        "attention": 379.0610000000001,
+        "moe_experts": 251.247,
+        "shared_expert": 44.271,
+        "head_prefix": 520.521,
+        "argmax": 21.042
+      },
+      "event_us": 1531.77,
+      "wall_us": 1727.2559999999999,
+      "envelope_gap_us": 135.52199999999993,
+      "residual_us": 195.48599999999988,
+      "events": 62
+    },
+    {
+      "prompt_id": "technical-guide",
+      "position": 82,
+      "classes_us": {
+        "transfers": 4.375,
+        "embedding_ple": 62.292,
+        "hc_norm_merge": 250.83200000000005,
+        "other": 6.875,
+        "attention": 388.43800000000005,
+        "moe_experts": 251.66799999999998,
+        "shared_expert": 44.166,
+        "head_prefix": 521.146,
+        "argmax": 21.458
+      },
+      "event_us": 1551.25,
+      "wall_us": 1782.1100000000001,
+      "envelope_gap_us": 128.02099999999996,
+      "residual_us": 230.86000000000013,
+      "events": 62
+    },
+    {
+      "prompt_id": "technical-guide",
+      "position": 83,
+      "classes_us": {
+        "transfers": 1.771,
+        "embedding_ple": 58.854,
+        "hc_norm_merge": 252.91400000000002,
+        "other": 6.042,
+        "attention": 386.25,
+        "moe_experts": 250.10399999999998,
+        "shared_expert": 43.437,
+        "head_prefix": 520.417,
+        "argmax": 20.937
+      },
+      "event_us": 1540.726,
+      "wall_us": 1728.769,
+      "envelope_gap_us": 124.16999999999985,
+      "residual_us": 188.0429999999999,
+      "events": 62
+    }
+  ],
+  "limitations": [
+    "Residual is not pure fixed launch overhead: includes CPU embedding access, waits, submission and instrumentation.",
+    "Useful weight reads are not measured DRAM traffic; activations and context-dependent KV reads are additional.",
+    "HC logical reads count four hidden projection streams; cache may reuse their common weights.",
+    "Head allocated stride includes 180 bytes of source metadata beyond 3200 useful bytes per row.",
+    "Saving projections assume unchanged bandwidth and acceptance, and exclude kernel overhead.",
+    "Coverage acceptance proxies are conditional illustrations, not measured or predicted acceptance.",
+    "Q4 derives the authenticated existing Unsloth Q6_K GGUF, not original BF16 weights.",
+    "Rank1 memory is inherited modeling, not a new device measurement."
+  ]
+}

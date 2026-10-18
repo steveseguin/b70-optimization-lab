@@ -1,0 +1,83 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "compiled": false,
+  "ready": false,
+  "preparation_passed": true,
+  "pending": "Packet91 own matched A/B screens and subsequent full chain",
+  "python_tests": 172,
+  "python_subtests": 12,
+  "full_shape_runs": 8,
+  "selection_rehearsals": 5,
+  "queue_jobs": 13,
+  "chain_windows_per_rehearsal": 11,
+  "baseline_restored": true,
+  "parent_copy_inputs_unchanged": true,
+  "logical_packet_bytes_including_shared_hardlinks": 366450242,
+  "task_new_bytes_cap": 1500000000,
+  "storage": {
+    "passed": true,
+    "device_executed": false,
+    "root_free_bytes": 19324665856,
+    "required_free_bytes": 18923951570,
+    "margin_bytes": 400714286,
+    "build_bytes": 222852910,
+    "build_budget_bytes": 1200000000,
+    "retained_build_bytes": 222852910,
+    "retained_build_fits": true,
+    "cpu_build_peak_limit_bytes": 1200000000,
+    "free_floor_bytes": 12000000000,
+    "parent_model_reserve_bytes": 0,
+    "parent_model_maximum_reserve_bytes": 0,
+    "oracle_growth_reserve_bytes": 0,
+    "early_retained_limit_bytes": 128000000,
+    "own_chain_peak_bytes": 5946804480,
+    "full_chain_uncompressed_bytes": 10582804480
+  },
+  "binaries": {
+    "rec-parallel": {
+      "parent": "experiments/own-xpu-runtime/stage2/packet84-record-bundle",
+      "binaries": {
+        "device": {
+          "path": "experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/device/own-rt-iq3",
+          "sha256": "8b615a0c74db57ab3ceab3cd4a56524d07bc9cf1cb78da2178a947e3918e294a"
+        },
+        "gnu-host": {
+          "path": "experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/gnu-host/own-rt-iq3",
+          "sha256": "176680955b859a4284c41f8987708eff5c543e3f509ea91a51cda55d5b825e83"
+        }
+      }
+    },
+    "rec-both-plus": {
+      "parent": "experiments/own-xpu-runtime/stage2/packet82b-recurrence2",
+      "binaries": {
+        "device": {
+          "path": "experiments/own-xpu-runtime/stage2/packet82b-recurrence2/build/device/own-rt-iq3",
+          "sha256": "3d633037c78943efa44783ef9cfab59ee18b7ae536755a807d7dd64b1592fcb5"
+        },
+        "gnu-host": {
+          "path": "experiments/own-xpu-runtime/stage2/packet82b-recurrence2/build/gnu-host/own-rt-iq3",
+          "sha256": "66e957d112c5f20abb7b417d7f66d6e79e36eb76e5d86337c50cc835b8bc6304"
+        }
+      }
+    }
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/ops/packet91-orchestration/ready.json": "f40d2793b8ad16a9d746b8266117a750a187882f1c675a7bc5606ba1591110f2",
+    "experiments/own-xpu-runtime/stage2/packet91-record-bundle/evidence/python-tests.json": "2b05b443f4726e1067ea592ad15d216c1bcee6f76b45b15aa6480f6f5f94d638",
+    "experiments/own-xpu-runtime/stage2/packet91-record-bundle/evidence/reselection.json": "bb3e33bc96c344dd1bba55fc66e5d38ac4ea629dbcf397571d2f1ee0b6bec250",
+    "experiments/own-xpu-runtime/stage2/packet91-record-bundle/evidence/queue-plans.json": "1d994e5f8a60c061cbf465c29a12caf25fe4b2d52272fbba7e8a9a4b45e74e97",
+    "experiments/own-xpu-runtime/stage2/packet91-record-bundle/evidence/cpu-byte-identity.json": "0e96d2070c0a84092a7c5c6526436ac7720d392836d1bc1f1607bb2ef62e268c",
+    "experiments/own-xpu-runtime/stage2/packet91-record-bundle/evidence/full-shape.json": "ff29c3cace42896c6059282438f2da79ddb062386d2f88cfa8e5f0874a94660c",
+    "experiments/own-xpu-runtime/stage2/packet91-record-bundle/evidence/dry-run.json": "26c3d22ec8415a35d8742b6620dc2291a4e1cd224c7f5cab10fe30a05ff0eb95",
+    "experiments/own-xpu-runtime/stage2/packet91-record-bundle/evidence/selection-dry-run.json": "a13643d807ebd4be2139d54e6a1e3f884582cbb957895f660a64274dea3230c1",
+    "experiments/own-xpu-runtime/stage2/packet91-record-bundle/build-receipt.json": "0afe325ecd2832d28af30ff227defedda53d042e86c6d5d1370942b05b9cd6af",
+    "experiments/own-xpu-runtime/stage2/packet91-record-bundle/screen-jobs-seal.json": "e52b514782dbc4e35a534d2bf4727495ca16b6322e73f716cc2b7c8866e76d0d"
+  },
+  "proposals": [
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p91-A.txt",
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p91-B.txt",
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p91-B-grid.txt"
+  ],
+  "readiness_verifier_refuses_pending": true
+}

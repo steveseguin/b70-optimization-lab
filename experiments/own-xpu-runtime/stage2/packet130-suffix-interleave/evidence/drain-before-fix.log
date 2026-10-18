@@ -1,0 +1,53 @@
+EFFF
+======================================================================
+ERROR: test_both_copies_survive_deadline_crossing (__main__.DrainFixTests.test_both_copies_survive_deadline_crossing) (path=PosixPath('/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/v5/drain_gate.py'))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/test_drain_fix.py", line 44, in test_both_copies_survive_deadline_crossing
+    with self.subTest(path=path):self.assertEqual(race(load(path)),[0.0])
+                                                  ^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/test_drain_fix.py", line 34, in race
+    with permit:
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/v5/drain_gate.py", line 51, in __enter__
+    self.sleep(min(.25, until - self.now()))
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/test_drain_fix.py", line 30, in sleep
+    if delay<0:raise ValueError('sleep length must be non-negative')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: sleep length must be non-negative
+
+======================================================================
+FAIL: test_copies_identical (__main__.DrainFixTests.test_copies_identical)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/test_drain_fix.py", line 49, in test_copies_identical
+    self.assertEqual((P/'drain_gate.py').read_bytes(),(O/'drain_gate.py').read_bytes())
+AssertionError: b'"""[2323 chars]eep(max(0.0, min(.25, until - self.now())))\n [4192 chars]rn\n' != b'"""[2323 chars]eep(min(.25, until - self.now()))\n           [4182 chars]rn\n'
+
+======================================================================
+FAIL: test_old_code_fails_same_scenario (__main__.DrainFixTests.test_old_code_fails_same_scenario) (path=PosixPath('/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/v5/drain_gate.py'))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/test_drain_fix.py", line 47, in test_old_code_fails_same_scenario
+    with self.subTest(path=path),self.assertRaisesRegex(ValueError,'non-negative'):race(load(path,old=True))
+                                                                                        ^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/test_drain_fix.py", line 17, in load
+    assert fixed in source
+           ^^^^^^^^^^^^^^^
+AssertionError
+
+======================================================================
+FAIL: test_static_scanner_rejects_old_code (__main__.DrainFixTests.test_static_scanner_rejects_old_code)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/test_drain_fix.py", line 56, in test_static_scanner_rejects_old_code
+    self.assertEqual(scanner.inspect_source(source,drain_gate=True)['status'],'FIXED')
+AssertionError: 'UNFIXED' != 'FIXED'
+- UNFIXED
+? --
++ FIXED
+
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.037s
+
+FAILED (failures=3, errors=1)

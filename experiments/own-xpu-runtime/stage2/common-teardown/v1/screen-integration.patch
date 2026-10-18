@@ -1,0 +1,194 @@
+--- a/screen.py
++++ b/screen.py
+@@ -1,6 +1,8 @@
+ #!/usr/bin/env python3
+ """Coordinator-only diagnostic screen. --plan is CPU-only and never opens a device."""
+ import argparse
++from teardown_on_error import (VERSION, StickyCheck, drained_on_error,
++                               finish_on_error, prove_screen_exit)
+ import fcntl
+ from lane_admission import Reservation, atomic_json, admission_scope
+ from chain_devices import process_identity, admit_clients
+@@ -106,7 +108,8 @@
+         time.sleep(.1)
+
+
+-def screen_main(argv=None, *, release=None):
++def screen_main(argv=None, *, release=None, lifecycle=None):
++    if lifecycle is None:lifecycle = {'launch_attempted': False}
+     args = parser().parse_args(argv)
+     cpu_gate() if args.plan else lane_gate(args.lane)
+     scope = admission_scope(args.lane, 'screen')
+@@ -166,6 +169,7 @@
+         oracle_completion_sha256=sha(D.ORACLE / 'results/completion.json')))
+     child, handlers = None, {}
+     device_complete = False
++    postflight_complete = False
+     reasons = record['stop_reasons']
+     def persist():
+         save(args.output / 'window.json', record)
+@@ -205,12 +209,14 @@
+             require(not reasons, 'stop requested before launch')
+             persist()
+             with (args.output / 'native.log').open('w') as log, (args.output / 'kernel-window.jsonl').open('w') as kernel:
++                lifecycle['launch_attempted'] = True
+                 child = subprocess.Popen(cmd, env=env, stdout=log, stderr=subprocess.STDOUT)
+                 record.update(pid=child.pid, process_start_ticks=SUPPORT.process_start(child.pid), device_executed=True)
+                 persist()
+                 record.update(S.supervise(child, WATCHDOG[args.profile], cursor, kernel, reasons, latch, persist,
+                                           memory_sensor=sensor, observe_memory=record.update,
+                                           drain_seconds=90, read_journal=S.journal))
++                postflight_complete = record.get('child_still_running') is False
+             if record['child_still_running']:
+                 record['child_retained'] = True
+                 persist()
+@@ -246,11 +252,23 @@
+             persist()
+             return 0
+     except Exception as error:
++        if not device_complete and child is not None:
++            def prove():
++                require(postflight_complete, 'screen postflight incomplete')
++                prove_screen_exit(record, child, read(args.output / 'run/teardown.json'), args.output)
++            def complete():
++                nonlocal device_complete
++                coordination = release(record)
++                device_complete = True
++                record.update(device_complete=True, lease_released=True,
++                              teardown_on_error=VERSION)
++                atomic_json(args.output / 'lane-coordination.json', coordination)
++            finish_on_error(error, prove=prove, complete=complete)
+         if device_complete:
+             record.update(report_failed=True, report_error=str(error), passed=False)
+             save(args.output / 'report-failure.json', dict(passed=False, device_failure=False, error=str(error)))
+             persist()
+-            return 1
++            raise
+         reasons.append(str(error))
+         if child is not None and child.poll() is None:
+             child.send_signal(signal.SIGTERM)
+@@ -284,6 +302,8 @@
+         require(not fault_review.fault_lines(fresh), 'fresh fault during lane reservation')
+     handlers = {sig: signal.signal(sig, lambda n, f: stopped.append(n))
+                 for sig in (signal.SIGINT, signal.SIGTERM)}
++    check = StickyCheck(check)
++    lifecycle = {'launch_attempted': False}
+     lease = Reservation(args.lane, window='screen', check=check)
+     lease.record['output'] = str(args.output.resolve())
+     try:
+@@ -299,7 +319,20 @@
+                 return dict(
+                     schema='own-runtime.screen-lane.v4', passed=True, reservation=lease.record,
+                     clients_after_drain=clients, released_before_report=True)
+-            return screen_main(argv, release=release)
++            def prove_unstarted():
++                if lease.completed:
++                    return
++                require(not lifecycle['launch_attempted'], 'screen launch may have occurred')
++                check()
++            def release_unstarted():
++                if not lease.completed:
++                    lease.complete(drained=True)
++            with drained_on_error(prove=prove_unstarted, complete=release_unstarted):
++                code = screen_main(argv, release=release, lifecycle=lifecycle)
++                if code and not lifecycle['launch_attempted']:
++                    finish_on_error(RuntimeError('screen refused before launch'),
++                                    prove=prove_unstarted, complete=release_unstarted)
++                return code
+     finally:
+         for sig, handler in handlers.items():
+             signal.signal(sig, handler)
+--- a/conditions.py
++++ b/conditions.py
+@@ -1,5 +1,6 @@
+ """Fixed screen conditions and passive ownership checks; no device discovery."""
+ import fcntl
++from teardown_on_error import finish_on_error
+ from drain_gate import DEFAULT_DRAIN_ROOT, screen_teardown_admit
+ import os
+ from pathlib import Path
+@@ -65,10 +66,11 @@
+     incomplete record or mark this refused attempt drained.
+     """
+     def __init__(self, output, root=DEFAULT_DRAIN_ROOT, now=time.monotonic, sleep=time.sleep,
+-                 on_refusal=None):
++                 on_refusal=None, prove_drained=None):
+         self.output, self.root, self.now, self.sleep = output, root, now, sleep
+         self.lock = None
+         self.on_refusal = on_refusal
++        self.prove_drained = prove_drained
+         self.boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+
+     def __enter__(self):
+@@ -116,12 +118,19 @@
+                 self.lock.close()
+             raise
+
++    def complete(self):
++        if self.prove_drained is not None:
++            self.prove_drained()
++        self.record.update(drained=True, completed_monotonic=self.now())
++        save(self.root / 'teardown-state.json', self.record)
++        save(self.output / 'teardown.json', self.record)
++
+     def __exit__(self, kind, value, trace):
+         try:
+             if kind is None:
+-                self.record.update(drained=True, completed_monotonic=self.now())
+-                save(self.root / 'teardown-state.json', self.record)
+-                save(self.output / 'teardown.json', self.record)
++                self.complete()
++            elif self.prove_drained is not None:
++                finish_on_error(value, prove=self.prove_drained, complete=self.complete)
+         finally:
+             self.lock.close()
+
+--- a/tp2_worker.py
++++ b/tp2_worker.py
+@@ -1,6 +1,9 @@
+ #!/usr/bin/env python3
+ """Internal screen worker: one rank pair, one load, 64-token gate then 12x128."""
+ import argparse
++from teardown_on_error import StickyCheck, prove_transport_exit
++from common import S, require
++import fault_review
+ import os
+ from pathlib import Path
+ import signal
+@@ -9,7 +12,7 @@
+
+ from common import D, P56, ROOT, SUPPORT, compare_tokens, label, read, require, save, sha, summary
+
+-from conditions import LANES, Teardown, lane_gate
++from conditions import LANES, Teardown, lane_gate, selected_clients
+ from devices import DeviceMonitor, masked_environment
+
+ def drain(transport, output, success, reason=None):
+@@ -28,7 +31,10 @@
+             transport.close(False)
+         return dict(cooperative_stop_requested=True, own_ranks_exited=True,
+                     drain_bound_seconds=65)
+-    with Teardown(output, on_refusal=refused):
++    def prove_drained():
++        prove_transport_exit(transport)
++        selected_clients(transport.teardown_lane)
++    with Teardown(output, on_refusal=refused, prove_drained=prove_drained):
+         try:
+             if not success:
+                 transport.stop(reason)
+@@ -93,7 +99,15 @@
+             monitor.poll()
+     handlers = {s: signal.signal(s, lambda n, f: stopped.append(n))
+                 for s in (signal.SIGTERM, signal.SIGINT)}
++    # Use the parent-approved boundary, including worker startup; never advance it.
++    teardown_cursor = read(output.parent / 'window.json')['coordinator_fault_review']['cursor']
++    require(isinstance(teardown_cursor, str) and teardown_cursor, 'missing fault boundary')
++    def teardown_check():
++        fresh, _ = S.journal(teardown_cursor)
++        require(not fault_review.fault_lines(fresh), 'new GPU fault before drain completion')
+     transport = pipeline.Transport.__new__(pipeline.Transport)
++    transport.teardown_check = StickyCheck(teardown_check)
++    transport.teardown_lane = identity['lane']
+     try:
+         pipeline.Transport.__init__(transport, args, ranks, environment, check, launch_hook=monitor.register)
+         monitor.poll(ready=True)

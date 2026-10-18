@@ -1,0 +1,37 @@
+{
+  "schema": "own-runtime.screen.placement-policy.v1",
+  "lineage": "experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait",
+  "seal_sha256": "73795308e319a38ae8e8bb251b0a83bd67e12eaa3ca0b36a7109cc8d627d3828",
+  "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+  "evidence": {
+    "experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/memory_gate.py": "3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232",
+    "experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/memory-plan.json": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+    "experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/main.cpp": "b9ff8a70dc4447d6448a87333c12b7f22a06b33f896b904df45ecbc749d0a2c4",
+    "experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/rank.hpp": "5e385d6a242cecaaec69206c54cf53226eeac1916bf0c24b986935558df00801",
+    "experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/mtp.hpp": "ad617eb06ee0656518cc6b778a3f1e5dc8ebe1ee3cfdca29d94691d9bd72befe",
+    "experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/p56_config.hpp": "830eeed71e2298f6c0160147f92440ec5cdb784b1b108a7feecd3629174fbb9d",
+    "experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/p56_prefix.hpp": "0bea4bf778614cedfa8a179c3965cef73ce0a48bc764a942a85bd556a68dfd0e",
+    "experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/p49_dispatch.py": "8629a8891663096d3ff0ae2fa8ddd13ad037f63c0380447765c4e2ebeee91e3b",
+    "experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/window.py": "efaafcc9d06b81c7be51b1ebf67b299ccdffdacc60af962f95ee1c049be5a56b",
+    "experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/dispatch-speed6.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/dispatch-speed6-provenance.json": "bfbc1198f69a7480d06d47b88b735c8f10633da3a53c89d9197965379c1a1ba9"
+  },
+  "placements": {
+    "1-split23": {
+      "supported": true,
+      "reason": "Admitted: resident prefix head stays on rank 1; shared K2 class dispatch, unchanged target verification and BF16 cache."
+    },
+    "0-split23": {
+      "supported": false,
+      "reason": "Unsupported: mtp.hpp requires the shared resident output.weight before constructing the prefix head; rank.hpp assigns final/logits to rank 1 and main.cpp loads only local-plan weights. Rank 0 has no resident head. Memory admits a duplicate head, but this sealed engine refuses it; a separate candidate is required."
+    },
+    "0": {
+      "supported": false,
+      "reason": "Unsupported: mtp.hpp requires the shared resident output.weight before constructing the prefix head; rank.hpp assigns final/logits to rank 1 and main.cpp loads only local-plan weights. Rank 0 has no resident head. Memory admits a duplicate head, but this sealed engine refuses it; a separate candidate is required."
+    },
+    "1": {
+      "supported": true,
+      "reason": "Admitted: resident prefix head stays on rank 1; shared K2 class dispatch, unchanged target verification and BF16 cache."
+    }
+  }
+}

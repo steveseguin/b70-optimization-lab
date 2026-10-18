@@ -1,0 +1,95 @@
+--- a/window.py
++++ b/window.py
+@@ -35,7 +35,19 @@
+         self.admission=admission
+         self.out=out;self.boot=boot;self.end=time.monotonic()+seconds;self.last=0.;self.cancelled=[];self.launched=[];self.cpu_children=[];self.new_gpu_fault=False
+         text,self.cursor=journal();(out/'kernel-preflight.txt').write_text(text)
++    device_phase_complete = False
++
++    def finish_devices(self):
++        if self.device_phase_complete:
++            return
++        require(not live_owner_pids(self), 'device owners still alive')
++        self.postflight()
++        if self.admission:
++            self.admission.devices_drained()
++        self.device_phase_complete = True
++
+     def mark_launched(self,pid):
++        require(not self.device_phase_complete, 'launch after terminal drain')
+         self.launched.append(int(pid))
+         if self.admission:self.admission.register(int(pid))
+     def mark_cpu_child(self,child):
+@@ -43,6 +55,8 @@
+         # CPU ownership never counts as device contact for the fault latch.
+         self.cpu_children.append(child)
+     def latch(self,reason):
++        if self.device_phase_complete:
++            return  # CPU report/validator failure cannot poison device state.
+         # Admission/loader/argument refusals before any child exists cannot poison a boot.
+         owner_failure = False
+         if getattr(reason, 'device_owner_failed', False) and not self.cancelled:
+@@ -72,6 +86,7 @@
+             if fault:self.latch('GPU fault signature')
+         if fault:raise ValueError('GPU fault signature')
+     def check(self):
++        require(not self.device_phase_complete, 'device check after terminal drain')
+         self.poll_kernel()
+         if self.admission:self.admission.check()
+         require(not self.cancelled,'coordinator stop requested')
+@@ -311,8 +326,13 @@
+             save(out/'children.json',dict(pids=[child.pid for child in children],entries=entries,signals_sent=0))
+             if a.window in ('K1a','K1b','K2'):
+                 wait_for_children()
++                if index + 1 == len(jobs):
++                    watch.finish_devices()  # before the final CPU receipt validator
+                 receipt=json.loads((dest/'receipt.json').read_text());require(receipt.get('passed') is True,'fixture native failure')
+         wait_for_children()
++        # Last K fixture owner has exited. Run postflight and publish drain now,
++        # before receipt hashing, K2 summaries or dispatch validators can raise.
++        watch.finish_devices()
+         for entry,child in zip(entries,children):
+             require(child.returncode==0,'fixture exit failure');directory=entry['directory']
+             receipt=json.loads((out/directory/'receipt.json').read_text());require(receipt.get('passed') is True,'fixture native failure')
+@@ -573,7 +593,7 @@
+                     for f in (out/f'run/rank{rank}').glob('step*/layer-*.bf16'):observed[str(f.relative_to(out/f'run/rank{rank}'))]=sha(f)
+                 require(observed==hashes,'retained fixtures differ/missing');record.update(token_matches=len(expected),layer_matches=len(hashes),diagnostic=r['diagnostic'],decode_tok_s=r['decode_tok_s'])
+             record['receipts']={str(f.relative_to(out)):sha(f) for f in (out/'run').rglob('receipt.json')}
+-        watch.postflight();record['passed']=True
++        watch.finish_devices();record['passed']=True
+     except Exception as error:
+         record.update(error=str(error),passed=False)
+         pp.failure_attempt('window fault latch',lambda:watch.latch(error),record.setdefault('diagnostic_errors',[]))
+--- a/window_adapter.py
++++ b/window_adapter.py
+@@ -82,14 +82,29 @@
+         finally:
+             self.persist()
+ 
+-    def complete(self):
++    def devices_drained(self):
++        """Terminal owner boundary, after kernel postflight; no launches follow."""
++        require(not self.record.get('devices_drained'), 'device phase already complete')
+         try:
+             self.monitor.finish()
+             require(not self.window.startswith('W') or self.monitor.ready_checks > 0,
+                     'model window lacks the before-request READY proof')
+             self.record['clients_after_drain'] = admit_clients(self.scope, self.proc)
+             self.drain.complete()
++            # Publish completion under the shared flock, then release it before
++            # CPU reporting. A later screen still observes the 60-second gap.
++            self.drain.__exit__(None, None, None)
+             self.lease.complete(drained=True)
++            self.record['devices_drained'] = True
++            self.record['released_before_report'] = True
++        finally:
++            self.persist()
++
++    def complete(self):
++        try:
++            if not self.record.get('devices_drained'):
++                self.devices_drained()
++            # Final receipt binding remains a separate quality/report gate.
+             self.record['passed'] = True
+         finally:
+             self.persist()

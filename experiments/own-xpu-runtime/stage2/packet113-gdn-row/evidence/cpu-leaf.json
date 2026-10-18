@@ -1,0 +1,64 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "records": [
+    {
+      "compiler": "gnu",
+      "leaf": "gdn",
+      "passed": true,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-DOWN_RT_HOST_ONLY",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet113-gdn-row",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet113-gdn-row/leaf_gdn.cpp",
+        "-lcrypto",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet113-gdn-row/build/gnu-leaf-gdn"
+      ],
+      "binary_sha256": "f74cb8a64c72184196d28d5d90d868365f151098342373e2e9459e2785f995e4",
+      "repeat_sha256": [
+        "d87c403ea00caf0b0305694d1ca5f115088324cfb169e2a90b7a9986dc494f1c",
+        "d87c403ea00caf0b0305694d1ca5f115088324cfb169e2a90b7a9986dc494f1c"
+      ]
+    },
+    {
+      "compiler": "intel",
+      "leaf": "gdn",
+      "passed": true,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-DOWN_RT_HOST_ONLY",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet113-gdn-row",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet113-gdn-row/leaf_gdn.cpp",
+        "-lcrypto",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet113-gdn-row/build/intel-leaf-gdn"
+      ],
+      "binary_sha256": "3d75568906acf8953a6e68e7f8b083f23de5269eb9938a79b61125ea60540ba0",
+      "repeat_sha256": [
+        "730594180ce514e600d7747d49ef4377db40d5f7c7818c402c267a58932ece53",
+        "730594180ce514e600d7747d49ef4377db40d5f7c7818c402c267a58932ece53"
+      ]
+    }
+  ]
+}

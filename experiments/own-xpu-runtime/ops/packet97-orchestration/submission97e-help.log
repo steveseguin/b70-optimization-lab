@@ -1,0 +1,24 @@
+usage: submission97e.py [-h]
+                        [--packet {packet49-integrate,packet49b-gemv,packet49c-round2,packet97-record-bundle,packet49d-round3}]
+                        [--update-record RESULT_JSON]
+                        [--submission-id SUBMISSION_ID] [--chain CHAIN]
+                        [--oracle ORACLE] [--output OUTPUT]
+
+CPU-only packet49 lineage evidence builder and offline submission validator.
+No runtime imports, subprocesses, model reads, device calls or network access.
+Original evidence bytes are retained in a portable gzip/base64 bundle. The
+helper replays the same checks from that bundle, rather than trusting a
+computed headline.
+
+options:
+  -h, --help            show this help message and exit
+  --packet {packet49-integrate,packet49b-gemv,packet49c-round2,packet97-record-bundle,packet49d-round3}
+  --update-record RESULT_JSON
+                        Append a validated submitted result to the pinned
+                        record ledger
+  --submission-id SUBMISSION_ID
+                        Real submission ID supplied by coordinator after
+                        successful submission
+  --chain CHAIN         Finished registered chain (read only)
+  --oracle ORACLE
+  --output OUTPUT

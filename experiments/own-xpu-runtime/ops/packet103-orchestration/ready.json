@@ -1,0 +1,59 @@
+{
+  "schema": "packet103.ready.v1",
+  "evidence_rule": "identical-selection-v1",
+  "ready": false,
+  "composition_ready": true,
+  "device_executed": false,
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "chain_command": "systemd-run --user --unit=packet103-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --property=StandardOutput=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/chain.log --property=StandardError=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/chain.log --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/build/device-cards01-a </dev/null",
+  "decision": "experiments/own-xpu-runtime/ops/packet103-orchestration/decisions/1ad512f75aab3fce.json",
+  "chain_entry": "packet103",
+  "chain_output": "device-cards01-a",
+  "decision_sha256": "67ab80da72066bd8db5c4414c33354ae4ede5e9bd3e2425325eaf9706b871ec3",
+  "selection": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64+halfcache",
+    "host": "ordered",
+    "route": "fast",
+    "norm": "production",
+    "recurrence": "rec-both-plus",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "down": "tile16",
+    "draft_attention": "split32"
+  },
+  "qualified_sources": [
+    "91",
+    "100",
+    "101",
+    "90"
+  ],
+  "composition": {
+    "passed": false,
+    "chain_policy_passed": false,
+    "reason": "lane A requires every identical bracket exact, unchanged and >=+0.5%",
+    "brackets": [],
+    "ratios": {
+      "A": 0.0,
+      "B": 0.0
+    },
+    "lane_passed": {
+      "A": false,
+      "B": false
+    },
+    "ratio_definition": "minimum qualifying bracket gain over stronger control per lane",
+    "confirmed_levers": [
+      "91",
+      "100",
+      "101",
+      "90"
+    ],
+    "excluded_brackets": [],
+    "receipts": {
+      "experiments/own-xpu-runtime/ops/packet103-orchestration/attempts/1ad512f75aab3fce-x.json": "3a253dcd45f49f078f69313186211f6a4bd4429efe21d13a7a6dd2df0d48eba0"
+    }
+  },
+  "reason": "lane A requires every identical bracket exact, unchanged and >=+0.5%"
+}

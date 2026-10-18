@@ -1,0 +1,62 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "plans": [
+    {
+      "lane": "B",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p106b-smoke-B.txt",
+      "proposal_sha256": "3f6dfc50290ca7096a7d9afcddfdf95df3a49e6d9f07352065c759e2fae34a08",
+      "jobs": 1,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/tmp/p106b-queue-1yso35sa"
+      ],
+      "passed": true,
+      "log_sha256": "ee2313733bbf3c80c027b202ab9d074c8d1eebc59d47072e65ea9d070edee1c7"
+    },
+    {
+      "lane": "B",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p105b-B-grid.txt",
+      "proposal_sha256": "990592a4850b49ec921432134f01bef6010da1f38ae63a3b854c1a09ce29a66c",
+      "jobs": 4,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/tmp/p106b-queue-1yso35sa"
+      ],
+      "passed": true,
+      "log_sha256": "656e7ac893f0422d9262b6569affc0389d0506bfd9b1eaabeff7f909148534a1"
+    },
+    {
+      "lane": "A",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p105b-A-confirm.txt",
+      "proposal_sha256": "a5bb719a5cdc00e0b4ea50206757d76c853e1b9855be6151608cd766889712bb",
+      "jobs": 3,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "A",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106b-draft-split/build/tmp/p106b-queue-1yso35sa"
+      ],
+      "passed": true,
+      "log_sha256": "95261ffc356f4cfe35a650ce104761e063a5578943fc0db0771274b224309c94"
+    }
+  ],
+  "record_lane": "A"
+}

@@ -1,0 +1,808 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "source": "experiments/own-xpu-runtime/stage2/packet124b-record-bundle",
+  "references": [
+    {
+      "reference": "packet103-record-bundle",
+      "path": "oracle",
+      "target": "../packet49-integrate/oracle",
+      "status": "restored-authority"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/input",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/input",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-rope.hpp",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/fusion-rope.hpp",
+      "status": "restored-byte-identical"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/startup103/rope.bf16",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/rope.bf16",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/startup103/mtp-manifest.tsv",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/mtp-manifest.tsv",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/device/jit-smoke",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/jit-smoke",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/device/k2-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/k2-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/device/p49d-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p49d-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/device/p49-qsa-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p49-qsa-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/device/p49c-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p49c-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/device/p33-linked-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p33-linked-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/device/p49b-expert-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p49b-expert-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/device/nongemv-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/nongemv-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/device/p56-head-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p56-head-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/full-shape/rope.bf16",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/rope.bf16",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/full-shape/mtp-manifest.tsv",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/mtp-manifest.tsv",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/gnu-host/queue-tests",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/queue-tests",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/gnu-host/owner-retirement-tests",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/owner-retirement-tests",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/gnu-host/authority-tests",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/authority-tests",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/gnu-host/prepared-invalidation-tests",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/prepared-invalidation-tests",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/gnu-host/p39-merged-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p39-merged-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/gnu-host/chain-tests",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/chain-tests",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/gnu-host/lifetime-tests",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/lifetime-tests",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/gnu-host/libmath_bridge.so",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/libmath_bridge.so",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/gnu-host/p56-head-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p56-head-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/norm-odd-255.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-odd-255.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/route-nan.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/route-nan.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/qsa-select-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-select-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/gdn-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/gdn-packed-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-packed-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/hc-act-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/hc-act-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/pool-inactive.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/pool-inactive.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/norm-odd-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-odd-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/qsa-select-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-select-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/norm-odd-2560.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-odd-2560.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/gdn-packed-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-packed-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/qsa-pool-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-pool-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/gdn-runtime-f32-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-runtime-f32-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/pool-existing.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/pool-existing.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/ffn-routed-act-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/ffn-routed-act-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/norm-stored-f32-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-stored-f32-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/gdn-runtime-f32-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-runtime-f32-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/mix-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/mix-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/qsa-prepare-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-prepare-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/gdn-gated-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-gated-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/conv-10240-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-10240-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/select-pruned-tail.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/select-pruned-tail.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/gdn-runtime-f32-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-runtime-f32-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/conv-10240-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-10240-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/mix-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/mix-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/qsa-attention-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-attention-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/gdn-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/hc-act-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/hc-act-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/cases.txt",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/cases.txt",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/conv-dilation3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-dilation3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/ffn-routed-act-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/ffn-routed-act-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/qsa-pool-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-pool-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/qsa-attention-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-attention-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/gdn-gated-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-gated-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/moe-combine-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/moe-combine-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/combine-norm-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/combine-norm-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/gdn-inactive.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-inactive.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/gdn-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/ffn-act-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/ffn-act-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/norm-stored-f32-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-stored-f32-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/ffn-routed-act-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/ffn-routed-act-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/manifest.json",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/manifest.json",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/qsa-select-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-select-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/mix-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/mix-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/norm-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/moe-combine-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/moe-combine-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/qsa-attention-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-attention-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/norm-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/conv-17-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-17-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/norm-stored-f32-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-stored-f32-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/route-ties.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/route-ties.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/gdn-sticky-error.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-sticky-error.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/norm-odd-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-odd-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/moe-combine-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/moe-combine-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/combine-norm-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/combine-norm-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/gdn-packed-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-packed-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/route-gather-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/route-gather-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/hc-act-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/hc-act-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/norm-odd-17.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-odd-17.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/ffn-act-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/ffn-act-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/route-varied.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/route-varied.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/conv-17-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-17-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/conv-10240-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-10240-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/qsa-prepare-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-prepare-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/qsa-pool-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-pool-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/norm-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/norm-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/combine-norm-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/combine-norm-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/qsa-prepare-1.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/qsa-prepare-1.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/conv-17-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-17-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/gdn-gated-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/gdn-gated-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/route-gather-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/route-gather-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/conv-real-f32-weights.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/conv-real-f32-weights.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/ffn-act-3.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/ffn-act-3.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet103-record-bundle",
+      "path": "build/fusion-fixtures/route-gather-87.fixture",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/build/fusion-fixtures/route-gather-87.fixture",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "oracle",
+      "target": "../packet49-integrate/oracle",
+      "status": "restored-authority"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/input",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/input",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/fusion-rope.hpp",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/fusion-rope.hpp",
+      "status": "restored-byte-identical"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/startup97e/rope.bf16",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/rope.bf16",
+      "status": "absent-historical-scratch-not-copied"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/startup97e/mtp-manifest.tsv",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/mtp-manifest.tsv",
+      "status": "absent-historical-scratch-not-copied"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/device/jit-smoke",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/jit-smoke",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/device/k2-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/k2-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/device/p49d-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p49d-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/device/p49-qsa-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p49-qsa-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/device/p49c-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p49c-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/device/p33-linked-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p33-linked-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/device/p49b-expert-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p49b-expert-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/device/nongemv-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/nongemv-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/device/p56-head-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/p56-head-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/full-shape/rope.bf16",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/rope.bf16",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/full-shape/mtp-manifest.tsv",
+      "target": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/mtp-manifest.tsv",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/queue-tests",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/queue-tests",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/owner-retirement-tests",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/owner-retirement-tests",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/authority-tests",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/authority-tests",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/prepared-invalidation-tests",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/prepared-invalidation-tests",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/k2-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/k2-fixtures",
+      "status": "restored-byte-identical"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/p49d-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p49d-fixtures",
+      "status": "restored-byte-identical"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/p39-merged-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p39-merged-fixtures",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/chain-tests",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/chain-tests",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/lifetime-tests",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/lifetime-tests",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/p49-qsa-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p49-qsa-fixtures",
+      "status": "restored-byte-identical"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/libmath_bridge.so",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/libmath_bridge.so",
+      "status": "preserved-existing-link"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/p49c-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p49c-fixtures",
+      "status": "restored-byte-identical"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/p33-linked-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p33-linked-fixtures",
+      "status": "restored-byte-identical"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/p49b-expert-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p49b-expert-fixtures",
+      "status": "restored-byte-identical"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/nongemv-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/nongemv-fixtures",
+      "status": "restored-byte-identical"
+    },
+    {
+      "reference": "packet97-record-bundle",
+      "path": "build/gnu-host/p56-head-fixtures",
+      "target": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p56-head-fixtures",
+      "status": "preserved-existing-link"
+    }
+  ],
+  "restored": {
+    "oracle": "../packet49-integrate/oracle",
+    "build/fusion-rope.hpp": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet45-merged3/build/fusion-rope.hpp",
+    "build/gnu-host/k2-fixtures": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/k2-fixtures",
+    "build/gnu-host/p49d-fixtures": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p49d-fixtures",
+    "build/gnu-host/p49-qsa-fixtures": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p49-qsa-fixtures",
+    "build/gnu-host/p49c-fixtures": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p49c-fixtures",
+    "build/gnu-host/p33-linked-fixtures": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p33-linked-fixtures",
+    "build/gnu-host/p49b-expert-fixtures": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/p49b-expert-fixtures",
+    "build/gnu-host/nongemv-fixtures": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/gnu-host/nongemv-fixtures"
+  },
+  "binaries": {
+    "build/device/own-rt-iq3": "f77e0e9c50fa9f75d6d0900efa0241911fee34806dc9d118e1d9fab7edb73a01",
+    "build/gnu-host/own-rt-iq3": "7b7e42e664183cce5060f25f4032f7f7cfa5f86f46bc984a61a2fb85cbeb2ee5"
+  }
+}

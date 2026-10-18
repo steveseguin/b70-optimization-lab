@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/prepare_views.py", line 32, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/prepare_views.py", line 21, in main
+    view=seal_view(tuple(choice[k] for k in KEYS),'1')
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/prepare_packet.py", line 59, in seal_view
+    generic.create(view,'tp2',bp,fp,view/'build/device/own-rt-iq3',view/'dispatch-speed6.json',view/'screen-seal.json')
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/seal.py", line 17, in create
+    verify_map(ROOT, sources)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/common.py", line 42, in verify_map
+    path = W.safe_path(root, name)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard/window.py", line 78, in safe_path
+    require(not rel.is_absolute() and '..' not in rel.parts and path.is_relative_to(root.resolve()), 'unsafe identity path')
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet34-replay-bench/window.py", line 27, in require
+    raise ValueError(reason)
+ValueError: unsafe identity path

@@ -1,0 +1,16 @@
+usage: submission_cli97e.py [-h] [--payloads PAYLOADS] [--label LABEL]
+                            [--limit LIMIT] [--sleep-on-429] [--dry-run]
+                            [--server-dry-run] [--allow-non-headline]
+
+options:
+  -h, --help            show this help message and exit
+  --payloads PAYLOADS   JSON payload queue
+  --label LABEL         Submit only this label
+  --limit LIMIT         Submit at most N payloads
+  --sleep-on-429
+  --dry-run
+  --server-dry-run      Validate projected payloads against the authenticated
+                        LocalMaxxing dry-run endpoint without writing a result
+  --allow-non-headline  Inspect diagnostic/non-headline payloads such as
+                        warmed/history n-gram artifacts. This is restricted to
+                        --dry-run; real submissions fail closed.

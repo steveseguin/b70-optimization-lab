@@ -1,0 +1,28 @@
+smoke negative PASS
+smoke positive PASS
+composite positive PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet111-orchestration/launch_limit_gate.py", line 93, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet111-orchestration/launch_limit_gate.py", line 90, in main
+    assert cp.returncode==0,cp.stderr[-3000:]
+           ^^^^^^^^^^^^^^^^
+AssertionError: Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet111-orchestration/launch_limit_gate.py", line 93, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet111-orchestration/launch_limit_gate.py", line 85, in main
+    if a.probe:print(json.dumps(probe(a.probe,a.negative)));return
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet111-orchestration/launch_limit_gate.py", line 50, in probe
+    args=model_args('WS128',target,out)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/startup103.py", line 141, in model_args
+    a,namespace=window_options(name)
+                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/startup103.py", line 125, in window_options
+    cmd=planned_commands(S/'chain')[name];cmd=cmd[cmd.index(str(P/'window.py'))+1:]
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/window.py' is not in list
+

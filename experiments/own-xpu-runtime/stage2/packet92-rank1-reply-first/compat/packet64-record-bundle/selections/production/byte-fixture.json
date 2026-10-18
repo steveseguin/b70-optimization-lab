@@ -1,0 +1,160 @@
+{
+  "schema": "own-runtime.screen.byte-fixture.v1",
+  "passed": true,
+  "device_executed": false,
+  "changed_class": "host report scheduling; real mailbox plus mock state/error, unchanged kernels, miniature engine parity with packet84",
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/fixture-GNU",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/GNU-1"
+  ],
+  "build_receipt_sha256": "2442992fa1361476e8c779a930f1683d1269d33bf1d328cc2d8cfc9eeff553c0",
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/reply_first_test.cpp": "dfb2b5a702f3c286ae93487ea663733b7686213c6175a50c1a2117ade86b118a",
+    "experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/reply_first.hpp": "4388ba38ed4dc27cf890fc30b23a435b9b8e236e621dd32c516d18300e0232e3",
+    "experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/native_controller.hpp": "0b32e6a50e300c29bad02ea9078042e45acb36906720dd1ea77d6103d283150a",
+    "experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/host_spin.hpp": "5f56024f2678d7ab90eb5b1818c34d2241066b4c7dff74fb7a5a4ccc388b799e",
+    "experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/cpu_gate.py": "fdbf17cb9156c5b7c52b0cab50213aa74a399201661748815990ab1a3833ded1",
+    "experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/compile_turn.py": "1656747d86c396c1153e5f19af6b5a45321efce23855f177e55657e4cfe7324d"
+  },
+  "expected": {
+    "path": "expected.bin",
+    "sha256": "328ca41dad580be58639203f65c4aa3fd2b19285667398a4affd26d8ac062aa4"
+  },
+  "actual": {
+    "path": "candidate.bin",
+    "sha256": "328ca41dad580be58639203f65c4aa3fd2b19285667398a4affd26d8ac062aa4"
+  },
+  "raw_runs": [
+    {
+      "compiler": "GNU",
+      "repeat": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/fixture-GNU",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/GNU-1"
+      ],
+      "compile_command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-MMD",
+        "-MF",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/GNU.d",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/reply_first_test.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/fixture-GNU"
+      ],
+      "binary_sha256": "f66e79ec8cffd874dca21eb4b48c1a7c98ee99d0405c8ad1623ad2b88ae66a5b",
+      "expected_sha256": "328ca41dad580be58639203f65c4aa3fd2b19285667398a4affd26d8ac062aa4",
+      "candidate_sha256": "328ca41dad580be58639203f65c4aa3fd2b19285667398a4affd26d8ac062aa4",
+      "raw_evidence": "experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/evidence/328ca41dad580be58639203f65c4aa3fd2b19285667398a4affd26d8ac062aa4.bin.gz",
+      "raw_evidence_sha256": "55c0b04161726963d89580bcec5f799c11c24be3d72516a2efe952dbf15dea97",
+      "passed": true,
+      "device_executed": false,
+      "state_token_words": 68,
+      "negative_cases": 9
+    },
+    {
+      "compiler": "GNU",
+      "repeat": 2,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/fixture-GNU",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/GNU-2"
+      ],
+      "compile_command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-MMD",
+        "-MF",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/GNU.d",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/reply_first_test.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/fixture-GNU"
+      ],
+      "binary_sha256": "f66e79ec8cffd874dca21eb4b48c1a7c98ee99d0405c8ad1623ad2b88ae66a5b",
+      "expected_sha256": "328ca41dad580be58639203f65c4aa3fd2b19285667398a4affd26d8ac062aa4",
+      "candidate_sha256": "328ca41dad580be58639203f65c4aa3fd2b19285667398a4affd26d8ac062aa4",
+      "raw_evidence": "experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/evidence/328ca41dad580be58639203f65c4aa3fd2b19285667398a4affd26d8ac062aa4.bin.gz",
+      "raw_evidence_sha256": "55c0b04161726963d89580bcec5f799c11c24be3d72516a2efe952dbf15dea97",
+      "passed": true,
+      "device_executed": false,
+      "state_token_words": 68,
+      "negative_cases": 9
+    },
+    {
+      "compiler": "Intel",
+      "repeat": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/fixture-Intel",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/Intel-1"
+      ],
+      "compile_command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-MMD",
+        "-MF",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/Intel.d",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/reply_first_test.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/fixture-Intel"
+      ],
+      "binary_sha256": "dba92a4b79b6e396c94de5a53df63a794f3063ac98e968e9741ad43d3ec675f6",
+      "expected_sha256": "328ca41dad580be58639203f65c4aa3fd2b19285667398a4affd26d8ac062aa4",
+      "candidate_sha256": "328ca41dad580be58639203f65c4aa3fd2b19285667398a4affd26d8ac062aa4",
+      "raw_evidence": "experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/evidence/328ca41dad580be58639203f65c4aa3fd2b19285667398a4affd26d8ac062aa4.bin.gz",
+      "raw_evidence_sha256": "55c0b04161726963d89580bcec5f799c11c24be3d72516a2efe952dbf15dea97",
+      "passed": true,
+      "device_executed": false,
+      "state_token_words": 68,
+      "negative_cases": 9
+    },
+    {
+      "compiler": "Intel",
+      "repeat": 2,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/fixture-Intel",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/Intel-2"
+      ],
+      "compile_command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-MMD",
+        "-MF",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/Intel.d",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/reply_first_test.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/build/cpu/fixture-Intel"
+      ],
+      "binary_sha256": "dba92a4b79b6e396c94de5a53df63a794f3063ac98e968e9741ad43d3ec675f6",
+      "expected_sha256": "328ca41dad580be58639203f65c4aa3fd2b19285667398a4affd26d8ac062aa4",
+      "candidate_sha256": "328ca41dad580be58639203f65c4aa3fd2b19285667398a4affd26d8ac062aa4",
+      "raw_evidence": "experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/evidence/328ca41dad580be58639203f65c4aa3fd2b19285667398a4affd26d8ac062aa4.bin.gz",
+      "raw_evidence_sha256": "55c0b04161726963d89580bcec5f799c11c24be3d72516a2efe952dbf15dea97",
+      "passed": true,
+      "device_executed": false,
+      "state_token_words": 68,
+      "negative_cases": 9
+    }
+  ],
+  "choices": {
+    "route": "route-exp32-rank4",
+    "recurrence": "rec-parallel",
+    "hc": "production",
+    "miss": "batch",
+    "experts": "wide64",
+    "packed_dense": "production",
+    "hc_gate": "wide",
+    "host_retire": "ordered",
+    "hc_norm": "production"
+  }
+}

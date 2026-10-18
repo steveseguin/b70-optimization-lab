@@ -1,0 +1,42 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "cpu_model_executed": false,
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet76-rank1-host/python_gate.py": "bb15f74fb847ee4c3f02cdf3863dab6bfc487ce8741623712b486a4a70143e20",
+    "experiments/own-xpu-runtime/stage2/packet76-rank1-host/test_attribute.py": "70521c07c737d9e4418b85a463c68808eb6523255c57d46bfeda8988f981323f",
+    "experiments/own-xpu-runtime/stage2/packet76-rank1-host/test_screen.py": "3cf5e359e811f2ddf943df284ec2c384aace50507fdc9685e38a5c9972d36e30",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/test_reporting.py": "81870827aecf68b05b1f747792522b649e98ee2fc3e129d0cc9f22411bddad14",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/test_refusal.py": "7829acbd0a75dab9ae310c3510da32214f7c94627f26d327cdb8d814416d80f4",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/test_lane_admission.py": "59d46dfd70a7eae228a0892baf7790ee230ba0791214667b732906a1a0b98e51",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/test_plan_admission.py": "3e9e8b07d104f5851a7b5e890fe78e6e04d0eb729b1cbc6df84f1113b6f64160"
+  },
+  "commands": [
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "test_reporting",
+        "test_refusal",
+        "test_lane_admission",
+        "test_plan_admission",
+        "-v"
+      ],
+      "cwd": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes"
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "test_attribute",
+        "test_screen",
+        "-v"
+      ],
+      "cwd": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet76-rank1-host"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schema": "packet116.micro-origin.v1",
+  "parent": "packet110-class-roofline",
+  "frozen_parents": {
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/layer_bench.cpp": "e25a1eb957e36c8c43bbbea2716bbf55807a9098451934fadef7d9aa1149dcf3",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/run_micro.py": "2d6a607b952cf579e17aa5b88be857ec92ccce120b51d29db2211ca9991bc2c9",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/fixture_bytes.hpp": "850b1722140a694bd5697c9ce53c050f58061bcd0885ebcc4c5195bf83547068",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/dispatch-speed6.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/rope.bf16": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
+  },
+  "changes": [
+    "Restore QSA layer3, use packet103 selected production line with qsa_schedule switch",
+    "Both orders, contexts128/4096, all producer buffers plus all scratch immediately after select/attention and all final mutable allocations",
+    "50 timing pairs/context, first10 excluded, sum every attention and selection event",
+    "Two fresh native owners, each context128 candidate/production median <=0.6; report4096 separately",
+    "CPU-only plans and shared compiler turn; expected240s watchdog1200s"
+  ]
+}

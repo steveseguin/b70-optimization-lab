@@ -1,0 +1,8 @@
+# CPU proposal only; card 0, lane A, whole host; lane B paused/drained throughout.
+# Packet58vb: real queue/window startup CPU gate; lanequeue-derived unit identity; minimal reseal.
+# Two K1 fixtures precede one model load. Smoke: 12 x 64 overlap; v5: 12 x 128 serial/overlap/serial/overlap/serial.
+# Native and Python check every token against iq3-p49-split32-v1. The v5 runner refuses without this exact smoke.
+# Expected 600-900 seconds; watchdog 7200 seconds >= 4x upper estimate.
+# Required host MemAvailable 95435761152 bytes, including unchanged 8 GiB reserve; BF16 KV, 18 GB cache.
+# No device run, live queue change, record chain or submission performed by preparation.
+{"name": "packet58v-smoke-A", "lane": "A", "argv": ["/usr/bin/python3", "-B", "experiments/own-xpu-runtime/stage2/packet58v-async-cache/queue_runner.py", "--arm", "smoke", "--output", "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/card0-async-a/smoke", "--fault-review", "{REVIEW}", "--library-path", "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib", "--authorized-device-window"], "env_extra": {}, "review": "experiments/own-xpu-runtime/stage2/packet58v-async-cache/fault_review.py"}

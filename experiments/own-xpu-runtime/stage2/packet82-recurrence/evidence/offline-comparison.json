@@ -1,0 +1,70 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "interpretation": "Scheduling-only candidates; no scratch spills. Flag spills increase, and no measured speed benefit is claimed.",
+  "rows": [
+    {
+      "kind": "production",
+      "kernel": "//.kernel _ZTSZZNK7p49drec16RecurrenceKernelILj4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "static_instructions": 2892,
+      "configured_grf": 128,
+      "flag_spill_metadata": [
+        "//.spill flag store 10",
+        "//.spill flag load 14"
+      ],
+      "counts": {
+        "ALU pipe: int": 594,
+        "ALU pipe: float": 2138,
+        "ALU pipe: math": 29,
+        "load.ugm": 19,
+        "store.ugm": 4,
+        "load.slm": 4,
+        "store.slm": 5,
+        "sync.bar": 3
+      },
+      "scratch_messages": 0
+    },
+    {
+      "kind": "candidate",
+      "kernel": "//.kernel _ZTSZZNK6p82rec6KernelILb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "static_instructions": 2910,
+      "configured_grf": 128,
+      "flag_spill_metadata": [
+        "//.spill flag store 13",
+        "//.spill flag load 16"
+      ],
+      "counts": {
+        "ALU pipe: int": 606,
+        "ALU pipe: float": 2139,
+        "ALU pipe: math": 29,
+        "load.ugm": 19,
+        "store.ugm": 4,
+        "load.slm": 4,
+        "store.slm": 5,
+        "sync.bar": 3
+      },
+      "scratch_messages": 0
+    },
+    {
+      "kind": "candidate",
+      "kernel": "//.kernel _ZTSZZNK6p82rec6KernelILb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "static_instructions": 2754,
+      "configured_grf": 128,
+      "flag_spill_metadata": [
+        "//.spill flag store 14",
+        "//.spill flag load 18"
+      ],
+      "counts": {
+        "ALU pipe: int": 563,
+        "ALU pipe: float": 2038,
+        "ALU pipe: math": 20,
+        "load.ugm": 17,
+        "store.ugm": 4,
+        "load.slm": 4,
+        "store.slm": 7,
+        "sync.bar": 3
+      },
+      "scratch_messages": 0
+    }
+  ]
+}

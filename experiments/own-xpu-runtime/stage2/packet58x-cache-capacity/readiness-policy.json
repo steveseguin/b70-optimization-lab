@@ -1,0 +1,16 @@
+{
+  "schema": "packet58w.readiness-policy.v1",
+  "minimum_gain_each_control": 0.005,
+  "maximum_control_drift": 0.03,
+  "exact_prompts_per_arm": 12,
+  "tokens_per_prompt": 128,
+  "smoke_required": true,
+  "views": [
+    "serial",
+    "overlap",
+    "serial",
+    "overlap",
+    "serial"
+  ],
+  "readiness_policy": "Amended after packet58v's data and before any packet58w chain: in this one-card one-load bracket the first view A0 warms the initially empty immutable device expert cache. A0 is reported and must be exact, but is excluded from drift and comparison. The 58t precedent (15:21-15:35 UTC) had a cold first control of 21.41 versus 26.13 tok/s warm. Smoke must pass; every 12 x 128 tokens in all five views must be checked again against packet49 iq3-p49-split32-v1; remaining serial controls A1/A2 must have max/min <=1.03; both overlap views B0/B1 must be >=1.005 times EACH remaining serial control. All other checks remain unchanged. This is warm steady-state readiness only; the record value is the chain's fresh WS128."
+}

@@ -1,0 +1,35 @@
+real CPU bracket IPC, parent parity, fresh repeat 0 PASS
+real CPU bracket IPC, parent parity, fresh repeat 1 PASS
+real CPU bracket IPC, parent parity, fresh repeat 0 PASS
+real CPU bracket IPC, parent parity, fresh repeat 1 PASS
+real CPU bracket IPC, parent parity, fresh repeat 0 PASS
+real CPU bracket IPC, parent parity, fresh repeat 1 PASS
+real CPU bracket IPC, parent parity, fresh repeat 0 PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/protocol_gate.py", line 87, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/protocol_gate.py", line 84, in main
+    results.append(gate(name,config))
+                   ^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/protocol_gate.py", line 62, in gate
+    dest=root/('bracket-'+str(repeat));row=run(B/'gnu-host/own-rt-iq3',config['views'],dest)
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/protocol_gate.py", line 35, in run
+    result=suite.run_request(transport,args,[1,2,3],8)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/suite.py", line 278, in run_request
+    storage.admit(storage.request_write_bytes(len(pipeline.retention_steps(args.retain_steps,count))))
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/protocol_gate.py", line 18, in <lambda>
+    storage.admit=lambda *a,**kw: limits()
+                                  ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/build_engine.py", line 18, in limits
+    assert sum(f.stat().st_size for f in B.rglob('*') if f.is_file())<=300_000_000,'packet98 build above 300 MB'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/build_engine.py", line 18, in <genexpr>
+    assert sum(f.stat().st_size for f in B.rglob('*') if f.is_file())<=300_000_000,'packet98 build above 300 MB'
+               ^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 842, in stat
+    return os.stat(self, follow_symlinks=follow_symlinks)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/build/full-shape/attention-rank0/view0/speculative-snapshot.json'

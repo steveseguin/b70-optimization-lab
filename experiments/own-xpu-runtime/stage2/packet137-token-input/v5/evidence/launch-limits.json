@@ -1,0 +1,538 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "rows": [
+    {
+      "passed": true,
+      "kind": "smoke",
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "argv": [
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/build/device/own-rt-iq3",
+          "--rank",
+          "0",
+          "--channel",
+          "7",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p137-argv-o35gdwpu/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/tmp/p137-argv-o35gdwpu/run/ranks/rank0",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--plan",
+          "/tmp/p137-argv-o35gdwpu/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p137-argv-o35gdwpu/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p137-argv-o35gdwpu/run/adapter/selection.json",
+          "--selection-sha256",
+          "c899bcc2e9c98f85b466c9b9aa54bbf1eccdd20000a3a99eec78c2a26ed38105",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/lineage/dispatch-speed6.json",
+          "--authorized-device-window"
+        ],
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/build/device/own-rt-iq3",
+          "--rank",
+          "1",
+          "--channel",
+          "9",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p137-argv-o35gdwpu/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "1",
+          "--output",
+          "/tmp/p137-argv-o35gdwpu/run/ranks/rank1",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--draft-mtp",
+          "--draft-fault",
+          "none",
+          "--plan",
+          "/tmp/p137-argv-o35gdwpu/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p137-argv-o35gdwpu/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p137-argv-o35gdwpu/run/adapter/selection.json",
+          "--selection-sha256",
+          "c899bcc2e9c98f85b466c9b9aa54bbf1eccdd20000a3a99eec78c2a26ed38105",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/lineage/dispatch-speed6.json",
+          "--authorized-device-window"
+        ]
+      ],
+      "real_oracle_commands": [
+        [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15,24-31",
+          "python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/shared_oracle.py",
+          "--require-complete"
+        ]
+      ],
+      "limits_checked": true,
+      "inherited_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "final_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "operational_admission_synthetic": true
+    },
+    {
+      "passed": true,
+      "negative_control": true,
+      "refusal": "native launch refuses finite RLIMIT_AS",
+      "device_executed": false
+    },
+    {
+      "passed": true,
+      "kind": "bracket",
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "argv": [
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/build/device/own-rt-iq3",
+          "--rank",
+          "0",
+          "--channel",
+          "7",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p137-argv-_ka7kwb8/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/tmp/p137-argv-_ka7kwb8/run/ranks/rank0",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "128",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--plan",
+          "/tmp/p137-argv-_ka7kwb8/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p137-argv-_ka7kwb8/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p137-argv-_ka7kwb8/run/adapter/selection.json",
+          "--selection-sha256",
+          "c899bcc2e9c98f85b466c9b9aa54bbf1eccdd20000a3a99eec78c2a26ed38105",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/lineage/dispatch-speed6.json",
+          "--authorized-device-window"
+        ],
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/build/device/own-rt-iq3",
+          "--rank",
+          "1",
+          "--channel",
+          "9",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p137-argv-_ka7kwb8/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "1",
+          "--output",
+          "/tmp/p137-argv-_ka7kwb8/run/ranks/rank1",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "128",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--draft-mtp",
+          "--draft-fault",
+          "none",
+          "--plan",
+          "/tmp/p137-argv-_ka7kwb8/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p137-argv-_ka7kwb8/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p137-argv-_ka7kwb8/run/adapter/selection.json",
+          "--selection-sha256",
+          "c899bcc2e9c98f85b466c9b9aa54bbf1eccdd20000a3a99eec78c2a26ed38105",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/lineage/dispatch-speed6.json",
+          "--authorized-device-window"
+        ]
+      ],
+      "real_oracle_commands": [
+        [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15,24-31",
+          "python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/shared_oracle.py",
+          "--require-complete"
+        ]
+      ],
+      "limits_checked": true,
+      "inherited_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "final_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "operational_admission_synthetic": true
+    },
+    {
+      "passed": true,
+      "negative_control": true,
+      "refusal": "native launch refuses finite RLIMIT_AS",
+      "device_executed": false
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/launch_limit_gate.py": "e35d67920f9fa54679ddd62d904323910cea56e5b0300e3b99b8738e1033b798",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/argument_gate.py": "95f3e50960aeacae9134075b3e670ce43423875013bbd554009af905d8d9543d",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/exec_limits.py": "c998ae4e35775c189006da5f2dc308ccdf2dd33d1fa4e8c58c90197427c4fae9",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/tp2_worker.py": "a995da7ddb129a0a0eafe9c7df8a35ba36a57b68536fb269beff881f45e3013e"
+  }
+}

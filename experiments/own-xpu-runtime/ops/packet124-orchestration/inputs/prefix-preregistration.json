@@ -1,0 +1,43 @@
+{
+  "schema": "lab.packet114.preregistration.v1",
+  "objective": "Minimize modeled draft head row work subject to at least 99.0% token-count-weighted coverage on the five fixed non-benchmark documents. This constrained objective deliberately does not use benchmark timing or acceptance to select N.",
+  "rule": "Choose the smallest positive multiple of 256 covering >= 990/1000 tokens. Produce exactly one N; if N >= 91392, close without a smaller candidate. Never retune from device results.",
+  "coverage_numerator": 990,
+  "coverage_denominator": 1000,
+  "row_alignment": 256,
+  "production_rows": 91392,
+  "full_vocab_rows": 248320,
+  "source_commit": "fe3e538df7a01ba46de9835c539eac0bad864cae",
+  "sources": [
+    {
+      "path": "docs/own-xpu-runtime-objective.md",
+      "sha256": "7a27df0cab08fd2bd7470b2a78a9941ea1c898747f0d06ad9f5ae2dc98439dda",
+      "bytes": 10580
+    },
+    {
+      "path": "docs/host-stability-and-fault-diagnosis.md",
+      "sha256": "ebb5fb82d0406555c4a84ed803d9637484eceab060843850619cfb16bb1bd56c",
+      "bytes": 32076
+    },
+    {
+      "path": "docs/local-ops.md",
+      "sha256": "0059b54abf02b632c867245e2ef76345f326ef205390b1d1ff173fb60d5f9b99",
+      "bytes": 16431
+    },
+    {
+      "path": "docs/recipe-publication-standard.md",
+      "sha256": "b5ea44228b8e1f39b2c4295cb73c6321f5d75ec6c1f3f3dfd14fffc1b9eec906",
+      "bytes": 7164
+    },
+    {
+      "path": "scripts/check-storage-headroom.py",
+      "sha256": "daf118c70b9bf544d9d4c54178ee6bdc58eb032b5311340e7de3dfed51c29ba2",
+      "bytes": 6154
+    }
+  ],
+  "tokenization": "Exact packet56 tokenizer, no special tokens or chat template; original source bytes retrieved from source_commit. Recompute after this preregistration is committed.",
+  "independence": "Historical packet56 preregistration and selection (including its retained histogram) were read as explicitly requested. No new selection calculation has run. No suite-inputs-20261012 prompts or oracle outputs have been read. Corpus is unchanged general operations/design/publication/storage material, not target-generated calibration.",
+  "cost_analysis_after_selection": "Derive linear row-work cost with fixed per-row arithmetic and argmax; use the supplied historical ~0.52 ms prefix bucket as an explicitly dated planning proxy only after N is frozen. No current direct profile is claimed. Estimate additional rejection conservatively as the frequency mass in [N,91392), with no credit for possible new hits; this is a corpus proxy, not measured draft acceptance.",
+  "device_decision": "One lane-B native A/B/A/B/A, A=91392, B=selected N, twelve prompts x128 plus incident64 per view. Every token exact vs iq3-p49-split32-v1, cached_tokens=0, control drift <=3%, both B rates >=1.005 times strongest A. Otherwise reject; never choose another N from bracket. Record per-arm draft acceptance and counts. Screening only, no promotion.",
+  "resource_policy": "CPU only preparation; <=8GiB per CPU main, no import-time limits; <=150MB build; serialized compile_turn; no frozen tree or live queue edits."
+}

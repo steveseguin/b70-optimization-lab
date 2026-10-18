@@ -1,0 +1,42 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "default": "overlap",
+  "parent_bracket_complete": true,
+  "amendment": "packet58xc: owned readers and frozen local evidence; first view exact/reported and outside drift/gain",
+  "reason": "All parent native tokens replayed from the local snapshot against unchanged packet49; no sibling source reads.",
+  "decision": {
+    "passed": true,
+    "rates": [
+      22.7309513443468,
+      28.115842239246334,
+      26.053436242414122,
+      28.152570338879926,
+      26.078853370216997
+    ],
+    "control_drift": 0.0009755767940313673,
+    "minimum_gain": 0.07810883554242659,
+    "warmup_view": {
+      "label": "A0",
+      "rate": 22.7309513443468,
+      "exact": true,
+      "excluded_from_drift_and_comparison": true
+    },
+    "comparison_controls": [
+      "A1",
+      "A2"
+    ],
+    "readiness_policy": "Amended after packet58v's data and before any packet58w chain: in this one-card one-load bracket the first view A0 warms the initially empty immutable device expert cache. A0 is reported and must be exact, but is excluded from drift and comparison. The 58t precedent (15:21-15:35 UTC) had a cold first control of 21.41 versus 26.13 tok/s warm. Smoke must pass; every 12 x 128 tokens in all five views must be checked again against packet49 iq3-p49-split32-v1; remaining serial controls A1/A2 must have max/min <=1.03; both overlap views B0/B1 must be >=1.005 times EACH remaining serial control. All other checks remain unchanged. This is warm steady-state readiness only; the record value is the chain's fresh WS128."
+  },
+  "smoke_passed": true,
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/lineage/58xb-source-snapshot.tar.gz": "8a41bf40e256ae0b5bac7057971cec02a509d465647e8b630ae1f35b1bc68ac5",
+    "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/lineage/58xb-source-snapshot.json": "857e7964a251b58162b2de147f2d6a07270dee3e6931decfdac2a9bd36f38bf3",
+    "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/readiness_compare.py": "ddea85e4b81160cd3fcfb67589ec707425e221c1ad8bac84618821536fba4bad",
+    "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/readiness-policy.json": "3286da12705a6a0870adb9538d1d25b2eb5b98a2d135a2add9e0ae740cf8c26a",
+    "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/maintenance_decision.py": "aa91192efb776adc3232cdfc25c44abc3cdfb5fee7b76ef253fdb0fcf8013411",
+    "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/suite_driver.py": "91f1da0b545b8845212289409c82fe9f4a5880d004d9be45dbe724d5f1fc6357",
+    "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/suite_metrics.py": "4eef50d1272c759904b64947297c865b71b683a52c5590fb822301bcdc7f04aa",
+    "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/oracle-binding.json": "22f04b9182f5298552925a4391465f14c653e6d757ed0f444d579f2674636344"
+  }
+}

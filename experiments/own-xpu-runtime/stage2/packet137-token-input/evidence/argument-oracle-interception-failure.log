@@ -1,0 +1,36 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/argument_gate.py", line 92, in <module>
+    resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+                                                                 ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/argument_gate.py", line 75, in main
+    (P/'evidence'/('arguments-'+kind+'.log')).write_text(r.stdout+r.stderr);assert r.returncode==0,r.stderr
+                                                                                   ^^^^^^^^^^^^^^^
+AssertionError: Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/argument_gate.py", line 90, in <module>
+    elif '--probe' in sys.argv:print('ARGUMENT_RESULT='+json.dumps(probe(sys.argv[-1])))
+                                                                   ^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/argument_gate.py", line 49, in probe
+    try:worker.run(row,tmp/'run',4800)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/tp2_worker.py", line 53, in run
+    placement, memory_gate = verify_identity(identity)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/placement.py", line 76, in verify_identity
+    expected = sealed(args)
+               ^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/common.py", line 51, in sealed
+    return sealed_identity(args)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/bracket_config.py", line 29, in sealed_identity
+    row=verify()
+        ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/cpu_seal.py", line 105, in verify
+    require(read(HERE/'placement-validation/wrapper-seal.json')==row,'wrapper seal changed');oracle();return row
+                                                                                             ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/cpu_seal.py", line 18, in oracle
+    cp=subprocess.run(command,stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=180)
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 548, in run
+    with Popen(*popenargs, **kwargs) as process:
+TypeError: 'types.SimpleNamespace' object does not support the context manager protocol
+

@@ -1,0 +1,67 @@
+{
+  "schema": "own-runtime.screen.byte-fixture.v1",
+  "passed": true,
+  "device_executed": false,
+  "model_executed": false,
+  "changed_class": "paired dense GEMV, HC and routed expert union exact ordered arithmetic",
+  "command": [
+    "python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/batch_cpu_gate.py"
+  ],
+  "build_receipt_sha256": "18200f1c10695ab829a1984b9b238f7470fe9ca0767b4e9695b7a293be268de5",
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/batch_cpu_gate.py": "a76e17f495dcb663645e242b495dc064a12016671271f37a2a869e8dbf368f13",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/batch_fixture.cpp": "39e17bb0f4e27e2b63a8730c0c582ae87515f86c77390db5e513d5a6ea555371",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/batched_rows.hpp": "8444a58820e06ae0902f74c2f280cab137e3f4af3b501f2bda150f1986a9e5e3",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/batched_hc.hpp": "55a03282ddeb5d1cccc6cb14e5146903a9a6aa33477433cf9c22011cfbd9889e",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/batched_experts.hpp": "4401ad8124c291d466e4a65274f0fc960e76c3934ab83d3c946517fdae0d4f34",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/dependent_rows.hpp": "71f7f1b489f43b6f2def013e76dc3a2d85384f6f6698fb4375593eb96cab783f",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/production_rows.hpp": "ca3598c706e090fb2c092a69d92c61fb1b96979a6d0fa9690bf698924b5b026b",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/production_expert_chains.hpp": "714065f0ec01b0d601e6bf5472afe9a9d9a827ac2c5470f9003bb845a811878b",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/production65.hpp": "08b04e7cc3bda9dabab98ae500af54605eb86bcd9a103d14b36ec32546b26acf",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/production_router.hpp": "f4da6b053aff05cd593b485a8a48b0ab967349e5f437489f2e2159c9e1ad7517",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/production_route.hpp": "e654a87fc2c0427829a88e7f47d48c180accc3350aa4ca3d127cc348a0e02799",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/kernel-table.tsv": "0d3bf42efb0cff8914876ddb9c836f4ca669fc1ca6cc186a9a5d9a468b4f9dcc"
+  },
+  "compilers": [
+    {
+      "compiler": "gnu-host",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/gnu-host-batch-fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/fixture/gnu-host"
+      ],
+      "result": {
+        "passed": true,
+        "byte_checks": 2728,
+        "model_executed": false,
+        "device_executed": false
+      },
+      "expected_sha256": "c160a10d2f3c22e3ac00852b50da8cbe1ede60db0f156079d3eefab6d663ceb3",
+      "actual_sha256": "c160a10d2f3c22e3ac00852b50da8cbe1ede60db0f156079d3eefab6d663ceb3"
+    },
+    {
+      "compiler": "intel-host",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/intel-host-batch-fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/fixture/intel-host"
+      ],
+      "result": {
+        "passed": true,
+        "byte_checks": 2728,
+        "model_executed": false,
+        "device_executed": false
+      },
+      "expected_sha256": "c160a10d2f3c22e3ac00852b50da8cbe1ede60db0f156079d3eefab6d663ceb3",
+      "actual_sha256": "c160a10d2f3c22e3ac00852b50da8cbe1ede60db0f156079d3eefab6d663ceb3"
+    }
+  ],
+  "expected": {
+    "path": "fixture/gnu-host-expected.bin",
+    "sha256": "c160a10d2f3c22e3ac00852b50da8cbe1ede60db0f156079d3eefab6d663ceb3"
+  },
+  "actual": {
+    "path": "fixture/gnu-host-actual.bin",
+    "sha256": "c160a10d2f3c22e3ac00852b50da8cbe1ede60db0f156079d3eefab6d663ceb3"
+  }
+}

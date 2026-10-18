@@ -1,0 +1,15 @@
+{
+  "schema": "packet58y.batch.v1",
+  "order": [
+    "packet58x-smoke-A",
+    "packet58x-v5-A",
+    "packet58y-attrib-A"
+  ],
+  "same_hold_required": true,
+  "standalone_hold_allowed": false,
+  "predecessor_proposals": {
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58x-smoke-A.txt": "f9c6ac504dcbb498e55f37fd91655b58eb3ad226c12f69626f1028eda1c52bac",
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58x-v5-A.txt": "c84c3f0f0efb02654fc7b78d88aca1e2644aa0a56eb73bc094396747a82fd8aa"
+  },
+  "coordinator_instruction": "Keep PAUSE-B continuously from before 58x smoke until 58y drains; no intervening job. 58y verifies clean same-boot predecessors and unchanged pause."
+}

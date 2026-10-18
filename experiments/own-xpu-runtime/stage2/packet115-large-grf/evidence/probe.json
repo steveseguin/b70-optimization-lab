@@ -1,0 +1,71 @@
+{
+  "schema": "packet115.module-large-probe.v1",
+  "device_executed": false,
+  "results": [
+    {
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-fsycl",
+        "-fsycl-device-only",
+        "-O2",
+        "-std=c++20",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fdenormal-fp-math=ieee",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet115-large-grf/probe.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet115-large-grf/build/probe.bc"
+      ],
+      "returncode": 0,
+      "log": "probe-0.log"
+    },
+    {
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/compiler/llvm-spirv",
+        "--spirv-ext=+all,-SPV_INTEL_runtime_aligned,-SPV_KHR_untyped_pointers,-SPV_KHR_fma",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet115-large-grf/build/probe.bc",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet115-large-grf/build/probe.spv"
+      ],
+      "returncode": 0,
+      "log": "probe-1.log"
+    },
+    {
+      "command": [
+        "/usr/bin/ocloc",
+        "compile",
+        "-spirv_input",
+        "-file",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet115-large-grf/build/probe.spv",
+        "-device",
+        "bmg-g31",
+        "-options",
+        "-ze-fp32-correctly-rounded-divide-sqrt",
+        "-out_dir",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet115-large-grf/build/default"
+      ],
+      "returncode": 0,
+      "log": "probe-2.log"
+    },
+    {
+      "command": [
+        "/usr/bin/ocloc",
+        "compile",
+        "-spirv_input",
+        "-file",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet115-large-grf/build/probe.spv",
+        "-device",
+        "bmg-g31",
+        "-options",
+        "-ze-fp32-correctly-rounded-divide-sqrt -ze-opt-large-register-file",
+        "-out_dir",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet115-large-grf/build/large"
+      ],
+      "returncode": 0,
+      "log": "probe-3.log"
+    }
+  ],
+  "source_sha256": "d94324cd9d40034721c263f408f35d00e0ab181819d03554bc71a3606890f08c",
+  "max_rss_kib": 285384
+}

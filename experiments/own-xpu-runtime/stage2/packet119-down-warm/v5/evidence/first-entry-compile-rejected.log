@@ -1,0 +1,43 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/v5/native-src/entry-main.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/main.cpp: In member function ‘void Engine::linear(const flash::Launch&)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/main.cpp:1266:29: error: ‘kind’ was not declared in this scope; did you mean ‘p39::kind’?
+ 1266 |         require(down!=p.launches.end()&&down->weights.size()==1,"p119 missing matching DOWN consumer");
+      |                             ^~~~
+      |                             p39::kind
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/main.cpp:17:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/p39_plan.hpp:6:13: note: ‘p39::kind’ declared here
+    6 | inline Kind kind(const flash::Launch&l){return Kind(l.parameter-plan_tag);}
+      |             ^~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/main.cpp: In lambda function:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/main.cpp:1267:109: error: ‘prefix’ was not declared in this scope; did you mean ‘p105::prefix’?
+ 1267 |         load(c,down->weights[0]);b.other=weights[c].at(down->weights[0]);
+      |                                                                                                             ^     
+      |                                                                                                             p105::prefix
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/p105_submit.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/main.cpp:23:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/p105_common.hpp:5:27: note: ‘p105::prefix’ declared here
+    5 | inline constexpr unsigned prefix=202240,suffix=46080,vocab=248320,hidden_bytes=5120;
+      |                           ^~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/main.cpp: In member function ‘void Engine::linear(const flash::Launch&)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/main.cpp:1269:34: error: ‘b’ was not declared in this scope
+ 1269 |       std::vector<Matrix> selected{m};if(l.op=="expert_gate_up")selected.push_back(a.memory=="resident"?it->second[1]:matrix(l,1));
+      |                                  ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/main.cpp:1276:29: error: ‘kind’ was not declared in this scope; did you mean ‘p39::kind’?
+ 1276 |         require(down!=p.launches.end()&&down->weights.size()==1,"p119 missing matching DOWN consumer");
+      |                             ^~~~
+      |                             p39::kind
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/p39_plan.hpp:6:13: note: ‘p39::kind’ declared here
+    6 | inline Kind kind(const flash::Launch&l){return Kind(l.parameter-plan_tag);}
+      |             ^~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/main.cpp: In lambda function:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/main.cpp:1277:109: error: ‘prefix’ was not declared in this scope; did you mean ‘p105::prefix’?
+ 1277 |         load(c,down->weights[0]);b.other=weights[c].at(down->weights[0]);
+      |                                                                                                             ^     
+      |                                                                                                             p105::prefix
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/p105_common.hpp:5:27: note: ‘p105::prefix’ declared here
+    5 | inline constexpr unsigned prefix=202240,suffix=46080,vocab=248320,hidden_bytes=5120;
+      |                           ^~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/main.cpp: In member function ‘void Engine::linear(const flash::Launch&)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet119-down-warm/main.cpp:1279:34: error: ‘b’ was not declared in this scope
+ 1279 |       std::vector<Matrix> selected{m};if(l.op=="expert_gate_up")selected.push_back(a.memory=="resident"?it->second[1]:matrix(l,1));
+      |                                  ^

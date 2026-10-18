@@ -1,0 +1,61 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "raw_source": "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p118-89f2d60778eb2d6e-composite-B-1-candidate",
+  "first99": {
+    "hit": {
+      "count": 932,
+      "mean_ms": {
+        "elapsed_ms": 14.960746891717147,
+        "A": 12.85338658972992,
+        "B": 13.335624103322715,
+        "C": 0.0,
+        "D": 1.6047367412030353,
+        "R": 0.0,
+        "rank0_slack_ms": 0.4826401134684598,
+        "spec_start_offset_ms": -0.00040259987566532173
+      }
+    },
+    "miss": {
+      "count": 256,
+      "mean_ms": {
+        "elapsed_ms": 25.803577402143674,
+        "A": 12.848082796722338,
+        "B": 13.383911081518818,
+        "C": 11.846807324332076,
+        "D": 1.6049533395516846,
+        "R": 0.5592489205810125,
+        "rank0_slack_ms": 0.5352696952058977,
+        "spec_start_offset_ms": 0.0005585895905824145
+      }
+    }
+  },
+  "copy_samples": {
+    "hidden-import": {
+      "count": 1600,
+      "mean_ms": 0.02386549375,
+      "minimum_ms": 0.021169
+    },
+    "best-export": {
+      "count": 1600,
+      "mean_ms": 0.0234943525,
+      "minimum_ms": 0.021841000000000003
+    }
+  },
+  "minimum_mandatory_copy_cost_ms": 0.04301000000000001,
+  "apparent_hit_tail_less_known_copies_ms": 0.4396301134684598,
+  "usable_slack_ms": null,
+  "reason": "Rank0 suffix compute is absent from command envelopes. Apparent tail and copy-only upper bound are not usable idle time.",
+  "old_model_full_target_head_ms": 1.4036838541666665,
+  "candidate_added_rank0_head_time_sensitivity_ms": {
+    "81920": 0.20259354596219928,
+    "122880": 0.4341290270618556
+  },
+  "scope": "Original trace accounting and old linear row-cost sensitivity only, not new device measurements or a speed forecast",
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p118-89f2d60778eb2d6e-composite-B-1-candidate/summary.json": "74d49a67038ac73f10ac0f5a7145b9de3de442b87817c4053757fcc5f7db1b0a",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p118-89f2d60778eb2d6e-composite-B-1-candidate/window.json": "1b6ff60072567804a9b94cb2514431a52d0f517e537b5d1340f03237e979f61f",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p118-89f2d60778eb2d6e-composite-B-1-candidate/run/ranks/rank0/p105-transfers.jsonl": "fae1aa29bf551e216861a2ae3f44988eb87a17e810a1b8ceed58878d9daf2f78",
+    "experiments/own-xpu-runtime/stage2/packet87-slack-model/DECISION.json": "45c224e5295921c2863a9c9b600206561ed3e137134b19eb4a21c8c964b2e0e5"
+  }
+}

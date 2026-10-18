@@ -1,0 +1,156 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "cached_proof_sha256": "26c3d22ec8415a35d8742b6620dc2291a4e1cd224c7f5cab10fe30a05ff0eb95",
+  "binaries": {
+    "rec-parallel": {
+      "parent": "experiments/own-xpu-runtime/stage2/packet84-record-bundle",
+      "binaries": {
+        "device": {
+          "path": "experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/device/own-rt-iq3",
+          "sha256": "8b615a0c74db57ab3ceab3cd4a56524d07bc9cf1cb78da2178a947e3918e294a"
+        },
+        "gnu-host": {
+          "path": "experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/gnu-host/own-rt-iq3",
+          "sha256": "176680955b859a4284c41f8987708eff5c543e3f509ea91a51cda55d5b825e83"
+        }
+      }
+    },
+    "rec-both-plus": {
+      "parent": "experiments/own-xpu-runtime/stage2/packet82b-recurrence2",
+      "binaries": {
+        "device": {
+          "path": "experiments/own-xpu-runtime/stage2/packet82b-recurrence2/build/device/own-rt-iq3",
+          "sha256": "3d633037c78943efa44783ef9cfab59ee18b7ae536755a807d7dd64b1592fcb5"
+        },
+        "gnu-host": {
+          "path": "experiments/own-xpu-runtime/stage2/packet82b-recurrence2/build/gnu-host/own-rt-iq3",
+          "sha256": "66e957d112c5f20abb7b417d7f66d6e79e36eb76e5d86337c50cc835b8bc6304"
+        }
+      }
+    }
+  },
+  "runs": [
+    {
+      "label": "baseline",
+      "selection": {
+        "dense": "production",
+        "hc": "hc-wide",
+        "experts": "wide64",
+        "host": "ordered",
+        "route": "production",
+        "norm": "production",
+        "placement": "1",
+        "recurrence": "rec-parallel",
+        "draft_head": "production"
+      },
+      "reseal_seconds": 3.748547442999552,
+      "rehearsal_seconds": 25.187919403993874,
+      "logs": {
+        "rehearsal-baseline-imports.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "rehearsal-baseline-consumers.log": "d7dfa6d3d6034d914fbed30b3b9839ab0ebc8609f912d3581874899b29f29e51",
+        "rehearsal-baseline-windows.log": "ac670f58c5be7502c5fde489b410a9488a89deebe8f8d996c0f69347c065ccb0",
+        "rehearsal-baseline-screen-A.log": "0afb68d38f9e40216168666bd149509dbe63b68a68a7c2c85b7a5dd624fc38f6",
+        "rehearsal-baseline-screen-B.log": "13366716bdd36876995c92a7a2248bff086486149daf59f3ef925c104ae2e961"
+      },
+      "receipt_sha256": "adebc653d88bb9bfc3a2b08e9dea525d85ef7c807410250e99ccc26790f267c4"
+    },
+    {
+      "label": "route-fast",
+      "selection": {
+        "dense": "production",
+        "hc": "hc-wide",
+        "experts": "wide64",
+        "host": "ordered",
+        "route": "fast",
+        "norm": "production",
+        "placement": "1",
+        "recurrence": "rec-parallel",
+        "draft_head": "production"
+      },
+      "reseal_seconds": 3.787625922006555,
+      "rehearsal_seconds": 25.088418322004145,
+      "logs": {
+        "rehearsal-route-fast-imports.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "rehearsal-route-fast-consumers.log": "1f16dd8a6af86d36968a8a9b821d1d85822d9de150ef5902dcccc23b6cb0c485",
+        "rehearsal-route-fast-windows.log": "28b5cf5ec5d44b47fd4032c860e070dd07aad02aa44ded353c5d024dafde8909",
+        "rehearsal-route-fast-screen-A.log": "20ac1427723359b2171b425d1d33b7d68390fe7ccc8059f3e7a01682dadca902",
+        "rehearsal-route-fast-screen-B.log": "a0cbe08fbd921f235c593116ae5920b86ed95bb9e6e235093dbdf690399a5043"
+      },
+      "receipt_sha256": "afb87497e5bef96dd721dfd6ade30cdf77bc5dd0e44530d701f692866a513f83"
+    },
+    {
+      "label": "rec-both-plus",
+      "selection": {
+        "dense": "production",
+        "hc": "hc-wide",
+        "experts": "wide64",
+        "host": "ordered",
+        "route": "production",
+        "norm": "production",
+        "placement": "1",
+        "recurrence": "rec-both-plus",
+        "draft_head": "production"
+      },
+      "reseal_seconds": 3.7346825360000366,
+      "rehearsal_seconds": 25.13608953000221,
+      "logs": {
+        "rehearsal-rec-both-plus-imports.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "rehearsal-rec-both-plus-consumers.log": "d7dfa6d3d6034d914fbed30b3b9839ab0ebc8609f912d3581874899b29f29e51",
+        "rehearsal-rec-both-plus-windows.log": "98eee93fee89ee37069ff7874794a6224f2611d56b04c64d8a751002cf517314",
+        "rehearsal-rec-both-plus-screen-A.log": "cb305abb9efa9683289262068b57f620f13c16b0c2ac4dfb12921d66fe9ab3df",
+        "rehearsal-rec-both-plus-screen-B.log": "7b604ede7faf91b090275f15bb00713fef682749bef04ed60569273d06bf3e47"
+      },
+      "receipt_sha256": "74e2486e17a5843c684ab66a4dc10736687b5ccda5f8277727cb65c9cf80397b"
+    },
+    {
+      "label": "combined",
+      "selection": {
+        "dense": "production",
+        "hc": "hc-wide",
+        "experts": "wide64",
+        "host": "ordered",
+        "route": "fast",
+        "norm": "production",
+        "placement": "1",
+        "recurrence": "rec-both-plus",
+        "draft_head": "production"
+      },
+      "reseal_seconds": 3.7711798700038344,
+      "rehearsal_seconds": 47.41528234000725,
+      "logs": {
+        "rehearsal-combined-imports.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "rehearsal-combined-consumers.log": "d7dfa6d3d6034d914fbed30b3b9839ab0ebc8609f912d3581874899b29f29e51",
+        "rehearsal-combined-windows.log": "a6d20f7d5a8170d39dd86b73e980c9bc516fef1b900563a2cd8adbb81d2bc89e",
+        "rehearsal-combined-screen-A.log": "8545a683554e6d33c811ddb988c49451ed01d4f8afdd11b884035ec24ea65413",
+        "rehearsal-combined-screen-B.log": "45c6a6e9be4e5cedae8cb060830fd9b50ec498123e45530bef0f88de8fde2c1a"
+      },
+      "receipt_sha256": "4efe84b51f56588ca669d570a948f64d8ac110a53125ab2a84315539ac37243e"
+    },
+    {
+      "label": "restored",
+      "selection": {
+        "dense": "production",
+        "hc": "hc-wide",
+        "experts": "wide64",
+        "host": "ordered",
+        "route": "production",
+        "norm": "production",
+        "placement": "1",
+        "recurrence": "rec-parallel",
+        "draft_head": "production"
+      },
+      "reseal_seconds": 3.731577122991439,
+      "rehearsal_seconds": 35.954449547003605,
+      "logs": {
+        "rehearsal-restored-imports.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "rehearsal-restored-consumers.log": "d7dfa6d3d6034d914fbed30b3b9839ab0ebc8609f912d3581874899b29f29e51",
+        "rehearsal-restored-windows.log": "f25d88d89636b6cb42239c6ff028e2a7c36b2eb611145cc7e0f59af407a6206a",
+        "rehearsal-restored-screen-A.log": "0afb68d38f9e40216168666bd149509dbe63b68a68a7c2c85b7a5dd624fc38f6",
+        "rehearsal-restored-screen-B.log": "13366716bdd36876995c92a7a2248bff086486149daf59f3ef925c104ae2e961"
+      },
+      "receipt_sha256": "a9d5e3d3bdaa5861588d345acbe0185f4701b492909440d9590b8ff6a22ae324"
+    }
+  ],
+  "baseline_restored": true
+}

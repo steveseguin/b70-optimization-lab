@@ -1,0 +1,144 @@
+{
+  "schema": "packet132.cpu-environment.v1",
+  "recorded_at_utc": "2026-10-18T14:36:30.747114+00:00",
+  "capture_start_timestamp": null,
+  "capture_start_timestamp_note": "Supervisor stores monotonic elapsed durations, not a wall-clock start timestamp; none inferred.",
+  "capture_wall_limit_seconds": 4200,
+  "host": "steve-b70s",
+  "platform": "Linux-7.0.0-39-generic-x86_64-with-glibc2.39",
+  "python_executable": "/home/steve/.venvs/vllm-xpu/bin/python3",
+  "python_version": "3.12.13 (main, May 10 2026, 19:30:01) [Clang 22.1.3 ]",
+  "package_versions": {
+    "torch": "2.11.0+xpu",
+    "numpy": "2.3.5"
+  },
+  "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "source_head_at_recording": "4cf1e0a73a78f73b1d24bf11df2b013b6952880b",
+  "capture_script_sha256": "87ae3dcbfa8e92b4a033615d6624c07e5a415e7462113a9de04b14354ab9e743",
+  "child_environment_observed": {
+    "OMP_NUM_THREADS": "2",
+    "MKL_NUM_THREADS": "2",
+    "OPENBLAS_NUM_THREADS": "2",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "P49_CAPTURE": "1",
+    "MALLOC_ARENA_MAX": "2"
+  },
+  "native_child_pid_observed": 1449232,
+  "native_child_nice": 19,
+  "native_child_affinity": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "draft_thread_configuration": {
+    "torch_intraop": 2,
+    "torch_interop": 1,
+    "OMP_NUM_THREADS": "2",
+    "MKL_NUM_THREADS": "2",
+    "OPENBLAS_NUM_THREADS": "2"
+  },
+  "process_address_caps_bytes": {
+    "supervisor_and_draft": 7500000000,
+    "native_oracle": 5000000000
+  },
+  "heavy_phases": "Sequential: host compile, then per document native target and CPU draft; never concurrent model children.",
+  "source_admission": {
+    "inputs_sha256": "8359ae6b0f8a38c58a8cd96c48b65a599287ed34b4de4f0c46da47461558c2b0",
+    "source_commit": "fe3e538df7a01ba46de9835c539eac0bad864cae",
+    "packet114_preregistration_sha256": "e34fa40630fcf3143112f5864f82b0d57529755ec0d0a175feccb9ef84fd0c68",
+    "full_source_bytes_and_sha256_validated": true,
+    "source_documents": [
+      {
+        "path": "docs/own-xpu-runtime-objective.md",
+        "sha256": "7a27df0cab08fd2bd7470b2a78a9941ea1c898747f0d06ad9f5ae2dc98439dda",
+        "bytes": 10580,
+        "source_commit": "fe3e538df7a01ba46de9835c539eac0bad864cae",
+        "full_token_count": 2784,
+        "excerpt_start": 1392
+      },
+      {
+        "path": "docs/host-stability-and-fault-diagnosis.md",
+        "sha256": "ebb5fb82d0406555c4a84ed803d9637484eceab060843850619cfb16bb1bd56c",
+        "bytes": 32076,
+        "source_commit": "fe3e538df7a01ba46de9835c539eac0bad864cae",
+        "full_token_count": 9549,
+        "excerpt_start": 4774
+      },
+      {
+        "path": "docs/local-ops.md",
+        "sha256": "0059b54abf02b632c867245e2ef76345f326ef205390b1d1ff173fb60d5f9b99",
+        "bytes": 16431,
+        "source_commit": "fe3e538df7a01ba46de9835c539eac0bad864cae",
+        "full_token_count": 4066,
+        "excerpt_start": 2033
+      },
+      {
+        "path": "docs/recipe-publication-standard.md",
+        "sha256": "b5ea44228b8e1f39b2c4295cb73c6321f5d75ec6c1f3f3dfd14fffc1b9eec906",
+        "bytes": 7164,
+        "source_commit": "fe3e538df7a01ba46de9835c539eac0bad864cae",
+        "full_token_count": 1579,
+        "excerpt_start": 789
+      },
+      {
+        "path": "scripts/check-storage-headroom.py",
+        "sha256": "daf118c70b9bf544d9d4c54178ee6bdc58eb032b5311340e7de3dfed51c29ba2",
+        "bytes": 6154,
+        "source_commit": "fe3e538df7a01ba46de9835c539eac0bad864cae",
+        "full_token_count": 1499,
+        "excerpt_start": 749
+      }
+    ],
+    "gguf_header_sha256": "7c1460a95eb2e95377c32b14deb92cf74fe504d4feb5a62a40d48f78e9e0dcb8",
+    "gguf_identity_tsv_sha256": "85992a7027dca5de4478e9a5cef4e24722a7065aca66bc1a9954d8d3f617e257",
+    "gguf_plan_tsv_sha256": "9926b7a266ba2774f02fe00583257ab2aaff96ee0313d350d3ba54602ae2a656",
+    "gguf_file_stat_identity_checked_before_capture": true,
+    "tokenizer_sha256": "1c284c06b6a159c39cb9a00acd7cc411ed9adae87b4850e98da5dd4fd33543a7",
+    "tokenizer_matches_authority": true,
+    "packet31_safe_store_read_hashes": "Retained per document in draft-receipt.json; original official FP8 source with expanded INT8 semantic reference.",
+    "packet31_iq_store_admission": "RecordedStore enforces packet1 model admission file signatures before any draft inference."
+  },
+  "arithmetic_scope": {
+    "target": "packet49 iq3-p49-split32-v1 CPU oracle",
+    "draft": "packet31 expanded INT8 CPU semantic reference",
+    "head_library": "packet3-runtime-oracle/matmul.cpp uses packet13 iq3-p13-r234-sg32-split4-bf16-v1 CPU reductions",
+    "device_parity_proved": false,
+    "head_prefix_rows": 80128,
+    "build_receipt_sha256": "82288d9047f02835d80801820ea0ed8f82da35dc16caeb28e725d73a606e69c4",
+    "matmul_dependency_sha256": {
+      "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/matmul.cpp": "81900f76281853ff984e00a34972b0ab55d4e99ff39354cbf31974981c2d767f",
+      "experiments/own-xpu-runtime/stage2/packet13-integrate/arithmetic.hpp": "5fa871445c0bef63f60ce6bf06e5a2102e4c71fd8ec350e7b4b46ffd7e22dde7",
+      "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": "95bdc549c66d5cb72fd54cc73696187dae08568f15b19d206cc954ca290c85f4",
+      "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": "f744a148509ed091d69a708262d0fcbc94c179da8ca5ed364791e8ba77a328af",
+      "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c",
+      "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": "7532f67c6d9a0be2a9187ce149b2004d9f1ea045705327d0ce542a283ad5ed72",
+      "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f",
+      "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+      "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+      "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495"
+    }
+  },
+  "completed_stage_wall_seconds": {
+    "build-oracle.receipt.json": 18.514047311007744,
+    "prepare.receipt.json": 1.5012765080027748,
+    "build-matmul.receipt.json": 2.5048438270168845,
+    "doc-0/target.receipt.json": 559.4343438100186,
+    "doc-0/draft.receipt.json": 54.60469064200879,
+    "doc-1/target.receipt.json": 540.3944576359936,
+    "doc-1/draft.receipt.json": 27.015628979017492
+  },
+  "metadata_collection": "importlib.metadata only; no torch import, model inference, GPU API or service calls."
+}

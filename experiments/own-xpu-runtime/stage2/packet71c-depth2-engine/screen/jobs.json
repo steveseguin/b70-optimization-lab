@@ -1,0 +1,157 @@
+[
+  {
+    "name": "serial-smoke-B",
+    "kind": "smoke",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/screen/screen.py",
+      "--kind",
+      "smoke",
+      "--lane",
+      "B",
+      "--placement",
+      "1",
+      "--lineage",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+      "--seal",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/serial-screen-seal.json",
+      "--binary",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/device/own-rt-iq3",
+      "--dispatch",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/dispatch-speed6.json",
+      "--output",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/screen/evidence/serial-smoke-B"
+    ],
+    "expected_seconds": 180,
+    "coordinator_arguments": [
+      "--fault-review",
+      "REVIEW_PATH",
+      "--authorized-device-window"
+    ]
+  },
+  {
+    "name": "smoke-B",
+    "kind": "smoke",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/screen/screen.py",
+      "--kind",
+      "smoke",
+      "--lane",
+      "B",
+      "--placement",
+      "1",
+      "--lineage",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+      "--seal",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/screen-seal.json",
+      "--binary",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/device/own-rt-iq3",
+      "--dispatch",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/dispatch-speed6.json",
+      "--output",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/screen/evidence/smoke-B"
+    ],
+    "expected_seconds": 180,
+    "coordinator_arguments": [
+      "--fault-review",
+      "REVIEW_PATH",
+      "--authorized-device-window"
+    ]
+  },
+  {
+    "name": "control-B",
+    "kind": "quick",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/screen/screen.py",
+      "--kind",
+      "quick",
+      "--lane",
+      "B",
+      "--placement",
+      "1",
+      "--lineage",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch",
+      "--seal",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/screen-seal.json",
+      "--binary",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/build/device/own-rt-iq3",
+      "--dispatch",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/dispatch-speed6.json",
+      "--output",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/screen/evidence/control-B"
+    ],
+    "expected_seconds": 240,
+    "coordinator_arguments": [
+      "--fault-review",
+      "REVIEW_PATH",
+      "--authorized-device-window"
+    ]
+  },
+  {
+    "name": "candidate-B",
+    "kind": "quick",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/screen/screen.py",
+      "--kind",
+      "quick",
+      "--lane",
+      "B",
+      "--placement",
+      "1",
+      "--lineage",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine",
+      "--seal",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/screen-seal.json",
+      "--binary",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/build/device/own-rt-iq3",
+      "--dispatch",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/dispatch-speed6.json",
+      "--output",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/screen/evidence/candidate-B"
+    ],
+    "expected_seconds": 240,
+    "coordinator_arguments": [
+      "--fault-review",
+      "REVIEW_PATH",
+      "--authorized-device-window"
+    ]
+  },
+  {
+    "name": "control-repeat-B",
+    "kind": "quick",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/screen/screen.py",
+      "--kind",
+      "quick",
+      "--lane",
+      "B",
+      "--placement",
+      "1",
+      "--lineage",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch",
+      "--seal",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/screen-seal.json",
+      "--binary",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/build/device/own-rt-iq3",
+      "--dispatch",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet64-record-bundle/selections/1-draft-hc-batch/dispatch-speed6.json",
+      "--output",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/screen/evidence/control-repeat-B"
+    ],
+    "expected_seconds": 240,
+    "coordinator_arguments": [
+      "--fault-review",
+      "REVIEW_PATH",
+      "--authorized-device-window"
+    ]
+  }
+]

@@ -139,7 +139,19 @@ the conventional 99-interval field.
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, lossless MTP1, VRAM headroom | 4x Arc Pro B70 | **27.048435 conventional interval median (class-balanced; 27.526174 all-prompt median)**, fixed cold realistic gate, one speculative token with every output pin equal to the MTP0 rows (twelve suite rows, exact-2K and exact-4K authorities) | [`cmtp5u0ip02eln701lntsl2ns`](https://www.localmaxxing.com/runs/cmtp5u0ip02eln701lntsl2ns) | [packet](qwen38-flash-next-fp8-b70/README.md); [suite result](../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a189-realistic-suite-v1-result.json); [battery](../experiments/qwen38-flash-next-fp8-b70/data/20260905-tp4-mtp1-a190-fresh-repeat-deterministic-summary.json) |
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, MTP0, both reference Triton kernels + W13-N64 map | 4x Arc Pro B70 | **34.495292 conventional interval median (class-balanced)**, fixed cold realistic gate, no speculation; two cold suites (34.510128, 34.495292), every row above every row of the record it supersedes; outputs bit-identical across three servers | [`cmts8zca50032ps01e0ddqm18`](https://www.localmaxxing.com/runs/cmts8zca50032ps01e0ddqm18) | [guide](../repro/qwen38-flash-next-fp8-tp4-mtp0-w13n64-b70-34tps-20260908/), [attestation](../experiments/qwen38-flash-next-fp8-b70/data/20260908-tp4-mtp0-a326-w13n64-promotion-attestation.json) |
 | Qwen3.8 Flash-Next 125B-A6B official FP8, TP4+EP4 deterministic full-decode graph, lossless MTP1, exact serial GDN rows in the kernel extension | 4x Arc Pro B70 | **46.854250 conventional interval median (class-balanced)**, fixed cold realistic gate, one speculative token with every output pin equal to the 37.83 line (12/12 suite outputs bit-identical) | [`cmtzask41000nlq011f16bpbc`](https://www.localmaxxing.com/runs/cmtzask41000nlq011f16bpbc) | [packet](qwen38-flash-next-fp8-b70/README.md) |
-| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 23/25 split with draft on rank 1, packet56 (49d + draft proposal over head rows [0,91392), N preregistered from independent text) | 2x Arc Pro B70 | **46.962697 conventional interval median (class-balanced; 47.206748 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope as extended 2026-10-17; strict 512-cap gate false and declared), 12/12 requests exact vs the `iq3-p49-split32-v1` CPU oracle (target unchanged; full-head verification). Single timed WS128; acceptance 0.787; hit/miss 18.22/33.04 ms. Supersedes `cmvcconpv06o9le01nnxeuwpi` (46.003849) | [`cmvcf84kb06r2le0174bgk16l`](https://www.localmaxxing.com/runs/cmvcf84kb06r2le0174bgk16l) | [packet](../experiments/own-xpu-runtime/stage2/packet56-draft-prefix/submission/prepared/result-packet.md) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, **TP1 (one card)**, target-only (no draft), packet58g: 48-layer target on card 0, 48.6 GB packed experts host-pinned + 18 GB device expert cache (copy-on-miss, zero-copy fallback) | 1x Arc Pro B70 | **24.338653 conventional interval median (class-balanced)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope; strict 512-cap gate false and declared), 12/12 requests exact vs the `iq3-p49-split32-v1` CPU oracle. Single timed WS128; WS128x exactness 24.01. First 1x Arc Pro B70 entry for this model on the public list | [`cmvd8bhou000duj01hxaihg15`](https://www.localmaxxing.com/runs/cmvd8bhou000duj01hxaihg15) | [packet](../experiments/own-xpu-runtime/stage2/packet58s-onecard-submission/submission/card0-58g-a-v3/result-packet.md) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, **TP1 (one card)**, target-only plain greedy (no draft), all 48 layers on XPU, 48.6 GB host-pinned experts + 18 GB device expert cache, packet58p (packet58g engine + lossless down-weight tile16 layout) | 1x Arc Pro B70 | **26.228599 conventional interval median (class-balanced)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope; strict 512-cap gate false and declared), 12/12 requests exact vs the `iq3-p49-split32-v1` CPU oracle. Single timed WS128 (0 major page faults per token, median host preparation 0.53 ms). Supersedes `cmvd8bhou000duj01hxaihg15` (24.338653) | [`cmvdukc200064rf01lqsql9x8`](https://www.localmaxxing.com/runs/cmvdukc200064rf01lqsql9x8) | [packet](../experiments/own-xpu-runtime/stage2/packet58p-onecard-record/submission/prepared-a/result-packet.md) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, **TP1 (one card)**, target-only plain greedy (no draft), all 48 layers on XPU, 48.6 GB host-pinned experts + 18 GB device expert cache, packet58w (packet58p tile16 line + packet58v overlapped expert-cache maintenance: fills on the copy engine during the next position, two-phase pointer publication) | 1x Arc Pro B70 | **28.042989 conventional interval median (class-balanced)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope; strict 512-cap gate false and declared), 12/12 requests exact vs the `iq3-p49-split32-v1` CPU oracle. Single timed WS128 of chain b (the one preregistered quiet-host rerun; chain a WS128 25.773 was not submitted). Supersedes `cmvdukc200064rf01lqsql9x8` (26.228599, +6.92%) | [`cmve789qr008vrf01pm678ee8`](https://www.localmaxxing.com/runs/cmve789qr008vrf01pm678ee8) | [result](../experiments/own-xpu-runtime/stage2/packet58w-onecard-record/submission/prepared-b/result.json), [chain-a note](../notes/2026-10-18-own-runtime-packet58w-chain-a-result.md) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 24/24 split (placement 1) with draft on rank 1, packet97 (packet84 selection with route-fast + rec-both-plus + E1 half-scale expert cache; head production) | 2x Arc Pro B70 | **56.086987 conventional interval median (class-balanced; 56.247777 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope; strict 512-cap gate false and declared), 12/12 requests exact vs the `iq3-p49-split32-v1` CPU oracle. Single timed WS128 (window rate 56.351), chain folder device-cards01-b after the packet97e KD host-reference fix. Supersedes `cmvd78ela0007uj01k1ojlm8g` (55.686963) | [`cmvdgjqwj000rrf013ay3ew6t`](https://www.localmaxxing.com/runs/cmvdgjqwj000rrf013ay3ew6t) | [packet](../experiments/own-xpu-runtime/stage2/packet97-record-bundle/submission/prepared-b/result-packet.md) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 24/24 split (placement 1) with draft on rank 1, packet103 bundle 5 (packet97 selection + packet100 down-tile16 + packet101 split32 draft attention; head production) | 2x Arc Pro B70 | **57.550573 conventional interval median (class-balanced; 57.739403 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope; strict 512-cap gate false and declared), 12/12 requests exact vs the `iq3-p49-split32-v1` CPU oracle. Single timed WS128, chain folder device-cards01-b after chain-a died at WS admission on a drain-cooldown race (no device work). Supersedes `cmvdgjqwj000rrf013ay3ew6t` (56.086987) | [`cmvdpmbbo0022rf017ynt8i35`](https://www.localmaxxing.com/runs/cmvdpmbbo0022rf017ynt8i35) | [packet](../experiments/own-xpu-runtime/stage2/packet103-record-bundle/submission/prepared-b/result-packet.md) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 24/24 split (placement 1) with draft on rank 1, bundle 7 = packet124c (packet103 selection + packet109 exact other-fusion + packet105b exact target-head split + packet114 draft prefix 80,128 preregistered on non-benchmark text) | 2x Arc Pro B70 | **58.223834 conventional interval median (class-balanced; 58.205186 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope; strict 512-cap gate false and declared), 12/12 requests exact vs the `iq3-p49-split32-v1` CPU oracle. Single timed WS128. Supersedes `cmvdpmbbo0022rf017ynt8i35` (57.550573) | [`cmvdx8urg0068rf01vvb32bcs`](https://www.localmaxxing.com/runs/cmvdx8urg0068rf01vvb32bcs) | [packet](../experiments/own-xpu-runtime/stage2/packet124c-record-bundle/submission/prepared-a/result-packet.md) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 24/24 split (placement 1) with draft on rank 1, bundle 8 = packet136 (bundle 7 packet124c + packet131b banked rollback state: rotating snapshot banks remove ~61% of rank 0's per-cycle snapshot copy bytes) | 2x Arc Pro B70 | **58.798109 conventional interval median (class-balanced; 58.761837 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope; strict 512-cap gate false and declared), 12/12 requests exact vs the `iq3-p49-split32-v1` CPU oracle. Single timed WS128; TTFT median 897 ms; wall rate 41.66 tok/s. Supersedes `cmvdx8urg0068rf01vvb32bcs` (58.223834, +0.99%) | [`cmve4dtir007wrf01k57sdf23`](https://www.localmaxxing.com/runs/cmve4dtir007wrf01k57sdf23) | [result](../experiments/own-xpu-runtime/stage2/packet136-record-bundle/submission/prepared-a/result.json), [submission tool fix](../experiments/own-xpu-runtime/ops/packet136s-submission/) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 24/24 split (placement 1) with draft on rank 1, packet84 (packet80 + packet82 `rec-parallel` GDN recurrence preparation, exact order) | 2x Arc Pro B70 | **55.686963 conventional interval median (class-balanced; 55.812214 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope as extended 2026-10-17; strict 512-cap gate false and declared), 12/12 requests exact vs the `iq3-p49-split32-v1` CPU oracle (target arithmetic unchanged). Single timed WS128 (window rate 55.956). Supersedes `cmvd48tdv083ale01clv86fbd` (55.189917) | [`cmvd78ela0007uj01k1ojlm8g`](https://www.localmaxxing.com/runs/cmvd78ela0007uj01k1ojlm8g) | [packet](../experiments/own-xpu-runtime/stage2/packet84-record-bundle/submission/prepared/result-packet.md) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 24/24 split (placement 1) with draft on rank 1, packet80 (packet70 + packet73 hc-wide HC-gate loads + packet76 ordered rank-1 event retirement) | 2x Arc Pro B70 | **55.189917 conventional interval median (class-balanced; 55.344345 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope as extended 2026-10-17; strict 512-cap gate false and declared), 12/12 requests exact vs the `iq3-p49-split32-v1` CPU oracle (target arithmetic unchanged). Single timed WS128; acceptance 0.787; hit/miss 15.79/27.14 ms. Supersedes `cmvcuvh4q080wle01pgjwixvj` (54.162022) | [`cmvd48tdv083ale01clv86fbd`](https://www.localmaxxing.com/runs/cmvd48tdv083ale01clv86fbd) | [packet](../experiments/own-xpu-runtime/stage2/packet80-record-bundle/submission/prepared/result-packet.md) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 24/24 split (placement 1) with draft on rank 1, packet70 (packet64 + packet65 `wide64` routed-expert kernels, exact order) | 2x Arc Pro B70 | **54.162022 conventional interval median (class-balanced; 54.304251 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope as extended 2026-10-17; strict 512-cap gate false and declared), 12/12 requests exact vs the `iq3-p49-split32-v1` CPU oracle (target arithmetic unchanged). Single timed WS128; acceptance 0.787; hit/miss 16.09/27.57 ms. 90 s chain gaps. Supersedes `cmvcr0nee07wele01ypyng2nz` (52.899081); superseded 2026-10-18 by `cmvd48tdv083ale01clv86fbd`; retained | [`cmvcuvh4q080wle01pgjwixvj`](https://www.localmaxxing.com/runs/cmvcuvh4q080wle01pgjwixvj) | [packet](../experiments/own-xpu-runtime/stage2/packet70-record-bundle/submission/prepared/result-packet.md) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 24/24 split (placement 1) with draft on rank 1, packet64 (packet61x + packet63 draft-HC schedules/fusions + packet62 batched rollback copies + balanced 24/24 placement) | 2x Arc Pro B70 | **52.899081 conventional interval median (class-balanced; 52.960451 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope as extended 2026-10-17; strict 512-cap gate false and declared), 12/12 requests exact vs the `iq3-p49-split32-v1` CPU oracle (target arithmetic unchanged). Single timed WS128; acceptance 0.787; hit/miss 16.45/28.37 ms. Supersedes `cmvco3d6606u1le01941ek8hq` (51.033041); superseded 2026-10-17 by `cmvcuvh4q080wle01pgjwixvj`; retained | [`cmvcr0nee07wele01ypyng2nz`](https://www.localmaxxing.com/runs/cmvcr0nee07wele01ypyng2nz) | [packet](../experiments/own-xpu-runtime/stage2/packet64-record-bundle/submission/prepared-v2/result-packet.md) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 23/25 split with draft on rank 1, packet61x (packet56 draft-head prefix + controller pure-PAUSE spin waits + packet60 exact-order HC fusion) | 2x Arc Pro B70 | **51.033041 conventional interval median (class-balanced; 51.154559 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope as extended 2026-10-17; strict 512-cap gate false and declared), 12/12 requests exact vs the `iq3-p49-split32-v1` CPU oracle (target arithmetic unchanged). Single timed WS128; acceptance 0.787; hit/miss 17.24/28.48 ms. Resumed chain (K0–W0p imported hash-pinned; all exactness/headline windows fresh), disclosed. Supersedes `cmvcf84kb06r2le0174bgk16l` (46.962697); superseded 2026-10-17 by `cmvcr0nee07wele01ypyng2nz`; retained | [`cmvco3d6606u1le01941ek8hq`](https://www.localmaxxing.com/runs/cmvco3d6606u1le01941ek8hq) | [packet](../experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/submission/prepared/result-packet.md) |
+| Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 23/25 split with draft on rank 1, packet56 (49d + draft proposal over head rows [0,91392), N preregistered from independent text) | 2x Arc Pro B70 | **46.962697 conventional interval median (class-balanced; 47.206748 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope as extended 2026-10-17; strict 512-cap gate false and declared), 12/12 requests exact vs the `iq3-p49-split32-v1` CPU oracle (target unchanged; full-head verification). Single timed WS128; acceptance 0.787; hit/miss 18.22/33.04 ms. Supersedes `cmvcconpv06o9le01nnxeuwpi` (46.003849); superseded 2026-10-17 by `cmvco3d6606u1le01941ek8hq`; retained | [`cmvcf84kb06r2le0174bgk16l`](https://www.localmaxxing.com/runs/cmvcf84kb06r2le0174bgk16l) | [packet](../experiments/own-xpu-runtime/stage2/packet56-draft-prefix/submission/prepared/result-packet.md) |
 | Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 23/25 split with draft on rank 1, packet49d-round3 (49c + exact-order expert virtual-lane, small-FFN, route and recurrence kernels) | 2x Arc Pro B70 | **46.003849 conventional interval median (class-balanced; 46.058122 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope as extended 2026-10-17; strict 512-cap gate false and declared), 12/12 requests exact vs the `iq3-p49-split32-v1` CPU oracle (same as 49c). Single timed WS128; acceptance 0.791; hit/miss 19.02/32.81 ms. Supersedes `cmvc9xc0f06o0le01x7afsrcw` (45.695513); superseded 2026-10-17 by `cmvcf84kb06r2le0174bgk16l`; retained | [`cmvcconpv06o9le01nnxeuwpi`](https://www.localmaxxing.com/runs/cmvcconpv06o9le01nnxeuwpi) | [packet](../experiments/own-xpu-runtime/stage2/packet49d-round3/submission/prepared/result-packet.md) |
 | Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 23/25 split with draft on rank 1, packet49c-round2 (split32 QSA + exact-order expert/route/HC/attention kernels) | 2x Arc Pro B70 | **45.695513 conventional interval median (class-balanced; 45.622004 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized 128-token scope extended to this pinned packet by the coordinator's 2026-10-17 decision; strict 512-cap gate false and declared), 12/12 requests exact vs the new `iq3-p49-split32-v1` CPU oracle (arithmetic changed from SPEED6; 9/12 greedy outputs differ from the arithmetic-v2 outputs, informational). Single timed WS128 run; acceptance 0.791 median (unchanged). Supersedes `cmv9wjmtj013gle01v8k1yg4v` (39.422009); superseded 2026-10-17 by `cmvcconpv06o9le01nnxeuwpi`; retained | [`cmvc9xc0f06o0le01x7afsrcw`](https://www.localmaxxing.com/runs/cmvc9xc0f06o0le01x7afsrcw) | [packet](../experiments/own-xpu-runtime/stage2/packet49c-round2/submission/prepared/result-packet.md) |
 | Qwen3.8 Flash-Next 125B-A6B Unsloth UD-IQ3_XXS (GGUF), lab's own Xe runtime, TP2, official MTP draft head target-verified, 23/25 split with draft on rank 1 | 2x Arc Pro B70 | **39.422009 conventional interval median (class-balanced; 39.269034 all-prompt median)**, fixed cold realistic suite at 4,096-position context, 128 tokens per prompt (owner-authorized same scope as 2026-10-13; strict 512-cap gate false and declared), 12/12 requests bit-exact vs arithmetic-v2 oracles; confirmation 39.386 (cards 0-1, run 2) and 39.378 (cards 2-3). Supersedes `cmv9j70v100v1le01q9jxyx2r` (38.157157); superseded 2026-10-17 by `cmvc9xc0f06o0le01x7afsrcw`; retained | [`cmv9wjmtj013gle01v8k1yg4v`](https://www.localmaxxing.com/runs/cmv9wjmtj013gle01v8k1yg4v) | [packet](../experiments/qwen38-flash-next-ud-iq3xxs-b70/data/20261015-own-rt-iq3-tp2-c4096-s23dr1-result-packet.md) |
@@ -935,6 +947,135 @@ approved figures, so no re-submission was made; the R304 attestations and queue 
 (`*-20260912-r304-strict-result.json`, `localmaxxing-*-r304-strict-20260913.queue.json`) should a resubmission ever be
 wanted.
 
+### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, TP2, packet 97 record bundle (2026-10-18)
+
+Submitted 2026-10-18 at about 06:44 UTC after a local dry-run and a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmvdgjqwj000rrf013ay3ew6t`, status APPROVED. It supersedes `cmvd78ela0007uj01k1ojlm8g` (55.686963). Receipt: `data/localmaxxing-responses/2026-10-18-packet97-record-bundle-chain-b-ws128.txt`.
+
+**Identity:** packet 97 decision `f1e5d7f47fc0fe54` = packet 84's selection plus packet 91 route-fast + rec-both-plus and packet 90 E1 half-scale expert cache, with head=production. Packet 93's head-transpose was excluded after a lane-A loss.
+
+**Evidence:** four brackets of the identical selection, all exact:
+- lane A: +0.69% and +0.70%;
+- lane B: +0.74%, plus one bracket inside 1.0% control drift.
+
+Packet 97d's identical-selection rule admitted it.
+
+**Chain history:**
+- the first chain (`device-cards01-a`) failed at KD's host reference (E1 half-cache layout unsupported there) before any device execution;
+- packet 97e fixed it with a sealed draft-only reference and added a 1,408-check every-window CPU startup gate;
+- this chain ran in a fresh folder, `device-cards01-b`.
+
+**Headline: 56.086987 tok/s** class-balanced (all-prompt 56.247777; WS128 window rate 56.351).
+- +0.72% over packet 84.
+- Progression since 2026-10-17: 39.42 → 45.70 → 46.00 → 46.96 → 51.03 → 52.90 → 54.16 → 55.19 → 55.69 → **56.09**.
+
+### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, ONE card, packet 58g (2026-10-18)
+
+Submitted 2026-10-18 at about 02:55 UTC after a local dry-run and a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmvd8bhou000duj01hxaihg15`, status APPROVED. Receipt: `experiments/own-xpu-runtime/stage2/packet58s-onecard-submission/submission/card0-58g-a-v3/submission-response.txt`.
+
+**Identity:** packet 58g one-card engine on card 0 (`0000:43:00.0`-filtered mask), all 48 target layers. 48.6 GB of packed routed experts are pinned in host memory, with an 18 GB device expert cache filled copy-on-miss and a zero-copy fallback miss path. Non-expert target weights (5.8 GB) and BF16 KV at 4,096 are on the device. Plain greedy, **no draft/MTP**. Arithmetic `iq3-p49-split32-v1`, exact to the packet 49 CPU oracle on all 12 prompts (fresh WS, WS128x and WS128 exactness repeats).
+
+**Headline: 24.338653 tok/s** class-balanced (single whole-host WS128; WS128x under possible shared load measured 24.01).
+
+**Public check:** HTTP GET of the public speed-test list for model id `cmtas1yaz000cqq01umzx85mw` returned 57 runs, 16 on one GPU, none on a single Intel Arc Pro B70. Other single-GPU hardware is faster (Strix Halo unified memory up to 110 tok/s, Radeon AI Pro R9700 63.97, CMP 170HX 46.05). This fills the 1x B70 slot; it is not a cross-hardware one-GPU record.
+
+**Path to the submission:**
+- four device refusals (58b GPUActive accounting, 58c lifetimes, 58e journal boundary/device mask, 58f `p28 extent/alignment` from an 8 KiB pointer table passed as a 360 MB weight bank) fixed in 58g with a full-size CPU gate over every submit-time extent check;
+- packet 58s preparer; the server rejects `specNumTokens: 0`, so it is omitted for no-draft runs (the first preparation failed the server dry-run on it).
+
+**Next:** packet 58h (one-card MTP draft feasibility).
+
+### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, TP2, packet 84 record bundle (2026-10-18)
+
+Submitted 2026-10-18 at about 02:23 UTC after a local dry-run and a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmvd78ela0007uj01k1ojlm8g`, status APPROVED. It supersedes `cmvd48tdv083ale01clv86fbd` (55.189917). Receipt: `data/localmaxxing-responses/2026-10-18-packet84-record-bundle-ws128.txt`.
+
+**Identity:** packet84-record-bundle = packet 80's pinned selection plus packet 82 `recurrence=rec-parallel` (GDN recurrence serial-preparation latency cut; identical arithmetic):
+- packet 82 grid/confirmation: +0.93% on lane A, +0.42% on lane B over the larger same-lane control, 13/13 exact;
+- packet 84s lane-B composition screen: 55.542 vs controls 55.050 / 55.011 (+0.93% over their mean), 13/13 exact, acceptance unchanged 0.7854.
+
+Orchestration (`ops/packet84-orchestration/orchestrate.py`) pinned `experts=wide64` and `draft_head=production`, and recorded packet 81 (expert load-count, neutral) as a coordinator closure (`--closed`). Packet 83 (draft bytes) had no winner. Route-fast (+1.34% composed on lane B) was not admissible under this bundle's rules and is carried into packet 91. Placement 1 (24/24, draft on rank 1), 90 s chain gaps.
+
+**Headline: 55.686963 tok/s** class-balanced (all-prompt 55.812214; WS128 window rate 55.956).
+- +0.90% over packet 80.
+- Progression since 2026-10-17: 39.42 → 45.70 → 46.00 → 46.96 → 51.03 → 52.90 → 54.16 → 55.19 → **55.69**.
+
+**Submission-tool fix before posting:** packet 80's collection-phase `verify_receipt` fix (pass the lane-admission sidecar bytes) was ported to packet 84's tool.
+
+### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, TP2, packet 80 record bundle (2026-10-18)
+
+Submitted 2026-10-18 at about 00:57 UTC after a local dry-run and a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmvd48tdv083ale01clv86fbd`, status APPROVED. It supersedes `cmvcuvh4q080wle01pgjwixvj` (54.162022).
+
+**Identity:** packet80-record-bundle = packet 70's selection plus two changes, each confirmed exact and faster than same-lane production on both lanes:
+- packet 73 `hc-wide` HC-gate kernels: +0.98% on A, +0.73% on B;
+- packet 76 `ordered` rank-1 event retirement: +1.05% on A, +0.41% on B.
+
+The evidence-based orchestration also proposed packet 78's route-fast + norm-fused via a composite screen. The coordinator pinned both back to production (`orchestrate.py --pin`), because norm-fused alone measured −0.65% and the composite scored below hc-wide alone on both lanes. Placement 1 (24/24, draft on rank 1), 90 s chain gaps.
+
+**Headline: 55.189917 tok/s** class-balanced (all-prompt 55.344345).
+- Hit/miss cycles 15.79/27.14 ms (packet 70: 16.09/27.57).
+- Acceptance 0.787.
+- +1.90% over packet 70.
+- Progression since 2026-10-17: 39.42 → 45.70 → 46.00 → 46.96 → 51.03 → 52.90 → 54.16 → **55.19**.
+
+**Submission-tool fixes before posting:**
+- the collection-phase `verify_receipt` call now passes the lane-admission sidecar bytes;
+- the draft-placement disclosure is placement-aware (the draft on rank 1 uses prefix rows of the shared head).
+
+Evidence: `experiments/own-xpu-runtime/stage2/packet80-record-bundle/submission/prepared/`. Receipt: `data/localmaxxing-responses/qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-packet80-record-bundle-realistic-20261017.json`.
+
+### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, TP2, packet 70 record bundle (2026-10-17)
+
+Submitted 2026-10-17 at about 20:35 UTC after a local dry-run and a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmvcuvh4q080wle01pgjwixvj`, status APPROVED. It supersedes `cmvcr0nee07wele01ypyng2nz` (52.899081).
+
+**Identity:** packet70-record-bundle = packet 64's selection (draft-HC, batched rollback copies, 24/24) plus packet 65's `wide64` routed-expert kernels. `wide64` shares raw code/scale loads across adjacent chains while keeping exact order, so the arithmetic is unchanged.
+- **Selection:** a preregistered both-lanes rule (`ops/packet70-orchestration`). Packet 65 quick screens were 13/13 exact on all 12 screens: `wide64` +5.39% on lane A, +4.80% on lane B over same-lane production.
+- **Chain:** 90 s gaps instead of 305 s for every window.
+
+**Headline: 54.162022 tok/s** class-balanced (all-prompt 54.304251).
+- Hit/miss cycles 16.09/27.57 ms (packet 64: 16.45/28.37).
+- Acceptance 0.787.
+- +2.39% over packet 64. Today: 39.42 → 45.70 → 46.00 → 46.96 → 51.03 → 52.90 → **54.16**.
+
+**First attempt failed.** It stopped at K2 (19:33 UTC) after its device work passed: a CPU-side validator rejected the new `experts` selection key. That was fixed and resealed (`6e18ee8ee`, wrapper-only), the failed tree was kept as `device-cards01-a-k2fail-20261017T1933`, and a fresh chain ran 19:43–20:34. All windows are from the fresh chain.
+
+Evidence: `experiments/own-xpu-runtime/stage2/packet70-record-bundle/submission/prepared/`. Receipt: `data/localmaxxing-responses/qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-packet70-record-bundle-realistic-20261017.json`.
+
+### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, TP2, packet 64 record bundle (2026-10-17)
+
+Submitted 2026-10-17 at about 18:47 UTC after a local dry-run and a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmvcr0nee07wele01ypyng2nz`, status APPROVED. It supersedes `cmvco3d6606u1le01941ek8hq` (51.033041).
+
+**Identity:** packet64-record-bundle, sealed base `53ffe4605`, device binary `aeda7568…`. Selection `1-draft-hc-batch`, made by the preregistered both-lanes rule (`ops/packet64-orchestration`, 17:37 UTC). Screens were 13/13 exact on both lanes; +1.38% on lane A and +0.90% on lane B over same-lane production. It is packet 61x plus three changes:
+- packet 63's draft-side HC schedules and fusions (draft arithmetic only; the target verifies every token);
+- packet 62's batched rollback copies (one uploaded descriptor table and a flat copy kernel);
+- balanced 24/24 placement, draft on rank 1.
+
+**Headline: 52.899081 tok/s** class-balanced (all-prompt 52.960451).
+- Hit/miss cycles 16.45/28.37 ms (packet 61x: 17.24/28.48).
+- Acceptance 0.787.
+- +3.66% over packet 61x. Today: 39.42 → 45.70 → 46.00 → 46.96 → 51.03 → **52.90**.
+
+The first prepared bundle (`submission/prepared/`) was never posted: its notes were 2,068 characters, over the API's 2,000 limit. `prepared-v2` condenses the lane-admission and spin wording and keeps every disclosure; it is the same WS128 evidence.
+
+Evidence: `experiments/own-xpu-runtime/stage2/packet64-record-bundle/submission/prepared-v2/`. Receipt: `data/localmaxxing-responses/qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-packet64-record-bundle-realistic-20261017.json`.
+
+### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, TP2, packet 61x spin + HC fusion (2026-10-17)
+
+Submitted 2026-10-17 at about 17:25 UTC after a local dry-run and a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmvco3d6606u1le01941ek8hq`, status APPROVED. It supersedes `cmvcf84kb06r2le0174bgk16l` (46.962697).
+
+**Identity:** packet61x-spin-hcfusion-wait, sealed base `4941d17af`, seal `7a4f76c0…`, device binary `c846812c…`. It is packet 56 plus two host/kernel-structure changes:
+- controller waits: pure PAUSE spin with a yield every 256 iterations on mailbox, device and pending-draft progress waits; rank-0 queue profiling on, without timing reads (packet 56x variant (a));
+- packet 60 HC fusion: three exact-order kernels per side, both sides, for the M=1 row and both serial M=2 rows, with unchanged BF16 intermediates and target arithmetic.
+
+The target verifies every token, so outputs equal the packet 49 oracle (12/12 prompts, 1,536 tokens, repeated in fresh WS/WSs/WS128x/WS128 processes).
+
+**Headline: 51.033041 tok/s** class-balanced (all-prompt 51.154559, p10 49.895).
+- Hit/miss cycles 17.24/28.48 ms (packet 56: 18.22/33.04).
+- Acceptance 0.787 (unchanged).
+- +8.67% over packet 56. Today's progression: 39.42 → 45.70 → 46.00 → 46.96 → **51.03**.
+
+**Resumed chain, disclosed:** the first chain (`device-cards01-a`) passed K0, K1a, K1b, K2 and W0p, then stopped at KD on a wrapper host-scratch path check. The wrapper-only repair (`53ffe4605`) left binaries, screen seal and dispatch unchanged. `device-cards01-b` imported those five receipts byte-identical under hash pins (`resume-manifest.json`, bound into the evidence bundle). KD, W2m, WS, WSs, WS128x and WS128 all ran fresh. The submission tool was extended (`05d39a699`) to admit that chain only through `resume_chain.validate(prepared=True)`; the payload notes and `engineFlags.chainResume` state the resume.
+
+Evidence: `experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/submission/prepared/`. Receipt: `data/localmaxxing-responses/qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-packet61x-spin-hcfusion-wait-realistic-20261017.json`.
+
 ### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, TP2, packet 56 draft-head prefix (2026-10-17)
 
 Submitted 2026-10-17 at about 13:22 UTC after a local dry-run and a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmvcf84kb06r2le0174bgk16l`, status APPROVED. It supersedes `cmvcconpv06o9le01nnxeuwpi` (46.003849).
@@ -1088,3 +1229,74 @@ receipt `data/localmaxxing-responses/qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-
 | label | run id | c | headline | notes |
 | --- | --- | ---: | ---: | --- |
 | `qwen38-flash-next-unsloth-iq3xxs-ownrt-tp2-mtp1-c4096-realistic-20261013` | `cmv6pugme0020oa01fjrho6nx` | 1 | **37.856264 class-balanced median of prompt-class medians, 99 intervals after TTFT** | lab's own runtime; engineName `custom`; 2x B70; target-verified MTP1 |
+
+
+### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, TP2, packet 103 record bundle (bundle 5, 2026-10-18)
+
+Submitted 2026-10-18 at about 10:57 UTC after a local dry-run and a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmvdpmbbo0022rf017ynt8i35`, status APPROVED. It supersedes `cmvdgjqwj000rrf013ay3ew6t` (56.086987). Receipt: `data/localmaxxing-responses/2026-10-18-packet103-record-bundle-chain-b-ws128.txt`.
+
+**Identity:** packet 103 decision `1ad512f75aab3fce` = packet 97's selection (route-fast, rec-both-plus, wide64+halfcache, hc-wide, head production) plus packet 100 down-tile16 (lossless 16-row down-weight transpose at load) and packet 101 split32 draft attention. Device binary `81cd3f47…`, build receipt `3d209d2d…`. Draft head prefix 91,392 rows (packet 56 preregistered rule).
+
+**Evidence:** composites of the identical selection, all exact: lane A 57.551 vs controls 55.609 / 55.760 (+3.2%), lane B 57.291 vs 55.744 / 55.594 (+2.8%).
+
+**Chain history:** the first chain (`device-cards01-a`, launched 09:16) passed K0–W2m including KD, then WS refused at admission (`drain_gate.py` negative sleep in the shared 60 s cooldown after a lane-B teardown; no device work; fault count unchanged). Packet 103x had earlier removed an import-time `RLIMIT_AS` that broke the first composite. The record chain re-ran in a fresh folder `device-cards01-b` (10:04–10:54) with the other lane paused; all 11 windows passed.
+
+**Result:** 57.550573 tok/s class-balanced (57.739 all-prompt median), TTFT median 902.5 ms, wall rate 41.05 tok/s, 12/12 prompts and 1,536 tokens exact. Same 128-token owner-authorized scope as the previous records.
+
+
+### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, ONE card, packet 58p tile16 (2026-10-18)
+
+Submitted 2026-10-18 at about 13:16 UTC after a local dry-run and a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmvdukc200064rf01lqsql9x8`, status APPROVED. It supersedes `cmvd8bhou000duj01hxaihg15` (24.338653). Receipt: `data/localmaxxing-responses/2026-10-18-packet58p-onecard-ws128.txt`.
+
+**Identity:** packet 58g one-card engine (all 48 target layers on card 0, 48.6 GB host-pinned expert banks, 18 GB device expert cache, zero-copy miss path, BF16 KV, target-only plain greedy) with packet 100's lossless down-weight tile16 layout as the only change.
+
+**Evidence:** packet 58n whole-host screen (one load per arm): production 20.999 / 21.336, tile16-only 26.274, all exact (+23%). Packet 125's transfer micro: tile16 raises zero-copy miss bandwidth ~1.27×. Packet 58q found most of the production arms' deficit in host preparation (major page faults); the record chain's WS128 ran with 0 major faults per token over 1,536 tokens (median host preparation 0.53 ms).
+
+**Chain:** packet 58p `card0-58p-a`, 12:48–13:12 UTC, K1a, K1b, KD, W2m, WS, WS128x, WS128 all passed (first launch attempt at 12:47 refused in 3 s because the coordinator's waiter did not supply the oneAPI `LD_LIBRARY_PATH` that WINDOW.md passes through; relaunched with the recorded path). Public list checked 13:14 UTC: the only 1× B70 entry was the lab's own 24.339.
+
+**Result:** 26.228599 tok/s (median of six prompt-class medians, 99 intervals), TTFT median 3.31 s, wall rate 15.80 tok/s, 12/12 prompts and 1,536 tokens exact. Single timed run; same 128-token scope as the previous record.
+
+
+### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, TP2, bundle 7 (packet 124c, 2026-10-18)
+
+Submitted 2026-10-18 at about 14:30 UTC after a local dry-run and a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmvdx8urg0068rf01vvb32bcs`, status APPROVED. It supersedes `cmvdpmbbo0022rf017ynt8i35` (57.550573). Receipt: `data/localmaxxing-responses/2026-10-18-packet124c-record-bundle-chain-a-ws128.txt`.
+
+**Identity:** bundle 7 = packet 103's selection plus packet 109 exact other-fusion (72 fewer launches per half), packet 105b exact target-head split (rank 0 computes suffix rows [202,240, 248,320), exact lowest-index merge) and packet 114 draft-head prefix 80,128 rows (preregistered on non-benchmark text; never tuned on the benchmark). Same selection as packet 118 (decision `89f2d60778eb2d6e`); packet 124c carries only host-side fixes (drain-cooldown clamp, K2 sub-selection, nine restored symlinks incl. the packet49 oracle link).
+
+**Evidence:** composites of the identical selection vs packet 103's selection, all exact: lane A 58.321 vs 57.414 / 57.685, lane B 57.958 vs 57.190 / 57.345 (packet ratios +1.48% A, +1.40% B).
+
+**Chain history:** packet 124 (11:37) failed at K2 (selection exact-key check saw `other_fusion`); packet 124b (12:22) passed K2 and W0p, then the queue runner stopped at the oracle-authority check (copied `oracle` directory instead of the packet 49 symlink); packet 124c (13:14–14:28, lane B paused through the whole-host windows) passed all 11 windows.
+
+**Result:** 58.223834 tok/s class-balanced (58.205 all-prompt median), TTFT median 897 ms, wall rate 41.40 tok/s, 12/12 prompts and 1,536 tokens exact. Same 128-token scope as the previous records.
+
+### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, TP2, bundle 8 (packet 136, 2026-10-18)
+
+Submitted 2026-10-18 at about 17:50 UTC after a local dry-run and a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmve4dtir007wrf01k57sdf23`, status APPROVED. It supersedes `cmvdx8urg0068rf01vvb32bcs` (58.223834). Receipt: `data/localmaxxing-responses/2026-10-18-packet136-record-bundle-chain-a-ws128.txt`.
+
+**Identity:** bundle 8 = bundle 7 (packet 124c selection) plus packet 131b `rollback_state=banks`: rank 0's speculative snapshot rotates between banks instead of copying the full rollback state each cycle (about 61% of the 48.6 MB per-cycle capture bytes removed), with exact state transcripts and no extra device allocation. Placement 1 (24/24, draft on rank 1), BF16 KV, 4096 capacity, unchanged full target verification, draft prefix 80,128 rows preregistered on non-benchmark text.
+
+**Evidence:**
+- Lane B v4 fresh-load grid (packet 131b): +0.81% strict over every control, drift 0.11%, exact, acceptance unchanged.
+- Lane A confirm (packet 136b): control 58.33 vs candidate 58.81, plus a composed 12×64 smoke, all exact.
+
+**Chain:** `packet136-chain-a`, 16:55–17:42 UTC, K0 → WS128, all passed; GPU fault count unchanged (2). Lane B ran the packet 138 capture during the chain's lane-A-only windows.
+- The first lane-A confirm (16:08) was refused before any device work: the entry script added `PYTHONDONTWRITEBYTECODE` to the closed environment. Packet 136b fixed it before any evidence was written.
+- The sealed `prepare_submission` refused at the oracle-checker binding: packet 136's seal omits its own `oracle/suite_check.py`, which is the packet 49 symlink. Packet 136s fixed only that binding, in a copy (`ops/packet136s-submission/`), by checking the hash through the shared-oracle binding and the parent packet 124c seal. Every other check is unchanged and the sealed tree is untouched. The template's "target 23/25" text is a stale literal; the real split is 24/24 (`layer_boundary` 24).
+
+**Result:** 58.798109 tok/s class-balanced (58.761837 all-prompt median), TTFT median 897 ms, wall rate 41.66 tok/s, 12/12 prompts and 1,536 tokens exact. Same 128-token scope as the previous records.
+
+
+### Qwen3.8 Flash-Next Unsloth UD-IQ3_XXS, lab own Xe runtime, one B70, packet58w chain b (2026-10-18)
+
+Submitted 2026-10-18 at about 19:12 UTC after a local dry-run and a server dry-run (HTTP 200 `{"valid": true}`): HTTP 201, run `cmve789qr008vrf01pm678ee8`, status APPROVED. It supersedes `cmvdukc200064rf01lqsql9x8` (26.228599). Receipt: `data/localmaxxing-responses/2026-10-18-packet58w-onecard-chain-b-ws128.txt`.
+
+**Identity:** the packet58p one-card line (packet58g engine + tile16 down layout; 48.6 GB host-pinned experts, 18 GB immutable device expert cache, zero-copy misses, target-only, BF16 KV) plus packet58v `cache_maintenance=overlap`. Cache fills of the previous position run on the copy engine while the next position computes. Victims are republished as host pointers before reuse, and new device pointers are published at a later boundary only after the fill completes. Bytes and arithmetic are unchanged.
+
+**Evidence:** packet58v one-load bracket (17:50–18:04 UTC), all views exact: serial 22.731 (first view, empty cache), overlap 28.116, serial 26.053, overlap 28.153, serial 26.079. The readiness rule was amended (p58wb) after this data and before any chain: the first, cold-cache view counts as warm-up, as in the packet58t precedent. The amendment is disclosed in the notes.
+
+**Chains:**
+- Chain a (`packet58-onecard-58w-a`, 18:12–18:37) passed every window, exact, but WS128 measured 25.773 (WS128x 28.078). It was **not submitted**. Codex CPU gates reading the GGUF ran during it.
+- A note committed before any rerun (`notes/2026-10-18-own-runtime-packet58w-chain-a-result.md`) preregistered exactly one quiet-host rerun, with its result final either way.
+- Chain b (`packet58-onecard-58w-b`, 18:43–19:08, all Codex units frozen, fresh fault review): every window passed, WS128x 28.204, WS128 28.043.
+
+**Result:** 28.042989 tok/s class-balanced, TTFT median 3.04 s, wall rate 17.08 tok/s, 12/12 prompts and 1,536 tokens exact. Process faults over 1,536 tokens: 92 major, 26,047 minor; no new GPU fault lines (count 2). Same 128-token scope as the previous one-card records.

@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "proposal_sha256": "1b802ad590e9b901dde38b628c4f2a370f1c7ad78225bec32049681dcd691611",
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+    "plan",
+    "--lane",
+    "A",
+    "--directory",
+    "/tmp/packet133-plan-0ii2b4du"
+  ],
+  "log_sha256": "458f095169484bb36913263486fded1c652b80bf33be77e2e6076ceefe0ad4c3",
+  "expected_seconds": [
+    720,
+    1200
+  ],
+  "watchdog_seconds": 4800,
+  "sources": {
+    "experiments/own-xpu-runtime/ops/packet133-orchestration/proposal_plan.py": "4a5f25b6bac0f54ffae9d8a3bb65d9d7e47e0a168ca0db3eb626c1a3dcb66dff",
+    "experiments/own-xpu-runtime/stage2/packet133-record-bundle/v5/bracket_job.py": "d5c1136f59cd8c81350ade1959190243613ad60097ed8e760867e70504711bc8",
+    "experiments/own-xpu-runtime/stage2/packet133-record-bundle/v5/screen133.py": "6b0c20e7aa866979b901d92e8b696793a01334263536138bcf77bf9f071e603c",
+    "experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py": "cc71ca68cb9d294ea89fbb63aac01c4b04b20885d4818e9c0b576f659e25b5e3"
+  },
+  "conditional_on": "exact p130 smoke, identical native selections, CPU qualification and coordinator live admission; composed smoke remains mandatory for chain"
+}

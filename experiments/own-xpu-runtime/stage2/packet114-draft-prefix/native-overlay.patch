@@ -1,0 +1,116 @@
+--- packet103/p59c_select.hpp
++++ p114/p59c_select.hpp
+@@ -40,7 +40,7 @@
+ }
+ inline void validate(const std::map<std::string,std::string>&m){
+  auto registered=defaults();if(m.size()!=registered.size())throw std::invalid_argument("p59c incomplete draft selection");
+- for(auto&[key,value]:m)if(!registered.contains(key)||(key=="head_format"?(value!="production"&&value!="q4-g32"):key=="head_prefix"?(value!="production"&&value!="coverage990"&&value!="coverage985"):(value!="production"&&value!="packet59")))throw std::invalid_argument("p59c unknown draft choice: "+key);
++ for(auto&[key,value]:m)if(!registered.contains(key)||(key=="head_format"?(value!="production"&&value!="q4-g32"):key=="head_prefix"?(value!="production"&&value!="p114-80128"&&value!="coverage990"&&value!="coverage985"):(value!="production"&&value!="packet59")))throw std::invalid_argument("p59c unknown draft choice: "+key);
+  if(m.at("head_format")!="production"&&m.at("head_prefix")!="production")throw std::invalid_argument("p83 unregistered combined draft head");
+  for(auto&[key,producer]:dependencies)if(m.at(key)=="packet59"&&m.at(producer)!="packet59")throw std::invalid_argument("p59c fusion requires packet59 producer: "+key);
+ }
+--- packet103/argument_block.hpp
++++ p114/argument_block.hpp
+@@ -32,12 +32,13 @@
+  // Type identity binds template parameters (kernel family, arithmetic, phase,
+  // width and split) which have no per-instance data member.
+  const char* type=typeid(T).name();out.insert(out.end(),type,type+std::strlen(type)+1);
+- constexpr bool known=requires{op.matrices;}||requires{op.rows;}||requires{op.host;}||requires{op.b;}||requires{op.experts;}||requires{op.shape;}||requires{op.s;}||requires{op.spec;}||requires{op.n;}||requires{op.a;}||requires{op.width;}||requires{op.family;};
+- if constexpr(!known&&sizeof(T)!=sizeof(void*))throw std::logic_error("unregistered prepared operation state");
++ constexpr bool known=requires{op.matrices;}||requires{op.rows;}||requires{op.host;}||requires{op.b;}||requires{op.experts;}||requires{op.shape;}||requires{op.s;}||requires{op.spec;}||requires{op.n;}||requires{op.a;}||requires{op.width;}||requires{op.family;}||requires{op.capacity;};
++ if constexpr(!known&&!requires{op.shapes;}&&sizeof(T)!=sizeof(void*))throw std::logic_error(std::string("unregistered prepared operation state: ")+typeid(T).name());
+ #define FIELD(name) if constexpr(requires{op.name;})append(out,op.name)
+  FIELD(matrices);FIELD(variant);FIELD(shared);FIELD(rows);FIELD(host);FIELD(b);
+  FIELD(a);FIELD(width);FIELD(family);FIELD(metadata);FIELD(count);
+  FIELD(experts);FIELD(shape);FIELD(s);FIELD(spec);FIELD(work);FIELD(mode);FIELD(n);
++ FIELD(capacity);FIELD(shapes);
+ #undef FIELD
+  return out;
+ }
+--- packet103/p83_head.hpp
++++ p114/p83_head.hpp
+@@ -15,6 +15,7 @@
+  if(mini)return vocab;
+  if(vocab!=248320)throw std::invalid_argument("p83 vocabulary");
+  if(choice=="production")return 91392;
++ if(choice=="p114-80128")return 80128;
+  if(choice=="coverage990")return 80128;
+  if(choice=="coverage985")return 74752;
+  throw std::invalid_argument("p83 prefix selection");
+--- copied/main.cpp
++++ native/main.cpp
+@@ -784,6 +784,7 @@
+       for(size_t i=1;i<group.members.size();++i)require(small_followers.emplace(group.members[i],&first).second,"overlapping small GEMV groups");
+     }
+   }
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet114-draft-prefix/native/engine_bracket.hpp"
+   void guard() {
+     pipeline_cancel_check();
+     require(!poisoned, "poisoned step");
+@@ -819,6 +820,7 @@
+     return id;
+   }
+   void upload(int c, Allocation dst, size_t offset, const void *src, size_t n) {
++    require(!bracket_weights_locked||dev(c).arena.row(dst).category!=Category::weights,"bracket immutable weight write refused");
+     drain();
+     auto started=std::chrono::steady_clock::now();
+     for (size_t i = 0; i < n; i += 4 * 1024 * 1024) {
+@@ -1545,7 +1547,7 @@
+     weights[c].clear();
+   }
+ };
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet114-draft-prefix/sources/experiments/own-xpu-runtime/stage2/packet103-record-bundle/mtp.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet114-draft-prefix/build/native/mtp.hpp"
+ static void write_plan(const fs::path &path, const flash::Plan &p,
+                        const Weights &w, int cards, const Options& a) {
+   p49d::Selection selected;
+@@ -1634,7 +1636,7 @@
+   out<<"{\"phase\":"<<ownrt::quote(phase)<<",\"MemAvailable\":"<<available<<",\"GPUActive\":"
+      <<(has_active?std::to_string(active):"null")<<"}\n";out.flush();
+ }
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet114-draft-prefix/sources/experiments/own-xpu-runtime/stage2/packet103-record-bundle/rank.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet114-draft-prefix/build/native/rank.hpp"
+ 
+ // SPEED6_SCRATCH_POLICY_BEGIN
+ // Scope the footprint reduction to the previously refused split23/dr1 arm.
+--- copied/rank.hpp
++++ native/rank.hpp
+@@ -234,6 +234,7 @@
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet114-draft-prefix/sources/experiments/own-xpu-runtime/stage2/packet103-record-bundle/rank_canary.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet114-draft-prefix/sources/experiments/own-xpu-runtime/stage2/packet103-record-bundle/request_reset.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet114-draft-prefix/sources/experiments/own-xpu-runtime/stage2/packet103-record-bundle/native_controller.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet114-draft-prefix/native/bracket_boundary.hpp"
+ static int run_rank(const Options& a) {
+  using namespace pipeline;
+  std::unique_ptr<Weights> weights;std::unique_ptr<Engine> engine;std::unique_ptr<mtp36::DraftRuntime> provider;
+@@ -257,6 +258,8 @@
+   record_host_memory(a.output,"after_load");
+   if(a.mtp&&a.rank==a.draft_rank)provider=std::make_unique<mtp36::DraftRuntime>(*engine);
+   save(a.output/"census.json",engine->dev(0).arena.census());
++  engine->bracket_weights_locked=true;
++  save(a.output/"loaded-arena-descriptors.txt",engine->bracket_arena_descriptors());
+   Reply ready{};ready.rank=a.rank;transfer(a.channel,&ready,sizeof ready,true,a.seconds);
+   Candidate c;int sequence=0,accepted=0;bool async_half_ready=false;int async_half_position=-1,async_half_token=-1;
+   auto execute=[&](const Request& r)->Reply {
+@@ -302,6 +305,11 @@
+    }
+    else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();state_dump(*engine,r.position);if(r.position==2147483647)request_state_inventory(*engine);}
+    else if(r.op==11){image.boundary();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
++   else if(r.op==13){
++    require(!async_half_ready,"bracket pending asynchronous half");
++    bracket_boundary(*engine,c,provider.get(),image,a.output/("bracket-"+std::to_string(r.sequence)+".txt"),accepted);
++    async_half_position=async_half_token=-1;
++   }
+    #ifdef OWN_RT_HOST_ONLY
+    else if(r.op==12){require(a.rank==0&&c.pending&&c.speculative,"negative control ownership");image.corrupt_protected_for_gate(r.token);}
+ #endif
+--- copied/mtp.hpp
++++ native/mtp.hpp
+@@ -298,6 +298,7 @@
+   publication_event=0;e.progress_pending=false;e.progress_callback={};
+   trace.close();trace.open(output/"draft-rows.jsonl");require(bool(trace),"draft reset trace");
+  }
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet114-draft-prefix/native/draft_bracket.hpp"
+  void dump_all_state(const fs::path& path) {
+   dump(path);std::ostringstream out;out<<"{\"position\":"<<position<<",\"disabled\":"<<(disabled?"true":"false")<<",\"mutable_sha256\":{";
+   bool comma=false;for(auto allocation:mutable_ids){const auto& row=e.dev(0).arena.row(allocation);

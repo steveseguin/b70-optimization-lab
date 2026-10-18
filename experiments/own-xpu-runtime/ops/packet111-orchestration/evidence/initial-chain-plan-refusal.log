@@ -1,0 +1,18 @@
+{"passed": false, "device_executed": false, "model_payload_read": false, "output_root": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/device-cards01-a", "windows": {"K0": {"write_paths": 45, "static_files": 5132, "generated_prerequisites": 0}, "K1a": {"write_paths": 23, "static_files": 5206, "generated_prerequisites": 2}, "K1b": {"write_paths": 23, "static_files": 5206, "generated_prerequisites": 4}, "K2": {"write_paths": 15, "static_files": 5206, "generated_prerequisites": 6}, "W0p": {"write_paths": 21, "static_files": 5132, "generated_prerequisites": 2}, "KD": {"write_paths": 20, "static_files": 5353, "generated_prerequisites": 9}, "W2m": {"write_paths": 21, "static_files": 5996, "generated_prerequisites": 13}, "WS": {"write_paths": 46, "static_files": 14725, "generated_prerequisites": 13}, "WSs": {"write_paths": 46, "static_files": 14725, "generated_prerequisites": 11}, "WS128x": {"write_paths": 46, "static_files": 14725, "generated_prerequisites": 13}, "WS128": {"write_paths": 46, "static_files": 14725, "generated_prerequisites": 15}}, "static_files": 14955, "write_path_count": 352, "errors": ["prefix/oracle admission: packet49c must use the unchanged packet49 oracle authority"]}
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet111-orchestration/chain_entry.py", line 17, in <module>
+    if __name__=='__main__':raise SystemExit(main())
+                                             ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet111-orchestration/chain_entry.py", line 16, in main
+    return chain103.main()
+           ^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/chain103.py", line 30, in main
+    if role=='queue':return q.main()
+                            ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/queue_runner.py", line 271, in main
+    input_preflight(args)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/queue_runner.py", line 158, in input_preflight
+    subprocess.run(command, check=True)
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['nice', '-n', '19', 'taskset', '-c', '8-15,24-31', 'python3', '-B', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/check_inputs.py', '--output-root', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/build/device-cards01-a']' returned non-zero exit status 1.

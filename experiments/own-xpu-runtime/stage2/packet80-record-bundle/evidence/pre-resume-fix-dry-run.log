@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/dry_run.py", line 51, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/dry_run.py", line 25, in main
+    subprocess.run([sys.executable,'-B',str(P/script)],stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,check=True)
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/usr/bin/python3', '-B', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/all_view_plans.py']' died with <Signals.SIGINT: 2>.

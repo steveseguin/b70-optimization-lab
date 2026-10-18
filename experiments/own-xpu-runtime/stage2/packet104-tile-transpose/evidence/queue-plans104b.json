@@ -1,0 +1,39 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "plans": [
+    {
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p104b-B-grid.txt",
+      "sha256": "ae949774e942540b6b4477fe37dd213c3be1ae8092586182a8d747dd23c4a274",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/tmp/p104b-queue-plan-u_3yglrg"
+      ],
+      "passed": true
+    },
+    {
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p104b-A-confirm.txt",
+      "sha256": "a6d4383cee44706ae943a909ba13a824129d61a2b384c79497eb55297d47c3c9",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "A",
+        "--directory",
+        "/tmp/p104b-queue-plan-u_3yglrg"
+      ],
+      "passed": true
+    }
+  ],
+  "baseline": "packet97 selected + down-tile16 + E1; plain gate candidate removes E1",
+  "confirmation": "A execution refuses until all four B screens complete, exact, unchanged acceptance, winner beats both controls"
+}

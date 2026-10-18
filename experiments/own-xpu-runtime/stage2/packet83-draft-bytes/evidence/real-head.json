@@ -1,0 +1,130 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "runs": [
+    {
+      "compiler": "GNU",
+      "repeat": 1,
+      "command": [
+        "ionice",
+        "-c",
+        "3",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet83-draft-bytes/build/real-head/GNU",
+        "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "29632"
+      ],
+      "passed": true,
+      "rows": 91392,
+      "columns": 2560,
+      "source_sha256": "864b90a478256a65fcf7528ec4e06373e3a76c72d50f1f1ebe320ef0c73b392c",
+      "quantized_sha256": "9420e293912ea57f247fed9d283fbf07c19418066c1d31a6e206406d758dce9c",
+      "expected_sha256": "db653c7e83076e8590e51be47a4303ff6218714763e0c084ca4d6ddf913a3ed4",
+      "actual_sha256": "db653c7e83076e8590e51be47a4303ff6218714763e0c084ca4d6ddf913a3ed4"
+    },
+    {
+      "compiler": "GNU",
+      "repeat": 2,
+      "command": [
+        "ionice",
+        "-c",
+        "3",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet83-draft-bytes/build/real-head/GNU",
+        "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "29632"
+      ],
+      "passed": true,
+      "rows": 91392,
+      "columns": 2560,
+      "source_sha256": "864b90a478256a65fcf7528ec4e06373e3a76c72d50f1f1ebe320ef0c73b392c",
+      "quantized_sha256": "9420e293912ea57f247fed9d283fbf07c19418066c1d31a6e206406d758dce9c",
+      "expected_sha256": "db653c7e83076e8590e51be47a4303ff6218714763e0c084ca4d6ddf913a3ed4",
+      "actual_sha256": "db653c7e83076e8590e51be47a4303ff6218714763e0c084ca4d6ddf913a3ed4"
+    },
+    {
+      "compiler": "Intel",
+      "repeat": 1,
+      "command": [
+        "ionice",
+        "-c",
+        "3",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet83-draft-bytes/build/real-head/Intel",
+        "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "29632"
+      ],
+      "passed": true,
+      "rows": 91392,
+      "columns": 2560,
+      "source_sha256": "864b90a478256a65fcf7528ec4e06373e3a76c72d50f1f1ebe320ef0c73b392c",
+      "quantized_sha256": "9420e293912ea57f247fed9d283fbf07c19418066c1d31a6e206406d758dce9c",
+      "expected_sha256": "db653c7e83076e8590e51be47a4303ff6218714763e0c084ca4d6ddf913a3ed4",
+      "actual_sha256": "db653c7e83076e8590e51be47a4303ff6218714763e0c084ca4d6ddf913a3ed4"
+    },
+    {
+      "compiler": "Intel",
+      "repeat": 2,
+      "command": [
+        "ionice",
+        "-c",
+        "3",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet83-draft-bytes/build/real-head/Intel",
+        "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+        "29632"
+      ],
+      "passed": true,
+      "rows": 91392,
+      "columns": 2560,
+      "source_sha256": "864b90a478256a65fcf7528ec4e06373e3a76c72d50f1f1ebe320ef0c73b392c",
+      "quantized_sha256": "9420e293912ea57f247fed9d283fbf07c19418066c1d31a6e206406d758dce9c",
+      "expected_sha256": "db653c7e83076e8590e51be47a4303ff6218714763e0c084ca4d6ddf913a3ed4",
+      "actual_sha256": "db653c7e83076e8590e51be47a4303ff6218714763e0c084ca4d6ddf913a3ed4"
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/real_head_gate.py": "fa755e8749f6ca39fbf37cc20d908580694bab396740555cb2ea6b372db407b3",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/p83_cpu.cpp": "6e2bac6a1819557829c0f097d60eac1fcd5b45046fe68d3574b7c484916b3882",
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/metadata.json": "0e3e3d28f8125b98fb18e0d16a242552ba47f43eeea8e3fd455afbaa4b4b5969",
+    "experiments/own-xpu-runtime/stage2/suite-inputs-20261012/code-review/identity.tsv": "85992a7027dca5de4478e9a5cef4e24722a7065aca66bc1a9954d8d3f617e257",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/p83_head.hpp": "02e8238ef561a81946f8f30627d75ae8c70de18a35c1229b6d99610e1e782d90",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/p59_draft.hpp": "2c01b784a7d52e8ca51a12da34e560fbaf62b8af0140d9527948f176231337e2",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/mtp_kernels.hpp": "f6ae6a4781051e85dbc82b429b3eb06d2f07a625237138d67ffacd6992a2a674",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/performance.hpp": "97048551886ee82850180ef9a7981259d80569fb82981c16e8473793739b2137",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/runtime_kernels.hpp": "f56dff0f8aaa0647857d077dd1fd10ec1ed573403d1cdb7cdd2b4db194ce3538",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": "1044e1a57d101d35a1d02e7fd911c3db9e5faed41248255ac61af52528f98f74",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/owner.hpp": "ee69610bda3e786e2aecf9888430541879af2d4c51cb64329784cb58d3ba1faf",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/owner_api.hpp": "1c712169fca15d34319ab082701a054a4a1fc63caccdfd7515a00067f4843608",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/argument_block.hpp": "f2cc8a5709ae443e2fcaa755cfb86e36080a710e9964422b12d3a8425433db35",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/core_v2.hpp": "44a05d7d5cadc7a3de6e3d855f045a5d2156416ac2e463ca0d88d41a42357b1d",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/detmath.hpp": "d699920742292f623317537dbb25d25873b8f8e9afd4f4f329448921890714db",
+    "experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/rope.hpp": "83782198e96337883f7e226d5fc474360841f6ca26a00bce43a6d87f42b74929",
+    "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp": "5122c8e7115d94e0546d7b40fcd9a9a795c45717394a636ac3c806ad6d37dd6e",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp": "218ec7d39db6272038f05453c84e7823220f6e3d97f7272a17efa1cd9593c706",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp": "a4c24610451981c3d0d19289919e7b16521ed652605ba557f44c234bc413d54e",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp": "78f15ee1abaace582eff11e876e9f76a3e69d78159156655e1133dc2ed3aa8c0",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": "7532f67c6d9a0be2a9187ce149b2004d9f1ea045705327d0ce542a283ad5ed72",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": "f744a148509ed091d69a708262d0fcbc94c179da8ca5ed364791e8ba77a328af",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp": "efd7bb4c4dcdc0ee2afa24a7c1146e19a993f4f3cebd73cf025c84bc209053ed",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": "95bdc549c66d5cb72fd54cc73696187dae08568f15b19d206cc954ca290c85f4",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/arithmetic.hpp": "ea9a853c66b3a22eff01e7b53243da0c5a2a33d5306dd4f09faf06c447a4c1ae",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp": "b5a6c3b39d051853e49761491aaf69f55e7ad882cffef34ea8300a68c608176d",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/specialised.hpp": "0d7489d31fb869a49db3a7a365dbe78af52931c0e7d5cdf38ff05b01e594c126",
+    "experiments/own-xpu-runtime/stage2/packet83-draft-bytes/kernels.hpp": "715e38078abaf8e1ee38bbb650c946b754ad29f44e77e5dafbc8db1b077d530f"
+  },
+  "model_file": "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+  "identity": [
+    "49567921344",
+    "2050",
+    "2740947",
+    "1791675421206920900",
+    "1791675421213040100"
+  ],
+  "source_offset": 29632,
+  "max_rss_kib": 274600
+}

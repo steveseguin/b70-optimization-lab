@@ -1,0 +1,82 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "cpu_model_executed": false,
+  "live_queues_modified": false,
+  "views": [
+    {
+      "name": "production",
+      "seal_sha256": "d7d323a0effb8ebe5e6c0a9a398563cf606e1b25e53ec8030cbdbf2ef2783dba"
+    },
+    {
+      "name": "target-wide64",
+      "seal_sha256": "3e748b9c3f335642ff1b61a7df487d961914076117ec5c85692e4d0a22ba3ecb"
+    },
+    {
+      "name": "target-wide128",
+      "seal_sha256": "9f7ac8d98ef2a940cba8ac8ac1aa62fefad8d4c31c558603f03fafc0d4d0e941"
+    },
+    {
+      "name": "draft-head-wide64",
+      "seal_sha256": "d29d25750ff04db2a1702f6f0183e30df683e2e5cb8453e7191cdaed6fdc2968"
+    },
+    {
+      "name": "draft-attention",
+      "seal_sha256": "167a34a552556fb4210dd9f85c0b2416bd1ec89a38076d28749d45ef7ae4df1c"
+    },
+    {
+      "name": "draft-hc",
+      "seal_sha256": "d8bf43807fffee26321323a824314f3c31a98b01cb86a5fd12b16e3733c10a52"
+    },
+    {
+      "name": "combined",
+      "seal_sha256": "cb70f35027ede4ef600e558d9edd03f2bcec85ddc61d9132f16d286b020273e5"
+    }
+  ],
+  "plans": {
+    "A": {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/run.py",
+        "--lane",
+        "A",
+        "--jobs",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/jobs-A-r3.txt",
+        "--plan"
+      ],
+      "sha256": "f2654cf29bd246114902b8f35eb87e94512796cfdd0844cee39b4cef49982ad6"
+    },
+    "B": {
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/run.py",
+        "--lane",
+        "B",
+        "--jobs",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet69-rank1-head/screen/quick/jobs-B-r3.txt",
+        "--plan"
+      ],
+      "sha256": "70b06deb0154b3948fcbf4ef98492f41b552a4998dd26b9149bd5d3bd18ec9be"
+    }
+  },
+  "proposals": {
+    "A": {
+      "path": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p69-r3-A.txt",
+      "sha256": "26d69d2cb065388c701921c5620c2e9ad9636ba31da23f1ad275a30e27b05e67",
+      "plan_log_sha256": "b36baa4acf6ba5c720375550184f68237170f4e94dc6380a6a2a452955dc1370"
+    },
+    "B": {
+      "path": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p69-r3-B.txt",
+      "sha256": "0df283ea118d01508cf0c133d90438bb0f24f65d7c96d72dfe931da0b957236e",
+      "plan_log_sha256": "451d07b92d51745f234cbdb5b8da7e7f98f9f745acce02955ade550039366cb1"
+    }
+  },
+  "production_fixture_bytes_unchanged": true,
+  "inherited_arithmetic_objects_unchanged": true,
+  "wrapper_tests": 18,
+  "head_status_gate_sha256": "c685d6b8a7e3bf93c0f77522e8f2493681327cc3d1f25d5a693ec37b37a9da39",
+  "device_quality": "pending coordinator rerun",
+  "binary_sha256": "83137a320ef47f8eacc65334cf4cf49ca172ac228948fb1e4b63de828aa6a2fe"
+}

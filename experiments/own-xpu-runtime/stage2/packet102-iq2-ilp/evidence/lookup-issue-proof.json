@@ -1,0 +1,589 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/lookup_proof.py": "a58b48d6ac161d8ab88c5137efbaac98057dc862f6fd1538cee5ac92490b3fef",
+    "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/register-report-offline.json": "e89464cd78431c829efd5829e762d8ebd9526568be4de1b3d45864959ac2df00",
+    "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-1.visaasm.gz": "47bdae6a1a75bfeb23be5e76a0443a051afb52e660cf2b5ff440c96d57f075e8",
+    "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-1.asm.gz": "55917f41798bff44c37208a094da5732c746da48cbbd5c78402ef9758fa056c7",
+    "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-2.visaasm.gz": "9b3864f19e502883c833a6ada0c31558c1894f1a7c67710d2014750b89ab520f",
+    "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-2.asm.gz": "8d260b63b355386e425f0fc66ed01775c8f0e0006b07e6a8f9da73574e2f40f4",
+    "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-3.visaasm.gz": "9f56d30d30875486d5604062c4d687878cc67c0ecb60981984ff52ced106bdce",
+    "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-3.asm.gz": "d22926dc21247bfcc061f644be2784a2e1e3bf3df888b3d763b5f92071b25b91",
+    "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-4.visaasm.gz": "9877e6b0e4a3cee8f4f1f72a3c33cbc9547a5db492246288468820dc7d2dc8e3",
+    "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-4.asm.gz": "2037ece2c7b6010d56dcb2e3601b9b26a8e8262b62b8e83e1b0579358606f8ea"
+  },
+  "kernels": [
+    {
+      "name": "//.kernel _ZTSZZNK6p90exp6KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1ELj0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "batch": 1,
+      "shared": false,
+      "visa": "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-1.visaasm.gz",
+      "assembly": "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-1.asm.gz",
+      "passed": true,
+      "grid_words_per_step": 8,
+      "batch_grid_words": 1,
+      "activation_vectors_per_step": 8,
+      "activation_d32_loads_per_step": 32,
+      "groups": [
+        {
+          "passed": true,
+          "independent_sends": 1,
+          "last_send_line": 1891,
+          "first_consumer_line": 1903,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 2137,
+              "visa_first_consumer_line": 2151,
+              "send_id": 187,
+              "consumer_id": 201,
+              "asm_send_line": 1891,
+              "asm_first_consumer_line": 1903,
+              "scoreboard": 10,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r20:4       [r14:4]            {I@1,$10} // ex_desc:0x0; desc:0x8401580 // $187",
+              "consumer": "and (32|M0)              r6.0<1>:d     r20.0<1;1,0>:d    255:w               {Compacted,$10.dst} //  ALU pipe: int; $201"
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "independent_sends": 1,
+          "last_send_line": 2140,
+          "first_consumer_line": 2146,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 2372,
+              "visa_first_consumer_line": 2373,
+              "send_id": 398,
+              "consumer_id": 399,
+              "asm_send_line": 2140,
+              "asm_first_consumer_line": 2146,
+              "scoreboard": 15,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r12:4       [r30:4]            {A@1,$15} // ex_desc:0x0; desc:0x8401580 // $398",
+              "consumer": "and (32|M0)              r6.0<1>:d     r12.0<1;1,0>:d    255:w               {Compacted,$15.dst} //  ALU pipe: int; $399"
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "independent_sends": 1,
+          "last_send_line": 2391,
+          "first_consumer_line": 2399,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 2598,
+              "visa_first_consumer_line": 2605,
+              "send_id": 600,
+              "consumer_id": 607,
+              "asm_send_line": 2391,
+              "asm_first_consumer_line": 2399,
+              "scoreboard": 4,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r12:4       [r24:4]            {I@1,$4} // ex_desc:0x0; desc:0x8401580 // $600",
+              "consumer": "and (32|M0)              r6.0<1>:d     r12.0<1;1,0>:d    255:w               {Compacted,$4.dst} //  ALU pipe: int; $607"
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "independent_sends": 1,
+          "last_send_line": 2637,
+          "first_consumer_line": 2641,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 2826,
+              "visa_first_consumer_line": 2827,
+              "send_id": 804,
+              "consumer_id": 805,
+              "asm_send_line": 2637,
+              "asm_first_consumer_line": 2641,
+              "scoreboard": 9,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r12:4       [r24:4]            {A@1,$9} // ex_desc:0x0; desc:0x8401580 // $804",
+              "consumer": "and (32|M0)              r6.0<1>:d     r12.0<1;1,0>:d    255:w               {Compacted,$9.dst} //  ALU pipe: int; $805"
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "independent_sends": 1,
+          "last_send_line": 2884,
+          "first_consumer_line": 2893,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 3051,
+              "visa_first_consumer_line": 3058,
+              "send_id": 1005,
+              "consumer_id": 1012,
+              "asm_send_line": 2884,
+              "asm_first_consumer_line": 2893,
+              "scoreboard": 14,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r12:4       [r24:4]            {I@1,$14} // ex_desc:0x0; desc:0x8401580 // $1005",
+              "consumer": "and (32|M0)              r6.0<1>:d     r12.0<1;1,0>:d    255:w               {Compacted,$14.dst} //  ALU pipe: int; $1012"
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "independent_sends": 1,
+          "last_send_line": 3131,
+          "first_consumer_line": 3135,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 3279,
+              "visa_first_consumer_line": 3280,
+              "send_id": 1209,
+              "consumer_id": 1210,
+              "asm_send_line": 3131,
+              "asm_first_consumer_line": 3135,
+              "scoreboard": 3,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r12:4       [r24:4]            {A@1,$3} // ex_desc:0x0; desc:0x8401580 // $1209",
+              "consumer": "and (32|M0)              r6.0<1>:d     r12.0<1;1,0>:d    255:w               {Compacted,$3.dst} //  ALU pipe: int; $1210"
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "independent_sends": 1,
+          "last_send_line": 3346,
+          "first_consumer_line": 3386,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 3504,
+              "visa_first_consumer_line": 3511,
+              "send_id": 1410,
+              "consumer_id": 1417,
+              "asm_send_line": 3346,
+              "asm_first_consumer_line": 3386,
+              "scoreboard": 8,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r38:4       [r10:4]            {I@1,$8} // ex_desc:0x0; desc:0x8401580 // $1410",
+              "consumer": "and (32|M0)              r6.0<1>:d     r38.0<1;1,0>:d    255:w               {Compacted,$8.dst} //  ALU pipe: int; $1417"
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "independent_sends": 1,
+          "last_send_line": 3596,
+          "first_consumer_line": 3628,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 3732,
+              "visa_first_consumer_line": 3733,
+              "send_id": 1614,
+              "consumer_id": 1615,
+              "asm_send_line": 3596,
+              "asm_first_consumer_line": 3628,
+              "scoreboard": 13,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r52:4       [r36:4]            {I@1,$13} // ex_desc:0x0; desc:0x8401580 // $1614",
+              "consumer": "and (32|M0)              r6.0<1>:d     r52.0<1;1,0>:d    255:w               {Compacted,$13.dst} //  ALU pipe: int; $1615"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "//.kernel _ZTSZZNK4p1026KernelILj2ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "batch": 2,
+      "shared": false,
+      "visa": "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-2.visaasm.gz",
+      "assembly": "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-2.asm.gz",
+      "passed": true,
+      "grid_words_per_step": 8,
+      "batch_grid_words": 2,
+      "activation_vectors_per_step": 8,
+      "activation_d32_loads_per_step": 32,
+      "groups": [
+        {
+          "passed": true,
+          "independent_sends": 2,
+          "last_send_line": 2022,
+          "first_consumer_line": 2037,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 2124,
+              "visa_first_consumer_line": 2163,
+              "send_id": 180,
+              "consumer_id": 219,
+              "asm_send_line": 2019,
+              "asm_first_consumer_line": 2037,
+              "scoreboard": 14,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r22:4       [r40:4]            {I@3,$14} // ex_desc:0x0; desc:0x8401580 // $180",
+              "consumer": "and (32|M0)              r6.0<1>:d     r22.0<1;1,0>:d    255:w               {Compacted,$14.dst} //  ALU pipe: int; $219"
+            },
+            {
+              "visa_send_line": 2137,
+              "visa_first_consumer_line": 2378,
+              "send_id": 193,
+              "consumer_id": 410,
+              "asm_send_line": 2022,
+              "asm_first_consumer_line": 2269,
+              "scoreboard": 15,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r34:4       [r18:4]            {I@1,$15} // ex_desc:0x0; desc:0x8401580 // $193",
+              "consumer": "and (32|M0)              r20.0<1>:d    r34.0<1;1,0>:d    255:w               {Compacted,$15.dst} //  ALU pipe: int; $410"
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "independent_sends": 2,
+          "last_send_line": 2528,
+          "first_consumer_line": 2539,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 2582,
+              "visa_first_consumer_line": 2616,
+              "send_id": 590,
+              "consumer_id": 624,
+              "asm_send_line": 2517,
+              "asm_first_consumer_line": 2539,
+              "scoreboard": 5,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r40:4       [r34:4]            {I@6,$5} // ex_desc:0x0; desc:0x8401580 // $590",
+              "consumer": "and (32|M0)              r6.0<1>:d     r40.0<1;1,0>:d    255:w               {Compacted,$5.dst} //  ALU pipe: int; $624"
+            },
+            {
+              "visa_send_line": 2589,
+              "visa_first_consumer_line": 2831,
+              "send_id": 597,
+              "consumer_id": 815,
+              "asm_send_line": 2528,
+              "asm_first_consumer_line": 2779,
+              "scoreboard": 10,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r52:4       [r34:4]            {I@1,$10} // ex_desc:0x0; desc:0x8401580 // $597",
+              "consumer": "and (32|M0)              r20.0<1>:d    r52.0<1;1,0>:d    255:w               {Compacted,$10.dst} //  ALU pipe: int; $815"
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "independent_sends": 2,
+          "last_send_line": 3033,
+          "first_consumer_line": 3052,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 3035,
+              "visa_first_consumer_line": 3070,
+              "send_id": 995,
+              "consumer_id": 1030,
+              "asm_send_line": 3017,
+              "asm_first_consumer_line": 3052,
+              "scoreboard": 1,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r32:4       [r26:4]            {I@4,$1} // ex_desc:0x0; desc:0x8401580 // $995",
+              "consumer": "and (32|M0)              r8.0<1>:d     r32.0<1;1,0>:d    255:w               {Compacted,$1.dst} //  ALU pipe: int; $1030"
+            },
+            {
+              "visa_send_line": 3042,
+              "visa_first_consumer_line": 3285,
+              "send_id": 1002,
+              "consumer_id": 1221,
+              "asm_send_line": 3033,
+              "asm_first_consumer_line": 3290,
+              "scoreboard": 2,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r38:4       [r18:4]            {I@3,$2} // ex_desc:0x0; desc:0x8401580 // $1002",
+              "consumer": "and (32|M0)              r20.0<1>:d    r38.0<1;1,0>:d    255:w               {Compacted,$2.dst} //  ALU pipe: int; $1221"
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "independent_sends": 2,
+          "last_send_line": 3542,
+          "first_consumer_line": 3560,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 3489,
+              "visa_first_consumer_line": 3523,
+              "send_id": 1401,
+              "consumer_id": 1435,
+              "asm_send_line": 3542,
+              "asm_first_consumer_line": 3560,
+              "scoreboard": 13,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r38:4       [r34:4]            {I@3,$13} // ex_desc:0x0; desc:0x8401580 // $1401",
+              "consumer": "and (32|M0)              r6.0<1>:d     r38.0<1;1,0>:d    255:w               {Compacted,$13.dst} //  ALU pipe: int; $1435"
+            },
+            {
+              "visa_send_line": 3496,
+              "visa_first_consumer_line": 3738,
+              "send_id": 1408,
+              "consumer_id": 1626,
+              "asm_send_line": 3541,
+              "asm_first_consumer_line": 3807,
+              "scoreboard": 12,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r52:4       [r16:4]            {I@5,$12} // ex_desc:0x0; desc:0x8401580 // $1408",
+              "consumer": "and (32|M0)              r12.0<1>:d    r52.0<1;1,0>:d    255:w               {Compacted,$12.dst} //  ALU pipe: int; $1626"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "//.kernel _ZTSZZNK4p1026KernelILj4ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "batch": 4,
+      "shared": false,
+      "visa": "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-3.visaasm.gz",
+      "assembly": "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-3.asm.gz",
+      "passed": true,
+      "grid_words_per_step": 8,
+      "batch_grid_words": 4,
+      "activation_vectors_per_step": 8,
+      "activation_d32_loads_per_step": 32,
+      "groups": [
+        {
+          "passed": true,
+          "independent_sends": 4,
+          "last_send_line": 2043,
+          "first_consumer_line": 2052,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 2124,
+              "visa_first_consumer_line": 2177,
+              "send_id": 180,
+              "consumer_id": 233,
+              "asm_send_line": 2028,
+              "asm_first_consumer_line": 2052,
+              "scoreboard": 14,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r58:4       [r42:4]            {I@3,$14} // ex_desc:0x0; desc:0x8401580 // $180",
+              "consumer": "and (32|M0)              r6.0<1>:d     r58.0<1;1,0>:d    255:w               {Compacted,$14.dst} //  ALU pipe: int; $233"
+            },
+            {
+              "visa_send_line": 2137,
+              "visa_first_consumer_line": 2392,
+              "send_id": 193,
+              "consumer_id": 424,
+              "asm_send_line": 2041,
+              "asm_first_consumer_line": 2285,
+              "scoreboard": 15,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r28:4       [r42:4]            {I@3,$15} // ex_desc:0x0; desc:0x8401580 // $193",
+              "consumer": "and (32|M0)              r6.0<1>:d     r28.0<1;1,0>:d    255:w               {Compacted,$15.dst} //  ALU pipe: int; $424"
+            },
+            {
+              "visa_send_line": 2144,
+              "visa_first_consumer_line": 2616,
+              "send_id": 200,
+              "consumer_id": 624,
+              "asm_send_line": 2043,
+              "asm_first_consumer_line": 2536,
+              "scoreboard": 2,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r40:4       [r12:4]            {$2} // ex_desc:0x0; desc:0x8401580 // $200",
+              "consumer": "and (32|M0)              r6.0<1>:d     r40.0<1;1,0>:d    255:w               {Compacted,$2.dst} //  ALU pipe: int; $624"
+            },
+            {
+              "visa_send_line": 2151,
+              "visa_first_consumer_line": 2831,
+              "send_id": 207,
+              "consumer_id": 815,
+              "asm_send_line": 2042,
+              "asm_first_consumer_line": 2776,
+              "scoreboard": 1,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r62:4       [r46:4]            {I@1,$1} // ex_desc:0x0; desc:0x8401580 // $207",
+              "consumer": "and (32|M0)              r20.0<1>:d    r62.0<1;1,0>:d    255:w               {Compacted,$1.dst} //  ALU pipe: int; $815"
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "independent_sends": 4,
+          "last_send_line": 3064,
+          "first_consumer_line": 3065,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 3035,
+              "visa_first_consumer_line": 3084,
+              "send_id": 995,
+              "consumer_id": 1044,
+              "asm_send_line": 3014,
+              "asm_first_consumer_line": 3065,
+              "scoreboard": 3,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r42:4       [r26:4]            {I@5,$3} // ex_desc:0x0; desc:0x8401580 // $995",
+              "consumer": "and (32|M0)              r6.0<1>:d     r42.0<1;1,0>:d    255:w               {Compacted,$3.dst} //  ALU pipe: int; $1044"
+            },
+            {
+              "visa_send_line": 3042,
+              "visa_first_consumer_line": 3299,
+              "send_id": 1002,
+              "consumer_id": 1235,
+              "asm_send_line": 3041,
+              "asm_first_consumer_line": 3306,
+              "scoreboard": 4,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r32:4       [r10:4]            {A@2,$4} // ex_desc:0x0; desc:0x8401580 // $1002",
+              "consumer": "and (32|M0)              r6.0<1>:d     r32.0<1;1,0>:d    255:w               {Compacted,$4.dst} //  ALU pipe: int; $1235"
+            },
+            {
+              "visa_send_line": 3049,
+              "visa_first_consumer_line": 3523,
+              "send_id": 1009,
+              "consumer_id": 1435,
+              "asm_send_line": 3059,
+              "asm_first_consumer_line": 3557,
+              "scoreboard": 9,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r46:4       [r28:4]            {$9} // ex_desc:0x0; desc:0x8401580 // $1009",
+              "consumer": "and (32|M0)              r28.0<1>:d    r46.0<1;1,0>:d    255:w               {Compacted,$9.dst} //  ALU pipe: int; $1435"
+            },
+            {
+              "visa_send_line": 3056,
+              "visa_first_consumer_line": 3738,
+              "send_id": 1016,
+              "consumer_id": 1626,
+              "asm_send_line": 3064,
+              "asm_first_consumer_line": 3802,
+              "scoreboard": 10,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r58:4       [r38:4]            {$10} // ex_desc:0x0; desc:0x8401580 // $1016",
+              "consumer": "and (32|M0)              r12.0<1>:d    r58.0<1;1,0>:d    255:w               {Compacted,$10.dst} //  ALU pipe: int; $1626"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "//.kernel _ZTSZZNK4p1026KernelILj1ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "batch": 1,
+      "shared": true,
+      "visa": "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-4.visaasm.gz",
+      "assembly": "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/registers-offline/kernel-4.asm.gz",
+      "passed": true,
+      "grid_words_per_step": 8,
+      "batch_grid_words": 2,
+      "activation_vectors_per_step": 4,
+      "activation_d32_loads_per_step": 16,
+      "groups": [
+        {
+          "passed": true,
+          "independent_sends": 2,
+          "last_send_line": 1797,
+          "first_consumer_line": 1826,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 1966,
+              "visa_first_consumer_line": 2005,
+              "send_id": 196,
+              "consumer_id": 235,
+              "asm_send_line": 1788,
+              "asm_first_consumer_line": 1826,
+              "scoreboard": 14,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r18:4       [r14:4]            {I@1,$14} // ex_desc:0x0; desc:0x8401580 // $196",
+              "consumer": "and (32|M0)              r22.0<1>:d    r18.0<1;1,0>:d    255:w               {Compacted,$14.dst} //  ALU pipe: int; $235"
+            },
+            {
+              "visa_send_line": 1974,
+              "visa_first_consumer_line": 2223,
+              "send_id": 204,
+              "consumer_id": 429,
+              "asm_send_line": 1797,
+              "asm_first_consumer_line": 2065,
+              "scoreboard": 15,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r14:4       [r22:4]            {I@1,$15} // ex_desc:0x0; desc:0x8401580 // $204",
+              "consumer": "and (32|M0)              r18.0<1>:d    r14.0<1;1,0>:d    255:w               {Compacted,$15.dst} //  ALU pipe: int; $429"
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "independent_sends": 2,
+          "last_send_line": 2289,
+          "first_consumer_line": 2301,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 2413,
+              "visa_first_consumer_line": 2436,
+              "send_id": 595,
+              "consumer_id": 618,
+              "asm_send_line": 2280,
+              "asm_first_consumer_line": 2301,
+              "scoreboard": 4,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r18:4       [r14:4]            {I@1,$4} // ex_desc:0x0; desc:0x8401580 // $595",
+              "consumer": "and (32|M0)              r22.0<1>:d    r18.0<1;1,0>:d    255:w               {Compacted,$4.dst} //  ALU pipe: int; $618"
+            },
+            {
+              "visa_send_line": 2420,
+              "visa_first_consumer_line": 2634,
+              "send_id": 602,
+              "consumer_id": 792,
+              "asm_send_line": 2289,
+              "asm_first_consumer_line": 2534,
+              "scoreboard": 5,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r14:4       [r22:4]            {I@1,$5} // ex_desc:0x0; desc:0x8401580 // $602",
+              "consumer": "and (32|M0)              r18.0<1>:d    r14.0<1;1,0>:d    255:w               {Compacted,$5.dst} //  ALU pipe: int; $792"
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "independent_sends": 2,
+          "last_send_line": 2758,
+          "first_consumer_line": 2785,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 2822,
+              "visa_first_consumer_line": 2857,
+              "send_id": 956,
+              "consumer_id": 991,
+              "asm_send_line": 2749,
+              "asm_first_consumer_line": 2785,
+              "scoreboard": 10,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r18:4       [r14:4]            {I@1,$10} // ex_desc:0x0; desc:0x8401580 // $956",
+              "consumer": "and (32|M0)              r24.0<1>:d    r18.0<1;1,0>:d    255:w               {Compacted,$10.dst} //  ALU pipe: int; $991"
+            },
+            {
+              "visa_send_line": 2829,
+              "visa_first_consumer_line": 3066,
+              "send_id": 963,
+              "consumer_id": 1176,
+              "asm_send_line": 2758,
+              "asm_first_consumer_line": 3023,
+              "scoreboard": 11,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r14:4       [r22:4]            {I@1,$11} // ex_desc:0x0; desc:0x8401580 // $963",
+              "consumer": "and (32|M0)              r38.0<1>:d    r14.0<1;1,0>:d    255:w               {Compacted,$11.dst} //  ALU pipe: int; $1176"
+            }
+          ]
+        },
+        {
+          "passed": true,
+          "independent_sends": 2,
+          "last_send_line": 3251,
+          "first_consumer_line": 3264,
+          "no_early_destination_wait": true,
+          "loads": [
+            {
+              "visa_send_line": 3256,
+              "visa_first_consumer_line": 3279,
+              "send_id": 1342,
+              "consumer_id": 1365,
+              "asm_send_line": 3248,
+              "asm_first_consumer_line": 3264,
+              "scoreboard": 1,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r14:4       [r28:4]            {I@3,$1} // ex_desc:0x0; desc:0x8401580 // $1342",
+              "consumer": "and (32|M0)              r20.0<1>:d    r14.0<1;1,0>:d    255:w               {Compacted,$1.dst} //  ALU pipe: int; $1365"
+            },
+            {
+              "visa_send_line": 3263,
+              "visa_first_consumer_line": 3477,
+              "send_id": 1349,
+              "consumer_id": 1539,
+              "asm_send_line": 3251,
+              "asm_first_consumer_line": 3491,
+              "scoreboard": 2,
+              "send": "load.ugm.d32x2.a64 (32|M0)  r28:4       [r34:4]            {$2} // ex_desc:0x0; desc:0x8401580 // $1349",
+              "consumer": "and (32|M0)              r12.0<1>:d    r28.0<1;1,0>:d    255:w               {Compacted,$2.dst} //  ALU pipe: int; $1539"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "scope": "linked offline BMG-G31 send ordering and activation-load reuse; device speed remains pending"
+}

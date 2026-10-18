@@ -1,0 +1,109 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "selection": {
+    "name": "production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production",
+    "placement": "1",
+    "draft": "draft-hc",
+    "miss": "batch",
+    "draft_rank": 1,
+    "target_split": 0,
+    "layer_boundary": 24,
+    "experts": "wide64+halfcache",
+    "dense": "production",
+    "hc": "hc-wide",
+    "host": "ordered",
+    "route": "fast",
+    "norm": "production",
+    "recurrence": "rec-both-plus",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "selection_sha256": "6c58206cad748a8385b41389d5b9c05ff1891340b4bd0b12ce3611b5cddca739",
+    "screen_seal_sha256": "254e281548ca9439856b47e5064da13e49310fed89be45b9ba93be041e57bd77"
+  },
+  "checks": [
+    {
+      "name": "imports",
+      "command": [
+        "/home/steve/.venvs/deepseek-v4-xpu/bin/python",
+        "-B",
+        "-c",
+        "import runpy;from bootstrap import install,WRAPPER;install();runpy.run_path(str(WRAPPER/'tp2_worker.py'),run_name='cpu_import');from lane_admission import admission_scope;assert admission_scope('A','screen')=='lane-A';assert admission_scope('A','WS128')=='whole-host'"
+      ],
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "consumers",
+      "command": [
+        "/home/steve/.venvs/deepseek-v4-xpu/bin/python",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/test_packet97.py",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/test_lane_admission.py",
+        "--basetemp",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/build/tmp/selected-test-qi1jg6ne/pytest"
+      ],
+      "sha256": "12657b1acaa5d8da88a80609d7d5c16ad7a9f8d47afe3362f0e96314f318d319"
+    },
+    {
+      "name": "windows",
+      "command": [
+        "/home/steve/.venvs/deepseek-v4-xpu/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/plan_gate.py"
+      ],
+      "sha256": "8da5f5767f4fc9026122de5a94193c1ffaef8ed4d0692256deda619752a59947"
+    },
+    {
+      "name": "screen-A",
+      "command": [
+        "/home/steve/.venvs/deepseek-v4-xpu/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/run_screen.py",
+        "--profile",
+        "tp2",
+        "--lane",
+        "A",
+        "--placement",
+        "1",
+        "--lineage",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--placement-1",
+        "--seal",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--placement-1/screen-seal.json",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p97-selection-plan-A",
+        "--plan"
+      ],
+      "sha256": "074045c7ce784a598797a8498185b2f13c561f261c1c6af0b5a90d7b92e6d62d"
+    },
+    {
+      "name": "screen-B",
+      "command": [
+        "/home/steve/.venvs/deepseek-v4-xpu/bin/python",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/run_screen.py",
+        "--profile",
+        "tp2",
+        "--lane",
+        "B",
+        "--placement",
+        "1",
+        "--lineage",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--placement-1",
+        "--seal",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--placement-1/screen-seal.json",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p97-selection-plan-B",
+        "--plan"
+      ],
+      "sha256": "f9e19b27bd6506443ad11c83c21f64fd347fc4a8693da29c6b18d135607e2237"
+    }
+  ],
+  "seconds": 33.069457959005376,
+  "cached_proof_sha256": "f5aa7d34117897cf63c248eda62d9a6a5e294d55bb7a9c1678b2353b42707cf5"
+}

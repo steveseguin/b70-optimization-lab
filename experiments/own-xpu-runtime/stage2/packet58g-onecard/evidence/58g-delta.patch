@@ -1,0 +1,445 @@
+diff --git a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/main.cpp b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/main.cpp
+index 7c7b22e9a..ed7ef515e 100644
+--- a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/main.cpp
++++ b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/main.cpp
+@@ -816,6 +816,11 @@ public:
+     for(const auto& l:p.launches)if(l.op=="gemv" && l.weights[0]==name)return variant(l);
+     return 2;
+   }
++#ifdef OWN_RT_HOST_ONLY
++  bool allocation_probe=false, legacy_pointer_probe=false; // Only the CPU gate sets these.
++#else
++  static constexpr bool allocation_probe=false, legacy_pointer_probe=false;
++#endif
+   void load_expert_bank(const std::string& name) {
+     const auto& t=w.directory.at(name);require(t.shape.size()==3&&p.g.experts==512,"expert bank shape");
+     bool planes=p49b_weight(w,a,p,name);auto type=flash::grid_type(t.grid);unsigned k=t.shape.back();
+@@ -826,7 +831,7 @@ public:
+     auto host=allocate(0,"pinned-experts:"+name,bytes,Category::weights,Lifetime::process,Memory::pinned);
+     auto dest=static_cast<uint8_t*>(dev(0).arena.row(host).pointer);require(dest,"pinned expert allocation failed");
+     size_t chunk=std::max(size_t(1),size_t(4*1024*1024)/std::max(src_stride,stride));
+-    for(size_t row=0;row<total;row+=chunk){guard();size_t n=std::min(chunk,total-row);auto raw=w.read(name,row*src_stride,n*src_stride);
++    for(size_t row=0;!allocation_probe && row<total;row+=chunk){guard();size_t n=std::min(chunk,total-row);auto raw=w.read(name,row*src_stride,n*src_stride);
+       if(planes)for(size_t r=0;r<n;++r)p49bgemv::repack_row(type,k,raw.data()+r*src_stride,dest+(row+r)*stride);
+       else std::memcpy(dest+row*stride,raw.data(),raw.size());
+     }
+@@ -899,6 +904,7 @@ public:
+     auto id = allocate(c, "weight:" + name, expanded_bytes, Category::weights,
+                        Lifetime::process);
+     weights[c][name] = id;
++    if(allocation_probe)return;
+     if(planes){
+       const unsigned k=t.shape.back();const size_t raw_stride=p49bgemv::source_row_bytes(type,k),stride=p49bgemv::layout(type,k).row_bytes;
+       const size_t total=t.bytes/raw_stride,chunk=std::max(size_t(1),size_t(4*1024*1024)/std::max(raw_stride,stride));
+@@ -950,7 +956,7 @@ public:
+     const size_t operator_scratch_bytes=target_scratch_bytes(p,a);
+     owned_bytes.resize(a.cards);
+ #ifdef OWN_RT_HOST_ONLY
+-    devices.push_back(std::make_unique<ownrt::Device>(std::make_unique<Host>()));
++    if(!allocation_probe)devices.push_back(std::make_unique<ownrt::Device>(std::make_unique<Host>()));
+ #else
+     devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,profile_events||a.mtp||!a.draft_capture.empty())));
+     save(a.output/"device-contact.json","{\"device_contact\":true}");
+@@ -1194,7 +1200,7 @@ public:
+     }
+     if((candidate.starts_with("p28.")||candidate.starts_with("p29.")||candidate.starts_with("p33.")||candidate.starts_with("p42."))&&!a.mini){
+       std::vector<Matrix> selected{m};if(l.op=="expert_gate_up")selected.push_back(a.memory=="resident"?it->second[1]:matrix(l,1));
+-      finish(c,candidate.starts_with("p28.")?p28::submit(dev(c),selected,candidate,l.op=="expert_gate_up",variant(l)):(candidate.starts_with("p33.")||candidate.starts_with("p42."))?p33::submit(dev(c),selected,candidate,l.op=="expert_gate_up",variant(l)):p29::submit(dev(c),selected,candidate,l.op=="expert_gate_up",variant(l)),true);return;
++      finish(c,candidate.starts_with("p28.")?p28::submit(dev(c),selected,candidate,l.op=="expert_gate_up",variant(l),caching() && l.op=="expert_gate_up" && !legacy_pointer_probe):(candidate.starts_with("p33.")||candidate.starts_with("p42."))?p33::submit(dev(c),selected,candidate,l.op=="expert_gate_up",variant(l)):p29::submit(dev(c),selected,candidate,l.op=="expert_gate_up",variant(l)),true);return;
+     }
+     if((candidate.starts_with("p25.")||candidate.starts_with("p27."))&&!a.mini){ // model-shape candidates; mini retains registered packed arithmetic
+       std::vector<Matrix> selected{m};if(l.op=="expert_gate_up")selected.push_back(a.memory=="resident"?it->second[1]:matrix(l,1));
+@@ -1354,7 +1360,7 @@ public:
+       site.fp32_source=fp32_sources[l.card];site.fp32_extent=fp32_extents[l.card];
+       preparing_commands=true;auto& d=dev(l.card);d.begin_capture(site.commands);
+       try {execute_site(l);d.end_capture();preparing_commands=false;}
+-      catch(...){d.end_capture();preparing_commands=false;throw;}
++      catch(const std::exception& error){d.end_capture();preparing_commands=false;throw std::runtime_error(l.label+": "+error.what());}
+       site.cls=current_cls;
+     }
+     std::fill(fp32_sources.begin(),fp32_sources.end(),0);
+@@ -1630,10 +1636,15 @@ static void p58_reset_request(Engine& e,const fs::path& destination) {
+ 
+ #ifdef OWN_RT_HOST_ONLY
+ #include "postload_allocation_test.hpp"
++#include "fullshape_submit_test.hpp"
+ #endif
+ 
+ int main(int argc, char **argv) {
+ #ifdef OWN_RT_HOST_ONLY
++  if(argc==3 && std::string(argv[1])=="--fullshape-submit-test") {
++    try {return fullshape_submit_test(argv[2]);}
++    catch(const std::exception& error){std::cerr<<error.what()<<"\n";return 1;}
++  }
+   if(argc==3 && std::string(argv[1])=="--postload-allocation-test") {
+     try {return postload_allocation_test(argv[2]);}
+     catch(const std::exception& error){std::cerr<<error.what()<<"\n";return 1;}
+@@ -1644,7 +1655,7 @@ int main(int argc, char **argv) {
+   fs::path output;
+   std::string error;
+   std::vector<std::string> teardown;
+-  bool comparison = true, did_compare = false;
++  bool comparison = true, did_compare = false, compute_started = false;
+   std::vector<int> generated;
+   std::string text;
+   uint64_t read_bytes = 0;
+@@ -1698,6 +1709,7 @@ int main(int argc, char **argv) {
+     selection_observed_sha256=e->sealed_selection.observed_sha256;
+     record_host_memory(output,"before_load");
+     e->initialize();
++    e->dev(0).before_compute=[&]{compute_started=true;};
+     e->prepare_plan();
+     e->prepare_commands();
+     residency_json=w->residency; // sparse host lookups; do not touch all 28.8 GB PLE pages
+@@ -1888,6 +1900,7 @@ int main(int argc, char **argv) {
+ #else
+   r << "true";
+ #endif
++  r << ",\"compute_started\":"<<(compute_started?"true":"false");
+   r << ",\"safe_to_exit\":true,\"cpu_affinity\":"<<affinity_json<<",\"load_average_1m\":"<<load_average<<",\"lookup_residency\":"<<residency_json<<",\"host_path\":"<<ownrt::quote(a.memory=="resident"&&!a.legacy?"prepared":"legacy-streaming-or-explicit");
+   r << ",\"selection_sha256\":"<<ownrt::quote(selection_observed_sha256);
+   r << ",\"native_nice\":"<<a.native_nice<<",\"observed_nice\":"<<getpriority(PRIO_PROCESS,0);
+diff --git a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/p28/submit.cpp b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/p28/submit.cpp
+index 078f9389e..54f6e914d 100644
+--- a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/p28/submit.cpp
++++ b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/p28/submit.cpp
+@@ -7,22 +7,23 @@
+ #include <algorithm>
+ namespace p28 {
+ using integrated::Matrix;using integrated::Launch;
+-void validate(ownrt::Device& d,const std::vector<Matrix>& ms,const std::string& name,bool shared,unsigned v){
++void validate(ownrt::Device& d,const std::vector<Matrix>& ms,const std::string& name,bool shared,unsigned v,bool indirect){
+  if(ms.empty()||ms.size()>2)throw std::invalid_argument("p28 matrix count");
+  const auto& a=ms[0];if(a.type!=Type::Q6_K&&a.type!=Type::Q8_0&&a.type!=Type::F32&&a.type!=Type::BF16&&a.type!=Type::IQ2_S&&a.type!=Type::IQ3_S&&a.type!=Type::IQ4_NL)throw std::invalid_argument("p28 unsupported type");auto names=candidates(a.type);
+  if(std::find(names.begin(),names.end(),name)==names.end())throw std::invalid_argument("p28 candidate/type");
+  if(!a.rows||a.rows>248320||!a.columns||a.columns>17408||!a.count||a.count>10||!a.experts||a.experts>512||a.columns%iq3::layout(a.type).elements)throw std::invalid_argument("p28 geometry");
+  bool routed=expert(a.type);
+  const bool output_pair=a.type==Type::IQ2_S||a.type==Type::IQ3_S;
++ if(indirect && !routed)throw std::invalid_argument("p28 indirect dense weights");
+  if(routed&&(ms.size()!=(output_pair?2u:1u)||shared!=output_pair))throw std::invalid_argument("p28 expert projection cardinality");
+  if(routed?(v!=2||!a.routes||(a.experts!=512&&a.experts!=10)||a.count!=10||shared!=(ms.size()==2)):(ms.size()!=1||shared||a.routes||a.status||a.count!=1||a.experts!=1))throw std::invalid_argument("p28 dense/routed contract");
+  if(!routed&&(((a.type==Type::F32||a.type==Type::BF16) && v!=0&&v!=4)||(a.type!=Type::F32&&a.type!=Type::BF16&&v!=6&&v!=7)))throw std::invalid_argument("p28 arithmetic variant");
+  if((a.type==Type::IQ4_NL&&a.columns!=640)||(routed&&a.type!=Type::IQ4_NL&&a.columns!=2560)||(!routed&&a.columns!=320&&a.columns!=640&&a.columns!=2560&&a.columns!=6144&&a.columns!=10240))throw std::invalid_argument("p28 uncompiled shape family");
+  std::vector<std::pair<uint64_t,bool>> accesses;
+- auto extent=[&](ownrt::Allocation id,size_t bytes,bool write){auto r=d.arena.row(id);if(!r.live||r.memory!=ownrt::Memory::device||bytes>r.bytes||reinterpret_cast<uintptr_t>(r.pointer)%16)throw std::invalid_argument("p28 extent/alignment");accesses.emplace_back(id,write);};
++ auto extent=[&](ownrt::Allocation id,size_t bytes,bool write){auto r=d.arena.row(id);if(!r.live||r.memory!=ownrt::Memory::device||bytes>r.bytes||reinterpret_cast<uintptr_t>(r.pointer)%16)throw std::invalid_argument("p28 extent/alignment: label="+r.label+" id="+std::to_string(id)+" required="+std::to_string(bytes)+" actual="+std::to_string(r.bytes)+" memory="+std::to_string(int(r.memory))+" alignment_mod16="+std::to_string(reinterpret_cast<uintptr_t>(r.pointer)%16));accesses.emplace_back(id,write);};
+  for(const auto& m:ms){
+   if(m.type!=a.type||m.rows!=a.rows||m.columns!=a.columns||m.count!=a.count||m.experts!=a.experts||m.routes!=a.routes||m.x!=a.x||(m.span&&m.span!=m.rows)||m.activation!=Type::BF16||m.output_type!=Type::BF16||m.fp32)throw std::invalid_argument("p28 matrix identity");
+-  extent(m.w,size_t(m.experts)*m.rows*integrated::arithmetic::row_bytes(m.type,m.columns,v),false);
++  extent(m.w,indirect?size_t(m.experts)*sizeof(p58::Pointer):size_t(m.experts)*m.rows*integrated::arithmetic::row_bytes(m.type,m.columns,v),false);
+   extent(m.x,size_t(shared?1:m.count)*m.columns*2,false);extent(m.y,size_t(m.count)*m.rows*2,true);
+   if(routed){extent(m.routes,m.count*sizeof(iq3::Route),false);extent(m.status,m.count*4,true);}
+  }
+@@ -58,7 +59,7 @@ struct Kernel final:
+  void run(std::span<void*const> p)const override{auto d=bind(p);
+   for(unsigned slot=0;slot<d.count;++slot){auto r=d.routes?d.routes[slot]:iq3::Route{0,0,d.rows};bool valid=iq3::valid_route(r,d.experts,d.rows,d.rows);if(d.routes){d.status[slot]=!valid;if constexpr(OutputPair)d.ps[slot]=!valid;}
+    #pragma omp parallel for num_threads(2) schedule(static) if(d.rows>=64)
+-   for(unsigned row=0;row<d.rows;++row){float partial[2][4]{};if(valid&&row<r.row_count){size_t source=size_t(r.expert_id)*d.rows+r.row_begin+row;for(unsigned part=0;part<Split;++part){auto bounds=iq3::kopt2::bounds(K,part,Split);float sums[2][32]{};for(unsigned l=0;l<32;++l){auto values=lanes<T,K,Shared,Paired>(d.w+source*d.rb,d.peer+source*d.rb,d.x+(OutputPair?0:size_t(slot)*K),bounds.first,bounds.second,l,iq3::kopt3::HostShare{});sums[0][l]=values[0];sums[1][l]=values[1];}for(unsigned j=0;j<(OutputPair?2u:1u);++j)partial[j][part]=iq3::tree32(sums[j]);}}
++   for(unsigned row=0;row<d.rows;++row){float partial[2][4]{};if(valid&&row<r.row_count){size_t source=size_t(r.expert_id)*d.rows+r.row_begin+row;for(unsigned part=0;part<Split;++part){auto bounds=iq3::kopt2::bounds(K,part,Split);float sums[2][32]{};for(unsigned l=0;l<32;++l){auto values=lanes<T,K,Shared,Paired>(p58::resolve(d.w,source*d.rb,size_t(d.rows)*d.rb,d.indirect),p58::resolve(d.peer,source*d.rb,size_t(d.rows)*d.rb,d.indirect),d.x+(OutputPair?0:size_t(slot)*K),bounds.first,bounds.second,l,iq3::kopt3::HostShare{});sums[0][l]=values[0];sums[1][l]=values[1];}for(unsigned j=0;j<(OutputPair?2u:1u);++j)partial[j][part]=iq3::tree32(sums[j]);}}
+     for(unsigned j=0;j<(OutputPair?2u:1u);++j){float v=Split==1?partial[j][0]:(partial[j][0]+partial[j][1])+(partial[j][2]+partial[j][3]);(j?d.py:d.y)[size_t(slot)*d.rows+row]=iq3::bf16_bits(valid&&row<r.row_count?v:iq3::bits_float(0x7fc00000));}
+    }
+   }
+@@ -70,7 +71,7 @@ struct Kernel final:
+    auto sg=it.get_sub_group();unsigned l=sg.get_local_linear_id(),sub=sg.get_group_linear_id();size_t item=it.get_group_linear_id()*rpg*(rpg==4?Split:1)+sub,logical=item/Split;unsigned part=item%Split,row=logical%d.rows,slot=logical/d.rows;bool active=logical<size_t(d.rows)*d.count;
+    iq3::Route r{0,0,d.rows};if(active&&d.routes)r=d.routes[slot];bool route_ok=active&&iq3::valid_route(r,d.experts,d.rows,d.rows);bool valid=route_ok&&row<r.row_count;
+    std::array<float,2> values{};
+-   if(valid){size_t source=size_t(r.expert_id)*d.rows+r.row_begin+row;auto range=iq3::kopt2::bounds(K,part,Split);values=lanes<T,K,Shared,Paired>(d.w+source*d.rb,d.peer+source*d.rb,d.x+(OutputPair?0:size_t(slot)*K),range.first,range.second,l,Share{sg,l});}
++   if(valid){size_t source=size_t(r.expert_id)*d.rows+r.row_begin+row;auto range=iq3::kopt2::bounds(K,part,Split);values=lanes<T,K,Shared,Paired>(p58::resolve(d.w,source*d.rb,size_t(d.rows)*d.rb,d.indirect),p58::resolve(d.peer,source*d.rb,size_t(d.rows)*d.rb,d.indirect),d.x+(OutputPair?0:size_t(slot)*K),range.first,range.second,l,Share{sg,l});}
+    for(unsigned j=0;j<(OutputPair?2u:1u);++j){for(unsigned width=1;width<32;width*=2){float rhs=sycl::select_from_group(sg,values[j],(l+width)%32);if(l%(2*width)==0)values[j]=values[j]+rhs;}
+     if(active&&l==0){if constexpr(Split==1)(j?d.py:d.y)[logical]=iq3::bf16_bits(valid?values[j]:iq3::bits_float(0x7fc00000));else {if constexpr(rpg==4)partial[((sub/Split)*2+j)*4+part]=valid?values[j]:iq3::bits_float(0x7fc00000);else d.scratch[(logical*2+j)*4+part]=valid?values[j]:iq3::bits_float(0x7fc00000);}}}
+    if constexpr(rpg==4){it.barrier(sycl::access::fence_space::local_space);if(active&&l==0&&part==0&&Split==4){for(unsigned j=0;j<(OutputPair?2u:1u);++j){auto off=((sub/Split)*2+j)*4;(j?d.py:d.y)[logical]=iq3::bf16_bits((partial[off]+partial[off+1])+(partial[off+2]+partial[off+3]));}}}
+@@ -88,10 +89,10 @@ template<bool OutputPair> struct Finish final:ownrt::SyclOperation {
+  }
+ };
+ #endif
+-template<Type T,unsigned K,unsigned Split> Launch typed_split(ownrt::Device& d,const std::vector<Matrix>& ms,const std::string& name,unsigned variant){
++template<Type T,unsigned K,unsigned Split> Launch typed_split(ownrt::Device& d,const std::vector<Matrix>& ms,const std::string& name,unsigned variant,bool indirect){
+  constexpr bool OutputPair=T==Type::IQ2_S||T==Type::IQ3_S;
+  const auto& m=ms[0];const auto& p=OutputPair?ms[1]:m;
+- auto issue=[&]<unsigned RPG,bool Shared,bool Paired>(){Kernel<T,K,Split,RPG,Shared,Paired> op;op.b.rb=integrated::arithmetic::row_bytes(T,K,variant);op.b.rows=m.rows;op.b.count=m.count;op.b.experts=m.experts;op.b.has_routes=bool(m.routes);
++ auto issue=[&]<unsigned RPG,bool Shared,bool Paired>(){Kernel<T,K,Split,RPG,Shared,Paired> op;op.b.rb=integrated::arithmetic::row_bytes(T,K,variant);op.b.rows=m.rows;op.b.count=m.count;op.b.experts=m.experts;op.b.has_routes=bool(m.routes);op.b.indirect=indirect;
+   std::array<ownrt::Allocation,9> ids{m.w,p.w,m.x,m.y,p.y,m.routes?m.routes:m.x,m.status?m.status:m.y,p.status?p.status:p.y,m.workspace};auto e=d.compute(op,ids,{});Launch out{e,e,1};
+ #ifndef OWN_RT_HOST_ONLY
+   if constexpr(Split==4&&RPG==1){Finish<OutputPair> f;f.n=m.rows*m.count;std::array args{m.workspace,m.y,p.y};out.last=d.compute(f,args,{});out.passes=2;}
+@@ -105,23 +106,23 @@ template<Type T,unsigned K,unsigned Split> Launch typed_split(ownrt::Device& d,c
+  }
+  return four?issue.template operator()<4,false,false>():issue.template operator()<1,false,false>();
+ }
+-template<Type T,unsigned K> Launch typed(ownrt::Device& d,const std::vector<Matrix>& ms,const std::string& name,unsigned variant){
+- if constexpr(expert_format(T))return typed_split<T,K,1>(d,ms,name,variant);
+- else {if(variant==7||variant==4)return typed_split<T,K,4>(d,ms,name,variant);return typed_split<T,K,1>(d,ms,name,variant);}
++template<Type T,unsigned K> Launch typed(ownrt::Device& d,const std::vector<Matrix>& ms,const std::string& name,unsigned variant,bool indirect){
++ if constexpr(expert_format(T))return typed_split<T,K,1>(d,ms,name,variant,indirect);
++ else {if(variant==7||variant==4)return typed_split<T,K,4>(d,ms,name,variant,indirect);return typed_split<T,K,1>(d,ms,name,variant,indirect);}
+ }
+-template<Type T> Launch select_k(ownrt::Device& d,const std::vector<Matrix>& m,const std::string& n,unsigned v){
+- if constexpr(expert_format(T)){if constexpr(T==Type::IQ4_NL)return typed<T,640>(d,m,n,v);else return typed<T,2560>(d,m,n,v);}
++template<Type T> Launch select_k(ownrt::Device& d,const std::vector<Matrix>& m,const std::string& n,unsigned v,bool indirect){
++ if constexpr(expert_format(T)){if constexpr(T==Type::IQ4_NL)return typed<T,640>(d,m,n,v,indirect);else return typed<T,2560>(d,m,n,v,indirect);}
+  else {switch(m[0].columns){
+- case 2560:return typed<T,2560>(d,m,n,v);
+- case 6144:return typed<T,6144>(d,m,n,v);
+- case 10240:return typed<T,10240>(d,m,n,v);
+- case 320:if constexpr(T!=Type::Q6_K)return typed<T,320>(d,m,n,v);break;
+- case 640:if constexpr(T!=Type::Q6_K)return typed<T,640>(d,m,n,v);break;
++ case 2560:return typed<T,2560>(d,m,n,v,indirect);
++ case 6144:return typed<T,6144>(d,m,n,v,indirect);
++ case 10240:return typed<T,10240>(d,m,n,v,indirect);
++ case 320:if constexpr(T!=Type::Q6_K)return typed<T,320>(d,m,n,v,indirect);break;
++ case 640:if constexpr(T!=Type::Q6_K)return typed<T,640>(d,m,n,v,indirect);break;
+  }}throw std::invalid_argument("p28 uncompiled K");
+ }
+-Launch submit(ownrt::Device& d,const std::vector<Matrix>& m,const std::string& name,bool shared,unsigned v){validate(d,m,name,shared,v);
++Launch submit(ownrt::Device& d,const std::vector<Matrix>& m,const std::string& name,bool shared,unsigned v,bool indirect){validate(d,m,name,shared,v,indirect);
+  switch(m[0].type){
+-#define CASE(T) case Type::T:return select_k<Type::T>(d,m,name,v)
++#define CASE(T) case Type::T:return select_k<Type::T>(d,m,name,v,indirect)
+  CASE(Q6_K);CASE(Q8_0);CASE(F32);CASE(BF16);CASE(IQ2_S);CASE(IQ3_S);CASE(IQ4_NL);
+ #undef CASE
+  default:throw std::invalid_argument("p28 uncompiled type");}
+diff --git a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/p28/submit.hpp b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/p28/submit.hpp
+index c401cdd99..4b3c3b5ec 100644
+--- a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/p28/submit.hpp
++++ b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/p28/submit.hpp
+@@ -1,13 +1,14 @@
+ #pragma once
+ #include "registry.hpp"
++#include "../p58_pointer.hpp"
+ namespace p28 {
+ struct Bound {
+  const uint8_t* w{};const uint8_t* peer{};const uint16_t* x{};uint16_t* y{};uint16_t* py{};
+  const iq3::Route* routes{};uint32_t* status{};uint32_t* ps{};float* scratch{};
+- size_t rb{};unsigned rows{},count{},experts{},split{};bool paired{},has_routes{};
++ size_t rb{};unsigned rows{},count{},experts{},split{};bool paired{},has_routes{},indirect{};
+ };
+ static_assert(sizeof(Bound)<=1024,"packet28 arguments exceed 1024 bytes");
+ template<class F> F checked(F f){static_assert(sizeof(F)<=1024,"packet28 kernel capture exceeds 1024 bytes");return f;}
+-void validate(ownrt::Device&,const std::vector<integrated::Matrix>&,const std::string&,bool,unsigned);
+-integrated::Launch submit(ownrt::Device&,const std::vector<integrated::Matrix>&,const std::string&,bool,unsigned);
++void validate(ownrt::Device&,const std::vector<integrated::Matrix>&,const std::string&,bool,unsigned,bool indirect=false);
++integrated::Launch submit(ownrt::Device&,const std::vector<integrated::Matrix>&,const std::string&,bool,unsigned,bool indirect=false);
+ }
+diff --git a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/p58_native_fixture.cpp b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/p58_native_fixture.cpp
+index b9eb195a1..3d356196f 100644
+--- a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/p58_native_fixture.cpp
++++ b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/p58_native_fixture.cpp
+@@ -85,7 +85,7 @@ template<iq3::Type T,unsigned K,bool Gate>Times exercise(Runner&r,unsigned itera
+  std::vector<iq3::Route> routes(count);for(unsigned j=0;j<count;++j)routes[j]={(j*7)%experts,0,rows};a.routes=r.vec(routes);auto b=a;b.w=u;if(Gate){b.y=r.vec(std::vector<uint16_t>(rows*count,0));b.status=r.vec(std::vector<uint32_t>(count,0));}
+  p39::Bindings control;control.error=r.word(0);control.active=r.word(1);control.position=r.word(0);control.capacity=4096;
+  auto invoke=[&](bool indirect){auto aa=a,bb=b;aa.w=indirect?table:w;bb.w=indirect?up_table:u;std::vector<Matrix>m{aa};if(Gate)m.push_back(bb);auto controls=control;controls.indirect=indirect;
+-  if constexpr(T==iq3::Type::IQ3_S)return p39::submit(r.d,m,kind,controls);else return p49d::expert(r.d,m,kind,controls);};
++  if constexpr(T==iq3::Type::IQ3_S){if(indirect)return p28::submit(r.d,m,"p28.paired.wg32",true,2,true);return p39::submit(r.d,m,kind,controls);}else return p49d::expert(r.d,m,kind,controls);};
+  std::vector<Allocation>outputs{a.y,a.status,control.error};if(Gate){outputs.push_back(b.y);outputs.push_back(b.status);}
+  r.finish(invoke(false).last);auto expected=r.snapshot(outputs);std::vector<uint8_t> flattened;for(auto&v:expected)flattened.insert(flattened.end(),v.begin(),v.end());times.digest=packet26::hash(flattened.data(),flattened.size());
+  for(unsigned mode=0;mode<4;++mode){check(!p58_stopping,"K1 cooperative stop");std::vector<p58::Pointer>pt(experts),ut(experts);
+diff --git a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/onecard_admission.py b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/onecard_admission.py
+index 811a0eb4b..d22b42190 100644
+--- a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/onecard_admission.py
++++ b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/onecard_admission.py
+@@ -55,6 +55,32 @@ class Admission:
+         self.lease.complete(drained=True)
+         self.drained = self.record['devices_drained'] = True
+ 
++    def refusal_drained(self, child, native, reasons):
++        """Release only a proven pre-compute refusal after supervisor postflight."""
++        D.require(child.poll() is not None and child.returncode != 0 and not reasons,
++                  'refusal child live or postflight unclean')
++        D.require(native.get('passed') is False and native.get('safe_to_exit') is True
++                  and native.get('compute_started') is False and native.get('device_executed') is True
++                  and native.get('owner_cards') == 1, 'pre-compute refusal not proven')
++        teardown = native.get('teardown')
++        D.require(isinstance(teardown, list) and len(teardown) == 1, 'single shutdown required')
++        owner = teardown[0]
++        D.require(owner.get('status') == 'complete' and owner.get('safe_to_exit') is True
++                  and owner.get('idle_marker_complete') is True and not owner.get('error')
++                  and all(type(owner.get(k)) is int and owner[k] == 0
++                          for k in ('exit_code', 'live_bytes', 'in_flight')), 'shutdown not drained')
++        D.require(self.launch_attempted and not self.drained, 'no pending refusal')
++        D.require(all(D.process_identity(int(pid), self.proc) is None for pid in self.owners),
++                  'refused owner remains alive')
++        # Also catches a still-running native descendant missed by a fast poll.
++        self.record['clients_after_drain'] = D.admit_clients(self.scope, self.proc)
++        self.drain.complete()
++        self.drain.__exit__(None, None, None)
++        self.lease.complete(drained=True)
++        self.drained = self.record['devices_drained'] = True
++        self.record['precompute_refusal_released'] = True
++        # Deliberately leave passed=false. Queue must stop, never retry.
++
+     def observe(self, sample):
+         D.require(not self.drained, 'device observation after drain')
+         owned = {}
+diff --git a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/window.py b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/window.py
+index 5aaaab995..b907d4885 100644
+--- a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/window.py
++++ b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/window.py
+@@ -96,6 +96,7 @@ def build_gate():
+     verify_files(HERE, row.get('gates'))
+     require({'build/device/own-rt-iq3', 'build/device/p58-cache-fixtures'} <= set(row['artifacts']), 'both native binaries must be bound')
+     require('evidence/postload-allocation-cpu.json' in row['gates'], 'post-load allocation gate required')
++    require('evidence/fullshape-submit-cpu.json' in row['gates'], 'full-shape submit gate required')
+     for name in row['gates']:
+         gate = json.loads(safe_path(HERE, name).read_text())
+         require(gate.get('passed') is True and gate.get('device_executed') is False, 'CPU gate failed: ' + name)
+@@ -347,8 +348,8 @@ def main(argv=None):
+     parser.add_argument('--authorized-device-window', action='store_true')
+     args = parser.parse_args(argv)
+     require(args.authorized_device_window, 'coordinator device-window authorization required')
+-    require(os.getpriority(os.PRIO_PROCESS, 0) == 19, 'nice 19 required')
+-    require(set(os.sched_getaffinity(0)) <= set(range(4,16)) | set(range(20,32)), 'restricted affinity required')
++    require(os.getpriority(os.PRIO_PROCESS, 0) == (0 if args.window.startswith('W') else 19), 'window priority differs')
++    require(set(os.sched_getaffinity(0)) == set(range(4)) | set(range(16,20)) if args.window.startswith('W') else set(os.sched_getaffinity(0)) <= set(range(8,16)) | set(range(24,32)), 'window affinity differs')
+     cgroup = Path('/proc/self/cgroup').read_text()
+     user_unit_gate(cgroup)
+     env = closed_environment()
+@@ -361,7 +362,7 @@ def main(argv=None):
+     memory = dict(pending_lane_admission=True, plan=budget)
+     storage = SUPPORT.storage(output, WRITES[args.window])
+     build_bytes = sum(p.stat().st_size for p in (HERE/'build').rglob('*') if p.is_file())
+-    require(build_bytes <= 1_500_000_000, 'packet58 build exceeds 1.5 GB')
++    require(build_bytes <= 1_000_000_000, 'packet58 build exceeds 1 GB')
+     review, through = S.fault_review(args.faults_reviewed_through, time.time_ns()//1000)
+     boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+     latch_path = HERE / ('fault-'+boot+'.json')
+@@ -459,6 +460,13 @@ def main(argv=None):
+                 record['child_retained'] = True
+                 persist()
+                 return 75
++            if child.returncode != 0 and args.window != 'K1' and not reasons:
++                # Device drain and benchmark qualification are independent.
++                # A failed startup still stops the chain, after releasing its own locks.
++                native_receipt = output/'run/run/receipt.json'
++                proof = json.loads(native_receipt.read_text())
++                admission.refusal_drained(child, proof, reasons)
++                record['refusal_release'] = dict(passed=True, receipt_sha256=sha(native_receipt))
+             require(not reasons and child.returncode == 0, 'native window failed or interrupted')
+             if args.window == 'K1':
+                 # supervise has waited for exit and performed journal postflight.
+diff --git a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/suite_driver.py b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/suite_driver.py
+index 679f7e08b..c3c6a15da 100644
+--- a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/suite_driver.py
++++ b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/suite_driver.py
+@@ -110,6 +110,8 @@ def summarize(out, window, manifest):
+     native=read(out/'run/receipt.json')
+     require(native.get('passed') is True and native.get('safe_to_exit') is True
+             and native.get('device_executed') is True and native.get('owner_cards')==1, 'native owner failed')
++    if window.startswith('W'):
++        require(native.get('cpu_affinity')==[0,1,2,3,16,17,18,19] and native.get('observed_nice')==0 and native.get('native_nice')==0, 'timing native CPU placement')
+     teardown=native.get('teardown')
+     require(isinstance(teardown,list) and len(teardown)==1, 'single native owner teardown missing')
+     owner=teardown[0]
+@@ -136,7 +138,7 @@ def native_command(args, manifest, table):
+     require(model==Path('/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS').resolve(), 'unadmitted IQ3 path')
+     return ['ionice','-c3',str(HERE/'build/device/own-rt-iq3'),'--authorized-device-window',
+         '--card','0','--cards','1','--context','4096','--max-new',str(cap),'--stage','decode',
+-        '--memory','resident','--miss-path',('zero-copy' if args.miss_mode=='zerocopy' else 'streamed'),'--native-nice','19','--timing','token',
++        '--memory','resident','--miss-path',('zero-copy' if args.miss_mode=='zerocopy' else 'streamed'),'--native-nice',('0' if args.window.startswith('W') else '19'),'--timing','token',
+         '--retain-steps',retain,'--suite-inputs',str(table),'--input',str(bundle/'tokens.txt'),
+         '--plan',str(bundle/'plan.tsv'),'--identity',str(bundle/'identity.tsv'),'--model-dir',str(model),
+         '--selection',str(HERE/'selection.json'),'--selection-sha256',sha(HERE/'selection.json'),
+@@ -153,7 +155,9 @@ def main(argv=None):
+     import chain_devices as D
+     require(args.card == 0, 'one-card physical card must be 0')
+     D.verify_onecard_environment(os.environ)
+-    require(os.getpriority(os.PRIO_PROCESS,0)==19 and set(os.sched_getaffinity(0))<=set(range(4,16))|set(range(20,32)), 'CPU restrictions')
++    require(os.getpriority(os.PRIO_PROCESS,0)==(0 if args.window.startswith('W') else 19), 'native parent priority')
++    cores=set(range(4))|set(range(16,20)) if args.window.startswith('W') else set(range(8,16))|set(range(24,32))
++    require(set(os.sched_getaffinity(0))==cores, 'native parent affinity')
+     args.output=args.output.resolve();require(args.output.is_relative_to(HERE/'evidence'), 'packet evidence output required')
+     args.output.mkdir(parents=True,exist_ok=True)
+     require(not (args.output/'run').exists() and not (args.output/'receipt.json').exists(), 'output already used')
+@@ -172,7 +176,7 @@ def main(argv=None):
+     for sig in (signal.SIGINT,signal.SIGTERM):signal.signal(sig,stop)
+     try:
+         with (args.output/'native.log').open('w') as log:
+-            child=subprocess.Popen(command,stdout=log,stderr=subprocess.STDOUT)
++            child=subprocess.Popen(command,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT)
+             row.update(device_executed=True,native_pid=child.pid)
+             save(args.output/'receipt.json',row)
+             status=child.wait()
+diff --git a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/queue_runner.py b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/queue_runner.py
+index 9bbf846c2..8b1c96234 100644
+--- a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/queue_runner.py
++++ b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/queue_runner.py
+@@ -17,11 +17,11 @@ GAP_SECONDS = 90
+ 
+ 
+ def commands(output, card, review, library):
+-    W.require(card == 0, 'packet58f requires card 0 and lane A')
++    W.require(card == 0, 'packet58g requires card 0 and lane A')
+     result = {}
+     for index, name in enumerate(ORDER):
+         mode = 'K1' if name.startswith('K1') else name
+-        cmd = ['/usr/bin/nice', '-n', '19', '/usr/bin/taskset', '-c', '8-15,24-31',
++        cmd = ([] if mode.startswith('W') else ['/usr/bin/nice', '-n', '19']) + ['/usr/bin/taskset', '-c', '0-3,16-19' if mode.startswith('W') else '8-15,24-31',
+                '/usr/bin/env', '-i', 'PATH=/usr/bin:/bin', 'OMP_NUM_THREADS=2', 'LD_LIBRARY_PATH='+library,
+                '/usr/bin/python3', '-B', str(P/'window.py'), '--authorized-device-window',
+                '--window', mode, '--card', str(card), '--output', str(output/name),
+@@ -67,8 +67,8 @@ def main(argv=None):
+         return 0
+     W.require(args.authorized_device_window, 'coordinator authorization required')
+     W.user_unit_gate(Path('/proc/self/cgroup').read_text())
+-    W.require(os.getpriority(os.PRIO_PROCESS,0)==19, 'nice 19 required')
+-    W.require(set(os.sched_getaffinity(0)) <= set(range(4,16)) | set(range(20,32)), 'restricted affinity required')
++    W.require(os.getpriority(os.PRIO_PROCESS,0)==0, 'coordinator must start at nice 0 for timing; never raise priority in a child')
++    W.require(set(os.sched_getaffinity(0)) == set(range(4)) | set(range(16,20)), 'coordinator must use lane-A cores 0-3,16-19')
+     W.closed_environment()
+     W.build_gate()
+     W.require(not output.exists(), 'fresh queue output required; no automatic retry')
+@@ -95,7 +95,7 @@ def main(argv=None):
+                 state['running']=name
+                 persist()
+                 with (output/(name+'.log')).open('x') as log:
+-                    child=subprocess.Popen(cmds[name],cwd=W.REPO,stdout=log,stderr=subprocess.STDOUT)
++                    child=subprocess.Popen(cmds[name],cwd=W.REPO,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT)
+                     rc=child.wait()  # Child wrapper owns deadline and graceful drain; never hard kill.
+                 verify_success(name,output,args.card,rc)
+                 state['completed'].append(name)
+diff --git a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/CMakeLists.txt b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/CMakeLists.txt
+index b42084d3c..482031cc7 100644
+--- a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/CMakeLists.txt
++++ b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/CMakeLists.txt
+@@ -88,7 +88,11 @@ if(OWN_RT_HOST_ONLY)
+  add_library(fixture_validation OBJECT ${CMAKE_CURRENT_BINARY_DIR}/validation/adapter.cpp ${CMAKE_CURRENT_BINARY_DIR}/validation/performance.cpp)
+  configure_program(fixture_validation)
+ endif()
+-foreach(pair "own-rt-iq3|packet26_model_entry" "nongemv-fixtures|packet26_fixture_entry" "k2-fixtures|packet26_k2_entry")
++set(PROGRAM_ENTRIES "own-rt-iq3|packet26_model_entry" "nongemv-fixtures|packet26_fixture_entry" "k2-fixtures|packet26_k2_entry")
++if(OWN_RT_HOST_ONLY)
++ list(APPEND PROGRAM_ENTRIES "fullshape-submit|packet26_model_entry")
++endif()
++foreach(pair IN LISTS PROGRAM_ENTRIES)
+  string(REPLACE "|" ";" fields ${pair})
+  list(GET fields 0 target)
+  list(GET fields 1 entry)
+diff --git a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/build.py b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/build.py
+index 43ac5d19d..620291b97 100644
+--- a/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58f-onecard/build.py
++++ b/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58g-onecard/build.py
+@@ -12,7 +12,7 @@ def main():
+  a=argparse.ArgumentParser();a.add_argument('stage',choices=['prepare','gnu-host','device']);args=a.parse_args()
+  if os.getpriority(os.PRIO_PROCESS,0)!=19:raise SystemExit('nice19 required')
+  if not set(os.sched_getaffinity(0))<=set(range(4,16))|set(range(20,32)):raise SystemExit('CPU affinity outside admission')
+- if (sum(x.stat().st_size for x in B.rglob('*') if x.is_file()) if B.exists() else 0) > 1500000000:raise SystemExit('build cap')
++ if (sum(x.stat().st_size for x in B.rglob('*') if x.is_file()) if B.exists() else 0) > 1000000000:raise SystemExit('build cap')
+  B.mkdir(exist_ok=True)
+  parent=P.parent/'packet56-draft-prefix/build'
+  for name in ('input','fusion-fixtures','fusion-rope.hpp'):
+@@ -23,6 +23,7 @@ def main():
+  mode=args.stage;dest=B/mode;env=os.environ.copy();env['OMP_NUM_THREADS']='2';env['PYTHONDONTWRITEBYTECODE']='1'
+  compiler='/usr/bin/g++' if mode=='gnu-host' else '/opt/intel/oneapi/compiler/2026.0/bin/icpx'
+  cmds=[['cmake','-S',str(P),'-B',str(dest),'-DCMAKE_CXX_COMPILER='+compiler,'-DOWN_RT_HOST_ONLY='+('ON' if mode=='gnu-host' else 'OFF')],['cmake','--build',str(dest),'--target','own-rt-iq3','-j1']]
++ if mode=='gnu-host':cmds[-1].insert(-1,'fullshape-submit')
+  if (P/'p58_native_fixture.cpp').exists():cmds[-1].insert(-1,'p58-cache-fixtures')
+  for i,cmd in enumerate(cmds):
+   with (B/(mode+'-'+str(i)+'.log')).open('w') as f:
+@@ -30,7 +31,7 @@ def main():
+  after=source_identity()
+  if before!=after:raise SystemExit('source changed while compiler ran; rebuild required')
+  actual_bytes=sum(x.stat().st_size for x in B.rglob('*') if x.is_file())
+- if actual_bytes>1500000000:raise SystemExit('build exceeded1.5GB')
+- binaries=[dest/n for n in ('own-rt-iq3','p58-cache-fixtures') if (dest/n).is_file()]
++ if actual_bytes>1000000000:raise SystemExit('build exceeded1GB')
++ binaries=[dest/n for n in ('own-rt-iq3','p58-cache-fixtures','fullshape-submit') if (dest/n).is_file()]
+  (P/('build-'+mode+'-receipt.json')).write_text(json.dumps({'schema':'packet58.build.v1','device_executed':False,'passed':True,'sources_sha256':after,'build_bytes':actual_bytes,'commands':cmds,'binaries':{str(x.relative_to(P)):sha(x) for x in binaries},'built_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())},indent=2)+'\n')
+ if __name__=='__main__':main()

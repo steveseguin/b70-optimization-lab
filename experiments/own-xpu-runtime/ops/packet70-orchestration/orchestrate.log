@@ -1,0 +1,316 @@
+SELECTION wide64 all_screens_exact=True
+MOCK RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/fast_reseal.py --experts wide64
+MOCK RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/chain_seal.py --verify
+MOCK RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/check_inputs.py --output-root /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a
+MOCK RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/storage_precheck.py
+MOCK RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/plan_gate.py
+MOCK RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/queue_runner.py --phase all --output-root /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a --plan
+CHAIN COMMAND (PRINT ONLY): systemd-run --user --unit=packet70-chain --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --property=StandardOutput=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/chain.log --property=StandardError=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/chain.log --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/device-entry.sh chain </dev/null
+SELECTION wide64 all_screens_exact=True
+MOCK RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/fast_reseal.py --experts wide64
+MOCK RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/chain_seal.py --verify
+MOCK RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/check_inputs.py --output-root /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a
+MOCK RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/storage_precheck.py
+MOCK RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/plan_gate.py
+MOCK RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/queue_runner.py --phase all --output-root /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a --plan
+CHAIN COMMAND (PRINT ONLY): systemd-run --user --unit=packet70-chain --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --property=StandardOutput=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/chain.log --property=StandardError=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/chain.log --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/device-entry.sh chain </dev/null
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+WAIT packet64 chain and packet65 A/B screens; no launch
+SELECTION wide64 all_screens_exact=True
+RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/fast_reseal.py --experts wide64
+{"passed": true, "device_executed": false, "selection": "1-draft-hc-batch-wide64", "seconds": 1.5347679739934392}
+RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/chain_seal.py --verify
+{"passed": true, "device_executed": false}
+RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/check_inputs.py --output-root /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a
+{"passed": true, "device_executed": false, "model_payload_read": false, "output_root": "/home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a", "windows": {"K0": {"write_paths": 45, "static_files": 2660, "generated_prerequisites": 0}, "K1a": {"write_paths": 23, "static_files": 2734, "generated_prerequisites": 2}, "K1b": {"write_paths": 23, "static_files": 2734, "generated_prerequisites": 4}, "K2": {"write_paths": 15, "static_files": 2734, "generated_prerequisites": 6}, "W0p": {"write_paths": 21, "static_files": 2660, "generated_prerequisites": 2}, "KD": {"write_paths": 20, "static_files": 2882, "generated_prerequisites": 9}, "W2m": {"write_paths": 21, "static_files": 3525, "generated_prerequisites": 13}, "WS": {"write_paths": 46, "static_files": 12254, "generated_prerequisites": 13}, "WSs": {"write_paths": 46, "static_files": 12254, "generated_prerequisites": 11}, "WS128x": {"write_paths": 46, "static_files": 12254, "generated_prerequisites": 13}, "WS128": {"write_paths": 46, "static_files": 12254, "generated_prerequisites": 15}}, "static_files": 12484, "write_path_count": 352, "errors": []}
+RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/storage_precheck.py
+{
+  "passed": true,
+  "device_executed": false,
+  "root_free_bytes": 17382416384,
+  "required_free_bytes": 14135212053,
+  "margin_bytes": 3247204331,
+  "build_bytes": 211592427,
+  "build_budget_bytes": 400000000,
+  "retained_build_bytes": 211592427,
+  "retained_build_fits": true,
+  "cpu_build_peak_limit_bytes": 400000000,
+  "free_floor_bytes": 8000000000,
+  "parent_model_reserve_bytes": 0,
+  "parent_model_maximum_reserve_bytes": 0,
+  "oracle_growth_reserve_bytes": 0,
+  "early_retained_limit_bytes": 128000000,
+  "own_chain_peak_bytes": 5946804480,
+  "full_chain_uncompressed_bytes": 10582804480
+}
+RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/plan_gate.py
+{"ready": true, "completion": {"schema": "packet49.cpu-oracle.complete.v1", "passed": true, "device_executed": false, "completed_utc": "2026-10-17T10:05:53.425791+00:00", "prompts": 12, "token_cap": 128, "arithmetic": "iq3-p49-split32-v1", "manifest_sha256": "4216d6b7d31844d63162fdf475574171649fde1235f89176ce047983e2f3a540", "build_receipt_sha256": "232b181c86830069de95bbef53b47a1a208d5d2d6d77cea054c4e63880af1b76", "arithmetic_sha256": "1cfa18f9d394a4449bb55c3e8be2cf2bebfffd33ad5faaf97ef0110834dcf161", "old_manifest_sha256": "acb9a4295f21620e809f47d893898ae63f2d21b25c128f1eed16d7dea15c6236", "determinism_sha256": "de336cd0cd33d0be69d01c6df78654371bb83e47b9d48525a44d5b8b2e5df3f7", "old_v_new_sha256": "e8fab73622fe30217900dcd9e5fef85b553a409738157e6b540710313c17c1ba", "kd_capture_sha256": "30d31bddcff7177ab8e3b9fbb6b6aae42c2a3c3dae45998678b34a75f627f142"}}
+{"passed": true, "device_executed": false, "windows": ["K0", "K1a", "K1b", "K2", "W0p", "KD", "W2m", "WS", "WSs", "WS128x", "WS128"], "storage_passed": true, "storage_margin_bytes": 3219429355}
+RUN nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet70-record-bundle/queue_runner.py --phase all --output-root /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a --plan
+{"passed": true, "device_executed": false, "model_payload_read": false, "output_root": "/home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a", "windows": {"K0": {"write_paths": 45, "static_files": 2660, "generated_prerequisites": 0}, "K1a": {"write_paths": 23, "static_files": 2734, "generated_prerequisites": 2}, "K1b": {"write_paths": 23, "static_files": 2734, "generated_prerequisites": 4}, "K2": {"write_paths": 15, "static_files": 2734, "generated_prerequisites": 6}, "W0p": {"write_paths": 21, "static_files": 2660, "generated_prerequisites": 2}, "KD": {"write_paths": 20, "static_files": 2882, "generated_prerequisites": 9}, "W2m": {"write_paths": 21, "static_files": 3525, "generated_prerequisites": 13}, "WS": {"write_paths": 46, "static_files": 12254, "generated_prerequisites": 13}, "WSs": {"write_paths": 46, "static_files": 12254, "generated_prerequisites": 11}, "WS128x": {"write_paths": 46, "static_files": 12254, "generated_prerequisites": 13}, "WS128": {"write_paths": 46, "static_files": 12254, "generated_prerequisites": 15}}, "static_files": 12484, "write_path_count": 352, "errors": []}
+nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH= python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/window.py --authorized-device-window --card 0 --context 4096 --draft-rank 1 --target-split 0 --window K0 --output /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K0
+nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH= python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/window.py --authorized-device-window --card 0 --context 4096 --draft-rank 1 --target-split 0 --window K1a --output /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1a --k0 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K0/window.json --dispatch /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/dispatch-p45.json
+nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH= python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/window.py --authorized-device-window --card 0 --context 4096 --draft-rank 1 --target-split 0 --window K1b --output /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1b --k0 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K0/window.json --k1a /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1a/window.json --dispatch /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/dispatch-p45.json
+nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH= python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/window.py --authorized-device-window --card 0 --context 4096 --draft-rank 1 --target-split 0 --window K2 --output /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K2 --k0 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K0/window.json --k1a /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1a/window.json --k1b /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1b/window.json --dispatch /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/dispatch-p45.json --seconds 14400
+ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH= python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/window.py --authorized-device-window --card 0 --context 4096 --draft-rank 1 --target-split 0 --window W0p --output /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/W0p --k0 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K0/window.json
+nice -n 19 ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH= python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/window.py --authorized-device-window --card 0 --context 4096 --draft-rank 1 --target-split 0 --window KD --output /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/KD --k0 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K0/window.json --k1a /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1a/window.json --k1b /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1b/window.json --k2 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K2/window.json --dispatch /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K2/run0/dispatch-measured.json --input /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/build/input
+ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH= python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/window.py --authorized-device-window --card 0 --context 4096 --draft-rank 1 --target-split 0 --window W2m --output /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/W2m --k0 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K0/window.json --k1a /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1a/window.json --k1b /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1b/window.json --k2 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K2/window.json --w0p /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/W0p/window.json --kd /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/KD/window.json --dispatch /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K2/run0/dispatch-measured.json --input /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/build/input --oracle /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/oracle/results/incident-retrospective --controller native --retain-steps 1-8
+ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH= python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/window.py --authorized-device-window --card 0 --context 4096 --draft-rank 1 --target-split 0 --window WS --output /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/WS --k0 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K0/window.json --k1a /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1a/window.json --k1b /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1b/window.json --k2 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K2/window.json --w0p /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/W0p/window.json --kd /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/KD/window.json --dispatch /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K2/run0/dispatch-measured.json --suite-manifest /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/oracle/results/suite-manifest.json --controller native --repeat 1 --retain-steps 1-8
+ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH= python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/window.py --authorized-device-window --card 0 --context 4096 --draft-rank 1 --target-split 0 --window WSs --output /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/WSs --k0 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K0/window.json --k1a /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1a/window.json --k1b /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1b/window.json --k2 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K2/window.json --w0p /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/W0p/window.json --dispatch /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K2/run0/dispatch-measured.json --suite-manifest /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/oracle/results/suite-manifest.json --controller native --repeat 1 --retain-steps 1-8
+ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH= python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/window.py --authorized-device-window --card 0 --context 4096 --draft-rank 1 --target-split 0 --window WS128x --output /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/WS128x --k0 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K0/window.json --k1a /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1a/window.json --k1b /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1b/window.json --k2 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K2/window.json --w0p /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/W0p/window.json --kd /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/KD/window.json --dispatch /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K2/run0/dispatch-measured.json --suite-manifest /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/oracle/results/suite-manifest.json --controller native --repeat 1 --retain-steps 1-8,97-104
+ionice -c 3 env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH= python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/window.py --authorized-device-window --card 0 --context 4096 --draft-rank 1 --target-split 0 --window WS128 --output /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/WS128 --k0 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K0/window.json --k1a /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1a/window.json --k1b /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K1b/window.json --k2 /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K2/window.json --w0p /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/W0p/window.json --kd /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/KD/window.json --dispatch /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/K2/run0/dispatch-measured.json --suite-manifest /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet70-record-bundle/oracle/results/suite-manifest.json --controller native --repeat 1 --retain-steps none --exactness-window /home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a/WS128x/window.json
+CHAIN COMMAND (PRINT ONLY): systemd-run --user --unit=packet70-chain --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --property=StandardOutput=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/chain.log --property=StandardError=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/chain.log --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/device-entry.sh chain </dev/null

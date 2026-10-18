@@ -1,0 +1,57 @@
+{
+  "schema": "neural.download.promotion-attestation.v1",
+  "identity": {
+    "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+    "runtime_revision": "53ffe460517c585b21be1c3b69ce22b7e9f195a0",
+    "optimization_identity": "packet64-record-bundle-iq3-p49-split32-v1-tp2-c4096-target24-24-draft-rank1-seal-2e93e792cdbcff2387efe0acb597437ada6e6db7b3cab293bec1119d52a51864",
+    "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812",
+    "arithmetic": "iq3-p49-split32-v1"
+  },
+  "performance_evidence": {
+    "path": "experiments/own-xpu-runtime/stage2/packet64-record-bundle/submission/prepared-v2/result.json",
+    "sha256": "07a4787ddd921a657f78ff84a978d277df78f8d49a3e26b49f49bb3f86a36133"
+  },
+  "quality_evidence": [
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet64-record-bundle/submission/prepared-v2/evidence.json.gz",
+      "sha256": "4d582f49f7192a2978c614cf06f0bdfcd6d272e83a9e80247f65a4e9912d9701",
+      "supports": [
+        "varied_task_quality_passed",
+        "exact_or_target_oracle_passed",
+        "deterministic_repeats_passed",
+        "fresh_server_repeat_passed",
+        "target_model_unchanged",
+        "no_quality_loss"
+      ]
+    }
+  ],
+  "gates": {
+    "varied_task_quality_passed": true,
+    "exact_or_target_oracle_passed": true,
+    "deterministic_repeats_passed": true,
+    "fresh_server_repeat_passed": true,
+    "target_model_unchanged": true,
+    "no_quality_loss": true,
+    "strict_512_token_final_gate_passed": false
+  },
+  "submission_scope": {
+    "owner_authorization": {
+      "rule": "packet45.speed3.owner-authorized-128-token-scope.2026-10-15",
+      "date": "2026-10-15",
+      "authorization_text": "authorized: submit under the same 128-token scope as the October 13 record.",
+      "reference_submission": "cmv6pugme0020oa01fjrho6nx",
+      "requested_max_new": 128,
+      "scope": "same fixed realistic 12-prompt suite; cold; cached_tokens=0; 128 generated tokens per prompt; primary metric over 99 intervals between events 1 and 100"
+    },
+    "raw_realistic_final_gate": {
+      "passed": false,
+      "reason": "measurement preparation only; cap below fixed 512 and no promotion attestation; repeats/partial suites never qualify"
+    },
+    "strict_512_gate_passed": false,
+    "owner_exception_authorized": true,
+    "requested_max_new": 128,
+    "prepared_only": true,
+    "real_submission_performed": false,
+    "authorization_extension": "Coordinator packet64-record-bundle scope: same packet49 CPU oracle, all 12 prompts exact, 128-token owner-authorized scope; unchanged iq3-p49-split32-v1 arithmetic; class-balanced speed must exceed the pinned current submitted record. Preparation does not submit; the coordinator performs real submission."
+  }
+}

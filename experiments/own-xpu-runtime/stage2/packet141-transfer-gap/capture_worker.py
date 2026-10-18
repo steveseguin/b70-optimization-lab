@@ -1,0 +1,169 @@
+#!/usr/bin/env python3
+"""One 47-token packet49 window, rank0 diagnostic, then an 8-token reset check."""
+import sys
+from pathlib import Path
+P=Path(__file__).resolve().parent
+sys.path.insert(0,str(P.parent/"screen/v4-lanes"))
+import argparse
+import os
+from pathlib import Path
+import signal
+import sys
+import time
+
+from common import D, P56, ROOT, SUPPORT, compare_tokens, label, read, require, save, sha, summary
+
+from conditions import LANES, Teardown, lane_gate
+from devices import DeviceMonitor, masked_environment
+
+def drain(transport, output, success, reason=None):
+    """A stop arriving during FINISH must drain inside the same spacing permit."""
+    failure = None
+    def refused(error):
+        transport.teardown_refused = True
+        # Transport.stop writes ! to our inherited stop pipe. Transport.close
+        # waits at most 65 seconds and never signals or kills a process.
+        # Disable only the remembered Python cancellation during this wait;
+        # the outer supervisor continues passive fault/memory monitoring.
+        transport.check = lambda: None
+        try:
+            transport.stop(error)
+        finally:
+            transport.close(False)
+        return dict(cooperative_stop_requested=True, own_ranks_exited=True,
+                    drain_bound_seconds=65)
+    with Teardown(output, on_refusal=refused):
+        try:
+            if not success:
+                transport.stop(reason)
+                # Stop is already delivered through the native stop descriptor.
+                # Keep draining despite the remembered Python cancellation;
+                # the outer passive supervisor still checks memory and faults.
+                transport.check = lambda: None
+            transport.close(success)
+        except Exception as error:
+            failure = error
+            transport.stop(error)
+            transport.check = lambda: None
+            transport.close(False)
+    if failure is not None:
+        raise failure
+
+
+def run(identity, output, seconds, pair_dir=None):
+    from capture_identity import verify_identity
+    placement, memory_gate = verify_identity(identity)
+    # Use this lineage's admission for both prelaunch and live census checks.
+    sys.modules['memory_gate'] = memory_gate
+    # Reuse the sealed dispatch/control protocol, with private Python module state.
+    # Only paths used for new writes are redirected. No sealed files are modified.
+    sys.path.insert(0, str(P56))
+    import pipeline
+    import suite
+    import storage
+    from launch_guard import install_native_guard
+    install_native_guard(pipeline)
+    from input_gate import admit_inputs
+    manifest = read(P/'suite.snapshot.json')
+    entries = manifest['prompts']
+    adapter = output / 'adapter'
+    (adapter / 'build').mkdir(parents=True)
+    for name in ('selection.json', 'memory-plan.json'):
+        (adapter / name).write_bytes((Path(identity['lineage']) / name).read_bytes())
+    pipeline.P = adapter
+    storage.P, storage.B = adapter, adapter / 'build'
+    # Screen has its own admitted peak; do not reserve an eleven-window chain.
+    from run_capture import storage_budget
+    storage.admit = lambda extra, **unused: storage_budget(output.parent)
+    # The COW engine omits full-state dumps; no raw state is created/deleted.
+    suite.retain_request_state = lambda root: dict(diagnostic_only=True, full_state_not_requested=True)
+    args = pipeline.parser().parse_args(['--output', str(output), '--device',
+        '--binary', identity['binary'], '--dispatch', identity['dispatch'],
+        '--controller', 'native', '--draft', 'mtp', '--draft-rank', str(placement['draft_rank']),
+        '--target-split', str(placement['target_split']), '--context', '4096', '--tokens', '48',
+        '--retain-steps', 'none', '--timing', 'token', '--native-nice', '0',
+        '--card', '0',
+        '--seconds', str(seconds), '--wait-seconds', str(seconds)])
+    # Packet56's parser predates the attribution string. The controller ABI is
+    # unchanged; sealed() already checks the candidate's supported timing modes.
+    args.timing = identity['timing']
+    args.selection_sha256 = identity['selection_sha256']
+    checker = suite.checker_module(P56.parent / 'packet49-integrate/oracle/suite_check.py')
+    snapshots = admit_inputs(entries, output, checker)
+    args.input = snapshots[entries[0]['prompt_id']][0]
+    ranks = output / 'ranks'
+    ranks.mkdir()
+    stopped, rows, incident = [], [], {}
+    monitor = DeviceMonitor(identity['lane'], output)
+    environment = masked_environment(identity['lane'], dict(os.environ), inherited=True)
+    monitoring = True
+    def check():
+        require(not stopped, 'coordinator stop requested')
+        if monitoring:
+            monitor.poll()
+    handlers = {s: signal.signal(s, lambda n, f: stopped.append(n))
+                for s in (signal.SIGTERM, signal.SIGINT)}
+    transport = pipeline.Transport.__new__(pipeline.Transport)
+    try:
+        pipeline.Transport.__init__(transport, args, ranks, environment, check, launch_hook=monitor.register)
+        monitor.poll(ready=True)
+        requests = [(entries[0]['prompt_id'], entries[0], 47), ('post-probe', entries[0], 8)]
+        for name, entry, count in requests:
+            check()
+            dest = output / name
+            suite.reset(transport, dest)
+            prompt = snapshots[entry['prompt_id']][1]
+            result = suite.run_request(transport, args, prompt, count)
+            expected = entry['expected_tokens']
+            compare_tokens(result['tokens'], expected, count, name)
+            result.update(prompt_id=entry['prompt_id'], prompt_class=entry['category'],
+                          repeat=1, exact_oracle=entry['split']=='sanity', exact_reference=True, reference_kind=entry['reference_kind'], analysis_included=entry['analysis_included'], diagnostic_only=True, prompt_token_sha256=D.token_hash(prompt))
+            save(dest / 'receipt.json', label(result))
+            if name != 'post-probe':
+                transport.call(0,13,token=10015,position=133)
+                complete=read(dest/'rank0/p141-complete.json')
+                require(complete.get('passed') is True,'transfer probe incomplete')
+            rows.append(result)
+        monitor.poll(ready=True)
+        suite.reset(transport, output / 'after-suite')
+        monitor.poll(ready=True)
+        # Stage raw exactness receipts BEFORE drain; aggregation runs only in the
+        # parent after postflight and release. No CPU report runs after our drain.
+        save(output / 'report-inputs.json', dict(passed=True, requests=rows, incident64=incident,
+             placement=placement, lane=identity['lane'], timing=identity['timing'],
+             device_isolation=read(output / 'device-isolation.json')))
+        monitoring = False  # FINISH legitimately closes rank FDs and PIDs.
+        drain(transport, output, True)
+        return 0
+    except Exception as error:
+        save(output / 'failure.json', label(dict(passed=False, error=str(error))))
+        if hasattr(transport, 'stop_write') and not getattr(transport, 'closed', False):
+            if not getattr(transport, 'teardown_refused', False):
+                try:
+                    drain(transport, output, False, error)
+                except Exception as drain_error:
+                    save(output / 'drain-error.json', dict(error=str(drain_error)))
+            # Keep the supervising process alive while it still owns live ranks.
+            # The outer wrapper returns 75 and leaves the user unit for supervision.
+            while any(p.poll() is None for p in transport.children):
+                time.sleep(.25)
+        return 1
+    finally:
+        for s, handler in handlers.items():
+            signal.signal(s, handler)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--identity', type=Path, required=True)
+    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--seconds', type=int, required=True)
+    parser.add_argument('--pair-dir', type=Path)
+    args = parser.parse_args()
+    from exec_limits import check as check_limits
+    check_limits()
+    lane_gate(read(args.identity)['lane'])
+    # The outer supervisor owns authorization; accidental standalone calls fail.
+    require((args.identity.parent / 'window.json').is_file(), 'outer screen admission required')
+    require(args.pair_dir is None, 'capture does not use paired screens')
+    raise SystemExit(run(read(args.identity), args.output, args.seconds, args.pair_dir))

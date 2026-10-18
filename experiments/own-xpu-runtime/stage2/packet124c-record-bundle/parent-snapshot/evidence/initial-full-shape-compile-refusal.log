@@ -1,0 +1,9 @@
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet118-record-bundle/build/full-shape/entry.cpp: In function ‘int main(int, char**)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet118-record-bundle/build/full-shape/entry.cpp:33:29: error: ‘unsigned int mtp36::DraftRuntime::prefix_rows() const’ is private within this context
+   33 |   require(draft->prefix_rows()==(e->sealed_selection.draft.at("head_prefix")=="production"?91392u:80128u),"selected draft prefix rows");
+      |           ~~~~~~~~~~~~~~~~~~^~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet118-record-bundle/main.cpp:1502,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet118-record-bundle/build/full-shape/entry.cpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet118-record-bundle/mtp.hpp:60:11: note: declared private here
+   60 |  unsigned prefix_rows()const{return p83::rows(p.g.vocab,e.a.mini,e.sealed_selection.draft.at("head_prefix"));}
+      |           ^~~~~~~~~~~

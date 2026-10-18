@@ -1,0 +1,34 @@
+{
+  "schema": "packet58g.root-cause.v1",
+  "device_executed": false,
+  "site": "blk.2.expsgate",
+  "argument": "m.w",
+  "arena_label": "card0:expert-table:blk.2.ffn_gate_exps.weight",
+  "required_bytes": 360448000,
+  "actual_bytes": 8192,
+  "alignment_mod16": 0,
+  "memory": "device",
+  "geometry": {
+    "experts": 512,
+    "rows": 640,
+    "columns": 2560,
+    "row_bytes": 1100
+  },
+  "cause": "Layer 2 uses raw IQ3_S. Its expert-checks-iq3 fusion is deliberately disabled, so it falls through to direct p28 paired submission. The one-card loader stored a pointer table, unlike the two-card packed-bank path. IQ2_S and down paths already resolved indirect tables.",
+  "fix": "Explicit indirect p28 argument for cached expert gate/up. Validate pointer-table extent and resolve the selected expert row on both host and SYCL paths. Keep original arithmetic, status checks, buffers and budgets.",
+  "regression": "Real Engine initialize/prepare_plan/prepare_commands with full-size mmap arena; legacy_pointer_probe restores original direct call and fails on the exact row; fixed call captures all 1486 sites at extents 32 and 4096.",
+  "parent_files_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/p28/submit.cpp": "10ba4dee0b311c7d0f487d11159d06d8f16304ff3f9e745e62950d5ff54aa92d",
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/main.cpp": "ca27586afd3260613ca2b338bacf5d7555e5be55a25da917dd8790d8bae80628",
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/dispatch-speed6.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/p39_plan.hpp": "fec70f9aa95dfd71fea8dac927419373ce3172c73e76d4a3510d52b595eb855c",
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/evidence/card0-58f-a/KD/run/native.log": "f0f2f4420a0ab75a1b46de564c4f0b499ba36c47e92909d9fb907a5c1811d27b",
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/evidence/card0-58f-a/KD/run/run/failure.txt": "ab7531ec2618ad649464fd2713176804168c440d32f2d8516472e44274c2324b",
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/evidence/card0-58f-a/KD/run/run/receipt.json": "26733c9b7071cb9c1509177143e5288970b880346ebdb46ea82afbd4653c3192",
+    "experiments/own-xpu-runtime/stage2/packet58f-onecard/evidence/card0-58f-a/KD/run/run/plan.json": "e6eb192908a6d7148a349383c397cff95923097095171238792911fe2473ea69"
+  },
+  "device_allocation_bytes": 24287732980,
+  "pinned_allocation_bytes": 48633091712,
+  "allocation_rows": 3446,
+  "device_total_matches_58f_log": true
+}

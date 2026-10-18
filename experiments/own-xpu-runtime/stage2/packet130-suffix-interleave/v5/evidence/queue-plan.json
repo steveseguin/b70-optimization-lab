@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "proposals": {
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p130-smoke-B.txt": "e5e549e1deb4da8ffbe638af7006dea4b9f7c9dcc643cf12e7cb17f9439f6e79",
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p130-bracket-B.txt": "5c9de9e75b03ecc09eaff2196e3dd9abc117560f1aa67b4f32ca5d958b8e6903"
+  },
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+    "plan",
+    "--lane",
+    "B",
+    "--directory",
+    "/tmp/p130-plan-vwvpc41k"
+  ],
+  "log_sha256": "4310fa47ff6cfc8071e7a9bf1e593b647d3ed5c9df13061509bbbe5e12b0175c",
+  "expected_seconds": {
+    "smoke": [
+      240,
+      360
+    ],
+    "bracket": [
+      720,
+      1200
+    ]
+  },
+  "watchdog_seconds": 4800,
+  "conditional_on": "full exact 12x64 smoke, source-bound CPU gates, coordinator live admission"
+}

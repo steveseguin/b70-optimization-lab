@@ -1,0 +1,656 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "coordinator_limits": {
+    "RLIMIT_AS": [
+      -1,
+      -1
+    ],
+    "RLIMIT_CORE": [
+      0,
+      -1
+    ],
+    "RLIMIT_CPU": [
+      -1,
+      -1
+    ],
+    "RLIMIT_DATA": [
+      -1,
+      -1
+    ],
+    "RLIMIT_FSIZE": [
+      -1,
+      -1
+    ],
+    "RLIMIT_MEMLOCK": [
+      16864567296,
+      16864567296
+    ],
+    "RLIMIT_MSGQUEUE": [
+      819200,
+      819200
+    ],
+    "RLIMIT_NICE": [
+      0,
+      0
+    ],
+    "RLIMIT_NOFILE": [
+      1048576,
+      1048576
+    ],
+    "RLIMIT_NPROC": [
+      477915,
+      477915
+    ],
+    "RLIMIT_OFILE": [
+      1048576,
+      1048576
+    ],
+    "RLIMIT_RSS": [
+      -1,
+      -1
+    ],
+    "RLIMIT_RTPRIO": [
+      0,
+      0
+    ],
+    "RLIMIT_RTTIME": [
+      -1,
+      -1
+    ],
+    "RLIMIT_SIGPENDING": [
+      477915,
+      477915
+    ],
+    "RLIMIT_STACK": [
+      8388608,
+      -1
+    ]
+  },
+  "cases": [
+    {
+      "passed": true,
+      "device_executed": false,
+      "synthetic_admission": true,
+      "entry": "chain",
+      "observations": [
+        {
+          "stage": "chain-to-window",
+          "argv": [
+            "nice",
+            "-n",
+            "19",
+            "ionice",
+            "-c",
+            "3",
+            "env",
+            "-i",
+            "PATH=/usr/bin:/bin",
+            "OMP_NUM_THREADS=2",
+            "LD_LIBRARY_PATH=/usr/lib",
+            "python3",
+            "-B",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/chain103.py",
+            "window",
+            "--authorized-device-window",
+            "--card",
+            "0",
+            "--context",
+            "4096",
+            "--draft-rank",
+            "1",
+            "--target-split",
+            "0",
+            "--window",
+            "K0",
+            "--output",
+            "/tmp/p103x-launch-0atdqq55/chain-probe/chain/K0"
+          ],
+          "limits": {
+            "RLIMIT_AS": [
+              -1,
+              -1
+            ],
+            "RLIMIT_CORE": [
+              0,
+              -1
+            ],
+            "RLIMIT_CPU": [
+              -1,
+              -1
+            ],
+            "RLIMIT_DATA": [
+              -1,
+              -1
+            ],
+            "RLIMIT_FSIZE": [
+              -1,
+              -1
+            ],
+            "RLIMIT_MEMLOCK": [
+              16864567296,
+              16864567296
+            ],
+            "RLIMIT_MSGQUEUE": [
+              819200,
+              819200
+            ],
+            "RLIMIT_NICE": [
+              0,
+              0
+            ],
+            "RLIMIT_NOFILE": [
+              1048576,
+              1048576
+            ],
+            "RLIMIT_NPROC": [
+              477915,
+              477915
+            ],
+            "RLIMIT_OFILE": [
+              1048576,
+              1048576
+            ],
+            "RLIMIT_RSS": [
+              -1,
+              -1
+            ],
+            "RLIMIT_RTPRIO": [
+              0,
+              0
+            ],
+            "RLIMIT_RTTIME": [
+              -1,
+              -1
+            ],
+            "RLIMIT_SIGPENDING": [
+              477915,
+              477915
+            ],
+            "RLIMIT_STACK": [
+              8388608,
+              -1
+            ]
+          },
+          "unchanged": true,
+          "pid": 1186589
+        },
+        {
+          "stage": "native-pre-exec",
+          "argv": [
+            "ionice",
+            "-c",
+            "3",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/build/device/jit-smoke",
+            "--authorized-device-window",
+            "--card",
+            "0",
+            "--output",
+            "/tmp/p103x-launch-0atdqq55/chain-probe/chain/K0/run0",
+            "--cards",
+            "1"
+          ],
+          "limits": {
+            "RLIMIT_AS": [
+              -1,
+              -1
+            ],
+            "RLIMIT_CORE": [
+              0,
+              -1
+            ],
+            "RLIMIT_CPU": [
+              -1,
+              -1
+            ],
+            "RLIMIT_DATA": [
+              -1,
+              -1
+            ],
+            "RLIMIT_FSIZE": [
+              -1,
+              -1
+            ],
+            "RLIMIT_MEMLOCK": [
+              16864567296,
+              16864567296
+            ],
+            "RLIMIT_MSGQUEUE": [
+              819200,
+              819200
+            ],
+            "RLIMIT_NICE": [
+              0,
+              0
+            ],
+            "RLIMIT_NOFILE": [
+              1048576,
+              1048576
+            ],
+            "RLIMIT_NPROC": [
+              477915,
+              477915
+            ],
+            "RLIMIT_OFILE": [
+              1048576,
+              1048576
+            ],
+            "RLIMIT_RSS": [
+              -1,
+              -1
+            ],
+            "RLIMIT_RTPRIO": [
+              0,
+              0
+            ],
+            "RLIMIT_RTTIME": [
+              -1,
+              -1
+            ],
+            "RLIMIT_SIGPENDING": [
+              477915,
+              477915
+            ],
+            "RLIMIT_STACK": [
+              8388608,
+              -1
+            ]
+          },
+          "unchanged": true,
+          "pid": 1186710
+        },
+        {
+          "stage": "native-pre-exec",
+          "argv": [
+            "ionice",
+            "-c",
+            "3",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/build/device/jit-smoke",
+            "--authorized-device-window",
+            "--card",
+            "1",
+            "--output",
+            "/tmp/p103x-launch-0atdqq55/chain-probe/chain/K0/run1",
+            "--cards",
+            "1"
+          ],
+          "limits": {
+            "RLIMIT_AS": [
+              -1,
+              -1
+            ],
+            "RLIMIT_CORE": [
+              0,
+              -1
+            ],
+            "RLIMIT_CPU": [
+              -1,
+              -1
+            ],
+            "RLIMIT_DATA": [
+              -1,
+              -1
+            ],
+            "RLIMIT_FSIZE": [
+              -1,
+              -1
+            ],
+            "RLIMIT_MEMLOCK": [
+              16864567296,
+              16864567296
+            ],
+            "RLIMIT_MSGQUEUE": [
+              819200,
+              819200
+            ],
+            "RLIMIT_NICE": [
+              0,
+              0
+            ],
+            "RLIMIT_NOFILE": [
+              1048576,
+              1048576
+            ],
+            "RLIMIT_NPROC": [
+              477915,
+              477915
+            ],
+            "RLIMIT_OFILE": [
+              1048576,
+              1048576
+            ],
+            "RLIMIT_RSS": [
+              -1,
+              -1
+            ],
+            "RLIMIT_RTPRIO": [
+              0,
+              0
+            ],
+            "RLIMIT_RTTIME": [
+              -1,
+              -1
+            ],
+            "RLIMIT_SIGPENDING": [
+              477915,
+              477915
+            ],
+            "RLIMIT_STACK": [
+              8388608,
+              -1
+            ]
+          },
+          "unchanged": true,
+          "pid": 1186710
+        }
+      ],
+      "refusals": [],
+      "imports": {
+        "experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py": "a2e18d35abbc71b9a13b714441698109749858334540220007543b862ea7db4c",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/build_engine.py": "20bf0eeacadc905a7197bb72504a96b4980633e19b1c5c6ba319dd1d4dcf9f9f",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/bundle_selection.py": "5651bf8e3d559d4e0237790e46aef39ff2b74cad846822f4f342bd37d600a72a",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/chain103.py": "80d19c18711267353b16007ae427e432763c23392eea03fe19912c208b8906b5",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/chain_devices.py": "81f34a2df9917af22b60dd0c7df9e32c5be3318cd15e05a3dde047904a340d83",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/chain_pipeline.py": "13c83f5ba403cc86f0dbfd280547f66acc3694e9ea91ec23e4da082ada662175",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/chain_seal.py": "6cffbf07f491cdfc148ee639db88bf3fd4b711ad75a64d75b08b6d4219944eaf",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/compile_turn.py": "233ec14ad07ea902690f3b008cb22af156aaadb6a84f1e200bcdfc2ad1b0f309",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/diagnostic_mode.py": "4b82ce51e0b2d0624f0e80db67ca4459641d9502d3afe8547786c221575c7fc5",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/draft_identity.py": "087634c23cb674a3c70bab53bef1f1f247aa0cd52b57db0d4b22cc4934dc93c0",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/drain_gate.py": "3653fac95f6ea831b6c67fa0c71e0cbb070628a0a11a5e75ef4e8b3fa16c3714",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/fixture_support.py": "9eaeaab6ef0a86ce9762887c565d017f5ccf2ad4423ed5c8dbd0988921dd599c",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/full_shape.py": "ebf7d61148d641b9d2f3fad8f2628552fc0bf33270d2a58d32bdef8168719ea3",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/k2_summary.py": "12f63116ad718bc3a4a0ba9c0c4904181f0f1bc1e7583d8b663ae61f228e38fa",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/kd_window103.py": "1c2f2feb2446f4fb557bf9756501ae76c887ad5fd0fb1ef036adea7eed4de3b3",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/lane_admission.py": "fcd61deafe52b170cd20c649ff5690d6a92a1e0584db90ed982e54781752e4f4",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/memory_gate.py": "3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/memory_plans.py": "11496a02ca7699eb837eabff21e319ed9b1f25ffdf5a74bdbbdef9cbebdc59f9",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/merge_dispatch.py": "29497efa3d2090aa69f0985db384a3252a64d12e9314ec5c77099a2238827e6c",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/p49_seal.py": "75862a59408239f07f934bf31758c64620f9797407aaba9ebbea1b3c9b7305ce",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/p56_head_summary.py": "d86c9c8933bfdd1e1a27d22863c6ff05758d16794ec07c7f411efe8812569885",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/p56_head_support.py": "ef20a9fe5c9eb0c838024775e0591084e89fe169cbdfa2bfaa1c664a1b7d1e00",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/packet56_submission.py": "9141cd60825de8f74c1cb0eab519b0590e89f08c65852213bf6340662d1eb44d",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/parent_head.py": "cd1602c150d4fa8d050449f14d01f2884d1239e91cb8d30830820aabf954cb09",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/queue_runner.py": "567b928c11e24bfa936da9c83fd8bff43f4e6c9dde7b55a6b855f3c551ba68dd",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/shared_oracle.py": "327a77087b57e6ffe9f6398dee291909bd214e812c81377b30eb87495a8b9d07",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/startup103.py": "f93c93cdcfc16add0697f4bdbde781dd004b33a4836d0b759774553a0f6f5af8",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/startup_receipt103.py": "b3735ca9a095b7cc4500e7268985fd44bb9d806bd7ba73c1c28288f8ca1a19b1",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/storage.py": "42364a745a89f0e001867ac7a87f295a9e55ef26eba796bf6c090e1d9cb7f7c2",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/suite_metrics.py": "4eef50d1272c759904b64947297c865b71b683a52c5590fb822301bcdc7f04aa",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/window.py": "2409a4b91830965809ae79b23bd50125938b31ea25ac3eb3870065bdafd323db",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/window_adapter.py": "bc1c7c72936dbce9de9ef91acfedab12da6596b021ce00bcfa1a48fe9ace3b0b",
+        "experiments/own-xpu-runtime/stage2/packet103-record-bundle/window_safety.py": "353ce418d0570d3b85d23dc63dc91f7e005e528e91057d7a7ee620d390d02264",
+        "experiments/own-xpu-runtime/stage2/packet2/tests/device_window.py": "a26998d3bd062b78c8ffb8825e8daf9adb50cd866552b3c23bfacdafb0189e5f",
+        "experiments/own-xpu-runtime/stage2/packet34-replay-bench/window.py": "20426ac90dd439953fbb4857fa2afca05f233fd6b08e326eb1abb48c03d10017",
+        "experiments/own-xpu-runtime/stage2/packet49-integrate/oracle/oracle_job.py": "f171e92d9ff52cecb7679fc0544e577e3e1f553f6112cec7edf9713a7545f403",
+        "scripts/receipt_qualification.py": "1ed8f5bc44817c2dab4f975816d24f4957ea93a3a0a7a25eeec720c039d7a8e6"
+      },
+      "case": "ready-json-shell-chain",
+      "shell_argv": [
+        "/usr/bin/bash",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/device-entry.sh",
+        "chain",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/build/device-cards01-a"
+      ]
+    }
+  ],
+  "complete_gate": false,
+  "resource_audit": {
+    "passed": true,
+    "scanned_python_files": 139,
+    "mutations": [
+      {
+        "path": "experiments/own-xpu-runtime/ops/packet103-orchestration/read_screens.py",
+        "line": 29,
+        "call": "setrlimit",
+        "scope": "__main__"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/build_engine.py",
+        "line": 15,
+        "call": "setrlimit",
+        "scope": "limits"
+      }
+    ],
+    "explicit_cpu_limit_callers": [
+      {
+        "path": "experiments/own-xpu-runtime/ops/packet103-orchestration/decision_readiness.py",
+        "line": 226,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py",
+        "line": 146,
+        "call": "limits",
+        "scope": "observe"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py",
+        "line": 300,
+        "call": "limits",
+        "scope": "shell_python"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py",
+        "line": 328,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py",
+        "line": 331,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py",
+        "line": 335,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/ops/packet103-orchestration/orchestrate.py",
+        "line": 99,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/ops/packet103-orchestration/prepare_cpu.py",
+        "line": 9,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/ops/packet103-orchestration/prepare_views.py",
+        "line": 10,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/ops/packet103-orchestration/reseal103x.py",
+        "line": 8,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/build_engine.py",
+        "line": 32,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/compile_turn.py",
+        "line": 37,
+        "call": "limits",
+        "scope": "turn"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/composed_cpu.py",
+        "line": 61,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/cpu_gate.py",
+        "line": 20,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/cpu_gate.py",
+        "line": 31,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/draft_cpu_gate.py",
+        "line": 6,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/dry_run.py",
+        "line": 37,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/full_shape.py",
+        "line": 129,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/full_shape.py",
+        "line": 139,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/memory_matrix.py",
+        "line": 8,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/mini_gate.py",
+        "line": 28,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/negative_gate.py",
+        "line": 6,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/operator_matrix.py",
+        "line": 12,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/prepare_packet.py",
+        "line": 64,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/prepare_selections.py",
+        "line": 7,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/protocol_gate.py",
+        "line": 6,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/queue_plan.py",
+        "line": 18,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/real_head_gate.py",
+        "line": 7,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/restore_links.py",
+        "line": 6,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/retain_build.py",
+        "line": 8,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/retirement_gate.py",
+        "line": 6,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/screen_plans.py",
+        "line": 4,
+        "call": "limits",
+        "scope": "__main__"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/selection_rehearsal.py",
+        "line": 7,
+        "call": "limits",
+        "scope": "main"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/startup103.py",
+        "line": 188,
+        "call": "limits",
+        "scope": "main"
+      }
+    ],
+    "shell": [
+      {
+        "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/device-entry.sh",
+        "sha256": "e44a1f8941f7494ab2c50c8ccf9cdbf86f13be0a5dbcbd373caca2bb8c5dadb9",
+        "resource_mutations": 0
+      },
+      {
+        "path": "/tmp/claude-1000/-home-steve/fn-run/p49.env",
+        "sha256": "06d3759fc496b5a5bb96a383429a4663a51c4eb5649e8747ce6d2ca6563c1a5c",
+        "resource_mutations": 0
+      }
+    ],
+    "historical_snapshots": "frozen103 and lineage-inputs are evidence, never active imports"
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/composite_jobs.py": "bee97b7631059f19578dfe45cae36d073eba637bde6c0b75e221edafce46c44c",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/historical_pins.py": "b7492c177d579d01fdda5b39eb6d970d7139e1d0120e8de00ad95fe14addc567",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/source_adapter.py": "a131b621df5e1c4365c14e3f988c3d4efd058e5f52c2f5bc0a24d35ff070e047",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/verify_ready.py": "f4a156fe2cc4764c805e55f55e33f20382dc6ab6ad83c046d444fbafbd27366c",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/test_readiness103.py": "ed335aa7aaa3a53b2f2ae8da64ae73be69cf9615d7b2f4e50b35320bf9abb000",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/seal_inputs.py": "1d2aff387c89c5fe333656d308e8a8bb8591574a0782530f3d384b4069910c4e",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/fresh_chain.py": "4ed6e47c268ec8b65de41e0adad3be5c28552b0ce45880f1209e379c0f1b59bb",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/micro_source.py": "29016feaa50fbc8f865e7f6ec9b2caa84bb3f0f85411c63ca46eae251595ef3f",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py": "a2e18d35abbc71b9a13b714441698109749858334540220007543b862ea7db4c",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/reseal103x.py": "c1ad02c1f7670bffc13fb5c6a7c6fbde67c834143a40c0cd4ebb0441736757e0",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/composite_screen.py": "e9b95d019bb1073a6011c6d9e1a487c190a6a9942145c113ffaa5ab1516e6093",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/prepare_views.py": "e3e9ed01f12c99097acab06f964bb4ae57d23a1d7f3eb16d45b64716d0c3ae6a",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/test_decision.py": "66eedf39ca71e43c9831c018368e23ed0da772aab36cfec8d63d2a2b4ab16129",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/test_launch103x.py": "a72e783438967741e9019c2194f4a26680a1fc8896bc1f91166a2ad1657577b7",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/decision.py": "d1f299cc66655228f754504bbf475cdd73d3f512cc5cf05e1d14e08c71c5ba49",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/read_screens.py": "a870c3e2b4bccbb4e3687358ab025699aaefb9e48d60c800eaa9bed00b66cc5f",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/test_seal_inputs.py": "a8b3a64c6b5e1e83fe5c307748c0a1f71d9667361fa298d848d49e299eff1c7d",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/prepare_cpu.py": "c4260d40c2be312c7c421f2dce6c3c67a1be45f5fe622edda38d700c48082250",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/orchestrate.py": "0fd8ef711272ea3384708facc8b940abc4abd380b8870e2b06551ae014792334",
+    "experiments/own-xpu-runtime/ops/packet103-orchestration/decision_readiness.py": "7916349f4bf528996f660c8b1c7e158cb4c4d02d91c9cacf73eadfa7e43c42bd"
+  }
+}

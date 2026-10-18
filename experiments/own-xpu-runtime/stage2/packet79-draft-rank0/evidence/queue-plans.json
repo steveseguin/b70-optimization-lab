@@ -1,0 +1,45 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "rows": [
+    {
+      "lane": "A",
+      "proposal_sha256": "d6fd0d6a6256ee3cd7bf5028e57c6e8d6d5224ca4cde022ffe8423f331b1b6fa",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "A",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/build/p79-queue-tunyg5o_"
+      ],
+      "result": {
+        "name": "packet79-grid-A",
+        "plan": "passed",
+        "seal": "checked by packet plan/wrapper"
+      }
+    },
+    {
+      "lane": "B",
+      "proposal_sha256": "2faf673cbdf0b3ded68005b0e1a2b2bbdb7208f32f11a262975319bb3072d9a0",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet79-draft-rank0/build/p79-queue-r_8oep70"
+      ],
+      "result": {
+        "name": "packet79-grid-B",
+        "plan": "passed",
+        "seal": "checked by packet plan/wrapper"
+      }
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+Six lane-A jobs and complete chain planned; live queues untouched
+confirm entry -1 reaches both intercepted native calls
+confirm entry 0 reaches both intercepted native calls
+confirm entry 1 reaches both intercepted native calls
+confirm entry 2 reaches both intercepted native calls
+confirm entry 3 reaches both intercepted native calls
+confirm entry 4 reaches both intercepted native calls
+{
+  "schema": "packet136.ready.v1",
+  "ready": false,
+  "device_executed": false,
+  "evidence_rule": "identical-native-selection-both-v4-lanes-v1",
+  "decision": "experiments/own-xpu-runtime/ops/packet136-orchestration/decisions/087f9da3c434e862.json",
+  "decision_sha256": "607942e9cc7d3874ffd08880c94225139bb15091ab7ce54668c0c739f1d2aa16",
+  "selection": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64+halfcache",
+    "host": "ordered",
+    "route": "fast",
+    "norm": "production",
+    "recurrence": "rec-both-plus",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "down": "tile16",
+    "draft_attention": "split32",
+    "other_fusion": "fused",
+    "target_head": "split",
+    "draft_prefix": "80128",
+    "rollback_state": "banks"
+  },
+  "chain_output": "device-cards01-a",
+  "other_lane_pause_required": false,
+  "timing_exclusivity": "Existing whole-host timing windows retain ordinary exclusive admission",
+  "chain_command": "systemd-run --user --unit=packet136-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet136-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/build/device-cards01-a </dev/null",
+  "drain_fix": {
+    "passed": true,
+    "device_executed": false,
+    "scanner_sha256": "70d18ffb0abf9cbb59ea84737e09ecb700951805c6b3dc499f40e42d476aa62f",
+    "reports": [
+      {
+        "schema": "drain-fix-report.v1",
+        "root": "experiments/own-xpu-runtime/stage2/packet136-record-bundle",
+        "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+        "counts": {
+          "FIXED": 1,
+          "UNFIXED": 0
+        },
+        "passed": true,
+        "files": [
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet136-record-bundle/drain_gate.py",
+            "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+            "status": "FIXED",
+            "sleeps": [
+              {
+                "line": 51,
+                "status": "FIXED"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "schema": "drain-fix-report.v1",
+        "root": "experiments/own-xpu-runtime/ops/packet136-orchestration",
+        "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+        "counts": {
+          "FIXED": 2,
+          "UNFIXED": 0
+        },
+        "passed": true,
+        "files": [
+          {
+            "path": "experiments/own-xpu-runtime/ops/packet136-orchestration/drain_gate.py",
+            "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+            "status": "FIXED",
+            "sleeps": [
+              {
+                "line": 51,
+                "status": "FIXED"
+              }
+            ]
+          },
+          {
+            "path": "experiments/own-xpu-runtime/ops/packet136-orchestration/lanequeue.py",
+            "sha256": "5eac9e79f861394516851cf53604b9fbcdde34599aa9e754608f8f1538ee5e82",
+            "status": "FIXED",
+            "sleeps": [
+              {
+                "line": 721,
+                "status": "FIXED"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "argument_gate_sha256": "840160c2377477d37f6189820cc046632d635d91589db31e0fa9438f2b750ffb",
+  "launch_limits_sha256": "f2c412d83ff01b8baa58aa3422258fbf3b388bdaec4bf7d3e8cc42b446684b53",
+  "cpu_tests_sha256": "ecb0d1ad36f7187f46232903e69eb76fc2f162696c015327402d3a19ee4bdc6f",
+  "proposal_plan_sha256": "7f6e78285292009a2c6e8590d950b6d0dc4ed7c328897b1e7c60e2873ebf2290",
+  "confirm_entries_sha256": "7c268f9270866e1f34797f3308fbf936cab93b0bf0b6b2b316039c2a399b7684",
+  "cpu_preparation_ready": true,
+  "reason": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle: REFUSED: pending A composed 12x64 smoke\n; /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle: REFUSED: pending A grid 0: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p136b-0dd382892cdc-A-0-control\n"
+}
+	Command being timed: "python3 -B experiments/own-xpu-runtime/ops/packet136-orchestration/orchestrate.py"
+	User time (seconds): 82.99
+	System time (seconds): 23.30
+	Percent of CPU this job got: 98%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:47.84
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 74116
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 1334405
+	Voluntary context switches: 161098
+	Involuntary context switches: 837
+	Swaps: 0
+	File system inputs: 42128
+	File system outputs: 640136
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

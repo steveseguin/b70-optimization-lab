@@ -1,0 +1,17 @@
+Lane A: production mean 50.473280 tok/s
+selection          class-balanced tok/s    vs production    all-13-exact
+production                    50.460477           -0.03%    PASS
+wide64                        53.191435           +5.39%    PASS
+wg64                          50.162080           -0.62%    PASS
+wg128                         50.270388           -0.40%    PASS
+prefetch64                    49.404673           -2.12%    PASS
+production                    50.486083           +0.03%    PASS
+Lane B: production mean 51.177890 tok/s
+selection          class-balanced tok/s    vs production    all-13-exact
+production                    51.177711           -0.00%    PASS
+prefetch64                    49.814048           -2.66%    PASS
+wg128                         51.114664           -0.12%    PASS
+wg64                          50.708663           -0.92%    PASS
+wide64                        53.632349           +4.80%    PASS
+production                    51.178069           +0.00%    PASS
+Diagnostic 128-token screen only; 99/(t100-t1), median within class then across classes.

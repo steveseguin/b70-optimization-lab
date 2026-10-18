@@ -1,0 +1,43 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "decision": "packet111r.combined-candidate.v1",
+  "decision_path": "experiments/own-xpu-runtime/ops/packet111-orchestration/decisions/c9277d2c52987576.json",
+  "decision_sha256": "f1536a32c2b39a09d543520f5c6e9afa7a754ef79c88e036f8ddbdd59c1358e5",
+  "selected": {
+    "other_fusion": "fused",
+    "target_head": "split"
+  },
+  "frozen_files_verified": 130,
+  "historical_decision_unchanged": true,
+  "live_queue_writes_by_this_task": false,
+  "externally_changed_live_queues": [
+    "experiments/own-xpu-runtime/ops/lane-queue/queue-B.txt"
+  ],
+  "composite_plans": {
+    "passed": true,
+    "device_executed": false,
+    "live_queue_modified": false,
+    "decision_sha256": "f1536a32c2b39a09d543520f5c6e9afa7a754ef79c88e036f8ddbdd59c1358e5",
+    "plans": [
+      {
+        "lane": "A",
+        "passed": true,
+        "jobs": 3,
+        "log_sha256": "13504795e76fe50237a713b53b812622980d7d305c89cfaf3a7726de2565b1af"
+      },
+      {
+        "lane": "B",
+        "passed": true,
+        "jobs": 3,
+        "log_sha256": "8da682f441631d2a27498b66778f7616786c7b34d698694cc8f940e25b2cefec"
+      }
+    ]
+  },
+  "tests_passed": 33,
+  "fresh_chain": true,
+  "composites_unrun": true,
+  "launch_limits_passed": true,
+  "ready": false,
+  "readiness_reason": "[Errno 2] No such file or directory: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p111r-c9277d2c52987576-composite-A-0-control/window.json'"
+}

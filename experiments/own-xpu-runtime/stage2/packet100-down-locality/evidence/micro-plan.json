@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "runnable": false,
+  "lane": "B",
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet100-down-locality/build/microbench",
+    "--coordinator-admitted-device-window",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet100-down-locality/evidence/routes.bin"
+  ],
+  "identity": {
+    "build_receipt_sha256": "18d31d3abc9016166fe3d00963fb0a38c1cb37ef997fdd74c34b3be29fb159a5",
+    "binary_sha256": "8dae3c60b38ecc59924ef4ff6d49efd501dfce9be6dfdb98f7667ffa2b122f82",
+    "wrapper_seal_sha256": "2ce1884f599466ae5d91226bc08a22605fa66316132eb0dfbef992c2c9ebfb40"
+  },
+  "physical_cards": [
+    2
+  ],
+  "native_card": 0,
+  "device_mask": {
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:43:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+  },
+  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet100-down-locality/evidence/micro-B",
+  "reservation_scope": "lane-B",
+  "drain": "shared DrainPermit held across entire autonomous native lifetime",
+  "required_host_available_bytes": 10737418240,
+  "host_reserve_bytes": 8589934592,
+  "maximum_host_scratch_bytes": 2147483648,
+  "device_bytes_upper_bound": 2147483648,
+  "minimum_root_free_bytes": 12884901888,
+  "watchdog_seconds": 600,
+  "retries": 0,
+  "micro_qualification": "pending measured >=15% faster; no engine speed verdict"
+}

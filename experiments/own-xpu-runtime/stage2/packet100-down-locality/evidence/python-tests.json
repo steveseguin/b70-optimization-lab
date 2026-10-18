@@ -1,0 +1,47 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "tests": 15,
+  "commands": [
+    [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet100-down-locality",
+      "-p",
+      "test_packet100.py",
+      "-v"
+    ],
+    [
+      "/usr/bin/python3",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet100-down-locality/worker.py",
+      "--help"
+    ]
+  ],
+  "closed_worker_import": true,
+  "lane_admission": {
+    "A": "lane-A",
+    "B": "lane-B"
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet100-down-locality/test_packet100.py": "259aeea2f3a6f655ebfbba612fab29017e89466322cdded6791ce54e56d9f0e3",
+    "experiments/own-xpu-runtime/stage2/packet100-down-locality/micro_gate.py": "030c0bc0d9aafe9f11c0b4234f09d5e30b72c281a97569f22b3e2a566c3948ed",
+    "experiments/own-xpu-runtime/stage2/packet100-down-locality/route_inputs.py": "877b01beec091985d81b30e79d64182e21db74d7ccf3c68a99e212de6ea2cab7",
+    "experiments/own-xpu-runtime/stage2/packet100-down-locality/screen_jobs.py": "65ddf90fa24bd980274760afa6ae10002905a68584e9ba09c5859bf0eda7e913",
+    "experiments/own-xpu-runtime/stage2/packet100-down-locality/compare.py": "2201753e17a08b008c90a27ca2580adac8803cd76df6b94aed1bdb4522d7ba28",
+    "experiments/own-xpu-runtime/stage2/packet100-down-locality/bundle_selection.py": "7cb600a8e0a5aa7a0fb4f882162b5d00f3536d0a306f0b49b859d2a6bd647c96",
+    "experiments/own-xpu-runtime/stage2/packet100-down-locality/prepare_chain.py": "c06873975d7daf1893333a87dcca297c55684a128dda84076baed252955aea4d",
+    "experiments/own-xpu-runtime/stage2/packet100-down-locality/selection_gate.py": "6baab42f7cbfdb3bbbe2576fdff8f3927c4ca9b3e2cf2c6353968e2851943887",
+    "experiments/own-xpu-runtime/stage2/packet100-down-locality/merge_dispatch.py": "c06873975d7daf1893333a87dcca297c55684a128dda84076baed252955aea4d",
+    "experiments/own-xpu-runtime/stage2/packet100-down-locality/packet56_submission.py": "c06873975d7daf1893333a87dcca297c55684a128dda84076baed252955aea4d",
+    "experiments/own-xpu-runtime/stage2/packet100-down-locality/k2_summary.py": "c06873975d7daf1893333a87dcca297c55684a128dda84076baed252955aea4d",
+    "experiments/own-xpu-runtime/stage2/packet100-down-locality/bootstrap.py": "18fed55d67bd8facbad9256357b31a31fd54e81515cfc348cae4e47ae1fc9d77",
+    "experiments/own-xpu-runtime/stage2/packet100-down-locality/worker.py": "4d3866cf3c27505732d9ff58344427faaa4ea0937df1189a73bd3084a10b4912",
+    "experiments/own-xpu-runtime/stage2/packet100-down-locality/python_gate.py": "fd6dcbedf4e874e2ccb9d0cdd75b28fa407365ca2d2e2e532be00c5c5253fe1d",
+    "experiments/own-xpu-runtime/stage2/packet100-down-locality/evidence/full-shape.json": "45dff02d5512b10e070646cc62ac347937c82d8723429173b2cfe92179fae0f6"
+  }
+}

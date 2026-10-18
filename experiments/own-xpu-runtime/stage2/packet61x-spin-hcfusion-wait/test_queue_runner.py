@@ -99,7 +99,7 @@ class QueueTests(unittest.TestCase):
 
     def test_output_matches_window_build_boundary(self):
         base = Path('/home/steve/own-xpu-runtime-results/packet61x-spin-hcfusion-wait/build')
-        self.assertEqual(q.admitted_output(base / 'device-cards01-a'), base / 'device-cards01-a')
+        self.assertEqual(q.admitted_output(base / 'device-cards01-b'), base / 'device-cards01-b')
         for path in (base / 'another-chain', base, base.parent / 'device-cards01-a', Path('/tmp/packet49')):
             with self.assertRaises(ValueError):
                 q.admitted_output(path)

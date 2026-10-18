@@ -1,0 +1,83 @@
+"""CPU replay of the real post-device K2 selection path, no native execution."""
+import ast
+import json
+import shutil
+from pathlib import Path
+from unittest.mock import patch
+import unittest
+import tempfile
+
+import p49_dispatch as dispatch
+import bundle_selection
+from storage import B, digest
+
+P = Path(__file__).resolve().parent
+P70=P.parent/'packet70-record-bundle'
+ARCHIVE = Path('/home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a-k2fail-20261017T1933')
+
+
+class SelectionPostprocessing(unittest.TestCase):
+    def test_real_k2_all_experts_and_unknown_key(self):
+        pins = json.loads((P70/'evidence/k2fix-archive.json').read_text())['files']
+        names = ('K2/run0/summary.json', 'K2/run0/dispatch-measured.json',
+                 'K2/run0/receipt.json', 'K2/round3-timing/receipt.json',
+                 'K2/round3-timing/timings.jsonl')
+        for name in names:
+            self.assertEqual(digest(ARCHIVE/name), pins[name])
+        for expert in (*bundle_selection.views(),'unknown-key-test'):
+            with self.subTest(expert=expert), tempfile.TemporaryDirectory() as tmp:
+                local = Path(tmp); run = local/'run'; run.mkdir()
+                for name in ('summary.json', 'dispatch-measured.json'):
+                    shutil.copyfile(ARCHIVE/'K2/run0'/name, run/name)
+                for name in ('dispatch-speed6.json', 'dispatch-speed6-provenance.json', 'k2-class-registry.json'):
+                    shutil.copyfile(P/name, local/name)
+                selection = json.loads((P/'selection.json').read_text())
+                selection['choices'] = bundle_selection.choices(*bundle_selection.views()[expert]) if expert != 'unknown-key-test' else bundle_selection.choices('production','production','wide64')
+                if expert == 'unknown-key-test':
+                    selection['choices']['unexpected'] = 'must reject'
+                (local/'selection.json').write_text(json.dumps(selection))
+                summary = json.loads((run/'summary.json').read_text())
+                bundle = dict(json.loads((P/'bundle-selection.json').read_text()))
+                with patch.object(dispatch, 'P', local), patch.object(bundle_selection, 'selected', return_value=bundle):
+                    if expert == 'unknown-key-test':
+                        with self.assertRaisesRegex(ValueError, 'exactly route/recurrence/hc'):
+                            dispatch.pin_production_dispatch(run, summary, round3_root=ARCHIVE/'K2/round3-timing')
+                        continue
+                    result, policy = dispatch.pin_production_dispatch(run, summary, round3_root=ARCHIVE/'K2/round3-timing')
+                self.assertTrue(result['passed'])
+                self.assertTrue(policy['packet49d_measured_selection']['passed'])
+                self.assertEqual(policy['packet49d_measured_selection']['receipt_sha256'], pins['K2/round3-timing/receipt.json'])
+                self.assertEqual((run/'dispatch-measured.json').read_bytes(), (P/'dispatch-speed6.json').read_bytes())
+                self.assertEqual((run/'summary-k2-measured.json').read_bytes(), (ARCHIVE/'K2/run0/summary.json').read_bytes())
+        for name in names:
+            self.assertEqual(digest(ARCHIVE/name), pins[name], 'replay changed original evidence')
+
+    def test_every_window_selection_reader_has_replay_coverage(self):
+        # Inventory all mapping readers, including ones reached by window.py.
+        # A new consumer must get an explicit postprocessing test before this passes.
+        readers = set()
+        for path in P.glob('*.py'):
+            if path.name.startswith('test_'):
+                continue
+            tree = ast.parse(path.read_text())
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Constant) and node.slice.value == 'choices':
+                    readers.add(path.name)
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == 'get' and node.args and isinstance(node.args[0], ast.Constant) and node.args[0].value == 'choices':
+                    readers.add(path.name)
+        self.assertEqual(readers, {'p49_dispatch.py', 'p49d_k2.py', 'selection_gate.py',
+            'chain_seal.py', 'packet56_submission.py', 'prepare_selections.py', 'prepare_packet.py', 'bundle_selection.py', 'full_shape.py', 'mini_gate.py'})
+        # Every registered window shares this selection identity gate. K2 is the
+        # only additional choices-reading postprocessor; it is replayed above.
+        from packet56_submission import validate_bundle
+        from queue_runner import commands, EARLY, LATE
+        bundle = json.loads((P/'bundle-selection.json').read_text())
+        for name in commands(B/'device-cards01-a'):
+            self.assertIn(name, EARLY + LATE)
+            for view,v in bundle_selection.views().items():
+                for placement,(dr,split,boundary) in bundle_selection.PLACEMENTS.items():
+                    b=dict(bundle,**dict(zip(bundle_selection.KEYS,v)),name=view,placement=placement,draft_rank=dr,target_split=split,layer_boundary=boundary)
+                    selection=json.loads((bundle_selection.view_path(b)/'selection.json').read_text())
+                    validate_bundle(b,selection)
+
+if __name__=='__main__':unittest.main()

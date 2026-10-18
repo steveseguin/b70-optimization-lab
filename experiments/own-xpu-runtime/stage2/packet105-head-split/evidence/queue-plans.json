@@ -1,0 +1,42 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "plans": [
+    {
+      "lane": "B",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p105-B-grid.txt",
+      "proposal_sha256": "204fb6a7f9acfe33bf3a2fb38db8b85b56dd46768107f17778f8a071e7eb85bc",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/build/tmp/p105-queue-kf2skalf"
+      ],
+      "passed": true,
+      "log_sha256": "28571b14487bafd9e7d85e1db92d01ab15a4a4fd9ae950bfee429be24ddd56aa"
+    },
+    {
+      "lane": "A",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p105-A-grid.txt",
+      "proposal_sha256": "d12f49189ed5a03a138ce2482c39d892a5266e985c34528299d5e9d13828a42f",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "A",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/build/tmp/p105-queue-kf2skalf"
+      ],
+      "passed": true,
+      "log_sha256": "dd63de818918215398de0749879310608c005bc694671fe656b0718761c92cc6"
+    }
+  ],
+  "record_lane": "A"
+}

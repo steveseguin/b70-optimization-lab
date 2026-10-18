@@ -1,0 +1,176 @@
+# Packet117: move independent HC sigmoid work onto existing lanes
+
+CPU preparation on `steve-b70s`, beginning 2026-10-18 09:41 UTC; two-hour
+budget. `git pull --rebase` refused unrelated dirty orchestration files;
+`git fetch origin` confirmed both HEAD and origin/main at `141e207cebc0`.
+No GPU, service, live queue, sudo, host setting or other process is changed.
+The compiler turn respects the coordinator's whole-host hold.
+
+## What the 31% number actually includes
+
+[Packet110's table](../experiments/own-xpu-runtime/stage2/packet110-class-roofline/ROOFLINE.md)
+is synthetic full-layer attribution, not physical DRAM bandwidth or a model
+benchmark. Its HC gate event includes the Q8 GEMV **and four sigmoid products
+and an ordered mix**. The useful-byte count cannot separate those costs.
+There are **10,240 gate outputs, not 6,400**: four streams × 2,560 hidden
+positions, with K=320. The 25,600 output bytes are 20,480 gate bytes plus
+5,120 mix bytes.
+
+Source: `packet110-class-roofline/p60_submit.cpp`, `p73_hc.hpp`,
+`p60_math.hpp`, `p49d_small.hpp`, `byte_model.py`, and
+`packet17-detmath/detmath.hpp` (local paths under `experiments/own-xpu-runtime/stage2`).
+The selection's `hc_gate=wide` dispatches `p73hc`, not the old single-row kernel.
+
+* Weights originate as Q8_0. The runtime has already expanded each row to
+  320 signed code bytes, ten FP32 scales and twenty metadata bytes: 380-byte
+  row pitch. The gate reads 360 useful weight bytes/row, plus 640 input and
+  20,480 norm bytes: 3,707,520 read bytes. It does not convert FP16 scales in
+  the hot loop. Four neighboring logical lanes reuse each scale field.
+* Each existing subgroup handles two neighboring rows, sharing its eight-wide
+  BF16 input load. Each logical lane reads two contiguous 32-bit code words
+  per row, converts eight signed codes to float, multiplies by the scale,
+  multiplies by the BF16 input widened through bits, then adds in order.
+  Lanes 0–7 do a second eight-element chunk; lanes 8–31 do only one. The
+  second iteration therefore has only 25% of lanes active.
+* The exact per-output tree is still 32 leaves, distances 1,2,4,8,16, with
+  the left operand retained. There are 640 WG256 groups, eight SG32 groups
+  per workgroup, sixteen gate rows/four mixed outputs per workgroup, one
+  local barrier and 32 bytes of local gate scratch in production.
+* After that barrier, only work-items 0–3 run the mix. Each runs **four
+  serial calls to the software FP32 exponential** inside sigmoid. This
+  exponential uses paired-float polynomial arithmetic and explicit FMAs,
+  not a hardware native-exp instruction. All useful sigmoid work sits in
+  one subgroup while seven have finished their row sums. That serial work
+  and the short K are concrete reasons the event is not comparable to a
+  pure long GEMV's byte rate. Their exact timing share is unmeasured.
+* `hc.*.low` has K=10,240 and Split4, 324 WG128 groups (320 low rows plus
+  four inject rows); much longer streaming work amortizes its reduction and
+  epilogue. `small.ffn.q6` is a four-member router/shared-gate/shared-up/scalar
+  tuple, not one gate. It uses expanded Q6 signed bytes and FP32 scales,
+  K=2,560, Split4 and V4 independent rows. Its reported 92% includes a
+  different output count, arithmetic and epilogue. Similar useful bytes do
+  not imply similar instruction or occupancy cost.
+
+The final linked AOT report finds both HC kernels use 128 GRFs, one barrier,
+eight EU threads, no flag spills, no scratch messages and no per-thread
+private-memory allocation. The final candidate keeps 64 bytes of products
+plus 32 bytes of gates in local memory. This is compiler allocation metadata,
+not measured occupancy. No hardware occupancy or bandwidth counter is claimed.
+[HC-only extraction](../experiments/own-xpu-runtime/stage2/packet117-hc-gate/evidence/hc-register-summary.json)
+links the complete assembly and zeinfo report; unrelated emitted router kernels
+are not part of this claim.
+
+## Distinct mechanism and exactness contract
+
+A repository-wide `rg -i '\bhc\b|hc[._ -]|hyper' --glob '*DO-NOT-REPEAT*'`
+preceded implementation. Relevant exclusions include packets 51, 52, 53b,
+67, 69, 73, 90, 94, 99, 101, 102 and 104. Packet104's HC tile16 arm was
+1.006565× control; virtualization and four-stream subgroup geometry are
+closed. Packet90 H1 expanded weight cache and packet94 norm-consumer fusion
+are not reopened. Packet86's conversion-bound attribution does not establish
+that this fused event's serial software sigmoid is free.
+
+[Candidate](../experiments/own-xpu-runtime/stage2/packet117-hc-gate/hc_gate.hpp):
+keep `p73hc::chains`, its two-row pairing, original weight layout, SG32 tree,
+WG256 geometry and one launch. Broadcast the two already-reduced FP32 roots
+to existing lanes 0 and 1. Each computes one unchanged BF16-rounded gate,
+sigmoid and multiplication. Store sixteen independent FP32 products in
+64 bytes of local memory and retain the original 32-byte gate scratch,
+then keep the same barrier and original
+`(((0+p0)+p1)+p2)+p3`, divide-by-four, BF16 mix. Thus the longest serial
+sigmoid sequence becomes one call instead of four on finite inputs. Any
+nonfinite product takes the original scalar mix path for exact NaN payload
+selection. No integer dot, changed
+scale, new sum tree, weight cache, transposition, or large-GRF experiment.
+
+The expected value is enough to justify one micro: the supplied gate event
+has about 15 microseconds above its byte floor; the required 30% reduction
+would save roughly 6.6 microseconds/call, about 0.32 ms per half across both
+HC sites. This is an opportunity calculation, **not a predicted or measured
+model speedup**. Fail the mechanism if either fresh process misses the gate.
+
+## Prepared checks and coordinator handoff
+
+The micro copies packet110's complete-layer harness, using its deterministic
+synthetic weights and changing layer inputs. It compares all producer outputs
+and mutable state and directly challenges HC inactive/error/capacity/NaN/Inf/
+subnormal cases. Both QSA and GDN run at occupied context 128, ten warmups and
+forty measured pairs, alternating arm order. Every per-site/order/layer median
+must be <=0.70× production in **each of two fresh processes**. It is an
+operator diagnostic, never a realistic model benchmark or quality promotion.
+
+GNU and Intel CPU gates compare full 25,600-byte HC outputs and raw FP32
+chains in two fresh processes each. The one-load v5 copy is prepared in
+parallel from packet111 after 111r, with `hc_gate=production|p117`. Its launcher
+must recompute the sealed two-process micro qualification before admission.
+Native exactness, startup, reset, selection and pre-exec limit gates remain
+separate. No measured speed or device exactness is claimed during preparation.
+
+Commands use `nice -n 19 taskset -c 8-15,24-31 python3 -B ... </dev/null`.
+CPU-only entry processes set the 8 GiB cap; imports do not. One compiler at a
+time uses packet94's compile-turn lock. Root free must stay >=25 GB and the
+whole packet build <=250 MB. Binaries and temporary mirrors are ignored;
+compact receipts, patches and source are retained.
+
+## Micro milestone
+
+The device binary compiles and both fresh B jobs pass the real coordinator
+planner on a temporary queue. The proposal is
+[`proposed-p117-micro-B.txt`](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p117-micro-B.txt).
+Expected duration is 2–4 minutes per process; watchdog 1,200 seconds, five
+times the upper estimate. No GPU binary ran here.
+
+Final GNU and Intel gates each pass **16 cases, 16,384 raw FP32 chain checks,
+and 409,600 exact output bytes per fresh process**, twice per compiler.
+The unchanged production itself chooses different exceptional NaN payloads
+between compilers in scenarios 8, 14 and 15. Each candidate matches its own
+compiler's unchanged production byte for byte; repeated outputs are stable,
+and finite outputs match across compilers. No tolerance or canonicalization
+was added. [Receipt](../experiments/own-xpu-runtime/stage2/packet117-hc-gate/evidence/cpu-byte-identity.json).
+
+The original eight cases missed a mixed-NaN failure. The expanded GNU test
+found the first differing mix byte at offset 20,480 in scenario 8. The
+unconditional product array and failing bytes are preserved under
+`evidence/rejected-unconditional-products/`; they are not qualified. The
+retained candidate recomputes the original scalar mix when a product is
+nonfinite. Its direct device tests include all sixteen control/exceptional
+cases and compare complete mutable state before timing. Native equality
+remains unmeasured until the coordinator executes the proposal.
+
+The first micro compile also exposed a missing explicit kernel-guard include;
+its log is retained and the corrected build passes. A source change while an
+earlier compile was waiting caused the source-hash guard to refuse that
+stale build. The final build regenerates the mirror inside its compiler turn.
+Eight fail-closed micro-receipt tests pass. The compiler's linked HC allocation
+report remains spill-free after the exceptional fallback.
+
+## Final CPU handoff
+
+The v5 copy is complete. GNU-host and Intel device builds, four full-shape
+fresh/switch checks, four actual-parser startups (two selected views × two
+ranks), four mutable-state reset checks, two fresh miniature IPC brackets,
+fourteen policy tests and the inherited-limit pre-exec gate pass. The
+miniature IPC test uses its explicitly declared small projection; full-size
+split-head allocation and dispatch are checked separately. Its launch invokes
+micro qualification in a fresh Python process to avoid module-name collisions
+with its own wrapper.
+
+[`proposed-p117-v5-B.txt`](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p117-v5-B.txt)
+passes temporary planning with **launch eligibility false until the micro
+passes**. Expected duration is 15 minutes; watchdog 3,600 seconds (4×).
+The final copied QSA/GDN host micro additionally passes 4,736 exact comparisons,
+including all sixteen direct HC control/exception cases. The checked mirror
+uses original source paths for its runtime fixture reads. Compiler dependency
+lists bind only the actual translation-unit closure, not unrelated offline
+image files. The native binary and every seal were refreshed after that fix.
+
+Combined root/v5 build size is **127,956,132 bytes**; root free is **38,779,432,960 bytes**
+at handoff. Peak compiler RSS remains recorded in each build receipt and all
+CPU processes use the 8 GiB address-space cap. The 4 MiB packet-local RoPE table
+is documented in [retention](../experiments/own-xpu-runtime/stage2/packet117-hc-gate/RETENTION.md).
+The strict identity checker rejects a symlink; no frozen source was altered.
+
+[CPU preparation closeout](../experiments/own-xpu-runtime/stage2/packet117-hc-gate/CPU-PREPARATION-CLOSEOUT.md)
+records the rejected NaN path and remaining device gates. No GPU, services,
+queues, host settings or other owners' jobs were changed. Full model exactness
+and speed remain pending.

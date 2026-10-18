@@ -1,0 +1,13 @@
+offline stage 0 PASS
+offline stage 1 PASS
+offline stage 2 PASS
+offline stage 3 PASS
+offline stage 4 PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet99-iq2-grid/inspect_registers.py", line 50, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet99-iq2-grid/inspect_registers.py", line 42, in main
+    assert not r['scratch_messages'],(r['name'],r['spill_metadata'],len(r['scratch_messages']))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('//.kernel _ZTSZZNK3p996KernelILN3iq34TypeE20ELj640ELj4ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_', ['//.spill size 1664', '//.spill GRF est. ref count 106'], 52)

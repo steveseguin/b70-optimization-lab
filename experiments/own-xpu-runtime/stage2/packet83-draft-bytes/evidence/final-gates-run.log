@@ -1,0 +1,37 @@
+RUN full_shape.py
+production 0 PASS
+production 1 PASS
+q4-g32 0 PASS
+q4-g32 1 PASS
+prefix990 0 PASS
+prefix990 1 PASS
+prefix985 0 PASS
+prefix985 1 PASS
+RUN real_head_gate.py
+GNU 1 full real prefix PASS
+GNU 2 full real prefix PASS
+Intel 1 full real prefix PASS
+Intel 2 full real prefix PASS
+RUN cpu_gate.py
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet83-draft-bytes/cpu_gate.py", line 42, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet83-draft-bytes/cpu_gate.py", line 28, in main
+    expected,row=run_one('parent75',BASE/'build/gnu-host/own-rt-iq3','production',True);rows.append(row)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet83-draft-bytes/cpu_gate.py", line 16, in run_one
+    with patch.object(pipeline,'P',adapter):result=pipeline.run(args)
+                                                   ^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet83-draft-bytes/pipeline.py", line 451, in run
+    require(not args.output.exists(),"new output required");args.output.mkdir(parents=True)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet83-draft-bytes/pipeline.py", line 30, in require
+    if not test:raise ValueError(message)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: new output required
+Traceback (most recent call last):
+  File "<stdin>", line 6, in <module>
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/usr/bin/python3', '-B', 'experiments/own-xpu-runtime/stage2/packet83-draft-bytes/cpu_gate.py']' returned non-zero exit status 1.

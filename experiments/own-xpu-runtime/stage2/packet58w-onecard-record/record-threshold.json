@@ -1,0 +1,48 @@
+{
+  "schema": "lab.packet58.onecard-record-threshold.v1",
+  "gpu_count": 1,
+  "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+  "quantization": "UD-IQ3_XXS (GGUF)",
+  "records": [
+    {
+      "reference_submission": "cmvd8bhou000duj01hxaihg15",
+      "threshold_tok_s": 24.338653323339745,
+      "result": {
+        "path": "experiments/own-xpu-runtime/stage2/packet58s-onecard-submission/submission/card0-58g-a-v3/result.json",
+        "sha256": "d880f272b81214ba84520090ca6fac7ea34e091f51dd80a9add1cf98040f015f"
+      }
+    },
+    {
+      "reference_submission": "cmvdukc200064rf01lqsql9x8",
+      "threshold_tok_s": 26.22859930943809,
+      "result": {
+        "path": "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/submission/prepared-a/result.json",
+        "sha256": "46511b430d17252310a8de5dac27a60354aa0a0da46247bb65deddf57b5d9e3a"
+      }
+    }
+  ],
+  "public_record_check": {
+    "checked_utc": "2026-10-18T13:14:03Z",
+    "method": "GET",
+    "endpoint": "https://www.localmaxxing.com/api/speed-tests?modelId=cmtas1yaz000cqq01umzx85mw&limit=100",
+    "http_status": 200,
+    "status": "checked-own-1x-b70-entry-only",
+    "pagination_complete": true,
+    "runs_for_model": 60,
+    "single_gpu_runs_for_model": 17,
+    "matching_public_record": {
+      "reference_submission": "cmvd8bhou000duj01hxaihg15",
+      "tok_s": 24.33865332333975,
+      "owner": "this lab"
+    },
+    "best_tok_s": 24.33865332333975,
+    "best_single_gpu_other_hardware_tok_s": 110.0,
+    "local_ledger_matching_entry": true,
+    "previous_check": {
+      "checked_utc": "2026-10-18T02:50:00Z",
+      "http_status": 200,
+      "status": "checked-no-matching-1x-b70"
+    },
+    "disclosure": "Public list checked 2026-10-18 13:14 UTC (HTTP 200, 60 runs, 17 single-GPU): the only 1x Arc Pro B70 entry is this lab's 24.339 (cmvd8bhou000duj01hxaihg15), which this run supersedes; other single-GPU hardware entries exist (up to 110 tok/s). Change vs that run: down-weight tile16 layout only (lossless; raises zero-copy expert-miss bandwidth ~1.27x). WS128 host state: 0 major page faults per token over 1,536 tokens, median host preparation 0.53 ms. Single timed run."
+  }
+}

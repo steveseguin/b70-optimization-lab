@@ -1,0 +1,68 @@
+"""Validate measured coverage of every new kernel before adopting the selection."""
+import json
+from pathlib import Path
+import statistics
+from storage import digest
+from selection_gate import CHOICES, validate_choices
+
+CENSUS = {**{key: value for key, value in CHOICES.items() if key != 'hc'},
+          'hc.a.mix': CHOICES['hc'], 'hc.f.mix': CHOICES['hc'],
+          'expsgate': ('production', 'virtual8-split-stream'),
+          'expsdown': ('production', 'virtual16'),
+          'small.ffn.q6': ('production', 'virtual4')}
+
+
+def require(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+
+def measured_coverage(root, selection):
+    from record_scope import require_record_scope
+    require_record_scope()
+    validate_choices(selection['choices'])
+    root = Path(root)
+    receipt = json.loads((root/'receipt.json').read_text())
+    require(receipt.get('schema') == 'packet49d.all-choice-fixtures.v1'
+            and receipt.get('passed') is True and receipt.get('device_executed') is True
+            and receipt.get('timing') is True and receipt.get('card') == 0
+            and receipt.get('reference_exact') is True, 'K2 new-kernel owner failed')
+    teardown = receipt['teardown']
+    require(teardown.get('safe_to_exit') is True
+            and teardown.get('exit_code') == teardown.get('live_bytes') == teardown.get('in_flight') == 0,
+            'K2 new-kernel unsafe teardown')
+    expected = {(cls, candidate, i) for cls, candidates in CENSUS.items()
+                for candidate in candidates for i in range(210)}
+    observed = {}; endpoints = set()
+    for line in (root/'timings.jsonl').read_text().splitlines():
+        row = json.loads(line)
+        key = row['class'], row['candidate'], row['iteration']
+        require(key in expected and key not in observed, 'K2 duplicate/unknown new-kernel timing')
+        require(row['m'] == 1 and row['row'] == 0 and row['byte_exact'] is True
+                and row['warmup'] is (row['iteration'] < 10), 'K2 timing workload/byte identity differs')
+        events = row['events']; passes = 4 if row['class'] == 'route' else 1
+        require(row['passes'] == passes and len(events) == passes, 'K2 new-kernel event census')
+        require(all(type(e['start_ns']) is int and type(e['end_ns']) is int
+                    and 0 < e['start_ns'] < e['end_ns']
+                    and e['end_ns']-e['start_ns'] < 4_000_000_000 for e in events), 'invalid K2 event endpoints')
+        require(len({e['event'] for e in events}) == passes, 'duplicate K2 compute event')
+        for event in events:
+            pair = event['start_ns'], event['end_ns']
+            require(pair not in endpoints, 'reused K2 event endpoints')
+            endpoints.add(pair)
+        total = sum(e['end_ns']-e['start_ns'] for e in events)
+        require(type(row['gpu_ns']) is int and row['gpu_ns'] == total, 'K2 compute timing sum differs')
+        observed[key] = total / 1000
+    # The executable also runs its48 JSON parser/hash admission checks.
+    require(set(observed) == expected and receipt['checks'] == len(expected)+48, 'K2 new-kernel timings incomplete')
+    coverage = {cls+':'+candidate: 210 for cls, variants in CENSUS.items() for candidate in variants}
+    require(receipt['coverage'] == coverage, 'K2 new-kernel receipt coverage differs')
+    selected = dict(route=selection['choices']['route'], recurrence=selection['choices']['recurrence'],
+                    **{'hc.a.mix': selection['choices']['hc'], 'hc.f.mix': selection['choices']['hc'],
+                       'expsgate': 'virtual8-split-stream', 'expsdown': 'virtual16', 'small.ffn.q6': 'virtual4'})
+    medians = {cls: {candidate: statistics.median(observed[cls,candidate,i] for i in range(10,210))
+                     for candidate in variants} for cls, variants in CENSUS.items()}
+    return dict(passed=True, timing_scope='ordinary M1 complete compute events; 10 warmup + 200 measured per choice',
+                selection=selected, median_compute_us=medians, measured_choices=sum(map(len,CENSUS.values())),
+                receipt_sha256=digest(root/'receipt.json'), timings_sha256=digest(root/'timings.jsonl'),
+                model_speed_claim=False)

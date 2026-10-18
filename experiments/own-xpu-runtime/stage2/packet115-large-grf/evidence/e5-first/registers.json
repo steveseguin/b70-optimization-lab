@@ -1,0 +1,22 @@
+{
+  "source_sha256": "136921f1aa24255b48aa1cf03707df8795f2df93e6af95c18017871c9ae0c9ff",
+  "kernels": [
+    {
+      "name": "//.kernel _ZTSZZNK6p115e56KernelILj1ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "grf": 256,
+      "spill_metadata": [
+        "//.spill flag store 3",
+        "//.spill flag load 6"
+      ],
+      "scratch_messages": 0,
+      "per_thread_memory_allocated": false,
+      "scratch_bytes": 0,
+      "spill_free": false,
+      "assembly": "evidence/e5-first/large-kernel-5.asm.gz",
+      "sha256": "6718a7d7f9326250ae8dbc39fbd0d502b8ff18829f08380b81d47af5a714dd78",
+      "origin_assembly_path": "evidence/large-kernel-5.asm.gz"
+    }
+  ],
+  "reason": "Rejected: flag stores3/loads6 violate zero-spill gate, despite no scratch messages.",
+  "source": "evidence/e5-first/p115_e5.hpp"
+}

@@ -1,0 +1,85 @@
+{"decision": "d7029dc254088641", "candidate": "bundle8 BASE = bundle7 + drain fix", "threshold_ratio": 1.01}
+{
+  "schema": "packet124.ready.v1",
+  "ready": false,
+  "device_executed": false,
+  "evidence_rule": "bundle7-identical-selection-v1",
+  "decision": "experiments/own-xpu-runtime/ops/packet124-orchestration/decisions/d7029dc254088641.json",
+  "decision_sha256": "6616c86a09af8b410ba06af924813d1a0fb848020e0edf9492c9665356264ff2",
+  "selection": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64+halfcache",
+    "host": "ordered",
+    "route": "fast",
+    "norm": "production",
+    "recurrence": "rec-both-plus",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "down": "tile16",
+    "draft_attention": "split32",
+    "other_fusion": "fused",
+    "target_head": "split",
+    "draft_prefix": "80128"
+  },
+  "chain_output": "device-cards01-a",
+  "other_lane_pause_required": false,
+  "timing_exclusivity": "Existing whole-host timing windows still acquire their normal exclusive reservation",
+  "chain_command": "systemd-run --user --unit=packet124-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet124-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124-record-bundle/build/device-cards01-a </dev/null",
+  "drain_fix": {
+    "passed": true,
+    "device_executed": false,
+    "scanner_sha256": "70d18ffb0abf9cbb59ea84737e09ecb700951805c6b3dc499f40e42d476aa62f",
+    "reports": [
+      {
+        "schema": "drain-fix-report.v1",
+        "root": "experiments/own-xpu-runtime/stage2/packet124-record-bundle",
+        "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+        "counts": {
+          "FIXED": 1,
+          "UNFIXED": 0
+        },
+        "passed": true,
+        "files": [
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet124-record-bundle/drain_gate.py",
+            "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+            "status": "FIXED",
+            "sleeps": [
+              {
+                "line": 51,
+                "status": "FIXED"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "schema": "drain-fix-report.v1",
+        "root": "experiments/own-xpu-runtime/ops/packet124-orchestration",
+        "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+        "counts": {
+          "FIXED": 1,
+          "UNFIXED": 0
+        },
+        "passed": true,
+        "files": [
+          {
+            "path": "experiments/own-xpu-runtime/ops/packet124-orchestration/drain_gate.py",
+            "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+            "status": "FIXED",
+            "sleeps": [
+              {
+                "line": 51,
+                "status": "FIXED"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "launch_limits_sha256": "93652e70f39c18c6f47950dd571ec150cc2a5b33a0fcaa797a7ae7c0742546fd",
+  "reason": "CPU preparation tests stale"
+}

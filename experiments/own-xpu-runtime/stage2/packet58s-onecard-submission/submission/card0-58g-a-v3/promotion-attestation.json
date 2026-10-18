@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.promotion-attestation.v1",
+  "identity": {
+    "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+    "runtime_revision": "51b795591918183afdd95ae1594c639b0e151eb1",
+    "optimization_identity": "packet58g-tp1-plain-lru18gb-c4096-zero-copy-seal-61dd354dcf422774166a631911c939458b1fecf7c6215fdc505b908a689bf61d",
+    "arithmetic": "iq3-p49-split32-v1",
+    "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812"
+  },
+  "performance_evidence": {
+    "path": "experiments/own-xpu-runtime/stage2/packet58s-onecard-submission/submission/card0-58g-a-v3/result.json",
+    "sha256": "d880f272b81214ba84520090ca6fac7ea34e091f51dd80a9add1cf98040f015f"
+  },
+  "quality_evidence": [
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet58s-onecard-submission/submission/card0-58g-a-v3/evidence.json.gz",
+      "sha256": "b7b3118b66981ffb778315e41d568ba095dd22653fdc8ff5c7c14adc5b74ba36",
+      "supports": [
+        "varied_task_quality_passed",
+        "exact_or_target_oracle_passed",
+        "deterministic_repeats_passed",
+        "fresh_server_repeat_passed",
+        "target_model_unchanged",
+        "no_quality_loss"
+      ]
+    }
+  ],
+  "gates": {
+    "varied_task_quality_passed": true,
+    "exact_or_target_oracle_passed": true,
+    "deterministic_repeats_passed": true,
+    "fresh_server_repeat_passed": true,
+    "target_model_unchanged": true,
+    "no_quality_loss": true,
+    "strict_512_token_final_gate_passed": false,
+    "fresh_timing_repeat_passed": false
+  },
+  "submission_scope": {
+    "rule": "packet58s.packet58g.onecard-128-preparation.2026-10-18",
+    "date": "2026-10-18",
+    "requested_max_new": 128,
+    "strict_512_gate_passed": false,
+    "authority": "Owner packet58s brief: prepare one-card packet58g under the 128-token owner scope; coordinator submits.",
+    "preparation_only": true,
+    "fresh_timing_repeat_passed": false
+  }
+}

@@ -1,0 +1,760 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "cases": [
+    {
+      "passed": true,
+      "negative_control": true,
+      "refusal": "native launch refuses finite RLIMIT_AS",
+      "device_executed": false
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "role": "production",
+      "observations": [
+        {
+          "argv": [
+            "ionice",
+            "-c",
+            "3",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--split--80128--placement-1/build/device/own-rt-iq3",
+            "--rank",
+            "0",
+            "--channel",
+            "7",
+            "--stop-fd",
+            "3",
+            "--shared",
+            "/tmp/p118-exec-dzqzelyq/run/ranks/shared.bin",
+            "--cards",
+            "1",
+            "--card",
+            "0",
+            "--output",
+            "/tmp/p118-exec-dzqzelyq/run/ranks/rank0",
+            "--memory",
+            "resident",
+            "--context",
+            "4096",
+            "--seconds",
+            "1800",
+            "--native-nice",
+            "0",
+            "--timing",
+            "token",
+            "--max-new",
+            "128",
+            "--retain-steps",
+            "none",
+            "--draft-rank",
+            "1",
+            "--target-split",
+            "0",
+            "--plan",
+            "/tmp/p118-exec-dzqzelyq/run/input-bundles/incident-retrospective/plan.tsv",
+            "--identity",
+            "/tmp/p118-exec-dzqzelyq/run/input-bundles/incident-retrospective/identity.tsv",
+            "--model-dir",
+            "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+            "--host-path",
+            "prepared",
+            "--selection",
+            "/tmp/p118-exec-dzqzelyq/run/adapter/selection.json",
+            "--selection-sha256",
+            "0a43e349d1bd86562c2b674392a12f917d36d9918839b34aee8c33a5df22545c",
+            "--dispatch",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--split--80128--placement-1/dispatch-speed6.json",
+            "--authorized-device-window"
+          ],
+          "limits": {
+            "0": [
+              -1,
+              -1
+            ],
+            "1": [
+              -1,
+              -1
+            ],
+            "2": [
+              -1,
+              -1
+            ],
+            "3": [
+              8388608,
+              -1
+            ],
+            "4": [
+              0,
+              -1
+            ],
+            "5": [
+              -1,
+              -1
+            ],
+            "6": [
+              477915,
+              477915
+            ],
+            "7": [
+              1048576,
+              1048576
+            ],
+            "8": [
+              16864567296,
+              16864567296
+            ],
+            "9": [
+              -1,
+              -1
+            ],
+            "11": [
+              477915,
+              477915
+            ],
+            "12": [
+              819200,
+              819200
+            ],
+            "13": [
+              0,
+              0
+            ],
+            "14": [
+              0,
+              0
+            ],
+            "15": [
+              -1,
+              -1
+            ]
+          },
+          "unchanged": true
+        },
+        {
+          "argv": [
+            "ionice",
+            "-c",
+            "3",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--split--80128--placement-1/build/device/own-rt-iq3",
+            "--rank",
+            "1",
+            "--channel",
+            "9",
+            "--stop-fd",
+            "3",
+            "--shared",
+            "/tmp/p118-exec-dzqzelyq/run/ranks/shared.bin",
+            "--cards",
+            "1",
+            "--card",
+            "1",
+            "--output",
+            "/tmp/p118-exec-dzqzelyq/run/ranks/rank1",
+            "--memory",
+            "resident",
+            "--context",
+            "4096",
+            "--seconds",
+            "1800",
+            "--native-nice",
+            "0",
+            "--timing",
+            "token",
+            "--max-new",
+            "128",
+            "--retain-steps",
+            "none",
+            "--draft-rank",
+            "1",
+            "--target-split",
+            "0",
+            "--draft-mtp",
+            "--draft-fault",
+            "none",
+            "--plan",
+            "/tmp/p118-exec-dzqzelyq/run/input-bundles/incident-retrospective/plan.tsv",
+            "--identity",
+            "/tmp/p118-exec-dzqzelyq/run/input-bundles/incident-retrospective/identity.tsv",
+            "--model-dir",
+            "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+            "--host-path",
+            "prepared",
+            "--selection",
+            "/tmp/p118-exec-dzqzelyq/run/adapter/selection.json",
+            "--selection-sha256",
+            "0a43e349d1bd86562c2b674392a12f917d36d9918839b34aee8c33a5df22545c",
+            "--dispatch",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--split--80128--placement-1/dispatch-speed6.json",
+            "--authorized-device-window"
+          ],
+          "limits": {
+            "0": [
+              -1,
+              -1
+            ],
+            "1": [
+              -1,
+              -1
+            ],
+            "2": [
+              -1,
+              -1
+            ],
+            "3": [
+              8388608,
+              -1
+            ],
+            "4": [
+              0,
+              -1
+            ],
+            "5": [
+              -1,
+              -1
+            ],
+            "6": [
+              477915,
+              477915
+            ],
+            "7": [
+              1048576,
+              1048576
+            ],
+            "8": [
+              16864567296,
+              16864567296
+            ],
+            "9": [
+              -1,
+              -1
+            ],
+            "11": [
+              477915,
+              477915
+            ],
+            "12": [
+              819200,
+              819200
+            ],
+            "13": [
+              0,
+              0
+            ],
+            "14": [
+              0,
+              0
+            ],
+            "15": [
+              -1,
+              -1
+            ]
+          },
+          "unchanged": true
+        }
+      ],
+      "synthetic_admission": true
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "role": "81920",
+      "observations": [
+        {
+          "argv": [
+            "ionice",
+            "-c",
+            "3",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--81920--80128--placement-1/build/device/own-rt-iq3",
+            "--rank",
+            "0",
+            "--channel",
+            "7",
+            "--stop-fd",
+            "3",
+            "--shared",
+            "/tmp/p118-exec-pey_hbdc/run/ranks/shared.bin",
+            "--cards",
+            "1",
+            "--card",
+            "0",
+            "--output",
+            "/tmp/p118-exec-pey_hbdc/run/ranks/rank0",
+            "--memory",
+            "resident",
+            "--context",
+            "4096",
+            "--seconds",
+            "1800",
+            "--native-nice",
+            "0",
+            "--timing",
+            "token",
+            "--max-new",
+            "128",
+            "--retain-steps",
+            "none",
+            "--draft-rank",
+            "1",
+            "--target-split",
+            "0",
+            "--plan",
+            "/tmp/p118-exec-pey_hbdc/run/input-bundles/incident-retrospective/plan.tsv",
+            "--identity",
+            "/tmp/p118-exec-pey_hbdc/run/input-bundles/incident-retrospective/identity.tsv",
+            "--model-dir",
+            "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+            "--host-path",
+            "prepared",
+            "--selection",
+            "/tmp/p118-exec-pey_hbdc/run/adapter/selection.json",
+            "--selection-sha256",
+            "629e09d774310e83315ee5ae0225f2157c37afdd026ac43adad06213bf1d6fc1",
+            "--dispatch",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--81920--80128--placement-1/dispatch-speed6.json",
+            "--authorized-device-window"
+          ],
+          "limits": {
+            "0": [
+              -1,
+              -1
+            ],
+            "1": [
+              -1,
+              -1
+            ],
+            "2": [
+              -1,
+              -1
+            ],
+            "3": [
+              8388608,
+              -1
+            ],
+            "4": [
+              0,
+              -1
+            ],
+            "5": [
+              -1,
+              -1
+            ],
+            "6": [
+              477915,
+              477915
+            ],
+            "7": [
+              1048576,
+              1048576
+            ],
+            "8": [
+              16864567296,
+              16864567296
+            ],
+            "9": [
+              -1,
+              -1
+            ],
+            "11": [
+              477915,
+              477915
+            ],
+            "12": [
+              819200,
+              819200
+            ],
+            "13": [
+              0,
+              0
+            ],
+            "14": [
+              0,
+              0
+            ],
+            "15": [
+              -1,
+              -1
+            ]
+          },
+          "unchanged": true
+        },
+        {
+          "argv": [
+            "ionice",
+            "-c",
+            "3",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--81920--80128--placement-1/build/device/own-rt-iq3",
+            "--rank",
+            "1",
+            "--channel",
+            "9",
+            "--stop-fd",
+            "3",
+            "--shared",
+            "/tmp/p118-exec-pey_hbdc/run/ranks/shared.bin",
+            "--cards",
+            "1",
+            "--card",
+            "1",
+            "--output",
+            "/tmp/p118-exec-pey_hbdc/run/ranks/rank1",
+            "--memory",
+            "resident",
+            "--context",
+            "4096",
+            "--seconds",
+            "1800",
+            "--native-nice",
+            "0",
+            "--timing",
+            "token",
+            "--max-new",
+            "128",
+            "--retain-steps",
+            "none",
+            "--draft-rank",
+            "1",
+            "--target-split",
+            "0",
+            "--draft-mtp",
+            "--draft-fault",
+            "none",
+            "--plan",
+            "/tmp/p118-exec-pey_hbdc/run/input-bundles/incident-retrospective/plan.tsv",
+            "--identity",
+            "/tmp/p118-exec-pey_hbdc/run/input-bundles/incident-retrospective/identity.tsv",
+            "--model-dir",
+            "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+            "--host-path",
+            "prepared",
+            "--selection",
+            "/tmp/p118-exec-pey_hbdc/run/adapter/selection.json",
+            "--selection-sha256",
+            "629e09d774310e83315ee5ae0225f2157c37afdd026ac43adad06213bf1d6fc1",
+            "--dispatch",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--81920--80128--placement-1/dispatch-speed6.json",
+            "--authorized-device-window"
+          ],
+          "limits": {
+            "0": [
+              -1,
+              -1
+            ],
+            "1": [
+              -1,
+              -1
+            ],
+            "2": [
+              -1,
+              -1
+            ],
+            "3": [
+              8388608,
+              -1
+            ],
+            "4": [
+              0,
+              -1
+            ],
+            "5": [
+              -1,
+              -1
+            ],
+            "6": [
+              477915,
+              477915
+            ],
+            "7": [
+              1048576,
+              1048576
+            ],
+            "8": [
+              16864567296,
+              16864567296
+            ],
+            "9": [
+              -1,
+              -1
+            ],
+            "11": [
+              477915,
+              477915
+            ],
+            "12": [
+              819200,
+              819200
+            ],
+            "13": [
+              0,
+              0
+            ],
+            "14": [
+              0,
+              0
+            ],
+            "15": [
+              -1,
+              -1
+            ]
+          },
+          "unchanged": true
+        }
+      ],
+      "synthetic_admission": true
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "role": "122880",
+      "observations": [
+        {
+          "argv": [
+            "ionice",
+            "-c",
+            "3",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--122880--80128--placement-1/build/device/own-rt-iq3",
+            "--rank",
+            "0",
+            "--channel",
+            "7",
+            "--stop-fd",
+            "3",
+            "--shared",
+            "/tmp/p118-exec-7vohfevp/run/ranks/shared.bin",
+            "--cards",
+            "1",
+            "--card",
+            "0",
+            "--output",
+            "/tmp/p118-exec-7vohfevp/run/ranks/rank0",
+            "--memory",
+            "resident",
+            "--context",
+            "4096",
+            "--seconds",
+            "1800",
+            "--native-nice",
+            "0",
+            "--timing",
+            "token",
+            "--max-new",
+            "128",
+            "--retain-steps",
+            "none",
+            "--draft-rank",
+            "1",
+            "--target-split",
+            "0",
+            "--plan",
+            "/tmp/p118-exec-7vohfevp/run/input-bundles/incident-retrospective/plan.tsv",
+            "--identity",
+            "/tmp/p118-exec-7vohfevp/run/input-bundles/incident-retrospective/identity.tsv",
+            "--model-dir",
+            "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+            "--host-path",
+            "prepared",
+            "--selection",
+            "/tmp/p118-exec-7vohfevp/run/adapter/selection.json",
+            "--selection-sha256",
+            "ebbb96beb85873ae29868c9cfa9fb6f5b4fcaf01a09a37519e3783435de64658",
+            "--dispatch",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--122880--80128--placement-1/dispatch-speed6.json",
+            "--authorized-device-window"
+          ],
+          "limits": {
+            "0": [
+              -1,
+              -1
+            ],
+            "1": [
+              -1,
+              -1
+            ],
+            "2": [
+              -1,
+              -1
+            ],
+            "3": [
+              8388608,
+              -1
+            ],
+            "4": [
+              0,
+              -1
+            ],
+            "5": [
+              -1,
+              -1
+            ],
+            "6": [
+              477915,
+              477915
+            ],
+            "7": [
+              1048576,
+              1048576
+            ],
+            "8": [
+              16864567296,
+              16864567296
+            ],
+            "9": [
+              -1,
+              -1
+            ],
+            "11": [
+              477915,
+              477915
+            ],
+            "12": [
+              819200,
+              819200
+            ],
+            "13": [
+              0,
+              0
+            ],
+            "14": [
+              0,
+              0
+            ],
+            "15": [
+              -1,
+              -1
+            ]
+          },
+          "unchanged": true
+        },
+        {
+          "argv": [
+            "ionice",
+            "-c",
+            "3",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--122880--80128--placement-1/build/device/own-rt-iq3",
+            "--rank",
+            "1",
+            "--channel",
+            "9",
+            "--stop-fd",
+            "3",
+            "--shared",
+            "/tmp/p118-exec-7vohfevp/run/ranks/shared.bin",
+            "--cards",
+            "1",
+            "--card",
+            "1",
+            "--output",
+            "/tmp/p118-exec-7vohfevp/run/ranks/rank1",
+            "--memory",
+            "resident",
+            "--context",
+            "4096",
+            "--seconds",
+            "1800",
+            "--native-nice",
+            "0",
+            "--timing",
+            "token",
+            "--max-new",
+            "128",
+            "--retain-steps",
+            "none",
+            "--draft-rank",
+            "1",
+            "--target-split",
+            "0",
+            "--draft-mtp",
+            "--draft-fault",
+            "none",
+            "--plan",
+            "/tmp/p118-exec-7vohfevp/run/input-bundles/incident-retrospective/plan.tsv",
+            "--identity",
+            "/tmp/p118-exec-7vohfevp/run/input-bundles/incident-retrospective/identity.tsv",
+            "--model-dir",
+            "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+            "--host-path",
+            "prepared",
+            "--selection",
+            "/tmp/p118-exec-7vohfevp/run/adapter/selection.json",
+            "--selection-sha256",
+            "ebbb96beb85873ae29868c9cfa9fb6f5b4fcaf01a09a37519e3783435de64658",
+            "--dispatch",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--122880--80128--placement-1/dispatch-speed6.json",
+            "--authorized-device-window"
+          ],
+          "limits": {
+            "0": [
+              -1,
+              -1
+            ],
+            "1": [
+              -1,
+              -1
+            ],
+            "2": [
+              -1,
+              -1
+            ],
+            "3": [
+              8388608,
+              -1
+            ],
+            "4": [
+              0,
+              -1
+            ],
+            "5": [
+              -1,
+              -1
+            ],
+            "6": [
+              477915,
+              477915
+            ],
+            "7": [
+              1048576,
+              1048576
+            ],
+            "8": [
+              16864567296,
+              16864567296
+            ],
+            "9": [
+              -1,
+              -1
+            ],
+            "11": [
+              477915,
+              477915
+            ],
+            "12": [
+              819200,
+              819200
+            ],
+            "13": [
+              0,
+              0
+            ],
+            "14": [
+              0,
+              0
+            ],
+            "15": [
+              -1,
+              -1
+            ]
+          },
+          "unchanged": true
+        }
+      ],
+      "synthetic_admission": true
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet127-head-retune/exec_limits.py": "c998ae4e35775c189006da5f2dc308ccdf2dd33d1fa4e8c58c90197427c4fae9",
+    "experiments/own-xpu-runtime/stage2/packet127-head-retune/worker.py": "fac9204b8cde5b8044932fa6418c24623c5850ca2a5d4ad8d17834027473859a",
+    "experiments/own-xpu-runtime/stage2/packet127-head-retune/runtime_worker.py": "1451100966d4c589cf908442388cb0fce296e41bda15d6c917e04899c57b4351",
+    "experiments/own-xpu-runtime/stage2/packet127-head-retune/chain_pipeline.py": "13c83f5ba403cc86f0dbfd280547f66acc3694e9ea91ec23e4da082ada662175",
+    "experiments/own-xpu-runtime/stage2/packet127-head-retune/launch_limit_gate.py": "c104522ac51d53719ea2733d4c1846ddd4463e04ed987084a9e4bc9ede602f02"
+  }
+}

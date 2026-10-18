@@ -1,0 +1,22 @@
+K0 shared CPU fixture startup PASS
+K1a shared CPU fixture startup PASS
+K1b shared CPU fixture startup PASS
+K2 shared CPU fixture startup PASS
+W0p actual CPU canary handshake PASS
+production all 11 windows PASS
+target-gate-tile16 all 11 windows PASS
+target-gate-halfcache-tile16 all 11 windows PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet104-tile-transpose/startup97e.py", line 253, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet104-tile-transpose/startup97e.py", line 243, in main
+    report['sources']={**initial_sources,**{str(f.relative_to(ROOT)):sha(f) for f in files}}
+                                                                     ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet104-tile-transpose/build_engine.py", line 13, in sha
+    with Path(path).open('rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet104-tile-transpose/kd_window97e.py'

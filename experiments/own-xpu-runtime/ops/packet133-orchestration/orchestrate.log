@@ -1,0 +1,89 @@
+{
+  "schema": "packet133.ready.v1",
+  "ready": false,
+  "device_executed": false,
+  "evidence_rule": "identical-native-selection-both-v5-lanes-v1",
+  "decision": "experiments/own-xpu-runtime/ops/packet133-orchestration/decisions/048fdf5f056158c3.json",
+  "decision_sha256": "35c922e6c0930f2bbc197eb414325b1b773ed2c5517762d024fbe467a549c2b1",
+  "selection": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64+halfcache",
+    "host": "ordered",
+    "route": "fast",
+    "norm": "production",
+    "recurrence": "rec-both-plus",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "down": "tile16",
+    "draft_attention": "split32",
+    "other_fusion": "fused",
+    "target_head": "split",
+    "draft_prefix": "80128",
+    "suffix_schedule": "interleave"
+  },
+  "chain_output": "device-cards01-a",
+  "other_lane_pause_required": false,
+  "timing_exclusivity": "Existing whole-host timing windows retain ordinary exclusive admission",
+  "chain_command": "systemd-run --user --unit=packet133-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet133-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet133-record-bundle/build/device-cards01-a </dev/null",
+  "drain_fix": {
+    "passed": true,
+    "device_executed": false,
+    "scanner_sha256": "70d18ffb0abf9cbb59ea84737e09ecb700951805c6b3dc499f40e42d476aa62f",
+    "reports": [
+      {
+        "schema": "drain-fix-report.v1",
+        "root": "experiments/own-xpu-runtime/stage2/packet133-record-bundle",
+        "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+        "counts": {
+          "FIXED": 1,
+          "UNFIXED": 0
+        },
+        "passed": true,
+        "files": [
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet133-record-bundle/drain_gate.py",
+            "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+            "status": "FIXED",
+            "sleeps": [
+              {
+                "line": 51,
+                "status": "FIXED"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "schema": "drain-fix-report.v1",
+        "root": "experiments/own-xpu-runtime/ops/packet133-orchestration",
+        "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+        "counts": {
+          "FIXED": 1,
+          "UNFIXED": 0
+        },
+        "passed": true,
+        "files": [
+          {
+            "path": "experiments/own-xpu-runtime/ops/packet133-orchestration/drain_gate.py",
+            "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+            "status": "FIXED",
+            "sleeps": [
+              {
+                "line": 51,
+                "status": "FIXED"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "argument_gate_sha256": "6c57644f890a166ea5692f1524b8b668da1ed0d7871873c6fd8c25272d91f380",
+  "launch_limits_sha256": "89ef2451fadce8d0e440fb4c17ef3ea2d5a5f71fe2ca23cc40b2f199b749362b",
+  "cpu_tests_sha256": "5db78bfedf4121afe6128611ab9cad81806edb519f8dc3cc5efc3f65f0be6ab7",
+  "proposal_plan_sha256": "4d284950b5942b04d896084d8a9d7fadbe599586fa5d6deca67eec8d5e65a65d",
+  "cpu_preparation_ready": true,
+  "reason": "pending A smoke: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet133-record-bundle/v5/evidence/device-smoke-A; pending A bracket: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet133-record-bundle/v5/evidence/device-v5-A; both candidates need >=0.5% over every B control"
+}

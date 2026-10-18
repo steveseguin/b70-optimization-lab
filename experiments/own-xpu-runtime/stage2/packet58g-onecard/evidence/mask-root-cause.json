@@ -1,0 +1,26 @@
+{
+  "schema": "packet58f.mask-root-cause.v1",
+  "device_executed": false,
+  "finding": "58c and 58e construct selector-only child environments; the imported lane pair mask is unused. 58e adds strict owned-fd inspection.",
+  "failed_child_environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+  },
+  "observed_failure": "Owner FD census rejected a non-card-0 or unidentified Xe FD. Historical record did not retain offending FD/BDF.",
+  "inference": "Unfiltered driver discovery is consistent with the stop and the earlier screen-v3 driver investigation; not evidence of a pair mask being applied.",
+  "sensor": "Only xe FDs whose drm-pdev is exactly 0000:23:00.0 are allowed; retained unchanged, now saves offending raw FD rows.",
+  "fix": "Exact pre-open FilterBdfPath plus affinity 0, selector level_zero:0, private HOME, passive by-path/sysfs match; lane lease remains A.",
+  "drain": "No shared teardown record before CPU admission completes. Clean K1 owner exit and postflight release before CPU summary. Failure remains failed.",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet58c-onecard/window.py": "f75c1fd0ec1e1fccc5640aa2d14142707955b6d9746518fa007b8eb979e33874",
+    "experiments/own-xpu-runtime/stage2/packet58e-onecard/window.py": "8c13735b3dbeb8f671e44718245d5c77d0134f4eca2e0fbaf31de49c933575b8",
+    "experiments/own-xpu-runtime/stage2/packet58e-onecard/onecard_admission.py": "45084b349d3e28b7100dd0ce1e1b4375d2df106e33772226a8724f7eda423cfe",
+    "experiments/own-xpu-runtime/stage2/packet58e-onecard/chain_devices.py": "81f34a2df9917af22b60dd0c7df9e32c5be3318cd15e05a3dde047904a340d83",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/CHAIN-PATCH.md": "5840520bd7b717fbd299323ce879b65ab143c7c8c4fa76ddff57aae44ce14c4f",
+    "experiments/own-xpu-runtime/stage2/screen/v3/CPU-PREPARATION-CLOSEOUT.md": "2f64e3d7aec773df39adf4f47f865952189b943e3c8e8899210fa95f2d559f51",
+    "experiments/own-xpu-runtime/stage2/packet58e-onecard/evidence/card0-58e-b/K1a/window.json": "6235660a98ff2096424594c181970001469a4899759f4c2bbdcb629815318eb1",
+    "experiments/own-xpu-runtime/stage2/packet58e-onecard/evidence/card0-58e-b/K1a/native.log": "217a9a0865a0c15047e06812462c4fb67120c5daf07475efd729346b2ca78e4c"
+  }
+}

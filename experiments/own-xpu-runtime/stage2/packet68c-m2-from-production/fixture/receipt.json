@@ -1,0 +1,61 @@
+{
+  "schema": "own-runtime.screen.byte-fixture.v1",
+  "passed": true,
+  "device_executed": false,
+  "model_executed": false,
+  "changed_class": "paired dense GEMV, HC and routed expert union exact ordered arithmetic",
+  "command": [
+    "python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet68c-m2-from-production/cpu_gate.py"
+  ],
+  "build_receipt_sha256": "a9b7f0a63c56d774f0e6f7ab2dcab0f5cdf8a409e318efa1481aa15e4940cbf4",
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet68c-m2-from-production/cpu_gate.py": "8b9c13eb473335b1a483e42e1000a9e24e0860f5d03397d01a5c420bba879dd4",
+    "experiments/own-xpu-runtime/stage2/packet68c-m2-from-production/batch_fixture.cpp": "05b4d50fa32e1d778c0aa973eb86731dbc77c85218c88952b2527915a0132e2f",
+    "experiments/own-xpu-runtime/stage2/packet68c-m2-from-production/batched_rows.hpp": "8444a58820e06ae0902f74c2f280cab137e3f4af3b501f2bda150f1986a9e5e3",
+    "experiments/own-xpu-runtime/stage2/packet68c-m2-from-production/batched_hc.hpp": "5c574edb8599a35dc341d990d0328d0beaeaa11b5d6a10d8f43a075acd808ca7",
+    "experiments/own-xpu-runtime/stage2/packet68c-m2-from-production/batched_experts.hpp": "4401ad8124c291d466e4a65274f0fc960e76c3934ab83d3c946517fdae0d4f34",
+    "experiments/own-xpu-runtime/stage2/packet68c-m2-from-production/batch_probe.hpp": "023ceb7efbc7c031345bc9921f57f312e359e6c3084568fe15b12167a806f1be"
+  },
+  "compilers": [
+    {
+      "compiler": "gnu-host",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet68c-m2-from-production/build/gnu-host-batch-fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet68c-m2-from-production/fixture/gnu-host"
+      ],
+      "result": {
+        "passed": true,
+        "byte_checks": 1428,
+        "model_executed": false,
+        "device_executed": false
+      },
+      "expected_sha256": "f37663f9b84c03c190bae91b72afa05e31e9bae20ff77abc94bef510136409f6",
+      "actual_sha256": "f37663f9b84c03c190bae91b72afa05e31e9bae20ff77abc94bef510136409f6"
+    },
+    {
+      "compiler": "intel-host",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet68c-m2-from-production/build/intel-host-batch-fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet68c-m2-from-production/fixture/intel-host"
+      ],
+      "result": {
+        "passed": true,
+        "byte_checks": 1428,
+        "model_executed": false,
+        "device_executed": false
+      },
+      "expected_sha256": "f37663f9b84c03c190bae91b72afa05e31e9bae20ff77abc94bef510136409f6",
+      "actual_sha256": "f37663f9b84c03c190bae91b72afa05e31e9bae20ff77abc94bef510136409f6"
+    }
+  ],
+  "expected": {
+    "path": "fixture/gnu-host-expected.bin",
+    "sha256": "f37663f9b84c03c190bae91b72afa05e31e9bae20ff77abc94bef510136409f6"
+  },
+  "actual": {
+    "path": "fixture/gnu-host-actual.bin",
+    "sha256": "f37663f9b84c03c190bae91b72afa05e31e9bae20ff77abc94bef510136409f6"
+  }
+}

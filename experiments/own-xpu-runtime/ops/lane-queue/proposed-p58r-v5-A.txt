@@ -1,0 +1,7 @@
+# CPU-prepared only: card 0; one whole-host gap, lane B paused and drained throughout.
+# Two K1 fixtures, then one load: tile16 / route+rec / tile16 / route+rec / tile16.
+# 12 prompts x 128 per view; packet49 exact tokens; full BF16 KV.
+# Expected 20-30 min including internal gaps; native/window watchdog 7200s (>=4x 30 min).
+# Host bound 109718973456 bytes + 8 GiB reserve = 118308908048 MemAvailable.
+# Diagnostic screen only; no fresh-load repeat or 512-token final gate; no automatic chain.
+{"name": "packet58r-v5-A", "lane": "A", "argv": ["/usr/bin/python3", "-B", "experiments/own-xpu-runtime/stage2/packet58r-onecard-v5/queue_runner.py", "--arm", "route-rec", "--output", "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58r-onecard-v5/evidence/card0-v5-a/route-rec", "--fault-review", "{REVIEW}", "--authorized-device-window"], "env_extra": {}, "review": "experiments/own-xpu-runtime/stage2/packet58r-onecard-v5/fault_review.py"}

@@ -137,6 +137,15 @@ artifacts total about 240 KiB; no model or large raw device files were copied.
 Initial `git pull --rebase` refused an unrelated unstaged edit. `git fetch`
 confirmed HEAD and origin/main matched; that shared edit was left alone.
 
+## Integration record
+
+Commit `a20f40e40` contains this placement work and the concurrently staged
+packet63 preparation. The commit command incorrectly continued after the
+shared-index scope check failed. Packet63 source was not edited or validated
+by this placement task; the CPU tests and plan outcomes reported here cover
+screen v3 only. The pushed history is preserved. The follow-up documentation
+commit uses an explicit path so it cannot capture another writer's staged work.
+
 ## When to revisit
 
 The coordinator can compare `1-split23` and `1` within each lane, requiring

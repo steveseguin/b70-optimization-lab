@@ -1,0 +1,49 @@
+In file included from /usr/include/c++/13/string:51,
+                 from /usr/include/c++/13/bits/locale_classes.h:40,
+                 from /usr/include/c++/13/bits/ios_base.h:41,
+                 from /usr/include/c++/13/ios:44,
+                 from /usr/include/c++/13/istream:40,
+                 from /usr/include/c++/13/sstream:40,
+                 from /usr/include/c++/13/chrono:45,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/host_spin.hpp:2,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/main.cpp:1,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/main.cpp:1,
+                 from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet71b-depth2-engine/build/engine/entry-main.cpp:2:
+In static member function ‘static constexpr _Up* std::__copy_move_backward<_IsMove, true, std::random_access_iterator_tag>::__copy_move_b(_Tp*, _Tp*, _Up*) [with _Tp = unsigned char; _Up = unsigned char; bool _IsMove = true]’,
+    inlined from ‘constexpr _BI2 std::__copy_move_backward_a2(_BI1, _BI1, _BI2) [with bool _IsMove = true; _BI1 = unsigned char*; _BI2 = unsigned char*]’ at /usr/include/c++/13/bits/stl_algobase.h:769:37,
+    inlined from ‘constexpr _BI2 std::__copy_move_backward_a1(_BI1, _BI1, _BI2) [with bool _IsMove = true; _BI1 = unsigned char*; _BI2 = unsigned char*]’ at /usr/include/c++/13/bits/stl_algobase.h:778:51,
+    inlined from ‘constexpr _OI std::__copy_move_backward_a(_II, _II, _OI) [with bool _IsMove = true; _II = unsigned char*; _OI = unsigned char*]’ at /usr/include/c++/13/bits/stl_algobase.h:807:31,
+    inlined from ‘constexpr _BI2 std::move_backward(_BI1, _BI1, _BI2) [with _BI1 = unsigned char*; _BI2 = unsigned char*]’ at /usr/include/c++/13/bits/stl_algobase.h:901:47,
+    inlined from ‘constexpr void std::vector<_Tp, _Alloc>::_M_range_insert(iterator, _ForwardIterator, _ForwardIterator, std::forward_iterator_tag) [with _ForwardIterator = const char*; _Tp = unsigned char; _Alloc = std::allocator<unsigned char>]’ at /usr/include/c++/13/bits/vector.tcc:772:7:
+/usr/include/c++/13/bits/stl_algobase.h:748:30: warning: argument 2 null where non-null expected [-Wnonnull]
+  748 |             __builtin_memmove(__result - _Num, __first, sizeof(_Tp) * _Num);
+      |             ~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h:748:30: note: in a call to built-in function ‘void* __builtin_memmove(void*, const void*, long unsigned int)’
+In static member function ‘static constexpr _Up* std::__copy_move<_IsMove, true, std::random_access_iterator_tag>::__copy_m(_Tp*, _Tp*, _Up*) [with _Tp = unsigned char; _Up = unsigned char; bool _IsMove = true]’,
+    inlined from ‘constexpr _OI std::__copy_move_a2(_II, _II, _OI) [with bool _IsMove = true; _II = unsigned char*; _OI = unsigned char*]’ at /usr/include/c++/13/bits/stl_algobase.h:506:30,
+    inlined from ‘constexpr _OI std::__copy_move_a1(_II, _II, _OI) [with bool _IsMove = true; _II = unsigned char*; _OI = unsigned char*]’ at /usr/include/c++/13/bits/stl_algobase.h:533:42,
+    inlined from ‘constexpr _OI std::__copy_move_a(_II, _II, _OI) [with bool _IsMove = true; _II = unsigned char*; _OI = unsigned char*]’ at /usr/include/c++/13/bits/stl_algobase.h:540:31,
+    inlined from ‘constexpr _OI std::copy(_II, _II, _OI) [with _II = move_iterator<unsigned char*>; _OI = unsigned char*]’ at /usr/include/c++/13/bits/stl_algobase.h:633:7,
+    inlined from ‘static _ForwardIterator std::__uninitialized_copy<true>::__uninit_copy(_InputIterator, _InputIterator, _ForwardIterator) [with _InputIterator = std::move_iterator<unsigned char*>; _ForwardIterator = unsigned char*]’ at /usr/include/c++/13/bits/stl_uninitialized.h:147:27,
+    inlined from ‘_ForwardIterator std::uninitialized_copy(_InputIterator, _InputIterator, _ForwardIterator) [with _InputIterator = move_iterator<unsigned char*>; _ForwardIterator = unsigned char*]’ at /usr/include/c++/13/bits/stl_uninitialized.h:185:15,
+    inlined from ‘constexpr _ForwardIterator std::__uninitialized_copy_a(_InputIterator, _InputIterator, _ForwardIterator, allocator<_Tp>&) [with _InputIterator = move_iterator<unsigned char*>; _ForwardIterator = unsigned char*; _Tp = unsigned char]’ at /usr/include/c++/13/bits/stl_uninitialized.h:373:37,
+    inlined from ‘constexpr _ForwardIterator std::__uninitialized_move_a(_InputIterator, _InputIterator, _ForwardIterator, _Allocator&) [with _InputIterator = unsigned char*; _ForwardIterator = unsigned char*; _Allocator = allocator<unsigned char>]’ at /usr/include/c++/13/bits/stl_uninitialized.h:384:41,
+    inlined from ‘constexpr void std::vector<_Tp, _Alloc>::_M_range_insert(iterator, _ForwardIterator, _ForwardIterator, std::forward_iterator_tag) [with _ForwardIterator = const char*; _Tp = unsigned char; _Alloc = std::allocator<unsigned char>]’ at /usr/include/c++/13/bits/vector.tcc:786:34:
+/usr/include/c++/13/bits/stl_algobase.h:437:30: warning: argument 2 null where non-null expected [-Wnonnull]
+  437 |             __builtin_memmove(__result, __first, sizeof(_Tp) * _Num);
+      |             ~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h:437:30: note: in a call to built-in function ‘void* __builtin_memmove(void*, const void*, long unsigned int)’
+In static member function ‘static constexpr _Up* std::__copy_move<_IsMove, true, std::random_access_iterator_tag>::__copy_m(_Tp*, _Tp*, _Up*) [with _Tp = unsigned char; _Up = unsigned char; bool _IsMove = true]’,
+    inlined from ‘constexpr _OI std::__copy_move_a2(_II, _II, _OI) [with bool _IsMove = true; _II = unsigned char*; _OI = unsigned char*]’ at /usr/include/c++/13/bits/stl_algobase.h:506:30,
+    inlined from ‘constexpr _OI std::__copy_move_a1(_II, _II, _OI) [with bool _IsMove = true; _II = unsigned char*; _OI = unsigned char*]’ at /usr/include/c++/13/bits/stl_algobase.h:533:42,
+    inlined from ‘constexpr _OI std::__copy_move_a(_II, _II, _OI) [with bool _IsMove = true; _II = unsigned char*; _OI = unsigned char*]’ at /usr/include/c++/13/bits/stl_algobase.h:540:31,
+    inlined from ‘constexpr _OI std::copy(_II, _II, _OI) [with _II = move_iterator<unsigned char*>; _OI = unsigned char*]’ at /usr/include/c++/13/bits/stl_algobase.h:633:7,
+    inlined from ‘static _ForwardIterator std::__uninitialized_copy<true>::__uninit_copy(_InputIterator, _InputIterator, _ForwardIterator) [with _InputIterator = std::move_iterator<unsigned char*>; _ForwardIterator = unsigned char*]’ at /usr/include/c++/13/bits/stl_uninitialized.h:147:27,
+    inlined from ‘_ForwardIterator std::uninitialized_copy(_InputIterator, _InputIterator, _ForwardIterator) [with _InputIterator = move_iterator<unsigned char*>; _ForwardIterator = unsigned char*]’ at /usr/include/c++/13/bits/stl_uninitialized.h:185:15,
+    inlined from ‘constexpr _ForwardIterator std::__uninitialized_copy_a(_InputIterator, _InputIterator, _ForwardIterator, allocator<_Tp>&) [with _InputIterator = move_iterator<unsigned char*>; _ForwardIterator = unsigned char*; _Tp = unsigned char]’ at /usr/include/c++/13/bits/stl_uninitialized.h:373:37,
+    inlined from ‘constexpr _ForwardIterator std::__uninitialized_move_if_noexcept_a(_InputIterator, _InputIterator, _ForwardIterator, _Allocator&) [with _InputIterator = unsigned char*; _ForwardIterator = unsigned char*; _Allocator = allocator<unsigned char>]’ at /usr/include/c++/13/bits/stl_uninitialized.h:399:2,
+    inlined from ‘constexpr void std::vector<_Tp, _Alloc>::_M_range_insert(iterator, _ForwardIterator, _ForwardIterator, std::forward_iterator_tag) [with _ForwardIterator = const char*; _Tp = unsigned char; _Alloc = std::allocator<unsigned char>]’ at /usr/include/c++/13/bits/vector.tcc:819:9:
+/usr/include/c++/13/bits/stl_algobase.h:437:30: warning: argument 2 null where non-null expected [-Wnonnull]
+  437 |             __builtin_memmove(__result, __first, sizeof(_Tp) * _Num);
+      |             ~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/c++/13/bits/stl_algobase.h:437:30: note: in a call to built-in function ‘void* __builtin_memmove(void*, const void*, long unsigned int)’

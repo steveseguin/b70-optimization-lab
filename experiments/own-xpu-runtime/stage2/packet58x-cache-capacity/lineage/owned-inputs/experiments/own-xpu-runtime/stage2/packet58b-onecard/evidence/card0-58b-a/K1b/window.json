@@ -1,0 +1,111 @@
+{
+  "schema": "own-runtime.packet58.window.v1",
+  "window": "K1",
+  "passed": true,
+  "qualifying": false,
+  "device_executed": true,
+  "child_still_running": false,
+  "card": 0,
+  "pci_bdf": "0000:23:00.0",
+  "native_visible_card": 0,
+  "context": 4096,
+  "gpu_count": 1,
+  "decode_mode": "plain",
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "build_receipt_sha256": "4359482fd2421ed8cd9e2a0356029d6426865b62e65eecb69adfc2000b612628",
+  "artifacts_sha256": {
+    "build/device/own-rt-iq3": "abe0bad6b14e7700afddaf53019695576800b4107aca09f8dabf87b9a44f6129",
+    "build/device/p58-cache-fixtures": "7d9dffaf87db54eb598591b87b4d06bf3760f422c16ff648dc5c333a22045d4d",
+    "build/gnu-host/own-rt-iq3": "a10da027367d0e6ddb17a98ca843e6eea1c08b80d19c208abbce86abdea10182",
+    "build/gnu-host/p58-cache-fixtures": "6faaa91e3b525610ce15b12d2b80ca7a15ec4e70fcc3bedd0a663069942b71ae"
+  },
+  "environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+  },
+  "coordinator_fault_review": "2026-10-17T20:45:08Z",
+  "started_utc_ns": 1792270066416840499,
+  "expected_seconds": 120,
+  "watchdog_seconds": 600,
+  "memory_admission": {
+    "snapshot": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 120833241088,
+      "SwapTotal": 8589930496,
+      "SwapFree": 8466124800,
+      "GPUActive": 114688
+    }
+  },
+  "storage_admission": {
+    "free_bytes": 28970893312,
+    "planned_write_bytes": 134217728,
+    "min_free_bytes": 8000000000
+  },
+  "systemd_cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/packet58-onecard-58b-a.service\n",
+  "miss_path": null,
+  "stop_reasons": [],
+  "memory_fence": {
+    "53": "offline",
+    "54": "offline",
+    "55": "offline",
+    "56": "offline",
+    "57": "online"
+  },
+  "clients": {
+    "selected": [],
+    "other": [],
+    "inaccessible_entries": 495,
+    "hidden_clients_require_coordinator_ownership": true
+  },
+  "ldd": {
+    "returncode": 0,
+    "stdout": "\tlinux-vdso.so.1 (0x000073b78e28f000)\n\tlibcrypto.so.3 => /usr/lib/x86_64-linux-gnu/libcrypto.so.3 (0x000073b78dc00000)\n\tlibze_loader.so.1 => /usr/lib/x86_64-linux-gnu/libze_loader.so.1 (0x000073b78da7b000)\n\tlibstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x000073b78d600000)\n\tlibm.so.6 => /usr/lib/x86_64-linux-gnu/libm.so.6 (0x000073b78e19e000)\n\tlibgcc_s.so.1 => /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 (0x000073b78e16e000)\n\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x000073b78d200000)\n\tlibc.so.6 => /usr/lib/x86_64-linux-gnu/libc.so.6 (0x000073b78ce00000)\n\t/lib64/ld-linux-x86-64.so.2 (0x000073b78e291000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x000073b78e155000)\n\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x000073b78c000000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x000073b78e14e000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x000073b78e149000)\n\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x000073b78ba00000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x000073b78e12d000)\n\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x000073b78a200000)\n\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x000073b78d982000)\n\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x000073b78d91f000)\n",
+    "stderr": ""
+  },
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58b-onecard/build/device/p58-cache-fixtures",
+    "--card",
+    "0",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58b-onecard/evidence/card0-58b-a/K1b/run",
+    "--iterations",
+    "20",
+    "--authorized-device-window"
+  ],
+  "pid": 537045,
+  "process_start_ticks": 11277453,
+  "anonymous_peak_bytes": 125755392,
+  "anonymous_limit_bytes": 4294967296,
+  "anonymous_stop_bytes": 4026531840,
+  "memory_last_sample": {
+    "anonymous_bytes": 125755392,
+    "root_seen": true,
+    "processes": [
+      {
+        "pid": 537045,
+        "rss_anon_bytes": 125755392
+      }
+    ],
+    "host": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 120215359488,
+      "SwapTotal": 8589930496,
+      "SwapFree": 8466124800,
+      "GPUActive": 571826176
+    },
+    "gpuactive_growth_bytes": 571711488
+  },
+  "returncode": 0,
+  "sigterm_sent": false,
+  "elapsed_seconds": 6.887938721993123,
+  "native_files": {
+    "run/k1.json": "98b58950a3e0f87361aad91dd02d7f648cfc469918dc95f3f30fb41f152fe924",
+    "run/k1-cases.jsonl": "e04e205ce116f37c36874839800e607c0da7d3dcf10f3b58eb6026a14f960296",
+    "summary.json": "ec88cd03c70356a327a0ba79d8e4a97df6e713c4620edd6538d59961e7db226e",
+    "kernel-before.jsonl": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "kernel-window.jsonl": "9e2a078724c35cb29f9c1d6c2894d45b03cf53499867de8494fe8e6a0f52d1bf"
+  },
+  "finished_utc_ns": 1792270073564065376
+}

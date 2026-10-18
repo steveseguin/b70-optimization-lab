@@ -1,0 +1,5885 @@
+{
+  "schema": "packet58i.route-replay.v1",
+  "device_executed": false,
+  "benchmark_training": false,
+  "native_onecard_prediction": false,
+  "initial_cache": "empty, persists across held-out prompts",
+  "caveats": [
+    "Two-rank speculative route visits, including rejected work; not one-card plain decode.",
+    "Publication after each route, not after the complete position.",
+    "Compact rows retain exact phase/layer/IDs for this byte-demand replay; they are not model-output evidence."
+  ],
+  "binding_sha256": "5f9f98cfbfa0c5214d656ce885bbc5133a6994a15011e5b841d7c1a2913dcb91",
+  "comparisons": {
+    "18GB_LRU": {
+      "capacity": 18000000000,
+      "policy": "lru",
+      "speculative": false,
+      "totals": {
+        "prefill": {
+          "visits": 43776,
+          "requested_bytes": 866181120000,
+          "miss_bytes": 130946995200,
+          "misses": 66195,
+          "demand_fill_bytes": 130946995200,
+          "speculative_fill_bytes": 0,
+          "useful_prefetches": 0
+        },
+        "decode": {
+          "visits": 154833,
+          "requested_bytes": 3065092352000,
+          "miss_bytes": 194056038400,
+          "misses": 97908,
+          "demand_fill_bytes": 194056038400,
+          "speculative_fill_bytes": 0,
+          "useful_prefetches": 0
+        }
+      },
+      "per_layer": {
+        "prefill": [
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3215027200,
+            "misses": 1631,
+            "demand_fill_bytes": 3215027200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2093414400,
+            "misses": 1062,
+            "demand_fill_bytes": 2093414400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 21245952000,
+            "miss_bytes": 3012172800,
+            "misses": 1293,
+            "demand_fill_bytes": 3012172800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 1850956800,
+            "misses": 939,
+            "demand_fill_bytes": 1850956800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 1994854400,
+            "misses": 1012,
+            "demand_fill_bytes": 1994854400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2578329600,
+            "misses": 1308,
+            "demand_fill_bytes": 2578329600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2712371200,
+            "misses": 1376,
+            "demand_fill_bytes": 2712371200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2862182400,
+            "misses": 1452,
+            "demand_fill_bytes": 2862182400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2251110400,
+            "misses": 1142,
+            "demand_fill_bytes": 2251110400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2398950400,
+            "misses": 1217,
+            "demand_fill_bytes": 2398950400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2594099200,
+            "misses": 1316,
+            "demand_fill_bytes": 2594099200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2538905600,
+            "misses": 1288,
+            "demand_fill_bytes": 2538905600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2554675200,
+            "misses": 1296,
+            "demand_fill_bytes": 2554675200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2605926400,
+            "misses": 1322,
+            "demand_fill_bytes": 2605926400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2791219200,
+            "misses": 1416,
+            "demand_fill_bytes": 2791219200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2172262400,
+            "misses": 1102,
+            "demand_fill_bytes": 2172262400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2371353600,
+            "misses": 1203,
+            "demand_fill_bytes": 2371353600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2818816000,
+            "misses": 1430,
+            "demand_fill_bytes": 2818816000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2706457600,
+            "misses": 1373,
+            "demand_fill_bytes": 2706457600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2613811200,
+            "misses": 1326,
+            "demand_fill_bytes": 2613811200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2852326400,
+            "misses": 1447,
+            "demand_fill_bytes": 2852326400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2822758400,
+            "misses": 1432,
+            "demand_fill_bytes": 2822758400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3199257600,
+            "misses": 1623,
+            "demand_fill_bytes": 3199257600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2669004800,
+            "misses": 1354,
+            "demand_fill_bytes": 2669004800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2540876800,
+            "misses": 1289,
+            "demand_fill_bytes": 2540876800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2532992000,
+            "misses": 1285,
+            "demand_fill_bytes": 2532992000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2594099200,
+            "misses": 1316,
+            "demand_fill_bytes": 2594099200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2546790400,
+            "misses": 1292,
+            "demand_fill_bytes": 2546790400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2826700800,
+            "misses": 1434,
+            "demand_fill_bytes": 2826700800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2799104000,
+            "misses": 1420,
+            "demand_fill_bytes": 2799104000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3063244800,
+            "misses": 1554,
+            "demand_fill_bytes": 3063244800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2556646400,
+            "misses": 1297,
+            "demand_fill_bytes": 2556646400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2716313600,
+            "misses": 1378,
+            "demand_fill_bytes": 2716313600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3071129600,
+            "misses": 1558,
+            "demand_fill_bytes": 3071129600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2700544000,
+            "misses": 1370,
+            "demand_fill_bytes": 2700544000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2881894400,
+            "misses": 1462,
+            "demand_fill_bytes": 2881894400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3110553600,
+            "misses": 1578,
+            "demand_fill_bytes": 3110553600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2895692800,
+            "misses": 1469,
+            "demand_fill_bytes": 2895692800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3096755200,
+            "misses": 1571,
+            "demand_fill_bytes": 3096755200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2779392000,
+            "misses": 1410,
+            "demand_fill_bytes": 2779392000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2978483200,
+            "misses": 1511,
+            "demand_fill_bytes": 2978483200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3226854400,
+            "misses": 1637,
+            "demand_fill_bytes": 3226854400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3106611200,
+            "misses": 1576,
+            "demand_fill_bytes": 3106611200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2992281600,
+            "misses": 1518,
+            "demand_fill_bytes": 2992281600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3256422400,
+            "misses": 1652,
+            "demand_fill_bytes": 3256422400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2974540800,
+            "misses": 1509,
+            "demand_fill_bytes": 2974540800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2903577600,
+            "misses": 1473,
+            "demand_fill_bytes": 2903577600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2515251200,
+            "misses": 1276,
+            "demand_fill_bytes": 2515251200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          }
+        ],
+        "decode": [
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 5736192000,
+            "misses": 2910,
+            "demand_fill_bytes": 5736192000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 6045670400,
+            "misses": 3067,
+            "demand_fill_bytes": 6045670400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 84657664000,
+            "miss_bytes": 6888627200,
+            "misses": 2957,
+            "demand_fill_bytes": 6888627200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 4709196800,
+            "misses": 2389,
+            "demand_fill_bytes": 4709196800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 4922086400,
+            "misses": 2497,
+            "demand_fill_bytes": 4922086400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 4614579200,
+            "misses": 2341,
+            "demand_fill_bytes": 4614579200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 4764390400,
+            "misses": 2417,
+            "demand_fill_bytes": 4764390400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 5117235200,
+            "misses": 2596,
+            "demand_fill_bytes": 5117235200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 4715110400,
+            "misses": 2392,
+            "demand_fill_bytes": 4715110400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 4238080000,
+            "misses": 2150,
+            "demand_fill_bytes": 4238080000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 5215795200,
+            "misses": 2646,
+            "demand_fill_bytes": 5215795200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3633,
+            "requested_bytes": 71613696000,
+            "miss_bytes": 4305100800,
+            "misses": 2184,
+            "demand_fill_bytes": 4305100800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3629,
+            "requested_bytes": 71534848000,
+            "miss_bytes": 4498278400,
+            "misses": 2282,
+            "demand_fill_bytes": 4498278400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3147,
+            "requested_bytes": 62033664000,
+            "miss_bytes": 5424742400,
+            "misses": 2752,
+            "demand_fill_bytes": 5424742400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3074,
+            "requested_bytes": 60594688000,
+            "miss_bytes": 4098124800,
+            "misses": 2079,
+            "demand_fill_bytes": 4098124800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2053990400,
+            "misses": 1042,
+            "demand_fill_bytes": 2053990400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2531020800,
+            "misses": 1284,
+            "demand_fill_bytes": 2531020800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3934515200,
+            "misses": 1996,
+            "demand_fill_bytes": 3934515200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4596838400,
+            "misses": 2332,
+            "demand_fill_bytes": 4596838400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4070528000,
+            "misses": 2065,
+            "demand_fill_bytes": 4070528000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3707827200,
+            "misses": 1881,
+            "demand_fill_bytes": 3707827200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4380006400,
+            "misses": 2222,
+            "demand_fill_bytes": 4380006400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4482508800,
+            "misses": 2274,
+            "demand_fill_bytes": 4482508800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3536332800,
+            "misses": 1794,
+            "demand_fill_bytes": 3536332800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3847782400,
+            "misses": 1952,
+            "demand_fill_bytes": 3847782400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3248537600,
+            "misses": 1648,
+            "demand_fill_bytes": 3248537600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4383948800,
+            "misses": 2224,
+            "demand_fill_bytes": 4383948800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3660518400,
+            "misses": 1857,
+            "demand_fill_bytes": 3660518400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4186828800,
+            "misses": 2124,
+            "demand_fill_bytes": 4186828800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4630348800,
+            "misses": 2349,
+            "demand_fill_bytes": 4630348800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3603353600,
+            "misses": 1828,
+            "demand_fill_bytes": 3603353600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 1963315200,
+            "misses": 996,
+            "demand_fill_bytes": 1963315200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2540876800,
+            "misses": 1289,
+            "demand_fill_bytes": 2540876800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3922688000,
+            "misses": 1990,
+            "demand_fill_bytes": 3922688000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4458854400,
+            "misses": 2262,
+            "demand_fill_bytes": 4458854400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4048844800,
+            "misses": 2054,
+            "demand_fill_bytes": 4048844800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3299788800,
+            "misses": 1674,
+            "demand_fill_bytes": 3299788800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3699942400,
+            "misses": 1877,
+            "demand_fill_bytes": 3699942400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4129664000,
+            "misses": 2095,
+            "demand_fill_bytes": 4129664000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2566502400,
+            "misses": 1302,
+            "demand_fill_bytes": 2566502400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2842470400,
+            "misses": 1442,
+            "demand_fill_bytes": 2842470400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3104640000,
+            "misses": 1575,
+            "demand_fill_bytes": 3104640000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3264307200,
+            "misses": 1656,
+            "demand_fill_bytes": 3264307200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2982425600,
+            "misses": 1513,
+            "demand_fill_bytes": 2982425600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3218969600,
+            "misses": 1633,
+            "demand_fill_bytes": 3218969600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3550131200,
+            "misses": 1801,
+            "demand_fill_bytes": 3550131200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3897062400,
+            "misses": 1977,
+            "demand_fill_bytes": 3897062400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4417459200,
+            "misses": 2241,
+            "demand_fill_bytes": 4417459200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          }
+        ]
+      },
+      "prompts": [
+        {
+          "prompt_id": "p55-13-bounded-queue",
+          "totals": {
+            "prefill": {
+              "visits": 3312,
+              "requested_bytes": 65533440000,
+              "miss_bytes": 14644224000,
+              "misses": 7398,
+              "demand_fill_bytes": 14644224000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12904,
+              "requested_bytes": 255449600000,
+              "miss_bytes": 14597273600,
+              "misses": 7364,
+              "demand_fill_bytes": 14597273600,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-14-sql-islands",
+          "totals": {
+            "prefill": {
+              "visits": 3408,
+              "requested_bytes": 67432960000,
+              "miss_bytes": 8638873600,
+              "misses": 4370,
+              "demand_fill_bytes": 8638873600,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12830,
+              "requested_bytes": 253969408000,
+              "miss_bytes": 14876288000,
+              "misses": 7503,
+              "demand_fill_bytes": 14876288000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-15-market-repair",
+          "totals": {
+            "prefill": {
+              "visits": 3264,
+              "requested_bytes": 64583680000,
+              "miss_bytes": 12236672000,
+              "misses": 6185,
+              "demand_fill_bytes": 12236672000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13154,
+              "requested_bytes": 260442112000,
+              "miss_bytes": 13717043200,
+              "misses": 6922,
+              "demand_fill_bytes": 13717043200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-16-public-footpath",
+          "totals": {
+            "prefill": {
+              "visits": 3648,
+              "requested_bytes": 72181760000,
+              "miss_bytes": 8433152000,
+              "misses": 4266,
+              "demand_fill_bytes": 8433152000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12887,
+              "requested_bytes": 255110912000,
+              "miss_bytes": 16494822400,
+              "misses": 8319,
+              "demand_fill_bytes": 16494822400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-17-archive-storage",
+          "totals": {
+            "prefill": {
+              "visits": 4224,
+              "requested_bytes": 83578880000,
+              "miss_bytes": 12519091200,
+              "misses": 6329,
+              "demand_fill_bytes": 12519091200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12873,
+              "requested_bytes": 254831360000,
+              "miss_bytes": 17330432000,
+              "misses": 8744,
+              "demand_fill_bytes": 17330432000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-18-survey-bias",
+          "totals": {
+            "prefill": {
+              "visits": 3600,
+              "requested_bytes": 71232000000,
+              "miss_bytes": 12053529600,
+              "misses": 6093,
+              "demand_fill_bytes": 12053529600,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13083,
+              "requested_bytes": 259028224000,
+              "miss_bytes": 14209843200,
+              "misses": 7164,
+              "demand_fill_bytes": 14209843200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-19-repair-checklist",
+          "totals": {
+            "prefill": {
+              "visits": 3504,
+              "requested_bytes": 69332480000,
+              "miss_bytes": 10885683200,
+              "misses": 5502,
+              "demand_fill_bytes": 10885683200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12757,
+              "requested_bytes": 252512512000,
+              "miss_bytes": 24397721600,
+              "misses": 12308,
+              "demand_fill_bytes": 24397721600,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-20-school-menu",
+          "totals": {
+            "prefill": {
+              "visits": 3696,
+              "requested_bytes": 73131520000,
+              "miss_bytes": 9508172800,
+              "misses": 4805,
+              "demand_fill_bytes": 9508172800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13083,
+              "requested_bytes": 259028224000,
+              "miss_bytes": 16763801600,
+              "misses": 8456,
+              "demand_fill_bytes": 16763801600,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-21-french-orchard",
+          "totals": {
+            "prefill": {
+              "visits": 3744,
+              "requested_bytes": 74081280000,
+              "miss_bytes": 9065190400,
+              "misses": 4585,
+              "demand_fill_bytes": 9065190400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12992,
+              "requested_bytes": 257205760000,
+              "miss_bytes": 15796480000,
+              "misses": 7968,
+              "demand_fill_bytes": 15796480000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-22-arabic-translation",
+          "totals": {
+            "prefill": {
+              "visits": 4032,
+              "requested_bytes": 79779840000,
+              "miss_bytes": 10032332800,
+              "misses": 5072,
+              "demand_fill_bytes": 10032332800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13106,
+              "requested_bytes": 259485184000,
+              "miss_bytes": 15851136000,
+              "misses": 7999,
+              "demand_fill_bytes": 15851136000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-23-integer-squares",
+          "totals": {
+            "prefill": {
+              "visits": 3360,
+              "requested_bytes": 66483200000,
+              "miss_bytes": 11412710400,
+              "misses": 5771,
+              "demand_fill_bytes": 11412710400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12645,
+              "requested_bytes": 250272512000,
+              "miss_bytes": 13735142400,
+              "misses": 6933,
+              "demand_fill_bytes": 13735142400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-24-geometry-box",
+          "totals": {
+            "prefill": {
+              "visits": 3984,
+              "requested_bytes": 78830080000,
+              "miss_bytes": 11517363200,
+              "misses": 5819,
+              "demand_fill_bytes": 11517363200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12519,
+              "requested_bytes": 247756544000,
+              "miss_bytes": 16286054400,
+              "misses": 8228,
+              "demand_fill_bytes": 16286054400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        }
+      ],
+      "final_resident_bytes": 17713561600
+    },
+    "20.121GB_LRU_conditional_budget": {
+      "capacity": 20121486620,
+      "policy": "lru",
+      "speculative": false,
+      "totals": {
+        "prefill": {
+          "visits": 43776,
+          "requested_bytes": 866181120000,
+          "miss_bytes": 114272076800,
+          "misses": 57781,
+          "demand_fill_bytes": 114272076800,
+          "speculative_fill_bytes": 0,
+          "useful_prefetches": 0
+        },
+        "decode": {
+          "visits": 154833,
+          "requested_bytes": 3065092352000,
+          "miss_bytes": 152986624000,
+          "misses": 77178,
+          "demand_fill_bytes": 152986624000,
+          "speculative_fill_bytes": 0,
+          "useful_prefetches": 0
+        }
+      },
+      "per_layer": {
+        "prefill": [
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2483712000,
+            "misses": 1260,
+            "demand_fill_bytes": 2483712000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 1602585600,
+            "misses": 813,
+            "demand_fill_bytes": 1602585600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 21245952000,
+            "miss_bytes": 2432102400,
+            "misses": 1044,
+            "demand_fill_bytes": 2432102400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 1586816000,
+            "misses": 805,
+            "demand_fill_bytes": 1586816000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 1645952000,
+            "misses": 835,
+            "demand_fill_bytes": 1645952000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2146636800,
+            "misses": 1089,
+            "demand_fill_bytes": 2146636800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2213657600,
+            "misses": 1123,
+            "demand_fill_bytes": 2213657600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2361497600,
+            "misses": 1198,
+            "demand_fill_bytes": 2361497600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 1898265600,
+            "misses": 963,
+            "demand_fill_bytes": 1898265600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2099328000,
+            "misses": 1065,
+            "demand_fill_bytes": 2099328000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2197888000,
+            "misses": 1115,
+            "demand_fill_bytes": 2197888000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2249139200,
+            "misses": 1141,
+            "demand_fill_bytes": 2249139200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2115097600,
+            "misses": 1073,
+            "demand_fill_bytes": 2115097600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2170291200,
+            "misses": 1101,
+            "demand_fill_bytes": 2170291200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2434432000,
+            "misses": 1235,
+            "demand_fill_bytes": 2434432000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2006681600,
+            "misses": 1018,
+            "demand_fill_bytes": 2006681600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2168320000,
+            "misses": 1100,
+            "demand_fill_bytes": 2168320000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2477798400,
+            "misses": 1257,
+            "demand_fill_bytes": 2477798400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2294476800,
+            "misses": 1164,
+            "demand_fill_bytes": 2294476800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2314188800,
+            "misses": 1174,
+            "demand_fill_bytes": 2314188800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2515251200,
+            "misses": 1276,
+            "demand_fill_bytes": 2515251200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2402892800,
+            "misses": 1219,
+            "demand_fill_bytes": 2402892800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2680832000,
+            "misses": 1360,
+            "demand_fill_bytes": 2680832000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2408806400,
+            "misses": 1222,
+            "demand_fill_bytes": 2408806400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2195916800,
+            "misses": 1114,
+            "demand_fill_bytes": 2195916800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2262937600,
+            "misses": 1148,
+            "demand_fill_bytes": 2262937600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2211686400,
+            "misses": 1122,
+            "demand_fill_bytes": 2211686400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2306304000,
+            "misses": 1170,
+            "demand_fill_bytes": 2306304000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2418662400,
+            "misses": 1227,
+            "demand_fill_bytes": 2418662400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2424576000,
+            "misses": 1230,
+            "demand_fill_bytes": 2424576000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2706457600,
+            "misses": 1373,
+            "demand_fill_bytes": 2706457600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2398950400,
+            "misses": 1217,
+            "demand_fill_bytes": 2398950400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2503424000,
+            "misses": 1270,
+            "demand_fill_bytes": 2503424000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2737996800,
+            "misses": 1389,
+            "demand_fill_bytes": 2737996800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2257024000,
+            "misses": 1145,
+            "demand_fill_bytes": 2257024000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2609868800,
+            "misses": 1324,
+            "demand_fill_bytes": 2609868800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2816844800,
+            "misses": 1429,
+            "demand_fill_bytes": 2816844800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2586214400,
+            "misses": 1312,
+            "demand_fill_bytes": 2586214400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2682803200,
+            "misses": 1361,
+            "demand_fill_bytes": 2682803200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2560588800,
+            "misses": 1299,
+            "demand_fill_bytes": 2560588800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2769536000,
+            "misses": 1405,
+            "demand_fill_bytes": 2769536000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2933145600,
+            "misses": 1488,
+            "demand_fill_bytes": 2933145600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2810931200,
+            "misses": 1426,
+            "demand_fill_bytes": 2810931200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2755737600,
+            "misses": 1398,
+            "demand_fill_bytes": 2755737600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2952857600,
+            "misses": 1498,
+            "demand_fill_bytes": 2952857600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2651264000,
+            "misses": 1345,
+            "demand_fill_bytes": 2651264000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2574387200,
+            "misses": 1306,
+            "demand_fill_bytes": 2574387200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2237312000,
+            "misses": 1135,
+            "demand_fill_bytes": 2237312000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          }
+        ],
+        "decode": [
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 4269619200,
+            "misses": 2166,
+            "demand_fill_bytes": 4269619200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 4890547200,
+            "misses": 2481,
+            "demand_fill_bytes": 4890547200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 84657664000,
+            "miss_bytes": 5546777600,
+            "misses": 2381,
+            "demand_fill_bytes": 5546777600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 3952256000,
+            "misses": 2005,
+            "demand_fill_bytes": 3952256000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 4048844800,
+            "misses": 2054,
+            "demand_fill_bytes": 4048844800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 3670374400,
+            "misses": 1862,
+            "demand_fill_bytes": 3670374400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 3759078400,
+            "misses": 1907,
+            "demand_fill_bytes": 3759078400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 3966054400,
+            "misses": 2012,
+            "demand_fill_bytes": 3966054400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 3855667200,
+            "misses": 1956,
+            "demand_fill_bytes": 3855667200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 3490995200,
+            "misses": 1771,
+            "demand_fill_bytes": 3490995200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 4228224000,
+            "misses": 2145,
+            "demand_fill_bytes": 4228224000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3633,
+            "requested_bytes": 71613696000,
+            "miss_bytes": 3489024000,
+            "misses": 1770,
+            "demand_fill_bytes": 3489024000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3629,
+            "requested_bytes": 71534848000,
+            "miss_bytes": 3524505600,
+            "misses": 1788,
+            "demand_fill_bytes": 3524505600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3147,
+            "requested_bytes": 62033664000,
+            "miss_bytes": 4372121600,
+            "misses": 2218,
+            "demand_fill_bytes": 4372121600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3074,
+            "requested_bytes": 60594688000,
+            "miss_bytes": 3325414400,
+            "misses": 1687,
+            "demand_fill_bytes": 3325414400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 1728742400,
+            "misses": 877,
+            "demand_fill_bytes": 1728742400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2048076800,
+            "misses": 1039,
+            "demand_fill_bytes": 2048076800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3175603200,
+            "misses": 1611,
+            "demand_fill_bytes": 3175603200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3611238400,
+            "misses": 1832,
+            "demand_fill_bytes": 3611238400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3270220800,
+            "misses": 1659,
+            "demand_fill_bytes": 3270220800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2838528000,
+            "misses": 1440,
+            "demand_fill_bytes": 2838528000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3455513600,
+            "misses": 1753,
+            "demand_fill_bytes": 3455513600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3362867200,
+            "misses": 1706,
+            "demand_fill_bytes": 3362867200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2812902400,
+            "misses": 1427,
+            "demand_fill_bytes": 2812902400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3043532800,
+            "misses": 1544,
+            "demand_fill_bytes": 3043532800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2641408000,
+            "misses": 1340,
+            "demand_fill_bytes": 2641408000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3445657600,
+            "misses": 1748,
+            "demand_fill_bytes": 3445657600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2915404800,
+            "misses": 1479,
+            "demand_fill_bytes": 2915404800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3207142400,
+            "misses": 1627,
+            "demand_fill_bytes": 3207142400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3678259200,
+            "misses": 1866,
+            "demand_fill_bytes": 3678259200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2765593600,
+            "misses": 1403,
+            "demand_fill_bytes": 2765593600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 1557248000,
+            "misses": 790,
+            "demand_fill_bytes": 1557248000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 1992883200,
+            "misses": 1011,
+            "demand_fill_bytes": 1992883200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3035648000,
+            "misses": 1540,
+            "demand_fill_bytes": 3035648000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3398348800,
+            "misses": 1724,
+            "demand_fill_bytes": 3398348800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3140121600,
+            "misses": 1593,
+            "demand_fill_bytes": 3140121600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2440345600,
+            "misses": 1238,
+            "demand_fill_bytes": 2440345600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2818816000,
+            "misses": 1430,
+            "demand_fill_bytes": 2818816000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3037619200,
+            "misses": 1541,
+            "demand_fill_bytes": 3037619200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2020480000,
+            "misses": 1025,
+            "demand_fill_bytes": 2020480000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2225484800,
+            "misses": 1129,
+            "demand_fill_bytes": 2225484800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2351641600,
+            "misses": 1193,
+            "demand_fill_bytes": 2351641600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2505395200,
+            "misses": 1271,
+            "demand_fill_bytes": 2505395200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2272793600,
+            "misses": 1153,
+            "demand_fill_bytes": 2272793600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2456115200,
+            "misses": 1246,
+            "demand_fill_bytes": 2456115200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2769536000,
+            "misses": 1405,
+            "demand_fill_bytes": 2769536000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3051417600,
+            "misses": 1548,
+            "demand_fill_bytes": 3051417600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3522534400,
+            "misses": 1787,
+            "demand_fill_bytes": 3522534400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          }
+        ]
+      },
+      "prompts": [
+        {
+          "prompt_id": "p55-13-bounded-queue",
+          "totals": {
+            "prefill": {
+              "visits": 3312,
+              "requested_bytes": 65533440000,
+              "miss_bytes": 14644224000,
+              "misses": 7398,
+              "demand_fill_bytes": 14644224000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12904,
+              "requested_bytes": 255449600000,
+              "miss_bytes": 11855155200,
+              "misses": 5980,
+              "demand_fill_bytes": 11855155200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-14-sql-islands",
+          "totals": {
+            "prefill": {
+              "visits": 3408,
+              "requested_bytes": 67432960000,
+              "miss_bytes": 7470131200,
+              "misses": 3780,
+              "demand_fill_bytes": 7470131200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12830,
+              "requested_bytes": 253969408000,
+              "miss_bytes": 11446400000,
+              "misses": 5773,
+              "demand_fill_bytes": 11446400000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-15-market-repair",
+          "totals": {
+            "prefill": {
+              "visits": 3264,
+              "requested_bytes": 64583680000,
+              "miss_bytes": 10770457600,
+              "misses": 5445,
+              "demand_fill_bytes": 10770457600,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13154,
+              "requested_bytes": 260442112000,
+              "miss_bytes": 11267916800,
+              "misses": 5685,
+              "demand_fill_bytes": 11267916800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-16-public-footpath",
+          "totals": {
+            "prefill": {
+              "visits": 3648,
+              "requested_bytes": 72181760000,
+              "miss_bytes": 6785766400,
+              "misses": 3433,
+              "demand_fill_bytes": 6785766400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12887,
+              "requested_bytes": 255110912000,
+              "miss_bytes": 11881497600,
+              "misses": 5991,
+              "demand_fill_bytes": 11881497600,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-17-archive-storage",
+          "totals": {
+            "prefill": {
+              "visits": 4224,
+              "requested_bytes": 83578880000,
+              "miss_bytes": 11227776000,
+              "misses": 5677,
+              "demand_fill_bytes": 11227776000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12873,
+              "requested_bytes": 254831360000,
+              "miss_bytes": 12908851200,
+              "misses": 6510,
+              "demand_fill_bytes": 12908851200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-18-survey-bias",
+          "totals": {
+            "prefill": {
+              "visits": 3600,
+              "requested_bytes": 71232000000,
+              "miss_bytes": 10471552000,
+              "misses": 5295,
+              "demand_fill_bytes": 10471552000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13083,
+              "requested_bytes": 259028224000,
+              "miss_bytes": 11029043200,
+              "misses": 5558,
+              "demand_fill_bytes": 11029043200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-19-repair-checklist",
+          "totals": {
+            "prefill": {
+              "visits": 3504,
+              "requested_bytes": 69332480000,
+              "miss_bytes": 8874700800,
+              "misses": 4490,
+              "demand_fill_bytes": 8874700800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12757,
+              "requested_bytes": 252512512000,
+              "miss_bytes": 17735961600,
+              "misses": 8947,
+              "demand_fill_bytes": 17735961600,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-20-school-menu",
+          "totals": {
+            "prefill": {
+              "visits": 3696,
+              "requested_bytes": 73131520000,
+              "miss_bytes": 8180121600,
+              "misses": 4134,
+              "demand_fill_bytes": 8180121600,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13083,
+              "requested_bytes": 259028224000,
+              "miss_bytes": 14742067200,
+              "misses": 7436,
+              "demand_fill_bytes": 14742067200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-21-french-orchard",
+          "totals": {
+            "prefill": {
+              "visits": 3744,
+              "requested_bytes": 74081280000,
+              "miss_bytes": 7906304000,
+              "misses": 4000,
+              "demand_fill_bytes": 7906304000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12992,
+              "requested_bytes": 257205760000,
+              "miss_bytes": 11723443200,
+              "misses": 5913,
+              "demand_fill_bytes": 11723443200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-22-arabic-translation",
+          "totals": {
+            "prefill": {
+              "visits": 4032,
+              "requested_bytes": 79779840000,
+              "miss_bytes": 8497843200,
+              "misses": 4297,
+              "demand_fill_bytes": 8497843200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13106,
+              "requested_bytes": 259485184000,
+              "miss_bytes": 12919782400,
+              "misses": 6521,
+              "demand_fill_bytes": 12919782400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-23-integer-squares",
+          "totals": {
+            "prefill": {
+              "visits": 3360,
+              "requested_bytes": 66483200000,
+              "miss_bytes": 9909939200,
+              "misses": 5013,
+              "demand_fill_bytes": 9909939200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12645,
+              "requested_bytes": 250272512000,
+              "miss_bytes": 10855040000,
+              "misses": 5477,
+              "demand_fill_bytes": 10855040000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-24-geometry-box",
+          "totals": {
+            "prefill": {
+              "visits": 3984,
+              "requested_bytes": 78830080000,
+              "miss_bytes": 9533260800,
+              "misses": 4819,
+              "demand_fill_bytes": 9533260800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12519,
+              "requested_bytes": 247756544000,
+              "miss_bytes": 14621465600,
+              "misses": 7387,
+              "demand_fill_bytes": 14621465600,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        }
+      ],
+      "final_resident_bytes": 19856972800
+    },
+    "18GB_LFU": {
+      "capacity": 18000000000,
+      "policy": "lfu",
+      "speculative": false,
+      "totals": {
+        "prefill": {
+          "visits": 43776,
+          "requested_bytes": 866181120000,
+          "miss_bytes": 255015040000,
+          "misses": 129127,
+          "demand_fill_bytes": 255015040000,
+          "speculative_fill_bytes": 0,
+          "useful_prefetches": 0
+        },
+        "decode": {
+          "visits": 154833,
+          "requested_bytes": 3065092352000,
+          "miss_bytes": 972177561600,
+          "misses": 491428,
+          "demand_fill_bytes": 972177561600,
+          "speculative_fill_bytes": 0,
+          "useful_prefetches": 0
+        }
+      },
+      "per_layer": {
+        "prefill": [
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2607897600,
+            "misses": 1323,
+            "demand_fill_bytes": 2607897600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2073702400,
+            "misses": 1052,
+            "demand_fill_bytes": 2073702400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 21245952000,
+            "miss_bytes": 3119334400,
+            "misses": 1339,
+            "demand_fill_bytes": 3119334400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 5200025600,
+            "misses": 2638,
+            "demand_fill_bytes": 5200025600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 4795929600,
+            "misses": 2433,
+            "demand_fill_bytes": 4795929600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 4435200000,
+            "misses": 2250,
+            "demand_fill_bytes": 4435200000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3802444800,
+            "misses": 1929,
+            "demand_fill_bytes": 3802444800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3889177600,
+            "misses": 1973,
+            "demand_fill_bytes": 3889177600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3948313600,
+            "misses": 2003,
+            "demand_fill_bytes": 3948313600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 5089638400,
+            "misses": 2582,
+            "demand_fill_bytes": 5089638400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2990310400,
+            "misses": 1517,
+            "demand_fill_bytes": 2990310400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3697971200,
+            "misses": 1876,
+            "demand_fill_bytes": 3697971200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2996224000,
+            "misses": 1520,
+            "demand_fill_bytes": 2996224000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3114496000,
+            "misses": 1580,
+            "demand_fill_bytes": 3114496000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 6838092800,
+            "misses": 3469,
+            "demand_fill_bytes": 6838092800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 8641740800,
+            "misses": 4384,
+            "demand_fill_bytes": 8641740800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 7591091200,
+            "misses": 3851,
+            "demand_fill_bytes": 7591091200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 5994419200,
+            "misses": 3041,
+            "demand_fill_bytes": 5994419200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3386521600,
+            "misses": 1718,
+            "demand_fill_bytes": 3386521600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 5245363200,
+            "misses": 2661,
+            "demand_fill_bytes": 5245363200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 5669171200,
+            "misses": 2876,
+            "demand_fill_bytes": 5669171200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 4407603200,
+            "misses": 2236,
+            "demand_fill_bytes": 4407603200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 4153318400,
+            "misses": 2107,
+            "demand_fill_bytes": 4153318400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 8316492800,
+            "misses": 4219,
+            "demand_fill_bytes": 8316492800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 5448396800,
+            "misses": 2764,
+            "demand_fill_bytes": 5448396800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 7072665600,
+            "misses": 3588,
+            "demand_fill_bytes": 7072665600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3973939200,
+            "misses": 2016,
+            "demand_fill_bytes": 3973939200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 5229593600,
+            "misses": 2653,
+            "demand_fill_bytes": 5229593600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 4037017600,
+            "misses": 2048,
+            "demand_fill_bytes": 4037017600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3516620800,
+            "misses": 1784,
+            "demand_fill_bytes": 3516620800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 6784870400,
+            "misses": 3442,
+            "demand_fill_bytes": 6784870400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 9568204800,
+            "misses": 4854,
+            "demand_fill_bytes": 9568204800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 8346060800,
+            "misses": 4234,
+            "demand_fill_bytes": 8346060800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 5572582400,
+            "misses": 2827,
+            "demand_fill_bytes": 5572582400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3213056000,
+            "misses": 1630,
+            "demand_fill_bytes": 3213056000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 5458252800,
+            "misses": 2769,
+            "demand_fill_bytes": 5458252800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 6100864000,
+            "misses": 3095,
+            "demand_fill_bytes": 6100864000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 4147404800,
+            "misses": 2104,
+            "demand_fill_bytes": 4147404800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 4289331200,
+            "misses": 2176,
+            "demand_fill_bytes": 4289331200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 8160768000,
+            "misses": 4140,
+            "demand_fill_bytes": 8160768000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 7898598400,
+            "misses": 4007,
+            "demand_fill_bytes": 7898598400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 7731046400,
+            "misses": 3922,
+            "demand_fill_bytes": 7731046400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 6361062400,
+            "misses": 3227,
+            "demand_fill_bytes": 6361062400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 7573350400,
+            "misses": 3842,
+            "demand_fill_bytes": 7573350400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 6826265600,
+            "misses": 3463,
+            "demand_fill_bytes": 6826265600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 6140288000,
+            "misses": 3115,
+            "demand_fill_bytes": 6140288000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 5598208000,
+            "misses": 2840,
+            "demand_fill_bytes": 5598208000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3962112000,
+            "misses": 2010,
+            "demand_fill_bytes": 3962112000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          }
+        ],
+        "decode": [
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 12661017600,
+            "misses": 6423,
+            "demand_fill_bytes": 12661017600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 16183552000,
+            "misses": 8210,
+            "demand_fill_bytes": 16183552000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 84657664000,
+            "miss_bytes": 22585472000,
+            "misses": 9695,
+            "demand_fill_bytes": 22585472000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 25917337600,
+            "misses": 13148,
+            "demand_fill_bytes": 25917337600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 24024985600,
+            "misses": 12188,
+            "demand_fill_bytes": 24024985600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 22753561600,
+            "misses": 11543,
+            "demand_fill_bytes": 22753561600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 20685772800,
+            "misses": 10494,
+            "demand_fill_bytes": 20685772800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 19646950400,
+            "misses": 9967,
+            "demand_fill_bytes": 19646950400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 19353241600,
+            "misses": 9818,
+            "demand_fill_bytes": 19353241600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 18024652800,
+            "misses": 9144,
+            "demand_fill_bytes": 18024652800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 16595532800,
+            "misses": 8419,
+            "demand_fill_bytes": 16595532800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3633,
+            "requested_bytes": 71613696000,
+            "miss_bytes": 16398412800,
+            "misses": 8319,
+            "demand_fill_bytes": 16398412800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3629,
+            "requested_bytes": 71534848000,
+            "miss_bytes": 14490291200,
+            "misses": 7351,
+            "demand_fill_bytes": 14490291200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3147,
+            "requested_bytes": 62033664000,
+            "miss_bytes": 15172326400,
+            "misses": 7697,
+            "demand_fill_bytes": 15172326400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3074,
+            "requested_bytes": 60594688000,
+            "miss_bytes": 24848947200,
+            "misses": 12606,
+            "demand_fill_bytes": 24848947200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 26768896000,
+            "misses": 13580,
+            "demand_fill_bytes": 26768896000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 27139481600,
+            "misses": 13768,
+            "demand_fill_bytes": 27139481600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 26173593600,
+            "misses": 13278,
+            "demand_fill_bytes": 26173593600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 16991744000,
+            "misses": 8620,
+            "demand_fill_bytes": 16991744000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 21426944000,
+            "misses": 10870,
+            "demand_fill_bytes": 21426944000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 23496704000,
+            "misses": 11920,
+            "demand_fill_bytes": 23496704000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 18211916800,
+            "misses": 9239,
+            "demand_fill_bytes": 18211916800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 15184153600,
+            "misses": 7703,
+            "demand_fill_bytes": 15184153600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 26443648000,
+            "misses": 13415,
+            "demand_fill_bytes": 26443648000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 22814668800,
+            "misses": 11574,
+            "demand_fill_bytes": 22814668800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 26469273600,
+            "misses": 13428,
+            "demand_fill_bytes": 26469273600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 20955827200,
+            "misses": 10631,
+            "demand_fill_bytes": 20955827200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 23571609600,
+            "misses": 11958,
+            "demand_fill_bytes": 23571609600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 16916838400,
+            "misses": 8582,
+            "demand_fill_bytes": 16916838400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 14435097600,
+            "misses": 7323,
+            "demand_fill_bytes": 14435097600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 23721420800,
+            "misses": 12034,
+            "demand_fill_bytes": 23721420800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 27490355200,
+            "misses": 13946,
+            "demand_fill_bytes": 27490355200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 27866854400,
+            "misses": 14137,
+            "demand_fill_bytes": 27866854400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 23080780800,
+            "misses": 11709,
+            "demand_fill_bytes": 23080780800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 16820249600,
+            "misses": 8533,
+            "demand_fill_bytes": 16820249600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 20652262400,
+            "misses": 10477,
+            "demand_fill_bytes": 20652262400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 20271820800,
+            "misses": 10284,
+            "demand_fill_bytes": 20271820800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 16110617600,
+            "misses": 8173,
+            "demand_fill_bytes": 16110617600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 15391129600,
+            "misses": 7808,
+            "demand_fill_bytes": 15391129600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 22629376000,
+            "misses": 11480,
+            "demand_fill_bytes": 22629376000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 22024217600,
+            "misses": 11173,
+            "demand_fill_bytes": 22024217600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 20380236800,
+            "misses": 10339,
+            "demand_fill_bytes": 20380236800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 17133670400,
+            "misses": 8692,
+            "demand_fill_bytes": 17133670400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 18822988800,
+            "misses": 9549,
+            "demand_fill_bytes": 18822988800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 17011456000,
+            "misses": 8630,
+            "demand_fill_bytes": 17011456000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 17196748800,
+            "misses": 8724,
+            "demand_fill_bytes": 17196748800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 15387187200,
+            "misses": 7806,
+            "demand_fill_bytes": 15387187200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 13843737600,
+            "misses": 7023,
+            "demand_fill_bytes": 13843737600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          }
+        ]
+      },
+      "prompts": [
+        {
+          "prompt_id": "p55-13-bounded-queue",
+          "totals": {
+            "prefill": {
+              "visits": 3312,
+              "requested_bytes": 65533440000,
+              "miss_bytes": 14644224000,
+              "misses": 7398,
+              "demand_fill_bytes": 14644224000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12904,
+              "requested_bytes": 255449600000,
+              "miss_bytes": 15781964800,
+              "misses": 7955,
+              "demand_fill_bytes": 15781964800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-14-sql-islands",
+          "totals": {
+            "prefill": {
+              "visits": 3408,
+              "requested_bytes": 67432960000,
+              "miss_bytes": 14640640000,
+              "misses": 7418,
+              "demand_fill_bytes": 14640640000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12830,
+              "requested_bytes": 253969408000,
+              "miss_bytes": 44261862400,
+              "misses": 22387,
+              "demand_fill_bytes": 44261862400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-15-market-repair",
+          "totals": {
+            "prefill": {
+              "visits": 3264,
+              "requested_bytes": 64583680000,
+              "miss_bytes": 22457523200,
+              "misses": 11375,
+              "demand_fill_bytes": 22457523200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13154,
+              "requested_bytes": 260442112000,
+              "miss_bytes": 80389120000,
+              "misses": 40674,
+              "demand_fill_bytes": 80389120000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-16-public-footpath",
+          "totals": {
+            "prefill": {
+              "visits": 3648,
+              "requested_bytes": 72181760000,
+              "miss_bytes": 25057177600,
+              "misses": 12686,
+              "demand_fill_bytes": 25057177600,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12887,
+              "requested_bytes": 255110912000,
+              "miss_bytes": 80396108800,
+              "misses": 40649,
+              "demand_fill_bytes": 80396108800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-17-archive-storage",
+          "totals": {
+            "prefill": {
+              "visits": 4224,
+              "requested_bytes": 83578880000,
+              "miss_bytes": 24199526400,
+              "misses": 12262,
+              "demand_fill_bytes": 24199526400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12873,
+              "requested_bytes": 254831360000,
+              "miss_bytes": 73108224000,
+              "misses": 36966,
+              "demand_fill_bytes": 73108224000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-18-survey-bias",
+          "totals": {
+            "prefill": {
+              "visits": 3600,
+              "requested_bytes": 71232000000,
+              "miss_bytes": 20468224000,
+              "misses": 10364,
+              "demand_fill_bytes": 20468224000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13083,
+              "requested_bytes": 259028224000,
+              "miss_bytes": 67528832000,
+              "misses": 34149,
+              "demand_fill_bytes": 67528832000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-19-repair-checklist",
+          "totals": {
+            "prefill": {
+              "visits": 3504,
+              "requested_bytes": 69332480000,
+              "miss_bytes": 18782310400,
+              "misses": 9514,
+              "demand_fill_bytes": 18782310400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12757,
+              "requested_bytes": 252512512000,
+              "miss_bytes": 77519052800,
+              "misses": 39192,
+              "demand_fill_bytes": 77519052800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-20-school-menu",
+          "totals": {
+            "prefill": {
+              "visits": 3696,
+              "requested_bytes": 73131520000,
+              "miss_bytes": 18883558400,
+              "misses": 9559,
+              "demand_fill_bytes": 18883558400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13083,
+              "requested_bytes": 259028224000,
+              "miss_bytes": 138473216000,
+              "misses": 69942,
+              "demand_fill_bytes": 138473216000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-21-french-orchard",
+          "totals": {
+            "prefill": {
+              "visits": 3744,
+              "requested_bytes": 74081280000,
+              "miss_bytes": 25858022400,
+              "misses": 13093,
+              "demand_fill_bytes": 25858022400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12992,
+              "requested_bytes": 257205760000,
+              "miss_bytes": 97360614400,
+              "misses": 49201,
+              "demand_fill_bytes": 97360614400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-22-arabic-translation",
+          "totals": {
+            "prefill": {
+              "visits": 4032,
+              "requested_bytes": 79779840000,
+              "miss_bytes": 24393420800,
+              "misses": 12342,
+              "demand_fill_bytes": 24393420800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13106,
+              "requested_bytes": 259485184000,
+              "miss_bytes": 75795148800,
+              "misses": 38294,
+              "demand_fill_bytes": 75795148800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-23-integer-squares",
+          "totals": {
+            "prefill": {
+              "visits": 3360,
+              "requested_bytes": 66483200000,
+              "miss_bytes": 20460876800,
+              "misses": 10363,
+              "demand_fill_bytes": 20460876800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12645,
+              "requested_bytes": 250272512000,
+              "miss_bytes": 103361843200,
+              "misses": 52264,
+              "demand_fill_bytes": 103361843200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-24-geometry-box",
+          "totals": {
+            "prefill": {
+              "visits": 3984,
+              "requested_bytes": 78830080000,
+              "miss_bytes": 25169536000,
+              "misses": 12753,
+              "demand_fill_bytes": 25169536000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12519,
+              "requested_bytes": 247756544000,
+              "miss_bytes": 118201574400,
+              "misses": 59755,
+              "demand_fill_bytes": 118201574400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        }
+      ],
+      "final_resident_bytes": 17903334400
+    },
+    "18GB_twohit_admission": {
+      "capacity": 18000000000,
+      "policy": "twohit",
+      "speculative": false,
+      "totals": {
+        "prefill": {
+          "visits": 43776,
+          "requested_bytes": 866181120000,
+          "miss_bytes": 142912716800,
+          "misses": 72250,
+          "demand_fill_bytes": 119208857600,
+          "speculative_fill_bytes": 0,
+          "useful_prefetches": 0
+        },
+        "decode": {
+          "visits": 154833,
+          "requested_bytes": 3065092352000,
+          "miss_bytes": 199784524800,
+          "misses": 100799,
+          "demand_fill_bytes": 177660851200,
+          "speculative_fill_bytes": 0,
+          "useful_prefetches": 0
+        }
+      },
+      "per_layer": {
+        "prefill": [
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3420032000,
+            "misses": 1735,
+            "demand_fill_bytes": 2899635200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2260966400,
+            "misses": 1147,
+            "demand_fill_bytes": 1896294400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 21245952000,
+            "miss_bytes": 3207859200,
+            "misses": 1377,
+            "demand_fill_bytes": 2732620800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2059904000,
+            "misses": 1045,
+            "demand_fill_bytes": 1695232000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2207744000,
+            "misses": 1120,
+            "demand_fill_bytes": 1821388800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2785305600,
+            "misses": 1413,
+            "demand_fill_bytes": 2337843200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2911462400,
+            "misses": 1477,
+            "demand_fill_bytes": 2442316800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3088870400,
+            "misses": 1567,
+            "demand_fill_bytes": 2607897600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2462028800,
+            "misses": 1249,
+            "demand_fill_bytes": 2075673600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2686745600,
+            "misses": 1363,
+            "demand_fill_bytes": 2221542400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2751795200,
+            "misses": 1396,
+            "demand_fill_bytes": 2371353600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2749824000,
+            "misses": 1395,
+            "demand_fill_bytes": 2314188800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2775449600,
+            "misses": 1408,
+            "demand_fill_bytes": 2337843200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2763622400,
+            "misses": 1402,
+            "demand_fill_bytes": 2383180800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3067187200,
+            "misses": 1556,
+            "demand_fill_bytes": 2556646400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2509337600,
+            "misses": 1273,
+            "demand_fill_bytes": 1981056000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2704486400,
+            "misses": 1372,
+            "demand_fill_bytes": 2170291200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3098726400,
+            "misses": 1572,
+            "demand_fill_bytes": 2598041600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2905548800,
+            "misses": 1474,
+            "demand_fill_bytes": 2475827200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2864153600,
+            "misses": 1453,
+            "demand_fill_bytes": 2395008000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3157862400,
+            "misses": 1602,
+            "demand_fill_bytes": 2617753600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3049446400,
+            "misses": 1547,
+            "demand_fill_bytes": 2586214400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3427916800,
+            "misses": 1739,
+            "demand_fill_bytes": 2909491200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2941030400,
+            "misses": 1492,
+            "demand_fill_bytes": 2416691200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2779392000,
+            "misses": 1410,
+            "demand_fill_bytes": 2304332800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2844441600,
+            "misses": 1443,
+            "demand_fill_bytes": 2312217600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2805017600,
+            "misses": 1423,
+            "demand_fill_bytes": 2377267200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2810931200,
+            "misses": 1426,
+            "demand_fill_bytes": 2357555200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3035648000,
+            "misses": 1540,
+            "demand_fill_bytes": 2550732800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2990310400,
+            "misses": 1517,
+            "demand_fill_bytes": 2560588800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3349068800,
+            "misses": 1699,
+            "demand_fill_bytes": 2789248000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2952857600,
+            "misses": 1498,
+            "demand_fill_bytes": 2322073600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3039590400,
+            "misses": 1542,
+            "demand_fill_bytes": 2452172800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3325414400,
+            "misses": 1687,
+            "demand_fill_bytes": 2771507200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2872038400,
+            "misses": 1457,
+            "demand_fill_bytes": 2414720000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3140121600,
+            "misses": 1593,
+            "demand_fill_bytes": 2623667200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3412147200,
+            "misses": 1731,
+            "demand_fill_bytes": 2848384000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3148006400,
+            "misses": 1597,
+            "demand_fill_bytes": 2629580800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3376665600,
+            "misses": 1713,
+            "demand_fill_bytes": 2840499200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3140121600,
+            "misses": 1593,
+            "demand_fill_bytes": 2540876800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3297817600,
+            "misses": 1673,
+            "demand_fill_bytes": 2694630400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3518592000,
+            "misses": 1785,
+            "demand_fill_bytes": 2909491200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3360896000,
+            "misses": 1705,
+            "demand_fill_bytes": 2779392000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3264307200,
+            "misses": 1656,
+            "demand_fill_bytes": 2700544000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3516620800,
+            "misses": 1784,
+            "demand_fill_bytes": 2944972800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3216998400,
+            "misses": 1632,
+            "demand_fill_bytes": 2684774400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3159833600,
+            "misses": 1603,
+            "demand_fill_bytes": 2670976000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2698572800,
+            "misses": 1369,
+            "demand_fill_bytes": 2284620800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          }
+        ],
+        "decode": [
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 5791385600,
+            "misses": 2938,
+            "demand_fill_bytes": 5355750400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 6236876800,
+            "misses": 3164,
+            "demand_fill_bytes": 5615948800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 84657664000,
+            "miss_bytes": 7081984000,
+            "misses": 3040,
+            "demand_fill_bytes": 6397081600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 4918144000,
+            "misses": 2495,
+            "demand_fill_bytes": 4301158400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 5146803200,
+            "misses": 2611,
+            "demand_fill_bytes": 4545587200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 4722995200,
+            "misses": 2396,
+            "demand_fill_bytes": 4188800000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 4862950400,
+            "misses": 2467,
+            "demand_fill_bytes": 4336640000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 5213824000,
+            "misses": 2645,
+            "demand_fill_bytes": 4705254400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 4892518400,
+            "misses": 2482,
+            "demand_fill_bytes": 4322841600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 4448998400,
+            "misses": 2257,
+            "demand_fill_bytes": 3946342400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 5395174400,
+            "misses": 2737,
+            "demand_fill_bytes": 4803814400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3633,
+            "requested_bytes": 71613696000,
+            "miss_bytes": 4474624000,
+            "misses": 2270,
+            "demand_fill_bytes": 3948313600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3629,
+            "requested_bytes": 71534848000,
+            "miss_bytes": 4687513600,
+            "misses": 2378,
+            "demand_fill_bytes": 4173030400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3147,
+            "requested_bytes": 62033664000,
+            "miss_bytes": 5568640000,
+            "misses": 2825,
+            "demand_fill_bytes": 4977280000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3074,
+            "requested_bytes": 60594688000,
+            "miss_bytes": 4214425600,
+            "misses": 2138,
+            "demand_fill_bytes": 3751193600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2237312000,
+            "misses": 1135,
+            "demand_fill_bytes": 1847014400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2710400000,
+            "misses": 1375,
+            "demand_fill_bytes": 2326016000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4062643200,
+            "misses": 2061,
+            "demand_fill_bytes": 3591526400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4742707200,
+            "misses": 2406,
+            "demand_fill_bytes": 4214425600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4236108800,
+            "misses": 2149,
+            "demand_fill_bytes": 3741337600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3790617600,
+            "misses": 1923,
+            "demand_fill_bytes": 3366809600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4519961600,
+            "misses": 2293,
+            "demand_fill_bytes": 4031104000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4529817600,
+            "misses": 2298,
+            "demand_fill_bytes": 4058700800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3654604800,
+            "misses": 1854,
+            "demand_fill_bytes": 3224883200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3991680000,
+            "misses": 2025,
+            "demand_fill_bytes": 3498880000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3414118400,
+            "misses": 1732,
+            "demand_fill_bytes": 2976512000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4494336000,
+            "misses": 2280,
+            "demand_fill_bytes": 3954227200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3780761600,
+            "misses": 1918,
+            "demand_fill_bytes": 3289932800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4243993600,
+            "misses": 2153,
+            "demand_fill_bytes": 3780761600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4827468800,
+            "misses": 2449,
+            "demand_fill_bytes": 4293273600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3694028800,
+            "misses": 1874,
+            "demand_fill_bytes": 3299788800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2059904000,
+            "misses": 1045,
+            "demand_fill_bytes": 1764224000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2670976000,
+            "misses": 1355,
+            "demand_fill_bytes": 2327987200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4062643200,
+            "misses": 2061,
+            "demand_fill_bytes": 3638835200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4527846400,
+            "misses": 2297,
+            "demand_fill_bytes": 4050816000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4171059200,
+            "misses": 2116,
+            "demand_fill_bytes": 3733452800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3370752000,
+            "misses": 1710,
+            "demand_fill_bytes": 3011993600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3747251200,
+            "misses": 1901,
+            "demand_fill_bytes": 3372723200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4125721600,
+            "misses": 2093,
+            "demand_fill_bytes": 3733452800,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2651264000,
+            "misses": 1345,
+            "demand_fill_bytes": 2335872000,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2917376000,
+            "misses": 1480,
+            "demand_fill_bytes": 2588185600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3165747200,
+            "misses": 1606,
+            "demand_fill_bytes": 2844441600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3333299200,
+            "misses": 1691,
+            "demand_fill_bytes": 3019878400,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3051417600,
+            "misses": 1548,
+            "demand_fill_bytes": 2712371200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3260364800,
+            "misses": 1654,
+            "demand_fill_bytes": 2919347200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3577728000,
+            "misses": 1815,
+            "demand_fill_bytes": 3205171200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3944371200,
+            "misses": 2001,
+            "demand_fill_bytes": 3514649600,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4559385600,
+            "misses": 2313,
+            "demand_fill_bytes": 4023219200,
+            "speculative_fill_bytes": 0,
+            "useful_prefetches": 0
+          }
+        ]
+      },
+      "prompts": [
+        {
+          "prompt_id": "p55-13-bounded-queue",
+          "totals": {
+            "prefill": {
+              "visits": 3312,
+              "requested_bytes": 65533440000,
+              "miss_bytes": 24494668800,
+              "misses": 12373,
+              "demand_fill_bytes": 9850444800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12904,
+              "requested_bytes": 255449600000,
+              "miss_bytes": 20987545600,
+              "misses": 10584,
+              "demand_fill_bytes": 10726016000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-14-sql-islands",
+          "totals": {
+            "prefill": {
+              "visits": 3408,
+              "requested_bytes": 67432960000,
+              "miss_bytes": 9087411200,
+              "misses": 4599,
+              "demand_fill_bytes": 6935219200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12830,
+              "requested_bytes": 253969408000,
+              "miss_bytes": 15053516800,
+              "misses": 7594,
+              "demand_fill_bytes": 11700147200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-15-market-repair",
+          "totals": {
+            "prefill": {
+              "visits": 3264,
+              "requested_bytes": 64583680000,
+              "miss_bytes": 13668659200,
+              "misses": 6912,
+              "demand_fill_bytes": 10496819200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13154,
+              "requested_bytes": 260442112000,
+              "miss_bytes": 14071680000,
+              "misses": 7101,
+              "demand_fill_bytes": 11777740800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-16-public-footpath",
+          "totals": {
+            "prefill": {
+              "visits": 3648,
+              "requested_bytes": 72181760000,
+              "miss_bytes": 8433689600,
+              "misses": 4267,
+              "demand_fill_bytes": 7451315200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12887,
+              "requested_bytes": 255110912000,
+              "miss_bytes": 15686272000,
+              "misses": 7913,
+              "demand_fill_bytes": 14411084800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-17-archive-storage",
+          "totals": {
+            "prefill": {
+              "visits": 4224,
+              "requested_bytes": 83578880000,
+              "miss_bytes": 12809036800,
+              "misses": 6477,
+              "demand_fill_bytes": 11795481600,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12873,
+              "requested_bytes": 254831360000,
+              "miss_bytes": 17169331200,
+              "misses": 8663,
+              "demand_fill_bytes": 16129075200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-18-survey-bias",
+          "totals": {
+            "prefill": {
+              "visits": 3600,
+              "requested_bytes": 71232000000,
+              "miss_bytes": 12046540800,
+              "misses": 6090,
+              "demand_fill_bytes": 11632230400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13083,
+              "requested_bytes": 259028224000,
+              "miss_bytes": 14033689600,
+              "misses": 7075,
+              "demand_fill_bytes": 13633715200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-19-repair-checklist",
+          "totals": {
+            "prefill": {
+              "visits": 3504,
+              "requested_bytes": 69332480000,
+              "miss_bytes": 10861312000,
+              "misses": 5490,
+              "demand_fill_bytes": 10593228800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12757,
+              "requested_bytes": 252512512000,
+              "miss_bytes": 24161715200,
+              "misses": 12189,
+              "demand_fill_bytes": 23182208000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-20-school-menu",
+          "totals": {
+            "prefill": {
+              "visits": 3696,
+              "requested_bytes": 73131520000,
+              "miss_bytes": 9529139200,
+              "misses": 4816,
+              "demand_fill_bytes": 9311948800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13083,
+              "requested_bytes": 259028224000,
+              "miss_bytes": 17065753600,
+              "misses": 8609,
+              "demand_fill_bytes": 16004352000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-21-french-orchard",
+          "totals": {
+            "prefill": {
+              "visits": 3744,
+              "requested_bytes": 74081280000,
+              "miss_bytes": 9090457600,
+              "misses": 4598,
+              "demand_fill_bytes": 8843699200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12992,
+              "requested_bytes": 257205760000,
+              "miss_bytes": 15663692800,
+              "misses": 7901,
+              "demand_fill_bytes": 15252966400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-22-arabic-translation",
+          "totals": {
+            "prefill": {
+              "visits": 4032,
+              "requested_bytes": 79779840000,
+              "miss_bytes": 10005273600,
+              "misses": 5059,
+              "demand_fill_bytes": 9792384000,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 13106,
+              "requested_bytes": 259485184000,
+              "miss_bytes": 15811712000,
+              "misses": 7979,
+              "demand_fill_bytes": 15586636800,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-23-integer-squares",
+          "totals": {
+            "prefill": {
+              "visits": 3360,
+              "requested_bytes": 66483200000,
+              "miss_bytes": 11401420800,
+              "misses": 5766,
+              "demand_fill_bytes": 11178675200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12645,
+              "requested_bytes": 250272512000,
+              "miss_bytes": 13655936000,
+              "misses": 6893,
+              "demand_fill_bytes": 13243238400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-24-geometry-box",
+          "totals": {
+            "prefill": {
+              "visits": 3984,
+              "requested_bytes": 78830080000,
+              "miss_bytes": 11485107200,
+              "misses": 5803,
+              "demand_fill_bytes": 11327411200,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            },
+            "decode": {
+              "visits": 12519,
+              "requested_bytes": 247756544000,
+              "miss_bytes": 16423680000,
+              "misses": 8298,
+              "demand_fill_bytes": 16013670400,
+              "speculative_fill_bytes": 0,
+              "useful_prefetches": 0
+            }
+          }
+        }
+      ],
+      "final_resident_bytes": 17773414400
+    },
+    "18GB_frequency_one_prefetch_per_visit": {
+      "capacity": 18000000000,
+      "policy": "lru",
+      "speculative": true,
+      "totals": {
+        "prefill": {
+          "visits": 43776,
+          "requested_bytes": 866181120000,
+          "miss_bytes": 118253542400,
+          "misses": 59779,
+          "demand_fill_bytes": 118253542400,
+          "speculative_fill_bytes": 86618112000,
+          "useful_prefetches": 669
+        },
+        "decode": {
+          "visits": 154833,
+          "requested_bytes": 3065092352000,
+          "miss_bytes": 250917811200,
+          "misses": 126595,
+          "demand_fill_bytes": 250917811200,
+          "speculative_fill_bytes": 306509235200,
+          "useful_prefetches": 1682
+        }
+      },
+      "per_layer": {
+        "prefill": [
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3090841600,
+            "misses": 1568,
+            "demand_fill_bytes": 3090841600,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 29
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 1847014400,
+            "misses": 937,
+            "demand_fill_bytes": 1847014400,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 22
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 21245952000,
+            "miss_bytes": 2711654400,
+            "misses": 1164,
+            "demand_fill_bytes": 2711654400,
+            "speculative_fill_bytes": 2124595200,
+            "useful_prefetches": 13
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 1610470400,
+            "misses": 817,
+            "demand_fill_bytes": 1610470400,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 14
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 1819417600,
+            "misses": 923,
+            "demand_fill_bytes": 1819417600,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 14
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2322073600,
+            "misses": 1178,
+            "demand_fill_bytes": 2322073600,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 17
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2373324800,
+            "misses": 1204,
+            "demand_fill_bytes": 2373324800,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 23
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2464000000,
+            "misses": 1250,
+            "demand_fill_bytes": 2464000000,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 8
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 1945574400,
+            "misses": 987,
+            "demand_fill_bytes": 1945574400,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 19
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2083558400,
+            "misses": 1057,
+            "demand_fill_bytes": 2083558400,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 14
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2341785600,
+            "misses": 1188,
+            "demand_fill_bytes": 2341785600,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 18
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2341785600,
+            "misses": 1188,
+            "demand_fill_bytes": 2341785600,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 13
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2304332800,
+            "misses": 1169,
+            "demand_fill_bytes": 2304332800,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 10
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2233369600,
+            "misses": 1133,
+            "demand_fill_bytes": 2233369600,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 16
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2617753600,
+            "misses": 1328,
+            "demand_fill_bytes": 2617753600,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 8
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 1882496000,
+            "misses": 955,
+            "demand_fill_bytes": 1882496000,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 10
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2061875200,
+            "misses": 1046,
+            "demand_fill_bytes": 2061875200,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 13
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2499481600,
+            "misses": 1268,
+            "demand_fill_bytes": 2499481600,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 12
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2373324800,
+            "misses": 1204,
+            "demand_fill_bytes": 2373324800,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 11
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2329958400,
+            "misses": 1182,
+            "demand_fill_bytes": 2329958400,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 10
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2578329600,
+            "misses": 1308,
+            "demand_fill_bytes": 2578329600,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 18
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2517222400,
+            "misses": 1277,
+            "demand_fill_bytes": 2517222400,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 17
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2976512000,
+            "misses": 1510,
+            "demand_fill_bytes": 2976512000,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 28
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2458086400,
+            "misses": 1247,
+            "demand_fill_bytes": 2458086400,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 5
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2298419200,
+            "misses": 1166,
+            "demand_fill_bytes": 2298419200,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 15
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2331929600,
+            "misses": 1183,
+            "demand_fill_bytes": 2331929600,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 12
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2312217600,
+            "misses": 1173,
+            "demand_fill_bytes": 2312217600,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 19
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2408806400,
+            "misses": 1222,
+            "demand_fill_bytes": 2408806400,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 10
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2536934400,
+            "misses": 1287,
+            "demand_fill_bytes": 2536934400,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 14
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2446259200,
+            "misses": 1241,
+            "demand_fill_bytes": 2446259200,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 15
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2870067200,
+            "misses": 1456,
+            "demand_fill_bytes": 2870067200,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 17
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2268851200,
+            "misses": 1151,
+            "demand_fill_bytes": 2268851200,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 11
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2404864000,
+            "misses": 1220,
+            "demand_fill_bytes": 2404864000,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 8
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2759680000,
+            "misses": 1400,
+            "demand_fill_bytes": 2759680000,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 12
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2410777600,
+            "misses": 1223,
+            "demand_fill_bytes": 2410777600,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 20
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2649292800,
+            "misses": 1344,
+            "demand_fill_bytes": 2649292800,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 11
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2887808000,
+            "misses": 1465,
+            "demand_fill_bytes": 2887808000,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 7
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2686745600,
+            "misses": 1363,
+            "demand_fill_bytes": 2686745600,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 17
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2962713600,
+            "misses": 1503,
+            "demand_fill_bytes": 2962713600,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 23
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2529049600,
+            "misses": 1283,
+            "demand_fill_bytes": 2529049600,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 6
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2779392000,
+            "misses": 1410,
+            "demand_fill_bytes": 2779392000,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 6
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3006080000,
+            "misses": 1525,
+            "demand_fill_bytes": 3006080000,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 11
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2812902400,
+            "misses": 1427,
+            "demand_fill_bytes": 2812902400,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 9
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2732083200,
+            "misses": 1386,
+            "demand_fill_bytes": 2732083200,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 13
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 3015936000,
+            "misses": 1530,
+            "demand_fill_bytes": 3015936000,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 14
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2635494400,
+            "misses": 1337,
+            "demand_fill_bytes": 2635494400,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 11
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2641408000,
+            "misses": 1340,
+            "demand_fill_bytes": 2641408000,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 11
+          },
+          {
+            "visits": 912,
+            "requested_bytes": 17977344000,
+            "miss_bytes": 2081587200,
+            "misses": 1056,
+            "demand_fill_bytes": 2081587200,
+            "speculative_fill_bytes": 1797734400,
+            "useful_prefetches": 15
+          }
+        ],
+        "decode": [
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 8018841600,
+            "misses": 4068,
+            "demand_fill_bytes": 8018841600,
+            "speculative_fill_bytes": 7163340800,
+            "useful_prefetches": 57
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 7157427200,
+            "misses": 3631,
+            "demand_fill_bytes": 7157427200,
+            "speculative_fill_bytes": 7163340800,
+            "useful_prefetches": 69
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 84657664000,
+            "miss_bytes": 8929356800,
+            "misses": 3833,
+            "demand_fill_bytes": 8929356800,
+            "speculative_fill_bytes": 8465766400,
+            "useful_prefetches": 53
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 5635660800,
+            "misses": 2859,
+            "demand_fill_bytes": 5635660800,
+            "speculative_fill_bytes": 7163340800,
+            "useful_prefetches": 14
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 5884032000,
+            "misses": 2985,
+            "demand_fill_bytes": 5884032000,
+            "speculative_fill_bytes": 7163340800,
+            "useful_prefetches": 40
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 5704652800,
+            "misses": 2894,
+            "demand_fill_bytes": 5704652800,
+            "speculative_fill_bytes": 7163340800,
+            "useful_prefetches": 48
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 6146201600,
+            "misses": 3118,
+            "demand_fill_bytes": 6146201600,
+            "speculative_fill_bytes": 7163340800,
+            "useful_prefetches": 55
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 6830208000,
+            "misses": 3465,
+            "demand_fill_bytes": 6830208000,
+            "speculative_fill_bytes": 7163340800,
+            "useful_prefetches": 39
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 5702681600,
+            "misses": 2893,
+            "demand_fill_bytes": 5702681600,
+            "speculative_fill_bytes": 7163340800,
+            "useful_prefetches": 39
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 5436569600,
+            "misses": 2758,
+            "demand_fill_bytes": 5436569600,
+            "speculative_fill_bytes": 7163340800,
+            "useful_prefetches": 24
+          },
+          {
+            "visits": 3634,
+            "requested_bytes": 71633408000,
+            "miss_bytes": 6272358400,
+            "misses": 3182,
+            "demand_fill_bytes": 6272358400,
+            "speculative_fill_bytes": 7163340800,
+            "useful_prefetches": 33
+          },
+          {
+            "visits": 3633,
+            "requested_bytes": 71613696000,
+            "miss_bytes": 5410944000,
+            "misses": 2745,
+            "demand_fill_bytes": 5410944000,
+            "speculative_fill_bytes": 7161369600,
+            "useful_prefetches": 25
+          },
+          {
+            "visits": 3629,
+            "requested_bytes": 71534848000,
+            "miss_bytes": 5381376000,
+            "misses": 2730,
+            "demand_fill_bytes": 5381376000,
+            "speculative_fill_bytes": 7153484800,
+            "useful_prefetches": 49
+          },
+          {
+            "visits": 3147,
+            "requested_bytes": 62033664000,
+            "miss_bytes": 6845977600,
+            "misses": 3473,
+            "demand_fill_bytes": 6845977600,
+            "speculative_fill_bytes": 6203366400,
+            "useful_prefetches": 39
+          },
+          {
+            "visits": 3074,
+            "requested_bytes": 60594688000,
+            "miss_bytes": 5749990400,
+            "misses": 2917,
+            "demand_fill_bytes": 5749990400,
+            "speculative_fill_bytes": 6059468800,
+            "useful_prefetches": 24
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2787276800,
+            "misses": 1414,
+            "demand_fill_bytes": 2787276800,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 15
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3554073600,
+            "misses": 1803,
+            "demand_fill_bytes": 3554073600,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 21
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 5558784000,
+            "misses": 2820,
+            "demand_fill_bytes": 5558784000,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 32
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 5947110400,
+            "misses": 3017,
+            "demand_fill_bytes": 5947110400,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 53
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 5229593600,
+            "misses": 2653,
+            "demand_fill_bytes": 5229593600,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 30
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 5101465600,
+            "misses": 2588,
+            "demand_fill_bytes": 5101465600,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 34
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 5280844800,
+            "misses": 2679,
+            "demand_fill_bytes": 5280844800,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 53
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 5872204800,
+            "misses": 2979,
+            "demand_fill_bytes": 5872204800,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 56
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4671744000,
+            "misses": 2370,
+            "demand_fill_bytes": 4671744000,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 25
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 5134976000,
+            "misses": 2605,
+            "demand_fill_bytes": 5134976000,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 33
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4579097600,
+            "misses": 2323,
+            "demand_fill_bytes": 4579097600,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 32
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 5753932800,
+            "misses": 2919,
+            "demand_fill_bytes": 5753932800,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 34
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4837324800,
+            "misses": 2454,
+            "demand_fill_bytes": 4837324800,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 21
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 5564697600,
+            "misses": 2823,
+            "demand_fill_bytes": 5564697600,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 39
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 5826867200,
+            "misses": 2956,
+            "demand_fill_bytes": 5826867200,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 50
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 5115264000,
+            "misses": 2595,
+            "demand_fill_bytes": 5115264000,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 24
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 2816844800,
+            "misses": 1429,
+            "demand_fill_bytes": 2816844800,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 14
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3619123200,
+            "misses": 1836,
+            "demand_fill_bytes": 3619123200,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 27
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 5213824000,
+            "misses": 2645,
+            "demand_fill_bytes": 5213824000,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 34
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 5570611200,
+            "misses": 2826,
+            "demand_fill_bytes": 5570611200,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 54
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4981222400,
+            "misses": 2527,
+            "demand_fill_bytes": 4981222400,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 39
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4606694400,
+            "misses": 2337,
+            "demand_fill_bytes": 4606694400,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 26
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4411545600,
+            "misses": 2238,
+            "demand_fill_bytes": 4411545600,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 49
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 5357721600,
+            "misses": 2718,
+            "demand_fill_bytes": 5357721600,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 45
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3692057600,
+            "misses": 1873,
+            "demand_fill_bytes": 3692057600,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 10
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 3802444800,
+            "misses": 1929,
+            "demand_fill_bytes": 3802444800,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 14
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4098124800,
+            "misses": 2079,
+            "demand_fill_bytes": 4098124800,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 17
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4072499200,
+            "misses": 2066,
+            "demand_fill_bytes": 4072499200,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 43
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4088268800,
+            "misses": 2074,
+            "demand_fill_bytes": 4088268800,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 23
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4123750400,
+            "misses": 2092,
+            "demand_fill_bytes": 4123750400,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 38
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4466739200,
+            "misses": 2266,
+            "demand_fill_bytes": 4466739200,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 31
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 4931942400,
+            "misses": 2502,
+            "demand_fill_bytes": 4931942400,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 23
+          },
+          {
+            "visits": 3072,
+            "requested_bytes": 60555264000,
+            "miss_bytes": 5142860800,
+            "misses": 2609,
+            "demand_fill_bytes": 5142860800,
+            "speculative_fill_bytes": 6055526400,
+            "useful_prefetches": 35
+          }
+        ]
+      },
+      "prompts": [
+        {
+          "prompt_id": "p55-13-bounded-queue",
+          "totals": {
+            "prefill": {
+              "visits": 3312,
+              "requested_bytes": 65533440000,
+              "miss_bytes": 12543104000,
+              "misses": 6337,
+              "demand_fill_bytes": 12543104000,
+              "speculative_fill_bytes": 6553344000,
+              "useful_prefetches": 66
+            },
+            "decode": {
+              "visits": 12904,
+              "requested_bytes": 255449600000,
+              "miss_bytes": 20255155200,
+              "misses": 10219,
+              "demand_fill_bytes": 20255155200,
+              "speculative_fill_bytes": 25544960000,
+              "useful_prefetches": 194
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-14-sql-islands",
+          "totals": {
+            "prefill": {
+              "visits": 3408,
+              "requested_bytes": 67432960000,
+              "miss_bytes": 8204851200,
+              "misses": 4148,
+              "demand_fill_bytes": 8204851200,
+              "speculative_fill_bytes": 6743296000,
+              "useful_prefetches": 62
+            },
+            "decode": {
+              "visits": 12830,
+              "requested_bytes": 253969408000,
+              "miss_bytes": 19479398400,
+              "misses": 9828,
+              "demand_fill_bytes": 19479398400,
+              "speculative_fill_bytes": 25396940800,
+              "useful_prefetches": 145
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-15-market-repair",
+          "totals": {
+            "prefill": {
+              "visits": 3264,
+              "requested_bytes": 64583680000,
+              "miss_bytes": 10523699200,
+              "misses": 5320,
+              "demand_fill_bytes": 10523699200,
+              "speculative_fill_bytes": 6458368000,
+              "useful_prefetches": 71
+            },
+            "decode": {
+              "visits": 13154,
+              "requested_bytes": 260442112000,
+              "miss_bytes": 19856614400,
+              "misses": 10019,
+              "demand_fill_bytes": 19856614400,
+              "speculative_fill_bytes": 26044211200,
+              "useful_prefetches": 170
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-16-public-footpath",
+          "totals": {
+            "prefill": {
+              "visits": 3648,
+              "requested_bytes": 72181760000,
+              "miss_bytes": 8551244800,
+              "misses": 4325,
+              "demand_fill_bytes": 8551244800,
+              "speculative_fill_bytes": 7218176000,
+              "useful_prefetches": 34
+            },
+            "decode": {
+              "visits": 12887,
+              "requested_bytes": 255110912000,
+              "miss_bytes": 21708467200,
+              "misses": 10951,
+              "demand_fill_bytes": 21708467200,
+              "speculative_fill_bytes": 25511091200,
+              "useful_prefetches": 130
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-17-archive-storage",
+          "totals": {
+            "prefill": {
+              "visits": 4224,
+              "requested_bytes": 83578880000,
+              "miss_bytes": 10873318400,
+              "misses": 5497,
+              "demand_fill_bytes": 10873318400,
+              "speculative_fill_bytes": 8357888000,
+              "useful_prefetches": 65
+            },
+            "decode": {
+              "visits": 12873,
+              "requested_bytes": 254831360000,
+              "miss_bytes": 23966028800,
+              "misses": 12093,
+              "demand_fill_bytes": 23966028800,
+              "speculative_fill_bytes": 25483136000,
+              "useful_prefetches": 179
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-18-survey-bias",
+          "totals": {
+            "prefill": {
+              "visits": 3600,
+              "requested_bytes": 71232000000,
+              "miss_bytes": 10848409600,
+              "misses": 5484,
+              "demand_fill_bytes": 10848409600,
+              "speculative_fill_bytes": 7123200000,
+              "useful_prefetches": 63
+            },
+            "decode": {
+              "visits": 13083,
+              "requested_bytes": 259028224000,
+              "miss_bytes": 19764326400,
+              "misses": 9966,
+              "demand_fill_bytes": 19764326400,
+              "speculative_fill_bytes": 25902822400,
+              "useful_prefetches": 170
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-19-repair-checklist",
+          "totals": {
+            "prefill": {
+              "visits": 3504,
+              "requested_bytes": 69332480000,
+              "miss_bytes": 9647411200,
+              "misses": 4876,
+              "demand_fill_bytes": 9647411200,
+              "speculative_fill_bytes": 6933248000,
+              "useful_prefetches": 58
+            },
+            "decode": {
+              "visits": 12757,
+              "requested_bytes": 252512512000,
+              "miss_bytes": 26290790400,
+              "misses": 13262,
+              "demand_fill_bytes": 26290790400,
+              "speculative_fill_bytes": 25251251200,
+              "useful_prefetches": 138
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-20-school-menu",
+          "totals": {
+            "prefill": {
+              "visits": 3696,
+              "requested_bytes": 73131520000,
+              "miss_bytes": 8956416000,
+              "misses": 4528,
+              "demand_fill_bytes": 8956416000,
+              "speculative_fill_bytes": 7313152000,
+              "useful_prefetches": 63
+            },
+            "decode": {
+              "visits": 13083,
+              "requested_bytes": 259028224000,
+              "miss_bytes": 18609561600,
+              "misses": 9392,
+              "demand_fill_bytes": 18609561600,
+              "speculative_fill_bytes": 25902822400,
+              "useful_prefetches": 61
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-21-french-orchard",
+          "totals": {
+            "prefill": {
+              "visits": 3744,
+              "requested_bytes": 74081280000,
+              "miss_bytes": 8720947200,
+              "misses": 4410,
+              "demand_fill_bytes": 8720947200,
+              "speculative_fill_bytes": 7408128000,
+              "useful_prefetches": 57
+            },
+            "decode": {
+              "visits": 12992,
+              "requested_bytes": 257205760000,
+              "miss_bytes": 19728844800,
+              "misses": 9954,
+              "demand_fill_bytes": 19728844800,
+              "speculative_fill_bytes": 25720576000,
+              "useful_prefetches": 119
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-22-arabic-translation",
+          "totals": {
+            "prefill": {
+              "visits": 4032,
+              "requested_bytes": 79779840000,
+              "miss_bytes": 9083648000,
+              "misses": 4592,
+              "demand_fill_bytes": 9083648000,
+              "speculative_fill_bytes": 7977984000,
+              "useful_prefetches": 40
+            },
+            "decode": {
+              "visits": 13106,
+              "requested_bytes": 259485184000,
+              "miss_bytes": 20350848000,
+              "misses": 10269,
+              "demand_fill_bytes": 20350848000,
+              "speculative_fill_bytes": 25948518400,
+              "useful_prefetches": 177
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-23-integer-squares",
+          "totals": {
+            "prefill": {
+              "visits": 3360,
+              "requested_bytes": 66483200000,
+              "miss_bytes": 9971584000,
+              "misses": 5041,
+              "demand_fill_bytes": 9971584000,
+              "speculative_fill_bytes": 6648320000,
+              "useful_prefetches": 41
+            },
+            "decode": {
+              "visits": 12645,
+              "requested_bytes": 250272512000,
+              "miss_bytes": 19687091200,
+              "misses": 9929,
+              "demand_fill_bytes": 19687091200,
+              "speculative_fill_bytes": 25027251200,
+              "useful_prefetches": 72
+            }
+          }
+        },
+        {
+          "prompt_id": "p55-24-geometry-box",
+          "totals": {
+            "prefill": {
+              "visits": 3984,
+              "requested_bytes": 78830080000,
+              "miss_bytes": 10328908800,
+              "misses": 5221,
+              "demand_fill_bytes": 10328908800,
+              "speculative_fill_bytes": 7883008000,
+              "useful_prefetches": 49
+            },
+            "decode": {
+              "visits": 12519,
+              "requested_bytes": 247756544000,
+              "miss_bytes": 21220684800,
+              "misses": 10713,
+              "demand_fill_bytes": 21220684800,
+              "speculative_fill_bytes": 24775654400,
+              "useful_prefetches": 127
+            }
+          }
+        }
+      ],
+      "final_resident_bytes": 17673241600
+    }
+  }
+}

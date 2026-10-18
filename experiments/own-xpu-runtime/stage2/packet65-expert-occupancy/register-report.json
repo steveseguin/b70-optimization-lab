@@ -1,0 +1,131 @@
+{
+  "schema": "packet65.offline-registers.v1",
+  "passed": true,
+  "device_executed": false,
+  "scope": "Offline BMG-G31 same prepared expert TU; configured GRFs and spill metadata, not resident occupancy or installed-driver JIT",
+  "commands": [
+    [
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-fsycl",
+      "-fsycl-device-only",
+      "-O2",
+      "-std=c++20",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fdenormal-fp-math=ieee",
+      "-foffload-fp32-prec-div",
+      "-foffload-fp32-prec-sqrt",
+      "-c",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/build/checked/experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/p49d_expert_submit.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/build/offline/kernels.bc"
+    ],
+    [
+      "/opt/intel/oneapi/compiler/2026.0/bin/compiler/llvm-spirv",
+      "--spirv-ext=+all,-SPV_INTEL_runtime_aligned,-SPV_KHR_untyped_pointers",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/build/offline/kernels.bc",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/build/offline/kernels.spv"
+    ],
+    [
+      "/usr/bin/ocloc",
+      "compile",
+      "-spirv_input",
+      "-file",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/build/offline/kernels.spv",
+      "-device",
+      "bmg-g31",
+      "-out_dir",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/build/offline/aot"
+    ]
+  ],
+  "kernels": [
+    {
+      "name": "//.kernel _ZTSZZNK11p49dvirtual6KernelILN3iq34TypeE22ELj2560ELj2EE17submit_stream_armILj2EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/evidence/registers/kernel-0.asm.gz",
+      "sha256": "e5385deca00b57f1488342254e7d562a5be63f8bb26433e1d4b16d73a400d989"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK11p49dvirtual6KernelILN3iq34TypeE20ELj640ELj3EE10submit_armILj3EEEN4sycl3_V15eventERNS6_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorIS7_SaIS7_EEENKUlRNS6_7handlerEE_clESK_EUlNS6_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/evidence/registers/kernel-1.asm.gz",
+      "sha256": "72814a51274678c8a1d7099cb458d8ba4af1cb06013aab75a08b877bb0ffd6ed"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK3p656KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/evidence/registers/kernel-2.asm.gz",
+      "sha256": "5a272da845e6c3b66545d6350e2e5e78cac12d67e2d44b4aa383227df8eccc65"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK3p656KernelILN3iq34TypeE20ELj640ELj64ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/evidence/registers/kernel-3.asm.gz",
+      "sha256": "02811971764eb4a18b4a9c9925b41bd2aa4b305a009671182be42bccdfd66135"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK3p656KernelILN3iq34TypeE22ELj2560ELj128ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/evidence/registers/kernel-4.asm.gz",
+      "sha256": "8b64491edfd31c67b378f491022e634afb9b5bfb43ff28b3b607bf14aaed9777"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK3p656KernelILN3iq34TypeE20ELj640ELj128ELb0ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/evidence/registers/kernel-5.asm.gz",
+      "sha256": "260ebf6828e01d4def958e495ff4f7f2ae598b8dda6f6fac749dc9a31cbf212b"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK3p656KernelILN3iq34TypeE22ELj2560ELj64ELb0ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/evidence/registers/kernel-6.asm.gz",
+      "sha256": "fb62bb819c5dc6c0341a71f6772d18e5e45ac090b2f4b80dc4969104de1b3ac7"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK3p656KernelILN3iq34TypeE20ELj640ELj64ELb0ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/evidence/registers/kernel-7.asm.gz",
+      "sha256": "3413bc597667a6d2aaea924cf7cb703eae675ed4eec3b1fce4b35bbc91cd4e27"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK3p656KernelILN3iq34TypeE22ELj2560ELj64ELb1ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/evidence/registers/kernel-8.asm.gz",
+      "sha256": "aeac254d1f62993565bc1150d8344a528fe6e7100f0884e0247e40640b7c2169"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK3p656KernelILN3iq34TypeE20ELj640ELj64ELb1ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS5_5eventESaISD_EEENKUlRNS5_7handlerEE_clESJ_EUlNS5_7nd_itemILi1EEEE_",
+      "configured_grf": 128,
+      "spill_metadata": [],
+      "scratch_messages": [],
+      "assembly": "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/evidence/registers/kernel-9.asm.gz",
+      "sha256": "4cb778ba61fa349448d119d33bd53caf56416291f7cca80fcf4328e7bdd6be93"
+    }
+  ],
+  "tools": {
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx": "9fe05a4aef59abce8d8f0631964dd0f12932345d0d38fc9e9d6f6af844e94b33",
+    "/opt/intel/oneapi/compiler/2026.0/bin/compiler/llvm-spirv": "feed1c4e68bd0a8ba61e2ad6d6daec5bd2f02f03ea1dc9e37bbb35b821acd3fa",
+    "/usr/bin/ocloc": "56c987c47eba69ccd18ac7544eb15c2e421fed8fc0a51df877972b21bfa4e584"
+  },
+  "source_sha256": "b568db995ef07e9e140355bb39fadd698a5da105f1c0cfd5dbc6dbf1512710e4",
+  "max_rss_kib": 393452
+}

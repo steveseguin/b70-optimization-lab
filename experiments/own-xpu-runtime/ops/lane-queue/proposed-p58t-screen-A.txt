@@ -1,0 +1,9 @@
+# CPU-prepared proposal only. Whole-host card0; coordinator must keep lane B out.
+# Copy of frozen 58r one-load bracket: tile16 file-backed / tile16 resident / tile16 file-backed.
+# One model load, two K1 fixtures, 12 prompts per view, 128 tokens; packet49 exact output required.
+# Lookup copies loaded before A0 and held in all views: same memory, source pages affected by load.
+# Diagnostic screen only, never an independent fresh-process repeat or final gate.
+# Expected 15-25 minutes excluding admission waits; model watchdog 7200 s (>=4x 1500 s).
+# Host available >=118308908048 bytes, including 8 GiB reserve; resident lookup bytes 29321610240.
+# Per-token preparation and whole-token major/minor faults retained alongside speed.
+{"name": "packet58t-resident-A", "lane": "A", "argv": ["/usr/bin/python3", "-B", "experiments/own-xpu-runtime/stage2/packet58t-resident-lookups/screen_runner.py", "--arm", "resident", "--output", "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58t-resident-lookups/evidence/card0-resident-a/resident", "--fault-review", "{REVIEW}", "--authorized-device-window"], "env_extra": {}, "review": "experiments/own-xpu-runtime/stage2/packet58t-resident-lookups/fault_review.py"}

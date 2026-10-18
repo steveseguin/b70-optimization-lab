@@ -1,0 +1,123 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "projected_not_measured": true,
+  "record_tok_s": 26.22859930943809,
+  "record_reciprocal_ms": 38.12632112764636,
+  "metric_events_2_100": {
+    "positions": 1188,
+    "token_wall_ms": 37.97368013468014,
+    "cache_wall_ms": 6.9913633754208755,
+    "fills": 33.005050505050505,
+    "fill_bytes": 65456571.04377104,
+    "pointer_publications": 144,
+    "pointer_bytes": 1179648,
+    "pointer_publication_ms": null,
+    "pointer_time_reason": "not separately instrumented; nested within cache wall"
+  },
+  "per_layer_measured_ms": null,
+  "per_layer_reason": "58g/58p device profiling disabled; zero fields are placeholders",
+  "equal_share_remainder_ms": 0.6454649324845679,
+  "k1_remote_penalty_ms_per_missing_expert": {
+    "all_host_linear": {
+      "0": 0.156005475,
+      "2": 0.135582555
+    },
+    "mixed_half_host_linear": {
+      "0": 0.10399324999999998,
+      "2": 0.09253650999999999
+    }
+  },
+  "assumed_scenarios": [
+    {
+      "name": "conservative",
+      "bandwidth_GB_s": 19,
+      "dma_fraction": 0.5,
+      "window_fraction": 0.25,
+      "predictor_ms": 0.05,
+      "publication_ms": 0.01,
+      "plan_extra_ms": 0.25,
+      "fill_submit_ms": 0.006,
+      "pre_router_fraction": 0.5,
+      "hidden_control_cache_fraction": 0.5,
+      "remote_penalty": "mixed_half_host_linear"
+    },
+    {
+      "name": "middle",
+      "bandwidth_GB_s": 25,
+      "dma_fraction": 0.5,
+      "window_fraction": 0.5,
+      "predictor_ms": 0.025,
+      "publication_ms": 0.005,
+      "plan_extra_ms": 0.1,
+      "fill_submit_ms": 0.003,
+      "pre_router_fraction": 0.5,
+      "hidden_control_cache_fraction": 0.5,
+      "remote_penalty": "mixed_half_host_linear"
+    },
+    {
+      "name": "optimistic",
+      "bandwidth_GB_s": 25,
+      "dma_fraction": 0.75,
+      "window_fraction": 1.0,
+      "predictor_ms": 0.01,
+      "publication_ms": 0.002,
+      "plan_extra_ms": 0.05,
+      "fill_submit_ms": 0.001,
+      "pre_router_fraction": 0.5,
+      "hidden_control_cache_fraction": 0.5,
+      "remote_penalty": "all_host_linear"
+    }
+  ],
+  "assumptions": [
+    "Control is the modeled 58v delayed asynchronous schedule, anchored to the 58p token period with half its cache span hidden; no measured 58v speed is claimed.",
+    "Equal per-layer remainder is a proxy; the fixed 25/50/100% causal window shares reserve unmeasured head/host/PCIe work.",
+    "DMA bandwidth and fraction, extra router/publication cost, and plan cost are sensitivity assumptions, not measured on this path.",
+    "Remote penalties are linear K1 host-vs-device proxies from 58g/58i, not measured per-expert sparse miss costs.",
+    "Both arms use the same inputs, byte capacity, empty initial cache, prior prompt prefill and global LRU.",
+    "Candidate layer-boundary publication is a modeling assumption; there is no device implementation or lossless device proof."
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/measurement.json": "f8f982d693aba32f0474c1ed38d36df4eff54a2e88b0c95c3d115ae30bcda2b2",
+    "experiments/own-xpu-runtime/stage2/packet58i-onecard-attribution/lever-models.json": "1902d27822d385784a1726ae2b1ce5a77b97ba488ebffb73daf92d8f4239006d",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/window.json": "04184b0fa7cde54c6b31dadd349213baac364381545593fb74a456156d63607e",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/summary.json": "b73af0176156b072a0cbf98df5e502e6de0a7e44cdf8e21667dfaabc3ef54f08",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/cache.jsonl": "e169ea5102aab5c5a8090493c4cb68b6c9d4a145553f0f7239f82ad9801ce8a3",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/incident-retrospective/prefill-timings.jsonl": "05a464af28042450656cf8ab9415932f77343224db97c3cd24735c6a1e918bfb",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/incident-retrospective/timings.jsonl": "4c0092d9d0027a25234d2757698b5ed47b38881b2cf35e268bb123175623cc3b",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/incident-retrospective/cache-stats.json": "6c56931bd7546dad88c366cf72b1857e8ce92b3e282bd8ae4752a5c5df7e859e",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/code-review/prefill-timings.jsonl": "7e534018ea51135dc38d2c574035ba5876c7b56699d52b4d6674f3f420f64f1d",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/code-review/timings.jsonl": "198d5afbab92ee4321ae6285f08c34afb4c9ffa025aea1fb891e841e679f01c0",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/code-review/cache-stats.json": "599e06efb2d0dffedb0a5c39df631a7cd1f8ff26301ba82690c4773f568744a8",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/customer-email/prefill-timings.jsonl": "b739193fceff8b90c4ef74c3ac63306ef585ee0cb052d64473643e546c31b8e2",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/customer-email/timings.jsonl": "0e201f3a78c23f72395974dadb8ef6d2e117d8530b326f16f6df106f026911d7",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/customer-email/cache-stats.json": "8cd98637bd4f49a3a7595e82f50f9b66c0efb2c6b6d61e197f7f178c910a9b6f",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/sql-debugging/prefill-timings.jsonl": "c4eee91f6d1b9e75c56af79ef815eea542c3621760b4f1ebb5d47076107835ae",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/sql-debugging/timings.jsonl": "fea0a28e3548e397fd24861683e8172307297e32719b09b24847779a8c667b4f",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/sql-debugging/cache-stats.json": "f82a6dba982c4924ffcb1273a81914cf9ea131b2df6fcceba4918cc9e372d492",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/release-plan/prefill-timings.jsonl": "c8904dadedc1564b1b62fd18be072bd047c3231f28234a9fa4d00d91a2f78755",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/release-plan/timings.jsonl": "641085aefe6f66219b2da72a19613b5d3cb9fa639842ed06a16ea145950bb966",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/release-plan/cache-stats.json": "de542338949a6045d1e5ef60f1c03ab6b3e22193e574b8abf7a6d5fdcc710807",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/benchmark-analysis/prefill-timings.jsonl": "ca6acd797159a3e6a2ac1f632df5a60651985bd7986da7dedb2e6900a2893fae",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/benchmark-analysis/timings.jsonl": "8237cd9b8cef4dc5193679ce7be27227a44dfe9f37c0b928823aab47d70bbc1b",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/benchmark-analysis/cache-stats.json": "e597872394fb9dd6afe53fa488b0b0ec79c395c41fdcc930c05f2ff81a5bcc31",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/architecture-tradeoff/prefill-timings.jsonl": "f1c86c012f366910aa37753e0ece2f68dcddc539fa4a7c14228ec51b2a7d52a6",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/architecture-tradeoff/timings.jsonl": "2b455af3d46ed180323a94b99f66fbe8d903148a65b6484e680c724957aaffa4",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/architecture-tradeoff/cache-stats.json": "408d4013be16b2e2c947c6963c3640bb526a37cf5276082687e1444548faa205",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/bug-report-synthesis/prefill-timings.jsonl": "d0be0289e1fd81882641a0b03a46454b1acae7783643bc06f7607047e2cb45ab",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/bug-report-synthesis/timings.jsonl": "4bafb8d3f112426e53e134e6bbbc74fd1c17921b64488090b1c48ab7fc065f62",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/bug-report-synthesis/cache-stats.json": "c71c6da7d4fae1cd262aa68135ce720b2fea719d93823db44074efd9b726b500",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/technical-guide/prefill-timings.jsonl": "70f58592d355d3e2a22c2491518d6c8209a57591c8372741bde1d2767e1a8ea9",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/technical-guide/timings.jsonl": "5f1f4a8de9785afe19788ddfc39dd035fbf27365f4cf173c408177986153b6b4",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/technical-guide/cache-stats.json": "b4f8e7ab8c0f0e1f359e361deff67a2ce56342f800be8918249a83a4362c2de8",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/risk-register/prefill-timings.jsonl": "053ace98812effe0e18751fdd25e490ff0501f7c098f2417bf703b517f76311d",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/risk-register/timings.jsonl": "0d218da7956c9bd42d0f3400c12ad5f7ee51fced4e435aaaed5824511d2335fc",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/risk-register/cache-stats.json": "4d5fc49f47cb4f9a76018b332d1c3720e2eade8667d12d1d4587bd014057bd2c",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/performance-hypotheses/prefill-timings.jsonl": "629f934913948cfa33ef61180f32e7ffffc3a90c167e967242311ed46a30bed6",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/performance-hypotheses/timings.jsonl": "216559bc82a46d6ab081250253baec4c02b12425b3d36478d87ebe1b3981e952",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/performance-hypotheses/cache-stats.json": "40594b4c7b8cdb486a8cc07c56c734b0de14d27258ff2fbf44cf66c153d63102",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/decision-memo/prefill-timings.jsonl": "91d285dc06b5acfb1e42125eb1d985ccee613b8071bb471eacd9b52ccb882f2d",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/decision-memo/timings.jsonl": "1e801491294a628719354cff89fb35e9a321aa866081393d7745983aac050be1",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/decision-memo/cache-stats.json": "a65eba13cb3169a101cc001317f2f8ac3e7a126206b9ae0af7c1b523b63568d6"
+  }
+}

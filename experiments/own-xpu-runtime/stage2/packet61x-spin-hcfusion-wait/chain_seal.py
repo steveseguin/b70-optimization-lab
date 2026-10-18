@@ -101,7 +101,7 @@ def verify():
 
 
 def reseal_wrapper():
-    """Owner-authorized input repair; immutable engine/screen seals must agree."""
+    """Owner-authorized chain repair; immutable engine/screen seals must agree."""
     from storage import B as output_build, REGISTERED_CHAIN
     require(not (output_build / REGISTERED_CHAIN).exists(), 'registered chain already started')
     path = P / 'build-receipt.json'
@@ -113,7 +113,9 @@ def reseal_wrapper():
             'wrapper reseal cannot change binary, arithmetic, oracle or screen identity')
     wrappers = {'window.py', 'queue_runner.py', 'storage.py', 'prepare_chain.py',
                 'prepare_inputs.py', 'check_inputs.py', 'plan_gate.py', 'chain_seal.py',
-                'test_queue_runner.py', 'test_check_inputs.py', 'test_packet61.py', 'input-fixtures.json'}
+                'test_queue_runner.py', 'test_check_inputs.py', 'test_packet61.py', 'input-fixtures.json',
+                'draft_window.py', 'write_paths.py', 'resume_chain.py', 'resume-pins.json',
+                'test_resume_chain.py', 'test_write_paths.py', 'coordinator_windows.sh'}
     changed = {name for name in old['sources'].keys() | row['sources'].keys()
                if old['sources'].get(name) != row['sources'].get(name)}
     require(all((ROOT / name).parent == P and Path(name).name in wrappers for name in changed),

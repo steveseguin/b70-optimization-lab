@@ -1,0 +1,48 @@
+{
+  "schema": "packet64.orchestration.cpu-validation.v1",
+  "passed": true,
+  "device_executed": false,
+  "systemd_launched": false,
+  "mock_orchestration_tests": 19,
+  "existing_protocol_drain_adapter_tests": 34,
+  "shell_syntax": "passed",
+  "nice": 19,
+  "affinity": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "sources": {
+    "orchestrate.sh": "66c12d88e93d6094b6ad7fd9cdf4b5fa93d1686ee086891819280af45ca3d9e4",
+    "orchestrate.py": "4d4076462db93c40f00cbc784f3d3ec9c2611fb39bb713cb23369b1cb65ae562",
+    "device-entry.sh": "a764ce2852434ad42f884333df49de705ecd54623d8cf9920238333b40a3e1ca",
+    "check_companion.py": "0b7562e20961cb6770c821ac95615a10d343542733d561b838f68c5dc14e4c65",
+    "test_orchestrate.py": "dcc265f1c294e66055e8b28e0221d63f9cb63319532d87036386d8fa99556683"
+  },
+  "protocol_sources": {
+    "experiments/own-xpu-runtime/stage2/screen/v3-packet64-lanes/lane_admission.py": "5c7376dc15024ad2c632f5030ea5e6db2f271f64b95cab5ff67db12fc8dd7175",
+    "experiments/own-xpu-runtime/stage2/screen/v3-packet64-lanes/drain_gate.py": "3653fac95f6ea831b6c67fa0c71e0cbb070628a0a11a5e75ef4e8b3fa16c3714",
+    "experiments/own-xpu-runtime/stage2/screen/v3-packet64-lanes/window_adapter.py": "bc1c7c72936dbce9de9ef91acfedab12da6596b021ce00bcfa1a48fe9ace3b0b",
+    "experiments/own-xpu-runtime/stage2/screen/v3-packet64-lanes/test_lane_admission.py": "59d46dfd70a7eae228a0892baf7790ee230ba0791214667b732906a1a0b98e51"
+  },
+  "protocol_test_command": "nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest test_lane_admission.ProtocolTests test_lane_admission.DrainTests test_lane_admission.AdapterTests -v",
+  "protocol_test_cwd": "experiments/own-xpu-runtime/stage2/screen/v3-packet64-lanes",
+  "evidence": {
+    "tests.log": "18a794102d9ce111bb9bd458ba82241e5bdff845c8161ca19b8c50f5f72d49c2",
+    "dry-run.log": "050be3405cb6854ec2dd9f5d61dd2950a81af6cc0a31dc27617311057f688ece"
+  },
+  "scope": "CPU mocks and temporary lock/proc trees only; no live GPU overlap qualification"
+}

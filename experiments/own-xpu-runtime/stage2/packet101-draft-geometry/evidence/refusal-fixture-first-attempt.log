@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet101-draft-geometry/negative_gate.py", line 24, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet101-draft-geometry/negative_gate.py", line 16, in main
+    assert r.returncode!=0 and r.stderr.strip() and 'negative mode' not in r.stderr and not (scratch/'result.json').exists(),(label,mode,r.stderr)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('control', 'serial', 'negative mode\ncontext lifetime PASS: 1090 destructions, native release last, zero late destructions\n')

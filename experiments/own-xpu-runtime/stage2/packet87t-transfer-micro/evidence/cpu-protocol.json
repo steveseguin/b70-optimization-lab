@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "scope": "host-backed real two-process mailbox, staging, payload verification and graceful drain; CPU timings discarded",
+  "samples": 1800,
+  "cases": 9,
+  "command": [
+    "/usr/bin/g++",
+    "-std=c++20",
+    "-O2",
+    "-pthread",
+    "-DP56X_SLEEP20=0",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet87t-transfer-micro",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/build/cpu-protocol.cpp",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/sources/owner.cpp",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/sources/owner_retire.cpp",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/sources/host_wait_mode.cpp",
+    "-o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/build/cpu-protocol"
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/microbench.cpp": "83ec9ba95a8ed1334e9f43ad4bfa735a994112053246cd3b56e2f613a0050565",
+    "experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/cpu_protocol.py": "a53eda10305b4214584770d269fbd12087e4c0d44ea5716d94ca3061d1d4686c",
+    "experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/build/cpu-protocol.cpp": "eddc93c44aa379fa38143e9009c6d31ede3616a77131da67a256f88b5be627e2"
+  },
+  "samples_sha256": "301cc46d1a8e7fe55c962e70cf4732bb49f00307f89e14de0f5718f28784f408"
+}

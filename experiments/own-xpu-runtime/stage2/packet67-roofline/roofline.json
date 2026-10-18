@@ -1,0 +1,4385 @@
+{
+  "schema": "packet67.roofline.v1",
+  "roofline_GBs": 540,
+  "device_executed": false,
+  "raw_event_files": {
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/architecture-tradeoff/rank0/sites.jsonl": "aab764b2d85f8ba8271306cb3ac5dceaea51fdadc97ef6e6b7e9869bc0bfbafe",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/architecture-tradeoff/rank1/sites.jsonl": "36c91f90a9ae6413aaf186ab9592cd54c8d7cad3bd029bd51bb237953aa0106d",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/benchmark-analysis/rank0/sites.jsonl": "a2890cff6902e8583b7fd216a608d7b95a4d8fe77ba7583edc31cc9176367ac0",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/benchmark-analysis/rank1/sites.jsonl": "2cc4cf736b66f736b13d1f315e2a24779bfd9174b8b5fe482ba220a67806afe9",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/bug-report-synthesis/rank0/sites.jsonl": "397431a50efe878c716edfdf085d0b0c125c3cf61510cbf7a89ea0e2706f3cd7",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/bug-report-synthesis/rank1/sites.jsonl": "5055f0e08daeaea9cd8a1895156c20567978da24e442b37e45e941ba2db5b384",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/code-review/rank0/sites.jsonl": "20e3b7f315f78ad6681e53273e3fdfee828768a9bddb969bb9046c8812761199",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/code-review/rank1/sites.jsonl": "c7c75d2c157b9998cb0e1a1e5db1fb434f1cc2de5fc7b2ff0acfb414ca3ffcf5",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/customer-email/rank0/sites.jsonl": "af925f6bcd0b2534dc3d1de93258a65e2722f5b91f9fc3571bdb638fd9cde94a",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/customer-email/rank1/sites.jsonl": "b52625b1e6c05262bea1e97041babcb54a362a0160fdd15af2c4a3d6fd9f1ddf",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/decision-memo/rank0/sites.jsonl": "65b408941b68eca158bd8443f121bab0b8267bcab83694f705d54f15392adb40",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/decision-memo/rank1/sites.jsonl": "378e23d8ec85189048fd667b09ceb0236880e6629dc6a1706a6d2623aa7f3eb0",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/incident-retrospective/rank0/sites.jsonl": "c79769de513b922ad21e2a46870eb42a16be799922dd4ea0353b8b0c201db220",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/incident-retrospective/rank1/sites.jsonl": "b66f77a23c9cdd5d17e55822889cf41bab54060686f712c6a95662e80e2e4212",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/performance-hypotheses/rank0/sites.jsonl": "adce11b571daf7b46986c737ad379a7d67a839776aadca12b83fad0c0f420500",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/performance-hypotheses/rank1/sites.jsonl": "cd27450ea1a8324d9347bcf2065e82a62e463105d5f204776f432e33428ba8d1",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/release-plan/rank0/sites.jsonl": "7d928680109f3408c0f5e615ca58e4ba7a5f0f569da2ea391188a246cd2c0872",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/release-plan/rank1/sites.jsonl": "15225247aac5d2dd4aa18dd89be0f6732c4f75fc773f4b68420a3003adb5faf4",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/risk-register/rank0/sites.jsonl": "9a38a64fa2708d3bd2fb88de425b0de7529d36eeabeae8baa8aff43eb82c57bf",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/risk-register/rank1/sites.jsonl": "efcbe3d4fa07beec1083cf61702313bf4b5613e8fed4fabd47a58a5fea01500f",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/sql-debugging/rank0/sites.jsonl": "30445bb8a54b36c15bf1097553a7916ae64830b5f4cbec56f0f1dfd8380b5185",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/sql-debugging/rank1/sites.jsonl": "0ac93098ad8afe866e0a705f2fd57a580bc3f1cb15e0834783e61dcb4c7a9541",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/technical-guide/rank0/sites.jsonl": "c055a64ccfc03eac4767b65610c3ffb29f29b00837f728f797cbcaf393d3eae4",
+    "experiments/own-xpu-runtime/stage2/screen/v3-attr/evidence/packet64-attribution-B-a/run/attribution/technical-guide/rank1/sites.jsonl": "7b19ce86e82d45a2002a766290a4b0728adc0196f1d93734396652680ec8de68"
+  },
+  "byte_definition": "useful global bytes, each distinct weight/input once per kernel; intermediate traffic explicitly included; not measured DRAM or instruction-issued bytes",
+  "caveats": [
+    "sampled layers only; occurrence scaling is an analytical estimate, never an unmeasured performance point",
+    "sum all events of a site call before median; event medians mixing stages are invalid call latency",
+    "controls, codebook residency, cache line overfetch/reloads and PCIe/host overhead not measured; 540 is memory-only not an attainable compute floor"
+  ],
+  "rows": [
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "attention",
+      "calls": 20,
+      "events_per_call": [
+        2
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 46.5105,
+      "occurrences_per_half": 18,
+      "roofline_us": 36.6686962962963,
+      "effective_GBs": 425.7338880467851,
+      "excess_us": 9.841803703703704,
+      "excess_us_per_half": 177.15246666666667,
+      "gguf_weight_bytes": 12902400.0,
+      "runtime_weight_read_bytes": 19660800.0,
+      "activation_state_read_bytes": 73736.0,
+      "read_bytes": 19734536.0,
+      "write_bytes": 66560.0,
+      "tensors": [
+        {
+          "name": "blk.22.ssm_out.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            6144,
+            2560
+          ]
+        }
+      ],
+      "notes": "two kernels: GEMV partials + BF16 output/stream combine"
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "expsact",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 5.677,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.07111111111111111,
+      "effective_GBs": 6.764135987317245,
+      "excess_us": 5.605888888888889,
+      "excess_us_per_half": 100.906,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 25600.0,
+      "read_bytes": 25600.0,
+      "write_bytes": 12800.0,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "expsdown",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 56.979,
+      "occurrences_per_half": 18,
+      "roofline_us": 17.18548148148148,
+      "effective_GBs": 162.86982923533233,
+      "excess_us": 39.79351851851852,
+      "excess_us_per_half": 716.2833333333333,
+      "gguf_weight_bytes": 9216000.0,
+      "runtime_weight_read_bytes": 9216000.0,
+      "activation_state_read_bytes": 12920.0,
+      "read_bytes": 9228920.0,
+      "write_bytes": 51240.0,
+      "tensors": [
+        {
+          "name": "blk.22.ffn_down_exps.weight",
+          "type": "IQ4_NL",
+          "dimensions": [
+            640,
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": "packet65-owned; ten selected experts"
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "expsgate",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 72.86449999999999,
+      "occurrences_per_half": 18,
+      "roofline_us": 19.494296296296298,
+      "effective_GBs": 144.47254836031266,
+      "excess_us": 53.370203703703694,
+      "excess_us_per_half": 960.6636666666665,
+      "gguf_weight_bytes": 10496000.0,
+      "runtime_weight_read_bytes": 10496000.0,
+      "activation_state_read_bytes": 5240.0,
+      "read_bytes": 10501240.0,
+      "write_bytes": 25680.0,
+      "tensors": [
+        {
+          "name": "blk.22.ffn_gate_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        },
+        {
+          "name": "blk.22.ffn_up_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        }
+      ],
+      "notes": "packet65-owned; ten selected experts, paired gate/up + status"
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "ffn.combine",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 11.042,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.08534814814814815,
+      "effective_GBs": 4.1738815431986955,
+      "excess_us": 10.956651851851852,
+      "excess_us_per_half": 197.21973333333335,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 25608.0,
+      "read_bytes": 25608.0,
+      "write_bytes": 20480.0,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "gdn.a",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 6.6665,
+      "occurrences_per_half": 18,
+      "roofline_us": 1.8302814814814814,
+      "effective_GBs": 148.25650641266031,
+      "excess_us": 4.8362185185185185,
+      "excess_us_per_half": 87.05193333333334,
+      "gguf_weight_bytes": 983040.0,
+      "runtime_weight_read_bytes": 983040.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 988160.0,
+      "write_bytes": 192.0,
+      "tensors": [
+        {
+          "name": "blk.22.ssm_alpha.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            48
+          ]
+        },
+        {
+          "name": "blk.22.ssm_beta.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            48
+          ]
+        }
+      ],
+      "notes": "alpha/beta tuple"
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "gdn.conv",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 7.292,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.6068148148148148,
+      "effective_GBs": 44.93691716950082,
+      "excess_us": 6.685185185185185,
+      "excess_us_per_half": 120.33333333333333,
+      "gguf_weight_bytes": 163840.0,
+      "runtime_weight_read_bytes": 163840.0,
+      "activation_state_read_bytes": 81920.0,
+      "read_bytes": 245760.0,
+      "write_bytes": 81920.0,
+      "tensors": [
+        {
+          "name": "blk.22.ssm_conv1d.weight",
+          "type": "F32",
+          "dimensions": [
+            4,
+            10240
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "gdn.gated",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 5.521,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.06921481481481481,
+      "effective_GBs": 6.769788081869226,
+      "excess_us": 5.4517851851851855,
+      "excess_us_per_half": 98.13213333333334,
+      "gguf_weight_bytes": 512.0,
+      "runtime_weight_read_bytes": 512.0,
+      "activation_state_read_bytes": 24576.0,
+      "read_bytes": 25088.0,
+      "write_bytes": 12288.0,
+      "tensors": [
+        {
+          "name": "blk.22.ssm_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            128
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "gdn.qkv",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 65.469,
+      "occurrences_per_half": 18,
+      "roofline_us": 60.72888888888889,
+      "effective_GBs": 500.90271731659266,
+      "excess_us": 4.740111111111105,
+      "excess_us_per_half": 85.32199999999989,
+      "gguf_weight_bytes": 21504000.0,
+      "runtime_weight_read_bytes": 32768000.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 32773120.0,
+      "write_bytes": 20480.0,
+      "tensors": [
+        {
+          "name": "blk.22.attn_qkv.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            10240
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "gdn.recurrence",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 35.833,
+      "occurrences_per_half": 18,
+      "roofline_us": 5.88717037037037,
+      "effective_GBs": 88.71911366617364,
+      "excess_us": 29.94582962962963,
+      "excess_us_per_half": 539.0249333333334,
+      "gguf_weight_bytes": 384.0,
+      "runtime_weight_read_bytes": 384.0,
+      "activation_state_read_bytes": 1593536.0,
+      "read_bytes": 1593920.0,
+      "write_bytes": 1585152.0,
+      "tensors": [
+        {
+          "name": "blk.22.ssm_a",
+          "type": "F32",
+          "dimensions": [
+            48
+          ]
+        },
+        {
+          "name": "blk.22.ssm_dt.bias",
+          "type": "F32",
+          "dimensions": [
+            48
+          ]
+        }
+      ],
+      "notes": "BF16 state read/write; head normalization repeated per four rows; no FP32 state carry"
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "gdn.z",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 39.271,
+      "occurrences_per_half": 18,
+      "roofline_us": 36.441125925925924,
+      "effective_GBs": 501.08752005296526,
+      "excess_us": 2.829874074074077,
+      "excess_us_per_half": 50.937733333333384,
+      "gguf_weight_bytes": 12902400.0,
+      "runtime_weight_read_bytes": 19660800.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 19665920.0,
+      "write_bytes": 12288.0,
+      "tensors": [
+        {
+          "name": "blk.22.attn_gate.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            6144
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "hc.a.gate",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 24.792,
+      "occurrences_per_half": 18,
+      "roofline_us": 6.913185185185185,
+      "effective_GBs": 150.57760567925138,
+      "excess_us": 17.878814814814817,
+      "excess_us_per_half": 321.8186666666667,
+      "gguf_weight_bytes": 3481600.0,
+      "runtime_weight_read_bytes": 3686400.0,
+      "activation_state_read_bytes": 21120.0,
+      "read_bytes": 3707520.0,
+      "write_bytes": 25600.0,
+      "tensors": [
+        {
+          "name": "blk.22.hc_attn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "hc.a.low",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 11.25,
+      "occurrences_per_half": 18,
+      "roofline_us": 7.170503703703703,
+      "effective_GBs": 344.1841777777778,
+      "excess_us": 4.079496296296297,
+      "excess_us_per_half": 73.43093333333334,
+      "gguf_weight_bytes": 3645440.0,
+      "runtime_weight_read_bytes": 3850240.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 3870720.0,
+      "write_bytes": 1352.0,
+      "tensors": [
+        {
+          "name": "blk.22.hc_attn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.22.hc_attn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "hc.a.norm",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 7.7605,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.15407407407407409,
+      "effective_GBs": 10.720958701114618,
+      "excess_us": 7.606425925925926,
+      "excess_us_per_half": 136.91566666666665,
+      "gguf_weight_bytes": 40960.0,
+      "runtime_weight_read_bytes": 40960.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 61440.0,
+      "write_bytes": 21760.0,
+      "tensors": [
+        {
+          "name": "blk.22.hc_attn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "hc.f.gate",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 24.792,
+      "occurrences_per_half": 18,
+      "roofline_us": 6.913185185185185,
+      "effective_GBs": 150.57760567925138,
+      "excess_us": 17.878814814814817,
+      "excess_us_per_half": 321.8186666666667,
+      "gguf_weight_bytes": 3481600.0,
+      "runtime_weight_read_bytes": 3686400.0,
+      "activation_state_read_bytes": 21120.0,
+      "read_bytes": 3707520.0,
+      "write_bytes": 25600.0,
+      "tensors": [
+        {
+          "name": "blk.22.hc_ffn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "hc.f.low",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 13.073,
+      "occurrences_per_half": 18,
+      "roofline_us": 7.170503703703703,
+      "effective_GBs": 296.18848007343377,
+      "excess_us": 5.902496296296297,
+      "excess_us_per_half": 106.24493333333335,
+      "gguf_weight_bytes": 3645440.0,
+      "runtime_weight_read_bytes": 3850240.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 3870720.0,
+      "write_bytes": 1352.0,
+      "tensors": [
+        {
+          "name": "blk.22.hc_ffn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.22.hc_ffn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "hc.f.norm",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 7.604,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.15407407407407409,
+      "effective_GBs": 10.941609679116254,
+      "excess_us": 7.449925925925926,
+      "excess_us_per_half": 134.09866666666667,
+      "gguf_weight_bytes": 40960.0,
+      "runtime_weight_read_bytes": 40960.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 61440.0,
+      "write_bytes": 21760.0,
+      "tensors": [
+        {
+          "name": "blk.22.hc_ffn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "moe",
+      "calls": 20,
+      "events_per_call": [
+        2
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 6.146,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.13282592592592593,
+      "effective_GBs": 11.670354702245362,
+      "excess_us": 6.013174074074074,
+      "excess_us_per_half": 108.23713333333333,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 61486.0,
+      "read_bytes": 61486.0,
+      "write_bytes": 10240.0,
+      "tensors": [],
+      "notes": "two kernels: ordered mixture + shared branch combination"
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "route",
+      "calls": 20,
+      "events_per_call": [
+        4
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 19.376,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.013066666666666667,
+      "effective_GBs": 0.3641618497109826,
+      "excess_us": 19.362933333333334,
+      "excess_us_per_half": 348.5328,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 4392.0,
+      "read_bytes": 4392.0,
+      "write_bytes": 2664.0,
+      "tensors": [],
+      "notes": "four stages; input twice, max/sum/exp scratch, final probability read/write and route copies"
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "router",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 22.1355,
+      "occurrences_per_half": 18,
+      "roofline_us": 17.32930740740741,
+      "effective_GBs": 422.7519595220347,
+      "excess_us": 4.806192592592591,
+      "excess_us_per_half": 86.51146666666665,
+      "gguf_weight_bytes": 7941120.0,
+      "runtime_weight_read_bytes": 9349120.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 9354240.0,
+      "write_bytes": 3586.0,
+      "tensors": [
+        {
+          "name": "blk.22.ffn_gate_inp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            512
+          ]
+        },
+        {
+          "name": "blk.22.ffn_gate_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.22.ffn_up_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.22.ffn_gate_inp_shexp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560
+          ]
+        }
+      ],
+      "notes": "four-member tuple: router + shared gate/up + shared router"
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "shexpact",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 4.063,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.0071111111111111115,
+      "effective_GBs": 0.9451144474526213,
+      "excess_us": 4.055888888888888,
+      "excess_us_per_half": 73.00599999999999,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 2560.0,
+      "read_bytes": 2560.0,
+      "write_bytes": 1280.0,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "rank": 0,
+      "layer": 22,
+      "kind": "GDN",
+      "site": "shexpdown",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 10.9375,
+      "occurrences_per_half": 18,
+      "roofline_us": 3.4251851851851853,
+      "effective_GBs": 169.10628571428572,
+      "excess_us": 7.512314814814815,
+      "excess_us_per_half": 135.22166666666666,
+      "gguf_weight_bytes": 1740800.0,
+      "runtime_weight_read_bytes": 1843200.0,
+      "activation_state_read_bytes": 1280.0,
+      "read_bytes": 1844480.0,
+      "write_bytes": 5120.0,
+      "tensors": [
+        {
+          "name": "blk.22.ffn_down_shexp.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            640,
+            2560
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "attention",
+      "calls": 20,
+      "events_per_call": [
+        2
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 46.042,
+      "occurrences_per_half": 6,
+      "roofline_us": 36.6686962962963,
+      "effective_GBs": 430.065939794101,
+      "excess_us": 9.373303703703705,
+      "excess_us_per_half": 56.23982222222223,
+      "gguf_weight_bytes": 12902400.0,
+      "runtime_weight_read_bytes": 19660800.0,
+      "activation_state_read_bytes": 73736.0,
+      "read_bytes": 19734536.0,
+      "write_bytes": 66560.0,
+      "tensors": [
+        {
+          "name": "blk.23.attn_output.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            6144,
+            2560
+          ]
+        }
+      ],
+      "notes": "two kernels: GEMV partials + BF16 output/stream combine"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "expsact",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 5.521,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.07111111111111111,
+      "effective_GBs": 6.9552617279478355,
+      "excess_us": 5.449888888888889,
+      "excess_us_per_half": 32.699333333333335,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 25600.0,
+      "read_bytes": 25600.0,
+      "write_bytes": 12800.0,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "expsdown",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 56.979,
+      "occurrences_per_half": 6,
+      "roofline_us": 17.18548148148148,
+      "effective_GBs": 162.86982923533233,
+      "excess_us": 39.79351851851852,
+      "excess_us_per_half": 238.76111111111112,
+      "gguf_weight_bytes": 9216000.0,
+      "runtime_weight_read_bytes": 9216000.0,
+      "activation_state_read_bytes": 12920.0,
+      "read_bytes": 9228920.0,
+      "write_bytes": 51240.0,
+      "tensors": [
+        {
+          "name": "blk.23.ffn_down_exps.weight",
+          "type": "IQ4_NL",
+          "dimensions": [
+            640,
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": "packet65-owned; ten selected experts"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "expsgate",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 72.708,
+      "occurrences_per_half": 6,
+      "roofline_us": 19.494296296296298,
+      "effective_GBs": 144.78351763217253,
+      "excess_us": 53.2137037037037,
+      "excess_us_per_half": 319.28222222222223,
+      "gguf_weight_bytes": 10496000.0,
+      "runtime_weight_read_bytes": 10496000.0,
+      "activation_state_read_bytes": 5240.0,
+      "read_bytes": 10501240.0,
+      "write_bytes": 25680.0,
+      "tensors": [
+        {
+          "name": "blk.23.ffn_gate_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        },
+        {
+          "name": "blk.23.ffn_up_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        }
+      ],
+      "notes": "packet65-owned; ten selected experts, paired gate/up + status"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "ffn.combine",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 11.198,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.08534814814814815,
+      "effective_GBs": 4.1157349526701195,
+      "excess_us": 11.112651851851853,
+      "excess_us_per_half": 66.67591111111112,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 25608.0,
+      "read_bytes": 25608.0,
+      "write_bytes": 20480.0,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "hc.a.gate",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 25.417,
+      "occurrences_per_half": 6,
+      "roofline_us": 6.913185185185185,
+      "effective_GBs": 146.87492623047567,
+      "excess_us": 18.503814814814817,
+      "excess_us_per_half": 111.0228888888889,
+      "gguf_weight_bytes": 3481600.0,
+      "runtime_weight_read_bytes": 3686400.0,
+      "activation_state_read_bytes": 21120.0,
+      "read_bytes": 3707520.0,
+      "write_bytes": 25600.0,
+      "tensors": [
+        {
+          "name": "blk.23.hc_attn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "hc.a.low",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 11.25,
+      "occurrences_per_half": 6,
+      "roofline_us": 7.170503703703703,
+      "effective_GBs": 344.1841777777778,
+      "excess_us": 4.079496296296297,
+      "excess_us_per_half": 24.47697777777778,
+      "gguf_weight_bytes": 3645440.0,
+      "runtime_weight_read_bytes": 3850240.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 3870720.0,
+      "write_bytes": 1352.0,
+      "tensors": [
+        {
+          "name": "blk.23.hc_attn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.23.hc_attn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "hc.a.norm",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 7.813,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.15407407407407409,
+      "effective_GBs": 10.64891846921797,
+      "excess_us": 7.658925925925925,
+      "excess_us_per_half": 45.95355555555555,
+      "gguf_weight_bytes": 40960.0,
+      "runtime_weight_read_bytes": 40960.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 61440.0,
+      "write_bytes": 21760.0,
+      "tensors": [
+        {
+          "name": "blk.23.hc_attn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "hc.f.gate",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 25.625,
+      "occurrences_per_half": 6,
+      "roofline_us": 6.913185185185185,
+      "effective_GBs": 145.6827317073171,
+      "excess_us": 18.711814814814815,
+      "excess_us_per_half": 112.27088888888889,
+      "gguf_weight_bytes": 3481600.0,
+      "runtime_weight_read_bytes": 3686400.0,
+      "activation_state_read_bytes": 21120.0,
+      "read_bytes": 3707520.0,
+      "write_bytes": 25600.0,
+      "tensors": [
+        {
+          "name": "blk.23.hc_ffn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "hc.f.low",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 11.666,
+      "occurrences_per_half": 6,
+      "roofline_us": 7.170503703703703,
+      "effective_GBs": 331.9108520486885,
+      "excess_us": 4.495496296296297,
+      "excess_us_per_half": 26.972977777777782,
+      "gguf_weight_bytes": 3645440.0,
+      "runtime_weight_read_bytes": 3850240.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 3870720.0,
+      "write_bytes": 1352.0,
+      "tensors": [
+        {
+          "name": "blk.23.hc_ffn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.23.hc_ffn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "hc.f.norm",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 7.812,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.15407407407407409,
+      "effective_GBs": 10.650281618023554,
+      "excess_us": 7.657925925925926,
+      "excess_us_per_half": 45.94755555555555,
+      "gguf_weight_bytes": 40960.0,
+      "runtime_weight_read_bytes": 40960.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 61440.0,
+      "write_bytes": 21760.0,
+      "tensors": [
+        {
+          "name": "blk.23.hc_ffn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "moe",
+      "calls": 20,
+      "events_per_call": [
+        2
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 6.354,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.13282592592592593,
+      "effective_GBs": 11.288322316650929,
+      "excess_us": 6.221174074074074,
+      "excess_us_per_half": 37.32704444444445,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 61486.0,
+      "read_bytes": 61486.0,
+      "write_bytes": 10240.0,
+      "tensors": [],
+      "notes": "two kernels: ordered mixture + shared branch combination"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "qsa.attention",
+      "calls": 20,
+      "events_per_call": [
+        3
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 44.479,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.6474888888888889,
+      "effective_GBs": 7.860878167224983,
+      "excess_us": 43.83151111111111,
+      "excess_us_per_half": 262.98906666666664,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 263048.0,
+      "read_bytes": 263048.0,
+      "write_bytes": 86596.0,
+      "tensors": [],
+      "notes": "three kernels; packet49 split32 partial scratch and count written/read; full16 KV; N=position+1"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "qsa.ik",
+      "calls": 20,
+      "events_per_call": [
+        2
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 6.354,
+      "occurrences_per_half": 6,
+      "roofline_us": 1.2311703703703705,
+      "effective_GBs": 104.63204280768021,
+      "excess_us": 5.12282962962963,
+      "excess_us_per_half": 30.736977777777778,
+      "gguf_weight_bytes": 655360.0,
+      "runtime_weight_read_bytes": 655360.0,
+      "activation_state_read_bytes": 7168.0,
+      "read_bytes": 662528.0,
+      "write_bytes": 2304.0,
+      "tensors": [
+        {
+          "name": "blk.23.indexer.k_proj.weight",
+          "type": "BF16",
+          "dimensions": [
+            2560,
+            128
+          ]
+        }
+      ],
+      "notes": "two kernels; Split4 scratch retained"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "qsa.iq",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 9.0625,
+      "occurrences_per_half": 6,
+      "roofline_us": 4.865896296296296,
+      "effective_GBs": 289.9403034482758,
+      "excess_us": 4.196603703703704,
+      "excess_us_per_half": 25.17962222222222,
+      "gguf_weight_bytes": 2621440.0,
+      "runtime_weight_read_bytes": 2621440.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 2626560.0,
+      "write_bytes": 1024.0,
+      "tensors": [
+        {
+          "name": "blk.23.indexer.q_proj.weight",
+          "type": "BF16",
+          "dimensions": [
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "qsa.k",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 8.437,
+      "occurrences_per_half": 6,
+      "roofline_us": 3.0454518518518516,
+      "effective_GBs": 194.92046936114735,
+      "excess_us": 5.391548148148148,
+      "excess_us_per_half": 32.34928888888889,
+      "gguf_weight_bytes": 1075200.0,
+      "runtime_weight_read_bytes": 1638400.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 1643520.0,
+      "write_bytes": 1024.0,
+      "tensors": [
+        {
+          "name": "blk.23.attn_k.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "qsa.pool",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 2.969,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.008533333333333334,
+      "effective_GBs": 1.5520377231391043,
+      "excess_us": 2.9604666666666666,
+      "excess_us_per_half": 17.7628,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 2304.0,
+      "read_bytes": 2304.0,
+      "write_bytes": 2304.0,
+      "tensors": [
+        {
+          "name": "blk.23.indexer.k_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            128
+          ]
+        }
+      ],
+      "notes": "historical raw rows, norm and RoPE read only on every fourth token"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "qsa.prepare",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 5.0,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.10358518518518518,
+      "effective_GBs": 11.1872,
+      "excess_us": 4.896414814814815,
+      "excess_us_per_half": 29.37848888888889,
+      "gguf_weight_bytes": 2560.0,
+      "runtime_weight_read_bytes": 2560.0,
+      "activation_state_read_bytes": 26752.0,
+      "read_bytes": 29312.0,
+      "write_bytes": 26624.0,
+      "tensors": [
+        {
+          "name": "blk.23.attn_q_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            256
+          ]
+        },
+        {
+          "name": "blk.23.attn_k_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            256
+          ]
+        },
+        {
+          "name": "blk.23.indexer.q_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            128
+          ]
+        }
+      ],
+      "notes": "includes 32 cos + 32 sin BF16 RoPE row"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "qsa.qgate",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 76.9795,
+      "occurrences_per_half": 6,
+      "roofline_us": 72.87277037037038,
+      "effective_GBs": 511.19188874960213,
+      "excess_us": 4.106729629629626,
+      "excess_us_per_half": 24.640377777777758,
+      "gguf_weight_bytes": 25804800.0,
+      "runtime_weight_read_bytes": 39321600.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 39326720.0,
+      "write_bytes": 24576.0,
+      "tensors": [
+        {
+          "name": "blk.23.attn_q.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            12288
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "qsa.select",
+      "calls": 20,
+      "events_per_call": [
+        2
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 14.479,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.026866666666666667,
+      "effective_GBs": 1.0020029007528146,
+      "excess_us": 14.452133333333332,
+      "excess_us_per_half": 86.71279999999999,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 6224.0,
+      "read_bytes": 6224.0,
+      "write_bytes": 8284.0,
+      "tensors": [],
+      "notes": "context-dependent index scores and selected-id scratch; padded ids extent"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "qsa.v",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 8.333,
+      "occurrences_per_half": 6,
+      "roofline_us": 3.0454518518518516,
+      "effective_GBs": 197.3531741269651,
+      "excess_us": 5.287548148148149,
+      "excess_us_per_half": 31.725288888888894,
+      "gguf_weight_bytes": 1075200.0,
+      "runtime_weight_read_bytes": 1638400.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 1643520.0,
+      "write_bytes": 1024.0,
+      "tensors": [
+        {
+          "name": "blk.23.attn_v.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "route",
+      "calls": 20,
+      "events_per_call": [
+        4
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 19.271,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.013066666666666667,
+      "effective_GBs": 0.3661460225208863,
+      "excess_us": 19.257933333333334,
+      "excess_us_per_half": 115.5476,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 4392.0,
+      "read_bytes": 4392.0,
+      "write_bytes": 2664.0,
+      "tensors": [],
+      "notes": "four stages; input twice, max/sum/exp scratch, final probability read/write and route copies"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "router",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 21.979,
+      "occurrences_per_half": 6,
+      "roofline_us": 17.32930740740741,
+      "effective_GBs": 425.76213658492196,
+      "excess_us": 4.64969259259259,
+      "excess_us_per_half": 27.89815555555554,
+      "gguf_weight_bytes": 7941120.0,
+      "runtime_weight_read_bytes": 9349120.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 9354240.0,
+      "write_bytes": 3586.0,
+      "tensors": [
+        {
+          "name": "blk.23.ffn_gate_inp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            512
+          ]
+        },
+        {
+          "name": "blk.23.ffn_gate_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.23.ffn_up_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.23.ffn_gate_inp_shexp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560
+          ]
+        }
+      ],
+      "notes": "four-member tuple: router + shared gate/up + shared router"
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "shexpact",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 4.531000000000001,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.0071111111111111115,
+      "effective_GBs": 0.8474950342087839,
+      "excess_us": 4.523888888888889,
+      "excess_us_per_half": 27.143333333333334,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 2560.0,
+      "read_bytes": 2560.0,
+      "write_bytes": 1280.0,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "rank": 0,
+      "layer": 23,
+      "kind": "QSA",
+      "site": "shexpdown",
+      "calls": 20,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        69,
+        99
+      ],
+      "measured_call_median_us": 10.9895,
+      "occurrences_per_half": 6,
+      "roofline_us": 3.4251851851851853,
+      "effective_GBs": 168.30611037808816,
+      "excess_us": 7.564314814814814,
+      "excess_us_per_half": 45.385888888888886,
+      "gguf_weight_bytes": 1740800.0,
+      "runtime_weight_read_bytes": 1843200.0,
+      "activation_state_read_bytes": 1280.0,
+      "read_bytes": 1844480.0,
+      "write_bytes": 5120.0,
+      "tensors": [
+        {
+          "name": "blk.23.ffn_down_shexp.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            640,
+            2560
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "attention",
+      "calls": 96,
+      "events_per_call": [
+        2
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 48.854,
+      "occurrences_per_half": 18,
+      "roofline_us": 36.6686962962963,
+      "effective_GBs": 405.31166332337165,
+      "excess_us": 12.185303703703703,
+      "excess_us_per_half": 219.33546666666666,
+      "gguf_weight_bytes": 12902400.0,
+      "runtime_weight_read_bytes": 19660800.0,
+      "activation_state_read_bytes": 73736.0,
+      "read_bytes": 19734536.0,
+      "write_bytes": 66560.0,
+      "tensors": [
+        {
+          "name": "blk.24.ssm_out.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            6144,
+            2560
+          ]
+        }
+      ],
+      "notes": "two kernels: GEMV partials + BF16 output/stream combine"
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "expsact",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 5.625,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.07111111111111111,
+      "effective_GBs": 6.826666666666667,
+      "excess_us": 5.553888888888889,
+      "excess_us_per_half": 99.97000000000001,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 25600.0,
+      "read_bytes": 25600.0,
+      "write_bytes": 12800.0,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "expsdown",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 57.708,
+      "occurrences_per_half": 18,
+      "roofline_us": 17.18548148148148,
+      "effective_GBs": 160.81236570319538,
+      "excess_us": 40.52251851851852,
+      "excess_us_per_half": 729.4053333333333,
+      "gguf_weight_bytes": 9216000.0,
+      "runtime_weight_read_bytes": 9216000.0,
+      "activation_state_read_bytes": 12920.0,
+      "read_bytes": 9228920.0,
+      "write_bytes": 51240.0,
+      "tensors": [
+        {
+          "name": "blk.24.ffn_down_exps.weight",
+          "type": "IQ4_NL",
+          "dimensions": [
+            640,
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": "packet65-owned; ten selected experts"
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "expsgate",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 73.542,
+      "occurrences_per_half": 18,
+      "roofline_us": 19.494296296296298,
+      "effective_GBs": 143.1416061570259,
+      "excess_us": 54.047703703703704,
+      "excess_us_per_half": 972.8586666666666,
+      "gguf_weight_bytes": 10496000.0,
+      "runtime_weight_read_bytes": 10496000.0,
+      "activation_state_read_bytes": 5240.0,
+      "read_bytes": 10501240.0,
+      "write_bytes": 25680.0,
+      "tensors": [
+        {
+          "name": "blk.24.ffn_gate_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        },
+        {
+          "name": "blk.24.ffn_up_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        }
+      ],
+      "notes": "packet65-owned; ten selected experts, paired gate/up + status"
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "ffn.combine",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 11.042,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.08534814814814815,
+      "effective_GBs": 4.1738815431986955,
+      "excess_us": 10.956651851851852,
+      "excess_us_per_half": 197.21973333333335,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 25608.0,
+      "read_bytes": 25608.0,
+      "write_bytes": 20480.0,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "gdn.a",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 6.875,
+      "occurrences_per_half": 18,
+      "roofline_us": 1.8302814814814814,
+      "effective_GBs": 143.7602909090909,
+      "excess_us": 5.044718518518518,
+      "excess_us_per_half": 90.80493333333334,
+      "gguf_weight_bytes": 983040.0,
+      "runtime_weight_read_bytes": 983040.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 988160.0,
+      "write_bytes": 192.0,
+      "tensors": [
+        {
+          "name": "blk.24.ssm_alpha.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            48
+          ]
+        },
+        {
+          "name": "blk.24.ssm_beta.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            48
+          ]
+        }
+      ],
+      "notes": "alpha/beta tuple"
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "gdn.conv",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 7.396,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.6068148148148148,
+      "effective_GBs": 44.30502974580855,
+      "excess_us": 6.789185185185185,
+      "excess_us_per_half": 122.20533333333333,
+      "gguf_weight_bytes": 163840.0,
+      "runtime_weight_read_bytes": 163840.0,
+      "activation_state_read_bytes": 81920.0,
+      "read_bytes": 245760.0,
+      "write_bytes": 81920.0,
+      "tensors": [
+        {
+          "name": "blk.24.ssm_conv1d.weight",
+          "type": "F32",
+          "dimensions": [
+            4,
+            10240
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "gdn.gated",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 5.625,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.06921481481481481,
+      "effective_GBs": 6.644622222222222,
+      "excess_us": 5.555785185185186,
+      "excess_us_per_half": 100.00413333333334,
+      "gguf_weight_bytes": 512.0,
+      "runtime_weight_read_bytes": 512.0,
+      "activation_state_read_bytes": 24576.0,
+      "read_bytes": 25088.0,
+      "write_bytes": 12288.0,
+      "tensors": [
+        {
+          "name": "blk.24.ssm_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            128
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "gdn.qkv",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 63.75,
+      "occurrences_per_half": 18,
+      "roofline_us": 60.72888888888889,
+      "effective_GBs": 514.4094117647059,
+      "excess_us": 3.021111111111111,
+      "excess_us_per_half": 54.379999999999995,
+      "gguf_weight_bytes": 21504000.0,
+      "runtime_weight_read_bytes": 32768000.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 32773120.0,
+      "write_bytes": 20480.0,
+      "tensors": [
+        {
+          "name": "blk.24.attn_qkv.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            10240
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "gdn.recurrence",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 34.896,
+      "occurrences_per_half": 18,
+      "roofline_us": 5.88717037037037,
+      "effective_GBs": 91.10132966529115,
+      "excess_us": 29.00882962962963,
+      "excess_us_per_half": 522.1589333333334,
+      "gguf_weight_bytes": 384.0,
+      "runtime_weight_read_bytes": 384.0,
+      "activation_state_read_bytes": 1593536.0,
+      "read_bytes": 1593920.0,
+      "write_bytes": 1585152.0,
+      "tensors": [
+        {
+          "name": "blk.24.ssm_a",
+          "type": "F32",
+          "dimensions": [
+            48
+          ]
+        },
+        {
+          "name": "blk.24.ssm_dt.bias",
+          "type": "F32",
+          "dimensions": [
+            48
+          ]
+        }
+      ],
+      "notes": "BF16 state read/write; head normalization repeated per four rows; no FP32 state carry"
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "gdn.z",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 39.479,
+      "occurrences_per_half": 18,
+      "roofline_us": 36.441125925925924,
+      "effective_GBs": 498.44747840624126,
+      "excess_us": 3.0378740740740753,
+      "excess_us_per_half": 54.681733333333355,
+      "gguf_weight_bytes": 12902400.0,
+      "runtime_weight_read_bytes": 19660800.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 19665920.0,
+      "write_bytes": 12288.0,
+      "tensors": [
+        {
+          "name": "blk.24.attn_gate.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            6144
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "hc.a.gate",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 25.104,
+      "occurrences_per_half": 18,
+      "roofline_us": 6.913185185185185,
+      "effective_GBs": 148.70618228170812,
+      "excess_us": 18.190814814814814,
+      "excess_us_per_half": 327.43466666666666,
+      "gguf_weight_bytes": 3481600.0,
+      "runtime_weight_read_bytes": 3686400.0,
+      "activation_state_read_bytes": 21120.0,
+      "read_bytes": 3707520.0,
+      "write_bytes": 25600.0,
+      "tensors": [
+        {
+          "name": "blk.24.hc_attn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "hc.a.low",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 11.771,
+      "occurrences_per_half": 18,
+      "roofline_us": 7.170503703703703,
+      "effective_GBs": 328.9501316795514,
+      "excess_us": 4.600496296296297,
+      "excess_us_per_half": 82.80893333333336,
+      "gguf_weight_bytes": 3645440.0,
+      "runtime_weight_read_bytes": 3850240.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 3870720.0,
+      "write_bytes": 1352.0,
+      "tensors": [
+        {
+          "name": "blk.24.hc_attn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.24.hc_attn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "hc.a.norm",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 9.843499999999999,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.15407407407407409,
+      "effective_GBs": 8.452278153095953,
+      "excess_us": 9.689425925925924,
+      "excess_us_per_half": 174.40966666666662,
+      "gguf_weight_bytes": 40960.0,
+      "runtime_weight_read_bytes": 40960.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 61440.0,
+      "write_bytes": 21760.0,
+      "tensors": [
+        {
+          "name": "blk.24.hc_attn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "hc.f.gate",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 24.583,
+      "occurrences_per_half": 18,
+      "roofline_us": 6.913185185185185,
+      "effective_GBs": 151.85778790220886,
+      "excess_us": 17.669814814814814,
+      "excess_us_per_half": 318.0566666666666,
+      "gguf_weight_bytes": 3481600.0,
+      "runtime_weight_read_bytes": 3686400.0,
+      "activation_state_read_bytes": 21120.0,
+      "read_bytes": 3707520.0,
+      "write_bytes": 25600.0,
+      "tensors": [
+        {
+          "name": "blk.24.hc_ffn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "hc.f.low",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 11.666,
+      "occurrences_per_half": 18,
+      "roofline_us": 7.170503703703703,
+      "effective_GBs": 331.9108520486885,
+      "excess_us": 4.495496296296297,
+      "excess_us_per_half": 80.91893333333334,
+      "gguf_weight_bytes": 3645440.0,
+      "runtime_weight_read_bytes": 3850240.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 3870720.0,
+      "write_bytes": 1352.0,
+      "tensors": [
+        {
+          "name": "blk.24.hc_ffn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.24.hc_ffn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "hc.f.norm",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 7.813,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.15407407407407409,
+      "effective_GBs": 10.64891846921797,
+      "excess_us": 7.658925925925925,
+      "excess_us_per_half": 137.86066666666665,
+      "gguf_weight_bytes": 40960.0,
+      "runtime_weight_read_bytes": 40960.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 61440.0,
+      "write_bytes": 21760.0,
+      "tensors": [
+        {
+          "name": "blk.24.hc_ffn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "moe",
+      "calls": 96,
+      "events_per_call": [
+        2
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 6.458,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.13282592592592593,
+      "effective_GBs": 11.106534530814493,
+      "excess_us": 6.3251740740740745,
+      "excess_us_per_half": 113.85313333333335,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 61486.0,
+      "read_bytes": 61486.0,
+      "write_bytes": 10240.0,
+      "tensors": [],
+      "notes": "two kernels: ordered mixture + shared branch combination"
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "route",
+      "calls": 96,
+      "events_per_call": [
+        4
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 20.052,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.013066666666666667,
+      "effective_GBs": 0.3518850987432675,
+      "excess_us": 20.038933333333333,
+      "excess_us_per_half": 360.70079999999996,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 4392.0,
+      "read_bytes": 4392.0,
+      "write_bytes": 2664.0,
+      "tensors": [],
+      "notes": "four stages; input twice, max/sum/exp scratch, final probability read/write and route copies"
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "router",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 22.188,
+      "occurrences_per_half": 18,
+      "roofline_us": 17.32930740740741,
+      "effective_GBs": 421.7516675680548,
+      "excess_us": 4.85869259259259,
+      "excess_us_per_half": 87.45646666666661,
+      "gguf_weight_bytes": 7941120.0,
+      "runtime_weight_read_bytes": 9349120.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 9354240.0,
+      "write_bytes": 3586.0,
+      "tensors": [
+        {
+          "name": "blk.24.ffn_gate_inp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            512
+          ]
+        },
+        {
+          "name": "blk.24.ffn_gate_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.24.ffn_up_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.24.ffn_gate_inp_shexp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560
+          ]
+        }
+      ],
+      "notes": "four-member tuple: router + shared gate/up + shared router"
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "shexpact",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 4.166,
+      "occurrences_per_half": 18,
+      "roofline_us": 0.0071111111111111115,
+      "effective_GBs": 0.9217474795967354,
+      "excess_us": 4.158888888888889,
+      "excess_us_per_half": 74.86,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 2560.0,
+      "read_bytes": 2560.0,
+      "write_bytes": 1280.0,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 24,
+      "kind": "GDN",
+      "site": "shexpdown",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 11.3545,
+      "occurrences_per_half": 18,
+      "roofline_us": 3.4251851851851853,
+      "effective_GBs": 162.8957681976309,
+      "excess_us": 7.9293148148148145,
+      "excess_us_per_half": 142.72766666666666,
+      "gguf_weight_bytes": 1740800.0,
+      "runtime_weight_read_bytes": 1843200.0,
+      "activation_state_read_bytes": 1280.0,
+      "read_bytes": 1844480.0,
+      "write_bytes": 5120.0,
+      "tensors": [
+        {
+          "name": "blk.24.ffn_down_shexp.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            640,
+            2560
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "attention",
+      "calls": 96,
+      "events_per_call": [
+        2
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 47.291,
+      "occurrences_per_half": 6,
+      "roofline_us": 36.6686962962963,
+      "effective_GBs": 418.70749191178027,
+      "excess_us": 10.6223037037037,
+      "excess_us_per_half": 63.7338222222222,
+      "gguf_weight_bytes": 12902400.0,
+      "runtime_weight_read_bytes": 19660800.0,
+      "activation_state_read_bytes": 73736.0,
+      "read_bytes": 19734536.0,
+      "write_bytes": 66560.0,
+      "tensors": [
+        {
+          "name": "blk.27.attn_output.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            6144,
+            2560
+          ]
+        }
+      ],
+      "notes": "two kernels: GEMV partials + BF16 output/stream combine"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "expsact",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 5.729,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.07111111111111111,
+      "effective_GBs": 6.702740443358352,
+      "excess_us": 5.657888888888889,
+      "excess_us_per_half": 33.94733333333333,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 25600.0,
+      "read_bytes": 25600.0,
+      "write_bytes": 12800.0,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "expsdown",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 57.813,
+      "occurrences_per_half": 6,
+      "roofline_us": 17.18548148148148,
+      "effective_GBs": 160.52029820282635,
+      "excess_us": 40.62751851851852,
+      "excess_us_per_half": 243.76511111111114,
+      "gguf_weight_bytes": 9216000.0,
+      "runtime_weight_read_bytes": 9216000.0,
+      "activation_state_read_bytes": 12920.0,
+      "read_bytes": 9228920.0,
+      "write_bytes": 51240.0,
+      "tensors": [
+        {
+          "name": "blk.27.ffn_down_exps.weight",
+          "type": "IQ4_NL",
+          "dimensions": [
+            640,
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": "packet65-owned; ten selected experts"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "expsgate",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 73.021,
+      "occurrences_per_half": 6,
+      "roofline_us": 19.494296296296298,
+      "effective_GBs": 144.1629120390025,
+      "excess_us": 53.5267037037037,
+      "excess_us_per_half": 321.1602222222222,
+      "gguf_weight_bytes": 10496000.0,
+      "runtime_weight_read_bytes": 10496000.0,
+      "activation_state_read_bytes": 5240.0,
+      "read_bytes": 10501240.0,
+      "write_bytes": 25680.0,
+      "tensors": [
+        {
+          "name": "blk.27.ffn_gate_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        },
+        {
+          "name": "blk.27.ffn_up_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        }
+      ],
+      "notes": "packet65-owned; ten selected experts, paired gate/up + status"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "ffn.combine",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 11.042,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.08534814814814815,
+      "effective_GBs": 4.1738815431986955,
+      "excess_us": 10.956651851851852,
+      "excess_us_per_half": 65.73991111111111,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 25608.0,
+      "read_bytes": 25608.0,
+      "write_bytes": 20480.0,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "hc.a.gate",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 24.48,
+      "occurrences_per_half": 6,
+      "roofline_us": 6.913185185185185,
+      "effective_GBs": 152.49673202614377,
+      "excess_us": 17.566814814814816,
+      "excess_us_per_half": 105.40088888888889,
+      "gguf_weight_bytes": 3481600.0,
+      "runtime_weight_read_bytes": 3686400.0,
+      "activation_state_read_bytes": 21120.0,
+      "read_bytes": 3707520.0,
+      "write_bytes": 25600.0,
+      "tensors": [
+        {
+          "name": "blk.27.hc_attn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "hc.a.low",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 11.355,
+      "occurrences_per_half": 6,
+      "roofline_us": 7.170503703703703,
+      "effective_GBs": 341.0014971378247,
+      "excess_us": 4.184496296296297,
+      "excess_us_per_half": 25.106977777777782,
+      "gguf_weight_bytes": 3645440.0,
+      "runtime_weight_read_bytes": 3850240.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 3870720.0,
+      "write_bytes": 1352.0,
+      "tensors": [
+        {
+          "name": "blk.27.hc_attn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.27.hc_attn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "hc.a.norm",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 7.709,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.15407407407407409,
+      "effective_GBs": 10.79258010118044,
+      "excess_us": 7.554925925925925,
+      "excess_us_per_half": 45.32955555555555,
+      "gguf_weight_bytes": 40960.0,
+      "runtime_weight_read_bytes": 40960.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 61440.0,
+      "write_bytes": 21760.0,
+      "tensors": [
+        {
+          "name": "blk.27.hc_attn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "hc.f.gate",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 25.521,
+      "occurrences_per_half": 6,
+      "roofline_us": 6.913185185185185,
+      "effective_GBs": 146.27639982759294,
+      "excess_us": 18.607814814814816,
+      "excess_us_per_half": 111.6468888888889,
+      "gguf_weight_bytes": 3481600.0,
+      "runtime_weight_read_bytes": 3686400.0,
+      "activation_state_read_bytes": 21120.0,
+      "read_bytes": 3707520.0,
+      "write_bytes": 25600.0,
+      "tensors": [
+        {
+          "name": "blk.27.hc_ffn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "hc.f.low",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 11.5105,
+      "occurrences_per_half": 6,
+      "roofline_us": 7.170503703703703,
+      "effective_GBs": 336.39476999261547,
+      "excess_us": 4.339996296296297,
+      "excess_us_per_half": 26.039977777777782,
+      "gguf_weight_bytes": 3645440.0,
+      "runtime_weight_read_bytes": 3850240.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 3870720.0,
+      "write_bytes": 1352.0,
+      "tensors": [
+        {
+          "name": "blk.27.hc_ffn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.27.hc_ffn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "hc.f.norm",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 7.812,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.15407407407407409,
+      "effective_GBs": 10.650281618023554,
+      "excess_us": 7.657925925925926,
+      "excess_us_per_half": 45.94755555555555,
+      "gguf_weight_bytes": 40960.0,
+      "runtime_weight_read_bytes": 40960.0,
+      "activation_state_read_bytes": 20480.0,
+      "read_bytes": 61440.0,
+      "write_bytes": 21760.0,
+      "tensors": [
+        {
+          "name": "blk.27.hc_ffn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "moe",
+      "calls": 96,
+      "events_per_call": [
+        2
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 6.355,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.13282592592592593,
+      "effective_GBs": 11.286546026750589,
+      "excess_us": 6.222174074074075,
+      "excess_us_per_half": 37.33304444444445,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 61486.0,
+      "read_bytes": 61486.0,
+      "write_bytes": 10240.0,
+      "tensors": [],
+      "notes": "two kernels: ordered mixture + shared branch combination"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "qsa.attention",
+      "calls": 96,
+      "events_per_call": [
+        3
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 44.8435,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.6474888888888889,
+      "effective_GBs": 7.796982840322455,
+      "excess_us": 44.19601111111111,
+      "excess_us_per_half": 265.17606666666666,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 263048.0,
+      "read_bytes": 263048.0,
+      "write_bytes": 86596.0,
+      "tensors": [],
+      "notes": "three kernels; packet49 split32 partial scratch and count written/read; full16 KV; N=position+1"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "qsa.ik",
+      "calls": 96,
+      "events_per_call": [
+        2
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 6.4575000000000005,
+      "occurrences_per_half": 6,
+      "roofline_us": 1.2311703703703705,
+      "effective_GBs": 102.95501355013549,
+      "excess_us": 5.22632962962963,
+      "excess_us_per_half": 31.35797777777778,
+      "gguf_weight_bytes": 655360.0,
+      "runtime_weight_read_bytes": 655360.0,
+      "activation_state_read_bytes": 7168.0,
+      "read_bytes": 662528.0,
+      "write_bytes": 2304.0,
+      "tensors": [
+        {
+          "name": "blk.27.indexer.k_proj.weight",
+          "type": "BF16",
+          "dimensions": [
+            2560,
+            128
+          ]
+        }
+      ],
+      "notes": "two kernels; Split4 scratch retained"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "qsa.iq",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 9.166,
+      "occurrences_per_half": 6,
+      "roofline_us": 4.865896296296296,
+      "effective_GBs": 286.6663757364172,
+      "excess_us": 4.300103703703704,
+      "excess_us_per_half": 25.800622222222223,
+      "gguf_weight_bytes": 2621440.0,
+      "runtime_weight_read_bytes": 2621440.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 2626560.0,
+      "write_bytes": 1024.0,
+      "tensors": [
+        {
+          "name": "blk.27.indexer.q_proj.weight",
+          "type": "BF16",
+          "dimensions": [
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "qsa.k",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 8.646,
+      "occurrences_per_half": 6,
+      "roofline_us": 3.0454518518518516,
+      "effective_GBs": 190.20865139949106,
+      "excess_us": 5.60054814814815,
+      "excess_us_per_half": 33.6032888888889,
+      "gguf_weight_bytes": 1075200.0,
+      "runtime_weight_read_bytes": 1638400.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 1643520.0,
+      "write_bytes": 1024.0,
+      "tensors": [
+        {
+          "name": "blk.27.attn_k.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "qsa.pool",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 3.333,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.008533333333333334,
+      "effective_GBs": 1.3825382538253825,
+      "excess_us": 3.324466666666667,
+      "excess_us_per_half": 19.946800000000003,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 2304.0,
+      "read_bytes": 2304.0,
+      "write_bytes": 2304.0,
+      "tensors": [],
+      "notes": "historical raw rows, norm and RoPE read only on every fourth token"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "qsa.prepare",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 5.208,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.10358518518518518,
+      "effective_GBs": 10.740399385560675,
+      "excess_us": 5.104414814814815,
+      "excess_us_per_half": 30.62648888888889,
+      "gguf_weight_bytes": 2560.0,
+      "runtime_weight_read_bytes": 2560.0,
+      "activation_state_read_bytes": 26752.0,
+      "read_bytes": 29312.0,
+      "write_bytes": 26624.0,
+      "tensors": [
+        {
+          "name": "blk.27.attn_q_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            256
+          ]
+        },
+        {
+          "name": "blk.27.attn_k_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            256
+          ]
+        },
+        {
+          "name": "blk.27.indexer.q_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            128
+          ]
+        }
+      ],
+      "notes": "includes 32 cos + 32 sin BF16 RoPE row"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "qsa.qgate",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 77.396,
+      "occurrences_per_half": 6,
+      "roofline_us": 72.87277037037038,
+      "effective_GBs": 508.440953020828,
+      "excess_us": 4.5232296296296255,
+      "excess_us_per_half": 27.139377777777753,
+      "gguf_weight_bytes": 25804800.0,
+      "runtime_weight_read_bytes": 39321600.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 39326720.0,
+      "write_bytes": 24576.0,
+      "tensors": [
+        {
+          "name": "blk.27.attn_q.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            12288
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "qsa.select",
+      "calls": 96,
+      "events_per_call": [
+        2
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 14.374500000000001,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.026866666666666667,
+      "effective_GBs": 1.0092872795575496,
+      "excess_us": 14.347633333333334,
+      "excess_us_per_half": 86.0858,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 6224.0,
+      "read_bytes": 6224.0,
+      "write_bytes": 8284.0,
+      "tensors": [],
+      "notes": "context-dependent index scores and selected-id scratch; padded ids extent"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "qsa.v",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 8.437,
+      "occurrences_per_half": 6,
+      "roofline_us": 3.0454518518518516,
+      "effective_GBs": 194.92046936114735,
+      "excess_us": 5.391548148148148,
+      "excess_us_per_half": 32.34928888888889,
+      "gguf_weight_bytes": 1075200.0,
+      "runtime_weight_read_bytes": 1638400.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 1643520.0,
+      "write_bytes": 1024.0,
+      "tensors": [
+        {
+          "name": "blk.27.attn_v.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "route",
+      "calls": 96,
+      "events_per_call": [
+        4
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 19.583,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.013066666666666667,
+      "effective_GBs": 0.36031251595771846,
+      "excess_us": 19.56993333333333,
+      "excess_us_per_half": 117.41959999999999,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 4392.0,
+      "read_bytes": 4392.0,
+      "write_bytes": 2664.0,
+      "tensors": [],
+      "notes": "four stages; input twice, max/sum/exp scratch, final probability read/write and route copies"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "router",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 21.5625,
+      "occurrences_per_half": 6,
+      "roofline_us": 17.32930740740741,
+      "effective_GBs": 433.9861333333334,
+      "excess_us": 4.233192592592591,
+      "excess_us_per_half": 25.399155555555545,
+      "gguf_weight_bytes": 7941120.0,
+      "runtime_weight_read_bytes": 9349120.0,
+      "activation_state_read_bytes": 5120.0,
+      "read_bytes": 9354240.0,
+      "write_bytes": 3586.0,
+      "tensors": [
+        {
+          "name": "blk.27.ffn_gate_inp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            512
+          ]
+        },
+        {
+          "name": "blk.27.ffn_gate_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.27.ffn_up_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.27.ffn_gate_inp_shexp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560
+          ]
+        }
+      ],
+      "notes": "four-member tuple: router + shared gate/up + shared router"
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "shexpact",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 4.167,
+      "occurrences_per_half": 6,
+      "roofline_us": 0.0071111111111111115,
+      "effective_GBs": 0.9215262778977682,
+      "excess_us": 4.159888888888888,
+      "excess_us_per_half": 24.95933333333333,
+      "gguf_weight_bytes": 0.0,
+      "runtime_weight_read_bytes": 0.0,
+      "activation_state_read_bytes": 2560.0,
+      "read_bytes": 2560.0,
+      "write_bytes": 1280.0,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "rank": 1,
+      "layer": 27,
+      "kind": "QSA",
+      "site": "shexpdown",
+      "calls": 96,
+      "events_per_call": [
+        1
+      ],
+      "positions": [
+        67,
+        104
+      ],
+      "measured_call_median_us": 10.938,
+      "occurrences_per_half": 6,
+      "roofline_us": 3.4251851851851853,
+      "effective_GBs": 169.09855549460593,
+      "excess_us": 7.512814814814815,
+      "excess_us_per_half": 45.07688888888889,
+      "gguf_weight_bytes": 1740800.0,
+      "runtime_weight_read_bytes": 1843200.0,
+      "activation_state_read_bytes": 1280.0,
+      "read_bytes": 1844480.0,
+      "write_bytes": 5120.0,
+      "tensors": [
+        {
+          "name": "blk.27.ffn_down_shexp.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            640,
+            2560
+          ]
+        }
+      ],
+      "notes": ""
+    }
+  ],
+  "ranking": [
+    {
+      "rank": 0,
+      "site": "expsgate",
+      "excess_us_per_half": 1279.9458888888887,
+      "measured_us_per_half": 1747.809
+    },
+    {
+      "rank": 0,
+      "site": "expsdown",
+      "excess_us_per_half": 955.0444444444445,
+      "measured_us_per_half": 1367.496
+    },
+    {
+      "rank": 0,
+      "site": "gdn.recurrence",
+      "excess_us_per_half": 539.0249333333334,
+      "measured_us_per_half": 644.9939999999999
+    },
+    {
+      "rank": 0,
+      "site": "route",
+      "excess_us_per_half": 464.0804,
+      "measured_us_per_half": 464.394
+    },
+    {
+      "rank": 0,
+      "site": "hc.f.gate",
+      "excess_us_per_half": 434.08955555555553,
+      "measured_us_per_half": 600.0060000000001
+    },
+    {
+      "rank": 0,
+      "site": "hc.a.gate",
+      "excess_us_per_half": 432.8415555555556,
+      "measured_us_per_half": 598.758
+    },
+    {
+      "rank": 0,
+      "site": "ffn.combine",
+      "excess_us_per_half": 263.8956444444445,
+      "measured_us_per_half": 265.944
+    },
+    {
+      "rank": 0,
+      "site": "qsa.attention",
+      "excess_us_per_half": 262.98906666666664,
+      "measured_us_per_half": 266.874
+    },
+    {
+      "rank": 0,
+      "site": "attention",
+      "excess_us_per_half": 233.3922888888889,
+      "measured_us_per_half": 1113.441
+    },
+    {
+      "rank": 0,
+      "site": "hc.a.norm",
+      "excess_us_per_half": 182.86922222222222,
+      "measured_us_per_half": 186.567
+    },
+    {
+      "rank": 0,
+      "site": "shexpdown",
+      "excess_us_per_half": 180.60755555555556,
+      "measured_us_per_half": 262.812
+    },
+    {
+      "rank": 0,
+      "site": "hc.f.norm",
+      "excess_us_per_half": 180.04622222222224,
+      "measured_us_per_half": 183.74400000000003
+    },
+    {
+      "rank": 0,
+      "site": "moe",
+      "excess_us_per_half": 145.5641777777778,
+      "measured_us_per_half": 148.752
+    },
+    {
+      "rank": 0,
+      "site": "expsact",
+      "excess_us_per_half": 133.60533333333333,
+      "measured_us_per_half": 135.31199999999998
+    },
+    {
+      "rank": 0,
+      "site": "hc.f.low",
+      "excess_us_per_half": 133.21791111111114,
+      "measured_us_per_half": 305.31000000000006
+    },
+    {
+      "rank": 0,
+      "site": "gdn.conv",
+      "excess_us_per_half": 120.33333333333333,
+      "measured_us_per_half": 131.256
+    },
+    {
+      "rank": 0,
+      "site": "router",
+      "excess_us_per_half": 114.4096222222222,
+      "measured_us_per_half": 530.313
+    },
+    {
+      "rank": 0,
+      "site": "shexpact",
+      "excess_us_per_half": 100.14933333333332,
+      "measured_us_per_half": 100.32000000000001
+    },
+    {
+      "rank": 0,
+      "site": "gdn.gated",
+      "excess_us_per_half": 98.13213333333334,
+      "measured_us_per_half": 99.378
+    },
+    {
+      "rank": 0,
+      "site": "hc.a.low",
+      "excess_us_per_half": 97.90791111111112,
+      "measured_us_per_half": 270.0
+    },
+    {
+      "rank": 0,
+      "site": "gdn.a",
+      "excess_us_per_half": 87.05193333333334,
+      "measured_us_per_half": 119.997
+    },
+    {
+      "rank": 0,
+      "site": "qsa.select",
+      "excess_us_per_half": 86.71279999999999,
+      "measured_us_per_half": 86.874
+    },
+    {
+      "rank": 0,
+      "site": "gdn.qkv",
+      "excess_us_per_half": 85.32199999999989,
+      "measured_us_per_half": 1178.442
+    },
+    {
+      "rank": 0,
+      "site": "gdn.z",
+      "excess_us_per_half": 50.937733333333384,
+      "measured_us_per_half": 706.878
+    },
+    {
+      "rank": 0,
+      "site": "qsa.k",
+      "excess_us_per_half": 32.34928888888889,
+      "measured_us_per_half": 50.622
+    },
+    {
+      "rank": 0,
+      "site": "qsa.v",
+      "excess_us_per_half": 31.725288888888894,
+      "measured_us_per_half": 49.998000000000005
+    },
+    {
+      "rank": 0,
+      "site": "qsa.ik",
+      "excess_us_per_half": 30.736977777777778,
+      "measured_us_per_half": 38.124
+    },
+    {
+      "rank": 0,
+      "site": "qsa.prepare",
+      "excess_us_per_half": 29.37848888888889,
+      "measured_us_per_half": 30.0
+    },
+    {
+      "rank": 0,
+      "site": "qsa.iq",
+      "excess_us_per_half": 25.17962222222222,
+      "measured_us_per_half": 54.375
+    },
+    {
+      "rank": 0,
+      "site": "qsa.qgate",
+      "excess_us_per_half": 24.640377777777758,
+      "measured_us_per_half": 461.877
+    },
+    {
+      "rank": 0,
+      "site": "qsa.pool",
+      "excess_us_per_half": 17.7628,
+      "measured_us_per_half": 17.814
+    },
+    {
+      "rank": 1,
+      "site": "expsgate",
+      "excess_us_per_half": 1294.0188888888888,
+      "measured_us_per_half": 1761.882
+    },
+    {
+      "rank": 1,
+      "site": "expsdown",
+      "excess_us_per_half": 973.1704444444445,
+      "measured_us_per_half": 1385.6219999999998
+    },
+    {
+      "rank": 1,
+      "site": "gdn.recurrence",
+      "excess_us_per_half": 522.1589333333334,
+      "measured_us_per_half": 628.128
+    },
+    {
+      "rank": 1,
+      "site": "route",
+      "excess_us_per_half": 478.12039999999996,
+      "measured_us_per_half": 478.43399999999997
+    },
+    {
+      "rank": 1,
+      "site": "hc.a.gate",
+      "excess_us_per_half": 432.8355555555555,
+      "measured_us_per_half": 598.752
+    },
+    {
+      "rank": 1,
+      "site": "hc.f.gate",
+      "excess_us_per_half": 429.7035555555555,
+      "measured_us_per_half": 595.62
+    },
+    {
+      "rank": 1,
+      "site": "attention",
+      "excess_us_per_half": 283.0692888888889,
+      "measured_us_per_half": 1163.118
+    },
+    {
+      "rank": 1,
+      "site": "qsa.attention",
+      "excess_us_per_half": 265.17606666666666,
+      "measured_us_per_half": 269.061
+    },
+    {
+      "rank": 1,
+      "site": "ffn.combine",
+      "excess_us_per_half": 262.95964444444445,
+      "measured_us_per_half": 265.008
+    },
+    {
+      "rank": 1,
+      "site": "hc.a.norm",
+      "excess_us_per_half": 219.73922222222217,
+      "measured_us_per_half": 223.43699999999998
+    },
+    {
+      "rank": 1,
+      "site": "shexpdown",
+      "excess_us_per_half": 187.80455555555557,
+      "measured_us_per_half": 270.009
+    },
+    {
+      "rank": 1,
+      "site": "hc.f.norm",
+      "excess_us_per_half": 183.80822222222218,
+      "measured_us_per_half": 187.50599999999997
+    },
+    {
+      "rank": 1,
+      "site": "moe",
+      "excess_us_per_half": 151.1861777777778,
+      "measured_us_per_half": 154.374
+    },
+    {
+      "rank": 1,
+      "site": "expsact",
+      "excess_us_per_half": 133.91733333333335,
+      "measured_us_per_half": 135.624
+    },
+    {
+      "rank": 1,
+      "site": "gdn.conv",
+      "excess_us_per_half": 122.20533333333333,
+      "measured_us_per_half": 133.128
+    },
+    {
+      "rank": 1,
+      "site": "router",
+      "excess_us_per_half": 112.85562222222217,
+      "measured_us_per_half": 528.759
+    },
+    {
+      "rank": 1,
+      "site": "hc.a.low",
+      "excess_us_per_half": 107.91591111111114,
+      "measured_us_per_half": 280.00800000000004
+    },
+    {
+      "rank": 1,
+      "site": "hc.f.low",
+      "excess_us_per_half": 106.95891111111112,
+      "measured_us_per_half": 279.051
+    },
+    {
+      "rank": 1,
+      "site": "gdn.gated",
+      "excess_us_per_half": 100.00413333333334,
+      "measured_us_per_half": 101.25
+    },
+    {
+      "rank": 1,
+      "site": "shexpact",
+      "excess_us_per_half": 99.81933333333333,
+      "measured_us_per_half": 99.99
+    },
+    {
+      "rank": 1,
+      "site": "gdn.a",
+      "excess_us_per_half": 90.80493333333334,
+      "measured_us_per_half": 123.75
+    },
+    {
+      "rank": 1,
+      "site": "qsa.select",
+      "excess_us_per_half": 86.0858,
+      "measured_us_per_half": 86.24700000000001
+    },
+    {
+      "rank": 1,
+      "site": "gdn.z",
+      "excess_us_per_half": 54.681733333333355,
+      "measured_us_per_half": 710.622
+    },
+    {
+      "rank": 1,
+      "site": "gdn.qkv",
+      "excess_us_per_half": 54.379999999999995,
+      "measured_us_per_half": 1147.5
+    },
+    {
+      "rank": 1,
+      "site": "qsa.k",
+      "excess_us_per_half": 33.6032888888889,
+      "measured_us_per_half": 51.876000000000005
+    },
+    {
+      "rank": 1,
+      "site": "qsa.v",
+      "excess_us_per_half": 32.34928888888889,
+      "measured_us_per_half": 50.622
+    },
+    {
+      "rank": 1,
+      "site": "qsa.ik",
+      "excess_us_per_half": 31.35797777777778,
+      "measured_us_per_half": 38.745000000000005
+    },
+    {
+      "rank": 1,
+      "site": "qsa.prepare",
+      "excess_us_per_half": 30.62648888888889,
+      "measured_us_per_half": 31.248
+    },
+    {
+      "rank": 1,
+      "site": "qsa.qgate",
+      "excess_us_per_half": 27.139377777777753,
+      "measured_us_per_half": 464.376
+    },
+    {
+      "rank": 1,
+      "site": "qsa.iq",
+      "excess_us_per_half": 25.800622222222223,
+      "measured_us_per_half": 54.996
+    },
+    {
+      "rank": 1,
+      "site": "qsa.pool",
+      "excess_us_per_half": 19.946800000000003,
+      "measured_us_per_half": 19.998
+    }
+  ],
+  "outside_layer_work": [
+    {
+      "rank": 0,
+      "site": "embedding lookup",
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "read_bytes": 2100,
+      "write_bytes": 5120,
+      "tensors": [],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": null,
+      "notes": "one Q6_K packed row on CPU; not HBM; BF16 output uploaded"
+    },
+    {
+      "rank": 0,
+      "site": "streams broadcast",
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "read_bytes": 5120,
+      "write_bytes": 20480,
+      "tensors": [],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": 0.047407407407407405,
+      "notes": "one per rank0 half"
+    },
+    {
+      "rank": 0,
+      "site": "speculative capture",
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "read_bytes": 48627432,
+      "write_bytes": 48627432,
+      "tensors": [],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": 180.1016,
+      "notes": "per capture from speculative-snapshot telemetry; excludes corrected-only execution"
+    },
+    {
+      "rank": 0,
+      "site": "corrected redo restore",
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "read_bytes": 19025640,
+      "write_bytes": 19025640,
+      "tensors": [],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": 70.46533333333333,
+      "notes": "per miss redo; not every half; accepted speculative result needs no restore"
+    },
+    {
+      "rank": 0,
+      "site": "PLE lookup",
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "read_bytes": 1440,
+      "write_bytes": 5120,
+      "tensors": [],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": null,
+      "notes": "16 IQ4_NL packed rows on CPU; not HBM; singleton blk.1 work omitted by sampled layers"
+    },
+    {
+      "rank": 0,
+      "site": "PLE key",
+      "gguf_weight_bytes": 27852800,
+      "runtime_weight_read_bytes": 29491200,
+      "read_bytes": 29496320,
+      "write_bytes": 20480,
+      "tensors": [
+        {
+          "name": "blk.1.ple_key.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            2560,
+            10240
+          ]
+        }
+      ],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": 54.66074074074074,
+      "notes": "singleton blk.1; timing absent"
+    },
+    {
+      "rank": 0,
+      "site": "PLE value",
+      "gguf_weight_bytes": 6963200,
+      "runtime_weight_read_bytes": 7372800,
+      "read_bytes": 7377920,
+      "write_bytes": 5120,
+      "tensors": [
+        {
+          "name": "blk.1.ple_value.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            2560,
+            2560
+          ]
+        }
+      ],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": 13.672296296296297,
+      "notes": "singleton blk.1; timing absent"
+    },
+    {
+      "rank": 0,
+      "site": "PLE three norms",
+      "gguf_weight_bytes": 122880,
+      "runtime_weight_read_bytes": 122880,
+      "read_bytes": 188160,
+      "write_bytes": 65280,
+      "tensors": [
+        {
+          "name": "blk.1.ple_norm_key.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        },
+        {
+          "name": "blk.1.ple_norm_query.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        },
+        {
+          "name": "blk.1.ple_norm_conv.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": 0.4693333333333333,
+      "notes": "three two-stage norms"
+    },
+    {
+      "rank": 0,
+      "site": "PLE convolution",
+      "gguf_weight_bytes": 163840,
+      "runtime_weight_read_bytes": 163840,
+      "read_bytes": 368640,
+      "write_bytes": 204800,
+      "tensors": [
+        {
+          "name": "blk.1.ple_conv1d.weight",
+          "type": "F32",
+          "dimensions": [
+            4,
+            10240
+          ]
+        }
+      ],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": 1.061925925925926,
+      "notes": "nine BF16 history rows; four taps, dilation three"
+    },
+    {
+      "rank": 0,
+      "site": "PLE gate and add",
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "read_bytes": 107520,
+      "write_bytes": 40960,
+      "tensors": [],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": 0.27496296296296296,
+      "notes": "gate reads key/query/value; add reads streams/gated/conv"
+    },
+    {
+      "rank": 0,
+      "site": "PLE hash/history",
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "read_bytes": 300,
+      "write_bytes": 144,
+      "tensors": [],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": null,
+      "notes": "CPU token/history/metadata; not HBM"
+    },
+    {
+      "rank": 1,
+      "site": "final norm",
+      "gguf_weight_bytes": 40960,
+      "runtime_weight_read_bytes": 40960,
+      "read_bytes": 62720,
+      "write_bytes": 21760,
+      "tensors": [
+        {
+          "name": "output_hc_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": 0.15644444444444444,
+      "notes": "two-stage original final HC norm"
+    },
+    {
+      "rank": 1,
+      "site": "final low + activation",
+      "gguf_weight_bytes": 3481600,
+      "runtime_weight_read_bytes": 3686400,
+      "read_bytes": 3706880,
+      "write_bytes": 1280,
+      "tensors": [
+        {
+          "name": "output_hc_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        }
+      ],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": 6.866962962962963,
+      "notes": "local Split4 partials; fused activation retains BF16 boundary"
+    },
+    {
+      "rank": 1,
+      "site": "final gate",
+      "gguf_weight_bytes": 3481600,
+      "runtime_weight_read_bytes": 3686400,
+      "read_bytes": 3687040,
+      "write_bytes": 20480,
+      "tensors": [
+        {
+          "name": "output_hc_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": 6.865777777777778,
+      "notes": "final HC is not target-layer p60 fusion"
+    },
+    {
+      "rank": 1,
+      "site": "final mix",
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "read_bytes": 40960,
+      "write_bytes": 5120,
+      "tensors": [],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": 0.08533333333333333,
+      "notes": "four-stream ordered mix"
+    },
+    {
+      "rank": 1,
+      "site": "target logits",
+      "gguf_weight_bytes": 521472000,
+      "runtime_weight_read_bytes": 794624000,
+      "read_bytes": 794629120,
+      "write_bytes": 496640,
+      "tensors": [
+        {
+          "name": "output.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            248320
+          ]
+        }
+      ],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": 1472.4551111111111,
+      "notes": "full 248320 rows; draft-only prefix never applies here"
+    },
+    {
+      "rank": 1,
+      "site": "target argmax",
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "read_bytes": 499070,
+      "write_bytes": 1948,
+      "tensors": [],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": 0.9278111111111111,
+      "notes": "243 chunks; scratch+selected BF16 candidate logits reread by final stage"
+    },
+    {
+      "rank": 1,
+      "site": "rank handoff",
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "read_bytes": 20484,
+      "write_bytes": 20484,
+      "tensors": [],
+      "measured_call_median_us": null,
+      "effective_GBs": null,
+      "excess_us_per_half": null,
+      "roofline_us": null,
+      "notes": "PCIe/host stream+token handoff, not same-card 540 GB/s"
+    }
+  ],
+  "measured_outside_remainders": [
+    {
+      "rank": 0,
+      "role": "rank0_speculative",
+      "control_half_mean_us": 14232.544999837652,
+      "instrumented_half_mean_us": 14893.849874776302,
+      "instrumented_layer_span": {
+        "count": 96,
+        "mean_us": 12547.505458333333,
+        "median_us": 12539.6875,
+        "min_us": 12513.542,
+        "max_us": 12624.688
+      },
+      "instrumented_outside_layer": {
+        "count": 96,
+        "mean_us": 2346.3444164429698,
+        "median_us": 2298.2305019259975,
+        "min_us": 2222.1090077841654,
+        "max_us": 2689.9110002524994
+      },
+      "estimated_scaled_outside_layer_us": 2237.456102858871,
+      "negative_remainder": false,
+      "measured": true,
+      "excluded_partial_or_cancelled_spans": 0,
+      "definition": "host half command duration minus same-card first-layer-start to last-layer-end GPU span; includes snapshot, preparation, head and handoff outside the layer region; not GPU idle"
+    },
+    {
+      "rank": 0,
+      "role": "rank0_corrected",
+      "control_half_mean_us": 12992.10880024475,
+      "instrumented_half_mean_us": 13638.6276986741,
+      "instrumented_layer_span": {
+        "count": 20,
+        "mean_us": 12536.13545,
+        "median_us": 12531.042000000001,
+        "min_us": 12514.167,
+        "max_us": 12596.562
+      },
+      "instrumented_outside_layer": {
+        "count": 20,
+        "mean_us": 1102.4922486740998,
+        "median_us": 1088.5609925583449,
+        "min_us": 1045.0789973657647,
+        "max_us": 1243.2200029952382
+      },
+      "estimated_scaled_outside_layer_us": 1051.3281821984474,
+      "negative_remainder": false,
+      "measured": true,
+      "excluded_partial_or_cancelled_spans": 0,
+      "definition": "host half command duration minus same-card first-layer-start to last-layer-end GPU span; includes snapshot, preparation, head and handoff outside the layer region; not GPU idle"
+    },
+    {
+      "rank": 1,
+      "role": "rank1_target",
+      "control_half_mean_us": 14685.540238739728,
+      "instrumented_half_mean_us": 15441.214166609521,
+      "instrumented_layer_span": {
+        "count": 96,
+        "mean_us": 12360.415552083334,
+        "median_us": 12350.884999999998,
+        "min_us": 12297.812,
+        "max_us": 12568.855
+      },
+      "instrumented_outside_layer": {
+        "count": 96,
+        "mean_us": 3080.7986145261884,
+        "median_us": 3024.179005034369,
+        "min_us": 2948.8300005113706,
+        "max_us": 3621.174991875887
+      },
+      "estimated_scaled_outside_layer_us": 2937.8260128582106,
+      "negative_remainder": false,
+      "measured": true,
+      "excluded_partial_or_cancelled_spans": 0,
+      "definition": "host half command duration minus same-card first-layer-start to last-layer-end GPU span; includes snapshot, preparation, head and handoff outside the layer region; not GPU idle"
+    }
+  ],
+  "draft_breakdown": [
+    {
+      "rank": 1,
+      "layer_type": "draft",
+      "speculative": false,
+      "category": "argmax",
+      "measured": {
+        "count": 96,
+        "mean_us": 21.047208333333334,
+        "median_us": 21.042,
+        "min_us": 20.625,
+        "max_us": 21.563
+      },
+      "estimated_scaled_mean_us": 20.609014315084732,
+      "scale_factor": 0.9791804209228729,
+      "scaled_is_measurement": false,
+      "excluded_partial_layers": 0
+    },
+    {
+      "rank": 1,
+      "layer_type": "draft",
+      "speculative": false,
+      "category": "attention",
+      "measured": {
+        "count": 96,
+        "mean_us": 388.1140208333333,
+        "median_us": 384.584,
+        "min_us": 371.45900000000006,
+        "max_us": 417.1859999999999
+      },
+      "estimated_scaled_mean_us": 380.033650285652,
+      "scale_factor": 0.9791804209228729,
+      "scaled_is_measurement": false,
+      "excluded_partial_layers": 0
+    },
+    {
+      "rank": 1,
+      "layer_type": "draft",
+      "speculative": false,
+      "category": "embedding_ple",
+      "measured": {
+        "count": 96,
+        "mean_us": 61.46265625,
+        "median_us": 60.4165,
+        "min_us": 58.958,
+        "max_us": 65.729
+      },
+      "estimated_scaled_mean_us": 60.18302961791285,
+      "scale_factor": 0.9791804209228729,
+      "scaled_is_measurement": false,
+      "excluded_partial_layers": 0
+    },
+    {
+      "rank": 1,
+      "layer_type": "draft",
+      "speculative": false,
+      "category": "hc_norm_merge",
+      "measured": {
+        "count": 96,
+        "mean_us": 337.0510625,
+        "median_us": 336.56399999999996,
+        "min_us": 333.021,
+        "max_us": 370.20599999999996
+      },
+      "estimated_scaled_mean_us": 330.03380125125153,
+      "scale_factor": 0.9791804209228729,
+      "scaled_is_measurement": false,
+      "excluded_partial_layers": 0
+    },
+    {
+      "rank": 1,
+      "layer_type": "draft",
+      "speculative": false,
+      "category": "head_prefix",
+      "measured": {
+        "count": 96,
+        "mean_us": 521.2999479166667,
+        "median_us": 520.573,
+        "min_us": 519.895,
+        "max_us": 552.7090000000001
+      },
+      "estimated_scaled_mean_us": 510.44670242811344,
+      "scale_factor": 0.9791804209228729,
+      "scaled_is_measurement": false,
+      "excluded_partial_layers": 0
+    },
+    {
+      "rank": 1,
+      "layer_type": "draft",
+      "speculative": false,
+      "category": "moe_experts",
+      "measured": {
+        "count": 96,
+        "mean_us": 251.33064583333334,
+        "median_us": 250.78299999999996,
+        "min_us": 248.33500000000004,
+        "max_us": 283.959
+      },
+      "estimated_scaled_mean_us": 246.09804757790084,
+      "scale_factor": 0.9791804209228729,
+      "scaled_is_measurement": false,
+      "excluded_partial_layers": 0
+    },
+    {
+      "rank": 1,
+      "layer_type": "draft",
+      "speculative": false,
+      "category": "other",
+      "measured": {
+        "count": 96,
+        "mean_us": 5.925645833333333,
+        "median_us": 5.833,
+        "min_us": 5.105,
+        "max_us": 6.8759999999999994
+      },
+      "estimated_scaled_mean_us": 5.8022763813232014,
+      "scale_factor": 0.9791804209228729,
+      "scaled_is_measurement": false,
+      "excluded_partial_layers": 0
+    },
+    {
+      "rank": 1,
+      "layer_type": "draft",
+      "speculative": false,
+      "category": "shared_expert",
+      "measured": {
+        "count": 96,
+        "mean_us": 44.1361875,
+        "median_us": 44.1145,
+        "min_us": 43.125,
+        "max_us": 45.104
+      },
+      "estimated_scaled_mean_us": 43.21729065418084,
+      "scale_factor": 0.9791804209228729,
+      "scaled_is_measurement": false,
+      "excluded_partial_layers": 0
+    },
+    {
+      "rank": 1,
+      "layer_type": "draft",
+      "speculative": false,
+      "category": "transfers",
+      "measured": {
+        "count": 96,
+        "mean_us": 2.7994791666666665,
+        "median_us": 1.9789999999999999,
+        "min_us": 1.77,
+        "max_us": 5.0
+      },
+      "estimated_scaled_mean_us": 2.74119518878148,
+      "scale_factor": 0.9791804209228729,
+      "scaled_is_measurement": false,
+      "excluded_partial_layers": 0
+    }
+  ]
+}

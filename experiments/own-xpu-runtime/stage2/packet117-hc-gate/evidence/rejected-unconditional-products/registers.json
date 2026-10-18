@@ -1,0 +1,118 @@
+{
+  "schema": "packet117.linked-aot-inspection.v1",
+  "passed": true,
+  "device_executed": false,
+  "command": [
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+    "-std=c++20",
+    "-O2",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-fdenormal-fp-math=ieee",
+    "-foffload-fp32-prec-div",
+    "-foffload-fp32-prec-sqrt",
+    "-fsycl",
+    "-fsycl-targets=spir64_gen",
+    "-fsycl-device-code-split=per_source",
+    "-fPIC",
+    "-shared",
+    "-Xs",
+    "-device bmg-g31 -options \"-ze-fp32-correctly-rounded-divide-sqrt -ze-opt-print-spill\"",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/checked/experiments/own-xpu-runtime/stage2/packet117-hc-gate/image.cpp",
+    "-o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate/build/hc-image.so"
+  ],
+  "kernels": [
+    {
+      "name": "//.kernel _ZTSZZN5p73hc6deviceERN4sycl3_V15queueEN3p605BoundERKSt6vectorINS1_5eventESaIS7_EEENKUlRNS1_7handlerEE_clESD_EUlNS1_7nd_itemILi1EEEE_",
+      "grf": 128,
+      "spill_metadata": [],
+      "scratch_messages": 0,
+      "assembly": "evidence/OCL_asmbf898e6f0c3a147b_simd32_entry_0001.asm.gz",
+      "sha256": "6d51219376c17cca3500d47e8275aeaf337b55c93778e81c215e6c929c9b2178"
+    },
+    {
+      "name": "//.kernel _ZTSZZN6p117hc6deviceERN4sycl3_V15queueEN3p605BoundERKSt6vectorINS1_5eventESaIS7_EEENKUlRNS1_7handlerEE_clESD_EUlNS1_7nd_itemILi1EEEE_",
+      "grf": 128,
+      "spill_metadata": [],
+      "scratch_messages": 0,
+      "assembly": "evidence/OCL_asmbf898e6f0c3a147b_simd32_entry_0002.asm.gz",
+      "sha256": "68dc41117ccc546b894aacf2f4f3dea22ceca0e93419019dac6abaa5566882bd"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK4p49c11RouteKernelILj1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "grf": 128,
+      "spill_metadata": [],
+      "scratch_messages": 0,
+      "assembly": "evidence/OCL_asmbf898e6f0c3a147b_simd32_entry_0003.asm.gz",
+      "sha256": "a42acf4cacc057b4dbb414c6e06e9b27d6b395095d8479d199bd8392242a3112"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK4p49c11RouteKernelILj2EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_7nd_itemILi1EEEE_",
+      "grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 9",
+        "//.spill flag load 27"
+      ],
+      "scratch_messages": 0,
+      "assembly": "evidence/OCL_asmbf898e6f0c3a147b_simd32_entry_0004.asm.gz",
+      "sha256": "c449a5242fcec62777dac8deb8054b964648f730b909c8776d94dffa20bce55f"
+    },
+    {
+      "name": "//.kernel _ZTSN4sycl3_V16detail18RoundedRangeKernelINS0_4itemILi1ELb1EEELi1EZZNK4p49c11RouteKernelILj0EE6submitERNS0_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS0_5eventESaISF_EEENKUlRNS0_7handlerEE_clESL_EUlNS0_2idILi1EEEE_EE",
+      "grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 3",
+        "//.spill flag load 3"
+      ],
+      "scratch_messages": 0,
+      "assembly": "evidence/OCL_asmf7ebc3bc705943ab_simd32_entry_0001.asm.gz",
+      "sha256": "7a9a37352713443aeb8dfee88847f479ae81026039028317da8894a1e04c2e0e"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK4p49c11RouteKernelILj0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_2idILi1EEEE_",
+      "grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 3",
+        "//.spill flag load 3"
+      ],
+      "scratch_messages": 0,
+      "assembly": "evidence/OCL_asmf7ebc3bc705943ab_simd32_entry_0002.asm.gz",
+      "sha256": "b4de2560cc4366bfdb171f3ed33d0b937c1e745d837bb58dc6215b6dadb6901f"
+    },
+    {
+      "name": "//.kernel _ZTSN4sycl3_V16detail18RoundedRangeKernelINS0_4itemILi1ELb1EEELi1EZZNK4p49c11RouteKernelILj4EE6submitERNS0_5queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS0_5eventESaISF_EEENKUlRNS0_7handlerEE_clESL_EUlNS0_2idILi1EEEE_EE",
+      "grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 68",
+        "//.spill flag load 427"
+      ],
+      "scratch_messages": 0,
+      "assembly": "evidence/OCL_asmf7ebc3bc705943ab_simd32_entry_0003.asm.gz",
+      "sha256": "4f4ceccdde5a1eae86c66be71888d6d06aa89b4a4fff94e7fbb42800911dcbb6"
+    },
+    {
+      "name": "//.kernel _ZTSZZNK4p49c11RouteKernelILj4EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS3_5eventESaISB_EEENKUlRNS3_7handlerEE_clESH_EUlNS3_2idILi1EEEE_",
+      "grf": 128,
+      "spill_metadata": [
+        "//.spill flag store 3",
+        "//.spill flag load 60"
+      ],
+      "scratch_messages": 0,
+      "assembly": "evidence/OCL_asmf7ebc3bc705943ab_simd32_entry_0004.asm.gz",
+      "sha256": "7b34f198867475f766d404e84613d0d3509f65cc2680c197bf3b57488bfc171b"
+    }
+  ],
+  "zeinfo": [
+    {
+      "path": "evidence/OCL_asmbf898e6f0c3a147b.zeinfo.gz",
+      "sha256": "1fbe4cee8a2dd2247bd12f7c4814e9410460d1c4cdb0bb120ba337ff03cf382d"
+    },
+    {
+      "path": "evidence/OCL_asmf7ebc3bc705943ab.zeinfo.gz",
+      "sha256": "87a6b3f3a91db4894a894698b4c651a81027223b063b6ba743420b390965692d"
+    }
+  ],
+  "artifact_sha256": "82f97b40778198c93fbcf06b8810c6b93222167257c4afd172a961ac29ff647b",
+  "max_rss_kib": 380032
+}

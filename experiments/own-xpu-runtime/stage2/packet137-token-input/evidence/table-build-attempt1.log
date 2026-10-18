@@ -1,0 +1,8 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/table_cpu.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/token_input.hpp: In function ‘void p137::decode(iq3::Type, const uint8_t*, size_t, uint16_t*)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/token_input.hpp:23:38: error: ‘isfinite’ is not a member of ‘std’
+   23 |      out[base+i]=iq3::bf16_bits(std::isfinite(scale)?scale*float((low|(high<<4))-32):iq3::decode(type,raw,i));
+      |                                      ^~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/token_input.hpp:29:62: error: ‘isfinite’ is not a member of ‘std’
+   29 |    for(unsigned i=0;i<32;++i)out[base+i]=iq3::bf16_bits(std::isfinite(d)?d*float(levels[(raw[2+i%16]>>(4*(i/16)))&15]):iq3::decode(type,raw,i));
+      |                                                              ^~~~~~~~

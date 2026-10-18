@@ -1,0 +1,173 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "services_started": false,
+  "live_queue_changed": false,
+  "checks": 10,
+  "records": [
+    {
+      "mode": "bracket",
+      "command": [
+        "bash",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/launch-proposed.sh",
+        "bracket",
+        "--plan",
+        "2026-01-01T00:00:00Z",
+        "/usr/lib/x86_64-linux-gnu"
+      ],
+      "passed": true,
+      "output_created": false
+    },
+    {
+      "mode": "record",
+      "command": [
+        "bash",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/launch-proposed.sh",
+        "record",
+        "--plan",
+        "2026-01-01T00:00:00Z",
+        "/usr/lib/x86_64-linux-gnu"
+      ],
+      "passed": true,
+      "output_created": false
+    },
+    {
+      "view": "production",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/queue_runner.py",
+        "--view",
+        "production",
+        "--output-root",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/evidence/plan-never-created-production",
+        "--faults-reviewed-through",
+        "2026-01-01T00:00:00Z",
+        "--plan"
+      ],
+      "passed": true,
+      "output_created": false
+    },
+    {
+      "view": "rec-both-plus",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/queue_runner.py",
+        "--view",
+        "rec-both-plus",
+        "--output-root",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/evidence/plan-never-created-rec-both-plus",
+        "--faults-reviewed-through",
+        "2026-01-01T00:00:00Z",
+        "--plan"
+      ],
+      "passed": true,
+      "output_created": false
+    },
+    {
+      "view": "route-fast",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/queue_runner.py",
+        "--view",
+        "route-fast",
+        "--output-root",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/evidence/plan-never-created-route-fast",
+        "--faults-reviewed-through",
+        "2026-01-01T00:00:00Z",
+        "--plan"
+      ],
+      "passed": true,
+      "output_created": false
+    },
+    {
+      "view": "route-fast+rec-both-plus",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/queue_runner.py",
+        "--view",
+        "route-fast+rec-both-plus",
+        "--output-root",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/evidence/plan-never-created-route-fast+rec-both-plus",
+        "--faults-reviewed-through",
+        "2026-01-01T00:00:00Z",
+        "--plan"
+      ],
+      "passed": true,
+      "output_created": false
+    },
+    {
+      "view": "down-tile16",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/queue_runner.py",
+        "--view",
+        "down-tile16",
+        "--output-root",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/evidence/plan-never-created-down-tile16",
+        "--faults-reviewed-through",
+        "2026-01-01T00:00:00Z",
+        "--plan"
+      ],
+      "passed": true,
+      "output_created": false
+    },
+    {
+      "view": "down-tile16+rec-both-plus",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/queue_runner.py",
+        "--view",
+        "down-tile16+rec-both-plus",
+        "--output-root",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/evidence/plan-never-created-down-tile16+rec-both-plus",
+        "--faults-reviewed-through",
+        "2026-01-01T00:00:00Z",
+        "--plan"
+      ],
+      "passed": true,
+      "output_created": false
+    },
+    {
+      "view": "down-tile16+route-fast",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/queue_runner.py",
+        "--view",
+        "down-tile16+route-fast",
+        "--output-root",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/evidence/plan-never-created-down-tile16+route-fast",
+        "--faults-reviewed-through",
+        "2026-01-01T00:00:00Z",
+        "--plan"
+      ],
+      "passed": true,
+      "output_created": false
+    },
+    {
+      "view": "port",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/queue_runner.py",
+        "--view",
+        "port",
+        "--output-root",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/evidence/plan-never-created-port",
+        "--faults-reviewed-through",
+        "2026-01-01T00:00:00Z",
+        "--plan"
+      ],
+      "passed": true,
+      "output_created": false
+    }
+  ],
+  "fault_boundary": "Inert historical fixture for plan-only validation; no device authorization.",
+  "build_receipt_sha256": "a6e9a764d26c40e7fbba322c7d7bfcd8e4c8dcb52bc2ca481ebc44867c74bb28"
+}

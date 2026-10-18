@@ -1,0 +1,767 @@
+{
+  "schema": "packet122.draft-budget.v1",
+  "diagnostic_only": true,
+  "measured": false,
+  "processes": [
+    null,
+    null
+  ],
+  "contexts": {
+    "128": {
+      "draft.merge.embedding_norm": {
+        "weight_bytes": 10240,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 5120,
+        "useful_bytes": 20480,
+        "reference_us": 0.0369009009009009,
+        "note": "FP32 converted gain; unique BF16 input/output"
+      },
+      "draft.merge.hidden_norm": {
+        "weight_bytes": 40960,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 20480,
+        "useful_bytes": 81920,
+        "reference_us": 0.1476036036036036,
+        "note": "original padded norm; reduction scratch excluded"
+      },
+      "draft.merge.embedding_projected": {
+        "weight_bytes": 13107200,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 5120,
+        "useful_bytes": 13117440,
+        "reference_us": 23.63502702702703,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.merge.projected": {
+        "weight_bytes": 13107200,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 20480,
+        "useful_bytes": 13148160,
+        "reference_us": 23.69037837837838,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.merge.add": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 25600,
+        "write_bytes": 20480,
+        "useful_bytes": 46080,
+        "reference_us": 0.08302702702702702,
+        "note": ""
+      },
+      "draft.begin.0": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 8,
+        "write_bytes": 4,
+        "useful_bytes": 12,
+        "reference_us": 2.162162162162162e-05,
+        "note": ""
+      },
+      "draft.blk.0.hc.a.norm": {
+        "weight_bytes": 40960,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 20480,
+        "useful_bytes": 81920,
+        "reference_us": 0.1476036036036036,
+        "note": "unique bytes, repeated norm input reads and scratch excluded"
+      },
+      "draft.blk.0.hc.a.low": {
+        "weight_bytes": 6553600,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 1280,
+        "useful_bytes": 6575360,
+        "reference_us": 11.847495495495496,
+        "note": "includes original low output and fused activation output"
+      },
+      "draft.blk.0.hc.a.gate": {
+        "weight_bytes": 6553600,
+        "activation_state_read_bytes": 21120,
+        "write_bytes": 25600,
+        "useful_bytes": 6600320,
+        "reference_us": 11.892468468468469,
+        "note": "includes gate and fused four-stream mixture; candidate keeps all bytes"
+      },
+      "draft.blk.0.hc.a.inject": {
+        "weight_bytes": 81920,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 8,
+        "useful_bytes": 102408,
+        "reference_us": 0.18451891891891892,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.hc.f.norm": {
+        "weight_bytes": 40960,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 20480,
+        "useful_bytes": 81920,
+        "reference_us": 0.1476036036036036,
+        "note": "unique bytes, repeated norm input reads and scratch excluded"
+      },
+      "draft.blk.0.hc.f.low": {
+        "weight_bytes": 6553600,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 1280,
+        "useful_bytes": 6575360,
+        "reference_us": 11.847495495495496,
+        "note": "includes original low output and fused activation output"
+      },
+      "draft.blk.0.hc.f.gate": {
+        "weight_bytes": 6553600,
+        "activation_state_read_bytes": 21120,
+        "write_bytes": 25600,
+        "useful_bytes": 6600320,
+        "reference_us": 11.892468468468469,
+        "note": "includes gate and fused four-stream mixture; candidate keeps all bytes"
+      },
+      "draft.blk.0.hc.f.inject": {
+        "weight_bytes": 81920,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 8,
+        "useful_bytes": 102408,
+        "reference_us": 0.18451891891891892,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.final.norm": {
+        "weight_bytes": 40960,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 20480,
+        "useful_bytes": 81920,
+        "reference_us": 0.1476036036036036,
+        "note": "unique bytes, repeated norm input reads and scratch excluded"
+      },
+      "draft.final.low": {
+        "weight_bytes": 6553600,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 1280,
+        "useful_bytes": 6575360,
+        "reference_us": 11.847495495495496,
+        "note": "includes original low output and fused activation output"
+      },
+      "draft.final.gate": {
+        "weight_bytes": 6553600,
+        "activation_state_read_bytes": 21120,
+        "write_bytes": 25600,
+        "useful_bytes": 6600320,
+        "reference_us": 11.892468468468469,
+        "note": "includes gate and fused four-stream mixture; candidate keeps all bytes"
+      },
+      "draft.blk.0.qsa.qgate": {
+        "weight_bytes": 62914560,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 24576,
+        "useful_bytes": 62944256,
+        "reference_us": 113.41307387387387,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.qsa.k": {
+        "weight_bytes": 2621440,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 1024,
+        "useful_bytes": 2627584,
+        "reference_us": 4.734385585585586,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.qsa.v": {
+        "weight_bytes": 2621440,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 1024,
+        "useful_bytes": 2627584,
+        "reference_us": 4.734385585585586,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.qsa.iq": {
+        "weight_bytes": 2621440,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 1024,
+        "useful_bytes": 2627584,
+        "reference_us": 4.734385585585586,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.qsa.ik": {
+        "weight_bytes": 655360,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 256,
+        "useful_bytes": 660736,
+        "reference_us": 1.1905153153153154,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.qsa.prepare": {
+        "weight_bytes": 2560,
+        "activation_state_read_bytes": 26752,
+        "write_bytes": 26624,
+        "useful_bytes": 55936,
+        "reference_us": 0.10078558558558559,
+        "note": "converted gains; one useful RoPE row"
+      },
+      "draft.blk.0.qsa.pool": {
+        "weight_bytes": 512,
+        "activation_state_read_bytes": 3200,
+        "write_bytes": 2560,
+        "useful_bytes": 6272,
+        "reference_us": 0.011300900900900902,
+        "note": "both requested contexts append a pooled row; three prior raw rows"
+      },
+      "draft.blk.0.qsa.select": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 9216,
+        "write_bytes": 8204,
+        "useful_bytes": 17420,
+        "reference_us": 0.03138738738738739,
+        "note": "unique pooled inputs and selected ids; score/rank scratch and repeated comparisons excluded"
+      },
+      "draft.blk.0.qsa.attention": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 287236,
+        "write_bytes": 12288,
+        "useful_bytes": 299524,
+        "reference_us": 0.5396828828828829,
+        "note": "split32; unique full16 K/V union, repeated heads and partial/reduction scratch excluded"
+      },
+      "draft.blk.0.attention": {
+        "weight_bytes": 31457280,
+        "activation_state_read_bytes": 12288,
+        "write_bytes": 5120,
+        "useful_bytes": 31474688,
+        "reference_us": 56.711149549549546,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.attn.combine": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 25616,
+        "write_bytes": 20480,
+        "useful_bytes": 46096,
+        "reference_us": 0.08305585585585586,
+        "note": ""
+      },
+      "draft.blk.0.router": {
+        "weight_bytes": 2621440,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 1024,
+        "useful_bytes": 2627584,
+        "reference_us": 4.734385585585586,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.route": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 1032,
+        "write_bytes": 80,
+        "useful_bytes": 1112,
+        "reference_us": 0.002003603603603604,
+        "note": "unique router logits, rounded probabilities and selected indices; exp/max/sum scratch excluded"
+      },
+      "draft.blk.0.gather": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 5168,
+        "write_bytes": 51440,
+        "useful_bytes": 56608,
+        "reference_us": 0.10199639639639639,
+        "note": ""
+      },
+      "draft.blk.0.expsgate": {
+        "weight_bytes": 40960000,
+        "activation_state_read_bytes": 5240,
+        "write_bytes": 25680,
+        "useful_bytes": 40990920,
+        "reference_us": 73.85751351351351,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.expsdown": {
+        "weight_bytes": 20480000,
+        "activation_state_read_bytes": 12920,
+        "write_bytes": 51240,
+        "useful_bytes": 20544160,
+        "reference_us": 37.0165045045045,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.expsgate.check": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 48,
+        "write_bytes": 4,
+        "useful_bytes": 52,
+        "reference_us": 9.36936936936937e-05,
+        "note": ""
+      },
+      "draft.blk.0.expsup.check": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 48,
+        "write_bytes": 4,
+        "useful_bytes": 52,
+        "reference_us": 9.36936936936937e-05,
+        "note": ""
+      },
+      "draft.blk.0.expsdown.check": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 48,
+        "write_bytes": 4,
+        "useful_bytes": 52,
+        "reference_us": 9.36936936936937e-05,
+        "note": ""
+      },
+      "draft.blk.0.expsact": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 25608,
+        "write_bytes": 12800,
+        "useful_bytes": 38408,
+        "reference_us": 0.0692036036036036,
+        "note": ""
+      },
+      "draft.blk.0.shexpgate": {
+        "weight_bytes": 3276800,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 1280,
+        "useful_bytes": 3283200,
+        "reference_us": 5.915675675675676,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.shexpup": {
+        "weight_bytes": 3276800,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 1280,
+        "useful_bytes": 3283200,
+        "reference_us": 5.915675675675676,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.shexpdown": {
+        "weight_bytes": 3276800,
+        "activation_state_read_bytes": 1280,
+        "write_bytes": 5120,
+        "useful_bytes": 3283200,
+        "reference_us": 5.915675675675676,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.shared_gate": {
+        "weight_bytes": 5120,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 2,
+        "useful_bytes": 10242,
+        "reference_us": 0.018454054054054054,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.shexpact": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 2568,
+        "write_bytes": 1280,
+        "useful_bytes": 3848,
+        "reference_us": 0.006933333333333333,
+        "note": ""
+      },
+      "draft.blk.0.moe": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 56370,
+        "write_bytes": 5120,
+        "useful_bytes": 61490,
+        "reference_us": 0.11079279279279279,
+        "note": "ordered expert sum and shared blend, both BF16 boundaries retained"
+      },
+      "draft.blk.0.ffn.combine": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 25616,
+        "write_bytes": 20480,
+        "useful_bytes": 46096,
+        "reference_us": 0.08305585585585586,
+        "note": ""
+      },
+      "draft.logits": {
+        "weight_bytes": 256409600,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 160256,
+        "useful_bytes": 256574976,
+        "reference_us": 462.29725405405406,
+        "note": "expanded Q6 useful fields 3200 bytes/row; storage stride stays3380"
+      },
+      "draft.argmax": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 160264,
+        "write_bytes": 8,
+        "useful_bytes": 160272,
+        "reference_us": 0.2887783783783784,
+        "note": "fixed prefix only, original lowest-index tie rule; scratch excluded"
+      },
+      "draft.commit.final": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 12,
+        "write_bytes": 4,
+        "useful_bytes": 16,
+        "reference_us": 2.8828828828828828e-05,
+        "note": ""
+      }
+    },
+    "4096": {
+      "draft.merge.embedding_norm": {
+        "weight_bytes": 10240,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 5120,
+        "useful_bytes": 20480,
+        "reference_us": 0.0369009009009009,
+        "note": "FP32 converted gain; unique BF16 input/output"
+      },
+      "draft.merge.hidden_norm": {
+        "weight_bytes": 40960,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 20480,
+        "useful_bytes": 81920,
+        "reference_us": 0.1476036036036036,
+        "note": "original padded norm; reduction scratch excluded"
+      },
+      "draft.merge.embedding_projected": {
+        "weight_bytes": 13107200,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 5120,
+        "useful_bytes": 13117440,
+        "reference_us": 23.63502702702703,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.merge.projected": {
+        "weight_bytes": 13107200,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 20480,
+        "useful_bytes": 13148160,
+        "reference_us": 23.69037837837838,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.merge.add": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 25600,
+        "write_bytes": 20480,
+        "useful_bytes": 46080,
+        "reference_us": 0.08302702702702702,
+        "note": ""
+      },
+      "draft.begin.0": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 8,
+        "write_bytes": 4,
+        "useful_bytes": 12,
+        "reference_us": 2.162162162162162e-05,
+        "note": ""
+      },
+      "draft.blk.0.hc.a.norm": {
+        "weight_bytes": 40960,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 20480,
+        "useful_bytes": 81920,
+        "reference_us": 0.1476036036036036,
+        "note": "unique bytes, repeated norm input reads and scratch excluded"
+      },
+      "draft.blk.0.hc.a.low": {
+        "weight_bytes": 6553600,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 1280,
+        "useful_bytes": 6575360,
+        "reference_us": 11.847495495495496,
+        "note": "includes original low output and fused activation output"
+      },
+      "draft.blk.0.hc.a.gate": {
+        "weight_bytes": 6553600,
+        "activation_state_read_bytes": 21120,
+        "write_bytes": 25600,
+        "useful_bytes": 6600320,
+        "reference_us": 11.892468468468469,
+        "note": "includes gate and fused four-stream mixture; candidate keeps all bytes"
+      },
+      "draft.blk.0.hc.a.inject": {
+        "weight_bytes": 81920,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 8,
+        "useful_bytes": 102408,
+        "reference_us": 0.18451891891891892,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.hc.f.norm": {
+        "weight_bytes": 40960,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 20480,
+        "useful_bytes": 81920,
+        "reference_us": 0.1476036036036036,
+        "note": "unique bytes, repeated norm input reads and scratch excluded"
+      },
+      "draft.blk.0.hc.f.low": {
+        "weight_bytes": 6553600,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 1280,
+        "useful_bytes": 6575360,
+        "reference_us": 11.847495495495496,
+        "note": "includes original low output and fused activation output"
+      },
+      "draft.blk.0.hc.f.gate": {
+        "weight_bytes": 6553600,
+        "activation_state_read_bytes": 21120,
+        "write_bytes": 25600,
+        "useful_bytes": 6600320,
+        "reference_us": 11.892468468468469,
+        "note": "includes gate and fused four-stream mixture; candidate keeps all bytes"
+      },
+      "draft.blk.0.hc.f.inject": {
+        "weight_bytes": 81920,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 8,
+        "useful_bytes": 102408,
+        "reference_us": 0.18451891891891892,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.final.norm": {
+        "weight_bytes": 40960,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 20480,
+        "useful_bytes": 81920,
+        "reference_us": 0.1476036036036036,
+        "note": "unique bytes, repeated norm input reads and scratch excluded"
+      },
+      "draft.final.low": {
+        "weight_bytes": 6553600,
+        "activation_state_read_bytes": 20480,
+        "write_bytes": 1280,
+        "useful_bytes": 6575360,
+        "reference_us": 11.847495495495496,
+        "note": "includes original low output and fused activation output"
+      },
+      "draft.final.gate": {
+        "weight_bytes": 6553600,
+        "activation_state_read_bytes": 21120,
+        "write_bytes": 25600,
+        "useful_bytes": 6600320,
+        "reference_us": 11.892468468468469,
+        "note": "includes gate and fused four-stream mixture; candidate keeps all bytes"
+      },
+      "draft.blk.0.qsa.qgate": {
+        "weight_bytes": 62914560,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 24576,
+        "useful_bytes": 62944256,
+        "reference_us": 113.41307387387387,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.qsa.k": {
+        "weight_bytes": 2621440,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 1024,
+        "useful_bytes": 2627584,
+        "reference_us": 4.734385585585586,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.qsa.v": {
+        "weight_bytes": 2621440,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 1024,
+        "useful_bytes": 2627584,
+        "reference_us": 4.734385585585586,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.qsa.iq": {
+        "weight_bytes": 2621440,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 1024,
+        "useful_bytes": 2627584,
+        "reference_us": 4.734385585585586,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.qsa.ik": {
+        "weight_bytes": 655360,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 256,
+        "useful_bytes": 660736,
+        "reference_us": 1.1905153153153154,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.qsa.prepare": {
+        "weight_bytes": 2560,
+        "activation_state_read_bytes": 26752,
+        "write_bytes": 26624,
+        "useful_bytes": 55936,
+        "reference_us": 0.10078558558558559,
+        "note": "converted gains; one useful RoPE row"
+      },
+      "draft.blk.0.qsa.pool": {
+        "weight_bytes": 512,
+        "activation_state_read_bytes": 3200,
+        "write_bytes": 2560,
+        "useful_bytes": 6272,
+        "reference_us": 0.011300900900900902,
+        "note": "both requested contexts append a pooled row; three prior raw rows"
+      },
+      "draft.blk.0.qsa.select": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 263168,
+        "write_bytes": 8204,
+        "useful_bytes": 271372,
+        "reference_us": 0.4889585585585586,
+        "note": "unique pooled inputs and selected ids; score/rank scratch and repeated comparisons excluded"
+      },
+      "draft.blk.0.qsa.attention": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 4227076,
+        "write_bytes": 12288,
+        "useful_bytes": 4239364,
+        "reference_us": 7.638493693693694,
+        "note": "split32; unique full16 K/V union, repeated heads and partial/reduction scratch excluded"
+      },
+      "draft.blk.0.attention": {
+        "weight_bytes": 31457280,
+        "activation_state_read_bytes": 12288,
+        "write_bytes": 5120,
+        "useful_bytes": 31474688,
+        "reference_us": 56.711149549549546,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.attn.combine": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 25616,
+        "write_bytes": 20480,
+        "useful_bytes": 46096,
+        "reference_us": 0.08305585585585586,
+        "note": ""
+      },
+      "draft.blk.0.router": {
+        "weight_bytes": 2621440,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 1024,
+        "useful_bytes": 2627584,
+        "reference_us": 4.734385585585586,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.route": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 1032,
+        "write_bytes": 80,
+        "useful_bytes": 1112,
+        "reference_us": 0.002003603603603604,
+        "note": "unique router logits, rounded probabilities and selected indices; exp/max/sum scratch excluded"
+      },
+      "draft.blk.0.gather": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 5168,
+        "write_bytes": 51440,
+        "useful_bytes": 56608,
+        "reference_us": 0.10199639639639639,
+        "note": ""
+      },
+      "draft.blk.0.expsgate": {
+        "weight_bytes": 40960000,
+        "activation_state_read_bytes": 5240,
+        "write_bytes": 25680,
+        "useful_bytes": 40990920,
+        "reference_us": 73.85751351351351,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.expsdown": {
+        "weight_bytes": 20480000,
+        "activation_state_read_bytes": 12920,
+        "write_bytes": 51240,
+        "useful_bytes": 20544160,
+        "reference_us": 37.0165045045045,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.expsgate.check": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 48,
+        "write_bytes": 4,
+        "useful_bytes": 52,
+        "reference_us": 9.36936936936937e-05,
+        "note": ""
+      },
+      "draft.blk.0.expsup.check": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 48,
+        "write_bytes": 4,
+        "useful_bytes": 52,
+        "reference_us": 9.36936936936937e-05,
+        "note": ""
+      },
+      "draft.blk.0.expsdown.check": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 48,
+        "write_bytes": 4,
+        "useful_bytes": 52,
+        "reference_us": 9.36936936936937e-05,
+        "note": ""
+      },
+      "draft.blk.0.expsact": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 25608,
+        "write_bytes": 12800,
+        "useful_bytes": 38408,
+        "reference_us": 0.0692036036036036,
+        "note": ""
+      },
+      "draft.blk.0.shexpgate": {
+        "weight_bytes": 3276800,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 1280,
+        "useful_bytes": 3283200,
+        "reference_us": 5.915675675675676,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.shexpup": {
+        "weight_bytes": 3276800,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 1280,
+        "useful_bytes": 3283200,
+        "reference_us": 5.915675675675676,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.shexpdown": {
+        "weight_bytes": 3276800,
+        "activation_state_read_bytes": 1280,
+        "write_bytes": 5120,
+        "useful_bytes": 3283200,
+        "reference_us": 5.915675675675676,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.shared_gate": {
+        "weight_bytes": 5120,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 2,
+        "useful_bytes": 10242,
+        "reference_us": 0.018454054054054054,
+        "note": "unique weights; repeated row input reads and implementation scratch excluded"
+      },
+      "draft.blk.0.shexpact": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 2568,
+        "write_bytes": 1280,
+        "useful_bytes": 3848,
+        "reference_us": 0.006933333333333333,
+        "note": ""
+      },
+      "draft.blk.0.moe": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 56370,
+        "write_bytes": 5120,
+        "useful_bytes": 61490,
+        "reference_us": 0.11079279279279279,
+        "note": "ordered expert sum and shared blend, both BF16 boundaries retained"
+      },
+      "draft.blk.0.ffn.combine": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 25616,
+        "write_bytes": 20480,
+        "useful_bytes": 46096,
+        "reference_us": 0.08305585585585586,
+        "note": ""
+      },
+      "draft.logits": {
+        "weight_bytes": 256409600,
+        "activation_state_read_bytes": 5120,
+        "write_bytes": 160256,
+        "useful_bytes": 256574976,
+        "reference_us": 462.29725405405406,
+        "note": "expanded Q6 useful fields 3200 bytes/row; storage stride stays3380"
+      },
+      "draft.argmax": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 160264,
+        "write_bytes": 8,
+        "useful_bytes": 160272,
+        "reference_us": 0.2887783783783784,
+        "note": "fixed prefix only, original lowest-index tie rule; scratch excluded"
+      },
+      "draft.commit.final": {
+        "weight_bytes": 0,
+        "activation_state_read_bytes": 12,
+        "write_bytes": 4,
+        "useful_bytes": 16,
+        "reference_us": 2.8828828828828828e-05,
+        "note": ""
+      }
+    }
+  }
+}

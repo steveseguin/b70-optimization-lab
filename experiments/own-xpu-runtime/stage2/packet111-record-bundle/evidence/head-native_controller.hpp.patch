@@ -1,0 +1,19 @@
+--- native_controller.hpp
++++ native_controller.hpp
+@@ -25,6 +25,7 @@
+ struct Trace {int rank;Request command;Reply reply;double sent;};
+ struct Backend {
+  Mailbox& m; uint8_t* shared;int seconds;std::function<Reply(const Request&)> execute;std::function<void()> cancel;
++ std::function<void(const Request&)> before_remote_wait;
+  uint32_t seq;bool pending[2]={false,false};Reply local{};Request commands[2]{};double sent[2]={};std::vector<Trace> trace;size_t stream_bytes=0;
+  Backend(Mailbox& box,uint8_t* mem,int timeout,std::function<Reply(const Request&)> fn,std::function<void()> stop):m(box),shared(mem),seconds(timeout),execute(fn),cancel(stop),seq(load(m.request_sequence)){}
+  void start(int rank,int op,int token=0,int position=0,int fixture=0,int speculative=0){
+@@ -33,7 +34,7 @@
+   else {require(load(m.reply_sequence)==seq,"native outstanding mailbox");require(seq<UINT32_MAX,"native sequence overflow");r.sequence=int32_t(seq+1);commands[rank]=r;m.request=r;publish(m.request_sequence,++seq);}
+  }
+  Reply wait(int rank){require(pending[rank],"native wait idle");Reply r;
+-  if(rank==0)r=local;else{uint32_t seen=load(m.reply_sequence);if(seen!=seq)wait_change(m.reply_sequence,seen,m,seconds,cancel);require(load(m.reply_sequence)==seq,"native reply sequence");r=m.reply;}
++  if(rank==0)r=local;else{if(before_remote_wait)before_remote_wait(commands[rank]);uint32_t seen=load(m.reply_sequence);if(seen!=seq)wait_change(m.reply_sequence,seen,m,seconds,cancel);require(load(m.reply_sequence)==seq,"native reply sequence");r=m.reply;}
+   require(!load(m.abort),"native peer failed");require(!r.status&&!r.error,"native failed operation");pending[rank]=false;trace.push_back({rank,commands[rank],r,sent[rank]});return r;
+  }
+  Reply call(int rank,int op,int token=0,int position=0,int fixture=0,int speculative=0){start(rank,op,token,position,fixture,speculative);return wait(rank);}

@@ -1,0 +1,209 @@
+--- a/main.cpp
++++ b/main.cpp
+@@ -1,4 +1,5 @@
+ #include "host_spin.hpp"
++#include "ordered_queue.hpp"
+ #include "p60_submit.hpp"
+ #include "p30_submit.hpp"
+ #include "p33_submit.hpp"
+@@ -85,8 +86,9 @@
+   return s.ends_with(suffix);
+ }
+ #ifdef OWN_RT_HOST_ONLY
+-class Host final : public packet18::LifetimeMock {
++class Host final : public packet18::LifetimeMock, public ownrt::OrderedQueue {
+ public:
++  bool ordered_prefix_complete(ownrt::Event e) override {return complete(e);}
+   ownrt::Event copy(void *a, const void *b, size_t n,
+                     std::span<const ownrt::Event> d) override {
+     auto e = LifetimeMock::copy(a, b, n, d);
+@@ -594,6 +596,15 @@
+   // Selection is resolved once while preparing each site, before capture.
+   // Token replay contains no selection lookup or candidate-name branch.
+   p49d::Selection sealed_selection;
++  bool ordered_retirement=false;
++  double retirement_ms=0,profiling_ms=0;
++  uint64_t retirement_calls=0;
++  void retire_events(int c) {
++    auto started=std::chrono::steady_clock::now();
++    if(ordered_retirement)dev(c).retire_ordered_events();
++    else dev(c).retire_completed_events();
++    retirement_ms+=ms(started);++retirement_calls;
++  }
+   std::string miss_choice() const {auto i=sealed_selection.choices.find("miss");return i==sealed_selection.choices.end()?"control":i->second;}
+   bool miss_banks() const {return a.rank==0&&miss_choice().starts_with("banks");}
+   bool miss_batch() const {return miss_choice().find("batch")!=std::string::npos;}
+@@ -661,6 +672,7 @@
+   void drain() {
+     if(!tail && pending.empty())return;
+     if(tail)wait(0,tail);
++    auto profiling_start=std::chrono::steady_clock::now();
+ #ifndef OWN_RT_HOST_ONLY
+     for(auto item:pending) {
+       require(item.launch.last-item.launch.first+1==item.launch.passes,"non-contiguous event group");
+@@ -676,8 +688,9 @@
+       if(class_timing) {class_ms[item.cls]+=duration;class_launches[item.cls]+=item.launch.passes;++class_groups[item.cls];}
+     }
+ #endif
++    profiling_ms+=ms(profiling_start);
+     pending.clear();attribution.events.clear();tail=0;
+-    if(!devices.empty())dev(0).retire_completed_events();
++    if(!devices.empty())retire_events(0);
+   }
+ 
+   std::ofstream argument_log;
+@@ -692,6 +705,7 @@
+                  std::chrono::seconds(a.seconds)) {attribution.enabled=args.timing=="attribution";pending.reserve(4096);prepared.reserve(p.launches.size());matrices.reserve(p.launches.size());gemv_choices.reserve(p.launches.size());
+     if(!a.selection.empty()){require(!a.selection_sha256.empty(),"selection requires sealed --selection-sha256");sealed_selection.load(a.selection.string(),a.selection_sha256);}
+     else require(a.selection_sha256.empty(),"selection SHA256 requires selection file");
++    ordered_retirement=a.rank==1 && sealed_selection.choices.contains("host_retire") && sealed_selection.choices.at("host_retire")=="ordered";
+     for(const auto& l:p.launches)if(l.op=="gemv"||l.op=="expert_gate_up"||l.op=="routed_gemv"){
+       std::array<unsigned,2> variants{selected_variant(w,a,p,l),0};if(l.op=="expert_gate_up")variants[1]=selected_variant(w,a,p,l,1);
+       gemv_choices.emplace(&l,std::make_pair(packet26::dispatch.gemv_for(l.label),variants));
+@@ -790,7 +804,7 @@
+                   static_cast<const uint8_t *>(src) + i, k);
+       ownrt::CopyEngine copy(dev(c));
+       wait(c, copy.copy(dst, offset + i, slab[c], 0, k, {}));
+-      dev(c).retire_completed_events();
++      retire_events(c);
+     }
+     transfer_ms+=ms(started);
+   }
+@@ -802,7 +816,7 @@
+       size_t k = std::min(n - i, size_t(4 * 1024 * 1024));
+       ownrt::CopyEngine copy(dev(c));
+       wait(c, copy.copy(slab[c], 0, src, i, k, {}));
+-      dev(c).retire_completed_events();
++      retire_events(c);
+       std::memcpy(b.data() + i, dev(c).arena.row(slab[c]).pointer, k);
+     }
+     transfer_ms+=ms(started);
+--- a/rank.hpp
++++ b/rank.hpp
+@@ -124,6 +124,7 @@
+  e.admit_position(request.position);
+  struct rusage before{},after{},thread_before{},thread_after{};getrusage(RUSAGE_SELF,&before);getrusage(RUSAGE_THREAD,&thread_before);
+  auto waits=e.host_waits;double waited=e.wait_ms;e.family_ms.fill(0);
++ const auto retire_calls=e.retirement_calls;const double retire_ms=e.retirement_ms,profile_ms=e.profiling_ms;
+  auto start=std::chrono::steady_clock::now();double gpu=e.gemv_ms+e.nongemv_ms;
+  candidate={};candidate.pending=true;candidate.position=request.position;candidate.fixture=request.fixture;candidate.speculative=request.speculative;
+  if(e.a.rank==0){candidate.h0=e.history0;candidate.h1=e.history1;
+@@ -185,6 +186,7 @@
+   <<",\"speculative\":"<<(request.speculative?"true":"false")
+   <<",\"cancelled\":"<<(candidate.cancelled?"true":"false")<<"}\n";
+  e.timings<<"{\"cpu_affinity\":[";bool comma=false;for(int cpu=0;cpu<CPU_SETSIZE;++cpu)if(CPU_ISSET(cpu,&affinity)){e.timings<<(comma?",":"")<<cpu;comma=true;}e.timings<<"],\"load_average_1m\":"<<load_average<<",\"position\":"<<request.position<<",\"fixture\":"<<request.fixture<<",\"speculative\":"<<(request.speculative?"true":"false")
++  <<",\"p76_retirement_ms\":"<<e.retirement_ms-retire_ms<<",\"p76_retirement_calls\":"<<e.retirement_calls-retire_calls<<",\"p76_profiling_ms\":"<<e.profiling_ms-profile_ms<<",\"p76_ordered_retirement\":"<<(e.ordered_retirement?"true":"false")
+   <<",\"launch_extent\":"<<std::min(e.p.g.context,((request.position+32)/32)*32)<<",\"capacity_reprepares\":"<<e.capacity_reprepares
+   <<",\"cancelled\":"<<(candidate.cancelled?"true":"false")<<",\"launches_issued\":"<<issued
+   <<",\"prepare_ms\":"<<prepare_ms<<",\"enqueue_loop_ms\":"<<enqueue_ms<<",\"wait_ms\":"<<e.wait_ms-waited<<",\"host_waits\":"<<e.host_waits-waits
+--- a/owner_api.hpp
++++ b/owner_api.hpp
+@@ -189,6 +189,7 @@
+   // Packet4 eager segments only: retire completed events, preserving allocations.
+   // Implementation lives with that integration; graph leases forbid retirement.
+   void retire_completed_events();
++  void retire_ordered_events(); // Packet76: explicit ordered-backend capability
+   void graph(std::string, std::vector<Allocation>, std::function<void()>);
+   Receipt shutdown(std::chrono::milliseconds timeout);
+ };
+--- a/owner_retire.cpp
++++ b/owner_retire.cpp
+@@ -1,4 +1,5 @@
+ #include "owner.hpp"
++#include "ordered_queue.hpp"
+ namespace ownrt {
+ void forget_event_queues(std::span<const Event>);
+ // A serial eager segment has no retained event consumers. Reclaim only after
+@@ -21,3 +22,23 @@
+   }
+ }
+ } // namespace ownrt
++
++namespace ownrt {
++void Device::retire_ordered_events() {
++  if (quiescing_ || closed_ || !fault_.empty() || !graphs_.empty() || capture_)
++    throw std::logic_error("ordered retirement requires an open eager owner");
++  auto* ordered=dynamic_cast<OrderedQueue*>(backend_.get());
++  if(!ordered)throw std::logic_error("backend has no ordered-prefix proof");
++  try {
++    if(!events_.empty() && !ordered->ordered_prefix_complete(events_.back()))
++      throw std::logic_error("ordered event retirement with pending work");
++    // Same error propagation and native cleanup as the original path. The
++    // only elision is the redundant individual completion query for each
++    // earlier event. No new work can enter this same-thread owner here.
++    backend_->synchronize();
++    backend_->clear_events();
++    forget_event_queues(events_);
++    events_.clear();
++  } catch(const std::exception& e) {fault_=e.what();throw;}
++}
++}
+--- a/single_device.cpp
++++ b/single_device.cpp
+@@ -1,4 +1,5 @@
+ #include "owner.hpp"
++#include "ordered_queue.hpp"
+ #include "prepared_submission.hpp"
+ #include "sycl_operation.hpp"
+ #include <sycl/sycl.hpp>
+@@ -21,7 +22,7 @@
+       for(const auto& d:p.get_devices(sycl::info::device_type::gpu)) out.push_back(d);
+   return out;
+ }
+-class SyclDevice final : public Backend {
++class SyclDevice final : public Backend, public OrderedQueue {
+   std::size_t card_;
+   std::string label_;
+   ze_context_handle_t native_=nullptr;
+@@ -106,6 +107,11 @@
+     return {event(e).get_profiling_info<sycl::info::event_profiling::command_start>(),
+             event(e).get_profiling_info<sycl::info::event_profiling::command_end>()};
+   }
++  bool ordered_prefix_complete(Event e) override {
++    check_error();
++    if(!queue_->has_property<sycl::property::queue::in_order>())throw std::logic_error("ordered retirement requires in-order queue");
++    return complete(e);
++  }
+   bool complete(Event e) override {
+     return event(e).get_info<sycl::info::event::command_execution_status>()==sycl::info::event_command_status::complete;
+   }
+--- a/p49d_submit.cpp
++++ b/p49d_submit.cpp
+@@ -45,6 +45,7 @@
+  p49dmix::Kernel k;k.spec=s;auto e=d.compute(k,a,deps);return {e,e,1};
+ }
+ Submit resolve(std::string_view cls,std::string_view choice){
++ if(cls=="host_retire"&&(choice=="production"||choice=="ordered"))return production;
+  if(cls=="experts"&&(choice=="production"||choice=="wg64"||choice=="wg128"||choice=="prefetch64"||choice=="wide64"))return production;
+  if(cls=="miss"&&(choice=="control"||choice=="batch"))return production;
+  if(cls=="route"){if(choice=="production")return production_route;if(choice=="route-rank4")return route<256>;if(choice=="route-exp32-rank4")return route<32>;}
+@@ -84,9 +85,9 @@
+    }
+   }else throw std::invalid_argument("p49d unknown selection field");
+  }while(more());take('}');ws();
+- if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision","draft"}||values.size()!=5)throw std::invalid_argument("p49d incomplete/trailing selection");
++ if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision","draft"}||values.size()!=6)throw std::invalid_argument("p49d incomplete/trailing selection");
+  p59c::validate(draft_values);
+- auto target_values=values;target_values.erase("miss");target_values.erase("experts");
++ auto target_values=values;target_values.erase("miss");target_values.erase("experts");target_values.erase("host_retire");
+  if(target_values!=std::map<std::string,std::string>{{"route","route-exp32-rank4"},{"recurrence","rows4-shared"},{"hc","production"}})throw std::invalid_argument("p59c target must stay packet56");
+  choices=std::move(values);draft=std::move(draft_values);observed_sha256=digest;
+ }
+--- a/selection.json
++++ b/selection.json
+@@ -5,12 +5,10 @@
+     "recurrence": "rows4-shared",
+     "hc": "production",
+     "miss": "batch",
+-    "experts": "wide64"
++    "experts": "wide64",
++    "host_retire": "production"
+   },
+-  "decision": {
+-    "path": "selection-decision.json",
+-    "sha256": "f3e6ab8638e137f4539f2ed04751c4710ae636d9bdbc2dcb1aa4361da578b919"
+-  },
++  "decision": null,
+   "draft": {
+     "attention_output": "production",
+     "down": "production",

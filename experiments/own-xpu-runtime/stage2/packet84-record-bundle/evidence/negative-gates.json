@@ -1,0 +1,134 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "runs": [
+    {
+      "case": "expert",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/expert.json",
+        "ae9d6ce38d0dc6a10120402a0062eb33aec551427d914d7c589cb135b15de227",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/expert",
+        "positive",
+        "1",
+        "0"
+      ],
+      "returncode": 1,
+      "stderr": "p49d unregistered selection\n"
+    },
+    {
+      "case": "recurrence",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/recurrence.json",
+        "292d21b6bb1bbe8d2c7601e6f04f2ea5a44d214b154c2fd31c3ed656425cabd3",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/recurrence",
+        "positive",
+        "1",
+        "0"
+      ],
+      "returncode": 1,
+      "stderr": "p49d unregistered selection\n"
+    },
+    {
+      "case": "host",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/host.json",
+        "ea89d7634216703af3a29e75db6fb25ed6774d2264926422ef03a22f9bf63355",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/host",
+        "positive",
+        "1",
+        "0"
+      ],
+      "returncode": 1,
+      "stderr": "p49d unregistered selection\n"
+    },
+    {
+      "case": "missing-prefix",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/missing-prefix.json",
+        "a7d24d6543fc5cfadfec5790f61bae8c71a126a53237fd4f8b4c67f365bb6e5d",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/missing-prefix",
+        "positive",
+        "1",
+        "0"
+      ],
+      "returncode": 1,
+      "stderr": "p59c incomplete draft selection\n"
+    },
+    {
+      "case": "unknown-prefix",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/unknown-prefix.json",
+        "dab3e3263a663b64846fe2e9d773ebcc6255a7e39db5df041e8a8b949e393419",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/unknown-prefix",
+        "positive",
+        "1",
+        "0"
+      ],
+      "returncode": 1,
+      "stderr": "p59c unknown draft choice: head_prefix\n"
+    },
+    {
+      "case": "unknown-format",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/unknown-format.json",
+        "0ab87c8b9b62031e68cccd41c60df4a1cc49108a8d16f486d4f4bd7ae9df4840",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/unknown-format",
+        "positive",
+        "1",
+        "0"
+      ],
+      "returncode": 1,
+      "stderr": "p59c unknown draft choice: head_format\n"
+    },
+    {
+      "case": "combined",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/combined.json",
+        "130e3f4cc84827e2954ea85770c0b37be74867982851ffbee98aebee740bfb80",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/combined",
+        "positive",
+        "1",
+        "0"
+      ],
+      "returncode": 1,
+      "stderr": "p83 unregistered combined draft head\n"
+    },
+    {
+      "case": "short-target-head",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/short-target-head.json",
+        "001e8e9c7ed99a27e3a8a2d4fb66676f28ecfc1b70bba605916ecced2df6a3bf",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/negative/short-target-head",
+        "negative",
+        "1",
+        "0"
+      ],
+      "returncode": 1,
+      "stderr": "p28 extent/alignment\ncontext lifetime PASS: 1090 destructions, native release last, zero late destructions\n"
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet84-record-bundle/negative_gate.py": "aed2a10e78446fae3f1f1add82b51d61bbe59c0acb1678ac9535648a25d6ea01",
+    "experiments/own-xpu-runtime/stage2/packet84-record-bundle/p59c_select.hpp": "801351ffe23a69c9d8d50ff07eeafc2b39a94ee9a10b176d1f7b5a30d2afa79f",
+    "experiments/own-xpu-runtime/stage2/packet84-record-bundle/p49d_submit.cpp": "1921592781ef008304438e651fbb1002823ec467e958537a57cf6b2ab130da73",
+    "experiments/own-xpu-runtime/stage2/packet84-record-bundle/bundle_selection.py": "62f46a571c50e3ccc615c2fd3195dde6fe069b3aa33b655cdbee12ee2496deb3",
+    "experiments/own-xpu-runtime/stage2/packet84-record-bundle/selection-template.json": "1019e758650544220d0811a7e25f4ca5ffebc88b960423fb5a2cde0aa7767fd0"
+  },
+  "binary_sha256": "2d6ef0c8d1a28e2a94f487e5f8fee956b35209c7e563bbf6d40ef836fadfca62"
+}

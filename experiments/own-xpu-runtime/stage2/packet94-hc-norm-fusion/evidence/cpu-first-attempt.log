@@ -1,0 +1,14 @@
+GNU production two repeats PASS
+GNU hc-normfuse two repeats PASS
+GNU hc-normfuse+weightcache two repeats PASS
+Intel production two repeats PASS
+Intel hc-normfuse two repeats PASS
+Intel hc-normfuse+weightcache two repeats PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet94-hc-norm-fusion/cpu_gate.py", line 38, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet94-hc-norm-fusion/cpu_gate.py", line 31, in main
+    assert len(row['runs'])==4 and len({r['candidate_sha256'] for r in row['runs']})==1
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

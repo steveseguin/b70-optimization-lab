@@ -1,0 +1,246 @@
+diff --git a/experiments/own-xpu-runtime/stage2/packet64-attribution/main.cpp b/experiments/own-xpu-runtime/stage2/packet64-attribution/main.cpp
+index fa4910380..d6b55680f 100644
+--- a/experiments/own-xpu-runtime/stage2/packet64-attribution/main.cpp
++++ b/experiments/own-xpu-runtime/stage2/packet64-attribution/main.cpp
+@@ -232,7 +232,7 @@ static Options parse(int argc, char **argv) {
+   require(a.tokens > 0 && a.tokens <= 128 && a.context >= 8 &&
+               a.context <= 32768 && a.seconds > 0 && a.seconds <= 172800,
+           "bounded generation/context/deadline");
+-  require(a.timing=="token" || a.timing=="launch" || a.timing=="class","timing mode");
++  require(a.timing=="token" || a.timing=="launch" || a.timing=="class" || a.timing=="attribution","timing mode");
+   require(a.wait_seconds>0 && a.wait_seconds<=600,"bounded wait deadline");
+   require(a.nongemv=="core" || a.nongemv=="parallel", "nongemv mode");
+   require(a.gemv=="frozen" || a.gemv=="r5", "gemv mode");
+@@ -554,6 +554,7 @@ struct Slot {
+   Scalar type;
+ };
+ static size_t target_scratch_bytes(const flash::Plan&,const Options&);
++#include "attribution.hpp"
+ class Engine final : public flash::Backend {
+ public:
+   Weights &w;
+@@ -566,6 +567,7 @@ public:
+   std::vector<size_t> owned_bytes;
+   std::map<Allocation,std::pair<int,size_t>> allocations;
+   std::vector<Allocation> ropes, controls, scores, probabilities, snapshots;
++  p57::Recorder attribution;
+   struct Pending { Launch launch; bool gemv; int cls; };
+   std::map<std::string,int> class_ids;
+   std::vector<std::string> class_names;
+@@ -633,9 +635,32 @@ public:
+   void finish(int, Launch l, bool gemv) {
+     // Submission only. Owner::compute appends the preceding owned event.
+     if(preparing_commands)return;
+-    if(profile_events||draft_timing)pending.push_back({l,gemv,current_cls}); tail=l.last; submitted+=l.passes;
++    if(profile_events||draft_timing||attribution.active())pending.push_back({l,gemv,current_cls});
++    if(attribution.active())for(auto event=l.first;event<=l.last;++event)attribution.record(event); tail=l.last; submitted+=l.passes;
+   }
+   void finish(int c, ownrt::Event event) { finish(c,{event,event,1},false); }
++  void attribution_row(ownrt::Event event,const ownrt::EventTiming& t) {
++    if(!attribution.enabled)return;
++    auto found=attribution.events.find(event);if(found==attribution.events.end())return;
++    const auto& site=found->second;
++    site_timings<<"{\"schema\":\"packet57.event.v1\",\"diagnostic\":true,\"rank\":"<<a.rank
++      <<",\"fixture\":"<<site.fixture<<",\"position\":"<<site.position
++      <<",\"speculative\":"<<(site.speculative?"true":"false")<<",\"label\":"<<ownrt::quote(site.label)
++      <<",\"class\":"<<ownrt::quote(p57::category(site.label))<<",\"event\":"<<event
++      <<",\"start_ns\":"<<t.start_ns<<",\"end_ns\":"<<t.end_ns
++      <<",\"device_ms\":"<<double(t.end_ns-t.start_ns)/1e6<<"}\n";
++    attribution.events.erase(found);
++  }
++  void attribution_copy(ownrt::Event event,const char* label,bool completed=false) {
++    if(!attribution.enabled||!p57::sample(attribution.current.fixture))return;
++    auto previous=attribution.current.label;attribution.current.label=label;attribution.record(event);attribution.current.label=previous;
++#ifndef OWN_RT_HOST_ONLY
++    if(completed){auto t=dev(0).timing(event);require(t.start_ns&&t.end_ns>=t.start_ns,"invalid transfer interval");attribution_row(event,t);}
++    else pending.push_back({{event,event,1},false,current_cls});
++#else
++    attribution.events.erase(event);
++#endif
++  }
+   void drain() {
+     if(!tail && pending.empty())return;
+     if(tail)wait(0,tail);
+@@ -648,12 +673,13 @@ public:
+         max_submission_ns=std::max(max_submission_ns,t.end_ns-t.start_ns);
+         require(t.end_ns-t.start_ns<=4000000000ull,"GPU submission exceeded declared 4-second budget");
+         duration+=double(t.end_ns-t.start_ns)/1e6;
++        attribution_row(id,t);
+       }
+       (item.gemv?gemv_ms:nongemv_ms)+=duration;
+       if(class_timing) {class_ms[item.cls]+=duration;class_launches[item.cls]+=item.launch.passes;++class_groups[item.cls];}
+     }
+ #endif
+-    pending.clear();tail=0;
++    pending.clear();attribution.events.clear();tail=0;
+     if(!devices.empty())dev(0).retire_completed_events();
+   }
+ 
+@@ -663,10 +689,10 @@ public:
+   bool poisoned = false;bool draft_timing=false;
+   std::chrono::steady_clock::time_point deadline;
+   Engine(Weights &source, const Options &args, flash::Plan q)
+-      : w(source), a(args), class_timing(args.timing=="class"),profile_events(args.timing!="token"),resident(args.memory=="resident"),prepared_path(resident&&!args.legacy),p(std::move(q)),
++      : w(source), a(args), class_timing(args.timing=="class"),profile_events(args.timing=="class"||args.timing=="launch"),resident(args.memory=="resident"),prepared_path(resident&&!args.legacy),p(std::move(q)),
+         timings(a.output / "timings.jsonl"), prefill_timings(a.output/"prefill-timings.jsonl"), site_timings(a.output/"sites.jsonl"), progress(a.output / "progress.jsonl"),
+         deadline(std::chrono::steady_clock::now() +
+-                 std::chrono::seconds(a.seconds)) {pending.reserve(4096);prepared.reserve(p.launches.size());matrices.reserve(p.launches.size());gemv_choices.reserve(p.launches.size());
++                 std::chrono::seconds(a.seconds)) {attribution.enabled=args.timing=="attribution";pending.reserve(4096);prepared.reserve(p.launches.size());matrices.reserve(p.launches.size());gemv_choices.reserve(p.launches.size());
+     if(!a.selection.empty()){require(!a.selection_sha256.empty(),"selection requires sealed --selection-sha256");sealed_selection.load(a.selection.string(),a.selection_sha256);}
+     else require(a.selection_sha256.empty(),"selection SHA256 requires selection file");
+     for(const auto& l:p.launches)if(l.op=="gemv"||l.op=="expert_gate_up"||l.op=="routed_gemv"){
+@@ -766,7 +792,8 @@ public:
+       std::memcpy(dev(c).arena.row(slab[c]).pointer,
+                   static_cast<const uint8_t *>(src) + i, k);
+       ownrt::CopyEngine copy(dev(c));
+-      wait(c, copy.copy(dst, offset + i, slab[c], 0, k, {}));
++      auto event=copy.copy(dst, offset + i, slab[c], 0, k, {});wait(c,event);
++      attribution_copy(event,draft_timing?"draft.transfer.upload":attribution.current.label=="transfer.rollback"?"transfer.rollback.upload":"transfer.upload",true);
+       dev(c).retire_completed_events();
+     }
+     transfer_ms+=ms(started);
+@@ -778,7 +805,8 @@ public:
+     for (size_t i = 0; i < n; i += 4 * 1024 * 1024) {
+       size_t k = std::min(n - i, size_t(4 * 1024 * 1024));
+       ownrt::CopyEngine copy(dev(c));
+-      wait(c, copy.copy(slab[c], 0, src, i, k, {}));
++      auto event=copy.copy(slab[c], 0, src, i, k, {});wait(c,event);
++      attribution_copy(event,draft_timing?"draft.transfer.readback":attribution.current.label=="transfer.rollback"?"transfer.rollback.readback":"transfer.readback",true);
+       dev(c).retire_completed_events();
+       std::memcpy(b.data() + i, dev(c).arena.row(slab[c]).pointer, k);
+     }
+@@ -867,7 +895,7 @@ public:
+ #ifdef OWN_RT_HOST_ONLY
+     devices.push_back(std::make_unique<ownrt::Device>(std::make_unique<Host>()));
+ #else
+-    devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,profile_events||a.mtp||!a.draft_capture.empty())));
++    devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,profile_events||attribution.enabled||a.mtp||!a.draft_capture.empty())));
+     save(a.output/"device-contact.json","{\"device_contact\":true}");
+ #endif
+     if(a.argument_audit){argument_log.open(a.output/"argument-equivalence.jsonl");dev(0).argument_audit=&argument_log;dev(0).audit_prepare_each=a.audit_prepare_each;}
+@@ -1319,11 +1347,12 @@ public:
+     if(poisoned||stopped)throw std::runtime_error("prepared guard closed");
+     if(dep!=logical)throw std::logic_error("step event order");
+     auto& site=issue_sites.at(index);int c=site.card;
++    if(attribution.enabled)attribution.current.label=p.launches[index].label;
+     if(submission_card!=c)drain();submission_card=c;current_cls=site.cls;
+     auto previous_submitted=submitted;
+     auto started=class_timing?std::chrono::steady_clock::now():std::chrono::steady_clock::time_point{};
+     double waited=wait_ms;
+-    for(const auto& cmd:site.commands){if(site.copy)drain();auto event=dev(c).issue(cmd);if(site.copy)tail=event;else finish(c,{event,event,1},site.family<=4);}
++    for(const auto& cmd:site.commands){if(site.copy)drain();auto event=dev(c).issue(cmd);if(site.copy){tail=event;attribution_copy(event,"transfer.target_site");}else finish(c,{event,event,1},site.family<=4);}
+     if(class_timing)family_ms[site.family]+=ms(started)-(wait_ms-waited);
+     if(a.checked&&site.layer_end&&integer(c,"error"))throw std::runtime_error("device sticky error at layer end "+p.launches[index].label);
+     if(a.mini||a.checked)site_timings<<"{\"kind\":\"site\",\"label\":"<<ownrt::quote(p.launches[index].label)<<",\"wall_ms\":null,\"kernel_submissions\":"<<submitted-previous_submitted<<"}\n";
+@@ -1332,6 +1361,7 @@ public:
+   flash::Event enqueue(const flash::Launch &l, flash::Event dep) override {
+     if(prepared_path){auto index=size_t(&l-p.launches.data());audit_issue_site(index);return issue_site(index,dep);}
+     guard();
++    if(attribution.enabled)attribution.current.label=l.label;
+     require(dep == logical, "step event order");
+     int c = l.card;
+     if(submission_card!=c)drain(); // both queues drained and events retired on host
+diff --git a/experiments/own-xpu-runtime/stage2/packet64-attribution/mtp.hpp b/experiments/own-xpu-runtime/stage2/packet64-attribution/mtp.hpp
+index 04e9bb870..d51239358 100644
+--- a/experiments/own-xpu-runtime/stage2/packet64-attribution/mtp.hpp
++++ b/experiments/own-xpu-runtime/stage2/packet64-attribution/mtp.hpp
+@@ -44,7 +44,7 @@ struct ProviderError:std::runtime_error{using std::runtime_error::runtime_error;
+ class DraftRuntime {
+  Engine& e;std::unique_ptr<Store> store;flash::Plan p;std::map<std::string,Slot> buffers;std::map<std::string,Weight> weights;
+  std::map<const flash::Launch*,Engine::Prepared> prepared;
+- struct Site { std::vector<ownrt::PreparedCompute> commands; bool gemv=false; int cls=0; bool head=false; };
++ struct Site { std::vector<ownrt::PreparedCompute> commands; bool gemv=false; int cls=0; bool head=false; std::string label; };
+  std::vector<Site> issue_sites;
+  std::vector<flash::Launch> merge_plan;
+  bool captured=false;int context_extent=32; const void* reverse_hidden=nullptr;
+@@ -64,7 +64,7 @@ class DraftRuntime {
+   if(!e.prepared_path)return;
+   e.drain();const int saved_class=e.current_cls;
+   auto capture=[&](const flash::Launch& l){
+-   Site site;site.gemv=l.op=="gemv"||l.op=="routed_gemv"||l.op=="expert_gate_up";
++   Site site;site.label="draft."+l.label;site.gemv=l.op=="gemv"||l.op=="routed_gemv"||l.op=="expert_gate_up";
+    site.head=l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax";
+    e.set_class("draft."+l.label);site.cls=e.current_cls;
+    e.preparing_commands=true;e.dev(0).begin_capture(site.commands);
+@@ -199,27 +199,27 @@ public:
+  int compute(int confirmed,int target_position,bool head,bool asynchronous=false){
+   require(!async_pending,"draft publication still pending");if(disabled)return -1;admit_position();require(confirmed>=0&&confirmed<p.g.vocab,"draft confirmed token bound");require(target_position==position+1,"draft confirmed position sequence");auto start=std::chrono::steady_clock::now();
+   if(e.a.draft_fault=="error"||e.a.draft_fault=="stall"){if(e.a.draft_fault=="stall"){auto until=std::chrono::steady_clock::now()+std::chrono::milliseconds(50);while(std::chrono::steady_clock::now()<until){e.guard();poll(nullptr,0,5);}}throw ProviderError("cooperative injected provider failure before submission");}
+-  e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);ownrt::CopyEngine copy(e.dev(0));if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");e.upload(0,id("merge.hidden"),0,reverse_hidden,4*p.g.h*2);reverse_hidden=nullptr;}else e.tail=copy.copy(id("merge.hidden"),0,e.buffers[0].at("streams").id,0,4*p.g.h*2,{});e.drain();
++  e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);ownrt::CopyEngine copy(e.dev(0));if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");e.upload(0,id("merge.hidden"),0,reverse_hidden,4*p.g.h*2);reverse_hidden=nullptr;}else {e.tail=copy.copy(id("merge.hidden"),0,e.buffers[0].at("streams").id,0,4*p.g.h*2,{});e.attribution_copy(e.tail,"draft.transfer.hidden");}e.drain();
+   // Bounded target embedding row only. No target PLE/history/token preparation.
+   auto t=e.w.directory.at("token_embd.weight");auto type=flash::grid_type(t.grid);auto fmt=iq3::layout(type);size_t rb=p.g.h/fmt.elements*fmt.bytes;auto raw=e.w.read(t.name,size_t(confirmed)*rb,rb);std::vector<uint16_t> emb(p.g.h);for(int k=0;k<p.g.h;++k)emb[k]=iq3::bf16_bits(iq3::element(type,raw.data(),k));e.upload(0,id("embedding"),0,emb.data(),emb.size()*2);
+   if(captured) {
+    for(const auto& site:issue_sites){if(!head&&site.head)continue;
+     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
+-    e.guard();e.current_cls=site.cls;
++    e.guard();e.current_cls=site.cls;if(e.attribution.enabled)e.attribution.current.label=site.label;
+     for(const auto& cmd:site.commands){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);}
+    }
+   } else {
+-   for(const auto& l:merge_plan){if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);}
++   for(const auto& l:merge_plan){if(e.a.timing=="class")e.set_class("draft."+l.label);if(e.attribution.enabled)e.attribution.current.label="draft."+l.label;direct(l);}
+    for(const auto& l:p.launches){if(!head&&(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax"))continue;
+     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
+-    e.guard();if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);
++    e.guard();if(e.a.timing=="class")e.set_class("draft."+l.label);if(e.attribution.enabled)e.attribution.current.label="draft."+l.label;direct(l);
+    }
+   }
+   if(asynchronous) {
+    // Copies belong to the same in-order queue and to private pinned memory.
+    // No host access occurs until the final copy event reports completion.
+-   ownrt::CopyEngine copy(e.dev(0));copy.copy(publication,0,id("error"),0,4,{});
+-   publication_event=copy.copy(publication,4,id("next_token"),0,4,{});e.tail=publication_event;
++   ownrt::CopyEngine copy(e.dev(0));auto status_event=copy.copy(publication,0,id("error"),0,4,{});e.attribution_copy(status_event,"draft.transfer.status");
++   publication_event=copy.copy(publication,4,id("next_token"),0,4,{});e.tail=publication_event;e.attribution_copy(publication_event,"draft.transfer.proposal");
+    pending_start=start;pending_head=head;pending_confirmed=confirmed;async_pending=true;e.progress_pending=true;
+    return -1;
+   }
+@@ -257,8 +257,8 @@ public:
+   // copy captured its target hidden input before these ordered overwrites.
+   auto* bytes=static_cast<uint8_t*>(e.dev(0).arena.row(half_staging).pointer);
+   std::memcpy(bytes,&token,4);std::memcpy(bytes+4,streams,4*p.g.h*2);
+-  ownrt::CopyEngine copy(e.dev(0));copy.copy(e.buffers[0].at("token").id,0,half_staging,0,4,{});
+-  e.tail=copy.copy(e.buffers[0].at("streams").id,0,half_staging,4,4*p.g.h*2,{});
++  ownrt::CopyEngine copy(e.dev(0));auto token_event=copy.copy(e.buffers[0].at("token").id,0,half_staging,0,4,{});e.attribution_copy(token_event,"transfer.half_token");
++  e.tail=copy.copy(e.buffers[0].at("streams").id,0,half_staging,4,4*p.g.h*2,{});e.attribution_copy(e.tail,"transfer.half_streams");
+  }
+  // Reset is quiescent and never frees/reallocates a shared-owner allocation.
+  void reset_request(const fs::path& output) {
+diff --git a/experiments/own-xpu-runtime/stage2/packet64-attribution/rank.hpp b/experiments/own-xpu-runtime/stage2/packet64-attribution/rank.hpp
+index dd6d108ae..880744d2f 100644
+--- a/experiments/own-xpu-runtime/stage2/packet64-attribution/rank.hpp
++++ b/experiments/own-xpu-runtime/stage2/packet64-attribution/rank.hpp
+@@ -103,6 +103,8 @@ static void publish(Engine& e,const Candidate& c) {
+  }
+ }
+ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uint8_t* shared,SpeculativeImage& image,bool prepared_inputs=false) {
++ if(e.attribution.enabled){if(request.fixture>0)e.attribution.generation_origin=request.position-request.fixture;
++  e.attribution.current={"transfer.target_begin",request.fixture,request.position,bool(request.speculative)};}
+  require(!candidate.pending,"half before resolving prior candidate");
+  require(request.position>=0&&request.position<e.p.g.context,"half position bound");
+  if(!prepared_inputs)require(e.integer(0,"position")==request.position,"position sequence mismatch");
+@@ -239,6 +241,7 @@ static int run_rank(const Options& a) {
+     else {auto* bytes=static_cast<uint8_t*>(mapping);require(__atomic_load_n(&reverse_ready(bytes).position_plus_one,__ATOMIC_ACQUIRE)==uint32_t(r.position),"reverse stream position mismatch");
+      if(__atomic_load_n(&verification(bytes).position_plus_one,__ATOMIC_ACQUIRE)){auto& v=verification(bytes);require(__atomic_load_n(&v.position_plus_one,__ATOMIC_ACQUIRE)==uint32_t(r.position)&&v.token==r.token,"rank0 draft requires target confirmation");}
+      provider->set_reverse_hidden(bytes+reverse_offset);}
++    if(engine->attribution.enabled)engine->attribution.current={"draft.transfer.begin",engine->attribution.generation_origin<0?0:r.position-engine->attribution.generation_origin,r.position,false};
+     auto before=std::chrono::steady_clock::now();double gpu=engine->gemv_ms+engine->nongemv_ms;
+     struct Publication{int32_t valid,position,token,error;uint64_t elapsed_ns;int32_t sequence,reserved;double gpu_ms;};static_assert(sizeof(Publication)==40);
+     auto publish_draft=[&,r](int token,double wall_ms,double gpu_ms){
+@@ -256,6 +259,7 @@ static int run_rank(const Options& a) {
+     response.busy_ms=Engine::ms(before);response.gpu_ms=engine->gemv_ms+engine->nongemv_ms-gpu;
+    }
+    else if(r.op==half){
++    if(engine->attribution.enabled)engine->attribution.current={"transfer.target_begin",r.fixture,r.position,bool(r.speculative)};
+     bool prepared_inputs=async_half_ready;
+     if(prepared_inputs){require(r.position==async_half_position&&r.token==async_half_token,"asynchronous draft/half confirmed identity");provider->queue_half_inputs(r.token,static_cast<uint8_t*>(mapping)+slot_bytes);async_half_ready=false;}
+     response=half_step(*engine,c,r,static_cast<uint8_t*>(mapping),image,prepared_inputs);
+@@ -263,6 +267,7 @@ static int run_rank(const Options& a) {
+    }
+    else if(r.op==pipeline::accept){require(c.pending,"accept without candidate");publish(*engine,c);if(c.speculative)image.accept();if(c.fixture>0)++accepted;c={};}
+    else if(r.op==rollback){
++    if(engine->attribution.enabled)engine->attribution.current={"transfer.rollback",r.fixture,r.position,false};
+     bool redo=r.speculative==1;require(r.speculative==0||redo,"rollback mode");
+     if(redo){auto& v=verification(static_cast<uint8_t*>(mapping));
+      require(c.pending&&c.speculative&&r.position==c.position&&r.fixture==c.fixture&&r.token>=0&&r.token<engine->p.g.vocab,"redo identity");

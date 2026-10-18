@@ -1,0 +1,105 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "selection": {
+    "name": "production--hc-wide--down-input-packed--ordered--production--production--rec-parallel--prefix990",
+    "placement": "1",
+    "draft": "draft-hc",
+    "miss": "batch",
+    "draft_rank": 1,
+    "target_split": 0,
+    "layer_boundary": 24,
+    "experts": "down-input-packed",
+    "dense": "production",
+    "hc": "hc-wide",
+    "host": "ordered",
+    "route": "production",
+    "norm": "production",
+    "recurrence": "rec-parallel",
+    "draft_head": "prefix990",
+    "selection_sha256": "332c161c8704fac3263182a7e1f1d1f06ac26cd1786cf81a1aa5b8d0ff48d243",
+    "screen_seal_sha256": "b08b4b68eb5cae6527102294d9183e33fdc8fb8253c915c19359a3783d01ba46"
+  },
+  "checks": [
+    {
+      "name": "imports",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-c",
+        "import runpy;from bootstrap import install,WRAPPER;install();runpy.run_path(str(WRAPPER/'tp2_worker.py'),run_name='cpu_import');from lane_admission import admission_scope;assert admission_scope('A','screen')=='lane-A';assert admission_scope('A','WS128')=='whole-host'"
+      ],
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "consumers",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/test_packet84.py",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/test_lane_admission.py"
+      ],
+      "sha256": "ce927c2b1cb2567ae11fef7b6beb1fed84e81dbfda90ba3ea3436592be126560"
+    },
+    {
+      "name": "windows",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/plan_gate.py"
+      ],
+      "sha256": "d0622fbc791c532d0464c3d557b357479e64b757714585ef8627237700f00e0b"
+    },
+    {
+      "name": "screen-A",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/run_screen.py",
+        "--profile",
+        "tp2",
+        "--lane",
+        "A",
+        "--placement",
+        "1",
+        "--lineage",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/selections/production--hc-wide--down-input-packed--ordered--production--production--rec-parallel--prefix990--placement-1",
+        "--seal",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/selections/production--hc-wide--down-input-packed--ordered--production--production--rec-parallel--prefix990--placement-1/screen-seal.json",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p84-selection-plan-A",
+        "--plan"
+      ],
+      "sha256": "92f0db0406753b30ff18c0a1b52d478a5b305c92058251b6440259ca246d6967"
+    },
+    {
+      "name": "screen-B",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/run_screen.py",
+        "--profile",
+        "tp2",
+        "--lane",
+        "B",
+        "--placement",
+        "1",
+        "--lineage",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/selections/production--hc-wide--down-input-packed--ordered--production--production--rec-parallel--prefix990--placement-1",
+        "--seal",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/selections/production--hc-wide--down-input-packed--ordered--production--production--rec-parallel--prefix990--placement-1/screen-seal.json",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p84-selection-plan-B",
+        "--plan"
+      ],
+      "sha256": "a06ccd38cf3deb337d3103291fb17af7c65f7be8cc375a8ea3745765e987ba84"
+    }
+  ],
+  "seconds": 28.736781572006294,
+  "cached_proof_sha256": "43ebaa37ac5bb4868c0b77a3064e3195a1647ea910509fcd8e199a35f2f77e0b"
+}

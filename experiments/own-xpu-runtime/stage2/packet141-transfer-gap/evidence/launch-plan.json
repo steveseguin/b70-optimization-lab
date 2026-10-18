@@ -1,0 +1,134 @@
+{
+  "evidence_label": "screen",
+  "device_executed": false,
+  "supported": true,
+  "identity": {
+    "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap",
+    "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/packet-seal.json",
+    "seal_sha256": "b31d2061d7cdb563775fc1ebc1067b587bc7939498f55d5143f01e09c1408bdc",
+    "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/build/device/own-rt-iq3",
+    "binary_sha256": "3258884a4f04dfffe20166a6c4097cab8a5ef6c47f7d3fe0ab47dc97de94ea81",
+    "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/dispatch-speed6.json",
+    "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "selection_sha256": "e617a20a6628bce163e7ee795dae3d509fb07db05b3a64fe83872653c5056082",
+    "memory_plan_sha256": "d57ba08e9e3ab75539dfcdc6d5ede2fa969f461b3c1e064c766f22b500bb8baf",
+    "suite_sha256": "5f7f2c939e888c057273d502dedacd8dc3dfe5bc3003d21696c317c1e377154f",
+    "timing": "token",
+    "profile": "tp2",
+    "placement": {
+      "name": "1",
+      "draft_rank": 1,
+      "target_split": 0,
+      "layer_boundary": 24,
+      "target_layers": [
+        24,
+        24
+      ],
+      "supported": true,
+      "reason": "bounded route diagnostic; full-state dumps disabled; model exactness required",
+      "memory_admitted": true,
+      "configuration": {
+        "context_capacity": 4096,
+        "ranks": [
+          {
+            "rank": 0,
+            "draft_rank": 1,
+            "target_layers": 24,
+            "target_modeled_allocations_bytes": 28412879988,
+            "allocation_reserve_bytes": 46500548,
+            "draft_total_bytes": 0,
+            "draft_duplicate_head_bytes": 0,
+            "target_total_bytes": 28459380536,
+            "total_with_mtp_bytes": 28459380536,
+            "free_with_mtp_bytes": 5782917320,
+            "allocation_margin_passed": true,
+            "arena_device_bytes": 28144182388,
+            "arena_headroom_bytes": 4068072332,
+            "arena_margin_passed": true
+          },
+          {
+            "rank": 1,
+            "draft_rank": 1,
+            "target_layers": 24,
+            "target_modeled_allocations_bytes": 28071621028,
+            "allocation_reserve_bytes": 1228800,
+            "draft_total_bytes": 3354364214,
+            "draft_duplicate_head_bytes": 0,
+            "target_total_bytes": 28072849828,
+            "total_with_mtp_bytes": 31427214042,
+            "free_with_mtp_bytes": 2815083814,
+            "allocation_margin_passed": true,
+            "arena_device_bytes": 31425985242,
+            "arena_headroom_bytes": 786269478,
+            "arena_margin_passed": true
+          }
+        ]
+      }
+    },
+    "diagnostic_only": true,
+    "lane": "B",
+    "conditions": {
+      "card": 2,
+      "cards": [
+        2,
+        3
+      ],
+      "pci": [
+        "0000:43:00.0",
+        "0000:47:00.0"
+      ],
+      "cores": [
+        4,
+        5,
+        6,
+        7,
+        20,
+        21,
+        22,
+        23
+      ],
+      "affinity": "4-7,20-23",
+      "nice": 0,
+      "native_card": 0,
+      "native_cards": [
+        0,
+        1
+      ]
+    }
+  },
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/capture_worker.py",
+    "--identity",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/evidence/probe-B/identity.json",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/evidence/probe-B/run",
+    "--seconds",
+    "4800"
+  ],
+  "model_lifetimes": 1,
+  "expected_seconds": [
+    600,
+    1200
+  ],
+  "watchdog_seconds": 4800,
+  "planned_write_bytes": 200000000,
+  "physical_cards": [
+    2,
+    3
+  ],
+  "native_card_arguments": [
+    0,
+    1
+  ],
+  "device_mask": {
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:4",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0,1",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1"
+  },
+  "timing": "token",
+  "reservation_scope": "lane-B"
+}

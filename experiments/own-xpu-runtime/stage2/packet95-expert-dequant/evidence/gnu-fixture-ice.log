@@ -1,0 +1,13 @@
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet95-expert-dequant/p95_cpu.cpp: In instantiation of ‘{anonymous}::run_shape<iq3::Type::IQ2_S, 2560>(Recorder&, unsigned int, unsigned int)::<lambda(const char*)> [with unsigned int Followup = 1]’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet95-expert-dequant/p95_cpu.cpp:65:43:   required from ‘void {anonymous}::run_shape(Recorder&, unsigned int, unsigned int) [with iq3::Type T = iq3::Type::IQ2_S; unsigned int K = 2560]’
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet95-expert-dequant/p95_cpu.cpp:147:29:   required from here
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet95-expert-dequant/p95_cpu.cpp:59:87: internal compiler error: in tsubst_copy, at cp/pt.cc:17475
+   59 |   Output actual(rows,scenario);auto ap=pointers(actual);std::conditional_t<Followup==1&&paired,p95exp::Kernel<T,K,64,false,true>,p65::Kernel<T,K,64,false,true>> candidate;
+      |                                                                            ~~~~~~~~~~~^~~~~~~~
+0x78ce7642a1c9 __libc_start_call_main
+	../sysdeps/nptl/libc_start_call_main.h:58
+0x78ce7642a28a __libc_start_main_impl
+	../csu/libc-start.c:360
+Please submit a full bug report, with preprocessed source (by using -freport-bug).
+Please include the complete backtrace with any bug report.
+See <file:///usr/share/doc/gcc-13/README.Bugs> for instructions.

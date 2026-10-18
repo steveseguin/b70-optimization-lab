@@ -1,0 +1,80 @@
+{
+  "parent_repair_commit": "932df6642",
+  "device_executed": false,
+  "ports": [
+    {
+      "source": "experiments/own-xpu-runtime/stage2/packet105b-head-split/p105_common.hpp",
+      "source_sha256": "8856d3e7b983c25bab743acfafaa8669109501adf1b3930279523427ef452e5e",
+      "local": "experiments/own-xpu-runtime/stage2/packet111-record-bundle/p105_common.hpp",
+      "local_sha256": "8856d3e7b983c25bab743acfafaa8669109501adf1b3930279523427ef452e5e",
+      "byte_identical": true,
+      "adaptation": "none"
+    },
+    {
+      "source": "experiments/own-xpu-runtime/stage2/packet105b-head-split/p105_runtime.hpp",
+      "source_sha256": "77657fb587123aa3f655fac475bcdd61ca25de8d68d584bc221837fa0abb07eb",
+      "local": "experiments/own-xpu-runtime/stage2/packet111-record-bundle/p105_runtime.hpp",
+      "local_sha256": "77657fb587123aa3f655fac475bcdd61ca25de8d68d584bc221837fa0abb07eb",
+      "byte_identical": true,
+      "adaptation": "none"
+    },
+    {
+      "source": "experiments/own-xpu-runtime/stage2/packet105b-head-split/p105_submit.hpp",
+      "source_sha256": "92de3b78df60ee78df549716f21875832d9c3e91f1d16e10cad3a5b95d77a457",
+      "local": "experiments/own-xpu-runtime/stage2/packet111-record-bundle/p105_submit.hpp",
+      "local_sha256": "92de3b78df60ee78df549716f21875832d9c3e91f1d16e10cad3a5b95d77a457",
+      "byte_identical": true,
+      "adaptation": "none"
+    },
+    {
+      "source": "experiments/own-xpu-runtime/stage2/packet105b-head-split/p105_submit.cpp",
+      "source_sha256": "5818567ffc2a6dca12a56b81a591aaaee5eb3dfe8780999b0e36e0136d3971b8",
+      "local": "experiments/own-xpu-runtime/stage2/packet111-record-bundle/p105_submit.cpp",
+      "local_sha256": "5818567ffc2a6dca12a56b81a591aaaee5eb3dfe8780999b0e36e0136d3971b8",
+      "byte_identical": true,
+      "adaptation": "none"
+    },
+    {
+      "source": "experiments/own-xpu-runtime/stage2/packet109-other-fusion/p109_fusion.hpp",
+      "source_sha256": "11399d812af35ba89cfaa5d3c535b195dca118fcf3326ef4d6c143a491be1f8e",
+      "local": "experiments/own-xpu-runtime/stage2/packet111-record-bundle/p109_fusion.hpp",
+      "local_sha256": "11399d812af35ba89cfaa5d3c535b195dca118fcf3326ef4d6c143a491be1f8e",
+      "byte_identical": true,
+      "adaptation": "none"
+    },
+    {
+      "source": "experiments/own-xpu-runtime/stage2/packet109-other-fusion/p109_route.hpp",
+      "source_sha256": "b7eed8a90bc6645067262cc2f501c60127dd2762ed38a70fb9674290daea8636",
+      "local": "experiments/own-xpu-runtime/stage2/packet111-record-bundle/p109_route.hpp",
+      "local_sha256": "eac807f1321f0ef061ce7304c55fa4b8279f11c19bac99b41088dd29dffd56bf",
+      "byte_identical": false,
+      "adaptation": "Relocate includes and omit redundant generated kernel_guard include"
+    },
+    {
+      "source": "experiments/own-xpu-runtime/stage2/packet109-other-fusion/engine_fusion.hpp",
+      "source_sha256": "1c1061f8822821c2b3d4b31abb2f548271449b686e29fee394b0626feb422478",
+      "local": "experiments/own-xpu-runtime/stage2/packet111-record-bundle/engine_fusion.hpp",
+      "local_sha256": "1c1061f8822821c2b3d4b31abb2f548271449b686e29fee394b0626feb422478",
+      "byte_identical": true,
+      "adaptation": "none"
+    },
+    {
+      "source": "experiments/own-xpu-runtime/stage2/packet109-other-fusion/fusion_cpu.cpp",
+      "source_sha256": "100d4e48453e868628772f884c2a1886a867947c66b5e97fdf491d807c7edffe",
+      "local": "experiments/own-xpu-runtime/stage2/packet111-record-bundle/fusion_cpu.cpp",
+      "local_sha256": "100d4e48453e868628772f884c2a1886a867947c66b5e97fdf491d807c7edffe",
+      "byte_identical": true,
+      "adaptation": "none"
+    },
+    {
+      "source": "experiments/own-xpu-runtime/stage2/packet109-other-fusion/production_cpu.cpp",
+      "source_sha256": "313257bbac404ec8d7facc9e6e3005288d6380cca5124721567fba21560e84c9",
+      "local": "experiments/own-xpu-runtime/stage2/packet111-record-bundle/production_cpu.cpp",
+      "local_sha256": "313257bbac404ec8d7facc9e6e3005288d6380cca5124721567fba21560e84c9",
+      "byte_identical": true,
+      "adaptation": "none"
+    }
+  ],
+  "head_integration_patches": "evidence/head-*.patch",
+  "base_decision": "1ad512f75aab3fce"
+}

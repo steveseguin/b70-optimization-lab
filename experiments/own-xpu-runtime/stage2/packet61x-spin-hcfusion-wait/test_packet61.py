@@ -4,12 +4,16 @@ import pytest
 import queue_runner as q
 import window as w
 
-CHAIN=Path('/home/steve/own-xpu-runtime-results/packet61x-spin-hcfusion-wait/build/device-cards01-a')
+CHAIN=Path('/home/steve/own-xpu-runtime-results/packet61x-spin-hcfusion-wait/build/device-cards01-b')
 
 def test_registered_chain_window_paths():
     assert q.admitted_output(CHAIN)==CHAIN
     for name in q.EARLY+q.LATE:
-        assert w.output_path(CHAIN/name)==CHAIN/name
+        if (CHAIN/name).exists():
+            with pytest.raises((ValueError,RuntimeError,AssertionError)):
+                w.output_path(CHAIN/name)
+        else:
+            assert w.output_path(CHAIN/name)==CHAIN/name
     for path in (CHAIN.parent/'unregistered',q.P/'build/unregistered'):
         with pytest.raises((ValueError,RuntimeError,AssertionError)):
             q.admitted_output(path)

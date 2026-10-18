@@ -1,5 +1,808 @@
 # Current Workspace State
 
+**October 18, packet141b early exit repaired on CPU:** The first probe stopped
+before any model step because an Intel loader library was missing. The repaired
+copy includes that library and prints rank errors directly. Both native entry
+checks, error logging, 28 Python tests and temporary queue planning pass. The
+analysis script is ready. The failed attempt is preserved; the fresh proposal
+is unqueued. The coordinator's device diagnostic is next; the record is unchanged.
+[Work note](notes/2026-10-18-own-runtime-packet141.md).
+
+**October 18, packet58y one-card attribution prepared on CPU:** The new copy
+measures host work, existing waits and cache hits/misses after packet58v's
+overlap change. Both builds, exact miniature repeats and 98 policy tests pass.
+The temporary queue plan puts it after 58x's smoke and bracket in their same
+whole-host hold; it refuses a separate hold. No job was queued or launched.
+Device timings that cannot be measured remain unknown. The next-lever ranking
+waits for the diagnostic, under a preregistered 3% gain gate. The evidence reader
+is ready and its 11 synthetic tests pass; its current report says data is pending.
+[Work note](notes/2026-10-18-own-runtime-packet58y.md).
+
+**October 18, packet58xb overlap amendment prepared on CPU:** The larger-cache
+smoke and all five comparison views now select overlap. The first view must
+still be exact and is reported as warm-up; the other two controls decide drift
+and gain, matching packet58wb. All 101 tests, six entry probes, the minimal
+reseal and both temporary queue plans pass. The cache sizes and memory guards stay.
+Device work remains unlaunched and unqueued by this preparation; the running
+packet58w chain is untouched.
+[Work note](notes/2026-10-18-own-runtime-packet58x.md#packet58xb--overlap-and-first-view-amendment-october-18).
+
+**October 18, packet58wb readiness amendment passes on CPU:** At the owner's
+request, the first one-card bracket view is treated as cache warm-up for speed
+comparison, after packet58v's data and before any packet58w chain. All five
+views still pass exact output checks against packet49. The warm controls drift
+by 0.098%; both overlap views beat both by at least 7.81%. All 124 tests and the
+minimal reseal pass. The chain command is unchanged and no chain was launched.
+Only the chain's fresh WS128 can supply a new record value.
+[Work note](notes/2026-10-18-own-runtime-packet58w.md#packet58wb--cold-first-view-amendment-october-18).
+
+**October 18, packet58x larger cache prepared on CPU:** The new copy allocates
+21.553 GB once and switches between 18 GB and full use after draining work.
+It keeps the device reserve and all transient allowances; host admission is
+98.990 GB under the measured policy. Independent replay projects +2.26%, not
+a measured speed. Both builds, byte checks, full-size startup, six real entry
+probes, 96 policy tests and seals pass. The smoke and five-view proposals pass
+temporary planning and remain unqueued. Serial maintenance stays the default
+because packet58v's completed bracket failed its control-drift gate. No GPU,
+service, live queue or host setting changed. Next is the coordinator's smoke.
+[Work note](notes/2026-10-18-own-runtime-packet58x.md).
+
+**October 18, packet58w one-card overlap chain prepared on CPU:** The fresh
+seven-window chain reuses packet58v's binaries and seals tile16 with overlapped
+cache maintenance. All 120 tests, seven real entry paths, 28 wrong-unit/environment
+refusals, full-size startup, byte checks and seals pass. The command embeds its
+library path and uses a new service name. It refuses until 58v's smoke and full
+five-view bracket pass the exact-output and speed gates; at the preparation
+check, smoke passed and the bracket was incomplete. The submission tool keeps
+the 128-token limit and the pinned current record ID. No GPU, service, live queue,
+parent packet or host setting was changed by this preparation. The 26.228599
+record is unchanged. [Work note](notes/2026-10-18-own-runtime-packet58w.md).
+
+**October 18, packet140 target-body search closed on CPU:** No new exact
+change supports the required 3% projected gain. The broadest scale-sharing
+idea gives about 1.31% under the transfer assumption supported by earlier
+kernel work. A more favorable assumption could exceed 3%, but the evidence
+does not justify it. The ranked table preserves all 164 negative indexes
+and reproduces the 58.223834 record before calculating savings. No runtime,
+build, GPU, service, queue proposal or readiness marker was created; existing
+packet136/137/139 work is untouched. Reopen with a distinct mechanism and
+evidence for enough savings. [Work note](notes/2026-10-18-own-runtime-packet140.md),
+[ranked table and closeout](experiments/own-xpu-runtime/stage2/packet140-body-lever/README.md).
+
+**October 18, packet137 token input prepared on CPU:** The new packet136-based
+copy replaces repeated draft projection with a complete read-only lookup table
+and gives the target fixed token-preparation buffers. Every vocabulary row
+matches under both compilers; draft proposals, rollback and state checks pass.
+Launch, queue and final seal checks pass. Three proposals cover the lane-B
+smoke and five-view comparisons on lanes B and A; they are planned but not
+queued. The unchanged legacy K2 startup receipt is reused within the CPU memory
+limit. Device quality and speed remain pending. No GPU, service, live queue or
+host setting changed. [Work note](notes/2026-10-18-own-runtime-packet137.md).
+
+**October 18, packet138 phase 1 closed:** The capture and exact CPU replay
+passed, but next-layer prefetch does not clear the registered gain and copy-time
+gate. The best optimistic projection is +5.75%; even it has 248 late copy
+batches. All 45 scenarios have late copies, and the less favorable timing
+assumptions lose speed. No phase-2 device design is admitted. All 624 captured
+tokens match their references; the route predictions and full cache analysis
+are retained. The coordinator released the capture cleanly; this preparer
+did not queue or launch device work. No measured speed record changes.
+[Work note](notes/2026-10-18-own-runtime-packet138.md),
+[results and closeout](experiments/own-xpu-runtime/stage2/packet138-xlayer-prefetch/phase1-closeout.md).
+
+**October 18, packet58v async cache prepared on CPU:** The one-card record
+spends 6.99 ms per token maintaining its cache. The new copy plans while the
+next position computes, then safely revokes victim pointers before filling
+their slots. This conservative schedule adds one position of lag. Both builds,
+byte/race checks, full-size startup, 87 policy tests and the seal pass. The
+12 × 64 smoke and five-view 12 × 128 bracket pass temporary planning but are
+not queued; the larger run requires the exact device smoke first. The build
+is 80.5 MB. Device correctness and speed remain pending; the 26.228599 record
+is unchanged. No GPU, service or live queue was started or changed.
+[Work note](notes/2026-10-18-own-runtime-packet58v.md).
+
+**October 18, packet136 banked bundle8 prepared on CPU:** The new copy keeps
+all 182 parent links and seals bundle7 with either copied or banked rollback
+state. All 88 tests, 11 subtests and five worker tests pass, along with the
+full launch-argument, temporary queue, drain and native-limit checks. The
+unchanged shared K2 startup receipt is reused within the 4-GiB CPU limit;
+the other startup checks ran locally. Six lane-A jobs are planned but not
+queued. The fresh chain waits for exact output and at least 0.5% improvement
+on both lanes, plus the composed smoke. Packet131b supplies lane B evidence.
+The 58.223834 record is unchanged. No GPU job, service or live queue was
+started or changed by this preparation.
+[Work note and handoff](notes/2026-10-18-own-runtime-packet136.md).
+
+**October 18, packet131b oracle admission repaired on CPU:** Packet131's
+smoke refused before device execution because its source map crossed the
+oracle symlink outside the repository. The new copy checks that oracle through
+its original binding and complete-oracle check. Unsafe source maps now fail at
+gate creation. All six real entry paths reach both intercepted native launches;
+the original refusal is reproduced. Native binaries and all seven links are
+unchanged. New smoke/grid proposals pass temporary planning but remain
+unlaunched. No GPU, service, live queue or host setting changed here.
+[Work note and evidence](notes/2026-10-18-own-runtime-packet131.md#packet131b--repair-oracle-admission-before-device-execution-october-18).
+
+**October 18, packet132 second-candidate study closed on CPU:** Checking a
+second draft choice on uncertain cycles does not clear the required 3% gain.
+The main cost model chooses to leave it disabled; even counting only extra
+expert work gives +2.25%, with +1.77% on held-out text. All 120 independent-text
+positions completed. Evidence and a do-not-repeat row are retained. These are
+CPU counts and cost projections, not measured device speed. No candidate was
+implemented; no GPU, service, live queue or host setting changed. The capture
+process exited normally. Reopen only with a new cost or prediction mechanism.
+[Work note](notes/2026-10-18-own-runtime-packet132.md).
+
+**October 18, packet134 rank0 gap attribution on CPU:** The saved trace does
+not support command replay as the next speed fix. Of each hit's 1.679 ms
+compute gap, 1.594 ms is before target kernels start and only 0.085 ms is
+inside their sequence. The separate host gap mostly covers rank1 drafting
+and target-head service. Misses add 2.046 ms before correction. Packet128b
+failed its timing-overhead gate, so these remain diagnostic observations.
+All 16 analysis tests pass and the evidence is sealed; the replay lever is
+closed for these receipts, with the exact reopening condition in the note.
+No runtime, GPU, service or live queue changed; no speed gain is claimed.
+The next useful evidence separates token lookup, decoding and upload costs.
+[Attribution and work note](notes/2026-10-18-own-runtime-packet134.md).
+
+**October 18, packet133 bundle8 prepared on CPU:** The new copy preserves all
+182 parent links and seals only bundle7 control and bundle7 plus suffix
+interleave. Both compositions pass their CPU startup checks; all 83 tests and
+11 subtests, the full argument/queue rehearsal, drain and native-limit gates
+pass. The lane-A proposal is planned but not queued; no job or service was
+launched. Packet130 B finished during preparation: its output is exact, but
+the candidate is 1.61% slower than the fastest control and fails the required
+0.5% gain. The fresh chain stays blocked; lane A and the composed smoke are
+unrun. Packet131 remains a disabled slot. The 58.223834 record is unchanged.
+[Work note and handoff](notes/2026-10-18-own-runtime-packet133.md).
+
+**October 18, packet130 early suffix scheduling sealed on CPU:** The new
+copy checks for rank1's hidden state between rank0's speculative layers and
+runs the head suffix when it is ready. It preserves the tested output bytes,
+arithmetic and miss rollback. Both compilers, full-size startup, all launch
+paths, drain, limits and temporary queue checks pass. Two new lane-B proposals
+cover a smoke and a one-load comparison; both are unlaunched. The build is
+108.5 MB. Device equality and speed remain pending; no gain is claimed.
+No GPU, service, live queue or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet130.md).
+
+**October 18, packet131 recurrent snapshot sealed on CPU:** A new copy keeps
+the old recurrent state in a spare buffer instead of copying it every cycle.
+Capture copies about 61% fewer bytes, with no increase in owned device
+allocation. All eight GNU/Intel state transcripts match byte for byte; reset,
+production bindings, startup, queue, drain and launch-limit checks pass.
+Two new lane-B proposals cover the exact smoke and five fresh-load comparison.
+They remain unlaunched. No GPU, service, live queue or host setting changed.
+Device correctness and speed remain pending; no speed gain is claimed.
+[Work note](notes/2026-10-18-own-runtime-packet131.md).
+
+**October 18, packet129 draft acceptance diagnostic prepared on CPU:** The new
+copy compares publisher FP8 draft experts against the current INT8 draft on the
+same inputs. Production guesses still drive the unchanged target. Both compilers
+pass exact arithmetic checks; target/state, reset, memory, launch arguments and
+temporary queue planning pass. Ten independent text inputs decide the +1.5-point
+acceptance gate; the twelve-prompt suite is secondary. The single lane-B proposal
+is ready for coordinator admission. Device acceptance is pending, and no speed
+gain is claimed. No GPU, service, live queue or host setting changed here.
+[Work note](notes/2026-10-18-own-runtime-packet129.md).
+
+**October 18, packet128b sampled timing job prepared on CPU:**
+Packet128's every-token recorder slowed the line to 42.21 tok/s, so its timing
+ranking remains blocked. The new copy records tokens 9–16 and keeps copy clocks
+separate from compute gaps. All parent links survive. CPU byte/reset/startup,
+argument, drain, limits and temporary queue checks pass. One proposed lane-B
+load checks all twelve 64-token answers; analysis runs after the lane is released.
+New device speed and the required 90% overhead ratio are still unmeasured.
+No GPU, service, live queue or host setting changed in this preparation.
+[Work note and handoff](notes/2026-10-18-own-runtime-packet128b.md).
+
+**October 18, packet58t resident lookup copy sealed on CPU:**
+The one-card engine now has an exact copy that reads its two sparse lookup
+tables from anonymous memory. This adds 29.32 GB of resident host bytes, checked
+by hashes and included in each window's memory budget. Both compilers preserve
+the tested output bytes; CPU preparation records zero major faults. All 109
+Python tests, native checks, drain and teardown gates pass. The new proposal
+passes a temporary queue plan: tile16 control / resident / control in one load,
+15–25 minutes with a two-hour watchdog. The coordinator must admit the whole
+host. Full-model device equality and speed remain pending; no gain is claimed.
+No GPU, service, live queue or host setting changed in this preparation.
+[Work note and evidence](notes/2026-10-18-own-runtime-packet58t.md).
+
+**October 18, packet124c restores the oracle link and gates the queue:**
+Packet124b stopped cleanly before KD because its oracle was a copied directory.
+The new copy restores the oracle authority link and eight identical file links.
+Native binaries and bundle7 selection are unchanged. All eleven window paths
+and the whole queue rehearsal pass on CPU, including six real oracle checks;
+the old tree reproduces the reported refusal. All 65 tests and 11 subtests pass.
+Readiness is true from packet118's original composites and the native identity
+chain. The fresh packet124c chain is unlaunched; the coordinator verifies
+readiness and live admission before launch. No GPU, service, live queue or
+host setting changed in this preparation.
+[Work note and handoff](notes/2026-10-18-own-runtime-packet124.md#packet124c--restore-oracle-authority-and-gate-the-whole-queue-october-18).
+
+**October 18, packet58r one-card one-load bracket sealed on CPU:**
+The new tile16 copy can switch route and recurrence without loading the model
+again. It checks every token against packet49 through A/B/A/B/A. Both compilers
+pass kernel bytes; all 80 Python tests, native resets, full-size binding and
+argument checks pass. The seal verifies and the new card-0 proposal passes a
+temporary queue plan. The coordinator can schedule its 20–30 minute whole-host
+gap, keeping lane B paused throughout. Fusion is unavailable and rejected.
+Device equality and speed remain unmeasured; no record is claimed.
+No GPU job, service, live queue or host setting changed in this preparation.
+[Work note](notes/2026-10-18-own-runtime-packet58r.md).
+
+**October 18, packet128 fresh bundle7 timing job prepared on CPU:** The new copy
+can record every layer on both ranks, including draft, head, copies and waits.
+CPU output, reset, full-size startup and real launch-argument checks pass.
+One temporary lane-B plan passes: twelve prompts, 64 tokens each, one load.
+The coordinator runs it next, then generates the budget. Actual device equality,
+overhead and class costs remain pending; no speed gain is claimed. No GPU,
+service, live queue or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet128.md).
+
+**October 18, packet58p tile16-only one-card chain prepared ahead on CPU:**
+The copy keeps production route and recurrence and changes only the down layout.
+All 118 Python tests, twelve full launch-argument paths, native parser/startup
+checks, byte checks and unchanged memory budgets pass. Both copied drain gates
+are fixed, and native launches refuse inherited resource caps. The 72.7 MB
+build reuses existing binaries. The seal and seven-window whole-host plan pass.
+Readiness is false while 58n's tile16 arm is still running and its final control
+is missing; all three arms must be exact and tile16 must beat both controls by
+at least 0.5%. The exact command is prepared for the coordinator, who pauses
+lane B. No GPU, service, live queue or host setting changed here.
+[Work note and handoff](notes/2026-10-18-own-runtime-packet58p.md).
+
+**October 18, packet124b repairs the failed K2 selection check:** The new copy
+passes only K2's three kernel choices to its unchanged strict validator. Native
+binaries, model output identity and bundle7 selection stay unchanged. All eleven
+real Python window paths pass on CPU, covering 31 intercepted launch arguments;
+the original packet124 code fails the retained K2 replay and the fix passes.
+All 51 policy/submission tests and four subtests pass, along with startup,
+memory, drain and launch-limit checks. Readiness uses the original packet118
+composites and pinned packet124 identity. That packet124b chain later stopped cleanly before KD at the oracle link check.
+Packet124c supersedes this preparation; its handoff is above.
+[Work note](notes/2026-10-18-own-runtime-packet124.md#packet124b--k2-selection-repair-in-a-new-copy-october-18).
+
+**October 18, packet126 early-draft analysis held at its timing gate:** Moving
+the next draft before target verification does not by itself save rank1 work.
+Without recovering head wait, the saved-command model is about 1.95% slower
+because misses add a discarded draft. It needs about 0.43 ms of recoverable
+wait per interval to clear the requested 0.5% gain, before rollback costs.
+The traces do not measure that wait, so the actual gain remains unknown.
+Both lanes' 2,376 intervals reproduce, eight analysis tests pass, and all 141
+negative indexes were checked. No runtime build, GPU job, service or queue
+proposal was made. Next prerequisite: separately timed head readiness,
+suffix service and merge wait. [Work note](notes/2026-10-18-own-runtime-packet126.md).
+
+**October 18, packet127 head retune ready for coordinator handoff:** The
+81,920-row and 122,880-row rank0 suffixes fit the unchanged 24/24 bundle7 line.
+Both compilers pass repeated exact bytes and resets; all 33 startup windows,
+six native launch-limit checks and four temporary proposal plans pass. The
+118 MB build is sealed. Both device micros, B's four-process grid and A's
+conditional confirmation remain pending. The old model favors 46,080, and
+packet120's trailing control refused teardown, so no new speed gain or spare
+GPU time is claimed. No GPU, service, live queue or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet127.md).
+
+**October 18, packet125 one-card miss micro prepared on CPU:** The retained
+one-card screen averages 33 misses and 65.46 MB of missing expert bytes per
+charged token. It does not separate PCIe reads from compute. All four external
+slot links report PCIe 4.0 ×16. Seven exact transport paths compile, both
+compilers pass repeated CPU byte checks, twelve policy tests and the drain
+check pass, and two card2 proposals pass temporary planning. The micro loads
+no model and uses real routes with explicitly simulated cache misses. The same
+candidate must reach 1.5× in both fresh processes before a copied engine or
+whole-host screen is prepared. Device results are pending; no GPU, live queue,
+service or host setting changed. [Work note](notes/2026-10-18-own-runtime-packet125.md).
+
+**October 18, queue live-window admission checked on CPU:** A now waits for a
+live B window before starting, then keeps the 61-second drain gap. B keeps its
+permitted overlap with an A exactness window. Fault, latch and pause checks
+stay active during the bounded wait. All 96 CPU tests pass. Read-only live
+plans found A's already-used evidence output and initially passed all five B
+entries; ongoing coordinator work then advanced B. No service, GPU, live queue,
+marker, latch or setting changed here. The coordinator picks up the code on
+its normal between-job restart. [Work note](notes/2026-10-18-own-runtime-ops-lane-overlap.md).
+
+**October 18, packet124 bundle8 BASE ready for coordinator handoff:** This is
+bundle7 with repaired host cooldown waiting and exactly the same native
+binaries and selection. Both compilers reproduce its saved output bytes;
+both ranks pass memory admission and all eleven startup windows pass. All 42
+policy/submission tests and six rank-launch checks pass. The old drain code
+fails the clock-crossing test; both fixed copies pass. The original bundle7
+smoke and both composites now qualify this identical selection, so readiness
+is true. Its chain folder is fresh. No manual pause of the other lane is needed
+for cooldown safety; normal exclusive timing reservations remain. New runtime
+levers are disabled slots. This CPU task launched no GPU job or service and
+changed no live queue or host setting. [Work note](notes/2026-10-18-own-runtime-packet124.md).
+
+**October 18, packet123 partial-layer move held at its timing check:** The
+saved bundle7 traces appear to leave 0.483 ms on rank0, but that includes
+head work missing from the command trace. The logged copies alone use at
+least 0.043 ms; total head time is unknown. We cannot establish the required
+0.3 ms spare time, or claim it is below that threshold. The next prerequisite
+is separately timed head work in an authorized device window. No candidate,
+build or queue proposal was made. CPU accounting and original-byte inputs
+are retained. No GPU, service, frozen tree or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet123.md).
+
+**October 18, packet122 draft CPU preparation complete:** The full draft
+probe covers 47 classes and both context lengths. The separate HC change
+passes both compilers' byte checks twice; both views and ranks pass startup,
+reset and protocol checks. The three proposed files pass temporary queue
+planning. Both fresh HC micros must cut every changed class by at least 20%
+with exact bytes before the one-load bracket can start. Device times are
+still missing. The long-context probe cycles real captures and is labeled
+a diagnostic. No GPU, service, live queue or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet122.md).
+
+**October 18, packet120 layer placement prepared on CPU:** Moving one target
+layer from rank1 to rank0 fits without changing the cache or head: the two
+rank arenas retain 2.73 and 1.78 GiB. Both compilers pass repeated byte checks,
+both views pass all startup windows, and the launch-limit and drain checks
+pass. The B screen and conditional A confirmation proposals pass temporary
+queue planning. Each compares production / 25-23 / production and requires
+at least 0.5% over both controls with exact output. The timing budget gives
+less spare time than the initial estimate, so a speed gain is uncertain.
+Device equality, residency and speed remain unmeasured. No GPU, service,
+live queue or host setting changed. The build is about 211 MB.
+[Work note](notes/2026-10-18-own-runtime-packet120.md).
+
+**October 18, packet119 DOWN-warming preparation complete on CPU:** Both
+compilers pass repeated exact-byte checks, and the compiled image retains the
+extra DOWN read with no extra stores or spills. The two proposed B micros use
+all 384 captured routes and must each cut gate/up-plus-down time by at least
+15% in both orders. The conditional one-load bracket passes both views and
+ranks' startup, reset, protocol, limit and sealed-evidence checks. All 28 policy
+tests and three temporary queue plans pass. The build is 120.6 MB. Actual cache
+behavior, device equality and speed remain unmeasured; the bracket stays
+blocked on both micros. No GPU, service, live queue or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet119.md).
+
+**October 18, queue drain-spacing guard checked on CPU:** The queue now waits
+until 61 seconds after the latest completed shared teardown on this boot before
+starting a job. Pause, stop, fault and latch checks remain active during the
+bounded wait. All 76 CPU tests and both live queue plans pass (six A jobs,
+eight B jobs). Frozen wrappers are unchanged. Keep the other lane paused
+during chains of unfixed bundles: their internal windows bypass the queue.
+No service, GPU job, live queue, marker, latch or host setting changed here.
+The coordinator picks up the code on its normal between-job driver restart.
+[Work note](notes/2026-10-18-own-runtime-ops-drain-spacing.md).
+
+**October 18, packet118 bundle7 preparation complete on CPU:** Both fixed
+prefix compositions pass GNU/Intel byte checks, VRAM admission and all 22
+startup windows. The twelve-prompt smoke shipped first; it and both composite
+proposals pass temporary queue planning. All 31 policy/submission tests and
+six rank-launch limit checks pass. The shorter prefix adds no head allocation.
+The build is 208 MB. Readiness stays false while smoke and composites await
+execution; packet103's record line is the control, and both lanes must clear
+1.0% over both controls with exact prompts. After those runs, only the evidence
+reader remains. No GPU, service, live queue or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet118.md).
+
+**October 18, packet116 QSA schedule prepared on CPU:** The candidate
+shares attention score work across more subgroups and selection ranking across
+all lanes. Both compilers pass repeated operator and complete-layer byte checks.
+Two value-tree rewrites changed NaN payloads and were rejected; the candidate
+keeps the original value arithmetic. Both fresh micro proposals pass temporary
+queue planning. Each must cut combined attention and selection time by at least
+40% before the separate one-load bracket can run. That bracket passes its
+startup, reset, protocol, limit and seal checks and has a conditional proposal.
+The build is 121.5 MB. Device equality and speed remain unmeasured. No GPU,
+service, live queue or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet116.md).
+
+**October 18, packet117 HC preparation complete on CPU:** The candidate
+shares independent sigmoid work across existing lanes and keeps the original
+sum order. Stronger NaN tests caught and fixed a payload difference; both
+compilers pass sixteen exact cases twice, and the full layer mock passes
+4,736 comparisons. Both HC kernels remain spill-free. The two fresh micro
+proposals and conditional one-load bracket pass temporary queue planning.
+The bracket's startup, reset, protocol and memory-limit checks pass. Each
+micro must cut both HC gate times by at least 30% before it can run. Device
+equality and speed remain unmeasured. No GPU, service, live queue or host
+setting changed. [Work note](notes/2026-10-18-own-runtime-packet117.md).
+
+**October 18, packet115 expert micro prepared on CPU:** Separate expert images
+use 128 registers for production and 256 for LARGE. All four designs have
+zero spills; both compilers pass exact-byte checks twice per view. Two fresh
+B micro proposals pass temporary queue planning and compare against both
+production modes. Device equality and speed remain unmeasured. A parallel
+one-load copy passes startup, reset and protocol checks and has a sealed,
+conditional B proposal. E3 is provisional until the micro selects a winner;
+only that winner's views are prepared. The whole build is 112.9 MB. No live
+queue or GPU changed here.
+[Work note](notes/2026-10-18-own-runtime-packet115.md).
+
+**October 18, packet114 smaller draft prefix prepared on CPU:** The fixed
+non-benchmark document rule chose 80,128 rows, down from 91,392. Both sizes
+pass the byte checks, all eleven startup paths, reset checks and seals. The
+full target head stays unchanged. The new lane-B one-load bracket proposal
+passes a temporary queue plan; allow 9–15 minutes with a one-hour watchdog.
+Its reports keep acceptance separate for each arm. The build is about 128 MB.
+Actual acceptance, exact model outputs and speed await the device bracket.
+No GPU, service, live queue or host setting changed in this preparation.
+[Work note](notes/2026-10-18-own-runtime-packet114.md).
+
+**October 18, packet111 four-composition bundle prepared on CPU:** The copy
+includes the packet103 launch repair, other-fusion and target-head split.
+Both compilers pass exact-byte checks; all 44 startup windows and 33 policy
+and submission tests pass. The combined twelve-prompt smoke proposal shipped
+first. The October 18 packet111r owner decision admits both added changes
+because each beats all its source controls: head is +0.37% on B and +0.53%
+on A, fusion +0.32% on B. Fresh combined proposals pass temporary planning.
+The combined candidate must still beat both controls by at least 0.5% on
+each lane, with exact prompts and unchanged per-prompt acceptance. The
+coordinator's smoke completed during the CPU review and passes; composite
+measurements are still missing, so the record chain stays blocked.
+The four sealed compositions and binaries are unchanged. The build is 208 MB.
+Launch checks reject the old inherited memory cap. This CPU update launched
+no jobs and changed no host setting or live queue.
+[Work note](notes/2026-10-18-own-runtime-packet111.md).
+
+**October 18, packet113 GDN row micro prepared on CPU:** The candidate gives
+each independent state row its own subgroup and removes workgroup barriers.
+Both compilers pass two fresh processes, each with 572 complete-layer checks
+and 768 full-state recurrence cases, including NaN/Inf and multiple tokens.
+The device binary compiles; both proposed B jobs pass temporary queue planning.
+Each fresh process must cut recurrence time by at least 40% before integration.
+Device equality and speed remain unmeasured. The build is 66.6 MB. No GPU,
+service, live queue or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet113.md).
+
+**October 18, packet112 route-selection micro prepared on CPU:** The 18.75
+microsecond route measurement already uses the fast route. The new candidate
+keeps its arithmetic and removes thirteen workgroup barriers from selection.
+GNU and Intel each pass 2,048 exact cases twice, including rejected NaN/Inf
+rows. Both fresh-process proposals pass temporary queue planning; the build
+is 10.3 MB. Each device process must halve route time before any integration.
+Device equality and speed remain unmeasured. No GPU, service, live queue or
+host setting changed. [Work note](notes/2026-10-18-own-runtime-packet112.md).
+
+**October 18, packet103x launch repair checked on CPU:** The first composite
+control failed because a Python import passed an 8 GiB address-space cap to
+the ranks. The cap now applies only to the CPU reader's CLI. The coordinator
+withdrew the old six jobs; their original names and failed output stay as
+evidence. The decision, native binaries and 5,632 startup receipts are unchanged.
+All six fresh suffixed proposals pass temporary queue planning. All 47 policy
+tests and fourteen intercepted native launch checks pass; the old reader fails
+the new gate. The record chain stays blocked on measured composite results.
+No GPU, service or live queue changed. Early test cleanup entered shared teardown
+bookkeeping; the final gate blocks writes outside its temporary directory.
+[Repair note](notes/2026-10-18-own-runtime-packet103.md#packet103x--inherited-address-space-limit-repair-october-18).
+
+**October 18, packet110 fresh class table and GDN timing job prepared on CPU:**
+The table uses both fresh QSA runs and keeps missing GDN times blank. It ranks
+open gate/up transpose, complete-tuple epilogues and exact route selection;
+these are opportunity budgets, not speed claims. The current-only GDN job
+compiles, passes two fresh CPU state checks and plans on a temporary queue.
+The coordinator proposal is pushed, with a script to fill the GDN table after
+its clean result. No device or live queue changed.
+[Work note](notes/2026-10-18-own-runtime-packet110.md).
+
+**October 18, packet58n one-card analysis and single-lever screen prepared on CPU:**
+The losing bundle spends much more time reading its host lookup inputs, with
+many more major page faults. Its expert-cache counts and bytes match production
+at every position; the receipts do not prove why the host state changed.
+The small retained tests favor tile16 even for host weights, so a new proposal
+tests tile16 alone between two production runs in a 33–39 minute whole-host
+gap. All 82 CPU checks and three temporary plans pass; the unchanged binaries
+use 39.53 MB. No device, service or live queue changed.
+[Analysis and proposed screen](notes/2026-10-18-own-runtime-packet58n.md).
+
+**October 18, packet58m one-card port chain prepared on CPU:** The copied port
+has all seven record windows, unchanged memory bounds and whole-host exclusion.
+Real parser/startup/oracle checks, 48 K1 byte checks, 110 Python checks and the
+seals pass. The finalized submission tool replays 58g's result and discloses
+host-pinned weights; the build is 72.7 MB. Readiness stays false while 58k's
+bracket is incomplete. The chain rereads all three exact receipts and requires
+at least 0.5% over both controls before any launch. No GPU, service or live
+queue changed. [Work note](notes/2026-10-18-own-runtime-packet58m.md),
+[readiness and proposed command](experiments/own-xpu-runtime/stage2/packet58m-onecard-record/ready.json).
+
+**October 18, packet108 budget and micro prepared on CPU:** Existing receipts
+put the current two-card hit/miss steps at about 15.17/26.09 ms. They do not
+retain fresh per-kernel times, so the budget keeps those gaps explicit. A new
+draft load-only micro compiles, passes its temporary queue plan and keeps the
+15% gate before any model integration. The build is under 1 MB. Device speed
+and equality are unmeasured; no GPU, service or live queue changed.
+[Work note](notes/2026-10-18-own-runtime-packet108.md).
+
+**October 18, packet107 specialised layers checked on CPU:** Both complete
+finite layers match across four fresh GNU/Intel runs. Stronger tests close the
+GDN change: Intel changes a NaN payload. QSA keeps exact FP32 and output bytes
+against each compiler's production and has two proposed single-card B jobs.
+It must save at least 80 microseconds per layer in both fresh processes before
+integration. Device equality and speed are unmeasured. The build is 67.2 MB;
+no GPU, service, live queue, frozen packet or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet107.md).
+
+**October 18, packet58k shorter one-card screen prepared on CPU:** Three
+proposed arms each load once and check every token in the twelve-prompt suite.
+Fresh small K1 fixtures still choose the miss path. Plan 33–39 minutes in a
+whole-host gap, with 118.31 GB available-memory admission. The unchanged
+binaries occupy 39.53 MB; all 76 CPU checks and three temporary queue plans
+pass. The full submission chain stays in 58j. No GPU, service, live queue or
+host setting changed. [Work note](notes/2026-10-18-own-runtime-packet58k.md).
+
+**October 18, packet105b/106b reset repair ready on CPU:** The new copies
+restore or preserve the suffix search after request reset. Repeated byte and
+reset checks, allocation/transfer checks and all 55 startup windows pass, with
+one saved receipt per window. The micro, both twelve-prompt candidate smokes,
+B grid and conditional A confirmation all plan successfully. The grid refuses
+until the device micro and complete smokes pass; A also needs an exact B winner.
+The combined new build is 240.9 MB. All device results and speed remain pending.
+No GPU, service or live queue changed.
+[Work note](notes/2026-10-18-own-runtime-packet105b.md).
+
+**October 18, packet106 prepared on CPU:** The draft head splits only after
+a verified hit; misses keep the complete prefix on rank1. Both compiler byte
+checks, hit/miss and transfer mocks, all eight allocation checks and all 44
+startup windows pass. Four views are sealed. The new proposals start with one
+64-token candidate-only B smoke, then a B grid and conditional A confirmation.
+The build is 261 MB. Device equality and speed are still unmeasured. No GPU,
+service or live queue changed.
+[Work note](notes/2026-10-18-own-runtime-packet106.md).
+
+**October 18, packet58j one-card port sealed on CPU:** The separate copy of
+58g has down-tile16, route-fast and rec-both-plus, with eight choices including
+production. Both builds, repeated GNU/Intel byte checks, all 80 full-size
+startup/submit checks, 109 Python checks and ten plan-only rehearsals pass.
+Every host budget matches 58g. E1 is excluded because it adds 616 MB of pinned
+weights. The build is 161 MB. Device exactness and speed await the coordinator's
+whole-host gap after the two-card chain; no device, service or live queue ran.
+[Work note](notes/2026-10-18-own-runtime-packet58j.md).
+
+**October 18, packet105 sealed on CPU:** The target head can send its last
+46,080 rows to rank0 using the verified current hidden vector. Both builds,
+both compiler byte checks, every head row's loader check, hit/miss mocks,
+all six allocation checks and all 33 startup checks pass. Three views are
+sealed. Ten proposed jobs pass temporary queue plans: both transfer choices
+on lane B, then independent lane-A confirmation. The build is 279 MB.
+Device quality, real card residency and speed remain pending. No GPU,
+service or live queue changed.
+[Work note](notes/2026-10-18-own-runtime-packet105.md).
+
+**October 18, packet104 micro compiled on CPU:** Nine tile16 weight-layout
+candidates are ready for the proposed lane-B operator test. The build is about
+29 MB. It uses packet100b's real target routes; draft replay is labeled as a
+proxy, with actual model screens required to check transfer. The target's
+shared expert and router now have separate full-tuple comparisons. No long CPU gates, model screens,
+GPU work or live queue ran. The coordinator proposal is
+`ops/lane-queue/proposed-p104-micro-B.txt` under the own-runtime experiment.
+[Work note](notes/2026-10-18-own-runtime-packet104.md).
+
+**October 18, packet97e ready on CPU:** KD's old host command could not use
+half-cache in streaming mode. The new sealed draft-only reference keeps its
+arithmetic and exactness checks; the target's half-cache guard stays intact.
+All 128 compositions pass all eleven startup windows in 12 minutes 36 seconds,
+using about 1.2 GiB RAM. Decision `f1e5d7f47fc0fe54` is ready again in fresh
+folder `device-cards01-b`; the old `-a` evidence and frozen decisions are
+unchanged. No chain, GPU work or live queue was launched. The exact manual
+command is in [ready.json](experiments/own-xpu-runtime/ops/packet97-orchestration/ready.json).
+[Repair and checks](notes/2026-10-18-own-runtime-packet97.md).
+
+**October 18, packet103 composite prepared on CPU:** Copied after packet97e’s
+committed fix, the new bundle includes down-tile16 and draft attention with
+all earlier choices. Both binaries compile; the build is about 222 MB including
+the executed fixture hard links.
+The source decision selects both new options and rechecks later lane-A losses.
+Operator bytes and 529 submission replay checks pass. All 1024 full-size rank
+allocation checks and all 5632 startup-window checks pass on finalized sources.
+Eight required views are sealed; both three-job composite proposals pass
+temporary queue planning. All 600 selected-path tests, input checks, storage
+admission and the fresh-chain plan pass. The coordinator can screen the
+proposals; record-chain readiness still needs their measured results. No device
+or live queue ran in this preparation.
+[Work note](notes/2026-10-18-own-runtime-packet103.md).
+
+**October 18, packet100b route capture prepared on CPU:** The new lane-B job
+captures both ranks' target expert routes for two standard 64-token requests,
+then checks every output against the existing oracle. The follow-on micro uses
+packet100's unchanged kernels and 15% gate. Both compilers, both full-size
+startup checks, 23 Python checks and six temporary queue plans pass. The build
+is about 66 MB. Real capture, device equality and speed remain pending. No GPU,
+service, live queue or frozen packet changed. Use the new capture/micro proposals
+and updated proposed B/A grids; records stay on A.
+[Evidence and handoff](notes/2026-10-18-own-runtime-packet100b.md).
+
+**October 18, packet98c native switching sealed on CPU:** A separate copy of
+packet97 can switch route, recurrence, HC gate and draft attention without
+reloading weights. Both builds, full-size capture/reset checks, layout refusals,
+poisoned-state checks, repeated byte comparisons and 130 wrapper tests pass.
+Both seals and all five temporary queue plans pass. Start with the proposed
+route-only A/B/A on lane B; full brackets require that same-binary smoke first.
+Device outputs and speed remain unmeasured. No GPU, service, live queue or existing
+packet changed. [Evidence and handoff](notes/2026-10-18-own-runtime-packet98c.md).
+
+**October 18, packet102 closed at the microbenchmark gate:** CPU byte,
+assembly and full startup checks pass. The coordinator's micro run found
+batch2 only 1.9% faster, batch4 unchanged and shared input 3.3% slower; none
+meets the required 15%. Both combined variants spill. All conditional model
+screens stay closed, and no record chain is qualified. The CPU preparation
+changed no live queue or device state.
+[Task note](notes/2026-10-18-own-runtime-packet102.md).
+
+**October 18, packet97d ready on CPU:** All four brackets of the same sealed
+selection are now counted. Both record-lane brackets clear the required gain;
+the other lane has one qualifying win and its drifting bracket stays above
+the first control. All outputs and acceptance counts agree. The unchanged
+chain policy and every CPU readiness check pass; `ready.json` is true for
+decision `f1e5d7f47fc0fe54`. No device work or live queue ran. The two frozen
+decisions are unchanged. [Evidence and checks](notes/2026-10-18-own-runtime-packet97d.md).
+
+**October 18, packet101 resealed on CPU after a parent-selection change:**
+The new seals exclude packet97's changing orchestration outputs and keep
+packet101's own selections. Binaries and quality gates are unchanged; no
+rebuild was needed. All six fresh A/B queue plans and 13 CPU checks pass.
+Start the complete fresh A control/attention/control bracket; the old A
+control remains history and is not reused. B has a fresh mirror. Live queues
+and all other packets were untouched. Packets99/100 do not pin the changing
+selection, but both still pin a parent evidence receipt whose hash currently
+matches. [Exact proposals and evidence](experiments/own-xpu-runtime/stage2/packet101-draft-geometry/RESEAL.md).
+
+**October 18, review15 cleanup and packet97 rule prepared on CPU:** The new
+cleanup tool can archive reviewed, closed screen caches and bundles after
+checking every live packet's references. Its dry run found 156.8 MB eligible;
+no real cleanup ran. New packet97 decisions exclude a source after a completed
+loss or inexact result on the record lane. Packet93 is excluded by its A loss;
+the two frozen decisions and their original tools remain unchanged. All 92 CPU
+tests pass. The coordinator runs cleanup after a fresh plan.
+[Instructions and evidence](notes/2026-10-18-own-runtime-review15-cleanup.md).
+
+**October 18, packet101 prepared on CPU:** Packet69's draft-HC settings are
+already active in packet97. Its draft attention option remains distinct, so
+the new packet prepares that choice alone. Both compilers pass repeated byte
+checks; all 512 full-size startup checks, four allocation refusals, four seals
+and six temporary queue plans pass. B has a control/candidate/control proposal
+and A its mirror; records stay on A. Device outputs, acceptance and speed remain
+pending. Scratch is cleaned and the build is below 65 MB. No GPU, service, live
+queue, existing packet or host setting changed.
+[Evidence and handoff](notes/2026-10-18-own-runtime-packet101.md).
+
+**October 18, packet100 prepared on CPU:** Two exact DOWN locality choices
+and production pass both compilers, all 34 full-size startup checks, three
+seals and five temporary queue plans. The build uses about 151 MB. The device
+test is blocked: packet77/86 kept route hashes, but matching raw route bytes
+were not found. No GPU, service or live queue ran. Recover those inputs before
+the microbenchmark; only a measured 15% kernel-time win can reach separate B
+screens and A confirmations. Records stay on A. No speed is claimed.
+[Evidence and handoff](notes/2026-10-18-own-runtime-packet100.md).
+
+**October 18, packet99 CPU checks complete:** Three exact IQ2 lookup choices
+and their half-cache forms pass both compilers without linked spills. Full-size
+startup, memory admission and refusal checks pass on both ranks. Down uses a
+different format; its new table path is exact but spills, so it is closed before
+device testing. The prepared single-card test must show at least 15% less kernel
+time before a candidate gets its own B bracket and A confirmation. A decides
+any later record choice. No GPU, service, live queue or host setting changed.
+[Evidence and handoff](notes/2026-10-18-own-runtime-packet99.md).
+
+**October 18, packet98 sealed on CPU:** A separate v5 screen wrapper now keeps
+one rank pair for a whole bracket. Both native builds, full-size startup and
+reset checks, real miniature byte checks, rank-message tests and 119 wrapper
+checks pass. Both lane-B proposals passed planning in a temporary queue. V4 and
+existing packets are untouched. No GPU or service ran. The first device step
+will be a two-view packet84 A/A smoke on lane B; only after it passes may the
+five-view packet91 comparison run. Device output parity and wall-time savings
+remain unmeasured. [Task note](notes/2026-10-18-own-runtime-packet98.md).
+
+**October 18, packet97b composition gate updated on CPU:** A source now needs one exact winning lane before joining the composite. Packet91's old rejection was an unfinished screen being labeled failed; its completed A grid now qualifies, together with packet93's head transpose and packet90's half-cache. The helper freezes that set and prepares both composite brackets plus conditional leave-one-out views from existing sealed selections. Pending sources do not delay the decision. Record readiness stays false until the composite's own two-lane checks and the unchanged full chain pass. No GPU, service, live queue or other packet tree changed. [Decision, diagnosis and validation](notes/2026-10-18-own-runtime-packet97.md#packet97b--review-14-screen-the-composite-first).
+
+**October 18, packet58h one-card MTP feasibility closed on CPU:** The draft shares the existing head, but its own weights still need more host RAM than the saved admission snapshots allow. Both device layouts fit; whole-host timing needs about 121.65 GB available with the reserve intact. The main timing model predicts 24.62 tokens per second, below the required 28.8. No runtime was built or queued; frozen packets and live work were untouched. A passive read found blocks 53–56 offline and 57 online, differing from the brief's stated 10 GiB exclusion; no setting changed. Revisit only with a faster complete verification path and a host budget with margin. [Analysis and closeout](notes/2026-10-18-own-runtime-packet58h.md).
+
+**October 18, packet97 sealed on CPU:** One new binary combines the packed head, reply-first reporting, HC norm fusion, expert grid prefetch and half-cache with packet91's routing and recurrence choices. Both compilers pass the byte checks; all 128 selections are sealed, all 256 full-size startup checks pass, and 305 Python tests plus 136 subtests pass. Largest and baseline chain rehearsals and six temporary queue plans pass. Readiness is false: packet91's A screen is rejected as unfinished/failed, other source decisions remain pending, and the unchanged chain disk reserve needs about 3.06 GB more free space. The helper will write the actual composition jobs when source decisions resolve. No GPU, service, live queue or frozen tree changed by this work. [Evidence and proposals](notes/2026-10-18-own-runtime-packet97.md).
+
+**October 18, packet58s one-card submission tooling:** The new CPU-only preparer checks packet58g's finished queue, original receipts and packet49 exactness, then derives the one-card payload from WS128 alone. Sixteen synthetic checks and the shared CLI's offline dry-run pass. Plain decode has no draft; full BF16 KV and the 18 GB expert cache are disclosed. The strict 512-token gate and second timing repeat remain false. The public record lookup was blocked, so the public one-card best is unknown. No result was submitted and the running packet58g tree was untouched. [Coordinator steps](notes/2026-10-18-own-runtime-packet58s.md).
+
+**October 18, packet93 restored-tool reseal:** Its three screen views now use packet84's restored submission tool. Both engine binaries stay unchanged. The original microbenchmark remains intact, but its old seal cannot admit new screens. The coordinator must run the new B2 micro proposal, then the B grid and A confirmation after fresh qualification. This work uses CPU only and leaves live queues untouched. [Exact proposals and evidence](experiments/own-xpu-runtime/stage2/packet93-packed-head2/RESEAL.md).
+
+**October 18, packet95 sealed on CPU:** The new expert path reads the next IQ2 table word during current arithmetic, with unchanged sums and no linked register spills. The full scale cache fails both memory limits and is closed with exact arithmetic. Both compiler byte repeats, all four real startup/memory checks, 90 Python tests, two seals and eight temporary queue plans pass. Production stays hc-wide/wide64/ordered/rec-parallel. No GPU, service, live queue or frozen source changed. The coordinator can choose either direction; device correctness and speed remain pending. [Evidence and proposed jobs](notes/2026-10-18-own-runtime-packet95.md).
+
+**October 18, packet94 sealed on CPU:** The low/injection kernel includes the same HC norm arithmetic and keeps the BF16 tensor needed by mixing. Both compilers pass every output and scratch byte across four consecutive tokens. All six full-size startup and memory checks, 90 Python tests, three seals and four temporary queue plans pass, including the HC weight-cache combination. The coordinator can screen either lane first and confirm its exact improving winner on the other. Device correctness and speed remain pending. No GPU, service, live queue or frozen source changed. [Evidence and exact proposed paths](notes/2026-10-18-own-runtime-packet94.md).
+
+**October 18, packet93 packed-head choices sealed on CPU:** Two new unpack paths keep the production arithmetic: one decodes words together, the other rearranges the same packed bytes for direct lane reads. Both compilers, all six full-size startup and memory checks, 102 Python tests, three seals and five temporary queue plans pass. The coordinator starts with the proposed single-card lane-B microbenchmark; only a candidate cutting kernel time by at least 15% may enter either matched screen direction. Production stays selected. No GPU, service, live queue or frozen source changed. Device quality and speed remain pending. [Evidence and handoff](notes/2026-10-18-own-runtime-packet93.md).
+
+**October 18, packet92 reply-first prepared on CPU:** Rank1 can send its verified reply and accept before formatting the prior half's report. Reporting then runs after the next draft is submitted, and a failure stops the next half. Kernels, result waits and error checks stay unchanged. Both compiler mock gates, repeated miniature byte checks, four full-size startup checks and 87 Python checks pass. Two views are sealed; both queue directions pass temporary planning. Build scratch is under 139 MB and root has over 17.5 GiB free. No GPU, service, live queue or frozen source changed. The coordinator next runs a matched device screen; savings remain unknown. [Evidence and handoff](notes/2026-10-18-own-runtime-packet92.md).
+
+**October 18, packet90 expert and HC candidates sealed on CPU:** Two new paths decode fixed weight values once at load while keeping the ordered arithmetic. Production and both candidates match bytes under GNU and Intel twice. All six full-size startup and memory checks pass; malformed allocations and unsupported modes are refused. Three view seals and all four proposed lane queues pass CPU planning. The build stayed below 146 MB before fixture cleanup. No GPU, service, live queue or frozen source changed. Either lane can now run the grid: the new B-grid proposal lets B run first, then A confirms only the same exact improving winner with unchanged acceptance counts. A-grid remains the default. All 90 Python checks pass; binaries are unchanged. Device correctness and speed remain pending. [Direction options and proposed files](experiments/own-xpu-runtime/stage2/packet90-expert-hc/WINDOW.md). [Original evidence](notes/2026-10-18-own-runtime-packet90.md).
+
+**October 18, packet91 sealed on CPU:** The new bundle starts from packet84's chained selection and tests faster routing, the new recurrence choice, and both together. It reuses the two existing binaries by hash; no compiler ran. All eight full-size startup checks, 172 Python tests plus 12 subtests, five complete selection rehearsals, chain/storage checks and thirteen temporary queue plans pass. The baseline is restored. Readiness remains false until packet91's own matched screens finish on both lanes. The running packet84 tree and live queue were untouched; no GPU or service ran. The coordinator next runs the proposed A grid and B confirmation or full grid. [Evidence and exact job paths](notes/2026-10-18-own-runtime-packet91.md).
+
+**October 18, packet58g one-card repair sealed on CPU:** Layer 2 passed an 8 KB expert-pointer table to a kernel expecting a 360 MB weight bank. The new path reads those pointers with unchanged arithmetic. The full-size CPU test reproduces the old refusal and passes all 1,486 sites; K1 keeps its exact hash, reset checks and 98 Python tests pass. A clean refusal before compute releases its own drain and lane lease while stopping the chain. W windows now use lane-A cores at normal priority. Both builds and seals pass; build scratch is 159 MB. No GPU, service or frozen tree changed. The coordinator next starts a fresh chain at K1a; actual device exactness and speed remain pending. [Evidence and launch command](notes/2026-10-18-own-runtime-packet58g.md).
+
+**October 18, packet82b recurrence round 2 prepared on CPU:** The gate split was already included in parallel recurrence, so their combined view is an identical control. A new view removes one preparation barrier while keeping the arithmetic loop unchanged. Both compilers pass the complete state/output checks twice; all six full-size startup checks, 87 Python checks and three seals pass. Both lanes have full-grid and opposite-lane confirmation proposals checked on temporary queues. No GPU, service, live queue or frozen source changed. The coordinator next screens the new view against the packet84 composition; device correctness and speed remain pending. [Evidence and handoff](notes/2026-10-18-own-runtime-packet82b.md).
+
+**October 18, packet88 miss-path attribution closed on CPU:** Rollback already overlaps drafting, and correction cannot reuse the wrong token's layer results. The raw receipts confirm 12.655 ms for correction and 0.569 ms for rollback. Each restore copies 19.03 MB after the existing spare-bank omission; its separate device time was not captured. No new lossless mechanism justified a build, so no screen or queue job was added. The next useful evidence is a separate restore timing or a complete state-preservation proof. No GPU, service or frozen tree changed. [Attribution and closeout](experiments/own-xpu-runtime/stage2/packet88-miss-path/MISS.md).
+
+**October 17, packet84 composition screen prepared on CPU:** Lane B has four proposed jobs: the pinned packet80 control, parallel recurrence, parallel recurrence plus fast routing, then the control again. All three sealed views share packet84's unchanged binary. Both ranks pass full-size startup, all four temporary queue plans pass, and comparison checks pass. The live queue and running chains were untouched; no GPU or service ran. The coordinator runs the proposed jobs before considering a packet84 record chain. Actual output checks, acceptance and speed remain pending. [Jobs, evidence and comparison](experiments/own-xpu-runtime/stage2/packet84-screens/README.md).
+
+**October 18, packet86 diagnostic prepared on CPU:** Eight views can test the cost of expert decoding, grid lookups, repeated expert reads and HC scaling. They deliberately change outputs and can never enter a bundle, chain or headline. Production matches packet75; both compiler checks and all sixteen full-size startup/admission checks pass. Both lanes have proposed jobs checked on temporary queues. No GPU, service or live queue ran. Actual costs and lossless savings remain unmeasured. The coordinator next runs the lane-B diagnostic after normal admission. [Evidence and handoff](notes/2026-10-18-own-runtime-packet86.md).
+
+**October 17, packet83 sealed on CPU:** The draft head can use a separate four-bit copy or two smaller prefixes chosen from independent text. Target bytes stay equal to packet75 in fresh CPU runs. Both compilers agree on every real prefix row, all eight full-size startup checks pass, and rank1 has about799MB left under its unchanged arena limit. Both lanes have full-grid proposals; the other lane confirms the exact improving winner between controls. All seals and temporary queue plans pass. No GPU, service or live queue ran. Actual acceptance and speed remain pending. [Evidence and handoff](notes/2026-10-17-own-runtime-packet83.md).
+
+**October 17, packet82 sealed on CPU:** Two recurrence choices share independent gate and normalization work across waiting subgroups. Both compilers match every candidate state/output byte to production over consecutive tokens; existing GNU/Intel NaN payload differences are recorded separately. All six full-size startup checks, 85 Python checks, three seals and temporary queue plans pass. No GPU, service or live queue ran. The coordinator next screens A, then its exact improving winner on B. Device correctness and speed remain pending. [Analysis and evidence](notes/2026-10-17-own-runtime-packet82.md).
+
+**October 17, packet81 sealed on CPU:** Three expert choices read the same activation bits with fewer load instructions. Both compilers pass every byte check twice, and all eight full-size startup checks reach their intended kernels. Four seals, all lane plans and both temporary queue plans pass. Memory limits and arithmetic are unchanged. No GPU, service or live queue ran. The coordinator next screens lane A, then its exact improving winner on B; actual speed and model-output checks remain pending. [Analysis, evidence and proposed jobs](notes/2026-10-17-own-runtime-packet81.md).
+
+**October 17, packet58f sealed on CPU:** The one-card child now filters discovery to card 0 before opening a device. The lane-A lease stays in place. A refusal before launch no longer leaves a shared teardown record; a clean K1 exit releases it before CPU report checks. All 81 Python checks, both builds, full post-load setup and the fresh card-0 plan pass. Memory budgets and arithmetic are unchanged. No GPU or service ran during preparation. The coordinator starts at K1a in a fresh 58f chain; actual device isolation, exactness and speed remain pending. [Evidence and commands](notes/2026-10-17-own-runtime-packet58f.md).
+
+**October 17, packet79 sealed on CPU:** The record-line draft can now use the first card with only its 91,392-row head prefix, at 23/25 or24/24 target layers. Both fit the unchanged memory limits in the complete post-load mock. Target and draft bytes match packet75 in miniature runs; both compilers, reverse-handoff tests,75 Python tests and both temporary queue plans pass. Six views share one binary, including hc-wide. No GPU or service ran. The coordinator screens A, then its exact improving winner between B controls. Real output checks, acceptance and speed remain pending; the estimated 5% is not a measurement. [Evidence and proposed jobs](notes/2026-10-17-own-runtime-packet79.md).
+
+**October 17, packet78 sealed on CPU:** Five choices can test a faster expert
+sort and smaller HC norms on the record configuration, including the wider HC
+gate. Both compilers pass every byte check twice. Full-size startup passes on
+both ranks, and captured operations confirm each choice reaches its intended
+kernel. Seals, worker imports, lane admission and temporary queue plans pass.
+No GPU or service ran. The coordinator screens lane A, then its exact improving
+winner between fresh lane-B controls; device correctness and speed remain
+pending. [Evidence and proposed jobs](notes/2026-10-17-own-runtime-packet78.md).
+
+**October 17, packet58e prepared on CPU:** The one-card chain now uses 90-second gaps. Its exactness windows can share the host with lane-B screens when 85.57 GB is available; the 8 GiB live reserve and full cache/KV budgets remain. Card 0 holds lane A. Timing still holds both lanes and requires 118.31 GB. Both builds, the full post-load setup, all 70 Python checks and the card-0 plan pass. No GPU or service ran. The coordinator starts a fresh chain at K1a; complete device memory, exactness and speed remain pending. [Evidence and commands](notes/2026-10-17-own-runtime-packet58e.md).
+
+**October 17, packet71c sealed on CPU:** The depth-two screen's router refused
+its grouped configuration in 71b. The new candidate separates those projections
+while keeping their arithmetic; production and controls are unchanged. Both
+compilers pass all byte checks. Full-size native startup and two-row setup now
+run on CPU for every plan, and reproduce the old refusal as a regression check.
+Seals and all four temporary queue plans pass. No GPU or service ran. The
+coordinator next runs smoke, then control/candidate/control; device correctness
+and speed remain pending. [Evidence and proposed jobs](notes/2026-10-17-own-runtime-packet71c.md).
+
+**October 17, packet77 prepared on CPU:** A new lane-B screen can measure where
+time goes in packet70's wide64 record selection. It compares observation off
+and on in one load, then reports both cards' class costs and the second card's
+head, final norm, argmax and remaining time. Both builds, full-shape allocation,
+real admission, 80 Python checks and temporary queue planning pass. The shared
+v4 wrapper is unchanged. No GPU or service ran; current costs and lever ranking
+await the coordinator's screen. [Evidence and proposed job](notes/2026-10-17-own-runtime-packet77.md).
+
+**October 17, packet58d sealed on CPU:** The one-card engine loaded all 48 layers in 58c, then stopped because two pinned copy slabs requested the wrong lifetime. The new packet fixes both callers and keeps the strict check. Errors now identify the allocation. A CPU mock passes the complete post-load setup; both builds, 59 Python checks, K1 byte checks and request resets pass. The seal and card-0 queue plan pass. No GPU or service ran during preparation. The coordinator reviews the retained lineage stops and starts the fresh chain at K1a; device correctness and speed remain pending. [Task note and command](notes/2026-10-17-own-runtime-packet58d.md).
+
+**October 17, packet76 sealed on CPU:** Most of rank1's reported 1.61 ms
+residual is host housekeeping, including substantial measurement overhead.
+Two sealed choices can test cheaper event cleanup with unchanged kernels.
+Both builds, mock byte checks, full-shape post-load allocations, all 76 Python
+checks and both temporary queue plans pass. The original pinned shared v4
+wrapper uses 23/25 for both controls and candidate. The coordinator runs lane A,
+then its exact improving winner on B. No GPU, model or service ran; speed and
+device exactness remain unmeasured. [Evidence and jobs](notes/2026-10-17-own-runtime-packet76.md).
+
+**October 17, packet58c prepared on CPU:** The one-card wrapper now counts completed pinned experts separately from remaining GPUActive growth. It keeps the same host admission, reserve and safety stops, and checks the combined memory total. All 57 CPU checks pass; native sources and binaries are unchanged. The old evidence fits the double-counting explanation but lacks the failing sample, so the new wrapper saves every sample. No GPU or service ran. The coordinator reviews the retained 58b latch, then starts the fresh card-0 chain at K1a; existing rules forbid reusing K1 across the new seal. [Task note and command](notes/2026-10-17-own-runtime-packet58c.md).
+
+**October 17, packet73 sealed on CPU:** Five choices now share one engine: packet70 production, shared-load HC, two expert follow-ups, and HC with the smaller IQ4 span. Both compilers agree on every operator byte check; accepted kernels have no offline spills. The private v4 wrapper passes 82 mock checks, all lane plans pass, and queue proposals were checked in a temporary copy. No GPU or model ran. The coordinator can screen lane A, then test its exact improving winner between fresh lane-B controls. [Task note and commands](notes/2026-10-17-own-runtime-packet73.md).
+
+**October 17, packet74 prepared on CPU:** Four sealed choices can test packed dense weights while keeping the same target arithmetic. Both compilers pass the byte checks; the engine and microbenchmark build. All screen and private queue plans pass. The combined choice saves about 662 MB on the first card and 682 MB on the second by calculation, including an unchanged expanded draft prefix. Fused HC and small-FFN groups stay on their existing paths. No GPU or model ran. The coordinator owns the exactness and speed screens; actual peak memory and speed are unmeasured. [Evidence and next steps](notes/2026-10-17-own-runtime-packet74.md).
+
+**October 17, packet71b prepared on CPU:** Packet71's screen import failure is repaired in a new copy. Plans now import the real worker in its closed launch environment. Both HC gates, router and route have two-row implementations that keep each row's arithmetic. Both compilers pass 2,728 byte checks; builds and eleven wrapper/import tests pass. Both selections are sealed, and all four proposed lane-B jobs pass queue planning. No GPU or CPU model ran. The coordinator next runs smoke, then control/candidate/control; device correctness and speed remain pending. [Evidence and jobs](notes/2026-10-17-own-runtime-packet71b.md).
+
+**October 17, packet72 prepared on CPU:** The bandwidth check rules out new QKV, Z and Q-gate work under the requested size threshold. Attention output narrowly qualifies on the second rank. Its candidate shares raw loads and keeps the same arithmetic. Both compiler byte checks and engine builds pass; the offline compiler emits fewer loads. Three views share one binary. The private v4 screen passes 79 mock checks and releases the lane before reporting. Lane A gets the full grid; lane B is limited to an exact improving candidate between two controls. No GPU or model ran. [Evidence and next steps](notes/2026-10-17-own-runtime-packet72.md).
+
+**October 17, packet71 ready for the coordinator's device screen:** The two-row engine now overlaps the next pair on the first card with verification on the second. Copied packet68c kernels are selectable by class; unsupported shapes retain the original kernels. Both the batched and all-serial settings are sealed. Small CPU fixtures pass every acceptance case, 1,854 state comparisons, state metadata and draft-cache checks. Operator bytes agree under both compilers. Lane-B smoke and matched quick jobs are prepared; full-model correctness and speed still need those device runs. No GPU or service ran during preparation. [Task note](notes/2026-10-17-own-runtime-packet71.md).
+
+**October 17, packet68c CPU preparation complete:** The coordinator has a sealed lane-B two-row probe built from the tuned production dense kernels and packet65's wide64 experts. Both compilers pass 1,428 byte checks and the device program builds. The probe adds consecutive real inputs with different expert routes and keeps all thirteen packet49 output checks. The main costly classes are batched; router and HC remain explicitly serial. No GPU or model ran here. Device speed and row/state identity remain pending; the prepared analyzer includes packet68's measured restore cost. [Task note and commands](notes/2026-10-17-own-runtime-packet68c.md).
+
+**October 17, packet69 CPU preparation complete:** The coordinator has a sealed lane-B screen to measure rank 1’s target head, final norm and argmax, plus seven candidate views and two fixed quick jobs. The draft prefix already reads about 561 GB/s using its actual expanded bytes; the old packed-byte estimate understated that. Both compiler byte checks, draft repeats, selection checks and all sixteen quick plans pass. Both wrappers release drained lanes before CPU reporting. No GPU or model ran; device timings, output checks and draft acceptance remain pending. [Task note and commands](notes/2026-10-17-own-runtime-packet69.md).
+
+**October 17, packet70 prepared on CPU:** The next record bundle reuses packet65's binary with packet64's selected draft-HC, batch-copy and 24/24 settings. Every chain gap is 90 seconds. Its private screen releases both lane locks after drain and postflight, before reporting; report errors no longer leave a device-fault latch. Seal, plans, input/storage checks and mock tests pass. No model, GPU or service ran. Production experts stay selected while both packet65 screen lanes finish; readiness is explicitly pending. The helper will choose only an exact expert that wins on both lanes, check the packet and print the chain command. The coordinator launches it. [Task note and evidence](notes/2026-10-17-own-runtime-packet70.md).
+
+**October 17, packet65 quick lane screens prepared on CPU:** Two fixed six-screen jobs can test the four expert choices on both card pairs at once, with fresh production controls on each lane. Each screen holds only its own lane lease and keeps all 13 exact checks, fault checks and shared drain spacing. The original packet65 binary and selection seals are unchanged; this task did not edit the frozen running trees. CPU seal checks, all twelve plans and mock runs pass; no GPU or service ran. The coordinator owns the next launch; device speed is still unmeasured. [Commands, jobs and comparison](experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/quick/README.md).
+
+**October 17, packet64 orchestration prepared on CPU:** The coordinator now has a single script to wait for both screen lanes, choose only an exact option that wins on both lanes, reseal it and start the full chain. Two extra lane-B screens use the existing timing holds and drain checks. Mock orchestration and CPU protocol tests pass; no GPU or service was started, and the frozen trees were untouched. The coordinator owns the next launch. [Command, selection rule and tests](experiments/own-xpu-runtime/ops/packet64-orchestration/README.md).
+
+**October 17, packet64 record bundle prepared on CPU:** One binary now has eight sealed choices: 24/24 or 23/25 target layers, production or draft-HC kernels, and ordinary or batched rollback copies. The prepared default is 24/24 with production draft and ordinary copies; the coordinator can change it in about 1.3 seconds after screening. Target fixtures match packet56, draft repeats pass, both memory placements pass, and all 32 screen plans pass. The complete chain checks 12,001 input paths and 352 write/scratch paths for each placement. It includes the repaired KD scratch and early-receipt resume, plus lane-aware admission that holds the whole host only during speed windows. The build stays below 400 MB. No GPU or service ran; existing jobs remain with the coordinator. Next are final screen selection and the sealed K0..WS128 chain. [Task note and commands](notes/2026-10-17-own-runtime-packet64.md).
+
+**October 17, lane-aware chain admission prepared on CPU:** Future chain wrappers can keep cards 0+1 while a masked screen uses cards 2+3 for exactness work. WS128, WSs and W2m still hold the whole host until their owners exit and postflight passes. The reusable code, chain patch and companion B-screen patch pass 55 CPU tests. Existing packets and running jobs were not changed by this preparation. Both sides need fresh seals before the coordinator tests device overlap; the current memory floors, watchdogs and shared drain spacing remain. [Protocol, adoption steps and evidence](notes/2026-10-17-own-runtime-lane-aware-chain.md).
+
+**October 17, packet63 CPU preparation complete:** The draft HC group is built
+on packet61x, with sealed control and candidate selections sharing one binary.
+Both pass the target fixture and draft repeat checks; all four screen plans
+pass. The proposed 22/26 split is skipped: current screens put rank1 last in
+every complete cycle, with its target half already longer than rank0. No GPU
+or service ran, and packet61x's record chain was untouched. Next is the
+coordinator's matched screen; device quality and speed remain unmeasured.
+[Task note, measured halves and exact commands](notes/2026-10-17-own-runtime-packet63.md).
+
 **October 17, packet61x placement plans prepared (CPU only):** All four requested placements fit their own memory plans. The control and draft-on-rank-1 24/24 split are supported on both lanes. Both rank-0 draft options are blocked by the sealed engine's missing resident output head, so they refuse before launch. All eight plan checks and 32 CPU tests give the expected results. No GPU or service ran; the running packet61x chain and sealed packets were untouched. Next is the coordinator's supported placement comparison, with the same 13 exact requests. [Job lines, reasons and evidence](experiments/own-xpu-runtime/stage2/screen/v3/PLACEMENT-CLOSEOUT.md).
 
 **October 17, packet61 full-chain input repair complete (CPU only):** The K1 failure came from missing archived fixture files. All 72 fixtures and their list are restored with original hashes; packet61x and packet56w have the same repair. All eleven windows now check their nested inputs before any device launch. The three input checks, storage checks and 111 focused tests pass. Packet61 uses fresh `device-cards01-b`; the failed `device-cards01-a` and STOP remain unchanged. Engine binaries and screen seals are unchanged. No GPU or service ran. The coordinator owns the next chain and device quality is still pending. [Exact commands and evidence](experiments/own-xpu-runtime/stage2/packet61-spin-hcfusion/INPUT-REPAIR-CLOSEOUT.md).
@@ -15,6 +818,47 @@
 **October 17, packet 58 CPU preparation complete:** The separate one-card IQ3 engine is built and sealed. It keeps all target layers on one card, uses an 18 GB cache for expert weights, and can read missing weights from pinned host memory or copy them before use. CPU byte comparisons, lifetime checks, request resets, sanitizer runs and all 44 wrapper/evidence checks pass. The build occupies 147 MB. The conservative plan requires 118.31 GB of available host RAM, including the possible GPU allocation shadow and an 8 GiB reserve; the passive snapshot had only 1.95 GB extra, so the optional draft is deferred. No GPU window, large pin, model payload read or host-setting change ran here; device ownership stays with the coordinator and packet 57 is untouched. Next is the coordinator's one-card K1 → KD/W2m → three-suite chain, after fresh admission: about 107 minutes planned including cooldowns. One-card exactness and speed remain unmeasured. [Task record](notes/2026-10-17-own-runtime-packet58.md), [CPU closeout](experiments/own-xpu-runtime/stage2/packet58-onecard/CPU-PREPARATION-CLOSEOUT.md), [exact commands and durations](experiments/own-xpu-runtime/stage2/packet58-onecard/WINDOW.md).
 
 **October 17, packet 57 CPU preparation complete:** The timing tools are built and sealed. Packet 56's saved traces show rank 0 finishing last in 93% of complete cycles; moving a whole layer does not look useful under the available average-cost estimates. The draft still takes about 1.90 ms, but its individual kernel costs remain unmeasured. Four fresh small CPU runs match the old engine exactly, all 19 focused checks pass, and both builds and the final seal pass. The retained build is about 336 MB. No GPU window ran and packet 55's work was left alone. Next is the coordinator's diagnostic run on cards 0+1, after the host is free: about 88 minutes planned, comparing ordinary timing with the new event recording against the same packet 49 answers. This is not a new speed result. [Task record](notes/2026-10-17-own-runtime-packet57.md), [timeline](experiments/own-xpu-runtime/stage2/packet57-attribution/TIMELINE.md), [exact command](experiments/own-xpu-runtime/stage2/packet57-attribution/WINDOW.md).
+
+**October 18, 19:12 UTC — 1-card IQ3 record 28.04 tok/s on one Arc Pro B70, submitted and approved (`cmve789qr008vrf01pm678ee8`).** Packet58w = packet58p tile16 line + packet58v overlapped expert-cache maintenance (fills on the copy engine during the next position); all 12 prompts exact (+6.92% over 26.23). Bracket: overlap 28.12/28.15 vs warm serial 26.05/26.08 (cold-cache first view excluded by a disclosed pre-chain amendment). Chain a (WS128 25.77 under concurrent Codex GGUF reads) was not submitted; one preregistered quiet-host rerun (chain b, Codex frozen) gave WS128 28.04 / WS128x 28.20. Ledger: `results/localmaxxing-submissions.md`.
+
+**October 18, 17:50 UTC — 2-card IQ3 record 58.80 tok/s, submitted and approved (`cmve4dtir007wrf01k57sdf23`).** Bundle 8 (packet 136) = bundle 7 + packet 131b banked rollback state (rotating snapshot banks remove ~61% of rank 0's per-cycle snapshot bytes); all 12 prompts exact (+0.99% over 58.22). Screens: lane B +0.81% strict (drift 0.11%), lane A confirm 58.33 → 58.81. Chain `packet136-chain-a` 16:55–17:42 UTC, all windows passed, fault count unchanged. Submission evidence prepared with the packet 136s tool copy (fixes only the oracle-checker binding lookup; sealed tree untouched). Ledger: `results/localmaxxing-submissions.md`.
+
+**October 18, 14:30 UTC — 2-card IQ3 record 58.22 tok/s, submitted and approved (`cmvdx8urg0068rf01vvb32bcs`).** Bundle 7 (packet 124c) = packet 103 + packet 109 exact fusion + packet 105b exact head split + packet 114 preregistered draft prefix 80,128; all 12 prompts exact (+1.17% over 57.55). Two earlier chain attempts died on host-side packaging (K2 selection keys; flattened oracle symlink), both fixed and now covered by an all-window argument and queue gate. Next: packet 130 (rank 1 waits 1.2–1.6 ms per hit for rank 0's head suffix; compute it at the first layer boundary), packet 131 (0.52 ms per-cycle rollback snapshot; double-buffered state), packet 132 (two-candidate speculation study).
+
+**October 18, 13:16 UTC — 1-card IQ3 record 26.23 tok/s on one Arc Pro B70, submitted and approved (`cmvdukc200064rf01lqsql9x8`).** Packet 58p = packet 58g one-card engine + lossless down-weight tile16 layout; all 12 prompts exact (+7.8% over 24.339). Screen (packet 58n): tile16-only 26.27 vs production 21.0/21.3; WS128 ran with 0 major page faults per token. Next one-card: packet 58r one-load bracket (route-fast, rec-both-plus on tile16) and packet 58t (resident per-token lookups), in one whole-host hold.
+
+**October 18, 10:57 UTC — 2-card IQ3 record 57.55 tok/s, submitted and approved (`cmvdpmbbo0022rf017ynt8i35`).** Bundle 5 (packet 103) = packet 97 + packet 100 down-tile16 + packet 101 split32 draft attention; all 12 prompts exact (+2.61% over 56.087; composites +3.2% lane A, +2.8% lane B). The first chain folder died at WS admission on a drain-cooldown race (negative sleep after a cross-lane teardown, no device work); the fresh folder `device-cards01-b` ran with lane B paused and passed all 11 windows. Next: bundle 7 (packet 118 = + packet 109 fusion + packet 105b head split + packet 114 draft prefix 80,128; lane-B bundle-6 composite +0.96%), packets 116/117/119 micros, packet 120 25/23 grid; Codex packets 121 (miss path) and 122 (draft path).
+
+**October 18, 06:44 UTC — 2-card IQ3 record 56.09 tok/s, submitted and approved (`cmvdgjqwj000rrf013ay3ew6t`).** Packet 97 = packet 84 + route-fast + rec-both-plus + E1 half-scale expert cache, all 12 prompts exact (+0.72% over 55.687). Next bundle (packet 103): adds packet 100 down-tile16 (lane A +2.09%, lane B +1.68%) and packet 101 draft attention (+0.28% / +0.34%); packet 105's target-head split is ready for a device smoke. [Ledger](results/localmaxxing-submissions.md).
+
+**October 18, 02:55 UTC — first one-card IQ3 result: 24.34 tok/s on one Arc Pro B70, submitted and approved (`cmvd8bhou000duj01hxaihg15`).** Packet 58g runs all 48 target layers on card 0 with 48.6 GB of experts pinned in host memory and an 18 GB device expert cache; target-only (no draft); all 12 prompts exact against the packet 49 oracle. It is the first 1x Arc Pro B70 entry for this model on the public list (other single-GPU hardware is faster). Next one-card step: the MTP draft (packet 58h). [Ledger](results/localmaxxing-submissions.md).
+
+**October 18, 02:23 UTC — 2-card IQ3 record 55.69 tok/s, submitted and approved (`cmvd78ela0007uj01k1ojlm8g`).** Packet 84 is packet 80 plus packet 82's `rec-parallel` GDN recurrence preparation (exact), confirmed on both lanes and in a lane-B composition screen (+0.93%). All 12 prompts exact against the packet 49 oracle. WS128 measured 55.686963 class-balanced (+0.90% over 55.189917; all-prompt 55.812). Queued next: packet 90 (exact expert half-scale cache, HC weight cache), packet 91 (route-fast + rec-both-plus in the record lineage), packet 92 (rank-1 reply-first), packet 94 (HC norm fused into its consumer), packet 93 (packed head, new unpack), packet 95 (expert grid-prefetch/scale-cache), and the one-card packet 58g. [Ledger](results/localmaxxing-submissions.md), [p84s screen](notes/2026-10-18-own-runtime-packet84s-result.md).
+
+**October 18, 00:57 UTC — 2-card IQ3 record 55.19 tok/s, submitted and approved (`cmvd48tdv083ale01clv86fbd`).** Packet 80 is packet 70 plus hc-wide HC-gate kernels and ordered rank-1 event retirement, both confirmed on both lanes (route/norm pinned to production). All 12 prompts exact against the packet 49 oracle. WS128 measured 55.189917 class-balanced (+1.90% over 54.162022); hit/miss 15.79/27.14 ms, acceptance 0.787. Closed tonight:
+- depth-2 MTP: −47%;
+- draft on rank 0: −1.3% / −2.3%;
+- packed dense: −0.8% to −2.9%;
+- draft bytes: −0.3% to −0.8%;
+- expert load-count: neutral;
+- miss path: no lossless saving.
+Next: packet 84 (+ rec-parallel, confirmed +0.99%/+0.67%); packet 86 limiter diagnostic for experts and HC; packet 82b recurrence round 2; 58f one-card. [Result packet](experiments/own-xpu-runtime/stage2/packet80-record-bundle/submission/prepared/result-packet.md).
+
+**October 17, 20:35 UTC — 2-card IQ3 record 54.16 tok/s, submitted and approved (`cmvcuvh4q080wle01pgjwixvj`).** Packet 70 is packet 64 plus packet 65 `wide64` routed-expert kernels (exact order; screens +5.4%/+4.8% on both lanes). All 12 prompts exact against the packet 49 oracle. WS128 measured 54.162022 class-balanced (+2.39% over 52.899081); hit/miss 16.09/27.57 ms, acceptance 0.787; 90 s chain gaps. The first attempt stopped at K2 on a CPU-side validator (fixed, fresh chain). Today: 39.42 → 45.70 → 46.00 → 46.96 → 51.03 → 52.90 → 54.16. Next:
+- packet 74 packed-format dense weights (the target head reads 795 MB of expanded Q6_K at 566 GB/s);
+- packet 73 HC gates + experts round 2;
+- packet 71b depth-2 (marginal: H(2)/H(1) 1.66–1.74);
+- packet 69/72 screens;
+- packet 58b one-card slot at 21:55 UTC.
+[Result packet](experiments/own-xpu-runtime/stage2/packet70-record-bundle/submission/prepared/result-packet.md).
+
+**October 17, 18:47 UTC — 2-card IQ3 record 52.90 tok/s, submitted and approved (`cmvcr0nee07wele01ypyng2nz`).** Packet 64 is packet 61x plus packet 63 draft-HC kernels, packet 62 batched rollback copies and balanced 24/24 placement, selected by the preregistered both-lanes screen rule. All 12 prompts are exact against the packet 49 oracle. WS128 measured 52.899081 class-balanced (+3.66% over 51.033041); hit/miss 16.45/28.37 ms, acceptance 0.787. Today: 39.42 → 45.70 → 46.00 → 46.96 → 51.03 → 52.90. Next:
+- packet 65 `wide64` expert kernel (+4.8% on lane B screens; lane A pending), then the packet 70 bundle with 90 s chain gaps;
+- packet 67 roofline kernels and packet 69 rank-1 head candidates (screens queued);
+- packet 68b batched two-row probe (decides the depth-2 engine).
+[Result packet](experiments/own-xpu-runtime/stage2/packet64-record-bundle/submission/prepared-v2/result-packet.md).
+
+**October 17, 17:25 UTC — 2-card IQ3 record 51.03 tok/s, submitted and approved (`cmvco3d6606u1le01941ek8hq`).** Packet 61x is packet 56 plus controller pure-spin waits and packet 60 exact-order HC fusion. All 12 prompts are exact against the packet 49 oracle. WS128 measured 51.033041 class-balanced (+8.67% over 46.962697); hit/miss 17.24/28.48 ms (from 18.22/33.04), acceptance 0.787. The chain was resumed after a wrapper KD scratch-path fix; the five early receipts were imported under hash pins and every exactness/headline window ran fresh (disclosed). Today's progression: 39.42 → 45.70 → 46.00 → 46.96 → 51.03. Next: packet 64 selection screens (draft-HC batch, balance) on both lanes, packet 65 expert occupancy, packet 58b one-card. [Result packet](experiments/own-xpu-runtime/stage2/packet61x-spin-hcfusion-wait/submission/prepared/result-packet.md).
 
 **October 17, 13:22 UTC — 2-card IQ3 record 46.96 tok/s, submitted and approved (`cmvcf84kb06r2le0174bgk16l`).** Packet 56 is packet 49d plus a draft-head vocabulary prefix: the MTP draft proposes from head rows [0, 91,392), with N preregistered from independent text, and the target verifies with the full head. All 12 prompts are exact against the same packet 49 oracle. WS128 measured 46.962697 class-balanced (+2.08% over 49d's 46.0038); the hit cycle went from 19.02 to 18.22 ms and acceptance from 0.791 to 0.787. Today's progression: 39.42 → 45.70 (49c) → 46.00 (49d) → 46.96 (56). Next: packet 55's one-card feasibility windows (CPU expert throughput, H2D streaming, route locality). [Result packet](experiments/own-xpu-runtime/stage2/packet56-draft-prefix/submission/prepared/result-packet.md).
 
@@ -305,11 +1149,26 @@ worker/recall trials and five unused tasks. Further worker tuning/integration is
 
 ## Storage And Recovery
 
+**October 18, disk6 archive pass:** closed experimental builds, private build dependencies and old compiler caches now have verified archives in
+`/mnt/raid-models/own-xpu-runtime-archive/disk6-20261018/`. The pass recovered **9.581 GB** of allocated file space and stopped at **14:26:13 UTC**,
+when root first reached **40.023 GB free**, up from 31.285 GB. Every selected archive member and original file was checked before removal.
+Live packets, their pinned parents, record chains and weights stayed in place. This was a one-time threshold; the running chain continues to use disk.
+Restore historical closed builds/caches from the exact manifests before replaying them. The [disk6 cleanup record](experiments/own-xpu-runtime/stage2/DISK-CLEANUP-20261018.md#disk6--verified-archive-pass-for-record-chain-headroom-2026-10-18)
+contains all 58 archive paths, hashes, restoration instructions and the audit limits.
+
 Retain the **50 GiB free-space reserve** and admit the peak temporary writes before creating archives or copies with `scripts/check-storage-headroom.py`; old free-space numbers are not admission. Verify current capacity, mount identity and ownership
 before new model downloads. Do not do bulk reads of the protected external trees during this documentation cleanup.
 
-Cache archives live under `/home/steve/git-archives/cache-consolidation-20261006/`; eight inactive staging builds are archived under `/home/steve/git-archives/staging-consolidation-20261007/` and need restoration before old launchers work. Keep
-`data/maintenance/consolidation-20261006/summary.json` and `data/maintenance/staging-consolidation-20261007/summary.json`, with their inventories, hashes and restore instructions.
+**October 18, disk5 archive relocation:** the old cache archives and eight inactive staging-build archives now live in
+`/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/cache-consolidation-20261006.tar.gz` and
+`/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/staging-consolidation-20261007.tar.gz`.
+Every file was hash-verified from its new archive before the exact originals were removed. Restore their `payload/` contents to the original
+`/home/steve/git-archives/` paths before using historical restoration commands or replaying the old backup/staging verification scripts.
+Keep `data/maintenance/consolidation-20261006/summary.json` and `data/maintenance/staging-consolidation-20261007/summary.json` unchanged:
+all twelve original archive hashes still match. The [disk5 cleanup log](experiments/own-xpu-runtime/stage2/DISK-CLEANUP-20261018.md#disk5--one-time-root-reserve-to-40-gb-2026-10-18)
+records the remaining exact moves, per-file manifests, archive checksums, restoration instructions and free-space readings.
+The one-time cleanup stopped at 09:24:16 UTC with **40.306 GB available (37.538 GiB)**, up from 31.003 GB;
+this is a point-in-time reading while other work continues, not a reserved allocation.
 
 The selected research/Git backup is `/mnt/usb-models/lab-backups/steve-b70s-20261007/` (nine verified archives, selected source only, not a whole-machine backup). Preserve `/home/steve/git-archives/flash-next-rescue-20261007/`,
 `/home/steve/worker-container-controls-20261007/`, and the official 27B cold copy `/mnt/usb-models/worker-models/qwen38-27b-fp8-20261007/017b9c7af6b5689d5dd426a76e0bc077eb5ca20a/`. This page does not assert the USB disk's current mount state. It is

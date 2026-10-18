@@ -1,0 +1,42 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "runnable": false,
+  "lane": "B",
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/build/microbench",
+    "--coordinator-admitted-device-window"
+  ],
+  "identity": {
+    "runner_pins_sha256": "a127c56e294803d082edd6e1668ec91ec24565ff8c86db62cb73fc42a62aa07e",
+    "build_receipt_sha256": "ef14b6d02f2fa1e1eb3883f75efb961b2fe180a67791677bc7e5d80e4ee9cbbc",
+    "binary_sha256": "dacab573880a2bca7e187896db1a5e4ea3124c4ef656a21bc22afe6f0b969fa4",
+    "wrapper_seal_sha256": "2ce1884f599466ae5d91226bc08a22605fa66316132eb0dfbef992c2c9ebfb40"
+  },
+  "physical_cards": [
+    2,
+    3
+  ],
+  "native_cards": [
+    0,
+    0
+  ],
+  "device_mask": {
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:4",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0,1",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0,1"
+  },
+  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/evidence/micro-B",
+  "reservation_scope": "lane-B",
+  "drain": "shared DrainPermit held across entire autonomous native lifetime",
+  "required_host_available_bytes": 10737418240,
+  "host_reserve_bytes": 8589934592,
+  "maximum_host_scratch_bytes": 2147483648,
+  "device_bytes_upper_bound": 2147483648,
+  "minimum_root_free_bytes": 12884901888,
+  "watchdog_seconds": 300,
+  "retries": 0,
+  "micro_qualification": "measured transfer model >=0.5%; no engine speed verdict"
+}

@@ -1,0 +1,174 @@
+{
+  "device_executed": false,
+  "live_queue_modified": false,
+  "steps": [
+    {
+      "label": "required-views",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/prepare_views.py"
+      ],
+      "returncode": 0,
+      "seconds": 85.97088395801256,
+      "log": "experiments/own-xpu-runtime/ops/packet103-orchestration/required-views.log",
+      "sha256": "e1f4c6e0b9187ac30958099c553d3e957a62d409b7506d1f7b1cb6aa4db017b7"
+    },
+    {
+      "label": "composition-queue-plan",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/queue_plan.py"
+      ],
+      "returncode": 0,
+      "seconds": 8.074087905988563,
+      "log": "experiments/own-xpu-runtime/ops/packet103-orchestration/composition-queue-plan.log",
+      "sha256": "f68ded57725ec31339de53b34567211dc1ca59fe2a2f08a5e7b415460dd989ca"
+    },
+    {
+      "label": "initial-reseal",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/fast_reseal.py",
+        "--dense",
+        "production",
+        "--hc",
+        "hc-wide",
+        "--experts",
+        "wide64+halfcache",
+        "--host",
+        "ordered",
+        "--route",
+        "fast",
+        "--norm",
+        "production",
+        "--recurrence",
+        "rec-both-plus",
+        "--draft_head",
+        "production",
+        "--head",
+        "production",
+        "--hc_norm",
+        "production",
+        "--down",
+        "tile16",
+        "--draft_attention",
+        "split32"
+      ],
+      "returncode": 0,
+      "seconds": 5.170014567003818,
+      "log": "experiments/own-xpu-runtime/ops/packet103-orchestration/initial-reseal.log",
+      "sha256": "818b6ee75fa37108bf0d3088609f88f0722de9a3521039b1716c40a41c75889f"
+    },
+    {
+      "label": "cached-proof",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/dry_run.py",
+        "--cached"
+      ],
+      "returncode": 0,
+      "seconds": 1.615801907988498,
+      "log": "experiments/own-xpu-runtime/ops/packet103-orchestration/cached-proof.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "cpu-dry-run",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/dry_run.py"
+      ],
+      "returncode": 0,
+      "seconds": 126.21796235401416,
+      "log": "experiments/own-xpu-runtime/ops/packet103-orchestration/cpu-dry-run.log",
+      "sha256": "f19a2562a52c102fafb945634959ac2691bcbfabd11590606b9fecd66cf09bc3"
+    },
+    {
+      "label": "seal",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/chain_seal.py",
+        "--verify"
+      ],
+      "returncode": 0,
+      "seconds": 1.1153555269993376,
+      "log": "experiments/own-xpu-runtime/ops/packet103-orchestration/seal.log",
+      "sha256": "e7b4eaec648aaf495e622e2ee83fc9e2af688fc9f737f66f5f051d48471994f1"
+    },
+    {
+      "label": "inputs",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/check_inputs.py"
+      ],
+      "returncode": 0,
+      "seconds": 8.323941529000876,
+      "log": "experiments/own-xpu-runtime/ops/packet103-orchestration/inputs.log",
+      "sha256": "b1780ff6bddc3a2e702c4bc136083988cfa869fdc7f134dd3ed9014f6ae4b389"
+    },
+    {
+      "label": "storage",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/storage_precheck.py"
+      ],
+      "returncode": 0,
+      "seconds": 0.06397189002018422,
+      "log": "experiments/own-xpu-runtime/ops/packet103-orchestration/storage.log",
+      "sha256": "a4304e027c4d4c4343963fa6b9b8483fbc200e694abb1293967a844fb8be7806"
+    },
+    {
+      "label": "queue-plan",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/chain103.py",
+        "queue",
+        "--plan",
+        "--output-root",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/build/device-cards01-a"
+      ],
+      "returncode": 0,
+      "seconds": 8.62417338998057,
+      "log": "experiments/own-xpu-runtime/ops/packet103-orchestration/queue-plan.log",
+      "sha256": "96b45f8e68247c2164219538174b217fb5eeb4d8992d29c5faa62cfccd48d65d"
+    },
+    {
+      "label": "composite-proposals",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/composite_jobs.py",
+        "--decision",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/decisions/1ad512f75aab3fce.json"
+      ],
+      "returncode": 0,
+      "seconds": 241.7218750359898,
+      "log": "experiments/own-xpu-runtime/ops/packet103-orchestration/composite-proposals.log",
+      "sha256": "c641b2a4c0511f57857e5ecda1691c4c210d05744655ef125cea02ad2905931b"
+    },
+    {
+      "label": "leave-one-out-proposals",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/composite_jobs.py",
+        "--decision",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/decisions/1ad512f75aab3fce.json",
+        "--leave-one-out"
+      ],
+      "returncode": 1,
+      "seconds": 273.50513355701696,
+      "log": "experiments/own-xpu-runtime/ops/packet103-orchestration/leave-one-out-proposals.log",
+      "sha256": "14713d32adf4a2aba4d61fb8ceb674ae738b788169dc6560c956e10e42ddfa86"
+    }
+  ],
+  "complete": false
+}

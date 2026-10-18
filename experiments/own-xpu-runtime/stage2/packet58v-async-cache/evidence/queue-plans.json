@@ -1,0 +1,53 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "services_started": false,
+  "live_queue_changed": false,
+  "temporary_queue": true,
+  "records": [
+    {
+      "arm": "smoke",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58v-smoke-A.txt",
+      "proposal_sha256": "c8fbbdd5e9d0a8d4293502bbc7c0e69e81464b748a6fc8e490342507ef02f4b3",
+      "plan": [
+        {
+          "name": "packet58v-smoke-A",
+          "plan": "passed",
+          "seal": "checked by packet plan/wrapper",
+          "host_required_available_bytes": 95435761152
+        }
+      ],
+      "expected_duration_seconds": [
+        600,
+        900
+      ],
+      "watchdog_seconds": 7200,
+      "log_sha256": "40d460c6af6aa5942af08965c594cd77b010c429c56c9ad94821c65a02abf807"
+    },
+    {
+      "arm": "overlap",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58v-v5-A.txt",
+      "proposal_sha256": "a209beba3a12e273f68fa00b67e483ec2e0492657b953b1b1a6d4b1639998f69",
+      "plan": [
+        {
+          "name": "packet58v-v5-A",
+          "plan": "passed",
+          "seal": "checked by packet plan/wrapper",
+          "host_required_available_bytes": 95435761152
+        }
+      ],
+      "expected_duration_seconds": [
+        1200,
+        1800
+      ],
+      "watchdog_seconds": 7200,
+      "log_sha256": "04d824f42e2a66408d6eb07fbc9578dcda78bc0b1ec4662304b0c0b193965a2c"
+    }
+  ],
+  "build_receipt_sha256": "aa5ff17482e3d41f4c6d511da0aac1e8784b3234119322cf0e8f98617730229d",
+  "storage": {
+    "root_free_bytes": 36201246720,
+    "planned_write_bytes": 2684354560,
+    "stop_floor_bytes": 25000000000
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "runtime_implemented": false,
+  "runtime_quality_gate": "not run; implementation not admitted",
+  "checks": [
+    {
+      "name": "replay",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet126-early-draft/simulate.py",
+        "--check"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 1.9287023669749033,
+      "log": "experiments/own-xpu-runtime/stage2/packet126-early-draft/evidence/replay.log",
+      "log_sha256": "79072ffb46892b6c27dcff00f524a094e09d7d25ee86a0b3050c4e51a75b0f4d"
+    },
+    {
+      "name": "prior-replay",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet126-early-draft/audit_prior.py",
+        "--check"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.31820913500268944,
+      "log": "experiments/own-xpu-runtime/stage2/packet126-early-draft/evidence/prior-replay.log",
+      "log_sha256": "46b2513b72ae74c250405f53206accbce0b234fa654334468b251c3124451a76"
+    },
+    {
+      "name": "analysis-tests",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet126-early-draft/test_simulate.py"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.04945548600517213,
+      "log": "experiments/own-xpu-runtime/stage2/packet126-early-draft/evidence/analysis-tests.log",
+      "log_sha256": "fb6b44199e306bb828d85349256563579e332000c3903acc3901c14fad0ffa96"
+    },
+    {
+      "name": "links",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/tools/check-doc-links.py",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet126-early-draft/ANALYSIS-CLOSEOUT.md",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet126-early-draft/DO-NOT-REPEAT.md",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet126-early-draft/README.md",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet126-early-draft/RESULTS.md",
+        "/home/steve/llm-optimizations/notes/2026-10-18-own-runtime-packet126.md"
+      ],
+      "returncode": 0,
+      "elapsed_seconds": 0.03395745498710312,
+      "log": "experiments/own-xpu-runtime/stage2/packet126-early-draft/evidence/links.log",
+      "log_sha256": "badfe0dfea343b34eadc6e6e030d98068e88fc978e0b7e290770d8f92ad8ed98"
+    }
+  ],
+  "parent_drain_passed": true,
+  "parent_drain_report_sha256": "e4f3743d5722db04c11ea6ee59a98061653b132acdf10f04efed0b169a7c185a",
+  "packet_bytes_before_validation_receipt": 4778080,
+  "build_bytes": 0,
+  "root_free_bytes": 34683834368,
+  "children_max_rss_kib": 81648,
+  "cpu_affinity": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "nice": 19,
+  "cpu_only_address_limit_bytes": 8589934592
+}

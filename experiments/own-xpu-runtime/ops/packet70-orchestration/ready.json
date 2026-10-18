@@ -1,0 +1,231 @@
+{
+  "schema": "packet70.ready.v1",
+  "ready": true,
+  "device_executed": false,
+  "chain_launched": false,
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "selection": {
+    "experts": "wide64",
+    "all_screens_exact": true,
+    "errors": {},
+    "controls": {
+      "A": 50.47328002558193,
+      "B": 51.17788980330357
+    },
+    "gains": {
+      "wide64": {
+        "A": 0.05385335103581168,
+        "B": 0.047959364200434784
+      },
+      "wg64": {
+        "A": -0.006165647344951619,
+        "B": -0.009168536162189156
+      },
+      "wg128": {
+        "A": -0.00401979640144734,
+        "B": -0.001235418824711454
+      },
+      "prefetch64": {
+        "A": -0.021171731048325815,
+        "B": -0.026649041546928598
+      }
+    },
+    "rule": "strictly faster on both lanes versus mean of two same-lane controls; all 12 screens exact 13/13; maximin tie-break",
+    "diagnostic": true,
+    "promotion_eligible": false,
+    "evidence": {
+      "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+      "lanes": {
+        "A": [
+          {
+            "choice": "production",
+            "rate": 50.46047726642638,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "wide64",
+            "rate": 53.191435292728414,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "wg64",
+            "rate": 50.1620795806012,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "wg128",
+            "rate": 50.27038771616585,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "prefetch64",
+            "rate": 49.40467331575347,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "production",
+            "rate": 50.486082784737484,
+            "exact": true,
+            "exact_count": 13
+          }
+        ],
+        "B": [
+          {
+            "choice": "production",
+            "rate": 51.177710745722074,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "prefetch64",
+            "rate": 49.8140480916512,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "wg128",
+            "rate": 51.11466367483156,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "wg64",
+            "rate": 50.70866346993745,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "wide64",
+            "rate": 53.63234885938992,
+            "exact": true,
+            "exact_count": 13
+          },
+          {
+            "choice": "production",
+            "rate": 51.17806886088508,
+            "exact": true,
+            "exact_count": 13
+          }
+        ]
+      },
+      "errors": {},
+      "receipts": {
+        "A/0": {
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-01-production/window.json": "fd0e65260a56f126a6696e97a2d2d4ba317dcace36eab4048f1305078ccd99ef",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-01-production/run/summary.json": "f9bd020a537e793060db37b9a6442acb6c724259b509a456ea57daf50b2e2844",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-01-production/lane-coordination.json": "6090d410e72047d2c88c4f6f5dce3458ecaad3f5af3f0c9996f9f24c53001873"
+        },
+        "A/1": {
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-02-wide64/window.json": "c0f5a5e0655ae65e80a0c7e34893c76495cbb2a919e5c32285746f982b39ed9d",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-02-wide64/run/summary.json": "d04e15dbf4c33a8d56feaa67b54899325cf9aa0e4b37bc7d551a81a42d96e679",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-02-wide64/lane-coordination.json": "719e6e8a9a00f54d278d3b8bc64235d8c2d34880d9a3126199decc9ecf0af5b2"
+        },
+        "A/2": {
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-03-wg64/window.json": "553df57261efaadef27a79ca8776548bb145bad574b880c7266625486abcbda1",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-03-wg64/run/summary.json": "73fddbdfabf6d8956e9265428ae08c8b8d05833575f1e376f11aadf160ae3797",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-03-wg64/lane-coordination.json": "104a89c411e5d621e143400ecaa3e2f2eb9a4437342051c105c98d5737c7b209"
+        },
+        "A/3": {
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-04-wg128/window.json": "c0c60bb3806a342006feff4c2c186473d78df283ea0f22072fc49e7734b79f50",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-04-wg128/run/summary.json": "195dbdadd4385e88dbd01565a916430759be29c28595422b6749c20abed57a96",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-04-wg128/lane-coordination.json": "bfd24eb1aba80efd510906bbb1f76dc1c4ab633adf95c27ee9532ca3e3aa9c2d"
+        },
+        "A/4": {
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-05-prefetch64/window.json": "1fa6cef3a203fd6de70d5455730a3e5509b1c7c40da0237e1cd47d022adb3558",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-05-prefetch64/run/summary.json": "470f5f01a6ec147cd066e91e42ce861e06ce89f6983e7a6f54da934ff7b0aac0",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-05-prefetch64/lane-coordination.json": "0f7a375e5d6f86a7fbfc676b160e2de0223b30f5f7b42007b091abc7dabf10b7"
+        },
+        "A/5": {
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-06-production/window.json": "2e2523e82124f4822416f248521d507463951011bf69b28a75d6a3d8f378ddc8",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-06-production/run/summary.json": "b902611d4f434765c2c439395b1047ce3e652539115bc2c41aca8154afd93c07",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-A-06-production/lane-coordination.json": "a75860cc7ff9c8e7120a3489e4952c603760e2b9545c6959264392287f16dfe8"
+        },
+        "B/0": {
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-01-production/window.json": "8680a071d1c81a918fdc1448113d7b70bdccfb4990defb872a7129b4e9f1f906",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-01-production/run/summary.json": "511c56318d503f362cc7f38e711488d55ddf92be32c08a13691f84f07255084f",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-01-production/lane-coordination.json": "5c7e5cb310b97b7e48913a30261a4f6d74845fc598d6d4d6ac2993b30075b6b3"
+        },
+        "B/1": {
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-02-prefetch64/window.json": "4c78954d34971d6539ad65fe3ad449ed67bc07b3a458517e1ec99f87a6041a07",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-02-prefetch64/run/summary.json": "572faf7deccd1b7c16d602edb0f4ac16b343f825202130172adcecdb919cd763",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-02-prefetch64/lane-coordination.json": "2f295bab4f112b6b759ed61c9de4d2c52f7401d40814d7b278159ffb68c96481"
+        },
+        "B/2": {
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-03-wg128/window.json": "2009acdbbd154c17b26a397da72b1e611751ccda9ad2a37350739a34bd93b878",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-03-wg128/run/summary.json": "d52115095a1aec41194a51765637f9ce2be4223cec544ba3e987d2d7bc39873f",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-03-wg128/lane-coordination.json": "d2209fa96251bb247ab08b7a889cca423121376be6e52328d6d52517053c2bea"
+        },
+        "B/3": {
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-04-wg64/window.json": "3804a54669284755a3462d23abf6760fedd59d4c0d4a9b51337d21c106815307",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-04-wg64/run/summary.json": "c5ce653d4f518c77fc9e68782122abfab8726de42ff2d19d913a99d92d2ccce5",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-04-wg64/lane-coordination.json": "11462be6cd7ab9c302ba0e0f9cfc037278fa37defad790884fd0561ca262d841"
+        },
+        "B/4": {
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-05-wide64/window.json": "f6701321b861b4ffb78dc20748e7806ee259950e9d7be320756d73e2afc4ebce",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-05-wide64/run/summary.json": "312b24e1478bd1b55569c564d642855b3f66e22c65791337da5f2d5cc3c0c5c8",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-05-wide64/lane-coordination.json": "591a60f87f916b1c371b5755ab3b1d743e09c1d6870c6c137341f91094aeb1db"
+        },
+        "B/5": {
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-06-production/window.json": "453165ec5abcd9b8ffa5c36a8dccbd59c0dd7f01e9623d8a20b2fbad5282bfd1",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-06-production/run/summary.json": "9ad409d3bb46c13dcf769edb82dd3a73db561fcd8fb2a34f93af58480053101a",
+          "experiments/own-xpu-runtime/stage2/packet65-expert-occupancy/screen/evidence/p65-quick-B-06-production/lane-coordination.json": "c099eb0bd87ca3cc7f3c9182430a4b5048be62a1e2518e945e25ef1aba469319"
+        }
+      },
+      "source": "packet65 screen/quick/compare.py load + checked_rate; mean of two production controls per lane"
+    }
+  },
+  "command": "systemd-run --user --unit=packet70-chain-k2fix --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --property=StandardOutput=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/chain-k2fix.log --property=StandardError=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/chain-k2fix.log --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet70-orchestration/device-entry.sh chain </dev/null",
+  "dry_run": false,
+  "requires_coordinator_launch": true,
+  "build_receipt_sha256": "8b33ee635956b538e945630c59daa9a5fc4749393c051be81d2faa1771e5a445",
+  "selection_sha256": "f02ae02e5dd1a8e64bf2fff10137839843b19fd2d90a658c38b987a750451684",
+  "orchestration_sources": {
+    "test_orchestrate.py": "54ea63124b5a1d61aca13663d9cace5bb1e23d4f35723786cc05ea6a852b0e49",
+    "verify_ready.py": "08be06d982afee64b376741f1b83f44f091b48b7883fbb6c6fa5914585dc02dc",
+    "read_screens.py": "7fcaf83776348e3bb6ffe0545a928085eb88d7f1ba4335920644c93acc14d9e0",
+    "orchestrate.py": "3d739200d5db7ec8b7821fee2483f3475da3bdaa6f79f16f7143bda9ba34a72b",
+    "device-entry.sh": "299cfe9063eb9e912415de24b293bde631c12c8204b1129a8f7cfc4638c2e664"
+  },
+  "prepared_utc": "2026-10-17T19:39:07.999155+00:00",
+  "chain_mode": "fresh",
+  "imported_windows": [],
+  "output_root": "/home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a",
+  "prior_attempt": {
+    "archive": "/home/steve/own-xpu-runtime-results/packet70-record-bundle/build/device-cards01-a-k2fail-20261017T1933",
+    "stop_preserved": true,
+    "reason": "K2 wrapper rejected experts after device work passed",
+    "fault_count": 2
+  },
+  "prechecks": {
+    "seal": {
+      "passed": true,
+      "path": "experiments/own-xpu-runtime/stage2/packet70-record-bundle/evidence/k2fix-seal.log",
+      "sha256": "e7b4eaec648aaf495e622e2ee83fc9e2af688fc9f737f66f5f051d48471994f1"
+    },
+    "inputs": {
+      "passed": true,
+      "path": "experiments/own-xpu-runtime/stage2/packet70-record-bundle/evidence/k2fix-inputs.log",
+      "sha256": "32eec799d7e491adee11b499d06cc60e0c03317952ce64aca8a548a531350e1c"
+    },
+    "storage": {
+      "passed": true,
+      "path": "experiments/own-xpu-runtime/stage2/packet70-record-bundle/evidence/k2fix-storage.log",
+      "sha256": "2584c3921be35f2c058f693da835d495fd87ddac099c7c802112ad92ac6068f4"
+    },
+    "plan": {
+      "passed": true,
+      "path": "experiments/own-xpu-runtime/stage2/packet70-record-bundle/evidence/k2fix-plan.log",
+      "sha256": "02a5652e11534aba3098e428cb9072d4a63e0bbb7422bb1ae4eb565d551e8810"
+    },
+    "queue": {
+      "passed": true,
+      "path": "experiments/own-xpu-runtime/stage2/packet70-record-bundle/evidence/k2fix-queue.log",
+      "sha256": "d2ab3d8f92ded20fb401f4e454624a444c905049f075bd7c75e9a2a912fe5e95"
+    }
+  }
+}

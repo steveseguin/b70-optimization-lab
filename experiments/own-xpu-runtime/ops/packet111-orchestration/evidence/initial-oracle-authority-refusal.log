@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/fast_reseal.py", line 62, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/fast_reseal.py", line 55, in main
+    save(P/'build-receipt.json',checked())
+                                ^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/chain_seal.py", line 35, in checked
+    require(static_binding()==parent['shared_oracle'],'oracle changed')
+            ^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet111-record-bundle/shared_oracle.py", line 15, in static_binding
+    raise ValueError('packet49c must use the unchanged packet49 oracle authority')
+ValueError: packet49c must use the unchanged packet49 oracle authority
