@@ -14,6 +14,9 @@ def validate_manifest(manifest):
   expected=json.loads((ROOT/e['reference']).read_text())['tokens'][:48]
   assert expected==e['expected_tokens']
   for name,digest in e['input_bundle_hashes'].items():assert sha(ROOT/e['input_bundle']/name)==digest
+  meta=json.loads((ROOT/e['input_bundle']/'input.json').read_text())
+  assert sha(Path(meta['prompt']))==meta['prompt_sha256']
+  for name,digest in meta['files'].items():assert sha(ROOT/e['input_bundle']/name)==digest
  return manifest
 
 def admit_inputs(entries,output,unused):

@@ -60,3 +60,13 @@ proposal plan passes. Build: 66,232,536 bytes. Raw capture plan: 801,036,288 byt
 Expected device duration: 5–15 minutes; watchdog: 60 minutes. No device launched.
 The source seal excludes external oracle resolution and verifies that authority
 through its binding. All existing packet trees and live queue files are intact.
+
+Follow-up CPU audit: regenerated held-out input.json prompt paths, text hashes
+and nested token-file hashes instead of leaving the copied sanity prompt's
+labels. Actual token IDs and native binaries did not change. The validator now
+checks those nested metadata bindings too. Both native launch rehearsals,
+twelve checks, source seal and temporary queue plan pass again. Capture and
+analysis source seals are separate so ongoing CPU analysis cannot invalidate
+the prepared capture. During this audit the external coordinator queued
+packet138-capture-B; this preparer did not write any live queue. No capture
+output directory existed when the audit completed.

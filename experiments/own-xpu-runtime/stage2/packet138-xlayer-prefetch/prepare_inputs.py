@@ -18,7 +18,12 @@ def main():
    d=dest/leaf
    if not d.exists():d.symlink_to(os.path.relpath(base/leaf,dest))
   inp=json.loads((base/'input.json').read_text());inp['tokens']=tokens
-  (dest/'input.json').write_text(json.dumps(inp,indent=2)+'\n');(dest/'tokens.txt').write_text(' '.join(map(str,tokens))+'\n')
+  (dest/'tokens.txt').write_text(' '.join(map(str,tokens))+'\n')
+  text=row.get('text',Path(inp['prompt']).read_text())
+  (dest/'prompt.txt').write_text(text)
+  inp['prompt']=str((dest/'prompt.txt').resolve());inp['prompt_sha256']=sha(dest/'prompt.txt')
+  inp['files']={n:sha(dest/n) for n in ('plan.tsv','identity.tsv','tokens.txt','vocab.bin')}
+  (dest/'input.json').write_text(json.dumps(inp,indent=2)+'\n')
   ref=json.loads(reference.read_text());assert ref.get('passed',True) and len(ref['tokens'])>=48
   sources[str(reference.relative_to(ROOT))]=sha(reference)
   entries.append(dict(prompt_id=name,category=category,split=kind,analysis_included=kind=='test',prompt_tokens=len(tokens),

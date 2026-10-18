@@ -20,7 +20,7 @@ def main():
   subprocess.run([sys.executable,'-B','-m','unittest','discover','-s',str(P),'-p','test_capture.py'],stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=120)
  args=json.loads((P/'evidence/arguments.json').read_text());assert args['passed'] and len(args['rank_execs'])==2 and not args['device_executed']
  save(P/'evidence/python-tests.json',dict(passed=True,device_executed=False,tests=12,log_sha256=sha(P/'evidence/python-tests.log')))
- local=[*P.glob('*.py'),*P.glob('*.hpp'),*P.glob('*.cpp'),P/'selection.json',P/'memory-plan.json',P/'dispatch-speed6.json',P/'suite.snapshot.json',P/'oracle-binding.json',P/'copy-provenance.json',P/'parent-commands.snapshot.json']
+ local=[P/n for n in ('argument_gate.py','build_engine.py','capture_identity.py','capture_inputs.py','capture_worker.py','cpu_gate.py','exec_limits.py','full_shape.py','input_gate.py','launch_guard.py','memory_gate.py','prepare_inputs.py','queue_plan.py','run_capture.py','seal.py','shared_oracle.py','test_capture.py','route_capture.hpp','capture_cpu.cpp','selection.json','memory-plan.json','dispatch-speed6.json','suite.snapshot.json','oracle-binding.json','copy-provenance.json','parent-commands.snapshot.json')]
  local+=list((P/'inputs').glob('*/*'))
  local+=[P/'evidence'/n for n in ('arguments.json','arguments.log','oracle-gate.json','python-tests.json','python-tests.log')]
  sources.update({str(f.relative_to(ROOT)):sha(f) for f in local})
