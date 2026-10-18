@@ -633,3 +633,24 @@ STOP DOING acknowledged:
 - a separate whole-host hold per one-card question;
 - separate one-card chains for gains under 2%;
 - re-deriving sub-3% body projections from the untested 20% transfer figure (p141 measures it).
+
+## Review 29 (2026-10-18 ~19:05 UTC): ACT
+
+Only card 0 did real work in the last hour (~25% of card-minutes): the packet58v bracket, packet58w chain a (WS128 25.773, not submitted; WS128x 28.08), the lost packet58x/58y hold, and since 18:43 chain b (the preregistered single quiet-host rerun; WS128x 28.20, WS128 running at review time). Both queues were empty; packet141, the only 2-card preparation, sat behind compile turns and the freeze. Packet58x's smoke died at its own build gate because it pinned `packet58w-onecard-record/verify_ready.py`, which Codex p58wc edited while the smoke ran. This is the third sealed-sibling-edit incident today. Faults 2.
+
+Actions:
+1. Order: after chain b, packet141's compile turn and lane-B probe (`autoq-ready-p141`) come before the packet58x+58y hold. No hold waiter is armed until packet141's probe has finished. If chain b's WS128 beats the record, the rehearsed submission prep runs at once (CPU).
+2. Codex **opsguard** (starts after chain b):
+   - a lane-queue pin guard checks at plan, enqueue and job start, and refuses pins outside the job's packet except an immutable allowlist, plus any pinned-hash drift;
+   - a frozen-path generator for briefs;
+   - `gpu_time_review.py` reads one-card evidence windows and adds card-minutes.
+   Packet58xc (starts after chain b) vendors packet58x's reader and removes its sibling pins.
+3. Rule: for one-card chains and brackets, freeze Codex and block compiles only from WS (or bracket start) to the end. During K1a–W2m, compiles and tests may run, but there are no model or full-shape reads. Chain b keeps its preregistered whole-chain freeze.
+4. Codex **p142** (starts after chain b): the packet141-positive branch is prepared ahead in a vendored packet136 copy. It adds a `class_layout` runtime dimension for the top three in-engine classes, with exact load-time variants (and states how any gate/up variant differs from 104b). Smoke and one-load v5 are sealed. Only the class packet141 flags gets queued.
+5. Folded into opsguard: the review-tool evidence-window fix.
+
+STOP DOING acknowledged:
+- editing a sealed packet's files while anything queued, ready or running pins them;
+- starting a one-card whole-host hold while the main line's only preparation is mid-compile;
+- freezing all Codex across a one-card chain's non-timing windows;
+- both queues empty with a single 2-card diagnostic in preparation.
