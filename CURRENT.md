@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, packet104 micro compiled on CPU:** Seven tile16 weight-layout
+candidates are ready for the proposed lane-B operator test. The build is about
+28 MB. It uses packet100b's real target routes; draft replay is labeled as a
+proxy and cannot qualify draft screens. No long CPU gates, model screens,
+GPU work or live queue ran. The coordinator proposal is
+`ops/lane-queue/proposed-p104-micro-B.txt` under the own-runtime experiment.
+[Work note](notes/2026-10-18-own-runtime-packet104.md).
+
 **October 18, packet97e ready on CPU:** KD's old host command could not use
 half-cache in streaming mode. The new sealed draft-only reference keeps its
 arithmetic and exactness checks; the target's half-cache guard stays intact.
