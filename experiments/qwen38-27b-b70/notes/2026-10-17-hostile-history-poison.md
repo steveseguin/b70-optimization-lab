@@ -287,3 +287,78 @@ ctxkeeper 1.1.1.dev0, the c30 server, device marks. Log `/mnt/fast-ai/bench-resu
 - If the gate drops on either seed, the change is not kept as it is.
 - If the memory guard fires again, the sampler shows which process grew. That process gets fixed before any more
   arms run.
+
+## Campaign 32 result (20:15-21:03 EDT): both fixes hold; one audit lost to the model's own final sum; gate 1x passes; the guard again
+
+ctxkeeper 1.1.1.dev1, the c30 server with device marks. Log `/mnt/fast-ai/bench-results/context-longrun-20261016/c32.log`.
+
+The first start refused: the launcher's fault latch from 18:31 (`server/FAULT.json`) was still there. It was renamed
+to `FAULT-20261017-c31.json`, as the earlier latches were, and the campaign started at 20:15.
+
+| # | Arm | Result | Prediction |
+|---|---|---|---|
+| 1 | quiet audits s1 | 49/50; audits 5/6: domi68 = 420 and qibape16 = -295 now right, rumohi78 = 266 for 265 | 6/6: no |
+| 2 | quiet audits s0 | 42/45; audits 6/6; the same three non-audit misses as c30 (werodo91, p4_4, p5_3) | 6/6: yes |
+| 3 | clean rules s0 | 39/39 in 7 min 3 s | 39/39: yes |
+| 4 | repair 1x | fixed 40/40, clean 40/40, audit 7/7 (18 min 47 s) | yes |
+| 5 | repair 2x | stopped after 1 min 13 s by the memory guard (1.59 GiB) | not run |
+
+**rumohi78.**
+- The notes kept 250 from item 92 to the end: `250 + (amount of the decrease entered in item 32) = unknown`. The
+  keeper asked again ("could not be followed part by part"); the second reply was no better and was kept.
+- In-place notes calls cannot search the archive, and the model searched only at the very end. There it re-added
+  the counter's whole history ("391 - 15 - 61 - 65 = 251"; it is 250) and answered 251 + 15 = 266.
+- Not a keeper defect. It shows a waiting line that nothing settles; addressed below.
+
+**Memory guard, second time.**
+- The sampler (`fault-20261017-1831/ps-c32.txt`) shows the server's processes flat for the whole run: workers 3.89
+  and 3.84 GiB, API server 1.41, engine 0.91.
+- What moved:
+  - the harbor client, 0.29-0.40 GiB (largest at an arm's start, with docker-compose);
+  - the agent session's own process, 0.63-0.77 GiB (it grows while the agent works; it was growing at the kill).
+- The kill was clean: no fault line, no latch.
+- Against the 10-04 census (`notes/2026-10-04-fp8-host-memory-anatomy.md`: workers 3.37 GiB each, API 1.37,
+  engine 0.82), the server is 1.15 GiB larger now, mostly in the workers (+0.5 GiB each). That census found the
+  memory is native runtime state. So the growth most likely comes from what this server adds since then (drafting
+  depth 5, prefix caching with kept states, the 262K window, the overlays and device marks). That is a lever: see
+  the census in campaign 33.
+
+## Lookups for waiting lines; campaign 33 registered (21:05:58 EDT, before any run)
+
+**Feature (ctxkeeper 1.2.0.dev0, commit e05582c69, `--lookups`, off by default, needs `--recall-label`).**
+- A CHANGES line that says it waits on an archived entry (`not yet known`, `unknown`, `must recall`, `pending`,
+  `from the archive` ...) and names an item is asked again, once per cut.
+- The question carries what those items say about the name: each sentence that names it, plus the next sentence,
+  word for word, at most 4,000 characters. Items whose words are in the turns being noted are not looked up.
+- What is shown counts as stated for that cut's checks, as an archive search's result does.
+- Tests: 96 pass, including one for the feature, which also checks that it is off by default.
+- On the saved c32 session, the lookups for rumohi78, qibape16 and tuxa48 show "lost fifteen", "went up by 28",
+  "went up by twenty-seven": the true amounts.
+- In every saved session since campaign 10-16, name lines that match the pattern and cite an item occur only in the
+  audit streams, and there only on the audit lines.
+
+**Queue 33** (`QUEUE33.txt`, runner `longrun-campaign33.sh`, `RUN=c33 SEQS=1 MTP=5 RESTORE=0 MARKS=1`, the same
+server; arm `K32L` = K32 + `--lookups`):
+
+| # | Arm | What it checks | Prediction |
+|---|---|---|---|
+| 1 | `K32L retro 1` | waiting lines get settled | audits 6/6 (rumohi78 = 265); lookups asked in 3-6 cuts |
+| 2 | `K32L retro 0` | no regression | audits 6/6; the same three non-audit misses or fewer |
+| 3 | `K32L retroloud 1` | the amount is stated: little to look up | 6/6, 50/50 |
+| 4 | `K32L rules 0` | inert on a clean stream | 39/39, no lookup asked |
+| 5 | `K32 repair 2x` | the gate seed c32 did not reach (1.1.1.dev1; `--lookups` is never on in repair arms) | 40/40 clean, audit 7/7 |
+
+**Memory for this run.**
+- The agent stays quiet beside the server: one watch that reports only arm results, the guard, faults and
+  captures.
+- One smaps census of both workers (sudo, `/proc/PID/smaps`), taken once after ready, sorted by mapping, for
+  comparison with the 10-04 census.
+- The sampler keeps running.
+
+**Decision.**
+- 1-5 hold: `--lookups` and 1.1.1.dev1 stand (a release still needs the owner). The 1M follow-up then runs on
+  `K32L hostile1m 0 9000`, with the 17:48 amendment's pass conditions.
+- Arm 1 misses an audit: read the cut, then fix or withdraw.
+- Arm 4 asks a lookup, or any score drops: the pattern is too wide; narrow it before more runs.
+- The guard fires again: the remaining arms go to the next campaign. Memory then comes first: the census names
+  what the workers gained since 10-04.
