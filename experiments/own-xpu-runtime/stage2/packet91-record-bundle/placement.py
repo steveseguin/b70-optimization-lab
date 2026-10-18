@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from common import HERE, P56, ROOT, module, read, require, sha
 
 POLICY=Path(__file__).with_name('placement-policy.json')
-PLACEMENTS={'1':(1,0,24),'1-split23':(1,23,23),'0':(0,24,24),'0-split23':(0,23,23)}
+PLACEMENTS={'1':(1,0,24)}
 
 
 def admission_gate(root):
@@ -46,7 +46,7 @@ def admit(root, seal, receipt, dispatch, name):
     for relative,digest in audit['memory_sources'].items():
         require(seal['sources'].get(relative)==digest and sha(ROOT/relative)==digest, 'memory census changed')
     require(audit['draft_prefix_rows'] in (91392,80128,74752) and audit['rank0_private_prefix_bytes']==(308904960 if rank==0 else 0), 'wrong prefix size')
-    supported,reason=True,'Packet91 full-shape post-load census, unchanged reverse handoff, private rank0 prefix; device residency pending'
+    supported,reason=True,'Packet91 full-shape post-load census, rank1 shared-head prefix; device residency pending'
     result = dict(name=name, draft_rank=rank, target_split=split, layer_boundary=boundary,
                   target_layers=[boundary, 48-boundary], context=4096,
                   memory_admitted=True, supported=supported, reason=reason,

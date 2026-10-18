@@ -1,0 +1,61 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "plans": [
+    {
+      "lane": "A",
+      "mode": "grid",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p91-A.txt",
+      "sha256": "95978b43b714b62e75437543a3891b0d7760e0310840a566419f6a1aa1a0fd60",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "A",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet91-record-bundle/build/tmp/p91-queue-ly8v_y62"
+      ],
+      "passed": true,
+      "log_sha256": "d54687353d609ccbafdaec54930dca585f17248fdad87300267932dc45e5586b"
+    },
+    {
+      "lane": "B",
+      "mode": "confirm",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p91-B.txt",
+      "sha256": "67e6f00574afa9d480c61147ee97924d7bb9ecbe2207621421c7b71fcd46d334",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet91-record-bundle/build/tmp/p91-queue-ly8v_y62"
+      ],
+      "passed": true,
+      "log_sha256": "b986c7acbdc11c767aa9bdd3559758a574080ee68251b91d3654ef9053e30224"
+    },
+    {
+      "lane": "B",
+      "mode": "grid",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p91-B-grid.txt",
+      "sha256": "a32766cf39bab15cfb8f3dc655aa67fa98b848e9abe710f59b4105f64c996b73",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet91-record-bundle/build/tmp/p91-queue-ly8v_y62"
+      ],
+      "passed": true,
+      "log_sha256": "c698718283e3a2ee59b7dea6edd5588e0953569af124308a15768814b4efbe2d"
+    }
+  ]
+}

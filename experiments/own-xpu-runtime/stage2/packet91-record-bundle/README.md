@@ -62,3 +62,10 @@ One coordinator owns a fresh record chain after confirmed screens. No service,
 GPU, submission, host setting change or frozen-tree write occurs in preparation.
 Root free must stay at least 12 GB; new bytes stay below 1.5 GB. Per-gate fixture
 scratch is removed after compact byte receipts are retained. No compiler runs.
+
+The final pass has 172 Python tests plus 12 subtests, eight full-size startup
+checks, five complete selection rehearsals and thirteen planned queue jobs.
+The [CPU closeout](CPU-PREPARATION-CLOSEOUT.md) records corrections and remaining
+device gates; [retention](RETENTION.md) explains shared binaries and restoration.
+Copied historical compile/matrix helpers remain source context; only the CPU
+sequence above and the registered selection/chain interfaces are packet91 gates.

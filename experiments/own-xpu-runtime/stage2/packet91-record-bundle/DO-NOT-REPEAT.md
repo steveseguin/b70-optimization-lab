@@ -8,3 +8,4 @@
 - CPU byte and startup passes do not establish device exactness, speed or acceptance.
 - Never launch from orchestration; readiness prints the coordinator command only.
 - The packet90 slot is empty. New expert/HC choices require new proof and matched screens.
+- CPU preparation closeout: [proof, corrections and device gates](CPU-PREPARATION-CLOSEOUT.md).

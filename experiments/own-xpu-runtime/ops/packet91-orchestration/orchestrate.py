@@ -12,6 +12,7 @@ def select(screens):
  if r.get('status')=='winner':
   if set(r.get('lanes',{}))!={'A','B'} or not all(r['lanes'].values()):raise ValueError('both matched lanes required')
   if not all(x.get('exact_count')==13 and x.get('exact') is True for rows in r['lanes'].values() for x in rows):raise ValueError('13/13 exact required')
+  if len({x['boot_id'] for rows in r['lanes'].values() for x in rows})!=1:raise ValueError('both lanes must share the same boot')
   a,b=r['best'],r['confirmation'];c=a['choice']
   if c not in VIEWS or c=='control' or c!=b['choice']:raise ValueError('same registered composition required')
   if not all(type(x) in (int,float) and math.isfinite(x) and x>1 for x in (a['ratio'],b['ratio'])):raise ValueError('both lanes must improve')
@@ -38,7 +39,7 @@ def apply_pins(choice,values):
  return choice,pins
 
 def close_packets(screens,choice,pins,values):
- dimensions={'91':('route','recurrence'),'82b':('recurrence',),'90':('expert_hc',)};closed={}
+ dimensions={'91':('route','recurrence'),'90':('expert_hc',)};closed={}
  for value in values:
   if '=' not in value:raise ValueError('closure must be packet=reason')
   n,reason=value.split('=',1)

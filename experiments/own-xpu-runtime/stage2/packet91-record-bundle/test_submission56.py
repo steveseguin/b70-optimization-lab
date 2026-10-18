@@ -14,7 +14,7 @@ import packet56_submission as p
 from test_packet49_submission import fixture, put
 
 
-def prefix_fixture(placement='1', draft='draft-hc', miss='batch', experts='wide64', dense='production', hc='production', host='production', route='production', norm='production',recurrence='production',draft_head='production'):
+def prefix_fixture(placement='1', draft='draft-hc', miss='batch', experts='wide64', dense='production', hc='hc-wide', host='ordered', route='production', norm='production',recurrence='rec-parallel',draft_head='production'):
     e = fixture(p.TEMPLATE_PACKET, speed=65)
     seal = e.read('seal.json')
     seal['schema'] = 'packet91.chain-cpu-seal.v1'
@@ -201,7 +201,7 @@ def test_payload_names_both_prefix_and_spin_changes(tmp_path):
     result = p.derive(prefix_fixture(), p.P56_PACKET)
     item = p.payload_for(result, {'path': 'r', 'sha256': 'a'}, {'path': 'a', 'sha256': 'b'}, 'doc')
     notes = item['payload']['notes']
-    assert '91392' in notes and 'Controller spin' in notes and 'pure PAUSE spin' in notes and '256' in notes
+    assert '91,392' in notes and 'Controller spin' in notes and 'pure PAUSE spin' in notes and '256' in notes
     assert 'queue profiling' in notes and 'Unchanged full target verifies' in notes
     assert 'Packet60 HC fusion' in notes and 'three exact-order kernels per side' in notes
 

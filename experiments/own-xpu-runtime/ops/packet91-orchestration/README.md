@@ -15,7 +15,8 @@ nice -n 19 taskset -c 8-15,24-31 env OMP_NUM_THREADS=2 /home/steve/.venvs/deepse
 `route=production`, `recurrence=rec-parallel` and `expert_hc=none`. A partial
 reversion cannot authorize an unconfirmed combination. `--closed 91=reason`
 can close a pending composition only with both route and recurrence explicitly
-pinned to default. It cannot override a winner, conflict or failure. The packet90
+pinned to default. Packet91 is one matched composition packet; packet82b is a
+source/binary input, not a separate screen dependency. It cannot override a winner, conflict or failure. The packet90
 extension is empty; its default is none. No p81/p82/p83/p84s result is reused as
 a matched packet91 screen.
 

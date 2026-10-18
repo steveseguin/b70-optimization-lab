@@ -31,7 +31,10 @@ def choose(rows):
  return best
 def winner(source_lane):
  from compare import load
- return choose([load(job) for job in jobs(source_lane)])
+ rows=[load(job) for job in jobs(source_lane)]
+ boot=Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+ if any(r['boot_id']!=boot for r in rows):raise ValueError('source grid boot is stale')
+ return choose(rows)
 def seal_jobs():
  sources={str(f.relative_to(ROOT)):sha(f) for f in P.glob('*.py')}
  for label in VIEWS:sources[str((view(label)/'screen-seal.json').relative_to(ROOT))]=sha(view(label)/'screen-seal.json')

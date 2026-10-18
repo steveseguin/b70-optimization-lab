@@ -32,7 +32,7 @@ class SelectionPostprocessing(unittest.TestCase):
                 for name in ('dispatch-speed6.json', 'dispatch-speed6-provenance.json', 'k2-class-registry.json'):
                     shutil.copyfile(P/name, local/name)
                 selection = json.loads((P/'selection.json').read_text())
-                selection['choices'] = bundle_selection.choices(*bundle_selection.views()[expert]) if expert != 'unknown-key-test' else bundle_selection.choices('production','production','wide64')
+                selection['choices'] = bundle_selection.choices(*bundle_selection.views()[expert]) if expert != 'unknown-key-test' else bundle_selection.choices(*next(iter(bundle_selection.views().values())))
                 if expert == 'unknown-key-test':
                     selection['choices']['unexpected'] = 'must reject'
                 (local/'selection.json').write_text(json.dumps(selection))

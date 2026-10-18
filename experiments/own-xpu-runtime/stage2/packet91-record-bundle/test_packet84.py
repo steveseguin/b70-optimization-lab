@@ -17,18 +17,18 @@ def test_every_composition_consumed_and_disclosed():
   assert len(notes)<=2000
   for key in ('experts','draft_head'):assert key+'='+row[key] in notes
   assert 'Recurrence='+row['recurrence'] in notes
-  assert str(b.prefix_rows(v[-1])) in notes and 'verifies every accepted token' in notes
+  assert f'{b.prefix_rows(v[-1]):,}' in notes and 'verifies every accepted token' in notes
 def test_draft_prefix_kd_selection_and_tamper():
  for head in b.DRAFT_HEAD:
-  v=('production','hc-wide','wide64','ordered','production','production','production',head)
+  v=('production','hc-wide','wide64','ordered','production','production','rec-parallel',head)
   expected=identity(bundle(v));prefix=dict(rows=b.prefix_rows(head),full_rows=248320,calibration_sha256=expected['selection_sha256'],target_head_unchanged=True)
   validate_prefix(prefix,expected)
   for key,value in (('rows',1),('calibration_sha256','0'*64),('target_head_unchanged',False)):
    with pytest.raises(ValueError):validate_prefix(dict(prefix,**{key:value}),expected)
 def test_unqualified_composition_rejected():
- v=('production','hc-wide','wide64','ordered','production','production','production','q4-g32')
+ v=('production','hc-wide','wide64','ordered','production','production','rec-parallel','production')
  for p in ('0','0-split23','1-split23'):
-  with pytest.raises(ValueError):validate_bundle(bundle(v,p),b.selection(v))
+  with pytest.raises(ValueError):validate_bundle(dict(bundle(v),placement=p),b.selection(v))
  bad=b.selection(v);bad['draft']['head_prefix']='coverage990'
  with pytest.raises(ValueError):validate_bundle(bundle(v),bad)
 def test_real_k2_selected_consumer(tmp_path,monkeypatch):
@@ -44,7 +44,7 @@ def test_real_k2_selected_consumer(tmp_path,monkeypatch):
   for rec in b.RECURRENCE:
    run=tmp_path/(expert+'-'+rec);run.mkdir()
    for n in ('summary.json','dispatch-measured.json'):shutil.copyfile(ARCHIVE/'K2/run0'/n,run/n)
-   v=('production','hc-wide',expert,'ordered','fast','fused',rec,'q4-g32')
+   v=('production','hc-wide',expert,'ordered','fast','production',rec,'production')
    (tmp_path/'selection.json').write_text(json.dumps(b.selection(v)))
    monkeypatch.setattr(d,'P',tmp_path);monkeypatch.setattr(b,'selected',lambda:bundle(v))
    result,policy=d.pin_production_dispatch(run,json.loads((ARCHIVE/'K2/run0/summary.json').read_text()),round3_root=ARCHIVE/'K2/round3-timing')

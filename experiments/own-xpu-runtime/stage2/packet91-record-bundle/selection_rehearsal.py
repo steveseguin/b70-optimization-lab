@@ -1,21 +1,18 @@
 """CPU-only reselection and restoration; retain each selected plan receipt."""
 import json, subprocess, sys, time
-from build_engine import P, B, sha, save, limits
+from build_engine import P, ROOT, B, sha, save, limits, provenance
 from bundle_selection import KEYS
 
 def main():
     limits()
     base = json.loads((P/'baseline-pins.json').read_text())['selection']
     proof_hash = sha(P/'evidence/dry-run.json')
-    binaries = {mode: sha(B/mode/'own-rt-iq3') for mode in ('device', 'gnu-host')}
+    inherited = provenance()['variants']
     cases = [
         ('baseline', {}),
-        ('q4', dict(experts='gate-input-packed', recurrence='rec-gates', draft_head='q4-g32')),
-        ('prefix990', dict(experts='down-input-packed', recurrence='rec-parallel', draft_head='prefix990')),
-        ('prefix985', dict(experts='input-packed', recurrence='rec-gates', draft_head='prefix985')),
-        ('rank1-split23', dict(placement='1-split23')),
-        ('rank0', dict(placement='0')),
-        ('rank0-split23', dict(placement='0-split23')),
+        ('route-fast', dict(route='fast')),
+        ('rec-both-plus', dict(recurrence='rec-both-plus')),
+        ('combined', dict(route='fast', recurrence='rec-both-plus')),
         ('restored', {}),
     ]
     rows = []
@@ -33,7 +30,8 @@ def main():
                        stdin=subprocess.DEVNULL, check=True, timeout=300)
         report = json.loads((P/'evidence/selection-dry-run.json').read_text())
         assert report['cached_proof_sha256'] == proof_hash == sha(P/'evidence/dry-run.json')
-        assert all(sha(B/mode/'own-rt-iq3') == value for mode, value in binaries.items())
+        expected=inherited[selected['recurrence']]['binaries']
+        assert all(sha(B/mode/'own-rt-iq3')==item['sha256']==sha(ROOT/item['path']) for mode,item in expected.items())
         logs = {}
         for check in report['checks']:
             source = P/'evidence'/('selected-'+check['name']+'.log')
@@ -46,7 +44,7 @@ def main():
                          receipt_sha256=sha(P/'evidence'/('rehearsal-'+label+'.json'))))
         print(label, 'reseal and all window plans PASS', flush=True)
     save(P/'evidence/reselection.json', dict(passed=True, device_executed=False,
-         cached_proof_sha256=proof_hash, binaries=binaries, runs=rows,
+         cached_proof_sha256=proof_hash, binaries=inherited, runs=rows,
          baseline_restored=True))
 
 if __name__ == '__main__': main()

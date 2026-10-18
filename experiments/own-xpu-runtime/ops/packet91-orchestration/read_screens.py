@@ -30,17 +30,20 @@ def collect():
    raise
   result['best']=dict(best,ratio=best['rate']/max(a[0]['rate'],a[-1]['rate']))
   # Prefer exact A-winner confirmation; a complete full B grid is also valid.
-  errors=[];b=None
+  errors=[];invalid=[];b=None
   for mode in ('confirm','grid'):
    try:
     candidate=rows('B',jobs('B',best['choice'],mode));compare(candidate,tuple(j['choice'] for j in jobs('B',best['choice'],mode)));b=candidate;break
-   except (OSError,ValueError,AssertionError,KeyError,TypeError) as e:errors.append(str(e))
-  if b is None:raise ValueError('B confirmation/grid pending: '+'; '.join(errors))
+   except FileNotFoundError as e:errors.append(str(e))
+   except (OSError,ValueError,AssertionError,KeyError,TypeError) as e:errors.append(str(e));invalid.append(str(e))
+  if b is None and invalid:raise ValueError('invalid B evidence: '+'; '.join(invalid))
+  if b is None:raise FileNotFoundError('B confirmation/grid pending: '+'; '.join(errors))
   result['lanes']['B']=b
   selected=next(r for r in b[1:-1] if r['choice']==best['choice'])
   result['confirmation']=dict(selected,ratio=selected['rate']/max(b[0]['rate'],b[-1]['rate']))
   result['status']='winner' if result['confirmation']['ratio']>1 else 'no-winner'
- except (OSError,ValueError,AssertionError,KeyError,TypeError) as e:result['error']=str(e)
+ except FileNotFoundError as e:result['error']=str(e)
+ except (OSError,ValueError,AssertionError,KeyError,TypeError) as e:result.update(status='failed',error=str(e))
  return result
 if __name__=='__main__':
  with contextlib.redirect_stdout(io.StringIO()):result=collect()
