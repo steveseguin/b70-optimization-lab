@@ -1,11 +1,23 @@
 # Current Workspace State
 
+**October 18, packet132 second-candidate study closed on CPU:** Checking a
+second draft choice on uncertain cycles does not clear the required 3% gain.
+The main cost model chooses to leave it disabled; even counting only extra
+expert work gives +2.25%, with +1.77% on held-out text. All 120 independent-text
+positions completed. Evidence and a do-not-repeat row are retained. These are
+CPU counts and cost projections, not measured device speed. No candidate was
+implemented; no GPU, service, live queue or host setting changed. The capture
+process exited normally. Reopen only with a new cost or prediction mechanism.
+[Work note](notes/2026-10-18-own-runtime-packet132.md).
+
 **October 18, packet134 rank0 gap attribution on CPU:** The saved trace does
 not support command replay as the next speed fix. Of each hit's 1.679 ms
 compute gap, 1.594 ms is before target kernels start and only 0.085 ms is
 inside their sequence. The separate host gap mostly covers rank1 drafting
 and target-head service. Misses add 2.046 ms before correction. Packet128b
 failed its timing-overhead gate, so these remain diagnostic observations.
+All 16 analysis tests pass and the evidence is sealed; the replay lever is
+closed for these receipts, with the exact reopening condition in the note.
 No runtime, GPU, service or live queue changed; no speed gain is claimed.
 The next useful evidence separates token lookup, decoding and upload costs.
 [Attribution and work note](notes/2026-10-18-own-runtime-packet134.md).

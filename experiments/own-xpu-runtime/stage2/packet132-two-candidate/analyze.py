@@ -258,12 +258,13 @@ def main():
         else:
             (P/name).write_bytes(raw)
     out = io.StringIO(newline='')
-    writer = csv.writer(out)
+    writer = csv.writer(out, lineterminator='\n')
     writer.writerow(['scenario', 'feature', 'tau', 'group', 'positions', 'flags',
                      'flagged_fraction', 'top1_hits', 'misses', 'flagged_misses',
                      'rescued_misses', 'rescued_fraction_of_all_misses',
                      'acceptance_with_two_candidates', 'projected_tok_s', 'gain_percent',
-                     'finite_gain_percent', 'maximum_extra_half_ms_for_three_percent'])
+                     'finite_gain_percent', 'maximum_extra_half_ms_for_three_percent',
+                     'second_choice_fraction_of_flagged_misses'])
     for record in sweep:
         for group in ('train', 'heldout', 'pooled'):
             m = record[group]
@@ -271,7 +272,8 @@ def main():
                              *[m[k] for k in ('positions', 'flags', 'flagged_fraction', 'top1_hits', 'misses',
                                              'flagged_misses', 'rescued_misses', 'rescued_fraction_of_all_misses',
                                              'acceptance_with_two_candidates', 'projected_tok_s', 'gain_percent',
-                                             'finite_gain_percent', 'maximum_extra_half_ms_for_three_percent')]])
+                                             'finite_gain_percent', 'maximum_extra_half_ms_for_three_percent')],
+                             m['rescued_misses']/m['flagged_misses'] if m['flagged_misses'] else None])
     raw = out.getvalue().encode()
     if args.check:
         assert (P/'thresholds.csv').read_bytes() == raw

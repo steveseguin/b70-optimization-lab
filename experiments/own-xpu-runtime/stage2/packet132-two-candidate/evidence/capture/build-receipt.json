@@ -1,0 +1,72 @@
+{
+  "schema": "packet132.cpu-build.v1",
+  "device_executed": false,
+  "original_receipt_sha256": "232b181c86830069de95bbef53b47a1a208d5d2d6d77cea054c4e63880af1b76",
+  "source_changes": "5 GB address cap; context 128; suppress per-layer debug dumps; arithmetic unchanged",
+  "sources": {
+    "runtime_main.cpp": "a1f537e56e3d75d6dcb952a4ce16646b36fc919c3e28adc68641a2eb0023ae9a",
+    "arithmetic.hpp": "1795c6f1aff84894528c5bc0586af7545f936691f1044ae5aa6eab6a175601ab",
+    "rope.hpp": "6707c89f4fe4a40a0ba02ab1637732c6a3f1c3158314339b056204e2c4e8c00d",
+    "performance.cpp": "1ba609155e80f1a5ab6b2292752f6707789fa1e9d7f03e225a25e7f3f8f7a400",
+    "runtime_kernels.hpp": "a0a0f600f7a3de14561c79b5b89317858da29271e722aefe23410ab98f9bb0e7",
+    "runtime_kernels.cpp": "ff95284fda68e0097c35e7ee0b03851563b77cf935602b4e2ea0d5ba526f37f0",
+    "oracle.cpp": "a3dfb732fbbc5c1ed224cd869e628cc783945b899c50ef10350eee06ea1561b2",
+    "core_v2.hpp": "b5d66cde3ad68039181dd31026a9a2fa3b48ba7336ba17c29b048a362b2e996b",
+    "performance.hpp": "0eaaa4795cc96ee115fd3790cdb27363b8f4f039d6488cf3d5046280ba26eb26",
+    "detmath.hpp": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc"
+  },
+  "oracle_sha256": "cbf0aeb3d40da1f4c399d7da03381e2189b94564d3f6db01427b8fb4af1c2bb5",
+  "matmul_source_sha256": "81900f76281853ff984e00a34972b0ab55d4e99ff39354cbf31974981c2d767f",
+  "matmul_dependency_sha256": {
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/matmul.cpp": "81900f76281853ff984e00a34972b0ab55d4e99ff39354cbf31974981c2d767f",
+    "experiments/own-xpu-runtime/stage2/packet13-integrate/arithmetic.hpp": "5fa871445c0bef63f60ce6bf06e5a2102e4c71fd8ec350e7b4b46ffd7e22dde7",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": "95bdc549c66d5cb72fd54cc73696187dae08568f15b19d206cc954ca290c85f4",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": "f744a148509ed091d69a708262d0fcbc94c179da8ca5ed364791e8ba77a328af",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": "7532f67c6d9a0be2a9187ce149b2004d9f1ea045705327d0ce542a283ad5ed72",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495"
+  },
+  "matmul_sha256": "3261c58512b63d272e2b969ff2c85232eccdb9fb1f02b8d6cd6b7df498bdee82",
+  "commands": [
+    [
+      "g++",
+      "-std=c++20",
+      "-O2",
+      "-mfma",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-DOWN_RT_HOST_ONLY",
+      "-fopenmp",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet132-two-candidate/build/capture/build/src",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet132-two-candidate/build/capture/build/src/oracle.cpp",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet132-two-candidate/build/capture/build/src/performance.cpp",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet132-two-candidate/build/capture/build/src/runtime_kernels.cpp",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet4/owner_retire.cpp",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.cpp",
+      "-lcrypto",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet132-two-candidate/build/capture/build/oracle"
+    ],
+    [
+      "g++",
+      "-std=c++20",
+      "-O2",
+      "-mfma",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-shared",
+      "-fPIC",
+      "/home/steve/llm-optimizations/experiments/qwen38-flash-next-ud-iq3xxs-b70/packet3-runtime-oracle/matmul.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet132-two-candidate/build/capture/build/matmul.so"
+    ]
+  ],
+  "dependencies": "\nDynamic section at offset 0xf9928 contains 32 entries:\n  Tag        Type                         Name/Value\n 0x0000000000000001 (NEEDED)             Shared library: [libcrypto.so.3]\n 0x0000000000000001 (NEEDED)             Shared library: [libstdc++.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libm.so.6]\n 0x0000000000000001 (NEEDED)             Shared library: [libgomp.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libgcc_s.so.1]\n 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]\n 0x000000000000000c (INIT)               0x5000\n 0x000000000000000d (FINI)               0x6781c\n 0x0000000000000019 (INIT_ARRAY)         0xf9110\n 0x000000000000001b (INIT_ARRAYSZ)       8 (bytes)\n 0x000000000000001a (FINI_ARRAY)         0xf9118\n 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)\n 0x000000006ffffef5 (GNU_HASH)           0x3b0\n 0x0000000000000005 (STRTAB)             0x16d0\n 0x0000000000000006 (SYMTAB)             0x518\n 0x000000000000000a (STRSZ)              6654 (bytes)\n 0x000000000000000b (SYMENT)             24 (bytes)\n 0x0000000000000015 (DEBUG)              0x0\n 0x0000000000000003 (PLTGOT)             0xf9b68\n 0x0000000000000002 (PLTRELSZ)           3144 (bytes)\n 0x0000000000000014 (PLTREL)             RELA\n 0x0000000000000017 (JMPREL)             0x4268\n 0x0000000000000007 (RELA)               0x3458\n 0x0000000000000008 (RELASZ)             3600 (bytes)\n 0x0000000000000009 (RELAENT)            24 (bytes)\n 0x000000000000001e (FLAGS)              BIND_NOW\n 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE\n 0x000000006ffffffe (VERNEED)            0x3248\n 0x000000006fffffff (VERNEEDNUM)         6\n 0x000000006ffffff0 (VERSYM)             0x30ce\n 0x000000006ffffff9 (RELACOUNT)          93\n 0x0000000000000000 (NULL)               0x0\n"
+}
