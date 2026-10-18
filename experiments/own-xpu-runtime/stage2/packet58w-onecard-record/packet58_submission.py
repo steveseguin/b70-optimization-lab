@@ -477,7 +477,7 @@ def submission_notes(result):
           'and full natural completion unmeasured. '
           f"Per-token process faults over {fault['tokens']} tokens: major={fault['major']}, minor={fault['minor']}; new GPU fault lines={fault['new_gpu_fault_lines']}. "
           f"Supersedes pinned local one-card record {previous['reference_submission']} ({previous['threshold_tok_s']:.6f} tok/s). "
-          +result['public_record_check']['disclosure'])
+          +result['public_record_check']['disclosure']+' '+POLICY['readiness_amendment'])
     require(len(text)<=2000,'submission notes exceed 2000 characters')
     return text
 
@@ -597,7 +597,8 @@ def update_record(result_path, submission_id, repo=ROOT):
     value = result['primary_metric']['value_tok_s']
     require(current['threshold_tok_s'] is None or value > current['threshold_tok_s'], 'record update must improve threshold')
     policy['records'].append(dict(reference_submission=submission_id, threshold_tok_s=value,
-                                  result=dict(path=str(path.relative_to(repo)), sha256=sha(raw))))
+                                  result=dict(path=str(path.relative_to(repo)), sha256=sha(raw)),
+                                  readiness_amendment=POLICY['readiness_amendment']))
     validate_threshold(policy)
     require(ledger.read_bytes() == before, 'threshold changed during update')
     ledger.write_bytes(encoded(policy))

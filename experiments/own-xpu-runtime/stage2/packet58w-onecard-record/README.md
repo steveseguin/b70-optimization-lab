@@ -28,10 +28,26 @@ It reads the exact locations used by packet58v's runner:
 Both queues must finish with clean drain and matching binaries. Native files
 are rehashed and every output is compared again with packet49. Smoke must
 pass all twelve 64-token requests. The five-view bracket must contain all
-twelve exact 128-token requests per view. Both overlap views must beat **each
-of the three serial controls by at least 0.5%**, with control drift at most
-3%. Boundary comparisons use decimal arithmetic. A saved `ready=true` is
+twelve exact 128-token requests per view, including A0. The first view (A0)
+is the cache warm-up and is excluded only from drift and speed comparison.
+Both overlap views (B0, B1) must beat **each remaining serial control (A1, A2)
+by at least 0.5%**, with A1/A2 control drift at most 3%.
+Boundary comparisons use decimal arithmetic. A saved `ready=true` is
 never sufficient; queue startup reruns these checks.
+
+This readiness amendment was made **after packet58v's data and before any
+packet58w chain**, under the owner's packet58wb instruction. Each one-card
+process starts with an empty immutable device expert cache, so the first view
+of a one-load bracket runs cold. Packet58v's A0 was 22.731 tok/s; A1/A2 were
+26.053/26.079 and B0/B1 were 28.116/28.153. The old rule refused its 14.7%
+control drift. The [packet58t precedent](../../../../notes/2026-10-18-own-runtime-packet58t-result.md)
+(15:21–15:35 UTC) had the same cold first control: 21.41 versus 26.13 warm.
+That historical loss and all packet58v evidence stay frozen. This bracket
+compares warm steady-state execution; its rates are not the record value.
+A0 remains reported and must be exact. Every 12 × 128 tokens in all five
+views is checked again against packet49. The record value comes only from the
+chain's own fresh WS128 window. No smoke, exactness, fault, chain, window or
+submission validation gate is otherwise changed.
 
 The fresh output is `evidence/card0-58w-a`; the exact service is
 `packet58-onecard-58w-a`. `ready.json` carries the complete command, including
@@ -59,7 +75,8 @@ nice -n 19 taskset -c 8-15,24-31 python3 -B "$P/verify_ready.py" --output "$P/re
 The final coordinator marker is
 [READY-FOR-DEVICE.json](../../ops/packet58w-orchestration/READY-FOR-DEVICE.json).
 It identifies the committed preparation and the SHA-256 of the exact command.
-“Prepared” is not a claim that the unrun device prerequisite passed.
+The amended readiness gate passes the real parent evidence; packet58w's own
+chain is still unrun. Readiness is rechecked at launch.
 
 ## CPU evidence
 

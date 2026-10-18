@@ -24,10 +24,14 @@ def evaluate(rows,policy=None):
         require(type(value) in (float,int) and math.isfinite(value) and value>0,'invalid rate')
         rates.append(Decimal(str(value)))
     require(all(s==signatures[0] for s in signatures),'prompts or tokens differ across views')
-    controls=rates[::2];candidates=rates[1::2]
+    # The first view fills the immutable device expert cache in this one-load
+    # bracket. Keep it exactness-gated and reported, outside speed comparison.
+    controls=rates[2::2];candidates=rates[1::2]
     require(max(controls)<=min(controls)*(1+Decimal(str(policy['maximum_control_drift']))),'controls drift by more than 3%')
     require(all(c>=a*(1+Decimal(str(policy['minimum_gain_each_control']))) for c in candidates for a in controls),'both overlap views must beat EVERY serial control by at least 0.5%')
-    return dict(passed=True,rates=list(map(float,rates)),control_drift=float(max(controls)/min(controls)-1),minimum_gain=float(min(candidates)/max(controls)-1))
+    return dict(passed=True,rates=list(map(float,rates)),control_drift=float(max(controls)/min(controls)-1),minimum_gain=float(min(candidates)/max(controls)-1),
+                warmup_view=dict(label='A0',rate=float(rates[0]),exact=True,excluded_from_drift_and_comparison=True),
+                comparison_controls=['A1','A2'],readiness_policy=policy['readiness_policy'])
 def command_argv():
     lib=json.loads((P/'library-path.json').read_text())['LD_LIBRARY_PATH']
     return ['systemd-run','--user','--unit=packet58-onecard-58w-a','--property=Restart=no','--property=SendSIGKILL=no','--property=TimeoutStopSec=infinity','--property=Nice=0','--working-directory='+str(ROOT),'/usr/bin/taskset','-c','0-3,16-19','/usr/bin/env','-i','PATH=/usr/bin:/bin','LD_LIBRARY_PATH='+lib,'OMP_NUM_THREADS=2','/usr/bin/python3','-B',str(P/'queue_runner.py'),'--authorized-device-window','--card','0','--view','down-tile16','--output-root',str(P/'evidence/card0-58w-a'),'--fault-review',str(P/'evidence/fault-review-58w.json')]

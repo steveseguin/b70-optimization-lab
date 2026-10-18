@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, packet58wb readiness amendment passes on CPU:** At the owner's
+request, the first one-card bracket view is treated as cache warm-up for speed
+comparison, after packet58v's data and before any packet58w chain. All five
+views still pass exact output checks against packet49. The warm controls drift
+by 0.098%; both overlap views beat both by at least 7.81%. All 124 tests and the
+minimal reseal pass. The chain command is unchanged and no chain was launched.
+Only the chain's fresh WS128 can supply a new record value.
+[Work note](notes/2026-10-18-own-runtime-packet58w.md#packet58wb--cold-first-view-amendment-october-18).
+
 **October 18, packet58x larger-cache CPU admission passes:** A 21.553 GB cache
 fits while keeping the device reserve, all transient allowances and a separate
 driver allowance. Host admission rises to 98.990 GB under the measured policy.

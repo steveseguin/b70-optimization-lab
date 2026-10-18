@@ -1,7 +1,9 @@
 # Packet58w boundaries
 
 - Do not launch on a stored readiness flag, partial smoke/bracket, inexact
-  tokens, less than 0.5% over any serial control, or control drift above 3%.
+  tokens, less than 0.5% over either warm serial control (A1/A2), or warm
+  control drift above 3%. A0 is reported and exactness-gated, excluded only
+  from speed comparison under the disclosed packet58wb amendment.
   Read the actual 58v runner output and recompute its outputs and rates.
 - Do not edit packet58v or any parent. No native rebuild was needed; reuse
   the five hash-matched binaries and retain their complete source closure.

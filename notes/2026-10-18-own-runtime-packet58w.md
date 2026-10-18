@@ -87,3 +87,54 @@ SHA-256. No device readiness or speed win is inferred from the marker.
 - [Build seal](../experiments/own-xpu-runtime/stage2/packet58w-onecard-record/build-receipt.json)
 - [CPU closeout](../experiments/own-xpu-runtime/stage2/packet58w-onecard-record/CPU-PREPARATION-CLOSEOUT.md)
 - [Final coordinator marker](../experiments/own-xpu-runtime/ops/packet58w-orchestration/READY-FOR-DEVICE.json)
+
+## Packet58wb — cold first-view amendment, October 18
+
+At the owner's request, readiness was amended after packet58v's 17:50–18:04
+UTC data and before any packet58w chain. No packet58w output directory exists.
+The first view of this one-card one-load bracket fills the initially empty
+immutable device expert cache. Packet58t already showed the same effect at
+15:21–15:35 UTC: 21.41 tok/s for the cold first control versus 26.13 warm.
+Its historical loss and every other packet's evidence remain unchanged.
+
+The original verifier was run before editing and refused the real evidence
+with “controls drift by more than 3%”. Its output is retained in
+[58wb-old-readiness.json](../experiments/own-xpu-runtime/ops/packet58w-orchestration/58wb-old-readiness.json).
+The amendment excludes only A0 from drift and comparison. A0 is still reported
+and must be exact. Smoke must pass, and all five views' 12 × 128 output tokens
+are checked again against packet49's `iq3-p49-split32-v1`. Both overlap views
+must beat each warm serial control by at least 0.5%, with warm-control drift
+at most 3%. No other validation, chain, window, fault rule or metric changed.
+
+The real replay passes. A0/B0/A1/B1/A2 are 22.730951 / 28.115842 / 26.053436 /
+28.152570 / 26.078853 tok/s. A1/A2 drift is 0.097558%; the smallest overlap
+gain against either warm control is 7.810884%. These are readiness comparisons,
+not a new record. The record value must come from the chain's fresh WS128.
+The record remains 26.22859930943809 tok/s until qualifying chain evidence exists.
+
+All 124 Python tests pass, including the real old-rule refusal/new-rule pass,
+each overlap view 0.1% below a warm control, 3.5% warm-control drift, and a
+non-exact first view. All seven actual CPU launch paths and 28 wrong-unit/env
+refusals pass again. The submission notes and ledger row template both disclose:
+“readiness gate amended to exclude the cold-cache first bracket view (58t
+precedent), before the chain; the record value is the chain's fresh WS128”.
+Offline submission tests verify both disclosures and the existing notes limit.
+No submission or live ledger update was performed.
+
+Minimal reseal: refreshed Python, argument and literal-audit receipts, then
+`seal.py`, `seal.py --verify`, `plan_gate.py`, and
+`verify_ready.py --output .../ready.json`. Every command used nice19, helper
+cores 8–15/24–31, `python3 -B`, and closed stdin. Python and argument test
+peak child RSS were 65,515,520 and 33,157,120 bytes. Native builds and their
+existing byte/startup receipts were retained unchanged; the 635-file seal
+and 72,924,200-byte build verify. The seven-window passive plan passes.
+The new ready.json is true and binds the rechecked parent evidence.
+
+The service name, output folder and environment-embedded chain command are
+byte-for-byte unchanged. Its existing SHA-256 is retained without recomputing:
+`bb0b42ff2cec8c3e88ecc650292598416867c6ddc983ba137793da421862bd3a`.
+The final marker is the last content write, after pushing the amendment commit;
+it binds that commit and is committed and pushed separately. Fetch confirmed
+HEAD == origin/main after the dirty-tree pull refusal. Commits use explicit
+paths with `git commit --only`. No GPU, service, sudo, setting, live queue or
+frozen packet was touched, and no chain was launched.

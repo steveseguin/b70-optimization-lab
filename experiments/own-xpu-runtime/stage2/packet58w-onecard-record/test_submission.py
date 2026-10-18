@@ -222,6 +222,7 @@ class SubmissionTests(unittest.TestCase):
         self.assertIn(S.POLICY['public_record_check']['disclosure'],notes)
         self.assertIn('overlapped cache maintenance',notes)
         self.assertIn('realistic_final_gate.passed=false',notes)
+        self.assertIn(S.POLICY['readiness_amendment'],notes)
 
     def test_missing_fault_counter_refuses(self):
         key='WS128/run/run/code-review/timings.jsonl'
@@ -350,6 +351,7 @@ class SubmissionTests(unittest.TestCase):
             result_path = out / 'result.json'
             row = S.update_record(result_path, 'synthetic-coordinator-id', repo)
             self.assertEqual(row['threshold_tok_s'], item['payload']['tokSOut'])
+            self.assertEqual(row['readiness_amendment'],S.POLICY['readiness_amendment'])
             with self.assertRaisesRegex(ValueError, 'improve threshold'):
                 S.update_record(result_path, 'another-id', repo)
             self.assertTrue(S.scope_problems(item, repo))

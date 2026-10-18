@@ -2,7 +2,7 @@
 import copy
 from contextlib import ExitStack
 from pathlib import Path
-import tempfile,unittest
+import json,tempfile,unittest
 from unittest.mock import patch
 import queue_runner as Q
 import verify_ready as R
@@ -14,12 +14,33 @@ def rows(rates=(25,25.125,25,25.125,25)):
 class ReadyTests(unittest.TestCase):
     def test_inclusive_gain(self):self.assertTrue(R.evaluate(rows())['passed'])
     def test_each_candidate_and_each_control(self):
-        for i in range(5):
+        for i in range(1,5):
             rates=[25,25.125,25,25.125,25];rates[i]=25.124 if i%2 else 25.001
             with self.subTest(index=i),self.assertRaisesRegex(ValueError,'EVERY'):R.evaluate(rows(rates))
     def test_drift(self):
         self.assertTrue(R.evaluate(rows((25,27,25.75,27,25)))['passed'])
         with self.assertRaisesRegex(ValueError,'drift'):R.evaluate(rows((25,27,25.75001,27,25)))
+    def test_real_evidence_old_refuses_new_passes(self):
+        old=json.loads((R.P.parents[1]/'ops/packet58w-orchestration/58wb-old-readiness.json').read_text())
+        self.assertFalse(old['ready'])
+        self.assertEqual(old['reason'],'controls drift by more than 3%')
+        data=json.loads((R.P.parent/'packet58v-async-cache/evidence/card0-async-a/overlap/WSCREEN/run/summary.json').read_text())['views']
+        rates=[r[R.METRIC]['median'] for r in data]
+        self.assertGreater(max(rates[::2])/min(rates[::2]),1.03)
+        result=R.evaluate(data)
+        self.assertTrue(result['passed'])
+        self.assertEqual(result['comparison_controls'],['A1','A2'])
+        self.assertEqual(result['rates'],rates)
+        self.assertTrue(result['warmup_view']['exact'])
+    def test_overlap_below_warm_control_by_point_one_percent(self):
+        for i in (1,3):
+            rates=[22,27,26,27,26];rates[i]=25.974
+            with self.subTest(view=i),self.assertRaisesRegex(ValueError,'EVERY'):R.evaluate(rows(rates))
+    def test_warm_controls_three_point_five_percent_drift(self):
+        with self.assertRaisesRegex(ValueError,'drift'):R.evaluate(rows((22,28,26,28,26.91)))
+    def test_nonexact_first_view_refuses(self):
+        data=rows((22,27,26,27,26));data[0]['requests'][0]['exact_oracle']=False
+        with self.assertRaisesRegex(ValueError,'exact'):R.evaluate(data)
     def test_complete_views(self):
         for count in range(5):
             with self.assertRaises(ValueError):R.evaluate(rows()[:count])
