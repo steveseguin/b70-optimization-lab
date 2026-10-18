@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, queue drain-spacing guard checked on CPU:** The queue now waits
+until 61 seconds after the latest completed shared teardown on this boot before
+starting a job. Pause, stop, fault and latch checks remain active during the
+bounded wait. All 76 CPU tests and both live queue plans pass (six A jobs,
+eight B jobs). Frozen wrappers are unchanged. Keep the other lane paused
+during chains of unfixed bundles: their internal windows bypass the queue.
+No service, GPU job, live queue, marker, latch or host setting changed here.
+The coordinator picks up the code on its normal between-job driver restart.
+[Work note](notes/2026-10-18-own-runtime-ops-drain-spacing.md).
+
 **October 18, packet118 bundle7 preparation complete on CPU:** Both fixed
 prefix compositions pass GNU/Intel byte checks, VRAM admission and all 22
 startup windows. The twelve-prompt smoke shipped first; it and both composite

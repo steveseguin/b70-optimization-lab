@@ -50,12 +50,17 @@ class QueueTestCase(unittest.TestCase):
         self.backend = FakeBackend(self.clock)
         self.queue = q.Queue(self.root, 'A', self.backend, now=lambda: self.clock[0], sleep=self.sleep)
         self.addCleanup(patch.stopall)
+        patch.object(q, 'STAGE', self.root / 'stage2').start()
+        boot_path = self.root / 'boot_id'
+        boot_path.write_text('2cba7160-0000-0000-0000-000000000000\n')
+        patch.object(q, 'BOOT_ID_PATH', boot_path).start()
         patch.object(q, 'library_path', return_value='/literal/libraries').start()
         patch.object(q, 'plan_job', return_value={'plan': 'passed'}).start()
         self.events = []
         self.queue.event = lambda kind, **kw: self.events.append((kind, kw))
 
     def sleep(self, seconds):
+        self.assertGreaterEqual(seconds, 0, 'negative sleep')
         self.clock[0] += seconds
         if self.clock[0] > 1000:
             self.fail('unbounded waiter')
@@ -343,6 +348,188 @@ class Tests(QueueTestCase):
             result = q.plan_job(dict(script=str(script), name='coord'), '/lib', run)
         self.assertIn('unsupported', result['plan'])
         run.assert_not_called()
+
+
+class DrainSpacingTests(QueueTestCase):
+    def setUp(self):
+        super().setUp()
+        self.clock[0] = 100.0
+        self.teardown = q.STAGE / 'screen/v3/teardown-state.json'
+        self.teardown.parent.mkdir(parents=True)
+        self.write([self.job()])
+        self.backend.after = lambda: (self.root / 'STOP-A').touch()
+
+    def drain(self, completed=90.0):
+        q.save(self.teardown, dict(boot_id=q.BOOT_ID_PATH.read_text().strip(),
+                                  drained=True, completed_monotonic=completed))
+
+    def start_time(self):
+        self.assertEqual(self.queue.run(), 0)
+        self.assertEqual(len(self.backend.runs), 1)
+        return self.clock[0] - self.backend.duration
+
+    def waits(self):
+        return [row for kind, row in self.events if kind == 'WAIT-DRAIN-SPACING']
+
+    def test_recent_teardown_waits_until_completed_plus_61(self):
+        self.drain()
+        before = self.teardown.read_bytes()
+        self.assertEqual(self.start_time(), 151.0)
+        self.assertEqual(self.waits(), [dict(name='one', wait_seconds=51.0, until_monotonic=151.0)])
+        self.assertEqual(self.teardown.read_bytes(), before)
+
+    def test_old_teardown_does_not_wait(self):
+        self.drain(completed=0.0)
+        self.assertEqual(self.start_time(), 100.0)
+        self.assertEqual(self.waits(), [])
+
+    def test_other_boot_does_not_wait(self):
+        self.drain()
+        row = json.loads(self.teardown.read_text())
+        row['boot_id'] = '2cba7160-1111-1111-1111-111111111111'
+        q.save(self.teardown, row)
+        self.assertEqual(self.start_time(), 100.0)
+        self.assertEqual(self.waits(), [])
+
+    def test_undrained_keeps_existing_path(self):
+        self.drain()
+        row = json.loads(self.teardown.read_text())
+        row['drained'] = False
+        q.save(self.teardown, row)
+        self.assertEqual(self.start_time(), 100.0)
+        self.assertEqual(self.waits(), [])
+
+    def test_missing_state_keeps_existing_path(self):
+        self.assertEqual(self.start_time(), 100.0)
+        self.assertEqual(self.waits(), [])
+
+    def test_invalid_state_adds_no_spacing(self):
+        for content in ('{', '[]', 'null', '42'):
+            with self.subTest(content=content):
+                self.teardown.write_text(content)
+                self.assertEqual(q.drain_spacing_deadline(), 0.0)
+        for completed in (None, True, '90', -1, float('inf'), float('nan'), 10**400):
+            with self.subTest(completed=completed):
+                self.drain(completed=completed)
+                self.assertEqual(q.drain_spacing_deadline(), 0.0)
+        with patch.object(Path, 'read_text', side_effect=PermissionError('unreadable')):
+            self.assertEqual(q.drain_spacing_deadline(), 0.0)
+
+    def test_pause_during_wait_prevents_start(self):
+        self.drain()
+        def sleep(seconds):
+            self.sleep(seconds)
+            if (self.root / 'PAUSE-A').exists():
+                self.assertEqual(self.backend.runs, [])
+                (self.root / 'STOP-A').touch()
+            else:
+                (self.root / 'PAUSE-A').touch()
+        self.queue.sleep = sleep
+        self.assertEqual(self.queue.run(), 0)
+        self.assertEqual(self.backend.runs, [])
+        self.assertFalse(self.queue.active.exists())
+
+    def test_stop_during_wait_prevents_start(self):
+        self.drain()
+        self.queue.sleep = lambda _: (self.root / 'STOP-A').touch()
+        self.assertEqual(self.queue.run(), 0)
+        self.assertEqual(self.backend.runs, [])
+
+    def test_signal_during_wait_prevents_start(self):
+        self.drain()
+        self.queue.sleep = lambda _: setattr(self.queue, 'stopped', True)
+        self.assertEqual(self.queue.run(), 0)
+        self.assertEqual(self.backend.runs, [])
+
+    def test_fault_during_wait_prevents_start(self):
+        self.drain()
+        self.backend.guard = lambda: q.require(self.clock[0] < 101.0, 'fault count changed')
+        with self.assertRaisesRegex(ValueError, 'fault count changed'):
+            self.queue.run()
+        self.assertEqual(self.backend.runs, [])
+        self.assertFalse(self.queue.active.exists())
+
+    def test_latch_during_wait_prevents_start(self):
+        self.drain()
+        self.backend.guards = lambda lane: q.Backend.guards(self.backend, lane)
+        with patch.object(q, 'COORD', self.root):
+            self.queue.sleep = lambda _: (self.teardown.parent / 'fault-old-A.json').touch()
+            with self.assertRaisesRegex(ValueError, 'fault latch'):
+                self.queue.run()
+        self.assertEqual(self.backend.runs, [])
+
+    def test_latest_teardown_extends_spacing(self):
+        self.drain()
+        def sleep(seconds):
+            self.sleep(seconds)
+            if self.clock[0] == 110.0:
+                self.drain(completed=110.0)
+        self.queue.sleep = sleep
+        self.assertEqual(self.start_time(), 171.0)
+        self.assertEqual([r['wait_seconds'] for r in self.waits()], [51.0, 61.0])
+
+    def test_slow_guard_and_logging_never_cause_negative_sleep(self):
+        self.drain(completed=39.5)
+        original_event = self.queue.event
+        def event(kind, **values):
+            original_event(kind, **values)
+            if kind == 'WAIT-DRAIN-SPACING':
+                self.clock[0] += 1.0
+        self.queue.event = event
+        self.backend.guard = lambda: self.clock.__setitem__(0, self.clock[0] + .1)
+        self.assertGreaterEqual(self.start_time(), 100.5)
+
+    def test_final_guard_teardown_update_is_rechecked(self):
+        self.drain(completed=0.0)
+        calls = []
+        def guard():
+            calls.append(self.clock[0])
+            if len(calls) == 3:  # preflight, spacing, final launch guard
+                self.drain(completed=100.0)
+        self.backend.guard = guard
+        self.assertEqual(self.start_time(), 161.0)
+
+    def test_guard_outlasts_remaining_spacing(self):
+        self.drain(completed=39.5)
+        self.backend.guard = lambda: self.clock.__setitem__(0, self.clock[0] + .3)
+        self.assertGreaterEqual(self.start_time(), 100.5)
+        self.assertEqual(self.waits(), [])
+
+    def test_pause_from_final_guard_prevents_start(self):
+        self.drain(completed=0.0)
+        calls = []
+        def guard():
+            calls.append(self.clock[0])
+            if len(calls) == 3:
+                (self.root / 'PAUSE-A').touch()
+        self.backend.guard = guard
+        self.queue.sleep = lambda _: (self.root / 'STOP-A').touch()
+        self.assertEqual(self.queue.run(), 0)
+        self.assertEqual(self.backend.runs, [])
+        self.assertFalse(self.queue.active.exists())
+
+    def test_queue_edit_during_wait_discards_old_job(self):
+        self.drain()
+        def sleep(seconds):
+            # The spacing waiter must not retain the queue's edit lock.
+            with q.lock(self.root / 'edit-A.lock', nonblocking=True):
+                self.write([self.job('replacement')])
+            self.sleep(seconds)
+        self.queue.sleep = sleep
+        self.assertEqual(self.start_time(), 151.0)
+        self.assertEqual(self.done()[0]['job']['name'], 'replacement')
+
+    def test_wait_is_bounded_when_teardown_keeps_changing(self):
+        self.drain()
+        def sleep(seconds):
+            self.sleep(seconds)
+            self.drain(completed=self.clock[0])
+        self.queue.sleep = sleep
+        with self.assertRaisesRegex(ValueError, 'spacing wait timed out'):
+            self.queue.run()
+        self.assertEqual(self.clock[0], 100.0 + q.DRAIN_WAIT_LIMIT)
+        self.assertEqual(self.backend.runs, [])
+        self.assertFalse(self.queue.active.exists())
 
 
 class ReportFailureTests(QueueTestCase):

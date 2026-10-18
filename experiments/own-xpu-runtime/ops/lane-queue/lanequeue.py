@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 import fcntl
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -27,6 +28,9 @@ CPU = set(range(8, 16)) | set(range(24, 32))
 AFFINITY = {'A': '0-3,16-19', 'B': '4-7,20-23'}
 BOOT = '2cba7160'
 BASE = 2
+BOOT_ID_PATH = Path('/proc/sys/kernel/random/boot_id')
+DRAIN_SPACING = 61.0
+DRAIN_WAIT_LIMIT = 120.0
 
 
 def require(ok, message):
@@ -36,6 +40,26 @@ def require(ok, message):
 
 def utc():
     return datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+
+
+def drain_spacing_deadline():
+    """Only a readable, completed drain on this boot adds queue spacing.
+
+    Missing/incomplete/invalid records still go through the existing guards
+    and frozen wrapper admission; this is not permission to bypass either.
+    """
+    try:
+        row = json.loads((STAGE / 'screen/v3/teardown-state.json').read_text())
+        if not isinstance(row, dict) or row.get('drained') is not True:
+            return 0.0
+        if row.get('boot_id') != BOOT_ID_PATH.read_text().strip():
+            return 0.0
+        completed = row.get('completed_monotonic')
+        if type(completed) not in (int, float) or not math.isfinite(completed) or completed < 0:
+            return 0.0
+        return completed + DRAIN_SPACING
+    except (OSError, ValueError, OverflowError):
+        return 0.0
 
 
 def atomic(path, value):
@@ -391,6 +415,33 @@ class Queue:
                 return True
             self.sleep(1)
 
+    def launch_interrupted(self):
+        return self.stopped or any((self.directory / f'{flag}-{self.lane}').exists()
+                                   for flag in ('STOP', 'PAUSE'))
+
+    def wait_drain_spacing(self, job):
+        # Do not hold the edit lock while waiting: pause/reorder remains usable.
+        limit = self.now() + DRAIN_WAIT_LIMIT
+        logged = None
+        while True:
+            if self.launch_interrupted():
+                return False
+            self.backend.guards(self.lane)
+            if self.launch_interrupted():
+                return False
+            until = drain_spacing_deadline()  # Follow the latest shared drain.
+            now = self.now()
+            if now >= until:
+                return True
+            require(now < limit, 'shared drain spacing wait timed out; no launch')
+            if until != logged:
+                self.event('WAIT-DRAIN-SPACING', name=job['name'],
+                           wait_seconds=until - now, until_monotonic=until)
+                logged = until
+            # Guards/logging can outlast the remainder. Never pass a negative
+            # sleep, including when the bounded wait itself has expired.
+            self.sleep(max(0.0, min(1.0, until - self.now(), limit - self.now())))
+
     def finish(self, job, record):
         # Writers use the same edit lock. Re-read after the long job; never
         # overwrite the coordinator's newly appended/reordered rows.
@@ -430,13 +481,17 @@ class Queue:
                 plan_job(job, ldp)
                 review = self.backend.review(job, self.directory) if job.get('review') else None
                 # Recheck after CPU preparation; no queue snapshot survives a pause.
-                if self.stopped or any((self.directory / f'{flag}-{self.lane}').exists() for flag in ('STOP', 'PAUSE')):
+                if not self.wait_drain_spacing(job):
                     continue
                 with lock(self.directory / f'edit-{self.lane}.lock'):
                     current = read_queue(self.directory, self.lane)
                     if not current or current[0] != job:
                         continue
                     faults_start = self.backend.guards(self.lane)
+                    # A teardown or pause can arrive while taking the edit lock
+                    # or checking guards. Discard this preparation and recheck.
+                    if self.launch_interrupted() or self.now() < drain_spacing_deadline():
+                        continue
                     run_id = job['name'] + '-' + uuid.uuid4().hex
                     receipt = self.directory / (run_id + '.exit.json')
                     log = self.directory / (run_id + '.log')
