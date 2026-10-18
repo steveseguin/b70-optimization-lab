@@ -35,10 +35,10 @@ def main():
     save(P/'evidence/memory-budget.json',dict(passed=True,device_executed=False,budget=budget,
         policy='packet58u tile16 plus 32 MiB metadata and 1179648-byte device staging backing',actual_live_host_admission=False,scope='whole-host'))
     print(count,'Python tests; full host/VRAM budget; 1 drain FIXED; custom teardown integration PASS')
-    assert resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024<4*1024**3
+    assert resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024<2*1024**3
     limits()
 
 if __name__=='__main__':
     # These tests exercise the runtime's real refusal of inherited AS caps.
-    # No native/GPU process is launched; measured RSS remains under 4 GiB.
+    # No native/GPU process is launched; measured RSS remains under 2 GiB.
     main()

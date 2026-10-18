@@ -1,4 +1,4 @@
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/kernel_guard.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/kernel_guard.hpp"
 #line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/p49d_submit.cpp"
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/build/checked/experiments/own-xpu-runtime/stage2/packet142-class-layout/p49d_submit.hpp"
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/build/checked/experiments/own-xpu-runtime/stage2/packet142-class-layout/p100_down.hpp"
@@ -58,7 +58,7 @@ Launch mix(Device&d,const Spec&s,IDs a,Allocation,Allocation,Allocation,Deps dep
  p49dmix::Kernel k;k.spec=s;auto e=d.compute(k,a,deps);return {e,e,1};
 }
 Submit resolve(std::string_view cls,std::string_view choice){
- if((cls=="class_layout"||cls=="class_layout_bank")&&(choice=="production"||choice=="attention-order512"||choice=="expert-gate-up-order512"||choice=="hc-gate-low-order512"))return production;
+ if((cls=="class_layout"||cls=="class_layout_bank")&&(choice=="production"||choice=="attention-order600"||choice=="expert-gate-up-order600"||choice=="hc-gate-low-order600"))return production;
  if(cls=="other_fusion"&&(choice=="production"||choice=="fused"))return production;
  if(cls=="head"&&(choice=="production"||choice=="head-transpose"||choice=="head-split-compute"||choice=="head-split-bcs"))return production;
  if(cls=="host_retire"&&(choice=="production"||choice=="ordered"||choice=="reply-first"))return production;

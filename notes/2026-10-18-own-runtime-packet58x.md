@@ -160,3 +160,57 @@ Recheck from the packet directory: `maintenance_decision.py`,
 `plan_queue.py --emit-only`, `argument_gate.py`, `run_cpu_gates.py`, `seal.py`,
 `seal.py --verify`, and `plan_queue.py`. The first full model smoke, quality
 and capacity timing results are still pending coordinator execution.
+
+## Packet58xd — DRM occupancy units repaired, October 18
+
+Smoke c passed K1a/K1b, then stopped cooperatively during load because the
+new sensor accepted only KiB. Its timing and prefill files are empty. The
+failed evidence is untouched; the reported fault count remains two, with no
+new kernel lines in that failure. This repair ran no device or health probe.
+
+The exact Ubuntu 7.0.0-39 formatter was checked using the matching binary and
+System.map. Its image matches the installed dpkg digest. It prints bytes, KiB
+or MiB, choosing the largest exact unit up to MiB; zero is `0`, and GiB never
+appears. [Kernel evidence and input identities](../experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/DRM-SIZE-FORMAT.md).
+The live Python sensor, native post-load guard and admission receipt reader
+now handle all three formats. Unknown units, signs, decimals, extra tokens,
+Unicode digits and uint64 overflow still refuse. Tests cover both actual
+parsers, unit boundaries, zero, malformed values, client deduplication and
+the unchanged 30.5 GB occupancy stop. The packet audit found no other active
+fdinfo/sysfs size assumption.
+
+Only the device entry was rebuilt. Host executables and reused kernel objects
+are unchanged. Peak compiler RSS was **544,669,696 bytes**, under a 2 GiB
+address-space cap; retained build size is **80,595,561 bytes**. The original
+receipt remains in `lineage/58xc-build.json`. The shared compiler lock was
+held by another builder waiting on the stopped smoke's stale hold. Neither
+was changed. Read-only checks found no active compiler or whole-host device
+child before this urgent entry-only compile ran under the brief's CPU caps.
+
+All **110 Python tests**, six real environment/unit-name entry probes through
+intercepted native exec, both old-unit refusals, drain/teardown and memory
+checks pass. Probe RSS stayed below 35 MiB. The seal verifies **395 sources**.
+No model payload or full-shape execution ran. Parent comparison replay stays
+unchanged and supplies no new packet58x speed claim.
+
+Restored historical metadata initially tripped the coordinator's recursive
+pin check. Both temporary-plan refusals are retained in
+`evidence/queue-plan-smoke-58xd-*-refusal.log`. Only archive-verified generated
+JSON copies outside the current build source closure were removed; originals
+remain in the owned archive and `restore()` recreates them. The active drain
+scanner excludes that historical build cache. No pin guard or external
+allowlist was relaxed.
+
+Both final proposals pass planning on temporary queue copies with a temporary
+prospective readiness marker. Jobs `packet58x-smoke-d-A` and
+`packet58x-v5-d-A` use `evidence/card0-capacity-d/{smoke,max}`; v5 requires the
+fresh smoke. Neither is queued. Commands used `nice -n 19 taskset -c
+8-15,24-31 python3 -B` and closed stdin. No GPU, services, sudo, settings,
+model reads, live queue writes or other packet changes were performed.
+
+Git pull refused unrelated dirty work; fetch initially confirmed HEAD equals
+origin/main. Implementation changes use explicit-path `git commit --only`
+and are pushed immediately. `READY-FOR-DEVICE.json` is the last content write,
+binding the implementation commit, rebuilt artifact seal and both planned
+proposals; it is then committed and pushed separately. Fresh smoke, full model
+quality and timing remain pending coordinator execution.

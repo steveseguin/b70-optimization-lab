@@ -1,10 +1,10 @@
 {
   "schema": "own-runtime.packet58x.ready-for-device.v1",
-  "created_utc": "2026-10-18T19:24:38.475948+00:00",
-  "implementation_commit": "df897b1511f5329eabedaea6055c8907aeb40582",
+  "created_utc": "2026-10-18T19:43:33.269818+00:00",
+  "implementation_commit": "ac532374980e6ce35128964eeafed0bbc53d29a9",
   "admission_milestone_commit": "7cc07d7be3164af267cf043e5c343b8890e63357",
   "passed": true,
-  "readiness": "Packet58xc CPU reseal complete; fresh smoke proposal first",
+  "readiness": "Packet58xd CPU reseal complete; fresh smoke proposal first",
   "device_executed": false,
   "services_started": false,
   "queued": false,
@@ -29,39 +29,41 @@
   "device_reserve_bytes": 1500000000,
   "driver_occupancy_allowance_bytes": 536870912,
   "host_memavailable_required_bytes": 98989727744,
-  "build_receipt_sha256": "bc13a8ce1d186a873e42434fed03ce0e91aa5111b31f53bc1269f5d4beb34416",
+  "build_receipt_sha256": "8879f091a03e2a22ad2d250e0bf04be23501480f94d3ae661421df300a28a730",
   "admission_sha256": "a647c20f69a21a8e20494c4d2dc55f8f9332ab4d0ef92dafb327668b43f9996a",
-  "maintenance_decision_sha256": "73e6eb4ef5eb267cdff977ddb66649f778a388475528ca18fb25ed8a5af97935",
-  "queue_plans_sha256": "47d18a2784008e53844b064506df7ae060433a8f730712854497ec3b060cc78a",
+  "maintenance_decision_sha256": "3bbec8e20e60d9b1ed49af2823f4d37311c5091ee0bc2749ea455aba942d7b8a",
+  "queue_plans_sha256": "9439175a212ac041dc104dfa0416e9f09cb613812286b05bb1247ec5561e6cfe",
   "proposals": [
     {
       "arm": "smoke",
       "proposal": "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/proposals/proposed-p58x-smoke-A.txt",
-      "proposal_sha256": "c5f6af8770b903a9ad3c21bf32cd9356daf3a5357b0ba8df98ae26619f912e96",
+      "proposal_sha256": "d931b5fd0cd1d832bdc18f03c01e5f2603309f034599895f80e8e70ac1942915",
       "coordinator_path": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58x-smoke-A.txt"
     },
     {
       "arm": "max",
       "proposal": "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/proposals/proposed-p58x-v5-A.txt",
-      "proposal_sha256": "be6cd30387343ac31cb1f46f1685b810661dad96c859af3808a566722ff45738",
+      "proposal_sha256": "9195492543409563375e312cadb954f0202bc27beed4e0d1a50b7d907b0900df",
       "coordinator_path": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58x-v5-A.txt"
     }
   ],
   "cpu_gates": {
     "passed": true,
-    "python_checks": 106,
+    "python_checks": 110,
     "entry_probes": 6,
-    "sealed_source_count": 314,
-    "peak_probe_child_rss_bytes": 34607104,
-    "native_artifacts_unchanged": true,
+    "sealed_source_count": 395,
+    "peak_probe_child_rss_bytes": 34377728,
+    "native_artifacts_unchanged": false,
+    "device_entry_rebuilt": true,
+    "host_binaries_unchanged": true,
     "live_host_admission_passed": true,
     "scope": "Minimal CPU reseal: owned comparison replay, policy tests, entry interception, build gate and temporary plans; no full-shape, GGUF-reading or device gates"
   },
   "limitations": [
-    "The old smoke passed K1a/K1b then refused before WSCREEN; its evidence is untouched.",
+    "Smoke c passed K1a/K1b, then stopped cooperatively during load on a DRM unit parser refusal; no timing ran; evidence untouched.",
     "Fresh smoke, physical fit, full model output and speed remain pending.",
     "No full-shape, GGUF-reading or native device gate ran during this amendment.",
-    "Native executables retain their original hashes; future rebuilds require their usual gates."
+    "Only the device entry was rebuilt for the DRM parser; host binaries and model arithmetic remain unchanged. Device qualification is pending."
   ],
   "smoke": {
     "prompts": 12,
@@ -100,15 +102,18 @@
     "maximum_control_drift": 0.03
   },
   "storage": {
-    "root_free_bytes": 31824949248,
-    "build_bytes": 80586089,
+    "root_free_bytes": 31285665792,
+    "build_bytes": 80595561,
     "root_stop_floor_bytes": 25000000000,
     "build_limit_bytes": 300000000
   },
   "last_content_write": true,
   "next_action": "Run the proposed smoke through lanequeue only when lane A owns the whole host; do not queue from this preparation.",
-  "previous_implementation_commit": "2fd7e32de2a649a48129d13aab0a7e6f27dbc278",
-  "amendment": "packet58xc: owned source closure, immutable allowlist, fresh card0-capacity-c outputs",
-  "failed_smoke_history": "evidence/card0-capacity-a/smoke/",
-  "fresh_output_root": "evidence/card0-capacity-c/"
+  "previous_implementation_commit": "df897b1511f5329eabedaea6055c8907aeb40582",
+  "amendment": "packet58xd: DRM size units repaired; fresh card0-capacity-d outputs",
+  "failed_smoke_history": [
+    "evidence/card0-capacity-a/smoke/",
+    "evidence/card0-capacity-c/smoke/"
+  ],
+  "fresh_output_root": "evidence/card0-capacity-d/"
 }

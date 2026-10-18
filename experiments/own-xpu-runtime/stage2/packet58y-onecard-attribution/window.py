@@ -21,7 +21,7 @@ from launch_identity import lane_unit_prefix
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[3]
-_spec = importlib.util.spec_from_file_location('packet58_supervision', HERE.parent / 'packet56-draft-prefix/p56_head_support.py')
+_spec = importlib.util.spec_from_file_location('packet58_supervision', HERE / 'runtime_support.py')
 SUPPORT = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(SUPPORT)
 S = SUPPORT.SUPERVISION
@@ -108,6 +108,9 @@ def build_gate():
     row = json.loads(path.read_text())
     require(row.get('schema') == 'own-runtime.packet58.build.v1' and row.get('passed') is True
             and row.get('device_executed') is False, 'CPU build receipt incomplete')
+    from source_pin_gate import validate_receipt, validate_metadata
+    validate_receipt(row)
+    validate_metadata()
     verify_files(REPO, row.get('sources'))
     verify_files(HERE, row.get('artifacts'))
     verify_files(HERE, row.get('gates'))

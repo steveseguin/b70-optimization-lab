@@ -7,12 +7,12 @@ QUEUE=P.parents[1]/'ops/lane-queue'
 
 def main():
     emit_only="--emit-only" in sys.argv
-    limits();assert not (P/'evidence/card0-capacity-c').exists()
+    limits();assert not (P/'evidence/card0-capacity-d').exists()
     library=json.loads((P/'library-path.json').read_text())['LD_LIBRARY_PATH']
     records=[]
     for arm,tag,expected in [('smoke','smoke',[600,900]),('max','v5',[1200,1800])]:
-        output=P/'evidence/card0-capacity-c'/arm
-        record=dict(name='packet58x-'+tag+'-c-A',lane='A',argv=['/usr/bin/python3','-B',str((P/'queue_runner.py').relative_to(ROOT)),
+        output=P/'evidence/card0-capacity-d'/arm
+        record=dict(name='packet58x-'+tag+'-d-A',lane='A',argv=['/usr/bin/python3','-B',str((P/'queue_runner.py').relative_to(ROOT)),
                     '--cache-maintenance',DEFAULT_MAINTENANCE,'--arm',arm,'--output',str(output),'--fault-review','{REVIEW}',
                     '--library-path',library,'--authorized-device-window'],
                     env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)))
@@ -31,10 +31,11 @@ def main():
             # Owner-authorized prelaunch 58xb amendment: only serial -> overlap.
             legacy=dict(record,argv=list(record['argv']))
             legacy['name']='packet58x-'+tag+'-A'
-            legacy['argv']=[v.replace('card0-capacity-c','card0-capacity-a') for v in legacy['argv']]
+            legacy['argv']=[v.replace('card0-capacity-d','card0-capacity-a') for v in legacy['argv']]
             previous=dict(legacy,argv=list(legacy['argv']))
             legacy['argv'][legacy['argv'].index('--cache-maintenance')+1]='serial'
-            assert existing in ([record],[legacy],[previous]), 'never overwrite unrelated changed proposal job'
+            prior=dict(record,argv=[v.replace('card0-capacity-d','card0-capacity-c') for v in record['argv']]);prior['name']='packet58x-'+tag+'-c-A'
+            assert existing in ([record],[legacy],[previous],[prior]), 'never overwrite unrelated changed proposal job'
         if emit_only:
             proposal.write_text(raw)
             (P/'proposals').mkdir(exist_ok=True)

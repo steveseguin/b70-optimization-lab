@@ -65,6 +65,8 @@ def generate():
 def main():
     limits();out=generate();prior=json.loads((P/'engine-commands.json').read_text())
     args=next(r['command'] for r in prior if r['name']=='gnu-host-entry-main');args=args[:args.index('-o')]
+    if '-c' in args:
+        i=args.index('-c');del args[i:i+2]
     args=[v for v in args if not v.startswith('-O')]+['-O0']
     compile_cmd=[*args,'-c',str(out/'entry.cpp'),'-o',str(out/'entry.o')]
     link=list(next(r['command'] for r in prior if r['name']=='gnu-host-link'))
@@ -87,7 +89,7 @@ def main():
     import sys
     sys.path.insert(0,str(BASE))
     from memory_gate import check
-    candidates=[P/'lineage'/v/'candidate.json' for v in ('attention-order512','expert-gate-up-order512','hc-gate-low-order512')]
+    candidates=[P/'lineage'/v/'candidate.json' for v in ('attention-order600','expert-gate-up-order600','hc-gate-low-order600')]
     for candidate,rank,fresh in __import__('itertools').product(candidates,(0,1),(False,True)):
         control=candidate.with_name('selection.json')
         dest=out/(candidate.parent.name+'-rank'+str(rank)+('-fresh' if fresh else ''));dest.mkdir(exist_ok=True)
@@ -113,7 +115,7 @@ def main():
           '--context','4096','--tokens','128','--memory','resident','--cards','1','--card','0',
           '--gemv','r5','--nongemv','parallel','--timing','token','--retain-steps','none',
           '--selection',str(selection),'--selection-sha256',sha(selection),
-          '--dispatch',str(BASE/'dispatch-speed6.json'),'--plan',str(BASE.parent/'suite-inputs-20261012/code-review/plan.tsv'),
+          '--dispatch',str(BASE/'dispatch-speed6.json'),'--plan',str(BASE/'lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/code-review/plan.tsv'),
           '--draft-manifest',str(BASE/'mtp-manifest.tsv'),'--native-nice','19','--output',str(dest)]
         if rank==1:command+=['--draft-mtp']
         result=subprocess.run(command,stdin=subprocess.DEVNULL,capture_output=True,text=True,env=dict(os.environ,OMP_NUM_THREADS='2'),timeout=180)

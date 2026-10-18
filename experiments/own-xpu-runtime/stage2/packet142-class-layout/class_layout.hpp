@@ -2,13 +2,13 @@
 // Allocation order is a hypothesis; allocator physical adjacency is not asserted.
   std::map<std::string,Allocation> class_original,class_ordered;
   size_t class_copy_bytes=0;
-  static constexpr size_t class_copy_budget=512ull*1024*1024;
+  static constexpr size_t class_copy_budget=600ull*1024*1024;
   std::string class_capability()const{return sealed_selection.choices.at("class_layout_bank");}
   bool class_site(const flash::Launch& l)const{
     const auto cls=packet26::Dispatch::class_name(l.label), bank=class_capability();
-    if(bank=="expert-gate-up-order512")return l.op=="expert_gate_up";
-    if(bank=="hc-gate-low-order512")return l.label.find("hc_")!=std::string::npos || l.label.find("hc.")!=std::string::npos;
-    if(bank=="attention-order512")return l.op=="gemv"&&(cls=="gdn.qkv"||cls=="gdn.z"||cls=="qsa.qgate"||cls=="qsa.k"||cls=="qsa.v"||cls=="attention");
+    if(bank=="expert-gate-up-order600")return l.op=="expert_gate_up";
+    if(bank=="hc-gate-low-order600")return cls=="hc.a.gate"||cls=="hc.a.low"||cls=="hc.f.gate"||cls=="hc.f.low";
+    if(bank=="attention-order600")return l.op=="gemv"&&(cls=="gdn.qkv"||cls=="gdn.z"||cls=="qsa.qgate"||cls=="qsa.k"||cls=="qsa.v"||cls=="attention");
     return false;
   }
   void initialize_class_layout(){
@@ -25,13 +25,13 @@
       for(const auto& n:names){
         auto original=weights.at(l.card).at(n);const size_t count=dev(l.card).arena.row(original).bytes;
         auto replacement=allocate(l.card,"class-order:"+n,count,Category::weights,Lifetime::process);
-        ownrt::CopyEngine copy(dev(l.card));wait(l.card,copy.copy(replacement,0,original,0,count,{}));retire_events(l.card);
+        ownrt::CopyEngine copy(dev(l.card));for(size_t off=0;off<count;off+=32*1024*1024){guard();wait(l.card,copy.copy(replacement,off,original,off,std::min(count-off,size_t(32*1024*1024)),{}));retire_events(l.card);}
         class_original[n]=original;class_ordered[n]=replacement;seen.insert(n);class_copy_bytes+=count;
       }
     }
     require(!class_ordered.empty(),"class layout has no complete consumer tuple within budget");
     class_select(sealed_selection.choices.at("class_layout"));
-    std::ostringstream proof;proof<<"{\"bytes\":"<<class_copy_bytes<<",\"budget\":"<<class_copy_budget<<",\"weights\":[";
+    std::ostringstream proof;proof<<"{\"class_layout_bank\":"<<ownrt::quote(class_capability())<<",\"bytes\":"<<class_copy_bytes<<",\"budget\":"<<class_copy_budget<<",\"weights\":[";
     bool first=true;for(const auto& [n,id]:class_ordered){proof<<(first?"":",")<<ownrt::quote(n);first=false;}proof<<"]}";
     save(a.output/"class-layout.json",proof.str());
   }

@@ -16,7 +16,7 @@ def cpu_gate():
     require(os.getpriority(os.PRIO_PROCESS,0)==19, 'nice19 required')
     require(set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32)), 'helper cores required')
 
-DRIVER = ROOT / 'experiments/own-xpu-runtime/stage1/packet4-prep/driver/window_driver.py'
+DRIVER = HERE / 'fault_patterns.py'
 
 
 def patterns():

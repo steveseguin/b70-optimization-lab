@@ -1,8 +1,11 @@
 """Checked capacity overlay applied only to the new generated native entry."""
+import json
+from pathlib import Path
 from native_source import once
 
 
 def transform(text):
+    text='#include '+json.dumps(str(Path(__file__).resolve().parent/'native/drm_size.hpp'))+'\n'+text
     text=once(text,'uint64_t cache_bytes=18000000000ull;',
         'uint64_t cache_bytes=21552729600ull;std::string cache_cap="18GB";')
     text=once(text,'    if(k=="--cache-maintenance")',
@@ -42,8 +45,7 @@ def transform(text):
 #ifndef OWN_RT_HOST_ONLY
     {std::ifstream f(output/"drm-memory-after_load.txt");std::string line;uint64_t peak=0;bool seen=false;
       while(std::getline(f,line))if(line.starts_with("drm-total-vram0:")){
-        std::istringstream row(line);std::string key,unit;uint64_t kb;row>>key>>kb>>unit;
-        require(bool(row)&&unit=="KiB","DRM occupancy parse");peak=std::max(peak,kb*1024);seen=true;
+        peak=std::max(peak,p58xd::drm_size(line.substr(line.find(':')+1)));seen=true;
       }
       require(seen&&peak<=30500000000ull,"device reserve violated before compute");
     }

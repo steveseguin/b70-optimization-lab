@@ -1,0 +1,13 @@
+full-shape candidate 0 switch PASS
+full-shape candidate 0 fresh PASS
+full-shape candidate 1 switch PASS
+full-shape candidate 1 fresh PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/full_shape.py", line 134, in <module>
+    resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+                                                                 ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/full_shape.py", line 100, in main
+    subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=180)
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build/full-shape/fixture', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/lineage/expert-gate-up-order600/selection.json', '9f4b05021e27a34054a55bb21f83b3c0e49ad8a78ecf98887d4ff28378951082', '0', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build/full-shape/expert-gate-up-order600-rank0', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/lineage/expert-gate-up-order600/candidate.json', '6fa50286e087c8535adfdd2592e77eba1d3f979ff0e1efe6be8648ab9f718191']' returned non-zero exit status 1.

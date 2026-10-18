@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read packet58y/58x receipts, recheck exactness, and rank bounded next levers.
+"""Read packet58y receipts, recheck exactness, and rank bounded next levers.
 
 No subprocess, device API, service, queue mutation or model payload access.
 Only the explicit report output is written. CPU limits are installed in main.
@@ -86,39 +86,8 @@ def window(e,root,build_sha):
     require(row['card']==0 and row['gpu_count']==1 and row['context']==4096 and row['build_receipt_sha256']==build_sha,'window identity changed')
     A.verify(row);e.verify_files(root,row['native_files']);return row
 
-def analyze_capacity(e,manifest,boot):
-    """Recompute each 58x view from raw results using the same target oracle."""
-    import suite_driver as D
-    parent=P.parent/'packet58x-cache-capacity';root=parent/'evidence/card0-capacity-a/max/WSCREEN'
-    build=hashlib.sha256(e.raw(parent/'build-receipt.json')).hexdigest()
-    proof=window(e,root,build);require(proof['boot_id']==boot,'capacity bracket is from another boot')
-    rates={};views=[]
-    for label,cap in [('A0','18GB'),('B0','max'),('A1','18GB'),('B1','max'),('A2','18GB')]:
-        boundary=e.js(root/'run/run'/label/'boundary.json')
-        require(boundary.get('cache_maintenance')=='overlap' and boundary.get('cache_cap')==cap
-                and boundary.get('cache_allocation_bytes')==21_552_729_600 and boundary.get('cache_started_empty') is True
-                and boundary.get('selection_sha256')==D.digest('attrib'),'capacity identity does not match overlap target')
-        summary=D.summarize(root/'run','WSCREEN',manifest,label,128)
-        rate=summary['class_balanced_tok_s_1_100_intervals_after_ttft']['median'];rates[label]=rate
-        views.append(dict(label=label,rate=rate,exact_oracle=True,request_count=len(summary['requests'])))
-    # Keep A0 in the report; x's registered steady-state comparison uses A1/A2.
-    controls=[Decimal(str(rates[k])) for k in ('A1','A2')];candidates=[Decimal(str(rates[k])) for k in ('B0','B1')]
-    drift=100*(max(controls)/min(controls)-1);gain=100*(min(candidates)/max(controls)-1)
-    reliable=max(controls)<=min(controls)*Decimal('1.03')
-    clears=min(candidates)>=max(controls)*Decimal('1.03')
-    return dict(views=views,measured_screen_gain_pct=float(gain),control_drift_pct=float(drift),
-        comparison_controls=['A1','A2'],first_view_reported=True,first_view_excluded_per_58x_preregistration=True,
-        passes_3pct_screen_gate=reliable and clears,
-        decision=('inconclusive_control_drift' if not reliable else 'clears_3pct_screen_gate' if clears else 'below_3pct_priority_gate'),
-        fresh_process_repeat=False,submission_eligible=False,
-        allocation_bytes=21_552_729_600,usage_caps=[18_000_000_000,21_552_729_600],
-        overhead_control_for_58y=False,overhead_caveat='58x allocation is larger; views/process state differ; this is not a matched instrumentation-overhead control')
-
 def describe_top_items(ranking,capacity):
-    large=capacity['decision']
-    return dict(larger_cache=('Still a measured >=3% screen lever; fresh-process quality/performance gates remain.' if capacity['passes_3pct_screen_gate'] else
-        'Current capacity change is below the +3% priority gate; do not extend it without a new supported mechanism.' if large=='below_3pct_priority_gate' else
-        'Inconclusive because the warm controls drift; no priority claim.'),
+    return dict(larger_cache='Not measured by this diagnostic; coordinator reviews independent capacity evidence.',
         miss_path='Not independently ranked: zero-copy miss kernels share the compute queue. Counts and logical bytes are measured; their removable stall time is unknown.',
         larger_cache_and_miss_path_both_remain_top='not established',
         largest_host_bound=ranking[0]['lever'],
@@ -126,36 +95,24 @@ def describe_top_items(ranking,capacity):
                      if any(r['decision']=='needs_causal_test' for r in ranking) else
                      'All isolated host bounds are below +3%; investigate a larger mechanism without extending these isolated levers.'))
 
-def verify_predecessors(e,batch):
-    parent=P.parent/'packet58x-cache-capacity'
-    expected={str((parent/'evidence/card0-capacity-a'/arm/receipt).relative_to(ROOT))
-              for arm in ('smoke','max') for receipt in ('queue.json','K1a/window.json','K1b/window.json','WSCREEN/window.json')}
-    pins=batch['predecessor_receipts']
-    require(isinstance(pins,dict) and set(pins)==expected,'incomplete predecessor receipt coverage')
-    e.verify_files(ROOT,pins)
-    build=hashlib.sha256(e.raw(parent/'build-receipt.json')).hexdigest()
-    previous_end=0;first_start=None
-    for arm in ('smoke','max'):
-        root=parent/'evidence/card0-capacity-a'/arm
-        q=e.js(root/'queue.json')
-        require(q.get('passed') is True and q.get('completed')==['K1a','K1b','WSCREEN'] and q.get('running') is None,'predecessor queue incomplete')
-        for stage in ('K1a','K1b','WSCREEN'):
-            row=e.js(root/stage/'window.json')
-            require(row.get('passed') is True and row.get('device_executed') is True and row.get('child_still_running') is False and row.get('stop_reasons')==[],'predecessor window failed')
-            require(row['boot_id']==batch['boot_id'] and row['build_receipt_sha256']==build,'predecessor identity changed')
-            start,end=row['started_utc_ns'],row['finished_utc_ns']
-            require(type(start) is int and type(end) is int and previous_end<=start<end,'predecessor chronology invalid')
-            if first_start is None:first_start=start
-            previous_end=end
-    pause=batch['pause']
+def verify_hold(batch):
+    pause=batch['pause'];start=batch['lanequeue_start']
     require(all(type(pause.get(k)) is int and pause[k]>=0 for k in ('device','inode','mtime_ns','ctime_ns')),'invalid stored pause identity')
-    require(pause['mtime_ns']<=first_start and pause['ctime_ns']<=first_start,'stored pause began after predecessors')
-    return previous_end
+    event=start['event']
+    require(event.get('event')=='START' and event.get('lane')=='A' and event.get('name')=='packet58y-attrib-A','wrong stored START')
+    text=pause['text'].lower()
+    require(('one-card' in text or 'one card' in text) and ('whole-host' in text or 'whole host' in text) and 'hold' in text,'invalid hold text')
+    require(hashlib.sha256(pause['text'].encode()).hexdigest()==pause['sha256'],'hold text hash changed')
+    from datetime import datetime
+    stamp=datetime.fromisoformat(event['utc'].replace('Z','+00:00'))
+    ns=int(stamp.timestamp())*1_000_000_000+stamp.microsecond*1000
+    require(ns==start['started_utc_ns'] and pause['mtime_ns']<ns and pause['ctime_ns']<ns,'hold did not predate START')
+    return ns
 
 def analyze():
     import suite_driver as D
     import window as W
-    e=Evidence();run=P/'evidence/card0-attribution-a/attrib'
+    e=Evidence();run=P/'evidence/card0-attribution-b/attrib'
     if not (run/'queue.json').is_file():
         return dict(schema='packet58y.analysis.v1',status='pending_device_evidence',passed=False,
             device_executed=False,analysis_only=True,kill_gate_gain_pct=GATE,
@@ -167,9 +124,9 @@ def analyze():
     queue=e.js(run/'queue.json')
     require(queue.get('passed') is True and queue.get('completed')==['K1a','K1b','WSCREEN'] and queue.get('running') is None,'diagnostic queue incomplete')
     batch=queue['batch_admission'];require(batch.get('passed') is True and batch.get('same_hold_required') is True and batch.get('standalone_hold_allowed') is False,'same-hold evidence missing')
-    predecessor_end=verify_predecessors(e,batch)
+    hold_start=verify_hold(batch)
     proof=window(e,run/'WSCREEN',ready['build_receipt_sha256']);require(proof['boot_id']==batch['boot_id'],'batch boot changed')
-    require(type(proof.get('started_utc_ns')) is int and predecessor_end<=proof['started_utc_ns'],'diagnostic precedes capacity bracket')
+    require(type(proof.get('started_utc_ns')) is int and hold_start<=proof['started_utc_ns'],'diagnostic precedes job START')
     manifest=D.oracle_inputs()
     recomputed=D.summarize_bracket(run/'WSCREEN/run','attrib',manifest)
     require(recomputed==e.js(run/'WSCREEN/run/summary.json'),'stored summary differs from actual oracle/trace recheck')
@@ -204,7 +161,7 @@ def analyze():
             counters_per_token={k:statistics.mean(r[k] for r in rows) for k in COUNTERS},
             residual_ms=statistics.mean(r['residual_ms'] for r in rows),
             device_class_ms={k:None for k in CLASSES},zero_copy_miss_stall_ms=None)
-    ranking=rank_levers(prompts);capacity=analyze_capacity(e,manifest,proof['boot_id'])
+    ranking=rank_levers(prompts);capacity=dict(decision='not_measured_by_this_diagnostic',passes_3pct_screen_gate=False)
     # Keep outputs bounded: raw rows remain hash-bound in their original files.
     per_prompt=[{k:v for k,v in row.items() if k!='selected'} for row in prompts]
     return dict(schema='packet58y.analysis.v1',status='complete_diagnostic',passed=True,device_executed=False,analysis_only=True,
@@ -224,7 +181,7 @@ def markdown(row):
     if row['status']=='refused_incomplete_or_invalid_evidence':
         return '# Packet58y analysis: evidence refused\n\nNo current ranking is valid.\n\nReason: '+row['error']+'\n'
     if row['status']=='pending_device_evidence':
-        return '# Packet58y analysis: device evidence pending\n\nNo measured split or lever ranking exists yet. Run the coordinator-owned\n58x smoke → 58x bracket → 58y diagnostic in one continuous hold, then\nrerun analyze.py. The +3% gate is preregistered; no data is invented.\n'
+        return '# Packet58y analysis: device evidence pending\n\nNo measured split or lever ranking exists yet. Run the coordinator-owned\n58y diagnostic inside an existing continuous one-card whole-host hold, then\nrerun analyze.py. The +3% gate is preregistered; no data is invented.\n'
     text=['# Packet58y measured diagnostic split','',
           f"The class-balanced diagnostic rate is {row['primary_metric']['median']:.4f} tok/s. This is not a record.",
           'The first cold prompt remains included. Host spans are descriptive; the table below gives optimistic removal bounds, not promised gains.','',
@@ -252,4 +209,4 @@ def main(argv=None):
     output.with_suffix('.md').write_text(markdown(row));print(json.dumps(dict(status=row['status'],passed=row['passed'],report=str(output))))
     return 0
 if __name__=='__main__':
-    resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));raise SystemExit(main())
+    resource.setrlimit(resource.RLIMIT_AS,(2*1024**3,2*1024**3));raise SystemExit(main())

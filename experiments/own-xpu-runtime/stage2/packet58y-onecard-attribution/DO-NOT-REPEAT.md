@@ -14,3 +14,8 @@ Inherit packet58v and packet58i negatives. No MTP, compressed KV, new arithmetic
 route/recurrence retuning or speculative cache predictor is reopened here.
 Device evidence and the measured ranking remain pending. Preserve failed
 planning receipts; they are evidence of refused launches, not device failures.
+
+Packet58yb: never pin sibling proposals, live receipts, source seals or mutable
+source trees in this diagnostic. Coordinator order is not a packet prerequisite.
+Use the current PAUSE-B identity and this job's START, plus whole-host admission.
+[Repair closeout](PACKET58YB-CLOSEOUT.md).

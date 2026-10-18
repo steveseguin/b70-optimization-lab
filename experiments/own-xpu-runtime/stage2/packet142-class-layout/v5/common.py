@@ -6,7 +6,7 @@ import sys
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[4]
-VENDOR = HERE.parent / 'vendor/repo/experiments/own-xpu-runtime/stage2'
+VENDOR = HERE.parent / 'lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2'
 P56 = VENDOR / 'packet56-draft-prefix'
 P58 = VENDOR / 'packet58-onecard'
 ARITHMETIC = 'iq3-p49-split32-v1'

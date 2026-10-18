@@ -6,8 +6,8 @@ from pathlib import Path
 import re
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[3]
-STAGE = HERE.parent
+REPO = HERE.parents[4]
+STAGE = HERE.parent.parent
 GIB = 1024**3
 ROOTS = {
     '58g': 'packet58g-onecard/evidence/card0-58g-a',
@@ -24,7 +24,7 @@ def sha(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-def derive():
+def _derive_expanded():
     pins = {}
 
     def pin(path):
@@ -142,6 +142,47 @@ def derive():
                                           old_required_bytes=required, old_shortage_bytes=shortage),
                   sources=pins)
     return base, report
+
+
+def archive_text(path):
+    """Read retained metadata from the local archive; no sibling reads."""
+    import tarfile
+    name=str(Path(path).relative_to(REPO))
+    with tarfile.open(HERE.parent/'lineage-inputs/memory-admission-inputs.tar.gz','r:gz') as archive:
+        return archive.extractfile(name).read().decode()
+
+
+def derive():
+    """Replay the unchanged arithmetic against a temporary, verified input tree."""
+    import tempfile,tarfile
+    global REPO,STAGE
+    packet=HERE.parent;original_repo,original_stage=REPO,STAGE
+    archive_path=packet/'lineage-inputs/memory-admission-inputs.tar.gz'
+    expected=json.loads((packet/'lineage-inputs/memory-admission-member-hashes.json').read_text())
+    relocations=json.loads((packet/'lineage-inputs/relocated-metadata.json').read_text())
+    prefix=str(packet.relative_to(original_repo))+'/lineage-inputs/original/'
+    def canonical(name):return name[len(prefix):] if name.startswith(prefix) else name
+    def relocated(row):
+        if isinstance(row,str):return relocations.get(row,{}).get('local',row)
+        if isinstance(row,list):return [relocated(v) for v in row]
+        if isinstance(row,dict):return {relocated(k):relocated(v) for k,v in row.items()}
+        return row
+    with tempfile.TemporaryDirectory(prefix='p58yb-admission-') as tmp:
+        with tarfile.open(archive_path,'r:gz') as archive:
+            for name,digest in expected.items():
+                raw=archive.extractfile(name).read()
+                assert hashlib.sha256(raw).hexdigest()==digest,name
+                target=Path(tmp)/canonical(name)
+                assert target.resolve().is_relative_to(Path(tmp))
+                target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(raw)
+        try:
+            REPO=Path(tmp);STAGE=REPO/'experiments/own-xpu-runtime/stage2'
+            base,report=_derive_expanded()
+        finally:REPO,STAGE=original_repo,original_stage
+    base,report=relocated(base),relocated(report)
+    report['sources']={str(archive_path.relative_to(REPO)):sha(archive_path)}
+    report['source_policy']='Historical source labels below are archive-member provenance only; no live sibling reads. All original members were verified against their retained hashes.'
+    return base,report
 
 
 if __name__ == '__main__':

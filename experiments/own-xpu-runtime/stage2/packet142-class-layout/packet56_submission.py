@@ -21,7 +21,7 @@ import sys
 from string import Template
 
 ROOT = Path(__file__).resolve().parents[4]
-sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lineage-inputs/submission-tools"))
 from receipt_qualification import require_qualifying
 
 
@@ -419,7 +419,13 @@ def derive(e, packet):
     frozen = e.read('oracle-source/frozen-manifest.json', oracle_build['frozen_sources'][str(FROZEN_MANIFEST)])
     e.raw('oracle-source/frozen-manifest.json', completion['old_manifest_sha256'])
     require(oracle_build['passed'] is True and oracle_build['binary_sha256'] == seal['oracle_binary_sha256'], 'oracle binary identity mismatch')
-    require(sha(e.raw('oracle-source/suite_check.py')) == seal['sources'][str(STAGE / packet / 'oracle/suite_check.py')], 'oracle checker changed')
+    if packet == 'packet49-integrate':
+        checker_digest=seal['sources'][str(STAGE / packet / 'oracle/suite_check.py')]
+    else:
+        checker_binding=e.read('oracle-binding.json')
+        require(checker_binding==seal['shared_oracle'],'oracle authority binding differs')
+        checker_digest=checker_binding['files_sha256'][str(STAGE/'packet49-integrate/oracle/suite_check.py')]
+    require(sha(e.raw('oracle-source/suite_check.py'))==checker_digest,'oracle checker changed')
     if packet != 'packet49-integrate':
         binding = e.read('oracle-binding.json')
         require(binding == seal['shared_oracle'] and binding['arithmetic'] == ARITHMETIC
@@ -879,7 +885,7 @@ def write_prepared(e, packet, output, repo=ROOT):
                   wall=str(result['secondary']['wall_rate_statistics']['median']),
                   increase=str(result['comparison']['observed_increase_percent']),
                   boot=result['boot_id'], reference=result['comparison']['reference_submission'], result_path=result_ref['path'])
-    templates = ROOT / STAGE / TEMPLATE_PACKET / 'submission'
+    templates = Path(__file__).resolve().parent / 'lineage-inputs/submission-tools'
     for name in ('result-packet', 'ledger-entry'):
         text = Template((templates / (name + '.md.in')).read_text()).substitute(values)
         text = text.replace('over 39.422009 threshold', 'over ' + str(result['comparison']['threshold_tok_s']) + ' threshold')

@@ -31,3 +31,38 @@ put build material at 306,110,535 bytes, above the 300 MB limit. Replacing these
 redundant local copies with hash-bound links to the allowed frozen binary
 objects reduced build material to 257,586,144 bytes. The refusal is retained;
 no cap was raised. Source snapshots are tracked separately in `native-base`.
+
+## CPU proofs and corrections, 19:39 UTC
+
+The initial 512 MiB class bank was too small for one complete expert gate/up
+consumer pair (550,502,400 bytes), so the registered variants are now
+attention-order600, expert-gate-up-order600 and hc-gate-low-order600. The fixed
+600 MiB cap leaves at least 157,123,878 bytes within rank1's unchanged 30 GiB
+arena ledger. Host admission adds 1200 MiB to 97 GiB. No host setting changed.
+The first whole-matrix copy hit CopyEngine's 128 MiB limit in the CPU fixture;
+32 MiB load-time chunks fix that. Neither correction changes arithmetic.
+
+All twelve full-shape fresh/switch checks and twelve real-parser startups passed.
+These use numerical allocations and never read model payloads. All six rollback
+capture pairs stay identical after normalizing the alternate weight allocation IDs;
+request-state reset covers every mutable allocation, and boundaries neither allocate
+nor write weights. The final guard rejects a different class before any mutation;
+its rebuild is waiting behind the one-card hold through the compiler arbiter.
+
+GNU and Intel each passed two fresh runs over real matrix dimensions with synthetic
+finite bytes: 679,424,000 weight bytes, 2,163,264 FP32 checks and 55,616 output rows.
+All four output transcript hashes agree; peak child RSS was 548,568 KiB. No model
+or GGUF payload was read. The entry and queue gates are still being finalized.
+
+The packet's own offline prepare_submission replayed a local copy of packet136's
+chain bundle through its real payload/attestation checks and rederived
+58.798108759182306 tok/s. A corrupt WS128 summary hash was refused. An inherited
+validator looked for the oracle checker in the generic source map; the local copy
+now validates it through the genuine oracle binding and shared-oracle seal.
+This is rehearsal evidence only; no external submission and no new speed claim.
+
+Local closure checks found inherited absolute native includes of packet136's
+kernel_guard.hpp. They now name the byte-identical local copy. Historical metadata
+and inactive v5 helpers are retained under lineage-inputs rather than treated as
+current pins. The compiler, active runtime and wrapper source closures are local;
+only allowed oracle/model inputs and hash-pinned frozen binaries remain external.

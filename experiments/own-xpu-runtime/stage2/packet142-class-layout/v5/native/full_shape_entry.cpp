@@ -55,7 +55,7 @@ int main(int argc,char**argv){if(argc>1&&std::string(argv[1])=="--startup109")re
  Options a;a.context=4096;a.cards=1;a.card=0;a.rank=std::stoi(argv[3]);a.draft_rank=1;a.target_split=0;
  a.mtp=true;a.argument_audit=true;a.memory="resident";a.gemv="r5";a.nongemv="parallel";a.selection=argv[1];a.selection_sha256=argv[2];a.output=argv[4];
  fs::create_directories(a.output);const auto parent=fs::path(P98_PARENT_PATH);
- a.plan=parent/"../suite-inputs-20261012/code-review/plan.tsv";a.draft_manifest=parent/"mtp-manifest.tsv";
+ a.plan=parent/"lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/code-review/plan.tsv";a.draft_manifest=parent/"mtp-manifest.tsv";
  packet26::dispatch.load((parent/"dispatch-speed6.json").string());Weights w(a);
  e=std::make_unique<Engine>(w,a,pipeline::split(plan(w,a),a.rank,false,1,0));e->initialize();std::unique_ptr<p105::Runtime> head_runtime;if(e->split_head())head_runtime=std::make_unique<p105::Runtime>(*e);
  if(a.rank==0)pipeline::banks(*e);else{e->prepare_plan();e->prepare_commands();}

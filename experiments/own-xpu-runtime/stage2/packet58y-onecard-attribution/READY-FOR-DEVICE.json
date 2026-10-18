@@ -1,8 +1,7 @@
 {
-  "schema": "own-runtime.packet58y.ready-for-device.v1",
-  "created_utc": "2026-10-18T18:28:30.154332+00:00",
-  "commit": "015291e69db952e68500e1cda7c4dc0553697911",
-  "implementation_commit": "015291e69db952e68500e1cda7c4dc0553697911",
+  "schema": "own-runtime.packet58y.ready-for-device.v2",
+  "created_utc": "2026-10-18T19:39:37.677334+00:00",
+  "prepared_on_commit": "49f404444a19c809c9c278a49acbd1d829cb1fea",
   "preregistration_commit": "19efcaa4a90a4e6d6a8ff3d62c85f6cfca469d05",
   "passed": true,
   "cpu_ready": true,
@@ -11,26 +10,16 @@
   "queued": false,
   "services_started": false,
   "live_queue_changed": false,
-  "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58y-attrib-A.txt",
-  "proposal_sha256": "948a7bb51e999576fe7b777826ca5bca2476d876ba0b2ee97319fd7f7daf108f",
-  "build_receipt_sha256": "aab4bd0bb17a819fdb5f6691675488e19526ab37d9c48759bcaa99c63f653de9",
-  "queue_plan_sha256": "20abff97517a7bf0ba237e375ab8ce31d57d6a4f19b1bfc1253214a3b3534f67",
-  "batch_contract_sha256": "d672246096432f31755da9b0644a7305c0e8edf6cfee8511fcefafc0f54668e1",
-  "predecessor_proposals": {
-    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58x-smoke-A.txt": "f9c6ac504dcbb498e55f37fd91655b58eb3ad226c12f69626f1028eda1c52bac",
-    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58x-v5-A.txt": "c84c3f0f0efb02654fc7b78d88aca1e2644aa0a56eb73bc094396747a82fd8aa"
-  },
+  "coordinator_proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58y-attrib-A.txt",
+  "coordinator_proposal_matches_local_snapshot": true,
   "lane": "A",
   "card": 0,
   "gpu_count": 1,
   "scope": "whole-host",
   "same_hold_required": true,
   "standalone_hold_allowed": false,
-  "order": [
-    "packet58x-smoke-A",
-    "packet58x-v5-A",
-    "packet58y-attrib-A"
-  ],
+  "order": "coordinator-owned; no sibling prerequisite",
+  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/card0-attribution-b/attrib",
   "expected_duration_seconds": [
     600,
     900
@@ -41,12 +30,26 @@
   "kv_dtype": "BF16",
   "arithmetic": "iq3-p49-split32-v1",
   "host_required_available_bytes": 95435761152,
-  "live_host_admission": "must be rechecked after coordinator drains other work",
   "kill_gate_gain_pct": 3.0,
   "build_bytes": 80564739,
+  "native_artifacts_unchanged": true,
+  "live_hold_observation": {
+    "admitted": false,
+    "reason": "existing coordinator PAUSE-B required; no standalone hold"
+  },
   "evidence_limits": [
-    "No device run or measured next-lever ranking yet",
-    "Separate zero-copy miss stall and device-class timings unavailable",
-    "Coordinator owns excluding intervening jobs and the continuous batch hold"
-  ]
+    "No new device evidence or measured lever ranking",
+    "Current hold and whole-host admission must pass at launch",
+    "Separate zero-copy miss stall and device-class timings unavailable"
+  ],
+  "proposal": "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/proposed-attrib-A.txt",
+  "proposal_sha256": "5848f4214de1b2b842bd119156c29d15bbd4f2c019763a6f0ca65779e1791d36",
+  "build_receipt": "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/build-receipt.json",
+  "build_receipt_sha256": "dbac9e354e53ea228c35d6d157bdb7a616af4c0fd5b60438c48196afbff7cb05",
+  "queue_plan": "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/queue-plans.json",
+  "queue_plan_sha256": "cfe18e5433f2b7c832cad2c4979c08f1ec3dbf1e5729ba5fd0163823105b3e5f",
+  "batch_contract": "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/batch-contract.json",
+  "batch_contract_sha256": "37254cb39ec93f4f2b9c2bc1280c11f865cc50077dfc696c29ae270ff0f89984",
+  "cpu_validation": "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/reseal-cpu.json",
+  "cpu_validation_sha256": "af48541d2f1b0afa202ca192dfec737bc0741f12cc9f10eaf745cb98f3f3c6b1"
 }

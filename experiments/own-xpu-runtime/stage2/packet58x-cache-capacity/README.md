@@ -5,7 +5,16 @@ This packet makes no new speed or quality claim. The target arithmetic remains
 `iq3-p49-split32-v1`, with tile16 expert down weights, target-only decode,
 4,096-position BF16 KV and zero-copy expert misses.
 
-**Packet58xc:** the first smoke passed K1a/K1b, then refused before WSCREEN
+**Packet58xd:** smoke c passed K1a/K1b, then stopped cooperatively during load
+because the new DRM sensor accepted KiB only. The Python sensor, admission
+reader and native post-load guard now accept bytes, KiB and MiB, with strict
+syntax and unsigned 64-bit overflow refusal. This kernel never prints GiB.
+See [exact kernel verification](DRM-SIZE-FORMAT.md). Only the device entry was
+rebuilt; host binaries and kernel objects are retained. Fresh proposals use
+`evidence/card0-capacity-d/{smoke,max}` and jobs ending in `-d-A`; they remain
+unqueued. The failed c evidence is untouched and has no timing samples.
+
+**Packet58xc history:** the first smoke passed K1a/K1b, then refused before WSCREEN
 because its seal depended on a mutable sibling reader. Its evidence stays in
 `evidence/card0-capacity-a/smoke/`. Fresh proposals use
 `evidence/card0-capacity-c/{smoke,max}` and new job names ending in `-c-A`.
@@ -19,10 +28,11 @@ oracle binding and frozen parent executable/object binaries. There are no
 directory exceptions. Historic source maps inside the archive and lineage
 receipts are provenance, not live filesystem dependencies.
 
-The native binaries and earlier native validation results are retained.
+The earlier native validation results are retained; packet58xd changes only
+the device entry's occupancy parser and retains the original host binaries.
 Minimal reseal does not rerun full-shape allocation, GGUF-reading gates or any
 device work. Source include paths have been relocated to the private snapshot;
-no native code is recompiled in this amendment. Before a future rebuild or
+packet58xc recompiled no native code. Before a future rebuild or
 historical analysis, run `frozen_inputs.py` to restore its owned source inputs.
 The unchanged historical native receipts are preserved inside the archive,
 including their original hashes. See [snapshot retention](RETENTION.md).

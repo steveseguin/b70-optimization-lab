@@ -20,7 +20,9 @@ test_hold_recheck_refuses_change (test_attribution.Attribution.test_hold_recheck
 test_missing_or_replaced_pause_refuses (test_attribution.Attribution.test_missing_or_replaced_pause_refuses) ... ok
 test_null_device_time_is_not_zero (test_attribution.Attribution.test_null_device_time_is_not_zero) ... ok
 test_single_overlap_view_unchanged_arithmetic (test_attribution.Attribution.test_single_overlap_view_unchanged_arithmetic) ... ok
-test_completed_predecessors_same_pause (test_attribution.BatchAdmission.test_completed_predecessors_same_pause) ... ok
+test_current_hold_and_start (test_attribution.BatchAdmission.test_current_hold_and_start) ... ok
+test_each_timestamp_must_predate_start (test_attribution.BatchAdmission.test_each_timestamp_must_predate_start) ... ok
+test_missing_stale_wrong_and_completed_start (test_attribution.BatchAdmission.test_missing_stale_wrong_and_completed_start) ... ok
 test_actual_suite_summary_requires_all_twelve_traces (test_attribution.TraceIntegrity.test_actual_suite_summary_requires_all_twelve_traces) ... ok
 test_missing_truncated_reordered_and_mismatch_refuse (test_attribution.TraceIntegrity.test_missing_truncated_reordered_and_mismatch_refuse) ... ok
 test_all_views_keep_storage (test_bracket.BracketPolicyTests.test_all_views_keep_storage) ... ok
@@ -85,6 +87,10 @@ test_host_floor_and_missing_sensor_still_stop (test_memory_sensor.SensorTests.te
 test_k1_does_not_get_model_pin_credit (test_memory_sensor.SensorTests.test_k1_does_not_get_model_pin_credit) ... ok
 test_live_wiring_and_failed_sample_retention (test_memory_sensor.SensorTests.test_live_wiring_and_failed_sample_retention) ... ok
 test_true_shadow_over_bound_stops_at_each_load_stage (test_memory_sensor.SensorTests.test_true_shadow_over_bound_stops_at_each_load_stage) ... ok
+test_exact_immutable_input_only (test_pin_guard.PinClosure.test_exact_immutable_input_only) ... ok
+test_external_mutable_and_escape_refuse (test_pin_guard.PinClosure.test_external_mutable_and_escape_refuse) ... ok
+test_local_symlink_cannot_escape (test_pin_guard.PinClosure.test_local_symlink_cannot_escape) ... ok
+test_nested_external_pin_refuses (test_pin_guard.PinClosure.test_nested_external_pin_refuses) ... ok
 test_clean_precompute_refusal_releases (test_refusal58g.RefusalTests.test_clean_precompute_refusal_releases) ... ok
 test_compute_started_retained (test_refusal58g.RefusalTests.test_compute_started_retained) ... ok
 test_fast_refusal_without_poll_owner_releases (test_refusal58g.RefusalTests.test_fast_refusal_without_poll_owner_releases) ... ok
@@ -98,6 +104,6 @@ test_missing_idle_retained (test_refusal58g.RefusalTests.test_missing_idle_retai
 test_unknown_journal_retained (test_refusal58g.RefusalTests.test_unknown_journal_retained) ... ok
 
 ----------------------------------------------------------------------
-Ran 98 tests in 2.272s
+Ran 104 tests in 2.828s
 
 OK

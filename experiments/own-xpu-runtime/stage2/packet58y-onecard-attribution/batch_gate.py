@@ -1,44 +1,56 @@
-"""Refuse standalone admission; read only the coordinator's continuous pause.
-
-The coordinator owns batching. This guard never creates/removes a hold, pauses
-queues or grants device permission. Existing admission still checks all clients.
-"""
-import json
+"""Read-only admission to an existing continuous coordinator one-card hold."""
+import hashlib,json,stat
+from datetime import datetime
 from pathlib import Path
-from build_engine import P,ROOT,sha
+from build_engine import P
 QUEUE=P.parents[1]/'ops/lane-queue'
-P58X=P.parent/'packet58x-cache-capacity'
 PAUSE=QUEUE/'PAUSE-B'
+EVENTS=QUEUE/'events-A.jsonl'
+JOB='packet58y-attrib-A'
 
 def require(good,message):
     if not good:raise ValueError(message)
 
-def pause_identity(path=PAUSE):
-    require(path.is_file() and not path.is_symlink(),'58y requires the existing continuous 58x PAUSE-B; no standalone hold')
-    st=path.stat()
-    return dict(device=st.st_dev,inode=st.st_ino,mtime_ns=st.st_mtime_ns,ctime_ns=st.st_ctime_ns)
+def pause_identity(path=None):
+    path=PAUSE if path is None else path
+    try:
+        before=path.lstat()
+        require(stat.S_ISREG(before.st_mode),'PAUSE-B must be a regular file, not a symlink')
+        require(before.st_size<=65536,'PAUSE-B text exceeds 64 KiB')
+        raw=path.read_bytes();after=path.lstat()
+    except FileNotFoundError as error:
+        raise ValueError('existing coordinator PAUSE-B required; no standalone hold') from error
+    fields=lambda s:(s.st_dev,s.st_ino,s.st_mtime_ns,s.st_ctime_ns)
+    require(fields(before)==fields(after),'PAUSE-B changed while reading')
+    text=raw.decode().lower().replace('_','-')
+    require(('one-card' in text or 'one card' in text) and ('whole-host' in text or 'whole host' in text) and 'hold' in text,
+            'PAUSE-B must name a one-card whole-host hold')
+    return dict(device=after.st_dev,inode=after.st_ino,mtime_ns=after.st_mtime_ns,ctime_ns=after.st_ctime_ns,
+                text=raw.decode(),sha256=hashlib.sha256(raw).hexdigest())
+
+def job_start(path=None):
+    path=EVENTS if path is None else path
+    latest=None
+    with path.open() as stream:
+        for line in stream:
+            row=json.loads(line)
+            if row.get('event')=='START' and row.get('lane')=='A':latest=row
+            elif row.get('name')==JOB and (row.get('event','').startswith(('DONE','FAIL','REFUSED','REPORT-FAILED')) or row.get('event')=='EXIT'):
+                latest=None
+    require(latest is not None and latest.get('name')==JOB,'current lane-A START must name this job')
+    stamp=datetime.fromisoformat(latest['utc'].replace('Z','+00:00'))
+    require(stamp.tzinfo is not None,'START needs UTC timezone')
+    ns=int(stamp.timestamp())*1_000_000_000+stamp.microsecond*1000
+    return dict(event=latest,started_utc_ns=ns)
 
 def verify():
-    pause=pause_identity();boot=Path('/proc/sys/kernel/random/boot_id').read_text().strip()
-    contract=json.loads((P/'batch-contract.json').read_text());pins={};starts=[]
-    for name,digest in contract['predecessor_proposals'].items():
-        require(sha(ROOT/name)==digest,'58x proposal changed; replan the batch')
-    build_sha=sha(P58X/'build-receipt.json');previous_end=0
-    for arm in ('smoke','max'):
-        root=P58X/'evidence/card0-capacity-a'/arm
-        q=json.loads((root/'queue.json').read_text())
-        require(q.get('passed') is True and q.get('completed')==['K1a','K1b','WSCREEN'] and q.get('running') is None,'58x prerequisite did not complete cleanly')
-        for stage in ('K1a','K1b','WSCREEN'):
-            f=root/stage/'window.json';row=json.loads(f.read_text())
-            require(row.get('passed') is True and row.get('device_executed') is True and row.get('child_still_running') is False and row.get('stop_reasons')==[], '58x window failed or owner remains')
-            require(row['boot_id']==boot and row['build_receipt_sha256']==build_sha,'58x prerequisite identity changed')
-            require(type(row['started_utc_ns']) is int and type(row.get('finished_utc_ns')) is int and previous_end<=row['started_utc_ns']<row['finished_utc_ns'],'58x smoke/bracket windows are out of order')
-            previous_end=row['finished_utc_ns']
-            starts.append(row['started_utc_ns']);pins[str(f.relative_to(ROOT))]=sha(f)
-        pins[str((root/'queue.json').relative_to(ROOT))]=sha(root/'queue.json')
-    require(pause['mtime_ns']<=min(starts) and pause['ctime_ns']<=min(starts),'PAUSE-B was recreated/changed after 58x began; same hold not established')
-    return dict(passed=True,same_hold_required=True,standalone_hold_allowed=False,
-                pause=pause,boot_id=boot,predecessor_receipts=pins)
+    pause=pause_identity();start=job_start()
+    require(pause['mtime_ns']<start['started_utc_ns'] and pause['ctime_ns']<start['started_utc_ns'],
+            'PAUSE-B must predate this job START; no new or replaced hold')
+    require(pause_identity()==pause,'hold changed during admission')
+    return dict(passed=True,same_hold_required=True,standalone_hold_allowed=False,pause=pause,
+                lanequeue_start=start,boot_id=Path('/proc/sys/kernel/random/boot_id').read_text().strip())
 
 def recheck(receipt):
-    require(pause_identity()==receipt['pause'],'58x/58y continuous hold changed')
+    require(pause_identity()==receipt['pause'],'continuous coordinator hold changed')
+    require(job_start()==receipt['lanequeue_start'],'current lanequeue START changed')

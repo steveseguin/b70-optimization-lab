@@ -17,7 +17,7 @@ def verify(root,pins):
 def create():
     from reseal_boundary import check
     check()
-    limits();assert not (P/'evidence/card0-capacity-c').exists(),'never reseal launched output'
+    limits();assert not (P/'evidence/card0-capacity-d').exists(),'never reseal launched output'
     sources={};gates={}
     for name in GATES:
         row=read(P/name);assert row.get('passed') is True and row.get('device_executed') is False,name

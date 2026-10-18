@@ -6,8 +6,8 @@ from build_engine import P,ROOT,sha,save,limits
 from argument_gate import identity
 class Forbidden(BaseException):pass
 
-def probe(kind):
- row=identity(kind)
+def probe(kind,variant="attention-order600"):
+ row=identity(kind,variant)
  oracle_command=['nice','-n','19','taskset','-c','8-15,24-31','python3','-B',str(P.parent/'shared_oracle.py'),'--require-complete'];oracle_calls=[]
  import tp2_worker as worker,bracket
  from common import D,P56
@@ -16,7 +16,7 @@ def probe(kind):
  for entry in D.oracle_inputs()['prompts']:
   bundle=ROOT/entry['input_bundle'];tokens=json.loads((bundle/'input.json').read_text())['tokens']
   expected[tuple(tokens)]=D.CHECK.token_record(D.ORACLE/'results'/entry['prompt_id'])[:128]
- with tempfile.TemporaryDirectory(prefix='p137-worker-') as d:
+ with tempfile.TemporaryDirectory(prefix='p142-worker-') as d:
   tmp=Path(d)
   def audit(event,args):
    if event=='open' and isinstance(args[0],(str,bytes)):
@@ -63,7 +63,7 @@ def probe(kind):
    assert len(oracle_calls)>=2
    return dict(passed=True,device_executed=False,kind=kind,positive_trace=positive,negative_trace=trace,requests=n*13,all_view_requests=True,real_oracle_commands=oracle_calls,native_execution_forbidden=True,synthetic_device_receipts_retained=False)
 
-def read_choice(view):return json.loads(Path(view['selection']).read_text())['choices']['token_input']
+def read_choice(view):return json.loads(Path(view['selection']).read_text())['choices']['class_layout']
 
 def main():
  limits();rows=[]

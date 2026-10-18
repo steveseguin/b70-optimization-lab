@@ -103,7 +103,7 @@ def observed_shadow(samples, baseline, pinned_limit):
 
 def seed_observation():
     """58c is an incomplete load: never substitute it for full cache/KV census."""
-    root = HERE / 'evidence/58c-supervisor'
+    root = HERE / 'lineage-inputs/58c-supervisor'
     pins = json.loads((root / 'source-manifest.json').read_text())
     for leaf, digest in pins.items():
         require(sha(root / leaf) == digest, 'shadow source changed')

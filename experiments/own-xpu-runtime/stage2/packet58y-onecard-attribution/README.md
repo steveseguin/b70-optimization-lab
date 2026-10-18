@@ -7,18 +7,20 @@ CPU-prepared diagnostic copied from frozen packet58v. It uses the unchanged
 
 ## Coordinator contract
 
-Use only `ops/lane-queue/proposed-p58y-attrib-A.txt`, after packet58x smoke and
-bracket, in **their same continuous whole-host hold**. Do not give 58y a separate
-hold. Lane B must stay paused and drained; the diagnostic refuses unless both
-58x jobs completed cleanly on this boot and PAUSE-B predates their first window.
-It checks that the pause remains unchanged before each stage, during the gaps,
-and after completion. The coordinator owns the order and continuous hold.
-[Batch contract](batch-contract.json), [runtime guard](batch_gate.py).
+Use only `ops/lane-queue/proposed-p58y-attrib-A.txt` inside an **existing,
+continuous coordinator one-card whole-host hold**. The coordinator owns order.
+No sibling receipt, proposal or seal is a prerequisite. The gate reads the
+current regular, non-symlink PAUSE-B, requires its text to name that hold, and
+requires both mtime and ctime to precede this job's latest lane-A START in
+`events-A.jsonl`. Device/inode/timestamps/content and START stay unchanged
+through every stage and gap. The existing whole-host admission still applies.
+No separate hold is permitted. [Contract](batch-contract.json).
 
-The proposal has explicit dependencies on `packet58x-smoke-A` and
-`packet58x-v5-A`. Temporary planning includes those two jobs in order before
-58y. The first attempted batch plan is retained: it caught a changing 58x seal.
-Never reinterpret a failed predecessor plan as a passing batch.
+Packet58yb uses fresh output `evidence/card0-attribution-b/attrib`.
+The proposal is planned alone on a temporary queue and remains unqueued.
+[Pin guard](source_pin_gate.py) rejects all outside pins except the explicit
+original-oracle and immutable compiled-input list. Historical source bytes and
+metadata live inside this packet; see [retention](RETENTION.md).
 
 One model load runs D0: twelve fixed prompts, at most 128 output tokens each.
 K1a/K1b precede the load. Expected total 600–900 seconds, watchdog 7200 seconds.
@@ -116,6 +118,16 @@ Hot-expert-cache idea credit: Niko1221 / Strata. Implementation is lab-authored.
 [Analysis instructions and boundaries](analysis/README.md),
 [current report](analysis/report.md). The reader is CPU-only and requires no
 further implementation after the coordinator's batch. It rechecks the exact
-oracle, all traces, predecessor receipt coverage and raw capacity results before
-ranking bounds against +3%. Eleven synthetic tests cover its positive and
+oracle, all traces, stored hold identity and job START before
+ranking bounds against +3%. Ten synthetic tests cover its positive and
 refusal paths. The current report remains pending; no device result exists yet.
+
+## Packet58yb minimal CPU reseal
+
+The native binaries, target arithmetic, output oracle and memory bounds are
+unchanged. Only coordination, local dependency closure and the evidence reader
+were amended. Existing miniature/full-size build proofs are retained; no model
+or full-shape execution/read is repeated. The archived historical inputs are
+provenance, not operational imports. `seal.py --verify` checks the new closure.
+For this minimal repair, run `reseal_cpu.py` while readiness is absent, then
+write readiness last. [Repair closeout](PACKET58YB-CLOSEOUT.md).

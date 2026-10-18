@@ -20,22 +20,24 @@ def document():
         proposals.append(dict(arm=arm,proposal=str(local.relative_to(ROOT)),proposal_sha256=sha(local),
                               coordinator_path=str(coordinator.relative_to(ROOT))))
     row.update(created_utc=datetime.now(timezone.utc).isoformat(),
+        previous_implementation_commit=row['implementation_commit'],
         implementation_commit=subprocess.check_output(['git','rev-parse','HEAD'],stdin=subprocess.DEVNULL,text=True).strip(),
-        readiness='Packet58xc CPU reseal complete; fresh smoke proposal first',
-        amendment='packet58xc: owned source closure, immutable allowlist, fresh card0-capacity-c outputs',
+        readiness='Packet58xd CPU reseal complete; fresh smoke proposal first',
+        amendment='packet58xd: DRM size units repaired; fresh card0-capacity-d outputs',
         build_receipt_sha256=sha(P/'build-receipt.json'),admission_sha256=sha(P/'admission.json'),
         maintenance_decision_sha256=sha(P/'maintenance-decision.json'),proposals=proposals,
         cpu_gates=dict(passed=True,python_checks=tests['checks'],entry_probes=args['checks'],
             sealed_source_count=len(build['sources']),peak_probe_child_rss_bytes=args['peak_child_rss_bytes'],
-            native_artifacts_unchanged=True,live_host_admission_passed=True,
+            native_artifacts_unchanged=False, device_entry_rebuilt=True, host_binaries_unchanged=True,live_host_admission_passed=True,
             scope='Minimal CPU reseal: owned comparison replay, policy tests, entry interception, build gate and temporary plans; no full-shape, GGUF-reading or device gates'),
-        failed_smoke_history='evidence/card0-capacity-a/smoke/',
-        fresh_output_root='evidence/card0-capacity-c/',device_executed=False,services_started=False,
+        failed_smoke_history=['evidence/card0-capacity-a/smoke/','evidence/card0-capacity-c/smoke/'],
+        fresh_output_root='evidence/card0-capacity-d/',device_executed=False,services_started=False,
         queued=False,live_queue_changed=False,last_content_write=True,
-        limitations=['The old smoke passed K1a/K1b then refused before WSCREEN; its evidence is untouched.',
+        limitations=['Smoke c passed K1a/K1b, then stopped cooperatively during load on a DRM unit parser refusal; no timing ran; evidence untouched.',
             'Fresh smoke, physical fit, full model output and speed remain pending.',
             'No full-shape, GGUF-reading or native device gate ran during this amendment.',
-            'Native executables retain their original hashes; future rebuilds require their usual gates.'])
+            'Only the device entry was rebuilt for the DRM parser; host binaries and model arithmetic remain unchanged. Device qualification is pending.'])
+    row['storage']['build_bytes']=build['retained_build_bytes']
     return row
 
 

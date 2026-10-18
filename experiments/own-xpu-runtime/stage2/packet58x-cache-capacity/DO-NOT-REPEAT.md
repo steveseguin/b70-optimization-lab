@@ -10,6 +10,7 @@
 | Treat independent route replay as native hit rate | Invalid topology/publication schedule transfer | Retained native route measurements |
 | Default to overlap from its CPU checks or smoke alone | Invalid speed evidence; packet58xb instead replays the completed exact packet58v bracket under p58wb's amended warm-control rule | Keep A0 exact/reported but outside drift/comparison; both candidates beat each A1/A2 control by 0.5%, drift <=3% |
 | Device readiness from temporary queue planning alone | Invalid; real-entry/native-parser/fullshape/seal gates also required | All current gates pass |
+| Assume DRM memory values always use KiB | Smoke c stopped during load; kernel uses bytes/KiB/MiB. Python sensor, admission reader and native guard repaired in 58xd | Keep the shared unit/boundary/malformed regressions; no GiB on 7.0.0-39 |
 
 All packet58v lifetime and packet58i replay caveats remain. No MTP, route or
 recurrence retuning, resident lookup copies, compressed KV, prompt reuse,
