@@ -1,0 +1,89 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "services_started": false,
+  "live_queue_modified": false,
+  "sealed_compositions": 1,
+  "gnu_intel_fresh_repeats": 4,
+  "all_startup_windows": 11,
+  "actual_rank_exec_checks": 6,
+  "old_limit_negative_control": true,
+  "drain": {
+    "passed": true,
+    "device_executed": false,
+    "scanner_sha256": "70d18ffb0abf9cbb59ea84737e09ecb700951805c6b3dc499f40e42d476aa62f",
+    "reports": [
+      {
+        "schema": "drain-fix-report.v1",
+        "root": "experiments/own-xpu-runtime/stage2/packet124-record-bundle",
+        "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+        "counts": {
+          "FIXED": 1,
+          "UNFIXED": 0
+        },
+        "passed": true,
+        "files": [
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet124-record-bundle/drain_gate.py",
+            "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+            "status": "FIXED",
+            "sleeps": [
+              {
+                "line": 51,
+                "status": "FIXED"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "schema": "drain-fix-report.v1",
+        "root": "experiments/own-xpu-runtime/ops/packet124-orchestration",
+        "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+        "counts": {
+          "FIXED": 1,
+          "UNFIXED": 0
+        },
+        "passed": true,
+        "files": [
+          {
+            "path": "experiments/own-xpu-runtime/ops/packet124-orchestration/drain_gate.py",
+            "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+            "status": "FIXED",
+            "sleeps": [
+              {
+                "line": 51,
+                "status": "FIXED"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "build_bytes": 221749644,
+  "root_free_bytes": 35240177664,
+  "selection_sha256": "0a43e349d1bd86562c2b674392a12f917d36d9918839b34aee8c33a5df22545c",
+  "memory_plan_sha256": "3f157407ea1306780633e45b6104993dde8c32d87011ae3b770c0111d3a6532e",
+  "startup_sha256": "6207525f3e312d19ba3736116150df6e0bdd03576b726f054821bf3868091195",
+  "cpu_tests_sha256": "5df275bbc42541966410d809c62e46c3b19afebd2c0938422571f358167f0a5e",
+  "chain_seal_sha256": "f12e2387d926a2b5c258a28aabfd5eee7b95f78cd6020da60cf5b8710bf007f0",
+  "ready": true,
+  "readiness_reason": null,
+  "tests_log": "..........................................                           [100%]\n42 passed, 4 subtests passed in 6.20s",
+  "large_retained_files": [
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet124-record-bundle/rope.bf16",
+      "bytes": 4194304
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet124-record-bundle/lineage-inputs/fusion-rope.hpp",
+      "bytes": 12582900
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet124-record-bundle/lineage-inputs/packet103-composition-selection.json",
+      "bytes": 1993365
+    }
+  ],
+  "retained_large_file_policy": "RETENTION.md: frozen source/provenance restored from Git; exact compressed fixtures from gzip or recorded CPU commands"
+}

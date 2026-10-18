@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 18, packet125 one-card miss micro prepared on CPU:** The retained
+one-card screen averages 33 misses and 65.46 MB of missing expert bytes per
+charged token. It does not separate PCIe reads from compute. All four external
+slot links report PCIe 4.0 ×16. Seven exact transport paths compile, both
+compilers pass repeated CPU byte checks, twelve policy tests and the drain
+check pass, and two card2 proposals pass temporary planning. The micro loads
+no model and uses real routes with explicitly simulated cache misses. The same
+candidate must reach 1.5× in both fresh processes before a copied engine or
+whole-host screen is prepared. Device results are pending; no GPU, live queue,
+service or host setting changed. [Work note](notes/2026-10-18-own-runtime-packet125.md).
+
 **October 18, queue live-window admission checked on CPU:** A now waits for a
 live B window before starting, then keeps the 61-second drain gap. B keeps its
 permitted overlap with an A exactness window. Fault, latch and pause checks
@@ -9,14 +20,17 @@ entries; ongoing coordinator work then advanced B. No service, GPU, live queue,
 marker, latch or setting changed here. The coordinator picks up the code on
 its normal between-job restart. [Work note](notes/2026-10-18-own-runtime-ops-lane-overlap.md).
 
-**October 18, packet124 bundle8 BASE sealed on CPU:** This is bundle7 with
-repaired host cooldown waiting and exactly the same native binaries and
-selection. Both compilers reproduce its saved output bytes; both ranks pass
-memory admission and all eleven startup windows pass. The clock-crossing test
-fails on the old drain code and passes on the fixed copies. The new chain
-folder is fresh. Orchestration and submission validation are being completed;
-no chain is declared ready yet. No GPU, service, live queue or host setting
-changed. [Work note](notes/2026-10-18-own-runtime-packet124.md).
+**October 18, packet124 bundle8 BASE ready for coordinator handoff:** This is
+bundle7 with repaired host cooldown waiting and exactly the same native
+binaries and selection. Both compilers reproduce its saved output bytes;
+both ranks pass memory admission and all eleven startup windows pass. All 42
+policy/submission tests and six rank-launch checks pass. The old drain code
+fails the clock-crossing test; both fixed copies pass. The original bundle7
+smoke and both composites now qualify this identical selection, so readiness
+is true. Its chain folder is fresh. No manual pause of the other lane is needed
+for cooldown safety; normal exclusive timing reservations remain. New runtime
+levers are disabled slots. This CPU task launched no GPU job or service and
+changed no live queue or host setting. [Work note](notes/2026-10-18-own-runtime-packet124.md).
 
 **October 18, packet123 partial-layer move held at its timing check:** The
 saved bundle7 traces appear to leave 0.483 ms on rank0, but that includes
