@@ -1,5 +1,12 @@
 # Packet101: re-test the remaining draft attention choice
 
+**October 18 reseal:** Use the fresh **A control / draft_attention / control**
+proposal and its B mirror linked below. Both pass temporary queue planning.
+The original A grid-0 control is history and is not part of either new bracket.
+The new seals exclude packet97's mutable selection and use a local copy of its
+build identity evidence. Binaries, arithmetic, selections and quality gates are
+unchanged. [Reseal details and packet99/100 audit](RESEAL.md).
+
 Packet97 already enables all fourteen settings from packet69's `draft-hc`
 view. Its draft HC kernels are byte-identical to packet69's. There is no new
 HC candidate to measure. The split32 attention path is compiled into packet97,
@@ -14,8 +21,8 @@ unchanged, hash-checked binaries. No runtime source or target arithmetic changed
 | `draft_hc` | Existing implementation 5 | Same | Byte-identical control alias |
 | `combined` | Split32, implementation 12 | Same | Byte-identical attention alias |
 
-The proposed bracket is **control / draft_attention / control**, first on B,
-with an A mirror. Do not spend GPU windows on the aliases. A single completed
+The proposed bracket is **control / draft_attention / control**, first on A,
+with a B mirror. Do not spend GPU windows on the aliases. A single completed
 lane qualifies this source for composition only when all thirteen exact checks
 pass, per-prompt hits and guesses stay identical, and the candidate is faster
 than **both** controls. There is no 1.5% source threshold. This packet makes no
@@ -57,17 +64,17 @@ Evidence: [draft bytes](evidence/cpu-gates.json),
 
 The coordinator may use the new proposals:
 
-- [B grid](../../ops/lane-queue/proposed-p101-B-grid.txt)
-- [A mirror](../../ops/lane-queue/proposed-p101-A-grid.txt)
+- [Fresh A grid](../../ops/lane-queue/proposed-p101-reseal-20261018-A-grid.txt)
+- [Fresh B mirror](../../ops/lane-queue/proposed-p101-reseal-20261018-B-grid.txt)
 
-After a completed bracket, run `compare.py --lane B` (or `--lane A`) under the
+After a completed fresh bracket, run `compare_reseal.py --lane A` (or `--lane B`) under the
 CPU command prefix below. `composition_qualified` uses the first-lane rule;
 `record_ready` and `submission_eligible` remain false. The worker still uses
 the frozen v4 lifecycle, admission, oracle, fault review and graceful teardown.
 The two proposals are alternatives for coordinator scheduling, not a request
 to run both lanes concurrently.
 
-For local CPU reproduction, first restore packet97's hash-bound builds and
+For local CPU reproduction of the original preparation, first restore packet97's hash-bound builds and
 the inherited lab inputs; this is not a public standalone deployment recipe.
 Use `nice -n 19 taskset -c 8-15,24-31 python3 -B`, stdin `/dev/null`, for each
 script, in this order: `audit.py`, `build_engine.py`, `cpu_gate.py`,
@@ -76,6 +83,11 @@ then `queue_plan.py`. Seals are immutable: creation expects new selection
 directories. `compile_turn.py` is copied verbatim from packet94; only one
 compiler runs at once. Builds reuse existing runtime binaries; only CPU test
 executables are compiled. Generated build caches remain ignored.
+
+That original preparation and its proposals remain historical. The current
+entry points are `reseal.py` (fresh directories only), `queue_plan_reseal.py`,
+`screen_job_reseal.py` and `compare_reseal.py`. Do not regenerate the original
+seal or resume its partly completed bracket; see [RESEAL.md](RESEAL.md).
 
 The two Intel fixture link failures were build-driver issues: PIE flags and
 linking Intel objects through GNU without Intel's runtime libraries. The final

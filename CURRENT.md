@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet101 resealed on CPU after a parent-selection change:**
+The new seals exclude packet97's changing orchestration outputs and keep
+packet101's own selections. Binaries and quality gates are unchanged; no
+rebuild was needed. All six fresh A/B queue plans and 13 CPU checks pass.
+Start the complete fresh A control/attention/control bracket; the old A
+control remains history and is not reused. B has a fresh mirror. Live queues
+and all other packets were untouched. Packets99/100 do not pin the changing
+selection, but both still pin a parent evidence receipt whose hash currently
+matches. [Exact proposals and evidence](experiments/own-xpu-runtime/stage2/packet101-draft-geometry/RESEAL.md).
+
 **October 18, review15 cleanup and packet97 rule prepared on CPU:** The new
 cleanup tool can archive reviewed, closed screen caches and bundles after
 checking every live packet's references. Its dry run found 156.8 MB eligible;
