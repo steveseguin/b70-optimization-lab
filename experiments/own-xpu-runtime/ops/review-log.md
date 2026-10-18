@@ -596,3 +596,21 @@ STOP DOING acknowledged:
 - finishing a bundle without arming its chain waiter;
 - five-load second-lane confirm grids from bundle 9 on;
 - device proposals as the last deliverable of long briefs.
+
+## Review 27 (2026-10-18 ~17:05 UTC): ACT
+
+Over 2 h, utilization was 60% (lane A 41%, lane B 41%). Lane B had no device work from 16:06 UTC. Its ready jobs (the packet138 capture from 16:44, packet137 smoke and bracket from 17:04) were held by a lane-B pause covering the whole packet136 chain. `p136-chain2.sh` set that pause on the stale assumption that lane B had nothing queued. The chain was at K2 at 17:05. Fault count 2.
+
+Actions:
+1. 17:07:28 UTC: lane B reordered so the packet138 capture runs first. Packet137's smoke and bracket were parked in `fn-run/held-p137-B.txt`, and PAUSE-B was lifted. The capture started at 17:07:29 during the chain's lane-A-only windows, and `repauseB-after-p138` restored PAUSE-B at 17:07:41. W2m keeps its exclusive admission (1800 s budget), and the drain fix is verified in this bundle.
+2. Codex **p140**: the next 2-card target-body lever. It first commits a ranked table of in-engine time against the byte reference, checked against every closed attempt. It proceeds only on a new exact mechanism projected at ≥ +3%, in a copy of packet136 as a runtime dimension, and goes straight to a lane-B smoke plus a one-load v5 bracket.
+3. Rule from bundle 9 on: launch a record chain only when the confirmed gains together are ≥ +2% over the current record, or when neither lane has a ready screen (e.g. overnight). The chain's own readiness gates are unchanged.
+4. Chain-waiter rule (restated a third time, now in memory): decide the lane-B pause when the chain launches, from the live queue. For drain-fixed bundles, pause lane B only from KD to the end, and only if the next lane-B job's upper expected time does not fit before the first whole-host window.
+5. Packet137: one smoke and one lane-B bracket, after the packet58v one-card hold (`requeue-p137` puts them back when `p58v-hold2` ends). Close it on that bracket if it is under +0.5% or not exact; no repair copy, no second grid.
+
+STOP DOING acknowledged:
+- whole-chain lane-B pauses for drain-fixed bundles;
+- queue assumptions baked into waiters when they are written;
+- sub-1% chains while a several-times-larger ready lever waits;
+- more than 75 min of Codex on levers projected under ~1%;
+- a single Codex job preparing the next candidate.
