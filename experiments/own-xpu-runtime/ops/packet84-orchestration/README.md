@@ -21,3 +21,15 @@ verify_ready.py must pass immediately before the coordinator launches manually.
 Large source-screen snapshots retain source and receipt hashes for audit. These
 are live evidence references; changing receipts invalidates readiness. CPU proof
 is separately cached and never hashes this directory.
+
+The saved preparation passed; readiness remains false while packet81 and
+packet82 confirmations are pending. Packet83's completed direction reports no
+winner. The baseline has been restored after eight reselection rehearsals and
+a real coordinator pin-reversion check. Cached proof was unchanged throughout.
+See ready.json for the exact snapshot and the lab note for evidence links.
+Resolved no-winner screens retain the baseline; only pending/conflicting screens
+block readiness after all prechecks pass.
+
+The initial failure log is retained byte-for-byte as safety-tests.log.gz with
+a hash manifest; its original stays local. final-tests.log records the passing
+regression verdict.

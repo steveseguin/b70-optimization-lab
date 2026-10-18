@@ -12,3 +12,7 @@
   mocks exercise every allowed composition. A fresh device chain remains mandatory.
 - Coordinator helper changes must not invalidate the cached arithmetic proof.
 - Never launch from orchestration. Production/default reversion pins only.
+
+- CPU preparation closeout: [evidence and remaining device gates](CPU-PREPARATION-CLOSEOUT.md).
+- KD prefix metadata must come from the selected row count and coverage hash;
+  the inherited packet56 fixed-prefix identity rejects smaller prefixes.

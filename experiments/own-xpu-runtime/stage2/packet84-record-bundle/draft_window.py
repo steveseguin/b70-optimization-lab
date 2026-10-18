@@ -149,9 +149,8 @@ def _run(a,out,env,watch,build,*,cpu_rehearsal=False,host_lifecycle):
    except OSError:pass
  host_result=json.loads((host_reference/'receipt.json').read_text())
  prefix=json.loads((host_reference/'draft-prefix.json').read_text())
- require(prefix.get('rows')==(prefix.get('full_rows') if cpu_rehearsal else build['draft_prefix']['draft_vocab_rows'])
-         and (cpu_rehearsal or prefix.get('full_rows')==build['draft_prefix']['full_vocab_rows'])
-         and prefix.get('calibration_sha256')==build['draft_prefix']['selection_sha256'], 'KD host prefix identity')
+ from draft_identity import validate_prefix
+ validate_prefix(prefix,build['draft_prefix'],cpu_rehearsal)
  for logits in host_reference.glob('row-*/logits.bf16'):
   require(logits.stat().st_size==2*prefix['rows'], 'KD must retain exactly the computed prefix logits')
  host_proposals=prefix_proposals(host_reference,prefix['rows'])

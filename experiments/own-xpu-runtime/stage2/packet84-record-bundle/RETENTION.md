@@ -17,3 +17,19 @@ Source seals bind the shared v4-lanes wrapper unchanged. Cached proof excludes
 orchestration helpers; ready.json separately binds current helpers, source screen
 receipts, selected seal and selected dry run. A pin change recomputes that cheap
 selection receipt. No unchanged cached proof is relabeled as a device result.
+
+`retain_build.py` packages generated source and raw CPU logs, state and miniature
+fixtures into `evidence/generated-cpu-evidence.tar.gz`. The accompanying
+`build-retention.json` records each member's size and SHA-256. Every member is
+read back and verified before completion; originals stay in the local build.
+`restore_links.py` validates the archive and restores missing files without
+replacing existing different bytes. These records, matrix summaries, seals and
+source maps can exceed 1 MiB: they are retained to audit every admitted
+configuration and restore exact source identities. They are evidence, not caches.
+Compiled binaries and object files remain ignored local rebuild products.
+
+The completed archive has 156,549 members and 42,359,071 compressed bytes.
+Its roughly 41 MiB JSON member manifest is deliberately retained: it names and
+hashes every original byte stream, including both miniature pass histories.
+This is the retention justification for those large artifacts. The local build
+was 830,951,800 logical bytes after CPU runs; no original file was removed.

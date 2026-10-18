@@ -19,9 +19,9 @@ def selected_check():
  started=time.monotonic();verify();from bundle_selection import selected,view_path
  choice=selected();view=view_path(choice)
  env=dict(os.environ,PYTEST_DISABLE_PLUGIN_AUTOLOAD='1',PYTHONPATH='/home/steve/.venvs/deepseek-v4-xpu/lib/python3.12/site-packages',TMPDIR=str(B/'tmp'),OMP_NUM_THREADS='2')
- commands=[('imports',[sys.executable,'-B','-c',"import runpy;from bootstrap import install,WRAPPER;install();runpy.run_path(str(WRAPPER/'tp2_worker.py'),run_name='cpu_import');from lane_admission import admission_scope;assert admission_scope('A','screen')=='lane-A';assert admission_scope('A','WS128')=='whole-host'"]),('consumers',[sys.executable,'-B','-m','pytest','-q','-p','no:cacheprovider',str(P/'test_packet84.py')]),('windows',[sys.executable,'-B',str(P/'plan_gate.py')])]
+ commands=[('imports',[sys.executable,'-B','-c',"import runpy;from bootstrap import install,WRAPPER;install();runpy.run_path(str(WRAPPER/'tp2_worker.py'),run_name='cpu_import');from lane_admission import admission_scope;assert admission_scope('A','screen')=='lane-A';assert admission_scope('A','WS128')=='whole-host'"]),('consumers',[sys.executable,'-B','-m','pytest','-q','-p','no:cacheprovider',str(P/'test_packet84.py'),str(P/'test_lane_admission.py')]),('windows',[sys.executable,'-B',str(P/'plan_gate.py')])]
  for lane in ('A','B'):
-  commands.append(('screen-'+lane,[sys.executable,'-B',str(P/'run_screen.py'),'--profile','tp2','--lane',lane,'--placement',choice['placement'],'--lineage',str(view),'--seal',str(view/'screen-seal.json'),'--output',str(P/'build'/('plan-'+lane)),'--plan']))
+  commands.append(('screen-'+lane,[sys.executable,'-B',str(P/'run_screen.py'),'--profile','tp2','--lane',lane,'--placement',choice['placement'],'--lineage',str(view),'--seal',str(view/'screen-seal.json'),'--output',str(P.parent/'screen/v4-lanes/evidence'/('p84-selection-plan-'+lane)),'--plan']))
  rows=[]
  for label,cmd in commands:
   with (P/'evidence'/('selected-'+label+'.log')).open('w') as log:r=subprocess.run(cmd,cwd=P,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,env=env,timeout=240)

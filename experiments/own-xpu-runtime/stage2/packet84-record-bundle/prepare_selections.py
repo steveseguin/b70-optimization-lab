@@ -1,12 +1,12 @@
-"""Read-only validation of all independently sealed composition views."""
+"""Verify all materialized views against their immutable source and artifact maps."""
 import json
-from build_engine import P,ROOT,sha
-from bundle_selection import views,choices
+from build_engine import P,ROOT,limits
 from chain_seal import check_map
+from prepare_packet import proof
 def main():
- for name,v in views().items():
-  root=P/'selections'/name;s=json.loads((root/'selection.json').read_text());assert s['choices']==choices(*v)
-  row=json.loads((root/'screen-seal.json').read_text());check_map(ROOT,row['sources'])
-  for key in ('artifacts','gates','fixture_files'):check_map(root,row[key])
- print('24 composed views verified')
-if __name__=='__main__':main()
+ limits();proof()
+ for path in (P/"selections").glob("*/screen-seal.json"):
+  row=json.loads(path.read_text());check_map(ROOT,row["sources"])
+  for key in ("artifacts","gates","fixture_files"):check_map(path.parent,row[key])
+ print("All materialized selections and cached composition proof verified")
+if __name__=="__main__":main()

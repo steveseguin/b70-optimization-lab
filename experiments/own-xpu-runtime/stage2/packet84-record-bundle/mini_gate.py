@@ -26,7 +26,7 @@ def run_one(label,binary,dr,split,v=None):
 
 def main():
  limits();rows=[]
- expected,row=run_one('parent75',BASE/'build/gnu-host/own-rt-iq3',1,0);rows.append(row)
+ expected,row=run_one('parent80',BASE/'build/gnu-host/own-rt-iq3',1,0);rows.append(row)
  tested={}
  for name,v in views().items():
   # All 48 new-choice products on the coordinator baseline, plus all original

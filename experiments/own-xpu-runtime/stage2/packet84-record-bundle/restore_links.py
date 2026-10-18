@@ -21,7 +21,7 @@ def main():
                 target=B/item.name
                 if target.exists():assert sha(target)==expected['sha256']
                 else:target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
-    fixtures={sha(f):f for f in (P/'evidence').glob('operator-bytes-*.bin.gz')}
+    fixtures={sha(f):f for f in (P/'evidence').glob('composition-*.bin.gz')}
     for view in (P/'selections').iterdir():
         seal=json.loads((view/'screen-seal.json').read_text())
         for leaf,digest in seal['fixture_files'].items():

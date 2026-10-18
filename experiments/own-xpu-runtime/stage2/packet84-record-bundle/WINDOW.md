@@ -17,5 +17,6 @@ reuse change. Component screening is diagnostic; the composed chain must
 establish its own exactness and speed.
 
 Submission/resume entry remains submission_cli.py; it rejects another packet's
-binary/source identity. Fast reseal selects only existing sealed choices and
-refuses after a chain starts.
+binary/source identity. Fast reseal materializes the selected CPU-proven view
+without compilation and refuses after a chain starts. New draft heads require
+placement1. Every selection runs all11 window plans before readiness.

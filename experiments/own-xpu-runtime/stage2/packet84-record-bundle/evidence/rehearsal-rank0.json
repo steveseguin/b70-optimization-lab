@@ -1,0 +1,105 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "selection": {
+    "name": "production--hc-wide--wide64--ordered--production--production--production--production",
+    "placement": "0",
+    "draft": "draft-hc",
+    "miss": "batch",
+    "draft_rank": 0,
+    "target_split": 24,
+    "layer_boundary": 24,
+    "experts": "wide64",
+    "dense": "production",
+    "hc": "hc-wide",
+    "host": "ordered",
+    "route": "production",
+    "norm": "production",
+    "recurrence": "production",
+    "draft_head": "production",
+    "selection_sha256": "e48afd8ffa8a61a8795b9a7377061dfe66c705ad321a8d14255308be63d9e952",
+    "screen_seal_sha256": "a8c1b263fb54eb02ab2f3f7270a2ba581b9e56a0020bd79fe0c81177dd1a7ae0"
+  },
+  "checks": [
+    {
+      "name": "imports",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-c",
+        "import runpy;from bootstrap import install,WRAPPER;install();runpy.run_path(str(WRAPPER/'tp2_worker.py'),run_name='cpu_import');from lane_admission import admission_scope;assert admission_scope('A','screen')=='lane-A';assert admission_scope('A','WS128')=='whole-host'"
+      ],
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "consumers",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/test_packet84.py",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/test_lane_admission.py"
+      ],
+      "sha256": "687f1b206503d92bf19b24652f78bd72d8f67ac980eecaffa882262c114a9553"
+    },
+    {
+      "name": "windows",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/plan_gate.py"
+      ],
+      "sha256": "5cd1c2d15ca2c91d6821773ba8d851611547e75c160bb834cf4a33b86f4d5f0d"
+    },
+    {
+      "name": "screen-A",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/run_screen.py",
+        "--profile",
+        "tp2",
+        "--lane",
+        "A",
+        "--placement",
+        "0",
+        "--lineage",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/selections/production--hc-wide--wide64--ordered--production--production--production--production--placement-0",
+        "--seal",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/selections/production--hc-wide--wide64--ordered--production--production--production--production--placement-0/screen-seal.json",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p84-selection-plan-A",
+        "--plan"
+      ],
+      "sha256": "a14531e6837fa62bada48c696be69b339fafa904a2fef0f0377e787a29e514a2"
+    },
+    {
+      "name": "screen-B",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/run_screen.py",
+        "--profile",
+        "tp2",
+        "--lane",
+        "B",
+        "--placement",
+        "0",
+        "--lineage",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/selections/production--hc-wide--wide64--ordered--production--production--production--production--placement-0",
+        "--seal",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/selections/production--hc-wide--wide64--ordered--production--production--production--production--placement-0/screen-seal.json",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p84-selection-plan-B",
+        "--plan"
+      ],
+      "sha256": "e25c46c90ca0ce228b42c3d33ba3bbdff713c67fd3638f787ad57ef6ed37b0e0"
+    }
+  ],
+  "seconds": 55.475758290995145,
+  "cached_proof_sha256": "43ebaa37ac5bb4868c0b77a3064e3195a1647ea910509fcd8e199a35f2f77e0b"
+}

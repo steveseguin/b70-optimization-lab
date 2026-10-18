@@ -32,6 +32,7 @@ def main():
    value['placements']['0-split24' if placement=='0' else placement]=dict(draft_rank=dr,layer_boundary=boundary,capacities={'4096':dict(context_capacity=4096,ranks=ranks)})
   ledgers[head]=value;save(P/'evidence'/('memory-'+head+'.json'),value)
  for r in report['runs']:
+  operation=ROOT/r['operations'];assert sha(operation)==r['operations_sha256'];sources[r['operations']]=sha(operation)
   v=check(caches[r['census']],ledgers[r['draft_head']],r['rank'],mtp=True,context=4096,draft_rank=r['draft_rank'],target_split=r['target_split'])
   admissions.append(dict(view=r['view'],placement=r['placement'],**v))
  for n in ('memory_matrix.py','memory_gate.py','evidence/full-shape.json',*('evidence/memory-'+h+'.json' for h in DRAFT_HEAD)):sources[str((P/n).relative_to(ROOT))]=sha(P/n)

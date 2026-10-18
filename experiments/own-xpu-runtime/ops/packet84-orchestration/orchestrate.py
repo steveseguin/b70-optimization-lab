@@ -65,7 +65,6 @@ def main():
         row['pins']={str(f.relative_to(ROOT)):sha(f) for f in [P/'build-receipt.json',P/'bundle-selection.json',P/'submission-pins.json',P/'shared-wrapper-pin.json',P/'evidence/dry-run.json',P/'evidence/selection-dry-run.json',*sorted(O.glob('*.py')),O/'device-entry.sh']}
         row['preparation_passed']=True
         if any(r['status'] not in ('winner','no-winner') for r in screens.values()):raise ValueError('screen confirmations pending or conflicting; CPU preparation passed')
-        if not any(r['status']=='winner' for r in screens.values()):raise ValueError('no new confirmed winner; packet80 baseline retained')
         row['ready']=True
     except (ValueError,OSError,AssertionError,subprocess.SubprocessError) as error:row['reason']=str(error)
     save(O/'ready.json',row)

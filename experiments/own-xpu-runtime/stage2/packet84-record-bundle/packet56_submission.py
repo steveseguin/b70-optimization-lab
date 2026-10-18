@@ -318,6 +318,8 @@ def collect(packet, chain, oracle, repo=ROOT):
         e.add('bundle-selection.json', directory / 'bundle-selection.json')
         e.add('draft-prefix-selection.json', directory / 'calibration/selection.json')
         e.add('draft-prefix-config.hpp', directory / 'p56_config.hpp')
+        e.add('draft-head-coverage.json', directory / 'coverage.json')
+        e.add('draft-head-config.hpp', directory / 'p83_head.hpp')
     e.add('seal.json', directory / 'build-receipt.json')
     if packet != 'packet49-integrate':
         e.add('oracle-binding.json', directory / 'oracle-binding.json')
@@ -469,6 +471,10 @@ def derive(e, packet):
     selected_hash = sha(e.raw('selection.json')) if packet in DYNAMIC_PACKETS else None
     bundle = seal['bundle_selection'] if packet == P56_PACKET else dict(placement='1-split23',draft='production',miss='control',draft_rank=1,target_split=23,layer_boundary=23)
     split, draft_rank, boundary = bundle['target_split'], bundle['draft_rank'], bundle['layer_boundary']
+    if packet == P56_PACKET:
+        from bundle_selection import prefix_rows
+        require(seal['draft_prefix']['draft_vocab_rows']==prefix_rows(bundle['draft_head']) and seal['draft_prefix']['selection_sha256']==sha(e.raw('draft-head-coverage.json')), 'selected draft prefix identity differs')
+        require(seal['sources'].get(str(STAGE / packet / 'p83_head.hpp'))==sha(e.raw('draft-head-config.hpp')), 'selected draft kernel identity differs')
 
     def observed_selection(row, location, *, mandatory=False):
         if selected_hash is not None and (mandatory or 'selection_sha256' in row):
@@ -486,6 +492,7 @@ def derive(e, packet):
             require(name not in ('W2m','WSs','WS128') or proof['timing_claim_eligible'] is True, 'speed window did not hold whole host')
             require(w.get('screen_seal_sha256') == seal['screen_seal_sha256'] and w.get('controller_spin') == SPIN, 'spin window identity mismatch: ' + name)
             require(w.get('hc_fusion') == HC_FUSION, 'HC fusion window identity mismatch: ' + name)
+            require(w.get('draft_vocab_rows')==seal['draft_prefix']['draft_vocab_rows'],'selected prefix row count differs: '+name)
             require(w.get('draft_prefix_selection_sha256') == sha(e.raw('draft-prefix-selection.json'))
                     and w.get('draft_prefix_config_sha256') == sha(e.raw('draft-prefix-config.hpp')),
                     'packet56 window prefix identity mismatch: ' + name)

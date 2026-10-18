@@ -7,6 +7,7 @@ def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def save(p,v):p.write_text(json.dumps(v,indent=2)+'\n')
 def edit(n,a,b):
  p=P/n;t=p.read_text();assert a in t,(n,a);p.write_text(t.replace(a,b))
+assert not (P/"main.cpp").exists(), "one-time bootstrap refuses an existing bundle"
 pins={}
 for f in BASE.iterdir():
  if f.is_file() and f.suffix in ('.py','.sh','.cpp','.hpp','.inc','.tsv','.bf16','.patch','.json','.md','.txt'):

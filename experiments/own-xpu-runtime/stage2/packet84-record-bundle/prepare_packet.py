@@ -3,17 +3,22 @@ import argparse,gzip,importlib.util,json,os
 from build_engine import P,ROOT,B,sha,save,limits
 from bundle_selection import views,choices,selection,placements,PLACEMENTS,prefix_rows,name as view_name
 from chain_seal import check_map
-GATES=('cpu-byte-identity.json','retirement-byte-identity.json','protocol.json','full-shape.json','memory-admission.json','cpu-gates.json')
+GATES=('cpu-byte-identity.json','retirement-byte-identity.json','protocol.json','full-shape.json','memory-admission.json','cpu-gates.json','negative-gates.json')
 def proof():
  build=json.loads((P/'build-device-receipt.json').read_text());reports={n:json.loads((P/'evidence'/n).read_text()) for n in GATES}
  for r in (build,*reports.values()):
   assert r['passed'] and r['device_executed'] is False;check_map(ROOT,r['sources'])
  check_map(P,build['artifacts'])
+ assert sha(B/'full-shape/fixture')==reports['full-shape.json']['binary_sha256']==reports['negative-gates.json']['binary_sha256']
  from bundle_selection import configurations
  assert len(reports['full-shape.json']['runs'])==len(configurations())*2
+ assert {(r['view'],r['placement'],r['rank']) for r in reports['full-shape.json']['runs']}=={(n,p,rank) for n,v,p in configurations() for rank in (0,1)}
+ assert reports['cpu-gates.json']['build_receipt_sha256']==sha(P/'build-device-receipt.json')
  assert set(reports['cpu-byte-identity.json']['views'])==set(views())
  sources=dict(build['sources'])
  for r in reports.values():sources.update(r['sources'])
+ for run in reports['cpu-gates.json']['rows']:
+  f=P/'evidence'/('mini-'+run['label']+'.json');assert sha(f)==run['identity_sha256'];sources[str(f.relative_to(ROOT))]=sha(f)
  sources.update(json.loads((P/'dependency-pins.json').read_text()))
  extras=[*P.glob('*.py'),P/'baseline-pins.json',P/'placement-policy.json',P/'dependency-pins.json',P/'selection-template.json',P/'shared-wrapper-pin.json',*[P/'evidence'/n for n in GATES]]
  sources.update({str(f.relative_to(ROOT)):sha(f) for f in extras})

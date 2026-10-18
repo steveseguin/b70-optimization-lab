@@ -5,8 +5,9 @@ packet84 chain, or its own pinned resume, can produce a submission payload.
 Packet49 remains the quality oracle. The current monotonic threshold file is
 read when pinning and preparing a result; historical records remain intact.
 
-Notes disclose host, route, norm, HC, placement, fixed wide64 experts and
-production dense, plus inherited spin, HC fusion, draft prefix and rollback.
+Notes disclose host, route, norm, HC, placement, experts, recurrence, draft-head
+format and prefix rows, plus inherited spin, HC fusion and rollback. Q4 changes
+draft-only arithmetic; the unchanged target verifies every accepted token.
 Both fresh and resumed notes must fit2000 characters. Every allowed combination
 and placement is exercised by the synthetic evidence/payload tests. No secret,
 external API or submission is accessed during this preparation.

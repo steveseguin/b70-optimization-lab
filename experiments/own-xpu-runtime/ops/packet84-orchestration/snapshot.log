@@ -1,0 +1,16 @@
+{
+  "ready": false,
+  "reason": "snapshot only; prechecks not run",
+  "selection": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64",
+    "host": "ordered",
+    "route": "production",
+    "norm": "production",
+    "placement": "1",
+    "recurrence": "production",
+    "draft_head": "production"
+  },
+  "chain_command": "systemd-run --user --unit=packet84-chain --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --property=StandardOutput=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet84-orchestration/chain.log --property=StandardError=append:/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet84-orchestration/chain.log --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet84-orchestration/device-entry.sh chain </dev/null"
+}
