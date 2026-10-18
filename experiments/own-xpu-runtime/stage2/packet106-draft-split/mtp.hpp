@@ -47,8 +47,10 @@ struct ProviderError:std::runtime_error{using std::runtime_error::runtime_error;
 class DraftRuntime {
  Engine& e;std::unique_ptr<Store> store;flash::Plan p;std::map<std::string,Slot> buffers;std::map<std::string,Weight> weights;
  std::map<const flash::Launch*,Engine::Prepared> prepared;
- struct Site { std::vector<ownrt::PreparedCompute> commands; bool gemv=false; int cls=0; bool head=false; };
+ struct Site { std::vector<ownrt::PreparedCompute> commands; bool gemv=false; int cls=0; bool head=false; std::string label; };
  std::vector<Site> issue_sites;
+ std::vector<ownrt::PreparedCompute> split_logits,split_argmax;
+ bool split_pending=false;std::function<void()> split_export,split_publish,split_merge;
  std::vector<flash::Launch> merge_plan;
  bool captured=false;int context_extent=32; const void* reverse_hidden=nullptr;
  Allocation publication{},half_staging{};ownrt::Event publication_event=0;
@@ -76,7 +78,7 @@ class DraftRuntime {
   if(!e.prepared_path)return;
   e.drain();const int saved_class=e.current_cls;
   auto capture=[&](const flash::Launch& l){
-   Site site;site.gemv=l.op=="gemv"||l.op=="routed_gemv"||l.op=="expert_gate_up";
+   Site site;site.label=l.label;site.gemv=l.op=="gemv"||l.op=="routed_gemv"||l.op=="expert_gate_up";
    site.head=l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax";
    e.set_class("draft."+l.label);site.cls=e.current_cls;
    e.preparing_commands=true;e.dev(0).begin_capture(site.commands);
@@ -86,6 +88,17 @@ class DraftRuntime {
   };
   for(const auto& l:merge_plan)capture(l);
   for(const auto& l:p.launches)capture(l);
+  if(e.split_draft()&&e.a.draft_capture.empty()){
+   e.preparing_commands=true;
+   try{
+    e.dev(0).begin_capture(split_logits);
+    integrated::Matrix m{};m.w=weights.at("output.weight").id;m.type=iq3::Type::Q6_K;m.x=id("final.mix");m.y=id("logits");m.rows=m.span=p106::prefix;m.columns=p.g.h;m.workspace=head_workspace;
+    p33::submit(e.dev(0),{m},head_candidate,false,head_variant);e.dev(0).end_capture();
+    e.dev(0).begin_capture(split_argmax);
+    const auto it=std::find_if(p.launches.begin(),p.launches.end(),[](const auto& l){return l.op=="argmax";});require(it!=p.launches.end(),"p106 argmax site");
+    auto b=bind(*it);b.spec.sizes[0]=p106::prefix;packet18::submit_parallel(e.dev(0),b.spec,b.bindings,control,score,probability,{});e.dev(0).end_capture();e.preparing_commands=false;
+   }catch(...){e.dev(0).end_capture();e.preparing_commands=false;throw;}
+  }
   e.current_cls=saved_class;captured=true;
  }
 
@@ -152,6 +165,16 @@ class DraftRuntime {
   a.push_back(scratch);a.push_back(id("error"));a.push_back(id("position"));a.push_back(id("active"));a.push_back(e.ropes[0]);return {s,a};
  }
 public:
+ std::unique_ptr<p106::Runtime> split_runtime;
+ void configure_split(bool hit,p106::Mailbox& box,uint32_t sequence,int pos,int fixture){
+  require(!async_pending,"p106 pending draft");split_pending=hit;
+  split_export={};split_publish={};split_merge={};
+  if(!hit)return;
+  require(split_runtime&&captured&&!split_logits.empty()&&!split_argmax.empty()&&fixture>0,"p106 unprepared hit");
+  split_export=[&,sequence,pos,fixture]{split_runtime->export_hidden(box,sequence,pos,fixture);};
+  split_publish=[&]{split_runtime->publish_hidden(box);};
+  split_merge=[&,sequence,pos,fixture]{split_runtime->merge_draft(box,sequence,pos,fixture,pipeline_cancel_check);};
+ }
  void set_reverse_hidden(const void* bytes){require(!async_pending,"reverse handoff while draft pending");reverse_hidden=bytes;}
  DraftRuntime(Engine& target):e(target),trace(e.a.output/"draft-rows.jsonl"){
   require(e.a.rank==e.a.draft_rank||!e.a.draft_capture.empty(),"draft placement/capture");if(!e.a.mini)store=std::make_unique<Store>(e.a.draft_manifest,e.a.draft_model);
@@ -206,6 +229,7 @@ public:
   for(const auto& l:merge_plan)record(l);for(const auto& l:p.launches)record(l);
   choices<<"}}";save(e.a.output/"draft-kernel-choices.json",choices.str());
   prepare_commands();
+  if(e.split_draft()&&e.a.draft_capture.empty())split_runtime=std::make_unique<p106::Runtime>(e,id("final.mix"),id("logits"),id("next_token"),id("error"));
   save(e.a.output/"draft-memory.json","{\"device_allocation_bytes\":"+std::to_string(allocated)+",\"cache_bytes\":"+std::to_string(size_t(p.g.context)*(2*p.g.kvh*p.g.ad+p.g.id)*2+size_t((p.g.context+3)/4)*p.g.id*2)+",\"head_weight_shared\":"+(!q4_head()&&e.a.memory=="resident"&&e.weights[0].count("output.weight")&&!e.packed_weight("output.weight")?"true":"false")+"}");
  }
  void admit_position() {
@@ -223,7 +247,7 @@ public:
   }
  }
  int compute(int confirmed,int target_position,bool head,bool asynchronous=false){
-  require(!async_pending,"draft publication still pending");if(disabled)return -1;admit_position();require(confirmed>=0&&confirmed<p.g.vocab,"draft confirmed token bound");require(target_position==position+1,"draft confirmed position sequence");auto start=std::chrono::steady_clock::now();
+  require(!async_pending,"draft publication still pending");if(disabled){require(!split_pending,"p106 disabled provider cannot service hit");return -1;}admit_position();require(confirmed>=0&&confirmed<p.g.vocab,"draft confirmed token bound");require(target_position==position+1,"draft confirmed position sequence");auto start=std::chrono::steady_clock::now();
   if(e.a.draft_fault=="error"||e.a.draft_fault=="stall"){if(e.a.draft_fault=="stall"){auto until=std::chrono::steady_clock::now()+std::chrono::milliseconds(50);while(std::chrono::steady_clock::now()<until){e.guard();poll(nullptr,0,5);}}throw ProviderError("cooperative injected provider failure before submission");}
   e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);ownrt::CopyEngine copy(e.dev(0));if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");e.upload(0,id("merge.hidden"),0,reverse_hidden,4*p.g.h*2);reverse_hidden=nullptr;}else e.tail=copy.copy(id("merge.hidden"),0,e.buffers[0].at("streams").id,0,4*p.g.h*2,{});e.drain();
   // Bounded target embedding row only. No target PLE/history/token preparation.
@@ -232,7 +256,11 @@ public:
    for(const auto& site:issue_sites){if(!head&&site.head)continue;
     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
     e.guard();e.current_cls=site.cls;
-    for(const auto& cmd:site.commands){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);}
+    if(split_pending&&head&&site.label=="logits")split_export();
+    const auto& commands=split_pending&&head&&site.label=="logits"?split_logits:split_pending&&head&&site.label=="argmax"?split_argmax:site.commands;
+    for(const auto& cmd:commands){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);}
+    if(split_pending&&head&&site.label=="logits")split_publish();
+    if(split_pending&&head&&site.label=="argmax")split_merge();
    }
   } else {
    for(const auto& l:merge_plan){if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);}
@@ -241,6 +269,7 @@ public:
     e.guard();if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);
    }
   }
+  require(!split_pending||head,"p106 split without head");split_pending=false;
   if(asynchronous) {
    // Copies belong to the same in-order queue and to private pinned memory.
    // No host access occurs until the final copy event reports completion.
@@ -257,7 +286,7 @@ public:
  bool submitting()const{return async_pending;}
  bool begin(int confirmed,int target_position,bool head){
   try {compute(confirmed,target_position,head,true);return async_pending;}
-  catch(const ProviderError& ex){e.drain();disabled=true;trace<<"{\"disabled\":true,\"reason\":"<<ownrt::quote(ex.what())<<"}\n";trace.flush();return false;}
+  catch(const ProviderError& ex){if(split_pending)throw;e.drain();disabled=true;trace<<"{\"disabled\":true,\"reason\":"<<ownrt::quote(ex.what())<<"}\n";trace.flush();return false;}
  }
  struct Completion {int token=-1;double wall_ms=0,gpu_ms=0;};
  std::optional<Completion> poll_result(){

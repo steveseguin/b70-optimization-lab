@@ -2,7 +2,7 @@
 import hashlib,json,os,resource,subprocess
 from pathlib import Path
 from compile_turn import turn
-P=Path(__file__).resolve().parent;ROOT=P.parents[3];B=P/'build';BASE=P.parent/'packet97-record-bundle'
+P=Path(__file__).resolve().parent;ROOT=P.parents[3];B=P/'build';BASE=P.parent/'packet105-head-split'
 def sha(p):
  h=hashlib.sha256()
  with Path(p).open('rb') as f:
@@ -25,13 +25,14 @@ def main():
  check();mapping=mirror()
  sources={str(f.relative_to(ROOT)):sha(f) for f in closure()}
  sources.update({str(mapping[f].relative_to(ROOT)):sha(mapping[f]) for f in closure()})
- parent=json.loads((BASE/'build-device-receipt.json').read_text())
+ parent=json.loads((P/'parent-build-receipt.json').read_text())
  # Inherited object identity and its frozen source closure. Deliberately omit
  # parent preparation receipts, selection, evidence and orchestration outputs.
  for n,h in parent['sources'].items():
+  if str(BASE.relative_to(ROOT))+'/' in n:continue # rebuilt local source, never mutable parent preparation
   if Path(n).suffix in ('.cpp','.hpp','.inc','.o','.bf16','.tsv'):
    assert sha(ROOT/n)==h,n;sources[n]=h
- prior=json.loads((BASE/'engine-commands.json').read_text());commands=[];artifacts={};objects=[]
+ prior=json.loads((P/'parent-engine-commands.json').read_text());commands=[];artifacts={};objects=[]
  entry=B/'entry-main.cpp';entry.write_text('#define main packet26_model_entry\n#include '+json.dumps(str(mapping[P/'main.cpp']))+'\n#undef main\n')
  def run(cmd,name):
   cmd=list(map(str,cmd));commands.append(dict(name=name,command=cmd,cwd=str(ROOT)))
@@ -49,9 +50,10 @@ def main():
    stem=next((s for s in rebuilt if Path(arg).name in (s+'.o',s+'.cpp.o') or Path(arg).name.endswith('-'+s+'.cpp.o') or Path(arg).name.endswith('-'+s+'.o')),None)
    if stem:link[i]=str(dest/(stem+'.o'));replaced.append(stem)
    else:
-    src=Path(arg);target=dest/'inherited'/(hashlib.sha256(arg.encode()).hexdigest()[:12]+'-'+src.name);target.parent.mkdir(exist_ok=True)
+    src=Path(arg);assert parent['sources'][str(src.relative_to(ROOT))]==sha(src),src
+    target=dest/'inherited'/(hashlib.sha256(arg.encode()).hexdigest()[:12]+'-'+src.name);target.parent.mkdir(exist_ok=True)
     if not target.exists():os.link(src,target)
-    assert sha(src)==sha(target);sources[str(src.relative_to(ROOT))]=sha(src);sources[str(target.relative_to(ROOT))]=sha(target)
+    assert sha(src)==sha(target);sources[str(target.relative_to(ROOT))]=sha(target)
     objects.append(dict(source=str(src.relative_to(ROOT)),local=str(target.relative_to(ROOT)),sha256=sha(src)));link[i]=str(target)
   for stem in set(rebuilt)-set(replaced):link.insert(link.index('-o'),str(dest/(stem+'.o')));replaced.append(stem)
   assert sorted(replaced)==sorted(rebuilt)

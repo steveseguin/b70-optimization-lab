@@ -20,6 +20,7 @@
 #include "p93_submit.hpp"
 #include "p93_head.hpp"
 #include "p105_submit.hpp"
+#include "p106_common.hpp"
 #include "p49d_submit.hpp"
 #include "p25_bridge.hpp"
 #include "p28/submit.hpp"
@@ -719,7 +720,7 @@ public:
     if(!a.mini&&(cached_expert||cached_hc))require(a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p90 cached layout requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
     const bool normfuse=sealed_selection.choices.contains("hc_norm")&&sealed_selection.choices.at("hc_norm")=="consumer";
     if(normfuse)require(!a.mini&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p94 fusion requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
-    if(head_choice()!="production")require(!a.mini&&!a.legacy&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&a.context==4096&&a.draft_rank==1&&a.target_split==0&&sealed_selection.choices.at("packed_dense")=="production","p93 packed head requires sealed resident r5 parallel 4K rank1 draft 24/24");
+    if(head_choice()!="production"||(split_draft()&&a.draft_capture.empty()))require(!a.mini&&!a.legacy&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&a.context==4096&&a.draft_rank==1&&a.target_split==0&&sealed_selection.choices.at("packed_dense")=="production","p93 packed head requires sealed resident r5 parallel 4K rank1 draft 24/24");
     const auto host_choice=sealed_selection.choices.contains("host_retire")?sealed_selection.choices.at("host_retire"):"production";
     ordered_retirement=a.rank==1 && (host_choice=="ordered"||host_choice=="reply-first");
     reply_report.enabled=a.rank==1 && host_choice=="reply-first";
@@ -860,7 +861,17 @@ public:
     for(const auto& l:p.launches)if(l.op=="gemv" && l.weights[0]==name)return variant(l);
     return 2;
   }
-  std::string head_choice()const {auto i=sealed_selection.choices.find("head");return i==sealed_selection.choices.end()?"production":i->second;}
+  std::string head_choice()const {auto i=sealed_selection.choices.find("head");auto v=i==sealed_selection.choices.end()?"production":i->second;return v=="draft-split"?"production":v=="head-split+draft-split"?"head-split-compute":v;}
+  bool split_draft()const {auto i=sealed_selection.choices.find("head");return i!=sealed_selection.choices.end()&&(i->second=="draft-split"||i->second=="head-split+draft-split");}
+  Allocation load_draft_suffix(){
+    require(a.rank==0&&split_draft(),"p106 suffix owner");
+    const auto& tensor=w.directory.at("output.weight");require(flash::grid_type(tensor.grid)==iq3::Type::Q6_K&&tensor.shape.size()==2&&tensor.shape[0]==248320&&tensor.shape[1]==2560,"p106 Q6 suffix shape");
+    auto id=allocate(0,"p106:suffix-weights",size_t(p106::suffix)*3380,Category::weights,Lifetime::process,Memory::device);
+    head_auxiliary.insert(id); // p106 weight payload starts here
+    constexpr size_t rb=2100,er=3380,chunk=1024;
+    for(size_t row=0;row<p106::suffix;row+=chunk){auto n=std::min(chunk,size_t(p106::suffix)-row);auto raw=w.read("output.weight",(p106::prefix+row)*rb,n*rb);raw=iq3::expanded::expand(iq3::Type::Q6_K,raw.data(),raw.size(),2560);upload(0,id,row*er,raw.data(),raw.size());}
+    return id;
+  }
   bool split_head()const {return head_choice()=="head-split-compute"||head_choice()=="head-split-bcs";}
   bool packed_weight(const std::string& name)const {
     if(name=="output.weight"&&head_choice()=="head-transpose")return true;
@@ -1541,6 +1552,7 @@ public:
     weights[c].clear();
   }
 };
+#include "p106_runtime.hpp"
 #include "mtp.hpp"
 static void write_plan(const fs::path &path, const flash::Plan &p,
                        const Weights &w, int cards, const Options& a) {
@@ -1564,7 +1576,7 @@ static void write_plan(const fs::path &path, const flash::Plan &p,
       owner[n] = l.card;
       auto &t = w.directory.at(n);
       auto v=l.op=="gemv"?dispatch(l,t):2;
-      stored[n]=(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head").starts_with("head-split-"))?size_t(p105::prefix)*3380:(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head")=="head-transpose")?t.bytes:p49b_weight(w,a,p,n)?p49b_weight_bytes(t):arithmetic::is_expanded(v)?size_t(t.shape[0])*arithmetic::row_bytes(flash::grid_type(t.grid),t.shape[1],v):t.bytes;
+      stored[n]=(n=="output.weight"&&selected.choices.contains("head")&&(selected.choices.at("head").starts_with("head-split-")||selected.choices.at("head")=="head-split+draft-split"))?size_t(p105::prefix)*3380:(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head")=="head-transpose")?t.bytes:p49b_weight(w,a,p,n)?p49b_weight_bytes(t):arithmetic::is_expanded(v)?size_t(t.shape[0])*arithmetic::row_bytes(flash::grid_type(t.grid),t.shape[1],v):t.bytes;
       if(cached_expert&&p49b_weight(w,a,p,n)&&flash::grid_type(t.grid)==iq3::Type::IQ2_S)stored[n]=t.bytes/p49bgemv::source_row_bytes(iq3::Type::IQ2_S,t.shape.back())*p90::expert_stride(t.shape.back());
       if(cached_hc&&n.starts_with("blk.")&&(n.ends_with(".hc_attn_up.weight")||n.ends_with(".hc_ffn_up.weight")))stored[n]=size_t(t.shape[0])*p90::hc_stride;
       o << (comma ? "," : "") << "{\"name\":" << ownrt::quote(n)

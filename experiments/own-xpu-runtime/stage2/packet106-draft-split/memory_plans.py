@@ -10,9 +10,9 @@ def plan(v):
  row=copy.deepcopy(json.loads((P.parent/'packet91-record-bundle/memory-plan.json').read_text()))
  row.update(schema='packet105.exact-layout-memory.v1',view=name(*v))
  row['placements']={'1':row['placements']['1']};row['placements']['1']['capacities']={'4096':row['placements']['1']['capacities']['4096']}
- half='halfcache' in v[2];head=v[8]=='head-transpose';split=v[8].startswith('head-split-');deltas=[]
+ half='halfcache' in v[2];head=v[8]=='head-transpose';split=v[8].startswith('head-split');deltas=[]
  for rank,r in enumerate(row['placements']['1']['capacities']['4096']['ranks']):
-  extra=EXPERT_DELTA[rank] if half else 0;extra+=(157322272 if rank==0 else -155750384) if split else 0;target=extra-(TARGET_SAVING if head and rank==1 else 0);prefix=DRAFT_PREFIX if head and rank==1 else 0;delta=target+prefix;deltas.append(delta)
+  extra=EXPERT_DELTA[rank] if half else 0;extra+=(157322272 if rank==0 else -155750384) if split else 0;extra+=(153826336 if rank==0 else 16) if 'draft-split' in v[8] else 0;target=extra-(TARGET_SAVING if head and rank==1 else 0);prefix=DRAFT_PREFIX if head and rank==1 else 0;delta=target+prefix;deltas.append(delta)
   for k in ('target_modeled_allocations_bytes','target_total_bytes'):r[k]+=target
   r['draft_duplicate_head_bytes']+=prefix
   for k in ('total_with_mtp_bytes','arena_device_bytes'):r[k]+=delta

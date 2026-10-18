@@ -6,7 +6,7 @@ from compile_turn import turn
 def main():
  limits();dest=B/'controller';dest.mkdir(exist_ok=True);runs=[];sources={};commands=[]
  for compiler,cxx in [('GNU','/usr/bin/g++'),('Intel','/opt/intel/oneapi/compiler/2026.0/bin/icpx')]:
-  binary=dest/compiler;dep=dest/(compiler+'.d');cmd=[cxx,'-std=c++20','-O2','-pthread','-MMD','-MF',str(dep),str(P/'p105_controller_test.cpp'),'-o',str(binary)]
+  binary=dest/compiler;dep=dest/(compiler+'.d');cmd=[cxx,'-std=c++20','-O2','-pthread','-MMD','-MF',str(dep),str(P/'p106_controller_test.cpp'),'-o',str(binary)]
   with turn(),(dest/(compiler+'.log')).open('w') as log:subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=300)
   commands.append(cmd)
   for n in shlex.split(dep.read_text().replace('\\\n',' ').split(':',1)[1]):sources[str(Path(n).resolve().relative_to(ROOT))]=sha(n)

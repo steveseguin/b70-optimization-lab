@@ -8,7 +8,7 @@ HC=('hc-wide',); HOST=('ordered',)
 ROUTE=('fast',); NORM=('production',)
 RECURRENCE=('rec-both-plus',)
 DRAFT_HEAD=('production',)
-HEAD=('production','head-split-compute','head-split-bcs'); HC_NORM=('production',)
+HEAD=('production','head-split-compute','draft-split','head-split+draft-split'); HC_NORM=('production',)
 KEYS=('dense','hc','experts','host','route','norm','recurrence','draft_head','head','hc_norm')
 def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def name(dense,hc,experts,host='production',route='production',norm='production',recurrence='production',draft_head='production',head='production',hc_norm='production'):
@@ -51,4 +51,4 @@ def selected():
     if row['selection_sha256']!=sha(P/'selection.json') or row['screen_seal_sha256']!=sha(view/'screen-seal.json'):raise ValueError('seal differs')
     return row
 
-def aliases():return {v[8]:v for v in views().values()}
+def aliases():return {('head-split' if v[8]=='head-split-compute' else v[8]):v for v in views().values()}

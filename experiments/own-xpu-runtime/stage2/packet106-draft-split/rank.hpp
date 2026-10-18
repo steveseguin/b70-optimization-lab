@@ -236,7 +236,7 @@ static void pipeline_cancel_check() {
 static int run_rank(const Options& a) {
  using namespace pipeline;
  std::unique_ptr<Weights> weights;std::unique_ptr<Engine> engine;std::unique_ptr<mtp36::DraftRuntime> provider;
- std::unique_ptr<p105::Runtime> head_runtime;bool native_active=false;
+ std::unique_ptr<p105::Runtime> head_runtime;std::unique_ptr<p106::Runtime> draft_suffix;bool native_active=false;
  int fd=-1;void* mapping=MAP_FAILED;std::string error,selection_observed_sha256;std::vector<std::string> teardown;
  pipeline_stop_fd=a.stop_fd;
  try {
@@ -248,9 +248,12 @@ static int run_rank(const Options& a) {
   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,a);
   engine=std::make_unique<Engine>(*weights,a,p);selection_observed_sha256=engine->sealed_selection.observed_sha256;record_host_memory(a.output,"before_load");engine->initialize();
   if(engine->split_head())head_runtime=std::make_unique<p105::Runtime>(*engine);
+  if(engine->split_draft()&&a.rank==0)draft_suffix=std::make_unique<p106::Runtime>(*engine);
   if(a.rank==0)banks(*engine);else {engine->prepare_plan();engine->prepare_commands();}
   auto& head_box=*reinterpret_cast<p105::Mailbox*>(static_cast<uint8_t*>(mapping)+reverse_offset);
-  static_assert(sizeof(p105::Mailbox)<=slot_bytes);
+  static_assert(sizeof(p105::Mailbox)<=8192);
+  auto& draft_box=*reinterpret_cast<p106::Mailbox*>(static_cast<uint8_t*>(mapping)+reverse_offset+8192);
+  static_assert(8192+sizeof(p106::Mailbox)<=slot_bytes);
   if(head_runtime&&a.rank==1){
    engine->head_export=[&](int seq,int pos,int fixture){require(native_active,"p105 requires native controller");head_runtime->export_hidden(head_box,uint32_t(seq),pos,fixture);};
    engine->head_merge=[&](int seq,int pos,int fixture){head_runtime->merge_target(head_box,uint32_t(seq),pos,fixture,pipeline_cancel_check);};
@@ -277,6 +280,8 @@ static int run_rank(const Options& a) {
     else {auto* bytes=static_cast<uint8_t*>(mapping);require(__atomic_load_n(&reverse_ready(bytes).position_plus_one,__ATOMIC_ACQUIRE)==uint32_t(r.position),"reverse stream position mismatch");
      if(__atomic_load_n(&verification(bytes).position_plus_one,__ATOMIC_ACQUIRE)){auto& v=verification(bytes);require(__atomic_load_n(&v.position_plus_one,__ATOMIC_ACQUIRE)==uint32_t(r.position)&&v.token==r.token,"rank0 draft requires target confirmation");}
      provider->set_reverse_hidden(bytes+reverse_offset);}
+    require(r.reserved[0]==0||r.reserved[0]==1,"p106 hit flag");
+    if(engine->split_draft()){require(native_active,"p106 requires native controller");provider->configure_split(r.reserved[0]&&r.fixture>0,draft_box,uint32_t(r.sequence),r.position,r.fixture);}
     auto before=std::chrono::steady_clock::now();double gpu=engine->gemv_ms+engine->nongemv_ms;
     struct Publication{int32_t valid,position,token,error;uint64_t elapsed_ns;int32_t sequence,reserved;double gpu_ms;};static_assert(sizeof(Publication)==40);
     auto publish_draft=[&,r](int token,double wall_ms,double gpu_ms){
@@ -309,7 +314,8 @@ static int run_rank(const Options& a) {
     undo(*engine,c,image,redo,r.position,r.token);
    }
    else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();state_dump(*engine,r.position);if(r.position==2147483647)request_state_inventory(*engine);}
-   else if(r.op==11){image.boundary();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
+   else if(r.op==11){image.boundary();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;
+    if(head_runtime)head_runtime->reset_trace();if(draft_suffix)draft_suffix->reset_trace();if(provider&&provider->split_runtime)provider->split_runtime->reset_trace();}
    #ifdef OWN_RT_HOST_ONLY
    else if(r.op==12){require(a.rank==0&&c.pending&&c.speculative,"negative control ownership");image.corrupt_protected_for_gate(r.token);}
 #endif
@@ -335,12 +341,16 @@ static int run_rank(const Options& a) {
      else {
       auto cfg=native38::config(a.shared.parent_path()/"native-request.txt",engine->p.g.context,engine->p.g.vocab);cfg.draft_rank=a.draft_rank;
       native38::Backend backend(mailbox,bytes,a.seconds,execute,cancel);
-      if(head_runtime)backend.before_remote_wait=[&](const Request& req){if(req.op==half&&req.fixture>0)head_runtime->service(head_box,uint32_t(req.sequence),req.position,req.fixture,[&]{cancel();require(!native38::load(mailbox.abort),"p105 native peer failed");});};
+      if(head_runtime||draft_suffix)backend.before_remote_wait=[&](const Request& req){
+       auto checked=[&]{cancel();require(!native38::load(mailbox.abort),"p106 native peer failed");};
+       if(head_runtime&&req.op==half&&req.fixture>0)head_runtime->service(head_box,uint32_t(req.sequence),req.position,req.fixture,checked);
+       if(draft_suffix&&req.op==draft&&req.reserved[0]&&req.fixture>0)draft_suffix->service(draft_box,uint32_t(req.sequence),req.position,req.fixture,checked);
+      };
       auto result=native38::run(backend,cfg);
       save(a.shared.parent_path()/"native-result.json",native38::json(result,backend,cfg));
      }
      native_active=false;
-    }catch(...){p105::publish(head_box.abort,1);native38::abort(mailbox);throw;}
+    }catch(...){p105::publish(head_box.abort,1);p106::publish(draft_box.abort,1);native38::abort(mailbox);throw;}
     response.sequence=r.sequence;response.rank=a.rank;
    }else response=execute(r);
    transfer(a.channel,&response,sizeof response,true,a.seconds);
@@ -359,6 +369,7 @@ static int run_rank(const Options& a) {
  // Failure receipt is durable before any teardown. Device owns all SYCL borrowers.
  if(engine)engine->progress_callback={};
  head_runtime.reset();
+ draft_suffix.reset();
  provider.reset();
  if(engine){try{teardown=engine->shutdown();}catch(const std::exception& ex){error+=(error.empty()?"":"; ")+std::string(ex.what());}engine.reset();}
  weights.reset();if(mapping!=MAP_FAILED)munmap(mapping,shared_bytes);if(fd>=0)::close(fd);

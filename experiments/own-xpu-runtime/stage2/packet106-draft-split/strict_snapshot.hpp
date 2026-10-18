@@ -244,7 +244,7 @@ public:
   for(const auto& [name,id]:e.state_reserves)represented.insert(id);
   for(const auto& [id,owner]:e.allocations){const auto& row=e.dev(owner.first).arena.row(id);
    if(e.head_auxiliary.contains(id)){
-    require(e.split_head()&&owner.first==0&&row.label.starts_with("card0:p105:")&&!represented.count(id),"p105 auxiliary cannot alias target state");
+    require(owner.first==0&&!represented.count(id)&&((e.split_head()&&row.label.starts_with("card0:p105:"))||(e.split_draft()&&row.label.starts_with("card0:p106:"))),"split auxiliary cannot alias target state");
     continue; // only the post-half suffix service reads/writes these allocations
    }
    if(!row.live||row.category==Category::weights||row.category==Category::pinned_slab||represented.count(id)||id==e.one[0])continue;

@@ -30,6 +30,7 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;std::unique_ptr<mtp36::D
  require(p.g.h==2560&&p.g.context==4096&&p.g.vocab==248320,"real production dimensions");
  e=std::make_unique<Engine>(w,a,p);e->initialize();
  std::unique_ptr<p105::Runtime> head;if(e->split_head())head=std::make_unique<p105::Runtime>(*e);
+ std::unique_ptr<p106::Runtime> suffix;if(e->split_draft()&&a.rank==0&&a.draft_capture.empty())suffix=std::make_unique<p106::Runtime>(*e);
  if(!a.draft_capture.empty()){e->prepare_plan();draft=std::make_unique<mtp36::DraftRuntime>(*e);}
  else{if(a.rank==0)pipeline::banks(*e);else{e->prepare_plan();e->prepare_commands();}
   {pipeline::SpeculativeImage image(*e);if(a.mtp)draft=std::make_unique<mtp36::DraftRuntime>(*e);}}

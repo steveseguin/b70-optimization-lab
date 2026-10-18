@@ -7,7 +7,7 @@ def main():
  limits();dest=B/'cpu';dest.mkdir(exist_ok=True);sources={};runs=[];commands=[]
  for compiler,cxx in [('GNU','/usr/bin/g++'),('Intel','/opt/intel/oneapi/compiler/2026.0/bin/icpx')]:
   binary=dest/('head-'+compiler);dep=binary.with_suffix('.d')
-  cmd=[cxx,'-std=c++20','-O2','-fno-fast-math','-ffp-contract=off','-ffunction-sections','-fdata-sections','-Wl,--gc-sections','-DOWN_RT_HOST_ONLY','-I'+str(P),'-I'+str(P.parents[1]/'stage1/packet3-prep/src'),'-I'+str(P.parent/'packet2/kernels'),'-I'+str(P.parent/'packet2/loader'),'-MMD','-MF',str(dep),str(P/'p105_cpu.cpp'),'-o',str(binary),'-lcrypto']
+  cmd=[cxx,'-std=c++20','-O2','-fno-fast-math','-ffp-contract=off','-ffunction-sections','-fdata-sections','-Wl,--gc-sections','-DOWN_RT_HOST_ONLY','-I'+str(P),'-I'+str(P.parents[1]/'stage1/packet3-prep/src'),'-I'+str(P.parent/'packet2/kernels'),'-I'+str(P.parent/'packet2/loader'),'-MMD','-MF',str(dep),str(P/'p106_cpu.cpp'),'-o',str(binary),'-lcrypto']
   with turn(),(dest/('head-'+compiler+'.log')).open('w') as log:subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=600)
   commands.append(cmd)
   for n in shlex.split(dep.read_text().replace('\\\n',' ').split(':',1)[1]):sources[str(Path(n).resolve().relative_to(ROOT))]=sha(n)

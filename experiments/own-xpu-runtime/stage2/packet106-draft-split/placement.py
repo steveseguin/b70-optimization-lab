@@ -45,8 +45,14 @@ def admit(root, seal, receipt, dispatch, name):
         require(seal['sources'].get(relative)==digest and sha(ROOT/relative)==digest, 'placement source changed')
     for relative,digest in audit['memory_sources'].items():
         require(seal['sources'].get(relative)==digest and sha(ROOT/relative)==digest, 'memory census changed')
-    require(audit['draft_prefix_rows'] in (91392,80128,74752) and audit['rank0_private_prefix_bytes']==(308904960 if rank==0 else 0), 'wrong prefix size')
-    supported,reason=True,'Packet105 complete post-load census, private suffix and unchanged draft prefix; driver residency must pass live admission'
+    require(audit['draft_prefix_rows']==91392 and audit['rank0_private_prefix_bytes']==0, 'wrong prefix size')
+    choice=read(root/'selection.json')['choices']['head']
+    target=choice in ('head-split-compute','head-split+draft-split')
+    draft=choice in ('draft-split','head-split+draft-split')
+    require(audit['rank0_suffix_weight_bytes']==(155750400 if target else 0)
+            and audit['rank0_draft_suffix_weight_bytes']==(152289280 if draft else 0)
+            and audit['rank0_total_added_device_bytes']==(157322272 if target else 0)+(153826336 if draft else 0), 'wrong split allocation audit')
+    supported,reason=True,'Packet106 full post-load census, separate target/draft suffixes and unchanged miss prefix; driver residency must pass live admission'
     result = dict(name=name, draft_rank=rank, target_split=split, layer_boundary=boundary,
                   target_layers=[boundary, 48-boundary], context=4096,
                   memory_admitted=True, supported=supported, reason=reason,

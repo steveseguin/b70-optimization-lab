@@ -25,6 +25,7 @@ struct Runtime {
    index=e.buffers[0].at("next_token").id;error=e.buffers[0].at("error").id;
   }
  }
+ void reset_trace(){timings.close();timings.clear();timings.open(e.a.output/"p105-transfers.jsonl");require(bool(timings),"p105 reset trace");}
  void transfer(Allocation dst,Allocation src,size_t n,const char*leg){
   auto start=std::chrono::steady_clock::now();CopyScope scope(bcs);ownrt::CopyEngine copy(e.dev(0));
   auto event=copy.copy(dst,0,src,0,n,{});e.wait(0,event);e.retire_events(0);
@@ -47,7 +48,9 @@ struct Runtime {
   e.drain(); // local speculative half has completed; no model-state writes below.
   std::memcpy(e.dev(0).arena.row(staging).pointer,box.hidden,hidden_bytes);
   transfer(hidden,staging,hidden_bytes,"hidden-import");
-  uint32_t zero=0;e.upload(0,error,0,&zero,4);
+  // Request reset zeroes auxiliary controls too. Restore the private active
+  // flag on every service before the argmax; never inherit a previous request.
+  uint32_t zero=0,one=1;e.upload(0,error,0,&zero,4);e.upload(0,active,0,&one,4);
   for(const auto& command:suffix_commands)e.tail=e.dev(0).issue(command);
   e.drain();transfer(staging,best,16,"best-export");
   std::memcpy(&box.best,e.dev(0).arena.row(staging).pointer,16);check();publish(box.reply,seq);

@@ -9,18 +9,18 @@ def main():
  for leaf,r in reports.items():
   assert r['passed'] and r['device_executed'] is False,leaf
   check_map(ROOT,r['sources']);sources.update(r['sources']);sources[str((P/leaf).relative_to(ROOT))]=sha(P/leaf)
- startup=reports['startup97e.json'];assert startup['compositions']==3 and startup['windows_per_composition']==11 and startup['total_windows']==33
+ startup=reports['startup97e.json'];assert startup['compositions']==4 and startup['windows_per_composition']==11 and startup['total_windows']==44
  archive=startup['archive'];assert sha(ROOT/archive['path'])==archive['sha256'];sources[archive['path']]=archive['sha256']
- shape=reports['evidence/full-shape.json'];assert len(shape['runs'])==6
+ shape=reports['evidence/full-shape.json'];assert len(shape['runs'])==8
  for r in shape['runs']:
   assert r['passed'] and r['memory']['passed']
   for artifact in r['artifacts'].values():sources[artifact['path']]=artifact['sha256']
  gates=reports['evidence/cpu-byte-identity.json']['runs'];assert {(r['compiler'],r['repeat']) for r in gates}=={(c,r) for c in ('GNU','Intel') for r in (1,2)};assert len({r['candidate_sha256'] for r in gates})==1
  sources.update(json.loads((P/'dependency-pins.json').read_text()))
- for f in [*P.glob('*.py'),P/'copy-lineage.json',P/'placement-policy.json',P/'shared-wrapper-pin.json',P/'selection-template.json',P/'build-device-receipt.json']:sources[str(f.relative_to(ROOT))]=sha(f)
+ for f in [*P.glob('*.py'),P/'copy-lineage.json',P/'parent-build-receipt.json',P/'parent-engine-commands.json',P/'placement-policy.json',P/'shared-wrapper-pin.json',P/'selection-template.json',P/'build-device-receipt.json']:sources[str(f.relative_to(ROOT))]=sha(f)
  # Parent composition outputs change while chains run. No seal binds them.
  forbidden=('bundle-selection.json','selection-dry-run.json','composition-selection.json','/ops/')
- assert not any('packet105-head-split' not in n and any(k in n for k in forbidden) for n in sources)
+ assert not any('packet106-draft-split' not in n and any(k in n for k in forbidden) for n in sources)
  check_map(ROOT,sources)
  from bootstrap import install
  install();spec=importlib.util.spec_from_file_location('p105_generic_seal',P.parent/'screen/seal.py');generic=importlib.util.module_from_spec(spec);spec.loader.exec_module(generic)
@@ -33,15 +33,15 @@ def main():
    dest=view/'build'/mode/'own-rt-iq3';dest.parent.mkdir(parents=True,exist_ok=True)
    if not dest.exists():os.link(P/'build'/mode/'own-rt-iq3',dest)
    artifacts[str(dest.relative_to(view))]=sha(dest)
-  split=label!='production'
+  split=label.startswith('head-split');draft_split='draft-split' in label
   audit=dict(placement='1',draft_rank=1,target_split=0,layer_boundary=24,target_layers=[24,24],draft_prefix_rows=91392,rank0_private_prefix_bytes=0,target_head=label,
     rank0_target_suffix_rows=46080 if split else 0,rank1_target_rows=202240 if split else 248320,rank0_suffix_weight_bytes=155750400 if split else 0,
-    target_hidden_source='verified normalized final.mix only',transfer_placement='bcs' if label.endswith('bcs') else 'compute',
+    rank0_draft_suffix_weight_bytes=152289280 if draft_split else 0,rank0_total_added_device_bytes=(157322272 if split else 0)+(153826336 if draft_split else 0),draft_dispatch='verified hit only; miss full prefix',target_hidden_source='verified normalized final.mix only',transfer_placement='bcs' if label.endswith('bcs') else 'compute',
     dispatch_sha256=sha(view/'dispatch-speed6.json'),binary_sha256=artifacts['build/device/own-rt-iq3'],
-    engine_sources={str((P/n).relative_to(ROOT)):sha(P/n) for n in ('main.cpp','rank.hpp','mtp.hpp','native_controller.hpp','p105_runtime.hpp','p105_common.hpp','single_device.cpp','strict_snapshot.hpp')},memory_sources=shape['sources'],startup_view=name(*v))
+    engine_sources={str((P/n).relative_to(ROOT)):sha(P/n) for n in ('main.cpp','rank.hpp','mtp.hpp','native_controller.hpp','p105_runtime.hpp','p105_common.hpp','p106_runtime.hpp','p106_common.hpp','single_device.cpp','strict_snapshot.hpp')},memory_sources=shape['sources'],startup_view=name(*v))
   save(view/'placement-audit.json',audit);bound=dict(sources);bound[str((view/'placement-audit.json').relative_to(ROOT))]=sha(view/'placement-audit.json')
   for leaf in ('expected','actual'):(view/('fixture-'+leaf+'.bin.gz')).write_bytes((ROOT/fixture['fixture']).read_bytes())
   bp=view/'build-receipt.json';fp=view/'byte-fixture.json';save(bp,dict(passed=True,device_executed=False,sources=bound,artifacts=artifacts))
-  save(fp,dict(schema='own-runtime.screen.byte-fixture.v1',passed=True,device_executed=False,build_receipt_sha256=sha(bp),sources=reports['evidence/cpu-byte-identity.json']['sources'],changed_class='Exact p33 target rows and BF16 logits; round2 argmax with global ties, nonfinite refusal. GNU/Intel repeated full vocabulary. Actual Runtime and native-controller mock gates separately bound.',command=['python3','-B',str(P/'cpu_gate.py')],**{k:dict(path='fixture-'+k+'.bin.gz',sha256=sha(view/('fixture-'+k+'.bin.gz'))) for k in ('expected','actual')}))
+  save(fp,dict(schema='own-runtime.screen.byte-fixture.v1',passed=True,device_executed=False,build_receipt_sha256=sha(bp),sources=reports['evidence/cpu-byte-identity.json']['sources'],changed_class='Exact p33 draft rows [0,91392); split at 46336 and BF16 logits; round2 argmax with global ties, nonfinite refusal. GNU/Intel repeated full vocabulary. Actual Runtime and native-controller mock gates separately bound.',command=['python3','-B',str(P/'cpu_gate.py')],**{k:dict(path='fixture-'+k+'.bin.gz',sha256=sha(view/('fixture-'+k+'.bin.gz'))) for k in ('expected','actual')}))
   generic.create(view,'tp2',bp,fp,view/'build/device/own-rt-iq3',view/'dispatch-speed6.json',view/'screen-seal.json');print(label,'sealed',flush=True)
 if __name__=='__main__':main()

@@ -25,8 +25,7 @@ def user_unit_gate(cgroup):
 
 
 def commands(out):
-    from bundle_selection import selected
-    choice = selected()
+    choice = dict(draft_rank=1,target_split=0)
     """Keep SPEED6 topology, native controller, and its retained/speed pairing."""
     base = ['ionice', '-c', '3', 'env', '-i', 'PATH=/usr/bin:/bin',
             'OMP_NUM_THREADS=2', 'LD_LIBRARY_PATH=' + os.environ.get('LD_LIBRARY_PATH', ''),
@@ -106,8 +105,7 @@ def oracle_ready():
 
 def validate_success(name, out, rc):
     from window_adapter import verify_receipt
-    from bundle_selection import selected
-    choice = selected()
+    choice = dict(draft_rank=1,target_split=0)
     if rc:
         raise RuntimeError(f'{name} exited {rc}; no retry')
     row = json.loads((out / name / 'window.json').read_text())

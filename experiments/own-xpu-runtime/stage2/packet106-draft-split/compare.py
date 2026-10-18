@@ -34,12 +34,12 @@ def checked_requests(summary, oracle):
         require(math.isclose(r['acceptance'], hits / guesses, rel_tol=1e-10), 'acceptance differs from counts')
         acceptance.append(hits / guesses)
         counts.append(dict(prompt_id=prompt, hits=hits, guesses=guesses))
-    return dict(rate=statistics.median(statistics.median(v) for v in grouped.values()),
+    return dict(proposal_sequences=[r['guess_sequence'] for r in rows],rate=statistics.median(statistics.median(v) for v in grouped.values()),
                 acceptance=statistics.mean(acceptance), acceptance_counts=counts)
 
 def load(job):
     lane=job['lane'];index=job['index']
-    root=output(job) if job['mode']=='grid' else WRAPPER/'evidence'/f'p97-{lane}-confirm-{index}'
+    root=output(job)
     lineage=view(job['choice'])
     window, identity = read(root / 'window.json'), read(root / 'identity.json')
     require(window.get('passed') is True and window.get('device_executed') is True
@@ -83,6 +83,7 @@ def compare(rows, order=ORDER):
             'screens must run in control/A/B/control order without overlap')
     require(all(r['exact'] and r['exact_count']==13 for r in rows), '13/13 exact required')
     require(all(r['acceptance_counts']==rows[0]['acceptance_counts'] for r in rows), 'acceptance changed')
+    require(all(r['proposal_sequences']==rows[0]['proposal_sequences'] for r in rows), 'draft proposals changed')
     control_rate = statistics.mean(r['rate'] for r in (rows[0], rows[-1]))
     control_acceptance = statistics.mean(r['acceptance'] for r in (rows[0], rows[-1]))
     require(control_rate > 0 and all(math.isfinite(r['rate']) and r['rate'] > 0 for r in rows), 'invalid rates')
@@ -101,12 +102,17 @@ def compare(rows, order=ORDER):
                     for r in rows[1:-1]])
 
 def compare_grid(rows):
-    require([r['choice'] for r in rows]==list(ORDER),'complete five-screen grid required')
-    brackets=[compare(rows[i:i+3],ORDER[i:i+3]) for i in (0,2)]
-    return dict(passed=True,diagnostic=True,submission_eligible=False,record_ready=False,record_lane='A',brackets=brackets,
-                winners=[r['screens'][1]['choice'] for r in brackets if r['composition_qualified']])
+    require([r['choice'] for r in rows]==list(ORDER),'complete four-screen grid required')
+    result=compare(rows)
+    result['composition_qualified']=rows[2]['rate']>max(rows[0]['rate'],rows[-1]['rate'])
+    return dict(passed=True,diagnostic=True,submission_eligible=False,record_ready=False,record_lane='A',brackets=[result],
+                winners=[r['choice'] for r in result['candidates'] if r['faster_than_both_controls']])
 
 if __name__ == '__main__':
     import argparse
     ap=argparse.ArgumentParser();ap.add_argument('--lane',choices=('A','B'),required=True);a=ap.parse_args();verify()
-    print(json.dumps(compare_grid([load(j) for j in jobs(a.lane)]),indent=2))
+    if a.lane=='A':
+        from screen_jobs import confirm_jobs,qualified_winner
+        selected=confirm_jobs(qualified_winner());result=compare([load(j) for j in selected],tuple(j['choice'] for j in selected))
+    else:result=compare_grid([load(j) for j in jobs(a.lane)])
+    print(json.dumps(result,indent=2))

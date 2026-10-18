@@ -45,6 +45,7 @@ public:
  t=body(t,'std::vector<uint8_t> read(const std::string &name', '\n throw std::runtime_error("mock must never read model payload");\n')
  t=body(t,'std::vector<int64_t> metadata()', '\n std::vector<int64_t> v{3,5,7};v.insert(v.end(),16,17);for(int i=0;i<16;++i)v.push_back(17*i);return v;\n')
  # Size, dispatch and actual allocation are retained; only upload/expansion is mocked.
+ t=replace(t,'    head_auxiliary.insert(id); // p106 weight payload starts here','    head_auxiliary.insert(id); return id; // test-only payload elision')
  t=replace(t,'    weights[c][name] = id;', '    weights[c][name] = id; return; // test-only payload elision')
  t=replace(t,'#include '+json.dumps(str(mirror/'mtp.hpp')),'#include '+json.dumps(str(S/'mtp.hpp')))
  m=replace(m,'mutable_ids.erase(w.id);','mutable_ids.erase(w.id);weights[name]=w;return; // test-only payload elision\n')
@@ -74,6 +75,7 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;std::unique_ptr<mtp36::D
  if(negative=="legacy")a.legacy=true;
  e=std::make_unique<Engine>(w,a,p);e->initialize();
  std::unique_ptr<p105::Runtime> head;if(e->split_head())head=std::make_unique<p105::Runtime>(*e);
+ std::unique_ptr<p106::Runtime> suffix;if(e->split_draft()&&a.rank==0)suffix=std::make_unique<p106::Runtime>(*e);
  if(a.rank==1)p93_target_head=e->dev(0).arena.row(e->weights[0].at("output.weight")).pointer;
  write_plan(a.output/"native-plan.json",p,w,a.cards,a);
  if(negative!="positive"){
@@ -137,13 +139,15 @@ def main():
     weights={r['label'].split('weight:',1)[1]:r['bytes'] for r in census['allocations'] if r['live'] and r['memory']=='device' and r['label'].startswith('card0:weight:')}
     planned={r['name']:r['stored_bytes'] for r in reported['tensor_owners']}
     assert all(planned[k]==n for k,n in weights.items() if not (rank==0 and k=='output.weight'))
-    packed=v[8]=='head-transpose';split=v[8].startswith('head-split-');expected_head=(202240*3380 if rank==1 else 46080*3380) if split else (248320*(2100 if packed else 3380) if rank==1 else 0);expected_prefix=91392*3380 if rank==1 and packed else 0
+    packed=v[8]=='head-transpose';split=v[8].startswith('head-split');expected_head=(202240*3380 if rank==1 else 46080*3380) if split else (248320*(2100 if packed else 3380) if rank==1 else 0);expected_prefix=91392*3380 if rank==1 and packed else 0
     assert weights.get('output.weight',0)==expected_head
     prefix=[r for r in census['allocations'] if r['live'] and r['memory']=='device' and r['label']=='card0:draft:shared-head-host']
     assert sum(r['bytes'] for r in prefix)==expected_prefix
     if rank==1:
      assert json.loads((dest/'draft-memory.json').read_text())['head_weight_shared']==(not packed)
      d=json.loads((dest/'draft-prefix.json').read_text());assert d['rows']==91392 and d['extra_weight_bytes']==expected_prefix
+    suffix=[r for r in census['allocations'] if r['live'] and r['memory']=='device' and r['label']=='card0:p106:suffix-weights']
+    assert sum(r['bytes'] for r in suffix)==(152289280 if rank==0 and 'draft-split' in v[8] else 0)
     gate=check(census,ledger,rank,mtp=True,context=4096,draft_rank=1,target_split=0)
     artifacts={}
     for leaf in ('census.json','selected-operations.txt','draft-prefix.json','draft-memory.json','native-plan.json','result.json'):
@@ -152,6 +156,15 @@ def main():
     report['runs'].append(dict(view=label,placement='1',command=cmd,selection_key_consumers_verified=True,memory=gate,artifacts=artifacts,target_head_bytes=expected_head,draft_prefix_bytes=expected_prefix,arena_headroom_bytes=ARENA_LIMIT_BYTES-census['totals']['device'],**native))
    finally:shutil.rmtree(dest)
   print(label,'both ranks startup/admission PASS',flush=True)
+ report['refusals']=[]
+ for negative in ('short','misaligned','serial','gemv','streaming','draft-rank','split','context','legacy'):
+  dest=S/'scratch';dest.mkdir()
+  cmd=[str(S/'fixture'),str(path),sha(path),'1',str(dest),negative,'1','0']
+  try:
+   r=subprocess.run(cmd,stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120)
+   assert r.returncode!=0 and r.stderr.strip(), 'invalid layout admitted: '+negative
+   report['refusals'].append(dict(case=negative,returncode=r.returncode,error=r.stderr.strip()))
+  finally:shutil.rmtree(dest)
  from math_gate import closure
  for f in [*closure(),P/'full_shape.py',P/'memory_plans.py',P/'memory_gate.py',P/'bundle_selection.py',P/'selection-template.json',P/'dispatch-speed6.json',*generated]:report['sources'][str(f.relative_to(ROOT))]=sha(f)
  report.update(passed=True,binary_sha256=sha(S/'fixture'));save(P/'evidence/full-shape.json',report)

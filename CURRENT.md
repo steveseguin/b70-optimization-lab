@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, packet106 implementation resumed on CPU:** The draft head can
+split its prefix only after a verified hit; misses keep the full prefix on
+rank1. The combined target/draft view uses separate state. Reset handling and
+request logs are fixed in this copy. Nine Python checks pass; compiler byte,
+startup, memory and final seal checks are pending behind the shared compiler
+turn. No GPU, service or live queue changed.
+[Work note](notes/2026-10-18-own-runtime-packet106.md).
+
 **October 18, packet58j one-card port checked on CPU:** The separate copy of
 58g has down-tile16, route-fast and rec-both-plus, with eight choices including
 production. All 80 full-size startup/submit checks pass, and every host budget

@@ -28,8 +28,8 @@ struct Backend {
  std::function<void(const Request&)> before_remote_wait;
  uint32_t seq;bool pending[2]={false,false};Reply local{};Request commands[2]{};double sent[2]={};std::vector<Trace> trace;size_t stream_bytes=0;
  Backend(Mailbox& box,uint8_t* mem,int timeout,std::function<Reply(const Request&)> fn,std::function<void()> stop):m(box),shared(mem),seconds(timeout),execute(fn),cancel(stop),seq(load(m.request_sequence)){}
- void start(int rank,int op,int token=0,int position=0,int fixture=0,int speculative=0){
-  require(!pending[rank],"native double pending");cancel();require(!load(m.abort),"native peer failed");Request r{op,token,position,fixture,speculative,0,{0,0}};commands[rank]=r;sent[rank]=clock_now();pending[rank]=true;
+ void start(int rank,int op,int token=0,int position=0,int fixture=0,int speculative=0,int verified_hit=0){
+  require(!pending[rank],"native double pending");cancel();require(!load(m.abort),"native peer failed");Request r{op,token,position,fixture,speculative,0,{verified_hit,0}};commands[rank]=r;sent[rank]=clock_now();pending[rank]=true;
   if(rank==0){if(op==draft)r.sequence=position;commands[rank]=r;local=execute(r);if(op==half)stream_bytes=local.bytes;}
   else {require(load(m.reply_sequence)==seq,"native outstanding mailbox");require(seq<UINT32_MAX,"native sequence overflow");r.sequence=int32_t(seq+1);commands[rank]=r;m.request=r;publish(m.request_sequence,++seq);}
  }
@@ -90,7 +90,7 @@ inline Result run(Backend& b,const Config& c){
   bool early_accept=false;
   if(c.mode==3){int confirmed=known?c.prompt[p+1]:out.tokens.back();
    if(c.draft_rank==0&&pending){b.wait(0);if(known||guess==confirmed){b.call(0,accept);early_accept=true;}}
-   b.start(c.draft_rank,draft,confirmed,p+1,int(p+2>=length),1);issued_draft_at=b.sent[c.draft_rank];if(c.draft_rank==0)b.wait(0);draft_pending=true;}
+   b.start(c.draft_rank,draft,confirmed,p+1,int(p+2>=length),1,int(!known&&pending&&guess>=0&&guess==confirmed));issued_draft_at=b.sent[c.draft_rank];if(c.draft_rank==0)b.wait(0);draft_pending=true;}
   if(known){if(!pending)half_start(0,c.prompt[p+1],p+1);if(b.pending[0])b.wait(0);if(!early_accept)b.call(0,accept);}
   else{int actual=out.tokens.back();if(pending){if(b.pending[0])b.wait(0);bool hit=guess==actual;if(hit){++out.hits;if(!early_accept)b.call(0,accept);}else{++out.misses;double redo=clock_now();b.call(0,rollback,actual,p+1,fixture(p+1),1);half_start(0,actual,p+1);b.wait(0);b.call(0,accept);out.redo_ms+=(clock_now()-redo)*1000;}out.guesses.push_back({p+1,guess,actual,hit,(clock_now()-cycle)*1000});}
    else{half_start(0,actual,p+1);b.wait(0);b.call(0,accept);}}
