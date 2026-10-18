@@ -469,3 +469,27 @@ Decision, as registered: the dedicated hunt stops. Device marks (`MARKS=1`) and 
 the context lane's ordinary runs from campaign 30 on (not in runs whose times are published). The next hang will
 show which card was where without a dedicated run. The heavy samplers (engine-register ring, power states, PCIe
 residency, xe tracepoints) are stopped. Evidence: `data/2026-10-17-hang-repro3/`.
+
+## The next hang, caught by the device marks (2026-10-18 00:31 EDT, campaign 35 arm 2)
+
+Campaign 35's second arm (`K32L retro 1`, ctxkeeper 1.2.0.dev2, the context lane's ordinary server with `MARKS=1`
+and `hang-capture.sh` riding along, as registered above) hung 5 min 47 s in.
+- **Step:** #5897, a 463-token prompt step after a cache hit (computed 7,488, scheduled 463), right after three
+  short requests of the same session. The same class as the 06:23 hang (300-600 new tokens after a hit).
+- **Rank 0 device marks (card 03:00.0):** 894,024 collectives issued, 893,970 completed; **#893,971 not started on
+  the card (a kernel before it still running)**; it is an `all_gather_into_tensor` of 7,111,680 elements in step
+  #5897, the 102nd of the step's 155; 53 issued after it. So card 03 was not inside an exchange: a compute kernel
+  between collectives 101 and 102 of the step ran until the driver's job timeout.
+- **Kernel:** 00:31:00.64 card 03 `Engine reset: engine_class=ccs ... Timedout job ... in python3`, coredump; 00:31:01.8
+  card e3 `Fault response: Unsuccessful -EINVAL`, ccs engine reset and a copy-engine CAT error (its peer's memory gone).
+  Rank 1 wrote no marks (its process ended with the engine before its 20 s stall timer).
+- **Recovery:** the first health probe's all-reduce hung; its end reset e3's GT (00:33:25); the second probe passed,
+  kernel log clean. Evidence: `/mnt/fast-ai/bench-results/context-longrun-20261016/fault-20261018-0031/` (coredumps of
+  both cards, kernel log, probes) and `data/2026-10-17-hang-capture-c35/capture-003101/` (py-spy of all four
+  processes, engine state of both cards).
+
+What this changes: the oneCCL ring (LL256) reading of the 06:23 hang does not fit this one, since the card that timed
+out had not reached the collective. The next question is which kernel sits between collectives 101 and 102 of a
+463-token prompt step; that needs the order of the step's collectives (name and size), which the marks keep only for
+pending ones. Next: map position 102 to the model's layer and sub-block, then look at that kernel for anything that
+can wait on other work-groups.
