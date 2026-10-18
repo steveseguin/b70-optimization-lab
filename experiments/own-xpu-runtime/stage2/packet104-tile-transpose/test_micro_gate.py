@@ -15,7 +15,7 @@ class Gate(unittest.TestCase):
      for pos in range(2):
       candidate=bool(pos^(rep&1))
       rows.append(dict(kind='sample',pair=name,view=name if candidate else 'production',route=route,repeat=rep,position=pos,event_ns=80 if candidate else 100,sg=32,wg=wg,scrub_bytes=536870912,diagnostic_only=True,**shape))
-  rows.append(dict(kind='summary',passed=True,drained=True,diagnostic_only=True,candidate_count=7,route_count=384));cls.rows=rows
+  rows.append(dict(kind='summary',passed=True,drained=True,diagnostic_only=True,candidate_count=len(CANDIDATES),route_count=384));cls.rows=rows
  def reject(self,index,key,value):
   row=self.rows[index];before=row[key];row[key]=value
   try:
@@ -23,8 +23,8 @@ class Gate(unittest.TestCase):
   finally:row[key]=before
  def test_complete_pass(self):
   r=analyze(self.rows,384)
-  self.assertEqual(len(r['qualified']),5)
-  self.assertNotIn('draft-gate-tile16',r['qualified'])
+  self.assertEqual(len(r['qualified']),len(CANDIDATES))
+  self.assertIn('draft-gate-tile16',r['qualified'])
   self.assertTrue(r['candidates']['draft-gate-tile16']['qualified'])
  def test_missing_route(self):
   with self.assertRaises(ValueError):analyze(self.rows[:-81]+self.rows[-1:],384)
@@ -40,6 +40,12 @@ class Gate(unittest.TestCase):
  def test_single_stratum_fail_blocks_candidate(self):
   indices=[i for i,r in enumerate(self.rows[:81]) if r.get('view')=='target-gate-tile16' and r.get('kind')=='sample']
   for i in indices:self.rows[i]['event_ns']=90
+  try:self.assertNotIn('target-gate-tile16',analyze(self.rows,384)['qualified'])
+  finally:
+   for i in indices:self.rows[i]['event_ns']=80
+ def test_one_order_fails_despite_good_combined_median(self):
+  indices=[i for i,r in enumerate(self.rows[:81]) if r.get('view')=='target-gate-tile16' and r.get('kind')=='sample']
+  for i in indices:self.rows[i]['event_ns']=90 if self.rows[i]['repeat']%2 else 50
   try:self.assertNotIn('target-gate-tile16',analyze(self.rows,384)['qualified'])
   finally:
    for i in indices:self.rows[i]['event_ns']=80

@@ -8,6 +8,7 @@
 #include "p82b_recurrence.hpp"
 #include "p49d_mix.hpp"
 #include "p49d_small.hpp"
+#include "p104_small.hpp"
 #include "small_gemv.hpp"
 #include <fstream>
 #include <set>
@@ -60,7 +61,7 @@ Submit resolve(std::string_view cls,std::string_view choice){
  if(cls=="host_retire"&&(choice=="production"||choice=="ordered"||choice=="reply-first"))return production;
  if(cls=="hc_norm"&&(choice=="production"||choice=="subgroup"||choice=="consumer"))return production;
  if(cls=="hc_gate"&&(choice=="production"||choice=="wide"||choice=="wide-tile16"))return production;
- if(cls=="packed_dense"&&(choice=="production"||choice=="head-packed"||choice=="dense-packed"||choice=="combined"))return production;
+ if(cls=="packed_dense"&&(choice=="production"||choice=="head-packed"||choice=="dense-packed"||choice=="combined"||choice=="small-q6-tile16"||choice=="small-router-tile16"))return production;
  if(cls=="experts"){
   choice=p100::gate_choice(choice);
   if(choice=="gate-tile16"||choice=="gate-halfcache-tile16")return production;
@@ -112,10 +113,18 @@ void Selection::load(const std::string&path,const std::string&expected_sha256){
  if(target_values!=std::map<std::string,std::string>{{"route","route-exp32-rank4"},{"recurrence","rows4-shared"},{"hc","production"}})throw std::invalid_argument("p59c target must stay packet56");
  choices=std::move(values);draft=std::move(draft_values);observed_sha256=digest;
 }
-Launch small(Device&d,std::string_view name,std::span<const integrated::Matrix>ms,std::span<const unsigned>variants){
+Launch small(Device&d,std::string_view name,std::span<const integrated::Matrix>ms,std::span<const unsigned>variants,bool tileq6,bool tilerouter){
  if(name!="small.ffn.q6")throw std::invalid_argument("p49d only banked small.ffn.q6 tuple");packet27::small::validate(d,name,ms,variants);
- p49dvirtual::SmallKernel<4>k;std::array<Allocation,12>ids{};
+ auto issue=[&]<class K>(K k){std::array<Allocation,12>ids{};
+ if(tileq6||tilerouter)for(unsigned i=0;i<3;++i)if((tileq6&&(i==1||i==2))||(tilerouter&&i==0)){
+   if(ms[i].rows%16||uintptr_t(d.arena.row(ms[i].w).pointer)%16)throw std::invalid_argument("p104 small tile alignment/rows");
+ }
+
  for(unsigned i=0;i<4;++i){const auto&m=ms[i];k.shapes[i].rows=m.rows;k.shapes[i].rb=integrated::arithmetic::row_bytes(m.type,m.columns,variants[i]);ids[3*i]=m.w;ids[3*i+1]=m.x;ids[3*i+2]=m.y;}
- auto e=d.compute(k,ids,{});return {e,e,1};
+ auto e=d.compute(k,ids,{});return Launch{e,e,1};};
+ if(tileq6&&tilerouter)return issue(p104small::SmallKernel<4,true,true>{});
+ if(tileq6)return issue(p104small::SmallKernel<4,true,false>{});
+ if(tilerouter)return issue(p104small::SmallKernel<4,false,true>{});
+ return issue(p49dvirtual::SmallKernel<4>{});
 }
 } // namespace p49d

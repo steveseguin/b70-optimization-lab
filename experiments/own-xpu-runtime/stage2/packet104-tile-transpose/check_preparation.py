@@ -19,5 +19,5 @@ def main():
   with (P/'evidence/queue-plan.log').open('w') as f:subprocess.run(cmd,cwd=ROOT,stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,check=True,timeout=180)
   results.append(dict(name='temporary-queue-plan',command=cmd,passed=True))
  save(P/'evidence/preparation-checks.json',dict(passed=True,device_executed=False,live_queue_modified=False,long_cpu_gates_run=False,route_vectors=routes['micro_route_vectors'],proposal_sha256=sha(proposal),build_receipt_sha256=sha(P/'evidence/microbench-build.json'),checks=results))
- print('12 protocol checks, real routes, micro plan, temporary queue plan PASS; no kernels')
+ print('13 protocol checks, real routes, micro plan, temporary queue plan PASS; no kernels')
 if __name__=='__main__':main()

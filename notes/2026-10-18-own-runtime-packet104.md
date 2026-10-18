@@ -24,9 +24,11 @@ There is no model integration or engine speed claim yet.
 The full 384-vector packet100b target-route snapshot is hash verified against
 its capture evidence. Both target gate variants consume those real IDs, with
 the operation's 640-row extent. The draft operator replays the same target
-IDs as an explicit proxy: packet100b did not capture draft routes. Even a
-15% proxy gain cannot qualify a routed draft screen without actual draft-route
-evidence. Non-routed shared and HC operations use eight fixed input seeds.
+IDs as an explicit proxy: packet100b did not capture draft routes. As the
+brief requests, this replay is the draft operator's 15% screening gate;
+subsequent actual model screens must establish whether a gain transfers.
+It is never labeled native draft-route timing. Non-routed shared and HC
+operations use eight fixed input seeds.
 
 Each candidate compares full FP32 reductions, BF16 outputs, fused outputs,
 status and error controls before timing. Forty pairs alternate order in each
@@ -81,7 +83,7 @@ workgroup geometry and no added activation fusion. Selection and dispatch
 snapshots are now explicit build inputs. The old receipt and binary are
 retained as superseded preparation evidence, never a timing control.
 
-The corrected binary compiles. Twelve protocol checks pass, including a
+The corrected binary compiles. Thirteen protocol checks pass, including a
 single slow route rejecting an otherwise winning candidate, malformed order,
 geometry, exactness, finite timing and drain checks. The real capture binding,
 closed-environment micro plan and a temporary lanequeue plan pass. These are
@@ -94,3 +96,33 @@ has a separate half-cache control. KD gets a draft-only host selection with
 the target resident-only transpose removed, while keeping all selected draft
 choices. The eleven actual chain window names are registered from packet97e,
 including both KD startup paths. No model seal or runnable screen exists.
+
+## Complete matching-stream inventory and ninth-arm build
+
+The target's resident `small.ffn.q6` override is another matching stream:
+`p49dvirtual::SmallKernel<4>` maps four rows inside each subgroup, with the
+unchanged Split4 reduction. Added two independent comparisons: expanded Q6
+shared gate/up and F32 expert router. Both time the **complete selected tuple**,
+including unchanged sibling operations; neither substitutes an isolated GEMV.
+The scalar one-row shared router remains unchanged. Q6 keeps all 3380 bytes
+per row (codes, float scales and 180 metadata bytes); router keeps 10240.
+The micro checks the full tuple's FP32 reductions and actual BF16 outputs,
+including agreement between the two, and verifies output guards.
+
+Nine candidate kernels now compile; the current build is 29,117,472 bytes.
+All nine views compose with down-tile16. The selected target shared-down is
+packet33 Q8 WG32, one row per subgroup, so it does not match. Attention
+`rows4` means rows across separate subgroups; its name does not establish
+the packet100 pattern. The detailed inventory is in
+[the access census](../experiments/own-xpu-runtime/stage2/packet104-tile-transpose/ACCESS-CENSUS.md).
+
+The micro's actual dependency closure no longer requires the large generated
+parent RoPE header or a full runtime build. There are still no measured
+packet104 timings, no byte-identity verdict and no model-screen admission.
+
+Read-only review also caught incomplete startup plans that omit a tuple
+sibling. The prepared integration now uses one coverage predicate for both
+load layout and dispatch: only complete resident Q6 tuples without outside
+consumers of the selected banks can transpose. Partial plans retain their
+original bytes and kernels; both Q6 banks are admitted together. This fix
+still needs the conditional full-window CPU gates after a micro win.

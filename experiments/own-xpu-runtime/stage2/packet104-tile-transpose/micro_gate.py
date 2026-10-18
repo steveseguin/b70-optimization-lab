@@ -2,7 +2,7 @@
 import json,math,statistics
 from pathlib import Path
 from build_engine import P,ROOT,sha,save
-CANDIDATES=('target-gate-tile16','target-gate-halfcache-tile16','draft-gate-tile16','draft-down-tile16','shared-gate-up-tile16','shared-down-tile16','hc-gate-tile16')
+CANDIDATES=('target-gate-tile16','target-gate-halfcache-tile16','draft-gate-tile16','draft-down-tile16','shared-gate-up-tile16','shared-down-tile16','hc-gate-tile16','target-shared-q6-tile16','target-router-tile16')
 MICRO_DIRECTORY='evidence/micro-B'
 # rows, columns, count, experts, workgroup, number of strata (0 means routes)
 SHAPES={
@@ -13,6 +13,8 @@ SHAPES={
  'shared-gate-up-tile16':(640,2560,1,1,128,8),
  'shared-down-tile16':(2560,640,1,1,32,8),
  'hc-gate-tile16':(10240,320,1,1,256,8),
+ 'target-shared-q6-tile16':(1793,2560,1,1,128,8),
+ 'target-router-tile16':(1793,2560,1,1,128,8),
 }
 def require(ok,message):
  if not ok:raise ValueError(message)
@@ -21,7 +23,7 @@ def analyze(rows,route_count):
  require(rows and rows[-1].get('kind')=='summary','complete summary required')
  end=rows[-1]
  require(sum(r.get('kind')=='summary' for r in rows)==1 and all(end.get(k) is True for k in ('passed','drained','diagnostic_only')),'clean drained micro required')
- require(end.get('candidate_count')==7 and end.get('route_count')==route_count,'complete candidate/route census required')
+ require(end.get('candidate_count')==len(CANDIDATES) and end.get('route_count')==route_count,'complete candidate/route census required')
  cs=[r for r in rows if r.get('kind')=='correctness'];ss=[r for r in rows if r.get('kind')=='sample']
  expected=sum(v[5] or route_count for v in SHAPES.values());require(len(cs)==expected and len(ss)==80*expected,'complete correctness and timings required')
  groups={};seen=set()
@@ -50,5 +52,5 @@ def analyze(rows,route_count):
    all_control+=times['production'];all_candidate+=times[name]
   ratio=statistics.median(all_candidate)/statistics.median(all_control);passed=ratio<=0.85 and all(s['qualified'] for s in strata)
   results[name]=dict(time_ratio=ratio,route_strata=strata,qualified=passed,pairs_per_route=40)
-  if passed and not name.startswith('draft-'):qualified.append(name)
- return dict(schema='packet104.micro-qualification.v1',draft_route_caveat='captured target routes replayed through draft; native draft-route qualification pending',passed=True,diagnostic_only=True,threshold=0.85,candidates=results,qualified=qualified)
+  if passed:qualified.append(name)
+ return dict(schema='packet104.micro-qualification.v1',draft_route_caveat='captured target routes replayed through draft as requested; not a native draft-route timing or model speed claim',passed=True,diagnostic_only=True,threshold=0.85,candidates=results,qualified=qualified)

@@ -862,6 +862,21 @@ public:
     return 2;
   }
   std::string head_choice()const {auto i=sealed_selection.choices.find("head");return i==sealed_selection.choices.end()?"production":i->second;}
+  bool small_tiled_group(const SmallGroup&group)const {
+    if(a.mini||a.memory!="resident"||group.name!="small.ffn.q6")return false;
+    const auto&choice=sealed_selection.choices.at("packed_dense");
+    if(choice!="small-q6-tile16"&&choice!="small-router-tile16")return false;
+    for(unsigned j=0;j<3;++j)if((choice=="small-router-tile16"&&j==0)||(choice=="small-q6-tile16"&&j!=0)){
+      const auto&name=group.members[j]->weights[0];
+      for(const auto&site:p.launches)if(std::find(site.weights.begin(),site.weights.end(),name)!=site.weights.end()&&std::find(group.members.begin(),group.members.end(),&site)==group.members.end())return false;
+    }return true;
+  }
+  bool small_tiled_weight(const std::string&name)const {
+    const auto&choice=sealed_selection.choices.at("packed_dense");
+    for(const auto&[first,group]:small_groups)if(small_tiled_group(group))for(unsigned j=0;j<3;++j)
+      if(((choice=="small-router-tile16"&&j==0)||(choice=="small-q6-tile16"&&j!=0))&&group.members[j]->weights[0]==name)return true;
+    return false;
+  }
   bool packed_weight(const std::string& name)const {
     if(name=="output.weight"&&head_choice()!="production")return true;
     if(a.mini||a.memory!="resident")return false;
@@ -936,16 +951,23 @@ public:
       }
       return;
     }
+    if(sealed_selection.choices.at("packed_dense")=="small-router-tile16"&&small_tiled_weight(name)){
+      require(a.memory=="resident"&&type==iq3::Type::F32&&t.shape.size()==2&&t.shape[0]==512&&t.shape[1]==2560,"p104 router shape");
+      for(size_t row=0;row<512;row+=128){guard();auto raw=w.read(name,row*10240,128*10240);auto tiled=p104::small_router(raw.data(),128);upload(c,id,row*10240,tiled.data(),tiled.size());}return;
+    }
     if(!packed&&arithmetic::is_expanded(v)) {
       auto fmt=iq3::layout(type);size_t rb=t.shape[1]/fmt.elements*fmt.bytes;
       size_t er=hccache?p90::hc_stride:arithmetic::row_bytes(type,t.shape[1],v);
       size_t rows_per=std::max(size_t(1),size_t(4*1024*1024)/std::max(rb,er));
       const bool hctile=sealed_selection.choices.at("hc_gate")=="wide-tile16"&&name.starts_with("blk.")&&(name.ends_with(".hc_attn_up.weight")||name.ends_with(".hc_ffn_up.weight"));
       if(hctile){require(type==iq3::Type::Q8_0&&t.shape[0]==10240&&t.shape[1]==320&&er==380,"p104 HC layout shape");rows_per=std::max(size_t(16),rows_per/16*16);}
+      const bool q6tile=sealed_selection.choices.at("packed_dense")=="small-q6-tile16"&&small_tiled_weight(name);
+      if(q6tile){require(a.memory=="resident"&&type==iq3::Type::Q6_K&&t.shape[0]==640&&t.shape[1]==2560&&er==3380,"p104 small Q6 layout shape");rows_per=std::max(size_t(16),rows_per/16*16);}
       for(size_t row=0;row<size_t(t.shape[0]);row+=rows_per){
         auto nr=std::min(rows_per,size_t(t.shape[0])-row);auto raw=w.read(name,row*rb,nr*rb);
         auto expanded=hccache?p90::hc_repack(raw.data(),raw.size()):iq3::expanded::expand(type,raw.data(),raw.size(),t.shape[1]);
         if(hctile)expanded=p104::hc(expanded.data(),nr);
+        if(q6tile)expanded=p104::small_q6(expanded.data(),nr);
         upload(c,id,row*er,expanded.data(),expanded.size());
       }
       return;
@@ -1212,7 +1234,7 @@ public:
       }
       if(class_timing)set_class(grouped->second.name);
       auto name=grouped->second.name;auto key=name.starts_with("small.ffn")?"small.ffn":name;
-      finish(c,!a.mini&&a.memory=="resident"&&name=="small.ffn.q6"?p49d::small(dev(c),name,members,variants):!a.mini&&packet26::dispatch.fusion_choice(key)=="p30.small.rows4"?p30integrated::small(dev(c),name,members,variants):packet27::small::submit(dev(c),name,members,variants),true);return;
+      finish(c,!a.mini&&a.memory=="resident"&&name=="small.ffn.q6"?p49d::small(dev(c),name,members,variants,small_tiled_group(grouped->second)&&sealed_selection.choices.at("packed_dense")=="small-q6-tile16",small_tiled_group(grouped->second)&&sealed_selection.choices.at("packed_dense")=="small-router-tile16"):!a.mini&&packet26::dispatch.fusion_choice(key)=="p30.small.rows4"?p30integrated::small(dev(c),name,members,variants):packet27::small::submit(dev(c),name,members,variants),true);return;
     }
     auto it=matrices.find(&l);
     if(a.memory=="resident" && it==matrices.end()) {

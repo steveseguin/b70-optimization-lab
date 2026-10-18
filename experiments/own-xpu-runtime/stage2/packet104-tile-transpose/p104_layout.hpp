@@ -31,4 +31,6 @@ template<unsigned K,bool Int8>inline std::vector<uint8_t> draft(const uint8_t*sr
  else return transpose(src,rows,K*2,{{0,K*2,16}});
 }
 inline std::vector<uint8_t> hc(const uint8_t*src,size_t rows){return transpose(src,rows,380,{{0,320,8},{320,40,4},{360,20,2}});}
+inline std::vector<uint8_t> small_q6(const uint8_t*src,size_t rows){return transpose(src,rows,3380,{{0,2560,8},{2560,640,4},{3200,180,2}});}
+inline std::vector<uint8_t> small_router(const uint8_t*src,size_t rows){return transpose(src,rows,10240,{{0,10240,32}});}
 }

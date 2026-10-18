@@ -4,9 +4,9 @@ from pathlib import Path
 from kernel_overlay import apply
 from submission_overlay import apply_submission_overlay
 from math_gate import closure,ROOT,HERE,OWNER
-def mirror():
+def mirror(paths=None):
  assert not re.search(r'\b(malloc_device|malloc_shared|malloc_host|parallel_for|single_task|submit)\s*\(', (HERE/'jit_smoke.cpp').read_text()),'K0 must build only'
- paths=closure();dest=HERE/'build/checked';mapping={x:dest/x.relative_to(ROOT) for x in paths}
+ paths=closure() if paths is None else paths;dest=HERE/'build/checked';mapping={x:dest/x.relative_to(ROOT) for x in paths}
  mapping[(OWNER/"owner.hpp").resolve()]=mapping[(HERE/"owner_api.hpp").resolve()]
  # All imported owner consumers must use the packet-local diagnostic ABI.
  original=(OWNER/"owner.hpp").resolve()

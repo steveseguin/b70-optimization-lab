@@ -3,11 +3,13 @@
 Micro-first preparation from copied packet100 sources. See the
 [work note](../../../../notes/2026-10-18-own-runtime-packet104.md).
 
-The native micro compiles; device correctness and speed are pending. Seven
+The native micro compiles; device correctness and speed are pending. Nine
 candidate kernels retain their source operations and change only weight
 addresses. `p104_layout.hpp` transposes complete 16-row tiles without adding
 weight bytes. No full model view is admitted until the 15% micro gate passes.
 Draft timings on packet100b's **target** routes remain proxy diagnostics.
+The [access census](ACCESS-CENSUS.md) covers the target shared tuple and
+explains why the selected attention paths do not match.
 
 The coordinator owns `ops/lane-queue/proposed-p104-micro-B.txt` (relative to
 the runtime experiment root). This task created a proposal only.

@@ -83,7 +83,7 @@ def native_summary(path):
     require(rows and rows[-1].get('kind') == 'summary', 'missing final native summary')
     summary = rows[-1]
     require(summary.get('passed') is True and summary.get('drained') is True
-            and summary.get('candidate_count') == 7 and summary.get('route_count') == 384,
+            and summary.get('candidate_count') == 9 and summary.get('route_count') == 384,
             'native microbenchmark failed, wrong shape or drain unproved')
     return summary
 

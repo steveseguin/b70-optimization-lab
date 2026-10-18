@@ -8,10 +8,11 @@ startup and seals are next; device quality, residency and speed are pending.
 No GPU, service or live queue changed.
 [Work note](notes/2026-10-18-own-runtime-packet105.md).
 
-**October 18, packet104 micro compiled on CPU:** Seven tile16 weight-layout
+**October 18, packet104 micro compiled on CPU:** Nine tile16 weight-layout
 candidates are ready for the proposed lane-B operator test. The build is about
-28 MB. It uses packet100b's real target routes; draft replay is labeled as a
-proxy and cannot qualify draft screens. No long CPU gates, model screens,
+29 MB. It uses packet100b's real target routes; draft replay is labeled as a
+proxy, with actual model screens required to check transfer. The target's
+shared expert and router now have separate full-tuple comparisons. No long CPU gates, model screens,
 GPU work or live queue ran. The coordinator proposal is
 `ops/lane-queue/proposed-p104-micro-B.txt` under the own-runtime experiment.
 [Work note](notes/2026-10-18-own-runtime-packet104.md).

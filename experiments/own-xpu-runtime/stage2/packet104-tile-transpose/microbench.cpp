@@ -135,6 +135,7 @@ template<class Op>void benchmark(sycl::queue&q,const std::vector<iq3::Route>&cap
  }
  q.wait_and_throw();guard();
 }
+#include "micro_small.hpp"
 int main(int argc,char**argv){try{
  if(argc!=3||std::string(argv[1])!="--coordinator-admitted-device-window")throw std::runtime_error("coordinator admission and route payload required");
  std::ifstream in(argv[2],std::ios::binary);std::vector<uint8_t>raw((std::istreambuf_iterator<char>(in)),{});
@@ -146,6 +147,7 @@ int main(int argc,char**argv){try{
   benchmark<Target<false>>(q,rs);benchmark<Target<true>>(q,rs);
   benchmark<Draft<2560,true,true,1>>(q,rs);benchmark<Draft<640,true,false,1>>(q,rs);
   benchmark<Draft<2560,false,false,1>>(q,rs);benchmark<Draft<640,false,false,1>>(q,rs);benchmark<HC>(q,rs);
+  benchmark_small<true,false>(q);benchmark_small<false,true>(q);
   q.wait_and_throw();guard();}
- std::cout<<"{\"kind\":\"summary\",\"passed\":true,\"drained\":true,\"candidate_count\":7,\"route_count\":384,\"diagnostic_only\":true}\n"<<std::flush;return 0;
+ std::cout<<"{\"kind\":\"summary\",\"passed\":true,\"drained\":true,\"candidate_count\":9,\"route_count\":384,\"diagnostic_only\":true}\n"<<std::flush;return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

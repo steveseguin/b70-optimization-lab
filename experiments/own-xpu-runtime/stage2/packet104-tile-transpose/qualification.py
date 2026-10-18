@@ -1,4 +1,4 @@
-"""Hash-bound packet104 micro results; target routes do not qualify draft routes."""
+"""Hash-bound packet104 micro results; draft replay stays explicitly labeled."""
 import json
 from build_engine import P,ROOT,sha,save
 from route_inputs import require_ready,MANIFEST,ROUTES
