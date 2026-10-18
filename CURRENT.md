@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, packet98c native switching built on CPU:** A separate copy of
+packet97 can switch route, recurrence, HC gate and draft attention without
+reloading weights. Both builds, full-size capture/reset checks, layout refusals,
+poisoned-state checks and 125 wrapper tests pass. Full protocol repeats, seals
+and temporary queue plans are being finished. The first proposed device step
+will be a route-only A/B/A on lane B. No GPU, service, live queue or existing
+packet changed. [Evidence and handoff](notes/2026-10-18-own-runtime-packet98c.md).
+
 **October 18, packet102 microbenchmark prepared on CPU:** The five IQ2 lookup
 batching/shared-input candidates and half-cache control compile. The lane-B
 proposal passes a temporary queue plan and 15 micro tests pass. Longer byte,

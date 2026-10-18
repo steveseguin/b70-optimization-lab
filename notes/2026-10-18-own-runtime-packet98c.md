@@ -17,5 +17,21 @@ cores 8-15,24-31, python3 -B and closed stdin. Compiles use packet94's shared
 compile turn, 8 GiB address-space limit, one compiler and a 300 MB build cap.
 No GPU, service, sudo, settings or secret reads are needed.
 
-Build, full-shape, byte identity, refusal, protocol and seal results are pending.
+Both native compilers pass. Twenty full-size starts and 100 view resets pass:
+each admitted dimension on both ranks, with a fresh selected capture for
+comparison. All 240 native refusal checks pass before mutation. Four fresh
+miniature poison tests restore every mutable allocation, including pinned
+buffers, and preserve all weights. All 125 Python wrapper checks pass.
+
+The capture audit exposed missing HC-capacity and small-GEMV-shape fields in
+the inherited CPU serializer. The local test helper now records both. The
+full-shape fixture rebuilds only the two CPU submit objects needed to expose
+those fields; production arithmetic objects stay unchanged. Failed logs remain.
+Generated full-shape files were archived and every member rehashed before
+scratch removal. The build currently occupies about 73 MiB, below 300 MB.
+
+The first protocol attempt matched output/state bytes in completed cases but
+stopped when a concurrent scratch archive removed a file during the size census.
+The census now tolerates a disappearing scratch file. The complete protocol
+comparison is rerunning against the final binary; seals and queue plans follow.
 No device exactness or performance claim is made.

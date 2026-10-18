@@ -2,7 +2,9 @@
 
 The engine is copied from packet97's checked bundle sources. The v5 wrapper
 is copied from packet98. Neither parent is edited. `source-copy-provenance.json`
-records the originals; only absolute include roots are relocated in `sources/`.
+records the originals; absolute include roots are relocated in `sources/`.
+The CPU-only argument serializer additionally records HC capacity and small-GEMV
+shape arrays, missing from the inherited helper. No arithmetic changes.
 Native additions live in `native/` and `native_source.py`.
 
 | Dimension | Load and dispatch evidence in packet97 | Decision |
