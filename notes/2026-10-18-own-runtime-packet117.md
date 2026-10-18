@@ -144,6 +144,33 @@ stale build. The final build regenerates the mirror inside its compiler turn.
 Eight fail-closed micro-receipt tests pass. The compiler's linked HC allocation
 report remains spill-free after the exceptional fallback.
 
-The v5 copy is still being validated in parallel. Its launch invokes micro
-qualification in a fresh Python process to avoid module-name collisions with
-its own wrapper. Full model exactness and speed remain pending.
+## Final CPU handoff
+
+The v5 copy is complete. GNU-host and Intel device builds, four full-shape
+fresh/switch checks, four actual-parser startups (two selected views × two
+ranks), four mutable-state reset checks, two fresh miniature IPC brackets,
+fourteen policy tests and the inherited-limit pre-exec gate pass. The
+miniature IPC test uses its explicitly declared small projection; full-size
+split-head allocation and dispatch are checked separately. Its launch invokes
+micro qualification in a fresh Python process to avoid module-name collisions
+with its own wrapper.
+
+[`proposed-p117-v5-B.txt`](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p117-v5-B.txt)
+passes temporary planning with **launch eligibility false until the micro
+passes**. Expected duration is 15 minutes; watchdog 3,600 seconds (4×).
+The final copied QSA/GDN host micro additionally passes 4,736 exact comparisons,
+including all sixteen direct HC control/exception cases. The checked mirror
+uses original source paths for its runtime fixture reads. Compiler dependency
+lists bind only the actual translation-unit closure, not unrelated offline
+image files. The native binary and every seal were refreshed after that fix.
+
+Combined root/v5 build size is **127,956,132 bytes**; root free is **38,779,432,960 bytes**
+at handoff. Peak compiler RSS remains recorded in each build receipt and all
+CPU processes use the 8 GiB address-space cap. The 4 MiB packet-local RoPE table
+is documented in [retention](../experiments/own-xpu-runtime/stage2/packet117-hc-gate/RETENTION.md).
+The strict identity checker rejects a symlink; no frozen source was altered.
+
+[CPU preparation closeout](../experiments/own-xpu-runtime/stage2/packet117-hc-gate/CPU-PREPARATION-CLOSEOUT.md)
+records the rejected NaN path and remaining device gates. No GPU, services,
+queues, host settings or other owners' jobs were changed. Full model exactness
+and speed remain pending.

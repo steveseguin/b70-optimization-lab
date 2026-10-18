@@ -20,15 +20,16 @@ The build is 121.5 MB. Device equality and speed remain unmeasured. No GPU,
 service, live queue or host setting changed.
 [Work note](notes/2026-10-18-own-runtime-packet116.md).
 
-**October 18, packet117 HC micro prepared on CPU:** The candidate shares
-independent sigmoid work across existing lanes and preserves the original
+**October 18, packet117 HC preparation complete on CPU:** The candidate
+shares independent sigmoid work across existing lanes and keeps the original
 sum order. Stronger NaN tests caught and fixed a payload difference; both
-compilers now pass sixteen exact cases twice. The native binary compiles,
-both HC kernels remain spill-free, and two fresh B proposals pass temporary
-queue planning. Each must cut both HC gate times by at least 30% before the
-parallel one-load bracket can run. Device equality and speed are unmeasured.
-No GPU, service, live queue or host setting changed.
-[Work note](notes/2026-10-18-own-runtime-packet117.md).
+compilers pass sixteen exact cases twice, and the full layer mock passes
+4,736 comparisons. Both HC kernels remain spill-free. The two fresh micro
+proposals and conditional one-load bracket pass temporary queue planning.
+The bracket's startup, reset, protocol and memory-limit checks pass. Each
+micro must cut both HC gate times by at least 30% before it can run. Device
+equality and speed remain unmeasured. No GPU, service, live queue or host
+setting changed. [Work note](notes/2026-10-18-own-runtime-packet117.md).
 
 **October 18, packet115 expert micro prepared on CPU:** Separate expert images
 use 128 registers for production and 256 for LARGE. All four designs have
