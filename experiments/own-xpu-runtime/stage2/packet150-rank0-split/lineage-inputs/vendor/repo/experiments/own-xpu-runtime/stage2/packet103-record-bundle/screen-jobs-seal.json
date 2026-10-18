@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "views": {
+    "control": {
+      "dense": "production",
+      "hc": "hc-wide",
+      "experts": "wide64",
+      "host": "ordered",
+      "route": "production",
+      "norm": "production",
+      "recurrence": "rec-parallel",
+      "draft_head": "production",
+      "head": "production",
+      "hc_norm": "production",
+      "down": "production",
+      "draft_attention": "production"
+    },
+    "candidate": {
+      "dense": "production",
+      "hc": "hc-wide",
+      "experts": "wide64+halfcache",
+      "host": "ordered",
+      "route": "fast",
+      "norm": "production",
+      "recurrence": "rec-both-plus",
+      "draft_head": "production",
+      "head": "production",
+      "hc_norm": "production",
+      "down": "tile16",
+      "draft_attention": "split32"
+    }
+  },
+  "order": [
+    "control",
+    "candidate",
+    "control"
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet103-record-bundle/screen_jobs.py": "9ff5c68ac91bf920e3ca47f9beb1c141b37b2b65a308023da1eea7817a21477a",
+    "experiments/own-xpu-runtime/stage2/packet103-record-bundle/screen_job.py": "e8dab56c167cbe3dcb8cf23ded6cf43f41d0c0442d841cf5e7ff629c7cfe7234",
+    "experiments/own-xpu-runtime/stage2/packet103-record-bundle/compare.py": "c74cbee8f9ef0ec567b88aaa2ad42f828e7d679e53b2429d81be6217f1ac0677",
+    "experiments/own-xpu-runtime/stage2/packet103-record-bundle/composition-selection.json": "a88d65c9c93be5a8b677f6c221c798e2c95ea91ed85971f774a8ef4bdd2685e8",
+    "experiments/own-xpu-runtime/stage2/packet103-record-bundle/run_screen.py": "e8aa2c023565abe00dc9cf72da8faaf77d52fb8c6c0066eacb492f9c6e1ed015",
+    "experiments/own-xpu-runtime/stage2/packet103-record-bundle/baseline-pins.json": "2a9f511d8a74ea5fdf4237fc618626161fc8453bd9055a3b12c7c418ab3a7623",
+    "experiments/own-xpu-runtime/stage2/packet103-record-bundle/shared-wrapper-pin.json": "266c1794bd6dbd6839111038fd82d4e4295acc2ec8377d14f618e6fdb437a566",
+    "experiments/own-xpu-runtime/stage2/packet103-record-bundle/selections/production--hc-wide--wide64--ordered--production--production--rec-parallel--production--production--production--production--production--placement-1/screen-seal.json": "c29567ab620b09e8c0ac7288d4780ac8faad1b7793eaf7624c074ee5d9cd14fb",
+    "experiments/own-xpu-runtime/stage2/packet103-record-bundle/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--placement-1/screen-seal.json": "5384395381113d28e60039b5ec759c6179c003e464f4b125ac421866fb7c8126"
+  }
+}

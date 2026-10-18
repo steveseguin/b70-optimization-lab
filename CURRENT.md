@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet150 rank-0 split prepared on CPU:** The current banked
+bundle8 copy separates token preparation, snapshot work, the suffix head and
+peer/draft waits. One proposed lane-B load has five exact 64-token views and a
+15-minute cooperative watchdog. Builds, miniature byte/restore checks, launch
+and report rehearsal, limits, drain checks and pin admission pass. Nothing was
+queued or launched. Device attribution remains pending; the 58.798 record is
+unchanged. Packet149's completed probe adds about 7.69 ms per miss, above the
+1 ms gate, so no shared-correction prototype is being built.
+[Work note and handoff](notes/2026-10-18-own-runtime-packet150.md).
+
 **October 18, disk8 archive pass recovered 0.413 GB; reserve still short:**
 Two verified archives preserve 595 closed, unused compiler outputs, logs and
 private cache files on RAID. Root had 29.771 GB free at the final file check,

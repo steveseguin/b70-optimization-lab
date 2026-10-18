@@ -1,0 +1,1010 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "weight_bytes_read": 0,
+  "plan_dispatch_rows": 48,
+  "target_ffn_groups": 48,
+  "commands_per_tuple_before": 6,
+  "commands_per_tuple_after": 2,
+  "removed_target_commands": 192,
+  "command_count_scope": "48 restored groups times the retained six-to-two command recipes; no model execution",
+  "sources_sha256": {
+    "speed1_plan_gate.py": "a970f7ad13b95dffa5bbd8c4cbcd862f4f0769fd7c8b54cbfca2d2f04e3f058c",
+    "plan_group_gate.py": "1485f6d26704743ee3f83204332278763b10bb4c21b37929bed72eadcdae48c5",
+    "main.cpp": "1263d055aae92ccb78e541fabbf583e5d1737a5597ad9517213fecf875d2a53f",
+    "rank.hpp": "3e87bd512f69019499fc50bdb75a333d6d3018817eb759fc4c4472b7677cddd0",
+    "mtp.hpp": "ab81b1640de3cfdd2407762cc05d3efec1f08381dafb44b0bc0ac57c41bb8b82",
+    "p39_plan.hpp": "fec70f9aa95dfd71fea8dac927419373ce3172c73e76d4a3510d52b595eb855c",
+    "small_gemv.cpp": "36f250c15ef6de5081f934bbb85daf7476c9b36efb70f0708ef0bba2b39123af",
+    "small_gemv.hpp": "8da011c8025e8a3fec2c7d8e4e23eec08d212ad85be649ad0fc1009d75d4e872"
+  },
+  "metadata_sha256": "9926b7a266ba2774f02fe00583257ab2aaff96ee0313d350d3ba54602ae2a656",
+  "binary_sha256": "3148de2f2e0369bb30160d5d4a184211f1b4ca623b7d6fa41cf3b40cef95779e",
+  "generated_sha256": "488bbcf056ba422c211c2c1c8eebce8e3dcec27ac842cd88bd9df165e30ae5fa",
+  "rows": [
+    {
+      "plan": "target",
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 0,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 39,
+        "followers": 83,
+        "launches": 686
+      },
+      "group_census": {
+        "ffn": 22,
+        "shared": 0,
+        "tag1": 22,
+        "tag2": 44,
+        "tag4": 22,
+        "tag7": 21
+      }
+    },
+    {
+      "plan": "target",
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 0,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 39,
+        "followers": 83,
+        "launches": 686
+      },
+      "group_census": {
+        "ffn": 22,
+        "shared": 0,
+        "tag1": 22,
+        "tag2": 44,
+        "tag4": 22,
+        "tag7": 21
+      }
+    },
+    {
+      "plan": "target",
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 0,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 39,
+        "followers": 83,
+        "launches": 640
+      },
+      "group_census": {
+        "ffn": 22,
+        "shared": 0,
+        "tag1": 22,
+        "tag2": 44,
+        "tag4": 22,
+        "tag5": 22,
+        "tag7": 22
+      }
+    },
+    {
+      "plan": "target",
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 1,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 45,
+        "followers": 97,
+        "launches": 802
+      },
+      "group_census": {
+        "ffn": 26,
+        "shared": 0,
+        "tag1": 26,
+        "tag2": 53,
+        "tag4": 26,
+        "tag7": 26
+      }
+    },
+    {
+      "plan": "target",
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 1,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 45,
+        "followers": 97,
+        "launches": 802
+      },
+      "group_census": {
+        "ffn": 26,
+        "shared": 0,
+        "tag1": 26,
+        "tag2": 53,
+        "tag4": 26,
+        "tag7": 26
+      }
+    },
+    {
+      "plan": "target",
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 1,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 45,
+        "followers": 97,
+        "launches": 750
+      },
+      "group_census": {
+        "ffn": 26,
+        "shared": 0,
+        "tag1": 26,
+        "tag2": 53,
+        "tag4": 26,
+        "tag5": 26,
+        "tag7": 26
+      }
+    },
+    {
+      "plan": "KD",
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 1,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 740
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "KD",
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 1,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 740
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "KD",
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 1,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 692
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag5": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "draft",
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 0,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 0,
+        "launches": 48,
+        "draft_uses_own_unfused_dispatch": true
+      },
+      "group_census": {}
+    },
+    {
+      "plan": "draft",
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 0,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 0,
+        "launches": 48,
+        "draft_uses_own_unfused_dispatch": true
+      },
+      "group_census": {}
+    },
+    {
+      "plan": "draft",
+      "context": 4096,
+      "draft_rank": 0,
+      "rank": 0,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 0,
+        "launches": 48,
+        "draft_uses_own_unfused_dispatch": true
+      },
+      "group_census": {}
+    },
+    {
+      "plan": "target",
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 0,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 748
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 48,
+        "tag4": 24,
+        "tag7": 23
+      }
+    },
+    {
+      "plan": "target",
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 0,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 748
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 48,
+        "tag4": 24,
+        "tag7": 23
+      }
+    },
+    {
+      "plan": "target",
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 0,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 698
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 48,
+        "tag4": 24,
+        "tag5": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "target",
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 740
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "target",
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 740
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "target",
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 692
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag5": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "KD",
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 740
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "KD",
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 740
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "KD",
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 692
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag5": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "draft",
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 0,
+        "launches": 48,
+        "draft_uses_own_unfused_dispatch": true
+      },
+      "group_census": {}
+    },
+    {
+      "plan": "draft",
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 0,
+        "launches": 48,
+        "draft_uses_own_unfused_dispatch": true
+      },
+      "group_census": {}
+    },
+    {
+      "plan": "draft",
+      "context": 4096,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 0,
+        "launches": 48,
+        "draft_uses_own_unfused_dispatch": true
+      },
+      "group_census": {}
+    },
+    {
+      "plan": "target",
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 0,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 39,
+        "followers": 83,
+        "launches": 686
+      },
+      "group_census": {
+        "ffn": 22,
+        "shared": 0,
+        "tag1": 22,
+        "tag2": 44,
+        "tag4": 22,
+        "tag7": 21
+      }
+    },
+    {
+      "plan": "target",
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 0,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 39,
+        "followers": 83,
+        "launches": 686
+      },
+      "group_census": {
+        "ffn": 22,
+        "shared": 0,
+        "tag1": 22,
+        "tag2": 44,
+        "tag4": 22,
+        "tag7": 21
+      }
+    },
+    {
+      "plan": "target",
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 0,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 39,
+        "followers": 83,
+        "launches": 640
+      },
+      "group_census": {
+        "ffn": 22,
+        "shared": 0,
+        "tag1": 22,
+        "tag2": 44,
+        "tag4": 22,
+        "tag5": 22,
+        "tag7": 22
+      }
+    },
+    {
+      "plan": "target",
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 1,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 45,
+        "followers": 97,
+        "launches": 802
+      },
+      "group_census": {
+        "ffn": 26,
+        "shared": 0,
+        "tag1": 26,
+        "tag2": 53,
+        "tag4": 26,
+        "tag7": 26
+      }
+    },
+    {
+      "plan": "target",
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 1,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 45,
+        "followers": 97,
+        "launches": 802
+      },
+      "group_census": {
+        "ffn": 26,
+        "shared": 0,
+        "tag1": 26,
+        "tag2": 53,
+        "tag4": 26,
+        "tag7": 26
+      }
+    },
+    {
+      "plan": "target",
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 1,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 45,
+        "followers": 97,
+        "launches": 750
+      },
+      "group_census": {
+        "ffn": 26,
+        "shared": 0,
+        "tag1": 26,
+        "tag2": 53,
+        "tag4": 26,
+        "tag5": 26,
+        "tag7": 26
+      }
+    },
+    {
+      "plan": "KD",
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 1,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 740
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "KD",
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 1,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 740
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "KD",
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 1,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 692
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag5": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "draft",
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 0,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 0,
+        "launches": 48,
+        "draft_uses_own_unfused_dispatch": true
+      },
+      "group_census": {}
+    },
+    {
+      "plan": "draft",
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 0,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 0,
+        "launches": 48,
+        "draft_uses_own_unfused_dispatch": true
+      },
+      "group_census": {}
+    },
+    {
+      "plan": "draft",
+      "context": 32768,
+      "draft_rank": 0,
+      "rank": 0,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 0,
+        "launches": 48,
+        "draft_uses_own_unfused_dispatch": true
+      },
+      "group_census": {}
+    },
+    {
+      "plan": "target",
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 0,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 748
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 48,
+        "tag4": 24,
+        "tag7": 23
+      }
+    },
+    {
+      "plan": "target",
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 0,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 748
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 48,
+        "tag4": 24,
+        "tag7": 23
+      }
+    },
+    {
+      "plan": "target",
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 0,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 698
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 48,
+        "tag4": 24,
+        "tag5": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "target",
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 740
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "target",
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 740
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "target",
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 692
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag5": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "KD",
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 740
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "KD",
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 740
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "KD",
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 42,
+        "followers": 90,
+        "launches": 692
+      },
+      "group_census": {
+        "ffn": 24,
+        "shared": 0,
+        "tag1": 24,
+        "tag2": 49,
+        "tag4": 24,
+        "tag5": 24,
+        "tag7": 24
+      }
+    },
+    {
+      "plan": "draft",
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "dr0",
+      "dispatch_sha256": "7f1e1f1a318901cdf2a2ae44a90a3ec817689203f1c13bde0a58218c27c6157f",
+      "result": {
+        "passed": true,
+        "groups": 0,
+        "launches": 48,
+        "draft_uses_own_unfused_dispatch": true
+      },
+      "group_census": {}
+    },
+    {
+      "plan": "draft",
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "dr1",
+      "dispatch_sha256": "3c75073292a91a2732e8f442f60228302792182dd39ee77414fc30fba64db6f2",
+      "result": {
+        "passed": true,
+        "groups": 0,
+        "launches": 48,
+        "draft_uses_own_unfused_dispatch": true
+      },
+      "group_census": {}
+    },
+    {
+      "plan": "draft",
+      "context": 32768,
+      "draft_rank": 1,
+      "rank": 1,
+      "dispatch": "forced",
+      "dispatch_sha256": "b1aa5b7d14c73814534c31ba5196f4c0a0f1ed0ea4d070c1a796ec13ccc2a9cf",
+      "result": {
+        "passed": true,
+        "groups": 0,
+        "launches": 48,
+        "draft_uses_own_unfused_dispatch": true
+      },
+      "group_census": {}
+    }
+  ]
+}
