@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet134 rank0 gap attribution on CPU:** The saved trace does
+not support command replay as the next speed fix. Of each hit's 1.679 ms
+compute gap, 1.594 ms is before target kernels start and only 0.085 ms is
+inside their sequence. The separate host gap mostly covers rank1 drafting
+and target-head service. Misses add 2.046 ms before correction. Packet128b
+failed its timing-overhead gate, so these remain diagnostic observations.
+No runtime, GPU, service or live queue changed; no speed gain is claimed.
+The next useful evidence separates token lookup, decoding and upload costs.
+[Attribution and work note](notes/2026-10-18-own-runtime-packet134.md).
+
 **October 18, packet133 bundle8 prepared on CPU:** The new copy preserves all
 182 parent links and seals only bundle7 control and bundle7 plus suffix
 interleave. Both compositions pass their CPU startup checks; all 83 tests and
