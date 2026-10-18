@@ -85,7 +85,14 @@ def finish_bracket(output, window, identity, coordination):
     else:
         result['candidates'] = [dict(index=r['index'], rate=r['rate'],
              faster_than_all_controls=r['rate'] > max(controls),
-             gain_percent=100*(r['rate']/statistics.mean(controls)-1)) for r in rows if r['choice']=='candidate']
+             gain_percent=100*(r['rate']/max(controls)-1),
+             diagnostic_gain_over_control_mean_percent=100*(r['rate']/statistics.mean(controls)-1))
+             for r in rows if r['choice']=='candidate']
+        candidate_rates=[r['rate'] for r in rows if r['choice']=='candidate']
+        require(len(candidate_rates)==2, 'both candidate repeats required')
+        result['strict_candidate_control_ratio']=min(candidate_rates)/max(controls)
+        result['strict_gain_percent']=100*(result['strict_candidate_control_ratio']-1)
+        result['both_candidates_faster_than_all_controls']=min(candidate_rates)>max(controls)
     save(output / 'bracket-summary.json', result)
     require(result['passed'], 'A/A timing drift exceeds preregistered 3% control bound')
     return result

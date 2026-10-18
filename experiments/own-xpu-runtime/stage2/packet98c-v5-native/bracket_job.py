@@ -1,4 +1,4 @@
-"""Fixed first-use A/A smoke, then five-view packet91 bracket. Plan is CPU only."""
+"""Packet98c route A/B/A first-use smoke, then kernel-only five-view brackets."""
 import argparse
 from pathlib import Path
 from common import HERE, read, require, sha

@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/full_shape.py", line 95, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/full_shape.py", line 80, in main
+    subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=180)
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/build/full-shape/fixture', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/lineage/selection.json', '2cb03124193cfe9e3fd3ea93464a3e6ed75ce1b9c0170a7806ccb390db0012cb', '0', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/build/full-shape/candidate-rank0', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/lineage/candidate.json', '3f7d3b61738f9f031cc1dde8a1f28d5fe3767b0ef79a84a32c45ec9594adb36c']' returned non-zero exit status 1.

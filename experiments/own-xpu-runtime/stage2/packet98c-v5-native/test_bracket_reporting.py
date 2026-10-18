@@ -8,7 +8,7 @@ from conditions import LANES
 import test_v3
 
 class BracketReportingTests(unittest.TestCase):
-    def scenario(self,kind='bracket',drift=False,tamper=False):
+    def scenario(self,kind='bracket',drift=False,tamper=False,scales=None,acceptance_change=False):
         with tempfile.TemporaryDirectory() as tmp:
             output=Path(tmp)
             (output/'run').mkdir()
@@ -20,8 +20,9 @@ class BracketReportingTests(unittest.TestCase):
                 dest=output/'run/views'/f'{i:02d}-{selection["choice"]}'
                 (dest/'incident64').mkdir(parents=True)
                 (dest/'boundary').mkdir()
-                rows=test_v3.V3Tests().rows(1.1 if drift and i==2 else 1.)
+                rows=test_v3.V3Tests().rows(scales[i] if scales else 1.1 if drift and i==2 else 1.)
                 for row in rows:row.update(hits=56,guesses=70,cached_tokens=0,repeat=1)
+                if acceptance_change and i==1:rows[0].update(hits=55,acceptance=55/70)
                 if tamper and i==1:rows[3]['tokens'][5]=999
                 incident=dict(tokens=list(range(64)),cached_tokens=0,passed=True,exact_oracle=True)
                 C.save(dest/'incident64/receipt.json',incident)
@@ -56,5 +57,14 @@ class BracketReportingTests(unittest.TestCase):
 
     def test_adapter_rechecks_tokens_instead_of_trusting_pass(self):
         with self.assertRaisesRegex(ValueError,'target output mismatch'):self.scenario(tamper=True)
+
+    def test_mean_only_gain_is_not_a_win(self):
+        result=self.scenario(scales=[1.1,1.05,1.,1.06,1.])
+        self.assertFalse(result['both_candidates_faster_than_all_controls'])
+        self.assertLess(result['strict_gain_percent'],0)
+        self.assertTrue(all(r['diagnostic_gain_over_control_mean_percent']>0 for r in result['candidates']))
+
+    def test_per_prompt_acceptance_change_refuses(self):
+        with self.assertRaisesRegex(ValueError,'acceptance changed'):self.scenario(acceptance_change=True)
 
 if __name__=='__main__':unittest.main()

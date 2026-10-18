@@ -3,6 +3,7 @@ import copy
 import itertools
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 import bracket
 from common import HERE, read
 
@@ -63,5 +64,30 @@ class NativeSwitchTests(unittest.TestCase):
             for source in read(path).get('sources',{}):
                 self.assertNotIn('/ops/',source)
                 self.assertFalse(source.endswith('/packet97-record-bundle/selection.json'))
+
+    def test_smoke_lane_a_refused_before_worker(self):
+        import bracket_job
+        with patch('cpu_seal.verify'),patch.object(bracket_job.screen,'main') as launch:
+            with self.assertRaisesRegex(ValueError,'lane B only'):
+                bracket_job.main(['--kind','smoke','--lane','A','--output','/unused','--plan'])
+            launch.assert_not_called()
+
+    def test_plan_needs_no_completed_device_smoke(self):
+        import bracket_job
+        with patch('cpu_seal.verify'),patch('compare.load',side_effect=AssertionError('device receipt read')),patch.object(bracket_job.screen,'main',return_value=0) as launch:
+            self.assertEqual(bracket_job.main(['--kind','attention','--lane','A','--output','/unused','--plan']),0)
+            self.assertIn('--plan',launch.call_args.args[0])
+
+    def test_missing_or_incomplete_smoke_never_launches_full_job(self):
+        import bracket_job
+        for result in (None,dict(kind='smoke',timing_equal_within_control_drift=False)):
+            with self.subTest(result=result),patch('cpu_seal.verify'),patch.object(bracket_job,'read',return_value={}),patch.object(bracket_job.screen,'main') as launch:
+                if result is None:
+                    with patch('compare.load',side_effect=FileNotFoundError('smoke missing')):
+                        with self.assertRaises(FileNotFoundError):bracket_job.main(['--kind','bracket','--lane','A','--output','/unused'])
+                else:
+                    with patch('compare.load',return_value=result):
+                        with self.assertRaisesRegex(ValueError,'must pass'):bracket_job.main(['--kind','bracket','--lane','A','--output','/unused'])
+                launch.assert_not_called()
 
 if __name__=='__main__':unittest.main()

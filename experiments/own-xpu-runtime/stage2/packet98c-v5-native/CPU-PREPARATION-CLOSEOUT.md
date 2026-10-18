@@ -8,9 +8,20 @@ objects, new native command 13 switch/reset and a copy of packet98's v5 wrapper.
 Target/draft weights, BF16 KV, 4K context, rank1 draft and 24/24 split remain fixed.
 The proposed composite projection fixes experts at wide64.
 
-Preparation is in progress; final CPU results will be recorded here. Device
-13/13 exactness, acceptance equality, fresh device repeats and speed remain
-pending. No device, service, live queue or parent packet is changed.
+Both native builds pass. Twenty full-size starts, 100 view resets and 240
+native refusals pass. Every switched capture matches the corresponding fresh
+selection, including draft attention. Four poison/reset runs verify 2,990
+mutable allocation checks, including pinned buffers, with unchanged weights.
+Five configurations each pass two fresh bracket repeats against fresh packet97
+and packet98c single-selection references: 46 switched miniature requests and
+20 reference requests, comparing tokens and 212 state-file hashes per request.
+These are synthetic CPU tests, not full-model outputs or speed measurements.
+
+Native preparation is sealed. Final wrapper tests, wrapper sealing and all five
+temporary queue plans have separate receipts under `evidence/` and
+`placement-validation/`. Device 13/13 exactness, acceptance equality, fresh
+device repeats and speed remain pending. No device, service, live queue or
+parent packet is changed.
 
 Useful mechanisms: strict pre-mutation choice validation; both target banks
 recaptured; draft prepared specs and captured attention rebuilt; complete

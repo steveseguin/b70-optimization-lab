@@ -1,0 +1,97 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "plans": [
+    {
+      "kind": "smoke",
+      "lane": "B",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p98c-smoke-B.txt",
+      "sha256": "5dea4167e76d9d6bd765e3445fdcaa0fdab90f6c97c22be9ac65b51f0eebcab3",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/build/p98-queue-cbp1s0_0"
+      ],
+      "log_sha256": "2cc40fc8d3fc931ed550cdc1f8cffb70901064843132a4ed788824a67539cdb6",
+      "passed": true
+    },
+    {
+      "kind": "bracket",
+      "lane": "A",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p98c-bracket-A.txt",
+      "sha256": "205917ba70fe16b3d5c8bff04de462482d4952d49e6aa268b2bc5bd9a06ba9d4",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "A",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/build/p98-queue-cbp1s0_0"
+      ],
+      "log_sha256": "fb529e6474d6dc703fe648f34e3dad0b26e84a3fbc5f3405238a715c0c656b0c",
+      "passed": true
+    },
+    {
+      "kind": "bracket",
+      "lane": "B",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p98c-bracket-B.txt",
+      "sha256": "9a208651bf9b5752fa70b8a85897b2a8349f4c3116a5519b4ff09ba22e3471b8",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/build/p98-queue-cbp1s0_0"
+      ],
+      "log_sha256": "83251a748ce642bd22db9d75fe2a51e537e334648844601e2a75bdba82c505af",
+      "passed": true
+    },
+    {
+      "kind": "attention",
+      "lane": "A",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p98c-attention-A.txt",
+      "sha256": "016521549285a26f9f721212fd92f4cae7184dd2842d94b527c4a5769078a5c4",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "A",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/build/p98-queue-cbp1s0_0"
+      ],
+      "log_sha256": "fba01b5d24e5a4f20bb24ac35378a64bb0575ec48f4a502245476fe75c913c22",
+      "passed": true
+    },
+    {
+      "kind": "attention",
+      "lane": "B",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p98c-attention-B.txt",
+      "sha256": "21dd3445e8c33d084420b836209d274af30c34f0ae1fdbfa03c4a38abc6d93cf",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet98c-v5-native/build/p98-queue-cbp1s0_0"
+      ],
+      "log_sha256": "e57d39da4defc4a6a2395d6b78daf85515ae512ce9eacf98c0c181004f175300",
+      "passed": true
+    }
+  ]
+}

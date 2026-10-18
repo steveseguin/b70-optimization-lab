@@ -6,8 +6,11 @@ gate and draft attention. Weights, layouts and allocation identities stay fixed.
 The target and draft captures are rebuilt and all request state is reset before
 each view. See [load/dispatch proof](LAYOUT-AUDIT.md).
 
-CPU preparation is in progress. Device output equality, acceptance and speed
-are unmeasured. CPU miniature checks are not full-model quality evidence.
+Both builds, all full-shape and reset checks, native refusals and repeated
+miniature comparisons pass. Native preparation is sealed; wrapper sealing and
+queue planning receipts are recorded separately under `evidence/`.
+Device output equality, acceptance and speed are unmeasured.
+CPU miniature checks are not full-model quality evidence.
 No record, model package or production default changes.
 
 The first proposed device job is
@@ -39,7 +42,7 @@ Planning does not occupy a lane or edit a live queue.
 
 Reproduce locally with `nice -n 19 taskset -c 8-15,24-31 python3 -B`, closed
 stdin, in this order: `bracket_config.py`, `build_engine.py`, `full_shape.py`,
-`reset_gate.py`, `protocol_gate.py`, the unittest suite, `seal_native.py`,
+`reset_gate.py`, `protocol_gate.py`, `audit_sources.py`, the unittest suite, `seal_native.py`,
 `cpu_seal.py`, `queue_plan.py`. Seals require fresh outputs. Both native
 compilers are serialized through packet94's `compile_turn.py`; compilation of
 the device binary does not execute a GPU program. The 8 GiB address-space

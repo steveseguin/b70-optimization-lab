@@ -1,14 +1,14 @@
 # Packet98c: native kernel-only v5 switching
 
-CPU preparation in progress. The isolated engine and wrapper are in
+CPU preparation is complete and sealed. The isolated engine and wrapper are in
 `experiments/own-xpu-runtime/stage2/packet98c-v5-native/`.
 The engine starts from packet97's bundle sources; the wrapper is a copy of v5.
 Frozen trees, live queues and active record work remain untouched.
 
 The source audit admits route, recurrence, production/wide HC gate and draft
 attention switching. Experts, packed heads and all other choices stay fixed.
-The proposed first device job will be a route-only A/B/A on lane B, planned
-on a temporary queue. Device execution is outside this CPU-only task.
+The proposed first device job is a route-only A/B/A on lane B, successfully
+planned on a temporary queue. Device execution is outside this CPU-only task.
 See the packet's `LAYOUT-AUDIT.md` for exact load/dispatch boundaries.
 
 The initial `git pull --rebase` refused pre-existing shared edits. Fetch showed
@@ -33,5 +33,47 @@ scratch removal. The build currently occupies about 73 MiB, below 300 MB.
 The first protocol attempt matched output/state bytes in completed cases but
 stopped when a concurrent scratch archive removed a file during the size census.
 The census now tolerates a disappearing scratch file. The complete protocol
-comparison is rerunning against the final binary; seals and queue plans follow.
-No device exactness or performance claim is made.
+comparison passes against the final binary for all five configurations, twice
+each: 46 switched miniature requests and 20 fresh single-selection references.
+Every request matches its reference tokens and 212 state-file hashes. The
+parent and new binaries are compared under the same selection. Miniature
+geometry is synthetic; production-size allocation/capture tests separately
+prove that each selection binds the intended kernels.
+
+The final **130 wrapper tests pass**, including all 24 kernel-only combinations,
+every non-switchable field, incomplete-smoke refusal, cold requests, changed
+outputs/acceptance, and a mean-only apparent gain that fails the fastest control.
+One new synthetic test initially scaled its fake rates in the wrong direction;
+its corrected fixture passes. No production criterion was relaxed.
+Both native and wrapper seals pass verification. The source audit checks all
+192 copied native files and unchanged linked arithmetic objects. Parent
+orchestration outputs and the mutable packet97 selection are not dependencies.
+
+All five new files under `experiments/own-xpu-runtime/ops/lane-queue/` pass the
+real planner using temporary queue copies:
+
+- `proposed-p98c-smoke-B.txt`: route production / fast / production.
+- `proposed-p98c-bracket-A.txt` and `proposed-p98c-bracket-B.txt`: route-fast
+  plus rec-both-plus, experts fixed wide64. This is only decision f1e5's
+  kernel-only part, not the half-cache composite.
+- `proposed-p98c-attention-A.txt` and `proposed-p98c-attention-B.txt`: packet101's
+  draft attention switch, alone.
+
+Full jobs refuse until the same-seal lane-B smoke completes successfully.
+Each device view requires incident64 and all twelve cold oracle prompts, 13/13
+exact, zero cached tokens and identical per-prompt acceptance. Full brackets
+report the slower candidate divided by the fastest of all three controls;
+mean-control gains are explicitly diagnostic. Records remain on lane A and
+still need the separate full-chain gates and fresh device repeat evidence.
+
+Native builds and CPU milestones were committed and pushed immediately
+(`6a07dd635`, `3445a0889`); the final seal/proposal commit follows this note.
+The build remains about 73 MiB, with about 18 GiB free on root. Full-shape
+archives preserve every original member after hash verification. Copied
+historical patches/source retain their original whitespace; new edits pass
+the whitespace check. No GPU, service, sudo, live queue or host setting ran or
+changed. Device exactness, speed and wall-time savings remain unmeasured.
+
+Primary evidence is in the packet's `evidence/{build,full-shape,reset-bytes,
+protocol,native-source-audit,queue-plans}.json`, `lineage/screen-seal.json`,
+and `placement-validation/wrapper-seal.json` plus its 130-test log.

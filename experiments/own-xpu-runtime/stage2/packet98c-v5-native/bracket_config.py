@@ -1,4 +1,4 @@
-"""Fixed one-binary packet84 control and packet91 routing/recurrence choices."""
+"""Packet97 kernel-only decision projection and packet101 draft attention."""
 import json
 from pathlib import Path
 from common import HERE, ROOT, P56, ARITHMETIC, read, require, sha, save, verify_map, module

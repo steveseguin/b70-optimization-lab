@@ -36,5 +36,5 @@ def main():
             rows.append(dict(kind=kind,lane=lane,proposal=str(source.relative_to(ROOT)),sha256=sha(source),
                              command=cmd,log_sha256=sha(log),passed=True))
     save(P/'evidence/queue-plans.json',dict(passed=True,device_executed=False,live_queue_modified=False,plans=rows))
-    print('both lane-B proposals planned in a temporary queue; no live queue edits')
+    print('all five proposals planned in a temporary queue; no live queue edits')
 if __name__=='__main__':main()

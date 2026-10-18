@@ -5,7 +5,7 @@ import json
 
 def closure():
     sources={}
-    for name in ('build','full-shape','reset-bytes','protocol'):
+    for name in ('build','full-shape','reset-bytes','protocol','native-source-audit'):
         path=P/'evidence'/(name+'.json');row=json.loads(path.read_text())
         assert row.get('passed') is True and row.get('device_executed') is False,name
         for leaf,digest in row.get('sources',{}).items():assert sha(ROOT/leaf)==digest,leaf
