@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Read-only time accounting for the hourly efficiency review.
 
-Reconstructs per-lane and combined evidenced device occupancy from live device
-children and receipts over the last N hours. Journals and queue events supply
-attribution, never busy time. Admission waits count as idle. It also
+Reconstructs per-lane and combined busy/held time from queue job lifetimes,
+chain window receipts and live device children over the last N hours. Journal
+wrappers alone do not establish occupancy. Admission waits count as idle. It also
 lists idle gaps, Codex activity, recent commits and the record floor.
 It never launches, stops or edits anything.
 
@@ -23,7 +23,7 @@ from compile_turn import process_table, device_descendants
 
 # Units that hold or wait for GPUs: device windows, chains and drivers.
 DEVICE = re.compile(r'^(packet\d+\S*|p\d+\S*|screen\S*)\.service$')  # p61x-chain etc. (review 3 fix)
-# Unit lifetimes supply attribution only, never device occupancy.
+# Unbounded journal wrapper lifetimes do not establish occupancy.
 WAITERS = re.compile(r'^(p58-after-p57\S*)\.service$')
 LINE = re.compile(r'^(\S+) \S+ systemd\[\d+\]: (?:Started (\S+\.service)|(\S+\.service): (Deactivated successfully|Failed with result.*|Consumed .*))')
 SCRATCH = '/tmp/claude-1000/-home-steve/9743941a-5875-4449-b2f0-62a6e15d94f5/scratchpad'
@@ -55,35 +55,134 @@ def read_json(path):
         return {}
 
 
-def queue_events(now, notes):
-    """Use durable START/terminal events for attribution, never occupancy."""
+def scope_of(row):
+    """Read only explicit scheduling metadata, not arbitrary nested scope text."""
+    if not isinstance(row, dict):
+        return None
+    if row.get('scope') in ('whole-host', 'lane-A', 'lane-B'):
+        return row['scope']
+    for key in ('job', 'plan', 'lane_admission', 'coordination', 'reservation'):
+        scope = scope_of(row.get(key))
+        if scope:
+            return scope
+    return None
+
+
+def json_lines(path, notes):
+    try:
+        with path.open() as stream:
+            for line in stream:
+                if not line.strip() or line.lstrip().startswith('#'):
+                    continue
+                try:
+                    row = json.loads(line)
+                    if isinstance(row, dict):
+                        yield row
+                    else:
+                        notes.add(f'{path.name}: malformed queue record skipped.')
+                except ValueError:
+                    notes.add(f'{path.name}: malformed queue record skipped.')
+    except OSError:
+        notes.add(f'{path.name}: queue evidence unavailable.')
+
+
+def job_scope(job):
+    """Use saved plans/receipts; never execute a job's plan command."""
+    scope = scope_of(job)
+    if scope:
+        return scope
+    argv = job.get('argv', [])
+    if not isinstance(argv, list) or '--output' not in argv:
+        return None
+    index = argv.index('--output') + 1
+    if index >= len(argv) or not isinstance(argv[index], str):
+        return None
+    output = Path(argv[index])
+    if not output.is_absolute():
+        output = Path(REPO) / output
+    for path in [output / 'queue.json', output / 'plan.json',
+                 output / 'window.json', *sorted(output.glob('*/window.json'))]:
+        scope = scope_of(read_json(path))
+        if scope:
+            return scope
+    return None
+
+
+def queue_events(now, notes, holds=None):
+    """Count job lifetimes; optionally collect whole-host holds for both lanes."""
     starts, intervals, lanes = {}, [], {}
+    if holds is None:
+        holds = []
+    root = OPS / 'lane-queue'
+    scopes = {}
+    receipts = []
     for lane in ('A', 'B'):
-        path = OPS / 'lane-queue' / f'events-{lane}.jsonl'
-        try:
-            lines = path.read_text().splitlines()
-        except OSError:
-            notes.add(f'Lane {lane}: queue events unavailable; using journal evidence.')
+        # Reviewed done files remain evidence after the live done file is rotated.
+        for path in sorted(root.glob(f'done-{lane}*.txt')):
+            receipts.extend(json_lines(path, notes))
+    for path in sorted(root.glob('*.exit.json')):
+        row = read_json(path)
+        if row.get('start_utc') and row.get('end_utc'):
+            receipts.append(row)
+    for row in receipts:
+        job = row.get('job', row)
+        if not isinstance(job, dict) or not isinstance(job.get('name'), str):
             continue
-        for line in lines:
+        scope = job_scope(row) or job_scope(job)
+        if scope:
+            scopes[job['name']] = scope
+    # START events do not embed the job. Proposals provide scope for jobs whose
+    # terminal receipt is not yet available, without counting unstarted plans.
+    for path in sorted(root.glob('proposed-*.txt')):
+        for job in json_lines(path, notes):
+            if isinstance(job.get('name'), str) and job['name'] not in scopes:
+                scope = job_scope(job)
+                if scope:
+                    scopes[job['name']] = scope
+
+    def add(start, end, name, lane, kind, scope=None):
+        if lane not in ('A', 'B') or end <= start:
+            return
+        unit = 'screen-' + name + '.service'
+        intervals.append((start, end, unit, kind))
+        lanes[unit] = lane
+        if (scope or scopes.get(name)) == 'whole-host':
+            holds.append((start, end))
+
+    for row in receipts:
+        try:
+            job = row.get('job', row)
+            add(timestamp(row['start_utc']), timestamp(row['end_utc']),
+                job['name'], job['lane'], 'queue exit receipt', scope_of(row))
+        except (ValueError, KeyError, TypeError, AttributeError, OverflowError):
+            notes.add('Malformed queue exit receipt skipped.')
+    for lane in ('A', 'B'):
+        for row in json_lines(root / f'events-{lane}.jsonl', notes):
             try:
-                row = json.loads(line)
                 if row.get('lane') != lane or not row.get('name'):
                     continue
-                unit = 'screen-' + row['name'] + '.service'
+                name = row['name']
+                unit = 'screen-' + name + '.service'
                 stamp = timestamp(row['utc'])
                 kind = row['event']
                 lanes[unit] = lane
+                if scope_of(row):
+                    scopes[name] = scope_of(row)
                 if kind == 'START':
-                    starts[unit] = stamp
-                elif kind in ('DONE', 'REFUSED-fast', 'FAILED', 'FAILED-status',
-                              'FAILED-postflight', 'REPORT-FAILED') and unit in starts:
-                    intervals.append((starts.pop(unit), stamp, unit, kind))
+                    starts[unit] = (stamp, name, lane)
+                elif (kind in ('DONE', 'REPORT-FAILED')
+                      or kind.startswith(('REFUSED', 'FAILED'))) and unit in starts:
+                    start, _, _ = starts.pop(unit)
+                    add(start, stamp, name, lane, kind)
             except (ValueError, KeyError, TypeError, AttributeError):
                 notes.add(f'Lane {lane}: malformed queue event skipped.')
-    for unit, start in starts.items():
+    for unit, (start, name, lane) in starts.items():
+        # A lost terminal event must not turn an archived completed job into an
+        # open interval, especially if this unit name is reused later.
+        if any(u == unit and s <= start <= e for s, e, u, _ in intervals):
+            continue
         if active(unit):
-            intervals.append((start, now, unit, 'still active'))
+            add(start, now, name, lane, 'still active')
         else:
             notes.add(f'{unit}: unfinished queue event; active state unconfirmed, end unknown.')
     return intervals, lanes
@@ -135,6 +234,59 @@ def receipt_paths():
                         'screen/**/window.json'):
             paths.update(Path(p).resolve() for p in glob.glob(str(root / pattern), recursive=True))
     return sorted(paths)
+
+
+def chain_windows(begin, now, notes):
+    """Count each completed chain window, excluding its admission wait.
+
+    Older K receipts store clocks in the sibling lane-admission receipt's
+    shared_drain: started is admission granted, completed is window release.
+    Those monotonic clocks are valid only on the recorded boot.
+    """
+    intervals, lanes, holds = [], {}, []
+    try:
+        boot = (PROC / 'sys/kernel/random/boot_id').read_text().strip()
+    except OSError:
+        boot = None
+    epoch = dt.datetime.now(dt.timezone.utc) - dt.timedelta(seconds=time.monotonic())
+    paths = set()
+    for root in (OPS.parent / 'stage2', RESULTS):
+        paths.update(p.resolve() for p in root.glob(
+            'packet*/build/device-cards01-*/*/window.json'))
+    for path in sorted(paths):
+        row = read_json(path)
+        if row.get('cpu_rehearsal') is True or row.get('device_executed') is False:
+            continue
+        admission = read_json(path.parent.with_name(path.parent.name + '-lane-admission.json'))
+        scope = scope_of(row) or scope_of(admission)
+        start = end = None
+        try:
+            if row.get('start_utc') and row.get('end_utc'):
+                start, end = timestamp(row['start_utc']), timestamp(row['end_utc'])
+            elif finite(row.get('started_utc_ns')) and finite(row.get('finished_utc_ns')):
+                start, end = (dt.datetime.fromtimestamp(row[k] / 1e9, dt.timezone.utc)
+                              for k in ('started_utc_ns', 'finished_utc_ns'))
+            else:
+                drain = admission.get('shared_drain', {})
+                if not isinstance(drain, dict) or not boot or drain.get('boot_id') != boot:
+                    continue
+                first, last = drain.get('started_monotonic'), drain.get('completed_monotonic')
+                if finite(first) and finite(last):
+                    start, end = (epoch + dt.timedelta(seconds=t) for t in (first, last))
+        except (ValueError, TypeError, OverflowError, OSError):
+            notes.add(f'{path.parent}: invalid chain window clocks skipped.')
+            continue
+        if start is None or end is None or end <= start:
+            continue
+        start, end = max(start, begin), min(end, now)
+        if end <= start:
+            continue
+        unit = str(path.parent)
+        intervals.append((start, end, unit, 'chain window receipt'))
+        lanes[unit] = 'A'
+        if scope == 'whole-host':
+            holds.append((start, end))
+    return intervals, lanes, holds
 
 
 def finite(value):
@@ -308,10 +460,10 @@ def device_evidence(begin, now, notes):
                 unit, owner.get('lane'), owner.get('scope'), 'live device child')
         except (OSError, ValueError, IndexError):
             continue
-    notes.add('Device evidence is a lower bound when historical child exit clocks are missing; '
-              'only observed process/request time is used then. Service waits, cooldowns and drain tails are excluded.')
+    notes.add('Additional device evidence uses observed process/request clocks; '
+              'queue lifetimes and chain windows are counted separately. Admission waits remain separate.')
     if unclocked:
-        notes.add(f'{unclocked} device receipts lack usable clocks; their wrapper lifetimes are not counted.')
+        notes.add(f'{unclocked} device receipts lack child clocks; queue/window receipts may still establish busy time.')
     return intervals, lanes, holds, waits
 
 
@@ -392,21 +544,22 @@ def main():
     intervals, now = parse(a.hours)
     begin = now - dt.timedelta(hours=a.hours)
     notes = set()
-    queued, evidence = queue_events(now, notes)
-    # Prefer the manager's precise start/stop when both sources saw the same
-    # invocation. Queue events fill journal gaps and retain the lane after GC.
-    intervals = sorted(intervals + [q for q in queued if not any(
-        u == q[2] and s <= q[1] and e >= q[0] for s, e, u, _ in intervals)])
+    queue_holds = []
+    queued, evidence = queue_events(now, notes, queue_holds)
     wrappers = intervals
     intervals, receipt_lanes, holds, waits = device_evidence(begin, now, notes)
+    windows, window_lanes, window_holds = chain_windows(begin, now, notes)
+    intervals += queued + windows
+    holds += queue_holds + window_holds
     evidence.update({u: lane for u, lane in receipt_lanes.items() if lane in ('A', 'B')})
+    evidence.update(window_lanes)
     lanes = {u: unit_lane(u, evidence) for s, e, u, _ in intervals
              if e > begin and s < now and not WAITERS.match(u)}
     # Union rank pairs and duplicate receipt clocks before listing each source.
-    intervals = [(s, e, u, 'device evidence') for u in sorted({r[2] for r in intervals})
+    intervals = [(s, e, u, 'busy/held evidence') for u in sorted({r[2] for r in intervals})
                  for s, e in union((s, e) for s, e, unit, _ in intervals if unit == u)]
     notes.add(f'{len(wrappers)} wrapper intervals retained for attribution only; '
-              'active services and queue START/DONE events do not establish busy time.')
+              'queue jobs and completed chain windows count as busy/held time.')
     spans = [(s, e) for s, e, u, _ in intervals if not WAITERS.match(u)]
     busy_s, gaps = accounting(spans + holds, begin, now)
     fmt = lambda t: t.strftime('%H:%M')
@@ -415,12 +568,12 @@ def main():
                               if not WAITERS.match(u) and '-model-' not in u] + holds, begin, now)
     print(f'Device units in flight (union, excl. pure waiters): {busy_s/3600:.2f} h = {100*busy_s/(a.hours*3600):.0f}% of wall time')
     print(f'  ... also excluding *-model-* queues (they can sit waiting on a CPU oracle): {strict_s/3600:.2f} h = {100*strict_s/(a.hours*3600):.0f}%')
-    print('NOTE: in-flight now means evidenced device children/work, not active wrappers; '
-          'this is occupancy, not a GPU compute-utilization measurement.')
+    print('NOTE: busy/held includes queue START-to-terminal lifetimes and chain windows; '
+          'this is lane occupancy, not a GPU compute-utilization measurement.')
     for lane, cards in (('A', '0+1'), ('B', '2+3')):
         lane_spans = [(s, e) for s, e, u, _ in intervals
                       if not WAITERS.match(u) and lanes.get(u) == lane]
-        # A holds B only for evidenced device activity, never admission waits.
+        # Explicit whole-host jobs/windows hold both lanes; union removes overlaps.
         lane_spans += holds
         seconds, idle = accounting(lane_spans, begin, now)
         print(f'Lane {lane} (cards {cards}) busy/held: {seconds/3600:.2f} h = '

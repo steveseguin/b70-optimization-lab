@@ -42,6 +42,9 @@ class ReviewTest(unittest.TestCase):
         self.ops = patch.object(review, 'OPS', self.root)
         self.ops.start()
         self.addCleanup(self.ops.stop)
+        results = patch.object(review, 'RESULTS', self.root / 'results')
+        results.start()
+        self.addCleanup(results.stop)
 
     def events(self, lane, rows):
         path = self.root / 'lane-queue' / f'events-{lane}.jsonl'
@@ -109,7 +112,7 @@ class ReviewTest(unittest.TestCase):
 
     def test_terminal_events_and_unfinished_start(self):
         kinds = ['DONE', 'REFUSED-fast', 'FAILED', 'FAILED-status',
-                 'FAILED-postflight', 'REPORT-FAILED']
+                 'FAILED-postflight', 'REPORT-FAILED', 'REFUSED-admission']
         rows = []
         for i, kind in enumerate(kinds):
             rows.extend([(i * 2, 'START', kind), (i * 2 + 1, kind, kind)])
@@ -119,8 +122,10 @@ class ReviewTest(unittest.TestCase):
             stream.write('{partial\n')
         notes = set()
         with patch.object(review, 'active', side_effect=lambda u: u == 'screen-live.service'):
-            spans, lanes = review.queue_events(NOW, notes)
-        self.assertEqual(len(spans), 7)
+            holds = []
+            spans, lanes = review.queue_events(NOW, notes, holds)
+        self.assertEqual(len(spans), 8)
+        self.assertEqual(holds, [])
         self.assertEqual(spans[-1], (minute(20), NOW, 'screen-live.service', 'still active'))
         self.assertEqual(lanes['screen-live.service'], 'A')
         self.assertTrue(any('end unknown' in n for n in notes))
@@ -169,6 +174,163 @@ class ReviewTest(unittest.TestCase):
         self.assertIn('Lane A (cards 0+1) busy/held: 0.00 h = 0%', text)
         self.assertIn('Lane B (cards 2+3) busy/held: 0.00 h = 0%', text)
         self.assertIn('Unassigned units count only in the combined union', text)
+
+    def write_json(self, path, row):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(row))
+
+    def report(self, now, hours=1, device=([], {}, [], [])):
+        output = io.StringIO()
+        with patch.object(review, 'parse', return_value=([], now)), \
+             patch.object(review, 'device_evidence', return_value=device), \
+             patch.object(review.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, '')), \
+             patch.object(review, 'SCRATCH', str(self.root)), \
+             patch.object(review, 'REPO', str(self.root)), \
+             patch('sys.argv', ['gpu_time_review.py', '--hours', str(hours)]), \
+             contextlib.redirect_stdout(output):
+            review.main()
+        return output.getvalue()
+
+    def test_review26_onecard_holds_from_archived_receipts_and_events(self):
+        # Actual review-26 UTC ranges. Job scope lives in its saved queue plan,
+        # not the events or the archived done record.
+        ranges = [('packet58r-v5-A', '15:06:38.281955', '15:20:09.779371'),
+                  ('packet58t-resident-A', '15:21:41.185360', '15:35:25.625482')]
+        events, receipts = [], []
+        for name, first, last in ranges:
+            start, end = [f'2026-10-18T{t}Z' for t in (first, last)]
+            output = self.root / name
+            self.write_json(output / 'queue.json', {'plan': {'scope': 'whole-host'}})
+            receipts.append({'job': {'name': name, 'lane': 'A',
+                                      'argv': ['runner.py', '--output', str(output)]},
+                             'start_utc': start, 'end_utc': end, 'outcome': 'DONE'})
+            events.extend([dict(event=kind, lane='A', name=name, utc=stamp)
+                           for kind, stamp in [('START', start), ('DONE', end)]])
+        queue = self.root / 'lane-queue'
+        (queue / 'done-A-reviewed-20261018.txt').write_text(
+            ''.join(json.dumps(r) + '\n' for r in receipts))
+        (queue / 'events-A.jsonl').write_text(
+            ''.join(json.dumps(r) + '\n' for r in events))
+        now = review.timestamp('2026-10-18T16:00:00Z')
+        holds = []
+        spans, lanes = review.queue_events(now, set(), holds)
+        expected = sum((review.timestamp(r['end_utc']) - review.timestamp(r['start_utc'])).total_seconds()
+                       for r in receipts)
+        self.assertAlmostEqual(review.accounting(holds, now-dt.timedelta(hours=1), now)[0], expected)
+        self.assertAlmostEqual(review.accounting([(s, e) for s, e, _, _ in spans],
+                                                now-dt.timedelta(hours=1), now)[0], expected)
+        self.assertEqual(set(lanes.values()), {'A'})
+        text = self.report(now)
+        for lane in 'AB':
+            self.assertIn(f'Lane {lane} (cards {"0+1" if lane == "A" else "2+3"}) busy/held: 0.45 h = 45%', text)
+        self.assertNotIn('15:06-15:35 UTC', text)
+        # Rotated or lost events must not remove archived evidence.
+        (queue / 'events-A.jsonl').write_text('')
+        self.assertIn('Lane B (cards 2+3) busy/held: 0.45 h = 45%', self.report(now))
+
+    def test_queue_scope_from_receipt_or_proposal_without_counting_unstarted_jobs(self):
+        self.events('A', [(10, 'START', 'planned'), (20, 'REFUSED-new-reason', 'planned')])
+        self.write_json(self.root / 'lane-queue/proposed-test.txt',
+                        {'name': 'planned', 'scope': 'whole-host'})
+        self.write_json(self.root / 'lane-queue/proposed-unused.txt',
+                        {'name': 'unused', 'scope': 'whole-host'})
+        self.write_json(self.root / 'lane-queue/archived.exit.json',
+                        {'job': {'name': 'receipt-only', 'lane': 'B'},
+                         'scope': 'whole-host', 'start_utc': minute(30).isoformat(),
+                         'end_utc': minute(40).isoformat()})
+        holds = []
+        spans, lanes = review.queue_events(NOW, set(), holds)
+        self.assertEqual(len(spans), 2)
+        self.assertEqual(review.accounting(holds, BEGIN, NOW)[0], 20 * 60)
+        self.assertNotIn('screen-unused.service', lanes)
+
+    def test_missing_terminal_receipt_does_not_extend_reused_unit(self):
+        self.events('A', [(5, 'START', 'reused'), (30, 'START', 'reused')])
+        self.write_json(self.root / 'lane-queue/done-A-reviewed.txt',
+                        {'job': {'name': 'reused', 'lane': 'A'},
+                         'start_utc': minute(5).isoformat(), 'end_utc': minute(10).isoformat()})
+        with patch.object(review, 'active', return_value=False):
+            spans, _ = review.queue_events(NOW, set())
+        self.assertEqual([(s, e) for s, e, _, _ in spans], [(minute(5), minute(10))])
+
+    def test_review26_chain_k_windows_and_whole_host_receipts(self):
+        # K receipts have no child/request clocks. Their sibling admission
+        # receipts bracket the completed windows, including serial fixture gaps.
+        start = review.timestamp('2026-10-18T13:15:00Z')
+        now = review.timestamp('2026-10-18T14:00:00Z')
+        boot = self.root / 'proc/sys/kernel/random/boot_id'
+        boot.parent.mkdir(parents=True)
+        boot.write_text('test-boot')
+        windows = ('K0', 'K1a', 'K1b', 'K2', 'W0p', 'KD')
+        bounds = (0, 1, 4, 7, 12, 15, 22)
+        root = review.RESULTS / 'packet124c-record-bundle/build/device-cards01-a'
+        for i, name in enumerate(windows):
+            self.write_json(root / name / 'window.json',
+                            {'device_executed': True, 'lane_admission': {'scope': 'lane-A'}})
+            self.write_json(root / f'{name}-lane-admission.json',
+                            {'coordination': {'lane': 'A', 'scope': 'lane-A',
+                                              'started_monotonic': 900 + bounds[i] * 60},
+                             'shared_drain': {'boot_id': 'test-boot',
+                                              'started_monotonic': 1000 + bounds[i] * 60,
+                                              'completed_monotonic': 1000 + bounds[i+1] * 60}})
+        # Wall clocks remain usable across boots; whole-host windows hold B.
+        self.write_json(root / 'WSs/window.json',
+                        {'start_utc': '2026-10-18T13:40:00Z', 'end_utc': '2026-10-18T13:50:00Z',
+                         'boot_id': 'old-boot', 'lane_admission': {'scope': 'whole-host'}})
+        class ChainClock(dt.datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return now
+        with patch.object(review, 'PROC', self.root / 'proc'), \
+             patch.object(review.dt, 'datetime', ChainClock), \
+             patch.object(review.time, 'monotonic', return_value=3700):
+            spans, lanes, holds = review.chain_windows(start, now, set())
+            self.assertEqual(len(spans), 7)
+            self.assertEqual(review.accounting([(s, e) for s, e, _, _ in spans], start, now)[0], 32 * 60)
+            self.assertEqual(review.accounting(holds, start, now)[0], 10 * 60)
+            self.assertEqual(set(lanes.values()), {'A'})
+            text = self.report(now)
+            self.assertIn('Lane A (cards 0+1) busy/held: 0.53 h = 53%', text)
+            self.assertIn('Lane B (cards 2+3) busy/held: 0.17 h = 17%', text)
+            self.assertNotIn('13:15-13:37 UTC', text)
+            boot.write_text('different-boot')
+            spans, _, _ = review.chain_windows(start, now, set())
+            self.assertEqual(len(spans), 1)  # only UTC receipt survives reboot
+
+    def test_chain_utc_nanoseconds_and_invalid_or_rehearsal_receipts(self):
+        root = review.RESULTS / 'packet2/build/device-cards01-a'
+        valid = {'started_utc_ns': int(minute(10).timestamp() * 1e9),
+                 'finished_utc_ns': int(minute(20).timestamp() * 1e9),
+                 'device_executed': True, 'scope': 'whole-host'}
+        self.write_json(root / 'K0/window.json', valid)
+        for name, change in [('cpu', {'cpu_rehearsal': True}),
+                             ('unlaunched', {'device_executed': False}),
+                             ('nan', {'finished_utc_ns': float('nan')}),
+                             ('backwards', {'finished_utc_ns': valid['started_utc_ns'] - 1e9}),
+                             ('missing', {'finished_utc_ns': None})]:
+            self.write_json(root / name / 'window.json', dict(valid, **change))
+        with patch.object(review, 'PROC', self.root / 'no-proc'):
+            spans, _, holds = review.chain_windows(minute(15), NOW, set())
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(holds, [(minute(15), minute(20))])
+
+
+    def test_overlapping_queue_device_and_windows_union_per_lane_and_preserve_wait(self):
+        self.events('A', [(10, 'START', 'a'), (30, 'DONE', 'a')])
+        self.events('B', [(25, 'START', 'b'), (40, 'DONE', 'b')])
+        root = review.RESULTS / 'packet1/build/device-cards01-a'
+        self.write_json(root / 'WSs/window.json',
+                        {'start_utc': minute(20).isoformat(), 'end_utc': minute(35).isoformat(),
+                         'scope': 'whole-host'})
+        device = ([(minute(15), minute(25), 'screen-a.service', 'device')], {}, [],
+                  [(minute(0), minute(12), 'wait-A', 'A')])
+        text = self.report(NOW, device=device)
+        self.assertIn('union, excl. pure waiters): 0.50 h = 50%', text)
+        self.assertIn('Lane A (cards 0+1) busy/held: 0.42 h = 42%', text)
+        self.assertIn('Lane B (cards 2+3) busy/held: 0.33 h = 33%', text)
+        self.assertIn('Lane A idle_admission_wait: 10.0 min', text)
+        self.assertIn('Lane B whole-host holds included: 15.0 min', text)
+
 
     def test_wait_category_subtracts_busy_and_unions_duplicates(self):
         self.assertEqual(review.subtract([(minute(10), minute(40)),
