@@ -2,7 +2,7 @@
   "schema": "packet127.selection-evidence.v1",
   "device_executed": false,
   "historical_device_evidence": true,
-  "created_utc": "2026-10-18T11:47:38Z",
+  "created_utc": "2026-10-18T11:54:27Z",
   "choices": [
     81920,
     122880
@@ -226,9 +226,21 @@
     "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p120-B-grid-0-production/window.json": "ab4c63749023812bc423d9bd88106f34cf85ce19cda52f6f93799d9eb90ae075",
     "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p120-B-grid-0-production/summary.json": "932abe55234851c396e4d5b2829012499460f483cded27e9133b04eaf7550bdd",
     "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p120-B-grid-1-25-23/window.json": "0a2f64f2b78887635f8c20cbd55195808ec4c1f06edd438db75efa153efb95ad",
-    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p120-B-grid-1-25-23/summary.json": "03899cae7fcced687f31477989b705c2c84808a1602282614d057508e22d4ad6"
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p120-B-grid-1-25-23/summary.json": "03899cae7fcced687f31477989b705c2c84808a1602282614d057508e22d4ad6",
+    "experiments/own-xpu-runtime/stage2/packet127-head-retune/evidence/p120-trailing-teardown.json": "dd8c86526a2de2d72bcd0d78a3e21c10c151ede270ee3b25ff39f59548c90adb",
+    "experiments/own-xpu-runtime/stage2/packet127-head-retune/p120_closeout_evidence.py": "7c12251e85a91c28920d92e628cca2460be2566314173c669f55d00bf31b82a9"
   },
   "packet120_relative_to_first_control_percent": [
     -3.7955728641799302
-  ]
+  ],
+  "packet120_trailing_lifecycle": {
+    "passed": false,
+    "gate_refused": true,
+    "reason": "previous teardown incomplete; coordinator required",
+    "own_ranks_exited": true,
+    "retained_path": "experiments/own-xpu-runtime/stage2/packet127-head-retune/evidence/p120-trailing-teardown.json",
+    "source_path": "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p120-B-grid-2-production/run/teardown.json",
+    "source_sha256": "dd8c86526a2de2d72bcd0d78a3e21c10c151ede270ee3b25ff39f59548c90adb",
+    "scope": "Observed failure receipt, not a completed speed control"
+  }
 }

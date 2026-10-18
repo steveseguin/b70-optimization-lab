@@ -11,13 +11,15 @@ negative indexes were checked. No runtime build, GPU job, service or queue
 proposal was made. Next prerequisite: separately timed head readiness,
 suffix service and merge wait. [Work note](notes/2026-10-18-own-runtime-packet126.md).
 
-**October 18, packet127 head retune passes CPU gates:** The 81,920-row and
-122,880-row rank0 suffixes fit the unchanged 24/24 bundle7 line. Both compilers
-pass repeated exact byte and reset checks, and all 33 startup windows pass.
-The device micro is compiled; device equality and speed remain pending.
-The old model favors the existing 46,080-row split, so the proposed grid tests
-whether the newer bundle changed the best balance. No GPU, service, live queue
-or host setting changed. [Work note](notes/2026-10-18-own-runtime-packet127.md).
+**October 18, packet127 head retune ready for coordinator handoff:** The
+81,920-row and 122,880-row rank0 suffixes fit the unchanged 24/24 bundle7 line.
+Both compilers pass repeated exact bytes and resets; all 33 startup windows,
+six native launch-limit checks and four temporary proposal plans pass. The
+118 MB build is sealed. Both device micros, B's four-process grid and A's
+conditional confirmation remain pending. The old model favors 46,080, and
+packet120's trailing control refused teardown, so no new speed gain or spare
+GPU time is claimed. No GPU, service, live queue or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet127.md).
 
 **October 18, packet125 one-card miss micro prepared on CPU:** The retained
 one-card screen averages 33 misses and 65.46 MB of missing expert bytes per

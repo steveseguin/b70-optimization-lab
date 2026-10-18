@@ -1,0 +1,90 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "plans": [
+    {
+      "lane": "B",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p127-micro-81920-B.txt",
+      "sha256": "1cba256249e17b38752b8844cb6b70034a9359052a420409d8b6310ff08fc98e",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/build/tmp/p127-plan-te0puagx"
+      ],
+      "log_sha256": "8e58d7e1a85a8ab15885f5c3d96d714a0be9217f51b8357871799a5333863fd2",
+      "passed": true,
+      "expected_seconds": 100,
+      "watchdog_seconds": 1200,
+      "condition": "coordinator admission; independent fresh device micro"
+    },
+    {
+      "lane": "B",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p127-micro-122880-B.txt",
+      "sha256": "735d73427cfd34e93b962740ac4a1b4a5c3b71193e581f18351df053991e61e3",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/build/tmp/p127-plan-chm_xaab"
+      ],
+      "log_sha256": "9f10ca9fabf95fd10ee0b6e5311b35d62374a8ffda36215e7b7aafcd610d2759",
+      "passed": true,
+      "expected_seconds": 100,
+      "watchdog_seconds": 1200,
+      "condition": "coordinator admission; independent fresh device micro"
+    },
+    {
+      "lane": "B",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p127-B.txt",
+      "sha256": "a79af2f3466ac6410deec88f88a04d0be8e024d7c6145241ddcf2009e80c189c",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/build/tmp/p127-plan-bm9edh5h"
+      ],
+      "log_sha256": "c1a3e08679eecd77bcba2fba24ef3f236243beb5dd04a000c02673ca522d890c",
+      "passed": true,
+      "expected_seconds_per_process": 450,
+      "expected_total_seconds": 1800,
+      "watchdog_seconds_per_process": 3600,
+      "condition": "both exact micros; fixed four-process grid"
+    },
+    {
+      "lane": "A",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p127-A.txt",
+      "sha256": "37d51fb1a01755c5fd61eebe3c69b6a60619a773825654ccfad0dda5590eae5f",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "A",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune/build/tmp/p127-plan-o1mpakh5"
+      ],
+      "log_sha256": "6b6a0b4e3a7ac8466e2b56512e2b1ef405de916d4db55eff8ae5c7cded5d22ce",
+      "passed": true,
+      "expected_seconds_per_process": 450,
+      "expected_total_seconds": 1350,
+      "watchdog_seconds_per_process": 3600,
+      "condition": "both exact micros; complete B winner >=0.5% over both controls"
+    }
+  ],
+  "scope": "durations are planning estimates, not performance claims; normal reservation/drain waits may extend wall time"
+}

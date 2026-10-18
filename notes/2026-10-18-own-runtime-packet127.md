@@ -96,3 +96,53 @@ composition. Packet118's untraced suffix work cannot settle it. Packet120's
 completed candidate is 3.7956% below its first control, so moving a whole layer
 is evidence against abundant rank0 time, not evidence of spare GPU time.
 The trailing control was still pending at this milestone.
+
+## Final coordinator handoff
+
+The CPU milestone was committed and pushed as `764177e7f` after the
+preregistration commit `554d6e157`. All three views are sealed. Six actual
+rank exec interceptions pass with unlimited, unchanged inherited limits;
+an isolated inherited 8 GiB cap refuses. The final source/receipt audit passes.
+The retained build occupies **118,146,471 bytes**; root has about **34.7 GB**
+free. The preparation finished well within the two-hour box.
+
+Four new proposal files pass the real planner on temporary queue copies:
+`proposed-p127-micro-81920-B.txt`, `proposed-p127-micro-122880-B.txt`,
+`proposed-p127-B.txt`, and `proposed-p127-A.txt`. Each micro has a 100-second
+planning estimate and a 1,200-second watchdog. The B grid budget is four
+450-second processes; A is three, with a 3,600-second watchdog per screen.
+These estimates include margin over packet105b's roughly 53-second micro
+lifecycle and packet120's 204–292-second completed screens. Reservation and
+drain waits may extend them. Nothing was inserted into a live queue.
+
+A's proposal resolves the winner from the complete verified B receipts before
+each launch. It stays blocked on missing evidence or a failure to beat either
+control by 0.5%. Both micros must have exact bytes, full coverage and released
+leases. The screen reader verifies all twelve oracle token streams, identical
+acceptance, raw census admission, actual DRM counters at READY and after the
+suite, lifecycle hashes and fresh-process identity. A checks both possible
+winners during CPU planning, then runs only the qualified winner.
+
+[Original packet118 trace accounting](../experiments/own-xpu-runtime/stage2/packet127-head-retune/evidence/bundle7-traces.json)
+reproduces the 932 hit / 256 miss intervals and the apparent 0.482640 ms hit
+tail. Minimum recorded mandatory head copies consume 0.043010 ms; the loose
+remaining upper bound is 0.439630 ms, with existing suffix computation still
+untraced. The old linear head-row sensitivities add 0.202594 / 0.434129 ms.
+Thus the two candidates probe below and near that loose upper envelope; no
+usable slack or positive speed forecast is established.
+
+Packet120's trailing control completed its requests but **refused teardown**:
+`previous teardown incomplete; coordinator required`. Its own ranks exited
+through cooperative stopping, but there is no passed lifecycle or summary.
+The [original-byte failure receipt](../experiments/own-xpu-runtime/stage2/packet127-head-retune/evidence/p120-trailing-teardown.json)
+is retained. The 25/23 candidate's −3.7956% relative to the first control is
+provisional context only; there is no completed placement-bracket verdict.
+No frozen run, queue, service, process or shared marker was changed here.
+
+[Final CPU audit](../experiments/own-xpu-runtime/stage2/packet127-head-retune/evidence/final-cpu-audit.json),
+[proposal plans](../experiments/own-xpu-runtime/stage2/packet127-head-retune/evidence/queue-plans.json),
+[handoff and budgets](../experiments/own-xpu-runtime/stage2/packet127-head-retune/README.md),
+[CPU closeout](../experiments/own-xpu-runtime/stage2/packet127-head-retune/CPU-PREPARATION-CLOSEOUT.md).
+Device micros, B speed and conditional A confirmation remain pending for the
+coordinator. No model server, GPU work, sudo, host setting, reboot, external
+submission or live queue write occurred in this task.
