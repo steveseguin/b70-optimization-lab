@@ -1,0 +1,66 @@
+{
+  "schema": "packet149.ready-for-device.v1",
+  "passed": true,
+  "device_executed": false,
+  "queued": false,
+  "commit": "78a8f9ca91dfd7a7165b1204fd75ac7823381a78",
+  "prepared_utc": "2026-10-18T22:31:43.365440+00:00",
+  "lane": "B",
+  "arithmetic": "iq3-p49-split32-v1",
+  "device_quality_pending": true,
+  "device_performance_pending": true,
+  "readiness_scope": "coordinator-only xchg smoke; one-load off/xchg/off/xchg/off bracket requires matching exact lane-B smoke",
+  "cpu_seal_sha256": "5bced19a12bc634479bae5da14fde7401d1094e06ce43838e50fab9a5b69bfe6",
+  "cpu_gate_sha256": {
+    "entry-gate": "af606228619962c1d4922d982be6dc8c536e66c5b0a9787ae64b6e013fb80e13",
+    "launch-limits": "cce7b4a1719ca306fab5cea0443042889c566895730b1c2f2f7de0845a13d0ba",
+    "worker-gate": "29a475dc6cc62fb7b8b80fb2c0be3b724950f628f85f8c4834213c8f14ec0fae",
+    "report-gate": "9c12dd5c57d15f377ae9900bf1509f3a6005f875824d3ec21066c290e5a30407",
+    "queue-plan": "53a6ef063566a83f3a686e29b91cdd3dbcbcf5c2f5a8740d76941c6169b71a86",
+    "pin-guard": "6ace6dc9416b9925b95c91311adfb2cb7b1b3f55ea7b65d37734944014f6ab19"
+  },
+  "proposals": [
+    {
+      "path": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p149-smoke-B.txt",
+      "sha256": "e0cd6fb484c3d064a4a1d987c5db0a0b7a7ef6dc286f48c654c214f7126d2563"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p149-v5-B.txt",
+      "sha256": "26f70552d13f7ab4859dd8715ca1349d60f53e45e79b0628959f65da2ebced24"
+    }
+  ],
+  "cpu_receipts": [
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/evidence/entry-gate.json",
+      "sha256": "af606228619962c1d4922d982be6dc8c536e66c5b0a9787ae64b6e013fb80e13"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/evidence/launch-limits.json",
+      "sha256": "cce7b4a1719ca306fab5cea0443042889c566895730b1c2f2f7de0845a13d0ba"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/evidence/worker-gate.json",
+      "sha256": "29a475dc6cc62fb7b8b80fb2c0be3b724950f628f85f8c4834213c8f14ec0fae"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/evidence/report-gate.json",
+      "sha256": "9c12dd5c57d15f377ae9900bf1509f3a6005f875824d3ec21066c290e5a30407"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/evidence/queue-plan.json",
+      "sha256": "53a6ef063566a83f3a686e29b91cdd3dbcbcf5c2f5a8740d76941c6169b71a86"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/evidence/pin-guard.json",
+      "sha256": "6ace6dc9416b9925b95c91311adfb2cb7b1b3f55ea7b65d37734944014f6ab19"
+    }
+  ],
+  "build_material_bytes": 68045191,
+  "model_loaded": false,
+  "services_started": false,
+  "live_queues_modified": false,
+  "full_shape_startup_executed": false,
+  "source_symlink_objects_preserved": 182,
+  "report_regression": "real retained packet145 router lane-A bracket, original bytes unchanged",
+  "remaining": "device output equality and measured in-engine exchange cost; no shared compute speed claim"
+}
