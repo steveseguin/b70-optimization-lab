@@ -430,3 +430,32 @@ STOP-doing items applied:
 - no pins on mutable parent files;
 - no launch-count-only fusions;
 - microbenchmarks before full gates for kernel ideas.
+
+## Review 17, 06:05 UTC (2026-10-18): **ACT**
+
+**Evidence:**
+- Last 2 h: 98% in flight (A 71%, B 76%); 6 h 98%. Fault count 2. Root 18 GB.
+- Lane A lost 12 min at 05:26: the p100 A-confirm was queued before the lane-B grid it reads had finished.
+- One p97 chain needed five launcher attempts (rule refusals, KD failure, frozen-folder pointer).
+- Lane B idle since 05:58 with p104's micro still being edited (correctly held).
+- p103's startup sweep finishes about 06:38 and the p97 chain about 06:52.
+- Two Codex commits swept other jobs' staged files (944963d2c, 6fbb16b9d).
+
+**Actions, 06:06–06:09 UTC:**
+1. **`p103-handoff` waiter:**
+   - after Codex p103 exits, it queues p103's lane-B composite at lane B's head once it plans clean;
+   - when `packet97-chain-b` ends cleanly (fault count 2, no marker, drained, no latch), it queues p103's lane-A composite (if available) and removes PAUSE-A, without waiting for CPU-only post-chain work.
+2. **p105 head split:** its first device run will be a small smoke (one prompt, 64 tokens), not the grid. The coordinator will add or request it when p105 lands.
+3. **Codex p106 (draft split, +0.77% modeled):** copies p105's transfer code after p105's byte gates commit; smoke first, then one combined lane-B grid.
+4. **Ordering and launcher rules:**
+   - jobs that read another lane's result are queued only by a waiter on that result;
+   - chain launchers take the folder from the newest `ready.json`;
+   - the lane-B hand-off from p103 is pre-armed.
+5. **Codex p58j:** ports down-tile16, route-fast, rec-both-plus and E1 (if the layout admits it) to the one-card line, with a one-card bracket and a fresh-folder chain plan for a whole-host gap after the 2-card chain.
+
+**STOP-doing items applied:**
+- no cross-lane-dependent confirms queued directly;
+- no hard-coded chain folders;
+- no lane hand-offs waiting on CPU-only work;
+- no new cross-card path at full grid size first;
+- briefs require `git commit --only -- <paths>`.
