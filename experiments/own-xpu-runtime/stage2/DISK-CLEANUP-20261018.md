@@ -264,3 +264,100 @@ Restore by checking the archive SHA-256, reading `.cleanup/plan.json` for the or
 - Both unchanged submission replays pass against the committed prepared bundles. Packet 80's collector map remains identical across 1,101 members; packet 84's map remains identical across 1,103 members. Packet 84's existing collector has an API mismatch: it calls `verify_receipt(window)` without the now-required `data=` argument. This failed before removal. The audit-only collector adapter supplied the actual admission receipt bytes to the unchanged verifier; it did not skip verification or edit repository code. The ordinary saved-bundle replay passes without that adapter.
 - Packet 84's composition comparison passes unchanged. Packet 97's packet 90 and packet 95 source-adapter outputs are identical as parsed JSON before/after (statuses `winner` and `no-winner`), including their source/receipt hash maps. This checks the retained qualification evidence beyond readiness scripts that stop at existing flags.
 - No missing-input regression was observed. The final storage result above is separate from the existing preparation blockers. No packet 97 chain was launched.
+
+
+## Third pass for the packet 97e rerun (2026-10-18; completed 2026-10-18 05:29:07 UTC)
+
+**Reclaimed 2,014,814,208 allocated bytes (2.015 GB), below the 2.5 GB cap.** Removed 2,713 exact regular-file paths from 44 closed/superseded screen trees, only after verified archival. Allocation accounting deduplicates inodes and counts an inode only when every link was selected; filesystem free-space drift is not used as the reclamation claim. No further source removal is planned for this pass.
+
+Initial root availability was 18,704,494,592 bytes. At 2026-10-18 05:29:07 UTC, root has **20,172,414,976 bytes available**, which is **1,360,189,770 bytes above** the brief's 18,812,225,206-byte launch requirement. Concurrent screens/builds continued writing. This is a point-in-time margin, not a reservation. The packet's current storage precheck also passes; its own calculated requirement differs from the brief and is retained verbatim in `after-storage-97.log`.
+
+Work stayed on `main`, with `git pull --ff-only` reporting up to date. Only this record is committed. No GPU, service, sudo, host setting, live queue, cache outside the selected private screen trees, or packet build tree was changed. Packet 97’s failed chain was left intact, as were all never-touch packets and prepared submissions. Bulk programs ran with `nice -n 19 ionice -c3 taskset -c 8-15,24-31`, Python `-B`, and stdin `/dev/null`. Per-file `POSIX_FADV_DONTNEED` was used after bulk hashing/reading and archive writes/verification; no global cache drop occurred. Audit data was written directly to the archive disk, so no root scratch recovery is included in the result.
+
+### Reference audit and selection
+
+Repository-wide exact absolute/relative-path and parent/name searches included hidden and ignored files, excluding `.git` and binary/compressed payloads. The broad text search capped files at 32 MB and recorded 68 inaccessible unrelated Qwen cache/STOP paths; the Python/shell searches were unrestricted by size and had no access errors. No exact selected path was named by a Python/shell consumer. Dynamic consumers were inspected separately. The before-input inventories for packets 91/97 and tracked-file list had no selected-path intersection. No accessible process command line named a selected tree; every deletion also checked accessible process descriptors for open selected files.
+
+- **Old `screen/v3/evidence` and `screen/evidence`:** archived private driver-cache bytes, duplicate vocabulary/input tables, raw/compressed after-suite state, old kernel boot/before captures, and both old summary copies. These screens are before packet 76 and superseded under the owner’s brief. All receipts, identity/window JSON, token text, native logs, timings and other JSONL remain. Packet 62’s diagnostic still has its receipts, rank0 timings and snapshot JSON; packet 63 still has its complete receipt inputs. Code, locks and teardown state are untouched.
+- Two historical records (`packet59c-draft-select/source-diagnosis-evidence.json` and `packet56w-chain/evidence/screen-context.json`) name four archived old top-level summaries. They are historical provenance, not current code inputs; their recorded hashes are preserved. Restore the named archive member before reopening that historical summary.
+- **Closed v4 screens for packets 84s, 92, 93, 94, 95 and 86:** archived only remaining raw/compressed state and old kernel boot/before captures. Every v4 JSON stays. All `kernel-window.jsonl` files stay, including packet 93x’s required analysis inputs. Packet 100’s packet 86 production attribution inputs stay. Packet 90 and all packet build trees stay.
+- Current packet 97 source-adapter outputs for 90/91/92/93/94/95 are identical as parsed JSON before/after, including receipt/source hash maps. Their existing statuses remain winner/winner/failed/winner/failed/failed; those failures were not introduced here or converted into passes.
+
+### Archives and restoration
+
+Archive base: `/mnt/raid-models/own-xpu-runtime-archive/cleanup-third-20261018/`. Each directory below contains exactly one `verified-bulk-third.tar.gz`. Each archive embeds `.cleanup/plan.json` (absolute original root and exact selected paths), `.cleanup/manifest.json`, `.cleanup/manifest.sha256`, and `.cleanup/kept.json`. Payload members are `payload/<relative source path>`.
+
+Every member was fully read and SHA-256 verified before deletion. Hard-link handling verifies target content, and an independent GNU tar regular-plus-hard-link count matches the manifest plus four metadata members. The archive SHA, every selected source hash/stat and every retained hash were rechecked before exact-path unlink. No recursive delete or deletion glob was used; directories and symlinks remain. All retained hashes passed immediately after each deletion and again in the final check.
+
+| Archive directory | Files removed | Reclaimed bytes | tar.gz bytes | Members (regular + hard links) | Archive SHA-256 |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `old-screen-v3-evidence-p56x-sleep20-A2` | 109 | 84430848 | 27232884 | 113 + 0 | `0913139e37e99d1d3490ca3d9561648fa5b2b167f020e3ba5c6b695adf1a4be1` |
+| `old-screen-v3-evidence-p59c-experts-route-A` | 108 | 85528576 | 27518922 | 112 + 0 | `53f15a4ab5de5d65f958a54e2bd431b1ecfd8310c348da509de8f06706e891cb` |
+| `old-screen-v3-evidence-p61x-pl-1-B` | 109 | 84582400 | 27295566 | 113 + 0 | `ab06f45b0d0554a5231db04c7f880afe140f331fc3fdd2e3e3004d7c24729fb9` |
+| `old-screen-v3-evidence-p61x-pl-1split23-A` | 109 | 84582400 | 27301778 | 113 + 0 | `b61bd0515bc8ad029a4315687d729be490edc3928ded383bb487d2d83a028f11` |
+| `old-screen-v3-evidence-p63-drafthc-A` | 110 | 85827584 | 27584562 | 114 + 0 | `3245ef525d5a9900fe3e1afc4a29bee779c0756b5546169020dedfe4abd66115` |
+| `old-screen-v3-evidence-p63-drafthc-B` | 110 | 85827584 | 27571020 | 114 + 0 | `0a5093ae82a01072215c7d3f1d10e6031cef724daae3cadda2a89766ffe44ef4` |
+| `old-screen-v3-evidence-packet56w-B` | 109 | 84422656 | 27257605 | 113 + 0 | `8757d4a7c2bb3828d043b518c91c0381ff01a8a3e2010795bcc72e7c1360773b` |
+| `old-screen-v3-evidence-packet60-B` | 109 | 84570112 | 27306773 | 113 + 0 | `387cc134e80b7cc8726744562318f15bb47378781979ff6e927ca150667fd99a` |
+| `old-screen-v3-evidence-packet61-A` | 109 | 84570112 | 27303980 | 113 + 0 | `9bc66d3608a224ce043bd1cb1cd09d89c2b4730c06bc0579dd186ecb7e85a453` |
+| `old-screen-v3-evidence-packet61-B` | 109 | 84570112 | 27294284 | 113 + 0 | `1fe592820decf532f2ffd6f2fdc31f3157aad1ada83459950cae70efc2c18c47` |
+| `old-screen-v3-evidence-packet61x-A` | 109 | 84570112 | 27290573 | 113 + 0 | `42387399ecdd3238b06d9484525445f270eba532ae5b0ef4b9785af23c6f3741` |
+| `old-screen-v3-evidence-packet61x-B` | 109 | 84570112 | 27299684 | 113 + 0 | `18828b57b541641294ab704d958de05ff1074f9ab011ccf494a54a4a2a15cbb0` |
+| `old-screen-v3-evidence-packet61x-B2` | 109 | 84570112 | 27287600 | 113 + 0 | `74ca71fc7ac439b291c0fced0e19790f8d78d167d580835f1640bf8970f8ae08` |
+| `old-screen-evidence-p56-ctl-b` | 109 | 84414464 | 27264232 | 113 + 0 | `89a4317b52bce6c0299242b5df27d1a130ff497fefb95050abab67cadaa6864a` |
+| `old-screen-evidence-p56x-spin-a` | 109 | 84422656 | 27245104 | 113 + 0 | `fd908a431849add199f3c14435a2405c703c30e8e628493d4010bdf2918f3f40` |
+| `old-screen-evidence-p59-a` | 107 | 84721664 | 27340648 | 111 + 0 | `f9d5a89eb089b3ab2f1d1e2a97809f2a1d34c3bc04d48d001078603100fdd715` |
+| `old-screen-evidence-p59c-attention-a` | 109 | 85364736 | 27481455 | 113 + 0 | `e30cbe66a1a349a22393f895ed3b567b16096a91b6831ec8c318144518a97aa6` |
+| `old-screen-evidence-p59c-hc-a` | 110 | 85667840 | 27541173 | 114 + 0 | `b90e06b98d9ea67fff03acee756639bb1ad4b29bb5e4be5b984c83a775a2da75` |
+| `old-screen-evidence-packet56-a` | 109 | 84414464 | 27265269 | 113 + 0 | `949647e46dbce665ff18a0c1880a94a567681d9f75e0d63c409a4b903160c34b` |
+| `old-screen-evidence-packet56w-a` | 109 | 84422656 | 27263693 | 113 + 0 | `445c1ad3ac9f4b0450f78f7c3e6c9408a82e8c56672309856e51cf067f57ffc7` |
+| `old-screen-evidence-packet60-a` | 109 | 84570112 | 27307976 | 113 + 0 | `ec621a72bce80a614f011ef90391ca40359f0e009513d8141d808d26d9e79776` |
+| `v4-p84s-B-0-control` | 16 | 3964928 | 2546123 | 20 + 0 | `e496262bf4a9f1ef6b69acfc17475fc96ff5a0f8c44469b91d33dd187f73ee02` |
+| `v4-p84s-B-1-candidate-a` | 16 | 3964928 | 2546612 | 20 + 0 | `9fc4f49adce855b7d5a586705070eeb63b89d29d1b7f8b16c75fc6f7c0c33699` |
+| `v4-p84s-B-2-candidate-b` | 16 | 3964928 | 2546252 | 20 + 0 | `b5ff5e90a133b9b2eaf2eb2141f59f625b76b1ea915222894e186f61d8aa932c` |
+| `v4-p84s-B-3-control` | 16 | 3969024 | 2547102 | 20 + 0 | `c0525ab36eac42f1b8b58848a85b536aeb8b00449f6fcb310a652e2875da7cdc` |
+| `v4-p84s-B-3-control-refused-58f-undrained` | 16 | 3969024 | 2547852 | 20 + 0 | `f5c72a8c2174ec89e5f92fd713ed76b6a8e6dbd6cb83efd408a3ce7a44c4d0e3` |
+| `v4-p92-A-grid-A-0-production` | 21 | 13676544 | 2592504 | 25 + 0 | `4673fd247dd61783a7b22c407f19c46fd0e14881c095ffff1ea82a3130f1ae25` |
+| `v4-p92-A-grid-A-1-reply-first` | 21 | 13676544 | 2592596 | 25 + 0 | `fbd8c46174b9c815bd339e75845c0074669784120e287d86a77beb2fd784e5a0` |
+| `v4-p92-A-grid-A-2-production` | 21 | 13676544 | 2592335 | 25 + 0 | `0bb82f87b9d88a791dee9a475ee800232fddea27e36ebb9f7cf5688efcfefaf7` |
+| `v4-p93-B-grid-A-0-production` | 21 | 13676544 | 2592055 | 25 + 0 | `efffaf599493a587874d17dd7126d7cdca56deb08019e6631969e8c8dd033c21` |
+| `v4-p93-B-grid-A-1-head-transpose` | 21 | 13676544 | 2592271 | 25 + 0 | `4a2243b765551370316b7be40aec75e7ef2939e5a6d60112f7004aef0a2b27e4` |
+| `v4-p93-B-grid-A-2-production` | 21 | 13676544 | 2592463 | 25 + 0 | `d8501a84a6e47186b1084c8c503be80db5844c1284b1da53384dc7ae8785df6a` |
+| `v4-p93-B-grid-B-0-production` | 21 | 13672448 | 2591392 | 25 + 0 | `b0e92bc31539579be3078ee71201cd426f2fe424c4d3714038db6ef51c77ebb3` |
+| `v4-p93-B-grid-B-1-head-transpose` | 21 | 13672448 | 2591749 | 25 + 0 | `930641cbfd22fdf22c86587642284cc3578c70b753a4c2546f015ad5e32d3bf1` |
+| `v4-p93-B-grid-B-2-production` | 21 | 13680640 | 2593263 | 25 + 0 | `bec15fcd3257fd619e403f322cf6e71889e46155e193c5f3db2cd1e2ff34dbd0` |
+| `v4-p94-B-grid-B-0-production` | 21 | 13676544 | 2592777 | 25 + 0 | `b0bcf55fe421b8a8dcc02d345eb6d29c185f86fcde3b023bb260ad8266d7ba23` |
+| `v4-p94-B-grid-B-1-hc-normfuse` | 21 | 13676544 | 2592462 | 25 + 0 | `8b3dabb5e5304ae852724ee6f96fe419780b65be8be53e83965c7b8077969e72` |
+| `v4-p94-B-grid-B-2-hc-normfuse+weightcache` | 21 | 13676544 | 2592600 | 25 + 0 | `4d491ec86d8a2d798032e21cd74be9b2026e5836ff04c9c58e8b49b9a1cdef1f` |
+| `v4-p94-B-grid-B-3-production` | 21 | 13676544 | 2593003 | 25 + 0 | `ab3861869c3a9908c67f93b4bcaecdc2be1a487ec785818e4803653b4c90a1ac` |
+| `v4-p95-exp-grid-prefetch-B-grid-B-0-production` | 16 | 3973120 | 2548005 | 20 + 0 | `68f05a372ecf73f195157ccdd17436e98d330dbe251ce89a8498de46e9642513` |
+| `v4-p95-exp-grid-prefetch-B-grid-B-1-exp-grid-prefetch` | 16 | 3973120 | 2547631 | 20 + 0 | `c5aa3427263157768d4719d43dcf91a5de5aa62327f4cf858af5706915b97512` |
+| `v4-p95-exp-grid-prefetch-B-grid-B-2-production` | 21 | 13676544 | 2592200 | 25 + 0 | `77d9eb073beeb960af18ea6878d5688a3d11932bc6367045a47e9a5655010e7e` |
+| `v4-packet86-A-a` | 4 | 3317760 | 522487 | 8 + 0 | `97e304632e4ad8bad391c501e85ac324394c9e877471fe4969a22f01f0ffd6e6` |
+| `v4-packet86-B-a` | 14 | 11628544 | 1829193 | 18 + 0 | `a5cfc2de2f3c8f217118d8edb5bb02872692e3f70f9bcca0f62d5a3324b6f8d4` |
+
+Source-root mapping: `old-screen-v3-evidence-<name>` maps to `experiments/own-xpu-runtime/stage2/screen/v3/evidence/<name>`; `old-screen-evidence-<name>` maps to `experiments/own-xpu-runtime/stage2/screen/evidence/<name>`; `v4-<name>` maps to `experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/<name>`. All roots are below `/home/steve/llm-optimizations/`. The embedded plan gives the exact absolute path.
+
+Restore only required `payload/` members after verifying the archive SHA. Extract into the original root with the first path component stripped, preserving all retained files. GNU tar supports `--strip-components=1 --wildcards 'payload/*'` for a full payload restore. Check restored bytes against the embedded manifest; do not extract `.cleanup` over source files.
+
+Audit archive: `/mnt/raid-models/own-xpu-runtime-archive/cleanup-third-20261018/audit.tar.gz` (5,058,301 bytes), SHA-256 `8c7db964b9fbac0184b8d2b8beac67b4f2139adf453c45611c3151afe36ddaaa`. Its embedded `audit-manifest.json` covers the scripts, plans, exact/parent reference searches, source manifests, per-tree reports, before/after checks, source-adapter comparisons and retained-file check. Full content verification and independent GNU count passed: 298 regular + 0 hard-link members. Audit originals also remain on the archive disk.
+
+### Post-removal checks
+
+| Check | Before exit | After exit |
+| --- | ---: | ---: |
+| `lane-A` | 1 | 0 |
+| `lane-B` | 1 | 1 |
+| `verify-80` | 1 | 1 |
+| `verify-84` | 1 | 1 |
+| `verify-91` | 1 | 1 |
+| `verify-97` | 1 | 1 |
+| `inputs-91` | 0 | 0 |
+| `inputs-97` | 1 | 1 |
+| `storage-97` | 0 | 0 |
+
+- Lane A passes after cleanup (empty queue at that snapshot). Lane B’s `packet100-down-tile16-B-grid` rejects existing screen outputs; direct child-plan capture confirms `all screen outputs must be fresh`. `packet98c-smoke-B` and `packet87t-micro-B` pass. Baseline lanes also had failures, on the then-current jobs. Queues progressed during cleanup; no queue file was edited.
+- Packet 91 input check passes before/after: 14,246 static files, no errors. Packet 97 checks the same 14,375 static files before/after; its sole error is the existing failed-chain `device-cards01-a/STOP: latched output cannot be reused`. Both checks report `device_executed=false` and `model_payload_read=false`. No missing-input error appeared. The fresh packet 97e output is not registered by this cleanup.
+- Packet 91 readiness still rejects its existing readiness/preparation flags. Packet 97 readiness still rejects the changed `ops/packet97-orchestration/decision_readiness.py` hash. Packet 80/84 readiness still rejects already-started chains. These failures are retained honestly; storage sufficiency is not full readiness.
+- All six packet 97 source-adapter results match before/after. No v4 receipt/JSON changed.
+- Final retained-file verification passes for **16,726 files**; every selected source path is absent. No packet chain or GPU job was launched.
