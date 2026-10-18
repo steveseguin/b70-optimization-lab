@@ -21,3 +21,13 @@
   The first attempt exited before a model step because the dynamically loaded
   Level Zero adapter could not find `libumf.so.1`. Run `native_entry_gate.py`
   against the real device binary and recorded argv; retain immediate rank stderr.
+- Packet141c: releasing either diagnostic scratch allocation invalidates all
+  prepared commands owned by that Device, including the five inactive bank
+  pairs. Re-prepare every pair before returning to model work; an in-place
+  request reset cannot refresh prepared generations. The CPU sequence gate
+  must reject the old probe at post-reset enqueue, then pass all arms and all
+  six continuations with unchanged binding bytes. Never weaken the owner guard
+  or merely rewrite a command's generation. This is the second and last repair.
+- The split output head also retains rank0 commands outside the bank caches.
+  Refresh that suffix capture as well, and run its actual service in the CPU
+  gate. A bank-only repair passes its own continuation but leaves a later fault.

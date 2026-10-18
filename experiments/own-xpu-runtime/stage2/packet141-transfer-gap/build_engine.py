@@ -37,13 +37,24 @@ def prepare():
  gate=(P/'cpu_entry.hpp').read_text()
  main=replace(main,'int main(int argc, char **argv) {',gate+'\nint main(int argc, char **argv) {')
  main=replace(main,'    require(!fs::exists(a.output), "output already exists");','    if(a.p141_cpu_entry_gate)return p141_cpu_entry(a);\n    require(!fs::exists(a.output), "output already exists");')
+ # The split-head suffix has its own prepared cache on rank0's same Device.
+ # Extract its unchanged constructor capture into a reusable method locally.
+ head=(mirror/'p105_runtime.hpp').read_text()
+ start=head.index('   integrated::Matrix m{};');end=head.index('\n  }else{',start)
+ capture=head[start:end]
+ head=head[:start]+'   p141_prepare_suffix();'+head[end:]
+ head=replace(head,' void transfer(Allocation dst,Allocation src,size_t n,const char*leg){',
+  ' void p141_prepare_suffix(){\n  require(e.a.rank==0,"p141 suffix refresh rank");e.drain();suffix_commands.clear();\n'+capture+'\n }\n void transfer(Allocation dst,Allocation src,size_t n,const char*leg){')
+ main=replace(main,str(mirror/'p105_runtime.hpp'),str(B/'cow/p105_runtime.hpp'))
+ main=replace(main,'#include '+json.dumps(str(B/'cow/p105_runtime.hpp')),
+  '#include '+json.dumps(str(B/'cow/p105_runtime.hpp'))+'\n#include '+json.dumps(str(P/'probe_dispatch.hpp')))
  rank=replace(rank,'  error=ex.what();','  error=ex.what();\n  std::cerr<<"rank "<<a.rank<<" failure: "<<error<<std::endl;')
  main=replace(main,str(mirror/'rank.hpp'),str(B/'cow/rank.hpp'))
- rank=replace(rank,'   else if(r.op==11){','   else if(r.op==13){require(a.rank==0&&!c.pending,"p141 unresolved candidate/rank");image.boundary();engine->p141_probe(r.token,r.position);}\n   else if(r.op==11){')
+ rank=replace(rank,'   else if(r.op==11){','   else if(r.op==13){require(a.rank==0&&!c.pending,"p141 unresolved candidate/rank");image.boundary();p141_run_probe(*engine,head_runtime.get(),r.token,r.position);}\n   else if(r.op==11){')
  rank=replace(rank,str(mirror/'request_reset.hpp'),str(B/'cow/request_reset.hpp'))
  rank=replace(rank,'if(provider)provider->dump_all_state(engine->a.output/"draft-final-state");break;','/* p141: no full-state file output. */break;')
  reset=replace(reset,' state_dump(e,2147483647);request_state_inventory(e);if(provider)provider->dump_all_state(e.a.output/"draft-final-state");',' // p141: omit full-state files; allocation reset and arithmetic unchanged.')
- for name,body in [('main.cpp',main),('rank.hpp',rank),('request_reset.hpp',reset)]: (B/'cow'/name).write_text(body)
+ for name,body in [('main.cpp',main),('rank.hpp',rank),('request_reset.hpp',reset),('p105_runtime.hpp',head)]: (B/'cow'/name).write_text(body)
  entry=B/'entry-main.cpp';entry.write_text('#define main packet26_model_entry\n#include '+json.dumps(str(B/'cow/main.cpp'))+'\n#undef main\n');return prior,entry
 
 def main():

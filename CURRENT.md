@@ -12,12 +12,14 @@ placement. Device quality and speed remain pending. No GPU, service, live queue
 or host setting was changed by this preparation. The record is unchanged.
 [Work note](notes/2026-10-18-own-runtime-packet142.md).
 
-**October 18, packet141b early exit repaired on CPU:** The first probe stopped
-before any model step because an Intel loader library was missing. The repaired
-copy includes that library and prints rank errors directly. Both native entry
-checks, error logging, 28 Python tests and temporary queue planning pass. The
-analysis script is ready. The failed attempt is preserved; the fresh proposal
-is unqueued. The coordinator's device diagnostic is next; the record is unchanged.
+**October 18, packet141c second and last probe repair completed on CPU:** The
+previous attempt finished its diagnostic arms, then failed after cleanup made
+its saved launches stale. The repair refreshes all six bank combinations and
+the split output head. The CPU gate reproduces the old failure and passes the
+full repaired sequence, reset and continuation with unchanged binding bytes.
+Native entry checks, 28 Python tests and temporary queue planning pass. Both
+failed attempts are preserved. The fresh proposal is unqueued; a complete
+device result remains pending. No GPU, service or live queue changed here.
 [Work note](notes/2026-10-18-own-runtime-packet141.md).
 
 **October 18, packet58y one-card attribution prepared on CPU:** The new copy

@@ -275,7 +275,7 @@ def analyze(output):
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--output', type=Path, help='Optional analysis JSON, outside the sealed input tree')
-    ap.add_argument('--input', type=Path, default=P / 'evidence/probe-B-repair141b')
+    ap.add_argument('--input', type=Path, default=P / 'evidence/probe-B-repair141c')
     args = ap.parse_args()
     if args.output and args.output.resolve().is_relative_to(args.input.resolve()):
         ap.error('analysis output must be outside the sealed input tree')
