@@ -52,9 +52,9 @@ def signature(rec: dict) -> re.Pattern:
     if k == "memory":
         return re.compile(rf"letter\s+[\"']?{rec['letter']}\b|stop tracking|drop them", re.I)
     if k == "method":
-        return re.compile(rf"times\s+{rec['a']}\s+plus\s+{rec['b']}\b|x\s*{rec['a']}\s*\+\s*{rec['b']}\b", re.I)
+        return re.compile(rf"times\s+{rec['a']}\s+plus\s+{rec['b']}\b|[x*\u00d7]\s*{rec['a']}\s*\+\s*{rec['b']}\b", re.I)
     if k == "rule":
-        return re.compile(r"withdrawn|no longer confidential|reported by (?:their )?value", re.I)
+        return re.compile(r"withdr[ae]w\w*|no longer confidential|reported by (?:their )?value", re.I)
     return re.compile(rf"{rec['final_targets'][0]}\b.*\b{rec['asks_for']}\b|\b{rec['asks_for']}\b.*{rec['final_targets'][0]}\b", re.I)
 
 

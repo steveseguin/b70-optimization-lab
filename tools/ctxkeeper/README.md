@@ -289,6 +289,17 @@ and the question says that the NOTES value already counts the entries shown. Lab
 of eight reversals went wrong in such lines: an amount from memory, a whole-history sum that misread a "recorded at",
 and an entry added back before it was taken out. On the recorded runs the wider trigger asks at 0 of 17 cuts on the
 plain streams and at 7 of 75 cuts at 1M, all of them audit lines.
+1.2.0.dev3 (2026-10-18), from lab campaign 38 (2M tokens, forged notices and quiet audits, 410/423):
+- `--lookups` also asks for a line that leaves the amount as a gap after a sign (`447 + (item 85 decrease reversed,
+  item 473)`). Three of sixteen reversals were written that way, never asked about, and answered without the
+  reversal.
+- A new option, off by default: `--rule-scan REGEX`. A sentence of the turns being moved out that matches it and that
+  no RULES line has (no line holds 60 % of its words or cites its unit) is shown once per cut, with a question asking
+  for any rule among them in its original words. In the same run the first notes reply wrote no rule for turns that
+  state two. The confidentiality rule then lived only in an OPEN line and was never repeated at a question, and 9 of
+  59 questions about the confidential counter got a number.
+- On the recorded runs, the wider lookup trigger adds exactly those three lines. The rule scan, with the lab's
+  pattern, asks at no cut of the 1.2.0 runs that passed and at the first cut of both 2M runs.
 
 Also unreleased (1.1.1.dev1, 2026-10-17): a NOTES line whose new value states no number of its own (only item or
 ticket numbers, as in `audit reversal of the entry in item 4, amount not yet known, must recall items 4/5`) no longer

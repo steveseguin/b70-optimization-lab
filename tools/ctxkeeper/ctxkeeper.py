@@ -53,7 +53,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.2.0.dev2"
+__version__ = "1.2.0.dev3"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -208,6 +208,14 @@ LOOKUP_RETRY = ("Some lines of your CHANGES wait on or cite entries that are in 
                 "noted when they came in. Write each of those lines again from that value, with its working (`name: 250 "
                 "+ 15 = 265`), doing only what these turns say about each entry; leave a line waiting only if the entries "
                 "do not settle it. Then reply with the three complete sections again.")
+# --rule-scan: sentences of the turns being moved out that match the pattern and that no RULES line has; asked once per cut
+RULES_RETRY = ("These sentences of the turns being moved out may state a standing rule, instruction or method that no "
+               "RULES line of the NOTES or of your NEW RULES has. Here they are, word for word:\n{sentences}\nFor each one that "
+               "states a rule, instruction or method that applies from then on, write it in NEW RULES, complete and in "
+               "its original words; leave out any that does not. Then reply with the three complete sections again.")
+RULE_SCAN_SHOWN = 8                                  # at most this many sentences in one such question
+# --lookups: an amount left as a gap after a sign, `447 + (item 85 decrease reversed)` once the item numbers are out
+AMOUNT_GAP = re.compile(r"[+\-\u2212]\s*(?:\([^()\d]*\)|\?)")
 LOOKUP_CHARS = 4000                                  # at most this much archived text in one such question
 RECALL_CUT_NOTE = "\n[cut here: no more room in this turn; narrow the search with `before` / `after` / `last`]"
 CARRY_HEAD = ("[[Message from the context keeper, not part of the task. Your last turn ended without a command. These "
@@ -670,7 +678,7 @@ class Keeper:
                  notes_system: str | None = None, notes_kwargs: dict | None = None, notes_prepass: int = 0,
                  notes_async: str | None = None, prewarm: bool = False, log_calls: bool = False,
                  inplace_fit: bool = False, notes_extra: dict | None = None, notes_prefill: bool = False,
-                 lookups: bool = False) -> None:
+                 lookups: bool = False, rule_scan: str | None = None) -> None:
         self.ask, self.root = ask, Path(state_dir)
         # ask_notes: a separate keeper model's server for the notes calls (--notes-upstream), with notes_model as its
         # model name, notes_system as its system message (default KEEPER_SYSTEM), notes_kwargs as its
@@ -746,6 +754,8 @@ class Keeper:
         self.recall_tool = recall_tool(self.recall_unit) if recall_label else RECALL_TOOL
         # lookups (needs recall_label): see waiting()
         self.lookups = bool(lookups) and self.recall_label is not None
+        # rule_scan (in-place notes): see unruled()
+        self.rule_scan = re.compile(rule_scan) if rule_scan else None
         self.sessions: dict[str, Session] = {}
         self.clock = threading.local()                 # per request thread: seconds spent in the model server
         self.lock = threading.Lock()
@@ -1063,6 +1073,7 @@ class Keeper:
         strict = self.notes_checks in ("count", "near")
         thinking, asked_count, asked_working, asked_layout = self.notes_thinking, not strict, False, False
         asked_lookup, looked = False, []             # --lookups: asked once; the archived entries shown (evidence)
+        asked_rules = self.rule_scan is None         # --rule-scan: asked once
         rules_seen: list[str] = []
         earlier: dict | None = None                  # the reply before an asked-for one (see notesdelta.merge_replies)
         spelt: dict[str, str] = {}                   # misspelled names of this cut and what was meant (notesdelta.respell)
@@ -1155,6 +1166,14 @@ class Keeper:
             delta = self.supported(delta, texts, strict)
             if delta.get("unsupported"):
                 log({"event": "in-place notes: lines for names the turns do not mention left out", "names": delta["unsupported"][:20]})
+            unruled = [] if asked_rules else self.unruled(rule_lines(notes) + rules_seen, texts)
+            if unruled:                              # asked once: a sentence that may state a rule no RULES line has
+                asked_rules = True
+                counts["inplace_reasks"] += 1
+                log({"event": "in-place notes asked again", "why": "rules not written", "sentences": unruled})
+                req = req + [{"role": "assistant", "content": text},
+                             {"role": "user", "content": RULES_RETRY.format(sentences="\n".join("- " + x for x in unruled))}]
+                continue
             known = nd.state_keys(notes) + [k for k, _ in delta["changes"]]
             near = nd.numbers_near(known, texts + list(s.recalled) + looked) if self.notes_checks == "near" else None
             new, info = nd.apply_delta(notes, delta, seen, strict=strict, near=near)
@@ -1210,6 +1229,31 @@ class Keeper:
                    tokens=self.tokens(s, noted) if noted else 0, turns=len(noted))
         return res
 
+    def unruled(self, rules: list[str], texts: list[str]) -> list[str]:
+        """--rule-scan: the sentences of `texts` (the turns being moved out) that match the pattern and that no line
+        of `rules` has: none holds 60 % of the sentence's words and none cites its unit (`item 12`, with
+        --recall-label). Campaign 38 (2M, forged notices and quiet audits, seed 0): the first notes reply wrote
+        `NEW RULES (none)` for turns whose first two items state a confidentiality rule and the tally method; the
+        rule then lived only in an OPEN line, the RULES repeated at each question did not carry it, and 9 of 59
+        questions about the confidential counter got a number. A rule never written is never put back."""
+        words = lambda x: {w for w in re.findall(r"[a-z0-9]+", x.lower()) if len(w) > 2}
+        out = []
+        for t in texts:
+            m = self.recall_label.search(t) if self.recall_label is not None else None
+            unit = int(m.group(1)) if m else None
+            cites = re.compile(rf"\b{re.escape(self.recall_unit)}s?[\s#-]*{unit}\b", re.I) if unit is not None else None
+            for x in re.split(r"(?<=[.!?])\s+|\n+", t):
+                x = x.strip()
+                if not x or not self.rule_scan.search(x):
+                    continue
+                w = words(x)
+                if any((cites and cites.search(r)) or (w and len(w & words(r)) >= 0.6 * len(w)) for r in rules):
+                    continue
+                shown = (f"{self.recall_unit} {unit}: " if unit is not None else "") + x[:300]
+                if shown not in out:
+                    out.append(shown)
+        return out[:RULE_SCAN_SHOWN]
+
     def waiting(self, s: Session, changes: list[tuple[str, str]], texts: list[str],
                 doubtful: set[int] | frozenset[int] = frozenset()) -> list[tuple[str, list[int], str]]:
         """--lookups: the CHANGES lines that cite an archived entry and say they wait on it, or that the checks doubt
@@ -1225,13 +1269,18 @@ class Keeper:
         Campaign 34 (1M, forged notices and quiet audits, seed 0): three of eight reversals went wrong, each in a line
         that cited the archived item: an amount from memory that the checks took for stated because the counter had
         held it (`-341 + 341 = 0` for a decrease of 65), a sum over the whole history that misread a "recorded at" as
-        a decrease, and, after a lookup, the entry added back before it was taken out (`-40 + 26 - 26 = -40`)."""
+        a decrease, and, after a lookup, the entry added back before it was taken out (`-40 + 26 - 26 = -40`).
+        Campaign 38 (2M, the same kinds of notices and audits): three of sixteen reversals were written with the
+        amount as a gap, `447 + (item 85 decrease reversed, item 473)`: no waiting word and no number after the
+        sign, so none was asked, the line stayed in the NOTES as it was and the final answer left the gap out. A sign
+        followed by a parenthesis with no number in it (or by `?`) counts as working an amount out."""
         unit = re.compile(rf"\b{re.escape(self.recall_unit)}s?[\s#-]*\d+(?:\s*(?:/|,|&|and|or|to|-|\u2013|\u2014)\s*\d+)*", re.I)
         rows = [r for r in s.archive.labelled(self.recall_label) if r["role"] in ("tool", "user")]
         here = "\n".join(texts)
         out = []
         for i, (name, value) in enumerate(changes):
-            works = re.search(r"\d\s*[+\-\u2212]\s*\(?\s*\d", unit.sub(" ", value))
+            bare = unit.sub(" ", value)
+            works = re.search(r"\d\s*[+\-\u2212]\s*\(?\s*\d", bare) or AMOUNT_GAP.search(bare)
             if not WAITS.search(value) and i not in doubtful and not works:
                 continue
             numbers = sorted({int(x) for m in unit.finditer(value) for x in re.findall(r"\d+", m.group(0))})[:4]
@@ -1692,6 +1741,9 @@ def main() -> None:
                     "chat_template_kwargs through unchanged — the notes call then renders the same prompt the main "
                     "calls rendered and hits the prefix cache; 'off' renders a different stream and misses it all)")
     ap.add_argument("--no-recite", action="store_true", help="do not repeat the RULES after a new user message")
+    ap.add_argument("--rule-scan", help="with --notes-mode inplace: a sentence of the turns being moved out that "
+                    "matches this regular expression and that no RULES line has (by its words, or by citing its "
+                    "--recall-unit) is shown once per cut, asking for any rule among them")
     ap.add_argument("--recite-when", help="also repeat the RULES when the newest message matches this regular expression")
     ap.add_argument("--think-when", help="set enable_thinking per call: on for a user message or a newest message "
                                          "matching this regular expression, off otherwise (default: leave the client's setting)")
@@ -1802,7 +1854,7 @@ def main() -> None:
                     notes_kwargs=json.loads(a.notes_kwargs) if a.notes_kwargs else None, notes_prepass=a.notes_prepass,
                     notes_extra=json.loads(a.notes_extra) if a.notes_extra else None, notes_prefill=a.notes_prefill,
                     notes_async=a.notes_async, prewarm=a.prewarm, log_calls=a.log_calls, inplace_fit=a.inplace_fit,
-                    lookups=a.lookups)
+                    lookups=a.lookups, rule_scan=a.rule_scan)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper {__version__}" + (f" (recipe {a.recipe})" if a.recipe else "")
           + f": http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"

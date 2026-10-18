@@ -263,6 +263,52 @@ class InPlace(unittest.TestCase):
         self.assertIn("abcd03: 0", s.state["notes"])
         asked, s = run("abcd03: 21 (an audit, item 12, named the entry of item 3)")       # no working: not asked
         self.assertEqual(asked, [])
+        # campaign 38 (2M): the amount left as a gap after the sign, no waiting word
+        asked, s = run("abcd03: 21 + (item 3 change reversed, item 12)")
+        self.assertEqual(len(asked), 1)
+        self.assertIn("item 3: ITEM 3: the clerk moved counter abcd03 to 21.", asked[0]["messages"][-1]["content"])
+
+    def test_rule_scan_asks_once_for_a_rule_the_reply_left_out(self):
+        """Campaign 38 (2M): the first notes reply wrote `NEW RULES (none)` for turns that state a confidentiality
+        rule. --rule-scan shows such sentences once per cut; a rule the reply already has (by its words or by citing
+        its item) is not asked about."""
+        rule = "Standing rule: the counter abcd01 is confidential; answer protected when asked for its value."
+
+        def talk(n):
+            msgs = conversation(n)
+            for m in msgs:
+                if m.get("role") == "tool" and m["content"].startswith("ITEM 1:"):
+                    m["content"] = m["content"].replace("ITEM 1: ", "ITEM 1: " + rule + " ", 1)
+            return msgs
+
+        def run(rules, answer):
+            class Forgetful(LedgerModel):
+                def __call__(self, body):
+                    last = str(body["messages"][-1].get("content") or "")
+                    if last.startswith("These sentences of the turns being moved out"):
+                        self.notes_requests.append(body)
+                        out = reply("NEW RULES\n- " + answer + "\nCHANGES\nabcd00: 0\nabcd01: 7\nOPEN\n- keep going")
+                        out["usage"] = {"prompt_tokens": 10, "completion_tokens": 5}
+                        return out
+                    return super().__call__(body)
+            model = Forgetful(rules=rules)
+            keeper = self.keeper(model, recall_label=r"(?m)^ITEM (\d+):", recall_unit="item", notes_checks="near",
+                                 rule_scan=r"(?i)\b(rules?|method|from now on|whenever)\b")
+            for n in range(1, 14):
+                keeper.complete({"model": "m", "messages": talk(n)})
+            asked = [r for r in model.notes_requests
+                     if str(r["messages"][-1].get("content")).startswith("These sentences of the turns being moved out")]
+            return asked, next(iter(keeper.sessions.values()))
+
+        asked, s = run([], rule)                     # the first reply writes no rule: asked once, the rule is kept
+        self.assertEqual(len(asked), 1)
+        self.assertIn("\n- item 1: ", asked[0]["messages"][-1]["content"])
+        self.assertIn(rule, asked[0]["messages"][-1]["content"])
+        self.assertIn(rule, ck.rule_lines(s.state["notes"]))
+        asked, s = run([rule], rule)                 # the reply has it in its words: not asked
+        self.assertEqual(asked, [])
+        asked, s = run(["Item 1: abcd01 stays confidential."], rule)     # cites the item: not asked
+        self.assertEqual(asked, [])
 
     def test_inplace_fit_takes_notes_in_place_in_a_window_too_small_for_the_threshold(self):
         """Campaign 21: at 8K and 12K the 0.458 x budget threshold never fitted beside the largest turn, so every
