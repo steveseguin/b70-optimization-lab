@@ -1,14 +1,15 @@
 """Run the frozen K1 arithmetic fixture on CPU, never its device executable."""
 import json,resource,subprocess,tempfile
 from pathlib import Path
-from build_engine import P,ROOT,BASE,save,sha,limits
+from build_engine import P,ROOT,BASE,save,sha,limits,compiler_turn
 
 def main():
     limits();binary=P/'build/gnu-host/p58-cache-fixtures'
     with tempfile.TemporaryDirectory(prefix='k1-cpu-',dir=P/'build') as d:
         output=Path(d)/'run'
-        r=subprocess.run([str(binary),'--down-layout','down-tile16','--iterations','2','--output',str(output)],
-                         stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=600)
+        with compiler_turn():
+            r=subprocess.run([str(binary),'--down-layout','down-tile16','--iterations','2','--output',str(output)],
+                             stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=600)
         assert r.returncode==0,r.stderr
         row=json.loads((output/'k1.json').read_text());assert row['passed'] and not row['device_executed']
         assert all(row[k] for k in ('zero_copy_bytes_equal','mixed_bytes_equal','streamed_bytes_equal'))

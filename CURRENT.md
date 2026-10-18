@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet58ag one-card ports prepared on CPU:** The private
+packet58ab copy adds wider HC/expert geometry, exact half-scale decoding,
+small target fusions and cheaper foreground event retirement. HC fusion stays
+on. Both compilers' byte checks, all 111 policy tests, entry/report rehearsal
+and both temporary queue plans pass. The first proposal is a 12 × 64 smoke;
+the second compares the old line with the full composition in one five-view
+load. Neither was queued or launched. Device equality and speed remain
+pending, and the running packet58ad chain was left alone.
+[Work note and evidence](notes/2026-10-18-own-runtime-packet58ag.md).
+
 **October 18, packet150 rank-0 split prepared on CPU:** The current banked
 bundle8 copy separates token preparation, snapshot work, the suffix head and
 peer/draft waits. One proposed lane-B load has five exact 64-token views and a

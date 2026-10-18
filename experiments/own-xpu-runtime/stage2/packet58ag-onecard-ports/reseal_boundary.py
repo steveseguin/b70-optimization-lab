@@ -25,4 +25,4 @@ def check():
         for name in ('timings.jsonl', 'prefill-timings.jsonl'):
             assert (failed/'WSCREEN/run/run'/name).read_bytes() == b'', 'timing already ran'
     assert not (P/'evidence/card0-capacity-c/max').exists()
-    assert not (P/'evidence/card0-hcfusion-a').exists(), 'fresh output already consumed'
+    assert not (P/'evidence/card0-ports-a').exists(), 'fresh output already consumed'

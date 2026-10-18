@@ -1,3 +1,4 @@
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/ordered_retirement.hpp"
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/build/native/p60_submit.hpp"
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/kernel_guard.hpp"
 #line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/main.cpp"
@@ -127,7 +128,7 @@ struct RetainSteps {
   }
 };
 struct Options {
-  std::string hc="p60fusion",hc_geometry="production",experts="production",other_fusion="production";
+  std::string hc="p60fusion",hc_geometry="production",experts="production",other_fusion="production",retirement="production";
   uint64_t cache_bytes=18000000000ull;std::string miss_path="zero-copy";
   RetainSteps retain_steps;
   int cancel_launch=-1;
@@ -213,8 +214,9 @@ static Options parse(int argc, char **argv) {
       a.context = std::stoi(value());
     else if (k == "--seconds")
       { a.seconds = std::stoi(value()); seconds_supplied = true; }
+    else if (k == "--retirement") {a.retirement=value();require(a.retirement=="production"||a.retirement=="ordered-foreground","retirement dimension");}
     else if (k == "--hc-geometry") {a.hc_geometry=value();require(a.hc_geometry=="production"||a.hc_geometry=="hc-wide","HC geometry");}
-    else if (k == "--experts") {a.experts=value();require(a.experts=="production"||a.experts=="wide64+halfcache","expert dimension");}
+    else if (k == "--experts") {a.experts=value();require(a.experts=="production"||a.experts=="wide64"||a.experts=="wide64+halfcache","expert dimension");}
     else if (k == "--other-fusion") {a.other_fusion=value();require(a.other_fusion=="production"||a.other_fusion=="fused","fusion dimension");}
     else if (k == "--hc") {a.hc=value();require(a.hc=="production"||a.hc=="p60fusion","HC dimension");}
     else if (k == "--suite-inputs") a.suite_inputs=value();
@@ -868,6 +870,7 @@ public:
   }
   void initialize_cache() {
     require(expert_banks.size()==144,"all 48 target expert banks required");
+    ownrt::set_ordered_retirement(dev(0),a.retirement=="ordered-foreground");
     halfcache=allocate(0,"exact-half-decode-table",65536*4,Category::weights,Lifetime::process);
     std::vector<float> half_values(65536);for(unsigned i=0;i<65536;++i)half_values[i]=iq3::half(uint16_t(i));
     upload(0,halfcache,0,half_values.data(),half_values.size()*4);
@@ -1207,7 +1210,7 @@ public:
       std::vector<Matrix> selected{m};if(l.op=="expert_gate_up")selected.push_back(a.memory=="resident"?it->second[1]:matrix(l,1));
       // Same engine call for ordinary decode and each serial M=2 row.
       const bool round2=!a.mini&&a.memory=="resident"&&((kind==p39::Kind::silu_div4&&(cls=="hc.a.low"||cls=="hc.f.low"))||kind==p39::Kind::attention_combine);
-      finish(c,round2?p49c::dense_submit(dev(c),m,kind,b):p49b_site(w,a,l)?(kind==p39::Kind::expert_checks&&a.experts=="wide64+halfcache"?p58ag::expert(dev(c),selected,b,halfcache):p49d::expert(dev(c),selected,kind,b,sealed_selection.choices.at("down"))):p39::submit(dev(c),selected,kind,b),true);return;
+      finish(c,round2?p49c::dense_submit(dev(c),m,kind,b):p49b_site(w,a,l)?(kind==p39::Kind::expert_checks&&a.experts!="production"?p58ag::expert(dev(c),selected,b,halfcache,a.experts=="wide64+halfcache"):p49d::expert(dev(c),selected,kind,b,sealed_selection.choices.at("down"))):p39::submit(dev(c),selected,kind,b),true);return;
     }
     const auto cls=packet26::Dispatch::class_name(l.label);
     if(!a.mini&&a.memory=="resident"&&(cls=="hc.a.gate"||cls=="hc.f.gate")){

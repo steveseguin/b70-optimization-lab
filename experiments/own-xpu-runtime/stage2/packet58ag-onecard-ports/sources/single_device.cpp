@@ -1,3 +1,4 @@
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/ordered_retirement.hpp"
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/async_backend.hpp"
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/kernel_guard.hpp"
 #line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/single_device.cpp"
@@ -23,7 +24,8 @@ std::vector<sycl::device> cards() {
       for(const auto& d:p.get_devices(sycl::info::device_type::gpu)) out.push_back(d);
   return out;
 }
-class SyclDevice final : public Backend, public p58v::AsyncBackend {
+class SyclDevice final : public Backend, public p58v::AsyncBackend, public ForegroundPrefix {
+  ForegroundTails foreground_tails_;
   std::unique_ptr<sycl::queue> maintenance_queue_;
   ze_command_list_handle_t maintenance_native_=nullptr;
   sycl::event fill_tail_;Event fill_ticket_=0;
@@ -36,7 +38,7 @@ class SyclDevice final : public Backend, public p58v::AsyncBackend {
   std::vector<NativeTracked> events_;int allocation_card_=0;
   sycl::event& event(Event e){auto it=std::lower_bound(events_.begin(),events_.end(),e,[](const auto& v,Event h){return v.handle<h;});if(it==events_.end()||it->handle!=e)throw std::logic_error("foreign native event");return it->event;}
   void capacity(){if(events_.size()>=events_.capacity())throw std::length_error("native event capacity");}
-  Event record(sycl::event e){auto id=next_handle();events_.push_back({id,std::move(e),0});return id;}
+  Event record(sycl::event e,bool copy=false){auto id=next_handle();events_.push_back({id,std::move(e),0});foreground_tails_.record(id,copy);return id;}
   std::mutex error_mutex_;
   std::exception_ptr error_;
   void check_error() { std::lock_guard lock(error_mutex_); if(error_) std::rethrow_exception(error_); }
@@ -107,7 +109,7 @@ class SyclDevice final : public Backend, public p58v::AsyncBackend {
     auto copied=copy_queue_->memcpy(dst,src,n,after);
     // The compute queue must observe copy completion even for prepared kernels.
     // The returned owned copy event also protects pinned-source lifetime.
-    try {queue_->ext_oneapi_submit_barrier({copied});return record(copied);}
+    try {queue_->ext_oneapi_submit_barrier({copied});return record(copied,true);}
     catch(...) {
       // DMA was submitted before the dependency barrier failed. It is not yet
       // in Device's event ledger: prove completion before rethrowing, otherwise
@@ -131,7 +133,8 @@ class SyclDevice final : public Backend, public p58v::AsyncBackend {
     std::unique_ptr<PreparedSyclSubmission> captured;
     {SubmissionCapture scope(captured);native.submit(*queue_,p,{});}
     if(!captured)throw std::logic_error("native operation bypassed preparation");
-    return captured->make_callback({&events_,&error_mutex_,&error_,&allocation_card_,0});
+    auto issue=captured->make_callback({&events_,&error_mutex_,&error_,&allocation_card_,0});
+    return [this,issue=std::move(issue)]()mutable{auto event=issue();foreground_tails_.record(event);return event;};
   }
   std::function<Event()> prepare_copy(void* d,const void* s,size_t n) override {
     return [this,d,s,n]{std::vector<Event> deps;if(!events_.empty())deps.push_back(events_.back().handle);return copy(d,s,n,deps);};
@@ -142,6 +145,14 @@ class SyclDevice final : public Backend, public p58v::AsyncBackend {
       throw std::logic_error("profiling disabled");
     return {event(e).get_profiling_info<sycl::info::event_profiling::command_start>(),
             event(e).get_profiling_info<sycl::info::event_profiling::command_end>()};
+  }
+  bool foreground_prefix_complete() override {
+    check_error();
+    if(!queue_->has_property<sycl::property::queue::in_order>()||!copy_queue_->has_property<sycl::property::queue::in_order>())
+      throw std::logic_error("both foreground queues must be in order");
+    // No event can be issued concurrently by the single owner thread here.
+    // Both queues are still synchronized below to propagate async errors.
+    return foreground_tails_.complete([this](Event event){return complete(event);});
   }
   bool complete(Event e) override {
     return event(e).get_info<sycl::info::event::command_execution_status>()==sycl::info::event_command_status::complete;
@@ -182,7 +193,7 @@ class SyclDevice final : public Backend, public p58v::AsyncBackend {
     try {copy_queue_->wait();queue_->wait();}catch(...){hold_for_supervisor();}
     copy_queue_->throw_asynchronous();queue_->throw_asynchronous();check_error();
   }
-  void clear_events() override {events_.clear();}
+  void clear_events() override {events_.clear();foreground_tails_.clear();}
   void close_queue() override {maintenance_queue_.reset();fill_tail_=sycl::event{};fill_ticket_=0;if(maintenance_native_&&zeCommandListDestroy(maintenance_native_)!=ZE_RESULT_SUCCESS)throw std::runtime_error("maintenance queue destroy failed");maintenance_native_=nullptr;copy_queue_.reset();queue_.reset();if(native_copy_&&zeCommandListDestroy(native_copy_)!=ZE_RESULT_SUCCESS)throw std::runtime_error("copy immediate command list destroy failed");native_copy_=nullptr;}
   void close_context() override {
     context_.reset();

@@ -35,7 +35,7 @@ template<Type T,unsigned K,unsigned V,bool Packed=false>inline std::array<float,
 #endif
    uint16_t high=p49bgemv::load16(w+l.high+step*8+physical*2);
    uint16_t scales=p49bgemv::load16(w+l.scales+step*8+physical*2);
-   float decoded=halfcache[p49bgemv::load16(w+l.halves+2*step)];
+   const auto bits=p49bgemv::load16(w+l.halves+2*step);float decoded=halfcache?halfcache[bits]:iq3::half(bits);
    #pragma unroll
    for(unsigned chain=0;chain<V;++chain){unsigned k=first+chain*8;RawTile t;t.a=(codes[chain/2]>>(16*(chain%2)))&65535;t.high=(high>>(8*(chain/4)))&255;t.scale=(scales>>(8*(chain/4)))&255;
     float values[8];decode_tile<T>(t,k,values,decoded);
@@ -62,7 +62,7 @@ template<Type T,unsigned K,unsigned V,bool Packed=false>inline std::array<float,
  }
  return sums;
 }
-template<Type T,unsigned K,unsigned WG,bool Prefetch,bool Wide=false,unsigned Followup=0>struct Kernel final:p49b::Base {
+template<Type T,unsigned K,unsigned WG,bool Prefetch,bool Wide=false,unsigned Followup=0,bool Cached=true>struct Kernel final:p49b::Base {
  static_assert(T==Type::IQ2_S);
  static constexpr bool paired=T==Type::IQ2_S;
  static constexpr unsigned V=paired?8:16,P=32/V,SG=WG/32,RowsPerGroup=(paired?SG/2:SG)*V;
@@ -70,7 +70,7 @@ template<Type T,unsigned K,unsigned WG,bool Prefetch,bool Wide=false,unsigned Fo
  unsigned rows=paired?640:2560,count=10,experts=512;bool indirect=false;
  struct Bound:p39::Bound {const float* halfcache=nullptr;};
  Bound bind(std::span<void*const>p)const{
-  p49dvirtual::Kernel<T,K,paired?2:3> base;base.rows=rows;base.count=count;base.experts=experts;base.indirect=indirect;Bound b;static_cast<p39::Bound&>(b)=base.bind(p);b.halfcache=static_cast<const float*>(p[19]);return b;
+  p49dvirtual::Kernel<T,K,paired?2:3> base;base.rows=rows;base.count=count;base.experts=experts;base.indirect=indirect;Bound b;static_cast<p39::Bound&>(b)=base.bind(p);b.halfcache=Cached?static_cast<const float*>(p[19]):nullptr;return b;
  }
  static unsigned logical_row(unsigned group,unsigned sub,unsigned lane){return (group*(paired?SG/2:SG)+(paired?sub/2:sub))*V+lane/P;}
  static std::array<float,V> chains(const uint8_t*w,const uint16_t*x,unsigned lane,const float* halfcache){

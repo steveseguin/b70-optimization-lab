@@ -38,7 +38,7 @@ def transform(text):
     text=once(text,'    e->initialize();\n    e->dev(0).before_compute=',
         '    e->initialize();e->cache_capacity(a.cache_cap);\n    e->dev(0).before_compute=')
     text=once(text,'resident[0]+=a.cache_bytes;',
-        'resident[0]+=a.cache_bytes+1179648;')
+        'resident[0]+=a.cache_bytes+1179648; // exact-half table charged inside existing workspace bound')
     # All allocations are live at after_load. Later native work allocates no
     # additional weight arena; the supervisor also watches DRM throughout.
     text=once(text,'    record_host_memory(output,"after_load");',r'''    record_host_memory(output,"after_load");

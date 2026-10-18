@@ -2,7 +2,7 @@
 import argparse,json,resource,subprocess
 from pathlib import Path
 from build_engine import P,ROOT,sha,save,limits
-GATES=('evidence/build.json','evidence/hc-gates.json','evidence/control-gate.json','evidence/report-gate.json','evidence/entry-gates.json','evidence/protocol-gates.json','evidence/k1-async-cpu.json',
+GATES=('evidence/build.json','evidence/hc-gates.json','evidence/ports-gates.json','evidence/retirement-gates.json','evidence/control-gate.json','evidence/report-gate.json','evidence/entry-gates.json','evidence/protocol-gates.json','evidence/k1-async-cpu.json',
        'evidence/fullshape-submit-cpu.json','evidence/postload-allocation-cpu.json','evidence/reset-gate.json',
        'evidence/startup-cpu.json','evidence/argument-gate.json','evidence/python-cpu-gates.json',
        'evidence/memory-budget.json','evidence/drain-fix.json','evidence/teardown-integration.json','evidence/oracle-gate.json')
@@ -14,7 +14,7 @@ def verify(root,pins):
         assert sha(root/name)==digest,'changed sealed input: '+name
 
 def create():
-    limits();assert not (P/'evidence/card0-hcfusion-a').exists(),'never reseal started device output'
+    limits();assert not (P/'evidence/card0-ports-a').exists(),'never reseal started device output'
     sources={};gates={}
     for name in GATES:
         row=read(P/name);assert row.get('passed') is True and row.get('device_executed') is False,name
@@ -40,7 +40,9 @@ def create():
     row=dict(schema='own-runtime.packet58.build.v1',passed=True,device_executed=False,sources=sources,artifacts=artifacts,gates=gates,
         runtime_revision=subprocess.check_output(['git','rev-parse','HEAD'],text=True,stdin=subprocess.DEVNULL).strip(),
         arithmetic='iq3-p49-split32-v1',gpu_count=1,decode_mode='plain',kv_dtype='BF16',retained_build_bytes=size,
-        hc=['production','p60fusion'],cache_maintenance='overlap',cache_allocation_bytes=21552729600,oracle=binding,submission_eligible=False,
+        bracket_profiles=['production','p60fusion'],hc_fusion_always_on=True,
+        runtime_dimensions=['hc-wide','wide64','wide64+halfcache','other-fusion','ordered-foreground'],
+        cache_maintenance='overlap',cache_allocation_bytes=21552729600,oracle=binding,submission_eligible=False,
         qualification='CPU only; full-model device output equality and speed pending')
     save(P/'build-receipt.json',row);return row
 

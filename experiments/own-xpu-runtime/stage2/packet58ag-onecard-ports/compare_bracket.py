@@ -23,6 +23,6 @@ def compare(views):
         candidate_beats_all_controls=drift_passed and all(c>=a*Decimal('1.02') for c in candidates for a in controls),
         minimum_gain_vs_best_control=float(min(candidates)/max(controls)-1),
         warmup_view=dict(label='A0',rate=float(rates[0]),exact=True,excluded_from_drift_and_comparison=True),
-        comparison_controls=['A1','A2'],readiness_policy='packet58ab: packet58wb first-view warm-up amendment',
+        comparison_controls=['A1','A2'],readiness_policy='packet58ag: packet58wb first-view warm-up amendment',
         required_gain_fraction=.02,maximum_control_drift_fraction=.03,
         fresh_process_repeat=False,submission_eligible=False)

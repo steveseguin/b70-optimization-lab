@@ -12,7 +12,7 @@ class Capacity(unittest.TestCase):
         self.assertEqual(p['device_categories']['expert_cache_arena'],V.MAX_BYTES)
         self.assertGreaterEqual(p['device_margin_bytes'],0)
         self.assertLess(p['device_margin_bytes'],256)
-        self.assertEqual(p['device_categories']['workspace_bound'],1024**3)
+        self.assertEqual(p['device_categories']['workspace_bound']+p['device_categories']['exact_half_decode_table'],1024**3)
         self.assertEqual(p['device_categories']['control_transaction_bound'],1024**3)
         self.assertEqual(p['device_categories']['transfer_bound'],256*1024**2)
         self.assertEqual(p['device_categories']['target_4k_bf16_kv_index'],116391936)

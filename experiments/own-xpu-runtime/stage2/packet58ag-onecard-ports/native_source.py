@@ -101,24 +101,35 @@ def generate():
   void foreground_sync() override {packet18::LifetimeMock::synchronize();}
 ''')
     full=once(full,'    size_t commands=0;', '''    const auto arena=engine.bracket_arena_hash();
-    for(const auto* mode:{"serial","overlap"}) for(const auto* name:{"production","p60fusion","production","p60fusion","production"}) {
+    std::ostringstream port_census;port_census<<"[";bool first_port=true;
+    for(const auto* mode:{"serial","overlap"}) for(const auto* name:{"production","hc-wide","wide64","halfcache","other-fusion","ordered-retirement","p60fusion","production"}) {
       auto path=fs::path(P58R_SELECTIONS)/"tile16.json";
       std::ifstream f(path,std::ios::binary);std::vector<uint8_t> raw((std::istreambuf_iterator<char>(f)),{});
       engine.maintenance.running=true;
-      bool hc_refused=false;try{engine.bracket_select(path,hash(raw),name);}catch(const std::exception&){hc_refused=true;}
+      bool hc_refused=false;try{engine.bracket_select(path,hash(raw),"p60fusion");}catch(const std::exception&){hc_refused=true;}
       require(hc_refused,"HC switch during active position admitted");engine.maintenance.running=false;
       *static_cast<uint32_t*>(engine.dev(0).arena.row(engine.slab[0]).pointer)=37;
-      hc_refused=false;try{engine.bracket_select(path,hash(raw),name);}catch(const std::exception&){hc_refused=true;}
+      hc_refused=false;try{engine.bracket_select(path,hash(raw),"p60fusion");}catch(const std::exception&){hc_refused=true;}
       require(hc_refused,"HC boundary erased sticky failure");
       // FullShapeMock.copy intentionally does no transfer. Its error readback
       // must therefore explicitly represent the clean zero device-error word.
       std::memset(engine.dev(0).arena.row(engine.slab[0]).pointer,0,4);
-      engine.bracket_select(path,hash(raw),name);engine.cache_mode(mode);engine.cache_capacity("max");require(engine.expert_cache->capacity()==21552729600ull,"fullshape active cache cap");engine.publish_cache_table(engine.expert_cache->table());require(arena==engine.bracket_arena_hash(),"fullshape switch allocations changed");
+      const std::string profile=name;
+      engine.bracket_select(path,hash(raw),profile=="p60fusion"?"p60fusion":"production",
+        profile=="hc-wide"?"hc-wide":"",profile=="wide64"?"wide64":profile=="halfcache"?"wide64+halfcache":"",profile=="other-fusion"?"fused":"",profile=="ordered-retirement"?"ordered-foreground":"");engine.cache_mode(mode);engine.cache_capacity("max");require(engine.expert_cache->capacity()==21552729600ull,"fullshape active cache cap");engine.publish_cache_table(engine.expert_cache->table());require(arena==engine.bracket_arena_hash(),"fullshape switch allocations changed");
+      require(engine.a.hc=="p60fusion","HC fusion must remain on in every view");
+      require(engine.a.hc_geometry==((profile=="hc-wide"||profile=="p60fusion")?"hc-wide":"production"),"independent HC dimension");
+      require(engine.a.experts==(profile=="wide64"?"wide64":(profile=="halfcache"||profile=="p60fusion")?"wide64+halfcache":"production"),"independent expert dimension");
+      require(engine.a.other_fusion==((profile=="other-fusion"||profile=="p60fusion")?"fused":"production"),"independent fusion dimension");
+      require(ownrt::ordered_retirement(engine.dev(0))==(profile=="ordered-retirement"||profile=="p60fusion"),"independent retirement dimension");
+      size_t commands32=0;for(const auto& site:engine.issue_sites)commands32+=site.commands.size();
       // Exercise the selected view at both startup and maximum context, then
       // let the next real switch reset it from 4096 back to 32.
       engine.context_extent=4096;engine.prepared.clear();engine.alternate_prepared.clear();
       engine.issue_sites.clear();engine.matrices.clear();engine.prepare_plan();engine.prepare_commands();
       require(arena==engine.bracket_arena_hash(),"full-context view allocations changed");
+      size_t commands4096=0;for(const auto& site:engine.issue_sites)commands4096+=site.commands.size();
+      port_census<<(first_port?"":",")<<"{\\"maintenance\\":"<<ownrt::quote(mode)<<",\\"profile\\":"<<ownrt::quote(profile)<<",\\"hc_fusion_enabled\\":true,\\"commands32\\":"<<commands32<<",\\"commands4096\\":"<<commands4096<<"}";first_port=false;
       if(std::string(name)=="p60fusion") {
         std::array<unsigned,4> counts{};unsigned hooks=0;
         for(size_t i=0;i<engine.p.launches.size();++i) {
@@ -130,6 +141,7 @@ def generate():
       }
 
     }
+    port_census<<"]";save(destination/"port-census.json",port_census.str());
     // Exercise the real full-shape async Engine wiring with delayed mock DMA.
     // No weight bytes are read and no prepared model kernel is executed.
     engine.cache_mode("overlap");

@@ -23,7 +23,7 @@ def header(source):
     return target
 
 def prepare():
-    names=('p60_submit.cpp','p60_submit.hpp','p60_math.hpp','p60_kernels.hpp','p73_hc.hpp','p109_fusion.hpp','p109_route.hpp','p58ag_expert.hpp','p58ag_submit.cpp','p58ag_submit.hpp')
+    names=('p60_submit.cpp','p60_submit.hpp','p60_math.hpp','p60_kernels.hpp','p73_hc.hpp','p109_fusion.hpp','p109_route.hpp','p58ag_expert.hpp','p58ag_submit.cpp','p58ag_submit.hpp','fusion_cpu.cpp','production_cpu.cpp','ports_bytes.cpp','fixture.cpp')
     for name in names:
         source=P/'native'/name
         text=overlay.apply_submission_overlay(source,source.read_text())
@@ -35,3 +35,6 @@ def prepare():
             return '#include '+json.dumps(str(target))
         text=re.sub(r'^\s*#include\s*"([^"\n]+)"',resolve,text,flags=re.M)
         (P/'build/native'/name).write_text(text)
+    # Bind this fixture before the build receipt is captured, not later in
+    # hc_gate.py after its source hashes have already been read.
+    (P/'build/native/integrated_fixture.cpp').write_text((P/'native/integrated_fixture.cpp').read_text())

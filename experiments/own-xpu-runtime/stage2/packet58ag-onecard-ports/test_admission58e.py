@@ -85,7 +85,7 @@ class AdmissionTests(unittest.TestCase):
                     self.assertLess(required, 118308908048)
                     self.assertEqual(required, 85565068816)
                     self.assertFalse(p['shadow_observation']['complete_postload'])
-        self.assertEqual(M.window_plan('WS128')['host_required_available_bytes'], 98989727744)
+        self.assertEqual(M.window_plan('WS128')['host_required_available_bytes'], 98990252032)
 
     def test_observed_shadow_cannot_remove_cache_or_kv_budget(self):
         p = M.exact_plan(dict(peak_shadow_bytes=0, complete_postload=True))

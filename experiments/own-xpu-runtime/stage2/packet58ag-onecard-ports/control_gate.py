@@ -7,7 +7,7 @@ from launch_env import environment
 def main():
     limits();parent=P.parent/'packet58z-onecard-record/build/gnu-host/own-rt-iq3'
     current=P/'build/gnu-host/own-rt-iq3';rows=[];reference=None
-    with tempfile.TemporaryDirectory(prefix='p58ab-control-',dir=P/'build') as directory:
+    with tempfile.TemporaryDirectory(prefix='p58ag-control-',dir=P/'build') as directory:
         for name,binary in [('record',parent),('production',current)]:
             output=Path(directory)/name
             cmd=[str(binary),'--mini','--pipeline-mini','--memory','resident','--context','32','--tokens','8',

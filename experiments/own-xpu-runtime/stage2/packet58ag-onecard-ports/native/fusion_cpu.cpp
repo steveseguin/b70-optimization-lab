@@ -1,7 +1,7 @@
 // Actual unfused operation bodies vs the fused bodies, byte checks including scratch.
 #include "p33_submit.cpp"
 #include "performance.cpp"
-#include "p78_route.hpp"
+#include "p49d_route.hpp"
 #include "p109_fusion.hpp"
 #include <fstream>
 #include <filesystem>
@@ -40,7 +40,7 @@ static void routes(){
   if(test>=112)x[test%512]=std::array<uint16_t,4>{0x7f80,0xff80,0x7fc1,0xffa5}[test-112];
   integrated::Spec s{};s.g.h=2560;s.g.mid=640;s.g.top=10;s.g.context=4096;s.ni=1;s.no=4;s.nw=0;s.site.shape[1]=10;s.sizes[0]=512;s.types[0]=flash::Scalar::bf16;s.types[1]=s.types[3]=s.types[4]=flash::Scalar::u32;s.types[2]=flash::Scalar::f32;
   auto pa=a.pointers(x,gate,up),pb=b.pointers(x,gate,up);
-  p78route::Kernel reference;reference.spec=s;reference.run(std::span<void*const>(pa.data(),9));production_activation(a,gate,up);
+  p49droute::host<4,32>(route42::bind(s,std::span<void*const>(pa.data(),9)));production_activation(a,gate,up);
   p109route::Kernel fused;fused.spec=s;fused.run(pb);
   std::string label="route/activation "+std::to_string(test);
   compare(a.ids,b.ids,label);compare(a.up,b.up,label);compare(a.down,b.down,label);compare(a.prob,b.prob,label);compare(a.scratch,b.scratch,label);compare(a.act,b.act,label);compare(std::vector<uint32_t>{a.error,a.active,a.position},std::vector<uint32_t>{b.error,b.active,b.position},label);++cases;

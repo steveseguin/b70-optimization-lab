@@ -23,6 +23,15 @@ def fullshape():
                 result=run([binary,'--fullshape-submit-test',out,selection(view),'WSCREEN',miss])
                 row=json.loads((out/'result.json').read_text())
                 assert row['passed'] and row['contexts']==[32,4096]
+                row['port_census']=json.loads((out/'port-census.json').read_text())
+                assert len(row['port_census'])==16
+                for mode in ('serial','overlap'):
+                    entries={r['profile']:r for r in row['port_census'] if r['maintenance']==mode}
+                    assert set(entries)=={'production','hc-wide','wide64','halfcache','other-fusion','ordered-retirement','p60fusion'}
+                    for context in ('commands32','commands4096'):
+                        control=entries['production'][context]
+                        assert all(entries[v][context]==control for v in ('hc-wide','wide64','halfcache','ordered-retirement'))
+                        assert entries['other-fusion'][context]==entries['p60fusion'][context]<=control-144
                 rows.append(dict(view=view,miss_path=miss,result=row,stdout=result.stdout))
                 if view=='production' and miss=='zero-copy':
                     save(P/'evidence/fullshape-census.json',json.loads((out/'census.json').read_text()))
@@ -36,7 +45,7 @@ def fullshape():
         save(P/'evidence/postload-allocation-cpu.json',dict(passed=True,device_executed=False,binary_sha256=sha(binary),
             native={f.name:json.loads(f.read_text()) for f in candidates}))
     save(P/'evidence/fullshape-submit-cpu.json',dict(passed=True,device_executed=False,binary_sha256=sha(binary),
-        checks=len(rows),switches_per_check=10,maintenance_modes_per_check=2,rows=rows,peak_rss_bytes=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024))
+        checks=len(rows),switches_per_check=16,maintenance_modes_per_check=2,rows=rows,peak_rss_bytes=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024))
 
 def miniature():
     binary=P/'build/gnu-host/own-rt-iq3';rows=[]
@@ -121,7 +130,9 @@ def main():
     # Sparse full-shape mocks reserve >100 GB VA, but touch <100 MB RSS.
     # Only CPU gates using actual small allocations install the 4 GiB AS cap.
     if a.gate!='fullshape':resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3))
-    {'bytes':bytes_gate,'fullshape':fullshape,'reset':miniature}[a.gate]()
+    if a.gate=='fullshape':
+        with compiler_turn():fullshape()
+    else:{'bytes':bytes_gate,'reset':miniature}[a.gate]()
     assert resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024<4*1024**3
     limits()
 

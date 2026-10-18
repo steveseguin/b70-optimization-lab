@@ -15,4 +15,4 @@ def unit_name(job, library=''):
 
 def lane_unit_prefix():
     # No duplicated screen- literal: a naming change in lanequeue reaches this gate.
-    return unit_name(dict(name='packet58ab-', lane='A', argv=[])).removesuffix('.service')
+    return unit_name(dict(name='packet58ag-', lane='A', argv=[])).removesuffix('.service')

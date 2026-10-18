@@ -15,7 +15,8 @@ def main():
     base=next(x['command'] for x in commands if x['name']=='gnu-host-entry-main')
     base=base[:base.index('-MMD')]
     link=next(x['command'] for x in commands if x['name']=='gnu-host-own-rt-iq3')
-    for name in ('fixture.cpp','integrated_fixture.cpp'):
+    # fixture.cpp is emitted with private includes by hc_source.prepare().
+    for name in ('integrated_fixture.cpp',):
         text=(P/'native'/name).read_text()
         (B/'native'/name).write_text(text)
     metadata=P/'frozen-inputs/repo/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/incident-retrospective/plan.tsv'

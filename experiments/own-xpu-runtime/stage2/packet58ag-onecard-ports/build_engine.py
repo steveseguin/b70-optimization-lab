@@ -24,8 +24,9 @@ def translate(arg):
 
 def main():
     from frozen_inputs import restore
-    assert not (P/"READY-FOR-DEVICE.json").exists() and not (P/"evidence/card0-hcfusion-a").exists(),"sealed or started packet"
+    assert not (P/"READY-FOR-DEVICE.json").exists() and not (P/"evidence/card0-ports-a").exists(),"sealed or started packet"
     restore();limits();native=generate();commands=[];sources={};artifacts={}
+    previous=json.loads((P/'evidence/build.json').read_text()) if (P/'evidence/build.json').exists() else {}
     checked=BASE/'build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port'
     # p60 uses exactly this line's arithmetic headers; no packet56 mutable include.
     from hc_source import prepare
@@ -48,10 +49,17 @@ def main():
         jobs.insert(0,dict(name=mode+'-p60_submit',command=p60))
         for job in jobs:
             name,cmd=job['name'],job['command'];limits();start=time.monotonic()
-            with compiler_turn(),(B/(name+'.log')).open('w') as log:
-                subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=1200)
-            commands.append(dict(name=name,command=cmd,seconds=time.monotonic()-start));save(B/'commands-progress.json',commands)
-            print(name,'PASS',flush=True)
+            reused=False
+            if '-c' in cmd and '-MF' in cmd:
+                dep=Path(cmd[cmd.index('-MF')+1]);obj=Path(cmd[cmd.index('-o')+1])
+                if dep.exists() and obj.exists() and any(r['name']==name and r['command']==cmd for r in previous.get('commands',[])):
+                    paths=[Path(n).resolve() for n in shlex.split(dep.read_text().replace('\\\n',' '))[1:]]+[obj]
+                    reused=all(p.is_relative_to(ROOT) and previous.get('sources',{}).get(str(p.relative_to(ROOT)))==sha(p) for p in paths)
+            if not reused:
+                with compiler_turn(),(B/(name+'.log')).open('w') as log:
+                    subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=1200)
+            commands.append(dict(name=name,command=cmd,seconds=time.monotonic()-start,reused_verified_object=reused));save(B/'commands-progress.json',commands)
+            print(name,'verified reuse' if reused else 'PASS',flush=True)
             if '-c' not in cmd:artifacts[str(Path(cmd[cmd.index('-o')+1]).relative_to(P))]=sha(cmd[cmd.index('-o')+1])
         for dep in dest.glob('*.d'):
             for name in shlex.split(dep.read_text().replace('\\\n',' '))[1:]:
