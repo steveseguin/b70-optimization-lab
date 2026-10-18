@@ -106,3 +106,28 @@ mismatches. Next-layer router-input recall is 66.47% / 72.46% / 79.93% at widths
 10 / 12 / 16. The best residual stream is stream 3, at 53.84% / 59.21% / 66.89%.
 All five registered predictors remain in the matched simulation; no winner is
 selected by benchmarking, and no speed result is claimed from this capture.
+
+Phase 1 finished at 17:39 UTC, about 66 minutes into the two-hour box. The full
+45-case simulation took 1,563 seconds on CPU; peak child RSS across replay and
+simulation was 1,068,184 KiB, below 4 GiB. Root still had over 33 GB free.
+The registered gate fails: no case fits every copy inside its causal window.
+The best optimistic case is router input, width 12, +5.750% (30.536 projected
+tok/s versus a modeled 58v control of 28.876). Zero-copy reads fall from 97.026
+to 64.681 MB/token, but prefetch adds 66.106 MB/token, of which 42.039 MB/token
+is not used by the immediately predicted next layer. It has 248 late batches
+out of 9,217. The same width spans -16.35% to +5.75% across the registered
+timing assumptions. None of these rates is a device measurement.
+
+Closed this phase-1 arm with a DO-NOT-REPEAT row; no phase-2 device design.
+Retained the capture, exact router code, all prediction IDs and every scenario
+so a justified future timing or admission-policy change can be checked without
+discarding this result. [Full tables](../experiments/own-xpu-runtime/stage2/packet138-xlayer-prefetch/RESULTS.md),
+[closeout](../experiments/own-xpu-runtime/stage2/packet138-xlayer-prefetch/phase1-closeout.md).
+
+Final artifact/source checks pass. Capture occupies 879,937,459 bytes and the
+build 66,469,490 bytes. Packet138 has no repository-hygiene errors; its 3.96 MB
+prediction artifact has a documented retention and restoration reason. The
+repository-wide hygiene command reports an unrelated missing evidence link in
+packet139's copied `lineage-inputs/packet103-CPU-PREPARATION-CLOSEOUT.md`.
+That other packet is left unchanged. Details are retained in this packet's
+`evidence/final-validation.json`.

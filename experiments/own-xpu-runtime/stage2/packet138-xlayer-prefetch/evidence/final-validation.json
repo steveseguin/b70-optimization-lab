@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "scope": "packet138",
+  "completed_utc": "2026-10-18T17:41:49.289120+00:00",
+  "capture_full_validation_passed": true,
+  "exact_router_replay_passed": true,
+  "simulation_cases": 45,
+  "phase2_design_allowed": false,
+  "build_bytes": 66469490,
+  "capture_bytes": 879937459,
+  "max_child_rss_kib": 1068184,
+  "sources": {
+    "packet-seal.json": "a5d990cfd3caeb962f0df5803ec8c686f1b14d20b03c7e37c76db4677c6abdba",
+    "evidence/capture-inputs.json": "9e6585c48fd9254e23d808f995b1b19578f09a9bd61b8708745fab71d2e15e4b",
+    "evidence/analysis-seal.json": "d7dbeaab17648050fdc51e72f45076d0d20bb7892c80ea86f1004885f4073f46",
+    "evidence/continuation.json": "1d1e4abdd59d72a7eaf008171484a7748000c564d6a557d2369323866d0fe7e1",
+    "evidence/report-identity.json": "22a0cf7465c1dbb3057af7c4c69de21d14419d322472f13a6ea4565fc74dd1d7"
+  },
+  "hygiene": {
+    "packet138_errors": [],
+    "packet138_warnings": [
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet138-xlayer-prefetch/evidence/predictions.json.gz",
+        "bytes": 3960231,
+        "reason": "large artifact: document value, consumers, retention and restoration; a duplicate is not automatically disposable"
+      }
+    ],
+    "unrelated_errors": [
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet139-record-bundle/lineage-inputs/packet103-CPU-PREPARATION-CLOSEOUT.md",
+        "reason": "closeout needs at least one link to tracked repository evidence"
+      }
+    ],
+    "retention_document": "RETENTION.md"
+  }
+}

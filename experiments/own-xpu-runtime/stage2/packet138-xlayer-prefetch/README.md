@@ -4,7 +4,11 @@ The coordinator completed the lane-B capture on October 18. **All 624 captured
 output tokens match their references.** CPU replay matches every same-layer
 router logit and route across 27,648 rows, with no mismatches.
 The one-card record remains packet58p's 26.228599 tok/s. No phase-2 design is
-admitted until the real-capture simulation clears the preregistered +3% gate.
+admitted: the completed real-capture simulation fails the preregistered gain
+and causal-traffic gate. All 45 cases have late copies. The most favorable
+projection is +5.75%, but it still has 248 late copy batches; the same predictor
+loses time under less favorable assumptions. [Full results](RESULTS.md),
+[phase-1 closeout](phase1-closeout.md), [do-not-repeat entry](DO-NOT-REPEAT.md).
 
 The [new proposal](../../ops/lane-queue/proposed-p138-capture-B.txt) is for the
 coordinator's lane B (physical cards 2+3), one TP2 load. The external coordinator

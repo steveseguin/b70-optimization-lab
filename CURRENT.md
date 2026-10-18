@@ -21,17 +21,16 @@ queued. The unchanged legacy K2 startup receipt is reused within the CPU memory
 limit. Device quality and speed remain pending. No GPU, service, live queue or
 host setting changed. [Work note](notes/2026-10-18-own-runtime-packet137.md).
 
-**October 18, packet138 capture and exact CPU replay passed:** The external
-coordinator completed the lane-B capture and released its cards cleanly.
-All 624 output tokens match their pinned references. CPU replay also matches
-every router logit and expert choice across 27,648 rows. Using one layer's
-router input to predict the next finds 66.47% of its experts with ten guesses,
-or 79.93% with sixteen. The one-card cache simulation is running to determine
-whether that saves enough time after charging wrong guesses and copy traffic.
-Timing windows are explicit assumptions because the old receipts lack layer
-clocks. Phase-2 design requires at least 3% projected gain over the modeled 58v
-control with traffic fitting the available time. The preparer did not queue or
-launch device work. [Work note](notes/2026-10-18-own-runtime-packet138.md).
+**October 18, packet138 phase 1 closed:** The capture and exact CPU replay
+passed, but next-layer prefetch does not clear the registered gain and copy-time
+gate. The best optimistic projection is +5.75%; even it has 248 late copy
+batches. All 45 scenarios have late copies, and the less favorable timing
+assumptions lose speed. No phase-2 device design is admitted. All 624 captured
+tokens match their references; the route predictions and full cache analysis
+are retained. The coordinator released the capture cleanly; this preparer
+did not queue or launch device work. No measured speed record changes.
+[Work note](notes/2026-10-18-own-runtime-packet138.md),
+[results and closeout](experiments/own-xpu-runtime/stage2/packet138-xlayer-prefetch/phase1-closeout.md).
 
 **October 18, packet58v async cache prepared on CPU:** The one-card record
 spends 6.99 ms per token maintaining its cache. The new copy plans while the
