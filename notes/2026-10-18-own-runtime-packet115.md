@@ -68,3 +68,47 @@ duration is unmeasured. The frozen packet100b route identity is rechecked.
 [Image report](../experiments/own-xpu-runtime/stage2/packet115-large-grf/evidence/images.json),
 [CPU identity](../experiments/own-xpu-runtime/stage2/packet115-large-grf/evidence/cpu-byte-identity.json),
 [temporary plans](../experiments/own-xpu-runtime/stage2/packet115-large-grf/evidence/micro-queue-plan.json).
+
+## One-load bracket milestone
+
+The separate [v5 copy](../experiments/own-xpu-runtime/stage2/packet115-large-grf/v5/README.md)
+uses packet103 after103x with packet109's one-load boundaries. Only
+`expert_kernels` switches; half-cache gate/up, tile16 down, target arithmetic,
+draft selection and storage remain fixed. Both native binaries link with the
+two separate expert images. The shared prepared-submission TLS symbol is
+exported by the binary and both images; no immediate queue submission replaces
+the prepared path.
+
+Selected production/E3 startup passes all four rank/fresh-switch paths, with
+changed candidate capture bytes and exact restoration of production captures.
+Four reset checks restore every mutable byte and preserve weight bytes. Two
+fresh five-view CPU IPC brackets agree with the parent reference; nine wrapper
+tests pass. Early CPU audit failures were missing serialized `capacity`,
+expert `arm`/`down`, and small-kernel `shapes` fields. The packet-owned audit
+fixes and failed diagnostics remain retained; these were not device faults.
+
+[Build](../experiments/own-xpu-runtime/stage2/packet115-large-grf/v5/evidence/build.json),
+[startup](../experiments/own-xpu-runtime/stage2/packet115-large-grf/v5/evidence/full-shape.json),
+[reset](../experiments/own-xpu-runtime/stage2/packet115-large-grf/v5/evidence/reset-bytes.json),
+[protocol](../experiments/own-xpu-runtime/stage2/packet115-large-grf/v5/evidence/protocol.json),
+[seal](../experiments/own-xpu-runtime/stage2/packet115-large-grf/v5/lineage/screen-seal.json).
+
+The [v5 proposal](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p115-v5-B.txt)
+passes temporary planning explicitly as conditional, with
+`launch_eligible=false` until the micro qualifies. E3 is the provisional CPU
+view, not a measured winner. `v5/prepare_winner.py` reads the exact two-process
+micro result; if a different design is first to pass, it archives the prior
+selected receipts and runs only production/winner startup, reset and protocol
+checks before resealing. It neither queues nor starts a GPU job. The proposed
+device entry refuses any mismatch between the measured winner and sealed view.
+The five-view device bracket retains every token/oracle check and acceptance
+comparison. Budget 15 minutes; watchdog 60 minutes; actual duration unmeasured.
+
+Final combined logical build storage is **112,855,139 bytes**, below 250 MB.
+Root remained above 25 GB throughout preparation (about 38 GB at final review).
+No GPU, service, live queue, host setting, frozen packet or frozen screen was
+changed by this task. Gate 2 and full model equality/speed await the coordinator.
+
+Milestones were committed and immediately pushed to main: capability probe
+`5edca665e`, four spill-free designs and micro proposal `913d03665`; the final
+commit adds the sealed conditional v5 proposal and this closeout.

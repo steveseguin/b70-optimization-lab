@@ -62,8 +62,14 @@ After source changes, repeat affected gates and reseal; never mutate a proposed
 binary while the coordinator is using it. Root free must stay at least 25 GB;
 the entire packet's build storage is capped at 250 MB.
 
-Parallel v5 preparation is conditional on the micro. It retains
+[Parallel v5 preparation](v5/README.md) is sealed and conditional on the micro. It retains
 the unchanged model-output oracle `iq3-p49-split32-v1`, one model load, strict
 layout invariance and fresh control/candidate/control transitions.
+E3 is provisional. If another design is the first measured winner,
+`v5/prepare_winner.py` performs only that winner's CPU startup gates and reseals
+before the coordinator can launch. The complete build is 112,855,139 bytes.
+
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md),
+[boundaries](DO-NOT-REPEAT.md), [retention](RETENTION.md).
 
 [Work note](../../../../notes/2026-10-18-own-runtime-packet115.md).
