@@ -1,12 +1,14 @@
 # Current Workspace State
 
-**October 18, packet130 early suffix scheduling prepared on CPU:** The new
+**October 18, packet130 early suffix scheduling sealed on CPU:** The new
 copy checks for rank1's hidden state between rank0's speculative layers and
-runs the head suffix when it is ready. It keeps the same arithmetic and miss
-rollback. Policy, drain, teardown and launch-limit guard tests pass; native
-qualification is waiting for the shared compiler gate. No device gain is
-claimed, and no proposed job is admitted yet. No GPU, service, live queue or
-host setting changed. [Work note](notes/2026-10-18-own-runtime-packet130.md).
+runs the head suffix when it is ready. It preserves the tested output bytes,
+arithmetic and miss rollback. Both compilers, full-size startup, all launch
+paths, drain, limits and temporary queue checks pass. Two new lane-B proposals
+cover a smoke and a one-load comparison; both are unlaunched. The build is
+108.5 MB. Device equality and speed remain pending; no gain is claimed.
+No GPU, service, live queue or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet130.md).
 
 **October 18, packet131 recurrent snapshot preparation on CPU:** A new copy
 tests keeping the old recurrent state in a spare buffer instead of copying it

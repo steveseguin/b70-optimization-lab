@@ -13,3 +13,9 @@
   failed on that copied helper here; both new copies must have the clamp.
 - A source-sealed CPU mock is not full-model device equality or a speed record.
   Device smoke and bracket are pending. No candidate is adopted from a CPU gate.
+
+- The Intel CPU IPC launcher needs the explicit installed compiler library
+  directory for `libiomp5.so`. The closed-environment first attempt failed at
+  the loader; the corrected path and library hash are bound to the passing gate.
+- CPU preparation is closed in [the closeout](CPU-PREPARATION-CLOSEOUT.md).
+  Continue with the sealed smoke/bracket, not another unmeasured scheduling claim.

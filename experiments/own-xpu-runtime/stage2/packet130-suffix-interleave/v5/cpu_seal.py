@@ -51,6 +51,7 @@ def validate_receipts():
  require(all(r['result'].get('views')==5 and r['result'].get('fresh_start_capture_identity') is True for r in full),'five view capture/reset checks required')
  reset=rows['reset-bytes']['runs']
  require(len(reset)==4 and {(r['rank'],r['repeat']) for r in reset}=={(r,n) for r in (0,1) for n in (0,1)},'two reset processes per rank required')
+ for path,digest in rows['protocol']['cpu_runtime_libraries'].items():require(sha(path)==digest,'CPU runtime library changed')
  protocol=rows['protocol']['runs']
  require(len(protocol)==1 and len(protocol[0]['brackets'])==4,'four fresh GNU/Intel protocol brackets required')
  for bracket in protocol[0]['brackets']:
@@ -83,6 +84,7 @@ def seal(operator_evidence):
   require(run['cases']==40 and run['hits_and_misses'] is True and run['negative_controls']==7,'forced arrival gate incomplete')
   path=ROOT/run['binary'];require(sha(path)==run['binary_sha256'],'controller binary changed');operator_paths.add(path)
  reset=read(HERE.parent/'evidence/reset-regression.json');verify_map(ROOT,reset['sources'])
+ require(sha(HERE.parent/'reset_regression.py')==reset['gate_sha256'],'private reset gate source changed');operator_paths.add(HERE.parent/'reset_regression.py')
  require(reset['passed'] is True and reset['device_executed'] is False and len(reset['runs'])==4,'private suffix reset gate incomplete')
  for run in reset['runs']:require(run['result']['fixed_exact_cases']==21 and run['result']['negative_control_mismatches']==6,'private active reset regression missing')
  for row in (op,reset):
@@ -103,7 +105,7 @@ def seal(operator_evidence):
  sources.update(external_runtime_sources())
  binary=HERE/'build/device/own-rt-iq3'
  require(rows['build']['artifacts']['build/device/own-rt-iq3']==sha(binary),'device binary changed')
- row=dict(schema='packet130.v5.cpu-seal.v1',passed=True,device_executed=False,sources=sources,binary_sha256=sha(binary),suffix_schedule=read(HERE/'lineage/candidate.json')['choices']['suffix_schedule'],operator_evidence=str(operator_evidence.relative_to(ROOT)),operator_evidence_sha256=sha(operator_evidence),startup_views=['production',read(HERE/'lineage/candidate.json')['choices']['suffix_schedule']])
+ row=dict(schema='packet130.v5.cpu-seal.v1',passed=True,device_executed=False,sources=sources,binary_sha256=sha(binary),cpu_runtime_libraries=rows['protocol']['cpu_runtime_libraries'],suffix_schedule=read(HERE/'lineage/candidate.json')['choices']['suffix_schedule'],operator_evidence=str(operator_evidence.relative_to(ROOT)),operator_evidence_sha256=sha(operator_evidence),startup_views=['production',read(HERE/'lineage/candidate.json')['choices']['suffix_schedule']])
  save(HERE/'lineage/screen-seal.json',row)
  # The screen receipt refers to a wrapper seal independently of native seal.
  (HERE/'placement-validation').mkdir(exist_ok=True)
@@ -114,6 +116,7 @@ def verify():
  path=HERE/'lineage/screen-seal.json';row=read(path)
  require(row.get('passed') is True and row.get('device_executed') is False,'CPU seal missing')
  verify_map(ROOT,row['sources'])
+ for path,digest in row['cpu_runtime_libraries'].items():require(sha(path)==digest,'CPU runtime library changed')
  require(sha(HERE/'build/device/own-rt-iq3')==row['binary_sha256'],'binary changed')
  require(read(HERE/'lineage/candidate.json')['choices']['suffix_schedule']==row['suffix_schedule'],'selected startup receipt changed')
  require(read(HERE/'placement-validation/wrapper-seal.json')==row,'wrapper seal changed')

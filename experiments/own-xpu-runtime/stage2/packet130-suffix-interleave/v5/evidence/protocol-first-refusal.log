@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/v5/protocol_gate.py", line 97, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/v5/protocol_gate.py", line 89, in main
+    results.append(gate(name,config))
+                   ^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/v5/protocol_gate.py", line 62, in gate
+    row=run(binary,[view],dest);runs.append(dict(binary=binary_name,choice=label,**row))
+        ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/v5/protocol_gate.py", line 29, in run
+    pipeline.Transport.__init__(transport,args,ranks,{'PATH':'/usr/bin:/bin','OMP_NUM_THREADS':'2'})
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/pipeline.py", line 321, in __init__
+    for rank in range(2):self.receive(rank,args.seconds,ready=True)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/pipeline.py", line 369, in receive
+    values=REPLY.unpack(self.io(rank,timeout=timeout))
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/pipeline.py", line 365, in io
+    raise ValueError("rank receive EOF")
+ValueError: rank receive EOF
+
+Intel closed-environment loader diagnostic:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/v5/build/intel-host/own-rt-iq3: error while loading shared libraries: libiomp5.so: cannot open shared object file: No such file or directory

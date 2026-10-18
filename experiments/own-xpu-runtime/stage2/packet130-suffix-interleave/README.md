@@ -1,6 +1,6 @@
 # Packet130: exact target-head suffix interleave
 
-CPU preparation is in progress. Device quality and speed are unmeasured.
+CPU preparation passes and is sealed. Device quality and speed are unmeasured.
 The frozen source is packet124c's bundle7. Only the new `suffix_schedule`
 choice differs: `production` or `layer-interleave`. Both retain the same
 24/24 layers, 46,080-row suffix, 80,128-row draft prefix and BF16 KV.
@@ -55,3 +55,32 @@ host elapsed clocks, not summed GPU execution time. All control/candidate
 receipts carry the same instrumentation. No missing sample is filled with zero.
 
 [Work note](../../../../notes/2026-10-18-own-runtime-packet130.md).
+
+## CPU handoff
+
+All 18 final qualification stages pass. See
+[`v5/evidence/preparation-summary.json`](v5/evidence/preparation-summary.json)
+and the [preparation closeout](CPU-PREPARATION-CLOSEOUT.md).
+GNU and Intel each pass two fresh head/controller/reset runs. The full-size
+capture/reset gate covers both ranks and five views; the real miniature IPC
+checks parent tokens and retained state bytes across four fresh brackets.
+Intel entry/parser objects use the unchanged frozen arithmetic objects; the
+head and controller fixtures are independently compiled by each compiler.
+
+The final [qualification](v5/evidence/qualification.json) binds both proposed
+launches, 22 legacy window paths, all 78 mocked requests, resource-limit checks,
+and four real queue-loop success/failure rehearsals. Operational guards and
+execution are mocked only in these CPU queue tests; no service ran.
+
+New proposals, for the coordinator to admit in order:
+
+- [`proposed-p130-smoke-B.txt`](../../ops/lane-queue/proposed-p130-smoke-B.txt):
+  twelve 64-token requests, estimated 4–6 minutes.
+- [`proposed-p130-bracket-B.txt`](../../ops/lane-queue/proposed-p130-bracket-B.txt):
+  A/B/A/B/A, twelve 128-token requests per view, estimated 12–20 minutes.
+
+Both use an 80-minute watchdog. The bracket refuses without the exact smoke.
+The queue supplies its closed environment; the proposal needs no caller
+variables. The live queue remains unchanged. Full-model exactness and the
+measured scheduling tradeoff remain for the device run; no optimization is
+adopted from these CPU checks.

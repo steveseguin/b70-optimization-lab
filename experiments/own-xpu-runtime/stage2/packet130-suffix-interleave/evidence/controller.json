@@ -1,0 +1,113 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "runs": [
+    {
+      "compiler": "GNU",
+      "repeat": 1,
+      "binary": "experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/build/controller/GNU",
+      "binary_sha256": "e63afd5bed4ae9b2932d7dd9c508ac6f45133658da13ceeb81c7e41987b012ca",
+      "passed": true,
+      "device_executed": false,
+      "cases": 40,
+      "forced_arrivals": [
+        0,
+        1,
+        7,
+        23,
+        99
+      ],
+      "hits_and_misses": true,
+      "repeated_request_reset": true,
+      "negative_controls": 7
+    },
+    {
+      "compiler": "GNU",
+      "repeat": 2,
+      "binary": "experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/build/controller/GNU",
+      "binary_sha256": "e63afd5bed4ae9b2932d7dd9c508ac6f45133658da13ceeb81c7e41987b012ca",
+      "passed": true,
+      "device_executed": false,
+      "cases": 40,
+      "forced_arrivals": [
+        0,
+        1,
+        7,
+        23,
+        99
+      ],
+      "hits_and_misses": true,
+      "repeated_request_reset": true,
+      "negative_controls": 7
+    },
+    {
+      "compiler": "Intel",
+      "repeat": 1,
+      "binary": "experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/build/controller/Intel",
+      "binary_sha256": "9ee8e6f4a1eae72818d9243d420de678b7aca3b220554235dac439b67d013de4",
+      "passed": true,
+      "device_executed": false,
+      "cases": 40,
+      "forced_arrivals": [
+        0,
+        1,
+        7,
+        23,
+        99
+      ],
+      "hits_and_misses": true,
+      "repeated_request_reset": true,
+      "negative_controls": 7
+    },
+    {
+      "compiler": "Intel",
+      "repeat": 2,
+      "binary": "experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/build/controller/Intel",
+      "binary_sha256": "9ee8e6f4a1eae72818d9243d420de678b7aca3b220554235dac439b67d013de4",
+      "passed": true,
+      "device_executed": false,
+      "cases": 40,
+      "forced_arrivals": [
+        0,
+        1,
+        7,
+        23,
+        99
+      ],
+      "hits_and_misses": true,
+      "repeated_request_reset": true,
+      "negative_controls": 7
+    }
+  ],
+  "commands": [
+    [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-pthread",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/p130_controller_test.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/build/controller/GNU"
+    ],
+    [
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-pthread",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/p130_controller_test.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/build/controller/Intel"
+    ]
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/controller_gate.py": "815283a4175af0fe4d12fa6309d5762d7074b3bb6d10793aeff8ee2b108a9a3e",
+    "experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/p130_controller_test.cpp": "f0e2113cb83e42642d7df40c0ca160a92adf3781d9b143192ab8aedfefb97631",
+    "experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/p130_interleave.hpp": "1d1290c18be0fb942f3652578ea6affc08c6bbaec492913f62d91956748380ff",
+    "experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/native_controller.hpp": "6a9b6a5c6d5ec48cc65d189085f993af7d55b193080561601ce8f4615ab920d0",
+    "experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/p105_common.hpp": "8856d3e7b983c25bab743acfafaa8669109501adf1b3930279523427ef452e5e"
+  }
+}

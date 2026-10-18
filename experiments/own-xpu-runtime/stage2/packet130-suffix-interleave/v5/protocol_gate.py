@@ -26,7 +26,7 @@ def run(binary, views, output):
     rows=[];started=time.monotonic()
     try:
         with patch.object(pipeline.subprocess,'Popen',side_effect=launch):
-            pipeline.Transport.__init__(transport,args,ranks,{'PATH':'/usr/bin:/bin','OMP_NUM_THREADS':'2'})
+            pipeline.Transport.__init__(transport,args,ranks,{'PATH':'/usr/bin:/bin','OMP_NUM_THREADS':'2','LD_LIBRARY_PATH':'/opt/intel/oneapi/compiler/2026.0/lib'})
         for i,view in enumerate(views):
             dest=output/str(i);dest.mkdir()
             if len(views)>1:proof=switch_reset(transport,view,dest/'boundary',suite)
@@ -90,6 +90,7 @@ def main():
         save(P/'evidence'/('protocol-'+name+'.json'),results[-1])
     save(P/'evidence/protocol.json',dict(passed=True,device_executed=False,runs=results,
          fixture_projection='experts=wide64, head=production, selected suffix_schedule retained; split-head arithmetic and arrival ordering separately qualified by head/controller gates',
+         cpu_runtime_libraries={'/opt/intel/oneapi/compiler/2026.0/lib/libiomp5.so':sha('/opt/intel/oneapi/compiler/2026.0/lib/libiomp5.so')},
          binaries=results[0]['binaries'],sources={**results[0]['sources'],**{str(f.relative_to(ROOT)):sha(f) for f in (P/'mini_selection.py',control,candidate)}}))
 if __name__=='__main__':
  import resource

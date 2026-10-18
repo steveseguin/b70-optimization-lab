@@ -1,6 +1,6 @@
 # Packet130 — service the head suffix at a layer boundary
 
-CPU preparation in progress. No device speed or full-model equality is claimed.
+CPU preparation passes and is sealed. No device speed or full-model equality is claimed.
 The coordinator owns all future device runs. This task uses no GPU, service,
 sudo, live queue edit or host setting change.
 
@@ -94,3 +94,50 @@ by their recorded PIDs after source updates. No compiler or device child was
 active. Their partial build is explicitly superseded. The final build snapshots
 all native source hashes before compiling and refuses source drift before
 writing its receipt. The whole-host hold and serial compiler lock remain intact.
+
+## Final CPU result and coordinator handoff
+
+All 18 final qualification stages pass. The complete ledger is
+[`preparation-summary.json`](../experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/v5/evidence/preparation-summary.json).
+Both compilers pass two fresh full-vocabulary head runs (17 cases each),
+40-case early/late controller runs with hits, misses, EOS and refusal controls,
+and 21-case private-reset runs. The original broken reset remains a failing
+negative control. GNU/Intel miniature runtime outputs and retained target/draft
+state bytes match the frozen parent across four fresh five-view brackets.
+The Intel entry and selection parser reuse frozen arithmetic objects; head and
+controller fixtures are compiled independently by each compiler.
+
+Full-size numerical startup checks cover both ranks, five switched views,
+fresh starts, capture-byte identity and all reset extents. Twelve real selected
+launch starts, 22 legacy window paths, all 78 mocked smoke/bracket requests,
+wrong-output aborts, four queue success/failure cases, 12 policy tests and nine
+safety tests pass. Resource-limit probes preserve the complete inherited census;
+finite-limit negatives refuse before native launch. Both seals verify.
+
+One CPU-only failure was found after the first build: Intel IPC could not load
+`libiomp5.so` in its closed environment. The launcher now embeds the installed
+compiler library path, whose hash is bound to the gate. The failed loader log
+is retained; the complete corrected protocol gate passes. This did not change
+runtime arithmetic or require a native rebuild.
+
+The final build occupies 108,465,118 bytes, below 300 MB. Root free space at
+closeout was 34,820,636,672 bytes. Peak child RSS recorded by the head and build
+gates was 978,528 and 810,588 KiB. All 349 recorded parent source hashes and the
+two required copied symlink targets remain unchanged.
+
+The new proposal files are
+[`proposed-p130-smoke-B.txt`](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p130-smoke-B.txt)
+and
+[`proposed-p130-bracket-B.txt`](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p130-bracket-B.txt).
+They plan successfully together on a temporary queue. Run order is the exact
+12 × 64 candidate smoke, then conditional A/B/A/B/A 12 × 128 in one load.
+Expected durations are 4–6 and 12–20 minutes; both watchdogs are 4,800 seconds.
+The queue supplies the closed environment, and the job checks CPU qualification
+again at launch. No live queue was changed, and neither proposal was launched.
+
+After a device run, `bracket-summary.json` will carry the measured per-view
+rank1 suffix wait and rank0 speculative-half completion, separated by hit/miss,
+alongside exact outputs, acceptance and throughput. No values are filled in
+before measurement. See the
+[CPU preparation closeout](../experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/CPU-PREPARATION-CLOSEOUT.md)
+for retained evidence and revisit conditions.
