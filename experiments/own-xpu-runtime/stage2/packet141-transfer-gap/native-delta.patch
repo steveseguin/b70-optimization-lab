@@ -1,67 +1,91 @@
 --- parent/main.cpp
 +++ packet141/main.cpp
-@@ -570,6 +570,8 @@
- static size_t target_scratch_bytes(const flash::Plan&,const Options&);
- #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p65_attribution.hpp"
- #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p109_fusion.hpp"
+@@ -135,0 +136 @@
++  bool p141_cpu_entry_gate=false;
+@@ -167 +168,2 @@
+-    if (k == "--retain-steps") a.retain_steps.parse(value());
++    if(k=="--p141-cpu-entry-gate")a.p141_cpu_entry_gate=true;
++    else if (k == "--retain-steps") a.retain_steps.parse(value());
+@@ -262 +264 @@
+-  require(a.native_nice>=0 && a.native_nice<=19 && getpriority(PRIO_PROCESS, 0) == a.native_nice, "native priority differs from declared --native-nice");
++  require(a.native_nice>=0 && a.native_nice<=19 && getpriority(PRIO_PROCESS, 0) == (a.p141_cpu_entry_gate?19:a.native_nice), "native priority differs from declared --native-nice");
+@@ -572,0 +575,14 @@
 +#define P141_PACKET "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap"
 +#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/probe_touch.hpp"
- class Engine final : public flash::Backend {
- public:
-   Weights &w;
-@@ -652,6 +654,7 @@
-   std::vector<std::map<std::string, Slot>> buffers;
-   std::vector<std::map<std::string, Allocation>> weights;
-   std::vector<Allocation> slab, scratch, workspace, compact_routes, mixture_out, one;
++static void p141_validate_selection(const Options& a,const p49d::Selection& sealed_selection){auto head_choice=[&](){auto i=sealed_selection.choices.find("head");return i==sealed_selection.choices.end()?std::string("production"):i->second;};
++    const auto down_choice=sealed_selection.choices.contains("experts")?sealed_selection.choices.at("experts"):"production";
++    if(down_choice.find("down-interleave")!=std::string::npos||down_choice.find("down-tile16")!=std::string::npos)
++      require(!a.mini&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p100 locality requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
++    const bool cached_expert=sealed_selection.choices.contains("experts")&&(p100::gate_choice(sealed_selection.choices.at("experts"))=="exp-halfcache"||p100::gate_choice(sealed_selection.choices.at("experts")).ends_with("+halfcache"));
++    const bool cached_hc=sealed_selection.choices.contains("hc_gate")&&sealed_selection.choices.at("hc_gate")=="hc-weightcache";
++    require(!(cached_expert&&cached_hc),"p90 combined caches are not admitted");
++    if(!a.mini&&(cached_expert||cached_hc))require(a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p90 cached layout requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
++    const bool normfuse=sealed_selection.choices.contains("hc_norm")&&sealed_selection.choices.at("hc_norm")=="consumer";
++    if(normfuse)require(!a.mini&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p94 fusion requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
++    if(head_choice()!="production")require(!a.mini&&!a.legacy&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&a.context==4096&&a.draft_rank==1&&a.target_split==0&&sealed_selection.choices.at("packed_dense")=="production","p93 packed head requires sealed resident r5 parallel 4K rank1 draft 24/24");
++}
+@@ -654,0 +671 @@
 +#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/probe.hpp"
-   std::vector<Allocation> fp32_inputs, fp32_sources;
-   std::vector<size_t> fp32_extents;
-   std::vector<std::vector<uint32_t>> selected;
-@@ -1651,7 +1654,7 @@
-      <<(has_active?std::to_string(active):"null")<<"}\n";out.flush();
- }
- #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p105_runtime.hpp"
+@@ -720,10 +737 @@
+-    const auto down_choice=sealed_selection.choices.contains("experts")?sealed_selection.choices.at("experts"):"production";
+-    if(down_choice.find("down-interleave")!=std::string::npos||down_choice.find("down-tile16")!=std::string::npos)
+-      require(!a.mini&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p100 locality requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
+-    const bool cached_expert=sealed_selection.choices.contains("experts")&&(p100::gate_choice(sealed_selection.choices.at("experts"))=="exp-halfcache"||p100::gate_choice(sealed_selection.choices.at("experts")).ends_with("+halfcache"));
+-    const bool cached_hc=sealed_selection.choices.contains("hc_gate")&&sealed_selection.choices.at("hc_gate")=="hc-weightcache";
+-    require(!(cached_expert&&cached_hc),"p90 combined caches are not admitted");
+-    if(!a.mini&&(cached_expert||cached_hc))require(a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p90 cached layout requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
+-    const bool normfuse=sealed_selection.choices.contains("hc_norm")&&sealed_selection.choices.at("hc_norm")=="consumer";
+-    if(normfuse)require(!a.mini&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p94 fusion requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
+-    if(head_choice()!="production")require(!a.mini&&!a.legacy&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&a.context==4096&&a.draft_rank==1&&a.target_split==0&&sealed_selection.choices.at("packed_dense")=="production","p93 packed head requires sealed resident r5 parallel 4K rank1 draft 24/24");
++    p141_validate_selection(a,sealed_selection);
+@@ -1654 +1662 @@
 -#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/rank.hpp"
 +#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/build/cow/rank.hpp"
- 
- // SPEED6_SCRATCH_POLICY_BEGIN
- // Scope the footprint reduction to the previously refused split23/dr1 arm.
+@@ -1691,0 +1700,28 @@
++// CPU-only entry into the real device binary. No model, IPC, or SYCL API calls.
++// This returns before the ordinary output creation and run_rank boundary.
++#include <dlfcn.h>
++static int p141_cpu_entry(const Options& a) {
++#ifdef OWN_RT_HOST_ONLY
++ throw std::runtime_error("p141 CPU entry gate requires the device build's parser");
++#else
++ require(a.authorized && a.rank>=0 && a.channel>=0 && a.stop_fd>=0 && !a.shared.empty(),
++         "p141 CPU entry gate requires actual authorized rank arguments");
++ p49d::Selection selected;
++ require(!a.selection.empty()&&!a.selection_sha256.empty(),"selection required");
++ selected.load(a.selection.string(),a.selection_sha256);
++ p141_validate_selection(a,selected);
++ // dlopen resolves dependencies only. Never call urInit, zeInit, or SYCL
++ // enumeration here; loading the adapter cannot validate physical GPU health.
++ for(const char* name:{"libur_adapter_level_zero.so.0","libur_adapter_level_zero_v2.so.0"}) {
++  void* handle=dlopen(name,RTLD_NOW|RTLD_LOCAL);
++  if(!handle){const char* error=dlerror();throw std::runtime_error(std::string("p141 adapter load: ")+(error?error:name));}
++  dlclose(handle);
++ }
++ std::cout<<"{\"passed\":true,\"device_executed\":false,\"rank\":"<<a.rank
++          <<",\"card\":"<<a.card<<",\"authorized\":true,\"selection_sha256\":"
++          <<ownrt::quote(selected.observed_sha256)
++          <<",\"device_api_called\":false,\"model_read\":false,\"adapter_dependencies_loaded\":true}\n";
++ return 0;
++#endif
++}
++
+@@ -1719,0 +1756 @@
++    if(a.p141_cpu_entry_gate)return p141_cpu_entry(a);
 --- parent/rank.hpp
 +++ packet141/rank.hpp
-@@ -234,7 +234,7 @@
-  require(!stopped && !(fd.revents&(POLLIN|POLLHUP|POLLERR|POLLNVAL)),"cooperative rank stop");
- }
- #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/rank_canary.hpp"
+@@ -237 +237 @@
 -#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/request_reset.hpp"
 +#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/build/cow/request_reset.hpp"
- #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/native_controller.hpp"
- static int run_rank(const Options& a) {
-  using namespace pipeline;
-@@ -313,6 +313,7 @@
-     undo(*engine,c,image,redo,r.position,r.token);
-    }
-    else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();state_dump(*engine,r.position);if(r.position==2147483647)request_state_inventory(*engine);}
+@@ -315,0 +316 @@
 +   else if(r.op==13){require(a.rank==0&&!c.pending,"p141 unresolved candidate/rank");image.boundary();engine->p141_probe(r.token,r.position);}
-    else if(r.op==11){image.boundary();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
-    #ifdef OWN_RT_HOST_ONLY
-    else if(r.op==12){require(a.rank==0&&c.pending&&c.speculative,"negative control ownership");image.corrupt_protected_for_gate(r.token);}
-@@ -326,7 +327,7 @@
-    return response;
-   };
-   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
+@@ -329 +330 @@
 -   if(r.op==finish){if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");image.boundary();if(provider)provider->dump_all_state(engine->a.output/"draft-final-state");break;}
 +   if(r.op==finish){if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");image.boundary();/* p141: no full-state file output. */break;}
-    Reply response{};
-    if(r.op==10){
-     require(!c.pending,"native entry unresolved candidate");
+@@ -355,0 +357 @@
++  std::cerr<<"rank "<<a.rank<<" failure: "<<error<<std::endl;
 --- parent/request_reset.hpp
 +++ packet141/request_reset.hpp
-@@ -12,7 +12,7 @@
-  require(bool(std::getline(input,output))&&bool(std::getline(input,oracle)),"reset metadata");
-  fs::path destination(output);require(destination.is_absolute()&&!output.empty(),"reset output absolute");
-  // Retain the complete completed state before resetting, including warm-up.
+@@ -15 +15 @@
 - state_dump(e,2147483647);request_state_inventory(e);if(provider)provider->dump_all_state(e.a.output/"draft-final-state");
 + // p141: omit full-state files; allocation reset and arithmetic unchanged.
-  e.dump_classes(e.a.output/"class-times.json",accepted);
-  if(e.bank_parity)e.swap_state_banks();
-  // Covers plan allocations, both recurrent banks, QSA unused tails, snapshots,

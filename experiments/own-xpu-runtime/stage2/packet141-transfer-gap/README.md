@@ -1,8 +1,23 @@
 # Packet141 — cold sequence versus warm kernels
 
-CPU-prepared diagnostic; no device evidence or speed claim. The only proposal
+CPU-repaired diagnostic; no completed device timing or speed claim. The only proposal
 is [lane B](../../ops/lane-queue/proposed-p141-probe-B.txt), **not queued**.
 [Preregistration and work note](../../../../notes/2026-10-18-own-runtime-packet141.md).
+
+Packet141b fixes the first attempt's early exit. Both original rank receipts
+say `Level Zero GPU index`: the closed environment could not load the Level Zero
+adapter because `libumf.so.1` was missing. Authorization and device compilation
+were correct. The private Intel UMF dependency is now explicitly linked, and
+rank exceptions print immediately to stderr as well as their existing receipts.
+The failed `evidence/probe-B/` is preserved. The fresh proposal writes only to
+`evidence/probe-B-repair141b/`; it remains unqueued by this repair.
+
+`native_entry_gate.py` runs the actual device binary with both saved rank argv
+plus a CPU-only exit flag. It shares the native parser and selection checks,
+loads both adapter dependencies, and returns before model, IPC or device APIs.
+File traces verify no model or device opens. It also checks six invalid argument
+cases and both ranks' early-exception logging. This catches the original loader
+failure; it does not claim a model step or timed kernel has run successfully.
 
 One TP2 load runs the first 47 packet49 incident-retrospective tokens, checking
 every token, then measures rank0's next 24-layer target half at position 133.
@@ -20,6 +35,11 @@ and `shared_oracle.py`, never flattened into a source map. The original
 compiled-source closure is hash-bound; only a private engine entry is rebuilt.
 Its host entry is O1 to bound preparation cost; the production kernel objects
 and arithmetic flags are unchanged. No throughput inference uses host-loop time.
+Packet141b snapshots the exact compiled headers locally for the current pin
+guard. The original compiler commands remain provenance: this is not a claim
+that the repair was compiled from the new snapshot paths. Parent objects are
+pinned at their canonical immutable ELF paths. Three input links are now exact
+local files; the 182 parent native/build links are still preserved.
 
 ## Measurements
 
@@ -70,7 +90,7 @@ measured; the probe does not equate useful bytes with measured DRAM traffic.
 
 Expected device duration: 10–20 minutes; watchdog: 4,800 seconds (4× upper
 estimate). One load, one attempt, no retry. The proposal uses
-`screen-packet141-probe-B.service` and embeds the oneAPI library path. Existing
+`screen-packet141b-probe-B.service` and embeds the oneAPI library path. Existing
 lane reservation, fault review, memory floor, masks and cooperative drain apply.
 The native boundary refuses finite address-space limits or changed getrlimit
 values. CPU resource caps exist only in CPU command entrypoints.
@@ -81,11 +101,25 @@ python3 -B`, stdin `/dev/null`: `preserve_links.py`, `build_engine.py`,
 Compilation uses `ops/compile_turn.py`; root must retain 25 GB, physical build
 files stay below 300 MB, probe output below 200 MB. No live queue, device,
 service, power, memory, swap or page-cache setting is touched by preparation.
+For a minimal repair, run `localize_pins.py` after `build_engine.py`, then
+`native_entry_gate.py`, `argument_gate.py`, `seal.py` and `queue_plan.py`.
+The original full-size allocation receipt is reused: neither allocation logic
+nor kernel arithmetic changed. The repair used one compiler turn and no model
+or full-size allocation run.
 
 Read `READY-FOR-DEVICE.json` for the exact preparatory commit and proposal hash.
 Device execution remains the coordinator's action. After clean release, the
 CPU analysis consumes the retained raw events, complete-state checks and oracle
 receipts. It refuses partial or altered evidence.
+
+Run `nice -n 19 taskset -c 8-15,24-31 python3 -B
+experiments/own-xpu-runtime/stage2/packet141-transfer-gap/analyze.py < /dev/null`
+after clean release. Optional `--input` selects an attempt; `--output` must be
+outside its evidence tree. The analyzer applies the registered 1.15/1.30 and
+0.5 ms thresholds, withholds invalid conclusions, and reports pre-touch time
+and bytes separately. Thirteen synthetic tests cover the thresholds, summed
+complete samples, missing/altered evidence, equality and timing controls.
+Missing or failed device evidence returns exit code 2, never a close verdict.
 
 Timing review: all measured sites use original `enqueue()` / `finish()` bookkeeping.
 One additional cold half per block uses original enqueue without event recording;

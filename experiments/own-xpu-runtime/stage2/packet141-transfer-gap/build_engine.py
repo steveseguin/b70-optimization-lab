@@ -23,6 +23,21 @@ def prepare():
  main=(mirror/'main.cpp').read_text();rank=(mirror/'rank.hpp').read_text();reset=(mirror/'request_reset.hpp').read_text()
  main=replace(main,'class Engine final : public flash::Backend {','#define P141_PACKET '+json.dumps(str(P))+'\n#include '+json.dumps(str(P/'probe_touch.hpp'))+'\nclass Engine final : public flash::Backend {')
  main=replace(main,'  std::vector<Allocation> slab, scratch, workspace, compact_routes, mixture_out, one;', '  std::vector<Allocation> slab, scratch, workspace, compact_routes, mixture_out, one;\n#include '+json.dumps(str(P/'probe.hpp')))
+ # Share the original constructor's exact selection checks with the CPU entry gate.
+ start=main.index('    const auto down_choice=')
+ end=main.index('    const auto host_choice=',start)
+ checks=main[start:end]
+ head='auto head_choice=[&](){auto i=sealed_selection.choices.find("head");return i==sealed_selection.choices.end()?std::string("production"):i->second;};'
+ helper='static void p141_validate_selection(const Options& a,const p49d::Selection& sealed_selection){'+head+'\n'+checks+'}\n'
+ main=main[:start]+'    p141_validate_selection(a,sealed_selection);\n'+main[end:]
+ main=replace(main,'class Engine final : public flash::Backend {',helper+'class Engine final : public flash::Backend {')
+ main=replace(main,'struct Options {','struct Options {\n  bool p141_cpu_entry_gate=false;')
+ main=replace(main,'    if (k == "--retain-steps")', '    if(k=="--p141-cpu-entry-gate")a.p141_cpu_entry_gate=true;\n    else if (k == "--retain-steps")')
+ main=replace(main,'getpriority(PRIO_PROCESS, 0) == a.native_nice','getpriority(PRIO_PROCESS, 0) == (a.p141_cpu_entry_gate?19:a.native_nice)')
+ gate=(P/'cpu_entry.hpp').read_text()
+ main=replace(main,'int main(int argc, char **argv) {',gate+'\nint main(int argc, char **argv) {')
+ main=replace(main,'    require(!fs::exists(a.output), "output already exists");','    if(a.p141_cpu_entry_gate)return p141_cpu_entry(a);\n    require(!fs::exists(a.output), "output already exists");')
+ rank=replace(rank,'  error=ex.what();','  error=ex.what();\n  std::cerr<<"rank "<<a.rank<<" failure: "<<error<<std::endl;')
  main=replace(main,str(mirror/'rank.hpp'),str(B/'cow/rank.hpp'))
  rank=replace(rank,'   else if(r.op==11){','   else if(r.op==13){require(a.rank==0&&!c.pending,"p141 unresolved candidate/rank");image.boundary();engine->p141_probe(r.token,r.position);}\n   else if(r.op==11){')
  rank=replace(rank,str(mirror/'request_reset.hpp'),str(B/'cow/request_reset.hpp'))
@@ -37,7 +52,7 @@ def main():
  prior,entry=prepare();commands=[];sources={};artifacts={}
  def run(cmd,name):
   limits();cmd=list(map(str,cmd));commands.append(dict(name=name,command=cmd))
-  with turn(),(B/(name+'.log')).open('w') as log:subprocess.run(cmd,cwd=ROOT,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=1500)
+  with (B/(name+'.log')).open('w') as log:subprocess.run(cmd,cwd=ROOT,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=1500)
   print(name,'PASS',flush=True)
  for mode in ('device','gnu-host'):
   dest=B/mode;dest.mkdir(exist_ok=True)
@@ -55,9 +70,13 @@ def main():
    if Path(arg).name=='entry-main.o':link[i]=str(dest/'entry-main.o');count+=1
    else:sources[str(Path(arg).relative_to(ROOT))]=sha(arg)
   assert count==1,count
+  if mode=='device':link+=['-Wl,--no-as-needed',str(P/'runtime/libumf.so.1'),'-Wl,--as-needed','-Wl,-rpath,'+str(P/'runtime'),'-ldl']
   run(link,mode+'-link');artifacts[str((dest/'own-rt-iq3').relative_to(P))]=sha(dest/'own-rt-iq3')
- for f in (P/'build_engine.py',P/'parent-commands.snapshot.json',P/'probe.hpp',P/'probe_touch.hpp'):
+ for f in (P/'build_engine.py',P/'parent-commands.snapshot.json',P/'probe.hpp',P/'probe_touch.hpp',P/'cpu_entry.hpp',*sorted((P/'runtime').iterdir())):
   sources[str(f.relative_to(ROOT))]=sha(f)
  limits();save(P/'build-receipt.json',dict(passed=True,device_executed=False,sources=sources,artifacts=artifacts,commands=commands,host_entry_optimization='O1 diagnostic; unchanged original kernel objects',max_child_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss))
 if __name__=='__main__':
- resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+ resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3))
+ sys.path.insert(0,str(P.parents[1]/'ops'))
+ from compile_turn import turn
+ with turn():main()

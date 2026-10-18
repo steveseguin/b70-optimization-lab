@@ -49,7 +49,7 @@ def parser():
     ap.add_argument('--lineage', type=Path, default=P)
     for name in ('binary', 'dispatch', 'seal'):
         ap.add_argument('--' + name, type=Path)
-    ap.add_argument('--output', type=Path, default=P/'evidence/probe-B')
+    ap.add_argument('--output', type=Path, default=P/'evidence/probe-B-repair141b')
     ap.add_argument('--run', action='store_true')
     ap.add_argument('--fault-review', type=Path)
     ap.add_argument('--authorized-device-window', action='store_true')
@@ -80,13 +80,13 @@ def memory_sensor(pid, profile, memory):
         sample.update(root_seen=True, root_pf_exiting_or_gone=True)
     host = M.meminfo()
     require(host['MemAvailable'] >= M.HOST_RESERVE, 'host available memory below 8 GiB stop floor')
-    storage_budget(P/'evidence/probe-B')
+    storage_budget(P/'evidence/probe-B-repair141b')
     sample['host'] = host
     return sample
 
 
 def unit_gate(text):
-    require(any('/user@' in line and line.rsplit('/', 1)[-1] == 'screen-packet141-probe-B.service' for line in text.splitlines()),
+    require(any('/user@' in line and line.rsplit('/', 1)[-1] == 'screen-packet141b-probe-B.service' for line in text.splitlines()),
             'coordinator-owned screen-* systemd user service required')
 
 
@@ -129,7 +129,7 @@ def screen_main(argv=None, *, release=None):
     cpu_gate() if args.plan else lane_gate(args.lane)
     scope = admission_scope(args.lane, 'screen')
     args.lineage, args.output = args.lineage.resolve(), args.output.resolve()
-    require(args.output == P / 'evidence/probe-B' and not args.output.exists(), 'new screen evidence output required')
+    require(args.output == P / 'evidence/probe-B-repair141b' and not args.output.exists(), 'new screen evidence output required')
     identity = sealed(args)
     identity.update(lane=args.lane, conditions=LANES[args.lane])
     manifest = read(P/'suite.snapshot.json')

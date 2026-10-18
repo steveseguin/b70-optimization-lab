@@ -17,3 +17,7 @@
 - Original enqueue/finish is required, including the uninstrumented wall control.
   Withhold a verdict on >10% observer overhead or >=0.5 ms and >10% issue gaps.
 - No-extra-eviction follows restoration; it does not prove engine cache occupancy.
+- Packet141b: do not treat executable `ldd` alone as adapter dependency admission.
+  The first attempt exited before a model step because the dynamically loaded
+  Level Zero adapter could not find `libumf.so.1`. Run `native_entry_gate.py`
+  against the real device binary and recorded argv; retain immediate rank stderr.

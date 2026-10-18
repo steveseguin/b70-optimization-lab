@@ -62,3 +62,66 @@ were complete, but the readiness marker had not been written. The 19:07 UTC
 proposal deadline was missed while the final host link waited for the protected
 whole-host compiler hold. That hold was left untouched. This is a timing miss,
 not a device failure. The two-hour work box still applies.
+
+
+## Packet141b — early rank exit repaired on CPU, October 18
+
+The first probe never ran a model step. Both ranks saved `Level Zero GPU index`
+in their receipts, although their logs showed only the allocation plan. Their
+argv already contained `--authorized-device-window`. The device compile used
+`-fsycl` without `OWN_RT_HOST_ONLY`; the host-only p141 diagnostic exception
+was not the cause. The rank catch wrote files but printed nothing unless saving
+those files also failed.
+
+The exact closed environment could not load the Level Zero adapter: its Intel
+`libumf.so.1` dependency was missing. CPU `dlopen` reproduced that error without
+calling any device API. The original device binary parsed both real rank argv
+and reached the existing-output guard; only the priority argument was adjusted
+from 0 to 19 for that CPU check. Original logs, launch records, receipts,
+ownership/drain evidence and the failed output tree are retained unchanged.
+No new kernel fault was reported in the supplied failure; the existing count
+of two was unchanged.
+
+The device binary now explicitly needs an unmodified packet-local copy of Intel
+UMF 1.1.0, with its license and notices. Rank exceptions also print immediately
+to stderr. The new CPU gate runs the real device parser with both original argv
+plus a safe exit flag; it shares the constructor's exact selection checks,
+loads both Level Zero adapters and returns before model, IPC or device APIs.
+Traces show no GPU or model-file opens. Six bad argument cases refuse, and two
+missing-IPC tests prove that both native ranks write their exception into the
+captured logs. The gate never claims successful GPU enumeration or computation.
+
+One compile turn rebuilt the two entry objects and linked both binaries; peak
+compiler child RSS was 731,516 KiB. Production kernel objects, numerical flags,
+selection, model bytes and `iq3-p49-split32-v1` are unchanged. The prior full-size
+allocation receipt is reused; no model, GGUF, or full-size allocation run was
+performed. All commands used nice19, CPUs8–15/24–31, Python -B, closed stdin and
+a 4-GiB CPU cap. No GPU, service, live queue, sudo or host setting was touched.
+
+`analyze.py` is complete. It checks finished/released evidence, hashes, exact
+47+8 oracle tokens, full site/event coverage, routes, state equality, controls
+and clocks. It sums complete samples before medians and applies the registered
+<=1.15 close / >=1.30 with >=0.5 ms class-followup gates. Invalid cache sensitivity,
+observer overhead or issue gaps withhold the verdict. Pre-touch bytes and time
+remain separate. Thirteen synthetic tests cover boundaries, summation, malformed
+or altered evidence, equality and timing controls; all pass alongside the 15
+existing probe tests. Synthetic values are not measurements.
+
+The new queue pin guard also rejected inherited mutable source paths. Exact
+compiled source bytes are now snapshotted under this packet; original commands
+remain provenance, and parent objects use canonical immutable ELF paths. Three
+small input links are now local copies with unchanged hashes. The selected
+unchanged oracle result is explicitly included in the oracle binding. The
+proposal is sealed through a packet-local snapshot, with no mutable ops pin.
+Old build/seal/readiness metadata is retained as byte-verified gzip history.
+This does not rebuild or modify any other packet or shared wrapper.
+
+The fresh proposal is `packet141b-probe-B`, service
+`screen-packet141b-probe-B.service`, output `evidence/probe-B-repair141b/`.
+Temporary queue planning passes; it is not queued. The last readiness write
+binds the repaired seal, native gate and queue plan. The coordinator's device
+attempt must still reach the first timed sequence and pass all exact-output
+checks; this CPU repair supplies no timing result or new model speed claim.
+
+Repair evidence: `stage2/packet141-transfer-gap/evidence/repair141b/`.
+Original attempt: `stage2/packet141-transfer-gap/evidence/probe-B/`.

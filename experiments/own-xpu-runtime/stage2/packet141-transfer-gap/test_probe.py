@@ -41,7 +41,7 @@ class Probe(unittest.TestCase):
  def test_budget(self):
   self.assertGreaterEqual(R.WATCHDOG['tp2'],4*R.EXPECTED_SECONDS[-1]);self.assertEqual(R.WRITES['tp2'],200000000)
  def test_unit(self):
-  R.unit_gate('0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet141-probe-B.service')
+  R.unit_gate('0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet141b-probe-B.service')
   with self.assertRaises(ValueError):R.unit_gate('0::/app.slice/random.service')
  def test_library_path(self):
   self.assertEqual(R.parser().parse_args([]).library_path,'/opt/intel/oneapi/compiler/2026.0/lib')

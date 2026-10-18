@@ -25,6 +25,7 @@ def probe():
  from devices import masked_environment
  from types import SimpleNamespace
  q=ROOT/'experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py'
+ sys.path.insert(0,str(q.parent))
  spec=importlib.util.spec_from_file_location('p141_lanequeue',q);L=importlib.util.module_from_spec(spec);sys.modules[spec.name]=L;spec.loader.exec_module(L)
  proposal=q.parent/'proposed-p141-probe-B.txt';job=json.loads(proposal.read_text());L.validate(job,'B')
  env=L.closed_env('/opt/intel/oneapi/compiler/2026.0/lib')

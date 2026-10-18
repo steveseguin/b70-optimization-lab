@@ -1,11 +1,11 @@
 # Current Workspace State
 
-**October 18, packet141 transfer-gap probe prepared on CPU:** The new two-card
-probe compares a real 24-layer half in order, warm repeated kernels, and weights
-read just before use. It keeps packet136 bundle8 arithmetic and checks every
-model token against packet49. Both builds, allocation checks, 15 safety tests,
-the seal and temporary lane-B queue plan pass. It has not been queued or run.
-The next step is the coordinator's diagnostic; the record is unchanged.
+**October 18, packet141b early exit repaired on CPU:** The first probe stopped
+before any model step because an Intel loader library was missing. The repaired
+copy includes that library and prints rank errors directly. Both native entry
+checks, error logging, 28 Python tests and temporary queue planning pass. The
+analysis script is ready. The failed attempt is preserved; the fresh proposal
+is unqueued. The coordinator's device diagnostic is next; the record is unchanged.
 [Work note](notes/2026-10-18-own-runtime-packet141.md).
 
 **October 18, packet58y one-card attribution prepared on CPU:** The new copy
