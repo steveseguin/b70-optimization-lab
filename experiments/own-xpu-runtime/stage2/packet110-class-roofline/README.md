@@ -25,3 +25,10 @@ Builds reuse frozen packet97 objects read-only, after byte-identical parent
 relink verification. New files stay below 100 MB. See the
 [work note](../../../../notes/2026-10-18-own-runtime-packet110.md) and
 [roofline](ROOFLINE.md). GDN measurements are pending the coordinator.
+
+Refresh the table with `nice -n 19 taskset -c 8-15,24-31 python3 -B
+experiments/own-xpu-runtime/stage2/packet110-class-roofline/roofline.py </dev/null`
+from the repository root. Only a complete passed/drained GDN receipt is admitted.
+If closure inputs changed, the table updates but the ranking requires review.
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md) and
+[retention](RETENTION.md) preserve the bounded outcome and rebuild details.

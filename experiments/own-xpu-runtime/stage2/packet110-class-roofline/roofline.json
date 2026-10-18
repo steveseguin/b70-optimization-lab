@@ -1,0 +1,1775 @@
+{
+  "schema": "packet110.roofline.v1",
+  "roofline_GBs": 537,
+  "device_executed_by_analysis": false,
+  "timing_definition": "median of per-process medians of complete class event sums; 40 measured calls/context/owner",
+  "byte_definition": "source-derived useful global-byte floor, not measured DRAM traffic",
+  "sources": [
+    {
+      "name": "qsa-B-1",
+      "source": "experiments/own-xpu-runtime/stage2/packet107-specialised-layers/evidence/micro-B-1/native/iterations.jsonl",
+      "sha256": "627e99fd5d73e6aaa2738801ac495b881e12951ff0ce38937cacaefb91fed143",
+      "snapshot": "evidence/timing-qsa-B-1.jsonl.gz",
+      "window_sha256": "8d5a95a769d5f2098fdbe8060a76bcf7222f7d3e91cf04bc79f3299a7240540d",
+      "receipt_sha256": "c8935dd2dd08aa43682b641e3dcadf69ae01e8cbfa14b111619565f436c38eb0"
+    },
+    {
+      "name": "qsa-B-2",
+      "source": "experiments/own-xpu-runtime/stage2/packet107-specialised-layers/evidence/micro-B-2/native/iterations.jsonl",
+      "sha256": "d10a353fa800ec26df99fa5922d9723eab058d56a0ba403cf763a090244bc612",
+      "snapshot": "evidence/timing-qsa-B-2.jsonl.gz",
+      "window_sha256": "9df659e828cb345dfd02589e8ac442f933aab580cfb26de25659aa7844936e19",
+      "receipt_sha256": "c8935dd2dd08aa43682b641e3dcadf69ae01e8cbfa14b111619565f436c38eb0"
+    }
+  ],
+  "directory_sha256": "8352dc77cdb0e584068274b388b14bfba716ff315ff613bbe4ba67f62fd58507",
+  "byte_model_sha256": "457ac390ddb896d6b39044ee6116caf47194ae3ebfd32c8b16011837c508f82a",
+  "gdn_status": "pending coordinator",
+  "pending": [],
+  "rows": [
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "attention",
+      "measured_us": 44.896,
+      "owner_medians_us": [
+        45.0,
+        44.792
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 36.87354934823091,
+      "effective_GBs": 441.0436564504633,
+      "roof_ratio": 0.8213103472075667,
+      "above_floor_us": 8.022450651769091,
+      "headroom_ms_per_half": 0.04813470391061455,
+      "gguf_weight_bytes": 12902400,
+      "runtime_weight_read_bytes": 19660800,
+      "activation_state_read_bytes": 73736,
+      "read_bytes": 19734536,
+      "write_bytes": 66560,
+      "tensors": [
+        {
+          "name": "blk.3.attn_output.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            6144,
+            2560
+          ]
+        }
+      ],
+      "notes": "two kernels: GEMV partials + BF16 output/stream combine"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "expsact",
+      "measured_us": 5.41675,
+      "owner_medians_us": [
+        5.417,
+        5.4165
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.07150837988826815,
+      "effective_GBs": 7.08912170581991,
+      "roof_ratio": 0.013201343958696293,
+      "above_floor_us": 5.345241620111732,
+      "headroom_ms_per_half": 0.03207144972067039,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 25600,
+      "read_bytes": 25600,
+      "write_bytes": 12800,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "expsdown",
+      "measured_us": 50.599000000000004,
+      "owner_medians_us": [
+        50.521,
+        50.677
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 17.28148975791434,
+      "effective_GBs": 183.40599616593212,
+      "roof_ratio": 0.3415381679067637,
+      "above_floor_us": 33.31751024208566,
+      "headroom_ms_per_half": 0.19990506145251397,
+      "gguf_weight_bytes": 9216000,
+      "runtime_weight_read_bytes": 9216000,
+      "activation_state_read_bytes": 12920,
+      "read_bytes": 9228920,
+      "write_bytes": 51240,
+      "tensors": [
+        {
+          "name": "blk.3.ffn_down_exps.weight",
+          "type": "IQ4_NL",
+          "dimensions": [
+            640,
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": "p49d IQ4 planar bank: 360 bytes per K640 row; ten experts; output/status"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "expsgate",
+      "measured_us": 59.036,
+      "owner_medians_us": [
+        59.114000000000004,
+        58.958
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 20.079925512104282,
+      "effective_GBs": 182.64990853038825,
+      "roof_ratio": 0.3401301834830321,
+      "above_floor_us": 38.95607448789572,
+      "headroom_ms_per_half": 0.23373644692737433,
+      "gguf_weight_bytes": 10496000,
+      "runtime_weight_read_bytes": 10752000,
+      "activation_state_read_bytes": 5240,
+      "read_bytes": 10757240,
+      "write_bytes": 25680,
+      "tensors": [
+        {
+          "name": "blk.3.ffn_gate_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        },
+        {
+          "name": "blk.3.ffn_up_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        }
+      ],
+      "notes": "p90 half-cache IQ2: 840 useful bytes/row, ten experts, both gate/up, status"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "ffn.combine",
+      "measured_us": 11.40625,
+      "owner_medians_us": [
+        11.405999999999999,
+        11.406500000000001
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.08582495344506517,
+      "effective_GBs": 4.040591780821918,
+      "roof_ratio": 0.007524379480115303,
+      "above_floor_us": 11.320425046554934,
+      "headroom_ms_per_half": 0.06792255027932961,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 25608,
+      "read_bytes": 25608,
+      "write_bytes": 20480,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "hc.a.gate",
+      "measured_us": 21.875,
+      "owner_medians_us": [
+        21.875,
+        21.875
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 6.951806331471136,
+      "effective_GBs": 170.65691428571427,
+      "roof_ratio": 0.3177968608672519,
+      "above_floor_us": 14.923193668528864,
+      "headroom_ms_per_half": 0.08953916201117318,
+      "gguf_weight_bytes": 3481600,
+      "runtime_weight_read_bytes": 3686400,
+      "activation_state_read_bytes": 21120,
+      "read_bytes": 3707520,
+      "write_bytes": 25600,
+      "tensors": [
+        {
+          "name": "blk.3.hc_attn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "hc.a.low",
+      "measured_us": 11.093499999999999,
+      "owner_medians_us": [
+        11.042,
+        11.145
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 7.210562383612663,
+      "effective_GBs": 349.0397079370803,
+      "roof_ratio": 0.6499808341472632,
+      "above_floor_us": 3.882937616387336,
+      "headroom_ms_per_half": 0.023297625698324016,
+      "gguf_weight_bytes": 3645440,
+      "runtime_weight_read_bytes": 3850240,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 3870720,
+      "write_bytes": 1352,
+      "tensors": [
+        {
+          "name": "blk.3.hc_attn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.3.hc_attn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "hc.a.norm",
+      "measured_us": 8.411249999999999,
+      "owner_medians_us": [
+        8.4375,
+        8.385
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.15493482309124768,
+      "effective_GBs": 9.89151434091247,
+      "roof_ratio": 0.018419952217714097,
+      "above_floor_us": 8.256315176908751,
+      "headroom_ms_per_half": 0.04953789106145251,
+      "gguf_weight_bytes": 40960,
+      "runtime_weight_read_bytes": 40960,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 61440,
+      "write_bytes": 21760,
+      "tensors": [
+        {
+          "name": "blk.3.hc_attn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "hc.f.gate",
+      "measured_us": 22.083,
+      "owner_medians_us": [
+        22.083,
+        22.083
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 6.951806331471136,
+      "effective_GBs": 169.04949508671828,
+      "roof_ratio": 0.31480352902554615,
+      "above_floor_us": 15.131193668528862,
+      "headroom_ms_per_half": 0.09078716201117316,
+      "gguf_weight_bytes": 3481600,
+      "runtime_weight_read_bytes": 3686400,
+      "activation_state_read_bytes": 21120,
+      "read_bytes": 3707520,
+      "write_bytes": 25600,
+      "tensors": [
+        {
+          "name": "blk.3.hc_ffn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "hc.f.low",
+      "measured_us": 10.98975,
+      "owner_medians_us": [
+        11.042,
+        10.9375
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 7.210562383612663,
+      "effective_GBs": 352.3348574808344,
+      "roof_ratio": 0.6561170530369356,
+      "above_floor_us": 3.779187616387338,
+      "headroom_ms_per_half": 0.022675125698324028,
+      "gguf_weight_bytes": 3645440,
+      "runtime_weight_read_bytes": 3850240,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 3870720,
+      "write_bytes": 1352,
+      "tensors": [
+        {
+          "name": "blk.3.hc_ffn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.3.hc_ffn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "hc.f.norm",
+      "measured_us": 7.5,
+      "owner_medians_us": [
+        7.5,
+        7.5
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.15493482309124768,
+      "effective_GBs": 11.093333333333334,
+      "roof_ratio": 0.020657976412166358,
+      "above_floor_us": 7.3450651769087525,
+      "headroom_ms_per_half": 0.04407039106145251,
+      "gguf_weight_bytes": 40960,
+      "runtime_weight_read_bytes": 40960,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 61440,
+      "write_bytes": 21760,
+      "tensors": [
+        {
+          "name": "blk.3.hc_ffn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "moe",
+      "measured_us": 4.8695,
+      "owner_medians_us": [
+        4.8955,
+        4.8435
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.1335679702048417,
+      "effective_GBs": 14.729643700585275,
+      "roof_ratio": 0.027429504097924162,
+      "above_floor_us": 4.735932029795158,
+      "headroom_ms_per_half": 0.02841559217877095,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 61486,
+      "read_bytes": 61486,
+      "write_bytes": 10240,
+      "tensors": [],
+      "notes": "two kernels: ordered mixture + shared branch combination"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "qsa.attention",
+      "measured_us": 52.08325,
+      "owner_medians_us": [
+        52.084,
+        52.082499999999996
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.9267709497206704,
+      "effective_GBs": 9.555394488631181,
+      "roof_ratio": 0.017794030705086,
+      "above_floor_us": 51.15647905027933,
+      "headroom_ms_per_half": 0.306938874301676,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 386312,
+      "read_bytes": 386312,
+      "write_bytes": 111364,
+      "tensors": [],
+      "notes": "three kernels; packet49 split32 partial scratch and count written/read; full16 KV; N=position+1"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "qsa.ik",
+      "measured_us": 6.4065,
+      "owner_medians_us": [
+        6.4065,
+        6.4065
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 1.238048417132216,
+      "effective_GBs": 103.77460391789589,
+      "roof_ratio": 0.1932487968675901,
+      "above_floor_us": 5.168451582867784,
+      "headroom_ms_per_half": 0.031010709497206704,
+      "gguf_weight_bytes": 655360,
+      "runtime_weight_read_bytes": 655360,
+      "activation_state_read_bytes": 7168,
+      "read_bytes": 662528,
+      "write_bytes": 2304,
+      "tensors": [
+        {
+          "name": "blk.3.indexer.k_proj.weight",
+          "type": "BF16",
+          "dimensions": [
+            2560,
+            128
+          ]
+        }
+      ],
+      "notes": "two kernels; Split4 scratch retained"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "qsa.iq",
+      "measured_us": 9.24475,
+      "owner_medians_us": [
+        9.218499999999999,
+        9.271
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 4.893080074487895,
+      "effective_GBs": 284.22445171583877,
+      "roof_ratio": 0.5292820329903887,
+      "above_floor_us": 4.3516699255121045,
+      "headroom_ms_per_half": 0.026110019553072624,
+      "gguf_weight_bytes": 2621440,
+      "runtime_weight_read_bytes": 2621440,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 2626560,
+      "write_bytes": 1024,
+      "tensors": [
+        {
+          "name": "blk.3.indexer.q_proj.weight",
+          "type": "BF16",
+          "dimensions": [
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "qsa.k",
+      "measured_us": 8.54175,
+      "owner_medians_us": [
+        8.542,
+        8.5415
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 3.062465549348231,
+      "effective_GBs": 192.53010214534493,
+      "roof_ratio": 0.3585290542743853,
+      "above_floor_us": 5.47928445065177,
+      "headroom_ms_per_half": 0.03287570670391062,
+      "gguf_weight_bytes": 1075200,
+      "runtime_weight_read_bytes": 1638400,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 1643520,
+      "write_bytes": 1024,
+      "tensors": [
+        {
+          "name": "blk.3.attn_k.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "qsa.pool",
+      "measured_us": 4.583,
+      "owner_medians_us": [
+        4.583,
+        4.583
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.011679702048417132,
+      "effective_GBs": 1.3685358935195286,
+      "roof_ratio": 0.002548483973034504,
+      "above_floor_us": 4.5713202979515835,
+      "headroom_ms_per_half": 0.0274279217877095,
+      "gguf_weight_bytes": 512,
+      "runtime_weight_read_bytes": 512,
+      "activation_state_read_bytes": 3200,
+      "read_bytes": 3712,
+      "write_bytes": 2560,
+      "tensors": [
+        {
+          "name": "blk.3.indexer.k_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            128
+          ]
+        }
+      ],
+      "notes": "historical raw rows, norm and RoPE read only on every fourth token"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "qsa.prepare",
+      "measured_us": 5.3645,
+      "owner_medians_us": [
+        5.3645,
+        5.3645
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.10416387337057728,
+      "effective_GBs": 10.427066828222575,
+      "roof_ratio": 0.01941725666335675,
+      "above_floor_us": 5.260336126629422,
+      "headroom_ms_per_half": 0.03156201675977653,
+      "gguf_weight_bytes": 2560,
+      "runtime_weight_read_bytes": 2560,
+      "activation_state_read_bytes": 26752,
+      "read_bytes": 29312,
+      "write_bytes": 26624,
+      "tensors": [
+        {
+          "name": "blk.3.attn_q_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            256
+          ]
+        },
+        {
+          "name": "blk.3.attn_k_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            256
+          ]
+        },
+        {
+          "name": "blk.3.indexer.q_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            128
+          ]
+        }
+      ],
+      "notes": "includes 32 cos + 32 sin BF16 RoPE row"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "qsa.qgate",
+      "measured_us": 97.18725,
+      "owner_medians_us": [
+        97.1875,
+        97.187
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 73.27988081936685,
+      "effective_GBs": 404.90183640343764,
+      "roof_ratio": 0.7540071441404798,
+      "above_floor_us": 23.907369180633154,
+      "headroom_ms_per_half": 0.14344421508379893,
+      "gguf_weight_bytes": 25804800,
+      "runtime_weight_read_bytes": 39321600,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 39326720,
+      "write_bytes": 24576,
+      "tensors": [
+        {
+          "name": "blk.3.attn_q.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            12288
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "qsa.select",
+      "measured_us": 16.17175,
+      "owner_medians_us": [
+        16.197499999999998,
+        16.146
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.03291620111731844,
+      "effective_GBs": 1.0930171440938674,
+      "roof_ratio": 0.0020354136761524533,
+      "above_floor_us": 16.138833798882683,
+      "headroom_ms_per_half": 0.09683300279329608,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 9344,
+      "read_bytes": 9344,
+      "write_bytes": 8332,
+      "tensors": [],
+      "notes": "context-dependent index scores and selected-id scratch; padded ids extent"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "qsa.v",
+      "measured_us": 8.073,
+      "owner_medians_us": [
+        8.125,
+        8.021
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 3.062465549348231,
+      "effective_GBs": 203.70915397002352,
+      "roof_ratio": 0.3793466554376602,
+      "above_floor_us": 5.01053445065177,
+      "headroom_ms_per_half": 0.03006320670391062,
+      "gguf_weight_bytes": 1075200,
+      "runtime_weight_read_bytes": 1638400,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 1643520,
+      "write_bytes": 1024,
+      "tensors": [
+        {
+          "name": "blk.3.attn_v.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "route",
+      "measured_us": 18.75,
+      "owner_medians_us": [
+        18.75,
+        18.75
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.013139664804469273,
+      "effective_GBs": 0.37632,
+      "roof_ratio": 0.0007007821229050279,
+      "above_floor_us": 18.73686033519553,
+      "headroom_ms_per_half": 0.11242116201117318,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 4392,
+      "read_bytes": 4392,
+      "write_bytes": 2664,
+      "tensors": [],
+      "notes": "p78 route-fast single event; input twice, global max/sum/exp scratch and route/probability outputs; local sort scratch excluded"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "shexpact",
+      "measured_us": 3.542,
+      "owner_medians_us": [
+        3.542,
+        3.542
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.007150837988826816,
+      "effective_GBs": 1.0841332580463015,
+      "roof_ratio": 0.0020188701267156452,
+      "above_floor_us": 3.534849162011173,
+      "headroom_ms_per_half": 0.021209094972067036,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 2560,
+      "read_bytes": 2560,
+      "write_bytes": 1280,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "shexpdown",
+      "measured_us": 11.40675,
+      "owner_medians_us": [
+        11.406500000000001,
+        11.407
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 3.444320297951583,
+      "effective_GBs": 162.14960440090294,
+      "roof_ratio": 0.3019545705789627,
+      "above_floor_us": 7.962429702048418,
+      "headroom_ms_per_half": 0.04777457821229051,
+      "gguf_weight_bytes": 1740800,
+      "runtime_weight_read_bytes": 1843200,
+      "activation_state_read_bytes": 1280,
+      "read_bytes": 1844480,
+      "write_bytes": 5120,
+      "tensors": [
+        {
+          "name": "blk.3.ffn_down_shexp.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            640,
+            2560
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 128,
+      "site": "small.ffn.q6",
+      "measured_us": 18.95825,
+      "owner_medians_us": [
+        19.009999999999998,
+        18.9065
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 17.426119180633147,
+      "effective_GBs": 493.60178286497967,
+      "roof_ratio": 0.9191839531936307,
+      "above_floor_us": 1.5321308193668521,
+      "headroom_ms_per_half": 0.009192784916201112,
+      "gguf_weight_bytes": 7941120,
+      "runtime_weight_read_bytes": 9349120,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 9354240,
+      "write_bytes": 3586,
+      "tensors": [
+        {
+          "name": "blk.3.ffn_gate_inp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            512
+          ]
+        },
+        {
+          "name": "blk.3.ffn_gate_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.3.ffn_up_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.3.ffn_gate_inp_shexp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560
+          ]
+        }
+      ],
+      "notes": "four-member tuple: router + shared gate/up + shared router"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "attention",
+      "measured_us": 50.677,
+      "owner_medians_us": [
+        50.729,
+        50.625
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 36.87354934823091,
+      "effective_GBs": 390.73141661897904,
+      "roof_ratio": 0.7276190253612272,
+      "above_floor_us": 13.80345065176909,
+      "headroom_ms_per_half": 0.08282070391061454,
+      "gguf_weight_bytes": 12902400,
+      "runtime_weight_read_bytes": 19660800,
+      "activation_state_read_bytes": 73736,
+      "read_bytes": 19734536,
+      "write_bytes": 66560,
+      "tensors": [
+        {
+          "name": "blk.3.attn_output.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            6144,
+            2560
+          ]
+        }
+      ],
+      "notes": "two kernels: GEMV partials + BF16 output/stream combine"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "expsact",
+      "measured_us": 5.4945,
+      "owner_medians_us": [
+        5.5205,
+        5.4685
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.07150837988826815,
+      "effective_GBs": 6.988806988806989,
+      "roof_ratio": 0.013014538154202959,
+      "above_floor_us": 5.422991620111732,
+      "headroom_ms_per_half": 0.032537949720670395,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 25600,
+      "read_bytes": 25600,
+      "write_bytes": 12800,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "expsdown",
+      "measured_us": 50.72924999999999,
+      "owner_medians_us": [
+        50.677,
+        50.781499999999994
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 17.28148975791434,
+      "effective_GBs": 182.93509168773443,
+      "roof_ratio": 0.34066125081514786,
+      "above_floor_us": 33.44776024208565,
+      "headroom_ms_per_half": 0.2006865614525139,
+      "gguf_weight_bytes": 9216000,
+      "runtime_weight_read_bytes": 9216000,
+      "activation_state_read_bytes": 12920,
+      "read_bytes": 9228920,
+      "write_bytes": 51240,
+      "tensors": [
+        {
+          "name": "blk.3.ffn_down_exps.weight",
+          "type": "IQ4_NL",
+          "dimensions": [
+            640,
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": "p49d IQ4 planar bank: 360 bytes per K640 row; ten experts; output/status"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "expsgate",
+      "measured_us": 59.63525,
+      "owner_medians_us": [
+        59.687,
+        59.5835
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 20.079925512104282,
+      "effective_GBs": 180.8145350275215,
+      "roof_ratio": 0.3367123557309525,
+      "above_floor_us": 39.55532448789572,
+      "headroom_ms_per_half": 0.2373319469273743,
+      "gguf_weight_bytes": 10496000,
+      "runtime_weight_read_bytes": 10752000,
+      "activation_state_read_bytes": 5240,
+      "read_bytes": 10757240,
+      "write_bytes": 25680,
+      "tensors": [
+        {
+          "name": "blk.3.ffn_gate_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        },
+        {
+          "name": "blk.3.ffn_up_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        }
+      ],
+      "notes": "p90 half-cache IQ2: 840 useful bytes/row, ten experts, both gate/up, status"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "ffn.combine",
+      "measured_us": 11.379999999999999,
+      "owner_medians_us": [
+        11.405999999999999,
+        11.354
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.08582495344506517,
+      "effective_GBs": 4.0499121265377855,
+      "roof_ratio": 0.00754173580360854,
+      "above_floor_us": 11.294175046554933,
+      "headroom_ms_per_half": 0.0677650502793296,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 25608,
+      "read_bytes": 25608,
+      "write_bytes": 20480,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "hc.a.gate",
+      "measured_us": 21.901,
+      "owner_medians_us": [
+        21.875,
+        21.927
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 6.951806331471136,
+      "effective_GBs": 170.45431715446784,
+      "roof_ratio": 0.31741958501763096,
+      "above_floor_us": 14.949193668528864,
+      "headroom_ms_per_half": 0.08969516201117318,
+      "gguf_weight_bytes": 3481600,
+      "runtime_weight_read_bytes": 3686400,
+      "activation_state_read_bytes": 21120,
+      "read_bytes": 3707520,
+      "write_bytes": 25600,
+      "tensors": [
+        {
+          "name": "blk.3.hc_attn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "hc.a.low",
+      "measured_us": 11.093499999999999,
+      "owner_medians_us": [
+        11.093499999999999,
+        11.093499999999999
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 7.210562383612663,
+      "effective_GBs": 349.0397079370803,
+      "roof_ratio": 0.6499808341472632,
+      "above_floor_us": 3.882937616387336,
+      "headroom_ms_per_half": 0.023297625698324016,
+      "gguf_weight_bytes": 3645440,
+      "runtime_weight_read_bytes": 3850240,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 3870720,
+      "write_bytes": 1352,
+      "tensors": [
+        {
+          "name": "blk.3.hc_attn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.3.hc_attn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "hc.a.norm",
+      "measured_us": 8.35975,
+      "owner_medians_us": [
+        8.386,
+        8.3335
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.15493482309124768,
+      "effective_GBs": 9.952450731182152,
+      "roof_ratio": 0.01853342780480848,
+      "above_floor_us": 8.204815176908753,
+      "headroom_ms_per_half": 0.049228891061452514,
+      "gguf_weight_bytes": 40960,
+      "runtime_weight_read_bytes": 40960,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 61440,
+      "write_bytes": 21760,
+      "tensors": [
+        {
+          "name": "blk.3.hc_attn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "hc.f.gate",
+      "measured_us": 22.917,
+      "owner_medians_us": [
+        22.917,
+        22.917
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 6.951806331471136,
+      "effective_GBs": 162.89741240127412,
+      "roof_ratio": 0.30334713668766133,
+      "above_floor_us": 15.965193668528865,
+      "headroom_ms_per_half": 0.09579116201117319,
+      "gguf_weight_bytes": 3481600,
+      "runtime_weight_read_bytes": 3686400,
+      "activation_state_read_bytes": 21120,
+      "read_bytes": 3707520,
+      "write_bytes": 25600,
+      "tensors": [
+        {
+          "name": "blk.3.hc_ffn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "hc.f.low",
+      "measured_us": 11.9795,
+      "owner_medians_us": [
+        11.98,
+        11.979
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 7.210562383612663,
+      "effective_GBs": 323.22484243916693,
+      "roof_ratio": 0.6019084589183742,
+      "above_floor_us": 4.768937616387337,
+      "headroom_ms_per_half": 0.02861362569832402,
+      "gguf_weight_bytes": 3645440,
+      "runtime_weight_read_bytes": 3850240,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 3870720,
+      "write_bytes": 1352,
+      "tensors": [
+        {
+          "name": "blk.3.hc_ffn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.3.hc_ffn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "hc.f.norm",
+      "measured_us": 7.5,
+      "owner_medians_us": [
+        7.5,
+        7.5
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.15493482309124768,
+      "effective_GBs": 11.093333333333334,
+      "roof_ratio": 0.020657976412166358,
+      "above_floor_us": 7.3450651769087525,
+      "headroom_ms_per_half": 0.04407039106145251,
+      "gguf_weight_bytes": 40960,
+      "runtime_weight_read_bytes": 40960,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 61440,
+      "write_bytes": 21760,
+      "tensors": [
+        {
+          "name": "blk.3.hc_ffn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "moe",
+      "measured_us": 4.792,
+      "owner_medians_us": [
+        4.792,
+        4.792
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.1335679702048417,
+      "effective_GBs": 14.967863105175292,
+      "roof_ratio": 0.027873115652095517,
+      "above_floor_us": 4.658432029795158,
+      "headroom_ms_per_half": 0.027950592178770946,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 61486,
+      "read_bytes": 61486,
+      "write_bytes": 10240,
+      "tensors": [],
+      "notes": "two kernels: ordered mixture + shared branch combination"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "qsa.attention",
+      "measured_us": 407.6825,
+      "owner_medians_us": [
+        407.656,
+        407.709
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 13.798279329608938,
+      "effective_GBs": 18.175114212653227,
+      "roof_ratio": 0.03384565030289242,
+      "above_floor_us": 393.8842206703911,
+      "headroom_ms_per_half": 2.3633053240223463,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 5812232,
+      "read_bytes": 5812232,
+      "write_bytes": 1597444,
+      "tensors": [],
+      "notes": "three kernels; packet49 split32 partial scratch and count written/read; full16 KV; N=position+1"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "qsa.ik",
+      "measured_us": 6.40625,
+      "owner_medians_us": [
+        6.406499999999999,
+        6.406000000000001
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 1.238048417132216,
+      "effective_GBs": 103.77865365853658,
+      "roof_ratio": 0.19325633828405323,
+      "above_floor_us": 5.168201582867784,
+      "headroom_ms_per_half": 0.031009209497206706,
+      "gguf_weight_bytes": 655360,
+      "runtime_weight_read_bytes": 655360,
+      "activation_state_read_bytes": 7168,
+      "read_bytes": 662528,
+      "write_bytes": 2304,
+      "tensors": [
+        {
+          "name": "blk.3.indexer.k_proj.weight",
+          "type": "BF16",
+          "dimensions": [
+            2560,
+            128
+          ]
+        }
+      ],
+      "notes": "two kernels; Split4 scratch retained"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "qsa.iq",
+      "measured_us": 9.27075,
+      "owner_medians_us": [
+        9.2705,
+        9.271
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 4.893080074487895,
+      "effective_GBs": 283.4273386727072,
+      "roof_ratio": 0.5277976511596038,
+      "above_floor_us": 4.377669925512104,
+      "headroom_ms_per_half": 0.026266019553072624,
+      "gguf_weight_bytes": 2621440,
+      "runtime_weight_read_bytes": 2621440,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 2626560,
+      "write_bytes": 1024,
+      "tensors": [
+        {
+          "name": "blk.3.indexer.q_proj.weight",
+          "type": "BF16",
+          "dimensions": [
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "qsa.k",
+      "measured_us": 8.5155,
+      "owner_medians_us": [
+        8.4895,
+        8.5415
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 3.062465549348231,
+      "effective_GBs": 193.12359814455994,
+      "roof_ratio": 0.35963426097683415,
+      "above_floor_us": 5.453034450651769,
+      "headroom_ms_per_half": 0.03271820670391061,
+      "gguf_weight_bytes": 1075200,
+      "runtime_weight_read_bytes": 1638400,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 1643520,
+      "write_bytes": 1024,
+      "tensors": [
+        {
+          "name": "blk.3.attn_k.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "qsa.pool",
+      "measured_us": 4.6355,
+      "owner_medians_us": [
+        4.6355,
+        4.6355
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.011679702048417132,
+      "effective_GBs": 1.3530363499083162,
+      "roof_ratio": 0.002519620763330198,
+      "above_floor_us": 4.623820297951584,
+      "headroom_ms_per_half": 0.027742921787709502,
+      "gguf_weight_bytes": 512,
+      "runtime_weight_read_bytes": 512,
+      "activation_state_read_bytes": 3200,
+      "read_bytes": 3712,
+      "write_bytes": 2560,
+      "tensors": [
+        {
+          "name": "blk.3.indexer.k_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            128
+          ]
+        }
+      ],
+      "notes": "historical raw rows, norm and RoPE read only on every fourth token"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "qsa.prepare",
+      "measured_us": 5.3645,
+      "owner_medians_us": [
+        5.3645,
+        5.3645
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.10416387337057728,
+      "effective_GBs": 10.427066828222575,
+      "roof_ratio": 0.01941725666335675,
+      "above_floor_us": 5.260336126629422,
+      "headroom_ms_per_half": 0.03156201675977653,
+      "gguf_weight_bytes": 2560,
+      "runtime_weight_read_bytes": 2560,
+      "activation_state_read_bytes": 26752,
+      "read_bytes": 29312,
+      "write_bytes": 26624,
+      "tensors": [
+        {
+          "name": "blk.3.attn_q_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            256
+          ]
+        },
+        {
+          "name": "blk.3.attn_k_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            256
+          ]
+        },
+        {
+          "name": "blk.3.indexer.q_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            128
+          ]
+        }
+      ],
+      "notes": "includes 32 cos + 32 sin BF16 RoPE row"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "qsa.qgate",
+      "measured_us": 97.0835,
+      "owner_medians_us": [
+        96.875,
+        97.292
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 73.27988081936685,
+      "effective_GBs": 405.3345419149495,
+      "roof_ratio": 0.7548129272159209,
+      "above_floor_us": 23.80361918063315,
+      "headroom_ms_per_half": 0.1428217150837989,
+      "gguf_weight_bytes": 25804800,
+      "runtime_weight_read_bytes": 39321600,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 39326720,
+      "write_bytes": 24576,
+      "tensors": [
+        {
+          "name": "blk.3.attn_q.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            12288
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "qsa.select",
+      "measured_us": 179.922,
+      "owner_medians_us": [
+        180.0,
+        179.844
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.5206033519553073,
+      "effective_GBs": 1.5538066495481375,
+      "roof_ratio": 0.002893494691895973,
+      "above_floor_us": 179.40139664804468,
+      "headroom_ms_per_half": 1.076408379888268,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 267264,
+      "read_bytes": 267264,
+      "write_bytes": 12300,
+      "tensors": [],
+      "notes": "context-dependent index scores and selected-id scratch; padded ids extent"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "qsa.v",
+      "measured_us": 8.021,
+      "owner_medians_us": [
+        8.021,
+        8.021
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 3.062465549348231,
+      "effective_GBs": 205.02979678344346,
+      "roof_ratio": 0.38180595304179415,
+      "above_floor_us": 4.95853445065177,
+      "headroom_ms_per_half": 0.029751206703910623,
+      "gguf_weight_bytes": 1075200,
+      "runtime_weight_read_bytes": 1638400,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 1643520,
+      "write_bytes": 1024,
+      "tensors": [
+        {
+          "name": "blk.3.attn_v.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "route",
+      "measured_us": 18.75,
+      "owner_medians_us": [
+        18.75,
+        18.75
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.013139664804469273,
+      "effective_GBs": 0.37632,
+      "roof_ratio": 0.0007007821229050279,
+      "above_floor_us": 18.73686033519553,
+      "headroom_ms_per_half": 0.11242116201117318,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 4392,
+      "read_bytes": 4392,
+      "write_bytes": 2664,
+      "tensors": [],
+      "notes": "p78 route-fast single event; input twice, global max/sum/exp scratch and route/probability outputs; local sort scratch excluded"
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "shexpact",
+      "measured_us": 3.541,
+      "owner_medians_us": [
+        3.541,
+        3.541
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 0.007150837988826816,
+      "effective_GBs": 1.084439423891556,
+      "roof_ratio": 0.0020194402679544806,
+      "above_floor_us": 3.533849162011173,
+      "headroom_ms_per_half": 0.02120309497206704,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 2560,
+      "read_bytes": 2560,
+      "write_bytes": 1280,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "shexpdown",
+      "measured_us": 11.379999999999999,
+      "owner_medians_us": [
+        11.405999999999999,
+        11.354
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 3.444320297951583,
+      "effective_GBs": 162.53075571177507,
+      "roof_ratio": 0.30266434955637816,
+      "above_floor_us": 7.935679702048416,
+      "headroom_ms_per_half": 0.047614078212290495,
+      "gguf_weight_bytes": 1740800,
+      "runtime_weight_read_bytes": 1843200,
+      "activation_state_read_bytes": 1280,
+      "read_bytes": 1844480,
+      "write_bytes": 5120,
+      "tensors": [
+        {
+          "name": "blk.3.ffn_down_shexp.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            640,
+            2560
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 3,
+      "kind": "QSA",
+      "context": 4096,
+      "site": "small.ffn.q6",
+      "measured_us": 20.39025,
+      "owner_medians_us": [
+        20.416,
+        20.3645
+      ],
+      "owners": 2,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 6,
+      "floor_us": 17.426119180633147,
+      "effective_GBs": 458.9363053420139,
+      "roof_ratio": 0.8546299913259104,
+      "above_floor_us": 2.9641308193668543,
+      "headroom_ms_per_half": 0.017784784916201127,
+      "gguf_weight_bytes": 7941120,
+      "runtime_weight_read_bytes": 9349120,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 9354240,
+      "write_bytes": 3586,
+      "tensors": [
+        {
+          "name": "blk.3.ffn_gate_inp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            512
+          ]
+        },
+        {
+          "name": "blk.3.ffn_gate_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.3.ffn_up_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.3.ffn_gate_inp_shexp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560
+          ]
+        }
+      ],
+      "notes": "four-member tuple: router + shared gate/up + shared router"
+    }
+  ]
+}

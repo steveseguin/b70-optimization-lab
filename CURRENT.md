@@ -1,10 +1,12 @@
 # Current Workspace State
 
-**October 18, packet110 current GDN timing prepared on CPU:** The unchanged
-GDN path compiles and passes two fresh CPU state checks and a temporary queue
-plan. The coordinator proposal measures complete layers at 128 and 4096 tokens;
-closed specialisation arms stay closed. Fresh QSA roofline analysis is in
-progress, and GDN device times remain pending. No device or live queue changed.
+**October 18, packet110 fresh class table and GDN timing job prepared on CPU:**
+The table uses both fresh QSA runs and keeps missing GDN times blank. It ranks
+open gate/up transpose, complete-tuple epilogues and exact route selection;
+these are opportunity budgets, not speed claims. The current-only GDN job
+compiles, passes two fresh CPU state checks and plans on a temporary queue.
+The coordinator proposal is pushed, with a script to fill the GDN table after
+its clean result. No device or live queue changed.
 [Work note](notes/2026-10-18-own-runtime-packet110.md).
 
 **October 18, packet58n one-card analysis and single-lever screen prepared on CPU:**

@@ -1,0 +1,355 @@
+{
+  "schema": "own-runtime.packet107.micro-window.v1",
+  "passed": true,
+  "device_executed": true,
+  "drained": true,
+  "child_still_running": false,
+  "lane": "B",
+  "physical_cards": [
+    2
+  ],
+  "native_card": 0,
+  "pci": "0000:43:00.0",
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "identity": {
+    "build_receipt_sha256": "b3e1ac3763b563aa5c62a288e27943793cab84f5c43a71f9a7f3856957d1b5d2",
+    "binary_sha256": "ffd79f4ee7f2688386a5af36bdde999d4de238c5bd0d1d2e3a18aeaf64a96933",
+    "packet_seal_sha256": "b6e56df3566cb4ba901f016a55933b4e3c47aa280c78c5fcff1a3dfb4e47669d",
+    "wrapper_seal_sha256": "2ce1884f599466ae5d91226bc08a22605fa66316132eb0dfbef992c2c9ebfb40"
+  },
+  "build_receipt_sha256": "b3e1ac3763b563aa5c62a288e27943793cab84f5c43a71f9a7f3856957d1b5d2",
+  "binary_sha256": "ffd79f4ee7f2688386a5af36bdde999d4de238c5bd0d1d2e3a18aeaf64a96933",
+  "packet_seal_sha256": "b6e56df3566cb4ba901f016a55933b4e3c47aa280c78c5fcff1a3dfb4e47669d",
+  "wrapper_seal_sha256": "2ce1884f599466ae5d91226bc08a22605fa66316132eb0dfbef992c2c9ebfb40",
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet107-specialised-layers/build/device/layer-bench",
+    "--authorized-device-window",
+    "--card",
+    "0",
+    "--mode",
+    "timing",
+    "--layer",
+    "qsa",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet107-specialised-layers/evidence/micro-B-1/native"
+  ],
+  "systemd_cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet107-micro-B-1.service\n",
+  "systemd_properties": {
+    "ExitType": "cgroup",
+    "Restart": "no",
+    "TimeoutStopUSec": "infinity",
+    "KillMode": "process",
+    "SendSIGKILL": "no"
+  },
+  "started_utc_ns": 1792309791377508482,
+  "model_lifetimes": 1,
+  "watchdog_seconds": 1800,
+  "stop_reasons": [],
+  "environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:43:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+    "HOME": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet107-specialised-layers/evidence/micro-B-1/native-home"
+  },
+  "coordinator_fault_review": {
+    "schema": "own-runtime.screen.fault-review.v3",
+    "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+    "fault_count": 2,
+    "faults": [
+      {
+        "__REALTIME_TIMESTAMP": "1792199356236486",
+        "MESSAGE": "xe 0000:47:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+        "__CURSOR": "s=e3d94d04f38747dcbe36a4ef06874902;i=20dbcf8;b=2cba7160054a4ffeb4c4e252eb956f5f;m=9cb374e62;t=65dfeedfec2c6;x=433472837baa3e90",
+        "_MACHINE_ID": "9c3959da4143428eb2e83dbae3e4a0f7",
+        "__SEQNUM": "34454776",
+        "SYSLOG_IDENTIFIER": "kernel",
+        "_KERNEL_DEVICE": "+pci:0000:47:00.0",
+        "_SOURCE_MONOTONIC_TIMESTAMP": "42063964780",
+        "SYSLOG_FACILITY": "0",
+        "__SEQNUM_ID": "e3d94d04f38747dcbe36a4ef06874902",
+        "PRIORITY": "6",
+        "__MONOTONIC_TIMESTAMP": "42064105058",
+        "_HOSTNAME": "steve-b70s",
+        "_UDEV_SYSNAME": "0000:47:00.0",
+        "_KERNEL_SUBSYSTEM": "pci",
+        "_TRANSPORT": "kernel",
+        "_BOOT_ID": "2cba7160054a4ffeb4c4e252eb956f5f",
+        "_RUNTIME_SCOPE": "system"
+      },
+      {
+        "_RUNTIME_SCOPE": "system",
+        "_SOURCE_MONOTONIC_TIMESTAMP": "42063964790",
+        "__REALTIME_TIMESTAMP": "1792199356236728",
+        "SYSLOG_IDENTIFIER": "kernel",
+        "_KERNEL_DEVICE": "+pci:0000:47:00.0",
+        "_TRANSPORT": "kernel",
+        "PRIORITY": "6",
+        "__SEQNUM_ID": "e3d94d04f38747dcbe36a4ef06874902",
+        "_BOOT_ID": "2cba7160054a4ffeb4c4e252eb956f5f",
+        "__SEQNUM": "34454777",
+        "__CURSOR": "s=e3d94d04f38747dcbe36a4ef06874902;i=20dbcf9;b=2cba7160054a4ffeb4c4e252eb956f5f;m=9cb374f53;t=65dfeedfec3b8;x=7f42b4c9291f9442",
+        "SYSLOG_FACILITY": "0",
+        "__MONOTONIC_TIMESTAMP": "42064105299",
+        "_UDEV_SYSNAME": "0000:47:00.0",
+        "_HOSTNAME": "steve-b70s",
+        "MESSAGE": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=36, state=0x289",
+        "_MACHINE_ID": "9c3959da4143428eb2e83dbae3e4a0f7",
+        "_KERNEL_SUBSYSTEM": "pci"
+      }
+    ],
+    "cursor": "s=e3d94d04f38747dcbe36a4ef06874902;i=20dcdd0;b=2cba7160054a4ffeb4c4e252eb956f5f;m=22cfbc194d;t=65e17f2838db1;x=9b07d94bc80c9fd3",
+    "through": "2026-10-18T07:00:06.230449Z",
+    "through_us": 1792306806230449,
+    "driver_sha256": "41a57d623b87d5de4726bfa739d4bacf97d41dabf2759d1aa381ed90b14d14c8",
+    "journal_sha256": "e6a6c3c261f59c60ba4e9749d4a900b23822c092e36db2eeeedde394f3cb8812",
+    "kernel_capture": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/lanequeue-review-84f3b50219234b23bf425d38dc73dfb9.kernel.jsonl.gz"
+  },
+  "device_topology": {
+    "lane": "B",
+    "filter": "0000:4",
+    "native_indices": [
+      0,
+      1
+    ],
+    "nodes": [
+      {
+        "pci": "0000:43:00.0",
+        "path": "/dev/dri/by-path/pci-0000:43:00.0-render",
+        "node": "/dev/dri/renderD128",
+        "driver": "xe"
+      },
+      {
+        "pci": "0000:47:00.0",
+        "path": "/dev/dri/by-path/pci-0000:47:00.0-render",
+        "node": "/dev/dri/renderD129",
+        "driver": "xe"
+      }
+    ],
+    "device_nodes_opened": false
+  },
+  "clients_before": {
+    "scope": "lane-B",
+    "blocked": [],
+    "other": [],
+    "inaccessible_processes": 506,
+    "hidden_clients_require_coordinator_ownership": true,
+    "device_nodes_opened": false
+  },
+  "memory_fence": {
+    "53": "offline",
+    "54": "offline",
+    "55": "offline",
+    "56": "offline",
+    "57": "online"
+  },
+  "memory_admission": {
+    "snapshot": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 120605634560,
+      "SwapTotal": 8589930496,
+      "SwapFree": 8116711424,
+      "GPUActive": 114688
+    },
+    "required_bytes": 10737418240,
+    "host_reserve_bytes": 8589934592,
+    "anonymous_budget_bytes": 2147483648,
+    "device_bytes_upper_bound": 5368709120
+  },
+  "storage_admission": {
+    "root_free_bytes": 22592389120,
+    "minimum_root_free_bytes": 12884901888,
+    "planned_write_bytes": 134217728
+  },
+  "ldd": {
+    "returncode": 0,
+    "stdout": "\tlinux-vdso.so.1 (0x00007dea3fcec000)\n\tlibcrypto.so.3 => /usr/lib/x86_64-linux-gnu/libcrypto.so.3 (0x00007dea3f600000)\n\tlibze_loader.so.1 => /usr/lib/x86_64-linux-gnu/libze_loader.so.1 (0x00007dea3fb5f000)\n\tlibstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007dea3f200000)\n\tlibm.so.6 => /usr/lib/x86_64-linux-gnu/libm.so.6 (0x00007dea3f517000)\n\tlibgcc_s.so.1 => /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007dea3fb2f000)\n\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x00007dea3ee00000)\n\tlibc.so.6 => /usr/lib/x86_64-linux-gnu/libc.so.6 (0x00007dea3ea00000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007dea3fcee000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007dea3fb16000)\n\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x00007dea3dc00000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007dea3f512000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007dea3f50d000)\n\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x00007dea3d600000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007dea3f4f1000)\n\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x00007dea3be00000)\n\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x00007dea3ed07000)\n\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x00007dea3f48c000)\n",
+    "stderr": ""
+  },
+  "pid": 1167308,
+  "process_start_ticks": 15252412,
+  "device_isolation": {
+    "passed": true,
+    "allowed_pci": [
+      "0000:43:00.0"
+    ],
+    "observed_pci": [
+      "0000:43:00.0"
+    ],
+    "latest_fds": [
+      {
+        "pid": 1167308,
+        "fd": "9",
+        "driver": "xe",
+        "pci": "0000:43:00.0",
+        "client_id": "11749"
+      }
+    ]
+  },
+  "anonymous_peak_bytes": 290353152,
+  "anonymous_limit_bytes": 2147483648,
+  "anonymous_stop_bytes": 2013265920,
+  "memory_last_sample": {
+    "anonymous_bytes": 215752704,
+    "root_seen": true,
+    "processes": [
+      {
+        "pid": 1167308,
+        "rss_anon_bytes": 215752704
+      }
+    ]
+  },
+  "returncode": 0,
+  "sigterm_sent": false,
+  "elapsed_seconds": 37.66037381699425,
+  "native_summary": {
+    "schema": "ownrt.packet107.layer.v1",
+    "passed": true,
+    "cpu_mock": false,
+    "device_executed": true,
+    "safe_to_exit": true,
+    "mode": "timing",
+    "card": 0,
+    "context_capacity": 4096,
+    "occupied_context": 4096,
+    "arithmetic": "iq3-p49-split32-v1",
+    "checks": 644,
+    "timing_pair_checks": 100,
+    "exact_output_identity": "ace724525eadb7914b32750a05d83fc25303ad568552489cdc950985711ddd01",
+    "error": "",
+    "route_set_counts": {
+      "3": 4
+    },
+    "launch_counts": {
+      "3": {
+        "current": 31,
+        "specialized": 31
+      }
+    },
+    "teardown": [
+      {
+        "schema": "own-xpu-runtime.teardown.v1",
+        "backend": "LevelZero:0:Intel(R) Arc(TM) Pro B70 Graphics:driver=1.15.38308+1",
+        "status": "complete",
+        "exit_code": 0,
+        "safe_to_exit": true,
+        "idle_marker_complete": true,
+        "in_flight": 0,
+        "live_bytes": 0,
+        "error": "",
+        "sequence": [
+          "quiesce",
+          "drain",
+          "graphs-released",
+          "free:workspace:card0:control",
+          "free:workspace:card0:scores",
+          "free:workspace:card0:probabilities",
+          "free:workspace:card0:gemv-workspace",
+          "free:workspace:card0:operator-scratch",
+          "free:workspace:card0:mixture",
+          "free:workspace:card0:compact-routes",
+          "free:workspace:card0:fp32-input",
+          "free:workspace:card0:active",
+          "free:workspace:card0:blk.3.attention",
+          "free:workspace:card0:blk.3.expsact",
+          "free:workspace:card0:blk.3.expsdown",
+          "free:workspace:card0:blk.3.expsdown.status",
+          "free:workspace:card0:blk.3.expsgate",
+          "free:workspace:card0:blk.3.expsgate.status",
+          "free:workspace:card0:blk.3.expsup",
+          "free:workspace:card0:blk.3.expsup.status",
+          "free:workspace:card0:blk.3.hc.a.act",
+          "free:workspace:card0:blk.3.hc.a.gate",
+          "free:workspace:card0:blk.3.hc.a.inject",
+          "free:workspace:card0:blk.3.hc.a.low",
+          "free:workspace:card0:blk.3.hc.a.mix",
+          "free:workspace:card0:blk.3.hc.a.norm",
+          "free:workspace:card0:blk.3.hc.f.act",
+          "free:workspace:card0:blk.3.hc.f.gate",
+          "free:workspace:card0:blk.3.hc.f.inject",
+          "free:workspace:card0:blk.3.hc.f.low",
+          "free:workspace:card0:blk.3.hc.f.mix",
+          "free:workspace:card0:blk.3.hc.f.norm",
+          "free:workspace:card0:blk.3.ids",
+          "free:workspace:card0:blk.3.moe",
+          "free:workspace:card0:blk.3.prob",
+          "free:workspace:card0:blk.3.qsa.gate",
+          "free:workspace:card0:blk.3.qsa.ids",
+          "free:workspace:card0:blk.3.qsa.ik",
+          "free:workspace:card0:blk.3.qsa.iq",
+          "free:workspace:card0:blk.3.qsa.iqn",
+          "free:workspace:card0:blk.3.qsa.k",
+          "free:workspace:card0:blk.3.qsa.keys",
+          "free:workspace:card0:blk.3.qsa.kn",
+          "free:workspace:card0:blk.3.qsa.pooled",
+          "free:workspace:card0:blk.3.qsa.q",
+          "free:workspace:card0:blk.3.qsa.qgate",
+          "free:workspace:card0:blk.3.qsa.raw",
+          "free:workspace:card0:blk.3.qsa.v",
+          "free:workspace:card0:blk.3.qsa.values",
+          "free:workspace:card0:blk.3.qsa.y",
+          "free:workspace:card0:blk.3.router",
+          "free:workspace:card0:blk.3.routes",
+          "free:workspace:card0:blk.3.routes.down",
+          "free:workspace:card0:blk.3.shared_gate",
+          "free:workspace:card0:blk.3.shexpact",
+          "free:workspace:card0:blk.3.shexpdown",
+          "free:workspace:card0:blk.3.shexpgate",
+          "free:workspace:card0:blk.3.shexpup",
+          "free:workspace:card0:error",
+          "free:workspace:card0:position",
+          "free:workspace:card0:streams",
+          "free:workspace:card0:p107-private-prep",
+          "free:weights:card0:one",
+          "free:weights:card0:rope",
+          "free:weights:card0:weight:blk.3.hc_attn_norm.weight",
+          "free:weights:card0:weight:blk.3.hc_attn_down.weight",
+          "free:weights:card0:weight:blk.3.hc_attn_up.weight",
+          "free:weights:card0:weight:blk.3.hc_attn_inject.weight",
+          "free:weights:card0:weight:blk.3.attn_q.weight",
+          "free:weights:card0:weight:blk.3.attn_k.weight",
+          "free:weights:card0:weight:blk.3.attn_v.weight",
+          "free:weights:card0:weight:blk.3.indexer.q_proj.weight",
+          "free:weights:card0:weight:blk.3.indexer.k_proj.weight",
+          "free:weights:card0:weight:blk.3.attn_q_norm.weight",
+          "free:weights:card0:weight:blk.3.attn_k_norm.weight",
+          "free:weights:card0:weight:blk.3.indexer.q_norm.weight",
+          "free:weights:card0:weight:blk.3.indexer.k_norm.weight",
+          "free:weights:card0:weight:blk.3.attn_output.weight",
+          "free:weights:card0:weight:blk.3.hc_ffn_norm.weight",
+          "free:weights:card0:weight:blk.3.hc_ffn_down.weight",
+          "free:weights:card0:weight:blk.3.hc_ffn_up.weight",
+          "free:weights:card0:weight:blk.3.hc_ffn_inject.weight",
+          "free:weights:card0:weight:blk.3.ffn_gate_inp.weight",
+          "free:weights:card0:weight:blk.3.ffn_gate_exps.weight",
+          "free:weights:card0:weight:blk.3.ffn_up_exps.weight",
+          "free:weights:card0:weight:blk.3.ffn_down_exps.weight",
+          "free:weights:card0:weight:blk.3.ffn_gate_shexp.weight",
+          "free:weights:card0:weight:blk.3.ffn_up_shexp.weight",
+          "free:weights:card0:weight:blk.3.ffn_down_shexp.weight",
+          "free:weights:card0:weight:blk.3.ffn_gate_inp_shexp.weight",
+          "free:pinned-copy-slab:card0:bounded-copy",
+          "idle-marker-complete",
+          "events-released",
+          "queue-released",
+          "context-released"
+        ]
+      }
+    ]
+  },
+  "clients_after_drain": {
+    "scope": "lane-B",
+    "blocked": [],
+    "other": [],
+    "inaccessible_processes": 507,
+    "hidden_clients_require_coordinator_ownership": true,
+    "device_nodes_opened": false
+  },
+  "samples_sha256": "7738dbbb7d3f5dc0fff9bf2f38d8a7193fbfe7d9f6c834f0a09d8e24fdd68bfa",
+  "lease_released": true,
+  "finished_utc_ns": 1792309853992320129
+}
