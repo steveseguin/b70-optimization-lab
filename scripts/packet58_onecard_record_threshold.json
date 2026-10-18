@@ -1,21 +1,27 @@
 {
-  "schema": "lab.packet58.onecard-record-threshold.v1",
-  "gpu_count": 1,
-  "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
-  "quantization": "UD-IQ3_XXS (GGUF)",
-  "records": [],
-  "public_record_check": {
-    "checked_utc": "2026-10-18T02:34:37Z",
-    "method": "GET",
-    "endpoint": "https://www.localmaxxing.com/api/speed-tests",
-    "http_status": 403,
-    "status": "unknown-read-blocked",
-    "error": "Cloudflare 1010 browser_signature_banned",
-    "cloudflare_ray": "a4c4251e3e1155b7",
-    "pagination_complete": false,
-    "matching_public_record": null,
-    "best_tok_s": null,
-    "local_ledger_matching_entry": false,
-    "disclosure": "Public matching 1-GPU best unverified: authenticated API GET on 2026-10-18 was blocked (HTTP 403/Cloudflare 1010). No matching entry in the lab submission ledger; public absence is not established."
-  }
+ "schema": "lab.packet58.onecard-record-threshold.v1",
+ "gpu_count": 1,
+ "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+ "quantization": "UD-IQ3_XXS (GGUF)",
+ "records": [],
+ "public_record_check": {
+  "checked_utc": "2026-10-18T02:50:00Z",
+  "method": "GET",
+  "endpoint": "https://www.localmaxxing.com/api/speed-tests?modelId=cmtas1yaz000cqq01umzx85mw&limit=100",
+  "http_status": 200,
+  "status": "checked-no-matching-1x-b70",
+  "pagination_complete": true,
+  "runs_for_model": 57,
+  "single_gpu_runs_for_model": 16,
+  "matching_public_record": null,
+  "best_tok_s": null,
+  "best_single_gpu_other_hardware_tok_s": 110.0,
+  "local_ledger_matching_entry": false,
+  "previous_check": {
+   "checked_utc": "2026-10-18T02:34:37Z",
+   "http_status": 403,
+   "error": "Cloudflare 1010 browser_signature_banned (Python client)"
+  },
+  "disclosure": "Public list checked 2026-10-18 02:50 UTC: no 1x Arc Pro B70 entry for this model; other single-GPU hardware entries exist (up to 110 tok/s). First lab one-card result; single timed run."
+ }
 }

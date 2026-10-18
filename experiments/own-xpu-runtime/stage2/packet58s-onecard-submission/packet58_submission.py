@@ -474,7 +474,7 @@ def payload_for(result, result_ref, att_ref):
                  promptSha256=[r['prompt_token_sha256'] for r in rows], outputSha256=[r['output_token_sha256'] for r in rows],
                  prefixCaching=False, responseReuse=False, contextCheckpoints=0, historyAccelerated=False,
                  kvCacheDtype='bf16', apiKvCacheDtype='auto', attentionBackend='own Xe split32 QSA', apiAttentionBackend='sdpa',
-                 concurrency=1, tensorParallel=1, gpuLayers=48, temperature=0, specDecoding=False, mtpEnabled=False, specNumTokens=0,
+                 concurrency=1, tensorParallel=1, gpuLayers=48, temperature=0, specDecoding=False, mtpEnabled=False,
                  deviceCards=[0], immutableExpertWeightCacheBytes=18_000_000_000, hostPinnedExperts=True,
                  wholeHostTiming=True, freshTimingRepeatPassed=False,
                  commandSnippet='python3 -B ' + str(PACKET / 'queue_runner.py') +
