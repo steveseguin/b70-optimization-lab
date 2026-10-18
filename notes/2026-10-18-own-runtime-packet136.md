@@ -116,3 +116,65 @@ CPU fixtures and both compositions' model startup paths run locally. All 22
 registered window paths pass, with peak child RSS 1,250,744 KiB. The extended
 argument gate still runs K2's real Python entry and original timing-receipt
 replay; none of this qualifies a device performance result.
+
+## Packet136b — repair the confirm entry environment (October 18)
+
+Lane A's 16:07:59 UTC smoke refused before device work because the confirm
+entry inserted `PYTHONDONTWRITEBYTECODE` into an environment that rejects it.
+The entry now supplies only `PATH`, `OMP_NUM_THREADS=2` and the registered
+`LD_LIBRARY_PATH`; all Python launches retain `-B`. The chain shell/entry,
+smoke entry and both workers were inspected for the same problem. The chain
+already uses `env -i`; worker masks are installed only after the closed gate.
+
+The confirm probes now execute the real screen lifecycle, including
+`masked_environment` / `closed_environment`, passive `topology_admit`, and
+lane-A reservation arguments, then execute the real worker to both intercepted
+native launches. Only operating context, leases, predecessor receipts and live
+resource checks are synthetic, with all writes confined to disposable scratch.
+The chain probe uses the environment parsed from `device-entry.sh`, the real
+`chain_entry.main` and coordinated WS128 window, its whole-host reservation
+arguments, real topology and native environment checks. No device node opens
+or native device execution are permitted. The old entry is loaded from
+`3dfcff0ca` as a negative control and must reproduce `closed environment required`.
+
+Removing the variable invalidated transitive source pins in the two screen
+views and startup receipt. The startup checks were therefore rerun using the
+hash-verified existing CPU fixture, with no compile or rebuild: all 22 windows
+passed in 41.23 seconds, peak child RSS 1,249,428 KiB. The existing unchanged-K2
+receipt reuse remains explicitly labeled. Original startup and screen receipts
+are retained. The minimal reseal changes only source/preparation bindings and
+their dependent hashes; native artifacts, selections, dispatch, memory policy,
+`iq3-p49-split32-v1`, decision `087f9da3c434e862`, both-lane evidence rule and
+fresh chain folder `device-cards01-a` are unchanged.
+
+Old output names appear in lane-A history. The replacement proposal uses
+`packet136b-confirm-A-*` job names and `p136b-*` output directories. It is planned
+on a disposable queue before the proposal file is replaced; live queues are
+never written here. The repair procedures and unchanged-identity audit are
+retained under `ops/packet136-orchestration/evidence/*136b*`.
+
+Work runs on CPU with nice19, cores 8–15/24–31, Python `-B` and no stdin.
+Startup and entry probes use a 4-GiB address-space cap. The first general test
+run incorrectly inherited that cap: 86 tests passed and the two native-limit
+tests correctly refused it. That log is retained as
+`evidence/tests136b-finite-as-refusal.log`. The general suite is rerun with the
+required unlimited virtual address space and measured RAM below 4 GiB; native
+launches remain intercepted. No launch-limit gate is weakened.
+There are no GPU jobs, services, sudo, host-setting changes or signals.
+`git pull --rebase` refused unrelated dirty files; fetch initially confirmed
+HEAD and origin/main at `2a09e170ee94b8b0d64afceb419cfeba1fa500de`.
+
+Final repair validation: **88 tests, 11 subtests and five worker tests passed**.
+All eleven argument/queue windows and four launch-limit cases passed. All six
+confirm entries and the chain entry reached both intercepted native launches;
+the original confirm entry reproduced the exact closed-environment refusal.
+The complete six-job proposal and chain plan passed. Orchestration took
+1 minute 48 seconds with maximum RSS 74,116 KiB. CPU preparation is ready;
+chain readiness still refuses the missing lane-A smoke and grid. The fresh
+outputs are `p136b-0dd382892cdc-A-*`. Device results are not claimed.
+
+The repair commit is pushed before the final `READY-FOR-DEVICE.json` marker is
+written. Its `commit_sha` identifies that immutable repair commit, and its
+proposal SHA-256 binds the exact unqueued proposal. The marker is committed
+separately so it can contain a real committed revision without a self-hash.
+No file in either packet136 tree is changed after the marker is written.

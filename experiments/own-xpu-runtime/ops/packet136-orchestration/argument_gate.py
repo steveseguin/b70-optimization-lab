@@ -30,18 +30,24 @@ def sandbox(tmp):
   if event in ('subprocess.Popen','os.system','os.exec','os.posix_spawn'):raise Forbidden('execution forbidden in argument probe')
  sys.addaudithook(audit)
 
-def probe(name):
+def probe(name,entry=False):
  from chain_adapter import install
  install()
  import chain103
  q,w=chain103.install()
  import fixture_support,write_paths,storage,kd_window103
+ import chain_entry,window_adapter,exec_limits,source_gate136
+ oracle_result=source_gate136.oracle() if entry else None
  from window_safety import environment_gate
  with tempfile.TemporaryDirectory(prefix='p124b-argv-') as directory:
   tmp=Path(directory);sandbox(tmp)
   chain=tmp/'chain';chain.mkdir();k2=chain/'K2/run0';k2.mkdir(parents=True)
   shutil.copyfile(P/'dispatch-speed6.json',k2/'dispatch-measured.json')
   command=q.commands(chain)[name];argv=command[command.index('window')+1:]
+  if entry:
+   chain_entry.embed_environment(command)
+   child_env={x.split('=',1)[0]:x.split('=',1)[1] for x in command if '=' in x and not x.startswith('--')}
+   assert child_env=={k:v for k,v in os.environ.items() if k!='LC_CTYPE'}
   out=chain/name
   if name=='K2':shutil.rmtree(chain/'K2')
   observations=[]
@@ -62,6 +68,12 @@ def probe(name):
    cmd=list(map(str,cmd));assert '--output' in cmd, 'unexpected subprocess: '+repr(cmd)
    dest=Path(cmd[cmd.index('--output')+1]);assert dest.is_relative_to(tmp)
    observations.append(dict(argv=cmd,device_executed=False))
+   if entry:
+    from chain_devices import mask_for
+    native=kwargs['env']
+    assert all(native[k]==v for k,v in mask_for('A').items())
+    assert native['OMP_NUM_THREADS']=='2' and 'PYTHONDONTWRITEBYTECODE' not in native
+    observations[-1]['environment']=dict(native)
    if name in ('K0','K1a','K1b','K2'):
     dest.mkdir();save(dest/'receipt.json',dict(passed=True,synthetic_argument_gate=True))
     for leaf in ('output.bin','cases.jsonl','timings.jsonl'):(dest/leaf).write_bytes(b'')
@@ -82,6 +94,19 @@ def probe(name):
   def fixtures(*a,**kw):
    original_fixtures(*a,**kw)
    raise Reached()
+  startup={}
+  def reservation(lane,**kwargs):
+   assert lane=='A' and kwargs['window']==name
+   startup['reservation']=dict(lane=lane,window=name,scope=window_adapter.window_scope(name))
+   return SimpleNamespace(record={},__enter__=lambda:None)
+  class Lease:
+   def __init__(self,lane,**kwargs):self.record=reservation(lane,**kwargs).record
+   def __enter__(self):return self
+   def __exit__(self,*a):return False
+  class Permit:
+   def __init__(self,*a,**k):self.record={'synthetic':True}
+   def __enter__(self):return self
+   def __exit__(self,*a):return False
   with contextlib.ExitStack() as stack:
    patches=[patch.object(sys,'argv',['window.py',*argv]),patch.object(subprocess,'Popen',side_effect=capture),
     patch.object(w,'prerequisites',side_effect=predecessor),patch.object(w,'fresh_k1_owners'),
@@ -94,14 +119,29 @@ def probe(name):
     patch.object(w,'run_fixtures',side_effect=fixtures),patch.object(kd_window103,'admit'),
     patch.object(write_paths,'kd_scratch',side_effect=lambda p,b:Path(p)/'host-reference')]
    for item in patches:stack.enter_context(item)
+   if entry:
+    from chain_devices import topology_admit,mask_native
+    def topology(lane):
+     startup['topology']=topology_admit(lane);return startup['topology']
+    stack.enter_context(patch.object(w,'environment_gate',side_effect=lambda:environment_gate()))
+    stack.enter_context(patch.object(w,'mask_native',side_effect=mask_native))
+    stack.enter_context(patch.object(w,'journal',return_value=('', 'CPU-only')))
+    stack.enter_context(patch.object(window_adapter,'Reservation',Lease))
+    stack.enter_context(patch.object(window_adapter,'DrainPermit',Permit))
+    stack.enter_context(patch.object(window_adapter,'foreign_clients',return_value={'blocked':[]}))
+    original_admission=window_adapter.WindowAdmission
+    stack.enter_context(patch.object(window_adapter,'WindowAdmission',side_effect=lambda *a,**k:original_admission(*a,topology=topology,**k)))
+    stack.enter_context(patch.object(source_gate136,'oracle',return_value=oracle_result))
+    stack.enter_context(patch.object(exec_limits,'install'))  # separate launch-limit gate checks the real guard
+    stack.enter_context(patch.object(sys,'argv',[str(O/'chain_entry.py'),'window',*argv]))
    try:
-    code=w.main(admission=admission)
+    code=chain_entry.main() if entry else w.main(admission=admission)
     raise AssertionError('native exec not reached: '+str(code)+' '+(out/'window.json').read_text())
    except Reached:pass
   expected={'K0':2,'K1a':6,'K1b':6,'K2':2,'KD':3}.get(name,2)
   assert len(observations)==expected,(name,len(observations))
   return dict(window=name,passed=True,device_executed=False,argv=observations,
-   operational_receipts_synthetic=True,native_exec_intercepted=True)
+   operational_receipts_synthetic=True,native_exec_intercepted=True,startup=startup)
 
 def replay(old=False):
  from chain_adapter import install

@@ -1,0 +1,121 @@
+....................................F.................................F. [ 81%]
+................                                              [100%]
+=================================== FAILURES ===================================
+_______________________ test_limits_unchanged_on_import ________________________
+
+    def test_limits_unchanged_on_import():
+     code='import resource; kinds={getattr(resource,k) for k in dir(resource) if k.startswith("RLIMIT_")}; before={k:resource.getrlimit(k) for k in kinds}; import verify_ready,source_decision,chain_entry; assert before=={k:resource.getrlimit(k) for k in kinds}; assert resource.getrlimit(resource.RLIMIT_AS)==(-1,-1)'
+>    subprocess.run([sys.executable,'-B','-c',code],cwd=s.O,stdin=subprocess.DEVNULL,check=True)
+
+experiments/own-xpu-runtime/ops/packet136-orchestration/test_policy.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+input = None, capture_output = False, timeout = None, check = True
+popenargs = (['/home/steve/.venvs/deepseek-v4-xpu/bin/python3', '-B', '-c', 'import resource; kinds={getattr(resource,k) for k in ...ry; assert before=={k:resource.getrlimit(k) for k in kinds}; assert resource.getrlimit(resource.RLIMIT_AS)==(-1,-1)'],)
+kwargs = {'cwd': PosixPath('/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet136-orchestration'), 'stdin': -3}
+process = <Popen: returncode: 1 args: ['/home/steve/.venvs/deepseek-v4-xpu/bin/python3...>
+stdout = None, stderr = None, retcode = 1
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+    
+        If timeout (seconds) is given and the process takes too long,
+         a TimeoutExpired exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['/home/steve/.venvs/deepseek-v4-xpu/bin/python3', '-B', '-c', 'import resource; kinds={getattr(resource,k) for k in dir(resource) if k.startswith("RLIMIT_")}; before={k:resource.getrlimit(k) for k in kinds}; import verify_ready,source_decision,chain_entry; assert before=={k:resource.getrlimit(k) for k in kinds}; assert resource.getrlimit(resource.RLIMIT_AS)==(-1,-1)']' returned non-zero exit status 1.
+
+../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/subprocess.py:571: CalledProcessError
+----------------------------- Captured stderr call -----------------------------
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+AssertionError
+___________ Packet124Tests.test_exec_observes_actual_popen_boundary ____________
+
+self = <test_packet124.Packet124Tests testMethod=test_exec_observes_actual_popen_boundary>
+
+    def test_exec_observes_actual_popen_boundary(self):
+     import exec_limits
+     baseline=exec_limits.snapshot();events=[]
+     with patch.object(subprocess,'Popen',return_value=None):
+      exec_limits.install(lambda argv,limits:events.append(limits))
+>     subprocess.Popen(['/not-executed/own-rt-iq3','--authorized-device-window'])
+
+experiments/own-xpu-runtime/stage2/packet136-record-bundle/test_packet124.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+experiments/own-xpu-runtime/stage2/packet136-record-bundle/exec_limits.py:13: in guarded
+    check(baseline)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+baseline = {'0': [-1, -1], '1': [-1, -1], '11': [477915, 477915], '12': [819200, 819200], ...}
+
+    def check(baseline):
+>    assert resource.getrlimit(resource.RLIMIT_AS)==(resource.RLIM_INFINITY,resource.RLIM_INFINITY),'native launch refuses finite RLIMIT_AS'
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E    AssertionError: native launch refuses finite RLIMIT_AS
+
+experiments/own-xpu-runtime/stage2/packet136-record-bundle/exec_limits.py:6: AssertionError
+=========================== short test summary info ============================
+FAILED experiments/own-xpu-runtime/ops/packet136-orchestration/test_policy.py::test_limits_unchanged_on_import
+FAILED experiments/own-xpu-runtime/stage2/packet136-record-bundle/test_packet124.py::Packet124Tests::test_exec_observes_actual_popen_boundary
+2 failed, 86 passed, 11 subtests passed in 6.82s

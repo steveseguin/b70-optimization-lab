@@ -10,7 +10,7 @@ def view(label):
 def output(index):
  from build_engine import sha
  campaign=hashlib.sha256(''.join(sha(view(v)/'screen-seal.json') for v in ('control','candidate')).encode()).hexdigest()[:12]
- return P.parent/'screen/v4-lanes/evidence'/('p136-'+campaign+'-A-'+('smoke12' if index==-1 else str(index)+'-'+ORDER[index]))
+ return P.parent/'screen/v4-lanes/evidence'/('p136b-'+campaign+'-A-'+('smoke12' if index==-1 else str(index)+'-'+ORDER[index]))
 def admission():
  # Run the same CPU admission for --plan and launch, in an isolated import namespace.
  result=subprocess.run(['nice','-n','19','taskset','-c','8-15,24-31','python3','-B',str(O/'verify_cpu.py')],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=240)
@@ -29,7 +29,7 @@ def main(argv=None):
    from compare136 import load
    for i in range(a.index):load(dict(lane='A',index=i,choice=ORDER[i]))
  # Closed launch environment, including the library path; no caller setup needed.
- os.environ.clear();os.environ.update(PATH='/usr/bin:/bin',OMP_NUM_THREADS='2',LD_LIBRARY_PATH=LIBRARIES,PYTHONDONTWRITEBYTECODE='1')
+ os.environ.clear();os.environ.update(PATH='/usr/bin:/bin',OMP_NUM_THREADS='2',LD_LIBRARY_PATH=LIBRARIES)
  from bootstrap import install
  install()
  lineage=view('candidate' if a.index==-1 else ORDER[a.index])
