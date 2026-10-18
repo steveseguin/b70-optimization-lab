@@ -365,3 +365,25 @@ STOP-doing items applied:
 5. Chain policy: the next record chain only when a composed lane-B screen beats the record line by at least 1.5%, or two or more confirmed levers are ready (p91 plus any p90/p92/p93/p94/p95 winner).
 
 **STOP-doing items applied:** no packet-path substring matches in lock/turn checks; no rc=0-only lane hand-backs; diagnostics that choose the next big lever go before composition screens; no record chain per sub-1% increment; no second-lane copy of a diagnostic whose signal is far above control drift.
+
+## Review 14, 03:10 UTC (2026-10-18): **ACT**
+
+**Evidence:**
+- Last 2 h: 98% combined (lane A 92%, lane B 72%). The lane-B gap 02:27–02:49 was a 6-min stale-marker refusal plus a 15-min host-memory hold for one-card 58g. Fault count 2.
+- Lane A was about to run dry after `packet91-A-grid-4` (about 03:15) while lane B held about 1 h 45 min of serial work.
+- p93 `head-transpose` B grid +0.86%; its microbenchmark saving (−0.384 ms) became −0.177 ms per rank-1 step in the engine (about 47% transfer).
+- p91 lane A: route-fast +0.21%, rec-both-plus +0.05%, combined +0.65%.
+- p97 chain storage was 3.06 GB short.
+- Records this hour: 2-card 55.687 (p84), first 1-card 24.339 (p58g).
+
+**Actions, 03:11–03:13 UTC:**
+1. Queues rebalanced:
+   - Lane A: p91-A-grid-4 → p93-A-confirm-B2 → p94-A-grid → p92-A-grid.
+   - Lane B: p95 E3 grid (running) → four p86 views → **p91 3-view B confirm** (the combined view is +0.65%, so it replaces the 5-job B grid).
+   - Removed the p91/p92/p94 B grids. Both lanes plan clean.
+2. Codex p97b: the composite screen on both lanes is the two-lane confirmation; sources qualify on one exact first-lane win vs both controls (acceptance unchanged); leave-one-out generator; explain p91's "rejected" status.
+3. p86 diagnostics now run right after p95 on lane B; the next expert mechanism will be briefed from their result.
+4. Disk: the record-chain trees in `own-xpu-runtime-results` are referenced by later packets and by the shared screen wrapper (directory-level paths), so they were **not** blindly archived. Codex `disk` job: reclaim ≥ 6 GB of verified-unreferenced bulk with the packet-45 procedure and re-plan every queue afterwards.
+5. Codex p98: screen/v5-bracket, one model load per bracket (A/B/A/B, full state reset, per-view incident64 + 13/13, memory admission before the lease). 2-view smoke first.
+
+**STOP-doing items applied:** no second-lane standalone grids under +0.5%; no lane running dry while the other holds > 30 min; diagnostics before composition; no edits to sealed files after a chain. p94's grid still contains the closed `hc-normfuse+weightcache` view (sealed; about 5 min cost, accepted).
