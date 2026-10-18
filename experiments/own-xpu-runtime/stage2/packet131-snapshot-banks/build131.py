@@ -1,5 +1,5 @@
 """CPU-only packet131 incremental build; frozen packet124c objects are inputs."""
-import hashlib, importlib.util, json, os, resource, shutil, subprocess, sys, time
+import contextlib, hashlib, importlib.util, json, os, resource, shutil, subprocess, sys, time
 from pathlib import Path
 P=Path(__file__).resolve().parent; ROOT=P.parents[3]; B=P/'build'
 BASE=P.with_name('packet124c-record-bundle')
@@ -18,10 +18,13 @@ def limits():
 def cpu_main():
  resource.setrlimit(resource.RLIMIT_AS,(8*1024**3,8*1024**3));limits()
  os.environ.update(OMP_NUM_THREADS='2',TMPDIR=str(B/'tmp'))
+@contextlib.contextmanager
 def turn():
  # The exact packet94 lock, including the coordinator reservation check.
  spec=importlib.util.spec_from_file_location('p131_compile_turn',P.with_name('packet94-hc-norm-fusion')/'compile_turn.py')
- m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m.turn()
+ m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+ with m.turn():
+  limits();yield
 def run(cmd,name):
  limits();cmd=list(map(str,cmd));start=time.monotonic()
  with turn(),(B/(name+'.log')).open('w') as log:

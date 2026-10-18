@@ -12,8 +12,9 @@ No GPU, service, live queue or host setting changed.
 
 **October 18, packet131 recurrent snapshot preparation on CPU:** A new copy
 tests keeping the old recurrent state in a spare buffer instead of copying it
-on every speculative cycle. The first builds pass; byte, memory and launch
-checks are still in progress. Compilation respects the coordinator's whole-host
+on every speculative cycle. Both builds and the production memory/binding
+checks pass: capture copies about 61% fewer bytes, with no increase in owned
+device allocation. Full-state checks are still in progress. Compilation respects the coordinator's whole-host
 reservation. No GPU, service, live queue or host setting changed. Device
 correctness and speed remain pending.
 [Work note](notes/2026-10-18-own-runtime-packet131.md).

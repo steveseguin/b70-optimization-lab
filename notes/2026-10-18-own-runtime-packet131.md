@@ -49,6 +49,26 @@ owned sleeping census process was interrupted to consolidate the final serial
 build/check sequence; no device process was signalled. The candidate is
 **not ready for device admission** at this milestone.
 
+The final build and production census now pass, including the captured pointer
+and source/destination checks across every ordered bank pair and QSA context
+transition. [Complete census](../experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/CENSUS.md)
+and [individual extents](../experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/capture-extents.csv)
+are generated from the new receipt. The full inherited eleven-window Python
+gate, K2 replay, original K2/oracle failures and real queue validators also pass.
+Its disposable queue uses packet131's actual build/storage census: counting
+the frozen parent's live chain as retained scratch exceeded that parent's
+budget. The original refusal remains in `evidence/inherited-queue-parent-storage-refusal.log`;
+the parent and actual device storage policy were not edited. Packet131's own
+real pre-LATE oracle subprocess passes without root redirection.
+
+The full-state test's observed peak was about 865 MiB. Four independently
+capped 1.5-GiB CPU workers run at once; an interrupted sequential attempt is
+retained as incomplete. The Intel CPU fixture needed its own linker and an
+explicit non-PIE link. A separate production recurrence test passes raw
+bank-versus-reference equality under both compilers, but an additional
+cross-compiler comparison found different reference transcripts. Localization
+is pending; this is not accepted as a new arithmetic or quality change.
+
 Planned CPU gates: production allocation/descriptor census, actual snapshot
 and miniature target state under GNU and Intel, every logical committed/spare
 byte after hit/miss/cancel/fallback sequences, boundary retirement, reset bug

@@ -4,6 +4,12 @@ from types import SimpleNamespace
 from unittest.mock import patch
 from build131 import P,ROOT,B,BASE,sha,save,cpu_main,limits
 def main():
+ try:
+  prior=json.loads((P/'evidence/startup131.json').read_text());assert prior['passed'] and prior['total_windows']==22
+  for path,h in prior['sources'].items():assert sha(ROOT/path)==h
+  assert sha(ROOT/prior['archive'])==prior['archive_sha256']
+ except (OSError,KeyError,AssertionError):pass
+ else:print('Unchanged 22-window startup receipt and fixture verified');return
  import startup103 as g
  import window as w
  from kd_reference import prepare,command

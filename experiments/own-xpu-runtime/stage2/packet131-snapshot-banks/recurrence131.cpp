@@ -1,9 +1,10 @@
 // Actual production-shape recurrence, differently poisoned spare banks.
+#include <sstream>
 #define main inherited_p82_fixture_main
 #include "p82_cpu.cpp"
 #undef main
 int main(){try{
- unsigned cases=0;size_t bytes=0;
+ unsigned cases=0;size_t bytes=0;std::ostringstream transcript,case_rows;
  for(unsigned scenario:{0u,5u,6u,7u,8u,9u})for(bool packed:{false,true}){
   Data reference(1,scenario);ng::Shape s{};s.op=ng::gdn;s.tokens=1;s.capacity=4096;s.flags=2|8|(packed?4:0);
   Data expected=reference;p82brec::Kernel<true> k;k.shape=s;k.run(expected.args(false).p);
@@ -15,8 +16,11 @@ int main(){try{
    auto a=actual.args(false);a.p[5]=banks[active].data();a.p[7]=banks[spare].data();k.run(a.p);
    actual.state=banks[spare];check(actual.bytes()==expected.bytes(),"different destination changed production recurrence bytes");
    check(banks[active]==reference.input&&banks[3-active-spare]==untouched,"read-only bank changed");
-   bytes+=actual.bytes().size();++cases;
+   auto raw=actual.bytes();const auto digest=packet26::hash(raw.data(),raw.size());transcript<<digest<<'\n';bytes+=raw.size();
+   if(cases)case_rows<<',';
+   case_rows<<"{\"scenario\":"<<scenario<<",\"packed\":"<<packed<<",\"active\":"<<active<<",\"spare\":"<<spare<<",\"sha256\":\""<<digest<<"\"}";++cases;
   }
  }
- std::cout<<"{\"passed\":true,\"cases\":"<<cases<<",\"bytes_compared\":"<<bytes<<",\"physical_pairs\":6,\"state_elements\":786432}\n";return 0;
+ const auto raw=transcript.str();
+ std::cout<<"{\"passed\":true,\"cases\":"<<cases<<",\"bytes_compared\":"<<bytes<<",\"physical_pairs\":6,\"state_elements\":786432,\"canonical_sha256\":\""<<packet26::hash(raw.data(),raw.size())<<"\",\"case_hashes\":["<<case_rows.str()<<"]}\n";return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

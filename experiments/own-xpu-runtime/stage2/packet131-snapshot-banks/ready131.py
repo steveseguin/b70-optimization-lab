@@ -3,7 +3,7 @@ import json
 from build131 import P,ROOT,sha,save,cpu_main,limits
 def main():
  sources={}
- reports=['census131.json','state131.json','mini131.json','recurrence131.json','reset-regression.json','startup131.json','python131.json','extended-queue131.json','arguments131.json','launch-limits.json','queue131.json']
+ reports=['census131.json','state131.json','mini131.json','recurrence131.json','reset-regression.json','startup131.json','python131.json','extended-queue131.json','inherited-gate131.json','oracle131.json','arguments131.json','launch-limits.json','queue131.json']
  for name in reports:
   f=P/'evidence'/name;r=json.loads(f.read_text());assert r['passed'] and not r.get('device_executed',False),name
   sources[str(f.relative_to(ROOT))]=sha(f)

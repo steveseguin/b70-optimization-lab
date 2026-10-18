@@ -58,16 +58,25 @@ rank0 shared slot are preserved separately by the unchanged snapshot protocol.
 
 The 1,021 checked copy extents are flattened into **one descriptor upload and
 one compute submission**, not 1,021 device copy commands. Both choices retain
-two submissions. The flat kernel moves bytes in 16-byte tiles and searches
-the descriptor ranges. Of the control payload, 535 extents below 4 KiB hold
+two submissions. The flat kernel uses 4-KiB workgroups with 256 lanes;
+each lane searches the descriptor ranges and copies up to 16 bytes.
+Control launches 12,525 groups (3,206,400 lanes); candidate launches 5,298
+groups (1,356,288 lanes). Descriptor uploads are 32,672 and 31,488 bytes.
+Of the control payload, 535 extents below 4 KiB hold
 240,528 bytes; 466 below 1 MB hold 10,076,808 bytes; 20 large extents hold
-38,310,096 bytes. Large recurrent banks account for 60.8759% of total bytes.
+38,310,096 bytes. The recurrent banks account for 60.87% of total bytes.
 
-Packet128b measured 0.523 ms for capture on both hits and misses. Dividing
+Packet128b measured about 0.523 ms for the capture **compute event** on both
+hits and misses (`snapshot.capture.flat`), separately from host scheduling.
+Its budget is diagnostic and currently reports an instrumentation-overhead
+failure; it is a mechanism lead, not a production speed result. Dividing
 48,627,432 bytes by that time gives about 93 GB/s of useful copied payload
 (about 186 GB/s counting read plus write). This is accounting, not an isolated
-bandwidth measurement. Existing timing does not separate descriptor transfer,
-launch, address search and memory traffic, so it cannot prove the cost split.
+bandwidth measurement. Inside that compute event, existing timing does not
+separate descriptor searches, memory transactions and workgroup overhead.
+It therefore cannot establish a bandwidth-only explanation. The snapshot
+does create 1,021 guarded host copy descriptors, but it submits just one copy
+kernel; hundreds of small device launches do not explain the measured event.
 The candidate removes 29,601,792 bytes per cycle and 37 extents; it does not
 claim a 0.523-ms saving. Only the proposed exact device bracket can measure it.
 

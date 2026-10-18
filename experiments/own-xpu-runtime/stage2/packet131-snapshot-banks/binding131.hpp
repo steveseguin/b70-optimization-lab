@@ -13,13 +13,10 @@ static void binding131(Engine& e) {
     const auto active=e.buffers[0].at(name).id,dest=e.state_spares.at(name);
     const auto input=std::find(l.inputs.begin(),l.inputs.end(),name)-l.inputs.begin();
     require(p.bindings.at(input)==active&&p.bindings.at(p.spec.ni+1)==dest&&active!=dest,"logical bank binding");
-    if(l.op=="gdn"){
-     auto b=p49drec::recurrence_bindings(p.spec,p.bindings);
-     require(b.ids[5]==active&&b.ids[7]==dest,"production recurrence source/destination");
-    }
     bool reads=false,writes=false;
     for(const auto& command:e.issue_sites.at(&l-e.p.launches.data()).commands){
      require(command.ids.size()==command.pointers.size(),"capture pointer extent");
+     if(l.op=="gdn")require(command.ids.size()==19&&command.ids[5]==active&&command.ids[7]==dest,"production recurrence source/destination");
      for(size_t j=0;j<command.ids.size();++j){
       const auto id=command.ids[j];
       require(command.pointers[j]==e.dev(0).arena.row(id).pointer,"captured pointer identity");
