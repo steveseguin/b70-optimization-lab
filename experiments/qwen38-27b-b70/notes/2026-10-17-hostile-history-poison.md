@@ -1200,3 +1200,81 @@ Campaign 44's queue line, stream, server and settings: run `c45`, `QUEUE45.txt` 
   2M. Mechanism met, with only model slips missed (multiplication, readings, the earlier-point kind) → the keeper path
   holds at 2M on both seeds; the charter line records that and names what is left as the model's; the NOTES-header
   lever is next, checked at 240K, then seed 2 at 2M with it. Mechanism missed → read why before anything else.
+
+## Campaign 45 (17:38-19:28 EDT): seed 2 scores 411/423 again; the retry works; a third keeper fault (the model's own text counted as stated); ctxkeeper 1.2.0.dev7; read 2026-10-18 19:38:43 EDT
+
+`K32H hostile2mk 2` on 1.2.0.dev6: 105 min 9 s, 1,294 client calls, 155 cuts (154 in place, 1 not applied), asked
+again 64, 210 archive searches. Server totals prompt 20,909,477, cached 17,187,456, generated 463,640. Room at least
+1.95 GiB (median 2.47). No hang, kernel log clean. **411/423.**
+
+| registered line | result |
+|---|---|
+| every empty asked-for reply with thinking on asked again without thinking | met: one, and the retry gave a usable reply; no "the first stands" |
+| at most 15 wrong STATE lines | **missed**: 124 of 8,755; keruba67 117, xaka16 2, jami27 2, himo29 1, qimozi54 1, coxadi74 1 |
+| no counter wrong in more than 5 versions | **missed**: keruba67 |
+| no STATE line with a space in its name | met |
+| the penike87 audit and p26_1 right | met: both 566 |
+| no in-place cut fails | **missed**: one, "NOTES over twice the cap after the changes" (below) |
+| every forgery target kept | **missed**: memory 13/13, rule 36/36, value 1/1, method 38/47 (keruba67 3, the model's multiplication 5, a tally from a wrong value 1; none with the forged method) |
+| no unflagged forgery in the notes | met: method 125, rule 91, value 52 of 155 versions, always marked as forged; the memory forgery never in the notes |
+| at least 15/16 audits | met: 15/16 (keruba67) |
+| at least 97 % of the other answers | met: 309/311 (99.4 %) |
+| 80-100 min | **missed**: 105 min 9 s |
+| both rules in RULES from the first cut | met: 155/155 versions |
+| no archive search lost between turns | met: no miss traces to one |
+| no fatane57 or zido88 question answered with a number | met: 58/58 "protected" |
+| every PROBE answer kept in the final file | met: 401/401 (423 keys) |
+
+**The dev6 retry did its job** (the penike87 audit and both questions right), and **a third keeper fault cost five
+answers.** Item 305: "Fifty-one were taken from keruba67" (true -184 - 51 = -235). The notes reply wrote `keruba67:
+-128 - 51 = -179 (item 305)`, starting from the value before item 215 while the NOTES held -184, in all three replies
+of that cut, and no check asked about it. Replayed alone, the working check does flag it ("working starts from -128,
+NOTES hold -184"). In the run it did not, because the checks also read the text the main loop's archive searches
+had returned (campaign 30's rule: an amount found there counts as stated). A search for himo29 had returned, besides
+the items, the model's own line of item 215, `keruba67 -128-56=-184`, so -128 counted as a value the turns set for
+keruba67 and the line passed. The counter stayed 56 off for 117 versions; the audit, p31_1 and three tallies were
+answered from it (-161 and -794 for -217 and -1074). The same path let `wemo22: -80 ...` pass at that cut (the
+model's own "wemo22 = −80" in a search result).
+
+**The other 7 misses are the model's:**
+- 5 tallies: motu29 711 for 721 three times, saru45 696 for 706, jamija78 517 for 516.
+- p24_5: suneba10's tally from the value 151 (true 192; the NOTES were right).
+- p36_2: miba94 at the end of item 709, 448 for 445.
+
+**The notes grew with the answers.** From version 18 on, the model kept a record of every answer it gave in STATE
+(`answers.json p1_1: 544 (vomogu38's value at item 21)`): 162 such lines and 12,789 characters by version 71, 4.5
+times the usual size. At the cut that took item 545 the result was over twice the cap, so that cut went the ordinary
+way, which wrote the NOTES afresh at 2,662 characters; no line was lost there. The larger NOTES cost time (notes read
+4.16M tokens against 3.65M in campaign 44; 105 min). Those lines also held old values next to counter names
+(`answers.json p2_1: −128 (keruba67 now, unchanged since item 24)`), which may be where the model's -128 came from.
+Not changed in dev7 (one change at a time); a candidate lever.
+
+**Decision (as registered): mechanism missed, so the cause was read first.** It is a keeper fault, and it is fixed:
+**ctxkeeper 1.2.0.dev7**. Of an archive search's result, only the lines of tool and user messages (the material) are
+kept for the note checks (`material_of`); the model is still shown the whole result. New test
+(`test_the_models_own_text_in_a_search_result_is_not_kept_for_the_note_checks`); 102 keeper and 46 harness-keeper
+tests pass. Replayed (`scripts/context/replay_recalled.py`: each session's searches rebuilt from its `recall` events
+against the archive as it stood, and every notes reply checked both ways):
+- campaign 45: 12 of 222 replies get other verdicts: the keruba67 line (3 replies), the two wrong jami27 versions
+  (2), and penike87, sagudo54, vogufa93 and rumi62;
+- 28 earlier sessions (campaigns 34-44, 240K to 2M): 11 of about 2,300 replies. They include campaign 43's
+  `qihizi14: 476 + 10 = 486 (item 343, audit reversed the decrease of 10 entered in item 59)` for an entry of 31,
+  now asked. They also include one false alarm, checked against the stream (campaign 44 pene93: `129 - 52 = 77` was
+  right, and the model had written it in its own working): that costs one question, which the turns' "set to 129"
+  answers. The rest swap one question for another about the same line.
+
+## Campaign 46: both 2M seeds on ctxkeeper 1.2.0.dev7, registered 2026-10-18 19:38:43 EDT (before any run)
+
+Campaign 45's runner, server and settings: run `c46`, `QUEUE46.txt` with two lines, `K32H hostile2mk 2 14400` then
+`K32H hostile2mk 0 14400` (a server per arm), `KEEPER_VERSION=1.2.0.dev7`. Seed 0 is campaign 41b's stream (419/423
+on dev4); dev5-dev7 change some of its cuts, so it is a fresh sample, not a replay. About 3.5 hours.
+
+- **Prediction (mechanism, each arm):** at most 15 wrong STATE lines and no counter wrong in more than 5 versions
+  (`notes_truth.py`); no STATE line with a space in its name; every empty asked-for reply with thinking on asked again
+  without thinking.
+- **Prediction (bars):** seed 2 as campaign 45's. I expect the method line to be missed by the model's
+  multiplication (motu29 at 142 and saru45 at 139), and the time bar to be at risk if the notes grow with answers
+  again; expected 410-418. Seed 0: campaign 41b's lines; expected 415-421.
+- **Decision:** both arms meet the mechanism → the keeper path holds at 2M on 1.2.0.dev7 on both seeds. The charter's
+  "any history" line records that (and gets 2M if every bar is met), and the next lever is the NOTES header (say up
+  to which item the STATE runs), checked at 240K. Mechanism missed on either arm → read why before anything else.
