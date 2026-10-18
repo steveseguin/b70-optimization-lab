@@ -13,7 +13,7 @@ def main():
     rows = []
     with tempfile.TemporaryDirectory(prefix='p93-queue-plan-') as tmp:
         destination = Path(tmp)
-        for label, lane in (('micro-B', 'B'), ('B-grid', 'B'), ('A-confirm', 'A'), ('A-grid', 'A'), ('B-confirm', 'B')):
+        for label, lane in (('micro-B2', 'B'), ('B-grid-B2', 'B'), ('A-confirm-B2', 'A')):
             source = queue / f'proposed-p93-{label}.txt'
             (destination / f'queue-{lane}.txt').write_bytes(source.read_bytes())
             command = [sys.executable, '-B', str(queue / 'lanequeue.py'), 'plan',
@@ -25,7 +25,7 @@ def main():
                              passed=True, runnable=False, micro_gate='pending at planning'))
     save(P / 'evidence/queue-plans.json', dict(passed=True, device_executed=False,
          live_queue_modified=False, runnable=False, plans=rows))
-    print('five temporary queue plans PASS; measured micro gate and exact source winner remain mandatory')
+    print('three temporary queue plans PASS; measured micro-B2 gate and exact source winner remain mandatory')
 
 
 if __name__ == '__main__':

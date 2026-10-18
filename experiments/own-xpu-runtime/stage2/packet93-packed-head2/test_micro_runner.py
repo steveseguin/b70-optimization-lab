@@ -9,6 +9,11 @@ import run_micro as runner
 
 
 class MicroRunnerTest(unittest.TestCase):
+    def test_runner_and_gate_use_fresh_b2(self):
+        import micro_gate
+        self.assertEqual(runner.OUTPUT, runner.P / micro_gate.MICRO_DIRECTORY)
+        self.assertEqual(runner.OUTPUT.name, 'micro-B2')
+
     def test_plan_never_enters_device_path(self):
         with tempfile.TemporaryDirectory() as tmp, patch.object(runner, 'OUTPUT', Path(tmp) / 'fresh'), patch.object(runner, 'cpu_gate') as cpu, patch.object(runner, 'build_gate', return_value={'binary_sha256': 'test'}), patch.object(runner, 'lane_gate') as device, patch.object(runner, 'Reservation') as lease, patch.object(runner.subprocess, 'Popen') as launch, patch.object(runner, 'memory_admit') as memory, patch.object(runner, 'storage_admit') as storage, patch.object(runner.fault_review, 'validate') as review, patch('builtins.print') as output:
             self.assertEqual(runner.main(['--run', '--plan', '--lane', 'B']), 0)

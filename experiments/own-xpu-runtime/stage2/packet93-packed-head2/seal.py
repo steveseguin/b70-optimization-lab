@@ -48,7 +48,11 @@ def main():
   for kind in ('expected','candidate'):(v/(kind+'.bin')).write_text(selected['runs'][0][kind+'_sha256']+'\n')
   audit=dict(placement='1',draft_rank=1,target_split=0,target_layers=[24,24],dispatch_sha256=sha(v/'dispatch-speed6.json'),binary_sha256=sha(v/'build/device/own-rt-iq3'),engine_sources={str((P/n).relative_to(ROOT)):sha(P/n) for n in ('main.cpp','mtp.hpp','rank.hpp','p49d_submit.cpp','p60_submit.cpp','p65_expert.hpp','p49d_expert_submit.cpp','p93_head.hpp','p93_kernel.hpp','p93_submit.cpp')})
   save(v/'placement-audit.json',audit);bound={**sources,str((v/'placement-audit.json').relative_to(ROOT)):sha(v/'placement-audit.json')}
-  bp=v/'build-receipt.json';fp=v/'byte-fixture.json';save(bp,dict(passed=True,device_executed=False,sources=bound,artifacts=build['artifacts']))
+  bp=v/'build-receipt.json';fp=v/'byte-fixture.json';receipt=dict(passed=True,device_executed=False,sources=bound,artifacts=build['artifacts'])
+  refresh=P/'evidence/reseal-provenance.json'
+  if refresh.exists():
+   receipt['provenance_refresh']=json.loads(refresh.read_text());receipt['sources'][str(refresh.relative_to(ROOT))]=sha(refresh)
+  save(bp,receipt)
   save(fp,dict(schema='own-runtime.screen.byte-fixture.v1',passed=True,device_executed=False,changed_class='exact target Q6_K head word-plane decode or reversible transposed storage; complete raw comparisons retained compressed',command=selected['runs'][0]['command'],build_receipt_sha256=sha(bp),sources=fixture['sources'],expected=dict(path='expected.bin',sha256=sha(v/'expected.bin')),actual=dict(path='candidate.bin',sha256=sha(v/'candidate.bin')),raw_runs=selected['runs'],choices=choices(name)))
   generic.create(v,'tp2',bp,fp,v/'build/device/own-rt-iq3',v/'dispatch-speed6.json',v/'screen-seal.json')
   for leaf in ('selection.json','screen-seal.json','build-receipt.json','byte-fixture.json'):job_sources[str((v/leaf).relative_to(ROOT))]=sha(v/leaf)

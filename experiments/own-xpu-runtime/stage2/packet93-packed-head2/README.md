@@ -1,7 +1,9 @@
 # Packet93: packed Q6_K target head, new decode mechanisms
 
-CPU preparation for a microbenchmark-gated experiment. No GPU ran here and
-no speed claim follows from these artifacts. Production remains the expanded
+CPU preparation for a microbenchmark-gated experiment. The original diagnostic
+micro-B run qualified head-transpose; the restored-tool reseal requires a fresh
+micro-B2 run before engine screens. [Reseal and historical evidence](RESEAL.md).
+No engine speed claim follows from these artifacts. Production remains the expanded
 packet84 selection: wide64 experts, wide HC gate, ordered retirement,
 rec-parallel, rank1 draft and 24/24 target layers.
 

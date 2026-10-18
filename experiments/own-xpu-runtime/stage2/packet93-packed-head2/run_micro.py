@@ -26,7 +26,7 @@ import fault_review
 
 GIB = 1024**3
 PCI = '0000:43:00.0'
-OUTPUT = P / 'evidence/micro-B'
+OUTPUT = P / 'evidence/micro-B2'
 BINARY = P / 'build/microbench'
 BUILD = P / 'evidence/microbench-build.json'
 WATCHDOG = 600
@@ -95,7 +95,7 @@ def parser():
 def main(argv=None):
     args = parser().parse_args(argv)
     require(args.plan or args.run, 'choose --plan or --run')
-    require(not OUTPUT.exists(), 'fresh micro-B output required; no retry or overwrite')
+    require(not OUTPUT.exists(), 'fresh micro-B2 output required; no retry or overwrite')
     if args.plan:
         cpu_gate()
     identity = build_gate()

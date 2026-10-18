@@ -3,6 +3,7 @@ import json,math,statistics
 from pathlib import Path
 from build_engine import P,ROOT,sha,save
 CANDIDATES=('head-plane','head-transpose')
+MICRO_DIRECTORY='evidence/micro-B2'
 def require(ok,message):
  if not ok:raise ValueError(message)
 def analyze(rows):
@@ -34,7 +35,7 @@ def analyze(rows):
   if passed:qualified.append(name)
  return dict(schema='packet93.micro-qualification.v1',passed=True,diagnostic_only=True,threshold=dict(candidate_time_at_most_fraction=0.85,both_alternating_orders=True),candidates=result,qualified=qualified)
 def measured(packet):
- packet=Path(packet);directory=packet/'evidence/micro-B';receipt=directory/'window.json';samples=directory/'samples.jsonl';build=packet/'evidence/microbench-build.json'
+ packet=Path(packet);directory=packet/MICRO_DIRECTORY;receipt=directory/'window.json';samples=directory/'samples.jsonl';build=packet/'evidence/microbench-build.json'
  for f in (receipt,samples,build):require(f.is_file(),'micro qualification pending: '+str(f))
  window=json.loads(receipt.read_text());identity=json.loads(build.read_text())
  require(all(window.get(k) is True for k in ('passed','device_executed','drained','lease_released')),'clean micro device window required')
@@ -46,8 +47,8 @@ def measured(packet):
  result['bindings']={str(f.relative_to(packet)):sha(f) for f in (receipt,samples,build,packet/'build-device-receipt.json',packet/'screen-jobs-seal.json',packet/'micro_gate.py')}
  return result
 def evaluate(packet=P):
- result=measured(packet);save(Path(packet)/'evidence/micro-B/qualification.json',result);return result
+ result=measured(packet);save(Path(packet)/MICRO_DIRECTORY/'qualification.json',result);return result
 def require_qualified(packet=P):
- packet=Path(packet);f=packet/'evidence/micro-B/qualification.json';require(f.is_file(),'micro qualification pending')
+ packet=Path(packet);f=packet/MICRO_DIRECTORY/'qualification.json';require(f.is_file(),'micro-B2 qualification pending')
  saved=json.loads(f.read_text());fresh=measured(packet);require(saved==fresh,'micro qualification stale or altered');require(bool(fresh['qualified']),'no candidate passed 15% lower kernel time; screens refused')
  return tuple(fresh['qualified'])

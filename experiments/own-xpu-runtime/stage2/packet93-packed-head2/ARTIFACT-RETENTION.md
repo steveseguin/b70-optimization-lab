@@ -1,5 +1,18 @@
 # Packet93 artifact retention and rebuild
 
+Retain `evidence/pre-reseal-6470679d0.tar.gz` (1,187,303 bytes). It preserves
+the original Python tools, three view receipts/seals and micro build receipt
+needed to inspect the historical micro-B bindings. Restore individual members
+with `tar -xOf` into a separate review directory; never overwrite the current
+sealed packet. Its SHA256 is in `evidence/reseal-provenance.json`. The large
+per-view JSON source maps remain necessary to verify each complete native and
+Python input closure; this refresh retains their format and checks all inputs.
+`evidence/micro-B-original-hashes.json` records every original local micro-B
+file, including ignored compiler cache files. Those originals are not removed
+or rewritten; generated caches stay outside Git. The tracked historical sample,
+window and qualification receipts retain their exact original bytes. Kernel
+journals and cache bytes remain at their original local paths.
+
 This is a local research screen bundle, not a public deployment recipe.
 Copied packet84 sources are bound by `parent-source-manifest.json`; its actual
 object lineage is bound by `build-device-receipt.json` and

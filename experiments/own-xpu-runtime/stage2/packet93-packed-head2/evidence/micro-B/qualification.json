@@ -1,0 +1,44 @@
+{
+  "schema": "packet93.micro-qualification.v1",
+  "passed": true,
+  "diagnostic_only": true,
+  "threshold": {
+    "candidate_time_at_most_fraction": 0.85,
+    "both_alternating_orders": true
+  },
+  "candidates": {
+    "head-plane": {
+      "production_event_ns": 1402135.5,
+      "candidate_event_ns": 1494583.5,
+      "time_ratio": 1.065933713253819,
+      "order_time_ratios": [
+        1.0622444404040192,
+        1.062356307846768
+      ],
+      "qualified": false,
+      "pairs": 40
+    },
+    "head-transpose": {
+      "production_event_ns": 1416250.0,
+      "candidate_event_ns": 1032083.5,
+      "time_ratio": 0.728743865842895,
+      "order_time_ratios": [
+        0.7332279162610751,
+        0.7294413252735442
+      ],
+      "qualified": true,
+      "pairs": 40
+    }
+  },
+  "qualified": [
+    "head-transpose"
+  ],
+  "bindings": {
+    "evidence/micro-B/window.json": "a0993debdb8bb2d3035dc13f559937c9f8fdc14199234148517bd83b253273f9",
+    "evidence/micro-B/samples.jsonl": "8ef9086612ee76ca4490c77ff7e665260fb15b7be11e54b4f42b80c7c5356d22",
+    "evidence/microbench-build.json": "2a2ecea94f66ddf4f94d34ee0039014f7a19a66689ec3565a6a92aedaa65512a",
+    "build-device-receipt.json": "bda97e686bcabd9bbfee98668c89504c33fab5ab5270cc42c8754976261cec7d",
+    "screen-jobs-seal.json": "6d3f0e074fcc3f03843a57478113834e3493a6196e0679a113194feb84a0731e",
+    "micro_gate.py": "d0a162336deec42a3262ad2c3885dd45afbfc20d981e33f34e9d2e003d9589cc"
+  }
+}

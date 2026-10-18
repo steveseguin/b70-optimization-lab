@@ -1,0 +1,36 @@
+{
+  "schema": "packet93.provenance-refresh.v1",
+  "device_executed": false,
+  "previous_closure": "evidence/pre-reseal-6470679d0.tar.gz",
+  "previous_closure_sha256": "b85536a30f26592b102f974c745695c7f7e5b60692bf02bcb17f9ca8fdfa661c",
+  "restored_submission_sha256": "bc7480f11c2e62c30147f4042e254977f9f1dd3be6cb936aa8e090340eee5347",
+  "native_rebuilt": false,
+  "engine_build_receipt_sha256": "bda97e686bcabd9bbfee98668c89504c33fab5ab5270cc42c8754976261cec7d",
+  "engine_artifacts": {
+    "build/gnu-host/own-rt-iq3": "07ccf98238ed48b4f9595c34b975551fe1a0f2a994f4d7d5325832fab1f7c65b",
+    "build/device/own-rt-iq3": "465a2ea045865d3af098b257e28a91325a6c62e88eb457316b46591001bbf9af"
+  },
+  "micro_artifacts": {
+    "build/microbench": "56e3e332333fe932d595d6c2dd5c331f262aac9e09f45fe6555fc217d1229fe7"
+  },
+  "previous_micro_build_receipt_sha256": "2a2ecea94f66ddf4f94d34ee0039014f7a19a66689ec3565a6a92aedaa65512a",
+  "noncompiled_changes": {
+    "experiments/own-xpu-runtime/stage2/packet93-packed-head2/run_micro.py": {
+      "before": "2d7f542a8ed81ea22ec5aa846d57eeb14be89795df21001e747822282bdf09a5",
+      "after": "aaf6be25ab101b3ac5a331fd79ad33bda0676f3c679df52f0fc720315c934c71"
+    },
+    "experiments/own-xpu-runtime/stage2/packet93-packed-head2/test_micro_runner.py": {
+      "before": "045aa0264b6d6c27f5a8866958760a2bd85299a45eea5f5725df2986b20c2a33",
+      "after": "88369ce35f445c9355a0c1f8f528a6413f0b2e878bcd2d3b688cd040a87f6886"
+    },
+    "experiments/own-xpu-runtime/stage2/packet93-packed-head2/micro_gate.py": {
+      "before": "d0a162336deec42a3262ad2c3885dd45afbfc20d981e33f34e9d2e003d9589cc",
+      "after": "6a38f7277d03d49dee6ace48678e79544198ec151f9eea18c90a5003d208be5f"
+    },
+    "experiments/own-xpu-runtime/stage2/packet93-packed-head2/test_micro_gate.py": {
+      "before": "3c4525e982bcb3902c233e0e36ec315dda1f6e07a9eab23db7f11bc3dff1f132",
+      "after": "73e8d1a568af02f96ac5459089f430f098dda7ca21008920f297f29aeb104135"
+    }
+  },
+  "reason": "Submission Python is a consumer-test dependency, not a native compiler input. Only Python output routing/gate/tests changed; compiler inputs and binaries verified unchanged. Original micro-B remains historical; micro-B2 must run against the refreshed seals."
+}

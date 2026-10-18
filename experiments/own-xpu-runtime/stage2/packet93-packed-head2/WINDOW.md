@@ -1,10 +1,12 @@
 # Packet93 coordinator handoff
 
-Preparation is CPU-only. Device exactness, event timing and model-output
-qualification remain pending. Do not launch either engine grid before the
-microbenchmark qualifies at least one candidate.
+The October 18 reseal uses packet84's restored submission tool. The original
+`micro-B` run remains historical: head-transpose qualified at a 0.729 time
+ratio; head-plane did not. Its old seal bindings cannot admit the new screens.
+This reseal ran CPU checks only. A fresh `micro-B2` qualification is required;
+full model-output qualification and engine performance remain pending.
 
-1. Admit [proposed-p93-micro-B.txt](../../ops/lane-queue/proposed-p93-micro-B.txt)
+1. Admit [proposed-p93-micro-B2.txt](../../ops/lane-queue/proposed-p93-micro-B2.txt)
    through the ordinary queue coordinator. It holds lane B but opens only
    physical card 2 (`0000:43:00.0`), filtered before device discovery. Its native
    index is 0 after that filter. No live queue was edited by preparation.
@@ -21,8 +23,8 @@ microbenchmark qualifies at least one candidate.
    revalidates hashes and samples before each engine launch. No qualifying
    candidate means no screens; record the negative result and close that arm.
 4. Use the B grid then A confirmation by default:
-   [B grid](../../ops/lane-queue/proposed-p93-B-grid.txt),
-   [A confirm](../../ops/lane-queue/proposed-p93-A-confirm.txt).
+   [B grid](../../ops/lane-queue/proposed-p93-B-grid-B2.txt),
+   [A confirm](../../ops/lane-queue/proposed-p93-A-confirm-B2.txt).
    The reverse is also preregistered:
    [A grid](../../ops/lane-queue/proposed-p93-A-grid.txt),
    [B confirm](../../ops/lane-queue/proposed-p93-B-confirm.txt).
@@ -42,9 +44,14 @@ memory admission and root free-space floor. SIGTERM requests a graceful stop
 between completed kernels/uploads; no hard kill or automatic restart exists.
 A failed/hung owner retains its reservation for coordinator recovery. A clean
 micro exit releases its lease before CPU qualification/reporting. Micro output
-is `evidence/micro-B/`; a qualifying `qualification.json` binds its samples,
+is `evidence/micro-B2/`; a qualifying `qualification.json` binds its samples,
 clean window, build, engine identity and screen seal. A lone micro process is
 not a fresh-engine performance verdict.
+
+The three B2 proposal names are fresh queue identities. Do not enqueue the
+superseded micro-B proposal or duplicate the older B-grid/A-confirm proposals.
+The engine output names are unchanged and must still be unused. Both screen
+directions now read only the fresh B2 qualification. [Reseal evidence](RESEAL.md).
 
 CPU-only rechecks from repository root:
 
