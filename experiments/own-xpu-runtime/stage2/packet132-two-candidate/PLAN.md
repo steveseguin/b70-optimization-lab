@@ -19,7 +19,7 @@ the complete packet129 corpus or a performance benchmark.
 Target: packet49 `iq3-p49-split32-v1` CPU oracle, unchanged arithmetic and
 weights, private capture harness only. Draft: packet31 CPU INT8 semantic
 reference with IQ3 shared embedding/head, restricting head candidates to the
-production 91,392-row prefix. This reference is not certified device-identical;
+bundle7 production 80,128-row prefix. This reference is not certified device-identical;
 record that limitation rather than borrowing packet129's parity claim.
 Warm every shifted draft context row. Target labels are oracle predictions,
 never the next source-text token. Never read benchmark prompts or outputs for
@@ -33,7 +33,7 @@ Stop launching captures at the fixed deadline; incomplete evidence cannot pass.
 ## Fixed policies and selection
 
 Compute the top-two logit margin and top-one probability normalized over the
-91,392 admitted draft rows. The latter is a **prefix probability**, not a full
+80,128 admitted draft rows. The latter is a **prefix probability**, not a full
 248,320-token vocabulary probability. Margin is the primary feature; the
 probability sweep is secondary. Equal logits use the lowest token ID.
 
@@ -73,3 +73,8 @@ Advance to a design note only if the primary training-selected policy projects
 at least +3% on held-out sources, with complete capture. Otherwise close this
 session with a local DO-NOT-REPEAT entry. Report the best in-sample projection
 and all sensitivities even when they disagree. No implementation either way.
+
+Pre-capture correction: the first plan text mistakenly named the historical
+91,392-row prefix. Packet129's preregistration and bundle7 selection explicitly
+identify 80,128. Corrected before any new target/draft outputs; thresholds and
+corpus selection are unchanged.
