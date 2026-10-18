@@ -28,7 +28,7 @@ def main():
     records = []
     paths = [P.parent/'packet58p-onecard-record/evidence/card0-58p-a'/w
              for w in ('WS', 'WS128x', 'WS128')]
-    paths += [P.parent/'packet58r-onecard-v5/evidence/card0-v5-a/route-rec/WSCREEN',
+    paths += [P.parent/'packet58v-async-cache/evidence/card0-v5-a/route-rec/WSCREEN',
               P.parent/'packet58t-resident-lookups/evidence/card0-resident-a/resident/WSCREEN']
     for path in paths:
         window, summary = js(path/'window.json'), js(path/'summary.json')
@@ -70,7 +70,7 @@ def main():
                 metric_events_2_100=stats(selected), all_decode=stats(decode), all_positions=stats(allrows),
                 rate=view['class_balanced_tok_s_1_100_intervals_after_ttft']['median']))
         assert pos == len(caches)
-    for path in [P.parent/'packet58r-onecard-v5/sources/main.cpp',
+    for path in [P.parent/'packet58v-async-cache/sources/main.cpp',
                  P.parent/'packet58j-onecard-port/owner.cpp',
                  P.parent/'packet58i-onecard-attribution/ATTRIBUTION.json']:
         read(path)

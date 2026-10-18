@@ -1,0 +1,110 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "projected_not_measured": true,
+  "prompts": [
+    {
+      "prompt": "incident-retrospective",
+      "prompt_class": "operations",
+      "duration_ms": 3758.183908998035,
+      "cache_ms": 676.12949,
+      "fill_bytes": 6991308800
+    },
+    {
+      "prompt": "code-review",
+      "prompt_class": "code",
+      "duration_ms": 3733.760978007922,
+      "cache_ms": 663.95152,
+      "fill_bytes": 5949619200
+    },
+    {
+      "prompt": "customer-email",
+      "prompt_class": "prose",
+      "duration_ms": 3864.088710019132,
+      "cache_ms": 756.2323,
+      "fill_bytes": 7161369600
+    },
+    {
+      "prompt": "sql-debugging",
+      "prompt_class": "code",
+      "duration_ms": 3906.9854270201176,
+      "cache_ms": 783.93165,
+      "fill_bytes": 7585894400
+    },
+    {
+      "prompt": "release-plan",
+      "prompt_class": "operations",
+      "duration_ms": 3889.073480007937,
+      "cache_ms": 786.72155,
+      "fill_bytes": 7680332800
+    },
+    {
+      "prompt": "benchmark-analysis",
+      "prompt_class": "analysis",
+      "duration_ms": 3507.0694019959774,
+      "cache_ms": 530.3919099999999,
+      "fill_bytes": 4226611200
+    },
+    {
+      "prompt": "architecture-tradeoff",
+      "prompt_class": "analysis",
+      "duration_ms": 3585.2224699920043,
+      "cache_ms": 566.16359,
+      "fill_bytes": 5087488000
+    },
+    {
+      "prompt": "bug-report-synthesis",
+      "prompt_class": "operations",
+      "duration_ms": 3610.7634119980503,
+      "cache_ms": 603.74826,
+      "fill_bytes": 5128345600
+    },
+    {
+      "prompt": "technical-guide",
+      "prompt_class": "documentation",
+      "duration_ms": 3767.9535310016945,
+      "cache_ms": 677.80802,
+      "fill_bytes": 6823040000
+    },
+    {
+      "prompt": "risk-register",
+      "prompt_class": "structured-writing",
+      "duration_ms": 3781.080879998626,
+      "cache_ms": 720.9949,
+      "fill_bytes": 6475929600
+    },
+    {
+      "prompt": "performance-hypotheses",
+      "prompt_class": "analysis",
+      "duration_ms": 3678.5519249970093,
+      "cache_ms": 646.65177,
+      "fill_bytes": 5636736000
+    },
+    {
+      "prompt": "decision-memo",
+      "prompt_class": "prose",
+      "duration_ms": 4066.9167560117785,
+      "cache_ms": 893.01473,
+      "fill_bytes": 9015731200
+    }
+  ],
+  "conditional_tok_s": {
+    "baseline": 26.22859930943809,
+    "hide_fill_at_assumed_25_GB_s_minus_0.25ms_overhead": 28.01963829790092,
+    "hide_half_cache_wall_minus_0.5ms_overhead": 28.49485579664701,
+    "remove_entire_cache_wall_impossible_upper_bound": 32.07937890820441
+  },
+  "gain_percent": {
+    "baseline": 0.0,
+    "hide_fill_at_assumed_25_GB_s_minus_0.25ms_overhead": 6.828572762626872,
+    "hide_half_cache_wall_minus_0.5ms_overhead": 8.640402258893909,
+    "remove_entire_cache_wall_impossible_upper_bound": 22.306870182964666
+  },
+  "assumptions": [
+    "No added zero-copy misses or hit-rate loss from delayed publication",
+    "BCS fills overlap compute without bandwidth contention or driver serialization",
+    "CPU planning is hidden within already-enqueued compute",
+    "Publication overhead is the explicit assumed per-token deduction, not a measurement",
+    "No benefit is assigned to prompt/KV/response reuse; arithmetic unchanged"
+  ]
+}

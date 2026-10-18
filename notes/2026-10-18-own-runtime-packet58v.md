@@ -37,11 +37,28 @@ The analyzer is capped at 4 GiB and does not import a runtime or read weights.
 
 ## Design and evidence status
 
-Planned: retain tile16 arithmetic and global LRU; publish host pointers before
-reusing victim slots; copy on a separate BCS event chain; expose completed
-fills only at a later position boundary. Pointer publication will use one
-contiguous upload plus a device scatter into the existing tables. Host planning
-must operate on retained route data while the next position computes.
+Implemented in the new copy: retain tile16 arithmetic and global LRU; publish
+host pointers before reusing victim slots; copy on a separate BCS event chain;
+expose completed fills only at a later position boundary. Pointer publication
+uses one contiguous upload plus a scatter into the existing tables. Planning
+uses retained routes while the next position computes. Because those victims
+cannot safely be revoked during that position, reuse begins at the following
+boundary: this conservative version adds one position of lag. Pending slots
+cannot be evicted again. All actual routes still update LRU recency.
+
+Both GNU and Intel builds have passed; the final full-shape integration checks
+are being refreshed. The protocol/ownership race gates and full-size K1 source
+byte comparisons pass on CPU. The 87 Python policy checks pass. There is no
+device correctness claim. The private packet58u policy, plus a 32 MiB metadata
+allowance and 1,179,648-byte staging backing, needs 95,435,761,152 bytes of
+available host RAM. The 8 GiB reserve and original device ceiling remain.
+
+[Per-prompt sensitivities](../experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/projections.json)
+give 28.01964 tok/s (+6.83%) if all fill DMA at an assumed 25 GB/s is hidden,
+with only 0.25 ms extra cost per token. Hiding half the cache wall with 0.5 ms
+overhead gives 28.49486 (+8.64%). Both assume no loss of cache hits, no bandwidth
+contention and no driver serialization. They are conditional calculations,
+not speed results. The impossible all-cache-removal bound is 32.07938 tok/s.
 
 Hot-expert cache idea credit: Niko1221 / Strata. Implementation is lab-authored.
 Device equality, small async smoke and performance remain pending. No gain
