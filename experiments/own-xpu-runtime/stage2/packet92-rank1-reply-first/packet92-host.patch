@@ -1,0 +1,155 @@
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/p49d_submit.cpp
++++ /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/p49d_submit.cpp
+@@ -51,7 +51,7 @@
+  p49dmix::Kernel k;k.spec=s;auto e=d.compute(k,a,deps);return {e,e,1};
+ }
+ Submit resolve(std::string_view cls,std::string_view choice){
+- if(cls=="host_retire"&&(choice=="production"||choice=="ordered"))return production;
++ if(cls=="host_retire"&&(choice=="production"||choice=="ordered"||choice=="reply-first"))return production;
+  if(cls=="hc_norm"&&(choice=="production"||choice=="subgroup"))return production;
+  if(cls=="hc_gate"&&(choice=="production"||choice=="wide"))return production;
+  if(cls=="packed_dense"&&(choice=="production"||choice=="head-packed"||choice=="dense-packed"||choice=="combined"))return production;
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/native_controller.hpp
++++ /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/native_controller.hpp
+@@ -34,16 +34,16 @@
+  }
+  Reply wait(int rank){require(pending[rank],"native wait idle");Reply r;
+   if(rank==0)r=local;else{uint32_t seen=load(m.reply_sequence);if(seen!=seq)wait_change(m.reply_sequence,seen,m,seconds,cancel);require(load(m.reply_sequence)==seq,"native reply sequence");r=m.reply;}
+-  require(!r.status&&!r.error,"native failed operation");pending[rank]=false;trace.push_back({rank,commands[rank],r,sent[rank]});return r;
++  require(!load(m.abort),"native peer failed");require(!r.status&&!r.error,"native failed operation");pending[rank]=false;trace.push_back({rank,commands[rank],r,sent[rank]});return r;
+  }
+  Reply call(int rank,int op,int token=0,int position=0,int fixture=0,int speculative=0){start(rank,op,token,position,fixture,speculative);return wait(rank);}
+  void handover(){require(!pending[1]&&stream_bytes&&stream_bytes<=slot_bytes,"native handover ownership");std::memcpy(shared+slot_bytes,shared,stream_bytes);}
+ };
+-inline void worker(Mailbox& m,int seconds,const std::function<Reply(const Request&)>& execute,const std::function<void()>& cancel){
++inline void worker(Mailbox& m,int seconds,const std::function<Reply(const Request&)>& execute,const std::function<void()>& cancel,const std::function<void(const Request&)>& published={},const std::function<void()>& finish_reports={}){
+  uint32_t seen=load(m.reply_sequence);
+  for(;;){if(load(m.request_sequence)==seen)wait_change(m.request_sequence,seen,m,seconds,cancel);cancel();require(!load(m.abort),"native peer failed");uint32_t next=load(m.request_sequence);require(next==seen+1,"native worker sequence");Request r=m.request;
+-  if(r.op==0){m.reply={};publish(m.reply_sequence,next);return;}
+-  m.reply=execute(r);publish(m.reply_sequence,next);seen=next;
++  if(r.op==0){if(finish_reports)finish_reports();m.reply={};publish(m.reply_sequence,next);return;}
++  m.reply=execute(r);publish(m.reply_sequence,next);if(published)published(r);seen=next;
+  }
+ }
+ struct Config {int draft_rank=1,mode=0,count=0,overlap=1,dumps=0,vocab=31;std::vector<int> prompt,script,eos;};
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/main.cpp
++++ /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/main.cpp
+@@ -1,3 +1,4 @@
++#include "reply_first.hpp"
+ #include "host_spin.hpp"
+ #include "ordered_queue.hpp"
+ #include "p60_submit.hpp"
+@@ -598,6 +599,8 @@
+   // Token replay contains no selection lookup or candidate-name branch.
+   p49d::Selection sealed_selection;
+   bool ordered_retirement=false;
++  p92::Reports reply_report;
++  std::ofstream reply_timings;
+   double retirement_ms=0,profiling_ms=0;
+   uint64_t retirement_calls=0;
+   void retire_events(int c) {
+@@ -706,7 +709,11 @@
+                  std::chrono::seconds(a.seconds)) {attribution.enabled=args.timing=="attribution";pending.reserve(4096);prepared.reserve(p.launches.size());matrices.reserve(p.launches.size());gemv_choices.reserve(p.launches.size());
+     if(!a.selection.empty()){require(!a.selection_sha256.empty(),"selection requires sealed --selection-sha256");sealed_selection.load(a.selection.string(),a.selection_sha256);}
+     else require(a.selection_sha256.empty(),"selection SHA256 requires selection file");
+-    ordered_retirement=a.rank==1 && sealed_selection.choices.contains("host_retire") && sealed_selection.choices.at("host_retire")=="ordered";
++    const auto host_choice=sealed_selection.choices.contains("host_retire")?sealed_selection.choices.at("host_retire"):"production";
++    ordered_retirement=a.rank==1 && (host_choice=="ordered"||host_choice=="reply-first");
++    reply_report.enabled=a.rank==1 && host_choice=="reply-first";
++    if(host_choice=="reply-first")require(a.memory=="resident"&&!a.legacy&&a.draft_rank==1&&(a.target_split==0||a.target_split==24),"p92 reply-first requires resident prepared rank1-draft 24/24");
++    if(a.rank==1){reply_timings.open(a.output/"p92-host.jsonl");require(bool(reply_timings),"p92 host timing open");reply_report.output=&reply_timings;}
+     for(const auto& l:p.launches)if(l.op=="gemv"||l.op=="expert_gate_up"||l.op=="routed_gemv"){
+       std::array<unsigned,2> variants{selected_variant(w,a,p,l),0};if(l.op=="expert_gate_up")variants[1]=selected_variant(w,a,p,l,1);
+       gemv_choices.emplace(&l,std::make_pair(packet26::dispatch.gemv_for(l.label),variants));
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/rank.hpp
++++ /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/rank.hpp
+@@ -178,22 +178,34 @@
+  if(e.a.rank==0){bytes=4*e.p.g.h*2;auto raw=e.readback(0,e.buffers[0].at("streams").id,bytes);std::memcpy(shared,raw.data(),bytes);}
+  else if(request.fixture>0){token=e.integer(0,"next_token");auto& confirmed=verification(shared);confirmed.token=token;__atomic_store_n(&confirmed.position_plus_one,uint32_t(request.position+1),__ATOMIC_RELEASE);}
+  if(!e.resident){e.release_layer(0);e.loaded_layer[0]=-1;}
++ if(e.a.rank==1)e.reply_report.begin(request.sequence,request.fixture,request.position);
+  getrusage(RUSAGE_SELF,&after);getrusage(RUSAGE_THREAD,&thread_after);
++ const bool report_site=e.attribution.enabled&&p65timing::sample(request.fixture),report_cancelled=candidate.cancelled;
++ const auto report_half=e.attribution.current.half;const auto report_retirement_calls=e.retirement_calls-retire_calls;
++ const auto report_reprepares=e.capacity_reprepares,report_waits=e.host_waits-waits,report_checks=e.parity_argument_checks;
++ const double report_retirement_ms=e.retirement_ms-retire_ms,report_profiling_ms=e.profiling_ms-profile_ms,report_wait_ms=e.wait_ms-waited;
++ const auto report_families=e.family_ms;
++ // All changing fields are values. Only stable configuration and output streams
++ // remain references. Resource snapshots retain the original half boundary.
++ auto report=[=,&e](){
+  double load_average=0;getloadavg(&load_average,1);cpu_set_t affinity;CPU_ZERO(&affinity);require(!sched_getaffinity(0,sizeof affinity,&affinity),"per-half affinity");
+- if(e.attribution.enabled&&p65timing::sample(request.fixture))e.site_timings
+-  <<"{\"schema\":\"packet65.half.v1\",\"half\":"<<e.attribution.current.half
++ if(report_site)e.site_timings
++  <<"{\"schema\":\"packet65.half.v1\",\"half\":"<<report_half
+   <<",\"rank\":"<<e.a.rank<<",\"fixture\":"<<request.fixture<<",\"position\":"<<request.position
+   <<",\"speculative\":"<<(request.speculative?"true":"false")
+-  <<",\"cancelled\":"<<(candidate.cancelled?"true":"false")<<"}\n";
++  <<",\"cancelled\":"<<(report_cancelled?"true":"false")<<"}\n";
+  e.timings<<"{\"cpu_affinity\":[";bool comma=false;for(int cpu=0;cpu<CPU_SETSIZE;++cpu)if(CPU_ISSET(cpu,&affinity)){e.timings<<(comma?",":"")<<cpu;comma=true;}e.timings<<"],\"load_average_1m\":"<<load_average<<",\"position\":"<<request.position<<",\"fixture\":"<<request.fixture<<",\"speculative\":"<<(request.speculative?"true":"false")
+-  <<",\"p76_retirement_ms\":"<<e.retirement_ms-retire_ms<<",\"p76_retirement_calls\":"<<e.retirement_calls-retire_calls<<",\"p76_profiling_ms\":"<<e.profiling_ms-profile_ms<<",\"p76_ordered_retirement\":"<<(e.ordered_retirement?"true":"false")
+-  <<",\"launch_extent\":"<<std::min(e.p.g.context,((request.position+32)/32)*32)<<",\"capacity_reprepares\":"<<e.capacity_reprepares
+-  <<",\"cancelled\":"<<(candidate.cancelled?"true":"false")<<",\"launches_issued\":"<<issued
+-  <<",\"prepare_ms\":"<<prepare_ms<<",\"enqueue_loop_ms\":"<<enqueue_ms<<",\"wait_ms\":"<<e.wait_ms-waited<<",\"host_waits\":"<<e.host_waits-waits
++  <<",\"p76_retirement_ms\":"<<report_retirement_ms<<",\"p76_retirement_calls\":"<<report_retirement_calls<<",\"p76_profiling_ms\":"<<report_profiling_ms<<",\"p76_ordered_retirement\":"<<(e.ordered_retirement?"true":"false")
++  <<",\"launch_extent\":"<<std::min(e.p.g.context,((request.position+32)/32)*32)<<",\"capacity_reprepares\":"<<report_reprepares
++  <<",\"cancelled\":"<<(report_cancelled?"true":"false")<<",\"launches_issued\":"<<issued
++  <<",\"prepare_ms\":"<<prepare_ms<<",\"enqueue_loop_ms\":"<<enqueue_ms<<",\"wait_ms\":"<<report_wait_ms<<",\"host_waits\":"<<report_waits
+   <<",\"process_major_faults\":"<<after.ru_majflt-before.ru_majflt<<",\"process_minor_faults\":"<<after.ru_minflt-before.ru_minflt<<",\"process_voluntary_context_switches\":"<<after.ru_nvcsw-before.ru_nvcsw<<",\"process_involuntary_context_switches\":"<<after.ru_nivcsw-before.ru_nivcsw
+   <<",\"thread_voluntary_context_switches\":"<<thread_after.ru_nvcsw-thread_before.ru_nvcsw<<",\"thread_involuntary_context_switches\":"<<thread_after.ru_nivcsw-thread_before.ru_nivcsw
+-  <<",\"parity_argument_checks\":"<<e.parity_argument_checks<<",\"enqueue_family_ms\":";
+- if(!e.class_timing)e.timings<<"null";else {e.timings<<'{';for(size_t j=0;j<e.families.size();++j)e.timings<<(j?",":"")<<ownrt::quote(e.families[j])<<':'<<e.family_ms[j];e.timings<<'}';}e.timings<<"}\n";
++  <<",\"parity_argument_checks\":"<<report_checks<<",\"enqueue_family_ms\":";
++ if(!e.class_timing)e.timings<<"null";else {e.timings<<'{';for(size_t j=0;j<e.families.size();++j)e.timings<<(j?",":"")<<ownrt::quote(e.families[j])<<':'<<report_families[j];e.timings<<'}';}e.timings<<"}\n";
++ require(bool(e.timings)&&bool(e.site_timings),"p92 half receipt write failed");
++ };
++ if(e.a.rank==1)e.reply_report.schedule(std::move(report));else report();
+  return {0,token,error,int32_t(bytes),request.sequence,e.a.rank,{int32_t(candidate.cancelled),int32_t(issued)},Engine::ms(start),e.gemv_ms+e.nongemv_ms-gpu,0,0};
+ }
+ static void undo(Engine& e,Candidate& c,SpeculativeImage& image,bool redo=false,int position=-1,int token=-1) {
+@@ -246,6 +258,7 @@
+   Reply ready{};ready.rank=a.rank;transfer(a.channel,&ready,sizeof ready,true,a.seconds);
+   Candidate c;int sequence=0,accepted=0;bool async_half_ready=false;int async_half_position=-1,async_half_token=-1;
+   auto execute=[&](const Request& r)->Reply {
++   if(a.rank==1)engine->reply_report.before(r.op);
+    auto received=std::chrono::steady_clock::now();
+    Reply response{};response.sequence=r.sequence;response.rank=a.rank;
+    bool completing_redo=image.before_command(r.op==half&&!r.speculative,r.position,r.token);
+@@ -293,19 +306,22 @@
+    else if(r.op==fail)throw std::runtime_error("injected rank failure");
+    else if(r.op==stall){auto until=std::chrono::steady_clock::now()+std::chrono::seconds(a.seconds);while(std::chrono::steady_clock::now()<until){pipeline_cancel_check();poll(nullptr,0,10);}throw std::runtime_error("bounded injected stall");}
+    else throw std::runtime_error("unknown rank command");
++   if(a.rank==1)engine->reply_report.after(r.op);
+    response.redo_ms=std::chrono::duration<double>(received.time_since_epoch()).count();
+    response.reserved_ms=std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    return response;
+   };
+   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
+-   if(r.op==finish){require(!c.pending,"finish with unresolved candidate");image.boundary();if(provider)provider->dump_all_state(engine->a.output/"draft-final-state");break;}
++   if(r.op==finish){if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");image.boundary();if(provider)provider->dump_all_state(engine->a.output/"draft-final-state");break;}
+    Reply response{};
+    if(r.op==10){
+     require(!c.pending,"native entry unresolved candidate");
+     auto* bytes=static_cast<uint8_t*>(mapping);auto& mailbox=*reinterpret_cast<native38::Mailbox*>(bytes+2*slot_bytes+256);
+     auto cancel=[&](){pipeline_cancel_check();if(engine->progress_pending&&engine->progress_callback)engine->progress_callback();};
+     try {
+-     if(a.rank==1)native38::worker(mailbox,a.seconds,execute,cancel);
++     if(a.rank==1)native38::worker(mailbox,a.seconds,execute,cancel,
++       [&](const Request& cmd){if(cmd.op==half)engine->reply_report.published();},
++       [&](){engine->reply_report.flush();});
+      else {
+       auto cfg=native38::config(a.shared.parent_path()/"native-request.txt",engine->p.g.context,engine->p.g.vocab);cfg.draft_rank=a.draft_rank;
+       native38::Backend backend(mailbox,bytes,a.seconds,execute,cancel);
+@@ -316,10 +332,12 @@
+     response.sequence=r.sequence;response.rank=a.rank;
+    }else response=execute(r);
+    transfer(a.channel,&response,sizeof response,true,a.seconds);
++   if(a.rank==1&&r.op==half)engine->reply_report.published();
+   }
+   engine->dump_classes(engine->a.output/"class-times.json",accepted);
+  }catch(const std::exception& ex){
+   error=ex.what();
++  if(engine&&a.rank==1&&!engine->reply_report.poisoned())try{engine->reply_report.flush();}catch(const std::exception& report){error+="; report: "+std::string(report.what());}
+   // A full filesystem cannot bypass the explicit provider/owner drain below.
+   try{save(a.output/"failure.txt",error+"\n");}
+   catch(const std::exception& record){error+="; failure record: "+std::string(record.what());std::cerr<<error<<"\n";}
