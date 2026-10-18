@@ -1,0 +1,20 @@
+required-views 0 85.97
+composition-queue-plan 0 8.07
+initial-reseal 0 5.17
+cached-proof 0 1.62
+cpu-dry-run 0 126.22
+seal 0 1.12
+inputs 0 8.32
+storage 0 0.06
+queue-plan 0 8.62
+composite-proposals 0 241.72
+leave-one-out-proposals 1 273.51
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/prepare_cpu.py", line 40, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/prepare_cpu.py", line 31, in main
+    run('leave-one-out-proposals',[O/'composite_jobs.py','--decision',decision,'--leave-one-out'])
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/prepare_cpu.py", line 18, in run
+    assert r.returncode in allowed,(label,path)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('leave-one-out-proposals', PosixPath('/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/leave-one-out-proposals.log'))

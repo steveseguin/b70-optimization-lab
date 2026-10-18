@@ -43,6 +43,13 @@ a claim of parity with the old draft reduction. Full target-model equality,
 acceptance, repeats and speed remain device gates. A conservative disk refusal
 was recorded and must pass before launch.
 
+The requested six composite jobs pass temporary planning. The additional
+conditional leave-one-out batch exceeds the inherited 240-second CPU planner
+timeout; no conditional proposal is published. Its failed log remains in the
+orchestration folder. Smaller temporary batches are needed if later measured
+composite results require those jobs. This does not invalidate the completed
+composite handoff or claim that the broader helper completed successfully.
+
 ## Evidence and patches
 
 - [Build](build-device-receipt.json), [operator bytes](evidence/cpu-byte-identity.json)

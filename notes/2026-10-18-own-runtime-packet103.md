@@ -138,3 +138,16 @@ Both temporary composite queue plans pass (241.72 seconds together), and the
 coordinator-visible `proposed-p103-composite-A.txt` and `-B.txt` each contain
 control/candidate/control. No live queue or device ran in this preparation.
 Matched device results are still required before record-chain readiness.
+
+Final source dry-run passes with the same candidate. Full readiness evaluates
+zero completed composite brackets and correctly keeps `ready=false`;
+`verify_ready.py` refuses, as required. The generic preparation helper then
+stopped on its additional conditional leave-one-out plan: twelve jobs on lane A
+exceeded the planner's 240-second CPU subprocess bound. This is separate from
+the requested six-job composite handoff, which is complete and pushed. No
+leave-one-out proposal was published. Its failure log and incomplete helper
+report are retained honestly; do not repeat that oversized planning batch.
+If measured composite results require leave-one-out work, plan smaller CPU
+batches using the frozen decision before publishing those conditional jobs.
+The final handoff summary distinguishes completed requested work from this
+optional planning limitation. No worker from this preparation remains running.

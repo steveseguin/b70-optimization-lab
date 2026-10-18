@@ -14,3 +14,8 @@
 
 - K2 postprocessing tests must remove each synthetic run after its assertions;
   retaining both 1.4 MB summary copies for all 512 choices breaks the build cap.
+- The conditional twelve-job-per-lane leave-one-out plan exceeds the inherited
+  240-second CPU planner bound. Its failed attempt is retained in the new
+  orchestration's leave-one-out-proposals.log. Use smaller temporary planning
+  batches if measured composite evidence calls for it; the six composite jobs
+  already passed and must not be replanned after their outputs are occupied.
