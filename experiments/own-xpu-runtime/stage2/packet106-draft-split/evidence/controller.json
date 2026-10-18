@@ -1,0 +1,61 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "runs": [
+    {
+      "compiler": "GNU",
+      "binary_sha256": "c38bda64bd531dbc03a6459b7f6ab824c81983e993efa6df1bef25b9de7a8a4d",
+      "passed": true,
+      "device_executed": false,
+      "hit_split_count": 7,
+      "miss_split_count": 0,
+      "full_prefix_on_miss": true,
+      "identical_proposals": true,
+      "EOS": true
+    },
+    {
+      "compiler": "Intel",
+      "binary_sha256": "6102f8bd788452648271ad1eb0bca3f2ad9e45fd319e105aebc757115807a9d5",
+      "passed": true,
+      "device_executed": false,
+      "hit_split_count": 7,
+      "miss_split_count": 0,
+      "full_prefix_on_miss": true,
+      "identical_proposals": true,
+      "EOS": true
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet106-draft-split/p106_controller_test.cpp": "8039580290427f1792897b9237d14826ffd13e1fde36e752656d4119135b7898",
+    "experiments/own-xpu-runtime/stage2/packet106-draft-split/native_controller.hpp": "7253188548a1a2b7ccd5d1ee12fd35b912fc90cdbb650a7a18f2aa6a75e79ef4",
+    "experiments/own-xpu-runtime/stage2/packet106-draft-split/host_spin.hpp": "5f56024f2678d7ab90eb5b1818c34d2241066b4c7dff74fb7a5a4ccc388b799e",
+    "experiments/own-xpu-runtime/stage2/packet106-draft-split/p106_common.hpp": "171b725d16c8ad604c127e713da7843fd0bc9e69f6abbfcf55cd7eaa481ec5ef",
+    "experiments/own-xpu-runtime/stage2/packet106-draft-split/controller_gate.py": "a70d614ba0c6c663431c4fa53955e5b9e1cd3201d90d805d7a0c502d944f9041"
+  },
+  "commands": [
+    [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-O2",
+      "-pthread",
+      "-MMD",
+      "-MF",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106-draft-split/build/controller/GNU.d",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106-draft-split/p106_controller_test.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106-draft-split/build/controller/GNU"
+    ],
+    [
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-std=c++20",
+      "-O2",
+      "-pthread",
+      "-MMD",
+      "-MF",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106-draft-split/build/controller/Intel.d",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106-draft-split/p106_controller_test.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet106-draft-split/build/controller/Intel"
+    ]
+  ]
+}

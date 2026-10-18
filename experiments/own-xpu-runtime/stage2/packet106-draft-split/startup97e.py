@@ -183,6 +183,9 @@ def main():
     limits();os.environ['OMP_NUM_THREADS']='2';started=time.monotonic()
     initial_sources={str(f.relative_to(ROOT)):sha(f) for f in P.glob('*.py')}
     initial_sources.update({str(f.relative_to(ROOT)):sha(f) for f in P.glob('*.hpp')})
+    fixture_inputs=json.loads((P/'evidence/host-fixture-inputs.json').read_text())
+    initial_sources.update(fixture_inputs['sources'])
+    initial_sources[str((P/'evidence/host-fixture-inputs.json').relative_to(ROOT))]=sha(P/'evidence/host-fixture-inputs.json')
     generated,commands=build()
     shared=shared_fixtures()
     # Exercise the actual W0p shared-memory handshake. The real run_rank returns

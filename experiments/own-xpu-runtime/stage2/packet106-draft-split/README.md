@@ -29,8 +29,11 @@ target split. With logits, controls and workspace the combined device delta is
 311,148,608 bytes. The existing 30 GiB arena cap and 1.5 GB reserve stay fixed;
 real driver residency still needs the device admission checks.
 
-CPU gates and seals are in progress. Device output, deterministic repeat,
-acceptance and speed are unmeasured. Packet87t's +0.7749% draft estimate is a
+CPU gates and all four seals pass: GNU/Intel byte identity twice each, native
+hit/miss scheduling, real transfer mocks, eight full-size allocation checks,
+nine layout refusals, and all 44 startup windows. Nine Python checks and all
+three temporary queue plans pass. The final local build is 261,302,180 bytes.
+Device output, deterministic repeat, acceptance and speed are unmeasured. Packet87t's +0.7749% draft estimate is a
 model projection, not a result; host rendezvous may consume the saving.
 
 First device use is the proposed lane-B smoke: one incident prompt, 64 tokens,
@@ -46,3 +49,5 @@ stdin, 8 GiB address-space cap, and packet94's serial compiler turn. Keep build
 scratch under 300 MB. Tests: `python3 -B -m unittest test_packet106.py`.
 
 [Design](DESIGN.md), [work note](../../../../notes/2026-10-18-own-runtime-packet106.md).
+
+[Final verification](evidence/final-verification.json), [CPU closeout](CPU-PREPARATION-CLOSEOUT.md), [retention](RETENTION.md).

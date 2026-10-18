@@ -58,6 +58,9 @@ int main(int argc,char**argv){try{
   require(*static_cast<int32_t*>(pointer(1,one.index))==remote.index,"combined target suffix merge");
   require(p106::load(box.reply)==2,"target service changed draft mailbox");
  }
+ int32_t before_bad=*static_cast<int32_t*>(pointer(1,rt[1]->index));box.best.error=1;
+ bool bad=false;try{rt[1]->merge_draft(box,2,33,2,[]{});}catch(const std::exception&){bad=true;}
+ require(bad&&*static_cast<int32_t*>(pointer(1,rt[1]->index))==before_bad,"nonfinite suffix published a proposal");
  bool stale=false;try{rt[0]->service(box,2,33,2,[]{});}catch(const std::exception&){stale=true;}require(stale,"duplicate accepted");
  bool wrong=false;box.position=999;p106::publish(box.request,3);try{rt[0]->service(box,3,34,3,[]{});}catch(const std::exception&){wrong=true;}require(wrong,"stale position accepted");
  bool cancelled=false;box.position=34;try{rt[0]->service(box,3,34,3,[]{throw std::runtime_error("cancel");});}catch(const std::exception&){cancelled=true;}require(cancelled&&p106::load(box.reply)==2,"cancel published");

@@ -18,8 +18,8 @@ def packet_relative(path):
     raise ValueError('path outside packet storage: '+str(path))
 
 FREE_FLOOR = 12_000_000_000
-BUILD_BASE_BUDGET = 1_200_000_000
-CPU_BUILD_LIMIT = 1_200_000_000
+BUILD_BASE_BUDGET = 300_000_000
+CPU_BUILD_LIMIT = 300_000_000
 REGISTERED_CHAIN = json.loads((P / 'chain-registration.json').read_text())['output']
 import re
 if not re.fullmatch(r'device-cards01-[a-z][a-z0-9-]*', REGISTERED_CHAIN):
