@@ -1,0 +1,1034 @@
+{
+  "assumptions": [
+    "Head time linear in whole vocabulary rows; same per-row arithmetic and bytes, rank0_factor=1 by default. No new device measurement.",
+    "Final.mix is normalized BF16, 2560 elements (5120 bytes); copy exact bytes, do not re-run normalization or transfer guessed state.",
+    "Keep full existing local argmax time on both cards; merge BF16-rounded logit values with global indices, lowest index wins ties; OR finite/error status.",
+    "No rank0 head/target compute concurrency, and no hidden-copy overlap with rank0 compute assumed.",
+    "Target non-head remainder precedes head readiness as a conservative accounting surrogate, not a measured intra-command timestamp.",
+    "Draft hits are known at interval entry from the completed verifier. On misses do not issue a rank0 head or wait for it.",
+    "Two new cross-rank notifications and one new rank0 issue use existing measured host boundaries as proxies, not measurements of the proposed protocol.",
+    "Unchanged acceptance, target arithmetic, draft prefix rows, BF16 KV and rollback semantics; no gains from cached prompts.",
+    "No memory admission or real-shape partition validation performed; allocations exclude workspace and transport staging."
+  ],
+  "baseline": {
+    "acceptance": 0.7874015748031495,
+    "components_ms": {
+      "A": 13.688277306587056,
+      "Bh": 14.231596352745436,
+      "Bm": 14.463408852731975,
+      "C": 12.655226409165946,
+      "D": 1.7947473012216457,
+      "Gh": 0.020004615436893147,
+      "Gm": 0.012518896775353434,
+      "R": 0.5693899839238766,
+      "spec_offset": -0.00040029034813041315
+    },
+    "hit_ms": 16.046348269403975,
+    "hits": 936,
+    "identity_correction": "packet85 read run/summary.json (attribution arm, 54.06389572), not run/control/summary.json (uninstrumented control, 54.10652897); components remain unchanged",
+    "intervals": 1188,
+    "measured_tok_s": 54.10652897209122,
+    "miss_ms": 27.700544142597153,
+    "misses": 252,
+    "modeled_tok_s": 53.98398587813467,
+    "packet85_labeled_observed_tok_s": 54.06389572006298
+  },
+  "date": "2026-10-18",
+  "decision": "closeout_inconclusive_for_sealing",
+  "device_executed": false,
+  "diagnostic": true,
+  "engine_code_written": false,
+  "equations": {
+    "E_I_V": "new host-boundary proxy plus respectively unknown export/import/return cost",
+    "draft_hit": "draft_hit_D + max(Bh,A+offset) + Gh",
+    "draft_hit_D": "D-P-Jd+E+max(k/Np*P+Jd,I+(1-k/Np)*P*rank0_factor+Jd)+V",
+    "draft_miss": "unchanged max(D,R+C)+max(Bm,A+offset)+Gm",
+    "rate": "1000/(p*H+(1-p)*M), one verified token per interval",
+    "target_L": "B - target_head - target_argmax (conservative virtual ready time)",
+    "target_hit": "D + target_race(Bh) + Gh",
+    "target_miss": "max(D,R+C) + target_race(Bm) + Gm",
+    "target_race": "max(L+E+k/N*head+J, max(A+offset,L+E)+I+(1-k/N)*head*rank0_factor+J)+V"
+  },
+  "handoff_accounting": {
+    "measured_host_boundaries_ms": {
+      "draft_issue_after_emission_ms": {
+        "max": 0.014706994988955557,
+        "mean": 0.005470360272077166,
+        "median": 0.005339999916031957,
+        "min": 0.0045890046749264,
+        "n": 1188
+      },
+      "emission_after_race_ms": {
+        "max": 0.007923998055048287,
+        "mean": 0.0010621726736528266,
+        "median": 0.0010219955584034324,
+        "min": 0.000690997694619,
+        "n": 1188
+      },
+      "handoff_ready_to_rank1_ms": {
+        "max": 0.3191479918314144,
+        "mean": 0.01161998722701089,
+        "median": 0.012042000889778137,
+        "min": 0.0037669960875064135,
+        "n": 1188
+      }
+    },
+    "measured_total_new_host_boundary_proxy_ms": 0.02977250739975177,
+    "missing": [
+      "rank1 D2H final.mix and its wait",
+      "rank0 H2D final.mix and its wait",
+      "rank0 local-best/finite-status readback and wait",
+      "incremental rank1 local-best value/status readback",
+      "incremental host merge work"
+    ],
+    "missing_cost_value": null,
+    "new_host_boundary_proxy_ms": {
+      "export_publish": 0.01161998722701089,
+      "import_issue": 0.005470360272077166,
+      "return_merge": 0.012682159900663716
+    },
+    "old_Gh_Gm": "Retained unchanged; new boundary proxies price only additional operations",
+    "transfer_events": {
+      "draft.transfer.hidden": {
+        "events": 96,
+        "zero_width": 0
+      },
+      "draft.transfer.proposal": {
+        "events": 96,
+        "zero_width": 96
+      },
+      "draft.transfer.status": {
+        "events": 96,
+        "zero_width": 96
+      },
+      "draft.transfer.upload": {
+        "events": 96,
+        "zero_width": 96
+      },
+      "transfer.half_streams": {
+        "events": 96,
+        "zero_width": 96
+      },
+      "transfer.half_token": {
+        "events": 96,
+        "zero_width": 96
+      },
+      "transfer.readback": {
+        "events": 288,
+        "zero_width": 288
+      }
+    },
+    "zero_means": "Optimistic lower-bound scenario only; not measured zero DMA latency"
+  },
+  "identity": {
+    "draft_rank": 1,
+    "kv": "BF16",
+    "reference": "packet77 control / packet70 wide64 / draft-HC / batched rollback",
+    "scope": "12 prompts, first 99 emission intervals per prompt; one loaded pair",
+    "target_arithmetic": "iq3-p49-split32-v1",
+    "target_split": [
+      24,
+      24
+    ]
+  },
+  "measured_head_ms": {
+    "draft_argmax": 0.021087229166666666,
+    "draft_prefix": 0.52076615625,
+    "target": 1.4036838541666665,
+    "target_argmax": 0.022874302083333332
+  },
+  "options": {
+    "draft": {
+      "additional_transfer_budgets_for_0_5_percent_vs_measured": {
+        "equal_three_legs": {
+          "best_at_threshold": {
+            "gain_percent_vs_measured_control": 0.5000000000000782,
+            "gain_percent_vs_packet85_model": 0.7281339686632249,
+            "hit_ms": 15.876289404010265,
+            "k_rank1_rows": 48384,
+            "miss_ms": 27.700544142597153,
+            "predicted_tok_s": 54.37706161695172,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 43008,
+            "unmeasured_extra_ms_export_import_return": [
+              0.025289452328649986,
+              0.025289452328649986,
+              0.025289452328649986
+            ]
+          },
+          "maximum_extra_ms_per_active_leg": 0.025289452328649986,
+          "maximum_extra_total_ms": 0.07586835698594996
+        },
+        "export_only": {
+          "best_at_threshold": {
+            "gain_percent_vs_measured_control": 0.5000000000000115,
+            "gain_percent_vs_packet85_model": 0.7281339686631361,
+            "hit_ms": 15.876289404010281,
+            "k_rank1_rows": 46080,
+            "miss_ms": 27.700544142597153,
+            "predicted_tok_s": 54.37706161695168,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 45312,
+            "unmeasured_extra_ms_export_import_return": [
+              0.06273979842504218,
+              0.0,
+              0.0
+            ]
+          },
+          "maximum_extra_ms_per_active_leg": 0.06273979842504218,
+          "maximum_extra_total_ms": 0.06273979842504218
+        },
+        "import_only": {
+          "best_at_threshold": {
+            "gain_percent_vs_measured_control": 0.5000000000000115,
+            "gain_percent_vs_packet85_model": 0.7281339686631361,
+            "hit_ms": 15.876289404010285,
+            "k_rank1_rows": 57088,
+            "miss_ms": 27.700544142597153,
+            "predicted_tok_s": 54.37706161695168,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 34304,
+            "unmeasured_extra_ms_export_import_return": [
+              0.0,
+              0.12546513377168367,
+              0.0
+            ]
+          },
+          "maximum_extra_ms_per_active_leg": 0.12546513377168367,
+          "maximum_extra_total_ms": 0.12546513377168367
+        },
+        "return_only": {
+          "best_at_threshold": {
+            "gain_percent_vs_measured_control": 0.5000000000000115,
+            "gain_percent_vs_packet85_model": 0.7281339686631361,
+            "hit_ms": 15.876289404010281,
+            "k_rank1_rows": 46080,
+            "miss_ms": 27.700544142597153,
+            "predicted_tok_s": 54.37706161695168,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 45312,
+            "unmeasured_extra_ms_export_import_return": [
+              0.0,
+              0.0,
+              0.06273979842504218
+            ]
+          },
+          "maximum_extra_ms_per_active_leg": 0.06273979842504218,
+          "maximum_extra_total_ms": 0.06273979842504218
+        }
+      },
+      "conditional_first99_replay": {
+        "class_balanced_predicted_tok_s": 54.648868060517394,
+        "gain_percent_vs_measured": 1.0023542421394582,
+        "hit_change_ms": {
+          "max": -0.23279866381873404,
+          "mean": -0.23279866381873576,
+          "median": -0.23279866381873582,
+          "min": -0.23279866381873582,
+          "n": 936
+        },
+        "miss_change_ms": {
+          "max": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "min": 0.0,
+          "n": 252
+        },
+        "misses_worsened": 0,
+        "requests": [
+          {
+            "hits": 85,
+            "intervals": 99,
+            "observed_tok_s": 56.54855481012845,
+            "predicted_tok_s": 57.19501818800058,
+            "prompt_class": "analysis",
+            "prompt_id": "architecture-tradeoff"
+          },
+          {
+            "hits": 78,
+            "intervals": 99,
+            "observed_tok_s": 54.140260602156765,
+            "predicted_tok_s": 54.683279300227476,
+            "prompt_class": "analysis",
+            "prompt_id": "benchmark-analysis"
+          },
+          {
+            "hits": 66,
+            "intervals": 99,
+            "observed_tok_s": 50.13115657527964,
+            "predicted_tok_s": 50.52425095286712,
+            "prompt_class": "operations",
+            "prompt_id": "bug-report-synthesis"
+          },
+          {
+            "hits": 77,
+            "intervals": 99,
+            "observed_tok_s": 53.58949936819823,
+            "predicted_tok_s": 54.114584891791495,
+            "prompt_class": "code",
+            "prompt_id": "code-review"
+          },
+          {
+            "hits": 76,
+            "intervals": 99,
+            "observed_tok_s": 53.221504293943866,
+            "predicted_tok_s": 53.73257819798212,
+            "prompt_class": "prose",
+            "prompt_id": "customer-email"
+          },
+          {
+            "hits": 80,
+            "intervals": 99,
+            "observed_tok_s": 54.70229467444796,
+            "predicted_tok_s": 55.27106728055243,
+            "prompt_class": "prose",
+            "prompt_id": "decision-memo"
+          },
+          {
+            "hits": 80,
+            "intervals": 99,
+            "observed_tok_s": 54.62861286828812,
+            "predicted_tok_s": 55.1958463341581,
+            "prompt_class": "operations",
+            "prompt_id": "incident-retrospective"
+          },
+          {
+            "hits": 74,
+            "intervals": 99,
+            "observed_tok_s": 52.737641915249625,
+            "predicted_tok_s": 53.226094391114856,
+            "prompt_class": "analysis",
+            "prompt_id": "performance-hypotheses"
+          },
+          {
+            "hits": 78,
+            "intervals": 99,
+            "observed_tok_s": 54.07279734202567,
+            "predicted_tok_s": 54.61445682080731,
+            "prompt_class": "operations",
+            "prompt_id": "release-plan"
+          },
+          {
+            "hits": 81,
+            "intervals": 99,
+            "observed_tok_s": 55.1601254007568,
+            "predicted_tok_s": 55.74581542217987,
+            "prompt_class": "structured-writing",
+            "prompt_id": "risk-register"
+          },
+          {
+            "hits": 79,
+            "intervals": 99,
+            "observed_tok_s": 54.15988370867775,
+            "predicted_tok_s": 54.71033574554708,
+            "prompt_class": "code",
+            "prompt_id": "sql-debugging"
+          },
+          {
+            "hits": 82,
+            "intervals": 99,
+            "observed_tok_s": 55.44919413729476,
+            "predicted_tok_s": 56.04845794332919,
+            "prompt_class": "documentation",
+            "prompt_id": "technical-guide"
+          }
+        ]
+      },
+      "continuous_k_known_boundary_scenario": 46176.01119118969,
+      "head_rows": 91392,
+      "known_boundary_only_optimum": {
+        "gain_percent_vs_measured_control": 0.7707007209404537,
+        "gain_percent_vs_packet85_model": 0.999449177462175,
+        "hit_ms": 15.813549605585239,
+        "k_rank1_rows": 46080,
+        "miss_ms": 27.700544142597153,
+        "predicted_tok_s": 54.52352838095498,
+        "rank0_head_time_multiplier": 1.0,
+        "rank0_rows": 45312,
+        "unmeasured_extra_ms_export_import_return": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "miss_policy": "Entire original draft stays on rank1; split disabled before dispatch",
+      "rank0_added_head_allocation_bytes": 153154560,
+      "rank0_added_logit_bytes": 90624,
+      "rank0_bandwidth_sensitivity": [
+        {
+          "gain_percent_vs_measured_control": 0.7707007209404537,
+          "gain_percent_vs_packet85_model": 0.999449177462175,
+          "hit_ms": 15.813549605585239,
+          "k_rank1_rows": 46080,
+          "miss_ms": 27.700544142597153,
+          "predicted_tok_s": 54.52352838095498,
+          "rank0_head_time_multiplier": 1,
+          "rank0_rows": 45312,
+          "unmeasured_extra_ms_export_import_return": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "gain_percent_vs_measured_control": 0.7186635032127464,
+          "gain_percent_vs_packet85_model": 0.9472938357842464,
+          "hit_ms": 15.82558399006106,
+          "k_rank1_rows": 48384,
+          "miss_ms": 27.700544142597153,
+          "predicted_tok_s": 54.49537284866887,
+          "rank0_head_time_multiplier": 1.1,
+          "rank0_rows": 43008,
+          "unmeasured_extra_ms_export_import_return": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "gain_percent_vs_measured_control": 0.6493628049617284,
+          "gain_percent_vs_packet85_model": 0.8778358256593455,
+          "hit_ms": 15.841630133618327,
+          "k_rank1_rows": 51200,
+          "miss_ms": 27.700544142597153,
+          "predicted_tok_s": 54.457876646291815,
+          "rank0_head_time_multiplier": 1.25,
+          "rank0_rows": 40192,
+          "unmeasured_extra_ms_export_import_return": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "gain_percent_vs_measured_control": 0.5487332082870999,
+          "gain_percent_vs_packet85_model": 0.7769778008329453,
+          "hit_ms": 15.864969665743834,
+          "k_rank1_rows": 55296,
+          "miss_ms": 27.700544142597153,
+          "predicted_tok_s": 54.40342946441257,
+          "rank0_head_time_multiplier": 1.5,
+          "rank0_rows": 36096,
+          "unmeasured_extra_ms_export_import_return": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "gain_percent_vs_measured_control": 0.3997302635161404,
+          "gain_percent_vs_packet85_model": 0.6276366209064355,
+          "hit_ms": 15.899614600595743,
+          "k_rank1_rows": 61184,
+          "miss_ms": 27.700544142597153,
+          "predicted_tok_s": 54.322809142930794,
+          "rank0_head_time_multiplier": 2,
+          "rank0_rows": 30208,
+          "unmeasured_extra_ms_export_import_return": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "reason": "Known-host-boundary scenario clears 0.5%, but new reverse DMA/readback costs are not identified by packet77; no full-cost prediction can be sealed.",
+      "seal_ready": false,
+      "split_alignment": 256,
+      "status": "closeout_inconclusive_for_sealing",
+      "unmeasured_transfer_sensitivity": [
+        {
+          "best": {
+            "gain_percent_vs_measured_control": 0.7707007209404537,
+            "gain_percent_vs_packet85_model": 0.999449177462175,
+            "hit_ms": 15.813549605585239,
+            "k_rank1_rows": 46080,
+            "miss_ms": 27.700544142597153,
+            "predicted_tok_s": 54.52352838095498,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 45312,
+            "unmeasured_extra_ms_export_import_return": [
+              0,
+              0,
+              0
+            ]
+          },
+          "extra_each_leg_ms": 0,
+          "extra_roundtrip_sum_ms": 0
+        },
+        {
+          "best": {
+            "gain_percent_vs_measured_control": 0.5030355349489701,
+            "gain_percent_vs_packet85_model": 0.731176394245292,
+            "hit_ms": 15.875583990061061,
+            "k_rank1_rows": 48384,
+            "miss_ms": 27.700544142597153,
+            "predicted_tok_s": 54.3787040395483,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 43008,
+            "unmeasured_extra_ms_export_import_return": [
+              0.025,
+              0.025,
+              0.025
+            ]
+          },
+          "extra_each_leg_ms": 0.025,
+          "extra_roundtrip_sum_ms": 0.07500000000000001
+        },
+        {
+          "best": {
+            "gain_percent_vs_measured_control": 0.23210506099911044,
+            "gain_percent_vs_packet85_model": 0.4596309108998664,
+            "hit_ms": 15.938712548621986,
+            "k_rank1_rows": 50688,
+            "miss_ms": 27.700544142597153,
+            "predicted_tok_s": 54.2321129641664,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 40704,
+            "unmeasured_extra_ms_export_import_return": [
+              0.05,
+              0.05,
+              0.05
+            ]
+          },
+          "extra_each_leg_ms": 0.05,
+          "extra_roundtrip_sum_ms": 0.15000000000000002
+        },
+        {
+          "best": {
+            "gain_percent_vs_measured_control": -0.03218120596879537,
+            "gain_percent_vs_packet85_model": 0.1947447168180627,
+            "hit_ms": 16.000622658631457,
+            "k_rank1_rows": 52736,
+            "miss_ms": 27.700544142597153,
+            "predicted_tok_s": 54.089116838560145,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 38656,
+            "unmeasured_extra_ms_export_import_return": [
+              0.075,
+              0.075,
+              0.075
+            ]
+          },
+          "extra_each_leg_ms": 0.075,
+          "extra_roundtrip_sum_ms": 0.22499999999999998
+        },
+        {
+          "best": {
+            "gain_percent_vs_measured_control": -0.22648485549638941,
+            "gain_percent_vs_packet85_model": 0.0,
+            "hit_ms": 16.046348269403975,
+            "k_rank1_rows": 91392,
+            "miss_ms": 27.700544142597153,
+            "predicted_tok_s": 53.98398587813467,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 0,
+            "unmeasured_extra_ms_export_import_return": [
+              0.1,
+              0.1,
+              0.1
+            ]
+          },
+          "extra_each_leg_ms": 0.1,
+          "extra_roundtrip_sum_ms": 0.30000000000000004
+        },
+        {
+          "best": {
+            "gain_percent_vs_measured_control": -0.22648485549638941,
+            "gain_percent_vs_packet85_model": 0.0,
+            "hit_ms": 16.046348269403975,
+            "k_rank1_rows": 91392,
+            "miss_ms": 27.700544142597153,
+            "predicted_tok_s": 53.98398587813467,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 0,
+            "unmeasured_extra_ms_export_import_return": [
+              0.2,
+              0.2,
+              0.2
+            ]
+          },
+          "extra_each_leg_ms": 0.2,
+          "extra_roundtrip_sum_ms": 0.6000000000000001
+        }
+      ]
+    },
+    "target": {
+      "additional_transfer_budgets_for_0_5_percent_vs_measured": {
+        "equal_three_legs": {
+          "best_at_threshold": {
+            "gain_percent_vs_measured_control": 0.5000000000001448,
+            "gain_percent_vs_packet85_model": 0.7281339686632693,
+            "hit_ms": 15.91244365098372,
+            "k_rank1_rows": 201728,
+            "miss_ms": 27.5666395241769,
+            "predicted_tok_s": 54.37706161695175,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 46592,
+            "unmeasured_extra_ms_export_import_return": [
+              0.05258242210146591,
+              0.05258242210146591,
+              0.05258242210146591
+            ]
+          },
+          "maximum_extra_ms_per_active_leg": 0.05258242210146591,
+          "maximum_extra_total_ms": 0.15774726630439773
+        },
+        "export_only": {
+          "best_at_threshold": {
+            "gain_percent_vs_measured_control": 0.5000000000000115,
+            "gain_percent_vs_packet85_model": 0.7281339686631583,
+            "hit_ms": 15.912665428156116,
+            "k_rank1_rows": 183040,
+            "miss_ms": 27.565818127242203,
+            "predicted_tok_s": 54.377061616951686,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 65280,
+            "unmeasured_extra_ms_export_import_return": [
+              0.2099815105199525,
+              0.0,
+              0.0
+            ]
+          },
+          "maximum_extra_ms_per_active_leg": 0.2099815105199525,
+          "maximum_extra_total_ms": 0.2099815105199525
+        },
+        "import_only": {
+          "best_at_threshold": {
+            "gain_percent_vs_measured_control": 0.5000000000000115,
+            "gain_percent_vs_packet85_model": 0.7281339686631361,
+            "hit_ms": 15.912706597964934,
+            "k_rank1_rows": 220160,
+            "miss_ms": 27.565665646468812,
+            "predicted_tok_s": 54.37706161695168,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 28160,
+            "unmeasured_extra_ms_export_import_return": [
+              0.0,
+              0.20987019955538244,
+              0.0
+            ]
+          },
+          "maximum_extra_ms_per_active_leg": 0.20987019955538244,
+          "maximum_extra_total_ms": 0.20987019955538244
+        },
+        "return_only": {
+          "best_at_threshold": {
+            "gain_percent_vs_measured_control": 0.5000000000001448,
+            "gain_percent_vs_packet85_model": 0.7281339686632693,
+            "hit_ms": 15.91244365098372,
+            "k_rank1_rows": 201728,
+            "miss_ms": 27.5666395241769,
+            "predicted_tok_s": 54.37706161695175,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 46592,
+            "unmeasured_extra_ms_export_import_return": [
+              0.0,
+              0.0,
+              0.10516484420293182
+            ]
+          },
+          "maximum_extra_ms_per_active_leg": 0.10516484420293182,
+          "maximum_extra_total_ms": 0.10516484420293182
+        }
+      },
+      "conditional_first99_replay": {
+        "class_balanced_predicted_tok_s": 54.75321387535948,
+        "gain_percent_vs_measured": 1.1952067810556244,
+        "hit_change_ms": {
+          "max": 0.042568426095755285,
+          "mean": -0.21097416851946954,
+          "median": -0.23906946262318485,
+          "min": -0.23906946262318485,
+          "n": 936
+        },
+        "miss_change_ms": {
+          "max": -0.12046756504022937,
+          "mean": -0.23834716269828352,
+          "median": -0.23906946262318485,
+          "min": -0.23906946262318485,
+          "n": 252
+        },
+        "misses_worsened": 0,
+        "requests": [
+          {
+            "hits": 85,
+            "intervals": 99,
+            "observed_tok_s": 56.54855481012845,
+            "predicted_tok_s": 57.188951166401345,
+            "prompt_class": "analysis",
+            "prompt_id": "architecture-tradeoff"
+          },
+          {
+            "hits": 78,
+            "intervals": 99,
+            "observed_tok_s": 54.140260602156765,
+            "predicted_tok_s": 54.79975964744655,
+            "prompt_class": "analysis",
+            "prompt_id": "benchmark-analysis"
+          },
+          {
+            "hits": 66,
+            "intervals": 99,
+            "observed_tok_s": 50.13115657527964,
+            "predicted_tok_s": 50.68370047866491,
+            "prompt_class": "operations",
+            "prompt_id": "bug-report-synthesis"
+          },
+          {
+            "hits": 77,
+            "intervals": 99,
+            "observed_tok_s": 53.58949936819823,
+            "predicted_tok_s": 54.277440427034534,
+            "prompt_class": "code",
+            "prompt_id": "code-review"
+          },
+          {
+            "hits": 76,
+            "intervals": 99,
+            "observed_tok_s": 53.221504293943866,
+            "predicted_tok_s": 53.844390730541186,
+            "prompt_class": "prose",
+            "prompt_id": "customer-email"
+          },
+          {
+            "hits": 80,
+            "intervals": 99,
+            "observed_tok_s": 54.70229467444796,
+            "predicted_tok_s": 55.34986817263156,
+            "prompt_class": "prose",
+            "prompt_id": "decision-memo"
+          },
+          {
+            "hits": 80,
+            "intervals": 99,
+            "observed_tok_s": 54.62861286828812,
+            "predicted_tok_s": 55.33913756150183,
+            "prompt_class": "operations",
+            "prompt_id": "incident-retrospective"
+          },
+          {
+            "hits": 74,
+            "intervals": 99,
+            "observed_tok_s": 52.737641915249625,
+            "predicted_tok_s": 53.312853772879386,
+            "prompt_class": "analysis",
+            "prompt_id": "performance-hypotheses"
+          },
+          {
+            "hits": 78,
+            "intervals": 99,
+            "observed_tok_s": 54.07279734202567,
+            "predicted_tok_s": 54.706668103272406,
+            "prompt_class": "operations",
+            "prompt_id": "release-plan"
+          },
+          {
+            "hits": 81,
+            "intervals": 99,
+            "observed_tok_s": 55.1601254007568,
+            "predicted_tok_s": 55.82081045921389,
+            "prompt_class": "structured-writing",
+            "prompt_id": "risk-register"
+          },
+          {
+            "hits": 79,
+            "intervals": 99,
+            "observed_tok_s": 54.15988370867775,
+            "predicted_tok_s": 54.800149295369096,
+            "prompt_class": "code",
+            "prompt_id": "sql-debugging"
+          },
+          {
+            "hits": 82,
+            "intervals": 99,
+            "observed_tok_s": 55.44919413729476,
+            "predicted_tok_s": 56.10764925835116,
+            "prompt_class": "documentation",
+            "prompt_id": "technical-guide"
+          }
+        ]
+      },
+      "continuous_k_known_boundary_scenario": 201705.75922029713,
+      "head_rows": 248320,
+      "known_boundary_only_optimum": {
+        "gain_percent_vs_measured_control": 1.07802023957706,
+        "gain_percent_vs_packet85_model": 1.3074663082523585,
+        "hit_ms": 15.807278806780788,
+        "k_rank1_rows": 201728,
+        "miss_ms": 27.461474679973968,
+        "predicted_tok_s": 54.689808305342986,
+        "rank0_head_time_multiplier": 1.0,
+        "rank0_rows": 46592,
+        "unmeasured_extra_ms_export_import_return": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "miss_policy": "Same target split after unchanged parallel draft/repair",
+      "rank0_added_head_allocation_bytes": 157480960,
+      "rank0_added_logit_bytes": 93184,
+      "rank0_bandwidth_sensitivity": [
+        {
+          "gain_percent_vs_measured_control": 1.07802023957706,
+          "gain_percent_vs_packet85_model": 1.3074663082523585,
+          "hit_ms": 15.807278806780788,
+          "k_rank1_rows": 201728,
+          "miss_ms": 27.461474679973968,
+          "predicted_tok_s": 54.689808305342986,
+          "rank0_head_time_multiplier": 1,
+          "rank0_rows": 46592,
+          "unmeasured_extra_ms_export_import_return": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "gain_percent_vs_measured_control": 1.0063515576416604,
+          "gain_percent_vs_packet85_model": 1.2356349391444255,
+          "hit_ms": 15.820630074419004,
+          "k_rank1_rows": 203776,
+          "miss_ms": 27.473051454028948,
+          "predicted_tok_s": 54.65103086918769,
+          "rank0_head_time_multiplier": 1.1,
+          "rank0_rows": 44544,
+          "unmeasured_extra_ms_export_import_return": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "gain_percent_vs_measured_control": 0.9162354551427665,
+          "gain_percent_vs_packet85_model": 1.1453142740176503,
+          "hit_ms": 15.836692848420292,
+          "k_rank1_rows": 206848,
+          "miss_ms": 27.490416615111425,
+          "predicted_tok_s": 54.60227217408062,
+          "rank0_head_time_multiplier": 1.25,
+          "rank0_rows": 41472,
+          "unmeasured_extra_ms_export_import_return": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "gain_percent_vs_measured_control": 0.785683273300819,
+          "gain_percent_vs_packet85_model": 1.0144657400626311,
+          "hit_ms": 15.860569944908693,
+          "k_rank1_rows": 210944,
+          "miss_ms": 27.513570163221388,
+          "predicted_tok_s": 54.5316349199886,
+          "rank0_head_time_multiplier": 1.5,
+          "rank0_rows": 37376,
+          "unmeasured_extra_ms_export_import_return": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "gain_percent_vs_measured_control": 0.5923975546775706,
+          "gain_percent_vs_packet85_model": 0.8207412648416401,
+          "hit_ms": 15.895551708950032,
+          "k_rank1_rows": 217344,
+          "miss_ms": 27.549747582143212,
+          "predicted_tok_s": 54.4270547266428,
+          "rank0_head_time_multiplier": 2,
+          "rank0_rows": 30976,
+          "unmeasured_extra_ms_export_import_return": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "reason": "Known-host-boundary scenario clears 0.5%, but new reverse DMA/readback costs are not identified by packet77; no full-cost prediction can be sealed.",
+      "seal_ready": false,
+      "split_alignment": 256,
+      "status": "closeout_inconclusive_for_sealing",
+      "unmeasured_transfer_sensitivity": [
+        {
+          "best": {
+            "gain_percent_vs_measured_control": 1.07802023957706,
+            "gain_percent_vs_packet85_model": 1.3074663082523585,
+            "hit_ms": 15.807278806780788,
+            "k_rank1_rows": 201728,
+            "miss_ms": 27.461474679973968,
+            "predicted_tok_s": 54.689808305342986,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 46592,
+            "unmeasured_extra_ms_export_import_return": [
+              0,
+              0,
+              0
+            ]
+          },
+          "extra_each_leg_ms": 0,
+          "extra_roundtrip_sum_ms": 0
+        },
+        {
+          "best": {
+            "gain_percent_vs_measured_control": 0.8023771055457818,
+            "gain_percent_vs_packet85_model": 1.031197467135514,
+            "hit_ms": 15.85727880678079,
+            "k_rank1_rows": 201728,
+            "miss_ms": 27.51147467997397,
+            "predicted_tok_s": 54.54066737316878,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 46592,
+            "unmeasured_extra_ms_export_import_return": [
+              0.025,
+              0.025,
+              0.025
+            ]
+          },
+          "extra_each_leg_ms": 0.025,
+          "extra_roundtrip_sum_ms": 0.07500000000000001
+        },
+        {
+          "best": {
+            "gain_percent_vs_measured_control": 0.5282332589563454,
+            "gain_percent_vs_packet85_model": 0.756431316827566,
+            "hit_ms": 15.90727880678079,
+            "k_rank1_rows": 201728,
+            "miss_ms": 27.56147467997397,
+            "predicted_tok_s": 54.39233765338865,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 46592,
+            "unmeasured_extra_ms_export_import_return": [
+              0.05,
+              0.05,
+              0.05
+            ]
+          },
+          "extra_each_leg_ms": 0.05,
+          "extra_roundtrip_sum_ms": 0.15000000000000002
+        },
+        {
+          "best": {
+            "gain_percent_vs_measured_control": 0.2555765005237909,
+            "gain_percent_vs_packet85_model": 0.4831556303513951,
+            "hit_ms": 15.957278806780788,
+            "k_rank1_rows": 201728,
+            "miss_ms": 27.611474679973966,
+            "predicted_tok_s": 54.244812545392975,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 46592,
+            "unmeasured_extra_ms_export_import_return": [
+              0.075,
+              0.075,
+              0.075
+            ]
+          },
+          "extra_each_leg_ms": 0.075,
+          "extra_roundtrip_sum_ms": 0.22499999999999998
+        },
+        {
+          "best": {
+            "gain_percent_vs_measured_control": -0.015605237045279718,
+            "gain_percent_vs_packet85_model": 0.21135831302092623,
+            "hit_ms": 16.00727880678079,
+            "k_rank1_rows": 201728,
+            "miss_ms": 27.661474679973967,
+            "predicted_tok_s": 54.09808551998815,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 46592,
+            "unmeasured_extra_ms_export_import_return": [
+              0.1,
+              0.1,
+              0.1
+            ]
+          },
+          "extra_each_leg_ms": 0.1,
+          "extra_roundtrip_sum_ms": 0.30000000000000004
+        },
+        {
+          "best": {
+            "gain_percent_vs_measured_control": -0.22648485549638941,
+            "gain_percent_vs_packet85_model": 0.0,
+            "hit_ms": 16.046348269403975,
+            "k_rank1_rows": 248320,
+            "miss_ms": 27.700544142597153,
+            "predicted_tok_s": 53.98398587813467,
+            "rank0_head_time_multiplier": 1.0,
+            "rank0_rows": 0,
+            "unmeasured_extra_ms_export_import_return": [
+              0.2,
+              0.2,
+              0.2
+            ]
+          },
+          "extra_each_leg_ms": 0.2,
+          "extra_roundtrip_sum_ms": 0.6000000000000001
+        }
+      ]
+    }
+  },
+  "schema": "own-runtime.packet87.slack-model.v1",
+  "seal_ready": false,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet45-merged3/DO-NOT-REPEAT.md": "cdf4f0419d162e4344ed8e383d36c77c0570177f2afd88b0bc57e3e3b9ecdc08",
+    "experiments/own-xpu-runtime/stage2/packet76-rank1-host/ATTRIBUTION.md": "840782305cbf198371c20fe5772c666662ea7a701a3296f52b4acb91d290993d",
+    "experiments/own-xpu-runtime/stage2/packet77-attribution/core_v2.hpp": "44a05d7d5cadc7a3de6e3d855f045a5d2156416ac2e463ca0d88d41a42357b1d",
+    "experiments/own-xpu-runtime/stage2/packet77-attribution/mtp.hpp": "d0f0f076ad664feabaaff84d16a53511804753a989b0210a8a81a68510734c37",
+    "experiments/own-xpu-runtime/stage2/packet77-attribution/native_controller.hpp": "7fb8a10c38de27a6783d6515843b6a7543286dce403c47d2e1e956b6b6908798",
+    "experiments/own-xpu-runtime/stage2/packet77-attribution/p56_config.hpp": "830eeed71e2298f6c0160147f92440ec5cdb784b1b108a7feecd3629174fbb9d",
+    "experiments/own-xpu-runtime/stage2/packet77-attribution/rank.hpp": "eac9b165cbd3e0b95c05f019c9535c4defa91caf4bb6480ca920134f475f6c14",
+    "experiments/own-xpu-runtime/stage2/packet79-draft-rank0/DO-NOT-REPEAT.md": "3f77401f2a6570c3d0c8fba92fa92f9d8decc7bf93dc7e5f4a67c13afc3cfe21",
+    "experiments/own-xpu-runtime/stage2/packet85-critical-path/MODEL.md": "0269b4a8e13b2f986ff89ed1167e7401a966cf8b866bf1219b9a8790404cf9c4",
+    "experiments/own-xpu-runtime/stage2/packet85-critical-path/model.json": "8fe6d61b6b92b2800a0d99f3ba3661b87cc4f81c4201c9e08d047fc529eb8daa",
+    "experiments/own-xpu-runtime/stage2/packet85-critical-path/model.py": "6627ffa350361a85aed5160f1f5738409cb23bab4f9ca1f34fea7317a0b63ad4",
+    "experiments/own-xpu-runtime/stage2/packet87-slack-model/model.py": "6d2f41364acf6504d7d9e642246efdbd974d993a505747595b887cedd155b62f",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution-summary.json": "9c098110c4ee93b2464487dc57191dceec867885be3a66be5ecd148e69073fc3",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/architecture-tradeoff/rank1/sites.jsonl": "fed357be2b0065d020252cc6223cdb32208fefbff5c4b024893affddb1d71fcc",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/benchmark-analysis/rank1/sites.jsonl": "d240285ac5ed8adedda0ac6d7aaac585a90494000ec16a2ac1a7c77d0445e0ea",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/bug-report-synthesis/rank1/sites.jsonl": "12fbce4c23de9e0830bc9e1ad4f191de75866a968cf65efc555ef7d9456a8add",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/code-review/rank1/sites.jsonl": "f97890f0169802ed45417afb7aeaa753490d307939d9a7e6aa262b581e24092f",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/customer-email/rank1/sites.jsonl": "dba3863b09a90eed2c0de430df2ba76372e96515e04f5dae5b442f833ca964a8",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/decision-memo/rank1/sites.jsonl": "df41a4e373ffab3525f3ba3af7a59d7484ccacb9596285dafdbc5cc3a2f70965",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/incident-retrospective/rank1/sites.jsonl": "fde3499e605496a92949c5aa6804b7fdc93b5e71963cf4818629c169fe7412c6",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/performance-hypotheses/rank1/sites.jsonl": "014508a1e77f0c4c644d8ac241fe64833976413948231dc88cc5deb1cd976526",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/release-plan/rank1/sites.jsonl": "4d300138f8e257d6cac1bc35b9de9283845d27e0c7865b6a8ae5c9b39577ceee",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/risk-register/rank1/sites.jsonl": "23e500f416ca9e3a4a58608f09ec6a47a9fe6b4f9fa083bdb97d217902f847cc",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/sql-debugging/rank1/sites.jsonl": "ee4edff89c91f23454bd08237906951048387115cadd5ce74378a9affebfa083",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/attribution/technical-guide/rank1/sites.jsonl": "1b0d4443ca2071942eafdc2e0e30f73b7f99974b3e5d6b9c212265368adeab3a",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/architecture-tradeoff/rank1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/architecture-tradeoff/receipt.json": "fd162621f7809431c0bf5572b29c7435ee2651dff7b8921530f41749a8d9fdda",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/benchmark-analysis/rank1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/benchmark-analysis/receipt.json": "a7d96973301498a9ae98938aed862d0fba69a95b25465cb18022068a4761204c",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/bug-report-synthesis/rank1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/bug-report-synthesis/receipt.json": "fa70b73872afaa25168d1d4feac8752d8cf60a85de30f512f88557caf8586155",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/code-review/rank1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/code-review/receipt.json": "ed49125d678c1c321bc74903d226b6e56b0b33bc0493cd9395f998aafa1220d9",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/customer-email/rank1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/customer-email/receipt.json": "13ceff1f3938daeaa73912cc6cb2903df20d5e9804d7bf20050a43e2f4cb9cfe",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/decision-memo/rank1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/decision-memo/receipt.json": "8e2dbe1ea2d96fbc022f7aad3c4ea66343a8aa83a4ed138f2c1ef554cc938cd2",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/incident-retrospective/rank1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/incident-retrospective/receipt.json": "a93f750d9460538ac50a1f195e89ad1048c61b6a47ec43b2a64715a3f6404123",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/performance-hypotheses/rank1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/performance-hypotheses/receipt.json": "8ddeebd3f31ab07fabcfa9adbedbac1d0014a6f65fa10e2fcf47a9460b02b4ae",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/release-plan/rank1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/release-plan/receipt.json": "6c530c15a35b336a2f0b92474579b9dbebf141503a55ffb35f2fb046cf9ca6e8",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/risk-register/rank1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/risk-register/receipt.json": "d951c60a3e45f6e3d0c2797f96784ae0542cca0ecde64a427ccefb21b7c1a698",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/sql-debugging/rank1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/sql-debugging/receipt.json": "ade6b0c913ac19343bb79595b30a6118d5933cbb0f33a3543843ec10597f0d4d",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/summary.json": "40b4fa0b26243940fc70c262ad5c2d04db51572d1796ef306057843907714549",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/technical-guide/rank1/sites.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/control/technical-guide/receipt.json": "a53f71be1ba1dbf45223a66469d440f84a9a8cfdb76821e084d8de515b757f0f",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/summary.json": "d50fa7bf02051cdf65b36967127807404d20a1f968370b7e1ecc64cb8884d46b"
+  },
+  "submission_eligible": false,
+  "validation": {
+    "nominal_no_worsened_miss_intervals_both_options": true,
+    "packet85_component_reproduction": true,
+    "packet85_shared_source_hashes_checked": 43,
+    "scope": "CPU mathematical/accounting checks, not output parity, speed qualification or runtime sealing",
+    "search": "all nonempty 256-row-aligned splits plus untouched no-split control; optimize packet85 expected-time rate",
+    "unsplit_replays_observed_class_balanced_rate": true
+  }
+}
