@@ -735,8 +735,16 @@ worker/recall trials and five unused tasks. Further worker tuning/integration is
 Retain the **50 GiB free-space reserve** and admit the peak temporary writes before creating archives or copies with `scripts/check-storage-headroom.py`; old free-space numbers are not admission. Verify current capacity, mount identity and ownership
 before new model downloads. Do not do bulk reads of the protected external trees during this documentation cleanup.
 
-Cache archives live under `/home/steve/git-archives/cache-consolidation-20261006/`; eight inactive staging builds are archived under `/home/steve/git-archives/staging-consolidation-20261007/` and need restoration before old launchers work. Keep
-`data/maintenance/consolidation-20261006/summary.json` and `data/maintenance/staging-consolidation-20261007/summary.json`, with their inventories, hashes and restore instructions.
+**October 18, disk5 archive relocation:** the old cache archives and eight inactive staging-build archives now live in
+`/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/cache-consolidation-20261006.tar.gz` and
+`/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/staging-consolidation-20261007.tar.gz`.
+Every file was hash-verified from its new archive before the exact originals were removed. Restore their `payload/` contents to the original
+`/home/steve/git-archives/` paths before using historical restoration commands or replaying the old backup/staging verification scripts.
+Keep `data/maintenance/consolidation-20261006/summary.json` and `data/maintenance/staging-consolidation-20261007/summary.json` unchanged:
+all twelve original archive hashes still match. The [disk5 cleanup log](experiments/own-xpu-runtime/stage2/DISK-CLEANUP-20261018.md#disk5--one-time-root-reserve-to-40-gb-2026-10-18)
+records the remaining exact moves, per-file manifests, archive checksums, restoration instructions and free-space readings.
+The one-time cleanup stopped at 09:24:16 UTC with **40.306 GB available (37.538 GiB)**, up from 31.003 GB;
+this is a point-in-time reading while other work continues, not a reserved allocation.
 
 The selected research/Git backup is `/mnt/usb-models/lab-backups/steve-b70s-20261007/` (nine verified archives, selected source only, not a whole-machine backup). Preserve `/home/steve/git-archives/flash-next-rescue-20261007/`,
 `/home/steve/worker-container-controls-20261007/`, and the official 27B cold copy `/mnt/usb-models/worker-models/qwen38-27b-fp8-20261007/017b9c7af6b5689d5dd426a76e0bc077eb5ca20a/`. This page does not assert the USB disk's current mount state. It is

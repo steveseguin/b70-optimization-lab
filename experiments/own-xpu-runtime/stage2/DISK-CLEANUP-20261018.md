@@ -364,3 +364,151 @@ Audit archive: `/mnt/raid-models/own-xpu-runtime-archive/cleanup-third-20261018/
 
 ## 08:40 UTC: closed builds 104, 86, 102 (coordinator)
 Before the packet 103 chain (storage check needs 19.0 GB free). Archived `packet104-tile-transpose/build` (272 files), `packet86-limiter-diagnostic/build` (1,899) and `packet102-iq2-ilp/build` (366) to `/mnt/raid-models/own-xpu-runtime-archive/closed-builds3-20261018/` (tar.gz + per-file sha256 manifest, every member hash-verified from the archive, hard links included) and then removed them. No inbound symlinks and no references from live packets/orchestration (packet 93 and 107 builds kept: referenced by packet 103 and 110). Root free 21.15 GB afterwards.
+
+
+## disk5 — one-time root reserve to 40 GB (2026-10-18)
+
+Started 09:12 UTC on `steve-b70s`. Initial root availability: **31,003,389,952 bytes (31.003 GB; 28.874 GiB)** on `/dev/nvme0n1p2`. Target is **40,000,000,000 available bytes**, checked after every exact candidate; stop at the first passing reading. RAID `/mnt/raid-models` is `/dev/sdb2` (`fuseblk`), initially 5,187,118,641,152 bytes available. No host setting, GPU, service or sudo action is part of this cleanup. Bulk work uses `nice -n 19 ionice -c3 taskset -c 8-15,24-31`, stdin `/dev/null`.
+
+`git pull --rebase` refused unrelated unstaged orchestration changes. `git fetch origin` then confirmed HEAD == origin/main == `9b49c03e7b7c07b8433d5c70fcc04888ecf634fc`; main-only work and explicit-path commit apply. The repository's delegation instruction was used for read-only candidate audits.
+
+### Whole-root survey (before any movement)
+
+Full-depth `timeout 2400 du -x -B1 /` ran as a background tool session, writing `root-du.tsv` and `root-du.errors`. It completed (exit 1, 521,290 directory rows, 71 permission/disappearance diagnostics); this is a no-sudo survey, not a claim to see inaccessible storage. `/mnt` and `/proc /sys /dev /run` are excluded from the largest-directory list below. Parents overlap, and hard links are charged once in traversal order, so these figures must not be summed. Model storage is excluded/protected; no model candidate was selected. Full survey and search evidence will be retained in the destination's audit archive.
+
+| Largest directory outside excluded roots | Allocated GB | Classification / decision |
+| --- | ---: | --- |
+| `/home` | 180.094 | Mixed parent; keep |
+| `/home/steve` | 180.094 | Mixed parent; keep |
+| `/home/steve/llm-optimizations` | 65.484 | Repo packet builds/evidence; protected or retained |
+| `/home/steve/llm-optimizations/experiments` | 53.864 | Repo packet builds/evidence; protected or retained |
+| `/home/steve/src` | 45.731 | Runtime builds/toolchains; protected except proven exact closed outputs |
+| `/home/steve/llm-optimizations/experiments/own-xpu-runtime` | 37.357 | Repo packet builds/evidence; protected or retained |
+| `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2` | 37.318 | Repo packet builds/evidence; protected or retained |
+| `/home/steve/.venvs` | 29.369 | Venvs; protected |
+| `/opt` | 12.286 | Runtime builds/toolchains; protected except proven exact closed outputs |
+| `/opt/intel` | 12.286 | Runtime builds/toolchains; protected except proven exact closed outputs |
+| `/opt/intel/oneapi` | 12.286 | Runtime builds/toolchains; protected except proven exact closed outputs |
+| `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen` | 10.510 | Repo packet builds/evidence; protected or retained |
+| `/home/steve/.venvs/deepseek-v4-xpu` | 10.003 | Venvs; protected |
+| `/home/steve/.venvs/vllm-xpu` | 9.909 | Venvs; protected |
+| `/home/steve/.venvs/deepseek-v4-xpu/lib` | 9.894 | Venvs; protected |
+| `/home/steve/.venvs/vllm-xpu/lib` | 9.801 | Venvs; protected |
+| `/home/steve/qwen38-current-main-runs` | 8.916 | Old run outputs/compiler caches; reject unreadable root-owned internals |
+| `/home/steve/llm-optimizations/data` | 8.472 | Repo packet builds/evidence; protected or retained |
+| `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes` | 8.471 | Repo packet builds/evidence; protected or retained |
+| `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence` | 8.470 | Repo packet builds/evidence; protected or retained |
+| `/usr` | 8.411 | System packages/toolchains/caches; protected |
+| `/var` | 7.878 | System packages/toolchains/caches; protected |
+| `/home/steve/own-xpu-runtime-results` | 7.549 | Old run outputs and evidence; retained (live lineage) |
+| `/home/steve/.venvs/minicpm5-baseline-20260912` | 7.431 | Venvs; protected |
+| `/home/steve/.codex` | 7.391 | Agent state/caches; protected |
+| `/home/steve/.venvs/minicpm5-baseline-20260912/lib` | 7.319 | Venvs; protected |
+| `/home/steve/git-archives` | 6.163 | Archives; audit exact children only |
+| `/home/steve/.venvs/deepseek-v4-xpu/lib/python3.12` | 5.999 | Venvs; protected |
+| `/home/steve/.venvs/deepseek-v4-xpu/lib/python3.12/site-packages` | 5.999 | Venvs; protected |
+| `/home/steve/.venvs/vllm-xpu/lib/python3.12` | 5.907 | Venvs; protected |
+| `/home/steve/.venvs/vllm-xpu/lib/python3.12/site-packages` | 5.907 | Venvs; protected |
+| `/opt/intel/oneapi/compiler` | 5.820 | Runtime builds/toolchains; protected except proven exact closed outputs |
+| `/home/steve/llm-optimizations/experiments/qwen36-27b-autoround-int4-b70` | 5.339 | Repo packet builds/evidence; protected or retained |
+| `/home/steve/llm-optimizations/experiments/qwen27_graphsafe_flash_attention` | 5.320 | Repo packet builds/evidence; protected or retained |
+| `/home/steve/llm-optimizations/experiments/qwen36-27b-autoround-int4-b70/diagnostics` | 5.284 | Repo packet builds/evidence; protected or retained |
+| `/var/lib` | 5.109 | System packages/toolchains/caches; protected |
+| `/opt/intel/oneapi/mkl` | 5.062 | Runtime builds/toolchains; protected except proven exact closed outputs |
+| `/var/lib/snapd` | 4.751 | System packages/toolchains/caches; protected |
+| `/usr/lib` | 4.731 | System packages/toolchains/caches; protected |
+| `/var/lib/snapd/snaps` | 4.324 | System packages/toolchains/caches; protected |
+
+### Candidate decisions recorded before movement
+
+Whole-repository `rg -uuu -l -F` searches include hidden and ignored files, exclude only `.git`, and also scan `/home/steve/own-xpu-runtime-results`. They search full paths and parent/basename aliases. The archive search found 49 files; its 68 access errors are unrelated old Qwen cache/STOP files, with no inaccessible own-runtime/ops files. Exact matches were inspected, including historical maintenance code. No live packet, queue, service or runtime reads the selected archive groups. The old backup-selection script and staging verifier are historical replay consumers: restore original archive paths before replaying them. Current restore guidance will point to the new nested archives; historical receipts remain byte-identical.
+
+`/proc/*/fd`, cwd/exe/root and readable maps checks found no selected-path use (initial check: 49 accessible processes; 496 inaccessible, including kernel/root processes). No sudo workaround was used. Repository plus runtime-results symlink census found no inbound links to the two selected archive directories. Each source is readable with writable parents. Hashes and open-file checks are repeated immediately before exact unlink.
+
+| Exact candidate | Allocated bytes | Closure / reference evidence | Decision |
+| --- | ---: | --- | --- |
+| `/home/steve/git-archives/cache-consolidation-20261006` | 2,834,530,304 | Four already-retired compiler-cache archives; `data/maintenance/consolidation-20261006/summary.json`; only preservation/restore references and frozen backup inputs. 16 regular files. | Archive and verify, then remove exact source |
+| `/home/steve/git-archives/staging-consolidation-20261007` | 2,672,640,000 | Eight explicitly inactive August staging builds, already archived October 7; `notes/2026-10-06-storage-and-recovery-followup.md` and maintenance summary. Only historical verifier/archive/backup scripts use this path. 32 regular files. | Archive and verify, then remove exact source |
+| `/home/steve/git-archives/llm-optimizations-pre-main-consolidation-20260814.bundle` | 585,134,080 | Pre-main consolidation Git preservation bundle; `notes/2026-08-14-main-only-consolidation.md`; no runtime consumer. Preserve original bytes and historical refs in nested archive. | Archive and verify, then remove exact file |
+| `/home/steve/qwen38-current-main-runs` | 8,915,730,432 | August run/cache history; largest caches contain root-owned unreadable files and unwritable directories. | Reject; cannot fully verify/remove without sudo |
+| `/home/steve/git-archives/flash-next-rescue-20261007` | — | Explicitly protected and referenced by own-runtime/Flash-Next provenance. | Keep |
+| `/home/steve/own-xpu-runtime-results` | 7,549,018,112 | Remaining outputs include shared lineage, oracle and submitted record material. | Keep |
+| Closed `stage2/packet*/build` candidates | — | `ops/screen-cleanup/closed.json` read; closed does not prove unreferenced. Packet93/107 have downstream consumers; protected record/build trees remain. | No packet build selected |
+
+Destination for all disk5 archives: `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/`. Every candidate gets one `.tar.gz`, adjacent per-file JSON/SHA-256 manifests, archive SHA-256 and a removal receipt. Archives also embed both manifests under `.disk5/`. Every payload member is read and hash-checked, resolving hard-link entries to their verified targets; exact member sets must match. Source hashes/stat inventory and accessible open files are rechecked before removal. Only enumerated files are unlinked and their empty directories removed. Nothing is recursively deleted.
+
+Payload names are `payload/<source-basename>/...` (or `payload/<filename>` for a file). To restore, verify archive SHA-256, extract only `payload` into a scratch directory, verify file hashes with the embedded/adjacent manifest, then put the source basename back under its original parent. For cache/staging archives this restores the original `.tar.zst` files; existing historical restore commands then apply unchanged.
+
+### Execution receipts
+
+### Additional candidates, recorded before their movement (09:18 UTC)
+
+Read-only delegated audits are retained as `qwen-audit-alt-summary.md` and `extra-audit.md` in the audit archive, with full search patterns/matches/errors, ownership and process checks. All exact paths below are readable and removable without sudo, contain no model weight files, and have no accessible open-file/cwd/exe/map use. Whole-repository including ignored/hidden files plus own-runtime-results searches completed; unrelated unreadable files are recorded. No inaccessible process is claimed as inspected. Only the exact closed `build` subtree under `src` is eligible; its source parent stays.
+
+| Exact candidate | Allocated bytes | Closure / reference evidence | Decision |
+| --- | ---: | --- | --- |
+| `/home/steve/.triton/cache` | 599,433,216 | Generated Triton artifacts, last write September 8; no live reference; source/compiler can regenerate. | Eligible only while below 40 GB |
+| `/home/steve/.cache/ms-playwright` | 676,491,264 | September browser/ffmpeg downloads; no repo/results references or running browser; reinstallable. .links points back to installed playwright-core, which is kept. | Eligible only while below 40 GB |
+| `/home/steve/.cache/intel-compute-runtime-26.18.38308.1` | 96,043,008 | Six May .deb downloads and checksum file; no reference; installed driver/runtime untouched. | Eligible only while below 40 GB |
+| `/home/steve/.cache/neo_compiler_cache` | 1,011,773,440 | Generated compiler cache last written October 17 00:15 UTC; no visible process use. The lone home-cache reference is a May 5 historical note. Live packet references resolve to their separate private native-home/driver-cache trees. | Eligible only while below 40 GB |
+| `/home/steve/src/laguna-xpu-kernels-dequant-mad-grf128-transposed-20260731/build` | 594,825,216 | Exact rejected component build; July 31 preregistration closes 0.999856x result below 1.03 gate. No whole-repo/results match for unique source-parent name. Source and separately frozen component evidence kept. | Eligible only while below 40 GB |
+| `/home/steve/qwen36-raw-archives` | 195,354,624 | July 2 detached-worktree audit backlog. Sole reference is historical archive-retention.md recovery guidance, explicitly not a path for new work. | Eligible only while below 40 GB |
+
+- Completed `cache-consolidation-20261006` at 2026-10-18T09:19:13.579531+00:00: `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/cache-consolidation-20261006.tar.gz`; SHA-256 `2ea9659b57b2b9381fe312fb910b5700c202bcc9f8985c6c1c67e4398097a1fe`; 16 file paths verified (0 hard-link members); 2,834,526,208 allocated file bytes reclaimed. Root available: **33,663,635,456 bytes**. Exact original removed.
+
+### Reserve candidate, recorded before any movement (09:19 UTC)
+
+| Exact candidate | Allocated bytes | Closure / reference evidence | Decision |
+| --- | ---: | --- | --- |
+| `/home/steve/src/laguna-xpu-kernels-transposed-scale-prefetch-dist3-20260731/build` | 375,607,296 | July 31 distance-3 preregistration: 0.997847x, closed at component gate, no endpoint. Sole whole-repo/results parent-name match is the October8 historical storage inventory. Source parent remains. | Use only if earlier candidates leave root below 40 GB |
+
+Both Laguna build candidates have no special files or symlinks. The separate inbound-link audit examined 1,309 repository/runtime-results symlinks, including relative ancestor aliases, and found zero matches and zero errors. Readable process maps also have no candidate matches. The extra source-build audit is `extra-audit.md`; it preserves search outputs, closure references and process/access limitations.
+
+### Final reserve decision, recorded before any movement
+
+`/home/steve/src/vllm-xpu-kernels-poison-20260822/build` is eligible only if concurrent writes leave root below the target after all earlier candidates: **553,480,192 allocated bytes**, 825 regular files, no symlinks/special files/weights. This is the completed August poison diagnostic build, explicitly excluded from the accepted overlay (`notes/2026-08-23-qwen38-absolute-current-main-overlay-preservation.md`, diagnostic exclusion; August22 longkv2 closure). Full repo/results parent-name search has zero matches, and accessible fd/maps and inbound-link checks find no use. Source and poison patch stay. Detailed read-only audit: `extra2-audit.md` with supporting searches/process/permission checks in the audit archive.
+
+- Completed `staging-consolidation-20261007` at 2026-10-18T09:21:35.177580+00:00: `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/staging-consolidation-20261007.tar.gz`; SHA-256 `40f6751b35e58a0959b30575f4700ceee26242587566c25c9eac009f41e9e6b2`; 32 file paths verified (0 hard-link members); 2,672,635,904 allocated file bytes reclaimed. Root available: **36,265,816,064 bytes**. Exact original removed.
+
+- Completed `pre-main-git-bundle` at 2026-10-18T09:22:07.314210+00:00: `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/pre-main-git-bundle.tar.gz`; SHA-256 `8e631c06e3193971d573ba5fb47ded6119bd8b40e0abdc973394c0c12b0c25f4`; 1 file paths verified (0 hard-link members); 585,134,080 allocated file bytes reclaimed. Root available: **36,792,770,560 bytes**. Exact original removed.
+
+- Completed `triton-cache` at 2026-10-18T09:22:24.402401+00:00: `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/triton-cache.tar.gz`; SHA-256 `b74072b7eb3f680fd065daae4f81166d4a58e79c081043f5e0bd12ed48308e17`; 11420 file paths verified (0 hard-link members); 591,806,464 allocated file bytes reclaimed. Root available: **37,391,790,080 bytes**. Exact original removed.
+
+- Completed `playwright-cache` at 2026-10-18T09:22:48.347973+00:00: `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/playwright-cache.tar.gz`; SHA-256 `73878299281d58a993c2e37d4fa353ed30171c15c50e928e2d6685241501fad8`; 599 file paths verified (0 hard-link members); 676,388,864 allocated file bytes reclaimed. Root available: **38,064,160,768 bytes**. Exact original removed.
+
+- Completed `intel-runtime-download-cache` at 2026-10-18T09:22:54.261861+00:00: `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/intel-runtime-download-cache.tar.gz`; SHA-256 `5b0ab5b6fb114f440cc34f0458bb7d2b72d1e05a925ef70439631602e41ac4c8`; 7 file paths verified (0 hard-link members); 96,038,912 allocated file bytes reclaimed. Root available: **38,153,596,928 bytes**. Exact original removed.
+
+- Completed `laguna-dequant-mad-closed-build` at 2026-10-18T09:23:23.011630+00:00: `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/laguna-dequant-mad-closed-build.tar.gz`; SHA-256 `4235d4a3b28efffd5443eb356c0cdf7ae2c0ffb54c5be0ad4a0f0c47391dc837`; 10532 file paths verified (0 hard-link members); 591,273,984 allocated file bytes reclaimed. Root available: **38,729,416,704 bytes**. Exact original removed.
+
+- Completed `qwen36-raw-archives` at 2026-10-18T09:23:34.274268+00:00: `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/qwen36-raw-archives.tar.gz`; SHA-256 `9ddf33eb83bdadd72dc29bb95ae14a356352b5c6460a75b455229795ef784bae`; 1 file paths verified (0 hard-link members); 195,350,528 allocated file bytes reclaimed. Root available: **38,924,689,408 bytes**. Exact original removed.
+
+- Completed `neo-compiler-cache` at 2026-10-18T09:23:55.962413+00:00: `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/neo-compiler-cache.tar.gz`; SHA-256 `fbb5796762bf7e7ee13a47d06fce01c22d8d6056cfd375313d3fe62aa3abdfa5`; 2346 file paths verified (0 hard-link members); 1,010,655,232 allocated file bytes reclaimed. Root available: **39,934,689,280 bytes**. Exact original removed.
+
+- Completed `laguna-distance3-closed-build` at 2026-10-18T09:24:16.320368+00:00: `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/laguna-distance3-closed-build.tar.gz`; SHA-256 `286a9c2bf37c7eba6e4e7e1cfcaadc13c9ad4d566025a0cce5415c92fa07f619`; 4944 file paths verified (0 hard-link members); 373,411,840 allocated file bytes reclaimed. Root available: **40,305,991,680 bytes**. Exact original removed.
+
+### disk5 outcome — target reached once; removal stopped
+
+At **2026-10-18T09:24:16.320456+00:00**, root availability reached **40,305,991,680 bytes = 40.306 GB (37.538 GiB)**, from **31,003,389,952 bytes = 31.003 GB (28.874 GiB)**. The explicit stop threshold was 40,000,000,000 bytes. No further original-data removal followed this first passing reading; the extra poison-build reserve and three other audited small builds remain intact. This is a one-time result, not a reservation against concurrent writes.
+
+Ten exact candidates were archived and removed. All **29,898 file paths** passed full archive-content hash verification and a source rehash before unlink; **0 hard-link members** were resolved to verified content. Allocation accounting, deduplicating inodes and counting a file only when all its links were selected, gives **9,627,222,016 reclaimed file bytes** (directory blocks excluded). Concurrent writes explain why this exceeds the net change in available space. All twelve nested cache/staging archive hashes and the old Git bundle hash also match their original historical ledgers.
+
+All archive paths are below; each has adjacent `.manifest.json`, `.manifest.sha256`, `.tar.gz.sha256` and `.receipt.json` sidecars. The same per-file manifests are embedded under `.disk5/`. The audit archive is listed separately after its verification.
+
+| Archive (absolute path) | File paths | Archive bytes | Root available after removal |
+| --- | ---: | ---: | ---: |
+| `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/cache-consolidation-20261006.tar.gz` | 16 | 2,833,624,213 | 33,663,635,456 |
+| `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/staging-consolidation-20261007.tar.gz` | 32 | 2,660,522,494 | 36,265,816,064 |
+| `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/pre-main-git-bundle.tar.gz` | 1 | 584,214,868 | 36,792,770,560 |
+| `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/triton-cache.tar.gz` | 11,420 | 108,131,988 | 37,391,790,080 |
+| `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/playwright-cache.tar.gz` | 599 | 307,704,391 | 38,064,160,768 |
+| `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/intel-runtime-download-cache.tar.gz` | 7 | 94,984,203 | 38,153,596,928 |
+| `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/laguna-dequant-mad-closed-build.tar.gz` | 10,532 | 389,951,507 | 38,729,416,704 |
+| `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/qwen36-raw-archives.tar.gz` | 1 | 195,394,424 | 38,924,689,408 |
+| `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/neo-compiler-cache.tar.gz` | 2,346 | 237,957,068 | 39,934,689,280 |
+| `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/laguna-distance3-closed-build.tar.gz` | 4,944 | 272,735,337 | 40,305,991,680 |
+
+The two closed Laguna source roots remain; only their exact `build` subtrees moved. No packet build, screen, submitted record, model weight, venv, protected rescue archive, credential, service, GPU or host setting was changed. All initial unrelated dirty files remain outside this commit. Survey/audit temporary originals are retained, and their bytes are not counted as reclamation.
+
+Audit archive: `/mnt/raid-models/own-xpu-runtime-archive/disk5-20261018/audit.tar.gz` — **10,034,284 bytes**, SHA-256 `10c3aa58582fdfb09220d078846f46b9d27b24b6d29268f81ada0950d2e51b34`. All **142 audit payload files** plus the embedded manifest were fully read and verified. It retains the whole-root survey, candidate searches and errors, process/link checks, initial and final source inventories, copy/verification/removal code and execution receipts. Its adjacent `audit.manifest.json` and `audit.tar.gz.sha256` provide independent inspection. Audit originals remain on disk.
+
+Final documentation check: `git diff --check` passes for the cleanup log and `CURRENT.md`; only those two paths are committed using `git commit --only -- <paths>`. At 2026-10-18T09:25:50.214369+00:00, root still has **40,272,789,504 bytes available**. No further cleanup is scheduled.
