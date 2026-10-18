@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/full_shape.py", line 132, in <module>
+    resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+                                                                 ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/full_shape.py", line 84, in main
+    subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=300)
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/usr/bin/g++', '-DOWN_RT_HOST_ONLY', '-std=gnu++20', '-Werror=return-type', '-fno-fast-math', '-ffp-contract=off', '-march=native', '-fopenmp', '-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/build/checked/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout', '-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout', '-c', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/native-src/entry-main.cpp', '-O0', '-c', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/full-shape/entry.cpp', '-o', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/full-shape/entry.o']' returned non-zero exit status 1.

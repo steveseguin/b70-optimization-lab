@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, packet145 router lane-A smoke prepared on CPU:** The new frozen
+packet142c copy preserves exact router/shared tuple and GDN z row bytes. Both
+compilers, full-size startup/reset checks, both-lane entry/report tests and the
+router-A temporary queue/loader/pin checks pass. Only the router-A smoke has
+its milestone readiness marker; remaining proposals are being finished. No
+GPU, service or live queue changed. Device output quality and speed are pending;
+the 58.798 record is unchanged. [Work note](notes/2026-10-18-own-runtime-packet145.md).
+
 **October 18, packet58z larger-cache record chain prepared on CPU:** The
 new seven-window chain uses packet58x's exact binaries with a 21.55 GB cache,
 tile16 and overlapped maintenance. Smoke and the exact five-view comparison

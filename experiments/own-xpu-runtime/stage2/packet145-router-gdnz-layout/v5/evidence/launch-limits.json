@@ -1,0 +1,2116 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "rows": [
+    {
+      "passed": true,
+      "kind": "smoke",
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "argv": [
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "0",
+          "--channel",
+          "7",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-sdcbhp1i/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/tmp/p142-argv-sdcbhp1i/run/ranks/rank0",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--plan",
+          "/tmp/p142-argv-sdcbhp1i/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-sdcbhp1i/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-sdcbhp1i/run/adapter/selection.json",
+          "--selection-sha256",
+          "e066828f4c193ada1834a9f4ee651f0e252e7938e613edbf99ff1514404f6569",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/router-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ],
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "1",
+          "--channel",
+          "9",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-sdcbhp1i/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "1",
+          "--output",
+          "/tmp/p142-argv-sdcbhp1i/run/ranks/rank1",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--draft-mtp",
+          "--draft-fault",
+          "none",
+          "--plan",
+          "/tmp/p142-argv-sdcbhp1i/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-sdcbhp1i/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-sdcbhp1i/run/adapter/selection.json",
+          "--selection-sha256",
+          "e066828f4c193ada1834a9f4ee651f0e252e7938e613edbf99ff1514404f6569",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/router-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ]
+      ],
+      "real_oracle_commands": [
+        [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15,24-31",
+          "python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/shared_oracle.py",
+          "--require-complete"
+        ]
+      ],
+      "limits_checked": true,
+      "inherited_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "final_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "operational_admission_synthetic": true
+    },
+    {
+      "passed": true,
+      "negative_control": true,
+      "refusal": "native launch refuses finite RLIMIT_AS",
+      "device_executed": false
+    },
+    {
+      "passed": true,
+      "kind": "smoke",
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "argv": [
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "0",
+          "--channel",
+          "7",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-syl293i3/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/tmp/p142-argv-syl293i3/run/ranks/rank0",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--plan",
+          "/tmp/p142-argv-syl293i3/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-syl293i3/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-syl293i3/run/adapter/selection.json",
+          "--selection-sha256",
+          "e066828f4c193ada1834a9f4ee651f0e252e7938e613edbf99ff1514404f6569",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/router-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ],
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "1",
+          "--channel",
+          "9",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-syl293i3/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "1",
+          "--output",
+          "/tmp/p142-argv-syl293i3/run/ranks/rank1",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--draft-mtp",
+          "--draft-fault",
+          "none",
+          "--plan",
+          "/tmp/p142-argv-syl293i3/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-syl293i3/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-syl293i3/run/adapter/selection.json",
+          "--selection-sha256",
+          "e066828f4c193ada1834a9f4ee651f0e252e7938e613edbf99ff1514404f6569",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/router-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ]
+      ],
+      "real_oracle_commands": [
+        [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15,24-31",
+          "python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/shared_oracle.py",
+          "--require-complete"
+        ]
+      ],
+      "limits_checked": true,
+      "inherited_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "final_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "operational_admission_synthetic": true
+    },
+    {
+      "passed": true,
+      "negative_control": true,
+      "refusal": "native launch refuses finite RLIMIT_AS",
+      "device_executed": false
+    },
+    {
+      "passed": true,
+      "kind": "bracket",
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "argv": [
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "0",
+          "--channel",
+          "7",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-h50wcxsl/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/tmp/p142-argv-h50wcxsl/run/ranks/rank0",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "128",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--plan",
+          "/tmp/p142-argv-h50wcxsl/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-h50wcxsl/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-h50wcxsl/run/adapter/selection.json",
+          "--selection-sha256",
+          "e066828f4c193ada1834a9f4ee651f0e252e7938e613edbf99ff1514404f6569",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/router-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ],
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "1",
+          "--channel",
+          "9",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-h50wcxsl/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "1",
+          "--output",
+          "/tmp/p142-argv-h50wcxsl/run/ranks/rank1",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "128",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--draft-mtp",
+          "--draft-fault",
+          "none",
+          "--plan",
+          "/tmp/p142-argv-h50wcxsl/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-h50wcxsl/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-h50wcxsl/run/adapter/selection.json",
+          "--selection-sha256",
+          "e066828f4c193ada1834a9f4ee651f0e252e7938e613edbf99ff1514404f6569",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/router-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ]
+      ],
+      "real_oracle_commands": [
+        [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15,24-31",
+          "python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/shared_oracle.py",
+          "--require-complete"
+        ]
+      ],
+      "limits_checked": true,
+      "inherited_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "final_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "operational_admission_synthetic": true
+    },
+    {
+      "passed": true,
+      "negative_control": true,
+      "refusal": "native launch refuses finite RLIMIT_AS",
+      "device_executed": false
+    },
+    {
+      "passed": true,
+      "kind": "bracket",
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "argv": [
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "0",
+          "--channel",
+          "7",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-qb2f0v_s/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/tmp/p142-argv-qb2f0v_s/run/ranks/rank0",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "128",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--plan",
+          "/tmp/p142-argv-qb2f0v_s/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-qb2f0v_s/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-qb2f0v_s/run/adapter/selection.json",
+          "--selection-sha256",
+          "e066828f4c193ada1834a9f4ee651f0e252e7938e613edbf99ff1514404f6569",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/router-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ],
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "1",
+          "--channel",
+          "9",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-qb2f0v_s/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "1",
+          "--output",
+          "/tmp/p142-argv-qb2f0v_s/run/ranks/rank1",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "128",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--draft-mtp",
+          "--draft-fault",
+          "none",
+          "--plan",
+          "/tmp/p142-argv-qb2f0v_s/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-qb2f0v_s/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-qb2f0v_s/run/adapter/selection.json",
+          "--selection-sha256",
+          "e066828f4c193ada1834a9f4ee651f0e252e7938e613edbf99ff1514404f6569",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/router-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ]
+      ],
+      "real_oracle_commands": [
+        [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15,24-31",
+          "python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/shared_oracle.py",
+          "--require-complete"
+        ]
+      ],
+      "limits_checked": true,
+      "inherited_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "final_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "operational_admission_synthetic": true
+    },
+    {
+      "passed": true,
+      "negative_control": true,
+      "refusal": "native launch refuses finite RLIMIT_AS",
+      "device_executed": false
+    },
+    {
+      "passed": true,
+      "kind": "smoke",
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "argv": [
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "0",
+          "--channel",
+          "7",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-uphkkk2o/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/tmp/p142-argv-uphkkk2o/run/ranks/rank0",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--plan",
+          "/tmp/p142-argv-uphkkk2o/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-uphkkk2o/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-uphkkk2o/run/adapter/selection.json",
+          "--selection-sha256",
+          "24b90000f9edfb065a3b6f83be1dbc13dbe7aac9f1a75d2ea5f393c35a8e2b35",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/gdnz-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ],
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "1",
+          "--channel",
+          "9",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-uphkkk2o/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "1",
+          "--output",
+          "/tmp/p142-argv-uphkkk2o/run/ranks/rank1",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--draft-mtp",
+          "--draft-fault",
+          "none",
+          "--plan",
+          "/tmp/p142-argv-uphkkk2o/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-uphkkk2o/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-uphkkk2o/run/adapter/selection.json",
+          "--selection-sha256",
+          "24b90000f9edfb065a3b6f83be1dbc13dbe7aac9f1a75d2ea5f393c35a8e2b35",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/gdnz-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ]
+      ],
+      "real_oracle_commands": [
+        [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15,24-31",
+          "python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/shared_oracle.py",
+          "--require-complete"
+        ]
+      ],
+      "limits_checked": true,
+      "inherited_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "final_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "operational_admission_synthetic": true
+    },
+    {
+      "passed": true,
+      "negative_control": true,
+      "refusal": "native launch refuses finite RLIMIT_AS",
+      "device_executed": false
+    },
+    {
+      "passed": true,
+      "kind": "smoke",
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "argv": [
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "0",
+          "--channel",
+          "7",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-87jwlatz/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/tmp/p142-argv-87jwlatz/run/ranks/rank0",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--plan",
+          "/tmp/p142-argv-87jwlatz/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-87jwlatz/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-87jwlatz/run/adapter/selection.json",
+          "--selection-sha256",
+          "24b90000f9edfb065a3b6f83be1dbc13dbe7aac9f1a75d2ea5f393c35a8e2b35",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/gdnz-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ],
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "1",
+          "--channel",
+          "9",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-87jwlatz/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "1",
+          "--output",
+          "/tmp/p142-argv-87jwlatz/run/ranks/rank1",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "64",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--draft-mtp",
+          "--draft-fault",
+          "none",
+          "--plan",
+          "/tmp/p142-argv-87jwlatz/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-87jwlatz/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-87jwlatz/run/adapter/selection.json",
+          "--selection-sha256",
+          "24b90000f9edfb065a3b6f83be1dbc13dbe7aac9f1a75d2ea5f393c35a8e2b35",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/gdnz-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ]
+      ],
+      "real_oracle_commands": [
+        [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15,24-31",
+          "python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/shared_oracle.py",
+          "--require-complete"
+        ]
+      ],
+      "limits_checked": true,
+      "inherited_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "final_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "operational_admission_synthetic": true
+    },
+    {
+      "passed": true,
+      "negative_control": true,
+      "refusal": "native launch refuses finite RLIMIT_AS",
+      "device_executed": false
+    },
+    {
+      "passed": true,
+      "kind": "bracket",
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "argv": [
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "0",
+          "--channel",
+          "7",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-5veplz6c/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/tmp/p142-argv-5veplz6c/run/ranks/rank0",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "128",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--plan",
+          "/tmp/p142-argv-5veplz6c/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-5veplz6c/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-5veplz6c/run/adapter/selection.json",
+          "--selection-sha256",
+          "24b90000f9edfb065a3b6f83be1dbc13dbe7aac9f1a75d2ea5f393c35a8e2b35",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/gdnz-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ],
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "1",
+          "--channel",
+          "9",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-5veplz6c/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "1",
+          "--output",
+          "/tmp/p142-argv-5veplz6c/run/ranks/rank1",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "128",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--draft-mtp",
+          "--draft-fault",
+          "none",
+          "--plan",
+          "/tmp/p142-argv-5veplz6c/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-5veplz6c/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-5veplz6c/run/adapter/selection.json",
+          "--selection-sha256",
+          "24b90000f9edfb065a3b6f83be1dbc13dbe7aac9f1a75d2ea5f393c35a8e2b35",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/gdnz-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ]
+      ],
+      "real_oracle_commands": [
+        [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15,24-31",
+          "python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/shared_oracle.py",
+          "--require-complete"
+        ]
+      ],
+      "limits_checked": true,
+      "inherited_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "final_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "operational_admission_synthetic": true
+    },
+    {
+      "passed": true,
+      "negative_control": true,
+      "refusal": "native launch refuses finite RLIMIT_AS",
+      "device_executed": false
+    },
+    {
+      "passed": true,
+      "kind": "bracket",
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "argv": [
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "0",
+          "--channel",
+          "7",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-p7kbrk5z/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "0",
+          "--output",
+          "/tmp/p142-argv-p7kbrk5z/run/ranks/rank0",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "128",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--plan",
+          "/tmp/p142-argv-p7kbrk5z/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-p7kbrk5z/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-p7kbrk5z/run/adapter/selection.json",
+          "--selection-sha256",
+          "24b90000f9edfb065a3b6f83be1dbc13dbe7aac9f1a75d2ea5f393c35a8e2b35",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/gdnz-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ],
+        [
+          "ionice",
+          "-c",
+          "3",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/device/own-rt-iq3",
+          "--rank",
+          "1",
+          "--channel",
+          "9",
+          "--stop-fd",
+          "3",
+          "--shared",
+          "/tmp/p142-argv-p7kbrk5z/run/ranks/shared.bin",
+          "--cards",
+          "1",
+          "--card",
+          "1",
+          "--output",
+          "/tmp/p142-argv-p7kbrk5z/run/ranks/rank1",
+          "--memory",
+          "resident",
+          "--context",
+          "4096",
+          "--seconds",
+          "4800",
+          "--native-nice",
+          "0",
+          "--timing",
+          "token",
+          "--max-new",
+          "128",
+          "--retain-steps",
+          "none",
+          "--draft-rank",
+          "1",
+          "--target-split",
+          "0",
+          "--draft-mtp",
+          "--draft-fault",
+          "none",
+          "--plan",
+          "/tmp/p142-argv-p7kbrk5z/run/input-bundles/incident-retrospective/plan.tsv",
+          "--identity",
+          "/tmp/p142-argv-p7kbrk5z/run/input-bundles/incident-retrospective/identity.tsv",
+          "--model-dir",
+          "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+          "--host-path",
+          "prepared",
+          "--selection",
+          "/tmp/p142-argv-p7kbrk5z/run/adapter/selection.json",
+          "--selection-sha256",
+          "24b90000f9edfb065a3b6f83be1dbc13dbe7aac9f1a75d2ea5f393c35a8e2b35",
+          "--dispatch",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/gdnz-order600/dispatch-speed6.json",
+          "--authorized-device-window"
+        ]
+      ],
+      "real_oracle_commands": [
+        [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15,24-31",
+          "python3",
+          "-B",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/shared_oracle.py",
+          "--require-complete"
+        ]
+      ],
+      "limits_checked": true,
+      "inherited_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "final_limits": {
+        "0": [
+          -1,
+          -1
+        ],
+        "1": [
+          -1,
+          -1
+        ],
+        "2": [
+          -1,
+          -1
+        ],
+        "3": [
+          8388608,
+          -1
+        ],
+        "4": [
+          0,
+          -1
+        ],
+        "5": [
+          -1,
+          -1
+        ],
+        "6": [
+          477915,
+          477915
+        ],
+        "7": [
+          1048576,
+          1048576
+        ],
+        "8": [
+          16864567296,
+          16864567296
+        ],
+        "9": [
+          -1,
+          -1
+        ],
+        "11": [
+          477915,
+          477915
+        ],
+        "12": [
+          819200,
+          819200
+        ],
+        "13": [
+          0,
+          0
+        ],
+        "14": [
+          0,
+          0
+        ],
+        "15": [
+          -1,
+          -1
+        ]
+      },
+      "operational_admission_synthetic": true
+    },
+    {
+      "passed": true,
+      "negative_control": true,
+      "refusal": "native launch refuses finite RLIMIT_AS",
+      "device_executed": false
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/launch_limit_gate.py": "ed6c0637ac6ad762ae6e954e3054abd63c60c005fb5c3a6a6c36692188f02c21",
+    "experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/argument_gate.py": "428a6835bd39f1da2b9baa3540f0ad8e5cda284404c0cec084918f8082925f3e",
+    "experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/p145_v5_exec_limits.py": "c998ae4e35775c189006da5f2dc308ccdf2dd33d1fa4e8c58c90197427c4fae9",
+    "experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/tp2_worker.py": "3f26b3cdbddf80f11b150cc3e9156bf5de176155c4967c93803d068cd55adc60"
+  }
+}
