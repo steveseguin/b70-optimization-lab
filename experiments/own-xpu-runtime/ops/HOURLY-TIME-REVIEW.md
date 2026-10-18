@@ -14,7 +14,7 @@ The owner instituted this on 2026-10-17 after the coordinator let the GPUs sit m
 - The owner's other standing instructions are in `/home/steve/.claude/projects/-home-steve/memory/MEMORY.md`, notably "never ask questions; decide" and "keep GPUs busy: screens, not chains".
 
 ## Evidence to gather (read-only)
-1. `python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/gpu_time_review.py --hours 2` (and `--hours 6` for trend). This gives device units in flight, idle gaps, Codex activity, commits and the record floor.
+1. `python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/gpu_time_review.py --hours 2` (and `--hours 6` for trend). This gives per-lane device units in flight and idle gaps, the combined union, receipt-backed whole-host holds on lane B, Codex activity, commits and the record floor. Check attribution notes for missing evidence.
 2. Active work right now:
    - `systemctl --user list-units --state=active --no-pager | grep -E 'packet|p4|p5|screen|oracle'`;
    - `ps -eo etime,args | grep 'codex exec'`;
