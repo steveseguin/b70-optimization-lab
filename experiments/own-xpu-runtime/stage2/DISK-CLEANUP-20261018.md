@@ -361,3 +361,6 @@ Audit archive: `/mnt/raid-models/own-xpu-runtime-archive/cleanup-third-20261018/
 - Packet 91 readiness still rejects its existing readiness/preparation flags. Packet 97 readiness still rejects the changed `ops/packet97-orchestration/decision_readiness.py` hash. Packet 80/84 readiness still rejects already-started chains. These failures are retained honestly; storage sufficiency is not full readiness.
 - All six packet 97 source-adapter results match before/after. No v4 receipt/JSON changed.
 - Final retained-file verification passes for **16,726 files**; every selected source path is absent. No packet chain or GPU job was launched.
+
+## 08:40 UTC: closed builds 104, 86, 102 (coordinator)
+Before the packet 103 chain (storage check needs 19.0 GB free). Archived `packet104-tile-transpose/build` (272 files), `packet86-limiter-diagnostic/build` (1,899) and `packet102-iq2-ilp/build` (366) to `/mnt/raid-models/own-xpu-runtime-archive/closed-builds3-20261018/` (tar.gz + per-file sha256 manifest, every member hash-verified from the archive, hard links included) and then removed them. No inbound symlinks and no references from live packets/orchestration (packet 93 and 107 builds kept: referenced by packet 103 and 110). Root free 21.15 GB afterwards.
