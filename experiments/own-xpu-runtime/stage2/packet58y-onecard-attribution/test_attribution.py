@@ -19,7 +19,7 @@ class Attribution(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp)/'PAUSE-B'
             with self.assertRaises(ValueError):B.pause_identity(p)
-            p.touch();first=B.pause_identity(p);p.unlink();p.write_text('new')
+            p.write_text('one-card whole-host hold');first=B.pause_identity(p);p.unlink();p.write_text('new one-card whole-host hold')
             self.assertNotEqual(first,B.pause_identity(p))
             p.unlink();p.symlink_to(Path(tmp)/'target');(Path(tmp)/'target').touch()
             with self.assertRaises(ValueError):B.pause_identity(p)
@@ -35,33 +35,40 @@ class Attribution(unittest.TestCase):
 
 
 class BatchAdmission(unittest.TestCase):
-    def fixture(self,root):
-        packet=root/'packet';packet.mkdir();parent=root/'parent';parent.mkdir()
-        (packet/'batch-contract.json').write_text(json.dumps({'predecessor_proposals':{}}))
-        (parent/'build-receipt.json').write_text('{}')
-        paths=[]
-        clock=100
-        for arm in ('smoke','max'):
-            out=parent/'evidence/card0-capacity-a'/arm;out.mkdir(parents=True)
-            (out/'queue.json').write_text(json.dumps(dict(passed=True,completed=['K1a','K1b','WSCREEN'],running=None)))
-            for stage in ('K1a','K1b','WSCREEN'):
-                dest=out/stage;dest.mkdir()
-                f=dest/'window.json';f.write_text(json.dumps(dict(passed=True,device_executed=True,child_still_running=False,stop_reasons=[],boot_id=Path('/proc/sys/kernel/random/boot_id').read_text().strip(),build_receipt_sha256=B.sha(parent/'build-receipt.json'),started_utc_ns=clock,finished_utc_ns=clock+10)))
-                clock+=20
-                paths.append(f)
-        return packet,parent,paths
-
-    def test_completed_predecessors_same_pause(self):
+    def test_current_hold_and_start(self):
+        import time
+        from datetime import datetime,timezone
         with tempfile.TemporaryDirectory() as tmp:
-            root=Path(tmp);packet,parent,paths=self.fixture(root)
-            with patch.object(B,'P',packet),patch.object(B,'P58X',parent),patch.object(B,'ROOT',root),patch.object(B,'pause_identity',return_value=dict(mtime_ns=50,ctime_ns=50)):
-                self.assertTrue(B.verify()['passed'])
-                for field,value in [('passed',False),('child_still_running',True),('stop_reasons',['fault']),('boot_id','wrong'),('build_receipt_sha256','wrong')]:
-                    old=paths[0].read_text();row=json.loads(old);row[field]=value;paths[0].write_text(json.dumps(row))
-                    with self.subTest(field=field),self.assertRaises(ValueError):B.verify()
-                    paths[0].write_text(old)
-                with patch.object(B,'pause_identity',return_value=dict(mtime_ns=101,ctime_ns=50)),self.assertRaises(ValueError):B.verify()
-                with patch.object(B,'pause_identity',return_value=dict(mtime_ns=50,ctime_ns=101)),self.assertRaises(ValueError):B.verify()
+            root=Path(tmp);pause=root/'PAUSE-B';events=root/'events-A.jsonl'
+            pause.write_text('coordinator one-card whole-host hold')
+            stamp=datetime.now(timezone.utc).isoformat()
+            start=dict(event='START',lane='A',name=B.JOB,utc=stamp)
+            events.write_text(json.dumps(start)+'\n')
+            with patch.object(B,'PAUSE',pause),patch.object(B,'EVENTS',events):
+                receipt=B.verify();B.recheck(receipt)
+                pause.write_text('changed one-card whole-host hold')
+                with self.assertRaises(ValueError):B.recheck(receipt)
+                with self.assertRaises(ValueError):B.verify()
+                pause.write_text('unrelated maintenance')
+                with self.assertRaises(ValueError):B.verify()
+                pause.unlink()
+                with self.assertRaises(ValueError):B.verify()
+
+    def test_missing_stale_wrong_and_completed_start(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            events=Path(tmp)/'events-A.jsonl'
+            start=dict(event='START',lane='A',name=B.JOB,utc='2026-10-18T19:00:00Z')
+            for rows in ([],[dict(start,name='other')],[start,dict(start,event='REFUSED-fast')],[start,dict(start,event='FAILED-status')],
+                         [start,dict(start,event='REFUSED-PREDEVICE')],
+                         [start,dict(start,name='other')]):
+                events.write_text(''.join(json.dumps(r)+'\n' for r in rows))
+                with self.subTest(rows=rows),self.assertRaises(ValueError):B.job_start(events)
+
+    def test_each_timestamp_must_predate_start(self):
+        start=dict(started_utc_ns=100)
+        for mtime,ctime in ((100,99),(99,100),(101,99),(99,101)):
+            with patch.object(B,'pause_identity',return_value=dict(mtime_ns=mtime,ctime_ns=ctime)),patch.object(B,'job_start',return_value=start):
+                with self.assertRaises(ValueError):B.verify()
 
 class TraceIntegrity(unittest.TestCase):
     def row(self,index,token):

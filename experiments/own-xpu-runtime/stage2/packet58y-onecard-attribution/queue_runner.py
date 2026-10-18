@@ -16,7 +16,7 @@ P = Path(__file__).resolve().parent
 ORDER = ('K1a', 'K1b', 'WSCREEN')
 GAP_SECONDS = 90
 STAGES = (('attrib','attrib'),)
-ROOT = P / 'evidence/card0-attribution-a'
+ROOT = P / 'evidence/card0-attribution-b'
 
 
 def commands(output, card, review, library, view='attrib'):

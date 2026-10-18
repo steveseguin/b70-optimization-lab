@@ -107,3 +107,51 @@ after invalid evidence. A read-only review prompted those last three checks.
 The actual report is **pending device evidence**, with no split or ranking.
 The analyzer is separate from the sealed launch sources; the readiness marker,
 proposal and binary remain unchanged. No new hold or queue entry was created.
+
+## Packet58yb — sibling-free hold gate and minimal reseal (October 18)
+
+The old gate depended on mutable sibling proposals, receipts and seals. It now
+requires only the current coordinator's existing continuous one-card whole-host
+hold. PAUSE-B must be a regular non-symlink file whose text names that hold;
+both its mtime and ctime must strictly predate this job's current lane-A START.
+The gate rechecks the file's device, inode, timestamps and contents, and the
+START, between stages and throughout the gaps. Whole-host admission remains.
+The coordinator owns order. No separate hold is allowed.
+
+The active contract, proposal, plan and evidence reader have no predecessor
+requirement. The fresh output is `card0-attribution-b/attrib`; the temporary
+queue contains only this diagnostic and was never queued live. Readiness binds
+a local byte-identical proposal snapshot so it does not pin mutable ops state.
+The external proposal file was checked against that snapshot before readiness.
+
+The nested pin gate rejects outside paths except the original oracle and exact
+frozen native compiler inputs. Inherited source and memory-evidence dependencies
+were localized as byte-checked snapshots/archives. Historical manifests remain
+historical, rather than being mistaken for current source seals. No frozen
+sibling was changed. Retention and restoration instructions are in
+[RETENTION.md](../experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/RETENTION.md).
+
+All **104 policy tests, 19 admission replay tests and 10 analysis tests** pass.
+The three actual Python entry paths reach intercepted native exec under the
+closed launch environment and `screen-packet58y-attrib-A.service` identity.
+The hold gate itself consumes scratch PAUSE-B/START fixtures in those probes;
+no service or native process is started. The earlier wrong-unit regression
+still refuses. All numerical memory bounds reproduce from local metadata.
+The native artifact hashes exactly match the pre-repair seal; the target stays
+`iq3-p49-split32-v1`, with unchanged BF16 KV and output checks.
+
+The seal and the real coordinator's temporary queue plan pass. Failed planning
+attempts are retained: they exposed nested historical pins and old copy hashes,
+which were repaired before readiness. The actual live hold check refuses
+because PAUSE-B is absent, as required. Device correctness and attribution remain
+pending; no speed or next-lever claim changes. The earlier 18:42 pre-device
+refusal is preserved. No model tensors or full-shape buffers were read or run,
+no GPU/service/sudo/settings action occurred, and no live queue changed.
+
+Validation used nice 19, cores 8–15 and 24–31, Python `-B` and closed stdin.
+Largest child RSS was 38,461,440 bytes, below 2 GiB.
+[Repair closeout](../experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/PACKET58YB-CLOSEOUT.md),
+[reproducible CPU reseal](../experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/reseal_cpu.py),
+[CPU receipt](../experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/reseal-cpu.json).
+READY-FOR-DEVICE is the final content write; commit/push use only this packet,
+this note and the authorized proposal. Unrelated orchestration work is preserved.

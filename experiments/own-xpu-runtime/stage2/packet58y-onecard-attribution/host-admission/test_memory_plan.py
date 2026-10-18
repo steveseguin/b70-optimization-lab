@@ -21,7 +21,7 @@ import derive
 import memory_plan as M
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[3]
+REPO = HERE.parents[4]
 DATA = json.loads((HERE/'measured-peaks.json').read_text())
 BASE = json.loads((HERE/'base-plan.json').read_text())
 
@@ -42,7 +42,7 @@ class MemoryTests(unittest.TestCase):
         self.assertEqual(len(report['windows']), 29)
 
     def test_old_refusal_and_all_new_views_admit_saved_1458_reading(self):
-        old = source_function(HERE.parent/'packet58r-onecard-v5/memory_plan.py', 'admit', {'require': M.require})
+        old = source_function(HERE.parent/'lineage-inputs/original/experiments/own-xpu-runtime/stage2/packet58r-onecard-v5/memory_plan.py', 'admit', {'require': M.require})
         snapshot = DATA['historical_refusal']['snapshot']
         with self.assertRaisesRegex(ValueError, 'shortage 2827844624'):
             old(snapshot, BASE)
@@ -72,10 +72,10 @@ class MemoryTests(unittest.TestCase):
         for row in DATA['windows']:
             view = 'production' if row['view'] == 'production' else 'tile16'
             path = REPO/row['source']
-            receipt = json.loads((path.parent/'window.json').read_text())
+            receipt = json.loads(derive.archive_text(path.parent/'window.json'))
             baseline = receipt['memory_admission']['baseline_gpuactive_bytes']
             budget = M.window_plan(row['window'], view=view)
-            for line in path.read_text().splitlines():
+            for line in derive.archive_text(path).splitlines():
                 sample = json.loads(line)
                 result = M.account_memory(copy.deepcopy(sample), sample['host'], baseline,
                                           sample['pinned_expert_bytes'], budget, row['full_model'])
@@ -206,7 +206,7 @@ class MemoryTests(unittest.TestCase):
                                  process_tree_anon=None, DRAIN_SECONDS=60,
                                  ANONYMOUS_LIMIT_BYTES=200*M.GIB, ANONYMOUS_STOP_BYTES=200*M.GIB,
                                  FAULT=re.compile('Fault response'))
-                supervise = source_function(HERE.parent/'packet34-replay-bench/window.py', 'supervise', namespace)
+                supervise = source_function(HERE.parent/'runtime_supervision.py', 'supervise', namespace)
                 result = supervise(child, 60, 'cursor', kernel, reasons,
                                    lambda why: events.append(('latch', why)),
                                    lambda: events.append(('persist', bool(log.getvalue()))),
@@ -221,7 +221,7 @@ class MemoryTests(unittest.TestCase):
     def test_existing_window_stop_still_triggers_with_new_plan(self):
         # Unchanged frozen accounting also retains the live floor when fed the
         # new plan. This executes its real function, without a window launch.
-        account = source_function(HERE.parent/'packet58r-onecard-v5/window.py', 'account_memory',
+        account = source_function(HERE.parent/'lineage-inputs/original/experiments/own-xpu-runtime/stage2/packet58r-onecard-v5/window.py', 'account_memory',
                                   {'require': M.require, 'M': M})
         with self.assertRaisesRegex(ValueError, '8 GiB stop floor'):
             account({'anonymous_bytes': 0}, {'MemAvailable': M.HOST_RESERVE-1, 'GPUActive': 0},
@@ -245,7 +245,7 @@ class MemoryTests(unittest.TestCase):
         self.assertEqual(os.getpriority(os.PRIO_PROCESS, 0), 19)
         self.assertLessEqual(os.sched_getaffinity(0), set(range(8,16)) | set(range(24,32)))
         self.assertTrue(sys.dont_write_bytecode)
-        self.assertLess(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024, 4_000_000_000)
+        self.assertLess(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024, 2_000_000_000)
 
 
 if __name__ == '__main__':

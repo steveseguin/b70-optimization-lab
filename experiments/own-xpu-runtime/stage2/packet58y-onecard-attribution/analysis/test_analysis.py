@@ -56,19 +56,6 @@ class Bounds(unittest.TestCase):
         self.assertEqual(result['enqueue']['decision'],'needs_causal_test')
         self.assertEqual(result['enqueue']['perfect_removal_bound_gain_pct'],3)
 
-    def test_capacity_exact_boundary(self):
-        rates=dict(A0=90,A1=100,A2=103,B0=106.09,B1=106.09)
-        class FakeEvidence:
-            def raw(self,path):return b'{}'
-            def js(self,path):return dict(cache_maintenance='overlap',cache_cap='max' if path.parent.name.startswith('B') else '18GB',
-                cache_allocation_bytes=21_552_729_600,cache_started_empty=True,selection_sha256=D.digest('attrib'))
-        def summary(root,stage,manifest,label,cap):
-            return dict(class_balanced_tok_s_1_100_intervals_after_ttft=dict(median=rates[label]),requests=[0]*12)
-        with patch.object(A,'window',return_value=dict(boot_id='test')),patch.object(D,'summarize',side_effect=summary):
-            row=A.analyze_capacity(FakeEvidence(),{},'test')
-        self.assertEqual(row['control_drift_pct'],3)
-        self.assertEqual(row['measured_screen_gain_pct'],3)
-        self.assertTrue(row['passes_3pct_screen_gate'])
 
 
 class EndToEnd(unittest.TestCase):
@@ -102,24 +89,11 @@ class EndToEnd(unittest.TestCase):
         packet=tmp/'packet58y';packet.mkdir();(packet/'build-receipt.json').write_text('{}')
         build_hash=A.hashlib.sha256((packet/'build-receipt.json').read_bytes()).hexdigest()
         D.save(packet/'READY-FOR-DEVICE.json',dict(build_receipt_sha256=build_hash))
-        parent=tmp/'packet58x-cache-capacity';parent.mkdir();(parent/'build-receipt.json').write_text('{}')
-        self.make_window(parent/'evidence/card0-capacity-a/max/WSCREEN',parent)
-        pins={};stamp=100
-        for arm in ('smoke','max'):
-            root=parent/'evidence/card0-capacity-a'/arm
-            for stage in ('K1a','K1b','WSCREEN'):
-                f=root/stage/'window.json';f.parent.mkdir(parents=True,exist_ok=True)
-                row=D.read(f) if f.exists() else dict(passed=True,device_executed=True,child_still_running=False,stop_reasons=[],
-                    boot_id='synthetic-test-boot',build_receipt_sha256=build_hash)
-                row.update(started_utc_ns=stamp,finished_utc_ns=stamp+10);stamp+=20;D.save(f,row)
-                pins[str(f.relative_to(A.ROOT))]=hashlib.sha256(f.read_bytes()).hexdigest()
-            f=root/'queue.json';D.save(f,dict(passed=True,completed=['K1a','K1b','WSCREEN'],running=None))
-            pins[str(f.relative_to(A.ROOT))]=hashlib.sha256(f.read_bytes()).hexdigest()
-        run=packet/'evidence/card0-attribution-a/attrib'
+        run=packet/'evidence/card0-attribution-b/attrib'
         self.make_window(run/'WSCREEN',packet,attrib=True)
         D.save(run/'queue.json',dict(passed=True,completed=['K1a','K1b','WSCREEN'],running=None,batch_admission=dict(
-            passed=True,same_hold_required=True,standalone_hold_allowed=False,boot_id='synthetic-test-boot',predecessor_receipts=pins,
-            pause=dict(device=1,inode=1,mtime_ns=90,ctime_ns=90))))
+            passed=True,same_hold_required=True,standalone_hold_allowed=False,boot_id='synthetic-test-boot',lanequeue_start=dict(event=dict(event='START',lane='A',name='packet58y-attrib-A',utc='1970-01-01T00:00:00.000001Z'),started_utc_ns=1000),
+            pause=dict(device=1,inode=1,mtime_ns=90,ctime_ns=90,text='one-card whole-host hold',sha256=hashlib.sha256(b'one-card whole-host hold').hexdigest()))))
         return packet,run
 
     def test_full_evidence_path_and_tampered_trace(self):
@@ -134,7 +108,7 @@ class EndToEnd(unittest.TestCase):
                 self.assertEqual(result['measured_split']['tokens'],1188)
                 self.assertFalse(result['implementation_gate_passed'])
                 self.assertFalse(result['submission_eligible'])
-                self.assertTrue(result['larger_cache']['passes_3pct_screen_gate'])
+                self.assertFalse(result['larger_cache']['passes_3pct_screen_gate'])
                 self.assertEqual(result['primary_metric']['median'],result['primary_metric']['all_prompt_median'])
                 self.assertTrue(result['per_prompt'][0]['cold_first_request'])
                 trace=next((run/'WSCREEN/run/run/D0').glob('*/attribution.jsonl'))
@@ -149,8 +123,8 @@ class EndToEnd(unittest.TestCase):
         e=A.Evidence()
         with self.assertRaisesRegex(ValueError,'unsafe'):e.verify_files(Path('/tmp'),{'../escape':'0'*64})
 
-    def test_empty_predecessor_coverage_refused(self):
-        with self.assertRaisesRegex(ValueError,'coverage'):A.verify_predecessors(A.Evidence(),dict(predecessor_receipts={}))
+    def test_missing_hold_refused(self):
+        with self.assertRaises(KeyError):A.verify_hold({})
 
     def test_refusal_replaces_stale_success_markdown(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as tmp,patch.object(A,'P',Path(tmp)):

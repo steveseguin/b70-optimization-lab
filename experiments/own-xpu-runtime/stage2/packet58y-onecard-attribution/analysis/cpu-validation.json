@@ -1,26 +1,15 @@
 {
-  "schema": "packet58y.analysis.cpu-validation.v1",
-  "created_utc": "2026-10-18T19:08:54.056736+00:00",
+  "schema": "packet58y.analysis.cpu-validation.v2",
+  "passed": true,
+  "created_utc": "2026-10-18T19:38:15.820809+00:00",
   "device_executed": false,
-  "synthetic_tests": 11,
+  "synthetic_tests": 10,
   "synthetic_tests_passed": true,
-  "test_command": "nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest discover -s experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/analysis -p 'test_*.py' -v </dev/null",
-  "test_evidence": "Observed exit 0; 11 tests, 0.736 seconds. Synthetic refusal JSON is expected in stdout.",
-  "seal_verify_passed": true,
-  "sealed_sources": 547,
-  "build_bytes": 80564739,
-  "ready_bindings": {
-    "proposal": true,
-    "build_receipt": true,
-    "batch_contract": true,
-    "predecessors": true
-  },
-  "ready_sha256": "8239000cb21b5a611d260e727d7dfa6e24ead843fcd8f8e12413a6e1fd58cc93",
+  "log_sha256": "4a6b9fbf5f96f776a2b69c4ccfad3b9eb695dfce7479339284fa6810d68334ef",
   "source_sha256": {
-    "analyze.py": "e5cbe15f32f1499f76d0c77b4fcd972787161d69a334c63f588e8f08ab22f74f",
-    "test_analysis.py": "91f559d51eb38f46a58c6eb3f3bb603d67d3f05c0a30a6a8938d361cee3ec0af"
+    "analyze.py": "a4a87b085705b8988105c81edbc4f1c4fde88680ecaef134e3966ea8f9f977ea",
+    "test_analysis.py": "83adfd41ff6bed33701b06738e62f39a4f32379fb87cdfadfafbd9078b1e9c8a"
   },
-  "root_free_bytes": 32324571136,
   "actual_report_status": "pending_device_evidence",
   "queued": false
 }

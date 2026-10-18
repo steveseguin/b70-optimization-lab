@@ -53,7 +53,7 @@ def sandbox(tmp):
 def sources():
     from launch_identity import LANEQUEUE
     files = [*P.glob('*.py'), P/'views.json', P/'oracle-binding.json',
-             P/'selections/route-rec.json', P/'dispatch-speed6.json', LANEQUEUE]
+             P/'selections/route-rec.json', P/'dispatch-speed6.json']
     return {str(f.relative_to(ROOT)): sha(f) for f in files}
 
 
@@ -133,6 +133,11 @@ def probe(name, miss, candidate, old_gate=False):
                 vram_ms=.1, streamed_ms=1.1)
             (dest/'run/k1.json').write_text(json.dumps(native))
         out = packet/'evidence'/candidate
+        from datetime import datetime,timezone
+        pause=tmp/'PAUSE-B';pause.write_text('coordinator one-card whole-host hold')
+        events=tmp/'events-A.jsonl'
+        events.write_text(json.dumps(dict(event='START',lane='A',name=job['name'],
+            utc=datetime.now(timezone.utc).isoformat()))+'\n')
         observations = []
         env = L.closed_env(library)
         admissions = []
@@ -215,8 +220,8 @@ def probe(name, miss, candidate, old_gate=False):
                 patch.object(Path,'read_text',read_text),
                 patch.dict(os.environ,env,clear=True),
                 patch.object(Q,'ROOT',out.parent), patch.object(Q,'GAP_SECONDS',0),
-                patch.object(Q.BATCH,'verify',return_value={'synthetic':True}),
-                patch.object(Q.BATCH,'recheck'),
+                patch.object(Q.BATCH,'PAUSE',pause),
+                patch.object(Q.BATCH,'EVENTS',events),
                 patch.object(Q,'verify_smoke',return_value={'synthetic_prerequisite':True}),
                 patch.object(Q,'verify_success',return_value={'synthetic_prerequisite':True}),
                 patch.object(F,'validate',return_value=({'through_us':1767225600000000,'through':'2026-01-01T00:00:00Z'},'', '', None)),
@@ -263,7 +268,7 @@ def probe(name, miss, candidate, old_gate=False):
             memory_policy_real=True,synthetic_admitted_snapshot=True,below_bound_refused=True,proposal_sha256=sha(proposal),
             synthetic_boundaries=['build envelope (verified separately)', 'prior K1/smoke receipts',
                                   'host snapshot for intercepted launch (real live observation and below-bound refusal recorded separately)',
-                                  'coordination locks and 58x same-hold prerequisite (unit tested separately)', 'journal review', 'placement observations',
+                                  'coordination locks; real hold gate reads synthetic scratch PAUSE-B and START', 'journal review', 'placement observations',
                                   'ldd', 'device client ownership', 'memory fence'],
             resource_limits_unchanged=True, finite_address_space_limit=False)
 
@@ -290,7 +295,7 @@ def main():
             print(candidate,name,miss,'PASS',flush=True)
     assert before==sources()
     rss=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024
-    assert rss < 4*1024**3
+    assert rss < 2*1024**3
     row=dict(passed=True,device_executed=False,checks=len(records),records=records,sources=before,old_code_regressions=regressions,
         peak_child_rss_bytes=rss,model_payload_reads=False,services_started=False,
         seal_validation='separate seal verification; construction envelope synthetic to avoid circular gate dependency')
