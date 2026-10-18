@@ -508,3 +508,15 @@ Actions:
 4. Codex **p113i** (v5 integration prepared while the micro ran) was launched, then stopped at 09:15 when the p113 micro showed 1.5× slower (closed). Bundle 6's lane-B composite (`p111r`, candidate fusion + head split) fills lane B during the chain.
 5. Codex **disk5**: one pass to ≥ 40 GB root free via verified RAID archives of exactly named, unreferenced closed data. Before it: old Codex sessions 2026-05..08 moved to RAID (verified, root 20 → 31 GB).
 STOP DOING acknowledged. Also fixed: a failed transient `screen-<job>.service` blocks re-running the same job name (REFUSED-fast with no journal line); reset-failed before re-queueing (memory updated). The smoke-first gate will key on `drm-memory-after_load.txt`, and handoffs that set PAUSE-A will raise an ALERT and remove it on refusal, in the next template.
+
+## Review 21 (2026-10-18 ~10:08 UTC): ACT
+
+2 h: at least one pair busy 96%; lane A 54%, lane B 65%. `packet103-chain-a` failed at WS 09:53 (drain-cooldown negative sleep, triggered by a lane-B teardown 24 s earlier; no device work, faults 2); fresh `packet103-chain-b` launched 10:04:41 with PAUSE-B held so no cross-lane teardown lands inside a window's cooldown.
+
+Actions:
+1. Lane B queued behind the pause: packet116 micros (×2) queued at 10:04; `p117-queue` waiter appends packet117's micros as soon as its Codex job exits (outputs are queued only after the producer exits). v5 brackets are queued by the coordinator when each micro's qualification passes. Packet118's smoke/composites go to lane B's head when they land.
+2. No separate bundle 6 (packet111r) chain: its lane-A composite still runs after chain-b as fallback evidence; bundle 7 (packet118 = bundle 6 + packet114 prefix, with the drain fix) is the next chain candidate (≥ +1.0% vs bundle 5 on both lanes).
+3. Packet118's brief already moves orchestrate's CPU tests into preparation; a follow-up will pre-register a second fresh chain folder so a failed chain restarts in a minute.
+4. Next kernel brief targets the routed experts (1.76 ms per half above floor) with a mechanism distinct from packets 95/99/102/104/115, once packets 116/117 report.
+5. Codex **opsdrain**: `lanequeue.py` waits until 61 s after the latest shared teardown before starting any job, so the frozen wrappers never enter the buggy cooldown loop (chain runners are still protected by pausing the other lane).
+STOP DOING acknowledged (no full orchestrate re-run on idle cards when only the folder changes is noted for the next chain; Codex v5 prep stops as soon as its micro fails).
