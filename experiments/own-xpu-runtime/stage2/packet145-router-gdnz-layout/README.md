@@ -33,3 +33,6 @@ See [work note](../../../../notes/2026-10-18-own-runtime-packet145.md),
 [boundaries](DO-NOT-REPEAT.md), [registration](preregistration.json), and
 [CPU evidence](v5/evidence/). Historical copied receipts are provenance, not
 packet145 passes. Only the current v5 composition seal defines readiness.
+
+CPU preparation is complete; [closeout](CPU-PREPARATION-CLOSEOUT.md).
+All eight proposals remain unqueued. [Large-artifact retention census](retention-census.json).

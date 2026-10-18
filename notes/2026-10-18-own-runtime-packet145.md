@@ -74,7 +74,8 @@ work. No proposal is queued by this preparation.
 
 ## Milestone 1 — router lane A ready, 2026-10-18T21:32:20.130495+00:00
 
-The first lane-A smoke proposal is ready after 16.0 minutes. Both
+The first lane-A readiness marker was written after 16.0 minutes; the post-marker
+pin correction below was required before it was usable. Both
 compilers passed two fresh byte transcripts each: 52,915,200 copied weight
 bytes, 699,781 FP32 chain checks and 15,361 output rows; all four hashes match.
 Peak byte-test child RSS was 267,528 KiB; native compilation peaked at
@@ -103,3 +104,33 @@ The post-marker pin check caught a cross-packet proposal-file pin in the first
 marker. It now binds the byte-identical proposal mirror inside packet145.
 Temporary planning and loader/pin checks were repeated; the corrected marker
 is written last and checked read-only after writing. No device launch occurred.
+
+## Milestone 2 — both variants, both lanes, 2026-10-18T21:35:29.612204+00:00
+
+All eight external proposals and matching local mirrors now pass temporary
+queue planning, ops/rehearse_entry.py and the live pin guard. Final report
+coverage is eight real-entry smoke/bracket combinations. The final readiness
+marker is written last and checked read-only afterward. Total preparation
+time before this marker is 19.1 minutes; build material is
+290,573,357 bytes and root free space remains above 25 GB.
+
+The coordinator updated ops/pin_guard.py during this work. Only its new local
+snapshot changed here; all final plans checked that snapshot against the live
+implementation. No existing ops source or live queue was changed by this task.
+The local-mirror marker binding remains in use regardless of that guard update.
+The first scoped marker and its original gate snapshots remain provenance;
+the final marker supersedes them for admission.
+
+Git whitespace checking reports inherited trailing whitespace/blank lines in
+vendored patches, native snapshots and historical logs. Those original bytes
+are intentionally preserved. The 51.88 MiB legacy fixture archive is inherited
+reproduction evidence; retention-census.json binds all large tracked artifacts
+and explains restoration. No generated cache is committed.
+
+Device exactness and performance are still pending. No model read, GPU work,
+service, sudo, live queue, foreign-process signal or host setting changed.
+
+The corrected lane-A marker was pushed at 21:33:44 UTC, 17.35 minutes after
+preparation began, within the 40-minute milestone. Coordinator-owned review
+files appeared afterward; they are preserved and excluded from this commit.
+This preparation itself did not queue or launch a device job.
