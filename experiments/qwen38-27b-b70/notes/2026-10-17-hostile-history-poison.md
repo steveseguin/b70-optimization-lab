@@ -362,3 +362,34 @@ server; arm `K32L` = K32 + `--lookups`):
 - Arm 4 asks a lookup, or any score drops: the pattern is too wide; narrow it before more runs.
 - The guard fires again: the remaining arms go to the next campaign. Memory then comes first: the census names
   what the workers gained since 10-04.
+
+## Campaign 33 (21:07-21:18 EDT): lookups settle the waiting lines; the guard a third time; campaign 33b registered (21:22:49 EDT, before any run)
+
+**What ran.**
+- Arm 1 (`K32L retro 1`) ran to the end of the stream in 8 min 33 s. The memory guard killed the server at 21:17:41
+  (1.58 GiB free), before the agent's last answer could be graded, so the arm has no score.
+- The lookups were asked at three cuts: qibape16 and dija83 (items 4, 5, 39), tuxa48 (6, 45), domi68 and rumohi78
+  (32, 43, 85, 92).
+- The last NOTES then held every audited counter that had arrived at its right value: qibape16 -295, dija83 22,
+  tuxa48 373, rumohi78 265, domi68 420. Under 1.1.1.dev1 these lines waited to the end; vomo85's audit came after
+  the last cut.
+- Free memory sat at 1.80 GiB on the 5 s samples, then fell 0.22 GiB within 2 s.
+- The kill logged copy-engine faults on both cards, as at 18:31.
+- Recovery: the first health probe's all-reduce hung; its end reset both GTs (21:20:31; coredumps copied); the
+  second probe passed. Evidence: `/mnt/fast-ai/bench-results/context-longrun-20261016/fault-20261017-2117/`. The
+  latch was renamed to `server/FAULT-20261017-c33.json`.
+
+**Census** (`fault-20261017-1831/census-c33/`, 60 s after ready), worker 0 at 3.86 GiB:
+- heap 1,285 MiB (10-04: 1,208);
+- the two large anonymous blocks: 562 and 470 MiB (10-04: 507 and 457);
+- the growth since 10-04 is mostly many 40-100 MB anonymous blocks (63, 63, 60, 57, 52, 45, 43, 39 ...).
+
+**Two changes before the next run.**
+- `host_memory_guard.py`: the record of a kill now lists the 15 largest processes (pid, name, resident bytes,
+  cgroup), read just before the kill (13 ms). A test covers it.
+- Campaign 33b: the same queue 33 on the same server plus `MALLOC_ARENA_MAX=2` (`ARENA=2`). That allows fewer
+  host-allocator pools per process; nothing on the cards changes, so answers cannot. A census is taken at the same
+  moment as c33's.
+  - Prediction: the workers drop by 0.2-0.5 GiB each, with arm times within 5 %.
+  - If the workers do not drop by at least 0.15 GiB each, `ARENA` is dropped again and noted as no lever.
+  - The arms' predictions and decisions are those of campaign 33 above.

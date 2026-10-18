@@ -2,7 +2,8 @@
 # Campaign 33 (2026-10-17, copied from campaign 31's runner as it stood for campaign 32; registered in
 # notes/2026-10-17-hostile-history-poison.md before any run): arm K32L is K32 with ctxkeeper's --lookups (a CHANGES
 # line that waits on an archived entry is asked again once, with what that entry says). Keeper version check:
-# KEEPER_VERSION, default 1.2.0.dev0. Original campaign-31 header follows.
+# KEEPER_VERSION, default 1.2.0.dev0. ARENA=N (campaign 33b) adds MALLOC_ARENA_MAX=N to the server: fewer host
+# allocator pools per process, nothing on the cards. Original campaign-31 header follows.
 # Campaign 31 (2026-10-17, copied from campaign 28's runner as it stood for campaign 30; registered in
 # notes/2026-10-17-hostile-history-poison.md before any run): the same server and queue kinds with ctxkeeper
 # 1.1.1.dev0 (an amount found by an archive search counts as stated for the note checks). Only the keeper version
@@ -344,7 +345,8 @@ systemd-run --user --unit=ctx-fp8-tp2-server --collect -p WorkingDirectory=$LAB 
   $( [[ $TAIL == 1 ]] && echo --extra-env B70_PREFIX_CACHE_EXACT_TAIL=1) \
   $( [[ ${FA_PER_SEQ:-0} == 1 ]] && echo --overlay b70-fa-decode-per-seq --extra-env B70_FA_DECODE_PER_SEQ=1) \
   $( [[ ${BREADCRUMBS:-1} == 1 ]] && echo --overlay b70-step-breadcrumbs --extra-env B70_STEP_BREADCRUMBS=1) \
-  $( [[ ${MARKS:-0} == 1 ]] && echo --extra-env B70_STEP_BREADCRUMBS_DEVICE_MARKS=1) 2>&1 | tail -1
+  $( [[ ${MARKS:-0} == 1 ]] && echo --extra-env B70_STEP_BREADCRUMBS_DEVICE_MARKS=1) \
+  $( [[ -n ${ARENA:-} ]] && echo --extra-env MALLOC_ARENA_MAX=$ARENA) 2>&1 | tail -1
 ready=0
 for i in $(seq 1 120); do
   if server_up; then ready=1; say "server ready after ~$((i*15)) s; MemAvailable $(avail) MiB"; break; fi
