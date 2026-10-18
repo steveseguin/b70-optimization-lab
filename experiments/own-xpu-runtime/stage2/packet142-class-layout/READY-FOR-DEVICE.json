@@ -1,0 +1,150 @@
+{
+  "schema": "packet142.ready-for-device.v1",
+  "passed": true,
+  "commit": "6927d819e93c9b205080c59caf4bb86f392ee211",
+  "created_utc": "2026-10-18T20:11:43.841606+00:00",
+  "host": "steve-b70s",
+  "device_executed": false,
+  "queued": false,
+  "device_quality_pending": true,
+  "device_performance_pending": true,
+  "record_unchanged": 58.798,
+  "arithmetic": "iq3-p49-split32-v1",
+  "kv_dtype": "BF16",
+  "native_implementation": "same-packet qualified native sources and binaries; optional extra early refusal patch deferred",
+  "cpu_seal": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/cpu-seal.json",
+  "cpu_seal_sha256": "99c97a775409d8a2c2bfb94a7983f28e6238fbd003fd732f6c42f94268247a9f",
+  "cpu_gate_sha256": {
+    "build": "55bb918a679149c7bbc44e3385d9089f59df5147a2d4a70f91de5d35af155671",
+    "full-shape": "5a68aa4fd8dcd016086c37ca0ff108f6a6bf7c95d7cc3193835e460779b74288",
+    "bytes": "3e24a38ee5706822f346ec072cf74f0f73fedfb2658c69cea2480ed9efa0f0d2",
+    "exec-limits": "32862c040f1f9b1f4ee493192e67ea1a2b6ae6d2c51f1ffd328fcd7ff29c95b1",
+    "safety": "0b95af061f50f2ee50884812d67d1419d6267a7b8729c3823676af0329a9aec9",
+    "submission-rehearsal": "8e9c3c039eaa52f1504ce7dcbff3775b24deac240a8c3a4d7feafbb69e643489",
+    "admission": "22c34a621cfb3e84e171f60073464a924b60cc0d28dc4acf40bcfcee62c33f08",
+    "entry-gate": "9eda988a0b20d2166ebad01b22575e57c183ab14041ebbab54187e7bbf21fb3e",
+    "launch-limits": "930946c30950b2b1c94fdddfa9ece96830bdcfa269690be88f0f9be6917ce3c9",
+    "worker-gate": "155caed5f6086e2277f776a9f0deb2c40b092cfaeb462898d82e0e5266444ca8",
+    "queue-plan": "eca6526e4e139a7a4ace0ae904289b938f83e50a68da846096ed018082eb4829",
+    "pin-guard": "f34abd42e2c1646a11e31be7ffde8376eba0fc780443073b8ae796642e7251d7"
+  },
+  "gates": {
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/build.json": "55bb918a679149c7bbc44e3385d9089f59df5147a2d4a70f91de5d35af155671",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/full-shape.json": "5a68aa4fd8dcd016086c37ca0ff108f6a6bf7c95d7cc3193835e460779b74288",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/bytes.json": "3e24a38ee5706822f346ec072cf74f0f73fedfb2658c69cea2480ed9efa0f0d2",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/exec-limits.json": "32862c040f1f9b1f4ee493192e67ea1a2b6ae6d2c51f1ffd328fcd7ff29c95b1",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/safety.json": "0b95af061f50f2ee50884812d67d1419d6267a7b8729c3823676af0329a9aec9",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/submission-rehearsal.json": "8e9c3c039eaa52f1504ce7dcbff3775b24deac240a8c3a4d7feafbb69e643489",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/admission.json": "22c34a621cfb3e84e171f60073464a924b60cc0d28dc4acf40bcfcee62c33f08",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/entry-gate.json": "9eda988a0b20d2166ebad01b22575e57c183ab14041ebbab54187e7bbf21fb3e",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/launch-limits.json": "930946c30950b2b1c94fdddfa9ece96830bdcfa269690be88f0f9be6917ce3c9",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/worker-gate.json": "155caed5f6086e2277f776a9f0deb2c40b092cfaeb462898d82e0e5266444ca8",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/queue-plan.json": "eca6526e4e139a7a4ace0ae904289b938f83e50a68da846096ed018082eb4829",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/pin-guard.json": "f34abd42e2c1646a11e31be7ffde8376eba0fc780443073b8ae796642e7251d7"
+  },
+  "proposals": [
+    {
+      "proposal_name": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p142-attention-order600-smoke-B.txt",
+      "sha256": "b2fd497789d87fcbf28a70043a69068efcd3ede317717b82f53790906e1cefc2",
+      "snapshot": "experiments/own-xpu-runtime/stage2/packet142-class-layout/proposals/proposed-p142-attention-order600-smoke-B.txt",
+      "snapshot_sha256": "b2fd497789d87fcbf28a70043a69068efcd3ede317717b82f53790906e1cefc2",
+      "unit": "screen-packet142-attention-order600-smoke-B.service",
+      "expected_seconds": [
+        240,
+        360
+      ],
+      "watchdog_seconds": 4800
+    },
+    {
+      "proposal_name": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p142-attention-order600-v5-B.txt",
+      "sha256": "43a7344ff285dd3da2c840fe7e79fc86e3652e22413a0c27899d1bbce0bb5ff4",
+      "snapshot": "experiments/own-xpu-runtime/stage2/packet142-class-layout/proposals/proposed-p142-attention-order600-v5-B.txt",
+      "snapshot_sha256": "43a7344ff285dd3da2c840fe7e79fc86e3652e22413a0c27899d1bbce0bb5ff4",
+      "unit": "screen-packet142-attention-order600-bracket-B.service",
+      "expected_seconds": [
+        720,
+        1200
+      ],
+      "watchdog_seconds": 4800
+    },
+    {
+      "proposal_name": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p142-expert-gate-up-order600-smoke-B.txt",
+      "sha256": "def37becde48134121c9be981359b0d81a840ae887c136e56440a0be76e7264d",
+      "snapshot": "experiments/own-xpu-runtime/stage2/packet142-class-layout/proposals/proposed-p142-expert-gate-up-order600-smoke-B.txt",
+      "snapshot_sha256": "def37becde48134121c9be981359b0d81a840ae887c136e56440a0be76e7264d",
+      "unit": "screen-packet142-expert-gate-up-order600-smoke-B.service",
+      "expected_seconds": [
+        240,
+        360
+      ],
+      "watchdog_seconds": 4800
+    },
+    {
+      "proposal_name": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p142-expert-gate-up-order600-v5-B.txt",
+      "sha256": "a818842aeb7ff534282d5a6dc9aaaf50f66bef32b2858ae7c9163452c71807ea",
+      "snapshot": "experiments/own-xpu-runtime/stage2/packet142-class-layout/proposals/proposed-p142-expert-gate-up-order600-v5-B.txt",
+      "snapshot_sha256": "a818842aeb7ff534282d5a6dc9aaaf50f66bef32b2858ae7c9163452c71807ea",
+      "unit": "screen-packet142-expert-gate-up-order600-bracket-B.service",
+      "expected_seconds": [
+        720,
+        1200
+      ],
+      "watchdog_seconds": 4800
+    },
+    {
+      "proposal_name": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p142-hc-gate-low-order600-smoke-B.txt",
+      "sha256": "d7798eba3d290517df16cb95d80c5d4e167f7f5126f97208ca9cf8270b4c4862",
+      "snapshot": "experiments/own-xpu-runtime/stage2/packet142-class-layout/proposals/proposed-p142-hc-gate-low-order600-smoke-B.txt",
+      "snapshot_sha256": "d7798eba3d290517df16cb95d80c5d4e167f7f5126f97208ca9cf8270b4c4862",
+      "unit": "screen-packet142-hc-gate-low-order600-smoke-B.service",
+      "expected_seconds": [
+        240,
+        360
+      ],
+      "watchdog_seconds": 4800
+    },
+    {
+      "proposal_name": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p142-hc-gate-low-order600-v5-B.txt",
+      "sha256": "869de0692d93a63294379152235f2c1ef2ff8dd5e8d812a4c2f38daac88b339e",
+      "snapshot": "experiments/own-xpu-runtime/stage2/packet142-class-layout/proposals/proposed-p142-hc-gate-low-order600-v5-B.txt",
+      "snapshot_sha256": "869de0692d93a63294379152235f2c1ef2ff8dd5e8d812a4c2f38daac88b339e",
+      "unit": "screen-packet142-hc-gate-low-order600-bracket-B.service",
+      "expected_seconds": [
+        720,
+        1200
+      ],
+      "watchdog_seconds": 4800
+    }
+  ],
+  "variant_to_packet141_class": {
+    "attention-order600": {
+      "packet141_class": "attention",
+      "subset": "weighted GDN/QSA attention projections only"
+    },
+    "expert-gate-up-order600": {
+      "packet141_class": "MoE gate/up",
+      "subset": "routed expert gate/up; unchanged E1 halfcache rows; no tile transpose"
+    },
+    "hc-gate-low-order600": {
+      "packet141_class": "HC",
+      "subset": "hc.a.gate, hc.a.low, hc.f.gate, hc.f.low only"
+    }
+  },
+  "packet141_verdict_evaluated": false,
+  "coordinator_only": true,
+  "requires_valid_packet141_positive": {
+    "required_valid_verdict": true,
+    "cold_over_warm_min": 1.3,
+    "class_ms_per_half_min": 0.5,
+    "close_ratio_max": 1.15,
+    "intermediate": "inconclusive; do not queue automatically",
+    "observer_and_natural_sequence_checks": "must satisfy packet141 preregistration"
+  },
+  "sequence": "Only flagged classes: own 12x64 smoke, then own one-load C/X/C/X/C 12x128 bracket",
+  "class_copy_budget_bytes_per_rank": 629145600,
+  "coverage_limit": "Attention prefix: 27 tensors/rank; routed gate/up: one layer/rank; HC gate/low: 24 layers/rank. Physical adjacency is not guaranteed.",
+  "conservative_rank1_arena_headroom_bytes": 155895078,
+  "build_bytes": 288775204,
+  "no_services_started": true,
+  "no_live_queue_edits": true
+}
