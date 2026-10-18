@@ -1,0 +1,65 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "views": {
+    "control": {
+      "dense": "production",
+      "hc": "hc-wide",
+      "experts": "wide64",
+      "host": "ordered",
+      "route": "production",
+      "norm": "production",
+      "recurrence": "production",
+      "draft_head": "production"
+    },
+    "candidate-a": {
+      "dense": "production",
+      "hc": "hc-wide",
+      "experts": "wide64",
+      "host": "ordered",
+      "route": "production",
+      "norm": "production",
+      "recurrence": "rec-parallel",
+      "draft_head": "production"
+    },
+    "candidate-b": {
+      "dense": "production",
+      "hc": "hc-wide",
+      "experts": "wide64",
+      "host": "ordered",
+      "route": "fast",
+      "norm": "production",
+      "recurrence": "rec-parallel",
+      "draft_head": "production"
+    }
+  },
+  "order": [
+    "control",
+    "candidate-a",
+    "candidate-b",
+    "control"
+  ],
+  "placement": "1",
+  "binary_sha256": "8b615a0c74db57ab3ceab3cd4a56524d07bc9cf1cb78da2178a947e3918e294a",
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet84-screens/config.py": "055fe62d9a24b1027d90a83f3b2be91c3ae2d76785d1c30821417c84787ca0be",
+    "experiments/own-xpu-runtime/stage2/packet84-screens/compare.py": "988fded82438665d3591bd600226562db08d2db659e1c8f37622aedd3567ae1c",
+    "experiments/own-xpu-runtime/stage2/packet84-screens/validate.py": "41170f7a7d6a8861099cbc68f6948c2c3207550a9cd43f253a6019521832f380",
+    "experiments/own-xpu-runtime/stage2/packet84-screens/test_compare.py": "ec8af6245d306a291353ba45508ebd447f2fd28ba9af68eb02affa151576d75c",
+    "experiments/own-xpu-runtime/stage2/packet84-screens/screen_job.py": "5a302b0f14eee785772440ff3c4759b2c7a7b77988514bdd78c556af1d070332",
+    "experiments/own-xpu-runtime/stage2/packet84-screens/prepare.py": "2d41dc16d4e57aff46f577a16e33f0688892040cfefec38818612841913a8922",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/bundle-selection.json": "66943450b735f129e3ddefb24ba91d6bd858e3e3da5a72e4ec74e60a15eb624b",
+    "experiments/own-xpu-runtime/stage2/packet80-record-bundle/selection.json": "a374b96f32df502e477b98bdde5246bf8bb8442c7126d3cad0880837f9f5aae1",
+    "experiments/own-xpu-runtime/stage2/packet84-record-bundle/run_screen.py": "a1573d96774605689d4b56b3e97e3a2ef916a10632bf9ad6284c1df2b99ba31a",
+    "experiments/own-xpu-runtime/stage2/packet84-record-bundle/screen_plans.py": "059b9690a64dac6eb750d5f6351605e91c55604f9ad57cee08aed32e029ae0b9",
+    "experiments/own-xpu-runtime/stage2/packet84-record-bundle/prepare_selections.py": "65b6ea2a2ab8a1456c9f2418f3b604e6d3e693232926cd031ac9ac3ba0034d63",
+    "experiments/own-xpu-runtime/stage2/packet84-record-bundle/screen_seal_support.py": "5fcb0c6812be75669baf062e665f1792b60ca768d4019d50d1a8ff397097694d",
+    "experiments/own-xpu-runtime/stage2/packet84-record-bundle/build-device-receipt.json": "458151fa38b8266b197d06760e14e965e4889c9adeb6c0afd4cc1b87ce780fb9",
+    "experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/full-shape/fixture": "2d6ef0c8d1a28e2a94f487e5f8fee956b35209c7e563bbf6d40ef836fadfca62"
+  },
+  "seals": {
+    "control": "ac31dc4b00da791a9a4ed7807fdff0d1b0d46916e96e42921e73d86a15e70863",
+    "candidate-a": "f43583c2fb1734c9bb935b7d36a7eb36cf94a187a480730399af84c470375fef",
+    "candidate-b": "99e8e0099eb3f2cd2e418f244b0c65fe0c0c6a6511fb7c11dbbff979b95083de"
+  }
+}
