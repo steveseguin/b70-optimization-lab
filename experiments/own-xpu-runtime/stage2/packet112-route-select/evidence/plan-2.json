@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "runnable": false,
+  "lane": "B",
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet112-route-select/build/micro-device",
+    "--coordinator-admitted-device-window",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet112-route-select/evidence/capture/harness-logits.bin"
+  ],
+  "identity": {
+    "build_receipt_sha256": "0b3c0a7a2a5228693ca16685b2cd5869ba2fdaac3f68536c709036fa56ea8423",
+    "binary_sha256": "81e0b12c43e1dcf3856cd0e295e74bccd46bf2e4038b56668884cc14ee54d52c",
+    "packet_seal_sha256": "258e15d9e729214bbedc8488c69ded6f46734e579975a559b5266c0001c6b7ca",
+    "wrapper_seal_sha256": "2ce1884f599466ae5d91226bc08a22605fa66316132eb0dfbef992c2c9ebfb40",
+    "input_sha256": "18c05c0253bcb7d3441d300d68bc44fd03221ed46d41c295fb161b7741a36883"
+  },
+  "physical_cards": [
+    2
+  ],
+  "native_card": 0,
+  "device_mask": {
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:43:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+  },
+  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet112-route-select/evidence/micro-B-2",
+  "reservation_scope": "lane-B",
+  "drain": "shared DrainPermit held across entire autonomous native lifetime",
+  "required_host_available_bytes": 10737418240,
+  "host_reserve_bytes": 8589934592,
+  "maximum_host_scratch_bytes": 2147483648,
+  "device_bytes_upper_bound": 5368709120,
+  "minimum_root_free_bytes": 12884901888,
+  "watchdog_seconds": 1200,
+  "retries": 0,
+  "expected_seconds": 60,
+  "micro_qualification": "pending <=0.5 production time in BOTH fresh processes, exact all outputs; no engine speed verdict"
+}
