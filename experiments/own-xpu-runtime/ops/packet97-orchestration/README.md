@@ -1,5 +1,25 @@
 # Packet97 CPU orchestration
 
+## Packet98b: v5 intent planning and five-view readiness
+
+The composite CLI defaults to `--wrapper v5`; `--wrapper v4` retains separate
+loads. `v5_jobs.py --sources` prepares packets92/94/100/101. Every v5 intent is
+control/candidate/control/candidate/control, with exact selection hashes and
+records on lane A. **The requested current intents are blocked:** frozen v5
+only switches route/recurrence in its registered packet91 lineage. Half-cache,
+weightcache, and tile16 change load layout; other requested switches also lack
+qualified native support. The queue planner refuses these proposals. Do not
+enqueue them as runnable jobs or replace their selections with packet91's.
+
+The packet97d evaluator also reads qualifying v5 receipts. Both candidates must
+beat the maximum of all three controls; the slower candidate determines the
+ratio. All thirteen checks, acceptance, identical-selection/binary/seal rules,
+both lanes, the chain policy and all CPU readiness checks remain mandatory.
+The shared lifetime never counts as two fresh processes. Different v4/v5 native
+identities cannot be pooled. See the
+[packet98b note](../../../../notes/2026-10-18-own-runtime-packet98b.md)
+for exact refusals, proposed paths and CPU validation.
+
 ## Review 15: record-lane loss veto for new decisions
 
 Use `review15/orchestrate_review15.py` for new decisions. It rereads every source
