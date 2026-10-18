@@ -553,3 +553,15 @@ Actions:
 3. One-card: packet 58r's one-load bracket and packet 58t's resident-lookup screen will run back to back in a single whole-host hold after the packet124c chain (no separate holds; never ahead of a ready 2-card chain).
 4. Launch environment: the packet58p first launch died on a caller-supplied `LD_LIBRARY_PATH`; future WINDOW/ready commands must embed the recorded oneAPI path, and every pre-launch hook runs the closed-environment + argument + queue/oracle gates (packet124c's hook does the latter two).
 STOP DOING acknowledged: all-Codex-on-one-card while lane B is empty; per-question whole-host holds; unanalysed diagnostics; every-token event recording; caller-environment launch commands.
+
+## Review 24b (2026-10-18 ~14:05 UTC): ACT
+
+Cards 0+1 had no device process 13:37–14:03: packet124c's whole-host W2m window waited for admission behind packet129's lane-B diagnostic (autoq started it 13:32); W2m got in ~4 min before its 1800 s admission timeout. p130/p131 compiles stalled on the same hold. Packet129 closed (+0.08 pt acceptance; draft format is not the limit).
+
+Actions:
+1. PAUSE-B set through the rest of the packet124c chain (lane B queue was empty). Rule: during a lane-A chain, a lane-B job may start only if it finishes before the chain's next whole-host window; otherwise lane B is paused from KD to the chain's end.
+2. `p58rt` stopped; `p58rt2` keys on `packet124c-chain-a` ending (markers clear, not the CPU post-chain prep), releases lane B for p130/p131 smokes, waits ≤ 20 min for both packets' proposals, then runs the one-card hold (58r + 58t). `autoq2-p130` / `autoq2-p131` insert each packet's lane-B proposals (smoke first) at the head of lane B when its Codex job exits.
+3. Packet129 closed with a DO-NOT-REPEAT note; diagnostics stop at the primary gate.
+4. Codex **p132**: CPU-only study of a confidence-gated two-candidate speculative half (independent text; kill gate +3% projected net).
+5. Codex **opsmon** (gpu_time_review counts admission waits as idle; ops-level compile_turn that blocks only during started whole-host windows) and **disk6** (verified archive pass to ≥ 40 GB free).
+STOP DOING acknowledged: lane-B screens > ~15 min once a chain is past K2; secondary diagnostic passes after a decided primary; hand-offs keyed on post-chain CPU prep; further draft-format variants.
