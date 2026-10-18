@@ -30,7 +30,9 @@ def threshold():
     row=read(THRESHOLD)
     require(row.get('schema')=='own-runtime.packet58.one-gpu-threshold.v1' and row.get('gpu_count')==1
             and row.get('model_revision')==MODEL_REVISION,'one-card threshold identity')
-    require(sha(LEDGER)==row['ledger_sha256'],'submission ledger changed; refresh 1-GPU record review')
+    measured=read(verified_ref(row['measurement']))
+    require(measured['gpu_count']==1 and measured['decode_mode']=='plain'
+            and measured['class_balanced_tok_s_1_100_intervals_after_ttft']['median']==row['threshold_tok_s'],'saved one-card record differs')
     value=row['threshold_tok_s']
     require(value is None or (type(value) in (int,float) and value>0),'threshold must be absent or positive')
     require((value is None)==(row['reference_submission'] is None),'threshold/submission mismatch')
@@ -89,7 +91,7 @@ def derive(chain):
         require(owner not in owners,'fresh window process reused');owners.add(owner)
         if windows:
             first=windows['KD']
-            require(all(row[k]==first[k] for k in ('boot_id','card','environment','miss_path')),'window identity changed')
+            require(all(row[k]==first[k] for k in ('boot_id','card','environment','miss_path','view','selection_sha256')),'window identity changed')
             previous=windows[D.WINDOWS[D.WINDOWS.index(name)-1]]
             require(row['started_utc_ns']>previous['finished_utc_ns'],'overlapping windows')
         require(W.selected_miss_path(k1paths,row)==row['miss_path'],'miss choice not bound to K1')
@@ -102,6 +104,7 @@ def derive(chain):
                 owners.add(kowner);k1_owners[path]=kowner
             for leaf,digest in kw['native_files'].items():files[str((path.parent/leaf).relative_to(ROOT))]=digest
         summary=D.summarize(directory/'run',name,manifest)
+        summary.update(view=row['view'],selection_sha256=row['selection_sha256'],lane_scope='whole-host')
         require(summary==read(directory/'run/summary.json')==read(directory/'summary.json'),'summary not reproduced')
         driver=read(directory/'run/receipt.json')
         require(driver.get('passed') is True and driver.get('safe_to_exit') is True,'driver teardown')

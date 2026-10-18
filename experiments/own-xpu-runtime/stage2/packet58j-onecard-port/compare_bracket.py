@@ -43,6 +43,7 @@ def verify_chain(root,view):
  W.require(stored[METRIC]==summary[METRIC] and stored.get('view')==view,'summary differs from native outputs')
  for f in (root/'WS128/run/summary.json',root/'WS128/run/run/receipt.json'):
   pins[str(f)]=S.sha(f)
+ summary['miss_path']=r['miss_path']
  return summary,pins,boot
 
 def compare(root):
@@ -50,6 +51,7 @@ def compare(root):
  for folder,view in STAGES:
   row,files,boot=verify_chain(Path(root)/folder,view);rows.append(row);pins.update(files);boots.append(boot)
  W.require(len(set(boots))==1,'matched bracket must share boot')
+ W.require(len({row['miss_path'] for row in rows})==1,'matched bracket miss path differs')
  result=decision(rows);result.update(schema='packet58j.bracket.v1',sources=pins,build_receipt_sha256=S.sha(P/'build-receipt.json'))
  return result
 

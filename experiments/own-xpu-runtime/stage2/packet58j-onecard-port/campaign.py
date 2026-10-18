@@ -51,8 +51,11 @@ def main(argv=None):
   if args.mode=='bracket':state['decision']=C.compare(out)
   else:
    fresh,pins,_=C.verify_chain(out/'record-port','port');bracket=C.compare(args.bracket_root)
+   prior,_,_=C.verify_chain(args.bracket_root/'port','port')
+   W.require(fresh['miss_path']==prior['miss_path'],'fresh confirmation miss path differs')
    state['fresh_confirmation']=dict(passed=fresh[C.METRIC]['median']>max(bracket['rates'][0],bracket['rates'][2],C.RECORD),rate=fresh[C.METRIC]['median'],sources=pins,preregistered_submission_run='record-port/WS128',strict_512_gate=False,external_submission_performed=False)
-  state['passed']=True;save();return 0
+  verdict=state['decision'] if args.mode=='bracket' else state['fresh_confirmation']
+  state['passed']=verdict['passed'] is True;save();return 0 if state['passed'] else 1
  except Exception as error:state['error']=str(error);save();return 1
  finally:
   for sig,handler in handlers.items():signal.signal(sig,handler)

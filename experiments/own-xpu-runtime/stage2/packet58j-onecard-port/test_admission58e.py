@@ -142,8 +142,14 @@ class AdmissionTests(unittest.TestCase):
                     clock=Clock()
                     with self.assertRaisesRegex(ValueError,'timed out'):
                         L.Reservation('B',root=root,now=clock.now,sleep=clock.sleep,wait_seconds=1).__enter__()
-                    with self.assertRaises(ValueError):
+                    with self.assertRaisesRegex(FileNotFoundError,'active-lane-B.json'):
                         screen_teardown_admit('B',root=drain,coordination_root=root)
+                    # Even a stray B marker must not enable overlap with this
+                    # whole-host reservation. Only this temporary fixture changes.
+                    (root/'active-lane-B.json').write_text('{}')
+                    with self.assertRaisesRegex(ValueError,'shared drain is not this live A exactness reservation'):
+                        screen_teardown_admit('B',root=drain,coordination_root=root)
+                    (root/'active-lane-B.json').unlink()
                     d.complete()
                 a.complete(drained=True)
 

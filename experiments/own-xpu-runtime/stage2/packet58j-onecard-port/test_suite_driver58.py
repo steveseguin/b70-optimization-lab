@@ -43,7 +43,7 @@ class SuiteTests(unittest.TestCase):
         (self.actual/'reset.json').unlink()
         with self.assertRaises(FileNotFoundError):self.compare()
     def test_no_onecard_threshold_inherits_tp2(self):
-        row=S.threshold();self.assertEqual(row['gpu_count'],1);self.assertIsNone(row['threshold_tok_s'])
+        row=S.threshold();self.assertEqual(row['gpu_count'],1);self.assertEqual(row['threshold_tok_s'],24.338653323339745)
     def test_payload_onecard_plain_scope(self):
         row=self.compare()
         result=dict(requests=[row]*12,primary_metric=dict(name=D.METRICS.PRIMARY,value_tok_s=100),

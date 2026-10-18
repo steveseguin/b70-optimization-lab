@@ -8,7 +8,7 @@ import memory_plan as M
 import window as W
 
 HERE = Path(__file__).resolve().parent
-EVIDENCE = HERE/'evidence/58b-kd'
+EVIDENCE = HERE.parent/'packet58g-onecard/evidence/58b-kd'
 
 class SensorTests(unittest.TestCase):
     @classmethod
