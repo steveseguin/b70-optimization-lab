@@ -15,3 +15,5 @@ A CPU full-shape build pushed retained logical build size to302,374,633 bytes, e
 Detailed evidence and commands: `experiments/own-xpu-runtime/stage2/packet143-record-bundle/README.md` and `experiments/own-xpu-runtime/ops/packet143-orchestration/`. Final preparation state is in READY-FOR-DEVICE.json; device readiness remains a separate fail-closed decision.
 
 The complete CPU queue test passed with explicitly simulated operational storage availability. Its retained real disk precheck refused the full chain reserve. Launch/readiness continue to check real storage. All182 copied symlinks remain present and unbroken.
+
+Final checks passed: all11 intercepted window paths, full queue loop with12 input preflights and6 oracle checks, native limit refusal/positive paths, pin guard, current shared entry rehearsal, all16 submission identities and old-record refusal. The new optional shared report harness does not support this bootstrap route; the actual inline smoke report was rehearsed separately and passed. Readiness remains false.

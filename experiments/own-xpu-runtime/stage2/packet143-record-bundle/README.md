@@ -44,3 +44,7 @@ The parent rehearsal retains packet136 identity, runs its evidence/attestation/p
 Preparation can be verified with `ops/packet143-orchestration/prepare_runtime.py`. Its explicit `--seal` mode regenerates all 16 seals from existing completed CPU proofs, snapshots orchestration sources locally and optionally activates a view. It does not run device work. One-time construction scripts are retained as text under `lineage-inputs/construction/`.
 
 The complete CPU queue test passed with explicitly simulated operational storage availability. Its retained real disk precheck refused the full chain reserve. Launch/readiness continue to check real storage. All182 copied symlinks remain present and unbroken.
+
+If activation changes the selected view, rerun `ops/packet143-orchestration/argument_gate.py` with the reserved CPU settings before refreshing readiness; its proof deliberately binds the selected configuration.
+
+The newer shared optional `rehearse_entry.py --report` assumes a bracket wrapper and fails on this custom bootstrap order. Ordinary entry rehearsal passes. `lineage-inputs/report-rehearsal143.py` separately executes the actual inline smoke report body in the correct import context with12x64 synthetic CPU receipts; this passes and claims no device quality.
