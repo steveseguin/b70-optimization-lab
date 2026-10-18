@@ -1,0 +1,121 @@
+{
+  "decision": "close",
+  "memory": {
+    "context_capacity": 4096,
+    "record_view": "production--hc-wide--wide64--ordered--production--production--rec-parallel--production",
+    "record_rank0_full_shape": {
+      "view": "production--hc-wide--wide64--ordered--production--production--rec-parallel--production",
+      "placement": "1",
+      "draft_head": "production",
+      "draft_rank": 1,
+      "target_split": 0,
+      "target_layers": [
+        24,
+        24
+      ],
+      "census": "experiments/own-xpu-runtime/stage2/packet84-record-bundle/evidence/census.json-1d302e63c78658adcc04bb091964842539f48cb93a56d5bb72a1a71978547b83.gz",
+      "census_sha256": "16a29b5ccb8dd3af07d0d25d86eb8c1d3d0bf7c11af4a89a349c42393d583f22",
+      "operations": "experiments/own-xpu-runtime/stage2/packet84-record-bundle/evidence/selected-operations.txt-8eff7120f85e5b4e85f86244cecba97f3724d54f4fbc469e1d254498b68b1b69.gz",
+      "operations_sha256": "d71d8fbfc6ee20d65e713113f604dbb774d7503b9b74b55c1d57c5de46111125",
+      "passed": true,
+      "device_executed": false,
+      "rank": 0,
+      "postload_device_bytes": 27685394516,
+      "expanded_head_stride": 3380
+    },
+    "rank0_baseline": {
+      "rank": 0,
+      "draft_rank": 1,
+      "target_layers": 24,
+      "target_modeled_allocations_bytes": 27685394516,
+      "allocation_reserve_bytes": 46500548,
+      "draft_total_bytes": 0,
+      "draft_duplicate_head_bytes": 0,
+      "target_total_bytes": 27731895064,
+      "total_with_mtp_bytes": 27731895064,
+      "free_with_mtp_bytes": 6510402792,
+      "allocation_margin_passed": true,
+      "arena_device_bytes": 27685394516,
+      "arena_headroom_bytes": 4526860204,
+      "arena_margin_passed": true
+    },
+    "census_categories": {
+      "workspace": 285836076,
+      "weights": 26908492544,
+      "recurrent-state": 59203600,
+      "KV": 58195968,
+      "runtime-overhead": 373666328
+    },
+    "additional_all_nonweight_bytes": 776901972,
+    "additional_single_recurrence_bank_bytes": 29601792,
+    "additional_capture_payload_bytes": 48627432,
+    "new_arena_bytes": 28462296488,
+    "remaining_arena_bytes": 3749958232,
+    "remaining_physical_free_bytes": 5733500820,
+    "arena_limit_bytes": 32212254720,
+    "minimum_free_bytes": 1500000000,
+    "reservation_fits": true,
+    "is_candidate_startup_or_device_test": false
+  },
+  "cost_summary": {
+    "favorable": {
+      "extra_half_ms": 4.988175039970438,
+      "copy_ms": 0.1752339891891892,
+      "top2_ms": 0.0,
+      "select_ms": 0.0,
+      "m2_half_ms": 18.676452346557493
+    },
+    "partial_sharing": {
+      "extra_half_ms": 9.028531903219502,
+      "copy_ms": 1.4552978362220352,
+      "top2_ms": 0.023,
+      "select_ms": 0.5693899839238766,
+      "m2_half_ms": 22.716809209806556
+    },
+    "conservative": {
+      "extra_half_ms": 13.404970836222036,
+      "copy_ms": 1.4552978362220352,
+      "top2_ms": 0.05,
+      "select_ms": 1.4552978362220352,
+      "m2_half_ms": 27.09324814280909
+    },
+    "serial_m1": {
+      "extra_half_ms": 15.143575142809091,
+      "copy_ms": 1.4552978362220352,
+      "top2_ms": 0.05,
+      "select_ms": 1.4552978362220352,
+      "m2_half_ms": 28.831852449396145
+    }
+  },
+  "primary": {
+    "favorable": {
+      "feature": "never",
+      "theta": 0.0,
+      "train_gain": 0.0,
+      "test_gain": 0.0,
+      "test_tps": 55.69
+    },
+    "partial_sharing": {
+      "feature": "never",
+      "theta": 0.0,
+      "train_gain": 0.0,
+      "test_gain": 0.0,
+      "test_tps": 55.69
+    },
+    "conservative": {
+      "feature": "never",
+      "theta": 0.0,
+      "train_gain": 0.0,
+      "test_gain": 0.0,
+      "test_tps": 55.69
+    },
+    "serial_m1": {
+      "feature": "never",
+      "theta": 0.0,
+      "train_gain": 0.0,
+      "test_gain": 0.0,
+      "test_tps": 55.69
+    }
+  }
+}
+PASS: CPU model invariants and JSON generation
