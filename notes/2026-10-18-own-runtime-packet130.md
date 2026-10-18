@@ -58,3 +58,24 @@ queue copies. These are diagnostic screens, never a strict512 promotion.
 `git fetch origin` confirmed HEAD and origin/main both
 `c7b59d9429e3c2b1c6c351f523203e36ec1327fa`. Host is `steve-b70s`.
 Initial root free space exceeded 29 GB. Existing dirty work is preserved.
+
+## Implementation milestone
+
+The new copy now has the layer-boundary controller and runtime schedule switch.
+The suffix keeps its original kernel captures and private allocations. The
+candidate intentionally does not act on newly early target verification during
+its current speculative half: the baseline cannot receive that verification
+until the half returns. This preserves the same speculative work, bank swap
+and miss rollback; owner cancellation and explicit cancel-launch tests stay live.
+
+The GNU runtime entry and device-target entry compiled during the initial
+build. Remaining serialized compilation is waiting behind another packet's
+compiler turn and the coordinator's whole-host hold. Final native gates and
+seals are still pending; these initial objects are not a qualification.
+
+The copied v5 helper contained the old unclamped cooldown sleep. The retained
+negative log catches it. Applying packet124c's unchanged helper inside the new
+copy makes all four clock-crossing tests pass. All four teardown-refusal tests
+pass, including actual CPU child stop pipes, preserving an unrelated child and
+the previous drain record. Pre-exec limits and the hit/miss timing-join unit
+test pass. No GPU, service, live queue or frozen tree was changed.
