@@ -10,7 +10,9 @@ Both execution orders and context4096 are also measured. Every class event
 is summed per invocation. No v5 run is eligible until both processes pass
 full state equality and the kill gate. GPU measurements are coordinator work.
 
-`p116_qsa_host.hpp` independently visits the exact tree; `p116_qsa_kernel.hpp`
+`p116_qsa_host.hpp` varies finite head/tile scheduling while retaining the
+original scalar tree; exceptional inputs keep the unchanged reference body.
+The [rejected tree closeout](TREE-CLOSEOUT.md) explains the NaN findings. `p116_qsa_kernel.hpp`
 implements the device schedule; `p116_qsa_submit.cpp` binds the existing
 allocation/scratch layout. `cpu_gate.py` compiles and runs two processes under
 each of GNU and Intel. `micro/` contains the complete-layer comparison and

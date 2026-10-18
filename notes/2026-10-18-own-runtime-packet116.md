@@ -17,9 +17,11 @@ The starting `git pull --rebase` refused unrelated dirty orchestration files;
 
 - Target attention: keep admit and combine unchanged. The fixed32 tile uses
   256 threads/eight subgroups instead of128/four. Each subgroup computes four
-  scores instead ofeight. Each lane computes one value component with the same
-  adjacent32 tree visited depth first. Lower source-level liveness is a
-  hypothesis until compiler/device evidence, not a register or speed claim.
+  scores instead ofeight. The original128
+  threads retain the original vector2 value arithmetic and storage; the extra
+ 128 threads help score positions. Two lower-liveness tree variants were
+  rejected after compiler-specific NaN payload differences; see the
+  [closeout](../experiments/own-xpu-runtime/stage2/packet116-qsa-schedule/TREE-CLOSEOUT.md).
 - Selection: keep the128-leaf adjacent score tree and ordered four-head sum.
   Replace local-memory tree barriers by explicit subgroup shuffles. Share the
   full finite scan and integer rank over32 lanes; descending score and
@@ -46,6 +48,14 @@ effects. Root must retain25GB free and packet116 builds stay below250MB.
 
 ## Status
 
-Source audit and first candidate are prepared. Compiler byte tests, device
-binary compilation, complete-layer checks, startup receipts, seals and
+Source audit is pushed in `0a16b680c`. The final scalar operator gate passes
+8,764 exact checks per fresh process, twice under GNU and twice under Intel.
+It compares all allocated state and pre-gate FP32 values, with both selection
+orders, ties, partial blocks, signed zero, NaN/Inf and invalid controls.
+Compiler-specific NaN bytes are compared against each compiler’s production;
+cross-compiler NaN hashes are not required to match. CPU exceptional attention
+inputs use the unchanged scalar reference body. Device numerator arithmetic
+uses the original vector2 body; actual device equality remains mandatory.
+
+Device binary compilation, complete-layer checks, startup receipts, seals and
 proposal planning are in progress. Device timing and quality remain pending.
