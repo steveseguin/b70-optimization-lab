@@ -751,3 +751,79 @@ The remaining large candidates did not clear the brief’s gates. Packet133/137 
 The full-depth survey retained **539,774 directory rows and 71 permission/disappearance diagnostics**. Whole-repository reference-search errors and accessible/inaccessible process IDs are preserved; unreadable files are not claimed inspected. No own-runtime/ops reference file was inaccessible. The frozen-list audit initially inspected an incomplete still-writing snapshot, withdrew that observation, and used only completed successful snapshots for every archive decision.
 
 Full survey, searches, closure decisions, exact plans, scripts, pin snapshots, process checks and verification results are in **`/mnt/raid-models/own-xpu-runtime-archive/disk7-20261018/audit.tar.gz`**, **14,888,443 bytes**, SHA-256 **`3246e090d55a0019fc854ed76d925bc2b911d3d6843225d46c397f180f1902dc`**. Every one of its **161 audit payload files**, plus the embedded manifest, was read and hash-verified. Audit originals remain on RAID.
+
+
+## disk8 — verified archive pass (2026-10-18)
+
+Started 22:10 UTC on `steve-b70s`; survey baseline at 22:11:24 UTC:
+**29,635,219,456 available bytes (29.635 GB)**. Target: **38,000,000,000
+available bytes**, stopping at the first passing reading. Archive destination:
+`/mnt/raid-models/own-xpu-runtime-archive/disk8-20261018/`.
+
+`git pull --rebase` refused unrelated edits; fetch confirmed
+`HEAD == origin/main == b32810fa30153391b44cb2e6db3e7fd4377e8b6b`.
+The full-depth root survey completed before movement: 544,855 directory rows,
+71 permission diagnostics retained, exit 1. No inaccessible path is claimed
+inspected. No model contents were read. Bulk work uses `nice -n 19 ionice -c3
+taskset -c 8-15,24-31`, stdin `/dev/null`; no sudo, service, GPU, process kill
+or host setting change. Read-only review ran in parallel while the existing
+one-card hold continued.
+
+The successful initial `frozen_paths.py` snapshot contains 53,224 paths.
+Whole-repository searches include hidden and ignored files, excluding `.git`
+and model/raw tensor contents. Exact paths, relative paths and parent aliases
+were checked. Inaccessible unrelated Qwen files are recorded in the audit;
+no own-runtime reference-search access failure was reported. A no-follow
+repository/results symlink census found 5,176 links with no access errors.
+Incoming links, external hard links, pinned paths, protected record ancestry,
+all JSON/JSONL (including compressed copies), notes, sources and tracked files
+stay. Each archive gets fresh pin checks, complete member/hash verification,
+GNU tar member-set verification, source rehashes and accessible process checks
+before exact unlink. Retained files are hashed before and after. Directories
+and links remain; no recursive source deletion is used.
+
+### disk8 decisions before movement
+
+Each archive batches only the exact paths in its adjacent plan and manifests.
+The following are the audited roots; no other path beneath their common
+`/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2` parent is selected.
+
+| Archive group | Exact audited source root | Selected paths | Allocated bytes |
+| --- | --- | ---: | ---: |
+| `older-closed-private-caches` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet112-route-select` | 4 | 442,368 |
+| `older-closed-private-caches` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet113-gdn-row` | 14 | 6,078,464 |
+| `older-closed-private-caches` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet116-qsa-schedule` | 18 | 7,147,520 |
+| `older-closed-private-caches` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet117-hc-gate` | 18 | 8,437,760 |
+| `older-closed-private-caches` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet122-draft-budget` | 32 | 18,178,048 |
+| `older-closed-private-caches` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet122-draft-hc` | 16 | 9,216,000 |
+| `older-closed-private-caches` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet127-head-retune` | 6 | 2,899,968 |
+| `older-closed-private-caches` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet129-draft-acceptance` | 49 | 27,164,672 |
+| `recent-closed-compiler-cache-logs` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input` | 3 | 8,192 |
+| `recent-closed-compiler-cache-logs` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet138-xlayer-prefetch` | 50 | 24,477,696 |
+| `recent-closed-compiler-cache-logs` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap` | 20 | 138,752,000 |
+| `recent-closed-compiler-cache-logs` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout` | 115 | 52,973,568 |
+| `recent-closed-compiler-cache-logs` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet143-record-bundle` | 11 | 13,971,456 |
+| `recent-closed-compiler-cache-logs` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout` | 166 | 80,683,008 |
+| `recent-closed-compiler-cache-logs` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58t-resident-lookups` | 10 | 81,920 |
+| `recent-closed-compiler-cache-logs` | `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution` | 63 | 22,474,752 |
+
+### disk8 outcome — verified moves complete; 38 GB target not reached
+
+At **2026-10-18T22:26:01.114215+00:00**, root had **29,771,272,192 available bytes (29.771 GB)**, against **29,635,219,456 bytes (29.635 GB)** at the survey baseline. This pass reclaimed **412,987,392 allocated file bytes (0.413 GB)**. Concurrent packet work continued writing, so the free-space difference is not the reclaimed amount. **The 38 GB target was not reached; 8,228,727,808 bytes remain short.** The reviewed closed, unreferenced items were insufficient; the target did not override a keep decision.
+
+All **2 archives** passed full member SHA-256/link verification, independent GNU tar member-set checks, original-file rehashes, successful fresh pin checks and accessible process checks before removal. Final verification rechecked archive hashes and embedded manifests, confirmed **595 removed paths** absent and checked **22,120 retained files/links**, including **8,883 JSON/JSONL files**. Zero errors. Selected files were single-link regular files; all symlinks and external hard links stay.
+
+All archives below are under **`/mnt/raid-models/own-xpu-runtime-archive/disk8-20261018/`**, with adjacent `.manifest.json`, `.manifest.sha256`, `.tar.gz.sha256` and `.receipt.json` sidecars.
+
+| Archive filename | File paths | Reclaimed allocated bytes | Archive bytes | Root available after removal | Archive SHA-256 |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `older-closed-private-caches.tar.gz` | 157 | 79,564,800 | 18,564,076 | 29,549,850,624 | `b4f20c7c3cdc55872cd7c39420eec387ed3b82a15b83698c95234be89f4d3546` |
+| `recent-closed-compiler-cache-logs.tar.gz` | 438 | 333,422,592 | 80,920,729 | 29,773,561,856 | `c4603df9b51182165f83aac21e6dd620500c4c91a57ecc38e20e1414028c779e` |
+
+Restore by verifying the adjacent archive SHA-256, extracting only `payload/` into scratch space without dereferencing links, and checking each file against embedded `.disk8/manifest.json` and `.disk8/manifest.sha256`. Payload members are `payload/stage2/<packet>/<relative-path>`. The manifest lists every exact original path and audited root. Restore only selected files, preserving all current receipts, sources and links, before replaying historical compiler or cache paths.
+
+Kept: packet136 and record ancestry; packet58p/58v/58w/58x/58z; protected in-progress packets 58ab/58ad/58ae/148/149; packet49 oracle; chains and submissions; all model/system/venv/swap/agent/credential paths. Packet137 binaries remain because packet139 reads them even where the pin union does not list the executable. Packet142/145 lineage fixtures remain because retained aliases and local closure need them. Packet145 router evidence consumed by packet149 remains. Packet141 failed-attempt evidence and retained replay inputs stay. Packet143 parked status does not clear its pins. The CPU-only 140/144/146/58aa/58ac studies offer no qualifying bulk. Earlier rejected builds/captures were not reopened without new closure evidence. Large remaining screen directories are protected, live, record material, retained JSON, or lack exact closure.
+
+Whole-repository search diagnostics preserve 25 inaccessible old Qwen cache/STOP paths; no own-runtime reference file was inaccessible. Process audits list accessible and inaccessible PIDs; no permission workaround was used. Detailed exact-path and parent-reference decisions are retained in `audit/reference-review/` and `audit/older-review/`.
+
+Full survey, reference/link/process checks, exact plans, pin snapshots, scripts and verification results are preserved in **`/mnt/raid-models/own-xpu-runtime-archive/disk8-20261018/audit.tar.gz`**, **13,315,636 bytes**, SHA-256 **`da3160c47f4548911b439b5249c3e9309f473aeabb0af31277439e99bd26fd6d`**. Every one of its **97 audit payload files**, plus the embedded manifest, was read and hash-verified. Audit originals remain on RAID.

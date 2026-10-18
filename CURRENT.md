@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, disk8 archive pass recovered 0.413 GB; reserve still short:**
+Two verified archives preserve 595 closed, unused compiler outputs, logs and
+private cache files on RAID. Root had 29.771 GB free at the final file check,
+below the requested 38 GB. The remaining reviewed bulk is referenced,
+protected, or lacks clear closure. All 22,120 retained files and links passed,
+including 8,883 JSON/JSONL receipts. No device work or service was changed.
+[Archive paths, verification and restore instructions](experiments/own-xpu-runtime/stage2/DISK-CLEANUP-20261018.md).
+
 **October 18, packet58ad HC-fusion record chain prepared ahead on CPU:** The
 new seven-window chain binds packet58ab's final engine by hash, keeping
 tile16, overlap and the 21.55 GB cache. All 129 policy tests, seven entry paths,
