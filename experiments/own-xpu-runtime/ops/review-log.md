@@ -565,3 +565,15 @@ Actions:
 4. Codex **p132**: CPU-only study of a confidence-gated two-candidate speculative half (independent text; kill gate +3% projected net).
 5. Codex **opsmon** (gpu_time_review counts admission waits as idle; ops-level compile_turn that blocks only during started whole-host windows) and **disk6** (verified archive pass to ≥ 40 GB free).
 STOP DOING acknowledged: lane-B screens > ~15 min once a chain is past K2; secondary diagnostic passes after a decided primary; hand-offs keyed on post-chain CPU prep; further draft-format variants.
+
+## Review 25 (2026-10-18 ~15:05 UTC): ACT
+
+Both lanes stopped since 15:03 by refusals that came before any model load: packet58r host admission (115.48 vs 118.31 GB, parallel Codex CPU workers) and packet131's smoke ("unsafe identity path": the readiness map pinned the packet49 oracle results through the restored symlink; `run131 --plan` skipped `verify_map`). 2 h utilisation 51% (A 14%, B 45%). Faults 2.
+
+Actions:
+1. One-card hold now: refused evidence archived, 58r re-queued ahead of 58t on lane A, PAUSE-B, drivers restarted after archiving the failed done records (A started 15:06:38); `p58release2` releases lane B when 58t ends.
+2. Lane B cleaned: the five stale packet131 grid rows removed; Codex **p131b** fixes the oracle-path pin (with a plan-mode gate that runs the real ready gate) and `autoq2-p131b` queues its smoke + grid after the hold.
+3. Codex **opsrefusal**: lanequeue waits for host admission (≤ 20 min) and survives refusals proven pre-device (drops the job and its dependants, alerts, keeps the driver running); any possible device contact, fault line, latch or undrained teardown still stops the lane.
+4. Codex **p58u**: one-card admission bound derived from measured peaks (58g/58k/58n/58p, 58t's +29.3 GB) for future one-card packets.
+5. Packets 132 (+2.25% projected < +3%) and 134 (rank-0 gaps are draft waits, not enqueue) closed; Codex **p135** synthesises the full critical path of the 58.22 line and names the top levers ≥ +0.5% (or the practical ceiling).
+STOP DOING acknowledged: whole-host windows while Codex runs parallel CPU workers (new briefs cap Codex at ≤ 4 GB during holds); plan modes that skip the real gates; grid rows left queued after a refused smoke; v4 five-load grids for sub-2% runtime-switchable levers.
