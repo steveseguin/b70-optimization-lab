@@ -41,11 +41,12 @@ Caps belong only to CPU `__main__` processes. Root free space must remain
 at least 25 GB; packet build files must total at most 300 MB.
 
 The build entry is `v5/build_engine.py`. Gates are `head_cpu_gate.py`,
-`controller_gate.py`, `test_drain_fix.py`, then the v5 `full_shape.py`,
+`controller_gate.py`, `reset_regression.py`, `test_drain_fix.py`, then the v5 `full_shape.py`,
 `reset_gate.py`, `protocol_gate.py`, `test_v5.py`, `test_refusal.py`,
 `test_timing_report.py`, `exec_gate.py`, `cpu_seal.py`, `argument_gate.py`,
 `legacy_window_gate.py`, `worker_gate.py`, `launch_limit_gate.py`,
-`queue_plan.py` and `queue_gate.py`. The CPU seal's operator evidence is
+`queue_plan.py`, `queue_gate.py` and `readiness.py`.
+`v5/qualify_cpu.py` runs the complete sequence once and stops on any failure. The CPU seal's operator evidence is
 `evidence/head-byte-identity.json`. Pending evidence is never a pass.
 
 The post-release timing report separates hit/miss suffix wait, import,

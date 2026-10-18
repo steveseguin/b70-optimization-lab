@@ -89,7 +89,7 @@ def main():
         results.append(gate(name,config))
         save(P/'evidence'/('protocol-'+name+'.json'),results[-1])
     save(P/'evidence/protocol.json',dict(passed=True,device_executed=False,runs=results,
-         fixture_projection='experts=wide64, head=production, suffix_schedule=production; actual production shapes separately qualified by full-shape and selected startup',
+         fixture_projection='experts=wide64, head=production, selected suffix_schedule retained; split-head arithmetic and arrival ordering separately qualified by head/controller gates',
          binaries=results[0]['binaries'],sources={**results[0]['sources'],**{str(f.relative_to(ROOT)):sha(f) for f in (P/'mini_selection.py',control,candidate)}}))
 if __name__=='__main__':
  import resource

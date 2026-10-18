@@ -13,7 +13,7 @@ def limits():
  assert os.getpriority(os.PRIO_PROCESS,0)==19
  assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
  assert shutil.disk_usage('/').free>=25_000_000_000
- assert sum(f.stat().st_size for f in B.rglob('*') if f.is_file() and not f.is_symlink())<=300_000_000
+ assert sum(f.stat().st_size for f in P.rglob('*') if f.is_file() and 'build' in f.parts and not f.is_symlink())<=300_000_000
 
 def main():
  limits();(B/'tmp').mkdir(exist_ok=True);os.environ['TMPDIR']=str(B/'tmp')

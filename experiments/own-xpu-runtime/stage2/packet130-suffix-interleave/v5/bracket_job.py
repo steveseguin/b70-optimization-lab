@@ -19,6 +19,9 @@ def main(argv=None):
  ap.add_argument('--plan',action='store_true');a=ap.parse_args(argv)
  from cpu_seal import verify
  verify()
+ if not a.plan:
+  from readiness import verify_ready
+  verify_ready()
  if a.kind=='bracket':
   if a.plan:print(json.dumps(dict(device_executed=False,conditional_on='exact twelve-prompt 64-token candidate smoke; checked again at launch')))
   else:smoke_gate()

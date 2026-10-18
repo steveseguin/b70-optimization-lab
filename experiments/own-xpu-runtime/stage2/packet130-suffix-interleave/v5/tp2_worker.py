@@ -72,7 +72,7 @@ def run(identity, output, seconds, pair_dir=None):
     args = pipeline.parser().parse_args(['--output', str(output), '--device',
         '--binary', identity['binary'], '--dispatch', identity['dispatch'],
         '--controller', 'native', '--draft', 'mtp', '--draft-rank', str(placement['draft_rank']),
-        '--target-split', str(placement['target_split']), '--context', '4096', '--tokens', '128',
+        '--target-split', str(placement['target_split']), '--context', '4096', '--tokens', ('64' if identity.get('bracket',{}).get('kind')=='smoke' else '128'),
         '--retain-steps', 'none', '--timing', 'token', '--native-nice', '0',
         '--card', '0',
         '--seconds', str(seconds), '--wait-seconds', str(seconds)])

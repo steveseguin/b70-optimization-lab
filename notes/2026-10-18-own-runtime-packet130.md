@@ -79,3 +79,18 @@ copy makes all four clock-crossing tests pass. All four teardown-refusal tests
 pass, including actual CPU child stop pipes, preserving an unrelated child and
 the previous drain record. Pre-exec limits and the hit/miss timing-join unit
 test pass. No GPU, service, live queue or frozen tree was changed.
+
+## Qualification boundary
+
+The final qualification driver runs each CPU gate once and stops at the first
+failure. Heavy children set an 8 GiB cap only in their own main entry; native
+launch-limit probes retain and compare the inherited unlimited limits. Both
+smoke and bracket wrappers refuse launch without the final extended-gate
+qualification, in addition to the native CPU seal. The bracket additionally
+requires the exact twelve-prompt smoke. Both planned watchdogs are 4,800 s.
+
+The preliminary idle build and two waiting CPU gate coordinators were stopped
+by their recorded PIDs after source updates. No compiler or device child was
+active. Their partial build is explicitly superseded. The final build snapshots
+all native source hashes before compiling and refuses source drift before
+writing its receipt. The whole-host hold and serial compiler lock remain intact.

@@ -1,4 +1,4 @@
-"""CPU-only incremental build over frozen packet118, serial compilation."""
+"""CPU-only incremental build over frozen packet124c, serial compilation."""
 import hashlib,importlib.util,json,os,resource,shutil,subprocess,time,sys
 from pathlib import Path
 P=Path(__file__).resolve().parent; ROOT=P.parents[4]; STAGE=P.parents[1]
@@ -30,8 +30,9 @@ def main():
  limits();B.mkdir(exist_ok=True)
  from prepare_sources import prepare
  prepare()
+ captured={str(f.relative_to(ROOT)):sha(f) for f in [*LOCAL.glob('*.cpp'),*LOCAL.glob('*.hpp'),*LOCAL.glob('*.inc'),*P.glob('native/*'),*P.glob('native-src/*'),*LOCAL.joinpath('build/checked').rglob('*'),P/'prepare_sources.py',P/'build_engine.py'] if f.is_file()}
  prior=json.loads((BASE/'engine-commands.json').read_text());commands=[];sources={};artifacts={}
- # Pin every native source and object actually inherited from packet118.
+ # Pin every native source and object actually inherited from packet124c.
  parent=json.loads((BASE/'build-device-receipt.json').read_text())
  for name,digest in parent['sources'].items():
   path=ROOT/name
@@ -61,6 +62,8 @@ def main():
  for f in [*P.glob('native/*'),*P.glob('native-src/*'),*LOCAL.glob('*.hpp'),*LOCAL.glob('*.cpp'),*LOCAL.joinpath('build/checked').rglob('*'),P/'prepare_sources.py',P/'build_engine.py',P/'source-copy-provenance.json']:
   if f.is_file():sources[str(f.relative_to(ROOT))]=sha(f)
  sources.update(json.loads((P/'source-copy-provenance.json').read_text())['sources'])
+ assert all(sha(ROOT/name)==digest for name,digest in captured.items()),'native sources changed during compilation'
+ sources.update(captured)
  save(P/'engine-commands.json',commands)
  save(P/'evidence/build.json',dict(passed=True,device_executed=False,sources=sources,artifacts=artifacts,commands=commands,max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss))
  limits()

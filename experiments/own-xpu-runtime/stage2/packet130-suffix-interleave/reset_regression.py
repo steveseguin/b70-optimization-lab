@@ -39,7 +39,8 @@ def main():
     patch = ''.join(difflib.unified_diff(runtime.splitlines(True),
         runtime.splitlines(True),
         fromfile='a/' + relative, tofile='b/' + relative))
-    (P / 'proposed-fix.patch').write_text(patch)
+    # The copied repair is unchanged; retain the exact extracted snippets.
+    patch=fixed
     sources = {str((SOURCE / f).relative_to(ROOT)): sha(SOURCE / f)
                for f in ('request_reset.hpp', 'p105_runtime.hpp', 'round2_submit.cpp',
                          'p105_submit.cpp', 'p105_common.hpp')}
@@ -72,10 +73,11 @@ def main():
     result = dict(passed=True, device_executed=False, synthetic_logits=True,
                   failing_position_hidden_replay=False, runs=runs, commands=commands,
                   sources=sources, gate_sha256=sha(__file__),
-                  patch_sha256=sha(P / 'proposed-fix.patch'),
+                  fixed_snippet_sha256=hashlib.sha256(fixed.encode()).hexdigest(),
                   max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
     (P / 'evidence/reset-regression.json').write_text(json.dumps(result, indent=2) + '\n')
 
 
 if __name__ == '__main__':
+    resource.setrlimit(resource.RLIMIT_AS,(8*1024**3,8*1024**3))
     main()

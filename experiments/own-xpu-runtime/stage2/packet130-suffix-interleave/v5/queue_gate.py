@@ -1,6 +1,6 @@
 """Packet124c pattern: real queue loop/plan, scratch writes, intercepted execute.
 
-This view registers exactly one window, smoke-B and bracket-B (12 x 64 in one load).
+Two windows are registered: smoke-B (12 x 64) and bracket-B (five 12 x 128 views).
 Legacy eleven-window bundle chains are not admitted by this view's seal.
 Scheduler guards/review/status are synthetic; plan, argv, queue mutation and
 failure/no-retry behavior are real. No service or native process can execute.

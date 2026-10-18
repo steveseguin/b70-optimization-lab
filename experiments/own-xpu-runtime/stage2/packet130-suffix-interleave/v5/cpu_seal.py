@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from common import HERE,ROOT,read,require,save,sha,verify_map
 
-GATES=('build','full-shape','reset-bytes','protocol','exec-limits','policy')
+GATES=('build','full-shape','reset-bytes','protocol','exec-limits','policy','safety')
 
 def external_runtime_sources():
  """Retain the established v4 support closure and exact dynamic-import inputs."""
@@ -52,7 +52,7 @@ def validate_receipts():
  reset=rows['reset-bytes']['runs']
  require(len(reset)==4 and {(r['rank'],r['repeat']) for r in reset}=={(r,n) for r in (0,1) for n in (0,1)},'two reset processes per rank required')
  protocol=rows['protocol']['runs']
- require(len(protocol)==1 and len(protocol[0]['brackets'])==4,'two fresh protocol brackets required')
+ require(len(protocol)==1 and len(protocol[0]['brackets'])==4,'four fresh GNU/Intel protocol brackets required')
  for bracket in protocol[0]['brackets']:
   require(len(bracket['rows'])==5 and all(r['cached_tokens']==0 for r in bracket['rows']),'every bracket view cold and exact')
  for row in rows.values():
@@ -70,7 +70,7 @@ def seal(operator_evidence):
  op=read(operator_evidence)
  require(op.get('passed') is True and op.get('device_executed') is False,'head byte gate incomplete')
  verify_map(ROOT,op['sources'])
- operator_paths={operator_evidence,HERE.parent/'evidence/controller.json'}
+ operator_paths={operator_evidence,HERE.parent/'evidence/controller.json',HERE.parent/'evidence/reset-regression.json'}
  runs=op['runs']
  require(len(runs)==4 and {(r['compiler'],r['repeat']) for r in runs}=={(c,n) for c in ('GNU','Intel') for n in (1,2)},'GNU/Intel fresh head bytes required')
  import gzip,hashlib
@@ -82,7 +82,14 @@ def seal(operator_evidence):
  for run in controller['runs']:
   require(run['cases']==40 and run['hits_and_misses'] is True and run['negative_controls']==7,'forced arrival gate incomplete')
   path=ROOT/run['binary'];require(sha(path)==run['binary_sha256'],'controller binary changed');operator_paths.add(path)
- sources_extra={**op['sources'],**controller['sources']}
+ reset=read(HERE.parent/'evidence/reset-regression.json');verify_map(ROOT,reset['sources'])
+ require(reset['passed'] is True and reset['device_executed'] is False and len(reset['runs'])==4,'private suffix reset gate incomplete')
+ for run in reset['runs']:require(run['result']['fixed_exact_cases']==21 and run['result']['negative_control_mismatches']==6,'private active reset regression missing')
+ for row in (op,reset):
+  for cmd in row['commands']:
+   binary=Path(cmd[cmd.index('-o')+1]);compiler='GNU' if cmd[0]=='/usr/bin/g++' else 'Intel'
+   require(all(sha(binary)==r['binary_sha256'] for r in row['runs'] if r['compiler']==compiler),'operator fixture binary changed');operator_paths.add(binary)
+ sources_extra={**op['sources'],**controller['sources'],**reset['sources'],**rows['safety']['sources']}
  paths=set(HERE.glob('*.py'))|set(HERE.glob('native/*'))|set(HERE.glob('native-src/*'))|set(HERE.glob('lineage/*.json'))|set(HERE.glob('configs/*.json'))
  paths.discard(HERE/'lineage/screen-seal.json')
  paths.update(HERE/'evidence'/(n+'.json') for n in GATES)

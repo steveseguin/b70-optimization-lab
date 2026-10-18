@@ -26,7 +26,7 @@ def main():
             save(P/'evidence'/f'reset-rank{rank}-{repeat}.json',row);shutil.rmtree(dest)
             print('real CPU reset bytes',rank,repeat,'PASS',flush=True)
     save(P/'evidence/reset-bytes.json',dict(passed=True,device_executed=False,runs=runs,binary_sha256=sha(out/'fixture'),commands=[cmd,link],
-         fixture_projection='experts=wide64, head=production, suffix_schedule=production; packet100 rejects miniature shapes; both miniature views have warming disabled; reset evidence only, actual warming dispatch separately covered by full-size startup and byte gates',
+         fixture_projection='experts=wide64, head=production, selected suffix_schedule retained; reset evidence only, actual split-head arithmetic and arrival ordering covered by head/controller gates',
          sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'reset_gate.py',P/'native/reset_bytes.cpp',P/'mini_selection.py',control,candidate]}))
     limits()
 if __name__=='__main__':

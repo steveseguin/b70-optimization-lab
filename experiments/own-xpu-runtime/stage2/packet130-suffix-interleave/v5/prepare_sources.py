@@ -1,4 +1,4 @@
-"""Create checked packet130 bracket sources; frozen packet118 stays read-only."""
+"""Create checked packet130 bracket sources; frozen packet124c stays read-only."""
 import hashlib,json,sys
 from pathlib import Path
 P=Path(__file__).resolve().parent;ROOT=P.parents[4];STAGE=P.parents[1]
@@ -20,7 +20,7 @@ def prepare():
  from kernel_gate import mirror
  mirror()
  sys.path.remove(str(LOCAL))
- wrapper=STAGE/'packet117-hc-gate/v5'
+ wrapper=STAGE/'packet119-down-warm/v5'
  sources={str(f.relative_to(ROOT)):sha(f) for f in [*wrapper.glob('*.py'),*wrapper.glob('native/*')] if f.is_file()}
  out=P/'native-src';out.mkdir(exist_ok=True)
  for name in ('main.cpp','rank.hpp','mtp.hpp'):

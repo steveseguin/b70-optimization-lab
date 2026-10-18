@@ -50,7 +50,7 @@ def probe(kind,check_limits=False):
    except Reached:pass
   assert len(seen)==2
   for rank,cmd in enumerate(seen):
-   for key,value in [('--rank',str(rank)),('--context','4096'),('--max-new','128'),('--seconds','4800'),('--draft-rank','1'),('--target-split','0'),('--retain-steps','none'),('--selection-sha256',sha(P/'lineage/selection.json'))]:assert cmd[cmd.index(key)+1]==value,(key,cmd)
+   for key,value in [('--rank',str(rank)),('--context','4096'),('--max-new','64' if kind=='smoke' else '128'),('--seconds','4800'),('--draft-rank','1'),('--target-split','0'),('--retain-steps','none'),('--selection-sha256',sha(P/'lineage/selection.json'))]:assert cmd[cmd.index(key)+1]==value,(key,cmd)
    assert '--authorized-device-window' in cmd and '--mini' not in cmd
   return dict(passed=True,kind=kind,device_executed=False,native_exec_intercepted=True,argv=seen,limits_checked=check_limits,inherited_limits=inherited,final_limits=exec_limits.snapshot(),operational_admission_synthetic=True)
 

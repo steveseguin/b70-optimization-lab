@@ -24,7 +24,7 @@ class Tests(unittest.TestCase):
    with self.assertRaisesRegex(ValueError,'missing seal'):bracket_job.main(['--kind','bracket','--lane','B','--output','/tmp/p130-no-write','--plan'])
    smoke.assert_not_called()
  def test_bracket_requires_smoke(self):
-  with patch.object(cpu_seal,'verify',return_value={}),patch.object(bracket_job,'smoke_gate',side_effect=ValueError('missing smoke')):
+  with patch.object(cpu_seal,'verify',return_value={}),patch('readiness.verify_ready',return_value={}),patch.object(bracket_job,'smoke_gate',side_effect=ValueError('missing smoke')):
    with self.assertRaisesRegex(ValueError,'missing smoke'):bracket_job.main(['--kind','bracket','--lane','B','--output','/tmp/p130-no-write'])
  def test_bundle7_exact_baseline(self):
   parent=json.loads((P.parents[1]/'packet124c-record-bundle/selection.json').read_text());parent['choices']['suffix_schedule']='production';self.assertEqual(parent,self.base)
