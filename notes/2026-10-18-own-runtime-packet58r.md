@@ -66,6 +66,25 @@ paths with 24 negative cases, 8 full-size binding checks and 6 miniature
 reset brackets pass. Final sealing and temporary queue planning follow the
 last Intel link, which respects the shared compiler/whole-host guard.
 
+Final handoff, 13:06 UTC (inside the two-hour time box): native build milestone
+`2165ebe90` followed review milestone `eff55c452`; each was pushed immediately.
+The final seal verifies 510 source/dependency pins and a 76,509,170-byte build.
+The packet49 results are a symlink to the authoritative external store, so
+their completion hash is anchored in our sealed local `oracle-binding.json`
+and checked before following its full hash chain. A replacement-completion
+regression brings the final Python count to 80. No oracle bytes were changed.
+
+The new [proposal](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p58r-v5-A.txt)
+passes the coordinator planner on a temporary queue. Its
+[receipt](../experiments/own-xpu-runtime/stage2/packet58r-onecard-v5/evidence/queue-plans.json)
+records no live queue change, no service/device execution and no bracket
+output directory. Root free space was 32,631,570,432 bytes, with 1,342,177,280
+bytes reserved for outputs and the 25 GB floor preserved. The watchdog is
+7,200 seconds, exactly 4× the upper planning estimate. The coordinator's
+next action is the admitted whole-host card-0 gap; device token equality,
+timing and fresh-load repeats are pending. See the
+[CPU closeout](../experiments/own-xpu-runtime/stage2/packet58r-onecard-v5/CPU-PREPARATION-CLOSEOUT.md).
+
 No GPU job, service, sudo, power/memory/swap/page-cache setting, reboot, kill,
 live queue edit or external submission was performed. CPU work uses nice19,
 cores 8–15/24–31, Python -B and closed stdin. Root stays above the 25 GB stop

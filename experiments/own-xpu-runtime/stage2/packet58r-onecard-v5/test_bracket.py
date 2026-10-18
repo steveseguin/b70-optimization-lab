@@ -70,6 +70,14 @@ class BracketPolicyTests(unittest.TestCase):
               'assert not W.S.FAULT.search("ordinary progress")')
         subprocess.run([sys.executable,'-B','-c',code],cwd=W.HERE,stdin=subprocess.DEVNULL,check=True,timeout=20)
 
+    def test_oracle_completion_replacement_refused(self):
+        original=D.read
+        def changed(path):
+            row=original(path)
+            return dict(row,completion_sha256='0'*64) if Path(path)==D.HERE/'oracle-binding.json' else row
+        with patch.object(D,'read',side_effect=changed),self.assertRaisesRegex(ValueError,'registered oracle completion changed'):
+            D.oracle_inputs()
+
 
 class SummaryTests(unittest.TestCase):
     """Replay actual 60-request checker with synthetic native receipts in scratch."""

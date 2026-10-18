@@ -12,12 +12,14 @@ readiness and live admission before launch. No GPU, service, live queue or
 host setting changed in this preparation.
 [Work note and handoff](notes/2026-10-18-own-runtime-packet124.md#packet124c--restore-oracle-authority-and-gate-the-whole-queue-october-18).
 
-**October 18, packet58r one-card one-load bracket implemented on CPU:**
+**October 18, packet58r one-card one-load bracket sealed on CPU:**
 The new tile16 copy can switch route and recurrence without loading the model
 again. It checks every token against packet49 through A/B/A/B/A. Both compilers
-pass kernel bytes; miniature resets and full-size binding checks pass. Fusion
-is unavailable in this engine and is rejected. Final seals and a temporary
-whole-host card-0 proposal plan are being completed; no device result is claimed.
+pass kernel bytes; all 80 Python tests, native resets, full-size binding and
+argument checks pass. The seal verifies and the new card-0 proposal passes a
+temporary queue plan. The coordinator can schedule its 20–30 minute whole-host
+gap, keeping lane B paused throughout. Fusion is unavailable and rejected.
+Device equality and speed remain unmeasured; no record is claimed.
 No GPU job, service, live queue or host setting changed in this preparation.
 [Work note](notes/2026-10-18-own-runtime-packet58r.md).
 

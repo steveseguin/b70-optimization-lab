@@ -63,10 +63,10 @@ def create():
     budget=M.plan();sources.update(budget['allocation_inventory']['sources'])
     sources[budget['census']['source_path']]=budget['census']['source_sha256']
     sources.update(read(P/'oracle-binding.json')['files_sha256'])
-    from suite_driver import ORACLE,oracle_inputs
-    oracle_inputs()  # Verify every transitive result/input pin before anchoring it.
-    completion=ORACLE/'results/completion.json'
-    sources[str(completion.relative_to(ROOT))]=sha(completion)
+    from suite_driver import oracle_inputs
+    # Results are an authoritative external-store symlink. Their fixed root
+    # hash lives in our sealed local oracle-binding, not a repo-contained file.
+    oracle_inputs()
     for name in ('packet94-hc-norm-fusion/compile_turn.py','packet56-draft-prefix/p56_head_support.py',
                  'packet56-draft-prefix/suite_metrics.py','packet34-replay-bench/window.py'):
         path=P.parent/name;sources[str(path.relative_to(ROOT))]=sha(path)

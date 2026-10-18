@@ -32,7 +32,7 @@ full-size mock binding covers all four selections, both miss paths and each
 selection at contexts 32 and 4096. Six miniature brackets compare retained
 layer bytes against fresh controls. A wrong oracle stops before B0.
 Twelve intercepted window paths and six real host-only native parser paths
-retain the launch contract without opening a device. Seventy-nine Python
+retain the launch contract without opening a device. Eighty Python
 tests cover policy, memory, mask, drain, teardown and reporting failures.
 
 ## What failed or remains uncertain
@@ -61,10 +61,11 @@ qualifies for submission or promotion.
 - [Python policy](evidence/python-cpu-gates.json), [memory](evidence/memory-budget.json)
 - [Drain fix](evidence/drain-fix.json), [teardown](evidence/teardown-integration.json)
 - [Implementation and reproduction](README.md), [copy lineage](copy-manifest.json)
+- [Final seal](build-receipt.json), [temporary queue plan](evidence/queue-plans.json)
 
 Generated binaries/objects are ignored and restored with the documented build
 against frozen parent objects. This is an originating-host lab packet, not a
-publicly reproducible package. No required raw GPU evidence exists yet.
+publicly reproducible package. No packet58r GPU evidence exists yet.
 
 ## When to revisit
 

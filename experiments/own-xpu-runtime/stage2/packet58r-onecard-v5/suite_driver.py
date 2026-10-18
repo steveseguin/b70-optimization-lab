@@ -51,6 +51,7 @@ def oracle_inputs():
     binding = read(HERE / 'oracle-binding.json')
     for name, digest in binding['files_sha256'].items():
         require(sha(ROOT / name) == digest, 'oracle source binding: ' + name)
+    require(sha(ORACLE/'results/completion.json')==binding['completion_sha256'], 'registered oracle completion changed')
     completion = read(ORACLE / 'results/completion.json')
     require(completion['passed'] is True and completion['device_executed'] is False
             and completion['arithmetic'] == ARITHMETIC and completion['prompts'] == 12
