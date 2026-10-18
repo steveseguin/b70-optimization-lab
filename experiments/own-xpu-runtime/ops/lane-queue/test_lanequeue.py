@@ -129,8 +129,9 @@ class Tests(QueueTestCase):
             self.queue.run()
 
     def test_execute_captures_returncode(self):
-        with patch.object(q.subprocess, 'run', return_value=subprocess.CompletedProcess([], 13)):
-            self.assertEqual(q.Backend().execute(['mock'], self.root / 'run.log'), 13)
+        with patch.object(q.subprocess, 'Popen') as popen:
+            popen.return_value.poll.return_value = 13
+            self.assertEqual(q.Backend().execute(['mock', '--unit=screen-one'], self.root / 'run.log'), 13)
 
     def test_device_failure_stops(self):
         self.write([self.job(), self.job('two')])

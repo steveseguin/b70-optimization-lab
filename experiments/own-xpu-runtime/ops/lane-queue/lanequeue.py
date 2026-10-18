@@ -2,9 +2,10 @@
 """Editable, crash-closed per-lane queue. Only `run` starts device units."""
 import argparse
 import ast
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 from datetime import datetime, timezone
 import fcntl
+import hashlib
 import json
 import math
 import os
@@ -33,6 +34,8 @@ PROC = Path('/proc')
 DRAIN_SPACING = 61.0
 DRAIN_WAIT_LIMIT = 120.0
 LIVE_WAIT_LIMIT = 1800.0
+HOST_WAIT_LIMIT = 1200.0
+HOST_HEADROOM = 1024 ** 3
 
 
 def require(ok, message):
@@ -176,9 +179,16 @@ def resolve(value):
 
 def validate(job, lane):
     require(isinstance(job, dict), 'job must be an object')
-    require(set(job) <= {'name', 'argv', 'script', 'env_extra', 'review', 'lane'}, 'unknown job field')
+    require(set(job) <= {'name', 'argv', 'script', 'env_extra', 'review', 'lane',
+                         'depends_on', 'plan', 'admission'}, 'unknown job field')
     require(job.get('lane') == lane, 'job lane differs from queue')
     require(isinstance(job.get('name'), str) and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,100}', job['name']), 'invalid unit name')
+    deps = job.get('depends_on', [])
+    require(isinstance(deps, list) and all(isinstance(d, str) and
+            re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,100}', d) and d != job['name']
+            for d in deps), 'depends_on must list other job names')
+    for key in ('plan', 'admission'):
+        require(key not in job or isinstance(job[key], dict), key + ' must be an object')
     require(('argv' in job) != ('script' in job), 'choose argv or script')
     extra = job.get('env_extra', {})
     require(isinstance(extra, dict), 'env_extra must be an object')
@@ -233,6 +243,62 @@ def fault_patterns():
                     patterns[target.id] = re.compile(ast.literal_eval(node.value.args[0]), re.I)
     require(set(patterns) == {'FAULT', 'DELETED'}, 'fault expressions unavailable')
     return patterns['FAULT'], patterns['DELETED']
+
+
+class DeviceObservation:
+    """Read only: observe the unit cgroup, including grandchildren, while it runs.
+
+    Sampling alone never proves absence of device work. A fresh job receipt
+    must independently assert that it never executed, and ambiguity stops.
+    """
+    def __init__(self, unit):
+        self.unit = unit
+        self.pids = set()
+        self.device_fds = set()
+        self.errors = set()
+        self.live = set()
+        self.samples = 0
+
+    def sample(self):
+        live = set()
+        try:
+            processes = list(PROC.iterdir())
+        except OSError:
+            self.errors.add('proc unavailable')
+            return
+        for proc in processes:
+            if not proc.name.isdigit():
+                continue
+            try:
+                groups = proc.joinpath('cgroup').read_text().splitlines()
+                if not any(self.unit in line.split(':', 2)[-1].split('/') for line in groups):
+                    continue
+            except FileNotFoundError:
+                continue
+            except OSError:
+                self.errors.add('cgroup unreadable: ' + proc.name)
+                continue
+            live.add(int(proc.name))
+            self.pids.add(int(proc.name))
+            try:
+                for fd in (proc / 'fd').iterdir():
+                    try:
+                        target = os.readlink(fd)
+                    except FileNotFoundError:
+                        continue  # An fd closed between enumeration and read.
+                    if target.startswith(('/dev/dri/', '/dev/accel/')):
+                        self.device_fds.add(target)
+            except FileNotFoundError:
+                # An exited task cannot supply a complete observation.
+                self.errors.add('fd observation incomplete: ' + proc.name)
+            except OSError:
+                self.errors.add('fd observation unreadable: ' + proc.name)
+        self.live = live
+        self.samples += 1
+
+    def evidence(self):
+        return dict(pids=sorted(self.pids), device_fds=sorted(self.device_fds),
+                    errors=sorted(self.errors), live_pids=sorted(self.live), samples=self.samples)
 
 
 class Backend:
@@ -292,9 +358,19 @@ class Backend:
         return str(output)
 
     def execute(self, cmd, log):
+        unit = next(a.split('=', 1)[1] for a in cmd if a.startswith('--unit=')) + '.service'
+        observation = DeviceObservation(unit)
+        self.device_observation = None
         with log.open('x') as f:
-            cp = subprocess.run(cmd, cwd=ROOT, stdin=subprocess.DEVNULL, stdout=f, stderr=f)
-            rc = cp.returncode  # Capture before clocks, status reads or logging.
+            child = subprocess.Popen(cmd, cwd=ROOT, stdin=subprocess.DEVNULL, stdout=f, stderr=f)
+            while True:
+                observation.sample()
+                rc = child.poll()  # Capture before clocks, status reads or logging.
+                if rc is not None:
+                    break
+                time.sleep(.1)
+        observation.sample()
+        self.device_observation = observation.evidence()
         return rc
 
     def status(self, name, receipt):
@@ -357,6 +433,106 @@ def option(argv, name):
     return None
 
 
+def host_requirement(job, plan):
+    """Take the largest declared admission bound; never import packet code."""
+    bounds = []
+    whole_host = False
+
+    def visit(row):
+        nonlocal whole_host
+        if isinstance(row, list):
+            for item in row:
+                visit(item)
+        elif isinstance(row, dict):
+            whole_host |= row.get('scope') == 'whole-host'
+            for key, value in row.items():
+                if key == 'host_required_available_bytes':
+                    require(type(value) is int and value > 0, 'invalid host admission bound')
+                    bounds.append(value)
+                elif isinstance(value, (dict, list)):
+                    visit(value)
+
+    visit(plan)
+    visit(job.get('plan', {}))
+    visit(job.get('admission', {}))
+    if not bounds:
+        packet = job_script(job).parent
+        for relative in ('memory-plan.json', 'memory-budget.json', 'evidence/memory-budget.json'):
+            path = packet / relative
+            if path.is_file():
+                visit(json.loads(path.read_text()))
+    require(bounds or not whole_host, 'whole-host plan has no host admission bound')
+    return max(bounds, default=0)
+
+
+def mem_available():
+    values = re.findall(r'^MemAvailable:\s+(\d+) kB$', (PROC / 'meminfo').read_text(), re.M)
+    require(len(values) == 1, 'MemAvailable unavailable or malformed')
+    return int(values[0]) * 1024
+
+
+def predevice_evidence(job, observation):
+    """Require fresh whole-job refusal evidence, never a fast-exit heuristic."""
+    require(isinstance(observation, dict) and observation.get('samples', 0) > 0
+            and observation.get('pids') and observation.get('device_fds') == []
+            and observation.get('errors') == [] and observation.get('live_pids') == [],
+            'complete device-free PID observations unavailable')
+    require(not os.path.lexists(COORD / f"active-lane-{job['lane']}.json"),
+            'lane marker remains')
+    require(not list((STAGE / 'screen/v3').glob('fault-*')), 'fault latch remains')
+    teardown = STAGE / 'screen/v3/teardown-state.json'
+    if os.path.lexists(teardown):
+        drain = json.loads(teardown.read_text())
+        require(isinstance(drain, dict) and drain.get('drained') is True,
+                'shared teardown undrained or unknown')
+    output = option(job.get('argv', []), '--output')
+    require(output, 'pre-device refusal needs explicit job --output')
+    output = resolve(output)
+    require(output.is_dir() and not output.is_symlink(), 'fresh job receipt directory unavailable')
+    # plan_job required this output to be absent before launch. Check all
+    # window/queue receipts: a later refusal cannot erase an earlier K1 run.
+    paths = sorted(p for p in output.rglob('*.json') if p.name in
+                   ('window.json', 'queue.json', 'refusal.json') or 'refusal' in p.name)
+    proof, hashes = [], {}
+    for path in paths:
+        require(not path.is_symlink() and path.resolve().is_relative_to(output.resolve()),
+                'receipt escapes fresh job output')
+        raw = path.read_bytes()
+        row = json.loads(raw)
+        require(isinstance(row, dict), 'invalid refusal receipt')
+        no_load = any(isinstance(row.get(key), str) and 'no pin or model load' in row[key].lower()
+                      for key in ('error', 'reason', 'message'))
+        require((row.get('device_executed') is False or ('device_executed' not in row and no_load))
+                and ('child_still_running' not in row or row['child_still_running'] is False)
+                and not row.get('completed') and not row.get('device_complete')
+                and not row.get('child_retained'),
+                'receipt does not exclude device work: ' + str(path))
+        hashes[str(path)] = hashlib.sha256(raw).hexdigest()
+        if (path.parent == output and row.get('passed') is False
+                and (row.get('error') or row.get('stop_reasons') or row.get('refused') or no_load)):
+            proof.append(str(path))
+    require(proof, 'no explicit failed pre-device job receipt')
+    return dict(receipts=proof, receipt_sha256=hashes, observation=observation, teardown=str(teardown))
+
+
+def dependent_names(rows, refused):
+    """Transitive explicit dependencies plus the packet's smoke prerequisite."""
+    dropped = {refused['name']}
+    def prefix(name):
+        match = re.match(r'^(?:packet|p)(\d+[a-z]*)(?=[-_.]|$)', name)
+        return match[1] if match else None
+    changed = True
+    while changed:
+        changed = False
+        smoke_packets = {prefix(name) for name in dropped if 'smoke' in name.lower()} - {None}
+        for row in rows:
+            if row['name'] not in dropped and (dropped.intersection(row.get('depends_on', []))
+                    or prefix(row['name']) in smoke_packets):
+                dropped.add(row['name'])
+                changed = True
+    return dropped
+
+
 def report_failure_evidence(job):
     """Require job-local report/release proof and the shared completed drain.
 
@@ -417,7 +593,8 @@ def plan_job(job, ldp, invoke=subprocess.run):
                        for n in ast.walk(ast.parse(source)))
     if not supports:
         require(not jobs and not option(argv, '--seal'), 'cannot verify sealed job without --plan')
-        return dict(name=job['name'], plan='unsupported; static argv/environment checks only')
+        return dict(name=job['name'], plan='unsupported; static argv/environment checks only',
+                    host_required_available_bytes=host_requirement(job, {}))
     clean = []
     skip = False
     for arg in argv:
@@ -444,7 +621,14 @@ def plan_job(job, ldp, invoke=subprocess.run):
     cp = invoke(clean + ['--plan'], cwd=ROOT, env=env, stdin=subprocess.DEVNULL,
                 capture_output=True, text=True, timeout=120)
     require(cp.returncode == 0, 'CPU plan failed (seal, inputs or fresh outputs); inspect packet plan directly')
-    return dict(name=job['name'], plan='passed', seal='checked by packet plan/wrapper')
+    try:
+        metadata = json.loads(cp.stdout)
+    except ValueError:
+        require('host_required_available_bytes' not in cp.stdout and 'whole-host' not in cp.stdout,
+                'host admission plan is not valid JSON')
+        metadata = {}
+    return dict(name=job['name'], plan='passed', seal='checked by packet plan/wrapper',
+                host_required_available_bytes=host_requirement(job, metadata))
 
 
 class Queue:
@@ -476,6 +660,29 @@ class Queue:
     def launch_interrupted(self):
         return self.stopped or any((self.directory / f'{flag}-{self.lane}').exists()
                                    for flag in ('STOP', 'PAUSE'))
+
+    def wait_host_admission(self, job, required, limit):
+        if not required:
+            return not self.launch_interrupted()
+        last_log = float('-inf')
+        while True:
+            if self.launch_interrupted():
+                return False
+            self.backend.guards(self.lane)
+            if self.launch_interrupted():
+                return False
+            available = mem_available()
+            shortfall = required + HOST_HEADROOM - available
+            if shortfall <= 0:
+                return True
+            require(self.now() < limit, 'host admission wait timed out; no launch')
+            if self.now() - last_log >= 30:
+                self.event('WAIT-HOST-ADMISSION', name=job['name'],
+                           available_bytes=available, required_bytes=required,
+                           headroom_bytes=HOST_HEADROOM, shortfall_bytes=shortfall,
+                           until_monotonic=limit)
+                last_log = self.now()
+            self.sleep(max(0.0, min(1.0, limit - self.now())))
 
     def wait_drain_spacing(self, job):
         # Do not hold the edit lock while waiting: pause/reorder remains usable.
@@ -517,25 +724,54 @@ class Queue:
     def finish(self, job, record):
         # Writers use the same edit lock. Re-read after the long job; never
         # overwrite the coordinator's newly appended/reordered rows.
-        with lock(self.directory / f'edit-{self.lane}.lock'):
+        predevice = record.get('outcome') == 'REFUSED-PREDEVICE'
+        lanes = ('A', 'B') if predevice else (self.lane,)
+        with ExitStack() as stack:
+            for lane in lanes:
+                stack.enter_context(lock(self.directory / f'edit-{lane}.lock'))
             rows = read_queue(self.directory, self.lane)
             matching = [r for r in rows if r['name'] == job['name']]
             require(not matching or matching == [job], 'inflight job was edited; completion retained, queue not overwritten')
+            queues = {lane: read_queue(self.directory, lane) for lane in lanes}
+            dropped = dependent_names([r for rs in queues.values() for r in rs], job) if predevice else {job['name']}
+            if predevice:
+                for lane in lanes:
+                    inflight = self.directory / f'inflight-{lane}.json'
+                    if lane != self.lane and os.path.lexists(inflight):
+                        active = json.loads(inflight.read_text())
+                        require(active['job']['name'] not in dropped, 'dependent job already inflight; stop for review')
+                record['dropped_dependencies'] = sorted(dropped - {job['name']})
             with self.done.open('a') as f:
                 f.write(json.dumps(dict(job=job, **record), sort_keys=True) + '\n')
                 f.flush()
                 os.fsync(f.fileno())
-            atomic(self.directory / f'queue-{self.lane}.txt', ''.join(json.dumps(r) + '\n' for r in rows if r['name'] != job['name']))
+            for lane, queued in queues.items():
+                skipped = [r for r in queued if r['name'] in dropped and r['name'] != job['name']]
+                if skipped:
+                    with (self.directory / f'done-{lane}.txt').open('a') as f:
+                        for row in skipped:
+                            f.write(json.dumps(dict(job=row, outcome='SKIPPED-DEPENDENCY',
+                                      depends_on_refused=job['name'], end_unix=record['end_unix'])) + '\n')
+                        f.flush()
+                        os.fsync(f.fileno())
+                    for row in skipped:
+                        Queue(self.directory, lane, self.backend).event('SKIPPED-DEPENDENCY',
+                                name=row['name'], depends_on_refused=job['name'])
+                if lane == self.lane or skipped:
+                    atomic(self.directory / f'queue-{lane}.txt', ''.join(json.dumps(r) + '\n'
+                           for r in queued if r['name'] not in dropped))
         self.active.unlink()
 
     def run(self):
         with lock(self.directory / f'driver-{self.lane}.lock', nonblocking=True):
             require(not os.path.lexists(self.active), 'unfinished driver record exists; inspect unit and evidence, never retry automatically')
             until = self.now()
+            admission_deadlines = {}
             if self.done.exists():
                 records = [json.loads(line) for line in self.done.read_text().splitlines() if line.strip()]
                 if records:
-                    require(records[-1]['outcome'] in ('DONE', 'REPORT-FAILED'), 'previous job failed; lane remains stopped for review')
+                    terminal = [r for r in records if r['outcome'] != 'SKIPPED-DEPENDENCY']
+                    require(not terminal or terminal[-1]['outcome'] in ('DONE', 'REPORT-FAILED', 'REFUSED-PREDEVICE'), 'previous job failed; lane remains stopped for review')
                     elapsed = time.time() - records[-1]['end_unix']
                     until += max(0, 90 - elapsed)
             while self.boundary(until):
@@ -550,10 +786,16 @@ class Queue:
                     require(job['name'] not in names, 'job already completed; no automatic replay')
                 self.backend.guards(self.lane)
                 ldp = library_path()
-                plan_job(job, ldp)
+                plan = plan_job(job, ldp)
+                required = plan.get('host_required_available_bytes', 0)
+                deadline = admission_deadlines.setdefault(job['name'], self.now() + HOST_WAIT_LIMIT)
+                if not self.wait_host_admission(job, required, deadline):
+                    continue
                 review = self.backend.review(job, self.directory) if job.get('review') else None
                 # Recheck after CPU preparation; no queue snapshot survives a pause.
                 if not self.wait_drain_spacing(job):
+                    continue
+                if not self.wait_host_admission(job, required, deadline):
                     continue
                 with lock(self.directory / f'edit-{self.lane}.lock'):
                     current = read_queue(self.directory, self.lane)
@@ -563,7 +805,8 @@ class Queue:
                     # A teardown or pause can arrive while taking the edit lock
                     # or checking guards. Discard this preparation and recheck.
                     if (self.launch_interrupted() or live_window_blocker(self.lane) is not None
-                            or self.now() < drain_spacing_deadline()):
+                            or self.now() < drain_spacing_deadline()
+                            or (required and mem_available() < required + HOST_HEADROOM)):
                         continue
                     run_id = job['name'] + '-' + uuid.uuid4().hex
                     receipt = self.directory / (run_id + '.exit.json')
@@ -572,6 +815,7 @@ class Queue:
                     save(self.active, dict(job=job, start_utc=started, receipt=str(receipt), log=str(log),
                                            review=review, faults_start=faults_start))
                 self.event('START', name=job['name'])
+                self.backend.device_observation = None
                 rc = self.backend.execute(command(job, review, receipt, ldp), log)
                 duration = self.now() - start
                 ended, end_unix = utc(), time.time()
@@ -582,7 +826,7 @@ class Queue:
                 elif status['Result'] != 'success' or str(status['ExecMainStatus']) != '0':
                     outcome = 'FAILED-status'
                 postflight_ok, faults_end = False, None
-                evidence = {}
+                evidence = dict(device_observation=self.backend.device_observation)
                 try:
                     faults_end = self.backend.guards(self.lane)
                     require(type(faults_start) is int and faults_end == faults_start,
@@ -593,6 +837,14 @@ class Queue:
                     if outcome == 'DONE':
                         outcome = 'FAILED-postflight'
                 if rc != 0 and postflight_ok:
+                    try:
+                        require(status['Result'] == 'exit-code' and str(status['ExecMainStatus']) == str(rc),
+                                'ordinary job exit status unavailable')
+                        evidence['predevice_evidence'] = predevice_evidence(job, self.backend.device_observation)
+                        outcome = 'REFUSED-PREDEVICE'
+                    except (ValueError, OSError) as exc:
+                        evidence['predevice_rejection'] = str(exc)
+                if rc != 0 and postflight_ok and outcome != 'REFUSED-PREDEVICE':
                     try:
                         evidence['report_failure_evidence'] = report_failure_evidence(job)
                         outcome = 'REPORT-FAILED'
@@ -608,6 +860,9 @@ class Queue:
                 if outcome == 'REPORT-FAILED':
                     self.event('ALERT', name=job['name'],
                                reason='CPU report failed after passed device run and release; continuing to a different job; no retry')
+                elif outcome == 'REFUSED-PREDEVICE':
+                    self.event('ALERT', name=job['name'], dropped_dependencies=record['dropped_dependencies'],
+                               reason='Proven pre-device refusal; dependent rows dropped; continuing to an independent job; no retry')
                 elif outcome != 'DONE':
                     self.event('ALERT', reason='lane stopped; no retry or next job')
                     return 1

@@ -154,6 +154,73 @@ nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest discover \
   -s experiments/own-xpu-runtime/ops/lane-queue -v < /dev/null
 ```
 
+## Host-memory admission before START
+
+The queue retains `host_required_available_bytes` from the packet's CPU
+`--plan` JSON. Proposals may also provide `plan` or `admission` objects with
+that field, including nested memory plans. The largest declared bound wins.
+When none is present, the queue reads the packet's `memory-plan.json`,
+`memory-budget.json`, or `evidence/memory-budget.json`, if available. It never
+imports a memory planner to discover a bound. A declared whole-host scope
+without a readable bound refuses; malformed or nonpositive bounds refuse.
+
+Before START or an inflight record, `MemAvailable` must be at least that bound
+**plus 1 GiB**. The queue checks again after review/drain waiting and under the
+edit lock before launch. A shortfall logs `WAIT-HOST-ADMISSION`, including
+available, required, headroom and shortfall bytes, at most every 30 seconds
+within each wait. Polls honor PAUSE, STOP, signals, and existing journal,
+marker and latch guards. Sleeps are at most one second. The **1200-second**
+deadline belongs to the job name for the driver lifetime; pause/reprepare does
+not renew it. An unresolved shortfall at that deadline stops without launch.
+Queue edits remain unlocked while waiting and the head is reread before START.
+This is an admission observation, not a memory reservation; frozen wrappers
+still make the final checks. No memory, swap or page-cache settings change.
+
+## Proven pre-device refusals
+
+A nonzero ordinary exit can become `REFUSED-PREDEVICE` only when all of these
+conditions hold:
+
+- The job-start and complete postflight journal counts agree with the reviewed
+  baseline. No lane marker remains, **no fault latch on either lane** remains,
+  and any existing shared teardown receipt says `drained: true`.
+- While waiting for the unit, the queue observes its cgroup's PIDs and child
+  cgroups through `/proc` every 0.1 seconds. It must have observed at least one
+  PID, no `/dev/dri/` or `/dev/accel/` fd, no unreadable/incomplete observations,
+  and no remaining PID after exit. Observations are retained in done records.
+- The root of the explicit fresh `--output` directory contains a failed `window.json`,
+  `queue.json`, or refusal-named JSON receipt. It must explicitly say
+  `device_executed: false`, or omit that field and explicitly state
+  “no pin or model load” in its error/reason/message. All window/queue/refusal
+  receipts under that output must exclude device work, retained children and
+  completed stages. Receipt hashes are retained. Any positive or ambiguous
+  receipt defeats the exception, including an earlier successful K1 fixture.
+
+Sampling is supporting evidence, never proof by itself. Fast exit, a low
+memory peak, a CPU traceback or a missing receipt cannot qualify. Jobs without
+an explicit output/receipt, unreadable evidence, signal exits and all possible
+device failures retain the previous stop-for-review behavior. There is no
+wrapper bypass or automatic retry. A reporting-only failure still uses its
+separate existing proof requirements.
+
+On qualification the refused row is recorded in done/events, and an ALERT
+names it and the discarded dependencies. Under both edit locks (A then B),
+the queue rereads both queues and removes transitive `depends_on` names and
+same-packet rows whose prerequisite was a refused smoke. `depends_on` is an
+optional list of job names. Packet names `p131-…` and `packet131-…` share a
+prefix; `p131b-…` is separate. Removed rows get `SKIPPED-DEPENDENCY` done/event
+records, never START. An already-inflight dependent stops for review instead
+of being removed. New independent rows and coordinator reorderings survive.
+
+The driver continues after its existing 90-second gap. Restart permits these
+two new outcomes but never replays a completed/skipped job; skipped rows cannot
+hide an older failed job on the other lane. Partial completion still leaves
+the existing inflight/no-replay recovery barriers in place. No services are
+restarted by this change: the coordinator adopts it between jobs.
+
+The [work note](../../../../notes/2026-10-18-own-runtime-ops-predevice-refusals.md)
+records the historical receipt limits, read-only live-queue plans and CPU tests.
+
 ## Drain-fix check before chain readiness
 
 Every new bundle's CPU preparation must run this command from the repository
