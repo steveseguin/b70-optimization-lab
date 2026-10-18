@@ -41,9 +41,13 @@ packed-head disclosure, DOWN and attention disclosure, and packet97e's strictly
 bound KD projection before any seal. Parent metadata is snapshotted locally;
 new screen seals do not pin mutable parent selection/readiness/evidence outputs.
 
-Shared immutable 211 MB CPU fixture payloads use verified per-file symlinks in
-a packet-owned directory. They are not copied or modified. The preparation cap
-covers this packet’s new build bytes; inherited payload identity is checked.
+Shared immutable CPU fixture payloads use verified per-file links in a
+packet-owned directory. Seven executed fixtures use hard links so their sealed
+paths remain inside the repository; other fixtures retain symlinks. No parent
+payload is modified. The preparation cap includes the hard links' logical sizes.
+The external oracle manifest has a local immutable snapshot for screen sealing;
+the original oracle and complete startup receipt are rechecked before each
+composite proposal or launch by the orchestration's `seal_inputs.py`.
 
 All 512 compositions receive the exhaustive CPU gate. With disk tight, only
 the control, candidate, leave-one-out, largest-allocation and all-dimensions view manifests are

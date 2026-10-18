@@ -2,12 +2,13 @@
 import json
 import orchestrate as o
 from bundle_selection import KEYS,views
-from prepare_packet import seal_view
+from seal_inputs import prepare as prepare_inputs, seal_view
 from composite_jobs import variants
 from read_screens import collect,require_current
 
 def main():
  o.limits()
+ prepare_inputs()
  screens=collect();control,candidate,confirmed=o.select(screens)
  config=o.composition(screens,control,candidate,confirmed,{}, {})
  choices={'control':control,'candidate':candidate,**variants(config,True)}

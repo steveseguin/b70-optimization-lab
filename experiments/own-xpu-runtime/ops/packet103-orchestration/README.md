@@ -49,3 +49,14 @@ and speed remain device gates against iq3-p49-split32-v1.
 with exact commands and log hashes, and records a storage refusal without
 weakening the guard. The coordinator’s queue inputs are the composite proposals;
 proposed-p103-A/B are retained for the packet’s internal compatibility rehearsal.
+
+`seal_inputs.py` keeps the generic screen seal's repository path checks intact.
+It restores seven executed CPU fixtures as packet-owned hard links after checking
+their startup hashes, and snapshots the external oracle suite manifest locally.
+The original oracle symlink stays unchanged. Every composite proposal and launch
+rechecks the complete original startup receipt and both manifest copies. Unknown
+external seal dependencies are refused. The fixture links add no new payload
+blocks; the preparation build, including their logical sizes, stays below 300 MB.
+
+Composite filenames watched by the coordinator are published only after both
+temporary queue plans pass. No live queue is changed by this publication.

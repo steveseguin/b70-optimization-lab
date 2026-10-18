@@ -78,6 +78,8 @@ def check_selection(config):
 
 
 def validate(config):
+    from seal_inputs import verify as verify_startup_inputs
+    verify_startup_inputs()
     from chain_seal import check_map
     from bootstrap import install
     install()
@@ -115,6 +117,7 @@ def generate(config, leave_one_out=False, wrapper='v4'):
         save(decision, config)
     digest = sha(decision)
     paths = []
+    payloads = {}
     for lane in ('A', 'B'):
         rows = []
         for variant in variants(config, leave_one_out):
@@ -127,13 +130,13 @@ def generate(config, leave_one_out=False, wrapper='v4'):
                     env_extra={}, review=str((WRAPPER/'fault_review.py').relative_to(ROOT))))
         label = 'leave-one-out' if leave_one_out else 'composite'
         proposal = QUEUE / f'proposed-p103-{label}-{lane}.txt'
-        proposal.write_text(''.join(json.dumps(row) + '\n' for row in rows))
+        payloads[lane] = ''.join(json.dumps(row) + '\n' for row in rows).encode()
         paths.append(proposal)
     plans = []
     # The planner reads queue files only in this disposable directory.
     with tempfile.TemporaryDirectory(prefix='p103-queue-') as tmp:
         for lane, proposal in zip(('A', 'B'), paths):
-            (Path(tmp)/f'queue-{lane}.txt').write_bytes(proposal.read_bytes())
+            (Path(tmp)/f'queue-{lane}.txt').write_bytes(payloads[lane])
             cp = subprocess.run([sys.executable, '-B', str(QUEUE/'lanequeue.py'),
                 'plan', '--lane', lane, '--directory', tmp], cwd=ROOT,
                 stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=240)
@@ -141,8 +144,14 @@ def generate(config, leave_one_out=False, wrapper='v4'):
             log.write_text(cp.stdout + cp.stderr)
             assert cp.returncode == 0, str(log)
             plans.append(dict(proposal=str(proposal.relative_to(ROOT)),
-                sha256=sha(proposal), jobs=len(proposal.read_text().splitlines()),
+                sha256=hashlib.sha256(payloads[lane]).hexdigest(), jobs=len(payloads[lane].splitlines()),
                 plan_log_sha256=sha(log), passed=True))
+    # The coordinator watches these names. Expose them only after both plans pass.
+    for lane, proposal in zip(('A', 'B'), paths):
+        with tempfile.NamedTemporaryFile(dir=QUEUE, prefix='.p103-proposal-', delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(payloads[lane])
+        temporary.replace(proposal)
     receipt = dict(passed=True, device_executed=False, live_queue_modified=False,
                    decision=str(decision.relative_to(ROOT)), decision_sha256=digest, plans=plans)
     save(O / f'{label}-plans.json', receipt)

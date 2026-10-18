@@ -115,3 +115,16 @@ and the old half-cache command's required refusal. The source-bound receipt
 and compressed per-window archive verify. Runtime was 2,868.55 seconds; peak
 child RSS was 1,250,804 KiB. No device ran. Required-view sealing and temporary
 queue rehearsals follow using these unchanged sources.
+
+The first seal attempt refused eight paths that resolved outside the repository:
+seven inherited CPU fixture links and the shared oracle suite manifest. Its logs
+are retained under `ops/packet103-orchestration/evidence/seal-path-refusal/`.
+The new orchestration helper restores the seven fixtures as hash-checked hard
+links (221,520,100 logical build bytes, no new payload blocks) and binds a local
+copy of the manifest. The original oracle symlink and all runtime/startup sources
+are unchanged. Every composite validation now rechecks the complete original
+startup receipt and both manifest copies. Unknown external seal inputs still
+fail. Six new regression checks pass, including changed originals, changed
+snapshots, unknown external dependencies and refusal before proposal publication;
+the orchestration suite passes 37 checks. Watched proposal filenames are now
+published only after both temporary plans succeed.
