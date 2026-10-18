@@ -1,0 +1,98 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "plans": [
+    {
+      "label": "micro-B",
+      "lane": "B",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p100-micro-B.txt",
+      "sha256": "3a7dbafbe03d2f34a4484d65f86c17f5ab74fada64776a491b3496aaca951490",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/tmp/p100-queue-plan-c_4izew_"
+      ],
+      "passed": true,
+      "runnable": false
+    },
+    {
+      "label": "down-interleave-B-grid",
+      "lane": "B",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p100-down-interleave-B-grid.txt",
+      "sha256": "50ade592bba75d7963f78ac5f4561a2d225af3a0d64bdc1018fd7d8a25862062",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/tmp/p100-queue-plan-c_4izew_"
+      ],
+      "passed": true,
+      "runnable": false
+    },
+    {
+      "label": "down-interleave-A-confirm",
+      "lane": "A",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p100-down-interleave-A-confirm.txt",
+      "sha256": "830f9d1e959297b86e1590ba7b9d1a586475bbae44248ad59bd3bbc44696e463",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "A",
+        "--directory",
+        "/tmp/p100-queue-plan-c_4izew_"
+      ],
+      "passed": true,
+      "runnable": false
+    },
+    {
+      "label": "down-tile16-B-grid",
+      "lane": "B",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p100-down-tile16-B-grid.txt",
+      "sha256": "24b184a19739f5534ff499bde6abe05b8ac3338dc0db47c136ae8f71ac65378e",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/tmp/p100-queue-plan-c_4izew_"
+      ],
+      "passed": true,
+      "runnable": false
+    },
+    {
+      "label": "down-tile16-A-confirm",
+      "lane": "A",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p100-down-tile16-A-confirm.txt",
+      "sha256": "de034f97623b419cd6c4f11e4b53ae84a3758e498ae9606b43f351fc7dad81d9",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "A",
+        "--directory",
+        "/tmp/p100-queue-plan-c_4izew_"
+      ],
+      "passed": true,
+      "runnable": false
+    }
+  ],
+  "execution_gate": "receipt-bound route bytes, measured >=15% kernel gain, exact B winner before A confirmation; records on A"
+}

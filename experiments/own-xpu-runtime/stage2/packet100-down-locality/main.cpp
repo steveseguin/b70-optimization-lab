@@ -713,6 +713,9 @@ public:
                  std::chrono::seconds(a.seconds)) {attribution.enabled=args.timing=="attribution";pending.reserve(4096);prepared.reserve(p.launches.size());matrices.reserve(p.launches.size());gemv_choices.reserve(p.launches.size());
     if(!a.selection.empty()){require(!a.selection_sha256.empty(),"selection requires sealed --selection-sha256");sealed_selection.load(a.selection.string(),a.selection_sha256);}
     else require(a.selection_sha256.empty(),"selection SHA256 requires selection file");
+    const auto down_choice=sealed_selection.choices.contains("experts")?sealed_selection.choices.at("experts"):"production";
+    if(down_choice.find("down-interleave")!=std::string::npos||down_choice.find("down-tile16")!=std::string::npos)
+      require(!a.mini&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p100 locality requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
     const bool cached_expert=sealed_selection.choices.contains("experts")&&(p100::gate_choice(sealed_selection.choices.at("experts"))=="exp-halfcache"||p100::gate_choice(sealed_selection.choices.at("experts")).ends_with("+halfcache"));
     const bool cached_hc=sealed_selection.choices.contains("hc_gate")&&sealed_selection.choices.at("hc_gate")=="hc-weightcache";
     require(!(cached_expert&&cached_hc),"p90 combined caches are not admitted");

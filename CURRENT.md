@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, packet100 prepared on CPU:** Two exact DOWN locality choices
+and production pass both compilers, all 34 full-size startup checks, three
+seals and five temporary queue plans. The build uses about 151 MB. The device
+test is blocked: packet77/86 kept route hashes, but matching raw route bytes
+were not found. No GPU, service or live queue ran. Recover those inputs before
+the microbenchmark; only a measured 15% kernel-time win can reach separate B
+screens and A confirmations. Records stay on A. No speed is claimed.
+[Evidence and handoff](notes/2026-10-18-own-runtime-packet100.md).
+
 **October 18, packet99 CPU checks complete:** Three exact IQ2 lookup choices
 and their half-cache forms pass both compilers without linked spills. Full-size
 startup, memory admission and refusal checks pass on both ranks. Down uses a

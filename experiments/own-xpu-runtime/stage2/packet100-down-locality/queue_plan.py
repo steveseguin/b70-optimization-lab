@@ -1,32 +1,31 @@
-"""Write proposals and plan only in a temporary copy of the queue directory."""
+"""Write new proposals only; execute their plans on disposable queue copies."""
 import json,subprocess,sys,tempfile
 from pathlib import Path
-from build_engine import P,ROOT,save,sha,limits
-from screen_jobs import jobs,output,WRAPPER,seal_jobs
+from build_engine import P,ROOT,sha,save,limits
 
 def proposals():
- queue=P.parents[1]/'ops/lane-queue';paths=[]
- for lane,mode,suffix in (('A','grid','A'),('B','grid','B')):
-  result=[]
-  for row in jobs(lane,mode=mode):
-   dest=output(row) if mode=='grid' else WRAPPER/'evidence'/f'p97-{lane}-confirm-{row["index"]}'
-   result.append(dict(name=f'packet97-{lane}-{mode}-{row["index"]}',lane=lane,argv=['/usr/bin/python3','-B',str((P/'screen_job.py').relative_to(ROOT)),'--lane',lane,'--index',str(row['index']),'--output',str(dest),'--fault-review','{REVIEW}','--authorized-device-window'],env_extra={},review=str((WRAPPER/'fault_review.py').relative_to(ROOT))))
-  path=queue/f'proposed-p97-{suffix}.txt';path.write_text(''.join(json.dumps(r)+'\n' for r in result));paths.append((lane,mode,path))
- return paths
+ queue=P.parents[1]/'ops/lane-queue';relative=str(P.relative_to(ROOT));review='experiments/own-xpu-runtime/stage2/screen/v4-lanes/fault_review.py'
+ rows=[('micro-B','B',['/usr/bin/python3','-B',relative+'/run_micro.py','--lane','B','--run','--fault-review','{REVIEW}','--authorized-device-window'])]
+ for name in ('down-interleave','down-tile16'):
+  for label,lane in (('B-grid','B'),('A-confirm','A')):
+   rows.append((name+'-'+label,lane,['/usr/bin/python3','-B',relative+'/run_screens.py','--candidate',name,'--direction','B-grid','--lane',lane,'--run','--fault-review','{REVIEW}','--authorized-device-window']))
+ paths=[]
+ for label,lane,argv in rows:
+  p=queue/('proposed-p100-'+label+'.txt');body=json.dumps(dict(name='packet100-'+label,lane=lane,argv=argv,env_extra={},review=review))+'\n'
+  if p.exists():assert p.read_text()==body,'never overwrite different proposed job'
+  else:p.write_text(body)
+  paths.append((label,lane,p))
+ return queue,paths
 
 def main():
- limits();seal_jobs();queue=P.parents[1]/'ops/lane-queue';rows=[]
- with tempfile.TemporaryDirectory(prefix='p97-queue-',dir=P/'build/tmp') as tmp:
+ limits();queue,paths=proposals();records=[]
+ with tempfile.TemporaryDirectory(prefix='p100-queue-plan-') as tmp:
   dest=Path(tmp)
-  # Copy the queue's Python tools and data needed by planning; never live locks,
-  # state, pending jobs or review records.
-  for source in queue.glob('*.py'):(dest/source.name).write_bytes(source.read_bytes())
-  for lane,mode,source in proposals():
-   (dest/f'queue-{lane}.txt').write_bytes(source.read_bytes())
-   command=[sys.executable,'-B',str(queue/'lanequeue.py'),'plan','--lane',lane,'--directory',str(dest)]
-   log=P/'evidence'/f'queue-plan-{lane}-{mode}.log'
-   with log.open('w') as f:subprocess.run(command,cwd=ROOT,stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,check=True,timeout=240)
-   rows.append(dict(lane=lane,mode=mode,proposal=str(source.relative_to(ROOT)),sha256=sha(source),command=command,passed=True,log_sha256=sha(log)))
- save(P/'evidence/queue-plans.json',dict(passed=True,device_executed=False,live_queue_modified=False,plans=rows))
- print('6 jobs planned on temporary queues; live queue untouched')
+  for label,lane,path in paths:
+   (dest/('queue-'+lane+'.txt')).write_bytes(path.read_bytes())
+   cmd=[sys.executable,'-B',str(queue/'lanequeue.py'),'plan','--lane',lane,'--directory',str(dest)]
+   with (P/'evidence'/('queue-plan-'+label+'.log')).open('w') as log:subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=180)
+   records.append(dict(label=label,lane=lane,proposal=str(path.relative_to(ROOT)),sha256=sha(path),command=cmd,passed=True,runnable=False))
+ save(P/'evidence/queue-plans.json',dict(passed=True,device_executed=False,live_queue_modified=False,plans=records,execution_gate='receipt-bound route bytes, measured >=15% kernel gain, exact B winner before A confirmation; records on A'))
+ print('five temporary queue plans PASS; no live queue write')
 if __name__=='__main__':main()

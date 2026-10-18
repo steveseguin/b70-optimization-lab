@@ -184,6 +184,15 @@ def main():
    (P/'evidence'/(case+'.log')).write_text(r.stdout+r.stderr)
    assert r.returncode!=0 and 'selection' in r.stderr,(case,r.stderr)
   finally:shutil.rmtree(dest)
+ for label in ('down-interleave','down-tile16'):
+  path=S/'selection.json';save(path,selection(label))
+  for kind in ('serial','gemv','streaming','draft-rank','split','context','legacy'):
+   dest=S/'scratch';dest.mkdir()
+   try:
+    r=subprocess.run([str(S/'fixture'),str(path),sha(path),'1',str(dest),kind,'1','0'],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120)
+    assert r.returncode!=0 and 'p100 locality requires' in r.stderr,(label,kind,r.stderr)
+   finally:shutil.rmtree(dest)
+ report['unsupported_modes_rejected']=14
  report.update(negative_allocations=negatives,negative_extent_rejected=True,selection_negatives_rejected=5)
  from math_gate import closure
  for f in [*closure(),P/'full_shape.py',P/'memory_plans.py',P/'memory_gate.py',P/'bundle_selection.py',P/'selection-template.json',P/'dispatch-speed6.json',*generated]:report['sources'][str(f.relative_to(ROOT))]=sha(f)
