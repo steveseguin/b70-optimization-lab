@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, queue live-window admission checked on CPU:** A now waits for a
+live B window before starting, then keeps the 61-second drain gap. B keeps its
+permitted overlap with an A exactness window. Fault, latch and pause checks
+stay active during the bounded wait. All 96 CPU tests pass. Read-only live
+plans found A's already-used evidence output and initially passed all five B
+entries; ongoing coordinator work then advanced B. No service, GPU, live queue,
+marker, latch or setting changed here. The coordinator picks up the code on
+its normal between-job restart. [Work note](notes/2026-10-18-own-runtime-ops-lane-overlap.md).
+
 **October 18, packet124 bundle8 BASE sealed on CPU:** This is bundle7 with
 repaired host cooldown waiting and exactly the same native binaries and
 selection. Both compilers reproduce its saved output bytes; both ranks pass

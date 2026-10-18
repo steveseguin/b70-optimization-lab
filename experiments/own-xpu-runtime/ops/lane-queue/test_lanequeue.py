@@ -51,6 +51,8 @@ class QueueTestCase(unittest.TestCase):
         self.queue = q.Queue(self.root, 'A', self.backend, now=lambda: self.clock[0], sleep=self.sleep)
         self.addCleanup(patch.stopall)
         patch.object(q, 'STAGE', self.root / 'stage2').start()
+        patch.object(q, 'COORD', self.root / 'coordination').start()
+        patch.object(q, 'PROC', self.root / 'proc').start()
         boot_path = self.root / 'boot_id'
         boot_path.write_text('2cba7160-0000-0000-0000-000000000000\n')
         patch.object(q, 'BOOT_ID_PATH', boot_path).start()
@@ -530,6 +532,231 @@ class DrainSpacingTests(QueueTestCase):
         self.assertEqual(self.clock[0], 100.0 + q.DRAIN_WAIT_LIMIT)
         self.assertEqual(self.backend.runs, [])
         self.assertFalse(self.queue.active.exists())
+
+
+class LiveWindowTests(QueueTestCase):
+    def setUp(self):
+        super().setUp()
+        self.clock[0] = 100.0
+        self.teardown = q.STAGE / 'screen/v3/teardown-state.json'
+        self.teardown.parent.mkdir(parents=True)
+        q.COORD.mkdir()
+        self.boot = q.BOOT_ID_PATH.read_text().strip()
+        self.write([self.job()])
+        self.backend.after = lambda: setattr(self.queue, 'stopped', True)
+
+    def owner(self, lane='B', scope=None, marker=True):
+        owner = dict(pid=12345, start_ticks=50, boot_id=self.boot,
+                     lane=lane, scope=scope or 'lane-' + lane)
+        proc = q.PROC / '12345'
+        proc.mkdir(parents=True, exist_ok=True)
+        (proc / 'stat').write_text('12345 (name with ) spaces) S ' + '0 ' * 18 + '50\n')
+        if marker:
+            q.save(q.COORD / f'active-lane-{lane}.json', owner)
+        q.save(self.teardown, dict(boot_id=self.boot, drained=False,
+                                  pid=12345, chain_reservation=owner))
+        return owner
+
+    def release(self):
+        (q.COORD / 'active-lane-B.json').unlink(missing_ok=True)
+        (q.COORD / 'active-lane-A.json').unlink(missing_ok=True)
+        q.save(self.teardown, dict(boot_id=self.boot, drained=True,
+                                  completed_monotonic=self.clock[0]))
+
+    def start_time(self):
+        self.assertEqual(self.queue.run(), 0)
+        self.assertEqual(len(self.backend.runs), 1)
+        return self.clock[0] - self.backend.duration
+
+    def test_a_waits_for_live_b_then_61_seconds_after_drain(self):
+        self.owner()
+        def sleep(seconds):
+            self.sleep(seconds)
+            if self.clock[0] == 300.0:  # longer than the spacing-only budget
+                self.release()
+        self.queue.sleep = sleep
+        self.assertEqual(self.start_time(), 361.0)
+        self.assertEqual([kind for kind, _ in self.events],
+                         ['WAIT-OTHER-LANE-LIVE', 'WAIT-DRAIN-SPACING', 'START', 'DONE', 'STOP'])
+
+    def test_live_drain_owner_without_marker_waits(self):
+        self.owner(marker=False)
+        self.queue.sleep = lambda seconds: (self.sleep(seconds), self.release() if self.clock[0] == 101.0 else None)
+        self.assertEqual(self.start_time(), 162.0)
+
+    def test_v3_pid_only_drain_waits(self):
+        self.owner(marker=False)
+        q.save(self.teardown, dict(boot_id=self.boot, drained=False, pid=12345))
+        self.assertIsNotNone(q.live_window_blocker('A'))
+        self.assertIsNotNone(q.live_window_blocker('B'))
+
+    def test_marker_only_waits_before_drain_exists_and_after_drain(self):
+        self.owner()
+        self.teardown.unlink()
+        self.assertIsNotNone(q.live_window_blocker('A'))
+        q.save(self.teardown, dict(boot_id=self.boot, drained=True, completed_monotonic=0))
+        self.assertIsNotNone(q.live_window_blocker('A'))
+
+    def test_b_is_not_delayed_by_live_a_exactness(self):
+        self.owner('A')
+        job = dict(self.job(), lane='B')
+        (self.root / 'queue-B.txt').write_text(json.dumps(job) + '\n')
+        self.queue = q.Queue(self.root, 'B', self.backend, now=lambda: self.clock[0], sleep=self.sleep)
+        self.queue.event = lambda kind, **kw: self.events.append((kind, kw))
+        self.assertEqual(self.start_time(), 100.0)
+        self.assertNotIn('WAIT-OTHER-LANE-LIVE', [kind for kind, _ in self.events])
+
+    def test_other_live_combinations_refused_by_wrapper_wait(self):
+        for owner_lane, scope, arriving in [('A', 'whole-host', 'B'),
+                                            ('A', 'lane-A', 'A'), ('B', 'lane-B', 'B')]:
+            with self.subTest(owner_lane=owner_lane, scope=scope, arriving=arriving):
+                self.owner(owner_lane, scope)
+                self.assertIsNotNone(q.live_window_blocker(arriving))
+
+    def test_b_does_not_get_unmatched_a_exception(self):
+        self.owner('A')
+        q.save(q.COORD / 'active-lane-A.json', dict(pid=999))
+        self.assertIsNotNone(q.live_window_blocker('B'))
+
+    def test_pause_during_live_wait_no_start(self):
+        self.owner()
+        def sleep(seconds):
+            self.sleep(seconds)
+            if (self.root / 'PAUSE-A').exists():
+                self.assertEqual(self.backend.runs, [])
+                (self.root / 'STOP-A').touch()
+            else:
+                (self.root / 'PAUSE-A').touch()
+        self.queue.sleep = sleep
+        self.assertEqual(self.queue.run(), 0)
+        self.assertEqual(self.backend.runs, [])
+        self.assertFalse(self.queue.active.exists())
+
+    def test_stop_and_signal_during_live_wait_no_start(self):
+        self.owner()
+        for signal_stop in (False, True):
+            with self.subTest(signal=signal_stop):
+                self.queue.stopped = False
+                (self.root / 'STOP-A').unlink(missing_ok=True)
+                self.queue.sleep = lambda _: (setattr(self.queue, 'stopped', True) if signal_stop
+                                              else (self.root / 'STOP-A').touch())
+                self.assertEqual(self.queue.run(), 0)
+                self.assertEqual(self.backend.runs, [])
+                self.assertFalse(self.queue.active.exists())
+
+    def test_fault_during_live_wait_halts(self):
+        self.owner()
+        self.backend.guard = lambda: q.require(self.clock[0] < 101.0, 'fault count changed')
+        with self.assertRaisesRegex(ValueError, 'fault count changed'):
+            self.queue.run()
+        self.assertEqual(self.backend.runs, [])
+        self.assertFalse(self.queue.active.exists())
+
+    def test_latch_during_live_wait_halts(self):
+        self.owner()
+        self.backend.guards = lambda lane: q.Backend.guards(self.backend, lane)
+        self.queue.sleep = lambda _: (self.teardown.parent / 'fault-old-A.json').touch()
+        with self.assertRaisesRegex(ValueError, 'fault latch'):
+            self.queue.run()
+        self.assertEqual(self.backend.runs, [])
+        self.assertFalse(self.queue.active.exists())
+
+    def test_dead_b_keeps_existing_guards_and_wrapper_path(self):
+        self.owner()
+        (q.PROC / '12345/stat').unlink()
+        before = self.teardown.read_bytes()
+        self.assertIsNone(q.live_window_blocker('A'))
+        self.backend.guards = lambda lane: q.Backend.guards(self.backend, lane)
+        # Queue has never guarded the other lane's stale marker; frozen wrapper
+        # remains responsible. Simulate that refusal, without a real launch.
+        self.backend.rc, self.backend.duration = 7, 2
+        self.assertEqual(self.queue.run(), 1)
+        self.assertEqual(self.done()[0]['outcome'], 'REFUSED-fast')
+        self.assertEqual(self.teardown.read_bytes(), before)
+        self.assertTrue((q.COORD / 'active-lane-B.json').exists())
+        self.assertNotIn('WAIT-OTHER-LANE-LIVE', [kind for kind, _ in self.events])
+
+    def test_pid_reuse_and_zombies_keep_existing_path(self):
+        self.owner()
+        stat = q.PROC / '12345/stat'
+        for state, ticks in [('Z', 50), ('X', 50), ('S', 51)]:
+            with self.subTest(state=state, ticks=ticks):
+                stat.write_text('12345 (name) ' + state + ' ' + '0 ' * 18 + str(ticks))
+                self.assertIsNone(q.live_window_blocker('A'))
+
+    def test_other_boot_or_drained_record_without_marker_does_not_wait(self):
+        self.owner(marker=False)
+        for changes in [dict(boot_id='other'), dict(drained=True)]:
+            self.owner(marker=False)
+            row = json.loads(self.teardown.read_text())
+            q.save(self.teardown, {**row, **changes})
+            self.assertIsNone(q.live_window_blocker('A'))
+
+    def test_invalid_records_keep_existing_path(self):
+        for value in ['{', '[]', 'null', '{"pid":true}', '{"pid":-1}']:
+            (q.COORD / 'active-lane-B.json').write_text(value)
+            self.teardown.write_text(value)
+            self.assertIsNone(q.live_window_blocker('A'))
+        with patch.object(Path, 'read_text', side_effect=PermissionError('unreadable')):
+            self.assertIsNone(q.live_window_blocker('A'))
+
+    def test_live_wait_bounded_without_inflight(self):
+        self.owner()
+        with patch.object(q, 'LIVE_WAIT_LIMIT', 5):
+            with self.assertRaisesRegex(ValueError, 'other lane live wait timed out'):
+                self.queue.run()
+        self.assertEqual(self.clock[0], 105.0)
+        self.assertEqual(self.backend.runs, [])
+        self.assertFalse(self.queue.active.exists())
+
+    def test_slow_live_logging_clamps_sleep_and_still_times_out(self):
+        self.owner()
+        original = self.queue.event
+        def event(kind, **values):
+            original(kind, **values)
+            if kind == 'WAIT-OTHER-LANE-LIVE':
+                self.clock[0] += 6
+        self.queue.event = event
+        with patch.object(q, 'LIVE_WAIT_LIMIT', 5):
+            with self.assertRaisesRegex(ValueError, 'other lane live wait timed out'):
+                self.queue.run()
+        self.assertEqual(self.backend.runs, [])
+        self.assertFalse(self.queue.active.exists())
+
+    def test_final_guard_live_b_is_rechecked(self):
+        calls = []
+        def guard():
+            calls.append(self.clock[0])
+            if len(calls) == 3:
+                self.owner()
+        self.backend.guard = guard
+        self.queue.sleep = lambda seconds: (self.sleep(seconds), self.release() if self.clock[0] == 101.0 else None)
+        self.assertEqual(self.start_time(), 162.0)
+        self.assertIn('WAIT-OTHER-LANE-LIVE', [kind for kind, _ in self.events])
+
+    def test_live_b_arriving_during_spacing_is_rechecked(self):
+        q.save(self.teardown, dict(boot_id=self.boot, drained=True, completed_monotonic=90))
+        def sleep(seconds):
+            self.sleep(seconds)
+            if self.clock[0] == 110.0:
+                self.owner()
+            elif self.clock[0] == 120.0:
+                self.release()
+        self.queue.sleep = sleep
+        self.assertEqual(self.start_time(), 181.0)
+        self.assertIn('WAIT-OTHER-LANE-LIVE', [kind for kind, _ in self.events])
+
+    def test_queue_edit_during_live_wait_discards_old_job(self):
+        self.owner()
+        def sleep(seconds):
+            with q.lock(self.root / 'edit-A.lock', nonblocking=True):
+                self.write([self.job('replacement')])
+            self.sleep(seconds)
+            if self.clock[0] == 101.0:
+                self.release()
+        self.queue.sleep = sleep
+        self.assertEqual(self.start_time(), 162.0)
+        self.assertEqual(self.done()[0]['job']['name'], 'replacement')
 
 
 class ReportFailureTests(QueueTestCase):

@@ -29,8 +29,10 @@ AFFINITY = {'A': '0-3,16-19', 'B': '4-7,20-23'}
 BOOT = '2cba7160'
 BASE = 2
 BOOT_ID_PATH = Path('/proc/sys/kernel/random/boot_id')
+PROC = Path('/proc')
 DRAIN_SPACING = 61.0
 DRAIN_WAIT_LIMIT = 120.0
+LIVE_WAIT_LIMIT = 1800.0
 
 
 def require(ok, message):
@@ -60,6 +62,62 @@ def drain_spacing_deadline():
         return completed + DRAIN_SPACING
     except (OSError, ValueError, OverflowError):
         return 0.0
+
+
+def live_window_blocker(lane):
+    """Delay known live conflicts, without granting frozen-wrapper admission.
+
+    v4 drain_gate permits only B over a matching live A lane-A reservation.
+    Dead, reused, missing or unreadable owners keep the existing guard path.
+    Read only: never acquire/create protocol locks or repair owner records.
+    """
+    def read(path):
+        try:
+            row = json.loads(path.read_text())
+            return row if isinstance(row, dict) else {}
+        except (OSError, ValueError):
+            return {}
+
+    def live(owner):
+        pid = owner.get('pid')
+        if type(pid) is not int or pid <= 0:
+            return False
+        try:
+            # Match chain_devices.process_identity, including zombies and
+            # comm names containing spaces/parentheses. Check PID reuse when
+            # the reservation supplies start_ticks; v3 drains only have pid.
+            fields = (PROC / str(pid) / 'stat').read_text().rsplit(')', 1)[1].split()
+            return (len(fields) >= 20 and fields[0] not in ('Z', 'X')
+                    and (owner.get('start_ticks') is None
+                         or int(fields[19]) == owner['start_ticks']))
+        except (OSError, ValueError, IndexError):
+            return False
+
+    # Cover B's entire reservation, including before its drain record exists
+    # and after drain completion but before its release/postflight finishes.
+    active_b = read(COORD / 'active-lane-B.json')
+    if lane == 'A' and live(active_b):
+        return dict(source='active-lane-B.json', pid=active_b['pid'])
+    row = read(STAGE / 'screen/v3/teardown-state.json')
+    try:
+        boot = BOOT_ID_PATH.read_text().strip()
+    except OSError:
+        return None
+    if row.get('boot_id') != boot or row.get('drained') is True:
+        return None
+    owner = row.get('chain_reservation')
+    owner = owner if isinstance(owner, dict) else {}
+    if (lane == 'B' and owner == read(COORD / 'active-lane-A.json')
+            and owner.get('scope') == 'lane-A' and owner.get('lane') == 'A'
+            and owner.get('boot_id') == boot and owner.get('start_ticks') is not None
+            and live(owner)):
+        # The wrapper still verifies its own B reservation and all three locks.
+        return None
+    candidates = (owner,) if owner.get('pid') == row.get('pid') else (owner, row)
+    for candidate in candidates:
+        if live(candidate):
+            return dict(source='teardown-state.json', pid=candidate['pid'])
+    return None
 
 
 def atomic(path, value):
@@ -422,13 +480,27 @@ class Queue:
     def wait_drain_spacing(self, job):
         # Do not hold the edit lock while waiting: pause/reorder remains usable.
         limit = self.now() + DRAIN_WAIT_LIMIT
+        live_limit = self.now() + LIVE_WAIT_LIMIT
         logged = None
+        logged_live = None
         while True:
             if self.launch_interrupted():
                 return False
             self.backend.guards(self.lane)
             if self.launch_interrupted():
                 return False
+            blocker = live_window_blocker(self.lane)
+            if blocker is not None:
+                require(self.now() < live_limit, 'other lane live wait timed out; no launch')
+                if blocker != logged_live:
+                    self.event('WAIT-OTHER-LANE-LIVE', name=job['name'],
+                               until_monotonic=live_limit, **blocker)
+                    logged_live = blocker
+                # Give a completed drain its own existing spacing budget.
+                limit = self.now() + DRAIN_WAIT_LIMIT
+                self.sleep(max(0.0, min(1.0, live_limit - self.now())))
+                continue
+            logged_live = None
             until = drain_spacing_deadline()  # Follow the latest shared drain.
             now = self.now()
             if now >= until:
@@ -490,7 +562,8 @@ class Queue:
                     faults_start = self.backend.guards(self.lane)
                     # A teardown or pause can arrive while taking the edit lock
                     # or checking guards. Discard this preparation and recheck.
-                    if self.launch_interrupted() or self.now() < drain_spacing_deadline():
+                    if (self.launch_interrupted() or live_window_blocker(self.lane) is not None
+                            or self.now() < drain_spacing_deadline()):
                         continue
                     run_id = job['name'] + '-' + uuid.uuid4().hex
                     receipt = self.directory / (run_id + '.exit.json')
