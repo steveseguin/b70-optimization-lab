@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, packet99 CPU checks complete:** Three exact IQ2 lookup choices
+and their half-cache forms pass both compilers without linked spills. Full-size
+startup, memory admission and refusal checks pass on both ranks. Down uses a
+different format; its new table path is exact but spills, so it is closed before
+device testing. The prepared single-card test must show at least 15% less kernel
+time before a candidate gets its own B bracket and A confirmation. A decides
+any later record choice. No GPU, service, live queue or host setting changed.
+[Evidence and handoff](notes/2026-10-18-own-runtime-packet99.md).
+
 **October 18, packet98 sealed on CPU:** A separate v5 screen wrapper now keeps
 one rank pair for a whole bracket. Both native builds, full-size startup and
 reset checks, real miniature byte checks, rank-message tests and 119 wrapper

@@ -26,10 +26,16 @@ NaN/Inf arithmetic, FP32 products and additions, logical chain traversal,
 adjacent reduction tree, BF16 output, routing and error writes. Arithmetic
 identity remains `iq3-p49-split32-v1`.
 
-Packet81 deferred SLM because prior packet52/53 schedules lost. Packet86 now
+Packet81 deferred SLM because prior packet52/53 schedules lost. Packet52's
+source actually used a 2 KiB compact uint16 table despite its older note saying
+8 KiB. Its magnitude encoding is reused, not claimed as a new technique.
+Both the old and new fills serve 16 scalar output rows; there is no claimed
+improvement in fill amortization. Packet86 now
 provides distinct measured dependency-latency evidence. This arm uses production
 WG64 virtual chains, not persistent scheduling, and explicitly measures fill
-and barrier cost inside the timed kernel. Compact SLM reduces fill by four.
+and barrier cost inside the timed kernel. Compact SLM reduces fill by four
+relative to this packet's full-grid arm. The distinct changes are the exact
+wide64/V8 arithmetic schedule, paired uint32 table storage and new evidence.
 
 ## Gates, in order
 
