@@ -14,7 +14,7 @@ def all_winners():
  return s
 
 def test_all_dimensions_and_composition():
- control,candidate,confirmed=o.select(all_winners());assert control['route']=='fast' and control['recurrence']=='rec-both-plus'
+ control,candidate,confirmed=o.select(all_winners());assert control==o.DEFAULTS and candidate['route']=='fast' and candidate['recurrence']=='rec-both-plus'
  assert candidate['experts']=='wide64+grid-prefetch+halfcache' and candidate['head']=='head-transpose' and candidate['host']=='ordered+reply-first' and candidate['hc_norm']=='normfuse'
  assert len(confirmed)==6
  assert o.select(screens())[:2]==(o.DEFAULTS,o.DEFAULTS)
@@ -40,14 +40,15 @@ def test_only_retained_confirmed_levers_count():
  s=all_winners();control,candidate,confirmed=o.select(s);candidate,pins=o.apply_pins(candidate,['experts=wide64']);c=o.composition(s,control,candidate,confirmed,pins,{})
  assert set(c['confirmed_levers'])=={'92','93','94','91'}
  s['90']['status']='pending'
- with pytest.raises(AssertionError):o.composition(s,control,candidate,confirmed,pins,{})
+ assert o.composition(s,control,candidate,confirmed,pins,{})['deferred_sources']==['90']
 def test_ready_with_temp_ops_directory(tmp_path,monkeypatch):
  # Packet84 regression: an external temporary O must remain an absolute pin.
- import read_screens
+ import read_screens,composite_jobs
  packet=tmp_path/'packet';packet.mkdir();(packet/'composition-selection.json').write_text('{}')
  monkeypatch.setattr(o,'O',tmp_path);monkeypatch.setattr(o,'P',packet);monkeypatch.setattr(o,'limits',lambda:None);monkeypatch.setattr(o,'sha',lambda p:'a'*64)
  monkeypatch.setattr(read_screens,'collect',all_winners);calls=[]
- monkeypatch.setattr(o,'run',lambda label,args:calls.append(label));monkeypatch.setattr(o,'matched_composition',lambda config:dict(passed=True));monkeypatch.setattr(sys,'argv',['orchestrate.py'])
+ monkeypatch.setattr(composite_jobs,'prepare_proposals',lambda config:dict(passed=True))
+ monkeypatch.setattr(o,'run',lambda label,args:calls.append(label));monkeypatch.setattr(o,'matched_composition',lambda config:dict(passed=True,chain_policy_passed=True,leave_one_out=dict(required=False)));monkeypatch.setattr(sys,'argv',['orchestrate.py'])
  assert o.main()==0
  result=json.loads((tmp_path/'ready.json').read_text());assert result['ready'] and result['preparation_passed']
  assert o.pin_path(tmp_path/'device-entry.sh') in result['pins'];assert (o.ROOT/o.pin_path(tmp_path/'device-entry.sh')).resolve()==tmp_path/'device-entry.sh'
@@ -84,7 +85,7 @@ def test_source_adapter_uses_b_grid_when_a_missing(tmp_path,monkeypatch):
   entries=[]
   for i,c in enumerate(('production','reply-first','production')):
    out=f'{direction}-{lane}-{i}';root=wrapper/'evidence'/out;root.mkdir(parents=True,exist_ok=True)
-   (root/'window.json').write_text(json.dumps(dict(boot_id=boot,started_utc_ns=i*3+1,finished_utc_ns=i*3+2)))
+   if direction!='A-grid':(root/'window.json').write_text(json.dumps(dict(boot_id=boot,started_utc_ns=i*3+1,finished_utc_ns=i*3+2)))
    entries.append(dict(out=out,choice=c,direction=direction))
   return entries
  def load(j,lane):
@@ -92,10 +93,10 @@ def test_source_adapter_uses_b_grid_when_a_missing(tmp_path,monkeypatch):
   return dict(choice=j['choice'],rate=10.2 if j['choice']=='reply-first' else 10.,exact=True,acceptance_counts=[[64,100]])
  monkeypatch.setitem(sys.modules,'screen_jobs',types.SimpleNamespace(verify=lambda:dict(sources={}),jobs=jobs,WRAPPER=wrapper,choose=lambda rows:rows[1]))
  monkeypatch.setitem(sys.modules,'compare',types.SimpleNamespace(load=load,compare_direction=lambda direction:called.append(direction)))
- result=adapter.collect('92');assert result['status']=='winner' and result['winner']=='reply-first' and called==['B-grid']
- assert result['directions']['A-grid']['status']=='pending' and result['lanes']['A'][1]['exact_count']==13
+ result=adapter.collect('92');assert result['status']=='winner' and result['winner']=='reply-first' and called==[]
+ assert result['directions']['A-grid']['status']=='pending' and set(result['lanes'])=={'B'} and result['lanes']['B'][1]['exact_count']==13
 def test_pin_reverts_candidate_without_changing_packet91_control():
  s=all_winners();control,candidate,confirmed=o.select(s);candidate,pins=o.apply_pins(candidate,['route=production'])
  c=o.composition(s,control,candidate,confirmed,pins,{})
- assert c['control']['route']=='fast' and c['candidate']['route']=='production'
+ assert c['control']['route']=='production' and c['candidate']['route']=='production' and c['candidate']['recurrence']=='rec-parallel'
  assert '91' not in c['confirmed_levers']

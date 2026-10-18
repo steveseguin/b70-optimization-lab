@@ -62,3 +62,122 @@ The requested initial `git pull --rebase` refused unrelated dirty work. A fetch
 showed main equal to origin/main; no unrelated file was stashed or overwritten.
 A read-only subagent reviewed orchestration while the existing GPU job ran,
 as AGENTS.md directs. All implementation and compilation remained serial here.
+
+## Packet97b — review 14: screen the composite first
+
+The owner changed composition admission: one exact first-lane win qualifies a
+source. The new adapter retains the source's sealed loader/chooser, 13/13 exact
+checks, chronological same-lane controls, current boot and unchanged per-prompt
+acceptance. It no longer waits for that source's second lane. Pending sources
+are left out of the decision instead of delaying the whole composite. The
+composite itself must pass control/composite/control on both lanes. No source
+or microbenchmark gains are added together: packet93's roughly 47% transfer
+from its head microbenchmark to its engine step is the reason to measure the
+whole combination.
+
+The decision used here contains packet91's route-fast plus rec-both-plus,
+packet93's head-transpose and packet90's E1 half-cache. Packets92 and 94 are
+pending in the final snapshot. Packet95 finished during this work: its E3 path
+was exact but lost on B (55.235207 versus 55.479524 / 55.495027), so it has no
+qualifying win and is excluded. E1 remains a composition option, not a reopened
+standalone claim. The measured source rows are:
+
+| Source | First lane | Candidate tok/s | Opening / closing control tok/s | Gain over stronger control |
+| --- | --- | ---: | ---: | ---: |
+| 91 route + recurrence | A | 55.743640 | 55.386160 / 55.390176 | +0.6381% |
+| 93 head transpose | B | 55.928454 | 55.396357 / 55.510063 | +0.7537% |
+| 90 half-cache | B | 55.656613 | 55.516521 / 55.488676 | +0.2523% |
+
+Every source bracket passes all thirteen exact checks and preserves per-prompt
+acceptance. These are source screens, not a packet97 composite measurement or a
+record. The baseline for the new composite is the unchanged packet84 selection;
+packet91's route/recurrence join the candidate rather than being silently
+included in its control. This makes the whole-source comparison meaningful.
+
+### Why packet91 was called rejected
+
+The saved base at `6d434dbac` says `source 91 invalid: unfinished/failed screen`.
+Its accepted window hashes cover A-grid indices 0, 1 and 2; the next window was
+the combined candidate at index 3. The source comparator emits that same error
+for an unfinished window and a failed one, before checking the lane/selection
+identity. The old adapter converted that generic error into `failed`.
+
+At the first packet97b recheck, windows 0–3 had passed and the closing control
+`p91-A-grid-4-control/window.json` had `passed=false`, no `finished_utc_ns`, no
+stop reasons and no retained child. That is incomplete evidence, not an
+identity or quality rejection. It subsequently completed: the closing control
+is 55.390176 tok/s, and the combined candidate beats both controls exactly.
+The earlier in-progress receipt bytes have since been replaced by their final
+receipts; the base snapshot identifies where its read stopped, not a preserved
+failure receipt. Current source identity checks pass unchanged.
+
+The adapter now labels an unfinished window **pending**. Stop reasons, retained
+children, report failures, completed invalid windows and missing artifacts from
+finished windows remain failures. No source comparator or other packet tree
+was edited to obtain the pass.
+
+### Proposals, fallback and record boundary
+
+The generator writes
+`experiments/own-xpu-runtime/ops/lane-queue/proposed-p97-composite-{A,B}.txt`.
+Each lane gets control/composite/control using existing packet97 sealed views.
+The decision includes the qualified source evidence and tool hashes; job
+arguments bind its file hash, and every output path includes its identity.
+`composite-plans.json` points to the final decision. Use `orchestrate.py
+--decision <that-file>` to evaluate the same set after its screens finish,
+without picking up sources that qualified later. Started brackets are read
+without trying to plan their occupied output paths again.
+
+If the smaller composite lane gain is below the best selected single-source
+gain, or below +0.5%, readiness remains false and leave-one-out jobs are emitted.
+The comparison uses gain over the stronger same-lane control, never absolute
+cross-lane speeds or added standalone wins. Equality at either threshold does
+not trigger fallback. The generator also handles an exact composite that loses.
+For this decision, each lane's gain must reach +0.7537% to avoid fallback.
+
+`composite_jobs.py --decision <that-file> --leave-one-out` creates the conditional
+`proposed-p97-leave-one-out-{A,B}.txt` files from the already sealed 128 views.
+It removes one source per bracket: packet91's winning arm together, head
+transpose, or half-cache. E1/E3 removal preserves the other expert feature when
+both are present. Each view gets its own control/view/control on both lanes.
+These proposals do not claim the fallback has been triggered by a measurement.
+
+`--pin` remains baseline-only; `--closed` still requires a reason and explicit
+baseline pins for all affected dimensions, and cannot hide failed evidence.
+A partial packet91 pin removes its whole qualified arm. The new
+`composition_ready` field is separate from `ready`: source qualification permits
+screens, while record readiness still requires the composite's two exact
+winning brackets, the existing chain-admission rule, and the full sealed chain,
+CPU rehearsal, storage and input checks. The frozen record chain is unchanged.
+
+### CPU validation and scope
+
+The orchestration suite passes **52 tests** with
+`/home/steve/.venvs/deepseek-v4-xpu/bin/python -B -m pytest`; the existing
+packet97 and lane-admission suites pass **59 tests**. All use nice 19, cores
+8–15/24–31, no pytest cache, and stdin `/dev/null`. The tests cover single-lane
+admission, unfinished versus failed receipts, pin/closure rules, candidate
+binding, immutable decisions, two-lane composite exactness and acceptance,
+threshold boundaries, losing composites, expert-preserving leave-one-out
+views, occupied-output resume and temporary queue isolation. Read-only review
+found two issues (partial-pin verification order and candidate/source binding);
+both have fixes and regression tests.
+
+No build, GPU run, service, setting, live queue or other packet tree changed.
+The initial `git pull --rebase` refused unrelated dirty files; a fetch confirmed
+`main` matched `origin/main`. Those unrelated files were neither stashed nor
+included. The final queue receipts and test logs are in
+`experiments/own-xpu-runtime/ops/packet97-orchestration/`.
+
+Final decision: [`d27742791d5b859d`](../experiments/own-xpu-runtime/ops/packet97-orchestration/decisions/d27742791d5b859d.json).
+All **24 proposed jobs** pass their real CPU plan on temporary queues: six
+composite jobs and eighteen conditional leave-one-out jobs. Both proposal sets
+bind that same decision. The frozen decision also validates and reconstructs
+exactly from its qualified sources. Receipts:
+[composite plans](../experiments/own-xpu-runtime/ops/packet97-orchestration/composite-plans.json),
+[leave-one-out plans](../experiments/own-xpu-runtime/ops/packet97-orchestration/leave-one-out-plans.json),
+[orchestration tests](../experiments/own-xpu-runtime/ops/packet97-orchestration/python-tests-97b.log),
+[packet tests](../experiments/own-xpu-runtime/ops/packet97-orchestration/packet-tests-97b.log),
+[decision check](../experiments/own-xpu-runtime/ops/packet97-orchestration/decision-check.log).
+`composition_ready=true`; `ready=false` because the composite has no device
+receipts yet. No storage gate or full-chain requirement was waived.

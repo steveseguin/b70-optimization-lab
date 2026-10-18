@@ -10,7 +10,8 @@ PREFIX=['nice','-n','19','taskset','-c','8-15,24-31','/home/steve/.venvs/deepsee
 DIMENSIONS={'91':('route','recurrence'),'93':('head',),'92':('host',),'94':('hc_norm',),'95':('experts',),'90':('experts',)}
 SOURCE_CHOICES={'93':{'head-transpose':{'head':'head-transpose'}},'92':{'reply-first':{'host':'ordered+reply-first'}},'94':{'hc-normfuse':{'hc_norm':'normfuse'}}}
 def check_winner(r):
- assert r['status']=='winner' and set(r['lanes'])=={'A','B'},'both lanes required'
+ assert r['status']=='winner' and r['lanes'] and set(r['lanes'])<={'A','B'},'at least one source lane required'
+ assert set(r['ratios'])==set(r['lanes']),'ratio lanes differ'
  boots=set()
  for lane,rows in r['lanes'].items():
   assert len(rows)>=3 and rows[0]['choice']==rows[-1]['choice'],'fresh bracket required'
@@ -25,9 +26,9 @@ def check_winner(r):
   assert math.isclose(ratio,r['ratios'][lane],rel_tol=1e-12),'reported ratio differs'
   boots.update(x['boot_id'] for x in rows)
  assert len(boots)==1,'same boot required'
- assert r['lanes']['A'][0]['acceptance_counts']==r['lanes']['B'][0]['acceptance_counts'],'cross-lane acceptance changed'
+ if len(r['lanes'])==2:assert r['lanes']['A'][0]['acceptance_counts']==r['lanes']['B'][0]['acceptance_counts'],'cross-lane acceptance changed'
 def select(screens):
- control=dict(DEFAULTS);confirmed=[]
+ control=dict(DEFAULTS);candidate=dict(control);confirmed=[]
  for n,r in screens.items():
   if r['status']=='failed':raise ValueError('source '+n+' invalid: '+r.get('reason',''))
   if r['status']=='winner':check_winner(r)
@@ -35,8 +36,7 @@ def select(screens):
  if r['status']=='winner':
   options={'route-fast':dict(route='fast'),'rec-both-plus':dict(recurrence='rec-both-plus'),'route-fast-rec-both-plus':dict(route='fast',recurrence='rec-both-plus')}
   if r['winner'] not in options:raise ValueError('unregistered packet91 winner')
-  control.update(options[r['winner']]);confirmed.append('91')
- candidate=dict(control)
+  candidate.update(options[r['winner']]);confirmed.append('91')
  for n,options in SOURCE_CHOICES.items():
   r=screens[n]
   if r['status']=='winner':
@@ -88,47 +88,73 @@ def source_pins(screens):
  return pins
 
 def composition(screens,control,candidate,confirmed,pins,closures):
- assert all(r['status'] in ('winner','no-winner') for r in screens.values()),'source decisions pending'
  assert candidate!=control,'no new selected candidate'
  # Count each confirmed source selection once. Packet91's winning composition
  # is one confirmed source arm, not two inferred independent confirmations.
- selected=[n for n in confirmed if (all(candidate[k]==control[k] for k in DIMENSIONS[n]) and any(control[k]!=DEFAULTS[k] for k in DIMENSIONS[n]) if n=='91' else any(candidate[k]!=control[k] for k in DIMENSIONS[n]))]
- return dict(schema='packet97.composition-selection.v1',status='confirmed-sources',control=control,candidate=candidate,confirmed_levers=selected,coordinator_pins=pins,coordinator_closures=closures,evidence_pins=source_pins(screens))
+ selected=[n for n in confirmed if all(k not in pins for k in DIMENSIONS[n])]
+ # A partially reverted packet91 source is not qualified as that winning arm.
+ if '91' in confirmed and '91' not in selected:
+  for k in DIMENSIONS['91']:candidate[k]=control[k]
+ assert candidate!=control,'no retained qualified source'
+ qualified={n:screens[n] for n in selected}
+ return dict(schema='packet97.composition-selection.v1',status='confirmed-sources',
+  qualification='one first-lane exact win per source; composite requires both lanes',
+  control=control,candidate=candidate,confirmed_levers=selected,coordinator_pins=pins,
+  coordinator_closures=closures,deferred_sources=[n for n,r in screens.items() if r['status']=='pending'],
+  source_ratios={n:r['ratios'] for n,r in qualified.items()},qualified_screens=qualified,evidence_pins=source_pins(qualified))
 def chain_policy(ratios,levers):
  assert set(ratios)=={'A','B'} and all(type(r) in (int,float) and math.isfinite(r) and r>1 for r in ratios.values()),'both lanes must improve'
  assert len(levers)==len(set(levers)) and set(levers)<=set(SOURCE_CHOICES)|{'90','95','91'},'unknown/duplicate lever'
  return min(ratios.values())>=1.015 or len(levers)>=2
 def matched_composition(config):
- from screen_jobs import jobs,verify
- from compare import load,compare
- verify();lanes={lane:[load(j) for j in jobs(lane)] for lane in ('A','B')}
+ from composite_jobs import read_brackets
+ lanes=read_brackets(config);from compare import compare
  boot=Path('/proc/sys/kernel/random/boot_id').read_text().strip();ratios={};receipts={}
  for lane,rows in lanes.items():
   compare(rows);assert all(r['boot_id']==boot for r in rows),'stale composition boot'
-  ratio=rows[1]['rate']/max(rows[0]['rate'],rows[-1]['rate']);assert ratio>1,'composition must beat both controls on both lanes';ratios[lane]=ratio
+  ratio=rows[1]['rate']/max(rows[0]['rate'],rows[-1]['rate']);ratios[lane]=ratio
   for row in rows:
    for f in Path(row['output']).rglob('*.json'):receipts[pin_path(f)]=sha(f)
  assert lanes['A'][0]['acceptance_counts']==lanes['B'][0]['acceptance_counts'],'composition acceptance changed across lanes'
- eligible=chain_policy(ratios,config['confirmed_levers'])
- assert eligible,'chain policy needs >=1.5% composed on both lanes or >=2 confirmed selected levers'
- return dict(passed=True,lanes=lanes,ratios=ratios,confirmed_levers=config['confirmed_levers'],chain_policy_passed=True,receipts=receipts)
+ improved=all(r>1 for r in ratios.values())
+ eligible=improved and chain_policy(ratios,config['confirmed_levers'])
+ from composite_jobs import leave_one_out_required
+ loo=leave_one_out_required(ratios,config)
+ return dict(passed=improved,lanes=lanes,ratios=ratios,confirmed_levers=config['confirmed_levers'],chain_policy_passed=eligible,leave_one_out=loo,receipts=receipts)
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--snapshot-only',action='store_true');ap.add_argument('--pin',action='append',default=[]);ap.add_argument('--closed',action='append',default=[]);a=ap.parse_args();limits()
- row=dict(schema='packet97.ready.v1',ready=False,device_executed=False,boot_id=Path('/proc/sys/kernel/random/boot_id').read_text().strip(),chain_command=command())
+ ap=argparse.ArgumentParser();ap.add_argument('--snapshot-only',action='store_true');ap.add_argument('--decision',type=Path);ap.add_argument('--pin',action='append',default=[]);ap.add_argument('--closed',action='append',default=[]);a=ap.parse_args();limits()
+ row=dict(schema='packet97.ready.v1',ready=False,composition_ready=False,device_executed=False,boot_id=Path('/proc/sys/kernel/random/boot_id').read_text().strip(),chain_command=command())
  try:
   from read_screens import collect
-  screens=collect();save(O/'screens-current.json',screens);row['screens']=screens
-  control,candidate,confirmed=select(screens);candidate,pins=apply_pins(candidate,a.pin);closures=close_packets(screens,candidate,pins,a.closed)
-  # Pins change the candidate only; control stays packet91's winning selection.
+  frozen=None
+  if a.decision:
+   assert not a.pin and not a.closed,'a frozen decision cannot be repinned or closed'
+   frozen=json.loads(a.decision.read_text())
+   from composite_jobs import validate
+   validate(frozen)
+   screens={n:frozen['qualified_screens'].get(n,dict(status='pending' if n in frozen['deferred_sources'] else 'no-winner',receipts={},sources={})) for n in DIMENSIONS}
+  else:screens=collect()
+  save(O/'screens-current.json',screens);row['screens']=screens
+  control,candidate,confirmed=select(screens)
+  candidate,pins=apply_pins(candidate,[k+'='+v for k,v in frozen['coordinator_pins'].items()] if frozen else a.pin)
+  closures=frozen['coordinator_closures'] if frozen else close_packets(screens,candidate,pins,a.closed)
   row.update(control=control,selection=candidate,coordinator_pins=pins,coordinator_closures=closures)
-  if a.snapshot_only:raise ValueError('snapshot only; no preparation changed')
   config=composition(screens,control,candidate,confirmed,pins,closures)
+  if frozen:assert config==frozen,'frozen decision differs'
+  row.update(composition_ready=True,qualified_sources=config['confirmed_levers'],deferred_sources=config['deferred_sources'])
+  if a.snapshot_only:raise ValueError('snapshot only; no preparation changed')
+  from composite_jobs import prepare_proposals
+  row['proposals']=prepare_proposals(config)
+  row['composition']=matched_composition(config)
+  if row['composition']['leave_one_out']['required']:
+   row['leave_one_out_proposals']=prepare_proposals(config,leave_one_out=True)
+   raise ValueError('composite below best single source or +0.5%; run proposed leave-one-out brackets')
+  assert row['composition']['chain_policy_passed'],'chain policy needs >=1.5% on both lanes or >=2 qualified selected sources'
   from stopped_archive import require_fresh_chain
   require_fresh_chain(P/'build')
   previous=json.loads((P/'composition-selection.json').read_text())
   if previous!=config:save(P/'composition-selection.json',config)
   run('composition-queue-plan',[P/'queue_plan.py'])
-  row['composition']=matched_composition(config)
   run('reseal',[P/'fast_reseal.py',*[x for k,v in candidate.items() for x in ('--'+k,v)]])
   checks=[('cpu-dry-run',[P/'dry_run.py']),('seal',[P/'chain_seal.py','--verify']),('inputs',[P/'check_inputs.py']),('storage',[P/'storage_precheck.py']),('queue-plan',[P/'queue_runner.py','--plan','--output-root',P/'build/device-cards01-a'])]
   for label,args in checks:run(label,args)

@@ -4,6 +4,13 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[4];STAGE=ROOT/'experiments/own-xpu-runtime/stage2'
 PACKETS={'90':'packet90-expert-hc','91':'packet91-record-bundle','92':'packet92-rank1-reply-first','93':'packet93-packed-head2','94':'packet94-hc-norm-fusion','95':'packet95-expert-dequant'}
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def require_finished(window, root):
+ # The wrapper writes passed=False at launch and only timestamps completion
+ # after reporting. A stop, retained child or reporting failure is never pending.
+ if window.get('stop_reasons') or window.get('child_retained') or window.get('report_failed'):
+  raise ValueError('failed source screen: '+str(root))
+ if not window.get('finished_utc_ns') and window.get('passed') is not True:
+  raise FileNotFoundError('source screen incomplete (no finished_utc_ns): '+str(root))
 def collect(number):
  p=STAGE/PACKETS[number];sys.path.insert(0,str(p));import screen_jobs as jobs;import compare as comp
  boot=Path('/proc/sys/kernel/random/boot_id').read_text().strip();result=dict(packet=int(number),status='pending',receipts={},sources={},directions={})
@@ -22,9 +29,11 @@ def collect(number):
    def load_rows(lane,entries):
     rows=[]
     for j in entries:
-     r=comp.load(j) if number=='91' else comp.load(j,lane)
      root=(jobs.output(j) if j['mode']=='grid' else jobs.WRAPPER/'evidence'/f'p91-{lane}-confirm-{j["index"]}') if number=='91' else jobs.WRAPPER/'evidence'/j['out']
-     w=json.loads((root/'window.json').read_text());assert r['exact'] is True,'13/13 exact required'
+     w=json.loads((root/'window.json').read_text());require_finished(w,root)
+     try:r=comp.load(j) if number=='91' else comp.load(j,lane)
+     except FileNotFoundError as e:raise ValueError('finished source screen missing artifact: '+str(e)) from e
+     assert r['exact'] is True,'13/13 exact required'
      assert w['boot_id']==boot,'stale source screen boot'
      r.update(exact_count=13,all_13_exact=True,lane=lane,boot_id=boot,started_utc_ns=w['started_utc_ns'],finished_utc_ns=w['finished_utc_ns'],output=str(root))
      assert math.isfinite(r['rate']) and r['rate']>0
@@ -44,34 +53,20 @@ def collect(number):
     except ValueError as e:
      if str(e).startswith('no candidate beats both'):d.update(status='no-winner',reason=str(e));continue
      raise
-    if number=='91':
-     errors=[];confirmation=None
-     for mode in ('confirm','grid'):
-      try:
-       candidate=load_rows(other,jobs.jobs(other,best['choice'],mode));comp.compare(candidate,tuple(j['choice'] for j in jobs.jobs(other,best['choice'],mode)));confirmation=candidate;break
-      except FileNotFoundError as e:errors.append(str(e))
-     if confirmation is None:raise FileNotFoundError('; '.join(errors))
-    else:
-     confirmation=load_rows(other,jobs.jobs(other,best['choice'],**kwargs))
-     # Invoke exactly the source's compare logic as well as its load/choose.
-     try:
-      if number=='95':comp.compare_direction(direction,'exp-grid-prefetch')
-      else:comp.compare_direction(direction)
-     except ValueError as e:
-      if str(e).startswith('confirmation winner must beat both'):d.update(status='no-winner',reason=str(e));continue
-      raise
-    confirmed=next(r for r in confirmation[1:-1] if r['choice']==best['choice'])
-    assert confirmed['acceptance_counts']==grid[0]['acceptance_counts'],'cross-lane acceptance changed'
-    ratios={source:best['rate']/max(grid[0]['rate'],grid[-1]['rate']),other:confirmed['rate']/max(confirmation[0]['rate'],confirmation[-1]['rate'])}
-    d.update(status='winner' if min(ratios.values())>1 else 'no-winner',choice=best['choice'],ratios=ratios)
+    ratios={source:best['rate']/max(grid[0]['rate'],grid[-1]['rate'])}
+    assert ratios[source]>1,'must beat both same-lane controls'
+    d.update(status='winner',choice=best['choice'],ratios=ratios,
+             qualification='one exact first-lane bracket; composition only')
    except FileNotFoundError as e:d.update(status='pending',reason=str(e))
    except (ValueError,AssertionError,KeyError,TypeError,OSError) as e:d.update(status='failed',reason=str(e))
    finally:result['directions'][direction]=d
   complete=[d for d in result['directions'].values() if d['status']=='winner'];failed=[d for d in result['directions'].values() if d['status']=='failed']
   if failed:result.update(status='failed',reason=failed[0]['reason'])
   elif complete:
-   assert len({d['choice'] for d in complete})==1,'conflicting directional winners'
-   result.update(status='winner',winner=complete[0]['choice'],lanes=complete[0]['lanes'],ratios=complete[0]['ratios'])
+   # First completed qualifying lane wins; no cross-lane rate ranking.
+   first=min(complete,key=lambda d:next(iter(d['lanes'].values()))[-1]['finished_utc_ns'])
+   result.update(status='winner',winner=first['choice'],lanes=first['lanes'],ratios=first['ratios'],
+                 qualification=first['qualification'])
   elif any(d['status']=='no-winner' for d in result['directions'].values()):result['status']='no-winner'
  except FileNotFoundError as e:result['reason']=str(e)
  except (ValueError,AssertionError,KeyError,TypeError,OSError) as e:result.update(status='failed',reason=str(e))
