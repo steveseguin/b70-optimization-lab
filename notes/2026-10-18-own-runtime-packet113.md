@@ -64,3 +64,49 @@ and separate state. Intel's packet107 NaN-payload failure is explicitly covered.
 Multi-token checks, complete-layer builds and coordinator proposal are next.
 Builds use packet94's serial compiler turn, nice 19, CPUs 8–15/24–31, stdin
 `/dev/null`, and an 8 GiB cap only inside CPU CLI processes. Build budget 150 MB.
+
+## Milestone 2 — micro compiled, sealed and proposed (08:54 UTC)
+
+GNU, Intel and device complete-layer binaries compile. GNU and Intel each pass
+**two fresh CPU processes**, each with 572 whole-layer boundary/state checks
+and 768 full-state recurrence cases. M=1,2,4, both head mappings, both alias
+modes, sixteen finite/exceptional/control scenarios and four consecutive calls
+are covered. Every process compares about 1.2 GB of state/output bytes; the
+transcripts retain hashes only after raw byte equality. GNU/Intel NaN payloads
+are compared to their own unchanged production, never normalized across builds.
+The complete-layer finite transcripts agree across all four processes.
+
+The device micro binary includes the same 768 cases before timing. It uses the
+copied packet110 complete GDN layer, compares every mutable allocation after
+each pair, alternates current/candidate order, and measures both contexts
+128 and 4096. There are 10 warm-up and 40 measured pairs per context. Warm-up
+initializes kernels only; this is explicitly synthetic layer diagnostic timing,
+not the realistic model suite or a model throughput claim.
+
+Both jobs pass CPU planning on a temporary queue. The new coordinator proposal
+is [proposed-p113-micro-B.txt](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p113-micro-B.txt).
+Expected duration is **240 seconds per process**, watchdog **1,200 seconds**
+(5x). The wrapper reserves lane B, restricts native access to card2, checks
+faults/ownership/drain, and preserves a 19 GiB disk floor plus its log budget.
+No live queue was edited and no device job was launched by this task.
+
+Fifteen Python policy/refusal checks pass, including missing byte cases, wrong
+order, incomplete pairs, invalid event accounting, CPU receipts passed as device
+results, per-context/order losses and import-time resource-cap preservation.
+The build is **66,586,092 bytes**, below 150 MB. Peak compiler child RSS is
+under 700 MiB; all CPU CLIs use the requested 8 GiB cap. Generated binaries are
+ignored; the first milestone accidentally tracked the two small leaf binaries,
+corrected in this milestone while preserving them locally under `build/retained-*`.
+Their source, commands, hashes and prior commit remain available.
+
+**Device exactness and speed remain unmeasured.** The gate is hash-bound to both
+fresh-process windows, all exceptional and whole-layer transcripts, event
+endpoints and the sealed executable. Each context and alternating-order stratum
+must be at most 0.6 times production in each process. A failure closes this arm;
+only a pass allows the packet111/103x runtime dimension, startup/oracle gates,
+seals and v5 one-load proposal. None of those later steps is claimed here.
+
+Evidence: [CPU leaves](../experiments/own-xpu-runtime/stage2/packet113-gdn-row/evidence/cpu-leaf.json),
+[complete layers](../experiments/own-xpu-runtime/stage2/packet113-gdn-row/evidence/cpu-layers.json),
+[device build](../experiments/own-xpu-runtime/stage2/packet113-gdn-row/evidence/build-device.json),
+[queue plans](../experiments/own-xpu-runtime/stage2/packet113-gdn-row/evidence/queue-plans.json).

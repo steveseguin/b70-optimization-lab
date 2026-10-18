@@ -3,7 +3,7 @@
 #undef main
 // Current production operators only; packet107 specialised arms remain closed.
 #include "fixture_bytes.hpp"
-#include "p113_recurrence.hpp"
+#include "recurrence_cases.hpp"
 #include <numeric>
 namespace p107bench {
 using iq3::Type;
@@ -62,6 +62,28 @@ struct Fixture {
  std::map<std::string,std::vector<uint8_t>> boundary(const Group&g){std::map<std::string,std::vector<uint8_t>>r;for(const auto&n:g.outputs){auto b=e.buffers[0].at(n);r[n]=e.readback(0,b.id,b.n*flash::scalar_bytes(b.type));}return r;}
  std::string routes(){auto v=e.readback(0,id(prefix+"ids"),40);std::array<uint32_t,10>ids{};std::memcpy(ids.data(),v.data(),40);std::sort(ids.begin(),ids.end());require(ids.back()<512&&std::adjacent_find(ids.begin(),ids.end())==ids.end(),"valid distinct route set");std::memcpy(v.data(),ids.data(),40);return hash(v);}
 };
+static unsigned recurrence_cases(Engine&e,const fs::path&out){
+ std::array<Allocation,19> ids;ids.fill(e.controls[0]);
+ const std::array<size_t,19> sizes{4*10240*2,4*48*2,4*48*2,48*4,48*4,786432*2,4*6144*2,786432*2,0,0,0,0,0,0,0,4,0,4,4};
+ for(unsigned i=0;i<19;++i)if(sizes[i])ids[i]=e.allocate(0,"p113-leaf-"+std::to_string(i),sizes[i],Category::scratch,Lifetime::transaction);
+ std::ofstream transcript(out/"recurrence-cases.jsonl");
+ auto run=[&](bool candidate,ng::Shape s,p113test::Data&d,bool alias){
+  e.guard();auto a=d.args(false);auto bound=ids;auto n=sizes;n[0]=s.tokens*10240*2;n[1]=n[2]=s.tokens*48*2;n[6]=s.tokens*6144*2;
+  for(unsigned i=0;i<19;++i)if(n[i])e.upload(0,ids[i],0,a.p[i],n[i]);
+  if(alias)bound[5]=bound[7];e.set_class("p113.selftest");
+  if(candidate){p113rec::Kernel op;op.shape=s;e.finish(0,e.dev(0).compute(op,bound,{}));}
+  else{p82brec::Kernel<true> op;op.shape=s;e.finish(0,e.dev(0).compute(op,bound,{}));}
+  for(unsigned i=0;i<19;++i)if(n[i]){auto bytes=e.readback(0,ids[i],n[i]);
+   if(i==6||i==7||i==15)std::memcpy(a.p[i],bytes.data(),bytes.size());
+   else require(std::memcmp(a.p[i],bytes.data(),bytes.size())==0,"recurrence mutated input "+std::to_string(i));}
+  e.drain();e.pending.clear();e.tail=0;e.dev(0).retire_completed_events();
+ };
+ auto compare=[&](const p113test::Data&a,const p113test::Data&b,const std::string&desc,unsigned tokens){
+  auto x=a.bytes(),y=b.bytes();compare_bytes(y,x,"recurrence "+desc);
+  transcript<<"{\"case\":"<<ownrt::quote(desc)<<",\"tokens\":"<<tokens<<",\"bytes\":"<<x.size()<<",\"sha256\":"<<ownrt::quote(hash(x))<<",\"equal\":true}\n";
+ };
+ auto count=p113test::cases(run,compare);require(count==768&&bool(transcript),"recurrence case coverage/write");return count;
+}
 static flash::Plan layer_plan(Weights&w,Options&a,int layer){std::ifstream f(packet/"../packet34-replay-bench/directory.tsv");require(bool(f),"fixture metadata");w.directory=flash::read_directory(f);auto p=::plan(w,a);std::string prefix="blk."+std::to_string(layer)+".";std::erase_if(p.launches,[&](const auto&l){return !l.label.starts_with(prefix);});for(auto&l:p.launches){l.card=0;l.source_card=-1;}std::set<std::string>used{"error","active","position","streams"};for(const auto&l:p.launches){used.insert(l.inputs.begin(),l.inputs.end());used.insert(l.outputs.begin(),l.outputs.end());}std::erase_if(p.buffers,[&](const auto&b){return !used.contains(b.name);});for(auto&b:p.buffers)b.card=0;return p;}
 struct EventRow {std::string cls;uint64_t start,end,id;};
 struct Measure {uint64_t launches=0,gpu_ns=0;std::map<std::string,uint64_t>classes;std::vector<EventRow>events;};
@@ -73,7 +95,7 @@ static Measure measure(Fixture&f,bool candidate){auto&e=f.e;auto first=e.submitt
  e.pending.clear();e.tail=0;e.dev(0).retire_completed_events();return m;}
 static void timing_row(std::ofstream&out,int layer,unsigned iteration,unsigned pos,bool candidate,Measure m){out<<"{\"layer\":"<<layer<<",\"mode\":\""<<(candidate?"specialized":"current")<<"\",\"iteration\":"<<iteration<<",\"warmup\":"<<(iteration<10?"true":"false")<<",\"position\":"<<pos<<",\"occupied_context\":"<<pos+1<<",\"submissions\":"<<m.launches<<",\"gpu_ns\":"<<m.gpu_ns<<",\"classes_ns\":{";bool first=true;for(const auto&[n,ns]:m.classes){out<<(first?"":",")<<ownrt::quote(n)<<":"<<ns;first=false;}out<<"},\"events\":[";for(size_t j=0;j<m.events.size();++j){auto v=m.events[j];out<<(j?",":"")<<"{\"id\":"<<v.id<<",\"class\":"<<ownrt::quote(v.cls)<<",\"start_ns\":"<<v.start<<",\"end_ns\":"<<v.end<<"}";}out<<"]}\n";out.flush();require(bool(out),"timing write");}
 }
-int main(int argc,char**argv){using namespace p107bench;std::string mode,layer_choice="both";fs::path output;bool cpu=false,authorized=false,device_executed=false;size_t owners_started=0;int card=-1;std::vector<std::string>teardown;std::string error;std::unique_ptr<Engine>e;size_t checks=0,timing_pair_checks=0;std::vector<uint8_t>digest_bytes;std::map<int,std::set<std::string>>routes;std::map<int,std::array<uint64_t,2>>launch_counts;try{
+int main(int argc,char**argv){using namespace p107bench;std::string mode,layer_choice="both";fs::path output;bool cpu=false,authorized=false,device_executed=false;size_t owners_started=0;int card=-1;std::vector<std::string>teardown;std::string error;std::unique_ptr<Engine>e;size_t checks=0,timing_pair_checks=0,recurrence_checks=0;std::vector<uint8_t>digest_bytes;std::map<int,std::set<std::string>>routes;std::map<int,std::array<uint64_t,2>>launch_counts;try{
  for(int i=1;i<argc;++i){std::string k=argv[i];auto v=[&]{require(i+1<argc,"missing argument");return std::string(argv[++i]);};if(k=="--mode")mode=v();else if(k=="--layer")layer_choice=v();else if(k=="--output")output=v();else if(k=="--card")card=std::stoi(v());else if(k=="--authorized-device-window")authorized=true;else if(k=="--cpu-test")cpu=true;else throw std::runtime_error("unsupported argument: "+k);}
  require(!output.empty()&&(mode=="exact"||mode=="timing"),"--mode exact|timing --output required");fs::create_directories(output);require(getenv("OMP_NUM_THREADS")&&std::string(getenv("OMP_NUM_THREADS"))=="2","OMP_NUM_THREADS=2 required");
 #ifdef OWN_RT_HOST_ONLY
@@ -89,7 +111,7 @@ int main(int argc,char**argv){using namespace p107bench;std::string mode,layer_c
 #else
  device_executed=true;e->devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(0,true)));
 #endif
- ++owners_started;Fixture f(*e,layer);f.setup();unsigned total=requested_mode=="timing"?104:4;
+ ++owners_started;Fixture f(*e,layer);f.setup();recurrence_checks=recurrence_cases(*e,output);unsigned total=requested_mode=="timing"?104:4;
  for(unsigned iteration=0;iteration<total;++iteration){mode=iteration<4?"exact":"timing";unsigned timing_index=(iteration-4)%50;
   unsigned pos=mode=="exact"?std::array<unsigned,4>{126,127,128,129}[iteration]:(iteration<54?127:4095),control=0;
   if(iteration==0||mode=="timing")f.input(0x10700+iteration,pos,control);
@@ -129,7 +151,7 @@ int main(int argc,char**argv){using namespace p107bench;std::string mode,layer_c
  <<",\"safe_to_exit\":"<<(safe?"true":"false")<<",\"mode\":"<<ownrt::quote(mode)<<",\"card\":"<<card
  <<",\"context_capacity\":4096,\"occupied_context\":"<<(mode=="timing"?4096:0)
  <<",\"arithmetic\":\"iq3-p49-split32-v1\",\"checks\":"<<checks
- <<",\"timing_pair_checks\":"<<timing_pair_checks<<",\"exact_output_identity\":"<<ownrt::quote(hash(digest_bytes))
+ <<",\"recurrence_checks\":"<<recurrence_checks<<",\"timing_pair_checks\":"<<timing_pair_checks<<",\"exact_output_identity\":"<<ownrt::quote(hash(digest_bytes))
  <<",\"error\":"<<ownrt::quote(error)<<",\"route_set_counts\":{";
  bool first=true;for(auto&[layer,r]:routes){result<<(first?"":",")<<ownrt::quote(std::to_string(layer))<<":"<<r.size();first=false;}
  result<<"},\"launch_counts\":{";first=true;for(auto&[layer,c]:launch_counts){result<<(first?"":",")<<ownrt::quote(std::to_string(layer))<<":{\"current\":"<<c[0]<<",\"specialized\":"<<c[1]<<"}";first=false;}

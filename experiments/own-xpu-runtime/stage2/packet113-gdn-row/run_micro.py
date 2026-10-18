@@ -29,7 +29,8 @@ PCI = '0000:43:00.0'
 OUTPUT = P / 'evidence/micro-B'
 BINARY = P / 'build/device/layer-bench'
 BUILD = P / 'evidence/build-device.json'
-WATCHDOG = 600
+WATCHDOG = 1200
+EXPECTED_SECONDS = 240
 MASK = dict(NEOReadDebugKeys='1', FilterBdfPath=PCI, ZE_ENABLE_PCI_ID_DEVICE_ORDER='1',
             ZE_AFFINITY_MASK='0', ONEAPI_DEVICE_SELECTOR='level_zero:0')
 
@@ -41,14 +42,15 @@ def build_gate():
     require(row.get('passed') is True and row.get('device_executed') is False, 'completed CPU build required')
     verify_map(ROOT, row['sources']);verify_map(ROOT,row['objects']);verify_map(P,row['artifacts'])
     verify_map(P,read(P/'seal.json')['files']);verify_map(ROOT,read(P/'seal.json')['runtime_inputs'])
-    require(read(P/'evidence/cpu-layers.json')['passed'], 'CPU current/repeat state gate required')
+    require(read(P/'evidence/cpu-layers.json')['passed'], 'CPU complete-layer state gate required')
+    require(read(P/'evidence/cpu-leaf.json')['passed'] is True, 'both compiler exceptional gates required')
     return dict(build_receipt_sha256=sha(BUILD), binary_sha256=sha(BINARY), packet_seal_sha256=sha(P/'seal.json'), wrapper_seal_sha256=sha(WRAPPER/'wrapper-seal.json'))
 
 
 def storage_admit():
     free = shutil.disk_usage('/').free
-    require(free >= 12 * GIB + 128 * 1024**2, 'root free below 12 GiB plus micro log budget')
-    return dict(root_free_bytes=free, minimum_root_free_bytes=12 * GIB,
+    require(free >= 19 * GIB + 128 * 1024**2, 'root free below 19 GiB plus micro log budget')
+    return dict(root_free_bytes=free, minimum_root_free_bytes=19 * GIB,
                 planned_write_bytes=128 * 1024**2)
 
 
@@ -72,7 +74,7 @@ def fault_latch_gate(boot):
 
 def native_summary(path):
     summary=read(OUTPUT/'native/receipt.json')
-    require(summary.get('passed') is True and summary.get('safe_to_exit') is True and summary.get('device_executed') is True and summary.get('timing_pair_checks')==100 and summary.get('checks',0)>400, 'complete native equality/timing/drain required')
+    require(summary.get('passed') is True and summary.get('safe_to_exit') is True and summary.get('device_executed') is True and summary.get('timing_pair_checks')==100 and summary.get('checks',0)>400 and summary.get('recurrence_checks')==768, 'complete native equality/timing/drain required')
     return summary
 
 
@@ -104,8 +106,8 @@ def main(argv=None):
              drain='shared DrainPermit held across entire autonomous native lifetime',
              required_host_available_bytes=10*GIB, host_reserve_bytes=8*GIB,
              maximum_host_scratch_bytes=2*GIB, device_bytes_upper_bound=5*GIB,
-             minimum_root_free_bytes=12*GIB, watchdog_seconds=WATCHDOG, retries=0,
-             micro_qualification='current-mode attribution only; no candidate or speed verdict'), indent=2))
+             minimum_root_free_bytes=19*GIB, watchdog_seconds=WATCHDOG, retries=0,
+             expected_seconds=EXPECTED_SECONDS, micro_qualification='both fresh processes must pass every state byte and recurrence <=0.6 production in both contexts/orders; else close'), indent=2))
         return 0
     lane_gate('B')
     require(args.authorized_device_window and args.fault_review,
@@ -122,7 +124,7 @@ def main(argv=None):
     reasons, handlers = [], {}
     child = None
     completed = False
-    record = dict(schema='own-runtime.packet110.micro-window.v1', passed=False,
+    record = dict(schema='own-runtime.packet113.micro-window.v1', passed=False,
                   device_executed=False, drained=False, child_still_running=False,
                   lane='B', physical_cards=[2], native_card=0, pci=PCI, boot_id=boot,
                   identity=identity, **identity, command=command, systemd_cgroup=cgroup,
@@ -212,6 +214,7 @@ def main(argv=None):
                     require(not reasons and child.returncode == 0, 'micro failed or interrupted; no retry')
                     require(record.get('device_isolation', {}).get('passed') is True, 'single-card device ownership unproved')
                     record['native_summary'] = native_summary(OUTPUT / 'samples.jsonl')
+                    record['native_files']={str(x.relative_to(OUTPUT)):sha(x) for x in [OUTPUT/'native'/name for name in ('receipt.json','iterations.jsonl','recurrence-cases.jsonl','comparisons.jsonl')]}
                     require(process_identity(child.pid) != record['process_start_ticks'], 'micro still alive')
                     record['clients_after_drain'] = admit_clients('lane-B')
                     check()
@@ -223,6 +226,8 @@ def main(argv=None):
                 atomic_json(OUTPUT / 'lane-coordination.json', dict(passed=True, reservation=lease.record,
                             clients_after_drain=record['clients_after_drain'], released_before_report=True))
                 persist()
+        from qualification import evaluate
+        evaluate(P)
         return 0
     except Exception as error:
         if completed:

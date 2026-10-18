@@ -11,10 +11,10 @@ def main():
    with turn(),(B/(name+'-leaf-'+leaf+'-compile.log')).open('w') as log:subprocess.run(cmd,stdout=log,stderr=subprocess.STDOUT,stdin=subprocess.DEVNULL,check=True,timeout=600)
    hashes=[];codes=[]
    for repeat in (1,2):
-    out=P/'evidence'/f'leaf-{name}-{leaf}-{repeat}';out.mkdir(exist_ok=True)
+    out=P/'evidence'/f'leaf-v2-{name}-{leaf}-{repeat}';out.mkdir(exist_ok=False)
     args=[str(binary),'candidate',str(out)] if leaf=='gdn' else [str(binary),str(out/'candidate.bin')]
     with (out/'run.log').open('w') as log:r=subprocess.run(args,stdout=log,stderr=subprocess.STDOUT,stdin=subprocess.DEVNULL,timeout=300)
-    codes.append(r.returncode);hashes.append(sha(out/'candidate.bin'))
+    codes.append(r.returncode);hashes.append(sha(out/'candidate.txt'))
    passed=codes==[0,0] and hashes[0]==hashes[1]
    records.append(dict(compiler=name,leaf=leaf,passed=passed,exit_codes=codes,command=cmd,binary_sha256=sha(binary),repeat_sha256=hashes))
    print(name,leaf,'PASS' if passed else 'CLOSED: byte gate failure',flush=True)

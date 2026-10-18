@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet113 GDN row micro prepared on CPU:** The candidate gives
+each independent state row its own subgroup and removes workgroup barriers.
+Both compilers pass two fresh processes, each with 572 complete-layer checks
+and 768 full-state recurrence cases, including NaN/Inf and multiple tokens.
+The device binary compiles; both proposed B jobs pass temporary queue planning.
+Each fresh process must cut recurrence time by at least 40% before integration.
+Device equality and speed remain unmeasured. The build is 66.6 MB. No GPU,
+service, live queue or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet113.md).
+
 **October 18, packet112 route-selection micro prepared on CPU:** The 18.75
 microsecond route measurement already uses the fast route. The new candidate
 keeps its arithmetic and removes thirteen workgroup barriers from selection.
