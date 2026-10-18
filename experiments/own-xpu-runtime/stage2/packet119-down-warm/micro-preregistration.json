@@ -1,0 +1,71 @@
+{
+  "schema": "packet119.micro-preregistration.v1",
+  "diagnostic_only": true,
+  "device_executed": false,
+  "views": [
+    "production",
+    "p119"
+  ],
+  "production": "packet118 record halfcache+wide64+down-tile16",
+  "candidate_dimension": "down_warm=p119",
+  "route_vectors": 384,
+  "route_source": "packet100b-route-capture/evidence/routes.bin",
+  "route_shape": {
+    "experts": 512,
+    "top_k": 10,
+    "gate_rows": 640,
+    "gate_columns": 2560,
+    "down_rows": 2560,
+    "down_columns": 640
+  },
+  "weights": "deterministic synthetic full512-expert banks; seed119; same bytes in both views",
+  "activation": "p39::activation between gate/up and down, using generated gate/up output",
+  "lifetime": "one token gate/up, activation, down; matches serialized M=2 row execution",
+  "orders": [
+    [
+      "production",
+      "p119"
+    ],
+    [
+      "p119",
+      "production"
+    ]
+  ],
+  "fresh_processes": 2,
+  "cache_scrub": {
+    "bytes": 536870912,
+    "operation": "compute read one32-bit word per64-byte line into global sink",
+    "before_every_view": true,
+    "between_gate_and_down": false
+  },
+  "correctness": "byte comparison of all gate/up/activation/down outputs, all three status arrays and3 control words before and after every timed sample",
+  "kill_gate": {
+    "metric": "event_ns=expsgate_ns+expsdown_ns",
+    "threshold": 0.85,
+    "summary": "median matched candidate/production ratio across all384 routes and both orders; each order median independently <=0.85",
+    "process_requirement": "both fresh processes must pass",
+    "activation": "recorded separately; inclusive ratio diagnostic only"
+  },
+  "cache_probe": {
+    "spans_mib": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      24,
+      32,
+      48,
+      64
+    ],
+    "repetitions": 8,
+    "paired_cold_warm_reads": true,
+    "reported_cache_level": "unspecified SYCL global_mem_cache",
+    "capacity_inference": false
+  },
+  "expected_seconds_each": 240,
+  "watchdog_seconds_each": 1200,
+  "retries": 0,
+  "gpu_execution": "coordinator only, laneB lease and shared drain permit",
+  "performance_claim": "none; full-model one-load v5 bracket remains contingent on two-process micro qualification"
+}

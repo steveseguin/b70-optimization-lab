@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet119 DOWN-warming micro prepared on CPU:** The candidate
+reads the next DOWN weights during unchanged gate/up work. Both compilers pass
+two fresh byte checks, and the compiled device image retains the extra read
+with no extra stores or spills. All 384 captured routes and both orders are
+fixed in the two proposed B micros; each must cut gate/up-plus-down time by at
+least 15%. Temporary queue planning passes. Cache capacity, device equality
+and speed remain unmeasured. The separate one-load bracket is being prepared
+in parallel and stays blocked on those micros. No GPU, service, live queue or
+host setting changed. [Work note](notes/2026-10-18-own-runtime-packet119.md).
+
 **October 18, queue drain-spacing guard checked on CPU:** The queue now waits
 until 61 seconds after the latest completed shared teardown on this boot before
 starting a job. Pause, stop, fault and latch checks remain active during the
