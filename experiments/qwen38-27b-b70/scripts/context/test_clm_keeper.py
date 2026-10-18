@@ -595,6 +595,17 @@ class Keeper(unittest.TestCase):
         taken = {"rules": [], "open": None, "changes": [("vozi36", "1"), ("vozimi36", "2")]}
         self.assertEqual(NS["respell"](taken, {"vozimi36": 2})[1], {})               # the right name has its own line already
 
+    def test_a_name_split_by_a_space_is_joined(self):
+        # campaign 43 (2M, seed 2): every notes reply wrote `voned i62` for `vonedi62`
+        delta = {"rules": [], "open": None, "changes": [("voned i62", "60 - 7 = 53"), ("vone42", "5"), ("ab cd", "1")]}
+        out, fixed = NS["respell"](delta, {"vonedi62": 2, "vone42": 1})
+        self.assertEqual((fixed, out["changes"][0]), ({"voned i62": "vonedi62"}, ("vonedi62", "60 - 7 = 53")))
+        self.assertEqual(NS["respell"](delta, {"vone42": 1}, ["vonedi62"])[1], {"voned i62": "vonedi62"})   # held by the NOTES
+        self.assertEqual(NS["respell"](delta, {"vone42": 1})[1], {})                 # joined, it is no name: left alone
+        both = {"rules": [], "open": None, "changes": [("voned i62", "60"), ("vonedi62", "53")]}
+        out, fixed = NS["respell"](both, {"vonedi62": 2})
+        self.assertEqual((fixed, [k for k, _ in out["changes"]]), ({"voned i62": "vonedi62"}, ["vonedi62", "vonedi62"]))
+
     def test_lines_the_turns_do_not_bear_out_are_left_out(self):
         tool = lambda text: {"role": "tool", "content": text + "\n\n(exit_code=0)"}
         turns = [tool("ITEM 9/147 (UPDATE)\nabcd12 gained 5. wxyz56 was struck off the books. wxyz56 was opened at 30. faxa72 was set to 415. "

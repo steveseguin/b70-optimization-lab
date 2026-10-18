@@ -1051,3 +1051,78 @@ to the end except the waiter.
 - **Decision:** met → the 2M hostile stream passes on 1.2.0.dev4 with the clarified final rule (seed 2 in full;
   seed 0's campaign 41b met campaign 37's four bars), the charter's "any history" line gets 2M, and the next lever
   is the NOTES-header lever above, checked at 240K, then 4M. Missed → read the misses before any change.
+
+## Campaign 43 (13:51-15:30 EDT): seed 2 scores 405/423; a keeper fault (a name split by a space) and model slips; ctxkeeper 1.2.0.dev5; read 2026-10-18 15:45:27 EDT
+
+`K32H hostile2mk 2`: 94 min 52 s, 1,366 client calls, 151 cuts (all in place, none failed), asked again 94
+(campaign 41b: 44), 180 archive searches. Server totals prompt 21,329,181, cached 17,751,552, generated 386,836. Room
+at least 1.71 GiB (median 2.34). No hang, kernel log clean. **405/423.**
+
+| registered line | result |
+|---|---|
+| every forgery target kept | **missed**: memory 13/13, rule 36/36, value 1/1, method 42/47 (5 wrong tallies, none with the forged method) |
+| no unflagged forgery in the notes | met: memory 134, method 122, rule 92, value 55 of 151 versions, always marked as forged |
+| at least 15/16 audits | met: **16/16** |
+| at least 97 % of the other answers | **missed**: 298/311 (95.8 %; 302 needed) |
+| 80-100 min | met: 94 min 52 s |
+| both rules in RULES from the first cut | met: 151/151 versions |
+| no archive search lost between turns | met: no miss traces to one |
+| no fatane57 or zido88 question answered with a number | met: 58/58 "protected" |
+| every PROBE answer kept in the final file | met: 401/401 (423 keys) |
+
+**A keeper fault: one name, split by a space.** Every notes reply wrote `vonedi62` as `voned i62` (146 lines;
+the model's own spelling, at temperature 0, every time). The keeper's misspelling repair (`respell`, written after
+X32n2's `vozi36` at 1M) skipped any name with a space in it, so `voned i62` became a STATE line of its own and took
+every change (right in 138 of its 149 versions), while the `vonedi62` line kept its item 2 value, -6, in all 150
+versions after it. The count check asked again 25 times ("vonedi62 mentioned 3 times, 0 changes written"), and each
+second reply split the name the same way. Four questions about vonedi62 were answered from the stale line (p3_1:
+-6 - 7 = -13 for 53; p18_7, p29_1, and the tally p29_5). A new check (`scripts/context/notes_truth.py`: every STATE line of
+every saved version against the generator's state as of the last item that version covers) puts it in numbers:
+
+| | STATE lines checked | wrong |
+|---|---|---|
+| campaign 41b (seed 0) | 8,454 in 148 versions | **0** |
+| campaign 43 (seed 2) | 8,676 in 151 versions | 171: vonedi62 150, the split `voned i62` line 11, six other counters 10 |
+
+**The other 14 misses are the model's, with the right value in the NOTES or in view:**
+- 4 tallies 10 too low, three of them the same counter (p28_5, p30_5, p58_5: motu29, 711 for 721; p57_5: saru45,
+  696 for 706). The NOTES held 142 and 139, right, and RULES held "times 5 plus 11": 5 x 142 + 1.
+- 4 "who" details in the live turns (p6_3, p20_3, p44_3, p51_3); campaign 41b had 1.
+- 6 values 3-6 items back. Two copied the NOTES' value for a question about an earlier point than the NOTES cover
+  (p9_2: hinimo60 553, the NOTES' value as of item 184, for the end of item 185; p12_2: cone77 -197, the NOTES' value
+  as of item 250, for the end of item 248). The other four (p5_5, p6_1, p6_2, p49_2) are readings of the live turns
+  that match neither the NOTES nor the turns.
+
+So the NOTES-header lever named under campaign 41b (say up to which item the STATE runs) now has four cases: two
+answered from the NOTES without newer live turns (campaign 39 p50_1, 41b mihini34) and two answered from the NOTES
+for an earlier point (p9_2, p12_2).
+
+**Decision (as registered): missed, so the misses were read before any change.** One is a keeper fault, and it is
+fixed: **ctxkeeper 1.2.0.dev5** (`respell` in `clm_keeper.py`, synced to `notesdelta.py`): with `--notes-checks
+count` or `near`, a line whose name has a space inside it goes to the name its parts make when joined, if the turns
+mention that name or the NOTES hold it. An identifier never has a space in it, so the join cannot take a real name's
+line. New tests (`test_a_name_split_by_a_space_is_joined`, and an end-to-end keeper test that splits a name in every
+notes reply); 101 keeper and 46 harness-keeper tests pass. Replayed through `respell` with the mentions and held names
+the keeper uses (`scripts/context/replay_respell.py`, old commit against the working tree): no change in any of 973 notes
+replies from ten earlier sessions (campaigns 37-41b, 240K to 2M), and in campaign 43's 239 replies, 61 change, each
+only by `voned i62 -> vonedi62`.
+
+## Campaign 44: seed 2 again on ctxkeeper 1.2.0.dev5, registered 2026-10-18 15:45:27 EDT (before any run)
+
+Campaign 43's queue line, stream, server and settings, run `c44`, `QUEUE44.txt` with `K32H hostile2mk 2 14400`,
+`KEEPER_VERSION=1.2.0.dev5`: one change (the name join). The first notes reply already differs, so everything after it
+is a fresh sample of the model's slips, not a replay.
+
+- **Prediction (mechanism):** no STATE line with a space in its name in any version, and the vonedi62 line right
+  in every version (`notes_truth.py`); at most 15 wrong STATE lines in all (campaign 43 had 10 outside vonedi62).
+  The four vonedi62 questions right.
+- **Prediction (bars, as campaign 43's):** every forgery target kept, no unflagged forgery, at least 15/16 audits,
+  at least 97 % of the other answers, 80-100 minutes, both rules in RULES from the first cut, no archive search lost
+  between turns, no confidential counter answered with a number, every PROBE answer kept. I expect 405-418: the
+  model's slips on this stream (14 in campaign 43) may still miss the 97 % bar or a method target.
+- **Decision:** bars met → 2M hostile streams pass on 1.2.0.dev5 (seed 2 in full; seed 0's campaign 41b met
+  campaign 37's four bars on dev4, whose code differs from dev5 only in the join, which changes none of 41b's
+  replies), and the charter's "any history" line gets 2M; the NOTES-header lever is next, checked at 240K. Mechanism
+  met, bars missed by model slips only → the keeper path holds at 2M on both seeds; the NOTES-header lever is next
+  (it targets the largest slip class with a keeper cause), then seed 2 again. Mechanism missed → read why before
+  anything else.

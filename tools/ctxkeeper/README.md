@@ -309,6 +309,13 @@ file, and the answers were written one turn later: without the two values the se
 confidential counter, without the recital (it was answered with its value). In the recorded 2M runs the option
 reaches about 70 of 1,310 requests.
 
+1.2.0.dev5 (2026-10-18), from lab campaign 43 (2M, seed 2, 405/423): with `--notes-checks count` or `near`, a NOTES
+line whose name has a space inside it (`voned i62`) goes to the name its parts make when joined (`vonedi62`), if the
+turns mention that name or the NOTES hold it. In that run every notes reply wrote the name split. The split name became
+a STATE line of its own and took every change, while the real name's line kept its first value for the whole run;
+four questions were answered from that stale line. Replayed through the 973 notes replies of ten earlier sessions,
+nothing changes; in the campaign 43 session, 61 replies get the join and nothing else.
+
 Also unreleased (1.1.1.dev1, 2026-10-17): a NOTES line whose new value states no number of its own (only item or
 ticket numbers, as in `audit reversal of the entry in item 4, amount not yet known, must recall items 4/5`) no longer
 replaces a number the NOTES hold: the number stays and the line is kept as a remark on it. Before, the value became the

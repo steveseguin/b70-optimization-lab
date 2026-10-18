@@ -746,6 +746,25 @@ class InPlace(unittest.TestCase):
         self.assertEqual((s.state["inplace_reasks"], s.state["inplace_failed"]), (0, 0))
         self.assertIn("a misspelled name put right", self.events(keeper))
 
+    def test_a_name_split_by_a_space_in_every_notes_reply_is_joined(self):
+        """Campaign 43 (2M, seed 2): every notes reply wrote `voned i62` for `vonedi62`. The split name became a STATE
+        line of its own and the vonedi62 line kept its first value for the whole run."""
+        class Splitting(LedgerModel):
+            def __call__(self, body):
+                resp = super().__call__(body)
+                msg = resp["choices"][0]["message"]
+                if str(msg.get("content")).startswith("NEW RULES"):
+                    msg["content"] = msg["content"].replace("abcd01:", "abc d01:")
+                return resp
+
+        keeper = self.keeper(Splitting(), notes_checks="near")
+        s = self.run_conversation(keeper, 4)
+        notes = s.state["notes"].splitlines()
+        self.assertIn("abcd01: 7", notes)
+        self.assertFalse([ln for ln in notes if ln.startswith("abc d01")])
+        self.assertEqual((s.state["inplace_reasks"], s.state["inplace_failed"]), (0, 0))
+        self.assertIn("a misspelled name put right", self.events(keeper))
+
     def test_a_correction_under_the_same_misspelling_replaces_the_line_it_corrects(self):
         first = "NEW RULES\n(none)\nCHANGES\nabcd00: 0\nabd01: 999\nOPEN\n"
         second = "NEW RULES\n(none)\nCHANGES\nabd01: 7\nOPEN\n"

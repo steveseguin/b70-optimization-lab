@@ -965,13 +965,22 @@ def respell(delta: dict, mentions: dict[str, int], known: list[str] | tuple = ()
     {written: meant}. (X32n2 at 1M wrote `vozi36` for `vozimi36`; the line was left out as unsupported, the count
     question about vozimi36 got an 8,192-token reply that could not be used, and the change was lost.)
     `mentions`: how often the turns mention each identifier-like name (mention_counts). A name the NOTES hold
-    (`known`) is never taken for a misspelling: `bako35` and `bamo35` can both be real."""
+    (`known`) is never taken for a misspelling: `bako35` and `bamo35` can both be real.
+    A name written with a space inside it is the name its parts make when joined, if the turns mention that name or
+    the NOTES hold it (campaign 43, 2M seed 2: every notes reply wrote `voned i62` for `vonedi62`; the split name
+    became a STATE line of its own, which took every change, while the vonedi62 line kept its item 2 value for the
+    whole run and four questions were answered from it). An identifier never has a space in it, so the join cannot
+    take a real name's line, and it may also be a name the NOTES hold, which a misspelling may not."""
     import difflib
     names = list(dict.fromkeys(k for k, _ in delta["changes"]))
-    free = [m for m in mentions if m not in names]
     fixed: dict[str, str] = {}
     for n in names:
-        if n in mentions or n in known or len(n) < 3 or not re.search(r"[\d_]", n) or " " in n:
+        joined = re.sub(r"\s+", "", n)
+        if " " in n.strip() and joined != n and re.search(r"[\d_]", joined) and (joined in mentions or joined in known):
+            fixed[n] = joined
+    free = [m for m in mentions if m not in names and m not in fixed.values()]
+    for n in names:
+        if n in fixed or n in mentions or n in known or len(n) < 3 or not re.search(r"[\d_]", n) or " " in n:
             continue
         tail = re.search(r"\d*$", n).group(0)
         close = [m for m in free if re.search(r"\d*$", m).group(0) == tail
