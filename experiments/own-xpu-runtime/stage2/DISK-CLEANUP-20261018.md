@@ -186,3 +186,81 @@ Lane B:
 ```
 
 The last direct child-plan capture again identifies existing output as the active-job rejection. Final input checks all passed; readiness failures remained the same existing state assertions described above.
+
+
+## Second pass after coordinator closures (2026-10-18, started 03:44 UTC)
+
+**Reclaimed 2,048,720,896 allocated bytes (2.05 GB); stopped immediately after crossing the requested 2 GB threshold.** This exceeds the additional 1.5 GB requirement. Nine source trees were archived, containing 79,797 removed regular-file paths, including hard-link paths. The allocation count deduplicates inodes and counts an inode only when all its links were removed. Logical bytes and concurrent changes in filesystem free space are not substituted for reclaimed allocation.
+
+At the first filesystem reading, root had 18,313,216,000 bytes available. Before deletion, packet 97's storage check reported 18,151,378,944 free against 18,812,225,206 required (failed). At **2026-10-18 03:53:53 UTC**, after source removal and verified audit-scratch cleanup, it reports **19,952,496,640 free / 18,812,225,206 required; margin 1,140,271,434 bytes; passed=true**. Both lanes continued writing during this task. This is a point-in-time storage check, not full launch readiness or a reservation against later screen writes.
+
+Only this cleanup record is committed. Existing shared-main changes were preserved. Work was CPU/disk only: archive/check programs ran under `nice -n 19 ionice -c3 taskset -c 8-15,24-31`, Python used `-B`, and executed programs had stdin `/dev/null`. Source hashing and archive writes/reads used per-file `POSIX_FADV_DONTNEED` after reading/flushing where supported, including the input-check read wrapper. No global cache drop, host setting, GPU, service, sudo or secret display was used.
+
+### Reference decisions and retained inputs
+
+The owner's newly closed list authorized this pass. Whole-repository exact-path and parent/name searches included hidden and ignored files except `.git`; Python/shell consumer searches also included ignored files. The broad search recorded the same 68 inaccessible unrelated Qwen cache/STOP paths as the earlier pass. The source-code search had no access errors. Search indexes, complete source hits, candidate plans and protected-path intersections are in the audit archive.
+
+- **Packets 80 and 84:** removed only `.bin`/`.bf16` leftovers under completed `W2m`, `WS`, `WSs`, `WS128x`, and `WS128` windows in `build/device-cards01-a`. Kept all early `K0/K1a/K1b/K2/W0p` trees, the entire KD tree, every window-bound receipt, all JSON/JSONL/log files, binaries, seals and source/build inputs. `resume_chain.file_inventory` recursively reads the early trees; these remain complete. Submission collection still opens KD fixture bytes; those remain too. No selected raw file was a window-bound collector receipt.
+- **Five `p84s-*` screen trees:** removed private `run/adapter/build/driver-cache` files, duplicate input `vocab.bin` files, and the five raw after-suite draft-state files where present. This includes `p84s-B-3-control-refused-58f-undrained`; its refusal, kernel and coordination evidence remains. All JSON/JSONL, timestamps, output tokens, receipt hashes, logs, summaries and compressed state metadata stay available.
+- **Two packet 95 screens:** the same bulk-only selection in `p95-exp-grid-prefetch-B-grid-B-0-production` and `p95-exp-grid-prefetch-B-grid-B-1-exp-grid-prefetch`. The third screen was left intact because the threshold had been reached.
+- **Packet 95 build and all packet 90 evidence remain untouched.** Packet 97's source adapter verifies source seals and comparison inputs even for closed choices; there was no need to remove those dependencies. Packet 90 E1/production qualification inputs remain complete.
+- Packet 91/97 prior-chain seal paths and both full static input inventories were checked against the selected exact-path set: no intersection. The prior-chain seals name packet 80/84 build objects outside these completed chain trees; all remain. Submission prepared `evidence.json.gz` and `result.json` files are tracked and remain intact. No tracked file was selected for deletion.
+
+Packets 91, 93, 97, 98, 58g/58s, the packet 49 oracle, packet 17's `wa-reference`, and `screen/v4-lanes` code were not changed. Historical raw-state analysis that needs an archived byte must restore that member first; current collectors, screen comparisons and readiness inputs retain their files.
+
+### Archives and restoration
+
+Archive base: `/mnt/raid-models/own-xpu-runtime-archive/`. Each directory below contains one `unreferenced-bulk-20261018T0344.tar.gz`. Every archive embeds `.cleanup/manifest.json`, `.cleanup/manifest.sha256`, `.cleanup/kept.json`, and `.cleanup/plan.json`; the plan records the original absolute source root and the manifest enumerates exact paths, sizes and SHA-256 values. Payload names are `payload/<relative source path>`.
+
+Before each exact-path unlink, every archive member's content was verified against the per-file manifest; hard-link members were verified against their already verified target. The exact member-name set and an independent GNU tar regular-plus-hard-link count matched. The archive SHA, all selected source bytes and all kept-file hashes were then rechecked. Accessible process descriptors were checked for selected open paths. No recursive deletion or deletion glob was used; directories and symlinks remain. Kept hashes passed immediately after removal and again in the final combined check (9,062 retained files).
+
+| Archive directory | Removed files | Reclaimed bytes | tar.gz bytes | Members (regular + hard links) | Archive SHA-256 |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `packet80-record-bundle-late-raw` | 39664 | 790949888 | 469581521 | 21236 + 18432 | `f19419f61bef4455626258736eb2c759c43c6e5af53312ce02e8c8c2b9856483` |
+| `packet84-record-bundle-late-raw` | 39664 | 790949888 | 469577378 | 21236 + 18432 | `451b4edb1b70c573a7a4528295fcca3816a179dc09d66d414e811aead4349f92` |
+| `screen-p84s-B-0-control` | 68 | 68046848 | 23440155 | 72 + 0 | `2f5f53375a1d064b313fabe157979e91b409f4201839c373ace2f4d94ecb8c05` |
+| `screen-p84s-B-1-candidate-a` | 68 | 68046848 | 23440295 | 72 + 0 | `47edb7ad0ead13a1762c665f686fe21abb48e2d19cfab6bf9f359198ca2352a9` |
+| `screen-p84s-B-2-candidate-b` | 66 | 67751936 | 23367673 | 70 + 0 | `a97f33765504ab63f8b93afee1ee5852bdbe8bb1514e07b2ac6015d7d4b994b4` |
+| `screen-p84s-B-3-control` | 68 | 68046848 | 23440219 | 72 + 0 | `cef59f9e6103d5f9d6a1c6610b2345ffff83fa46c5b27ebc406dc004746bc937` |
+| `screen-p84s-B-3-control-refused-58f-undrained` | 63 | 58343424 | 23393598 | 67 + 0 | `da9b55b91e4f006aefec7117e4d52d68e57e4a209b7b3693254706f3dc79e0b4` |
+| `screen-p95-exp-grid-prefetch-B-grid-B-0-production` | 68 | 68292608 | 23496762 | 72 + 0 | `2a4ff917e0fd6cb21ff07fb920a1490715de20f1912f45b0cf48c50628173efd` |
+| `screen-p95-exp-grid-prefetch-B-grid-B-1-exp-grid-prefetch` | 68 | 68292608 | 23496383 | 72 + 0 | `cc07ba743ae27699bac684cec2bc5468d4371bc429c3591041b540a1c84274d8` |
+
+Original source roots:
+
+- `packet80-record-bundle-late-raw`: `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet80-record-bundle/build/device-cards01-a`
+- `packet84-record-bundle-late-raw`: `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet84-record-bundle/build/device-cards01-a`
+- `screen-p84s-B-0-control`: `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p84s-B-0-control`
+- `screen-p84s-B-1-candidate-a`: `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p84s-B-1-candidate-a`
+- `screen-p84s-B-2-candidate-b`: `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p84s-B-2-candidate-b`
+- `screen-p84s-B-3-control`: `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p84s-B-3-control`
+- `screen-p84s-B-3-control-refused-58f-undrained`: `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p84s-B-3-control-refused-58f-undrained`
+- `screen-p95-exp-grid-prefetch-B-grid-B-0-production`: `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p95-exp-grid-prefetch-B-grid-B-0-production`
+- `screen-p95-exp-grid-prefetch-B-grid-B-1-exp-grid-prefetch`: `/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p95-exp-grid-prefetch-B-grid-B-1-exp-grid-prefetch`
+
+Audit archive: `/mnt/raid-models/own-xpu-runtime-archive/cleanup-audit-20261018T0344/unreferenced-bulk-20261018T0344.tar.gz` (13,508,517 bytes), SHA-256 `e065089a4f9a7c5b5591932dd0114bf05b5f200b4adaa1003a7faf74542710ca`. All 116 audit payload files were content-verified; GNU member count 120 regular + 0 hard links, including four embedded metadata files. Its `payload/final-kept.json` is the final retained-file hash list. It also preserves reference searches, exact deletion/verification code, all per-tree reports/manifests, before/after input inventories, collector maps, screen comparisons and check logs. Verified temporary audit copies were deleted exactly; their 101,978,112 allocated bytes are **excluded** from the 2.05 GB original-data reclamation claim.
+
+Restore by checking the archive SHA-256, reading `.cleanup/plan.json` for the original root, and extracting the required `payload/` members into that root with one path component stripped. For a complete payload restore, GNU tar supports `--strip-components=1 --wildcards 'payload/*'`; preserve existing retained files and check the restored bytes against the embedded manifest. Do not extract `.cleanup` over source files.
+
+### Validation after removal
+
+| Check | Before exit | After exit |
+| --- | ---: | ---: |
+| `lane-A` | 0 | 1 |
+| `lane-B` | 0 | 1 |
+| `verify-80` | 1 | 1 |
+| `verify-84` | 1 | 1 |
+| `verify-91` | 1 | 1 |
+| `verify-97` | 1 | 1 |
+| `inputs-91` | 0 | 0 |
+| `inputs-97` | 0 | 0 |
+| `storage-97` | 1 | 0 |
+
+- Packet 91 input check: **PASS**, 14,246 static files, no errors; `device_executed=false`, `model_payload_read=false`.
+- Packet 97 input check: **PASS**, 14,147 static files, no errors; `device_executed=false`, `model_payload_read=false`. Full per-window inventories are retained in the audit.
+
+- Packet 80/84 readiness still rejects `chain already started`; packet 91/97 readiness still rejects the preexisting readiness/preparation flags. These are not reported as passes. All check logs and lane-plan rows are retained in the audit.
+- Both lane plans passed before removal. After removal, lane A's `p97b-d27742791d5b859d-composite-A-2-control` and lane B's `packet86-exp-onecached-B` rejected existing output directories; the other five A rows and four B rows passed. The direct A child-plan capture confirms `new screen evidence output required`. Those jobs subsequently left the live queue during this audit; no queue file was edited here.
+- Both unchanged submission replays pass against the committed prepared bundles. Packet 80's collector map remains identical across 1,101 members; packet 84's map remains identical across 1,103 members. Packet 84's existing collector has an API mismatch: it calls `verify_receipt(window)` without the now-required `data=` argument. This failed before removal. The audit-only collector adapter supplied the actual admission receipt bytes to the unchanged verifier; it did not skip verification or edit repository code. The ordinary saved-bundle replay passes without that adapter.
+- Packet 84's composition comparison passes unchanged. Packet 97's packet 90 and packet 95 source-adapter outputs are identical as parsed JSON before/after (statuses `winner` and `no-winner`), including their source/receipt hash maps. This checks the retained qualification evidence beyond readiness scripts that stop at existing flags.
+- No missing-input regression was observed. The final storage result above is separate from the existing preparation blockers. No packet 97 chain was launched.
