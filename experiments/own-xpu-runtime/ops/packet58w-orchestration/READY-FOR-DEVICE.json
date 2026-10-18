@@ -2,15 +2,15 @@
   "schema": "packet58w.ready-for-device.v1",
   "packet": "packet58w-onecard-record",
   "prepared_utc": "2026-10-18T17:55:41.724111+00:00",
-  "commit_sha": "65a3607145022df697b4a1df3841ba236bd24c66",
-  "commit_scope": "Pushed preparation commit: chain, sealed reused engine, CPU evidence, submission tool, work note and current-state entry. This final marker is committed separately.",
+  "commit_sha": "47a547f3e92a67831cad3e3e684c7ee7d13faa37",
+  "commit_scope": "Pushed packet58wb readiness amendment and minimal reseal. This final marker is committed separately.",
   "cpu_preparation_passed": true,
-  "ready_for_device_chain": false,
+  "ready_for_device_chain": true,
   "parent_qualification_required_at_launch": true,
-  "readiness_reason": "58v smoke/v5 pending or invalid: Traceback (most recent call last):\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58w-onecard-record/screen_gate.py\", line 59, in <module>\n    resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()\n                                                                 ^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58w-onecard-record/screen_gate.py\", line 26, in main\n    W.require(queue.get('passed') is True and queue.get('completed')==list(Q.ORDER) and queue.get('running') is None and not queue.get('error') and not queue.get('child_still_running'),'parent queue incomplete: '+arm)\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet34-replay-bench/window.py\", line 27, in require\n    raise ValueError(reason)\nValueError: parent queue incomplete: overlap",
+  "readiness_reason": "Real smoke and all five exact bracket views pass the amended pre-chain gate.",
   "parent_smoke_observed_passed": true,
-  "parent_v5_observed_complete": false,
-  "readiness_policy": "58v smoke must pass; both exact overlap views >=1.005 times EVERY serial control; control max/min <=1.03; all 12 x 128 tokens exact.",
+  "parent_v5_observed_complete": true,
+  "readiness_policy": "Amended after packet58v's data and before any packet58w chain: in this one-card one-load bracket the first view A0 warms the initially empty immutable device expert cache. A0 is reported and must be exact, but is excluded from drift and comparison. The 58t precedent (15:21-15:35 UTC) had a cold first control of 21.41 versus 26.13 tok/s warm. Smoke must pass; every 12 x 128 tokens in all five views must be checked again against packet49 iq3-p49-split32-v1; remaining serial controls A1/A2 must have max/min <=1.03; both overlap views B0/B1 must be >=1.005 times EACH remaining serial control. All other checks remain unchanged. This is warm steady-state readiness only; the record value is the chain's fresh WS128.",
   "chain_command": "systemd-run --user --unit=packet58-onecard-58w-a --property=Restart=no --property=SendSIGKILL=no --property=TimeoutStopSec=infinity --property=Nice=0 --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib OMP_NUM_THREADS=2 /usr/bin/python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58w-onecard-record/queue_runner.py --authorized-device-window --card 0 --view down-tile16 --output-root /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58w-onecard-record/evidence/card0-58w-a --fault-review /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58w-onecard-record/evidence/fault-review-58w.json < /dev/null",
   "chain_command_sha256": "bb0b42ff2cec8c3e88ecc650292598416867c6ddc983ba137793da421862bd3a",
   "command_hash_encoding": "UTF-8 bytes of chain_command, no trailing newline",
@@ -18,19 +18,19 @@
   "chain_output": "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/evidence/card0-58w-a",
   "whole_host_hold_required_through_gaps": true,
   "files_sha256": {
-    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/build-receipt.json": "2ea3865be6cad6aa1f6b38e8a57868b21be595c410d23ca936fbb0b09623e383",
-    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/submission-pins.json": "64b25966047acfedfb6f8ff2d61155969aae951813db99af69ccc39d876d3b56",
-    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/ready.json": "b261d35e4fb9412563bcf21df02b88ae66d9ca2b4ab8c404754a39c5fef0c794",
-    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/submission-policy.json": "1089568e3b37384c845694955701b1084df9179bca582fbcf1dbb33f0f489193",
+    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/build-receipt.json": "ada0490c458d27843ab0361c98d34bb22bea6754977fcd38a562558deed966bc",
+    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/submission-pins.json": "c70564d460ac6f054861af876e03a057c95c8537f844b3abfa97d5e08c353f8a",
+    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/ready.json": "3eb75fc3a63a0023c208071ba250459268015c6649f4e3e73aacb9c3c288bfa7",
+    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/submission-policy.json": "8ff5824a9c94ef9937021979e3a6d2068bb20437eca8f862312704e981a26f2a",
     "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/record-threshold.json": "ebb76ee9a3eed3c1322003bef45f5c6aac7e9c3ab3e8fefa3526651bb8db5e23",
     "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/runtime-selection.json": "e1832be265c0f3c40e9aa0bf09718a19f5181453bba5610154a54c51d9961f8c",
     "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/library-path.json": "127119f1ce942beb5c1b92f9289d11949f9d0d8211b5dc4b97283de742c9bdbd",
-    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/evidence/argument-gate.json": "8dd0796d5a2e7ddf7c36ac1c2191a5aa61e787d1390f57fb11ae5360eeea6f5f",
-    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/evidence/python-cpu-gates.json": "36e7f40baa03bed3e243f00c93cb9d3efead6c0bc7fb4ddafcc5b3fc94e4e3ba",
+    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/evidence/argument-gate.json": "20219d37893c48c36f632f1ecb8f9fda44fb4019558f0b112d4b7251785e728d",
+    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/evidence/python-cpu-gates.json": "d58fe0a35224d1db91e31aea2612348f69b77b1b7f5df87993f019f563d827ad",
     "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/evidence/fullshape-submit-cpu.json": "c8719b070929a754662584b7aee9c0b465cf93b36b390193f5ca2586ddf5057b",
     "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/evidence/startup-cpu.json": "12c00cfdf7b090dfd2b6fa8554430a343d129d6fb0699e696ab2a7464aabee6a",
-    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/evidence/plan-check.json": "6864d694f03918e609a3e9ed4e0ee2977536864d16073559a407695a5dbe37ca",
-    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/evidence/literal-audit.json": "aae5920e9647f5428b3cb9b63c987d56758bf8d26155e96bbe4b5a44feb09200"
+    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/evidence/plan-check.json": "d0b1cb3c9b03c51c05d71adc1b89c95948cacf7da8b1a6da640dd4f23e97b72f",
+    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/evidence/literal-audit.json": "d79d0fc42c58a8f82ff35d6fb64b4d64e5714b929d6531ef33f9c552123f1d23"
   },
   "native_artifacts": {
     "build/gnu-host/own-rt-iq3": "743ad9ea1d17785099d769f19f19e04992aea93295176529d24b578a645204fc",
@@ -54,7 +54,7 @@
     "context": 4096,
     "arithmetic": "iq3-p49-split32-v1"
   },
-  "python_tests_passed": 120,
+  "python_tests_passed": 124,
   "startup_entries_passed": 7,
   "wrong_unit_environment_refusals": 28,
   "native_fullshape_windows": 5,
@@ -79,5 +79,22 @@
   "live_queue_changed": false,
   "submission_performed": false,
   "parent_trees_edited": false,
-  "final_content_write": true
+  "final_content_write": true,
+  "amended_utc": "2026-10-18T18:11:37.066964+00:00",
+  "readiness_amendment": "readiness gate amended to exclude the cold-cache first bracket view (58t precedent), before the chain; the record value is the chain's fresh WS128",
+  "comparison_controls": [
+    "A1",
+    "A2"
+  ],
+  "warmup_view": {
+    "label": "A0",
+    "rate": 22.7309513443468,
+    "exact": true,
+    "excluded_from_drift_and_comparison": true
+  },
+  "control_drift": 0.0009755767940313673,
+  "minimum_gain": 0.07810883554242659,
+  "chain_command_bytes_unchanged": true,
+  "chain_command_hash_retained": true,
+  "amendment_after_parent_data_before_chain": true
 }
