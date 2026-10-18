@@ -679,3 +679,21 @@ STOP DOING acknowledged:
 - freezing 2-card critical-path Codex for one-card brackets;
 - unit lifetime as busy time;
 - first device run as the environment and arm-sequence test.
+
+## Review 31 (2026-10-18 ~21:05 UTC): ACT
+
+Cards were assigned work only 13.7% of card-minutes over 2 h. The last 2-card speed screen of a new lever was packet131b (ended 16:06); since then the 2-card line has run only diagnostics and smokes. One-card whole-host holds took 128 min in 6 h and left 3 cards idle each time. Packet58z (21.55 GB cache record chain) was running. Faults 2.
+
+Actions:
+1. **Ruled-out smokes pulled:** the queued packet142c expert-gate-up and hc-gate-low smokes are out of lane B, and `autoq-p142-v5c` is stopped. packet141's preregistered rule rules out both classes (1.22× and 1.10×), and the expert variant covers one layer per rank. The attention bracket stays at the head of lane B.
+2. **Codex p145** (launched after packet58z's timing windows): a vendored packet142 copy adding exact `router-order600` (1.86×) and `gdnz-order600` (1.30×) variants. It supports both lanes; the router lane-A smoke proposal comes first (≤ 40 min, queued by `autoq-ready-p145-router-A`).
+3. **Rule:** no new one-card whole-host holds after packet58z unless both 2-card queues are empty (e.g. overnight) or a 2-card body win is being ported. Batch one-card jobs into one hold.
+4. **Codex opsreview5** (after packet58z): `ops/rehearse_entry.py --report` runs each job's report step through the real import path on synthetic evidence, plus a duplicate-module-name check. READY-FOR-DEVICE requires it.
+5. **Generic waiter:** `fn-run/onecard-chain.sh <packet> <orchestration> [--check]` replaces the hand-copied waiters. It derives the unit, output and fault-review path from the packet's own READY/ready/WINDOW.md, validates them in `--check` before any pause, and freezes Codex only once `WS.log` exists. The 20:52 p58z-chain start failed on a copied fault-review filename and froze Codex 2 s after launch; the relaunch at 20:52:43 used the correct path.
+
+STOP DOING acknowledged:
+- queuing screens for attribution-ruled-out classes or single-layer candidates;
+- lane-B-only screen tooling;
+- one-card holds ahead of ready 2-card speed screens;
+- growing p143 beyond what brackets select;
+- dropping a brief without re-issuing its scope (p142b's lane-A scope moves to p145).
