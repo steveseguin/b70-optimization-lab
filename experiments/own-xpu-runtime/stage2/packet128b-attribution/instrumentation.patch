@@ -1,0 +1,135 @@
+--- packet128/main.cpp
++++ packet128b/main.cpp
+@@ -672,24 +672,25 @@
+   void flush_attribution(){site_timings<<site_buffer.str();site_timings.flush();site_buffer.str("");site_buffer.clear();require(bool(site_timings),"attribution write");}
+   void attribution_host(const char* label,std::chrono::steady_clock::time_point start){
+    if(!attribution.active())return;
+-   auto end=std::chrono::steady_clock::now();site_buffer<<"{\"schema\":\"packet128.host.v1\",\"request\":"<<attribution.request<<",\"rank\":"<<a.rank<<",\"fixture\":"<<attribution.current.fixture<<",\"position\":"<<attribution.current.position<<",\"label\":"<<ownrt::quote(label)<<",\"start_ns\":"<<std::chrono::duration_cast<std::chrono::nanoseconds>(start.time_since_epoch()).count()<<",\"end_ns\":"<<std::chrono::duration_cast<std::chrono::nanoseconds>(end.time_since_epoch()).count()<<"}\n";
++   auto end=std::chrono::steady_clock::now();site_buffer<<"{\"schema\":\"packet128b.host.v1\",\"request\":"<<attribution.request<<",\"rank\":"<<a.rank<<",\"fixture\":"<<attribution.current.fixture<<",\"position\":"<<attribution.current.position<<",\"label\":"<<ownrt::quote(label)<<",\"start_ns\":"<<std::chrono::duration_cast<std::chrono::nanoseconds>(start.time_since_epoch()).count()<<",\"end_ns\":"<<std::chrono::duration_cast<std::chrono::nanoseconds>(end.time_since_epoch()).count()<<"}\n";
+   }
+   void attribution_row(ownrt::Event event,const ownrt::EventTiming& t) {
+     if(!attribution.enabled)return;
+     auto found=attribution.events.find(event);if(found==attribution.events.end())return;
+     const auto& site=found->second;
+-    site_buffer<<"{\"schema\":\"packet128.event.v1\",\"diagnostic\":true,\"rank\":"<<a.rank
++    site_buffer<<"{\"schema\":\"packet128b.event.v1\",\"diagnostic\":true,\"rank\":"<<a.rank
+       <<",\"request\":"<<attribution.request<<",\"fixture\":"<<site.fixture<<",\"position\":"<<site.position
+       <<",\"speculative\":"<<(site.speculative?"true":"false")<<",\"label\":"<<ownrt::quote(site.label)
+       <<",\"class\":"<<ownrt::quote(p57::category(site.label))<<",\"event\":"<<event
++      <<",\"queue\":"<<ownrt::quote(site.queue)<<",\"queue_kind\":"<<ownrt::quote(std::string(site.queue)=="compute"?"compute":"copy")
+       <<",\"layer_boundary\":"<<ownrt::quote(p57::layer_boundary(site.label))
+       <<",\"start_ns\":"<<t.start_ns<<",\"end_ns\":"<<t.end_ns
+       <<",\"device_ms\":"<<double(t.end_ns-t.start_ns)/1e6<<"}\n";
+     attribution.events.erase(found);
+   }
+-  void attribution_copy(ownrt::Event event,const char* label,bool completed=false) {
++  void attribution_copy(ownrt::Event event,const char* label,bool completed=false,const char* queue="copy-auto") {
+     if(!attribution.enabled||!p57::sample(attribution.current.fixture))return;
+-    auto previous=attribution.current.label;attribution.current.label=label;attribution.record(event);attribution.current.label=previous;
++    auto previous=attribution.current;attribution.current.label=label;attribution.current.queue=queue;attribution.record(event);attribution.current=previous;
+ #ifndef OWN_RT_HOST_ONLY
+     if(completed){auto t=dev(0).timing(event);require(t.start_ns&&t.end_ns>=t.start_ns,"invalid transfer interval");attribution_row(event,t);}
+     else pending.push_back({{event,event,1},false,current_cls});
+@@ -1515,7 +1516,7 @@
+     if(poisoned||stopped)throw std::runtime_error("prepared guard closed");
+     if(dep!=logical)throw std::logic_error("step event order");
+     auto& site=issue_sites.at(index);int c=site.card;
+-    if(attribution.enabled)attribution.current.label=p.launches[index].label;
++    if(attribution.sampling())attribution.current.label=p.launches[index].label;
+     if(submission_card!=c)drain();submission_card=c;current_cls=site.cls;
+     auto previous_submitted=submitted;
+     auto started=class_timing?std::chrono::steady_clock::now():std::chrono::steady_clock::time_point{};
+@@ -1529,7 +1530,7 @@
+   flash::Event enqueue(const flash::Launch &l, flash::Event dep) override {
+     if(prepared_path){auto index=size_t(&l-p.launches.data());audit_issue_site(index);return issue_site(index,dep);}
+     guard();
+-    if(attribution.enabled)attribution.current.label=l.label;
++    if(attribution.sampling())attribution.current.label=l.label;
+     require(dep == logical, "step event order");
+     int c = l.card;
+     if(submission_card!=c)drain(); // both queues drained and events retired on host
+--- packet128/mtp.hpp
++++ packet128b/mtp.hpp
+@@ -231,14 +231,14 @@
+   if(captured) {
+    for(const auto& site:issue_sites){if(!head&&site.head)continue;
+     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
+-    e.guard();e.current_cls=site.cls;if(e.attribution.enabled)e.attribution.current.label=site.label;
++    e.guard();e.current_cls=site.cls;if(e.attribution.sampling())e.attribution.current.label=site.label;
+     for(const auto& cmd:site.commands){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);}
+    }
+   } else {
+-   for(const auto& l:merge_plan){if(e.a.timing=="class")e.set_class("draft."+l.label);if(e.attribution.enabled)e.attribution.current.label="draft."+l.label;direct(l);}
++   for(const auto& l:merge_plan){if(e.a.timing=="class")e.set_class("draft."+l.label);if(e.attribution.sampling())e.attribution.current.label="draft."+l.label;direct(l);}
+    for(const auto& l:p.launches){if(!head&&(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax"))continue;
+     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
+-    e.guard();if(e.a.timing=="class")e.set_class("draft."+l.label);if(e.attribution.enabled)e.attribution.current.label="draft."+l.label;direct(l);
++    e.guard();if(e.a.timing=="class")e.set_class("draft."+l.label);if(e.attribution.sampling())e.attribution.current.label="draft."+l.label;direct(l);
+    }
+   }
+   if(asynchronous) {
+--- packet128/p105_runtime.hpp
++++ packet128b/p105_runtime.hpp
+@@ -28,7 +28,7 @@
+  }
+  void transfer(Allocation dst,Allocation src,size_t n,const char*leg){
+   auto start=std::chrono::steady_clock::now();CopyScope scope(bcs);ownrt::CopyEngine copy(e.dev(0));
+-  auto event=copy.copy(dst,0,src,0,n,{});e.wait(0,event);e.attribution_copy(event,(std::string("transfer.head.")+leg).c_str(),true);e.retire_events(0);
++  auto event=copy.copy(dst,0,src,0,n,{});e.wait(0,event);e.attribution_copy(event,(std::string("transfer.head.")+leg).c_str(),true,bcs?"copy-bcs":"copy-auto");e.retire_events(0);
+   timings<<"{\"leg\":\""<<leg<<"\",\"placement\":\""<<(bcs?"bcs":"compute")<<"\",\"bytes\":"<<n<<",\"host_us\":"<<Engine::ms(start)*1000<<",\"backend\":"<<ownrt::quote(e.dev(0).identity())<<"}\n";
+   require(bool(timings),"p105 timing write");
+  }
+@@ -39,7 +39,7 @@
+   // CopyEngine binds the current final.mix writer event. BCS waits that event
+   // on its own queue; the following prefix head only reads the same input.
+   export_started=std::chrono::steady_clock::now();CopyScope scope(bcs);ownrt::CopyEngine copy(e.dev(0));
+-  export_event=copy.copy(staging,0,hidden,0,hidden_bytes,{});e.attribution_copy(export_event,"transfer.head.hidden_export");
++  export_event=copy.copy(staging,0,hidden,0,hidden_bytes,{});e.attribution_copy(export_event,"transfer.head.hidden_export",false,bcs?"copy-bcs":"copy-auto");
+   export_sequence=sequence;export_position=pos;export_fixture=fixture;
+  }
+  void publish_hidden(Mailbox& box){
+--- packet128/strict_snapshot.hpp
++++ packet128b/strict_snapshot.hpp
+@@ -200,7 +200,7 @@
+    }
+    require(rows.size()*sizeof(SnapshotFlat::Item)<=table_capacity,"flat snapshot table capacity");
+    e.upload(0,table,0,rows.data(),rows.size()*sizeof(SnapshotFlat::Item));
+-   SnapshotFlat op;op.count=rows.size();op.tiles=tiles;e.tail=e.dev(0).compute(op,ids,{});e.attribution_copy(e.tail,restore?"rollback.restore.flat":"snapshot.capture.flat");
++   SnapshotFlat op;op.count=rows.size();op.tiles=tiles;e.tail=e.dev(0).compute(op,ids,{});e.attribution_copy(e.tail,restore?"rollback.restore.flat":"snapshot.capture.flat",false,"compute");
+    (restore?restore_submissions:capture_submissions)+=2;return;
+   }
+   // Similar-sized pieces share one kernel, limiting padded work. Each batch
+@@ -221,7 +221,7 @@
+    require(batch.count&&batch.total<=SnapshotBatch::limit,"snapshot batch bound");
+    if(batch.count==1)e.tail=e.dev(0).issue(checked[order[start]]);
+    else e.tail=e.dev(0).compute(batch,ids,{});
+-   e.attribution_copy(e.tail,batch.count==1?(restore?"rollback.transfer.restore.single":"snapshot.transfer.capture.single"):(restore?"rollback.restore.batch":"snapshot.capture.batch"));
++   e.attribution_copy(e.tail,batch.count==1?(restore?"rollback.transfer.restore.single":"snapshot.transfer.capture.single"):(restore?"rollback.restore.batch":"snapshot.capture.batch"),false,batch.count==1?"copy-auto":"compute");
+    ++submissions;
+   }
+   (restore?restore_submissions:capture_submissions)+=submissions;
+--- packet128/attribution.hpp
++++ packet128b/attribution.hpp
+@@ -3,7 +3,7 @@
+ #include <string>
+ // Packet57 observation only. Device timestamps never compare different cards.
+ namespace p57 {
+-inline bool sample(int fixture) { return fixture>=1 && fixture<=64; }
++inline bool sample(int fixture) { return fixture>=9 && fixture<=16; }
+ inline const char* layer_boundary(const std::string& label) {
+  if(label=="blk.0.hc.a.norm"||label=="blk.24.hc.a.norm")return "begin";
+  if(label=="blk.23.ffn.combine"||label=="blk.47.ffn.combine")return "end";
+@@ -28,10 +28,11 @@
+  if(label.find("attention")!=std::string::npos||label.find("qsa")!=std::string::npos||label.find("gdn")!=std::string::npos||label.find("attn")!=std::string::npos)return "attention";
+  return "other";
+ }
+-struct Site {std::string label;int fixture=0,position=-1;bool speculative=false;};
++struct Site {std::string label;int fixture=0,position=-1;bool speculative=false;const char* queue="compute";};
+ struct Recorder {
+  bool enabled=false;int request=0;int generation_origin=-1;Site current;std::map<unsigned long long,Site> events;
+- bool active()const{return enabled&&sample(current.fixture)&&selected(current.label);}
++ bool sampling()const{return enabled&&sample(current.fixture);}
++ bool active()const{return sampling()&&selected(current.label);}
+  void record(unsigned long long event){if(active())events.emplace(event,current);}
+ };
+ }

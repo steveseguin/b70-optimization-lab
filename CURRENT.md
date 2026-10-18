@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet128b sampled timing job prepared on CPU:**
+Packet128's every-token recorder slowed the line to 42.21 tok/s, so its timing
+ranking remains blocked. The new copy records tokens 9–16 and keeps copy clocks
+separate from compute gaps. All parent links survive. CPU byte/reset/startup,
+argument, drain, limits and temporary queue checks pass. One proposed lane-B
+load checks all twelve 64-token answers; analysis runs after the lane is released.
+New device speed and the required 90% overhead ratio are still unmeasured.
+No GPU, service, live queue or host setting changed in this preparation.
+[Work note and handoff](notes/2026-10-18-own-runtime-packet128b.md).
+
 **October 18, packet58t resident lookup copy sealed on CPU:**
 The one-card engine now has an exact copy that reads its two sparse lookup
 tables from anonymous memory. This adds 29.32 GB of resident host bytes, checked
