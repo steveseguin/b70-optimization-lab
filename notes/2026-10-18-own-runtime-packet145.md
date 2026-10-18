@@ -98,3 +98,8 @@ rechecked after the report-only fixes.
 The marker is written last and scopes readiness to router smoke on lane A.
 Other proposal mirrors are staged locally; their external files and final
 all-lane handoff follow in milestone 2. No GPU, service or live queue changed.
+
+The post-marker pin check caught a cross-packet proposal-file pin in the first
+marker. It now binds the byte-identical proposal mirror inside packet145.
+Temporary planning and loader/pin checks were repeated; the corrected marker
+is written last and checked read-only after writing. No device launch occurred.
