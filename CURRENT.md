@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 18, packet58ad HC-fusion record chain prepared ahead on CPU:** The
+new seven-window chain binds packet58ab's final engine by hash, keeping
+tile16, overlap and the 21.55 GB cache. All 129 policy tests, seven entry paths,
+native parser and loader checks, submission rehearsal, seals and pin admission
+pass. The submission path bug is fixed in the new copy. The coordinator must
+retain the smoke/bracket's whole-host hold; launch still refuses until those
+results are complete, exact and clear the 2% gate. The parent's marker also
+records its unresolved shared report-tool check. Nothing was launched, queued
+or submitted here; the 29.259764 record is unchanged.
+[Work note](notes/2026-10-18-own-runtime-packet58ad.md).
+
 **October 18, packet58ab one-card HC fusion prepared on CPU; report gate blocked:**
 The private packet58z copy switches between production HC and packet60's
 three-stage HC within one load. GNU and Intel agree byte for byte; full-size
