@@ -42,9 +42,10 @@ def derive():
         for path in sorted((STAGE/packet/'evidence').glob('card*/**/window.json')):
             if path.parent.name.startswith('K1'):
                 continue
-            window = read(path)
+            window = json.loads(path.read_text())
             if not window.get('passed'):
                 continue
+            window = read(path)  # Bind completed immutable receipts only.
             post = window['postload_memory']
             assert post['complete_postload'] and post['full_cache_bytes'] == 18_000_000_000
             census = read(path.parent/'run/run/census.json')[0]
@@ -145,17 +146,29 @@ def main():
     saved_ms = record['metric_events_2_100']['fill_bytes']/25_000_000*(1-ratio)
     summary_path = STAGE/'packet58p-onecard-record/evidence/card0-58p-a/WS128/summary.json'
     summary = read(summary_path)
-    by_class = {}
+    caches = [json.loads(line) for line in pin(summary_path.parent/'run/run/cache.jsonl').read_text().splitlines()]
+    assert all(row['epoch']==i+1 for i,row in enumerate(caches))
+    by_class = {};position=0;prompt_projections=[]
     for request in summary['requests']:
         # Native timestamps bound each exact prompt's conventional 99 intervals.
         timings = pin(summary_path.parent/'run/run'/request['prompt_id']/'timings.jsonl')
         events = [json.loads(line) for line in timings.read_text().splitlines()]
+        assert [r['generated_index'] for r in events]==list(range(1,request['output_tokens']+1))
+        prefill=request['prompt_tokens']-1
+        charged=caches[position+prefill+1:position+prefill+100]
+        assert len(charged)==99
+        position+=prefill+request['output_tokens']
+        prompt_saved_ms=statistics.mean(row['fill_bytes'] for row in charged)/25_000_000*(1-ratio)
         # Reuse the receipt's individually measured rate, not aggregate reciprocals.
         stamps = request['token_timestamps']
         rate = 99/(stamps[99]-stamps[0])
         assert abs(rate-request['tok_s_1_100_intervals_after_ttft'])<1e-9
-        projected = 1000/(1000/rate-saved_ms)
+        projected = 1000/(1000/rate-prompt_saved_ms)
         by_class.setdefault(request['prompt_class'],[]).append(projected)
+        prompt_projections.append(dict(prompt_id=request['prompt_id'],measured_rate=rate,
+                                       projected_rate=projected,charged_intervals=99,
+                                       saved_ms_per_interval=prompt_saved_ms))
+    assert position==len(caches)
     projected = statistics.median(statistics.median(v) for v in by_class.values())
     gain = projected/record['rate']-1
     decision = admission['extra_cache_bytes']>=2_000_000_000 and gain>=0.02
@@ -163,6 +176,7 @@ def main():
                   projection=dict(measured_anchor_tok_s=record['rate'],miss_byte_ratio=ratio,
                                   fill_dma_proxy_GB_s=25, saved_ms_per_position=saved_ms,
                                   projected_tok_s=projected,projected_gain_fraction=gain,
+                                  per_prompt=prompt_projections,
                                   measured=False, transfer_assumption='Independent calibration miss ratio transfers to one-card serial fill payload; no zero-copy saving credited.'),
                   proceed=decision,sources=PINS)
     (P/'admission.json').write_text(json.dumps(result,indent=2)+'\n')

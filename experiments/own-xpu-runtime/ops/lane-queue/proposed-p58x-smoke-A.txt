@@ -1,0 +1,8 @@
+# CPU proposal only; card 0, lane A, whole host; lane B paused/drained throughout.
+# Packet58x: larger cache; real queue/window startup gate and lanequeue-derived unit identity.
+# Two K1 fixtures precede one model load. Smoke: 12 x 64 max; v5: 12 x 128 18GB/max/18GB/max/18GB; fixed serial maintenance.
+# Native and Python check every token against iq3-p49-split32-v1. The v5 runner refuses without this exact smoke.
+# Expected 600-900 seconds; watchdog 7200 seconds >= 4x upper estimate.
+# Required host MemAvailable 98989727744 bytes, including unchanged 8 GiB reserve; BF16 KV, one 21.5527296 GB allocation, usage capped per view.
+# No device run, live queue change, record chain or submission performed by preparation.
+{"name": "packet58x-smoke-A", "lane": "A", "argv": ["/usr/bin/python3", "-B", "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/queue_runner.py", "--cache-maintenance", "serial", "--arm", "smoke", "--output", "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/evidence/card0-capacity-a/smoke", "--fault-review", "{REVIEW}", "--library-path", "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib", "--authorized-device-window"], "env_extra": {}, "review": "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/fault_review.py"}

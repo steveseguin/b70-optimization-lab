@@ -1,0 +1,77 @@
+.....F.E...............................................................FE..E.F..F..............
+======================================================================
+ERROR: test_postload_proof_requires_cache_KV_and_after_load (test_admission58e.AdmissionTests.test_postload_proof_requires_cache_KV_and_after_load)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/test_admission58e.py", line 177, in test_postload_proof_requires_cache_KV_and_after_load
+    rows=json.loads((W.HERE/'evidence/postload-census.json').read_text())
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/evidence/postload-census.json'
+
+======================================================================
+ERROR: test_actual_retained_samples (test_memory_sensor.SensorTests.test_actual_retained_samples)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/test_memory_sensor.py", line 31, in test_actual_retained_samples
+    result = W.account_memory({'anonymous_bytes': last['anonymous_bytes'], 'root_seen': True},
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/window.py", line 278, in account_memory
+    require(shadow <= bound, 'GPUActive shadow exceeds admitted bound')
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet34-replay-bench/window.py", line 27, in require
+    raise ValueError(reason)
+ValueError: GPUActive shadow exceeds admitted bound
+
+======================================================================
+ERROR: test_combined_total_stops_even_with_legal_shadow_and_old_anon_limit (test_memory_sensor.SensorTests.test_combined_total_stops_even_with_legal_shadow_and_old_anon_limit)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/test_memory_sensor.py", line 64, in test_combined_total_stops_even_with_legal_shadow_and_old_anon_limit
+    anon_bound = sum(host[n] for n in ('loader_staging_bound','process_workspace_bound','cache_metadata_bound'))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/test_memory_sensor.py", line 64, in <genexpr>
+    anon_bound = sum(host[n] for n in ('loader_staging_bound','process_workspace_bound','cache_metadata_bound'))
+                     ~~~~^^^
+KeyError: 'loader_staging_bound'
+
+======================================================================
+FAIL: test_full_census_math_and_one_byte_boundary_every_window (test_admission58e.AdmissionTests.test_full_census_math_and_one_byte_boundary_every_window)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/test_admission58e.py", line 88, in test_full_census_math_and_one_byte_boundary_every_window
+    self.assertEqual(M.window_plan('WS128')['host_required_available_bytes'], 95435761152)
+AssertionError: 98989670400 != 95435761152
+
+======================================================================
+FAIL: test_actual_pinned_progress (test_memory_sensor.SensorTests.test_actual_pinned_progress)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/test_memory_sensor.py", line 41, in test_actual_pinned_progress
+    self.assertGreater(tracker.total, self.budget['device_owned_bound_bytes'])
+AssertionError: 26424115200 not greater than 29963128848
+
+======================================================================
+FAIL: test_crossing_reconstruction_explicitly_synthetic (test_memory_sensor.SensorTests.test_crossing_reconstruction_explicitly_synthetic)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/test_memory_sensor.py", line 47, in test_crossing_reconstruction_explicitly_synthetic
+    self.assertGreater(pinned, self.budget['device_owned_bound_bytes'])
+AssertionError: 26424115200 not greater than 29963128848
+
+======================================================================
+FAIL: test_host_floor_and_missing_sensor_still_stop (test_memory_sensor.SensorTests.test_host_floor_and_missing_sensor_still_stop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/test_memory_sensor.py", line 74, in test_host_floor_and_missing_sensor_still_stop
+    self.assertEqual(self.budget['host_required_available_bytes'],118308908048)
+AssertionError: 98989670400 != 118308908048
+
+----------------------------------------------------------------------
+Ran 95 tests in 2.075s
+
+FAILED (failures=4, errors=3)

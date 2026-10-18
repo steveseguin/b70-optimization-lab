@@ -21,13 +21,13 @@
     "device_reserve_bytes": 1500000000,
     "physical_capacity_floor_bytes": 32000000000,
     "physical_bound_with_driver_bytes": 30499999760,
-    "measured_host_peak_bytes": 82517304832,
+    "measured_host_peak_bytes": 82517362176,
     "host_margin_bytes": 4294967296,
     "host_reserve_bytes": 8589934592,
-    "host_required_available_bytes": 98989670400,
-    "host_bound_bytes": 90399735808,
+    "host_required_available_bytes": 98989727744,
+    "host_bound_bytes": 90399793152,
     "historical_available_floor_bytes": 119233388544,
-    "historical_host_margin_bytes": 20243718144,
+    "historical_host_margin_bytes": 20243660800,
     "shadow_stop_bytes": 4294967296,
     "windows": [
       {
@@ -92,6 +92,15 @@
         "measured_normalized_peak_bytes": 82238087680,
         "shadow_peak_bytes": 657899520,
         "admitted_available_bytes": 119233388544
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/card0-async-a/overlap/WSCREEN/window.json",
+        "device_bytes": 24288912628,
+        "drm_bytes": 24621572096,
+        "driver_overhead_bytes": 332659468,
+        "measured_normalized_peak_bytes": 82517362176,
+        "shadow_peak_bytes": 636993536,
+        "admitted_available_bytes": 120830705664
       },
       {
         "path": "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/card0-async-a/smoke/WSCREEN/window.json",
@@ -255,8 +264,94 @@
     "miss_byte_ratio": 0.6862181434700463,
     "fill_dma_proxy_GB_s": 25,
     "saved_ms_per_position": 0.8215633753679715,
-    "projected_tok_s": 26.806234065454106,
-    "projected_gain_fraction": 0.022023088202356433,
+    "projected_tok_s": 26.821730636027166,
+    "projected_gain_fraction": 0.022613915428401965,
+    "per_prompt": [
+      {
+        "prompt_id": "incident-retrospective",
+        "measured_rate": 26.342510743811438,
+        "projected_rate": 26.97228665121111,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.8863619615507891
+      },
+      {
+        "prompt_id": "code-review",
+        "measured_rate": 26.51481993172996,
+        "projected_rate": 27.05593931785381,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.7542959831201043
+      },
+      {
+        "prompt_id": "customer-email",
+        "measured_rate": 25.620529814262422,
+        "projected_rate": 26.230693839137757,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.9079223629839079
+      },
+      {
+        "prompt_id": "sql-debugging",
+        "measured_rate": 25.33922940058364,
+        "projected_rate": 25.97216716759385,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.9617438498069412
+      },
+      {
+        "prompt_id": "release-plan",
+        "measured_rate": 25.455934558428027,
+        "projected_rate": 26.102944891073562,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.9737168019199586
+      },
+      {
+        "prompt_id": "benchmark-analysis",
+        "measured_rate": 28.228697140597262,
+        "projected_rate": 28.662254037950177,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.5358520845116346
+      },
+      {
+        "prompt_id": "architecture-tradeoff",
+        "measured_rate": 27.61334919342419,
+        "projected_rate": 28.114073746351664,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.6449945170561056
+      },
+      {
+        "prompt_id": "bug-report-synthesis",
+        "measured_rate": 27.418024584783694,
+        "projected_rate": 27.91566313957638,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.6501744659778664
+      },
+      {
+        "prompt_id": "technical-guide",
+        "measured_rate": 26.274209377970028,
+        "projected_rate": 26.885256039356758,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.8650287508598526
+      },
+      {
+        "prompt_id": "risk-register",
+        "measured_rate": 26.182989240906153,
+        "projected_rate": 26.758205232697573,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.8210219040991033
+      },
+      {
+        "prompt_id": "performance-hypotheses",
+        "measured_rate": 26.912764049152436,
+        "projected_rate": 27.440517300995317,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.7146284795350405
+      },
+      {
+        "prompt_id": "decision-memo",
+        "measured_rate": 24.34276527879669,
+        "projected_rate": 25.03946978542695,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 1.1430193429943545
+      }
+    ],
     "measured": false,
     "transfer_assumption": "Independent calibration miss ratio transfers to one-card serial fill payload; no zero-copy saving credited."
   },
@@ -299,6 +394,11 @@
     "experiments/own-xpu-runtime/stage2/packet58t-resident-lookups/evidence/card0-resident-a/resident/WSCREEN/run/run/memory.json": "b10b4451c138d17faceb62bc64fed0e0a4664eb3b4c95296078f1615a2ce3b2d",
     "experiments/own-xpu-runtime/stage2/packet58t-resident-lookups/evidence/card0-resident-a/resident/WSCREEN/run/run/drm-memory-after_load.txt": "54646fc0296f524cb8b6cbc87ff46967c99913bfc3c4587d5c11517385c27e12",
     "experiments/own-xpu-runtime/stage2/packet58t-resident-lookups/evidence/card0-resident-a/resident/WSCREEN/host-memory.jsonl": "df43790ac6d422217017794307ba6f4ff05eecbb89584947af71d55a9a35563b",
+    "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/card0-async-a/overlap/WSCREEN/window.json": "b011a69138ac76117e2a468f0648d8623c1ef495ecf65324a392b32afcaf3e1b",
+    "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/card0-async-a/overlap/WSCREEN/run/run/census.json": "ffa6f14061f5279bc9e3b83a90936330aa5a87ca840da24e109a2c2d3ece2d6e",
+    "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/card0-async-a/overlap/WSCREEN/run/run/memory.json": "de392d37547eb0c8241f055d16e398fac6674b6f8b20dea43f08f4b8640dc3c0",
+    "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/card0-async-a/overlap/WSCREEN/run/run/drm-memory-after_load.txt": "95595d30ca30627b163182af206a1cca18836d1fbc92fb639663be4795f86008",
+    "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/card0-async-a/overlap/WSCREEN/host-memory.jsonl": "3b4c14c8ba6d71303684740b79ca6c3c53a6205e573a3478d17b9f038ba8da5d",
     "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/card0-async-a/smoke/WSCREEN/window.json": "61f525a9b987afd2748f7f22dbc125ae02b20d5989a1ef2ba7073e5d59eac8bb",
     "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/card0-async-a/smoke/WSCREEN/run/run/census.json": "ffa6f14061f5279bc9e3b83a90936330aa5a87ca840da24e109a2c2d3ece2d6e",
     "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/card0-async-a/smoke/WSCREEN/run/run/memory.json": "de392d37547eb0c8241f055d16e398fac6674b6f8b20dea43f08f4b8640dc3c0",
@@ -321,6 +421,7 @@
     "experiments/own-xpu-runtime/stage2/packet58i-onecard-attribution/route-inputs/p55-24-geometry-box.jsonl.gz": "2dabe68a2836f69904ff2294706fca729561b9686a19764cb0075bf88851da58",
     "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/measurement.json": "f8f982d693aba32f0474c1ed38d36df4eff54a2e88b0c95c3d115ae30bcda2b2",
     "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/summary.json": "b73af0176156b072a0cbf98df5e502e6de0a7e44cdf8e21667dfaabc3ef54f08",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/cache.jsonl": "e169ea5102aab5c5a8090493c4cb68b6c9d4a145553f0f7239f82ad9801ce8a3",
     "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/incident-retrospective/timings.jsonl": "4c0092d9d0027a25234d2757698b5ed47b38881b2cf35e268bb123175623cc3b",
     "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/code-review/timings.jsonl": "198d5afbab92ee4321ae6285f08c34afb4c9ffa025aea1fb891e841e679f01c0",
     "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/run/run/customer-email/timings.jsonl": "0e201f3a78c23f72395974dadb8ef6d2e117d8530b326f16f6df106f026911d7",

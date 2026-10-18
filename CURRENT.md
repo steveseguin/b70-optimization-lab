@@ -9,12 +9,15 @@ minimal reseal pass. The chain command is unchanged and no chain was launched.
 Only the chain's fresh WS128 can supply a new record value.
 [Work note](notes/2026-10-18-own-runtime-packet58w.md#packet58wb--cold-first-view-amendment-october-18).
 
-**October 18, packet58x larger-cache CPU admission passes:** A 21.553 GB cache
-fits while keeping the device reserve, all transient allowances and a separate
-driver allowance. Host admission rises to 98.990 GB under the measured policy.
-Independent route replay projects +2.20% from fewer fill copies; no speed has
-been measured. Next is the switchable private copy and CPU launch checks.
-No GPU, service, live queue or host setting changed.
+**October 18, packet58x larger cache prepared on CPU:** The new copy allocates
+21.553 GB once and switches between 18 GB and full use after draining work.
+It keeps the device reserve and all transient allowances; host admission is
+98.990 GB under the measured policy. Independent replay projects +2.26%, not
+a measured speed. Both builds, byte checks, full-size startup, six real entry
+probes, 96 policy tests and seals pass. The smoke and five-view proposals pass
+temporary planning and remain unqueued. Serial maintenance stays the default
+because packet58v's completed bracket failed its control-drift gate. No GPU,
+service, live queue or host setting changed. Next is the coordinator's smoke.
 [Work note](notes/2026-10-18-own-runtime-packet58x.md).
 
 **October 18, packet58w one-card overlap chain prepared on CPU:** The fresh
