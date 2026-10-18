@@ -17,7 +17,10 @@ packet49 sanity check, with all outputs checked against their pinned references.
 Both builds, byte checks, full-size startup, launch guards and the temporary
 queue plan pass. The external coordinator has queued the capture; the CPU
 preparer did not edit a live queue. Capture, prediction accuracy and projected
-gain remain pending; no GPU, service or live queue changed. Phase 2
+gain remain pending; no GPU, service or live queue changed by this preparer.
+The CPU router and cache analysis are ready: compiler repeats agree and the
+cache model matches the original allocator. Timing windows are explicit
+assumptions because the old receipts lack layer clocks. Phase-2 design
 requires at least 3% projected gain over the 58v control with traffic fitting the
 available layer time. [Work note](notes/2026-10-18-own-runtime-packet138.md).
 

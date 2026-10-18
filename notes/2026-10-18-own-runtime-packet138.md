@@ -7,9 +7,10 @@ mutation is authorized. Packet100b and all other existing packets remain frozen.
 Preregistered decision: proceed to a phase-2 device design only if a replay of
 real independent calibration captures projects at least +3% versus the packet58v
 one-card asynchronous-cache control, with all prefetch traffic (including wrong
-predictions) fitting the causal per-layer PCIe window. Missing captures, unknown
-windows or an unmeasured control cannot count as a pass. A measured failure gets
-a closeout and DO-NOT-REPEAT row; missing evidence remains pending.
+predictions) fitting the causal per-layer PCIe window. Missing captures cannot
+count as a pass. The control and windows are modeled with explicit assumptions;
+they are not new device measurements. Failure of the registered projection gate
+gets a closeout and DO-NOT-REPEAT row; missing capture evidence remains pending.
 
 Capture plan: copy packet100b's accepted-target diagnostic; retain all 48 target
 layers and the first 48 generated tokens of each of packet55's twelve fixed
@@ -70,3 +71,21 @@ analysis source seals are separate so ongoing CPU analysis cannot invalidate
 the prepared capture. During this audit the external coordinator queued
 packet138-capture-B; this preparer did not write any live queue. No capture
 output directory existed when the audit completed.
+
+CPU analysis preparation (17:06 UTC, before capture): both compilers and fresh
+processes produce identical exact-router bytes on real GGUF weights and synthetic
+states. Probability ties match the unchanged production top-ten route. The
+18 GB cache model matches the actual 58v allocator, eviction order and offsets
+on 150 randomized cases. A full-size synthetic layout test covers all 48 layers,
+12 prompts, five predictor inputs and three widths; it writes only to temporary
+scratch, never to real-capture artifacts.
+
+The 58g/58p receipts lack measured per-layer clocks. The registered sensitivity
+uses 25%, 50% and 100% of a 0.645465 ms average remainder per layer, derived from
+58p's measured token/cache spans. Effective DMA bandwidth, predictor cost and
+publication cost are explicit assumptions. Before seeing capture data, clarify
+that this is the requested projection gate: a candidate must clear +3% across
+all three scenarios and fit every charged prefetch window. A passing result may
+recommend phase-2 design conditionally; actual layer timing and device equality
+must then be measured. Missing per-layer measurements alone are not a veto on
+a phase-1 projection. No measured 58v rate is invented; its control is modeled.

@@ -5,7 +5,8 @@ The one-card record remains packet58p's 26.228599 tok/s. No phase-2 design is
 admitted until the real-capture simulation clears the preregistered +3% gate.
 
 The [new proposal](../../ops/lane-queue/proposed-p138-capture-B.txt) is for the
-coordinator's lane B (physical cards 2+3), one TP2 load. It is not queued. Plan
+coordinator's lane B (physical cards 2+3), one TP2 load. The external coordinator
+queued it after preparation; this task did not edit the live queue. Plan
 5–15 minutes with a 3,600-second watchdog (4× the upper estimate). The shared
 lane lease, fault handling, device mask, memory admission and cooperative drain
 remain in force. `screen-packet138-capture-B.service` is the actual lanequeue
@@ -72,10 +73,13 @@ exactly, then report next-layer recall at widths 10, 12 and 16. A residual predi
 is available later than the router-input prediction and gets only its remaining
 causal transfer window. Wrong and late prefetches cost traffic too.
 
-Proceed to phase 2 only with at least +3% projected gain over the 58v control and
-traffic fitting measured per-layer windows. Missing capture/timing/control data
-remain pending, never a passing or negative experiment. Prediction and simulated
-rates are diagnostic projections, not device measurements or a benchmark.
+Proceed to phase-2 design only with at least +3% projected gain over the modeled
+58v control throughout the registered sensitivity range, with traffic fitting
+every assumed causal window. Missing capture remains pending. The 58g/58p
+receipts have no measured per-layer clocks: assumptions are explicit and a
+conditional design recommendation is not a device performance qualification.
+Prediction and simulated rates are diagnostic projections, not measurements or
+a benchmark. See [CPU analysis and assumptions](ANALYSIS.md).
 
 Credit: pre-gating and cross-layer expert prediction ideas from MoE-offloading
 literature; independent lab implementation. Existing 58i frequency-prefetch and
