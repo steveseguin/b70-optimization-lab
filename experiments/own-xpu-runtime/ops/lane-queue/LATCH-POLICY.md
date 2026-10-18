@@ -1,5 +1,51 @@
 # Queue latch policy — 2026-10-18
 
+## Compiler turns and device-time reviews
+
+**New briefs use `experiments/own-xpu-runtime/ops/compile_turn.py`.** Packet94's
+copy and other sealed packet copies stay frozen. A future build can put the
+repository's `experiments/own-xpu-runtime/ops` directory first on `sys.path`
+before importing `compile_turn.turn`; do not accidentally import its local
+historical copy. The build still supplies `build_engine.limits()`.
+
+The ops gate keeps the shared `/tmp/own-xpu-runtime-cpu-compile.lock`, foreign
+compiler/build-tool checks, ten-second polling, one-hour blocker deadline and
+the caller's safety limits. As before, acquiring the shared flock itself waits
+without a separate deadline. It never signals a process or changes coordination.
+
+`hold-lane-B` is written **before** A waits for B. While B's active marker
+remains and A has no device descendant, that is admission waiting and compiles
+may proceed. Once B's marker is gone, the hold blocks compiles, including
+preflight and drain. A device child of the reservation owner also blocks even
+if B's marker is still present. PID/start-tick ancestry keeps B's device child
+from being mistaken for A's. Malformed/unreadable holds stay conservative;
+the whole-host A marker also protects the short marker/hold release transition.
+This is an observation before compilation, not an atomic reservation shared
+with device launch: an already-running compile is never interrupted, and a
+window can change after the check. Coordinator scheduling still matters.
+
+`ops/gpu_time_review.py --hours N` retains its CLI and report sections. Service
+lifetimes and queue START/DONE events are attribution only. Busy time comes
+from live `own-rt-iq3` device children and current-boot device receipts, with
+rank overlaps unioned. Whole-host credit on B requires that same device
+evidence. The new `idle_admission_wait` category counts reservation waiting as
+idle on the requesting lane, after subtracting any evidenced device activity.
+No admission wait, cooldown or wrapper/report tail becomes busy time.
+
+Some historical receipts have no exact child exit clock. The review uses
+observed device/request intervals as a lower bound, discloses missing clocks,
+and does not substitute drain completion or file modification times. Gaps with
+no attributed device evidence are not proof that unrecorded work never ran.
+The [work note](../../../../notes/2026-10-18-own-runtime-ops-monitor-compile.md)
+records the 13:37–14:03 regression and CPU checks.
+
+```bash
+nice -n 19 taskset -c 8-15,24-31 python3 -B -m unittest discover \
+  -s experiments/own-xpu-runtime/ops -p 'test_*.py' -v < /dev/null
+```
+
+## Queue fault boundaries
+
 The queue checks the complete current-boot kernel journal **before** deciding
 whether a screen latch belongs to this lane. It uses the `FAULT` and `DELETED`
 expressions from `stage1/packet4-prep/driver/window_driver.py`. The existing

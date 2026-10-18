@@ -72,7 +72,10 @@ class ReviewTest(unittest.TestCase):
         output = io.StringIO()
         with patch.object(review.subprocess, 'run', side_effect=run), \
              patch.object(review.dt, 'datetime', Clock), \
-             patch.object(review, 'whole_host_holds', return_value=[]), \
+             patch.object(review, 'device_evidence', return_value=(
+                 [(minute(0), minute(59), 'screen-a.service', 'device'),
+                  (minute(0), minute(20), 'screen-b1.service', 'device'),
+                  (minute(41), minute(59), 'screen-b2.service', 'device')], {}, [], [])), \
              patch.object(review, 'SCRATCH', str(self.root)), \
              patch.object(review, 'REPO', str(self.root)), \
              patch('sys.argv', ['gpu_time_review.py', '--hours', '1']), \
@@ -154,7 +157,7 @@ class ReviewTest(unittest.TestCase):
         with patch.object(review, 'parse', return_value=(intervals, NOW)), \
              patch.object(review, 'queue_events', return_value=([], {})), \
              patch.object(review, 'unit_lane', return_value=None), \
-             patch.object(review, 'whole_host_holds', return_value=[]), \
+             patch.object(review, 'device_evidence', return_value=(intervals, {}, [], [])), \
              patch.object(review.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, '')), \
              patch.object(review, 'SCRATCH', str(self.root)), \
              patch.object(review, 'REPO', str(self.root)), \
@@ -167,36 +170,12 @@ class ReviewTest(unittest.TestCase):
         self.assertIn('Lane B (cards 2+3) busy/held: 0.00 h = 0%', text)
         self.assertIn('Unassigned units count only in the combined union', text)
 
-    def test_receipt_backed_holds_only(self):
-        paths = []
-        for window, boot, passed in [('W2m', 'this-boot', True),
-                                      ('WSs', 'other-boot', True),
-                                      ('WS128', 'this-boot', False),
-                                      ('WS128x', 'this-boot', True)]:
-            p = self.root / (window + '-lane-admission.json')
-            p.write_text(json.dumps(dict(window=window, passed=passed, scope='whole-host',
-                coordination=dict(schema='own-runtime.chain-lanes.v1', lane='A',
-                                  scope='whole-host', boot_id=boot, started_monotonic=600),
-                shared_drain=dict(drained=True, completed_monotonic=1200))))
-            paths.append(str(p))
-        original = Path.read_text
-
-        def read(path, *args, **kwargs):
-            if str(path) == '/proc/sys/kernel/random/boot_id':
-                return 'this-boot'
-            return original(path, *args, **kwargs)
-
-        notes = set()
-        with patch.object(review.glob, 'glob', return_value=paths), \
-             patch.object(Path, 'read_text', read), \
-             patch.object(review.dt, 'datetime', Clock), \
-             patch.object(review.time, 'monotonic', return_value=3600):
-            holds = review.whole_host_holds(BEGIN, NOW, notes)
-        self.assertEqual(holds, [(minute(10), minute(20))])
-        self.assertTrue(any('missing, unfinished or older-boot' in n for n in notes))
-        seconds, gaps = review.accounting([(BEGIN, minute(10)), *holds,
-                                           (minute(20), NOW)], BEGIN, NOW)
-        self.assertEqual((seconds, gaps), (3600, []))
+    def test_wait_category_subtracts_busy_and_unions_duplicates(self):
+        self.assertEqual(review.subtract([(minute(10), minute(40)),
+                                          (minute(15), minute(30))],
+                                         [(minute(0), minute(20)),
+                                          (minute(25), minute(30))]),
+                         [(minute(20), minute(25)), (minute(30), minute(40))])
 
 
 if __name__ == '__main__':
