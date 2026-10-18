@@ -15,8 +15,19 @@ has no measured transfer or admitted memory plan; its favorable scenario does
 not pass the gate.
 
 Milestone 1: ranked analysis, reproducible arithmetic and frozen source/audit
-snapshot prepared on CPU. Next is final consistency checking and the closeout
-with new local DO-NOT-REPEAT entries. No design or device proposal is admitted.
+snapshot committed as `a00b33d36` and pushed immediately at 20:29 UTC, within
+the first 30-minute deadline.
+
+Milestone 2: consistency review, explicit conditional bounds and a concrete
+miss-conditioned draft-head completion check. Only 20 of the 256 target labels
+could benefit from added head rows; even a free rescue of all 20 is +1.233%
+in the recorded model. No prefix was selected or retuned from these labels.
+The [closeout](../experiments/own-xpu-runtime/stage2/packet144-miss-path/CLOSEOUT.md)
+and local DO-NOT-REPEAT entries retain all decisions. Final calculator checks
+and source review pass; peak RSS was about 163 MiB. All 26 local document links
+resolve and the seven captured packet136 files remain byte-identical. No
+design or device proposal is admitted. The study and closeout were completed
+within the 60-minute box.
 
 Host: `steve-b70s`. Work stayed on main. `git pull --rebase` refused existing
 unrelated dirty files; `git fetch origin` confirmed HEAD equaled origin/main

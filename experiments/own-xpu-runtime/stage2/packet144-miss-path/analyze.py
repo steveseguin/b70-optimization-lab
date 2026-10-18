@@ -90,9 +90,13 @@ def calculate():
             assert sha(raw) == member["sha256"]
             receipt = json.loads(raw)
             assert receipt["passed"] and receipt["cached_tokens"] == 0
+            assert receipt["arithmetic"] == "iq3-p49-split32-v1"
             assert receipt["binary_sha256"] == result["artifacts_sha256"]["device/own-rt-iq3"]
             rows = scope["intervals"](receipt)
             assert len(rows) == 99
+            guesses = {g["position"]: g for g in receipt["guess_rows"]}
+            for row in rows:
+                row["actual_token"] = guesses[row["position"]]["actual"]
             requests.append((receipt["prompt_id"], receipt["prompt_class"], rows))
         assert len(requests) == 12
         rows = [r for _, _, rr in requests for r in rr]
@@ -129,7 +133,7 @@ def calculate():
             conditional["hit" if hit else "miss"] = {"n": len(rr), "mean_ms": {
                 k: st.mean(r[k] for r in rr) for k in ("D", "R", "C", "A", "B", "elapsed_ms")}}
         scenarios = {}
-        for c in (0.05, 0.102197, 0.5, 1., 2., 2.3, 3.):
+        for c in (0.05, 0.102197, 0.5, 0.6, 1., 2., 2.3, 3.):
             scenarios[f"correction_cut_{c:g}_ms"] = gain(lambda r: model(r, c=c))
         scenarios["hide_entire_restore_upper_bound"] = gain(lambda r: model(r, restore=100))
         scenarios["hide_restore_and_0.102197ms_preparation_upper_bound"] = gain(
@@ -148,6 +152,12 @@ def calculate():
             "correction_cut_ms_for_3percent": threshold(lambda r, s: model(r, c=s)),
             "free_miss_rescue_fraction_for_3percent": rescue_fraction,
             "acceptance_percentage_point_increase_for_3percent": 100*rescue_fraction*misses/len(rows),
+            "draft_head_extension_retrospective_ceiling": {
+                "unchanged_prefix_rows": 80128,
+                "miss_labels_outside_prefix": sum(not r["hit"] and r["actual_token"] >= 80128 for r in rows),
+                "ideal_gain_if_all_outside_prefix_misses_rescued_percent": gain(
+                    lambda r: rescue(r, float(not r["hit"] and r["actual_token"] >= 80128))),
+                "assumptions": "Free full-head extension on every interval, not just after misses; unchanged prefix logits; all eligible misses rescued; no new misses. Retrospective upper sensitivity only, not independent acceptance evidence or prefix selection."},
             "scenarios_gain_percent_not_measurements": scenarios}
     regex = re.compile(r"miss|restore|prefetch|early|draft|handoff|hand.off|packet12[01879]|packet13[0245]|depth|split", re.I)
     output["negative_index_matches"] = {p: [{"line": i, "text": line}
