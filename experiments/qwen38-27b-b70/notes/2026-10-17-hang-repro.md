@@ -571,3 +571,9 @@ runs after campaign 36b, before the 2M run.
   cached states back to back for 20 minutes, breadcrumbs and device marks on.
 - If it is clean, the 2M hostile run starts right after it. If it hangs: recovery probes, then the short
   bisect runs above come first (a reproducer in hand beats two hours of a run the hang may end), then the 2M run.
+
+**One-card stress result (00:57-01:18 EDT): clean.** Card 0 (03:00.0, the card that timed out in both hangs) made
+2,694,329 calls, card 1 2,530,115 (19 min), all from a cached state at 300-600 tokens; none took over 0.5 s (max
+17-19 ms, p50 0.42 ms), no error, kernel log clean. About ten times the server's per-hang call count without a hang:
+the fused GDN prompt kernel alone does not hang at this rate. By the registered decision the two-card stress
+(kernel + exchanges) runs next, after campaign 36b.
