@@ -829,3 +829,75 @@ Whole-repository search diagnostics preserve 25 inaccessible old Qwen cache/STOP
 Full survey, reference/link/process checks, exact plans, pin snapshots, scripts and verification results are preserved in **`/mnt/raid-models/own-xpu-runtime-archive/disk8-20261018/audit.tar.gz`**, **13,315,636 bytes**, SHA-256 **`da3160c47f4548911b439b5249c3e9309f473aeabb0af31277439e99bd26fd6d`**. Every one of its **97 audit payload files**, plus the embedded manifest, was read and hash-verified. Audit originals remain on RAID.
 
 Closing reading at **2026-10-18T22:53:11.310036+00:00**: **29,396,131,840 bytes (29.396 GB)** available. Concurrent packet writes continued after the final archive checks; no further cleanup resumed. The additional read-only pairwise link census finished and agrees with the earlier 154 incoming-link matches; none intersects the removed paths. Its supplemental receipt is `disk8-20261018/late-check.json`, beside the unchanged sealed audit. All disk8 audit processes have finished.
+
+## disk9 — closed SCREEN bulk audit; no safe bulk remaining (2026-10-18)
+
+**The 34 GB target was not reached. No screen files were moved or removed.**
+Root started at **30,229,794,816 available bytes (30.230 GB)** and had
+**30,220,902,400 bytes (30.221 GB)** at **23:49:44 UTC**, leaving a
+**3,779,097,600-byte shortfall**. Concurrent work continued; this audit reclaimed
+zero bytes. No `ARCHIVED-disk9.json` marker was written because no screen was
+archived. The time box was not used to broaden the authorized scope.
+
+The requested evidence root is
+`experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/`. Its 428 entries
+are **118 directories and 310 nondirectory files**, not 428 screen folders.
+The directory inventory found **4,421,451,776 allocated bytes** matching
+`.bin`, `.log` or `.gz`, before safety exclusions. Only **25 directories**
+matched exact packet identities in `ops/screen-cleanup/closed.json`; their
+suffix-matched files total **186,159,104 allocated bytes**, even before the
+registry's view restrictions, pins and retained receipts are excluded.
+
+Decisions:
+
+- Most bulk belongs to packet identities absent from the closed/parked registry,
+  including 97b, 106b, 101, 104b, 82, 118, 103, 100, 111r, 131b, 136b and 91.
+  A numbered variant was not treated as its differently named parent packet.
+  Packet77 also lacks a registry closure. These folders stay.
+- `frozen_paths.py` completed with exit 0, no diagnostics and **56,234 paths**,
+  referencing **91 screen folders**. Entire pinned folders stay, including
+  packet93 screens. Packet136/124c orchestration and all `packet*-record-bundle`
+  metadata/source references were additionally searched, including the
+  bundle 7/8 screens p118, p124c, p131b and p136b.
+- Packet90 closes only its `hc-weightcache` view. Its other three directories
+  contain **138,399,744 allocated suffix-matched bytes** and remain live under
+  the registry's explicit E1/production exception.
+- Packet120's unfinished trailing control stays, as required by the disk7/8
+  decisions. Its suffix-matched files account for **36,429,824 allocated bytes**.
+- The remaining packet120/127 completed screens and packet90 H1 view contain
+  compressed `state-evidence.json.gz` receipts. The disk5–disk8 method explicitly
+  retains compressed JSON/JSONL, so `.gz` alone is not permission to remove them.
+- After those exclusions, the preliminary list held only 48 tiny log files
+  across packets92–95: **2,016 logical bytes / 131,072 allocated bytes**.
+  Packet93 is frozen. The other ten folders are still referenced by
+  `ops/packet103-orchestration/screens-current.json`: its `live_read.receipts`
+  retains hashes even though these candidates have `excluded` status. The brief
+  says to keep doubtful folders, so those logs stay too. This is a conservative
+  reference decision, not a claim that the frozen-path tool pins those logs.
+
+The audit includes exact screen inventories, per-folder decisions, the completed
+pin snapshot, the closed-registry snapshot, packet103/124c/136 readiness
+snapshots, reference searches and incoming-link checks. Hidden and ignored
+repository metadata/source files were searched; model/tensor contents were not
+read. The broader reference search returned exit 2 for **18 inaccessible old
+Qwen paths**, with no own-runtime access errors. The no-follow own-runtime and
+results-tree link census had no access errors; it also found packet75's alias
+to the shared screen tree. No inaccessible file is claimed inspected.
+
+Audit archive:
+`/mnt/raid-models/own-xpu-runtime-archive/disk9-20261018/audit.tar.gz`,
+**2,797,266 bytes**, SHA-256
+`3408d9c78dff7e23e53da5cb6b1b3c6e1942d467b673ffc4e5eed4db80419747`.
+All **19 audit files**, plus the embedded manifest, were verified from the
+archive; GNU tar independently matched the member set. Adjacent
+`audit.manifest.json`, `audit.tar.gz.sha256` and `audit-verification.json`
+record the checks. Audit originals remain on RAID. To inspect elsewhere,
+verify the archive hash, extract into scratch space, and verify each file
+against `manifest.json`; no screen restoration is needed.
+
+Host: `steve-b70s`. `git pull --rebase` refused unrelated dirty files; fetch
+confirmed `HEAD == origin/main == 1ac34bfa39f11a36a93ba1a727907bf0cbb6b411`.
+Disk/reference work ran at `nice -n 19 ionice -c3 taskset -c 8-15,24-31`;
+the pin/search/archive jobs used a 2 GiB virtual-memory cap. No sudo, service,
+GPU, kill, model/GGUF read, queue mutation, packet-tree mutation or host setting
+change occurred. Only this log and the `CURRENT.md` storage note are committed.

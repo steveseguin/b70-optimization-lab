@@ -1252,6 +1252,14 @@ worker/recall trials and five unused tasks. Further worker tuning/integration is
 
 ## Storage And Recovery
 
+**October 18, disk9 screen audit:** root had **30.221 GB free at 23:49:44 UTC**;
+the requested **34 GB was not reached**. No eligible bulky screen files remained
+under the closed/parked registry and pin rules, so nothing was moved. Most of
+the 4.42 GB suffix-matched inventory belongs to packets without a matching
+closure; the remainder is protected, compressed JSON evidence or tiny logs in
+still-referenced folders. The verified audit is on RAID.
+[Counts, keep decisions and audit archive](experiments/own-xpu-runtime/stage2/DISK-CLEANUP-20261018.md#disk9--closed-screen-bulk-audit-no-safe-bulk-remaining-2026-10-18).
+
 **October 18, disk7 archive pass:** verified archives of closed build and screen files recovered **1.975 GB**. Root went from **31.284 GB to 33.153 GB free** at 20:09:15 UTC. **The requested 40 GB was not reached**: the other large candidates are protected, still referenced, or lack a clear closure. All JSON receipts, notes, sources, live work and record material stayed. The archives were fully checked before their originals were removed. The final check covered 1,191 moved paths and 28,170 retained files or links, with no errors. [Archive paths, restore instructions and checks](experiments/own-xpu-runtime/stage2/DISK-CLEANUP-20261018.md#disk7--verified-archive-pass-2026-10-18).
 
 **October 18, disk6 archive pass:** closed experimental builds, private build dependencies and old compiler caches now have verified archives in
