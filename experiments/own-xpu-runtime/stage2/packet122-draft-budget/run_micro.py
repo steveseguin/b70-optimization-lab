@@ -238,6 +238,7 @@ def main(argv=None):
                     require(not reasons and child.returncode == 0, 'micro failed or interrupted; no retry')
                     require(record.get('device_isolation', {}).get('passed') is True, 'single-card device ownership unproved')
                     record['native_summary'] = native_summary(OUTPUT / 'samples.jsonl')
+                    record['native_artifacts']={n:sha(OUTPUT/'native'/n) for n in ('receipt.json','checks.json','iterations.jsonl')}
                     require(process_identity(child.pid) != record['process_start_ticks'], 'micro still alive')
                     record['clients_after_drain'] = admit_clients('lane-B')
                     check()
@@ -249,8 +250,6 @@ def main(argv=None):
                 atomic_json(OUTPUT / 'lane-coordination.json', dict(passed=True, reservation=lease.record,
                             clients_after_drain=record['clients_after_drain'], released_before_report=True))
                 persist()
-        import micro_gate
-        micro_gate.evaluate(P, args.repeat)
         return 0
     except Exception as error:
         if completed:

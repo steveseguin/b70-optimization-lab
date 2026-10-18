@@ -1,12 +1,13 @@
 # Current Workspace State
 
-**October 18, packet122 draft budget ready for the coordinator:** The complete
-draft probe compiles and both fresh B jobs pass temporary queue planning.
-It uses captured real inputs and the current 80,128-row prefix at 128 and
-4096 occupied context; the long cache fill cycles the captures and is labeled
-as a diagnostic. Every mutable draft byte is checked on replay. Device times
-are still missing. The separate exact HC schedule and its gated bracket are
-being prepared on CPU. No GPU, service or live queue changed.
+**October 18, packet122 draft CPU preparation complete:** The full draft
+probe covers 47 classes and both context lengths. The separate HC change
+passes both compilers' byte checks twice; both views and ranks pass startup,
+reset and protocol checks. The three proposed files pass temporary queue
+planning. Both fresh HC micros must cut every changed class by at least 20%
+with exact bytes before the one-load bracket can start. Device times are
+still missing. The long-context probe cycles real captures and is labeled
+a diagnostic. No GPU, service, live queue or host setting changed.
 [Work note](notes/2026-10-18-own-runtime-packet122.md).
 
 **October 18, packet120 layer placement prepared on CPU:** Moving one target

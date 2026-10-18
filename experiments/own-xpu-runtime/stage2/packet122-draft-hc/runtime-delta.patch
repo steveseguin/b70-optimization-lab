@@ -1,0 +1,49 @@
+--- packet118/p49d_submit.cpp
++++ packet122/p49d_submit.cpp
+@@ -56,6 +56,7 @@
+  p49dmix::Kernel k;k.spec=s;auto e=d.compute(k,a,deps);return {e,e,1};
+ }
+ Submit resolve(std::string_view cls,std::string_view choice){
++ if(cls=="draft_hc_schedule"&&(choice=="production"||choice=="p122"))return production;
+  if(cls=="other_fusion"&&(choice=="production"||choice=="fused"))return production;
+  if(cls=="head"&&(choice=="production"||choice=="head-transpose"||choice=="head-split-compute"||choice=="head-split-bcs"))return production;
+  if(cls=="host_retire"&&(choice=="production"||choice=="ordered"||choice=="reply-first"))return production;
+@@ -104,9 +105,9 @@
+    }
+   }else throw std::invalid_argument("p49d unknown selection field");
+  }while(more());take('}');ws();
+- if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision","draft"}||values.size()!=11||!values.contains("head"))throw std::invalid_argument("p49d incomplete/trailing selection");
++ if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision","draft"}||values.size()!=12||!values.contains("head"))throw std::invalid_argument("p49d incomplete/trailing selection");
+  p59c::validate(draft_values);
+- auto target_values=values;target_values.erase("other_fusion");target_values.erase("head");target_values.erase("host_retire");target_values.erase("hc_norm");if(target_values.at("route")=="route-fast")target_values["route"]="route-exp32-rank4";target_values.erase("miss");target_values.erase("experts");target_values.erase("packed_dense");target_values.erase("hc_gate");
++ auto target_values=values;target_values.erase("draft_hc_schedule");target_values.erase("other_fusion");target_values.erase("head");target_values.erase("host_retire");target_values.erase("hc_norm");if(target_values.at("route")=="route-fast")target_values["route"]="route-exp32-rank4";target_values.erase("miss");target_values.erase("experts");target_values.erase("packed_dense");target_values.erase("hc_gate");
+  if(target_values.at("recurrence")=="rec-both"||target_values.at("recurrence")=="rec-both-plus"||target_values.at("recurrence")=="rec-gates"||target_values.at("recurrence")=="rec-parallel")target_values["recurrence"]="rows4-shared";
+  if(target_values!=std::map<std::string,std::string>{{"route","route-exp32-rank4"},{"recurrence","rows4-shared"},{"hc","production"}})throw std::invalid_argument("p59c target must stay packet56");
+  choices=std::move(values);draft=std::move(draft_values);observed_sha256=digest;
+--- packet118/mtp.hpp
++++ packet122/mtp.hpp
+@@ -2,6 +2,7 @@
+ #include "mtp_kernels.hpp"
+ #include "p59_draft.hpp"
+ #include "p59_hc.hpp"
++#include "p122_hc.hpp"
+ #include "p56_prefix.hpp"
+ #include "p83_head.hpp"
+ #include <cfenv>
+@@ -110,7 +111,7 @@
+    }
+    e.finish(0,(head_candidate.starts_with("p28.")&&!e.a.mini)?p28::submit(e.dev(0),{m},head_candidate,false,head_variant):integrated::dense(e.dev(0),m,head_variant),true);return;}
+   if(!changed(l)){matrix_production(l);return;}
+-  if(l.label.ends_with(".gate")&&selected(p59c::consumers.at(l.label.substr(0,l.label.size()-4)+"mix"))){auto prefix=l.label.substr(0,l.label.size()-4);e.finish(0,p59::gate_mix(e.dev(0),w.id,id(l.inputs[0]),id(l.outputs[0]),id(prefix+"norm"),id(prefix+"mix"),p.g.h,w.cols),true);return;}
++  if(l.label.ends_with(".gate")&&selected(p59c::consumers.at(l.label.substr(0,l.label.size()-4)+"mix"))){auto prefix=l.label.substr(0,l.label.size()-4);e.finish(0,p122::gate_mix(e.dev(0),w.id,id(l.inputs[0]),id(l.outputs[0]),id(prefix+"norm"),id(prefix+"mix"),p.g.h,w.cols,e.sealed_selection.choices.at("draft_hc_schedule")=="p122"),true);return;}
+   p59::Linear a;a.w=w.id;a.x=id(l.inputs[0]);a.y=id(l.outputs[0]);a.rows=l.shape[1];a.columns=l.shape[2];a.batch=l.shape[0];a.experts=w.experts;a.int8=w.int8;
+   if(l.op=="routed_gemv"||l.op=="expert_gate_up"){a.routes=id(l.inputs[1]);a.status=id(l.outputs[1]);if(l.op=="expert_gate_up"){a.paired=true;a.peer=weights.at(l.weights[1]).id;a.py=id(l.outputs[2]);a.ps=id(l.outputs[3]);}}
+   if(l.label.ends_with(".low")&&selected(p59c::consumers.at(l.label.substr(0,l.label.size()-3)+"act"))){a.tail=p59::low;a.out=id(l.label.substr(0,l.label.size()-3)+"act");}
+@@ -152,6 +153,7 @@
+   a.push_back(scratch);a.push_back(id("error"));a.push_back(id("position"));a.push_back(id("active"));a.push_back(e.ropes[0]);return {s,a};
+  }
+ public:
++#include "p122_micro_api.hpp"
+  void set_reverse_hidden(const void* bytes){require(!async_pending,"reverse handoff while draft pending");reverse_hidden=bytes;}
+  DraftRuntime(Engine& target):e(target),trace(e.a.output/"draft-rows.jsonl"){
+   require(e.a.rank==e.a.draft_rank||!e.a.draft_capture.empty(),"draft placement/capture");if(!e.a.mini)store=std::make_unique<Store>(e.a.draft_manifest,e.a.draft_model);
