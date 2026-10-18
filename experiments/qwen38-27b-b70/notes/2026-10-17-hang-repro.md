@@ -493,3 +493,53 @@ out had not reached the collective. The next question is which kernel sits betwe
 463-token prompt step; that needs the order of the step's collectives (name and size), which the marks keep only for
 pending ones. Next: map position 102 to the model's layer and sub-block, then look at that kernel for anything that
 can wait on other work-groups.
+
+**Where the hung kernel sits (2026-10-18 00:38:14 EDT, reasoning only, before campaign 36's first arm reaches that point).**
+The breadcrumbs count a collective's size as the sum of its tensors: for `all_gather_into_tensor(output, input)`
+that is 3 x the input. 7,111,680 = 3 x 463 x 5,120, an ordinary hidden-size all-reduce (done as a gather by
+`b70-allgather-allreduce`). The step's prompt-token elements are exactly linear (2,035,200 per token over the 832-,
+743-, 463- and 106-token steps), and each step issues 155 collectives: the target's embedding (1) and 64 layers x 2,
+then the drafter. So collective 102 of the step is the all-reduce after **layer 50's token mixer**, and layer 50 is a
+linear-attention (GDN) layer (full attention at 3, 7, ..., 51). The kernel that ran past the timeout on card 03 is in
+layer 50's GDN prompt path: input norm, `in_proj_qkvz` / `in_proj_ba`, the causal conv1d with its cached state, the
+chunked gated delta rule from the cached state at 7,488, the gated norm or `out_proj`.
+
+**Replay test, registered now.** Campaign 36's first arm (`K32L retro 1`, keeper 1.2.0.dev2, a fresh server) is the
+same run as campaign 35's arm 2 on a deterministic stack (the keeper, the client at temperature 0 and the exact
+server), so it sends the same requests in the same order.
+- If it hangs at the same step (about 5 min 47 s into the arm, step #5897, a 463-token prompt step after a hit at
+  7,488): the hang is data-determined and can be replayed on demand; the next step is to record that one request and
+  run it alone with the GDN prompt kernels timed one by one.
+- If it passes that point: the hang is a race (timing, not data), like the GDN prefill race of September, and the
+  next step is a stress of layer-50-style GDN prompt steps (300-600 new tokens from a cached state) on one card.
+
+**Replay result (campaign 36, arm 1, 00:39-00:47 EDT): it is a race.** The keeper's call log of the replay equals
+the hung run's for the first 132 calls (kind, prompt tokens, written tokens); call 133 is the same request (7,951
+prompt tokens: 7,488 cached + 463 new) that hung at 00:31, and this time it returned. The arm went on to 50/50.
+
+**The coredump of card 03** (`fault-20261018-0031/devcoredump-card2-0000:03:00.0.txt`): the command streamer's
+last parsed instruction (`IPEHR 0x61050001`) is `STATE_COMPUTE_MODE`, a non-pipelined state command that waits for
+the compute work before it to drain, and the EU rows show busy (`ROW_INSTDONE 0`). So a kernel was executing; the
+queue was not parked on a semaphore waiting for the other card.
+
+## GDN prompt-kernel hang stress, registered 2026-10-18 00:51:13 EDT (before any run)
+
+`scripts/run-20261018-gdn-hang-stress.sh` (`OUT=data/2026-10-18-gdn-hang-stress`, `MINUTES=20`): one container per
+card at the same time, in the context server's image (R314 state-stride), each calling the fused prompt kernel
+`torch.ops._xpu_C.gdn_attention` exactly as `vllm._xpu_ops` does for a prompt step (prefill only, an initial state
+from one of 8 cache slots, TP2 split: 8 key and 24 value heads, `reorder_input=True`), with 300-600 new tokens per
+call and a synchronize after each (`scripts/qwen38-gdn-prefill-hang-stress.py`). A watchdog prints `STUCK` after
+2 s in one call. It starts right after campaign 36 ends (the runner is stopped once its queue is empty), only if
+campaign 36 logged no fault line.
+
+- **Scale:** the server ran about 48 GDN prompt calls per prompt step and hung twice in roughly 10,000 prompt
+  steps today (06:23 and 00:31, both on card 03), i.e. about one hang per 250,000 calls. At about 1 ms per call each
+  card makes about a million calls in 20 minutes.
+- **Prediction:** if the race is inside this kernel, at least one `STUCK` (and a driver timeout) within the 20
+  minutes, more likely on card 03.
+- **If it hangs:** the kernel is named; next, the conv and delta-rule stages separately (the September census
+  harness) and a source read of the stage that hangs for a work-group barrier or wait it can miss.
+- **If both cards run clean:** the kernel alone does not hang at this rate; the race needs the server's
+  surroundings (exchanges on the copy engines, the other card, the rest of the step). The next stress then adds an
+  all-gather loop across both cards beside the kernel loop.
+- Faults from this stress are our own and handled as such: copy the coredumps, one health probe, then carry on.
