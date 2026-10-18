@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, packet117 HC gate preparation:** The source shows that each
+HC gate event also runs four serial software sigmoids per mixed output. The
+new candidate places those independent products on existing lanes and keeps
+the original weight reads and sum order. Initial GNU byte checks pass; final
+GNU/Intel checks and compilation wait behind the coordinator's whole-host
+hold. A copied whole-layer micro and conditional one-load bracket are being
+prepared. No GPU, service, live queue or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet117.md).
+
 **October 18, packet115 expert micro prepared on CPU:** Separate expert images
 use 128 registers for production and 256 for LARGE. All four designs have
 zero spills; both compilers pass exact-byte checks twice per view. Two fresh
