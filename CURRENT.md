@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, packet58y one-card attribution prepared on CPU:** The new copy
+measures host work, existing waits and cache hits/misses after packet58v's
+overlap change. Both builds, exact miniature repeats and 98 policy tests pass.
+The temporary queue plan puts it after 58x's smoke and bracket in their same
+whole-host hold; it refuses a separate hold. No job was queued or launched.
+Device timings that cannot be measured remain unknown. The next-lever ranking
+waits for the diagnostic, under a preregistered 3% gain gate.
+[Work note](notes/2026-10-18-own-runtime-packet58y.md).
+
 **October 18, packet58xb overlap amendment prepared on CPU:** The larger-cache
 smoke and all five comparison views now select overlap. The first view must
 still be exact and is reported as warm-up; the other two controls decide drift

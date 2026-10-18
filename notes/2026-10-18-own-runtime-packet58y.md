@@ -44,3 +44,47 @@ Larger-cache versus miss-path ranking remains pending packet58y device evidence.
 The brief's historical 58v figures and 58x +2.2% projection are motivation,
 not a replacement for the new split. Prepared analysis will report bounded
 levers and explicitly identify costs that cannot be separated.
+
+## CPU preparation milestone
+
+The +3% preregistration was committed and pushed as `19efcaa4a`. The new
+[packet](../experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/README.md)
+copies 58v with symlink-preserving operations; no frozen parent is modified.
+It adds host spans, existing-wait categories, ten enqueue-family counters,
+actual published-pointer misses and commanded fill/table bytes. Production
+queues remain unprofiled; device-class durations and separate miss-stall time
+are explicitly unknown. The fixed metadata fits within 58v's existing allowance.
+
+Both compilers pass. The retained build is 80,564,739 bytes; the largest compiler
+child used 709,616 KiB RSS. The native miniature retains identical tokens and
+all 32 BF16 fixture files across an untraced control and two traced repeats.
+The full-size mock, source-byte fixtures, delayed-copy protocol, drain/teardown,
+three real intercepted launch boundaries, parser refusals and 98 Python tests
+pass. The oracle is still bound through the original packet49 authority.
+
+A record chain began using host memory during preparation. The real admission
+check correctly refused a full model when available RAM fell below the unchanged
+95,435,761,152-byte threshold. The CPU launch replay now records that actual
+observation and separately uses a clearly labeled synthetic admitted snapshot
+to exercise the remaining startup path. The actual memory policy and its
+one-byte-below refusal run unchanged. This is no device admission waiver.
+
+The first temporary three-job plan caught 58x being resealed by its preparer;
+that failed log is retained. Once its overlap proposals were sealed, all three
+plans passed in order: 58x smoke, 58x bracket, 58y attribution. The new proposal
+pins those predecessor hashes and requires their clean same-boot receipts plus
+the continuous PAUSE-B marker. The plan reserves 4,026,531,840 bytes for all
+three jobs against 32,742,936,576 root-free bytes, preserving the 25 GB floor.
+Nothing was queued. Expected 58y duration is 10–15 minutes with a 120-minute
+watchdog. Native output checking, library path, environment closure, drain and
+getrlimit gates are retained. No GPU, service or host setting changed here.
+
+The first-ready marker will bind the implementation commit, exact proposal and
+seal after this milestone is committed. Analysis preparation follows separately;
+no speed result or selected next lever is claimed before actual device evidence.
+
+A parallel read-only review caught a trace-integrity gap before readiness.
+The real suite now refuses missing, truncated, reordered, wrong-token or
+inconsistent traces before it can pass; all twelve traces are required. The
+reviewer rechecked this fix. Same-hold checks also enforce predecessor stage
+chronology; the coordinator still owns excluding intervening lane-A jobs.
