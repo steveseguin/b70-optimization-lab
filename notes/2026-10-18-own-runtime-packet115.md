@@ -112,3 +112,9 @@ changed by this task. Gate 2 and full model equality/speed await the coordinator
 Milestones were committed and immediately pushed to main: capability probe
 `5edca665e`, four spill-free designs and micro proposal `913d03665`; the final
 commit adds the sealed conditional v5 proposal and this closeout.
+
+Final retention correction: the root-only build ignore rule initially allowed
+the nested v5 build into that commit. A focused follow-up removes those
+generated files from Git tracking and adds the nested ignore rule. Local
+artifacts, receipts and hashes remain intact; no build or evidence bytes were
+deleted and no published history was rewritten.
