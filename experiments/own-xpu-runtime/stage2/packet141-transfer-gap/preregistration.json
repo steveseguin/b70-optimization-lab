@@ -1,0 +1,55 @@
+{
+  "schema": "packet141.preregistration.v1",
+  "diagnostic_only": true,
+  "arithmetic": "iq3-p49-split32-v1",
+  "blocks": 4,
+  "arms": [
+    "a",
+    "b",
+    "c",
+    "natural"
+  ],
+  "warm_repeats": 6,
+  "warmup_repeats": 2,
+  "position": 133,
+  "input_token": 10015,
+  "rank": 0,
+  "layer_count": 24,
+  "kernel_count": 530,
+  "classes": [
+    "attention",
+    "HC",
+    "MoE gate/up",
+    "MoE down",
+    "shared + fused router",
+    "route",
+    "norms",
+    "small"
+  ],
+  "close_if_all_ratios_at_most": 1.15,
+  "followup_ratio_at_least": 1.3,
+  "followup_class_ms_at_least": 0.5,
+  "otherwise": "report and close",
+  "forced_cold_natural_max_relative_difference": 0.1,
+  "forced_cold_validity_min_class_ms": 0.5,
+  "require_all_kernel_counts": true,
+  "require_all_routes_equal": true,
+  "require_all_state_equal": true,
+  "oracle_window_token_counts": [
+    47,
+    8
+  ],
+  "one_load": true,
+  "expected_seconds": [
+    600,
+    1200
+  ],
+  "watchdog_seconds": 4800,
+  "output_cap_bytes": 200000000,
+  "speed_claim": false,
+  "instrumented_control_max_relative_difference": 0.1,
+  "material_issue_gap_ms": 0.5,
+  "material_issue_gap_fraction": 0.1,
+  "control": "One cold uninstrumented original-enqueue half per block, after natural; state exact; wall-only",
+  "inconclusive_if": "cold/natural mismatch, observer overhead above 10%, or issue gap >=0.5 ms and >10% of in-order span"
+}

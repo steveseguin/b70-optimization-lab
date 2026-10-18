@@ -1,0 +1,67 @@
+--- parent/main.cpp
++++ packet141/main.cpp
+@@ -570,6 +570,8 @@
+ static size_t target_scratch_bytes(const flash::Plan&,const Options&);
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p65_attribution.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p109_fusion.hpp"
++#define P141_PACKET "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/probe_touch.hpp"
+ class Engine final : public flash::Backend {
+ public:
+   Weights &w;
+@@ -652,6 +654,7 @@
+   std::vector<std::map<std::string, Slot>> buffers;
+   std::vector<std::map<std::string, Allocation>> weights;
+   std::vector<Allocation> slab, scratch, workspace, compact_routes, mixture_out, one;
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/probe.hpp"
+   std::vector<Allocation> fp32_inputs, fp32_sources;
+   std::vector<size_t> fp32_extents;
+   std::vector<std::vector<uint32_t>> selected;
+@@ -1651,7 +1654,7 @@
+      <<(has_active?std::to_string(active):"null")<<"}\n";out.flush();
+ }
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p105_runtime.hpp"
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/rank.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/build/cow/rank.hpp"
+ 
+ // SPEED6_SCRATCH_POLICY_BEGIN
+ // Scope the footprint reduction to the previously refused split23/dr1 arm.
+--- parent/rank.hpp
++++ packet141/rank.hpp
+@@ -234,7 +234,7 @@
+  require(!stopped && !(fd.revents&(POLLIN|POLLHUP|POLLERR|POLLNVAL)),"cooperative rank stop");
+ }
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/rank_canary.hpp"
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/request_reset.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/build/cow/request_reset.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/native_controller.hpp"
+ static int run_rank(const Options& a) {
+  using namespace pipeline;
+@@ -313,6 +313,7 @@
+     undo(*engine,c,image,redo,r.position,r.token);
+    }
+    else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();state_dump(*engine,r.position);if(r.position==2147483647)request_state_inventory(*engine);}
++   else if(r.op==13){require(a.rank==0&&!c.pending,"p141 unresolved candidate/rank");image.boundary();engine->p141_probe(r.token,r.position);}
+    else if(r.op==11){image.boundary();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
+    #ifdef OWN_RT_HOST_ONLY
+    else if(r.op==12){require(a.rank==0&&c.pending&&c.speculative,"negative control ownership");image.corrupt_protected_for_gate(r.token);}
+@@ -326,7 +327,7 @@
+    return response;
+   };
+   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
+-   if(r.op==finish){if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");image.boundary();if(provider)provider->dump_all_state(engine->a.output/"draft-final-state");break;}
++   if(r.op==finish){if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");image.boundary();/* p141: no full-state file output. */break;}
+    Reply response{};
+    if(r.op==10){
+     require(!c.pending,"native entry unresolved candidate");
+--- parent/request_reset.hpp
++++ packet141/request_reset.hpp
+@@ -12,7 +12,7 @@
+  require(bool(std::getline(input,output))&&bool(std::getline(input,oracle)),"reset metadata");
+  fs::path destination(output);require(destination.is_absolute()&&!output.empty(),"reset output absolute");
+  // Retain the complete completed state before resetting, including warm-up.
+- state_dump(e,2147483647);request_state_inventory(e);if(provider)provider->dump_all_state(e.a.output/"draft-final-state");
++ // p141: omit full-state files; allocation reset and arithmetic unchanged.
+  e.dump_classes(e.a.output/"class-times.json",accepted);
+  if(e.bank_parity)e.swap_state_banks();
+  // Covers plan allocations, both recurrent banks, QSA unused tails, snapshots,

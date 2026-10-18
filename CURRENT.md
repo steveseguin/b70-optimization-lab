@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, packet141 transfer-gap probe prepared on CPU:** The new two-card
+probe compares a real 24-layer half in order, warm repeated kernels, and weights
+read just before use. It keeps packet136 bundle8 arithmetic and checks every
+model token against packet49. Both builds, allocation checks, 15 safety tests,
+the seal and temporary lane-B queue plan pass. It has not been queued or run.
+The next step is the coordinator's diagnostic; the record is unchanged.
+[Work note](notes/2026-10-18-own-runtime-packet141.md).
+
 **October 18, packet58y one-card attribution prepared on CPU:** The new copy
 measures host work, existing waits and cache hits/misses after packet58v's
 overlap change. Both builds, exact miniature repeats and 98 policy tests pass.
