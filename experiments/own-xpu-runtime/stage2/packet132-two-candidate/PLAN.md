@@ -69,12 +69,20 @@ Every cycle emits one verified token; no two-token multiplier. Also report
 finite-window accounting: interval i pays flag i+1 and receives rescue i;
 never join prompts or invent edge/wraparound positions.
 
-Advance to a design note only if the primary training-selected policy projects
-at least +3% on held-out sources, with complete capture. Otherwise close this
-session with a local DO-NOT-REPEAT entry. Report the best in-sample projection
-and all sensitivities even when they disagree. No implementation either way.
+Apply the user's kill gate to the best primary projected gain over this
+independent corpus: at least +3%, with complete capture, advances to a design
+note only. Otherwise close this session with a local DO-NOT-REPEAT entry.
+Separately report whether the training-selected policy clears +3% held out;
+that is a robustness check, not a replacement for the user's gate. Report all
+sensitivities even when they disagree. No implementation either way.
 
 Pre-capture correction: the first plan text mistakenly named the historical
 91,392-row prefix. Packet129's preregistration and bundle7 selection explicitly
 identify 80,128. Corrected before any new target/draft outputs; thresholds and
 corpus selection are unchanged.
+
+Pre-output review also corrected the initially stricter held-out decision rule
+to the user's best-projected-gain rule. The held-out split remains a separate
+robustness check. Add a diagnostic 21%-miss-standardized calculation to make
+the change in acceptance between this tiny CPU corpus and bundle7 explicit;
+it is not measured production behavior and does not replace raw counts.
