@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, packet58z larger-cache record chain prepared on CPU:** The
+new seven-window chain uses packet58x's exact binaries with a 21.55 GB cache,
+tile16 and overlapped maintenance. Smoke and the exact five-view comparison
+pass: 4.13% strict gain, 0.15% warm-control drift. The 128 policy tests, all
+seven entry paths, loader checks, submission rehearsal, seals and pin guard
+pass. The coordinator must hold the whole host and freeze Codex and compiles
+from WS through WS128. No chain was launched or queued; the 28.042989 record
+is unchanged. [Work note](notes/2026-10-18-own-runtime-packet58z.md).
+
 **October 18, packet142 class-layout preparation passes on CPU:** The packet136
 copy has three exact allocation-order candidates. Byte checks, full-size
 allocation checks, entry and limit checks, submission rehearsal, six temporary

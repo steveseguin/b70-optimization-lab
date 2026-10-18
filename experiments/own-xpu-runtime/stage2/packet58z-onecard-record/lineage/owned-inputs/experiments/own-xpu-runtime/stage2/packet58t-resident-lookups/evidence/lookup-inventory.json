@@ -1,0 +1,82 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_payload_reads": false,
+  "tensors": [
+    {
+      "bytes": 28800138240,
+      "component": "ple_lookup",
+      "data_offset": 528476160,
+      "dimensions": [
+        160,
+        320001536
+      ],
+      "file_offsets": [
+        528505792,
+        29328644032
+      ],
+      "hc_projection_replicated": false,
+      "layer": 1,
+      "name": "per_layer_token_embd.weight",
+      "official_correspondence": "model.language_model.layers.1.ple.ple_embedding.ngram_embedding.shard_{0..127}.weight (concatenated)",
+      "shape": [
+        320001536,
+        160
+      ],
+      "shard": "UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+      "type": "IQ4_NL",
+      "type_id": 20,
+      "rows_per_token": 16,
+      "row_bytes": 90,
+      "packed_bytes_per_token": 1440,
+      "bf16_output_bytes_per_token": 5120,
+      "access": "two history hashes, eight head vocabularies each; 16 scattered rows"
+    },
+    {
+      "bytes": 521472000,
+      "component": "embedding",
+      "data_offset": 29328614400,
+      "dimensions": [
+        2560,
+        248320
+      ],
+      "file_offsets": [
+        29328644032,
+        29850116032
+      ],
+      "hc_projection_replicated": false,
+      "layer": null,
+      "name": "token_embd.weight",
+      "official_correspondence": "model.language_model.embed_tokens.weight",
+      "shape": [
+        248320,
+        2560
+      ],
+      "shard": "UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00003.gguf",
+      "type": "Q6_K",
+      "type_id": 14,
+      "rows_per_token": 1,
+      "row_bytes": 2100,
+      "packed_bytes_per_token": 2100,
+      "bf16_output_bytes_per_token": 5120,
+      "access": "token ID"
+    }
+  ],
+  "resident_bytes": 29321610240,
+  "packed_bytes_per_token": 3540,
+  "bf16_output_bytes_per_token": 10240,
+  "ple_metadata_bytes": 280,
+  "host_id_bytes": 132,
+  "scale_bytes_per_token": 340,
+  "production_and_tile16_same_lookup_path": true,
+  "lookup_sidecars": false,
+  "expert_pinned_bytes": 48627712000,
+  "sources": {
+    "experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c",
+    "experiments/own-xpu-runtime/stage2/packet58j-onecard-port/main.cpp": "3738412a21aa68dd3597f6fcb5bf06f1a71983fb3953021bf870316a086a0243",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp": "d2560c5530d56ca62b0ec43bcbd1668cd7c637d1743f51abfebfb96de56ee480",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "experiments/own-xpu-runtime/stage2/packet58q-onecard-variance/ANALYSIS.md": "8d344e75e7ea8bcb1ca3d8744eda88979ba6f0915314d0443dd996b98cfac411",
+    "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/parent-build-device-receipt.json": "5db3acc9c30122cd9e3673dc727705b7646d5099b95696bb8f458c22848794da"
+  }
+}
