@@ -577,3 +577,22 @@ Actions:
 4. Codex **p58u**: one-card admission bound derived from measured peaks (58g/58k/58n/58p, 58t's +29.3 GB) for future one-card packets.
 5. Packets 132 (+2.25% projected < +3%) and 134 (rank-0 gaps are draft waits, not enqueue) closed; Codex **p135** synthesises the full critical path of the 58.22 line and names the top levers ≥ +0.5% (or the practical ceiling).
 STOP DOING acknowledged: whole-host windows while Codex runs parallel CPU workers (new briefs cap Codex at ≤ 4 GB during holds); plan modes that skip the real gates; grid rows left queued after a refused smoke; v4 five-load grids for sub-2% runtime-switchable levers.
+
+## Review 26 (2026-10-18 ~16:05 UTC): ACT
+
+Lane B ran continuously from 15:36 (p131b smoke + grid: **+0.81% strict, drift 0.11%, exact**, acceptance unchanged). Lane A had no device work after 15:35. Its confirm was held behind lane B's last grid row, and then the confirm smoke was refused before any device work: `confirm136.py` adds `PYTHONDONTWRITEBYTECODE` to the closed environment. p136 had no chain waiter armed. Fault count is still 2.
+
+Actions:
+1. Packet136 confirm fixed via Codex **p136b** (30 min): closed environment, confirm/chain entry probes through `masked_environment`/`closed_environment`, minimal reseal, `READY-FOR-DEVICE.json` as the last write. Stale `active-lane-A.json` (dead pid 1494247) archived after review: render nodes and locks free, fault count 2. The five broken grid rows were pulled, done-A archived, and the driver restarted (A20).
+   - `autoqA-p136b` queues the fixed confirm when p136b exits.
+   - `p136-chain2-waiter` then runs `orchestrate --evidence-only`, ready check, `argument_gate --verify`, `check_drain_fix`, PAUSE-A/B, drain spacing, `verify_ready`, the chain command, and post-chain prep with dry-run and server dry-run (no real submit). It is keyed on new lane events only.
+2. `p58v-hold` armed: after Codex p58v exits with smoke + v5 proposals and no packet136 chain is pending or running, one whole-host hold on lane A (PAUSE-B), released when the last job ends.
+3. New brief rule: every brief's first device milestone is the smoke proposal (≤ 75 min). `READY-FOR-DEVICE.json` is written after seals and gates are committed, and nothing in the packet changes afterwards. Waiters trigger on that file plus a clean temporary-queue plan, not on Codex exiting. This applies from p136b onward; p137 predates it.
+4. New readiness rule for bundle 9 and later, set before any bundle 9 data exists: one lane's grid (≥ +0.5%, drift ≤ 1%, exact) plus a composed 12×64 smoke on the other lane, then the chain. Packet136 keeps its sealed both-lane rule.
+5. Codex **opsreview2**: `gpu_time_review.py` counts lanequeue whole-host jobs (both lanes), chain K and whole-host windows, and takes the union of intervals.
+
+STOP DOING acknowledged:
+- making an idle lane wait for the other lane's last row or a Codex exit;
+- finishing a bundle without arming its chain waiter;
+- five-load second-lane confirm grids from bundle 9 on;
+- device proposals as the last deliverable of long briefs.
