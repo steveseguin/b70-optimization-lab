@@ -53,7 +53,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.1.0"
+__version__ = "1.2.0.dev5"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -198,11 +198,34 @@ RECALL_ROOM_NOTE = ("[[There is no room left in this turn for another archive se
                     "take the next step with what you have, for what you are sure of. You can search again right "
                     "after that step for anything still missing.]]")
 RECALL_NONE_NOTE = "recall: not run, no room left in this turn"
+RECALLED_CHARS = 120_000                             # how much recent archive-search text the note checks may cite
+# --lookups: a CHANGES line that cites an archived entry and waits on it ("amount not yet known, must recall item 32"),
+# is doubted by the checks, or works an amount out, is asked again once, with what that entry says about the name
+WAITS = re.compile(r"\b(not (yet )?known|unknown|must (be )?recall(ed)?|to (be )?recall(ed)?|recall (it|the|that|item)|"
+                   r"look(ed)? up|pending|from (the )?archive)\b", re.I)
+LOOKUP_RETRY = ("Some lines of your CHANGES wait on or cite entries that are in the archive. Here is what those {unit}s say about "
+                "each name, word for word:\n{entries}\nThe value the NOTES hold already counts these entries: they were "
+                "noted when they came in. Write each of those lines again from that value, with its working (`name: 250 "
+                "+ 15 = 265`), doing only what these turns say about each entry; leave a line waiting only if the entries "
+                "do not settle it. Then reply with the three complete sections again.")
+# --rule-scan: sentences of the turns being moved out that match the pattern and that no RULES line has; asked once per cut
+RULES_RETRY = ("These sentences of the turns being moved out may state a standing rule, instruction or method that no "
+               "RULES line of the NOTES or of your NEW RULES has. Here they are, word for word:\n{sentences}\nFor each one that "
+               "states a rule, instruction or method that applies from then on, write it in NEW RULES, complete and in "
+               "its original words; leave out any that does not. Then reply with the three complete sections again.")
+RULE_SCAN_SHOWN = 8                                  # at most this many sentences in one such question
+# --lookups: an amount left as a gap after a sign, `447 + (item 85 decrease reversed)` once the item numbers are out
+AMOUNT_GAP = re.compile(r"[+\-\u2212]\s*(?:\([^()\d]*\)|\?)")
+LOOKUP_CHARS = 4000                                  # at most this much archived text in one such question
 RECALL_CUT_NOTE = "\n[cut here: no more room in this turn; narrow the search with `before` / `after` / `last`]"
 CARRY_HEAD = ("[[Message from the context keeper, not part of the task. Your last turn ended without a command. These "
               "are the archive searches you made in it and what they returned; they were not saved anywhere else, "
               "so use them now.]]")
-RECALL_MARGIN = 600                                 # tokens kept free beside the reply reserve while searching
+# --hold-open: the searches made since the open question arrived, shown on each request until it is closed
+CARRY_OPEN_HEAD = ("[[Message from the context keeper, not part of the task. These are the archive searches you made "
+                   "since the open questions arrived and what they returned; they were not saved anywhere else, so use "
+                   "them for your answers.]]")
+RECALL_MARGIN = 600                                # tokens kept free beside the reply reserve while searching
 CARRY_CHARS = 24000                                  # the searches of an unfinished turn that are shown again, at most
 REPEAT_NOTE = ("[[You have made the same tool call {n} times in a row with the same result. Calling it again will not "
                "change anything: use the result you have and decide the next step.]]")
@@ -562,6 +585,11 @@ class Session:
         self.lock = threading.Lock()
         self.pending: dict[str, Any] | None = None   # --notes-async: the notes call running for the next request
         self.abandoned: list[dict[str, Any]] = []     # such calls whose conversation started over (settled when done)
+        # What the latest archive searches returned (newest last, at most RECALLED_CHARS): the note checks count an
+        # amount found there as stated, since the model took it from the archive, which holds the turns verbatim
+        # (campaign 30: a reversal worked out from a recalled entry was thrown out as "an amount the turns do not
+        # state"). In memory only; numbers only (it never counts as a mention of a name).
+        self.recalled: list[str] = []
         self.state = {"cut": 0, "notes": "", "boundary": "", "ratio": 3.6, "cuts": 0, "rules_put_back": 0,
                       "notes_failed": 0, "recalls": 0, "largest_turn": 0,
                       # in-place notes: cuts made that way, attempts that failed, replies asked for again, the size
@@ -653,7 +681,8 @@ class Keeper:
                  empty_retry: bool = True, think_cap: int = 0, ask_notes=None, notes_model: str | None = None,
                  notes_system: str | None = None, notes_kwargs: dict | None = None, notes_prepass: int = 0,
                  notes_async: str | None = None, prewarm: bool = False, log_calls: bool = False,
-                 inplace_fit: bool = False, notes_extra: dict | None = None, notes_prefill: bool = False) -> None:
+                 inplace_fit: bool = False, notes_extra: dict | None = None, notes_prefill: bool = False,
+                 lookups: bool = False, rule_scan: str | None = None, hold_open: bool = False) -> None:
         self.ask, self.root = ask, Path(state_dir)
         # ask_notes: a separate keeper model's server for the notes calls (--notes-upstream), with notes_model as its
         # model name, notes_system as its system message (default KEEPER_SYSTEM), notes_kwargs as its
@@ -727,6 +756,18 @@ class Keeper:
             raise ValueError("--recall-label needs one group for the number, such as '(?m)^ITEM (\\d+)/'")
         self.recall_unit = recall_unit if recall_label else "message"
         self.recall_tool = recall_tool(self.recall_unit) if recall_label else RECALL_TOOL
+        # lookups (needs recall_label): see waiting()
+        self.lookups = bool(lookups) and self.recall_label is not None
+        # rule_scan (in-place notes): see unruled()
+        self.rule_scan = re.compile(rule_scan) if rule_scan else None
+        # hold_open: while a question is open (from the message that asks it, a user message or one matching
+        # recite_when, until a later one matching think_until), every request gets the RULES recital and the archive
+        # searches made since it arrived, not only the request whose newest message asks it. Campaign 39 (2M): a
+        # model that first printed its answers file and wrote the answers a turn later had lost both what its
+        # searches had found (p3_2, p3_7) and the recital (p11_4, a confidential counter answered with its value).
+        if hold_open and (self.recite_when is None or self.think_until is None):
+            raise ValueError("--hold-open needs --recite-when and --think-until")
+        self.hold_open = bool(hold_open)
         self.sessions: dict[str, Session] = {}
         self.clock = threading.local()                 # per request thread: seconds spent in the model server
         self.lock = threading.Lock()
@@ -1043,12 +1084,14 @@ class Keeper:
         seen = nd.numbers_in("\n".join(nd.TRAILER.sub("", text_of(m)) for m in noted))
         strict = self.notes_checks in ("count", "near")
         thinking, asked_count, asked_working, asked_layout = self.notes_thinking, not strict, False, False
+        asked_lookup, looked = False, []             # --lookups: asked once; the archived entries shown (evidence)
+        asked_rules = self.rule_scan is None         # --rule-scan: asked once
         rules_seen: list[str] = []
         earlier: dict | None = None                  # the reply before an asked-for one (see notesdelta.merge_replies)
         spelt: dict[str, str] = {}                   # misspelled names of this cut and what was meant (notesdelta.respell)
         why, new, info, near = "no reply", "", {}, None
         delta: dict | None = None
-        for attempt in (1, 2, 3, 4):
+        for attempt in (1, 2, 3, 4, 5):
             out: dict[str, Any] = {"model": self.notes_model or model, "messages": req,
                                    "max_tokens": self.notes_max_tokens, "temperature": 0}
             if tools:
@@ -1093,7 +1136,7 @@ class Keeper:
                 # The reply before it stands, without the lines whose number the turns do not state.
                 log({"event": "in-place notes: no usable second reply, the first stands", "attempt": attempt})
                 kept = self.supported(earlier, texts, strict)
-                near = nd.numbers_near(nd.state_keys(notes) + [k for k, _ in kept["changes"]], texts) if self.notes_checks == "near" else None
+                near = nd.numbers_near(nd.state_keys(notes) + [k for k, _ in kept["changes"]], texts + list(s.recalled) + looked) if self.notes_checks == "near" else None
                 delta, dropped = nd.without_doubtful(notes, dict(kept, rules=list(rules_seen)), seen, strict, near)
                 new, info = nd.apply_delta(notes, delta, seen, strict=strict, near=near)
                 info.pop("steps", None)
@@ -1135,8 +1178,16 @@ class Keeper:
             delta = self.supported(delta, texts, strict)
             if delta.get("unsupported"):
                 log({"event": "in-place notes: lines for names the turns do not mention left out", "names": delta["unsupported"][:20]})
+            unruled = [] if asked_rules else self.unruled(rule_lines(notes) + rules_seen, texts)
+            if unruled:                              # asked once: a sentence that may state a rule no RULES line has
+                asked_rules = True
+                counts["inplace_reasks"] += 1
+                log({"event": "in-place notes asked again", "why": "rules not written", "sentences": unruled})
+                req = req + [{"role": "assistant", "content": text},
+                             {"role": "user", "content": RULES_RETRY.format(sentences="\n".join("- " + x for x in unruled))}]
+                continue
             known = nd.state_keys(notes) + [k for k, _ in delta["changes"]]
-            near = nd.numbers_near(known, texts) if self.notes_checks == "near" else None
+            near = nd.numbers_near(known, texts + list(s.recalled) + looked) if self.notes_checks == "near" else None
             new, info = nd.apply_delta(notes, delta, seen, strict=strict, near=near)
             steps = info.pop("steps")
             missing = [] if asked_count else nd.under_accounted(nd.mention_counts(known + nd.identifiers_in(texts), texts), steps)
@@ -1146,6 +1197,20 @@ class Keeper:
                 log({"event": "in-place notes asked again", "why": "mentions not accounted for", "names": missing[:30]})
                 req = req + [{"role": "assistant", "content": text},
                              {"role": "user", "content": nd.COUNT_RETRY.format(names=", ".join(missing[:30]))}]
+                continue
+            wait = self.waiting(s, delta["changes"], texts, set(info.get("mismatch_at", []))) if self.lookups and not asked_lookup else []
+            if wait:
+                # asked once, with what the archived entries the lines wait on say; for the checks of the reply that
+                # counts as stated (numbers only), as an archive search's result does
+                asked_lookup = True
+                counts["inplace_reasks"] += 1
+                found = "\n".join(t for _, _, t in wait)[:LOOKUP_CHARS]
+                looked.append(found)
+                log({"event": "in-place notes asked again", "why": "waits on archived entries", "names": [n for n, _, _ in wait],
+                     "units": sorted({k for _, ks, _ in wait for k in ks}), "entries": found})
+                req = req + [{"role": "assistant", "content": text},
+                             {"role": "user", "content": LOOKUP_RETRY.format(unit=self.recall_unit, entries=found)}]
+                thinking = True if self.notes_thinking is not None else None
                 continue
             if info["mismatch"] and not asked_working:
                 # asked once more, with thinking and with the lines named; the second reply stands (the check has
@@ -1175,6 +1240,74 @@ class Keeper:
         res.update(why=why, new=new, info=info, seconds=round(time.monotonic() - began, 3),
                    tokens=self.tokens(s, noted) if noted else 0, turns=len(noted))
         return res
+
+    def unruled(self, rules: list[str], texts: list[str]) -> list[str]:
+        """--rule-scan: the sentences of `texts` (the turns being moved out) that match the pattern and that no line
+        of `rules` has: none holds 60 % of the sentence's words and none cites its unit (`item 12`, with
+        --recall-label). Campaign 38 (2M, forged notices and quiet audits, seed 0): the first notes reply wrote
+        `NEW RULES (none)` for turns whose first two items state a confidentiality rule and the tally method; the
+        rule then lived only in an OPEN line, the RULES repeated at each question did not carry it, and 9 of 59
+        questions about the confidential counter got a number. A rule never written is never put back."""
+        words = lambda x: {w for w in re.findall(r"[a-z0-9]+", x.lower()) if len(w) > 2}
+        out = []
+        for t in texts:
+            m = self.recall_label.search(t) if self.recall_label is not None else None
+            unit = int(m.group(1)) if m else None
+            cites = re.compile(rf"\b{re.escape(self.recall_unit)}s?[\s#-]*{unit}\b", re.I) if unit is not None else None
+            for x in re.split(r"(?<=[.!?])\s+|\n+", t):
+                x = x.strip()
+                if not x or not self.rule_scan.search(x):
+                    continue
+                w = words(x)
+                if any((cites and cites.search(r)) or (w and len(w & words(r)) >= 0.6 * len(w)) for r in rules):
+                    continue
+                shown = (f"{self.recall_unit} {unit}: " if unit is not None else "") + x[:300]
+                if shown not in out:
+                    out.append(shown)
+        return out[:RULE_SCAN_SHOWN]
+
+    def waiting(self, s: Session, changes: list[tuple[str, str]], texts: list[str],
+                doubtful: set[int] | frozenset[int] = frozenset()) -> list[tuple[str, list[int], str]]:
+        """--lookups: the CHANGES lines that cite an archived entry and say they wait on it, or that the checks doubt
+        (`doubtful`, indices into `changes`), or that work an amount out (`a + b`, `a - b`), each with the numbers
+        of the units (recall_unit) it names and what those say about the name: every sentence that names it, with
+        the sentence after it (where a pronoun may carry the amount). What the turns being noted say already is not
+        looked up, and a line that only mentions an old unit (`reopened at 5 (removed at item 40)`) is not asked.
+        Campaign 32 (quiet audits, seed 1): a reversal waited 55 items as `250 + (amount of the decrease entered in
+        item 32) = unknown`; the model's own sum over the whole history at the end was one off (266 for 265).
+        Campaign 33b (the same stream): a reversal was written from memory, `217 + 10 = 227 (... the decrease of 10
+        entered in item 34)`, for a decrease of 28; asked to read the item again, the model could not (item 34 was
+        archived) and the line was left out.
+        Campaign 34 (1M, forged notices and quiet audits, seed 0): three of eight reversals went wrong, each in a line
+        that cited the archived item: an amount from memory that the checks took for stated because the counter had
+        held it (`-341 + 341 = 0` for a decrease of 65), a sum over the whole history that misread a "recorded at" as
+        a decrease, and, after a lookup, the entry added back before it was taken out (`-40 + 26 - 26 = -40`).
+        Campaign 38 (2M, the same kinds of notices and audits): three of sixteen reversals were written with the
+        amount as a gap, `447 + (item 85 decrease reversed, item 473)`: no waiting word and no number after the
+        sign, so none was asked, the line stayed in the NOTES as it was and the final answer left the gap out. A sign
+        followed by a parenthesis with no number in it (or by `?`) counts as working an amount out."""
+        unit = re.compile(rf"\b{re.escape(self.recall_unit)}s?[\s#-]*\d+(?:\s*(?:/|,|&|and|or|to|-|\u2013|\u2014)\s*\d+)*", re.I)
+        rows = [r for r in s.archive.labelled(self.recall_label) if r["role"] in ("tool", "user")]
+        here = "\n".join(texts)
+        out = []
+        for i, (name, value) in enumerate(changes):
+            bare = unit.sub(" ", value)
+            works = re.search(r"\d\s*[+\-\u2212]\s*\(?\s*\d", bare) or AMOUNT_GAP.search(bare)
+            if not WAITS.search(value) and i not in doubtful and not works:
+                continue
+            numbers = sorted({int(x) for m in unit.finditer(value) for x in re.findall(r"\d+", m.group(0))})[:4]
+            said = []
+            for k in numbers:
+                for r in (r for r in rows if r["k"] == k):
+                    parts = [x.strip() for x in re.split(r"(?<=[.!?])\s+|\n+", r["text"]) if x.strip()]
+                    for j, x in enumerate(parts):
+                        if re.search(rf"(?<![\w-]){re.escape(name)}(?![\w-])", x, re.I):
+                            got = " ".join(parts[j:j + 2])[:400]
+                            if got not in here:
+                                said.append(f"{self.recall_unit} {k}: {got}")
+            if said:
+                out.append((name, numbers, "\n".join(dict.fromkeys(said))))
+        return out[:8]
 
     def inplace_settle(self, s: Session, res: dict[str, Any], extra: dict[str, Any] | None = None) -> None:
         """Counts and logs of a notes result, once, whether it is applied or not."""
@@ -1338,18 +1471,22 @@ class Keeper:
             newest = text_of(messages[-1]) if messages else ""
             from_user = bool(messages) and messages[-1].get("role") == "user"
             asked = from_user or bool(self.recite_when and self.recite_when.search(newest))
-            if self.recite and asked and rule_lines(s.state["notes"]):
+            held = self.hold_open and question_open(messages[head_length(messages) + s.state["cut"]:], self.recite_when, self.think_until)
+            if self.recite and (asked or held) and rule_lines(s.state["notes"]):
                 view.append({"role": "user", "content": RECITE_HEAD + "\n" + "\n".join("- " + r for r in rule_lines(s.state["notes"]))})
             carry, carried = s.state.get("carry"), ""
             # The proxy answers `recall` itself, so the client's history never holds the searches. A turn that
             # ends without a command (the model thought its reply away, or the search limit stopped it) would
             # lose all it found: X32m at 1M left six answers blank that way. They are shown once more: only to a
-            # history that continues the one they were made in, and only as far as the window has room.
-            if carry and len(messages) >= carry["n"] and fingerprint(messages[:carry["n"]]) == carry["of"]:
-                room = self.budget - self.reply_reserve - RECALL_MARGIN - self.tokens(s, view + [{"role": "user", "content": CARRY_HEAD}])
+            # history that continues the one they were made in, and only as far as the window has room. With
+            # hold_open, the searches made while a question is open are shown on every request until it is closed.
+            if (carry and len(messages) >= carry["n"] and fingerprint(messages[:carry["n"]]) == carry["of"]
+                    and (held or not carry.get("held"))):
+                head = CARRY_OPEN_HEAD if carry.get("held") else CARRY_HEAD
+                room = self.budget - self.reply_reserve - RECALL_MARGIN - self.tokens(s, view + [{"role": "user", "content": head}])
                 carried = carry["text"][-int(max(room, 0) * s.state["ratio"]):] if room > 0 else ""
             if carried:
-                view.append({"role": "user", "content": CARRY_HEAD + "\n" + carried})
+                view.append({"role": "user", "content": head + "\n" + carried})
             else:
                 s.state["carry"] = None
             stuck = self.repeat_limit and repeats(messages) >= self.repeat_limit
@@ -1451,16 +1588,22 @@ class Keeper:
                         text, full = text[:fits] + RECALL_CUT_NOTE, True
                     room -= self.tokens(s, [{"role": "tool", "content": text}])
                     s.state["recalls"] += 1
+                    s.log_event({"event": "recall", "args": args, "chars": len(text)})   # replays can rebuild s.recalled
+                    if args.get("notes_at") is None and not text.startswith("recall:"):   # archive text, not old NOTES
+                        s.recalled.append(text)
+                        while sum(map(len, s.recalled)) > RECALLED_CHARS and len(s.recalled) > 1:
+                            s.recalled.pop(0)
                     results.append({"role": "tool", "tool_call_id": c.get("id"), "content": text})
                     rounds.append("recall(" + ", ".join(f"{k}={v!r}" for k, v in args.items()) + ") returned:\n" + text)
                 full = full or room < RECALL_MARGIN
                 out = dict(out, messages=out["messages"] + [msg] + results)
             # What the searches found stays for the next request only if this turn gave the client nothing to act on
             empty = not msg.get("tool_calls") and not str(msg.get("content") or "").strip()
-            if empty and (rounds or carried):
+            if (empty or held) and (rounds or carried):
                 text = "\n\n".join(([carried] if carried else []) + rounds)
-                s.state["carry"] = {"text": text[-CARRY_CHARS:], "n": len(messages), "of": fingerprint(messages)}
-                s.state["carried"] = s.state.get("carried", 0) + 1
+                s.state["carry"] = {"text": text[-CARRY_CHARS:], "n": len(messages), "of": fingerprint(messages),
+                                    "held": not empty}
+                s.state["carried" if empty else "held_carried"] = s.state.get("carried" if empty else "held_carried", 0) + 1
             else:
                 s.state["carry"] = None
             if self.notes_async and (msg.get("tool_calls") or str(msg.get("content") or "").strip()):
@@ -1483,6 +1626,41 @@ def post_json(url: str, body: dict[str, Any], timeout: float, headers: dict[str,
                                  headers={"Content-Type": "application/json", **(headers or {})})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read())
+
+
+def post_json_retrying(url: str, body: dict[str, Any], timeout: float, retries: int, wait: float, health_url: str,
+                       poll: float = 5.0, log=None) -> dict[str, Any]:
+    """post_json, for a model server that may fail and be restarted under a long task (--upstream-retries): when the
+    call gets no answer (connection refused or reset, timeout) or an HTTP 5xx, poll health_url until it answers 200,
+    for at most `wait` seconds, then send the same request again; at most `retries` times. An HTTP 4xx (the server
+    refused the request itself) and a server that does not come back raise as before. A greedy request to an exact
+    server gets the answer the failed call would have had, so a retry changes nothing but the time."""
+    for attempt in range(retries + 1):
+        try:
+            return post_json(url, body, timeout)
+        except urllib.error.HTTPError as e:
+            if e.code < 500 or attempt == retries:
+                raise
+            err: Exception = e
+        except (urllib.error.URLError, OSError) as e:      # includes connection errors and timeouts
+            if attempt == retries:
+                raise
+            err = e
+        if log:
+            log(f"ctxkeeper: model server failed ({type(err).__name__}: {err}); retry {attempt + 1} of {retries} once "
+                f"it answers again (waiting up to {wait:.0f} s)")
+        deadline = time.monotonic() + wait
+        while True:
+            try:
+                with urllib.request.urlopen(health_url, timeout=10) as r:
+                    if r.status == 200:
+                        break
+            except Exception:
+                pass
+            if time.monotonic() > deadline:
+                raise err
+            time.sleep(poll)
+    raise AssertionError("unreachable")
 
 
 def as_stream(resp: dict[str, Any]) -> bytes:
@@ -1580,7 +1758,14 @@ def main() -> None:
                     "chat_template_kwargs through unchanged — the notes call then renders the same prompt the main "
                     "calls rendered and hits the prefix cache; 'off' renders a different stream and misses it all)")
     ap.add_argument("--no-recite", action="store_true", help="do not repeat the RULES after a new user message")
+    ap.add_argument("--rule-scan", help="with --notes-mode inplace: a sentence of the turns being moved out that "
+                    "matches this regular expression and that no RULES line has (by its words, or by citing its "
+                    "--recall-unit) is shown once per cut, asking for any rule among them")
     ap.add_argument("--recite-when", help="also repeat the RULES when the newest message matches this regular expression")
+    ap.add_argument("--hold-open", action="store_true",
+                    help="with --recite-when and --think-until: while a question is open (from the message that asks it "
+                         "until one matching --think-until), every request gets the RULES recital and the archive "
+                         "searches made since it arrived, not only the request that asks it")
     ap.add_argument("--think-when", help="set enable_thinking per call: on for a user message or a newest message "
                                          "matching this regular expression, off otherwise (default: leave the client's setting)")
     ap.add_argument("--think-until", help="with --think-when: thinking stays on from a matching message until a later "
@@ -1604,6 +1789,10 @@ def main() -> None:
     ap.add_argument("--recall-label", help="a pattern whose first group is the content's own number, such as '(?m)^ITEM (\\d+)/': "
                                           "`recall` then shows and takes that number instead of message numbers")
     ap.add_argument("--recall-unit", default="item", help="what --recall-label counts, as the model is told (default: item)")
+    ap.add_argument("--lookups", action="store_true",
+                    help="with --notes-mode inplace and --recall-label: a CHANGES line that says it waits on an archived "
+                         "entry ('amount not yet known, must recall item 32') is asked again once, with what that entry "
+                         "says about the name (off by default)")
     ap.add_argument("--notes-scan", help="with --notes-checks count or near: read only the tool results and user messages "
                                          "matching this regular expression for mentions and stated numbers")
     ap.add_argument("--think-cap", type=int, default=0, metavar="TOKENS",
@@ -1645,6 +1834,12 @@ def main() -> None:
     ap.add_argument("--log-calls", action="store_true", help="write every call to a model server to calls.jsonl")
     ap.add_argument("--state-dir", type=Path, default=Path.home() / ".cache" / "ctxkeeper")
     ap.add_argument("--timeout", type=float, default=1800)
+    ap.add_argument("--upstream-retries", type=int, default=0,
+                    help="when the model server fails a call (no answer, or HTTP 5xx), wait for it to answer again "
+                         "and send the same call again, this many times at most (default 0: pass the failure on)")
+    ap.add_argument("--upstream-wait", type=float, default=900,
+                    help="with --upstream-retries: seconds to wait for a failed model server to answer its health "
+                         "check again before giving up (default 900: a restart of a large model and its warm-up)")
     ap.add_argument("--recipe", choices=sorted(RECIPES),
                     help="measured settings to start from (agent: any OpenAI-compatible server; qwen: Qwen3.x on vLLM, "
                          "fastest); options given on the command line still win")
@@ -1658,7 +1853,14 @@ def main() -> None:
     system = a.notes_system
     if system and system.startswith("@"):
         system = Path(system[1:]).read_text()
-    keeper = Keeper(lambda body: post_json(upstream + "/v1/chat/completions", body, a.timeout), a.state_dir,
+    def ask_upstream(base: str):
+        if a.upstream_retries <= 0:
+            return lambda body: post_json(base + "/v1/chat/completions", body, a.timeout)
+        return lambda body: post_json_retrying(base + "/v1/chat/completions", body, a.timeout, a.upstream_retries,
+                                               a.upstream_wait, base + "/health",
+                                               log=lambda m: print(m, file=sys.stderr, flush=True))
+
+    keeper = Keeper(ask_upstream(upstream), a.state_dir,
                     budget=a.budget, target_ratio=a.target_ratio, headroom=a.headroom, notes_cap=a.notes_cap,
                     notes_max_tokens=a.notes_max_tokens,
                     notes_thinking={"on": True, "off": False, "unset": None}[a.notes_thinking],
@@ -1668,11 +1870,12 @@ def main() -> None:
                     inplace_tokens=a.inplace_tokens, notes_checks=a.notes_checks, notes_scan=a.notes_scan,
                     max_recalls=a.max_recalls, recall_label=a.recall_label, recall_unit=a.recall_unit,
                     empty_retry=not a.no_empty_retry, think_cap=a.think_cap,
-                    ask_notes=(lambda body: post_json(keeper_url + "/v1/chat/completions", body, a.timeout)) if keeper_url else None,
+                    ask_notes=ask_upstream(keeper_url) if keeper_url else None,
                     notes_model=a.notes_model, notes_system=system,
                     notes_kwargs=json.loads(a.notes_kwargs) if a.notes_kwargs else None, notes_prepass=a.notes_prepass,
                     notes_extra=json.loads(a.notes_extra) if a.notes_extra else None, notes_prefill=a.notes_prefill,
-                    notes_async=a.notes_async, prewarm=a.prewarm, log_calls=a.log_calls, inplace_fit=a.inplace_fit)
+                    notes_async=a.notes_async, prewarm=a.prewarm, log_calls=a.log_calls, inplace_fit=a.inplace_fit,
+                    lookups=a.lookups, rule_scan=a.rule_scan, hold_open=a.hold_open)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper {__version__}" + (f" (recipe {a.recipe})" if a.recipe else "")
           + f": http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"

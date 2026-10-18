@@ -58,6 +58,30 @@ def decide(info, baseline_unaccounted, max_growth=DEFAULT_MAX_GROWTH, min_availa
     return None
 
 
+def top_processes(proc=Path('/proc'), n=15):
+    """The n largest processes by resident memory (pid, name, bytes, last part of the cgroup), read just before a
+    kill. Campaigns 31-33 (2026-10-17) lost three servers to the floor; each time free memory fell about 0.2 GiB
+    within 2 s, too fast for a 5 s sampler to name the process."""
+    rows = []
+    for d in proc.iterdir():
+        if not d.name.isdigit():
+            continue
+        try:
+            status = (d / 'status').read_text()
+        except OSError:
+            continue
+        fields = dict(line.split(':', 1) for line in status.splitlines() if ':' in line)
+        rss = fields.get('VmRSS', '').split()
+        if not rss or not rss[0].isdigit():
+            continue
+        try:
+            group = (d / 'cgroup').read_text().strip().rsplit('/', 1)[-1][:80]
+        except OSError:
+            group = ''
+        rows.append({'pid': int(d.name), 'name': fields.get('Name', '').strip(), 'rss': int(rss[0]) * 1024, 'cgroup': group})
+    return sorted(rows, key=lambda r: -r['rss'])[:n]
+
+
 def cgroup_dir(container_id, root=CGROUP_ROOT):
     if len(container_id) != 64 or any(c not in '0123456789abcdef' for c in container_id):
         raise ValueError('Full 64-hex container ID required')
@@ -75,6 +99,7 @@ def main(argv=None):
     ap.add_argument('--appear-timeout', type=float, default=180)
     ap.add_argument('--cgroup-root', type=Path, default=CGROUP_ROOT, help=argparse.SUPPRESS)
     ap.add_argument('--meminfo', type=Path, default=Path('/proc/meminfo'), help=argparse.SUPPRESS)
+    ap.add_argument('--proc', type=Path, default=Path('/proc'), help=argparse.SUPPRESS)
     a = ap.parse_args(argv)
     group = cgroup_dir(a.container_id, a.cgroup_root)
     max_growth, min_available = int(a.max_growth_gib * GIB), int(a.min_available_gib * GIB)
@@ -99,6 +124,10 @@ def main(argv=None):
             samples.flush()
             if reason and seen:
                 try:
+                    top = top_processes(a.proc)              # (a few tens of ms; the kill must not wait on more)
+                except Exception as exc:
+                    top = f'{type(exc).__name__}: {exc}'
+                try:
                     (group / 'cgroup.kill').write_text('1')
                     killed = True
                 except OSError as exc:
@@ -106,7 +135,7 @@ def main(argv=None):
                 receipt = {'at': time.time(), 'reason': reason, 'container_id': a.container_id,
                            'cgroup_kill': killed, 'baseline_unaccounted': a.baseline_unaccounted,
                            'max_growth': max_growth, 'min_available': min_available,
-                           'mlockall': locked, 'meminfo_bytes': info}
+                           'mlockall': locked, 'meminfo_bytes': info, 'top_processes': top}
                 (a.out / 'MEMORY-GUARD.json').write_text(json.dumps(receipt, indent=2) + '\n')
                 return FIRED_EXIT
             time.sleep(a.interval)

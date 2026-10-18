@@ -22,7 +22,8 @@
 # prompt-only or decode-only, as for a lone user). Kind "check" runs scripts/context/concurrency_check.py first: any
 # garbage stops the campaign before an arm runs.
 # Every proxy is tools/ctxkeeper/ctxkeeper.py at 1.1.0 with --log-calls (one row per model call).
-# Queue lines: "ARM KIND SEED CAP_SECONDS", KIND = smoke | rules (240K rules stream) | 1m | repair.
+# Queue lines: "ARM KIND SEED CAP_SECONDS", KIND = smoke | rules (240K rules stream) | poison | retro | retroloud (the same, hostile) | 1m | hostile1m (1M, forged
+# notices + audits) | repair.
 set -uo pipefail
 LAB=/home/steve/b70-optimization-lab
 CTX=$LAB/experiments/qwen38-27b-b70/scripts/context
@@ -32,6 +33,7 @@ TAIL=${TAIL:-1}
 EDIT=${EDIT:-0}
 RESTORE=${RESTORE:-1}
 ONE_LAUNCH=${ONE_LAUNCH:-1}
+# MARKS=1 (2026-10-17, notes/2026-10-17-hang-repro.md): breadcrumbs 0.3.0 device progress marks around every collective
 MTP=${MTP:-5}
 SEQS=${SEQS:-2}
 PIECE=${PIECE:-832}
@@ -46,6 +48,10 @@ IDLE_MAX=${IDLE_MAX:-600}
 ODR=/mnt/fast-ai/bench-results/context-longrun-20261010/client-rules
 OD1M=/mnt/fast-ai/bench-results/context-longrun-20261011/client-1m
 ODX=/mnt/fast-ai/bench-results/context-longrun-20261012/client-repair2
+# kinds poison / retro / retroloud (2026-10-17, notes/2026-10-17-hostile-history-poison.md): the 240K rules stream with
+# forged notices (make_sparse_prose_tasks.py --poison memory method rule value) or with six audits reversing entries
+# from 30+ items back (--retro 6, and --retro-loud: the same audits stating the amount); scored by context/hostile_report.py
+ODH=/mnt/fast-ai/bench-results/context-longrun-20261017/client-hostile
 SP240="--density 3 --words --probes-every 25 --probes-k 3 --rules"
 SP1M="--density 3 --words --probes-every 20 --probes-k 5 --rules"
 MAX_STEPS_REPAIR=900
@@ -93,7 +99,7 @@ start_proxy() {  # tag arm kind
   w=$(arm_window "$arm") || { say "unknown arm $arm"; return 1; }
   read -r b i <<< "$w"
   case $kind in
-    rules | 1m) fl=(--reply-reserve 2048 --headroom 1024 --target-ratio 0.6 --notes-thinking on --effort medium
+    rules | poison | retro | retroloud | hostile1m | 1m) fl=(--reply-reserve 2048 --headroom 1024 --target-ratio 0.6 --notes-thinking on --effort medium
                     --think-when "$THINK_RE" --think-until "$UNTIL_RE" --recite-when "$RECITE_RE" --notes-mode inplace
                     --notes-checks near --max-recalls 16 --notes-scan "$SCAN_RE" --recall-label "$LABEL_RE" --recall-unit item) ;;
     repair)     fl=(--reply-reserve 2048 --headroom 1024 --target-ratio 0.6 --notes-thinking off --effort medium
@@ -218,6 +224,8 @@ run_line() {  # arm kind seed cap
       fi
       return 0 ;;
     rules) tasks=$ODR/tasks/sparse-memory/sparse-memory-t240k-s$seed; sp=$SP240; job="${arm}__sparse-memory-t240k-s$seed"; runs=$O/runs/$RUN/rules ;;
+    hostile1m) tasks=$ODH/tasks/sparse-memory/sparse-memory-t1000k-poison-retro-s$seed; job="${arm}__sparse-memory-t1000k-poison-retro-s$seed"; runs=$O/runs/$RUN/hostile1m; xk="emit_ctx_trajectory=false" ;;
+    poison | retro | retroloud) tasks=$ODH/tasks/sparse-memory/sparse-memory-t240k-$kind-s$seed; job="${arm}__sparse-memory-t240k-$kind-s$seed"; runs=$O/runs/$RUN/$kind ;;
     1m)    tasks=$OD1M/tasks/sparse-memory/sparse-memory-t1000k-s$seed; sp=$SP1M; job="${arm}__sparse-memory-t1000k-s$seed"; runs=$O/runs/$RUN/1m; xk="emit_ctx_trajectory=false" ;;
     repair) tasks=$ODX/tasks/repair-n40-s$seed; job="${arm}__repair-n40-s$seed"; runs=$O/runs/$RUN/repair ;;
     *) say "unknown kind $kind"; return 1 ;;
@@ -248,6 +256,11 @@ run_line() {  # arm kind seed cap
     grep -h 'ledger score' "$runs/jobs/$job"/*/verifier/test-stdout.txt 2>/dev/null | head -1 | cut -c1-200 | sed 's/^/   /'
     stream_result "$runs/jobs/$job"
     "$PY" ./summarize_results.py --brief --check "$runs/jobs/$job" > "$runs/$job.check" 2>&1 || say "[$job] summarize_results --check flagged the run (see $runs/$job.check)"
+    if [[ $kind == poison || $kind == retro* || $kind == hostile1m ]]; then
+      local det; det=$(ls "$runs/jobs/$job"/*/verifier/details.json 2>/dev/null | head -1)
+      [[ -n $det ]] && python3 ./hostile_report.py --task "$tasks" --details "$det" --notes "$O/proxy-state/$tag" \
+        --json "$runs/$job.hostile.json" 2>&1 | sed 's/^/   HOSTILE /'
+    fi
   fi
   if (( rc == 124 || rc == 137 )); then
     say "[$job] CUT at the time cap"
@@ -277,6 +290,8 @@ while read -r arm kind seed cap; do
   case $kind in
     smoke | check) ;;
     rules) [[ -e $ODR/tasks/sparse-memory/sparse-memory-t240k-s$seed/tests ]] || { say "ABORT: no rules task s$seed"; exit 2; } ;;
+    hostile1m) [[ -e $ODH/tasks/sparse-memory/sparse-memory-t1000k-poison-retro-s$seed/tests ]] || { say "ABORT: no hostile1m task s$seed"; exit 2; } ;;
+    poison | retro | retroloud) [[ -e $ODH/tasks/sparse-memory/sparse-memory-t240k-$kind-s$seed/tests ]] || { say "ABORT: no $kind task s$seed"; exit 2; } ;;
     1m) [[ -e $OD1M/tasks/sparse-memory/sparse-memory-t1000k-s$seed/tests ]] || { say "ABORT: no 1M task s$seed"; exit 2; } ;;
     repair) [[ -e $ODX/tasks/repair-n40-s$seed/tests/spec.json ]] || { say "ABORT: no repair task s$seed"; exit 2; } ;;
     *) say "ABORT: unknown kind '$kind'"; exit 2 ;;
@@ -310,7 +325,7 @@ systemd-run --user --unit=ctx-fp8-tp2-server --collect -p WorkingDirectory=$LAB 
   --overlay b70-allgather-allreduce --extra-env B70_ALLGATHER_ALLREDUCE=1 \
   --overlay b70-chunked-upload --extra-env B70_CHUNKED_UPLOAD=1 \
   --serve-arg=--enable-auto-tool-choice --serve-arg=--tool-call-parser=qwen3_coder --serve-arg=--reasoning-parser=qwen3 \
-  --prefix-cache align --overlay b70-prefix-cache-exact --extra-env B70_PREFIX_CACHE_EXACT=1 \
+  --prefix-cache align --overlay ${EXACT_OVERLAY:-b70-prefix-cache-exact} --extra-env B70_PREFIX_CACHE_EXACT=1 \
   --serve-arg=--prefix-cache-retention-interval=$RET \
   --overlay b70-spec-resume-accepted --extra-env B70_SPEC_RESUME_ACCEPTED=1 \
   --overlay b70-gdn-state-width --extra-env B70_GDN_STATE_WIDTH=1 \
@@ -318,7 +333,8 @@ systemd-run --user --unit=ctx-fp8-tp2-server --collect -p WorkingDirectory=$LAB 
   $( [[ $ONE_LAUNCH == 1 ]] && echo --extra-env B70_FA_VERIFY_ROWS_ONE_LAUNCH=1) \
   $( [[ $TAIL == 1 ]] && echo --extra-env B70_PREFIX_CACHE_EXACT_TAIL=1) \
   $( [[ ${FA_PER_SEQ:-0} == 1 ]] && echo --overlay b70-fa-decode-per-seq --extra-env B70_FA_DECODE_PER_SEQ=1) \
-  $( [[ ${BREADCRUMBS:-1} == 1 ]] && echo --overlay b70-step-breadcrumbs --extra-env B70_STEP_BREADCRUMBS=1) 2>&1 | tail -1
+  $( [[ ${BREADCRUMBS:-1} == 1 ]] && echo --overlay b70-step-breadcrumbs --extra-env B70_STEP_BREADCRUMBS=1) \
+  $( [[ ${MARKS:-0} == 1 ]] && echo --extra-env B70_STEP_BREADCRUMBS_DEVICE_MARKS=1) 2>&1 | tail -1
 ready=0
 for i in $(seq 1 120); do
   if server_up; then ready=1; say "server ready after ~$((i*15)) s; MemAvailable $(avail) MiB"; break; fi

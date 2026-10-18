@@ -1,0 +1,104 @@
+
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+*****************************************
+start rank 1/2 conv (3, 5120) ssm (24, 128, 128) layers 16
+2026:10:18-05:55:14:   24 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+start rank 0/2 conv (3, 5120) ssm (24, 128, 128) layers 16
+2026:10:18-05:55:14:   23 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:10:18-05:55:14:   23 |CCL_WARN| value of CCL_RECV changed to be direct (default:)
+2026:10:18-05:55:14:   23 |CCL_WARN| value of CCL_SEND changed to be direct (default:)
+2026:10:18-05:55:14:   23 |CCL_WARN| value of CCL_SYCL_ALLREDUCE_SIMPLE_THRESHOLD changed to be 4294967296 (default:4194304)
+2026:10:18-05:55:14:   23 |CCL_WARN| value of CCL_SYCL_REDUCE_SCATTER_SIMPLE_THRESHOLD changed to be 4294967296 (default:8388608)
+2026:10:18-05:55:14:   23 |CCL_WARN| value of CCL_SYCL_ALLGATHERV_SIMPLE_THRESHOLD changed to be 4294967296 (default:1048576)
+2026:10:18-05:55:14:   23 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:10:18-05:55:14:   23 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:10:18-05:55:15:   40:[1] |CCL_WARN| no membind support for NUMA node 0, skip thread membind2026:10:18-05:55:15:   39:[0] |CCL_WARN| no membind support for NUMA node 0, skip thread membind
+
+2026:10:18-05:55:15:   23:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+/opt/venv/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+/opt/venv/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+progress rank 1 1702 steps 27232 kernel calls p50 16.569 ms max 288.43 ms
+progress rank 0 1709 steps 27344 kernel calls p50 16.571 ms max 288.292 ms
+progress rank 1 3503 steps 56048 kernel calls p50 16.593 ms max 288.43 ms
+progress rank 0 3510 steps 56160 kernel calls p50 16.594 ms max 288.292 ms
+progress rank 1 5302 steps 84832 kernel calls p50 16.62 ms max 288.43 ms
+progress rank 0 5309 steps 84944 kernel calls p50 16.62 ms max 288.292 ms
+progress rank 1 7109 steps 113744 kernel calls p50 16.615 ms max 288.43 ms
+progress rank 0 7116 steps 113856 kernel calls p50 16.612 ms max 288.292 ms
+progress rank 1 8909 steps 142544 kernel calls p50 16.604 ms max 288.43 ms
+progress rank 0 8916 steps 142656 kernel calls p50 16.602 ms max 288.292 ms
+progress rank 1 10709 steps 171344 kernel calls p50 16.593 ms max 288.43 ms
+progress rank 0 10717 steps 171472 kernel calls p50 16.591 ms max 288.292 ms
+progress rank 1 12512 steps 200192 kernel calls p50 16.649 ms max 288.43 ms
+progress rank 0 12520 steps 200320 kernel calls p50 16.652 ms max 288.292 ms
+progress rank 1 14310 steps 228960 kernel calls p50 16.649 ms max 288.43 ms
+progress rank 0 14318 steps 229088 kernel calls p50 16.652 ms max 288.292 ms
+progress rank 1 16113 steps 257808 kernel calls p50 16.621 ms max 288.43 ms
+progress rank 0 16122 steps 257952 kernel calls p50 16.62 ms max 288.292 ms
+progress rank 1 17923 steps 286768 kernel calls p50 16.6 ms max 288.43 ms
+progress rank 0 17932 steps 286912 kernel calls p50 16.596 ms max 288.292 ms
+progress rank 1 19718 steps 315488 kernel calls p50 16.596 ms max 288.43 ms
+progress rank 0 19727 steps 315632 kernel calls p50 16.597 ms max 288.292 ms
+progress rank 1 21513 steps 344208 kernel calls p50 16.626 ms max 288.43 ms
+progress rank 0 21523 steps 344368 kernel calls p50 16.624 ms max 288.292 ms
+progress rank 1 23310 steps 372960 kernel calls p50 16.636 ms max 288.43 ms
+progress rank 0 23320 steps 373120 kernel calls p50 16.641 ms max 288.292 ms
+progress rank 1 25112 steps 401792 kernel calls p50 16.619 ms max 288.43 ms
+progress rank 0 25121 steps 401936 kernel calls p50 16.621 ms max 288.292 ms
+progress rank 1 26907 steps 430512 kernel calls p50 16.625 ms max 288.43 ms
+progress rank 0 26917 steps 430672 kernel calls p50 16.624 ms max 288.292 ms
+progress rank 1 28713 steps 459408 kernel calls p50 16.612 ms max 288.43 ms
+progress rank 0 28723 steps 459568 kernel calls p50 16.611 ms max 288.292 ms
+progress rank 1 30510 steps 488160 kernel calls p50 16.62 ms max 288.43 ms
+progress rank 0 30520 steps 488320 kernel calls p50 16.622 ms max 288.292 ms
+progress rank 1 32317 steps 517072 kernel calls p50 16.585 ms max 288.43 ms
+progress rank 0 32327 steps 517232 kernel calls p50 16.589 ms max 288.292 ms
+progress rank 1 34112 steps 545792 kernel calls p50 16.626 ms max 288.43 ms
+progress rank 0 34122 steps 545952 kernel calls p50 16.628 ms max 288.292 ms
+progress rank 1 35916 steps 574656 kernel calls p50 16.627 ms max 288.43 ms
+progress rank 0 35927 steps 574832 kernel calls p50 16.628 ms max 288.292 ms
+progress rank 1 37715 steps 603440 kernel calls p50 16.615 ms max 288.43 ms
+progress rank 0 37726 steps 603616 kernel calls p50 16.615 ms max 288.292 ms
+progress rank 1 39521 steps 632336 kernel calls p50 16.603 ms max 288.43 ms
+progress rank 0 39532 steps 632512 kernel calls p50 16.6 ms max 288.292 ms
+progress rank 1 41323 steps 661168 kernel calls p50 16.601 ms max 288.43 ms
+progress rank 0 41333 steps 661328 kernel calls p50 16.6 ms max 288.292 ms
+progress rank 1 43119 steps 689904 kernel calls p50 16.611 ms max 288.43 ms
+progress rank 0 43130 steps 690080 kernel calls p50 16.61 ms max 288.292 ms
+progress rank 1 44922 steps 718752 kernel calls p50 16.621 ms max 288.43 ms
+progress rank 0 44933 steps 718928 kernel calls p50 16.622 ms max 288.292 ms
+progress rank 1 46726 steps 747616 kernel calls p50 16.608 ms max 288.43 ms
+progress rank 0 46737 steps 747792 kernel calls p50 16.605 ms max 288.292 ms
+progress rank 1 48531 steps 776496 kernel calls p50 16.614 ms max 288.43 ms
+progress rank 0 48542 steps 776672 kernel calls p50 16.613 ms max 288.292 ms
+progress rank 1 50333 steps 805328 kernel calls p50 16.592 ms max 288.43 ms
+progress rank 0 50344 steps 805504 kernel calls p50 16.595 ms max 288.292 ms
+progress rank 1 52144 steps 834304 kernel calls p50 16.576 ms max 288.43 ms
+progress rank 0 52155 steps 834480 kernel calls p50 16.574 ms max 288.292 ms
+progress rank 1 53954 steps 863264 kernel calls p50 16.54 ms max 288.43 ms
+progress rank 0 53964 steps 863424 kernel calls p50 16.544 ms max 288.292 ms
+progress rank 1 55766 steps 892256 kernel calls p50 16.533 ms max 288.43 ms
+progress rank 0 55776 steps 892416 kernel calls p50 16.533 ms max 288.292 ms
+progress rank 1 57580 steps 921280 kernel calls p50 16.531 ms max 288.43 ms
+progress rank 0 57590 steps 921440 kernel calls p50 16.531 ms max 288.292 ms
+progress rank 1 59388 steps 950208 kernel calls p50 16.523 ms max 288.43 ms
+progress rank 0 59398 steps 950368 kernel calls p50 16.524 ms max 288.292 ms
+progress rank 1 61201 steps 979216 kernel calls p50 16.539 ms max 288.43 ms
+progress rank 0 61211 steps 979376 kernel calls p50 16.539 ms max 288.292 ms
+progress rank 1 63021 steps 1008336 kernel calls p50 16.517 ms max 288.43 ms
+progress rank 0 63031 steps 1008496 kernel calls p50 16.517 ms max 288.292 ms
+progress rank 1 64823 steps 1037168 kernel calls p50 16.537 ms max 288.43 ms
+progress rank 0 64832 steps 1037312 kernel calls p50 16.537 ms max 288.292 ms
+progress rank 1 66627 steps 1066032 kernel calls p50 16.551 ms max 288.43 ms
+progress rank 0 66637 steps 1066192 kernel calls p50 16.551 ms max 288.292 ms
+progress rank 1 68433 steps 1094928 kernel calls p50 16.571 ms max 288.43 ms
+progress rank 0 68444 steps 1095104 kernel calls p50 16.568 ms max 288.292 ms
+progress rank 1 70235 steps 1123760 kernel calls p50 16.599 ms max 288.43 ms
+progress rank 0 70246 steps 1123936 kernel calls p50 16.6 ms max 288.292 ms
+progress rank 1 72043 steps 1152688 kernel calls p50 16.579 ms max 288.43 ms
+progress rank 0 72055 steps 1152880 kernel calls p50 16.577 ms max 288.292 ms
+done rank 1 72064 steps 1153024 kernel calls, slow 0, error None
+done rank 0 72064 steps 1153024 kernel calls, slow 0, error None

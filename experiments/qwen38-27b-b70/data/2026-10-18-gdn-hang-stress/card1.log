@@ -1,0 +1,15 @@
+/opt/venv/lib/python3.12/site-packages/torch/xpu/__init__.py:360: UserWarning: XPU device count is zero! (Triggered internally at /__w/pytorch/pytorch/c10/xpu/XPUFunctions.cpp:117.)
+  torch._C._xpu_init()
+Traceback (most recent call last):
+  File "/stress.py", line 134, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/stress.py", line 55, in main
+    conv_weights = rnd((2 * key_dim + value_dim, KERNEL), torch.float16, 0.2)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/stress.py", line 53, in rnd
+    return (torch.randn(shape, generator=gen) * scale).to(dtype).to(dev)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/venv/lib/python3.12/site-packages/torch/xpu/__init__.py", line 360, in _lazy_init
+    torch._C._xpu_init()
+RuntimeError: No XPU devices are available.

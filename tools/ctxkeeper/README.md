@@ -194,6 +194,7 @@ the notes no longer had room to be written in place. Bigger windows are slower: 
 | `--think-when REGEX`, `--think-until REGEX` | turn thinking on only around matching messages (Qwen-style `enable_thinking`) |
 | `--notes-checks near` | extra checks for ledger-like state with names such as `abcd12` (the lab's memory streams); leave it off for ordinary agent work |
 | `--recall-label REGEX` | let `recall` use your content's own numbering (e.g. `'(?m)^ITEM (\d+)/'`) instead of message numbers |
+| `--lookups` | with `--recall-label`: a notes line that cites an archived item and waits on it, is doubted, or works an amount out is asked again with what that item says (off by default) |
 | `--state-dir DIR` | where archives and notes are kept |
 | `--no-memory-note` | do not add the short paragraph that tells the model about its notes and `recall` |
 
@@ -266,6 +267,67 @@ Measured (lab campaigns 21-23, Qwen3.8-27B FP8 on two B70s unless noted; one run
 - Tested with one conversation at a time. Separate conversations have separate state and locks.
 
 ## Changes
+
+**Unreleased** (lab, 2026-10-17): `--upstream-retries N` (default 0, off) with `--upstream-wait SECONDS` (default
+900): when the model server fails a call (no answer, or HTTP 5xx), the proxy polls the server's `/health` until it
+answers 200 and sends the same call again, at most N times; a refusal (HTTP 4xx) is passed on as before. For long
+tasks on a server that may be restarted under them (for example by a supervisor after a GPU fault): a greedy call
+to an exact server gets the answer the failed one would have had, so the task loses only the time. Not measured
+yet on a real restart.
+
+Unreleased (1.2.0.dev0, 2026-10-17), a new option, off by default: `--lookups` (with `--notes-mode inplace` and
+`--recall-label`). A CHANGES line that says it waits on an archived entry (`amount not yet known, must recall item
+32`) is asked again, once per cut. The question shows what that item says about the name: each sentence that names
+it, with the next one, word for word. The note checks count what is shown as stated, as they do an archive
+search's result. In-place notes calls cannot search the archive themselves. Lab campaign 32: such a line waited
+55 items, and the model's own sum over the whole history at the end was one off.
+1.2.0.dev1 (2026-10-17): a line the note checks doubt (an amount the turns do not state) that cites an archived
+item gets the same question, instead of only being asked to read the item again, which it cannot do once the item
+is archived. Lab campaign 33b: a reversal was written from memory with a wrong amount (10 for 28) and then left out.
+1.2.0.dev2 (2026-10-17): a line that works an amount out (`a + b`, `a - b`) and cites an archived item is asked too,
+and the question says that the NOTES value already counts the entries shown. Lab campaign 34 (1M, seed 0): three
+of eight reversals went wrong in such lines: an amount from memory, a whole-history sum that misread a "recorded at",
+and an entry added back before it was taken out. On the recorded runs the wider trigger asks at 0 of 17 cuts on the
+plain streams and at 7 of 75 cuts at 1M, all of them audit lines.
+1.2.0.dev3 (2026-10-18), from lab campaign 38 (2M tokens, forged notices and quiet audits, 410/423):
+- `--lookups` also asks for a line that leaves the amount as a gap after a sign (`447 + (item 85 decrease reversed,
+  item 473)`). Three of sixteen reversals were written that way, never asked about, and answered without the
+  reversal.
+- A new option, off by default: `--rule-scan REGEX`. A sentence of the turns being moved out that matches it and that
+  no RULES line has (no line holds 60 % of its words or cites its unit) is shown once per cut, with a question asking
+  for any rule among them in its original words. In the same run the first notes reply wrote no rule for turns that
+  state two. The confidentiality rule then lived only in an OPEN line and was never repeated at a question, and 9 of
+  59 questions about the confidential counter got a number.
+- On the recorded runs, the wider lookup trigger adds exactly those three lines. The rule scan, with the lab's
+  pattern, asks at no cut of the 1.2.0 runs that passed and at the first cut of both 2M runs.
+
+1.2.0.dev4 (2026-10-18), from lab campaign 39 (2M, 413/423, 16/16 audits): a new option, off by default,
+`--hold-open` (needs `--recite-when` and `--think-until`). While a question is open, from the message that asks it
+until one matching `--think-until`, every request gets the RULES recital and the archive searches made since it
+arrived, not only the request whose newest message asks it. In that run the reply that searched printed the answers
+file, and the answers were written one turn later: without the two values the searches had found, and, for a
+confidential counter, without the recital (it was answered with its value). In the recorded 2M runs the option
+reaches about 70 of 1,310 requests.
+
+1.2.0.dev5 (2026-10-18), from lab campaign 43 (2M, seed 2, 405/423): with `--notes-checks count` or `near`, a NOTES
+line whose name has a space inside it (`voned i62`) goes to the name its parts make when joined (`vonedi62`), if the
+turns mention that name or the NOTES hold it. In that run every notes reply wrote the name split. The split name became
+a STATE line of its own and took every change, while the real name's line kept its first value for the whole run;
+four questions were answered from that stale line. Replayed through the 973 notes replies of ten earlier sessions,
+nothing changes; in the campaign 43 session, 61 replies get the join and nothing else.
+
+Also unreleased (1.1.1.dev1, 2026-10-17): a NOTES line whose new value states no number of its own (only item or
+ticket numbers, as in `audit reversal of the entry in item 4, amount not yet known, must recall items 4/5`) no longer
+replaces a number the NOTES hold: the number stays and the line is kept as a remark on it. Before, the value became the
+last item number (5) and the line was asked again. Lab campaign 31: a counter that waited on an archive search was
+reversed twice that way. Only for a STATE value that is a plain number; descriptions (`contains lines for tickets 10
+and 11`) are written as before. A replay of 29,272 saved lines changed only those lines.
+
+Also unreleased (1.1.1.dev0, 2026-10-17): with `--notes-checks near`, an amount the model took from an archive search
+counts as stated. The proxy keeps the text of its latest searches (up to 120,000 characters, in memory) as evidence
+for the amount check only, never as a mention of a name. Before, a correct line worked out from a recalled entry was
+"an amount the turns do not state" and was left out. Lab campaign 30: an audit naming only the item of the entry it
+reverses was lost that way. Each search is now also logged to `events.jsonl`.
 
 **1.1.0** (2026-10-16): new options, all off by default ([Added in 1.1.0](#added-in-110-all-off-by-default)): a
 separate keeper model (`--notes-upstream`, `--notes-model`, `--notes-system`, `--notes-kwargs`, `--notes-extra`,

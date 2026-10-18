@@ -18,8 +18,26 @@ or a call of execute_model, sample_tokens or propose_draft_token_ids, has lasted
 seconds (default 20; a watcher thread compares host timestamps only), or one of them raised. The block is the kept
 steps, oldest first, then the Python stacks of all threads.
 
+0.2.0 (2026-10-17, notes/2026-10-17-hang-repro.md): each step also counts the torch.distributed calls this worker
+issued from the start of its execute_model to the start of the next one, with a running signature of their names and
+element counts. The two ranks must issue the same collectives in the same order; if a hang is a cross-card exchange
+that one card never joined, the two ranks' blocks show different counts or signatures for the same step. Counting is
+host arithmetic on the call's arguments (`numel()` of the tensors passed), nothing is read from the device.
+
 No device call is added and no tensor is read or written (the per-request view is read from numpy arrays on the host),
 so no output can change. The four events are wrapped in a proxy that forwards everything, as b70-host-step-clock does.
+
+0.3.0 (2026-10-17, notes/2026-10-17-hang-repro.md), only with B70_STEP_BREADCRUMBS_DEVICE_MARKS=1 (off by default):
+the host counts say what each card was given, not what its GPU finished. With the switch on, after every collective
+this worker issues on an XPU tensor, its queue copies the collective's running number (mod 65,536, from a table on
+the device) into 4 bytes of pinned host memory, once before the collective (2k-1: lands when the kernel before it has
+finished) and once after it (2k: lands when it has finished on this card). On a stall the block names, read from host
+memory without touching the stuck queue, whether this card is inside collective k or still in a kernel before it, and
+which issued collectives have not completed (number, name, elements, step). Completed counts that differ by one
+between the two cards point at a collective one card left early; a card still in a kernel before the next collective
+points at that kernel. Two 4-byte device-to-host copies per collective; they write only their own buffers, so outputs
+cannot change. Calls with async_op are
+not marked (their copy would not be ordered after the collective).
 """
 import faulthandler
 import os
@@ -33,10 +51,107 @@ EVENTS = ('prepare_inputs_event', 'valid_sampled_token_count_event', 'draft_toke
 SHORT = {'prepare_inputs_event': 'prep', 'valid_sampled_token_count_event': 'count',
          'draft_token_ids_event': 'drafts', 'num_accepted_tokens_event': 'accepted'}
 ONE_LAUNCH_KEYS = 1536
+COLLECTIVES = ('all_reduce', 'all_gather_into_tensor', 'all_gather', 'reduce_scatter_tensor', 'reduce_scatter',
+               'broadcast', 'gather', 'scatter', 'reduce', 'all_to_all_single', 'all_to_all', 'barrier', 'send', 'recv',
+               'isend', 'irecv', 'broadcast_object_list', 'all_gather_object')
+CURRENT = []          # this process's Crumbs (one model runner per worker); the collective wrappers count into it
 
 
 def stamp(t):
     return time.strftime('%H:%M:%S', time.localtime(t)) + '.%03d' % int((t % 1) * 1000)
+
+
+def first_device(args):
+    for a in args:
+        for b in (a if isinstance(a, (list, tuple)) else (a,)):
+            dev = getattr(b, 'device', None)
+            if dev is not None and hasattr(b, 'numel'):
+                return dev
+    return None
+
+
+class DeviceMarks:
+    """Per worker, around each collective k on its card: a 4-byte copy into pinned host memory of 2k-1 before it (lands
+    once the kernel before the collective has finished) and 2k after it (lands once the collective has finished),
+    ordered on the card's queue (B70_STEP_BREADCRUMBS_DEVICE_MARKS=1). Exact while fewer than R/2 collectives are
+    pending (a step issues about 140)."""
+    R = 1 << 16
+
+    def __init__(self, log, keep=256, make=None):
+        self.log, self.make = log, make or self.make_torch
+        self.issued, self.device, self.table, self.host, self.off = 0, None, None, None, False
+        self.recent = deque(maxlen=keep)
+
+    def make_torch(self, device):
+        import torch
+        return (torch.arange(self.R, dtype=torch.int32, device=device),
+                torch.full((1,), -1, dtype=torch.int32).pin_memory())
+
+    def mark(self, v):
+        self.host.copy_(self.table[v % self.R:v % self.R + 1], non_blocking=True)
+
+    def start(self, index, args, elems, step):
+        """Before the collective: True if it is marked (then finish() must follow it)."""
+        if self.off:
+            return False
+        dev = first_device(args)
+        if dev is None or getattr(dev, 'type', 'cpu') == 'cpu':
+            return False
+        try:
+            if self.device is None:
+                self.table, self.host = self.make(dev)
+                self.device = dev
+            elif dev != self.device:
+                return False
+            k = self.issued + 1
+            self.mark(2 * k - 1)
+            self.issued = k
+            self.recent.append((k, index, elems, step))
+            return True
+        except Exception as e:     # diagnostic only: never fail a collective
+            self.off = True
+            self.log('b70_step_breadcrumbs: device marks off after %r' % (e,))
+            return False
+
+    def finish(self):
+        try:
+            self.mark(2 * self.issued)
+        except Exception as e:
+            self.off = True
+            self.log('b70_step_breadcrumbs: device marks off after %r' % (e,))
+
+    def landed(self):
+        """The last mark this card has passed, as its full number (-1 before the first)."""
+        if self.host is None:
+            return -1
+        v = int(self.host[0])
+        if v < 0:
+            return -1
+        top = 2 * self.issued
+        return top - ((top - v) % self.R)
+
+    def completed(self):
+        return max(self.landed(), 0) // 2
+
+    def report(self):
+        if self.off or self.device is None:
+            return 'device marks: %s' % ('off after an error' if self.off else 'no collective on a device yet')
+        full = self.landed()
+        k = (full + 1) // 2
+        text = 'device marks: %d collectives issued on %s, %d completed on this card' % (self.issued, self.device,
+                                                                                        max(full, 0) // 2)
+        if full % 2:
+            text += '; inside #%d (started on the card, not finished)' % k
+        elif k < self.issued:
+            text += '; #%d not started on the card (a kernel before it still running)' % (k + 1)
+        else:
+            text += '; every issued collective finished'
+        pending = [r for r in self.recent if r[0] > max(full, 0) // 2]
+        if pending:
+            n, index, elems, step = pending[0]
+            text += '; first not completed #%d %s %d elems (step #%d); %d issued after it' % (
+                n, COLLECTIVES[index], elems, step, len(pending) - 1)
+        return text
 
 
 class Crumbs:
@@ -46,6 +161,7 @@ class Crumbs:
         self.index, self.rank, self.busy, self.reported = 0, '?', {}, set()
         self.lock = threading.Lock()
         self.watcher, self.dumped, self.stalled = None, None, None
+        self.marks = None
 
     # ---- what happened
     def begin_step(self, out):
@@ -64,7 +180,8 @@ class Crumbs:
                          'computed': computed.get(rid)})
         step = {'i': self.index, 't': now, 'tokens': int(getattr(out, 'total_num_scheduled_tokens', 0) or 0),
                 'finished': len(getattr(out, 'finished_req_ids', None) or ()),
-                'preempted': len(getattr(out, 'preempted_req_ids', None) or ()), 'reqs': reqs, 'events': []}
+                'preempted': len(getattr(out, 'preempted_req_ids', None) or ()), 'reqs': reqs, 'events': [],
+                'coll': 0, 'sig': 0, 'elems': 0}
         self.index += 1
         with self.lock:
             self.steps.append(step)
@@ -93,6 +210,34 @@ class Crumbs:
             r = step['reqs'][0]
             keys = (r.get('w_computed', r['computed']) or 0) + r['sched']
             step['one_launch'] = 2 <= r['sched'] <= 8 and keys > ONE_LAUNCH_KEYS
+
+    def collective(self, index, args):
+        """One torch.distributed call issued by this worker: counted into the current step (host arithmetic only)."""
+        n = 0
+        for a in args:
+            numel = getattr(a, 'numel', None)
+            if numel is not None:
+                try:
+                    n += int(numel())
+                except Exception:
+                    pass
+            elif isinstance(a, (list, tuple)):
+                for b in a:
+                    try:
+                        n += int(b.numel())
+                    except Exception:
+                        pass
+        steps = self.steps
+        if steps:
+            s = steps[-1]
+            s['coll'] += 1
+            s['elems'] += n
+            s['sig'] = (s['sig'] * 1000003 + index * 7919 + n) & 0xffffffff
+        return n
+
+    def collective_start(self, index, args, n):
+        """Before the collective is issued: its first device mark (B70_STEP_BREADCRUMBS_DEVICE_MARKS=1 only)."""
+        return self.marks is not None and self.marks.start(index, args, n, self.steps[-1]['i'] if self.steps else -1)
 
     def event(self, name, what):
         with self.lock:
@@ -133,14 +278,20 @@ class Crumbs:
         with self.lock:
             steps = list(self.steps)
         lines = ['b70_step_breadcrumbs rank %s %s; last %d steps, oldest first:' % (self.rank, reason, len(steps))]
+        if self.marks is not None:
+            try:
+                lines.insert(0, 'b70_step_breadcrumbs rank %s %s' % (self.rank, self.marks.report()))
+            except Exception as e:
+                lines.insert(0, 'b70_step_breadcrumbs rank %s device marks unreadable: %r' % (self.rank, e))
         for s in steps:
             reqs = ' '.join('[%s sched %d draft %d comp %s | w comp %s tok %s acc %s]' % (
                 r['id'], r['sched'], r['draft'], r['computed'], r.get('w_computed'), r.get('w_tokens'),
                 r.get('w_accepted')) for r in s['reqs'])
             ev = ' '.join('%s.%s+%.1fms' % (n, w, (t - s['t']) * 1e3) for n, w, t in s['events'])
-            lines.append('  #%d %s tokens %d fin %d pre %d%s %s | %s%s' % (
+            lines.append('  #%d %s tokens %d fin %d pre %d%s %s | coll %d elems %d sig %08x | %s%s' % (
                 s['i'], stamp(s['t']), s['tokens'], s['finished'], s['preempted'],
-                ' ONE-LAUNCH' if s.get('one_launch') else '', reqs, ev, ' ' + s['view_error'] if 'view_error' in s else ''))
+                ' ONE-LAUNCH' if s.get('one_launch') else '', reqs, s['coll'], s['elems'], s['sig'], ev,
+                ' ' + s['view_error'] if 'view_error' in s else ''))
         self.log('\n'.join(lines))
         try:
             sys.stderr.flush()
@@ -195,7 +346,44 @@ class CrumbEvent:
         return getattr(self._event, attr)
 
 
-def install(cls, log, keep=32, stall_s=20.0, one_launch=False, watch=True):
+def compiling():
+    try:
+        import torch
+        return torch.compiler.is_compiling()
+    except Exception:
+        return False
+
+
+def count_collectives(module):
+    """Wrap the torch.distributed functions in `module` so each call is counted into this process's Crumbs."""
+    if getattr(module, '_b70_step_breadcrumbs', False):
+        return False
+    for index, name in enumerate(COLLECTIVES):
+        original = getattr(module, name, None)
+        if original is None:
+            continue
+
+        def wrapper(*args, _original=original, _index=index, **kwargs):
+            c = CURRENT[0] if CURRENT and not compiling() else None   # under torch.compile tracing: the call only
+            n = None
+            if c is not None:
+                try:
+                    n = c.collective(_index, args)
+                except Exception:
+                    pass
+            marked = c is not None and c.marks is not None and not kwargs.get('async_op') and \
+                c.collective_start(_index, args, n or 0)
+            result = _original(*args, **kwargs)
+            if marked:
+                c.marks.finish()
+            return result
+        wrapper.__name__, wrapper.__doc__, wrapper.__wrapped__ = original.__name__, original.__doc__, original
+        setattr(module, name, wrapper)
+    module._b70_step_breadcrumbs = True
+    return True
+
+
+def install(cls, log, keep=32, stall_s=20.0, one_launch=False, watch=True, marks=False):
     if getattr(cls, '_b70_step_breadcrumbs', False):
         return False
     init, execute, sample, draft = cls.__init__, cls.execute_model, cls.sample_tokens, cls.propose_draft_token_ids
@@ -204,6 +392,9 @@ def install(cls, log, keep=32, stall_s=20.0, one_launch=False, watch=True):
         c = self.__dict__.get('_b70_crumbs')
         if c is None:
             c = self.__dict__['_b70_crumbs'] = Crumbs(log, keep, stall_s, one_launch)
+            if marks:
+                c.marks = DeviceMarks(log)
+            CURRENT[:] = [c]
         return c
 
     def __init__(self, *args, **kwargs):
@@ -264,6 +455,12 @@ def register():
     keep = int(os.environ.get('B70_STEP_BREADCRUMBS_KEEP', '32') or 32)
     stall_s = float(os.environ.get('B70_STEP_BREADCRUMBS_STALL_S', '20') or 20)
     one_launch = os.environ.get('B70_FA_VERIFY_ROWS_ONE_LAUNCH', '').strip() == '1'
-    if install(module.GPUModelRunner, logger.warning, keep, stall_s, one_launch):
-        logger.warning('b70_step_breadcrumbs 0.1.0: installed on GPUModelRunner (last %d steps kept in memory, written '
-                       'on a stall over %.0f s or a failure; host only, no device call)', keep, stall_s)
+    marks = os.environ.get('B70_STEP_BREADCRUMBS_DEVICE_MARKS', '').strip() == '1'
+    import torch.distributed as dist
+    counted = count_collectives(dist)
+    if install(module.GPUModelRunner, logger.warning, keep, stall_s, one_launch, marks=marks):
+        logger.warning('b70_step_breadcrumbs 0.3.0: installed on GPUModelRunner (last %d steps kept in memory, written '
+                       'on a stall over %.0f s or a failure; torch.distributed calls counted per step: %s; %s)',
+                       keep, stall_s, 'yes' if counted else 'already',
+                       'device marks ON: a 4-byte copy to pinned host memory after each collective' if marks
+                       else 'host only, no device call')

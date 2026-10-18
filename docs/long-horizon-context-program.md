@@ -20,8 +20,12 @@ Each clause is a standing work queue, not a milestone:
 
 - **any agent** — the method must work for clients that share no code with this lab's harness. Done once (the lab's
   own stand-alone agent, campaign 15); open for every third-party program, starting with the owner's pick.
-- **any history** — longer, harder and hostile histories, without end. Done to 1M tokens twice; open at 2M-10M+ and
-  for adversarial, contradictory and poisoned streams.
+- **any history** — longer, harder and hostile histories, without end. Done to 1M tokens twice; hostile streams
+  (forged notices of four kinds plus quiet retroactive audits) pass at 240K on two seeds and at 1M (217/218, 8/8
+  audits, every forgery target kept; ctxkeeper 1.2.0.dev2, 2026-10-18,
+  `experiments/qwen38-27b-b70/notes/2026-10-17-hostile-history-poison.md`). At 2M (1.2.0.dev4, campaign 41b,
+  2026-10-18): 419/423, every forgery target kept, 15/16 audits, no keeper loss, but one registered line missed by
+  one key (a model name slip); a second seed is next. Open at 2M-10M+ and for contradictory streams.
 - **flat cost** — wall time and tokens per 100K of history stay flat and then fall. Flat to 1M is measured
   (8.3-9.5 min/100K, no trend); the measured wastes of 2026-10-13 (notes path reading 37 tokens per token written,
   cache-hit rates of 2-90% on the same code path) are the current targets, after which the next most expensive
@@ -307,6 +311,28 @@ What these two campaigns taught, each from a run that failed first:
   number (one line in about 75 notes calls). Idea: compare each notes line with what the model itself said when
   the item arrived, when it said anything.
 
+- **Idle-time, speculative compaction (owner, 2026-10-17).** Real users pause to read, think and type, and agents
+  wait on compiles and searches, so the GPU sits idle between requests. Use that time:
+  - once the view passes about 70 %, take notes on the turns that will certainly be moved out, in pieces, each time
+    the server has no request running, starting from the cached prefix;
+  - cancel the background call the moment a real request arrives;
+  - at the real cut, only the last piece is left to note ("topping off");
+  - a guess that turns out wrong (a different cut point, an edited history) is discarded and redone at the next
+    idle moment. Guesses close to the cut are almost always right.
+  - Also on one card, where the notes and the model share the GPU.
+
+  It stays lossless: old turns do not change, and the server is deterministic, so a note made early is the note the
+  model would write later.
+
+  What exists: in-place notes already take the cut turns in pieces, from the cached prefix; `--notes-async defer`
+  and `--prewarm` write the next notes in the background (+14 % / +18 % without MTP, -8 % with MTP). Those runs had
+  no idle time: the agent stream sends the next request 0.2 s after each answer, so the background call competed
+  with the foreground one.
+
+  Needed:
+  - a stream with realistic pauses (seconds between turns, slow tool calls);
+  - an idle gate (the server's running and waiting counts at zero) and cancellation;
+  - a metric of what the user waits for at a cut, not total wall time.
 - Per-batch commit proof with atomic staging; file I/O cost vs decode cost; **exact KV park-and-restore on NVMe**;
   prompt layouts that pay back the prefix cache (`2026-10-05-context-followup-ideas.md`).
 - Summaries with pointers ("lossless by reference"); itemised playbook notes (ACE); observation masking; recursive

@@ -1,5 +1,7 @@
-"""CPU check of b70-step-breadcrumbs 0.1.0 against a stand-in runner: steps kept with the worker's own view, one block
-per stall and per failure, events still forward record(), outputs returned unchanged. No vLLM, no GPU."""
+"""CPU check of b70-step-breadcrumbs 0.3.0 against a stand-in runner: steps kept with the worker's own view, one block
+per stall and per failure, events still forward record(), outputs returned unchanged, collectives counted per step
+with a signature that differs when the calls differ; device marks (0.3.0) name the first collective whose mark has not
+landed, skip host tensors and async calls, survive the counter wrap and turn off on an error. No vLLM, no GPU."""
 import importlib.util
 import unittest
 from pathlib import Path
@@ -126,6 +128,161 @@ class CrumbsTest(unittest.TestCase):
         self.assertIn('DEVICE_LOST', failed[0])
         self.assertIn('ONE-LAUNCH', failed[0])                              # the step before, 4,606 keys, 6 rows
         self.assertEqual(r._b70_crumbs.busy, {})
+
+
+    def test_collectives_counted_per_step(self):
+        calls = []
+
+        class Tensor:
+            def __init__(self, n):
+                self.n = n
+
+            def numel(self):
+                return self.n
+
+        fake = SimpleNamespace(all_gather_into_tensor=lambda out, x, group=None: calls.append(('ag', x.n)) or 'w',
+                               broadcast=lambda x, src=0, group=None: calls.append(('bc', x.n)))
+        self.assertTrue(crumbs.count_collectives(fake))
+        self.assertFalse(crumbs.count_collectives(fake))
+        lines = []
+        r = self.make(lines)
+        sigs = []
+        for extra in (False, False, True):
+            r.execute_model(step('req-00000004', 6, 5, 4600))
+            for _ in range(3):
+                self.assertEqual(fake.all_gather_into_tensor(Tensor(12), Tensor(6), group='g'), 'w')
+            fake.broadcast(Tensor(1), src=0)
+            if extra:
+                fake.all_gather_into_tensor(Tensor(12), Tensor(6))
+            s = r._b70_crumbs.steps[-1]
+            sigs.append((s['coll'], s['elems'], s['sig']))
+        self.assertEqual(len(calls), 13)                                    # every call reached the original
+        self.assertEqual(sigs[0], sigs[1])                                  # same calls, same signature
+        self.assertEqual(sigs[0][:2], (4, 3 * 18 + 1))
+        self.assertEqual(sigs[2][0], 5)
+        self.assertNotEqual(sigs[2][2], sigs[0][2])
+        r._b70_crumbs.dump('test')
+        self.assertIn('coll 4 elems 55 sig %08x' % sigs[0][2], lines[-1])
+
+
+class Tensor:
+    def __init__(self, n, device=None):
+        self.n = n
+        if device is not None:
+            self.device = device
+
+    def numel(self):
+        return self.n
+
+
+XPU = SimpleNamespace(type='xpu', index=0)
+CPU = SimpleNamespace(type='cpu', index=None)
+
+
+class Card:
+    """Stand-in for the device table and the pinned host buffer: a copy lands only when land() says so."""
+    def __init__(self):
+        self.queue, self.value = [], -1
+
+    def make(self, device):
+        card = self
+
+        class Table:
+            def __getitem__(self, sl):
+                return sl.start
+
+        class Host:
+            def copy_(self, src, non_blocking=False):
+                assert non_blocking
+                card.queue.append(src)
+
+            def __getitem__(self, i):
+                return card.value
+        return Table(), Host()
+
+    def land(self, k):
+        for _ in range(k):
+            self.value = self.queue.pop(0)
+
+
+class DeviceMarksTest(unittest.TestCase):
+    def setUp(self):
+        self.calls = []
+        self.fake = SimpleNamespace(
+            all_gather_into_tensor=lambda out, x, group=None, async_op=False: self.calls.append(x.n) or 'w')
+        crumbs.count_collectives(self.fake)
+
+    def runner(self, lines, marks=True, make=None):
+        cls = type('GPUModelRunner', (Runner,), {})
+        crumbs.install(cls, lines.append, keep=4, stall_s=5.0, watch=False, marks=marks)
+        r = cls()
+        r.execute_model(step('req-00000004', 443, 0, 4160, new=True))
+        if marks and make is not None:
+            r._b70_crumbs.marks = crumbs.DeviceMarks(lines.append, make=make)
+        return r
+
+    def test_first_unfinished_collective_named(self):
+        lines, card = [], Card()
+        r = self.runner(lines, make=card.make)
+        for _ in range(5):
+            self.assertEqual(self.fake.all_gather_into_tensor(Tensor(12, XPU), Tensor(6, XPU)), 'w')
+        self.assertEqual(len(card.queue), 10)                 # one mark before and one after each collective
+        card.land(6)                                          # collectives 1-3 finished, the kernel before 4 not
+        r._b70_crumbs.dump('STALL: test')
+        head = lines[-1].split('\n')[0]
+        self.assertIn('5 collectives issued', head)
+        self.assertIn('3 completed on this card; #4 not started on the card', head)
+        self.assertIn('first not completed #4 all_gather_into_tensor 18 elems (step #0); 1 issued after it', head)
+        card.land(1)                                          # collective 4 started on the card
+        self.assertIn('inside #4 (started on the card, not finished)', r._b70_crumbs.marks.report())
+        card.land(3)
+        self.assertEqual(r._b70_crumbs.marks.completed(), 5)
+        self.assertIn('every issued collective finished', r._b70_crumbs.marks.report())
+        self.assertNotIn('first not completed', r._b70_crumbs.marks.report())
+        self.assertEqual(len(self.calls), 5)
+
+    def test_host_tensors_and_async_calls_not_marked(self):
+        lines, card = [], Card()
+        r = self.runner(lines, make=card.make)
+        self.fake.all_gather_into_tensor(Tensor(12, CPU), Tensor(6, CPU))
+        self.fake.all_gather_into_tensor(Tensor(12, XPU), Tensor(6, XPU), async_op=True)
+        self.assertEqual(r._b70_crumbs.marks.issued, 0)
+        self.assertEqual(card.queue, [])
+        self.assertIn('no collective on a device yet', r._b70_crumbs.marks.report())
+        self.assertEqual(r._b70_crumbs.steps[-1]['coll'], 2)          # still counted on the host
+
+    def test_counter_wrap(self):
+        card = Card()
+        m = crumbs.DeviceMarks(print, make=card.make)
+        m.R = 8
+        for _ in range(21):
+            self.assertTrue(m.start(1, (Tensor(12, XPU),), 12, 0))
+            m.finish()
+        card.land(36)                                   # exact while fewer than R marks are pending (6 < 8 here)
+        self.assertEqual(m.completed(), 18)
+        card.land(1)
+        self.assertIn('inside #19', m.report())
+        card.land(5)
+        self.assertEqual(m.completed(), 21)
+
+    def test_error_turns_marks_off_and_call_still_returns(self):
+        lines = []
+
+        def broken(device):
+            raise RuntimeError('pin_memory unsupported')
+        r = self.runner(lines, make=broken)
+        self.assertEqual(self.fake.all_gather_into_tensor(Tensor(12, XPU), Tensor(6, XPU)), 'w')
+        self.assertTrue(r._b70_crumbs.marks.off)
+        self.assertIn('device marks off', lines[-1])
+        self.assertIn('off after an error', r._b70_crumbs.marks.report())
+
+    def test_off_by_default(self):
+        lines = []
+        r = self.runner(lines, marks=False)
+        self.fake.all_gather_into_tensor(Tensor(12, XPU), Tensor(6, XPU))
+        self.assertIsNone(r._b70_crumbs.marks)
+        r._b70_crumbs.dump('STALL: test')
+        self.assertNotIn('device marks', lines[-1])
 
 
 if __name__ == '__main__':

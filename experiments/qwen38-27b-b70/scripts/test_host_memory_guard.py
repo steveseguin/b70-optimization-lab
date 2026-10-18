@@ -61,6 +61,23 @@ class GuardTests(unittest.TestCase):
             self.assertTrue(receipt['cgroup_kill'])
             self.assertIn('driver-held', receipt['reason'])
 
+    def test_receipt_names_the_largest_processes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            def prepare(r):
+                (r / f'docker-{ID}.scope').mkdir()
+                for pid, name, kib in ((11, 'small', 100), (12, 'big', 9000), (13, 'mid', 500)):
+                    d = r / 'proc' / str(pid)
+                    d.mkdir(parents=True)
+                    (d / 'status').write_text(f'Name:\t{name}\nVmRSS:\t   {kib} kB\n')
+                    (d / 'cgroup').write_text('0::/system.slice/thing.scope\n')
+                (r / 'proc' / 'self').mkdir()
+                (r / 'proc' / '14').mkdir()                      # a process that exited: no status
+            code, root = self.run_guard(tmp, meminfo(free=3), extra=('--proc', str(Path(tmp) / 'proc')), prepare=prepare)
+            self.assertEqual(code, guard.FIRED_EXIT)
+            top = json.loads((root / 'out' / 'MEMORY-GUARD.json').read_text())['top_processes']
+            self.assertEqual([(r['name'], r['rss']) for r in top], [('big', 9000 * 1024), ('mid', 500 * 1024), ('small', 100 * 1024)])
+            self.assertEqual(top[0]['cgroup'], 'thing.scope')
+
     def test_never_fires_before_container_exists(self):
         with tempfile.TemporaryDirectory() as tmp:
             code, root = self.run_guard(tmp, meminfo(available=1), extra=('--appear-timeout', '0.1'))
