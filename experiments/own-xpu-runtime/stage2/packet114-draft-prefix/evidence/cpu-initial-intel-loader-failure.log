@@ -1,0 +1,11 @@
+GNU both prefixes, two fresh exact-byte/controller runs PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet114-draft-prefix/cpu_gate.py", line 25, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet114-draft-prefix/cpu_gate.py", line 16, in main
+    start=time.monotonic();r=subprocess.run([str(binary),str(n)],stdin=subprocess.DEVNULL,capture_output=True,text=True,check=True,timeout=300)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet114-draft-prefix/build/cpu/Intel', '91392']' returned non-zero exit status 127.
