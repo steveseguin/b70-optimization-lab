@@ -1161,7 +1161,7 @@ worker/recall trials and five unused tasks. Further worker tuning/integration is
 
 ## Storage And Recovery
 
-**October 18, disk7 archive pass:** verified archives of closed build and screen files recovered **1.975 GB**. Root went from **31.284 GB to 33.153 GB free** at 20:09:15 UTC. **The requested 40 GB was not reached**: the other large candidates are protected, still referenced, or lack a clear closure. All JSON receipts, notes, sources, live work and record material stayed. The archives were fully checked before their originals were removed. [Archive paths, restore instructions and checks](experiments/own-xpu-runtime/stage2/DISK-CLEANUP-20261018.md#disk7--verified-archive-pass-2026-10-18).
+**October 18, disk7 archive pass:** verified archives of closed build and screen files recovered **1.975 GB**. Root went from **31.284 GB to 33.153 GB free** at 20:09:15 UTC. **The requested 40 GB was not reached**: the other large candidates are protected, still referenced, or lack a clear closure. All JSON receipts, notes, sources, live work and record material stayed. The archives were fully checked before their originals were removed. The final check covered 1,191 moved paths and 28,170 retained files or links, with no errors. [Archive paths, restore instructions and checks](experiments/own-xpu-runtime/stage2/DISK-CLEANUP-20261018.md#disk7--verified-archive-pass-2026-10-18).
 
 **October 18, disk6 archive pass:** closed experimental builds, private build dependencies and old compiler caches now have verified archives in
 `/mnt/raid-models/own-xpu-runtime-archive/disk6-20261018/`. The pass recovered **9.581 GB** of allocated file space and stopped at **14:26:13 UTC**,
