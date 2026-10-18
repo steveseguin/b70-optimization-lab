@@ -33,9 +33,24 @@ arithmetic changes at a boundary. A native and Python check compares every
 output token with the original packet49 oracle.
 
 `cache_maintenance=serial|overlap` remains selectable from queue, window,
-suite and native commands. It is fixed across a capacity bracket. The sealed
-[maintenance decision](maintenance-decision.json) selects overlap only if the
-completed packet58v bracket rechecks exact and faster; otherwise serial.
+suite and native commands. **Overlap is the default and the selection for the
+smoke and every v5 view.** It is fixed across the capacity bracket so a larger
+cache can stack with the one-card overlap line. The sealed
+[maintenance decision](maintenance-decision.json) replays packet58v's smoke
+and all five bracket views under
+[p58wb's pre-chain amendment](../../../../notes/2026-10-18-own-runtime-packet58w.md#packet58wb--cold-first-view-amendment-october-18).
+The original serial choice came from including the cold first control
+(22.730951 tok/s) in the 3% drift check. Under the amended rule, warm serial
+controls are 26.053436 / 26.078853 and overlap is 28.115842 / 28.152570 tok/s:
+0.097558% warm drift and at least 7.810884% gain. Those are packet58v readiness
+comparisons, not packet58x speed measurements. Its original verdict is retained.
+
+Packet58xb applies that rule before any packet58x device window: A0 is reported,
+must be exact against `iq3-p49-split32-v1`, and is excluded from drift and speed
+comparison. Both max views B0/B1 must reach at least 1.005 times **each** remaining
+18GB control A1/A2; A1/A2 must have max/min at most 1.03. All five views still
+require twelve exact uncached outputs. The 18GB/max capacity dimension,
+allocation, resets, arithmetic and safety gates are unchanged.
 
 ## Memory and lifetime gates
 
@@ -57,10 +72,11 @@ Only the coordinator may run the two named proposals, after their final seal
 and readiness marker exist:
 
 - `ops/lane-queue/proposed-p58x-smoke-A.txt`: two K1 fixtures, then one model
-  load and twelve 64-token requests at `max`. Expected 600–900 seconds.
+  load and twelve 64-token requests at `max`, with overlap. Expected 600–900 seconds.
 - `ops/lane-queue/proposed-p58x-v5-A.txt`: two K1 fixtures, then one load with
   18GB/max/18GB/max/18GB, twelve 128-token requests per view. Expected
-  1200–1800 seconds. It refuses without the exact smoke and clean teardown.
+  1200–1800 seconds. Every view uses overlap. A0 is exact/reported warm-up only.
+  It refuses without the exact smoke and clean teardown.
 
 Both require card 0, lane A, whole-host ownership and lane B paused/drained.
 Both use a 7,200-second watchdog, at least four times the upper estimate.
@@ -81,6 +97,13 @@ From this directory, prefix commands with
 4. `plan_queue.py --emit-only`, `argument_gate.py`, `run_cpu_gates.py`,
    `shared_oracle.py --require-complete` to `evidence/oracle-gate.json`.
 5. `seal.py`, `seal.py --verify`, `plan_queue.py`.
+
+For the prelaunch packet58xb amendment, run `maintenance_decision.py`,
+`plan_queue.py --emit-only`, `argument_gate.py`, `run_cpu_gates.py`, `seal.py`,
+`seal.py --verify`, then `plan_queue.py`. Retain unchanged native builds and
+byte/startup evidence. Entry probes intercept execution before any native
+device launch and retain the real host-memory admission check. The final ready
+marker binds the new seal and planned proposals and is written last.
 
 Only CPU CLI processes install address-space limits. Sparse full-shape tests
 and intercepted launch probes need unlimited virtual addresses and retain

@@ -8,7 +8,7 @@
 | Reset metadata without publishing host pointers | Unsafe stale device pointers; new generations and publication are required | No relaxation |
 | Use original 26.409 GB allocator limit after growing the arena | Caught in literal audit and changed alongside native plan and Python budget | Recheck every allocation gate when capacity changes |
 | Treat independent route replay as native hit rate | Invalid topology/publication schedule transfer | Retained native route measurements |
-| Default to overlap from its CPU checks or smoke alone | Invalid speed evidence | Completed exact faster packet58v bracket |
+| Default to overlap from its CPU checks or smoke alone | Invalid speed evidence; packet58xb instead replays the completed exact packet58v bracket under p58wb's amended warm-control rule | Keep A0 exact/reported but outside drift/comparison; both candidates beat each A1/A2 control by 0.5%, drift <=3% |
 | Device readiness from temporary queue planning alone | Invalid; real-entry/native-parser/fullshape/seal gates also required | All current gates pass |
 
 All packet58v lifetime and packet58i replay caveats remain. No MTP, route or

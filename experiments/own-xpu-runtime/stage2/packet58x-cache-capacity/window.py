@@ -14,7 +14,7 @@ import time
 
 import memory_plan as M
 import onecard_admission as A
-from views import VIEWS, selection, digest
+from views import VIEWS, selection, digest, DEFAULT_MAINTENANCE
 from exec_limits import check as check_exec_limits
 from owner_teardown import finish_model_owner
 from launch_identity import lane_unit_prefix
@@ -202,7 +202,7 @@ def native_command(args, output, miss_path):
         return [str(HERE/'build/device/p58-cache-fixtures'), '--card', '0', '--output', str(output/'run'),
                 '--iterations', '20', '--down-layout', json.loads(selection(getattr(args,'view','production')).read_text())['choices']['down'], '--authorized-device-window']
     return ['/usr/bin/python3', '-B', str(HERE/'suite_driver.py'), '--window', args.window, '--view', getattr(args,'view','max'),
-            '--cache-maintenance',getattr(args,'cache_maintenance','serial'),
+            '--cache-maintenance',getattr(args,'cache_maintenance',DEFAULT_MAINTENANCE),
             '--card', str(args.card), '--output', str(output/'run'), '--miss-mode', 'zerocopy' if miss_path == 'zero-copy' else 'streamed',
             '--authorized-device-window']
 
@@ -370,7 +370,7 @@ def main(argv=None):
     install_fault_policy()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--window', choices=tuple(CONFIG), required=True)
-    parser.add_argument('--cache-maintenance',choices=('serial','overlap'),default='serial')
+    parser.add_argument('--cache-maintenance',choices=('serial','overlap'),default=DEFAULT_MAINTENANCE)
     parser.add_argument('--view', choices=VIEWS, default='max')
     parser.add_argument('--card', type=int, choices=(0,), default=0)
     parser.add_argument('--output', type=Path, required=True)

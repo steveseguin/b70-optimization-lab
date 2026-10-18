@@ -2,6 +2,7 @@
 import json,resource,shutil,subprocess,sys,tempfile
 from pathlib import Path
 from build_engine import P,ROOT,limits,save,sha
+from views import DEFAULT_MAINTENANCE
 QUEUE=P.parents[1]/'ops/lane-queue'
 
 def main():
@@ -12,12 +13,13 @@ def main():
     for arm,tag,expected in [('smoke','smoke',[600,900]),('max','v5',[1200,1800])]:
         output=P/'evidence/card0-capacity-a'/arm
         record=dict(name='packet58x-'+tag+'-A',lane='A',argv=['/usr/bin/python3','-B',str((P/'queue_runner.py').relative_to(ROOT)),
-                    '--cache-maintenance','serial','--arm',arm,'--output',str(output),'--fault-review','{REVIEW}',
+                    '--cache-maintenance',DEFAULT_MAINTENANCE,'--arm',arm,'--output',str(output),'--fault-review','{REVIEW}',
                     '--library-path',library,'--authorized-device-window'],
                     env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)))
         raw=('# CPU proposal only; card 0, lane A, whole host; lane B paused/drained throughout.\n'
              '# Packet58x: larger cache; real queue/window startup gate and lanequeue-derived unit identity.\n'
-             '# Two K1 fixtures precede one model load. Smoke: 12 x 64 max; v5: 12 x 128 18GB/max/18GB/max/18GB; fixed serial maintenance.\n'
+             '# Two K1 fixtures precede one model load. Smoke: 12 x 64 max; v5: 12 x 128 18GB/max/18GB/max/18GB; fixed overlap maintenance.\n'
+             '# Packet58xb follows p58wb: A0 exact/reported warm-up only; both max views >= 1.005x each A1/A2 control; warm drift <= 3%.\n'
              '# Native and Python check every token against iq3-p49-split32-v1. The v5 runner refuses without this exact smoke.\n'
              f'# Expected {expected[0]}-{expected[1]} seconds; watchdog 7200 seconds >= 4x upper estimate.\n'
              '# Required host MemAvailable 98989727744 bytes, including unchanged 8 GiB reserve; BF16 KV, one 21.5527296 GB allocation, usage capped per view.\n'
@@ -26,7 +28,10 @@ def main():
         if proposal.exists():
             existing = [json.loads(line) for line in proposal.read_text().splitlines()
                         if line.strip() and not line.lstrip().startswith('#')]
-            assert existing == [record], 'never overwrite changed proposal job'
+            # Owner-authorized prelaunch 58xb amendment: only serial -> overlap.
+            legacy=dict(record,argv=list(record['argv']))
+            legacy['argv'][legacy['argv'].index('--cache-maintenance')+1]='serial'
+            assert existing in ([record],[legacy]), 'never overwrite unrelated changed proposal job'
         if emit_only:
             proposal.write_text(raw)
             continue

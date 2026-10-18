@@ -33,6 +33,16 @@ class Capacity(unittest.TestCase):
                 self.assertEqual([r[4] for r in rows],['18GB','max','18GB','max','18GB'])
             with self.assertRaises(ValueError):V.write_table(p,'max','unknown')
 
+    def test_smoke_and_every_v5_view_default_to_overlap(self):
+        self.assertEqual(V.DEFAULT_MAINTENANCE,'overlap')
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/'views.tsv'
+            for candidate in ('smoke','max'):
+                V.write_table(p,candidate)
+                rows=[line.split() for line in p.read_text().splitlines()]
+                self.assertEqual([r[3] for r in rows],['overlap']*len(V.bracket(candidate)))
+                self.assertEqual([r[4] for r in rows],[v for _,v in V.bracket(candidate)])
+
     def test_measured_live_accounting_bounds(self):
         import window as W
         p=M.plan();host=p['host_categories'];pinned=host['pinned_packed_experts']

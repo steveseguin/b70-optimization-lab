@@ -39,10 +39,32 @@ class BracketPolicyTests(unittest.TestCase):
 
     def test_inexact_or_incomplete_or_cached_refuses(self):
         for mutation in (lambda x:x.pop(),lambda x:x[1]['requests'].pop(),
+                         lambda x:x[0]['requests'][0].update(exact_oracle=False),
                          lambda x:x[1]['requests'][11].update(exact_oracle=False),
                          lambda x:x[3]['requests'][0].update(cached_tokens=1)):
             rows=self.rows();mutation(rows)
             with self.assertRaises(ValueError):compare(rows)
+
+    def test_cold_first_view_is_reported_but_excluded(self):
+        result=compare(self.rows((22.730951,28.115842,26.053436,28.152570,26.078853)))
+        self.assertTrue(result['candidate_beats_all_controls'])
+        self.assertEqual(result['comparison_controls'],['A1','A2'])
+        self.assertEqual(result['warmup_view'],dict(label='A0',rate=22.730951,exact=True,
+                         excluded_from_drift_and_comparison=True))
+        self.assertGreater(result['minimum_gain_vs_best_control'],.078)
+
+    def test_each_candidate_must_clear_warm_controls(self):
+        for rates in ((22,25.974,26,28,26),(22,28,26,25.974,26)):
+            self.assertFalse(compare(self.rows(rates))['candidate_beats_all_controls'])
+
+    def test_warm_drift_three_point_five_percent_fails(self):
+        self.assertFalse(compare(self.rows((22,28,26,28,26.91)))['control_drift_passed'])
+
+    def test_inclusive_decimal_thresholds(self):
+        for rates in ((1,25.125,25,25.125,25),(1,27,25,27,25.75)):
+            self.assertTrue(compare(self.rows(rates))['candidate_beats_all_controls'])
+        self.assertFalse(compare(self.rows((1,25.124999,25,25.125,25)))['candidate_beats_all_controls'])
+        self.assertFalse(compare(self.rows((1,27,25,27,25.750001)))['control_drift_passed'])
 
     def test_no_fresh_process_or_submission_claim(self):
         row=compare(self.rows())

@@ -3,7 +3,7 @@ import hashlib,json
 from pathlib import Path
 P=Path(__file__).resolve().parent
 VIEWS=('18GB','max','smoke')
-DEFAULT_MAINTENANCE='serial'
+DEFAULT_MAINTENANCE='overlap'
 MAX_BYTES=21552729600
 def validate(view):
     if view not in VIEWS:raise ValueError('unsupported cache capacity view')

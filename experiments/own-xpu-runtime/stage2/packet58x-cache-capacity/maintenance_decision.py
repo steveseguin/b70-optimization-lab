@@ -1,33 +1,35 @@
-"""Read the frozen parent's completed bracket; never run a device or edit it."""
+"""Recheck frozen 58v evidence under 58wb's amended rule; no device or writes there."""
 import hashlib,json,resource,subprocess,sys
 from pathlib import Path
 P=Path(__file__).resolve().parent
-PARENT=P.parent/'packet58v-async-cache'
+AMENDMENT=P.parent/'packet58w-onecard-record'
+ROOT=P.parents[3]
 
 
 def main():
-    window=PARENT/'evidence/card0-async-a/overlap/WSCREEN/window.json'
-    row=dict(passed=True,device_executed=False,default='serial',parent_bracket_complete=False,
-             reason='No completed exact faster parent bracket at decision time.',sources={})
-    if window.exists():
-        receipt=json.loads(window.read_text())
-        if receipt.get('passed') and not receipt.get('child_still_running') and not receipt.get('stop_reasons'):
-            # Separate interpreter prevents imported packet58x modules substituting
-            # for the frozen parent's own views, oracle checker or comparison.
-            code=("import json,suite_driver as D; from pathlib import Path; "
-                  "print(json.dumps(D.summarize_bracket(Path("+repr(str(window.parent/'run'))+
-                  "),'overlap',D.oracle_inputs())))")
-            result=subprocess.run([sys.executable,'-B','-c',code],cwd=PARENT,stdin=subprocess.DEVNULL,
-                                  capture_output=True,text=True,check=True,timeout=120)
-            decision=json.loads(result.stdout)
-            row.update(parent_bracket_complete=True,decision={k:decision[k] for k in
-                ('rates','control_drift_fraction','candidate_beats_all_controls','minimum_gain_vs_best_control')})
-            row['default']='overlap' if decision['candidate_beats_all_controls'] else 'serial'
-            row['reason']='Rechecked all parent oracle outputs, boundaries, clean teardown and five-view speed gate.'
-            for source in (window,window.parent/'summary.json',PARENT/'build-receipt.json'):
-                row['sources'][str(source.relative_to(P.parents[3]))]=hashlib.sha256(source.read_bytes()).hexdigest()
+    assert not (P/'evidence/card0-capacity-a').exists(), 'never amend after launch'
+    # Isolated interpreters preserve frozen imports. Only replay evidence;
+    # do not invoke verify()'s fresh-chain gate while 58w is running.
+    code=("import json,subprocess,sys,verify_ready as R; "
+          "s=json.loads(subprocess.check_output([sys.executable,'-B',str(R.P/'screen_gate.py')],"
+          "stdin=subprocess.DEVNULL,text=True,timeout=180)); "
+          "print(json.dumps(dict(decision=R.evaluate(s['rows']),sources=s['sources'],"
+          "smoke_passed=s['smoke_passed'])))")
+    result=subprocess.run([sys.executable,'-B','-c',code],cwd=AMENDMENT,
+                          stdin=subprocess.DEVNULL,capture_output=True,text=True,check=True,timeout=240)
+    replay=json.loads(result.stdout)
+    assert replay['decision']['passed'] and replay['smoke_passed']
+    sources=replay['sources']
+    for source in (AMENDMENT/'screen_gate.py',AMENDMENT/'verify_ready.py',
+                   AMENDMENT/'readiness-policy.json',ROOT/'notes/2026-10-18-own-runtime-packet58w.md'):
+        sources[str(source.relative_to(ROOT))]=hashlib.sha256(source.read_bytes()).hexdigest()
+    row=dict(passed=True,device_executed=False,default='overlap',parent_bracket_complete=True,
+             amendment='packet58xb follows packet58wb; before any packet58x device window',
+             reason='58v smoke and all five views rechecked exact against packet49; A0 reported warm-up, '
+                    'excluded from comparison; both overlap views beat each warm serial control by >=0.5%, drift <=3%.',
+             decision=replay['decision'],smoke_passed=True,sources=sources)
     (P/'maintenance-decision.json').write_text(json.dumps(row,indent=2)+'\n')
-    print(json.dumps(row))
+    print(json.dumps({k:v for k,v in row.items() if k!='sources'}))
 
 
 if __name__=='__main__':

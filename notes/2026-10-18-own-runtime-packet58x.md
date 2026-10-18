@@ -46,3 +46,57 @@ for the existing whole-host hold through the shared compiler-turn gate.
 The final readiness marker is written only after the implementation commit and
 proposal hashes are fixed, then committed separately. It is the task's last
 content write. Device fit, quality and speed remain pending.
+
+## Packet58xb — overlap and first-view amendment, October 18
+
+At the owner's request, before any packet58x device window, the smoke and all
+five v5 views now select `cache_maintenance=overlap`. The cache-cap dimension
+stays 18GB/max/18GB/max/18GB; allocation, reserves, BF16 KV, tile16 and target
+arithmetic `iq3-p49-split32-v1` are unchanged. This lets the larger-cache screen
+measure an incremental gain on the overlap line used by packet58w.
+
+The earlier serial choice above used packet58v's original drift verdict,
+which included A0's cold-cache 22.730951 tok/s. The owner's
+[p58wb amendment](2026-10-18-own-runtime-packet58w.md#packet58wb--cold-first-view-amendment-october-18)
+was made before packet58w's chain. Replaying the frozen smoke and every native
+token from all five views under that amendment passes: warm serial controls
+26.053436 / 26.078853 tok/s, overlap 28.115842 / 28.152570 tok/s, warm-control
+drift 0.097558%, minimum overlap gain 7.810884%. The original packet58v verdict
+and every frozen packet are unchanged. These are readiness comparisons from
+packet58v, not packet58x measurements or a new record.
+
+Packet58x's own comparison reader now matches that rule: A0 is reported and
+must be exact, but is excluded from drift and comparison. Both max views B0/B1
+must be at least 1.005 times each remaining 18GB control A1/A2; their max/min
+must be at most 1.03. Decimal comparisons preserve the inclusive thresholds.
+Every view still requires the exact uncached twelve-prompt suite; the real
+reader checks all 128 output tokens and matching prompt/output identities.
+
+Minimal CPU reseal passes: **101 Python tests**, six real queue/window/native
+argument paths intercepted before device execution, two old-unit-gate refusals,
+drain/teardown and memory checks, the **1,250-source seal**, and both temporary
+lane-A queue plans. Entry probes additionally assert overlap in every smoke/v5
+table row and the unchanged cache-cap sequence. New regressions cover the cold
+first view, an inexact first view, either candidate below a warm control, 3.5%
+warm drift, and exact gain/drift boundaries. Native binaries and their existing
+byte, protocol, reset and full-shape startup receipts are retained unchanged;
+the build remains **80,586,089 bytes**.
+
+The first entry probe refused on the real host-memory gate while the existing
+chain held memory. Later probes passed the unchanged live admission check;
+no fallback or reduced threshold remains. No service was stopped or started.
+Commands used `nice -n 19 taskset -c 8-15,24-31 python3 -B`, closed stdin and
+the 4-GiB CPU limit. No model payload was loaded by these probes.
+
+Reproduction from the packet directory: `maintenance_decision.py`,
+`plan_queue.py --emit-only`, `argument_gate.py`, `run_cpu_gates.py`, `seal.py`,
+`seal.py --verify`, `plan_queue.py`. The last command plans each rewritten
+proposal on a temporary queue and never touches a live `queue-*.txt`.
+
+Git pull refused the unrelated dirty orchestration files; fetch confirmed
+HEAD == origin/main. The implementation is committed with explicit paths and
+pushed, then `READY-FOR-DEVICE.json` is rewritten as the last content write to
+bind that commit, the new seal and both planned proposal hashes. The marker
+is committed and pushed separately. No GPU, service, sudo, setting, live queue,
+other packet tree or screen tree was changed by this preparation. The smoke
+and v5 remain unqueued and unlaunched; device fit, quality and speed are pending.

@@ -17,13 +17,17 @@ test_smoke_and_bracket_dimensions (test_async_policy.AsyncPolicy.test_smoke_and_
 test_streamed_cannot_enter_async_native (test_async_policy.AsyncPolicy.test_streamed_cannot_enter_async_native) ... ok
 test_tampered_budget_rejected (test_async_policy.AsyncPolicy.test_tampered_budget_rejected) ... ok
 test_all_views_keep_storage (test_bracket.BracketPolicyTests.test_all_views_keep_storage) ... ok
+test_cold_first_view_is_reported_but_excluded (test_bracket.BracketPolicyTests.test_cold_first_view_is_reported_but_excluded) ... ok
+test_each_candidate_must_clear_warm_controls (test_bracket.BracketPolicyTests.test_each_candidate_must_clear_warm_controls) ... ok
 test_fresh_window_process_installs_full_fault_policy (test_bracket.BracketPolicyTests.test_fresh_window_process_installs_full_fault_policy) ... ok
+test_inclusive_decimal_thresholds (test_bracket.BracketPolicyTests.test_inclusive_decimal_thresholds) ... ok
 test_inexact_or_incomplete_or_cached_refuses (test_bracket.BracketPolicyTests.test_inexact_or_incomplete_or_cached_refuses) ... ok
 test_no_fresh_process_or_submission_claim (test_bracket.BracketPolicyTests.test_no_fresh_process_or_submission_claim) ... ok
 test_oracle_completion_replacement_refused (test_bracket.BracketPolicyTests.test_oracle_completion_replacement_refused) ... ok
 test_runtime_disk_reserve_at_25gb_boundary (test_bracket.BracketPolicyTests.test_runtime_disk_reserve_at_25gb_boundary) ... ok
 test_two_candidates_must_beat_every_control (test_bracket.BracketPolicyTests.test_two_candidates_must_beat_every_control) ... ok
 test_unknown_extra_or_changed_choice_refused (test_bracket.BracketPolicyTests.test_unknown_extra_or_changed_choice_refused) ... ok
+test_warm_drift_three_point_five_percent_fails (test_bracket.BracketPolicyTests.test_warm_drift_three_point_five_percent_fails) ... ok
 test_whole_host_and_watchdog (test_bracket.BracketPolicyTests.test_whole_host_and_watchdog) ... ok
 test_all60_actual_oracle_and_metrics (test_bracket.SummaryTests.test_all60_actual_oracle_and_metrics) ... ok
 test_boundary_and_reset_mutations (test_bracket.SummaryTests.test_boundary_and_reset_mutations) ... ok
@@ -39,6 +43,7 @@ test_drm_duplicate_fd_and_reserve (test_capacity.Capacity.test_drm_duplicate_fd_
 test_fixed_maintenance_and_capacity_rows (test_capacity.Capacity.test_fixed_maintenance_and_capacity_rows) ... ok
 test_maximum_retains_every_allowance (test_capacity.Capacity.test_maximum_retains_every_allowance) ... ok
 test_measured_live_accounting_bounds (test_capacity.Capacity.test_measured_live_accounting_bounds) ... ok
+test_smoke_and_every_v5_view_default_to_overlap (test_capacity.Capacity.test_smoke_and_every_v5_view_default_to_overlap) ... ok
 test_changed_or_missing_timestamp_refuses (test_fault_boundary.BoundaryTests.test_changed_or_missing_timestamp_refuses) ... ok
 test_each_arm_passes_derived_boundary_to_all_windows (test_fault_boundary.BoundaryTests.test_each_arm_passes_derived_boundary_to_all_windows) ... ok
 test_exact_boundary_refuses_old_argument_and_accepts_overlap (test_fault_boundary.BoundaryTests.test_exact_boundary_refuses_old_argument_and_accepts_overlap) ... ok
@@ -96,6 +101,6 @@ test_missing_idle_retained (test_refusal58g.RefusalTests.test_missing_idle_retai
 test_unknown_journal_retained (test_refusal58g.RefusalTests.test_unknown_journal_retained) ... ok
 
 ----------------------------------------------------------------------
-Ran 96 tests in 2.063s
+Ran 101 tests in 2.098s
 
 OK

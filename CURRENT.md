@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, packet58xb overlap amendment prepared on CPU:** The larger-cache
+smoke and all five comparison views now select overlap. The first view must
+still be exact and is reported as warm-up; the other two controls decide drift
+and gain, matching packet58wb. All 101 tests, six entry probes, the minimal
+reseal and both temporary queue plans pass. The cache sizes and memory guards stay.
+Device work remains unlaunched and unqueued by this preparation; the running
+packet58w chain is untouched.
+[Work note](notes/2026-10-18-own-runtime-packet58x.md#packet58xb--overlap-and-first-view-amendment-october-18).
+
 **October 18, packet58wb readiness amendment passes on CPU:** At the owner's
 request, the first one-card bracket view is treated as cache warm-up for speed
 comparison, after packet58v's data and before any packet58w chain. All five
