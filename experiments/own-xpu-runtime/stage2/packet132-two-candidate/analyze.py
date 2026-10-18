@@ -154,6 +154,8 @@ def validate_capture(path, rows):
     assert [json.loads(s) for s in (root/'rows.jsonl').read_text().splitlines()] == rows
     inputs = json.loads((root/'inputs.json').read_text())
     assert len(inputs['sources']) == 5
+    rule = json.loads((P/'inputs/preregistration.json').read_text())
+    assert inputs['preregistration_sha256'] == sha(P/'inputs/preregistration.json')
     for i, source in enumerate(inputs['sources']):
         directory = root/f'doc-{i}'
         target = json.loads((directory/'target/result.json').read_text())
@@ -165,8 +167,12 @@ def validate_capture(path, rows):
         assert len(selected) == len(target['tokens']) == receipt['count']
         assert target['status'] == 'eos' or len(selected) == 24
         assert len(source['tokens']) == 16 and source['generated_token_cap'] == 24
+        assert source['source_commit'] == rule['source_commit']
+        assert all(source[k] == rule['sources'][i][k] for k in ('path', 'sha256', 'bytes'))
+        assert source['excerpt_start'] == source['full_token_count']//2
         assert [r['target_token'] for r in selected] == target['tokens']
         assert all(r['draft_prefix_rows'] == 80128 for r in selected)
+        assert all(r['source_path'] == source['path'] for r in selected)
         assert [r['position'] for r in selected] == list(range(14, 14+len(selected)))
         consumed = source['tokens'] + target['tokens']
         assert all(r['next_input_token'] == consumed[r['position']+1] for r in selected)
@@ -188,7 +194,10 @@ def analyze(rows):
             choices.append(record)
         selected = min(choices, key=lambda r: (r['train']['delta_ms'], r['train']['flags']))
         pooled = min(choices, key=lambda r: (r['pooled']['delta_ms'], r['pooled']['flags']))
-        decisions.append(dict(scenario=scenario, train_selected=selected, pooled_best_in_sample=pooled))
+        active = min((r for r in choices if r['pooled']['flags']),
+                     key=lambda r: (r['pooled']['delta_ms'], r['pooled']['flags']))
+        decisions.append(dict(scenario=scenario, train_selected=selected, pooled_best_in_sample=pooled,
+                              pooled_best_active_in_sample=active))
         sweep.extend(choices)
     primary = decisions[0]['train_selected']
     passed = decisions[0]['pooled_best_in_sample']['pooled']['gain_percent'] >= 3

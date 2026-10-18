@@ -1,6 +1,9 @@
-import math
+import hashlib
+import json
+from pathlib import Path
+import tempfile
 import unittest
-from analyze import metrics, validate_rows, costs
+from analyze import P, metrics, validate_rows, validate_capture, costs
 
 
 def row(prompt, index, top1, top2, actual, margin):
@@ -57,6 +60,38 @@ class ModelTests(unittest.TestCase):
         self.assertAlmostEqual(budget['target_half_compute_ms'], 11.36252)
         self.assertAlmostEqual(budget['redo_compute_ms'] + budget['restore_compute_ms'], 11.56410)
         self.assertAlmostEqual(scenarios[0]['extra_half_ms'], 4.1539459375)
+
+    def test_incomplete_capture_cannot_be_scored(self):
+        rule = json.loads((P/'inputs/preregistration.json').read_text())
+        rows, sources = [], []
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for i, source in enumerate(rule['sources']):
+                r = row(str(i+1), 0, 1, 2, 2, 1)
+                r.update(draft_prefix_rows=80128, position=14, next_input_token=7, source_path=source['path'])
+                rows.append(r)
+                sources.append(dict(source, source_commit=rule['source_commit'], tokens=[7]*16,
+                                    generated_token_cap=24, full_token_count=100, excerpt_start=50))
+                directory = root/f'doc-{i}'
+                (directory/'target').mkdir(parents=True)
+                target = dict(arithmetic='iq3-p49-split32-v1', device_executed=False, status='eos',
+                              error='', tokens=[2])
+                (directory/'target/result.json').write_text(json.dumps(target))
+                (directory/'draft-receipt.json').write_text(json.dumps(dict(count=1, device_executed=False)))
+            raw = ''.join(json.dumps(r)+'\n' for r in rows).encode()
+            (root/'rows.jsonl').write_bytes(raw)
+            (root/'rows.json').write_text(json.dumps(rows))
+            (root/'inputs.json').write_text(json.dumps(dict(sources=sources, preregistration_sha256=hashlib.sha256((P/'inputs/preregistration.json').read_bytes()).hexdigest())))
+            complete = dict(device_executed=False, rows=5, rows_sha256=hashlib.sha256(raw).hexdigest())
+            (root/'completion.json').write_text(json.dumps(complete))
+            self.assertTrue(validate_capture(root/'rows.json', rows)['complete'])
+            target['status'] = 'token-cap'
+            (root/'doc-0/target/result.json').write_text(json.dumps(target))
+            with self.assertRaises(AssertionError):
+                validate_capture(root/'rows.json', rows)
+            (root/'completion.json').unlink()
+            with self.assertRaises(FileNotFoundError):
+                validate_capture(root/'rows.json', rows)
 
 
 if __name__ == '__main__':
