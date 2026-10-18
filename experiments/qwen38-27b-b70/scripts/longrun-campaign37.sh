@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Campaign 41 (2026-10-18, notes/2026-10-17-hostile-history-poison.md, registered before any run): kind hostile2mk is
+# hostile2m on the clarified copy of the 2M stream ($ODK: the final rule says to add the answers and keep the PROBE
+# answers already in the file; the stream is otherwise byte-identical). Earlier header follows.
 # Campaign 40 (2026-10-18, notes/2026-10-17-hostile-history-poison.md, registered before any run): arm K32H is K32R
 # with ctxkeeper 1.2.0.dev4's --hold-open (while a question is open, every request gets the RULES recital and the
 # archive searches made since it arrived). The tools/ctxkeeper check also requires --hold-open. Earlier header follows.
@@ -45,7 +48,7 @@
 # garbage stops the campaign before an arm runs.
 # Every proxy is tools/ctxkeeper/ctxkeeper.py at 1.1.0 with --log-calls (one row per model call).
 # Queue lines: "ARM KIND SEED CAP_SECONDS", KIND = smoke | rules (240K rules stream) | poison | retro | retroloud (the same, hostile) | 1m | hostile1m (1M, forged
-# notices + audits) | repair.
+# notices + audits) | hostile2m | hostile2mk (2M, the same; k = clarified final rule) | repair.
 set -uo pipefail
 LAB=/home/steve/b70-optimization-lab
 CTX=$LAB/experiments/qwen38-27b-b70/scripts/context
@@ -78,6 +81,7 @@ ODX=/mnt/fast-ai/bench-results/context-longrun-20261012/client-repair2
 # forged notices (make_sparse_prose_tasks.py --poison memory method rule value) or with six audits reversing entries
 # from 30+ items back (--retro 6, and --retro-loud: the same audits stating the amount); scored by context/hostile_report.py
 ODH=/mnt/fast-ai/bench-results/context-longrun-20261017/client-hostile
+ODK=/mnt/fast-ai/bench-results/context-longrun-20261018/client-hostile-keep
 SP240="--density 3 --words --probes-every 25 --probes-k 3 --rules"
 SP1M="--density 3 --words --probes-every 20 --probes-k 5 --rules"
 MAX_STEPS_REPAIR=900
@@ -126,7 +130,7 @@ start_proxy() {  # tag arm kind
   w=$(arm_window "$arm") || { say "unknown arm $arm"; return 1; }
   read -r b i <<< "$w"
   case $kind in
-    rules | poison | retro | retroloud | hostile1m | hostile2m | 1m) fl=(--reply-reserve 2048 --headroom 1024 --target-ratio 0.6 --notes-thinking on --effort medium
+    rules | poison | retro | retroloud | hostile1m | hostile2m | hostile2mk | 1m) fl=(--reply-reserve 2048 --headroom 1024 --target-ratio 0.6 --notes-thinking on --effort medium
                     --think-when "$THINK_RE" --think-until "$UNTIL_RE" --recite-when "$RECITE_RE" --notes-mode inplace
                     --notes-checks near --max-recalls 16 --notes-scan "$SCAN_RE" --recall-label "$LABEL_RE" --recall-unit item) ;;
     repair)     fl=(--reply-reserve 2048 --headroom 1024 --target-ratio 0.6 --notes-thinking off --effort medium
@@ -254,6 +258,7 @@ run_line() {  # arm kind seed cap
     rules) tasks=$ODR/tasks/sparse-memory/sparse-memory-t240k-s$seed; sp=$SP240; job="${arm}__sparse-memory-t240k-s$seed"; runs=$O/runs/$RUN/rules ;;
     hostile1m) tasks=$ODH/tasks/sparse-memory/sparse-memory-t1000k-poison-retro-s$seed; job="${arm}__sparse-memory-t1000k-poison-retro-s$seed"; runs=$O/runs/$RUN/hostile1m; xk="emit_ctx_trajectory=false" ;;
     hostile2m) tasks=$ODH/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s$seed; job="${arm}__sparse-memory-t2000k-poison-retro-s$seed"; runs=$O/runs/$RUN/hostile2m; xk="emit_ctx_trajectory=false" ;;
+    hostile2mk) tasks=$ODK/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s$seed; job="${arm}__sparse-memory-t2000k-poison-retro-s$seed"; runs=$O/runs/$RUN/hostile2mk; xk="emit_ctx_trajectory=false" ;;
     poison | retro | retroloud) tasks=$ODH/tasks/sparse-memory/sparse-memory-t240k-$kind-s$seed; job="${arm}__sparse-memory-t240k-$kind-s$seed"; runs=$O/runs/$RUN/$kind ;;
     1m)    tasks=$OD1M/tasks/sparse-memory/sparse-memory-t1000k-s$seed; sp=$SP1M; job="${arm}__sparse-memory-t1000k-s$seed"; runs=$O/runs/$RUN/1m; xk="emit_ctx_trajectory=false" ;;
     repair) tasks=$ODX/tasks/repair-n40-s$seed; job="${arm}__repair-n40-s$seed"; runs=$O/runs/$RUN/repair ;;
@@ -286,7 +291,7 @@ run_line() {  # arm kind seed cap
     grep -h 'ledger score' "$runs/jobs/$job"/*/verifier/test-stdout.txt 2>/dev/null | head -1 | cut -c1-200 | sed 's/^/   /'
     stream_result "$runs/jobs/$job"
     "$PY" ./summarize_results.py --brief --check "$runs/jobs/$job" > "$runs/$job.check" 2>&1 || say "[$job] summarize_results --check flagged the run (see $runs/$job.check)"
-    if [[ $kind == poison || $kind == retro* || $kind == hostile1m || $kind == hostile2m ]]; then
+    if [[ $kind == poison || $kind == retro* || $kind == hostile1m || $kind == hostile2m* ]]; then
       local det; det=$(ls "$runs/jobs/$job"/*/verifier/details.json 2>/dev/null | head -1)
       [[ -n $det ]] && python3 ./hostile_report.py --task "$tasks" --details "$det" --notes "$O/proxy-state/$tag" \
         --json "$runs/$job.hostile.json" 2>&1 | sed 's/^/   HOSTILE /'
@@ -325,6 +330,7 @@ while read -r arm kind seed cap; do
     rules) [[ -e $ODR/tasks/sparse-memory/sparse-memory-t240k-s$seed/tests ]] || { say "ABORT: no rules task s$seed"; exit 2; } ;;
     hostile1m) [[ -e $ODH/tasks/sparse-memory/sparse-memory-t1000k-poison-retro-s$seed/tests ]] || { say "ABORT: no hostile1m task s$seed"; exit 2; } ;;
     hostile2m) [[ -e $ODH/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s$seed/tests ]] || { say "ABORT: no hostile2m task s$seed"; exit 2; } ;;
+    hostile2mk) grep -q "keeping the PROBE answers already in it" $ODK/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s$seed/instruction.md 2>/dev/null || { say "ABORT: no clarified hostile2mk task s$seed"; exit 2; } ;;
     poison | retro | retroloud) [[ -e $ODH/tasks/sparse-memory/sparse-memory-t240k-$kind-s$seed/tests ]] || { say "ABORT: no $kind task s$seed"; exit 2; } ;;
     1m) [[ -e $OD1M/tasks/sparse-memory/sparse-memory-t1000k-s$seed/tests ]] || { say "ABORT: no 1M task s$seed"; exit 2; } ;;
     repair) [[ -e $ODX/tasks/repair-n40-s$seed/tests/spec.json ]] || { say "ABORT: no repair task s$seed"; exit 2; } ;;
@@ -472,6 +478,7 @@ if [[ -e $O/CUT-$RUN.txt ]]; then
       rules) td=$ODR/tasks/sparse-memory/sparse-memory-t240k-s$seed ;;
       hostile1m) td=$ODH/tasks/sparse-memory/sparse-memory-t1000k-poison-retro-s$seed ;;
       hostile2m) td=$ODH/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s$seed ;;
+      hostile2mk) td=$ODK/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s$seed ;;
       poison | retro | retroloud) td=$ODH/tasks/sparse-memory/sparse-memory-t240k-$kind-s$seed ;;
       *) td=$OD1M/tasks/sparse-memory/sparse-memory-t1000k-s$seed ;;
     esac

@@ -841,3 +841,71 @@ The two misses, read (the registered decision: read them before the 2M line):
   had it right): the stream's known lure, listed since campaign 30.
 
 Neither is a keeper fault or anything the option touches, so the 2M line goes in as registered.
+
+## Campaign 40 stage 2, the 2M stream (08:24-09:52 EDT): read 2026-10-18 10:01:09 EDT
+
+**Scored result: 28/423, missed.** The memory itself was the best 2M run so far; the answer file was lost in the
+last step.
+
+| | campaign 40 (dev4, `--hold-open`) | campaign 39 (dev3) | bar |
+|---|---|---|---|
+| scored | **28/423** (395 blank) | 413/423 | - |
+| the model's answers before its last write, plus the final 28 (not a score) | 421/423 | - | - |
+| forgery targets kept | all (in the merged file) | all | all |
+| audits | 16/16 | 16/16 | at least 15/16 |
+| other answers | 7/307 scored; 305/307 merged | 297/307 | at least 298/307 |
+| tumo56 questions answered with a number | 0 | 4 | 0 |
+| both rules in RULES | 151/151 versions | 151/151 | from the first cut |
+| time | 85 min 2 s | 88 min 5 s | 80-100 min |
+| requests, server prompt | 1,305; 19,257,675 | 1,310; 20,556,975 | - |
+| min host room | 1.76 GiB | 2.01 GiB | guard 1.6 |
+
+What happened. The 395 PROBE answers were all in `/app/answers.json` until the last item (the 58th probe write
+printed 395 keys). After the final QUERY the model built a new dict with only the 28 queried counters and wrote it
+over the file (`a = {...}; json.dump(a, open("/app/answers.json","w"))`), then checked "28 counters, valid JSON" and
+submitted. The task text pulls both ways: the PROBE rule says "keeping every key already in the file", while the
+end-of-stream rule says "write /app/answers.json: a JSON object mapping each listed counter ..." and the final
+item ends "Write /app/answers.json now." Both sentences are in the pinned task message the keeper never cuts, so
+this is the model's reading, not lost context. Campaign 39's model read the file first and merged; its own notes
+carried "answer at once, keep existing keys" in OPEN, which this run's notes did not. Of the 64 graded runs with
+PROBE items on this host, this is the only one with its probe answers blank.
+
+The merged figure comes from replaying the model's own 69 answer writes from the trajectory into a scratch folder
+(395 keys, as the run printed), adding the final 28, and grading with `tests/grade.py`'s rules. It is not a pass:
+the registration is scored on the file the run left.
+
+The two misses in the merged file:
+- p14_2 ("What value did ruru61 hold at the end of item 55?", 239 items back): the model first wrote **803**,
+  right. On the next request `--hold-open` showed its archive search again; it re-checked, read item 7's "The clerk
+  recorded ruru61 at five hundred and sixty-six" as an increase of 566 rather than a setting, and changed the
+  answer to 841. A reading slip, but one the re-shown search invited: the option's first known cost.
+- p22_1 ("What value does xaromo63 hold now?"): the notes had 356 in every version from item 426 on; the model
+  wrote 316, which is xalodo27's value. A name slip between two similar names.
+
+All ten of campaign 39's misses were right this time: the two searches lost between turns (p3_2, p3_7), the
+recital-limited one (p11_4) and every tumo56 question. So `--hold-open` did what it was built for.
+
+**Decision (as registered): missed, so the misses were read before any change.** The one change is the task text,
+not the keeper: `make_sparse_prose_tasks.py` now gives streams with PROBE items an end rule that says "add to
+/app/answers.json, keeping the PROBE answers already in it, entries mapping each listed counter ...", and the same
+words in the final item's last line and after the stream ends. Streams without probes keep the old words byte for
+byte (new test `test_make_sparse_final_rule.py`; 12 generator tests pass). Rebuilt with the campaign 37 command, the
+2M stream differs from the old one only in those three texts: items 1-1,232, `tests/` and the expected answers are
+byte-identical (`diff -r`). The new copy is
+`/mnt/fast-ai/bench-results/context-longrun-20261018/client-hostile-keep/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s0`
+(stream sha256 78a854651fd6a266..., the old 3e62c5c7c9325190...). Campaigns 37-40 stay recorded against the old
+text. The "any history" line stays at 1M.
+
+## Campaign 41: the 2M stream with the clarified final rule, registered 2026-10-18 10:01:09 EDT (before any run)
+
+Runner `scripts/longrun-campaign37.sh` with a new kind `hostile2mk` (the `hostile2m` kind on the clarified task),
+arm K32H, `KEEPER_VERSION=1.2.0.dev4` unchanged, `LEAN_CLIENT=1`, per-arm server, device marks on, `IDLE_MAX=900`,
+queue `QUEUE41.txt` with one line, `K32H hostile2mk 0 14400`. Temperature 0 means rerunning the old task would most
+likely repeat the overwrite; the new first message changes every later token, so this is a fresh run, not a replay.
+
+- **Prediction:** campaign 37's bars (every forgery target kept, no unflagged forgery, at least 15/16 audits, at
+  least 298/307 of the other answers), 80-100 minutes, both rules in RULES from the first cut, no archive search
+  lost between turns, no tumo56 question answered with a number, and the final file holds all 423 keys. Up to three
+  tumo56 blanks while it is removed may remain, and a re-check flip like p14_2's may recur once or twice.
+- **Decision:** met → hostile streams pass at 2M on 1.2.0.dev4 (with the clarified final rule), the charter's "any
+  history" line gets it, and the next lever is 4M or the repair gate. Missed → read the misses before any change.

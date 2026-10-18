@@ -133,7 +133,7 @@ Rules:
 - Each item is printed once and then deleted; it cannot be fetched again.
 - You do not know in advance which counters will be asked for.
 - Do not read or copy anything under /opt/kvstream directly; only use `next`.
-- When you have received the final item, write /app/answers.json: a JSON object mapping each
+- When you have received the final item, {final_rule}
   listed counter to its current integer value, or null if the counter has been removed at the
   end of the stream. If you no longer know a value, map it to "" — a blank scores the same as a
   wrong value, but blanks are reported separately as admitted losses.
@@ -141,6 +141,18 @@ Rules:
 {storage_rule}
 Your score is the fraction of listed counters whose value is exactly right.
 """
+# A stream with PROBE items says "keeping every key already in the file" for the probe answers; the final rule and the
+# final item must not read as "write a new file" (campaign 40: the model wrote a fresh file with only the final counters
+# and lost 395 probe answers). Streams without probes keep the original words. (rule line, final item's last line,
+# text after the stream ends)
+FINAL_RULE = ("write /app/answers.json: a JSON object mapping each",
+              "This was the last item. Write /app/answers.json now.",
+              "STREAM END: no more items. Answer the final query in /app/answers.json, then submit.")
+FINAL_RULE_KEEP = ("add to /app/answers.json, keeping the PROBE answers already in it, entries mapping each",
+                   "This was the last item. Add these answers to /app/answers.json now, keeping the PROBE answers "
+                   "already in it.",
+                   "STREAM END: no more items. Add the final query's answers to /app/answers.json, keeping the PROBE "
+                   "answers already in it, then submit.")
 
 
 class Sparse:
@@ -684,6 +696,7 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
     ask_txt = ("\n\nAlso answer these questions about earlier items in /app/answers.json, under the keys "
                "given (a number, or the words asked for):\n" + "\n".join(f"ASK {k}: {q}" for k, q, _a, _t, _b in asks)
                ) if asks else ""
+    final_rule = FINAL_RULE_KEEP if probes else FINAL_RULE
     items = []
     for bi, b in enumerate(batches, 1):
         items.append({"kind": "UPDATE", "total": total, "text": b})
@@ -693,7 +706,7 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
                   "text": "The auditors ask for the current value of each counter below (null if it has "
                           "been removed). Answer in /app/answers.json:\n" + "\n".join(f"QUERY {n}" for n in queried)
                           + ask_txt,
-                  "last": "This was the last item. Write /app/answers.json now."})
+                  "last": final_rule[1]})
     spec = {"kind": "ledger", "mode": mode, "expected": exp,
             "history": {n: g.history[n] for n in queried if n in g.history},
             "rules": rules_info,
@@ -731,12 +744,12 @@ def build(out: Path, name: str, target_tokens: int, seed: int, batch_tokens: int
         total=total, n_batches=len(batches), batch_tokens=tokens // len(batches), n_get=len(queried),
         probe_note=(f", {len(probe_after)} PROBE items with questions in between" if probes else ""),
         stream_tokens=tokens, n_counters=len(g.ever), example=g.names[0], rel=rel,
-        extra=("\n".join(extra) + "\n") if extra else "",
+        extra=("\n".join(extra) + "\n") if extra else "", final_rule=final_rule[0],
         storage_rule=STORAGE_MEMORY.replace("values, keys, SET lines", "counter names, values, report text")
         if mode == "memory" else STORAGE_NOTES)
     d = out / name
     write_task(d, items=items, spec=spec, answers_oracle=exp, instruction=instr, mode=mode,
-               end_text="STREAM END: no more items. Answer the final query in /app/answers.json, then submit.",
+               end_text=final_rule[2],
                metadata={"seed": seed, "target_tokens": target_tokens, "stream_tokens": tokens,
                          "token_counter": "tokenizer" if count_exact else f"chars/{cpt}",
                          "batch_tokens": tokens // len(batches), "density": density, "setting": tag,
