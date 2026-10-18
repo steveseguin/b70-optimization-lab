@@ -1,11 +1,12 @@
 # Current Workspace State
 
-**October 18, packet106 implementation resumed on CPU:** The draft head can
-split its prefix only after a verified hit; misses keep the full prefix on
-rank1. The combined target/draft view uses separate state. Reset handling and
-request logs are fixed in this copy. Nine Python checks pass; compiler byte,
-startup, memory and final seal checks are pending behind the shared compiler
-turn. No GPU, service or live queue changed.
+**October 18, packet106 prepared on CPU:** The draft head splits only after
+a verified hit; misses keep the complete prefix on rank1. Both compiler byte
+checks, hit/miss and transfer mocks, all eight allocation checks and all 44
+startup windows pass. Four views are sealed. The new proposals start with one
+64-token candidate-only B smoke, then a B grid and conditional A confirmation.
+The build is 261 MB. Device equality and speed are still unmeasured. No GPU,
+service or live queue changed.
 [Work note](notes/2026-10-18-own-runtime-packet106.md).
 
 **October 18, packet58j one-card port sealed on CPU:** The separate copy of
@@ -276,6 +277,8 @@ coordinator's matched screen; device quality and speed remain unmeasured.
 **October 17, packet 58 CPU preparation complete:** The separate one-card IQ3 engine is built and sealed. It keeps all target layers on one card, uses an 18 GB cache for expert weights, and can read missing weights from pinned host memory or copy them before use. CPU byte comparisons, lifetime checks, request resets, sanitizer runs and all 44 wrapper/evidence checks pass. The build occupies 147 MB. The conservative plan requires 118.31 GB of available host RAM, including the possible GPU allocation shadow and an 8 GiB reserve; the passive snapshot had only 1.95 GB extra, so the optional draft is deferred. No GPU window, large pin, model payload read or host-setting change ran here; device ownership stays with the coordinator and packet 57 is untouched. Next is the coordinator's one-card K1 → KD/W2m → three-suite chain, after fresh admission: about 107 minutes planned including cooldowns. One-card exactness and speed remain unmeasured. [Task record](notes/2026-10-17-own-runtime-packet58.md), [CPU closeout](experiments/own-xpu-runtime/stage2/packet58-onecard/CPU-PREPARATION-CLOSEOUT.md), [exact commands and durations](experiments/own-xpu-runtime/stage2/packet58-onecard/WINDOW.md).
 
 **October 17, packet 57 CPU preparation complete:** The timing tools are built and sealed. Packet 56's saved traces show rank 0 finishing last in 93% of complete cycles; moving a whole layer does not look useful under the available average-cost estimates. The draft still takes about 1.90 ms, but its individual kernel costs remain unmeasured. Four fresh small CPU runs match the old engine exactly, all 19 focused checks pass, and both builds and the final seal pass. The retained build is about 336 MB. No GPU window ran and packet 55's work was left alone. Next is the coordinator's diagnostic run on cards 0+1, after the host is free: about 88 minutes planned, comparing ordinary timing with the new event recording against the same packet 49 answers. This is not a new speed result. [Task record](notes/2026-10-17-own-runtime-packet57.md), [timeline](experiments/own-xpu-runtime/stage2/packet57-attribution/TIMELINE.md), [exact command](experiments/own-xpu-runtime/stage2/packet57-attribution/WINDOW.md).
+
+**October 18, 06:44 UTC — 2-card IQ3 record 56.09 tok/s, submitted and approved (`cmvdgjqwj000rrf013ay3ew6t`).** Packet 97 = packet 84 + route-fast + rec-both-plus + E1 half-scale expert cache, all 12 prompts exact (+0.72% over 55.687). Next bundle (packet 103): adds packet 100 down-tile16 (lane A +2.09%, lane B +1.68%) and packet 101 draft attention (+0.28% / +0.34%); packet 105's target-head split is ready for a device smoke. [Ledger](results/localmaxxing-submissions.md).
 
 **October 18, 02:55 UTC — first one-card IQ3 result: 24.34 tok/s on one Arc Pro B70, submitted and approved (`cmvd8bhou000duj01hxaihg15`).** Packet 58g runs all 48 target layers on card 0 with 48.6 GB of experts pinned in host memory and an 18 GB device expert cache; target-only (no draft); all 12 prompts exact against the packet 49 oracle. It is the first 1x Arc Pro B70 entry for this model on the public list (other single-GPU hardware is faster). Next one-card step: the MTP draft (packet 58h). [Ledger](results/localmaxxing-submissions.md).
 
