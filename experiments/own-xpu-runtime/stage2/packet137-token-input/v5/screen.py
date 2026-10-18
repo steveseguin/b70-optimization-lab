@@ -111,6 +111,25 @@ def pair_barrier(args, identity, reasons):
         time.sleep(.1)
 
 
+def report_step(args, record, identity, coordination):
+    """CPU report entry, shared by live execution and regression replay."""
+    proof = read(args.output / 'run/report-inputs.json')
+    require(proof.get('passed') is True and proof.get('device_isolation', {}).get('passed') is True,
+            'screen exactness/isolation unproven')
+    require(proof['lane'] == args.lane and len(proof['requests']) == 12
+            and proof['incident64'].get('passed') is True
+            and all(r.get('passed') is True and r.get('exact_oracle') is True for r in proof['requests']),
+            'screen quality incomplete')
+    result = summary(proof['requests'], proof['incident64'], args.profile)
+    result.update(placement=proof['placement'], lane=args.lane, conditions=LANES[args.lane],
+                  timing=identity['timing'], device_isolation=proof['device_isolation'])
+    save(args.output / 'run/summary.json', result)
+    save(args.output / 'summary.json', label(result))
+    if identity.get('bracket'):
+        from packet137_report import finish_report
+        finish_report(args.output, record, identity, coordination)
+
+
 def screen_main(argv=None, *, release=None):
     args = parser().parse_args(argv)
     cpu_gate() if args.plan else lane_gate(args.lane)
@@ -250,21 +269,7 @@ def screen_main(argv=None, *, release=None):
             record.update(device_complete=True, lease_released=True)
             atomic_json(args.output / 'lane-coordination.json', coordination)
             persist()
-            proof = read(args.output / 'run/report-inputs.json')
-            require(proof.get('passed') is True and proof.get('device_isolation', {}).get('passed') is True,
-                    'screen exactness/isolation unproven')
-            require(proof['lane'] == args.lane and len(proof['requests']) == 12
-                    and proof['incident64'].get('passed') is True
-                    and all(r.get('passed') is True and r.get('exact_oracle') is True for r in proof['requests']),
-                    'screen quality incomplete')
-            result = summary(proof['requests'], proof['incident64'], args.profile)
-            result.update(placement=proof['placement'], lane=args.lane, conditions=LANES[args.lane],
-                          timing=identity['timing'], device_isolation=proof['device_isolation'])
-            save(args.output / 'run/summary.json', result)
-            save(args.output / 'summary.json', label(result))
-            if identity.get('bracket'):
-                from compare import finish_bracket
-                finish_bracket(args.output, record, identity, coordination)
+            report_step(args, record, identity, coordination)
             record.update(passed=True, finished_utc_ns=time.time_ns(),
                           elapsed_seconds=(time.time_ns()-record['started_utc_ns'])/1e9,
                           files={str(p.relative_to(args.output)):sha(p) for p in args.output.rglob('*')

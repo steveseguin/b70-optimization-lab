@@ -53,7 +53,7 @@ class Tests(unittest.TestCase):
    common.verify_map(root,{'a':digest});f.write_bytes(b'two')
    with self.assertRaises(ValueError):common.verify_map(root,{'a':digest})
  def test_proposal_identity_ignores_timing_but_detects_guess(self):
-  from compare import proposal_identity
+  from packet137_report import proposal_identity
   with tempfile.TemporaryDirectory() as d:
    root=Path(d);(root/'rank1').mkdir();trace=root/'rank1/draft-rows.jsonl'
    row=dict(draft_position=0,confirmed_token=1,guess=2,head=True,wall_ms=12.)
@@ -63,7 +63,7 @@ class Tests(unittest.TestCase):
    trace.unlink()
    with self.assertRaises(ValueError):proposal_identity(root)
  def test_missing_device_table_samples_refused(self):
-  from compare import table_samples
+  from packet137_report import table_samples
   with tempfile.TemporaryDirectory() as d:
    root=Path(d);path=root/'run/ranks/rank1/token-table-samples.json';path.parent.mkdir(parents=True)
    common.save(path,dict(passed=True,samples=31,before_ready=True))
@@ -72,5 +72,5 @@ if __name__=='__main__':
  resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3))
  from build_engine import limits,save,sha,ROOT
  limits();result=unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(Tests))
- save(P/'evidence/policy.json',dict(passed=result.wasSuccessful(),device_executed=False,tests=result.testsRun,sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'test_v5.py',P/'bracket.py',P/'bracket_config.py',P/'bracket_job.py',P/'compare.py']}))
+ save(P/'evidence/policy.json',dict(passed=result.wasSuccessful(),device_executed=False,tests=result.testsRun,sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'test_v5.py',P/'bracket.py',P/'bracket_config.py',P/'bracket_job.py',P/'packet137_report.py']}))
  raise SystemExit(not result.wasSuccessful())

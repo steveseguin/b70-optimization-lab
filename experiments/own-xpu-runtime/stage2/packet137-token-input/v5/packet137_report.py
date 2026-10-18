@@ -48,14 +48,22 @@ def checked_requests(summary, oracle):
     return dict(rate=statistics.median(statistics.median(v) for v in grouped.values()),
                 acceptance=statistics.mean(acceptance), acceptance_counts=counts)
 
-def finish_bracket(output, window, identity, coordination):
+def finish_report(output, window, identity, coordination):
     proof = read(output / 'run/bracket-inputs.json')
     views = proof['views']
     require(proof.get('passed') is True and len(views) == len(identity['bracket']['views']), 'incomplete bracket')
     oracle = lambda prompt: D.CHECK.token_record(D.ORACLE / 'results' / prompt)
     isolation = read(output / 'run/device-isolation.json')
     require(isolation.get('passed') is True, 'bracket isolation failed')
-    if proof['kind']=='smoke':return finish_smoke(output,window,identity,proof,isolation,oracle)
+    require(proof['kind'] == identity['bracket']['kind'], 'report kind differs')
+    if proof['kind'] == 'smoke':
+        return finish_smoke(output, window, identity, proof, isolation, oracle)
+    require(proof['kind'] == 'bracket', 'unknown report kind')
+    return finish_bracket(output, window, identity, coordination, proof, isolation, oracle)
+
+def finish_bracket(output, window, identity, coordination, proof, isolation, oracle):
+    require(proof['kind'] == 'bracket', 'smoke cannot finish a bracket')
+    views = proof['views']
     samples=table_samples(output,identity)
     rows, descriptors = [], None
     for index, view in enumerate(views):

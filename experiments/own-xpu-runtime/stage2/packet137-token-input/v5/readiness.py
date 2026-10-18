@@ -2,7 +2,7 @@
 import json,resource
 from pathlib import Path
 from common import HERE,ROOT,read,require,sha,save,verify_map
-GATES=('argument-gate','legacy-windows','all-windows','worker-gate','launch-limits','queue-plan','queue-gate')
+GATES=('argument-gate','legacy-windows','all-windows','worker-gate','launch-limits','queue-plan','queue-gate','report137b-gate')
 def verify_ready():
  from preplan import verify as verify_preplan
  verify_preplan()

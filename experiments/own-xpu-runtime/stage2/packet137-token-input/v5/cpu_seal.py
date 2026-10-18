@@ -11,9 +11,13 @@ def symlinks():
   require(path.is_symlink() and str(path.readlink())==target,'parent symlink changed: '+name)
  return len(links)
 def oracle():
- sys.path.insert(0,str(HERE.parent))
- from shared_oracle import static_binding
- binding=static_binding()
+ prior_path = sys.path[:]
+ try:
+  sys.path.insert(0,str(HERE.parent))
+  from shared_oracle import static_binding
+  binding=static_binding()
+ finally:
+  sys.path[:] = prior_path
  command=['nice','-n','19','taskset','-c','8-15,24-31','python3','-B',str(HERE.parent/'shared_oracle.py'),'--require-complete']
  cp=subprocess.run(command,stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=180)
  require(cp.returncode==0,'shared oracle refused: '+cp.stderr[-2000:])
