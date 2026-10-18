@@ -1,18 +1,33 @@
 """New screen seals; inherited historical receipts are never admission evidence."""
-import gzip,importlib.util,json,os,shutil
+import gzip,hashlib,importlib.util,json,os,shutil
 from build131 import P,ROOT,B,sha,save,cpu_main,limits
 def main():
+ control=json.loads((P/'selections/control/selection.json').read_text())
+ candidate=json.loads((P/'selections/candidate/selection.json').read_text())
+ assert control['choices']['miss']=='batch' and candidate['choices']['miss']=='banks-batch'
+ candidate['choices']['miss']='batch';assert candidate==control,'only miss choice may change'
  build=json.loads((P/'build-device-receipt.json').read_text())
  state=json.loads((P/'evidence/state131.json').read_text());shape=json.loads((P/'evidence/census131.json').read_text())
  reset=json.loads((P/'evidence/reset-regression.json').read_text())
+ extra=[json.loads((P/'evidence'/name).read_text()) for name in ('recurrence131.json','mini131.json','startup131.json','python131.json')]
+ assert all(r['passed'] for r in extra)
  assert build['passed'] and state['passed'] and shape['passed'] and reset['passed']
  assert len(state['runs'])==8 and len({r['canonical_sha256'] for r in state['runs']})==1
+ for row in state['runs']:
+  f=ROOT/row['artifact'];assert sha(f)==row['artifact_sha256']
+  assert hashlib.sha256(gzip.decompress(f.read_bytes())).hexdigest()==row['canonical_sha256']
+ for row in shape['runs']:assert sha(ROOT/row['census'])==row['census_sha256']
+ startup=extra[2];assert sha(ROOT/startup['archive'])==startup['archive_sha256']
  sources=dict(build['sources'])
- for report in (state,shape,reset):sources.update(report['sources'])
- for name in ('state131.json','census131.json','reset-regression.json'):sources[str((P/'evidence'/name).relative_to(ROOT))]=sha(P/'evidence'/name)
+ for report in (state,shape,reset,*extra):
+  for name,h in report['sources'].items():
+   assert sha(ROOT/name)==h,'stale gate source: '+name
+   sources[name]=h
+ for name in ('state131.json','census131.json','reset-regression.json','recurrence131.json','mini131.json','startup131.json','python131.json'):sources[str((P/'evidence'/name).relative_to(ROOT))]=sha(P/'evidence'/name)
  for f in [*P.glob('*.py'),P/'placement-policy.json',P/'copy131.json',P/'dependency-pins.json',P/'shared-wrapper-pin.json']:
   sources[str(f.relative_to(ROOT))]=sha(f)
  sources.update(json.loads((P/'dependency-pins.json').read_text()))
+ for name,h in sources.items():assert sha(ROOT/name)==h,'stale seal input: '+name
  from bootstrap import install
  install()
  spec=importlib.util.spec_from_file_location('p131_generic_seal',P.parent/'screen/seal.py');generic=importlib.util.module_from_spec(spec);spec.loader.exec_module(generic)

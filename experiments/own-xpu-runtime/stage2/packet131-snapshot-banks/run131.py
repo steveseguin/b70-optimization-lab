@@ -1,12 +1,13 @@
 """Coordinator-only smoke then five fresh-load lane-B v4 windows."""
-import argparse,json
+import argparse,json,hashlib
 from pathlib import Path
 P=Path(__file__).resolve().parent;ORDER=('control','candidate','control','candidate','control')
 def view(name):return P/'selections'/name
 def output(index):
  from bootstrap import WRAPPER
  from build131 import sha
- return WRAPPER/'evidence'/('p131-'+sha(view('candidate')/'screen-seal.json')[:12]+'-B-'+('smoke12' if index==-1 else str(index)+'-'+ORDER[index]))
+ campaign=hashlib.sha256(''.join(sha(view(v)/'screen-seal.json') for v in ('control','candidate')).encode()).hexdigest()[:12]
+ return WRAPPER/'evidence'/('p131-'+campaign+'-B-'+('smoke12' if index==-1 else str(index)+'-'+ORDER[index]))
 def main(argv=None):
  ap=argparse.ArgumentParser();ap.add_argument('--index',type=int,choices=range(-1,5),required=True);ap.add_argument('--output',required=True);ap.add_argument('--plan',action='store_true');ap.add_argument('--fault-review');ap.add_argument('--authorized-device-window',action='store_true');a=ap.parse_args(argv)
  from bootstrap import install
@@ -22,6 +23,8 @@ def main(argv=None):
   for i in range(a.index):
    r=read(output(i)/'window.json')
    assert r['passed'] and r['device_complete'] and r['lease_released'] and not r.get('stop_reasons')
+   from compare131 import load
+   load(dict(lane='B',index=i,choice=ORDER[i]))
  lineage=view('candidate' if a.index==-1 else ORDER[a.index])
  args=['--profile','tp2','--lane','B','--placement','1','--timing','token','--lineage',str(lineage),'--seal',str(lineage/'screen-seal.json'),'--output',str(output(a.index))]
  if a.plan:args+=['--plan']

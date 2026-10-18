@@ -14,8 +14,8 @@ TARGET_ONLY = {'other_fusion':'production', 'experts': 'wide64', 'head': 'produc
                'hc_norm': 'production', 'host_retire': 'ordered'}
 
 def project(target):
-    from bundle_selection import views, selection
-    assert any(target == selection(v) for v in views().values()), 'unsealed KD composition'
+    root=Path(__file__).resolve().parent
+    assert any(target == json.loads((root/'selections'/v/'selection.json').read_text()) for v in ('control','candidate')), 'unsealed KD composition'
     result = copy.deepcopy(target)
     result['choices'].update(TARGET_ONLY)
     assert result['draft'] == target['draft']

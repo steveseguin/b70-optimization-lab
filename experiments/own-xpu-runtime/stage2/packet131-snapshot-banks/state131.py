@@ -29,7 +29,7 @@ def main():
     result.update(compiler=compiler,repeat=repeat,view=view,command=cmd,artifact=str(archive.relative_to(ROOT)),artifact_sha256=sha(archive),snapshot=json.loads((dest/'speculative-snapshot.json').read_text()))
     runs.append(result);shutil.rmtree(dest);print(compiler,repeat,view,'state PASS',flush=True)
  assert len({r['canonical_sha256'] for r in runs})==1,'cross view/compiler/repeat bytes differ'
- sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'state131.cpp',P/'state131.py',P/'strict_snapshot.hpp',P/'rank.hpp',P/'main.cpp',P/'request_reset.hpp']}
+ sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'state131.cpp',P/'state131.py',P/'strict_snapshot.hpp',P/'rank.hpp',P/'main.cpp',P/'request_reset.hpp',*(P/'selections'/v/n for v in ('control','candidate') for n in ('selection.json','mini.json'))]}
  save(P/'evidence/state131.json',dict(passed=True,device_executed=False,runs=runs,sources=sources,commands=commands,max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss))
  limits()
 if __name__=='__main__':cpu_main();main()

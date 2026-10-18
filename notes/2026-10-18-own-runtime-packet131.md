@@ -27,9 +27,27 @@ snapshot. This removes recurrent capture copying; it does not claim to remove
 the entire snapshot or its entire measured time.
 
 The first host and device-target build passes, without device execution. The
-production 24/24 census and forced state tests are being prepared. Compilation
-waits for packet94's lock and the coordinator's whole-host reservation. The
-candidate is **not ready for device admission** at this milestone.
+24/24 production constructor census copies 48,627,432 bytes over 1,021 extents
+for control, and 19,025,640 bytes over 984 extents for the candidate: 29,601,792
+bytes avoided on every cycle. The third bank costs exactly that amount, and
+backup capacity shrinks by the same amount. Total device allocation is
+unchanged: 28,144,182,388 bytes on rank0 and 31,425,985,242 on rank1. These are
+CPU allocation-ledger results, not a driver-residency measurement. Evidence:
+`evidence/preflight-census131.json` in the packet. Both retain two submissions.
+
+Two fresh miniature runs per choice match frozen packet124c target tokens,
+96 retained layer outputs and draft state/proposals. Ten Python tests pass,
+covering the drain deadline race, graceful teardown on error, full smoke/grid
+suite control flow and rejection of a one-load speed win. The real eleven-
+window queue loop passes for both selections, with failure at each position,
+changed receipt fields and repeat refusal. Operational admissions and child
+results are synthetic in these CPU queue tests, not a device qualification.
+
+The forced-state and production bank-binding checks are prepared. Compilation
+waits for packet94's lock and the coordinator's whole-host reservation. One
+owned sleeping census process was interrupted to consolidate the final serial
+build/check sequence; no device process was signalled. The candidate is
+**not ready for device admission** at this milestone.
 
 Planned CPU gates: production allocation/descriptor census, actual snapshot
 and miniature target state under GNU and Intel, every logical committed/spare

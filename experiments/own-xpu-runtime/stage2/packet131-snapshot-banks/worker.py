@@ -2,6 +2,6 @@
 import runpy
 from exec_limits import install as install_exec_limits
 install_exec_limits()
-from bootstrap import WRAPPER,install
+from bootstrap import P,WRAPPER,install
 install()
-if __name__=='__main__':runpy.run_path(str(WRAPPER/'tp2_worker.py'),run_name='__main__')
+if __name__=='__main__':runpy.run_path(str(P/'grid_worker.py'),run_name='__main__')

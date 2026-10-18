@@ -13,7 +13,8 @@ from bootstrap import install
 install()
 from common import D, P56, ROOT, SUPPORT, compare_tokens, label, read, require, save, sha, summary
 
-from conditions import LANES, Teardown, lane_gate
+from conditions import LANES, lane_gate
+from teardown import Teardown
 from devices import DeviceMonitor, masked_environment
 
 def drain(transport, output, success, reason=None):

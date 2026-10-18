@@ -61,6 +61,8 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;try{
     if(abandon==2)require(!image.before_command(true,p,6),"wrong token fallback");
     if(abandon==3)require(!image.before_command(true,p+1,5),"wrong position fallback");
     const auto after=canonical(*e,shared);require(after==before,"terminal/abandoned redo changed canonical bytes");
+    image.boundary();require(canonical(*e,shared)==before,"terminal boundary changed committed bytes");
+    for(const auto&[name,id]:e->state_reserves){auto raw=e->readback(0,id,e->dev(0).arena.row(id).bytes);require(std::all_of(raw.begin(),raw.end(),[](auto x){return x==0;}),"cancelled reserve not retired");}
     evidence<<p<<':'<<cut<<":fallback"<<abandon<<':'<<after<<'\n';++cases;
    }
   }
@@ -70,12 +72,20 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;try{
  // Two bank parities, live committed histories/KV, and repeated table rebuilds
  // across 31->32 and 63->64. Compare each step to a direct-target sequence.
  std::vector<std::string> direct,details;reset(0);
+ std::vector<int> live_cuts;size_t command_count=0;
+ for(size_t i=0;i<e->p.launches.size();++i){
+  command_count+=e->issue_sites[i].commands.size();const auto& op=e->p.launches[i].op;
+  if(op=="conv"||op=="gdn"||op=="qsa_append_pool")live_cuts.push_back(int(command_count));
+ }
+ require(!live_cuts.empty()&&command_count>0,"live cancellation coverage missing");live_cuts.push_back(int(command_count-1));
  for(int p=0;p<98;++p){half(5,p,false);accept();std::string detail;direct.push_back(canonical(*e,shared,&detail));details.push_back(detail);}
  reset(0);
  for(int p=0;p<98;++p){
   if(p%3==0){half(5,p,true);accept();}
   else {
-   half(7,p,true);pipeline::undo(*e,c,image,true,p,5);
+   e->a.cancel_launch=live_cuts[(p/3)%live_cuts.size()];auto stopped=half(7,p,true);
+   require(c.cancelled&&stopped.reserved[1]==e->a.cancel_launch,"live cancellation cut not reached");
+   pipeline::undo(*e,c,image,true,p,5);e->a.cancel_launch=-1;
    if(p%3==2)require(!image.before_command(false,-1,-1),"consecutive fallback");
    else require(image.before_command(true,p,5),"consecutive redo");
    half(5,p,false);if(p%3==1)image.finish_redo();accept();

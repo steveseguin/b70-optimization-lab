@@ -25,6 +25,7 @@ def turn():
 def run(cmd,name):
  limits();cmd=list(map(str,cmd));start=time.monotonic()
  with turn(),(B/(name+'.log')).open('w') as log:
+  limits()  # Recheck after a coordinator/foreign compiler wait.
   subprocess.run(cmd,cwd=ROOT,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=1200)
  print(name,'PASS',flush=True);limits()
  return dict(name=name,command=cmd,seconds=time.monotonic()-start)

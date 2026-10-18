@@ -20,9 +20,9 @@ def main():
    with log.open('w') as stream:subprocess.run(cmd,cwd=ROOT,stdin=subprocess.DEVNULL,stdout=stream,stderr=subprocess.STDOUT,check=True,timeout=240)
   proposal.write_text(payload);rows.append(dict(proposal=str(proposal.relative_to(ROOT)),sha256=sha(proposal),jobs=len(jobs),expected_seconds_per_job=360 if label.startswith('smoke') else 480,watchdog_seconds=1800 if label.startswith('smoke') else 3600))
  cases=[]
- for rc in (0,1):
+ for label,rc in (("smoke-B",0),("smoke-B",1),("grid-B",0),("grid-B",1)):
   with tempfile.TemporaryDirectory(prefix='p131-queue-') as d:
-   tmp=Path(d);shutil.copyfile(queue/'proposed-p131-smoke-B.txt',tmp/'queue-B.txt');executed=[]
+   tmp=Path(d);shutil.copyfile(queue/('proposed-p131-'+label+'.txt'),tmp/'queue-B.txt');executed=[]
    class Backend:
     def guards(self,lane):assert lane=='B';return 0
     def review(self,job,directory):return str(tmp/'synthetic-review.json')
@@ -31,12 +31,13 @@ def main():
    clock=[100000.]
    def now():clock[0]+=100.;return clock[0]
    runner=q.Queue(tmp,'B',backend=Backend(),now=now,sleep=lambda _:None);finish=runner.finish
-   def done(job,record):finish(job,record);runner.stopped=True
+   def done(job,record):finish(job,record);runner.stopped=bool(rc) or not q.read_queue(tmp,'B')
    with patch.object(q,'live_window_blocker',return_value=None),patch.object(q,'drain_spacing_deadline',return_value=0),patch.object(runner,'finish',side_effect=done),patch.object(q,'report_failure_evidence',side_effect=ValueError('synthetic failed child')):
     result=runner.run()
-   assert len(executed)==1 and result==rc
-   assert not q.read_queue(tmp,'B') and not runner.active.exists()
-   cases.append(dict(returncode=rc,executions=len(executed),command=executed[0],receipt=json.loads((tmp/'done-B.txt').read_text())))
+   expected=1 if rc or label=='smoke-B' else 5
+   assert len(executed)==expected and result==rc
+   assert len(q.read_queue(tmp,'B'))==(4 if rc and label=='grid-B' else 0) and not runner.active.exists()
+   cases.append(dict(proposal=label,returncode=rc,executions=len(executed),commands=executed,receipts=[json.loads(line) for line in (tmp/'done-B.txt').read_text().splitlines()]))
  save(P/'evidence/queue131.json',dict(passed=True,device_executed=False,service_executed=False,live_queue_modified=False,synthetic_scheduler=True,proposals=rows,cases=cases,sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'queue131.py',P/'run131.py',Path(q.__file__),*(ROOT/r['proposal'] for r in rows)]}))
  print('six plans and real queue success/failure PASS',flush=True)
 if __name__=='__main__':cpu_main();main()

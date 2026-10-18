@@ -40,7 +40,7 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;std::unique_ptr<mtp36::D
 '''
     (S/'entry.cpp').write_text(entry)
     commands=json.loads((P/'engine-commands.json').read_text())
-    base=next(r['command'] for r in commands if r['name']=='gnu-host-entry-main');base=base[:base.index('-o')]
+    base=next(r['command'] for r in commands if r['name']=='gnu-host-entry-main');base=base[:min(base.index('-o'),base.index('-c'))]
     base=[x for x in base if not x.startswith('-O')]+['-O0','-I'+str(P)]
     compile=[*base,'-c',str(S/'entry.cpp'),'-o',str(S/'entry.o')]
     link=list(next(r['command'] for r in commands if r['name']=='gnu-host-link'))

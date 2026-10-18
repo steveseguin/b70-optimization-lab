@@ -3,8 +3,9 @@ import json
 from types import SimpleNamespace
 from build_engine import P,ROOT,sha
 def require_smoke(*, lineage=None, root=None):
- from screen_jobs import view,smoke_output
- SMOKE_CHOICE="both"
+ from run131 import view,output
+ smoke_output=lambda:output(-1)
+ SMOKE_CHOICE="candidate"
  from bootstrap import install
  install()
  from common import sealed,D,compare_tokens
