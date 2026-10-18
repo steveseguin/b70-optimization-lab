@@ -1,0 +1,28 @@
+{
+  "schema": "packet118.ready.v1",
+  "ready": false,
+  "device_executed": false,
+  "evidence_rule": "identical-selection-v1",
+  "decision": "experiments/own-xpu-runtime/ops/packet118-orchestration/decisions/89f2d60778eb2d6e.json",
+  "decision_sha256": "6e8de7137e54fe258f6c98af8a5b1ee983b38845da265a566655cb47d97d4b94",
+  "selection": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64+halfcache",
+    "host": "ordered",
+    "route": "fast",
+    "norm": "production",
+    "recurrence": "rec-both-plus",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "down": "tile16",
+    "draft_attention": "split32",
+    "other_fusion": "fused",
+    "target_head": "split",
+    "draft_prefix": "80128"
+  },
+  "chain_output": "device-cards01-a",
+  "chain_command": "systemd-run --user --unit=packet118-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet118-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet118-record-bundle/build/device-cards01-a </dev/null",
+  "reason": "[Errno 2] No such file or directory: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet118-orchestration/evidence/launch-limits.json'"
+}

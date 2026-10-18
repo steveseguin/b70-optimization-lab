@@ -56,3 +56,40 @@ Exactly two views are sealed. `proposed-p118-smoke-B.txt` passes the real
 planner on a private temporary queue. It ships before the remaining CPU
 orchestration tests. Build size is about 208 MB, below 250 MB; root free is
 about 38.8 GB. Device output, smoke result and speed remain unmeasured here.
+
+## Final CPU orchestration milestone
+
+Smoke milestone `27494913b` was pushed immediately. Both proposed composites
+pass the real planner on temporary queues. Fixed decision `89f2d60778eb2d6e`
+selects the packet103 bundle5 control and bundle7 candidate. It never selects
+a different prefix from timing or acceptance data. The source audit confirms
+that the only C++ changes from bundle6 are packet114's two prefix-selection
+admissions; row arithmetic and argmax bodies are unchanged.
+
+All **31 policy and submission tests pass**. They cover the exact +1.0%
+boundary, either-lane failure, the stronger control, identical-selection
+refusal, fixed N, source/receipt tampering, exact outputs, allowed acceptance
+differences between prefixes, deterministic acceptance for each selection,
+imports that preserve every resource limit, and both selections' complete
+prepared-payload/submission replay. Submission notes disclose the prefix rule.
+The strict512 flag remains false for this inherited 128-token scope.
+
+Both actual rank exec points pass interception for smoke, composite and chain.
+All six retain unlimited address space and unchanged inherited limits. The
+isolated negative child rejects the old 8 GiB cap. The harness prohibits device
+opens, native execution and writes outside its temporary scratch. No device
+job imports a resource-setting CPU module.
+
+The fresh chain folder is `stage2/packet118-record-bundle/build/device-cards01-a`.
+Its input inventory and plan pass. `ready.json` is correctly false: the smoke
+has no device receipt yet, and both composites are pending. `verify_ready.py`
+refuses for that reason. After the composites, only the CPU evidence reader
+(`orchestrate.py --evidence-only`) remains; it does not rebuild, relaunch or
+rerun the preparation tests.
+
+The final build is **207,997,409 bytes**, below 250 MB. Root has about 38.8 GB
+free. [Final audit](../experiments/own-xpu-runtime/ops/packet118-orchestration/cpu-final.json),
+[CPU closeout](../experiments/own-xpu-runtime/stage2/packet118-record-bundle/CPU-PREPARATION-CLOSEOUT.md),
+[orchestration](../experiments/own-xpu-runtime/ops/packet118-orchestration/README.md).
+No GPU, service, sudo, live queue, host setting, reboot or external submission
+was performed. The two sealed views and shipped smoke proposal remain unchanged.
