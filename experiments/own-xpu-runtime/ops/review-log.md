@@ -306,3 +306,28 @@ STOP-doing items applied:
 - no composite confirmations that include a known-negative part;
 - check dependencies and the ledger before opening a lever (memory updated);
 - no hand-appended lane-B follow-ups.
+
+## Review 11, 00:05 UTC (2026-10-18): **ACT**
+
+**Evidence:**
+- 98% combined in-flight. But lane B was idle 23:16–23:37 (21 min), and both queues are nearly dry.
+- Packet 85's ranked lever list (23:52) had not been acted on. Only one Codex job was running.
+- Packet 83 closed (all negative); packet 81 neutral; packet 79 lost.
+- p84's brief still composes closed levers (p81 experts, p83 draft heads).
+
+**Actions, 00:06–00:12 UTC:**
+1. **Codex packet 86: a DIAGNOSTIC-ONLY limiter screen** for the experts (2.73 / 2.75 ms per half) and the rank-1 HC gates (1.198 ms).
+   - Views: `exp-nodeq`, `exp-constgrid`, `exp-onecached`, `hc-nodeq`, `hc-constscale`.
+   - Labelled non-exact, guarded out of every bundle, chain and submission path, with every safety check intact.
+   - Lane B. This supplies packet 85's required ALU/latency explanation before any more expert or HC builds.
+2. **Codex packet 87 (CPU, 30 min):** a model check of splitting the target-head vocabulary rows, or the draft prefix head on hits only, into rank 0's 0.544 ms hit slack, with handoff costs. Seal a design only if ≥ +0.5%; otherwise close.
+3. **p84 narrowed at orchestration:** pin `experts=wide64` and the draft head to production (p81 and p83 closed). Validate p80 + `rec-parallel` (± route-fast) with one lane-B control/candidate/control screen before any p84 chain; chain only at ≥ +0.5% on lane B.
+4. **Lane-A work for after 58f:** p86's lane-A grid or p84's chain, queued as soon as either is ready (`p80-launch.sh` unpauses lane A after 58f).
+5. **≥ 2 Codex lever jobs:** p84, p86 and p87 are running. The obsolete `laneB-followups-generic` waiter was stopped; it keyed on non-existent p83 file names.
+
+**STOP-doing items applied:**
+- no closed levers in bundles;
+- no more draft-bytes, relocation or expert load-count packets;
+- waiters keyed on the real job names;
+- per-lane idle accounting (gpu_time_review per-lane: TODO);
+- act on lever rankings within minutes.
