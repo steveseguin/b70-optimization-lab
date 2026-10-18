@@ -11,6 +11,9 @@
 # with py-spy stacks (non-blocking) of every python process in the containers, every thread's kernel state (state,
 # wait channel, syscall, kernel stack) and both cards' gt0/hw_engines. Re-armed when the progress file grows again;
 # at most 5 captures. Stops when OUT_DIR/STOP exists. py-spy 0.4.0 is fetched once into /mnt/fast-ai/tools/py-spy.
+# LOG_GLOB (2026-10-17): read the breadcrumb lines from the servers' own log files (the launcher's server.log) instead
+# of `docker logs` every second: two Docker CLI calls a second cost 30-40 MB each while the host had 0.2 GiB to spare
+# (campaign 31 was stopped by the 1.6 GiB memory guard). A file that exists at the start is read from its end.
 set -uo pipefail
 [[ $(id -u) == 0 ]] || { echo "run as root"; exit 1; }
 OUT=${1:?OUT_DIR}; PROG=${2:-}; SILENT=${3:-8}
@@ -41,12 +44,24 @@ capture() {  # dir
   chown -R 1000:1000 "$o"
 }
 captures=0; armed=1; last_size=-1; last_capture=0
-echo "hang-capture: watching containers' breadcrumbs${PROG:+ and $PROG (silent ${SILENT}s)} -> $OUT"
+CRUMB='b70_step_breadcrumbs rank .* (STALL|FAILED)'
+declare -A off
+if [[ -n ${LOG_GLOB:-} ]]; then for f in $LOG_GLOB; do [[ -f $f ]] && off[$f]=$(stat -c %s "$f"); done; fi
+echo "hang-capture: watching ${LOG_GLOB:-containers\' logs} for breadcrumbs${PROG:+ and $PROG (silent ${SILENT}s)} -> $OUT"
 while [[ ! -e $OUT/STOP ]]; do
   why=
-  for c in $(docker ps -q 2>/dev/null); do
-    docker logs --since 3s "$c" 2>&1 | grep -qE 'b70_step_breadcrumbs rank .* (STALL|FAILED)' && why="breadcrumbs stall in $c"
-  done
+  if [[ -n ${LOG_GLOB:-} ]]; then
+    for f in $LOG_GLOB; do
+      [[ -f $f ]] || continue
+      size=$(stat -c %s "$f"); o=${off[$f]:-0}; (( size < o )) && o=0
+      (( size > o )) && tail -c +$((o + 1)) "$f" | head -c $((size - o)) | grep -qE "$CRUMB" && why="breadcrumbs stall in $f"
+      off[$f]=$size
+    done
+  else
+    for c in $(docker ps -q 2>/dev/null); do
+      docker logs --since 3s "$c" 2>&1 | grep -qE "$CRUMB" && why="breadcrumbs stall in $c"
+    done
+  fi
   if [[ -n $PROG && -f $PROG ]]; then
     size=$(stat -c %s "$PROG"); age=$(( $(date +%s) - $(stat -c %Y "$PROG") ))
     (( ! armed && size != last_size )) && { armed=1; echo "$(date +%T) progress again: re-armed"; }

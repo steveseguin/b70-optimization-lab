@@ -28,6 +28,17 @@ class Delta(unittest.TestCase):
         self.assertEqual(kept.splitlines()[-2:], ["OPEN", "- nothing"])
         self.assertIn("abcd12 = 75", kept)
 
+    def test_a_line_without_a_value_keeps_the_held_number(self):
+        """Campaign 31, 2026-10-17: "amount not yet known, must recall items 4/5" is a remark on the value, not a value."""
+        notes = "RULES\n(none)\nSTATE\nqibape16: -267\nOPEN"
+        near = {"qibape16": set(), nd.LOOSE: set()}
+        new, info = nd.apply_delta(notes, {"changes": [("qibape16", "reversal pending, amount not yet known (items 4/5)")]},
+                                   set(), strict=True, near=near)
+        self.assertEqual(new.splitlines()[3], "qibape16: -267 (reversal pending, amount not yet known items 4/5)")
+        self.assertEqual(info["mismatch"], [])
+        self.assertEqual(nd.apply_delta(notes, {"changes": [("qibape16", "removed (item 5)")]})[0].splitlines()[3],
+                         "qibape16: removed (item 5)")
+
     def test_checks(self):
         texts = ["ITEM 7/9 (UPDATE)\nabcd12 was opened at 402. efgh34 was set to one hundred. efgh34 gained five. "
                  "Next on the list was wxyz56. It was set to minus sixty-two. What does qq11 hold now?"]

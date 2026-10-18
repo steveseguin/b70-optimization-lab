@@ -339,6 +339,28 @@ def fact_of(line: str) -> tuple[str, str]:
     return key.strip().strip("`*_ ").lower(), val.strip().strip("`")
 
 
+# References to the content's own numbering ("item 4", "items 4/5", "item-43"): numbers that are not a value
+ITEM_NUMBERS = re.compile(r"\b(?:items?|tickets?|messages?)[\s#-]*\d+(?:\s*(?:/|,|&|and|or|to|-|\u2013|\u2014)\s*\d+)*", re.I)
+
+
+def holds_no_value(value: str) -> bool:
+    """True for a line that states no value of its own: no number (in digits or words) once references to items are
+    set aside, and not a removal (`pending: amount not yet known, must recall items 4/5`; not `removed (item 5)`, not
+    `opened at 40`, not `minus twelve`)."""
+    v = ITEM_NUMBERS.sub(" ", value)
+    if re.match(r"\W*(removed|closed|struck|deleted|gone)\b", v.lower()):
+        return False
+    return not numbers_in(v)
+
+
+def is_a_number(value: str) -> bool:
+    """True for a value that is a number and nothing else, remarks set aside (`-267`, `75 (60, gained 15 in item 6)`,
+    `opened at 402`, `-58 - 35 = -93, then set to 82`); False for a description that holds numbers (`contains lines
+    for tickets 10 and 11`, `35 of 44 tickets fixed`)."""
+    v = ITEM_NUMBERS.sub(" ", re.sub(r"\([^()]*\)", " ", value))
+    return bool(re.search(r"\d", v)) and {w.lower() for w in re.findall(r"[a-z]+", v, re.I)} <= {"opened", "set", "at", "to", "now", "then"}
+
+
 def number_of(value: str) -> int | None:
     """The whole number a STATE value holds now: the last number in it once bracketed remarks are set aside
     (`75 (60, gained 15 in item 606)` -> 75, `-107 -> -31` -> -31, `opened at 402` -> 402,
@@ -790,6 +812,13 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
             continue                                     # (the table's own key is nobody's name)
         if held is not None:
             was.setdefault(name, set()).add(held)
+        if held is not None and is_a_number(old) and not re.search(r"=|\u2192|->|=>", value) and holds_no_value(value):
+            # A line that holds no value of its own does not replace the number the NOTES hold: it stays as a remark
+            # on it. Campaign 31 (quiet audits, s1): "audit reversal of the increase entered in item 4, amount not
+            # yet known, must recall items 4/5" became the value (5), and the reversal was later done twice. Only for a
+            # value that is a number (not `contains lines for tickets 10 and 11`); brackets inside the remark are dropped
+            # (number_of sets aside one level of them).
+            value = f"{held} ({' '.join(re.sub(r'[()]', ' ', value).split())})"
         value = restated(value) or value                 # one sum written out twice is that sum
         if re.search(r"\d{25,}", value):                 # a number of 25 digits or more is not a value: asked about, not kept
             info["mismatch"].append(f"{name}: `{value[:60]}...` is not a value; write the line again")

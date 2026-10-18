@@ -274,6 +274,13 @@ tasks on a server that may be restarted under them (for example by a supervisor 
 to an exact server gets the answer the failed one would have had, so the task loses only the time. Not measured
 yet on a real restart.
 
+Also unreleased (1.1.1.dev1, 2026-10-17): a NOTES line whose new value states no number of its own (only item or
+ticket numbers, as in `audit reversal of the entry in item 4, amount not yet known, must recall items 4/5`) no longer
+replaces a number the NOTES hold: the number stays and the line is kept as a remark on it. Before, the value became the
+last item number (5) and the line was asked again. Lab campaign 31: a counter that waited on an archive search was
+reversed twice that way. Only for a STATE value that is a plain number; descriptions (`contains lines for tickets 10
+and 11`) are written as before. A replay of 29,272 saved lines changed only those lines.
+
 Also unreleased (1.1.1.dev0, 2026-10-17): with `--notes-checks near`, an amount the model took from an archive search
 counts as stated. The proxy keeps the text of its latest searches (up to 120,000 characters, in memory) as evidence
 for the amount check only, never as a mention of a name. Before, a correct line worked out from a recalled entry was

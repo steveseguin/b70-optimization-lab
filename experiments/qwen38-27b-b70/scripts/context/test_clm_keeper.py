@@ -845,5 +845,26 @@ class Delta(unittest.TestCase):
         self.assertEqual(again, "RULES\n- R one\nSTATE\nabcd12: 168\nOPEN")
 
 
+    def test_a_line_without_a_value_keeps_the_held_number(self):
+        # Campaign 31 (quiet audits, seed 1, 2026-10-17): the model wrote what was still to do instead of a value, the
+        # line became the value (its last number, 5, an item number) and the reversal was later done twice (-323 for -295)
+        notes = "RULES\n(none)\nSTATE\nqibape16: -267\nOPEN"
+        todo = ("audit reversal of the increase entered in item 4 \u2014 amount not yet known, must recall items 4/5 from "
+                "archive and apply (item 39)")
+        near = {"qibape16": set(), NS["LOOSE"]: set()}
+        new, info = NS["apply_delta"](notes, {"changes": [("qibape16", todo)]}, set(), strict=True, near=near)
+        line = [ln for ln in new.splitlines() if ln.startswith("qibape16")][0]
+        self.assertEqual(NS["number_of"](NS["fact_of"](line)[1]), -267)
+        self.assertIn("amount not yet known", line)
+        self.assertEqual(info["mismatch"], [])
+        for value, now in [("removed (item 5)", None), ("opened at 40", 40), ("minus twelve", None)]:
+            new, _ = NS["apply_delta"](notes, {"changes": [("qibape16", value)]})
+            self.assertEqual(NS["fact_of"]([ln for ln in new.splitlines() if ln.startswith("qibape16")][0])[1], value)
+        new, _ = NS["apply_delta"](notes, {"changes": [("wxyz56", "pending (item 4)")]})   # nothing held: kept as written
+        self.assertIn("wxyz56: pending (item 4)", new)
+        files = "RULES\n(none)\nSTATE\nfixes.md: exists, contains lines for tickets 10 and 11 only.\nOPEN"
+        new, _ = NS["apply_delta"](files, {"changes": [("fixes.md", "contains lines for tickets 10, 11, 12, 13.")]})
+        self.assertIn("fixes.md: contains lines for tickets 10, 11, 12, 13.", new)   # a description, not a number (c28r)
+
 if __name__ == "__main__":
     unittest.main()

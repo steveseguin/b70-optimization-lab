@@ -210,3 +210,80 @@ All runs: K32, ctxkeeper 1.1.0, the c28f/c29a server with device marks; no stall
 
 **Not changed by any of this:** the final query, the probes and every expected answer of the forged streams equal
 the clean streams', checked byte for byte at build time.
+
+## Campaign 31 (18:14-18:31 EDT): domi68 fixed, a second keeper bug lost qibape16; stopped by the memory guard
+
+ctxkeeper 1.1.1.dev0, the c30 server, device marks. Log `/mnt/fast-ai/bench-results/context-longrun-20261016/c31.log`.
+
+**Arm 1, quiet audits s1: 49/50, audits 5/6.**
+- domi68 = 420 (right): the first fix works.
+- qibape16 = -323 against -295: reversed twice.
+- Cause, a second keeper bug: from item 39 on the model wrote what was still to do instead of a value, "qibape16:
+  audit reversal of the increase entered in item 4 — amount not yet known, must recall items 4/5 from archive and
+  apply (item 39)". The keeper read its last number (5, an item number) as the value. The check asked again ("5 is
+  not a value the turns state"), the second reply was no better and was accepted as a doubtful line. The final
+  answer was rebuilt from the archive, and the reversal was applied twice.
+- Three more counters of the same stream got the same kind of line (dija83, tuxa48, rumohi78), in c30 too; they
+  came out right only because later lines restated a number.
+- The arm's prediction (6/6) is not met, so the 1M follow-up does not run on 1.1.1.dev0.
+
+**Arm 2, clean rules s0: stopped after 4 min 24 s.**
+- The server's host-memory guard (floor 1.6 GiB, owner-approved) killed it at 18:31:14, at 1.595 GiB free.
+- During these campaigns free memory sat at 1.75-1.85 GiB (c30: median 1.83, minimum 1.64), with dips of 0.1-0.2
+  GiB. The last one came during an ordinary notes request (16 turns, 15,727 tokens).
+- No leak: c30's arms all ended near 2.1 GiB. The margin is 0.2 GiB, about 0.3-0.4 GiB thinner than on 2026-10-11.
+  The likeliest differences are the agent session's own process (765 MB after three days) and a leftover Codex
+  helper (110 MB, which the agent was not allowed to stop).
+- The kill of the busy two-card server logged copy-engine page faults on both cards and a compute-engine reset on
+  e3. That is a consequence of the kill, not a card fault.
+- Health probe (`scripts/check-qwen36-xpu-xccl-health.sh`):
+  - the first two runs passed the one-card smokes, but the all-reduce hung, as at 10:31 (a dead context holding a
+    copy engine);
+  - the second run's timeout reset both cards' GTs (19:59:40; the coredumps were copied first);
+  - the third run passed (barrier and all-reduce on both ranks), with no new kernel line.
+- Evidence: `/mnt/fast-ai/bench-results/context-longrun-20261016/fault-20261017-1831/` (coredumps, kernel log,
+  guard record, probe output).
+- Arms 3-5 did not run.
+
+## Second keeper fix; campaign 32 registered (20:11:33 EDT, before any run)
+
+**Fix (ctxkeeper 1.1.1.dev1, harness `clm_keeper.py` and `notesdelta.py` in step).**
+- A NOTES line whose new value states no number of its own (only item or ticket numbers, no number words, not a
+  removal) no longer replaces a number the NOTES hold. The number stays and the line becomes a remark on it:
+  `qibape16: -267 (audit reversal ... must recall items 4/5 from archive and apply item 39)`.
+- It applies only when the old value is a plain number (`-267`, `opened at 402`, `75 (60, gained 15 in item 6)`).
+  Descriptions such as the repair stream's `fixes.md: contains lines for tickets 10 and 11` are written as before
+  (the first draft changed three of those in the replay; narrowed).
+- Tests: harness 45 and ctxkeeper 95 pass, each with the new cases.
+- `replay_diff.py HEAD` over all 87 saved sessions of campaigns 10-16 to 10-17: 29,272 lines replayed, 8 differ.
+  All 8 are the intended lines: the four counters above, in c30 and in c31. Each was "asked" before and keeps its
+  number now.
+
+**Host memory for this campaign.**
+- The stale stall watcher (hang-repro2) is stopped.
+- `hang-capture.sh` gains `LOG_GLOB`: it reads the breadcrumb lines from the servers' `server.log` files instead of
+  calling `docker logs` every second (two Docker CLI calls a second, 30-40 MB each). Tested on fake logs: an old
+  line is skipped, a new file is read from its start.
+- Beside the server the agent runs nothing but small greps: no replays, tests, Codex or subagents.
+- A light sampler (`ps` every 5 s, the 12 largest processes) writes to `fault-20261017-1831/ps-c32.txt`, so a
+  further dip names its process.
+
+**Queue 32** (`QUEUE32.txt`): the same server and runner (`longrun-campaign31.sh`, `KEEPER_VERSION=1.1.1.dev1`,
+`RUN=c32 SEQS=1 MTP=5 RESTORE=0 MARKS=1`).
+
+| # | Arm | What it checks | Prediction |
+|---|---|---|---|
+| 1 | `K32 retro 1` | both fixes' case | 6/6 applied: domi68 = 420, qibape16 = -295 |
+| 2 | `K32 retro 0` | no regression on audits | 6/6 |
+| 3 | `K32 rules 0` | inert on the clean stream; call-by-call against c29a | 39/39 |
+| 4 | `K32 repair 1x` | the standing gate | 40/40 clean, audit 7/7 |
+| 5 | `K32 repair 2x` | the standing gate | 40/40 clean, audit 7/7 |
+
+**Decision.**
+- If 1-5 hold, 1.1.1.dev1 stands (a release still needs the owner). The 1M follow-up then runs on it:
+  `K32 hostile1m 0 9000` appended to queue 32 while the runner waits, with the pass conditions of the 17:48
+  amendment.
+- If arm 1 misses an audit, I read that cut first, then fix the cause or take the change back.
+- If the gate drops on either seed, the change is not kept as it is.
+- If the memory guard fires again, the sampler shows which process grew. That process gets fixed before any more
+  arms run.
