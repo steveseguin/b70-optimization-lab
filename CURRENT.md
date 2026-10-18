@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet58ah full-composition record chain prepared ahead on CPU:**
+The seven-window packet58ad copy binds packet58ag's finished engine by hash
+and selects all four new refinements explicitly. All 134 policy tests, seven
+entry paths, parser and loader checks, submission replay, seals and pin
+admission pass. The original 58ad timing is used only in a labeled rehearsal.
+Device readiness remains false while the parent's bracket is pending; the
+coordinator must recompute it and retain the same whole-host hold. Nothing was
+launched, queued or submitted. The 30.395631 record is unchanged.
+[Work note and evidence](notes/2026-10-18-own-runtime-packet58ah.md).
+
 **October 18, packet58ag one-card ports prepared on CPU:** The private
 packet58ab copy adds wider HC/expert geometry, exact half-scale decoding,
 small target fusions and cheaper foreground event retirement. HC fusion stays
