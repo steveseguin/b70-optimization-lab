@@ -578,3 +578,11 @@ out and reset both GTs at 00:57:19; the second probe passed. Evidence in
 `/mnt/fast-ai/bench-results/context-longrun-20261016/fault-20261018-0053/`; latch renamed
 `server/FAULT-20261018-c36.json`. Arms 3-4 did not run. The three remaining lines rerun as campaign 36b after the GDN
 stress, with the operator session silent beside each server.
+
+**Campaign 36b, registered 2026-10-18 01:01:13 EDT (before any run):** the three lines campaign 36 did not finish
+(`QUEUE36b.txt`: `K32L retro 0 2400`, `K32L retroloud 1 2400`, `K32L rules 0 2400`), same runner and settings
+(keeper 1.2.0.dev2, per-arm servers, device marks on, `IDLE_MAX=60`). It starts when the GDN stress has ended with
+the cards empty. Predictions and decisions are unchanged from campaign 35 (retro 0: 6/6 audits and at least 42/45;
+retroloud 1: 50/50; rules 0: 39/39 with no lookup asked). The operator session runs nothing beside a server but its
+watch. A guard kill again with the session silent means the room itself is too small for these arms; then the floor
+question goes to the owner and the arms wait.
