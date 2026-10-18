@@ -1,0 +1,46 @@
+{
+  "schema": "lab.packet129.acceptance-preregistration.v1",
+  "candidate": "publisher-fp8-experts-fp32-decode",
+  "source_commit": "fe3e538df7a01ba46de9835c539eac0bad864cae",
+  "sources": [
+    {
+      "path": "docs/own-xpu-runtime-objective.md",
+      "sha256": "7a27df0cab08fd2bd7470b2a78a9941ea1c898747f0d06ad9f5ae2dc98439dda",
+      "bytes": 10580
+    },
+    {
+      "path": "docs/host-stability-and-fault-diagnosis.md",
+      "sha256": "ebb5fb82d0406555c4a84ed803d9637484eceab060843850619cfb16bb1bd56c",
+      "bytes": 32076
+    },
+    {
+      "path": "docs/local-ops.md",
+      "sha256": "0059b54abf02b632c867245e2ef76345f326ef205390b1d1ff173fb60d5f9b99",
+      "bytes": 16431
+    },
+    {
+      "path": "docs/recipe-publication-standard.md",
+      "sha256": "b5ea44228b8e1f39b2c4295cb73c6321f5d75ec6c1f3f3dfd14fffc1b9eec906",
+      "bytes": 7164
+    },
+    {
+      "path": "scripts/check-storage-headroom.py",
+      "sha256": "daf118c70b9bf544d9d4c54178ee6bdc58eb032b5311340e7de3dfed51c29ba2",
+      "bytes": 6154
+    }
+  ],
+  "prompts": "First and last 128 tokens of each of the five pinned independent documents; 10 requests, each 128 generated target tokens. No chat template. All 127 verified proposals per request count.",
+  "secondary": "12 fixed suite prompts, 128 generated tokens; never used for decisions",
+  "kill_gate": {
+    "independent_acceptance_gain_points": 1.5,
+    "minimum_verified_proposals": 1270
+  },
+  "production": "packet124c bundle7, INT8-group16 draft experts, 80128-row Q6 prefix",
+  "policy": "Production draft drives every step. Shadow candidate must never affect target, production proposal, persistent draft state or selection. One load; no speed claim. Candidate selection and corpus fixed before measurements.",
+  "estimated_seconds": [
+    900,
+    1800
+  ],
+  "watchdog_seconds": 7200,
+  "gpu_executed": false
+}
