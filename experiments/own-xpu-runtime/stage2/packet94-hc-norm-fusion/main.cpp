@@ -1,6 +1,7 @@
 #include "host_spin.hpp"
 #include "ordered_queue.hpp"
 #include "p60_submit.hpp"
+#include "p90_layout.hpp"
 #include "p30_submit.hpp"
 #include "p33_submit.hpp"
 #include "p33r2.hpp"
@@ -706,6 +707,9 @@ public:
                  std::chrono::seconds(a.seconds)) {attribution.enabled=args.timing=="attribution";pending.reserve(4096);prepared.reserve(p.launches.size());matrices.reserve(p.launches.size());gemv_choices.reserve(p.launches.size());
     if(!a.selection.empty()){require(!a.selection_sha256.empty(),"selection requires sealed --selection-sha256");sealed_selection.load(a.selection.string(),a.selection_sha256);}
     else require(a.selection_sha256.empty(),"selection SHA256 requires selection file");
+    const bool normfuse=sealed_selection.choices.contains("hc_norm")&&sealed_selection.choices.at("hc_norm")=="consumer";
+    const bool cached_hc=sealed_selection.choices.contains("hc_gate")&&sealed_selection.choices.at("hc_gate")=="hc-weightcache";
+    if(normfuse||cached_hc)require(!a.mini&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p94 fusion requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
     ordered_retirement=a.rank==1 && sealed_selection.choices.contains("host_retire") && sealed_selection.choices.at("host_retire")=="ordered";
     for(const auto& l:p.launches)if(l.op=="gemv"||l.op=="expert_gate_up"||l.op=="routed_gemv"){
       std::array<unsigned,2> variants{selected_variant(w,a,p,l),0};if(l.op=="expert_gate_up")variants[1]=selected_variant(w,a,p,l,1);
@@ -852,6 +856,9 @@ public:
       return cls=="gdn.qkv"||cls=="gdn.z"||cls=="qsa.qgate"||cls=="qsa.k"||cls=="qsa.v"||cls=="attention"||cls=="ple.key"||cls=="ple.value"||cls=="shexpdown";
     }return false;
   }
+  bool p90_hc_weight(const std::string&name)const {
+    return !a.mini&&a.memory=="resident"&&sealed_selection.choices.at("hc_gate")=="hc-weightcache"&&name.starts_with("blk.")&&(name.ends_with(".hc_attn_up.weight")||name.ends_with(".hc_ffn_up.weight"));
+  }
   void load(int c, const std::string &name) {
     if (weights[c].count(name))
       return;
@@ -863,6 +870,8 @@ public:
     const bool packed=packed_weight(name);
     const bool planes=!packed&&p49b_weight(w,a,p,name);
     size_t expanded_bytes=packed?t.bytes:planes?p49b_weight_bytes(t):arithmetic::is_expanded(v)?size_t(t.shape[0])*arithmetic::row_bytes(type,t.shape[1],v):t.bytes;
+    const bool hccache=p90_hc_weight(name);
+    if(hccache){require(t.shape.size()==2&&t.shape[0]==10240&&t.shape[1]==320&&type==iq3::Type::Q8_0,"p90 HC shape");expanded_bytes=size_t(t.shape[0])*p90::hc_stride;}
     auto id = allocate(c, "weight:" + name, expanded_bytes, Category::weights,
                        Lifetime::process);
     weights[c][name] = id;
@@ -879,11 +888,11 @@ public:
     }
     if(!packed&&arithmetic::is_expanded(v)) {
       auto fmt=iq3::layout(type);size_t rb=t.shape[1]/fmt.elements*fmt.bytes;
-      size_t er=arithmetic::row_bytes(type,t.shape[1],v);
+      size_t er=hccache?p90::hc_stride:arithmetic::row_bytes(type,t.shape[1],v);
       size_t rows_per=std::max(size_t(1),size_t(4*1024*1024)/std::max(rb,er));
       for(size_t row=0;row<size_t(t.shape[0]);row+=rows_per){
         auto nr=std::min(rows_per,size_t(t.shape[0])-row);auto raw=w.read(name,row*rb,nr*rb);
-        auto expanded=iq3::expanded::expand(type,raw.data(),raw.size(),t.shape[1]);
+        auto expanded=hccache?p90::hc_repack(raw.data(),raw.size()):iq3::expanded::expand(type,raw.data(),raw.size(),t.shape[1]);
         upload(c,id,row*er,expanded.data(),expanded.size());
       }
       return;
@@ -1294,6 +1303,7 @@ public:
   bool fused_hc(const flash::Launch& l) {
     const int stage=p60::stage(l.label);
     if(a.mini||a.memory!="resident"||a.nongemv!="parallel"||stage<0)return false;
+    if(stage==0&&sealed_selection.choices.at("hc_norm")=="consumer")return true; // norm now computed at low, no launch
     if(stage==3)return true; // act/mix/inject are written by earlier stages
     const int c=l.card;
     const std::string tag=l.label.substr(0,l.label.rfind('.'));
@@ -1311,7 +1321,7 @@ public:
       flash::grid_type(w.directory.at(wt+"down.weight").grid)==iq3::Type::Q8_0 &&
       flash::grid_type(w.directory.at(wt+"up.weight").grid)==iq3::Type::Q8_0,
       "packet60 production HC weight formats");
-    finish(c,p60::submit(dev(c),ids,stage,p.g.context,sealed_selection.choices.at("hc_gate")=="wide",sealed_selection.choices.at("hc_norm")=="subgroup"),stage!=0);
+    finish(c,p60::submit(dev(c),ids,stage,p.g.context,sealed_selection.choices.at("hc_gate")=="wide",sealed_selection.choices.at("hc_norm")=="subgroup",sealed_selection.choices.at("hc_gate")=="hc-weightcache",sealed_selection.choices.at("hc_norm")=="consumer"),stage!=0);
     return true;
   }
   void execute_site(const flash::Launch& l) {int c=l.card;
@@ -1494,6 +1504,8 @@ public:
 #include "mtp.hpp"
 static void write_plan(const fs::path &path, const flash::Plan &p,
                        const Weights &w, int cards, const Options& a) {
+  p49d::Selection selected;if(!a.selection.empty())selected.load(a.selection.string(),a.selection_sha256);
+  const bool cached_hc=!a.mini&&selected.choices.contains("hc_gate")&&selected.choices.at("hc_gate")=="hc-weightcache";
   std::map<std::string, int> owner;
   std::map<std::string,size_t> stored;
   auto dispatch=[&](const flash::Launch& l,const auto&){return selected_variant(w,a,p,l);};
@@ -1511,6 +1523,7 @@ static void write_plan(const fs::path &path, const flash::Plan &p,
       auto &t = w.directory.at(n);
       auto v=l.op=="gemv"?dispatch(l,t):2;
       stored[n]=p49b_weight(w,a,p,n)?p49b_weight_bytes(t):arithmetic::is_expanded(v)?size_t(t.shape[0])*arithmetic::row_bytes(flash::grid_type(t.grid),t.shape[1],v):t.bytes;
+      if(cached_hc&&n.starts_with("blk.")&&(n.ends_with(".hc_attn_up.weight")||n.ends_with(".hc_ffn_up.weight")))stored[n]=size_t(t.shape[0])*p90::hc_stride;
       o << (comma ? "," : "") << "{\"name\":" << ownrt::quote(n)
         << ",\"card\":" << (l.op == "lookup" ? -1 : l.card)
         << ",\"bytes\":" << t.bytes << ",\"stored_bytes\":" << stored[n]

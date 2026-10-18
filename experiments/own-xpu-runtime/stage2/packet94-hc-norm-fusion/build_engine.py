@@ -1,5 +1,5 @@
 """Serial incremental build using packet70's actual packet65 object provenance."""
-import hashlib,json,os,resource,subprocess
+import hashlib,json,os,resource,subprocess,shutil
 from compile_turn import turn
 from pathlib import Path
 P=Path(__file__).resolve().parent;ROOT=P.parents[3];B=P/'build';BASE=P.parent/'packet84-record-bundle'
@@ -10,6 +10,8 @@ def sha(p):
  return h.hexdigest()
 def save(p,v):Path(p).write_text(json.dumps(v,indent=2)+'\n')
 def limits():
+ assert shutil.disk_usage(ROOT).free>=12_000_000_000,"root free below 12 GB"
+ assert sum(f.stat().st_size for f in B.rglob("*") if f.is_file())<1_000_000_000,"build above 1 GB"
  assert os.getpriority(os.PRIO_PROCESS,0)==19
  assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
  resource.setrlimit(resource.RLIMIT_AS,(8*1024**3,8*1024**3))
@@ -36,7 +38,7 @@ def main():
   dest=B/mode;dest.mkdir(exist_ok=True)
   args=next(r['command'] for r in prior if r['name']==mode+'-entry-main');args=args[:args.index('-o')]
   args=[x.replace(str(BASE),str(P)).replace(str(P.parent/'packet65-expert-occupancy'),str(P)) if x.startswith('-I') else x for x in args]
-  rebuilt=('entry-main','p49d_submit','p49d_expert_submit','p60_submit')
+  rebuilt=('entry-main','p49d_submit','p60_submit')
   for stem in rebuilt:run([*args,'-o',dest/(stem+'.o'),'-c',entry if stem=='entry-main' else mapping[P/(stem+'.cpp')]],mode+'-'+stem)
   link=list(next(r['command'] for r in prior if r['name']==mode+'-link'));link[link.index('-o')+1]=str(dest/'own-rt-iq3');replaced=[]
   for i,arg in enumerate(link):
@@ -53,6 +55,6 @@ def main():
  save(P/'engine-commands.json',commands);save(P/'evidence/object-identity.json',dict(passed=True,device_executed=False,objects=objects))
  for f in (P/'compile_turn.py',P/'build_engine.py',P/'engine-commands.json',P/'parent-source-manifest.json',P/'evidence/object-identity.json',P/'kernel_guard.hpp',P/'kernel_gate.py',P/'math_gate.py',P/'kernel_overlay.py',P/'submission_overlay.py',P/'rope.bf16',P/'mtp-manifest.tsv',entry):sources[str(f.relative_to(ROOT))]=sha(f)
  size=sum(f.stat().st_size for f in B.rglob('*') if f.is_file());assert size<1_000_000_000,size
- save(P/'build-device-receipt.json',dict(schema='packet90.cpu-build.v1',passed=True,device_executed=False,sources=sources,artifacts=artifacts,build_logical_bytes=size,max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss))
+ save(P/'build-device-receipt.json',dict(schema='packet94.cpu-build.v1',passed=True,device_executed=False,sources=sources,artifacts=artifacts,build_logical_bytes=size,max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss))
  print('sealed build receipt; logical bytes',size,flush=True)
 if __name__=='__main__':main()

@@ -52,8 +52,8 @@ Launch mix(Device&d,const Spec&s,IDs a,Allocation,Allocation,Allocation,Deps dep
 }
 Submit resolve(std::string_view cls,std::string_view choice){
  if(cls=="host_retire"&&(choice=="production"||choice=="ordered"))return production;
- if(cls=="hc_norm"&&(choice=="production"||choice=="subgroup"))return production;
- if(cls=="hc_gate"&&(choice=="production"||choice=="wide"))return production;
+ if(cls=="hc_norm"&&(choice=="production"||choice=="subgroup"||choice=="consumer"))return production;
+ if(cls=="hc_gate"&&(choice=="production"||choice=="wide"||choice=="hc-weightcache"))return production;
  if(cls=="packed_dense"&&(choice=="production"||choice=="head-packed"||choice=="dense-packed"||choice=="combined"))return production;
  if(cls=="experts"&&(choice=="production"||choice=="wg64"||choice=="wg128"||choice=="prefetch64"||choice=="wide64"||choice=="experts2-a"||choice=="experts2-b"||choice=="input-packed"||choice=="gate-input-packed"||choice=="down-input-packed"))return production;
  if(cls=="miss"&&(choice=="control"||choice=="batch"))return production;

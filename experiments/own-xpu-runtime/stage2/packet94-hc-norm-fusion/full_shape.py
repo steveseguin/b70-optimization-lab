@@ -72,7 +72,7 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;std::unique_ptr<mtp36::D
  e=std::make_unique<Engine>(w,a,p);e->initialize();
  write_plan(a.output/"native-plan.json",p,w,a.cards,a);
  if(negative!="positive"){
-  const bool expert=e->sealed_selection.choices.at("experts")=="exp-halfcache";
+  const bool expert=false;
   const std::string suffix=expert?".ffn_gate_exps.weight":".hc_attn_up.weight";
   auto found=std::find_if(e->weights[0].begin(),e->weights[0].end(),[&](const auto&v){return v.first.ends_with(suffix);});require(found!=e->weights[0].end(),"negative weight missing");
   auto &r=const_cast<std::remove_const_t<std::remove_reference_t<decltype(e->dev(0).arena.row(found->second))>>&>(e->dev(0).arena.row(found->second));
@@ -84,17 +84,33 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;std::unique_ptr<mtp36::D
  auto count=[](const std::string& key){unsigned n=0;for(const auto&[name,value]:p80_operations)if(name.find(key)!=std::string::npos)n+=value;return n;};
  const auto& choice=e->sealed_selection.choices;
  require(count("p82rec::Kernel<true>")>0,"rec-parallel selection consumer");
- const bool expert=choice.at("experts")=="exp-halfcache",hc=choice.at("hc_gate")=="hc-weightcache";
+ const bool expert=false,hc=choice.at("hc_gate")=="hc-weightcache",fused=choice.at("hc_norm")=="consumer";
  require((count("p90exp::Kernel<")>0)==expert,"cached expert selection consumer");
  require((count("p65::Kernel<(iq3::Type)22, 2560u, 64u, false, true, 0u>")>0)==!expert,"control expert consumer");
  require(count("p65::Kernel<(iq3::Type)20, 640u, 64u, false, true, 0u>")>0,"unchanged down expert consumer");
- require((count("p60::Kernel<2, true, false, true>")>0)==hc,"cached HC selection consumer");
- require((count("p60::Kernel<2, true, false, false>")>0)==!hc,"HC wide consumer");
- require(count("p78route::Kernel")==0&&count("p60::Kernel<0, false, true, false>")==0,"production route/norm");
+ require((count("p60::Kernel<2, true, false, true, false>")>0)==hc,"cached HC selection consumer");
+ require((count("p60::Kernel<2, true, false, false, false>")>0)==!hc,"HC wide consumer");
+ require(count("p78route::Kernel")==0&&count("p60::Kernel<0, false, true, false, false>")==0,"production route/norm");
+ require((count("p60::Kernel<0, false, false, false, false>")>0)==!fused,"separate norm launch removed");
+ require((count("p60::Kernel<1, false, false, false, true>")>0)==fused,"fused norm consumer captured");
+ require((count("p60::Kernel<1, false, false, false, false>")>0)==!fused,"production low consumer");
+ require(count("p60::Kernel<1,")==count("p60::Kernel<2,"),"each HC side retains low and gate captures");
+ if(fused)require(count("p60::Kernel<0,")==0,"no hidden norm capture");
+ // The real plan is the authoritative reader census, including fused metadata.
+ std::ofstream readers(a.output/"norm-readers.txt");unsigned norm_sites=0;
+ for(const auto& site:e->p.launches)if(p60::stage(site.label)==0){
+  ++norm_sites;require(site.outputs.size()==1,"norm output count");
+  auto name=site.outputs[0];std::vector<std::string> consumers;
+  for(const auto& next:e->p.launches)if(std::find(next.inputs.begin(),next.inputs.end(),name)!=next.inputs.end())consumers.push_back(next.label);
+  auto tag=site.label.substr(0,site.label.size()-5);
+  require(consumers==std::vector<std::string>{tag+".low",tag+".mix",tag+".inject"},"exact norm reader census");
+  auto current=&site-e->p.launches.data();require(size_t(current+1)<e->p.launches.size()&&e->p.launches[current+1].label==tag+".low","norm can move directly into next consumer");
+  readers<<name;for(const auto&c:consumers)readers<<" "<<c;readers<<"\n";
+ }
+ require(norm_sites==48,"24 layers times two HC sides");readers.close();
  unsigned transformed=0;
  for(const auto&[name,id]:e->weights[0]){
   const auto&r=e->dev(0).arena.row(id);
-  if(e->p90_expert_weight(name)){require(r.bytes==size_t(512)*640*840,"cached expert extent is real 840-byte stride");++transformed;}
   if(e->p90_hc_weight(name)){require(r.bytes==size_t(10240)*1280,"cached HC extent is real 1280-byte stride");++transformed;}
  }
  require(transformed==(expert?(a.rank==0?46u:48u):hc?48u:0u),"transformed target allocation count: "+std::to_string(transformed));
@@ -134,6 +150,10 @@ def main():
    planned={r['name']:r['stored_bytes'] for r in reported['tensor_owners']}
    for key,value in weight_rows.items():assert planned[key]==value,(name,rank,key,planned[key],value)
    report['runs'].append(dict(native_plan=str(plan_archive.relative_to(ROOT)),native_plan_sha256=sha(plan_archive),native_plan_weights_verified=len(weight_rows),census=str(census.relative_to(ROOT)),census_sha256=sha(census),view=name,selection_key_consumers_verified=True,selected_operations=consumers,selected_operations_sha256=sha(dest/'selected-operations.txt'),**json.loads((dest/'result.json').read_text())))
+   for leaf in ('norm-readers.txt','selected-operations.txt'):
+    raw=(dest/leaf).read_bytes();archive=P/'evidence'/(name+'-'+str(rank)+'-'+leaf+'.gz');archive.write_bytes(gzip.compress(raw,mtime=0));report['sources'][str(archive.relative_to(ROOT))]=sha(archive)
+   import shutil
+   shutil.rmtree(dest)
    print(name,rank,'PASS',flush=True)
  negatives=[]
  for name in views():
@@ -143,11 +163,13 @@ def main():
     dest=S/(name+'-'+str(rank)+'-'+kind);dest.mkdir(exist_ok=True)
     r=subprocess.run([str(S/'fixture'),str(path),sha(path),str(rank),str(dest),kind,'1','0'],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120)
     log=P/'evidence'/(dest.name+'.log');log.write_text(r.stdout+r.stderr)
-    expected='p39 allocation extent' if name=='exp-halfcache' and kind=='short' else 'p28 extent/alignment' if name=='exp-halfcache' else 'packet60 lifetime/extent/alignment'
+    expected='packet60 lifetime/extent/alignment'
     assert r.returncode!=0 and expected in r.stderr,(name,rank,kind,r.stderr)
+    import shutil
+    shutil.rmtree(dest)
     negatives.append(dict(view=name,rank=rank,mutation=kind,refusal=expected,passed=True,log_sha256=sha(log)))
  for case in ('missing-experts','unknown-experts','missing-hc','extra-key','unknown-gate'):
-  sel=json.loads((P/'selection.json').read_text());sel['choices']=choices('exp-halfcache')
+  sel=json.loads((P/'selection.json').read_text());sel['choices']=choices('hc-normfuse')
   if case=='missing-experts':del sel['choices']['experts']
   if case=='unknown-experts':sel['choices']['experts']='bogus'
   if case=='missing-hc':del sel['choices']['hc_gate']
@@ -158,17 +180,14 @@ def main():
   (P/'evidence'/(case+'.log')).write_text(r.stdout+r.stderr)
   assert r.returncode!=0 and ('selection' in r.stderr),r.stderr
  scope_negatives=[]
- for name in ('exp-halfcache','hc-weightcache'):
+ for name in ('hc-normfuse','hc-normfuse+weightcache'):
   sel=json.loads((P/'selection.json').read_text());sel['choices']=choices(name);path=S/(name+'.json');save(path,sel)
   for kind in ('serial','gemv','streaming','draft-rank','split','context','legacy'):
    dest=S/(name+'-'+kind);dest.mkdir(exist_ok=True)
    r=subprocess.run([str(S/'fixture'),str(path),sha(path),'1',str(dest),kind,'1','0'],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120)
-   assert r.returncode!=0 and 'p90 cached layout requires sealed' in r.stderr,(name,kind,r.stderr)
+   assert r.returncode!=0 and 'p94 fusion requires sealed' in r.stderr,(name,kind,r.stderr)
    scope_negatives.append(dict(view=name,mode=kind,passed=True))
- sel=json.loads((P/'selection.json').read_text());sel['choices']=choices('exp-halfcache');sel['choices']['hc_gate']='hc-weightcache';path=S/'combined.json';save(path,sel);dest=S/'combined';dest.mkdir(exist_ok=True)
- r=subprocess.run([str(S/'fixture'),str(path),sha(path),'1',str(dest),'positive','1','0'],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120)
- assert r.returncode!=0 and 'p90 combined caches are not admitted' in r.stderr,r.stderr
- report['scope_negatives']=scope_negatives;report['combined_refused']=True
+ report['scope_negatives']=scope_negatives
  report['negative_allocations']=negatives
  report.update(passed=True,negative_extent_rejected=True,selection_negatives_rejected=5,binary_sha256=sha(S/'fixture'))
  save(P/'evidence/full-shape.json',report)

@@ -17,12 +17,12 @@ def lanes(direction='A-grid'):
 def jobs(lane,choice=None,direction='A-grid'):
  require(lane in ('A','B'),'lane')
  source,confirm=lanes(direction)
- selected=list(VIEWS)+['production'] if lane==source else ['production',choice or 'exp-halfcache','production']
+ selected=list(VIEWS)+['production'] if lane==source else ['production',choice or 'hc-normfuse','production']
  require(lane==source or selected[1] in VIEWS[1:],'confirmation candidate')
  result=[]
  for index,c in enumerate(selected):
   v=P/'compat/packet64-record-bundle/selections'/c
-  result.append(dict(out=f'p90-{direction}-{lane}-{index}-{c}',choice=c,lineage=str(v),seal=str(v/'screen-seal.json'),binary=str(v/'build/device/own-rt-iq3'),dispatch=str(v/'dispatch-speed6.json'),placement='1'))
+  result.append(dict(out=f'p94-{direction}-{lane}-{index}-{c}',choice=c,lineage=str(v),seal=str(v/'screen-seal.json'),binary=str(v/'build/device/own-rt-iq3'),dispatch=str(v/'dispatch-speed6.json'),placement='1'))
  return result
 def command(row,lane,review=None,plan=False):
  cmd=['/usr/bin/python3','-B',str(WRAPPER/'screen.py'),'--profile','tp2','--lane',lane,'--placement','1','--timing','token']

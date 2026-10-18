@@ -9,10 +9,19 @@ def active():
   try:
    comm=(p/'comm').read_text().strip()
    cmd=(p/'cmdline').read_bytes().split(b'\0')
-   foreign_build=(comm in ('cmake','gmake','make','ninja') or (comm=='python3' and len(cmd)>2 and any(b'/packet58g-onecard/' in x for x in cmd[1:3])))
+   foreign_build=(comm in ('cmake','gmake','make','ninja'))
    if foreign_build or comm in ('icpx','icx','g++','cc1plus','clang++','clang','clang-21','clang-20','ld.lld','llvm-link','sycl-post-link','clang-offload-w'):
     result.append((int(p.name),comm))
   except (FileNotFoundError,PermissionError,ProcessLookupError):pass
+ # Coordinator 2026-10-18: device runs are not compilers. Wait instead while a whole-host
+ # window holds the host (hold-lane-B or a whole-host lane marker), so timing and host-RAM
+ # admission are never disturbed by a compile.
+ C=Path('/home/steve/own-xpu-runtime-results/coordination/chain-lanes-v1')
+ try:
+  if (C/'hold-lane-B').exists():result.append((-1,'hold-lane-B'))
+  for m in C.glob('active-lane-*.json'):
+   if b'whole-host' in m.read_bytes():result.append((-1,m.name))
+ except OSError:pass
  return result
 @contextlib.contextmanager
 def turn():
@@ -23,5 +32,7 @@ def turn():
    print('Waiting for compiler turn:',active(),flush=True)
    if time.monotonic()>end:raise TimeoutError('compiler turn deadline')
    time.sleep(10)
-  f.seek(0);f.truncate();f.write('packet90 pid='+str(os.getpid())+'\n');f.flush()
+  f.seek(0);f.truncate();f.write('packet94 pid='+str(os.getpid())+'\n');f.flush()
+  from build_engine import limits
+  limits()
   yield

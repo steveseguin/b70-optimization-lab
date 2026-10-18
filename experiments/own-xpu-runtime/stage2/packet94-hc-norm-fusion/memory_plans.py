@@ -3,10 +3,10 @@ import copy,gzip,json
 from build_engine import P,ROOT,sha,save,limits
 from bundle_selection import VIEWS
 from memory_gate import check,configuration,ARENA_LIMIT_BYTES
-DELTA={'production':(0,0),'exp-halfcache':(301465600,314572800),'hc-weightcache':(442368000,442368000)}
+DELTA={'production':(0,0),'hc-normfuse':(0,0),'hc-normfuse+weightcache':(442368000,442368000)}
 def plan(name):
  base=json.loads((P.parent/'packet84-record-bundle/memory-plan.json').read_text())
- row=copy.deepcopy(base);row['schema']='packet90.exact-layout-memory.v1';row['placements']={'1':row['placements']['1']};row['view']=name;row['extra_weight_bytes_per_rank']=DELTA[name]
+ row=copy.deepcopy(base);row['schema']='packet94.exact-layout-memory.v1';row['placements']={'1':row['placements']['1']};row['view']=name;row['extra_weight_bytes_per_rank']=DELTA[name]
  for rank,r in enumerate(row['placements']['1']['capacities']['4096']['ranks']):
   for key in ('target_modeled_allocations_bytes','target_total_bytes','total_with_mtp_bytes','arena_device_bytes'):r[key]+=DELTA[name][rank]
   r['free_with_mtp_bytes']-=DELTA[name][rank];r['arena_headroom_bytes']-=DELTA[name][rank]

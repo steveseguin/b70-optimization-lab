@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**October 18, packet94 CPU preparation started:** The HC norm also feeds mixing, so its BF16 tensor stays. A new dedicated low/injection kernel will recompute the same norm trees and remove the separate launch. Packet84 sources are copied; existing work stays untouched. Build, exact-byte and full-size startup checks are next. No GPU or service ran. [Design](notes/2026-10-18-own-runtime-packet94.md).
+**October 18, packet94 CPU gates pass:** A dedicated low/injection kernel now includes the same HC norm arithmetic and keeps the BF16 tensor needed by mixing. Both compiler checks pass every output and scratch byte across four consecutive tokens. All six full-size startup and memory checks pass, including the combination with packet90's HC weight cache. Seals and temporary queue planning are next. No GPU, service or frozen source changed. [Evidence](notes/2026-10-18-own-runtime-packet94.md).
 
 **October 18, packet93 diagnosis complete on CPU:** Packet74 already removed staging barriers; repeated code loads and alignment repair remain. Two new choices will decode words together or rearrange the same packed bytes for direct lane loads. Production stays selected. A full-size device microbenchmark must cut kernel time by at least15% before screens can run. No GPU, service or frozen work changed. [Diagnosis](notes/2026-10-18-own-runtime-packet93.md).
 
