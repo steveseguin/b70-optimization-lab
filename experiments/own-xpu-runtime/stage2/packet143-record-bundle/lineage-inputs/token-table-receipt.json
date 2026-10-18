@@ -1,0 +1,123 @@
+{
+  "passed": true,
+  "complete": true,
+  "device_executed": false,
+  "rows": 248320,
+  "bytes": 1271398400,
+  "path": "/home/steve/own-xpu-runtime-results/packet137-token-input/draft-embedding.bf16",
+  "sha256": "72260c77f4fec1174caead915453e0647e7b18d487255a114a8f96ae1e2709c9",
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/table_cpu.cpp": "32198ab74241c1ad25fddb6db75f7ef4a92d3f85be87d1685ac71e2913e30822",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/table_build.py": "1bff926ad860c7374d07f1d8d2d4af4f0a310628594463cf6479ac0579d8d02e",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/token_input.hpp": "076b87556e2d3488bb5ba5d7f0ee895a8ac140353783986324402bc9eff25969",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/kernels.hpp": "715e38078abaf8e1ee38bbb650c946b754ad29f44e77e5dafbc8db1b077d530f",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/p28/dense.hpp": "bc6d77353fa71520e15f2b349db381ced4370d8413fae3b6687cefed56297b47",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/mtp-manifest.tsv": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9",
+    "experiments/own-xpu-runtime/stage2/packet124c-record-bundle/build/input/identity.tsv": "85992a7027dca5de4478e9a5cef4e24722a7065aca66bc1a9954d8d3f617e257",
+    "experiments/own-xpu-runtime/stage2/packet124c-record-bundle/build/input/plan.tsv": "9926b7a266ba2774f02fe00583257ab2aaff96ee0313d350d3ba54602ae2a656",
+    "experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": "7532f67c6d9a0be2a9187ce149b2004d9f1ea045705327d0ce542a283ad5ed72",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/detmath.hpp": "d699920742292f623317537dbb25d25873b8f8e9afd4f4f329448921890714db",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/compile_turn.py": "928663c85ad9ed54d795e23d0169c348a265ff6c07849c0b65771fbe14ba38aa",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/argument_block.hpp": "f2cc8a5709ae443e2fcaa755cfb86e36080a710e9964422b12d3a8425433db35",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/rope.hpp": "83782198e96337883f7e226d5fc474360841f6ca26a00bce43a6d87f42b74929",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/owner.hpp": "ee69610bda3e786e2aecf9888430541879af2d4c51cb64329784cb58d3ba1faf",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp": "d2560c5530d56ca62b0ec43bcbd1668cd7c637d1743f51abfebfb96de56ee480",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/owner_api.hpp": "819d24483877eb31b211312330e6709c9d283a4fe0ec7b8bf016eeb8122c76ed",
+    "experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp": "80647a747f697dd8131019ee2041ab42b1f6b772f735abdf116fa6e2036323f1",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3"
+  },
+  "pins": {
+    "mtp.fc_embedding.weight": {
+      "path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8/model-00120-of-00131.safetensors",
+      "offset": 257935856,
+      "bytes": 13107200,
+      "sha256": "241d6e87ded317a61b1aeb3ca4e28c53f1caba09ad5be66092e91fe5e3e14751"
+    },
+    "mtp.pre_fc_norm_embedding.weight": {
+      "path": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8/model-00114-of-00131.safetensors",
+      "offset": 155041480,
+      "bytes": 5120,
+      "sha256": "04c4a570850e06f2d8913da8220d54d4c7f87db6eb6d45480b938e8ba41d6a86"
+    }
+  },
+  "runs": [
+    {
+      "compiler": "GNU",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/build/table/GNU",
+        "generate",
+        "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124c-record-bundle/build/input/identity.tsv",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124c-record-bundle/build/input/plan.tsv",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/build/table/norm.bf16",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/build/table/projection.bf16",
+        "/home/steve/own-xpu-runtime-results/packet137-token-input/draft-embedding.partial",
+        "248320"
+      ],
+      "seconds": 282.2775971359806,
+      "binary_sha256": "62ba95bc59eef514828c22855667a2281f545ad1fd182a3fe5d2564489a2e274",
+      "log_sha256": "4a0285b5d36de493f1fc8e8d67bd73bd9cd58b7c7f1bb69c8000f73f1aec7ccd"
+    },
+    {
+      "compiler": "Intel",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/build/table/Intel",
+        "verify",
+        "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124c-record-bundle/build/input/identity.tsv",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124c-record-bundle/build/input/plan.tsv",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/build/table/norm.bf16",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/build/table/projection.bf16",
+        "/home/steve/own-xpu-runtime-results/packet137-token-input/draft-embedding.partial",
+        "248320"
+      ],
+      "seconds": 194.34014396098792,
+      "binary_sha256": "f3e112ed5772f807fcc6cbc7272fea97c28b659ec7a87ab55bde09e61a13c004",
+      "log_sha256": "4a0285b5d36de493f1fc8e8d67bd73bd9cd58b7c7f1bb69c8000f73f1aec7ccd"
+    }
+  ],
+  "commands": [
+    [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-O3",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fopenmp",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Wl,--gc-sections",
+      "-Wl,-rpath,/opt/intel/oneapi/compiler/2026.0/lib",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/table_cpu.cpp",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/build/table/GNU"
+    ],
+    [
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-std=c++20",
+      "-O3",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fopenmp",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Wl,--gc-sections",
+      "-Wl,-rpath,/opt/intel/oneapi/compiler/2026.0/lib",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/table_cpu.cpp",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/build/table/Intel"
+    ]
+  ],
+  "max_rss_kib": 287220
+}
