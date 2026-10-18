@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 18, packet140 target-body search closed on CPU:** No new exact
+change supports the required 3% projected gain. The broadest scale-sharing
+idea gives about 1.31% under the transfer assumption supported by earlier
+kernel work. A more favorable assumption could exceed 3%, but the evidence
+does not justify it. The ranked table preserves all 164 negative indexes
+and reproduces the 58.223834 record before calculating savings. No runtime,
+build, GPU, service, queue proposal or readiness marker was created; existing
+packet136/137/139 work is untouched. Reopen with a distinct mechanism and
+evidence for enough savings. [Work note](notes/2026-10-18-own-runtime-packet140.md),
+[ranked table and closeout](experiments/own-xpu-runtime/stage2/packet140-body-lever/README.md).
+
 **October 18, packet137 token input prepared on CPU:** The new packet136-based
 copy replaces repeated draft projection with a complete read-only lookup table
 and gives the target fixed token-preparation buffers. Every vocabulary row
