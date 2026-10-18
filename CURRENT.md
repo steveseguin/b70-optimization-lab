@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 18, packet58w one-card overlap chain prepared on CPU:** The fresh
+seven-window chain reuses packet58v's binaries and seals tile16 with overlapped
+cache maintenance. All 120 tests, seven real entry paths, 28 wrong-unit/environment
+refusals, full-size startup, byte checks and seals pass. The command embeds its
+library path and uses a new service name. It refuses until 58v's smoke and full
+five-view bracket pass the exact-output and speed gates; at the preparation
+check, smoke passed and the bracket was incomplete. The submission tool keeps
+the 128-token limit and the pinned current record ID. No GPU, service, live queue,
+parent packet or host setting was changed by this preparation. The 26.228599
+record is unchanged. [Work note](notes/2026-10-18-own-runtime-packet58w.md).
+
 **October 18, packet140 target-body search closed on CPU:** No new exact
 change supports the required 3% projected gain. The broadest scale-sharing
 idea gives about 1.31% under the transfer assumption supported by earlier

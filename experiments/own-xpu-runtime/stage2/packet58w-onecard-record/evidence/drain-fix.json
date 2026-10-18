@@ -1,0 +1,41 @@
+{
+  "schema": "drain-fix-report.v1",
+  "root": "experiments/own-xpu-runtime/stage2/packet58w-onecard-record",
+  "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+  "counts": {
+    "FIXED": 2,
+    "UNFIXED": 0
+  },
+  "passed": true,
+  "files": [
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/drain_gate.py",
+      "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+      "status": "FIXED",
+      "sleeps": [
+        {
+          "line": 51,
+          "status": "FIXED"
+        }
+      ]
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/screen-reader/drain_gate.py",
+      "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+      "status": "FIXED",
+      "sleeps": [
+        {
+          "line": 51,
+          "status": "FIXED"
+        }
+      ]
+    }
+  ],
+  "device_executed": false,
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/drain_cpu_gate.py": "3747ba83d53a9e76b9d4c7dacd2aa7dd8789948e0ecd4ddeaf4efd96463f4ef3",
+    "scripts/check_drain_fix.py": "70d18ffb0abf9cbb59ea84737e09ecb700951805c6b3dc499f40e42d476aa62f",
+    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/drain_gate.py": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+    "experiments/own-xpu-runtime/stage2/packet58w-onecard-record/screen-reader/drain_gate.py": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72"
+  }
+}
