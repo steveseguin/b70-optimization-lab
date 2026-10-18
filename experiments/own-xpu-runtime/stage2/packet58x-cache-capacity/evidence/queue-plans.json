@@ -4,14 +4,16 @@
   "services_started": false,
   "live_queue_changed": false,
   "temporary_queue": true,
+  "prospective_ready_copy": true,
   "records": [
     {
       "arm": "smoke",
-      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58x-smoke-A.txt",
-      "proposal_sha256": "f9c6ac504dcbb498e55f37fd91655b58eb3ad226c12f69626f1028eda1c52bac",
+      "proposal": "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/proposals/proposed-p58x-smoke-A.txt",
+      "proposal_sha256": "c5f6af8770b903a9ad3c21bf32cd9356daf3a5357b0ba8df98ae26619f912e96",
+      "coordinator_path": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58x-smoke-A.txt",
       "plan": [
         {
-          "name": "packet58x-smoke-A",
+          "name": "packet58x-smoke-c-A",
           "plan": "passed",
           "seal": "checked by packet plan/wrapper",
           "host_required_available_bytes": 98989727744
@@ -22,15 +24,16 @@
         900
       ],
       "watchdog_seconds": 7200,
-      "log_sha256": "9a933fac6fa47cf18513fe06dd7a400028cba424116b74400875ed1ef7429a95"
+      "log_sha256": "cb73c85dd48c26beb51e41f39121ae2fd05a6e0f1551c253dac69ff3c1b66b00"
     },
     {
       "arm": "max",
-      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58x-v5-A.txt",
-      "proposal_sha256": "c84c3f0f0efb02654fc7b78d88aca1e2644aa0a56eb73bc094396747a82fd8aa",
+      "proposal": "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/proposals/proposed-p58x-v5-A.txt",
+      "proposal_sha256": "be6cd30387343ac31cb1f46f1685b810661dad96c859af3808a566722ff45738",
+      "coordinator_path": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58x-v5-A.txt",
       "plan": [
         {
-          "name": "packet58x-v5-A",
+          "name": "packet58x-v5-c-A",
           "plan": "passed",
           "seal": "checked by packet plan/wrapper",
           "host_required_available_bytes": 98989727744
@@ -41,12 +44,12 @@
         1800
       ],
       "watchdog_seconds": 7200,
-      "log_sha256": "030ec6fe5ac860105a97ed19be2a3f61f2307694e2d791fb42f042461ee2da1a"
+      "log_sha256": "0600e316497baa1d6e51b30841e0edc21093c05961e116151480a729472bbb6b"
     }
   ],
-  "build_receipt_sha256": "96ff67ddfbb61379bd79fd4a4e0e228b9b326bd8b0be6546d6d326434f0bd84d",
+  "build_receipt_sha256": "bc13a8ce1d186a873e42434fed03ce0e91aa5111b31f53bc1269f5d4beb34416",
   "storage": {
-    "root_free_bytes": 32785342464,
+    "root_free_bytes": 31824949248,
     "planned_write_bytes": 2684354560,
     "stop_floor_bytes": 25000000000
   }

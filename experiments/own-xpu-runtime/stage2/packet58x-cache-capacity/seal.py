@@ -8,13 +8,16 @@ GATES=('evidence/build.json','evidence/protocol-gates.json','evidence/k1-async-c
        'evidence/teardown-integration.json','evidence/oracle-gate.json','maintenance-decision.json')
 def read(p):return json.loads(p.read_text())
 def verify(root,pins):
-    assert pins
+    from input_scope import check_pins
+    check_pins(root,pins)
     for name,digest in pins.items():
         p=(root/name).resolve()
         assert p.is_relative_to(ROOT) and sha(p)==digest,'changed sealed input: '+name
 
 def create():
-    limits();assert not (P/'evidence/card0-capacity-a').exists(),'never reseal launched output'
+    from reseal_boundary import check
+    check()
+    limits();assert not (P/'evidence/card0-capacity-c').exists(),'never reseal launched output'
     sources={};gates={}
     for name in GATES:
         row=read(P/name);assert row.get('passed') is True and row.get('device_executed') is False,name
@@ -25,7 +28,9 @@ def create():
     assert all(r['passed'] for r in native['parent_relinks'])
     for mode in ('gnu-host','device'):
         name=f'build/{mode}/p58-cache-fixtures';artifacts[name]=sha(P/name)
-        assert artifacts[name]==sha(P.parent/'packet58j-onecard-port'/name)
+        from input_scope import allowed_inputs
+        parent='experiments/own-xpu-runtime/stage2/packet58j-onecard-port/'+name
+        assert artifacts[name]==allowed_inputs()[parent]
     for gate,binary in [('reset-gate','own-rt-iq3'),('startup-cpu','own-rt-iq3'),
                         ('fullshape-submit-cpu','fullshape-submit'),('postload-allocation-cpu','fullshape-submit'),
                         ('k1-async-cpu','p58-cache-fixtures')]:
@@ -42,18 +47,15 @@ def create():
     assert read(P/'evidence/python-cpu-gates.json')['checks']>=80
     from views import DEFAULT_MAINTENANCE
     assert read(P/'maintenance-decision.json')['default']==DEFAULT_MAINTENANCE
-    files=[*P.glob('*.py'),P/'views.json',P/'admission.json',P/'copy-manifest.json',P/'oracle-binding.json',P/'library-path.json',P/'k1-cpu.json',P/'dispatch-speed6.json']
-    for folder in ('native','sources','lineage','selections','host-admission','evidence/58c-kd','evidence/58c-supervisor'):
+    files=[*P.glob('*.py'),P/'views.json',P/'admission.json',P/'copy-manifest.json',P/'oracle-binding.json',P/'library-path.json',P/'k1-cpu.json',P/'dispatch-speed6.json',P/'immutable-inputs.json',P/'readiness-policy.json',P/'old_unit_gate.txt',P/'teardown-templates.json']
+    for folder in ('native','sources','lineage','selections','host-admission','proposals'):
         files += [f for f in (P/folder).rglob('*') if f.is_file() and '__pycache__' not in f.parts]
     for f in files:sources[str(f.relative_to(ROOT))]=sha(f)
     sources.update(read(P/'oracle-binding.json')['files_sha256'])
     from shared_oracle import completed_binding
     binding=completed_binding();assert binding==read(P/'evidence/oracle-gate.json')
-    for name in ('experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py',
-                 'experiments/own-xpu-runtime/ops/compile_turn.py','scripts/check_drain_fix.py','scripts/check_teardown_on_error.py',
-                 'experiments/own-xpu-runtime/stage1/packet4-prep/driver/window_driver.py',
-                 'experiments/own-xpu-runtime/stage2/packet56-draft-prefix/suite_metrics.py'):
-        sources[name]=sha(ROOT/name)
+    from input_scope import allowed_inputs
+    sources.update(allowed_inputs())
     verify(ROOT,sources);verify(P,artifacts)
     size=sum(f.stat().st_size for f in (P/'build').rglob('*') if f.is_file());assert size<=300_000_000
     row=dict(schema='own-runtime.packet58.build.v1',passed=True,device_executed=False,sources=sources,artifacts=artifacts,gates=gates,
@@ -72,4 +74,4 @@ def main():
     else:row=create()
     print(json.dumps(dict(passed=True,device_executed=False,sources=len(row['sources']),build_bytes=row['retained_build_bytes'])))
 if __name__=='__main__':
-    resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+    resource.setrlimit(resource.RLIMIT_AS,(2*1024**3,2*1024**3));main()

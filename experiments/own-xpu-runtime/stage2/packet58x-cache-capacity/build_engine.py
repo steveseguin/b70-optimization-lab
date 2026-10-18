@@ -24,13 +24,18 @@ def compiler_turn():
     return mod.turn()
 
 def main():
+    from frozen_inputs import restore
+    restore()
     limits();native=generate();commands=[];sources={};artifacts={};parent_relinks=[]
     # Source closure is verified against the frozen parent receipt before reuse.
     parent=json.loads((BASE/'build-receipt.json').read_text())
     sources[str((BASE/'build-receipt.json').relative_to(ROOT))]=sha(BASE/'build-receipt.json')
     for name,digest in parent['sources'].items():
-        assert sha(ROOT/name)==digest,name
-        sources[name]=digest
+        from frozen_inputs import FROZEN
+        source=FROZEN/name
+        snapshot=json.loads((P/'lineage/58xb-source-snapshot.json').read_text())
+        assert snapshot['members'][name]==digest,name
+        sources[str(source.relative_to(ROOT))]=sha(source)
     for mode in ('gnu-host','device'):
         base=BASE/'build'/mode;dest=B/mode;dest.mkdir(exist_ok=True)
         flags=dict(line.split(' = ',1) for line in (base/'CMakeFiles/programs.dir/flags.make').read_text().splitlines() if ' = ' in line)

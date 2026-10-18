@@ -53,7 +53,7 @@ def sandbox(tmp):
 def sources():
     from launch_identity import LANEQUEUE
     files = [*P.glob('*.py'), P/'views.json', P/'oracle-binding.json',
-             P/'selections/route-rec.json', P/'dispatch-speed6.json', LANEQUEUE]
+             P/'selections/route-rec.json', P/'dispatch-speed6.json']
     return {str(f.relative_to(ROOT)): sha(f) for f in files}
 
 
@@ -74,6 +74,16 @@ def probe(name, miss, candidate, old_gate=False):
     job = next(json.loads(line) for line in proposal.read_text().splitlines() if line.startswith('{'))
     L.validate(job, 'A')
     library = job['argv'][job['argv'].index('--library-path') + 1]
+    # Check the current coordinator command without depending on its mutable
+    # source identity in the runtime seal. Never execute the built command.
+    sys.path.insert(0,str(LANEQUEUE.parent))
+    try:
+        actual = D.module('packet58xc_actual_coordinator', LANEQUEUE)
+    finally:
+        sys.path.pop(0)
+    assert actual.command(job, '/tmp/packet58x-review.json', '/tmp/packet58x-exit.json', library) == L.command(
+        job, '/tmp/packet58x-review.json', '/tmp/packet58x-exit.json', library)
+    assert actual.closed_env(library) == L.closed_env(library)
     unit = unit_name(job, library)
     cgroup = '0::/user.slice/user-1000.slice/user@1000.service/app.slice/' + unit + '\n'
     real_read_text = Path.read_text
@@ -84,8 +94,7 @@ def probe(name, miss, candidate, old_gate=False):
     original_gate = None
     if old_gate:
         # Frozen pre-fix implementation, extracted without importing the parent.
-        source = subprocess.check_output(['git', 'show', 'ba0dc6e7b:' + str((P.parent/'packet58v-async-cache/window.py').relative_to(ROOT))],
-                                         text=True, stdin=subprocess.DEVNULL)
+        source = (P/'old_unit_gate.txt').read_text()
         node = next(n for n in ast.parse(source).body if isinstance(n, ast.FunctionDef) and n.name == 'user_unit_gate')
         namespace = {'require': W.require}
         exec(compile(ast.Module(body=[node], type_ignores=[]), '<old-user-unit-gate>', 'exec'), namespace)
@@ -278,7 +287,7 @@ def main():
             print(candidate,name,miss,'PASS',flush=True)
     assert before==sources()
     rss=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024
-    assert rss < 4*1024**3
+    assert rss < 2*1024**3
     row=dict(passed=True,device_executed=False,checks=len(records),records=records,sources=before,old_code_regressions=regressions,
         peak_child_rss_bytes=rss,model_payload_reads=False,services_started=False,
         seal_validation='separate seal verification; construction envelope synthetic to avoid circular gate dependency')

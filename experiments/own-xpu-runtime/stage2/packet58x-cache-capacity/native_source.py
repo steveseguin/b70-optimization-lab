@@ -3,7 +3,8 @@ import json
 from pathlib import Path
 P=Path(__file__).resolve().parent
 ROOT=P.parents[3]
-BASE=P.parent/'packet58j-onecard-port'
+from frozen_inputs import FROZEN
+BASE=FROZEN/'experiments/own-xpu-runtime/stage2/packet58j-onecard-port'
 
 
 def once(text, old, new):

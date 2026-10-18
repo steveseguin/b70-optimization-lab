@@ -1,3 +1,4 @@
+from frozen_inputs import FROZEN
 """Full-size binding, reset and miniature byte gates. No device executable runs."""
 import argparse,hashlib,json,os,resource,shutil,subprocess,tempfile,time
 from pathlib import Path
@@ -84,7 +85,7 @@ def bytes_gate():
                 source=P/'native'/(stem+'.cpp');sources[str(source.relative_to(P.parents[3]))]=sha(source)
                 binary=tmp/(tag+'-'+stem)
                 cmd=[compiler,'-std=c++20','-O2','-fno-fast-math','-ffp-contract=off','-DOWN_RT_HOST_ONLY','-Wno-unknown-pragmas',
-                    '-I'+str(BASE),'-I'+str(P/'../../stage1/packet3-prep/src'),'-I'+str(P.parent/'packet2/kernels'),'-I'+str(P.parent/'packet2/loader'),str(source),'-o',str(binary),'-lcrypto']
+                    '-I'+str(BASE),'-I'+str(FROZEN/'experiments/own-xpu-runtime/stage1/packet3-prep/src'),'-I'+str(FROZEN/'experiments/own-xpu-runtime/stage2/packet2/kernels'),'-I'+str(FROZEN/'experiments/own-xpu-runtime/stage2/packet2/loader'),str(source),'-o',str(binary),'-lcrypto']
                 with compiler_turn():
                     result=run(cmd)
                 (P/'evidence'/f'{tag}-{stem}-build.log').write_text(result.stdout+result.stderr)

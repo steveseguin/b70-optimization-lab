@@ -1,10 +1,10 @@
 #pragma once
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/owner.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/owner.hpp"
 #include <array>
 #ifdef OWN_RT_HOST_ONLY
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/adapter.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/adapter.hpp"
 #else
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp"
 #endif
 namespace p58v {
 // One contiguous H2D upload, then a device scatter into unchanged table handles.

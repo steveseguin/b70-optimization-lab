@@ -11,7 +11,7 @@ GIB = 1024**3
 CACHE_BYTES = 18_000_000_000
 HOST_RESERVE = 8 * GIB
 DEVICE_RESERVE = 1_500_000_000
-CENSUS = REPO / 'experiments/qwen38-flash-next-ud-iq3xxs-b70/packet1/tensor-census.json'
+CENSUS = HERE / 'host-admission/tensor-census.json'
 
 
 def require(condition, message):
@@ -42,7 +42,7 @@ def census_inventory(path=CENSUS):
 
 
 def allocation_inventory():
-    paths = [HERE.parent / 'packet45-merged3/evidence/audit6' / f'W2m-c4096-dr1-r{rank}/census.json' for rank in (0, 1)]
+    paths = [HERE / 'host-admission' / f'rank{rank}-census.json' for rank in (0, 1)]
     allocations = [a for p in paths for a in json.loads(p.read_text())['allocations']]
     target = [a for a in allocations if ':draft:' not in a['label']]
     weights = sum(a['bytes'] for a in target if a['category'] == 'weights' and 'exps.' not in a['label']) - 4_194_304
@@ -103,7 +103,7 @@ def observed_shadow(samples, baseline, pinned_limit):
 
 def seed_observation():
     """58c is an incomplete load: never substitute it for full cache/KV census."""
-    root = HERE / 'evidence/58c-supervisor'
+    root = HERE / 'lineage/fixtures/58c-supervisor'
     pins = json.loads((root / 'source-manifest.json').read_text())
     for leaf, digest in pins.items():
         require(sha(root / leaf) == digest, 'shadow source changed')

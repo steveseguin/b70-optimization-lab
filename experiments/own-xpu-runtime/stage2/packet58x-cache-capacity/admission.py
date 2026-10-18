@@ -10,7 +10,8 @@ import statistics
 
 P = Path(__file__).resolve().parent
 ROOT = P.parents[3]
-STAGE = P.parent
+from frozen_inputs import FROZEN
+STAGE = FROZEN/'experiments/own-xpu-runtime/stage2'
 GIB = 1024**3
 PINS = {}
 

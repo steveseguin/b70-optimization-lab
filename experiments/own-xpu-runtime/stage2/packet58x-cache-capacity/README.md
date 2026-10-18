@@ -5,6 +5,28 @@ This packet makes no new speed or quality claim. The target arithmetic remains
 `iq3-p49-split32-v1`, with tile16 expert down weights, target-only decode,
 4,096-position BF16 KV and zero-copy expert misses.
 
+**Packet58xc:** the first smoke passed K1a/K1b, then refused before WSCREEN
+because its seal depended on a mutable sibling reader. Its evidence stays in
+`evidence/card0-capacity-a/smoke/`. Fresh proposals use
+`evidence/card0-capacity-c/{smoke,max}` and new job names ending in `-c-A`.
+They are proposals only. Neither has been queued or launched by this amendment.
+
+Comparison, supervision and metrics readers are now owned here. The parent
+smoke and bracket are replayed from the byte-verified local source/evidence
+archive, never through sibling Python files. `input_scope.py` rejects every
+external live pin except exact `immutable-inputs.json` entries: the original
+oracle binding and frozen parent executable/object binaries. There are no
+directory exceptions. Historic source maps inside the archive and lineage
+receipts are provenance, not live filesystem dependencies.
+
+The native binaries and earlier native validation results are retained.
+Minimal reseal does not rerun full-shape allocation, GGUF-reading gates or any
+device work. Source include paths have been relocated to the private snapshot;
+no native code is recompiled in this amendment. Before a future rebuild or
+historical analysis, run `frozen_inputs.py` to restore its owned source inputs.
+The unchanged historical native receipts are preserved inside the archive,
+including their original hashes. See [snapshot retention](RETENTION.md).
+
 [Admission and independent replay](ADMISSION.md) permit **21.5527296 GB** of
 cache, compared with the 18 GB control. The estimate clears the registered
 gate narrowly: **+2.26%**, conditional on the independent miss ratio and the

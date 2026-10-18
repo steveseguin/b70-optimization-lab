@@ -15,11 +15,11 @@ def main():
     count=int(re.search(r'Ran (\d+) tests',result.stderr)[1])
     save(P/'evidence/python-cpu-gates.json',dict(passed=True,device_executed=False,checks=count,seconds=time.monotonic()-started,
         log_sha256=sha(P/'evidence/python-cpu-gates.log'),sources={str(f.relative_to(ROOT)):sha(f) for f in P.glob('*.py')}))
-    scanner=ROOT/'scripts/check_drain_fix.py'
+    scanner=P/'check_drain_fix.py'
     result=subprocess.run([sys.executable,'-B',str(scanner),str(P),'--json'],stdin=subprocess.DEVNULL,capture_output=True,text=True,check=True)
     row=json.loads(result.stdout);assert row['passed'] and row['counts']=={'FIXED':1,'UNFIXED':0}
     row.update(device_executed=False);save(P/'evidence/drain-fix.json',row)
-    checker=ROOT/'scripts/check_teardown_on_error.py'
+    checker=P/'check_teardown_on_error.py'
     result=subprocess.run([sys.executable,'-B',str(checker),str(P),'--json'],stdin=subprocess.DEVNULL,capture_output=True,text=True)
     row=json.loads(result.stdout)
     assert row['status']=='NOT_VERIFIED' and row['files'][0]['status']=='MATCH'
@@ -42,8 +42,8 @@ def main():
     save(P/'evidence/memory-budget.json',dict(passed=True,device_executed=False,budget=budget,
         fullshape_device_bytes=census['totals']['device'],fullshape_census_sha256=sha(P/'evidence/fullshape-census.json'),
         policy='packet58u plus full added-cache backing, unchanged margins, and explicit driver/transient allowances',actual_live_host_admission=False,scope='whole-host'))
-    print(count,'Python tests; full host/VRAM budget; 1 drain FIXED; custom teardown integration PASS')
-    assert resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024<4*1024**3
+    print(count,'Python tests; retained host/VRAM budget; 1 drain FIXED; custom teardown integration PASS')
+    assert resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024<2*1024**3
     limits()
 
 if __name__=='__main__':

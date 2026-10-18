@@ -5,7 +5,7 @@ from native_source import once, P, BASE
 
 def support():
     out=P/'build/native'
-    checked=BASE/'build/checked'/BASE.relative_to(P.parents[3])
+    checked=BASE/'build/checked'/Path('experiments/own-xpu-runtime/stage2/packet58j-onecard-port')
     owner=(checked/'owner.cpp').read_text()
     owner='#include "'+str(P/'native/async_backend.hpp')+'"\n'+owner
     owner=once(owner,'events_.reserve(16384);fast_owners[this].bindings.reserve(4096);',

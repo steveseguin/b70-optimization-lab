@@ -1,5 +1,5 @@
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/kernel_guard.hpp"
-#line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/fullshape_submit_test.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/kernel_guard.hpp"
+#line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/fullshape_submit_test.hpp"
 // Full production initialization and every submit check; no payload reads or kernels.
 #include <sys/mman.h>
 class FullShapeMock final : public packet18::LifetimeMock {

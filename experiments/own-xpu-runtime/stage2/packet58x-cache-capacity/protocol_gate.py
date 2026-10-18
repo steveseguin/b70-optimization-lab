@@ -1,3 +1,4 @@
+from frozen_inputs import FROZEN
 """Run actual protocol/publication and owner code with delayed CPU events."""
 import json,resource,subprocess
 from build_engine import P,BASE,ROOT,compiler_turn,limits,sha,save
@@ -7,8 +8,8 @@ def main():
     for stem in ('protocol_test','owner_async_test','capacity_test'):
         binary=P/'build'/stem
         cmd=['g++','-std=c++20','-O2','-DOWN_RT_HOST_ONLY','-I'+str(BASE),'-I'+str(P/'native'),
-             '-I'+str(P.parents[1]/'stage1/packet3-prep/src'),'-I'+str(P.parent/'packet2/kernels'),
-             '-I'+str(P.parent/'packet2/loader'),str(P/'native'/(stem+'.cpp'))]
+             '-I'+str(FROZEN/'experiments/own-xpu-runtime/stage1/packet3-prep/src'),'-I'+str(FROZEN/'experiments/own-xpu-runtime/stage2/packet2/kernels'),
+             '-I'+str(FROZEN/'experiments/own-xpu-runtime/stage2/packet2/loader'),str(P/'native'/(stem+'.cpp'))]
         if stem=='owner_async_test':cmd += [str(P/'build/gnu-host/owner.o'),str(P/'build/gnu-host/owner_retire.o')]
         cmd += ['-o',str(binary)]
         with compiler_turn():

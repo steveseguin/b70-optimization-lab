@@ -178,7 +178,7 @@ class AdmissionTests(unittest.TestCase):
             # Full metadata extents, including the KV preceding cache setup.
             rows['allocations'].append(dict(label='card0:KV',category='KV',memory='device',bytes=116391936,live=True))
             (run/'census.json').write_text(json.dumps([rows]))
-            (run/'progress.jsonl').write_bytes((W.HERE/'evidence/58c-kd/run/progress.jsonl').read_bytes())
+            (run/'progress.jsonl').write_bytes((W.HERE/'lineage/fixtures/58c-kd/run/progress.jsonl').read_bytes())
             (root/'host-memory.jsonl').write_text(json.dumps(dict(host=dict(GPUActive=48627772000),
                 pinned_expert_bytes=48627712000,gpuactive_shadow_bytes=60000))+'\n')
             sample=dict(phase='after_load',GPUActive=48627772000,MemAvailable=10*M.GIB)

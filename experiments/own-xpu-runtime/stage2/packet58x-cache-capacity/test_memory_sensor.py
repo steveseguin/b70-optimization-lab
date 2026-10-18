@@ -8,7 +8,7 @@ import legacy_memory_plan as M  # Historical 58b sensor regression uses its orig
 import window as W
 
 HERE = Path(__file__).resolve().parent
-EVIDENCE = HERE.parent/'packet58g-onecard/evidence/58b-kd'
+EVIDENCE = HERE/'lineage/fixtures/58b-kd'
 
 class SensorTests(unittest.TestCase):
     @classmethod

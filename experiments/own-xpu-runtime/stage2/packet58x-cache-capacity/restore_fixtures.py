@@ -3,6 +3,8 @@ import json,resource,shutil
 from build_engine import P,BASE,sha,limits
 
 def main():
+    from frozen_inputs import restore
+    restore()
     limits()
     parent=json.loads((BASE/'build-receipt.json').read_text())
     for mode in ('gnu-host','device'):

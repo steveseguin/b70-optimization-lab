@@ -26,7 +26,7 @@ def module(name, path):
     spec.loader.exec_module(result)
     return result
 
-METRICS = module('p58_metrics', HERE.parent / 'packet56-draft-prefix/suite_metrics.py')
+METRICS = module('p58_metrics', HERE / 'suite_metrics.py')
 CHECK = module('p58_oracle_check', ORACLE / 'suite_check.py')
 
 def require(condition, message):

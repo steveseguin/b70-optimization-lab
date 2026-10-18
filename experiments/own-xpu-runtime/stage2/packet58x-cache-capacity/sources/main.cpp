@@ -1,32 +1,32 @@
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/kernel_guard.hpp"
-#line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/main.cpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p30_submit.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p33_submit.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p33r2.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/synthetic.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/performance.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/adapter.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/small_gemv.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/dispatch.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p39_plan.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49b_expert_submit.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p100_down.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49c_submit.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49d_submit.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/cache_table.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p25_bridge.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p28/submit.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/expert_down.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/kernel_guard.hpp"
+#line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/main.cpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p30_submit.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p33_submit.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p33r2.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet2/loader/gguf.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/synthetic.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet3/step/plan.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/performance.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/adapter.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/small_gemv.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/dispatch.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p39_plan.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49b_expert_submit.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p100_down.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49c_submit.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49d_submit.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/cache_table.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p25_bridge.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p28/submit.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/expert_down.hpp"
 #include <unordered_map>
 #include <optional>
 #include <thread>
 #ifndef OWN_RT_HOST_ONLY
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp"
 #endif
 #ifdef OWN_RT_HOST_ONLY
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/lifetime_mock.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/lifetime_mock.hpp"
 #endif
 #include <csignal>
 #include <filesystem>
@@ -1480,7 +1480,7 @@ public:
     weights[c].clear();
   }
 };
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/mtp.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/mtp.hpp"
 static void write_plan(const fs::path &path, const flash::Plan &p,
                        const Weights &w, int cards, const Options& a) {
   std::map<std::string, int> owner;
@@ -1565,7 +1565,7 @@ static void record_host_memory(const fs::path& output,const char* phase) {
   out<<"{\"phase\":"<<ownrt::quote(phase)<<",\"MemAvailable\":"<<available<<",\"GPUActive\":"
      <<(has_active?std::to_string(active):"null")<<"}\n";out.flush();
 }
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rank.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rank.hpp"
 
 // SPEED6_SCRATCH_POLICY_BEGIN
 // Scope the footprint reduction to the previously refused split23/dr1 arm.
@@ -1640,8 +1640,8 @@ static void p58_reset_request(Engine& e,const fs::path& destination) {
 }
 
 #ifdef OWN_RT_HOST_ONLY
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/postload_allocation_test.hpp"
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/fullshape_submit_test.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/postload_allocation_test.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/fullshape_submit_test.hpp"
 #endif
 
 int main(int argc, char **argv) {

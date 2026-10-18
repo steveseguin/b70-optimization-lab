@@ -100,3 +100,63 @@ bind that commit, the new seal and both planned proposal hashes. The marker
 is committed and pushed separately. No GPU, service, sudo, setting, live queue,
 other packet tree or screen tree was changed by this preparation. The smoke
 and v5 remain unqueued and unlaunched; device fit, quality and speed are pending.
+
+## Packet58xc — own the source closure, October 18
+
+The first smoke passed K1a and K1b, then refused before WSCREEN because the
+seal still pinned packet58w's mutable `verify_ready.py`. Packet58wc had
+legitimately changed that file. The failed smoke remains untouched under
+`evidence/card0-capacity-a/smoke/`; no packet58x model timing window ran.
+The reported fault count remains two; this CPU preparation ran no GPU probe.
+
+Packet58x now owns its comparison reader, metrics, supervision helpers,
+fault expressions and the command-building functions used by its unit gate.
+The original parent smoke and five-view outputs replay from a local verified
+snapshot, including every native token against `iq3-p49-split32-v1`. A0 is
+still exact and reported, but excluded from drift and gain. Each max view must
+reach 1.005 times each remaining 18GB control; control drift must stay at or
+below 3%. The native executables, allocation, reserves, tile16 and BF16 KV
+are unchanged. Source include paths are mechanically redirected into the
+owned historical snapshot; this amendment does not rebuild the executables.
+
+The pin gate refuses any external path absent from the explicit immutable
+allowlist. Only the original oracle binding and exact frozen parent binary
+hashes are allowed, including the retained compiled object binaries. Nested
+admission and fixture provenance also has local copies. Original receipts
+and source maps remain under `lineage/` as history, rather than live checks
+against sibling files. The 10.235 MB source/evidence archive preserves 1,159
+verified original members; [retention and restoration](../experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/RETENTION.md)
+explains why it is retained. No parent or other packet tree was changed.
+
+Validation: **106 Python tests**, all six real queue/window entry probes and
+both old-unit refusals pass. The probes compare the command and closed
+environment with the current coordinator, pass the real live memory check,
+and intercept native execution. Peak probe child RSS stayed below **35 MiB**.
+The minimal seal and build gate pass with **314 source pins**; retained
+build size is **80,586,089 bytes**. No full-shape or GGUF-reading gate was run.
+The complete parent replay again gives 0.097558% warm-control drift and a
+minimum 7.810884% overlap gain; these remain parent readiness comparisons,
+not packet58x speed measurements.
+
+Both proposals now use fresh jobs `packet58x-smoke-c-A` and
+`packet58x-v5-c-A`, writing `evidence/card0-capacity-c/{smoke,max}`. The bracket
+requires that fresh smoke. Both passed planning on temporary queue copies,
+including the coordinator's newly added recursive pin guard. Planning reads
+a temporary copy of the prospective readiness marker; it does not overwrite
+the live marker early or disable any pin checks. Packet-local copies of the
+two proposals are sealed, with the two allowed coordinator proposal paths
+recorded separately. Nothing was queued or launched.
+
+Commands used `nice -n 19 taskset -c 8-15,24-31 python3 -B` with stdin closed.
+CPU utilities were capped at 2 GiB; entry probes preserve unlimited virtual
+addresses to test the real runtime refusal policy and enforce a 2 GiB RSS
+ceiling. No service, sudo, settings, model payload read or live queue write
+was performed. `git pull --rebase` refused unrelated dirty files; fetch later
+confirmed HEAD equals origin/main. Implementation changes are committed with
+explicit paths and pushed immediately. `READY-FOR-DEVICE.json` is then the
+last content write and is committed and pushed separately.
+
+Recheck from the packet directory: `maintenance_decision.py`,
+`plan_queue.py --emit-only`, `argument_gate.py`, `run_cpu_gates.py`, `seal.py`,
+`seal.py --verify`, and `plan_queue.py`. The first full model smoke, quality
+and capacity timing results are still pending coordinator execution.

@@ -2,7 +2,8 @@
 import hashlib,json,os,resource,shutil
 from pathlib import Path
 P=Path(__file__).resolve().parent
-SOURCE=P.parent/'packet58v-async-cache'
+from frozen_inputs import FROZEN
+SOURCE=FROZEN/'experiments/own-xpu-runtime/stage2/packet58v-async-cache'
 def main():
     assert shutil.disk_usage('/').free>=25_000_000_000
     assert not (P/'native').exists()
