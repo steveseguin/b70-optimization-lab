@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet138 capture prepared on CPU:** A new lane-B diagnostic
+will collect expert routes and the hidden states needed to test next-layer
+prefetch prediction. It uses twelve independent held-out prompts and a separate
+packet49 sanity check, with all outputs checked against their pinned references.
+Both builds, byte checks, full-size startup, launch guards and the temporary
+queue plan pass. The proposal is not queued. Capture, prediction accuracy and
+projected gain remain pending; no GPU, service or live queue changed. Phase 2
+requires at least 3% projected gain over the 58v control with traffic fitting the
+available layer time. [Work note](notes/2026-10-18-own-runtime-packet138.md).
+
 **October 18, packet58v async cache prepared on CPU:** The one-card record
 spends 6.99 ms per token maintaining its cache. The new copy plans while the
 next position computes, then safely revokes victim pointers before filling
