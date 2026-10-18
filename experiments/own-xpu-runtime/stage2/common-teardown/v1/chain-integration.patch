@@ -1,0 +1,101 @@
+--- a/window_adapter.py
++++ b/window_adapter.py
+@@ -1,5 +1,6 @@
+ """Small seal-time integration surface for packet61-style future windows."""
+ import argparse
++from teardown_on_error import StickyCheck, finish_chain_error
+ import hashlib
+ import json
+ from pathlib import Path
+@@ -18,6 +19,8 @@
+                  drain_root=DEFAULT_DRAIN_ROOT):
+         self.window, self.evidence, self.proc, self.now = window, Path(evidence), proc, now
+         self.scope = window_scope(window)
++        self.watch = None
++        self.failure_check = check = StickyCheck(check)
+         self.monitor = DeviceMonitor('A', proc, now)
+         self.lease = Reservation('A', window=window, root=root, check=check)
+         self.drain = DrainPermit(self.evidence, root=drain_root, check=check,
+@@ -82,21 +85,30 @@
+         finally:
+             self.persist()
+
+-    def complete(self):
++    def complete_teardown(self):
+         try:
+             self.monitor.finish()
+             require(not self.window.startswith('W') or self.monitor.ready_checks > 0,
+                     'model window lacks the before-request READY proof')
+             self.record['clients_after_drain'] = admit_clients(self.scope, self.proc)
++            self.failure_check()
+             self.drain.complete()
+             self.lease.complete(drained=True)
+-            self.record['passed'] = True
+-        finally:
+-            self.persist()
++        finally:
++            self.persist()
++
++    def complete(self):
++        self.complete_teardown()
++        self.record['passed'] = True
++        self.persist()
+
+     def __exit__(self, kind, value, trace):
+-        self.drain.__exit__(kind, value, trace)
+-        self.lease.__exit__(kind, value, trace)
++        try:
++            if value is not None:
++                finish_chain_error(self, value)
++        finally:
++            self.drain.__exit__(kind, value, trace)
++            self.lease.__exit__(kind, value, trace)
+
+
+ def bind_receipt(path, admission):
+@@ -220,6 +232,8 @@
+             code = main(admission=admission)
+             if code == 0:
+                 bind_receipt(args.output / 'window.json', admission)
++            else:
++                finish_chain_error(admission, RuntimeError('window returned ' + str(code)))
+             return code
+     finally:
+         for sig, handler in handlers.items():
+--- a/window.py
++++ b/window.py
+@@ -35,6 +35,7 @@
+         self.admission=admission
+         self.out=out;self.boot=boot;self.end=time.monotonic()+seconds;self.last=0.;self.cancelled=[];self.launched=[];self.cpu_children=[];self.new_gpu_fault=False
+         text,self.cursor=journal();(out/'kernel-preflight.txt').write_text(text)
++        if admission:admission.watch=self
+     def mark_launched(self,pid):
+         self.launched.append(int(pid))
+         if self.admission:self.admission.register(int(pid))
+@@ -517,6 +518,7 @@
+         record.update(MARKERS,diagnostic=True,diagnostic_for_speed=True)
+         save(out/'DIAGNOSTIC-UNSEALED.json',dict(MARKERS,reason='Unsealed diagnostic; never submission, publication or promotion evidence',artifacts_sha256=artifacts))
+     save(out/'window.json',record)
++    failure=None
+     watch=Watch(out,boot,seconds,admission);old={s:signal.signal(s,lambda n,f:watch.cancelled.append(n)) for s in (signal.SIGTERM,signal.SIGINT)}
+     try:
+         save(out/'window.json',record)
+@@ -587,6 +589,7 @@
+             record['receipts']={str(f.relative_to(out)):sha(f) for f in (out/'run').rglob('receipt.json')}
+         watch.postflight();record['passed']=True
+     except Exception as error:
++        failure=error
+         record.update(error=str(error),passed=False)
+         pp.failure_attempt('window fault latch',lambda:watch.latch(error),record.setdefault('diagnostic_errors',[]))
+     finally:
+@@ -603,7 +606,9 @@
+         try:compress_evidence(out,record)
+         except Exception as error:record.update(retention_error=str(error),raw_evidence_retained=True)
+     if a.diagnostic_unsealed:record.update(MARKERS,diagnostic=True,diagnostic_for_speed=True)
+-    save(out/'window.json',record);return 0 if record['passed'] else 1
++    save(out/'window.json',record)
++    if failure is not None:raise failure
++    return 0 if record['passed'] else 1
+ def coordinated_main():
+     import sys
+     if '--plan' in sys.argv:
