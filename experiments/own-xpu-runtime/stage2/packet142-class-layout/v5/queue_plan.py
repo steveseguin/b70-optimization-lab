@@ -1,29 +1,33 @@
-"""New proposals only. The real queue planner runs on disposable copies."""
-import json,subprocess,sys,tempfile
+"""Six new proposals, planned only in disposable queues; never enqueue."""
+import json,subprocess,sys,tempfile,shutil
 from pathlib import Path
-from build_engine import P,ROOT,sha,save,limits
-QUEUE=P.parents[2]/'ops/lane-queue'
-def proposal(kind,lane):
- plan=dict(host_required_available_bytes=97*1024**3+1_271_398_400+5120+32768,expected_seconds=[240,360] if kind=='smoke' else [720,1200],watchdog_seconds=4800)
- assert plan['watchdog_seconds']>=4*plan['expected_seconds'][1]
- return dict(name='packet137-'+kind+'-'+lane,lane=lane,argv=['/usr/bin/python3','-B',str((P/'bracket_job.py').relative_to(ROOT)),'--kind',kind,'--lane',lane,'--output',str(P/'evidence'/('device-'+('smoke' if kind=='smoke' else 'v5')+'-'+lane)),'--fault-review','{REVIEW}','--authorized-device-window'],env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)),plan=plan)
+from build_engine import P,LOCAL,ROOT,sha,save,limits
+from bracket_config import VALUES
+QUEUE=LOCAL.parents[1]/'ops/lane-queue'
+def proposal(variant,kind):
+ upper=360 if kind=='smoke' else 1200
+ return dict(name='packet142-'+variant+'-'+kind+'-B',lane='B',argv=['/usr/bin/python3','-B',str((P/'bracket_job.py').relative_to(ROOT)),'--variant',variant,'--kind',kind,'--lane','B','--output',str(P/'evidence'/('device-'+variant+'-'+('smoke' if kind=='smoke' else 'v5')+'-B')),'--fault-review','{REVIEW}','--authorized-device-window'],env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)),plan=dict(host_required_available_bytes=97*1024**3+1200*1024**2,expected_seconds=[240,upper] if kind=='smoke' else [720,upper],watchdog_seconds=4800))
 def main():
- limits();paths=[];logs=[]
- for kind,lane in (('smoke','B'),('bracket','B'),('bracket','A')):
-  path=QUEUE/('proposed-p137-'+('smoke' if kind=='smoke' else 'v5')+'-'+lane+'.txt');content=json.dumps(proposal(kind,lane))+'\n'
-  if path.exists():assert path.read_text()==content,'existing proposal differs'
-  else:path.write_text(content)
-  paths.append(path)
- for lane in ('B','A'):
-  with tempfile.TemporaryDirectory(prefix='p137-plan-') as d:
-   dest=Path(d)
-   for src in QUEUE.glob('*.py'):(dest/src.name).write_bytes(src.read_bytes())
-   (dest/('queue-'+lane+'.txt')).write_text(''.join(p.read_text() for p in paths if p.name.endswith('-'+lane+'.txt')))
-   cmd=[sys.executable,'-B',str(QUEUE/'lanequeue.py'),'plan','--lane',lane,'--directory',str(dest)]
-   log=P/'evidence'/('queue-plan-'+lane+'.log')
-   with log.open('w') as f:r=subprocess.run(cmd,cwd=ROOT,stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,timeout=600)
-   assert r.returncode==0,log.read_text();logs.append(dict(command=cmd,path=str(log.relative_to(ROOT)),sha256=sha(log)))
- sources={str(f.relative_to(ROOT)):sha(f) for f in [*paths,P/'queue_plan.py',*(ROOT/r['path'] for r in logs)]}
- save(P/'evidence/queue-plan.json',dict(sources=sources,passed=True,device_executed=False,live_queue_modified=False,proposals={str(p.relative_to(ROOT)):sha(p) for p in paths},logs=logs,expected_seconds={'smoke':[240,360],'bracket':[720,1200]},watchdog_seconds=4800,unqueued_lanes=['A','B'],conditional_on='full exact 12x64 both smoke, CPU seal, coordinator live admission'))
- print('Three unqueued proposals; both temporary queue plans PASS')
+ limits();copies=LOCAL/'proposals';copies.mkdir(exist_ok=True);snapshot=LOCAL/'lineage-inputs/queue';snapshot.mkdir(exist_ok=True)
+ for src in QUEUE.glob('*.py'):shutil.copy2(src,snapshot/src.name)
+ rows=[]
+ for variant in VALUES:
+  for kind in ('smoke','bracket'):
+   name='proposed-p142-'+variant+'-'+('smoke' if kind=='smoke' else 'v5')+'-B.txt';row=proposal(variant,kind);content=json.dumps(row)+'\n'
+   assert row['plan']['watchdog_seconds']>=4*row['plan']['expected_seconds'][1]
+   live=QUEUE/name
+   if live.exists():assert live.read_text()==content,'existing proposal changed'
+   else:live.write_text(content)
+   (copies/name).write_text(content)
+   with tempfile.TemporaryDirectory(prefix='p142-plan-') as d:
+    tmp=Path(d)
+    for src in snapshot.glob('*.py'):shutil.copy2(src,tmp/src.name)
+    (tmp/'queue-B.txt').write_text(content)
+    cmd=[sys.executable,'-B',str(QUEUE/'lanequeue.py'),'plan','--lane','B','--directory',str(tmp)]
+    log=P/'evidence'/('plan-'+variant+'-'+kind+'.log')
+    with log.open('w') as stream:r=subprocess.run(cmd,cwd=ROOT,stdin=subprocess.DEVNULL,stdout=stream,stderr=subprocess.STDOUT,timeout=300)
+    assert r.returncode==0,log.read_text()[-6000:]
+   rows.append(dict(proposal_name=str(live.relative_to(ROOT)),sha256=sha(live),mirror=str((copies/name).relative_to(ROOT)),log=str(log.relative_to(ROOT)),log_sha256=sha(log),unit='screen-'+row['name']+'.service',**row['plan']))
+ paths=[P/'queue_plan.py',*copies.glob('*.txt'),*(ROOT/r['log'] for r in rows)]
+ save(P/'evidence/queue-plan.json',dict(passed=True,device_executed=False,live_queue_modified=False,queued=False,rows=rows,sources={str(f.relative_to(ROOT)):sha(f) for f in paths}))
 if __name__=='__main__':main()

@@ -4,7 +4,7 @@ from pathlib import Path
 from common import D, compare_tokens, label, read, require, save, sha
 
 SWITCH_RESET = 13
-DOMAINS = {'class_layout': ('production', 'attention-order512', 'expert-gate-up-order512', 'hc-gate-low-order512')}
+DOMAINS = {'class_layout': ('production', 'attention-order600', 'expert-gate-up-order600', 'hc-gate-low-order600')}
 
 def compatible(selections):
     require(len(selections) >= 1, 'at least one view required')

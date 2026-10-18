@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/safety_gate.py", line 22, in <module>
+    if __name__=='__main__':resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+                                                                                         ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/safety_gate.py", line 19, in main
+    target=__import__('pathlib').Path(inc);assert target.resolve().is_relative_to(LOCAL),'external native include: '+inc
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: external native include: /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/kernel_guard.hpp

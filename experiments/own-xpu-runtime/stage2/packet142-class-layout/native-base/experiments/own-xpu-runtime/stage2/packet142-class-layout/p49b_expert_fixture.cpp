@@ -1,4 +1,4 @@
-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/kernel_guard.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/kernel_guard.hpp"
 #line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/p49b_expert_fixture.cpp"
 // Actual owner submissions for the qualified expert formats and both verification rows.
 // This is correctness evidence, never a speed benchmark.

@@ -1,66 +1,52 @@
-# Packet136 banked rollback bundle preparation — closeout
+# Packet142 CPU preparation — closeout record
 
 <!-- campaign-closeout -->
 
 ## Question and identity
 
-Prepare bundle7 (packet124c) plus packet131b banked rollback before its lane-B
-verdict, without launching anything. Exactly two selections are sealed:
-`rollback_state=copy|banks`. Native binaries and selections match packet131b;
-the arithmetic remains `iq3-p49-split32-v1` and KV remains BF16.
+Can frozen packet136 bundle8 expose exact class-specific allocation-order copies
+ready for a packet141-positive verdict? CPU-only work on steve-b70s, October 18,
+2026; unchanged `iq3-p49-split32-v1` target and full 16-bit KV. Three fixed
+600 MiB-per-rank banks cover attention projections, routed expert gate/up and
+HC gate/low. No device experiment is part of this preparation.
 
 ## Outcome
 
-CPU preparation passes. All 182 parent symlinks survive, including the original
-packet49 oracle. All 88 tests, 11 subtests and five worker tests pass. Extended
-admission covers eleven Python windows, 31 intercepted native argument lists,
-eleven queue windows, twelve input preflights and six real oracle checks.
-Six confirm entries pass real CPU admission through both intercepted ranks.
-Both compositions pass their full-size CPU checks. The 22 startup paths are
-verified; unchanged K2 uses the explicitly labeled frozen receipt described
-below. The new six-job lane-A proposal passes temporary planning only.
+The final `READY-FOR-DEVICE.json` is the completion authority. No marker means
+preparation remains incomplete. CPU identity and full-shape checks have passed;
+entry, queue and final composition checks are still required before that marker.
+No speed verdict and no change to the 58.798 tok/s record.
 
-Readiness remains false: composed A smoke and grid results are absent, and
-packet131b B is incomplete. Both lanes must be exact and improve at least
-0.5% against every same-lane control. No new device speed or output is claimed;
-the 58.223834 bundle7 record remains current. Build storage is 256,692,386 bytes.
+## What worked
 
-## Useful mechanisms
+Exact copied rows keep existing arithmetic and reduction order. The one-load
+switch uses retained allocations and rebuilds all six rollback capture pairs.
+CPU capture normalization, complete request reset, memory census, GNU/Intel
+byte transcripts and offline submission replay provide separate evidence.
 
-Bind reused binaries, native selections and bank-state transcripts by hashes.
-Keep oracle authority outside repository source maps and run the real safe-path
-and oracle checks even for `--plan`. Recompute device rates and acceptance from
-raw receipts. Require identical native selection on both lanes, fresh chain
-output, complete drain and uncapped native launch admission. Embed the runtime
-environment in every proposed launch command.
+## What failed or remains uncertain
 
-## Failures and uncertainty
+The original 512 MiB budget could not hold one expert consumer tuple; 600 MiB
+fits without raising the arena ceiling. Whole-matrix copies exceeded CopyEngine's
+128 MiB limit; 32 MiB chunks resolve it. Initial copied objects exceeded the
+300 MB build cap; allowed hash-bound binary links remove that duplication.
+An inherited oracle-checker lookup and absolute native includes required local
+closure fixes. Initial failures and subsequent passing receipts are retained.
+Physical adjacency, device output equality, speed transfer, fresh-load determinism
+and strict512 promotion remain unmeasured. This is a bounded class prefix.
 
-An inherited compiler metadata layout initially duplicated its source argument;
-the local harness normalizes it without changing frozen sources or binaries.
-The shared K2 native CPU fixture refused allocation under the 4-GiB cap and
-cleaned up fully. Its unchanged binary and packet124c archive are hash-verified,
-with `reused_unchanged=true` and `fresh_native_run=false`; the cap was not raised.
-Other startup paths ran locally. K2's real Python argument path and timing
-receipt replay still execute. Both original refusal logs are retained.
+## Evidence and patches
 
-Device correctness and speed remain unknown. The submission tooling retains
-the honest owner-authorized 128-token scope, with strict512 final gate false.
+See [notes](../../../../notes/2026-10-18-own-runtime-packet142.md),
+[CPU receipts](v5/evidence/), [load-time implementation](class_layout.hpp),
+[one-load switch](v5/native/engine_bracket.hpp), [exclusions](DO-NOT-REPEAT.md)
+and [restoration](RETENTION.md). Local copied packet136 chain evidence is used
+only by the offline rehearsal. Frozen parent object availability is checked by
+hash; the packet49 oracle remains the real bound authority.
 
-## Retained evidence
+## When to revisit
 
-- [Copy and symlink audit](../../ops/packet136-orchestration/inputs/symlink-audit.json)
-- [Extended argument and queue gate](../../ops/packet136-orchestration/evidence/argument-gate.json)
-- [CPU audit](../../ops/packet136-orchestration/cpu-final.json)
-- [Readiness](../../ops/packet136-orchestration/ready.json)
-- [Runbook](../../ops/packet136-orchestration/README.md)
-- [Retention and restoration](RETENTION.md)
-- [Bank patch](snapshot-banks.patch)
-
-## Next evidence and revisit conditions
-
-After independently admitted device work, run orchestration with
-`--evidence-only`, then verify readiness. A failed lane closes this composition
-for the captured identity; it does not authorize a chain. Changed source,
-selection, binary, oracle authority or linked artifact invalidates the relevant
-CPU receipts. No service or job is launched by this preparation.
+The coordinator may queue a class only after packet141 flags >=1.3x cold/warm
+and >=0.5 ms per half for that class, and only with a passing final marker.
+Run its 12 x 64 smoke before its own one-load five-view bracket. Other classes
+remain unqueued. CPU preparation does not close the model optimization lane.

@@ -55,9 +55,9 @@ def memory_admit(profile):
     snapshot = M.meminfo()
     if profile == 'onecard':
         return M.admit(snapshot)
-    required=98*M.GIB
+    required=97*M.GIB+1200*1024**2
     require(snapshot['MemAvailable'] >= required, 'packet142 retained class banks host admission')
-    return dict(snapshot=snapshot, required_bytes=required, class_bank_max_bytes=1024**3)
+    return dict(snapshot=snapshot, required_bytes=required, class_bank_max_bytes=1200*1024**2)
 
 
 def memory_sensor(pid, profile, memory):
@@ -133,10 +133,10 @@ def screen_main(argv=None, *, release=None):
         print(json.dumps(dict(evidence_label='screen', device_executed=False, supported=identity['placement']['supported'], identity=identity,
                               command=cmd, model_lifetimes=1, watchdog_seconds=WATCHDOG[args.profile],
                               planned_write_bytes=planned_writes,
-                              host_required_available_bytes=98*M.GIB,
+                              host_required_available_bytes=97*M.GIB+1200*1024**2,
                               expected_seconds=[240,360] if identity.get('bracket',{}).get('kind')=='smoke' else [720,1200],
                               conditional_on='CPU gates and live admission; bracket also requires exact twelve-prompt 64-token candidate smoke',
-                              host_memory_admission=dict(required_bytes=98*M.GIB,class_bank_max_bytes=1024**3,checked_at_launch=True),
+                              host_memory_admission=dict(required_bytes=97*M.GIB+1200*1024**2,class_bank_max_bytes=1200*1024**2,checked_at_launch=True),
                               physical_cards=LANES[args.lane]['cards'], native_card_arguments=[0, 1],
                               device_mask=mask_for(args.lane), timing=args.timing,
                               reservation_scope=scope, views=len(identity.get('bracket', {}).get('views', [None])),

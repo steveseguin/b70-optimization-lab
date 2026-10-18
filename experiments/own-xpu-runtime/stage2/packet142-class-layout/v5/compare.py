@@ -13,12 +13,15 @@ def proposal_identity(destination):
     require(values and any(r[3] for r in values),'draft proposal sequence empty')
     return dict(rows=len(values),sha256=hashlib.sha256(json.dumps(values,separators=(',',':')).encode()).hexdigest())
 
-def table_samples(output,identity):
-    row=read(output/'run/ranks/rank1/token-table-samples.json')
-    require(row.get('passed') is True and row.get('samples')==32 and row.get('before_ready') is True,'real table sample check missing')
-    from common import HERE
-    selection=read(HERE/'lineage/selection.json')['choices']
-    return dict(samples=32,table_sha256=selection['token_table_sha256'],receipt_sha256=sha(output/'run/ranks/rank1/token-table-samples.json'))
+def class_copies(output,identity):
+    expected=read(Path(identity['lineage'])/'selection.json')['choices']['class_layout_bank']
+    rows=[]
+    for rank in (0,1):
+        path=output/'run/ranks'/('rank'+str(rank))/'class-layout.json'
+        row=read(path)
+        require(row['class_layout_bank']==expected and 0<row['bytes']<=600*1024**2 and row['budget']==600*1024**2 and row['weights'],'class copy allocation receipt missing')
+        rows.append(dict(rank=rank,sha256=sha(path),**row))
+    return rows
 
 def checked_requests(summary, oracle):
     rows = summary['requests']
@@ -56,7 +59,7 @@ def finish_bracket(output, window, identity, coordination):
     isolation = read(output / 'run/device-isolation.json')
     require(isolation.get('passed') is True, 'bracket isolation failed')
     if proof['kind']=='smoke':return finish_smoke(output,window,identity,proof,isolation,oracle)
-    samples=table_samples(output,identity)
+    samples=class_copies(output,identity)
     rows, descriptors = [], None
     for index, view in enumerate(views):
         selection = identity['bracket']['views'][index]
@@ -95,7 +98,7 @@ def finish_bracket(output, window, identity, coordination):
     drift = 100 * (max(controls) / min(controls) - 1)
     result = label(dict(schema='own-runtime.bracket.summary.v1', passed=True, kind=proof['kind'],
                         model_lifetimes=1, target_loads=1, draft_loads=1, teardown_count=1,
-                        views=rows, all_13_exact=True, draft_proposals_identical=True, table_samples=samples, control_drift_percent=drift,
+                        views=rows, all_13_exact=True, draft_proposals_identical=True, class_copies=samples, control_drift_percent=drift,
                         control_drift_limit_percent=3.0,
                         measured_wall_seconds=(__import__('time').time_ns()-window['started_utc_ns'])/1e9,
                         device_wall_savings_seconds=None,
@@ -142,7 +145,7 @@ def finish_smoke(output,window,identity,proof,isolation,oracle):
     checked=smoke_checked(output,identity,proof,oracle)
     dest=output/'run/views/00-candidate'
     proposals={name:proposal_identity(dest/name) for name in ['incident64',*D.CHECK.PROMPT_IDS]}
-    result=label(dict(passed=True,kind='smoke',model_lifetimes=1,request_count=12,max_new=64,views=proof['views'],smoke_identity=checked,table_samples=table_samples(output,identity),draft_proposals=proposals,timing_status='smoke only; no speed verdict; device proposal parity checked by bracket'))
+    result=label(dict(passed=True,kind='smoke',model_lifetimes=1,request_count=12,max_new=64,views=proof['views'],smoke_identity=checked,class_copies=class_copies(output,identity),draft_proposals=proposals,timing_status='smoke only; no speed verdict; device proposal parity checked by bracket'))
     save(output/'bracket-summary.json',result);return result
 
 def load(output):
@@ -159,7 +162,7 @@ def load(output):
     result=read(output/'bracket-summary.json')
     require(result['passed'] is True and result['model_lifetimes']==1, 'bracket result failed')
     identity=read(output/'identity.json')
-    require(table_samples(output,identity)==result['table_samples'],'table sample receipt changed')
+    require(class_copies(output,identity)==result['class_copies'],'class copy receipt changed')
     require(window['identity']==identity, 'bracket window identity differs')
     from common import HERE
     require(window['wrapper_seal_sha256']==sha(HERE/'placement-validation/wrapper-seal.json'), 'wrapper seal changed')

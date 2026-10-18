@@ -7,7 +7,7 @@ import types
 import unittest
 
 P=Path(__file__).resolve().parent
-O=P.parents[1]/'ops/packet124c-orchestration'
+O=P/'v5'
 
 def load(path, old=False):
     # The negative control changes only the clamp in an in-memory source copy.
@@ -49,7 +49,7 @@ class DrainFixTests(unittest.TestCase):
         self.assertEqual((P/'drain_gate.py').read_bytes(),(O/'drain_gate.py').read_bytes())
     def test_static_scanner_rejects_old_code(self):
         root=P.parents[3]
-        spec=importlib.util.spec_from_file_location('scan124',root/'scripts/check_drain_fix.py')
+        spec=importlib.util.spec_from_file_location('scan124',P/'lineage-inputs/submission-tools/check_drain_fix.py')
         scanner=importlib.util.module_from_spec(spec);spec.loader.exec_module(scanner)
         for path in (P/'drain_gate.py',O/'drain_gate.py'):
             source=path.read_text()

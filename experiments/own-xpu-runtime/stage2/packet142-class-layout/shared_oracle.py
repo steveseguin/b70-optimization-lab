@@ -2,7 +2,9 @@
 import argparse
 import json
 from pathlib import Path
-from storage import digest
+import hashlib
+def digest(path):
+ with Path(path).open("rb") as stream:return hashlib.file_digest(stream,"sha256").hexdigest()
 
 P = Path(__file__).resolve().parent
 ROOT = P.parents[3]

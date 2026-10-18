@@ -23,7 +23,10 @@ def run(cmd,name):
  with compiler_turn(),(B/(name+'.log')).open('w') as log:subprocess.run(list(map(str,cmd)),stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=1200)
  print(name,'PASS',flush=True);return dict(name=name,command=list(map(str,cmd)),seconds=time.monotonic()-t)
 def main():
- limits();prior=json.loads((LOCAL/'engine-commands.json').read_text());commands=[];artifacts={};inherited={}
+ limits();(LOCAL/'build').mkdir(exist_ok=True)
+ if not (LOCAL/'build/checked').exists():(LOCAL/'build/checked').symlink_to('../native-base',target_is_directory=True)
+ pinned=json.loads((LOCAL/'immutable-binaries.json').read_text())
+ prior=json.loads((LOCAL/'lineage-inputs/packet136-history/engine-commands.json').read_text());commands=[];artifacts={};inherited={}
  for mode in ('gnu-host','device'):
   dest=B/mode;dest.mkdir(exist_ok=True)
   args=list(next(r['command'] for r in prior if r['name']==mode+'-entry-main'));args=args[:args.index('-o')]
@@ -31,20 +34,20 @@ def main():
   for stem in ('entry-main','p49d_submit'):
    src=P/'native-src/entry-main.cpp' if stem=='entry-main' else CHECKED/'p49d_submit.cpp'
    cmd=[*args,'-c',src,'-o',dest/(stem+'.o')]
-   if '--resume' in __import__('sys').argv and (dest/(stem+'.o')).exists():commands.append(dict(name=mode+'-'+stem,command=list(map(str,cmd)),resumed_own_build=True))
-   else:commands.append(run(cmd,mode+'-'+stem))
+   commands.append(run(cmd,mode+'-'+stem))
   link=list(next(r['command'] for r in prior if r['name']==mode+'-link'));link[link.index('-o')+1]=str(dest/'own-rt-iq3')
   for i,arg in enumerate(link):
    if not arg.endswith('.o'):continue
    stem=next((s for s in ('entry-main','p49d_submit') if Path(arg).name.endswith((s+'.o',s+'.cpp.o'))),None)
    if stem:link[i]=str(dest/(stem+'.o'))
    else:
-    src=Path(arg);target=dest/'inherited'/src.name;target.parent.mkdir(exist_ok=True)
+    src=Path(arg);assert sha(src)==pinned[str(src.resolve())],'frozen parent object changed: '+str(src)
+    target=dest/'inherited'/src.name;target.parent.mkdir(exist_ok=True)
     if not target.exists():target.symlink_to(src.resolve())
-    assert sha(src)==sha(target);inherited[str(target.relative_to(ROOT))]=sha(target);link[i]=str(target)
-  commands.append(run(link,mode+'-link'));artifacts[str((dest/'own-rt-iq3').relative_to(P))]=sha(dest/'own-rt-iq3')
+    assert sha(src)==sha(target);inherited[str(src.relative_to(ROOT))]=sha(target);link[i]=str(target)
+  commands.append(run(link,mode+'-link'));artifacts[str((dest/'own-rt-iq3').relative_to(ROOT))]=sha(dest/'own-rt-iq3')
   save(P/'engine-commands.json',commands)
- sources={str(f.relative_to(ROOT)):sha(f) for f in [*P.glob('native/*'),*P.glob('native-src/*'),*LOCAL.joinpath('build/checked').rglob('*'),LOCAL/'class_layout.hpp',P/'build_engine.py'] if f.is_file()}
+ sources={str(f.relative_to(ROOT)):sha(f) for f in [*[P/'native'/n for n in ('engine_bracket.hpp','draft_bracket.hpp','bracket_boundary.hpp')],*P.glob('native-src/*'),*LOCAL.joinpath('native-base').rglob('*'),LOCAL/'class_layout.hpp',P/'build_engine.py'] if f.is_file()}
  sources.update(inherited)
  save(P/'evidence/build.json',dict(passed=True,device_executed=False,sources=sources,artifacts=artifacts,commands=commands,max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss,build_bytes=limits()))
 if __name__=='__main__':
