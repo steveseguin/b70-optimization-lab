@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Campaign 39 (2026-10-18, notes/2026-10-17-hostile-history-poison.md, registered before any run): arm K32R is K32L
+# with ctxkeeper 1.2.0.dev3's --rule-scan "$RULE_RE" (a rule-like sentence no RULES line covers is asked about once
+# per cut). The tools/ctxkeeper check also requires --rule-scan. Earlier header follows.
 # Campaign 34 (2026-10-17, copied from campaign 33's runner; registered in notes/2026-10-17-hostile-history-poison.md
 # before any run): PER_ARM=1 (default) gives each queue line a server of its own, started before the arm and stopped
 # after it, so the memory guard stopping one server at an arm's end (the client's end-of-run burst) no longer ends
@@ -80,6 +83,7 @@ RECITE_RE='(?m)^(?:ASK \S+?:|QUERY \S+|GET \S+)'
 UNTIL_RE='(?m)^ITEM \d+/\d+ \(UPDATE\)'
 SCAN_RE='(?m)^ITEM \d+/\d+ \(UPDATE\)'
 LABEL_RE='(?m)^ITEM (\d+)/'
+RULE_RE='(?i)\b(rules?|method|from now on|in force|whenever|instead of|until further notice)\b'
 RECITE_RE_REPAIR='(?m)^TICKET \d+/\d+ \((BUG|NOTICE)\)'
 START=$(date '+%F %T')
 FAULT_RE='(xe [0-9a-f:.]+|drm\]).*(Fault response|CAT error|engine reset|gt reset|GPU reset|coredump has been created|Timedout job|timed out|wedged|device lost|failed to respond)|soft lockup'
@@ -105,14 +109,14 @@ mline() {
 arm_window() {  # arm -> "budget inplace_tokens"
   case $1 in
     K06) echo "6144 2800" ;;   K08) echo "8192 3750" ;;   K12 | R12) echo "12288 5600" ;;
-    K16 | R16) echo "16384 7500" ;;   K12f) echo "12288 5600" ;;   K08f) echo "8192 3750" ;;   K24) echo "24576 11250" ;;   K32 | K32L | A32d | A32dp | M32dp) echo "32768 15000" ;;
+    K16 | R16) echo "16384 7500" ;;   K12f) echo "12288 5600" ;;   K08f) echo "8192 3750" ;;   K24) echo "24576 11250" ;;   K32 | K32L | K32R | A32d | A32dp | M32dp) echo "32768 15000" ;;
     K48 | R48) echo "49152 22500" ;;   K64) echo "65536 30000" ;;   S08) echo "8192 3000" ;;   S16) echo "16384 5000" ;;
     *) return 1 ;;
   esac
 }
 arm_async() {  # arm -> background-notes options
   case $1 in A32d) echo "--notes-async defer" ;; A32dp | M32dp | S08 | S16) echo "--notes-async defer --prewarm" ;;
-    K12f | K08f) echo "--inplace-fit" ;; K32L) echo "--lookups" ;; *) echo "" ;; esac
+    K12f | K08f) echo "--inplace-fit" ;; K32L | K32R) echo "--lookups" ;; *) echo "" ;; esac
 }
 start_proxy() {  # tag arm kind
   local tag=$1 arm=$2 kind=$3 w b i fl=()
@@ -126,10 +130,11 @@ start_proxy() {  # tag arm kind
                     --recite-when "$RECITE_RE_REPAIR" --notes-mode inplace --notes-checks off --max-recalls 16) ;;
     smoke)      fl=(--recipe qwen) ;;
   esac
+  local rs=(); [[ $arm == K32R ]] && rs=(--rule-scan "$RULE_RE")
   systemctl --user reset-failed ctx-keeper-proxy 2>/dev/null
   # shellcheck disable=SC2046
   systemd-run --user --unit=ctx-keeper-proxy --collect -p WorkingDirectory=$LAB python3 tools/ctxkeeper/ctxkeeper.py \
-    --upstream "http://127.0.0.1:$PORT" --port $PPORT "${fl[@]}" --budget "$b" --inplace-tokens "$i" $(arm_async "$arm") \
+    --upstream "http://127.0.0.1:$PORT" --port $PPORT "${fl[@]}" "${rs[@]}" --budget "$b" --inplace-tokens "$i" $(arm_async "$arm") \
     --log-calls --state-dir "$O/proxy-state/$tag" 2>&1 | tail -1
   for k in $(seq 1 30); do curl -fsS -m 3 "http://127.0.0.1:$PPORT/v1/models" >/dev/null 2>&1 && return 0; sleep 1; done
   say "proxy did not come up"; journalctl --user -u ctx-keeper-proxy --no-pager -n 5 -o cat; return 1
@@ -306,6 +311,7 @@ for u in lfm25-srv lfm25-pkg-srv ctx-keeper-proxy; do systemctl --user is-active
 [[ "$(python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --version)" == "ctxkeeper $KV" ]] || { say "ABORT: tools/ctxkeeper is not $KV"; exit 2; }
 python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --inplace-fit || { say "ABORT: tools/ctxkeeper has no --inplace-fit"; exit 2; }
 python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --lookups || { say "ABORT: tools/ctxkeeper has no --lookups"; exit 2; }
+python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --rule-scan || { say "ABORT: tools/ctxkeeper has no --rule-scan"; exit 2; }
 cd "$CTX" || exit 2
 while read -r arm kind seed cap; do
   [[ -z $arm || $arm == \#* ]] && continue
