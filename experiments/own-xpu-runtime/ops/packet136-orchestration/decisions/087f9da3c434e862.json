@@ -1,0 +1,78 @@
+{
+  "schema": "packet136.source-decision.v1",
+  "source_rule": "packet136.bundle7-plus-p131b-snapshot-banks.v1",
+  "evidence_rule": "identical-native-selection-both-v4-lanes-v1",
+  "threshold_ratio": 1.005,
+  "control": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64+halfcache",
+    "host": "ordered",
+    "route": "fast",
+    "norm": "production",
+    "recurrence": "rec-both-plus",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "down": "tile16",
+    "draft_attention": "split32",
+    "other_fusion": "fused",
+    "target_head": "split",
+    "draft_prefix": "80128",
+    "rollback_state": "copy"
+  },
+  "candidate": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64+halfcache",
+    "host": "ordered",
+    "route": "fast",
+    "norm": "production",
+    "recurrence": "rec-both-plus",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "down": "tile16",
+    "draft_attention": "split32",
+    "other_fusion": "fused",
+    "target_head": "split",
+    "draft_prefix": "80128",
+    "rollback_state": "banks"
+  },
+  "sources": {
+    "bundle6-decision.json": {
+      "path": "experiments/own-xpu-runtime/ops/packet136-orchestration/inputs/bundle6-decision.json",
+      "sha256": "f1536a32c2b39a09d543520f5c6e9afa7a754ef79c88e036f8ddbdd59c1358e5"
+    },
+    "prefix-preregistration.json": {
+      "path": "experiments/own-xpu-runtime/ops/packet136-orchestration/inputs/prefix-preregistration.json",
+      "sha256": "e34fa40630fcf3143112f5864f82b0d57529755ec0d0a175feccb9ef84fd0c68"
+    },
+    "prefix-selection.json": {
+      "path": "experiments/own-xpu-runtime/ops/packet136-orchestration/inputs/prefix-selection.json",
+      "sha256": "77b0169d87d55b184eb04266b78067f1b51c1fb811ace8207b51dc8109861414"
+    },
+    "bundle7-decision.json": {
+      "path": "experiments/own-xpu-runtime/ops/packet136-orchestration/inputs/bundle7-decision.json",
+      "sha256": "6e8de7137e54fe258f6c98af8a5b1ee983b38845da265a566655cb47d97d4b94"
+    },
+    "bundle7-selection.json": {
+      "path": "experiments/own-xpu-runtime/ops/packet136-orchestration/inputs/bundle7-selection.json",
+      "sha256": "0a43e349d1bd86562c2b674392a12f917d36d9918839b34aee8c33a5df22545c"
+    },
+    "bundle7-memory-plan.json": {
+      "path": "experiments/own-xpu-runtime/ops/packet136-orchestration/inputs/bundle7-memory-plan.json",
+      "sha256": "3f157407ea1306780633e45b6104993dde8c32d87011ae3b770c0111d3a6532e"
+    },
+    "banks-native.json": {
+      "path": "experiments/own-xpu-runtime/ops/packet136-orchestration/inputs/banks-native.json",
+      "sha256": "1c7e7cdff87426208fe9071a160115391a78af0338c112a276f30f8c0ef999b7"
+    }
+  },
+  "device_executed": false,
+  "composition_kind": "bundle7+snapshot-banks",
+  "prefix_rule": "80128 fixed by packet114 non-benchmark preregistration; never retune",
+  "supersedes": "cmvdx8urg0068rf01vvb32bcs",
+  "record_tok_s": 58.223834,
+  "protocol": "v4 C/X/C/X/C; fresh allocation per load"
+}

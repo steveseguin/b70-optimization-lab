@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 18, packet136 banked bundle8 prepared on CPU:** The new copy keeps
+all 182 parent links and seals bundle7 with either copied or banked rollback
+state. All 88 tests, 11 subtests and five worker tests pass, along with the
+full launch-argument, temporary queue, drain and native-limit checks. The
+unchanged shared K2 startup receipt is reused within the 4-GiB CPU limit;
+the other startup checks ran locally. Six lane-A jobs are planned but not
+queued. The fresh chain waits for exact output and at least 0.5% improvement
+on both lanes, plus the composed smoke. Packet131b supplies lane B evidence.
+The 58.223834 record is unchanged. No GPU job, service or live queue was
+started or changed by this preparation.
+[Work note and handoff](notes/2026-10-18-own-runtime-packet136.md).
+
 **October 18, packet131b oracle admission repaired on CPU:** Packet131's
 smoke refused before device execution because its source map crossed the
 oracle symlink outside the repository. The new copy checks that oracle through

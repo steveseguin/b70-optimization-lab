@@ -1,0 +1,97 @@
+Two compositions preregistered; device evidence pending
+{
+  "schema": "packet136.ready.v1",
+  "ready": false,
+  "device_executed": false,
+  "evidence_rule": "identical-native-selection-both-v4-lanes-v1",
+  "decision": "experiments/own-xpu-runtime/ops/packet136-orchestration/decisions/087f9da3c434e862.json",
+  "decision_sha256": "607942e9cc7d3874ffd08880c94225139bb15091ab7ce54668c0c739f1d2aa16",
+  "selection": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64+halfcache",
+    "host": "ordered",
+    "route": "fast",
+    "norm": "production",
+    "recurrence": "rec-both-plus",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "down": "tile16",
+    "draft_attention": "split32",
+    "other_fusion": "fused",
+    "target_head": "split",
+    "draft_prefix": "80128",
+    "rollback_state": "banks"
+  },
+  "chain_output": "device-cards01-a",
+  "other_lane_pause_required": false,
+  "timing_exclusivity": "Existing whole-host timing windows retain ordinary exclusive admission",
+  "chain_command": "systemd-run --user --unit=packet136-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet136-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/build/device-cards01-a </dev/null",
+  "drain_fix": {
+    "passed": true,
+    "device_executed": false,
+    "scanner_sha256": "70d18ffb0abf9cbb59ea84737e09ecb700951805c6b3dc499f40e42d476aa62f",
+    "reports": [
+      {
+        "schema": "drain-fix-report.v1",
+        "root": "experiments/own-xpu-runtime/stage2/packet136-record-bundle",
+        "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+        "counts": {
+          "FIXED": 1,
+          "UNFIXED": 0
+        },
+        "passed": true,
+        "files": [
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet136-record-bundle/drain_gate.py",
+            "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+            "status": "FIXED",
+            "sleeps": [
+              {
+                "line": 51,
+                "status": "FIXED"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "schema": "drain-fix-report.v1",
+        "root": "experiments/own-xpu-runtime/ops/packet136-orchestration",
+        "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+        "counts": {
+          "FIXED": 2,
+          "UNFIXED": 0
+        },
+        "passed": true,
+        "files": [
+          {
+            "path": "experiments/own-xpu-runtime/ops/packet136-orchestration/drain_gate.py",
+            "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+            "status": "FIXED",
+            "sleeps": [
+              {
+                "line": 51,
+                "status": "FIXED"
+              }
+            ]
+          },
+          {
+            "path": "experiments/own-xpu-runtime/ops/packet136-orchestration/lanequeue.py",
+            "sha256": "5eac9e79f861394516851cf53604b9fbcdde34599aa9e754608f8f1538ee5e82",
+            "status": "FIXED",
+            "sleeps": [
+              {
+                "line": 721,
+                "status": "FIXED"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "argument_gate_sha256": "64bce42ed004a80c6eb14f3178ddb25adf860fd32aca6ec469d2ed53884a36f6",
+  "reason": "launch-limit sources changed"
+}
