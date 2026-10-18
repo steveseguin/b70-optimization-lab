@@ -106,7 +106,7 @@ by these gates. All native compilation is serialized by packet94's
 From the repo root, prefix every Python command below with
 `nice -n 19 taskset -c 8-15,24-31 python3 -B` and redirect stdin from `/dev/null`:
 
-1. `stage2/packet58r-onecard-v5/build_engine.py` (under `experiments/own-xpu-runtime/`).
+1. `restore_fixtures.py`, then `build_engine.py` (under `experiments/own-xpu-runtime/stage2/packet58r-onecard-v5/`).
 2. `cpu_gates.py bytes`, `cpu_gates.py fullshape`, `cpu_gates.py reset`.
 3. `startup_gate.py`, `run_cpu_gates.py`, `argument_gate.py`.
 4. Commit the checked sources, then `seal.py`, `seal.py --verify`, `plan_queue.py`.
