@@ -92,8 +92,8 @@ or barriers in its SG32 head loop. Do not attribute those old barriers to it.
 No retained SPIR-V, LLVM IR, vISA or assembly dumps were found in packet 74
 or packet 84 build trees during this audit. Consequently the source explains
 new work sufficient to make a loss plausible; it does not isolate which
-hardware bottleneck caused the observed -0.8%. Offline compiler output is a
-remaining diagnosis gate. Any new assembly findings must identify the exact
+hardware bottleneck caused the observed -0.8%. Offline compiler output was a
+remaining diagnosis gate at this point; the addendum below closes that gate. Any new assembly findings must identify the exact
 compiler flags, kernel and artifact, and must distinguish static operations
 from device latency/occupancy measurements.
 
@@ -156,9 +156,64 @@ full max/overlap model once a real component delta exists.
 
 The new microbenchmark admits a candidate to engine screens only when it
 is at least 15% faster than the measured production control under the same
-full-shape timing definition. If interpreted as a rate gain, this means
-`production_time / candidate_time >= 1.15`, not merely 15% fewer bytes.
-Record the exact chosen threshold definition in the runner. A failed gate
+full-shape timing definition. The conservative registered definition is at least 15% lower event time:
+`candidate_time <= 0.85 * production_time`, not merely 15% fewer bytes. A failed gate
 closes that candidate without an engine screen. An isolated win remains
 screening evidence; it must survive both lane orders in the engine before
 any performance conclusion. Production remains the default.
+
+## Offline assembly addendum
+
+[`inspect_decode.py`](inspect_decode.py) compiled
+[`offline_decode.cpp`](offline_decode.cpp) using icpx 2026.0, LLVM-to-SPIR-V
+translation, and `ocloc compile -device bmg-g31`. This never enumerates a
+card or runs a kernel. The shared compiler-turn lock covered all three
+stages; peak child RSS was 309828 KiB. The probe emits all four kernels at
+248320 by 2560, SG32 and WG32, with the same reduction/output operations.
+This deliberately controls geometry for diagnosis; it does not claim that
+packet 74 shipped WG32. Strict FP32 compiler flags, exact source hashes,
+commands, load lines, opcode counts and compressed assembly hashes are in
+[`evidence/offline/report.json`](evidence/offline/report.json).
+
+| Head path | Whole-kernel static instructions | Static load sites | Configured GRFs | Scratch instructions |
+| --- | ---: | ---: | ---: | ---: |
+| Production p33 | 234 | 8 | 128 | 0 observed |
+| Packet 74 packed | 381 | 11 | 128 | 0 observed |
+| Head-plane | 366 | 11 | 128 | 0 observed |
+| Head-transpose | 314 | 9 | 128 | 0 observed |
+
+The instruction column is IGC `//.instCount`, not a count of only predicated
+assembly lines. Load-site counts include one common kernel-argument payload
+load and four common input u32 loads. They count static sites, including
+branches, not dynamic instructions or DRAM transactions. No explicit spill
+metadata appears in these dumps; no scratch memory messages occur. All four
+request the same 128-GRF mode. These probes therefore provide no evidence
+that packet 74 loses through spilling or a larger configured GRF allocation.
+They do not measure live occupancy in the full engine.
+
+The assembly directly confirms the extra mechanism work. Packet 74 emits
+`load.ugm.d32x2.a64` for each plane, then a conditional `goto` around an extra
+`load.ugm.d32.a64` and shift/OR repairs, followed by `join`. Although IGC
+marks these blocks as divergent control flow, the alignment predicate is
+uniform across lanes for this valid shape; the annotation does not prove
+real lane divergence. The half conversion still emits exponent/mantissa
+branches and its subnormal normalization loop. Compared with production,
+packet 74 has 14 versus 6 `goto` sites and 77 versus 22 combined `shl`/`shr`
+sites. Thus more address/decode/control work is emitted even with matching
+geometry. Its 381 instructions versus 234 is consistent with a latency/ALU
+cost that can erase the byte saving, while still not isolating the measured
+stall cause.
+
+Head-plane lowers that total to 366 and shifts to 57, but retains all 11
+load sites and the alignment control flow. It is a modest decode change,
+not evidence that the unpack overhead has disappeared. Head-transpose lowers
+the total to 314, shifts to 53 and load sites to 9. Its two code loads are
+aligned d32 and d16; the 210-byte alignment repair paths are absent. It still
+pays half conversion and subscale multiplication, and remains larger than
+production. The transpose arm is therefore the stronger source/assembly
+hypothesis, subject to the same 15%-lower-event-time microbenchmark gate.
+Neither static reduction predicts a speed result.
+
+The compressed dumps retain the full emitted assembly. `--report-only`
+recomputes their metrics from this packet-owned offline build without
+compiling again; the original compile logs and memory receipt remain.
