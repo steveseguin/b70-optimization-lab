@@ -164,6 +164,14 @@
   "138": {
    "status": "CLOSED",
    "reason": "one-card cross-layer expert prefetch phase 1: next-layer router recall 66.5/72.5/79.9% at widths 10/12/16; all 45 simulated cases exceed per-layer PCIe copy windows (best optimistic +5.75% with 248 late batches; width-12 range -16.35%..+5.75%); no phase-2 design"
+  },
+  "137": {
+   "status": "CLOSED-DEFERRED",
+   "reason": "token-input (+0.26-0.62% projected): lane-B 12x64 smoke ran exact on device (summary passed, fault count 2) but its report step failed (cannot import finish_bracket from packet137 compare.py); the same import would end the bracket. Review 27 rule 5: one smoke + one bracket, no repair copy. Reopen only stacked with another >= +1.5% 2-card gain"
+  },
+  "139": {
+   "status": "DORMANT",
+   "reason": "bundle 9 = bundle 8 + packet137 sealed (READY 9ce32f1ce/f4f3b8add); no evidence path while packet137 is deferred; lane-A smoke withdrawn before launch"
   }
  },
  "reviewed_jobs": [
