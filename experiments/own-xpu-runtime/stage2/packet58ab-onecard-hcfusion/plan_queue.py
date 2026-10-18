@@ -1,79 +1,50 @@
-"""Emit two proposals, validate each on a temporary queue; never queue live jobs."""
+"""Prepare proposals and test TEMPORARY queues only; never edit a live queue."""
 import json,resource,shutil,subprocess,sys,tempfile
 from pathlib import Path
 from build_engine import P,ROOT,limits,save,sha
-from views import DEFAULT_MAINTENANCE
 QUEUE=P.parents[1]/'ops/lane-queue'
+def documents():
+    from launch_env import library_path
+    library=library_path();assert library==json.loads((P/'library-path.json').read_text())['LD_LIBRARY_PATH']
+    for arm,tag,expected in [('smoke','smoke',[600,900]),('p60fusion','v5',[1200,1800])]:
+        record=dict(name='packet58ab-'+tag+'-A',lane='A',argv=['/usr/bin/python3','-B',str((P/'queue_runner.py').relative_to(ROOT)),
+            '--cache-maintenance','overlap','--arm',arm,'--output',str(P/'evidence/card0-hcfusion-a'/arm),
+            '--fault-review','{REVIEW}','--library-path',library,'--authorized-device-window'],env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)))
+        record['plan']=dict(entry_rehearsal=dict(binaries=[dict(path=str((P/'build/device'/n).relative_to(ROOT)),sha256=sha(P/'build/device'/n)) for n in ('own-rt-iq3','p58-cache-fixtures')]))
+        record['plan']['entry_rehearsal']['binaries'][1].update(args=['--help'],returncode=1,contains='K1 unknown option')
+        text=('# Proposal only: one card (card 0), lane A, whole host; lane B must be drained.\n'
+            '# Two K1 fixtures, one model load. Tile16, overlap, full BF16 KV, 48 layers, cache 21,552,729,600 bytes.\n'
+            '# Smoke 12 x 64 p60fusion. V5 12 x 128 production/p60fusion/production/p60fusion/production.\n'
+            '# A0 exact and reported; excluded only from speed/drift (p58wb). Both candidates must beat both warm controls by 2%; warm drift <=3%.\n'
+            f'# Expected {expected[0]}-{expected[1]} seconds; watchdog 7200 seconds (>=4x). Host admission 98,989,727,744 bytes.\n'
+            '# No queuing or device execution during preparation. READY must be the final content write.\n'+json.dumps(record)+'\n')
+        yield arm,tag,expected,text
 
 def main():
-    emit_only="--emit-only" in sys.argv
-    limits();assert not (P/'evidence/card0-hcfusion-a').exists()
-    library=json.loads((P/'library-path.json').read_text())['LD_LIBRARY_PATH']
-    records=[]
-    for arm,tag,expected in [('smoke','smoke',[600,900]),('p60fusion','v5',[1200,1800])]:
-        output=P/'evidence/card0-hcfusion-a'/arm
-        record=dict(name='packet58ab-'+tag+'-d-A',lane='A',argv=['/usr/bin/python3','-B',str((P/'queue_runner.py').relative_to(ROOT)),
-                    '--cache-maintenance',DEFAULT_MAINTENANCE,'--arm',arm,'--output',str(output),'--fault-review','{REVIEW}',
-                    '--library-path',library,'--authorized-device-window'],
-                    env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)))
-        raw=('# CPU proposal only; card 0, lane A, whole host; lane B paused/drained throughout.\n'
-             '# Packet58x: larger cache; real queue/window startup gate and lanequeue-derived unit identity.\n'
-             '# Two K1 fixtures precede one model load. Smoke: 12 x 64 max; v5: 12 x 128 18GB/max/18GB/max/18GB; fixed overlap maintenance.\n'
-             '# Packet58xc owned reader: A0 exact/reported warm-up only; both max views >= 1.005x each A1/A2 control; warm drift <= 3%.\n'
-             '# Native and Python check every token against iq3-p49-split32-v1. The v5 runner refuses without this exact smoke.\n'
-             f'# Expected {expected[0]}-{expected[1]} seconds; watchdog 7200 seconds >= 4x upper estimate.\n'
-             '# Required host MemAvailable 98989727744 bytes, including unchanged 8 GiB reserve; BF16 KV, one 21.5527296 GB allocation, usage capped per view.\n'
-             '# No device run, live queue change, record chain or submission performed by preparation.\n'+json.dumps(record)+'\n')
-        proposal=QUEUE/('proposed-p58ab-'+tag+'-A.txt')
-        if proposal.exists():
-            existing = [json.loads(line) for line in proposal.read_text().splitlines()
-                        if line.strip() and not line.lstrip().startswith('#')]
-            # Owner-authorized prelaunch 58xb amendment: only serial -> overlap.
-            legacy=dict(record,argv=list(record['argv']))
-            legacy['name']='packet58ab-'+tag+'-A'
-            legacy['argv']=[v.replace('card0-hcfusion-a','card0-capacity-a') for v in legacy['argv']]
-            previous=dict(legacy,argv=list(legacy['argv']))
-            legacy['argv'][legacy['argv'].index('--cache-maintenance')+1]='serial'
-            prior=dict(record,argv=[v.replace('card0-hcfusion-a','card0-capacity-c') for v in record['argv']]);prior['name']='packet58ab-'+tag+'-c-A'
-            assert existing in ([record],[legacy],[previous],[prior]), 'never overwrite unrelated changed proposal job'
-        if emit_only:
-            proposal.write_text(raw)
-            (P/'proposals').mkdir(exist_ok=True)
-            (P/'proposals'/proposal.name).write_text(raw)
-            continue
-        local=P/'proposals'/proposal.name
-        assert local.read_text()==raw and proposal.read_text()==raw
+    limits();records=[]
+    for arm,tag,expected,raw in documents():
+        name='proposed-p58ab-'+tag+'-A.txt';local=P/'proposals'/name;external=QUEUE/name
+        if '--emit-only' in sys.argv:
+            local.parent.mkdir(exist_ok=True);local.write_text(raw);external.write_text(raw);continue
+        assert local.read_text()==external.read_text()==raw
         with tempfile.TemporaryDirectory(prefix='p58ab-plan-') as directory:
             (Path(directory)/'queue-A.txt').write_text(raw)
             from ready_document import document
-            prospective=Path(directory)/'READY-FOR-DEVICE.json'
-            prospective.write_text(json.dumps(document()))
-            # Plan against a temporary copy of the prospective marker. All
-            # actual coordinator/pin checks run; the old live marker stays
-            # untouched until the final content write after both plans pass.
-            code=("import sys,pathlib;sys.path.insert(0,sys.argv.pop(1));"
-                  "import lanequeue,pin_guard;target=pathlib.Path(sys.argv.pop(1));"
-                  "copy=pathlib.Path(sys.argv.pop(1));original=pin_guard.read_metadata;"
-                  "pin_guard.read_metadata=lambda p:copy.read_bytes() if p==target else original(p);"
-                  "raise SystemExit(lanequeue.main())")
-            cmd=[sys.executable,'-B','-c',code,str(QUEUE),str(P/'READY-FOR-DEVICE.json'),str(prospective),
-                 'plan','--lane','A','--directory',directory]
-            r=subprocess.run(cmd,cwd=ROOT,stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120)
+            prospective=Path(directory)/'READY-FOR-DEVICE.json';prospective.write_text(json.dumps(document()))
+            code=('import sys,pathlib;sys.path.insert(0,sys.argv.pop(1));import lanequeue,pin_guard;'
+                'target=pathlib.Path(sys.argv.pop(1));copy=pathlib.Path(sys.argv.pop(1));original=pin_guard.read_metadata;'
+                'pin_guard.read_metadata=lambda p:copy.read_bytes() if p==target else original(p);'
+                'paths=pin_guard.metadata_paths;pin_guard.metadata_paths=lambda packet,root:sorted(set(paths(packet,root)+([target] if packet==target.parent else [])));'
+                'raise SystemExit(lanequeue.main())')
+            cmd=[sys.executable,'-B','-c',code,str(QUEUE),str(P/'READY-FOR-DEVICE.json'),str(prospective),'plan','--lane','A','--directory',directory]
+            r=subprocess.run(cmd,cwd=ROOT,stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=180)
         log=P/'evidence'/('queue-plan-'+tag+'.log');log.write_text(r.stdout+r.stderr)
-        assert r.returncode==0,log.read_text()
+        assert r.returncode==0,log.read_text()[-6000:]
         plan=[json.loads(x) for x in r.stdout.splitlines()];assert len(plan)==1 and plan[0]['plan']=='passed'
-        proposal.write_text(raw)  # Only the named proposal, after its temporary plan passed.
-        records.append(dict(arm=arm,proposal=str(local.relative_to(ROOT)),proposal_sha256=sha(local),
-                            coordinator_path=str(proposal.relative_to(ROOT)),plan=plan,
-                            expected_duration_seconds=expected,watchdog_seconds=7200,log_sha256=sha(log)))
-    if emit_only:
-        print('Two draft proposals emitted; not yet planned or ready');return
-    import queue_runner as Q
-    writes=sum(Q.W.WRITES['K1' if w.startswith('K1') else w] for w in Q.ORDER)*2
-    free=shutil.disk_usage('/').free;assert free-writes>=25_000_000_000
-    save(P/'evidence/queue-plans.json',dict(passed=True,device_executed=False,services_started=False,live_queue_changed=False,
-        temporary_queue=True,prospective_ready_copy=True,records=records,build_receipt_sha256=sha(P/'build-receipt.json'),
-        storage=dict(root_free_bytes=free,planned_write_bytes=writes,stop_floor_bytes=25_000_000_000)))
-    print('Two temporary lane-A plans PASS; proposals unqueued')
+        records.append(dict(arm=arm,proposal=str(local.relative_to(ROOT)),proposal_sha256=sha(local),coordinator_path=str(external.relative_to(ROOT)),plan=plan,expected_duration_seconds=expected,watchdog_seconds=7200,log_sha256=sha(log)))
+    if '--emit-only' in sys.argv:print('Two unqueued proposals written; readiness pending');return
+    free=shutil.disk_usage('/').free;writes=2*(2*128*1024**2+1024**3);assert free-writes>=25_000_000_000
+    save(P/'evidence/queue-plans.json',dict(passed=True,device_executed=False,services_started=False,live_queue_changed=False,temporary_queue=True,prospective_ready_copy=True,records=records,build_receipt_sha256=sha(P/'build-receipt.json'),storage=dict(root_free_bytes=free,planned_write_bytes=writes,stop_floor_bytes=25_000_000_000)))
+    print('Both temporary lane-A plans PASS; nothing queued')
 if __name__=='__main__':
     resource.setrlimit(resource.RLIMIT_AS,(2*1024**3,2*1024**3));main()

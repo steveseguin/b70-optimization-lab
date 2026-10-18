@@ -13,7 +13,7 @@ import shutil
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[3]
 SPEC = importlib.util.spec_from_file_location(
-    'packet56_inherited_supervision', HERE / 'supervision.py')
+    'p58ab_inherited_supervision', HERE / 'supervision.py')
 SUPERVISION = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(SUPERVISION)
 # Extend the private imported supervisor's signatures without editing packet34.

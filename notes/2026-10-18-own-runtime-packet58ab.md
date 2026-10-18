@@ -27,3 +27,59 @@ stdin; compiler turns use the shared ops gate. No model payload is read.
 
 Milestone 1: private source closure and HC dispatch are implemented; builds
 and proofs are in progress. READY is deliberately absent until final checks.
+That source milestone was committed and pushed as `9cc135c73`.
+
+The one-load port needed an explicit plan rebuild at the quiescent boundary:
+the production plan absorbs some next-layer HC norms into the preceding
+combine. Merely changing dispatch would omit those fusion norms. The control
+keeps its original plan; fusion reconstructs the ordinary norm sites and all
+plan-pointer indexes before capture. Full-size mocks enforce all 96 HC sides,
+288 fusion commands and 48 ordinary layer hooks at both context extents.
+
+The arithmetic fixture passes GNU and Intel, including NaN, infinity, signed
+zero, nonfinite weights, inactive/out-of-range controls and sticky errors.
+Each compiler repeats exactly, and their complete byte transcripts agree.
+The real capture fixture also proves request reset and refusal to erase
+sticky/poisoned state. The first fixture teardown exposed a CPU harness bug
+(releasing a pinned staging allocation through the device-only accounting
+helper); the harness now releases it through its owning arena. No GPU ran.
+An inherited tiny DRM-parser test initially invoked its compiler directly;
+it now takes the required shared compiler turn.
+
+Both proposals were written within the 90-minute bound and remain unqueued.
+The six real entry paths, full-size allocation/submit checks and the unchanged
+production-versus-record miniature pass. Native loader checks use the exact
+vendored `ops/launch_env.py` library path.
+
+A required tool gate remains blocked: the frozen `ops/rehearse_entry.py
+--report` only accepts two-card `screen.main` entries. Both actual one-card
+proposals pass loader/parser checks but fail that report-routing prerequisite.
+Its failure receipts are preserved. The packet's own real smoke/bracket
+summary passes separately, including a changed last-token refusal; this is
+not reported as a shared-tool pass. Existing ops remain frozen. The final
+READY marker will be written last with `ready_for_device=false`, current
+implementation commit and proposal hashes. No device work or queue launch
+is authorized by that marker.
+
+Final CPU checks: 111 policy tests; eight HC byte-proof runs across GNU and
+Intel; all six real queue entry paths; full-size sparse submit/allocation
+checks; two repeated one-load reset brackets; the unchanged production versus
+record miniature; and both one-card report summaries. Evidence is retained
+under [the packet](../experiments/own-xpu-runtime/stage2/packet58ab-onecard-hcfusion/README.md).
+The retained build is about 109 MB, below the 300 MB limit. Peak HC compiler
+and fixture RSS is below 0.8 GB. The temporary plans retain a 7,200-second
+watchdog against expected 600–900-second smoke and 1,200–1,800-second bracket.
+The first smoke proposal was written during the initial CPU proof work,
+well inside 90 minutes. This preparation makes no device speed claim.
+
+The first final pin plan refused preserved parent-object symlinks when their
+receipt keys named the local links. Receipt generation now pins their resolved,
+immutable ELF targets while preserving the links themselves. The failed plan
+is retained as `evidence/queue-plan-smoke-before-pin-fix.log`; the corrected
+plan must pass the unchanged shared guard.
+
+At 22:20 UTC both corrected temporary lane-A plans passed the unchanged pin
+guard and packet plan. Root had 29.47 GB free; the combined 2.68 GB planned
+write allowance leaves more than 25 GB. CPU preparation took about 30 minutes.
+All source, proof and proposal edits precede the final readiness write. The
+shared report-layout failure is the sole unresolved preparation gate.

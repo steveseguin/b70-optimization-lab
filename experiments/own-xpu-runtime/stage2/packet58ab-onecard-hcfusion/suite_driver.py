@@ -21,6 +21,7 @@ SUITE_SHA = '0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812'
 WINDOWS = ('WSCREEN',)
 
 def module(name, path):
+    name="p58ab_"+name
     spec = importlib.util.spec_from_file_location(name, path)
     result = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(result)

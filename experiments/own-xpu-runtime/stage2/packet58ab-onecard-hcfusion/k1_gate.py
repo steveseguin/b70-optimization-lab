@@ -17,7 +17,7 @@ def main():
             binary_sha256=sha(binary),arithmetic_unchanged=True,
             actual_async_protocol_byte_gate='protocol-gates.json',
             peak_child_rss_bytes=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024,
-            sources={str((BASE/'build/gnu-host/p58-cache-fixtures').relative_to(ROOT)):sha(binary)}))
+            sources={str((BASE/'build/gnu-host/p58-cache-fixtures').resolve().relative_to(ROOT)):sha(binary)}))
     print('K1 full-shape zero-copy/mixed/streamed byte equality PASS')
 if __name__=='__main__':
     resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()

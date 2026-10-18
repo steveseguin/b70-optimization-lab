@@ -3,7 +3,7 @@ import importlib.util
 from pathlib import Path
 
 LANEQUEUE = Path(__file__).resolve().parents[2] / 'ops/lane-queue/lanequeue.py'
-spec = importlib.util.spec_from_file_location('packet58ab_lanequeue', Path(__file__).with_name('coordinator_snapshot.py'))
+spec = importlib.util.spec_from_file_location('p58ab_packet58ab_lanequeue', Path(__file__).with_name('coordinator_snapshot.py'))
 L = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(L)
 

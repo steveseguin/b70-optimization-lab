@@ -37,7 +37,7 @@ def main():
         # This urgent, bounded entry-only repair runs under the brief's CPU/AS
         # caps. Do not touch another builder's lock or stale lane markers.
         import importlib.util
-        spec=importlib.util.spec_from_file_location('compile_observer',P.parents[1]/'ops/compile_turn.py')
+        spec=importlib.util.spec_from_file_location('p58ab_compile_observer',P.parents[1]/'ops/compile_turn.py')
         observer=importlib.util.module_from_spec(spec);spec.loader.exec_module(observer)
         rows=observer.process_table()
         assert not [(pid,r['comm']) for pid,r in rows.items() if r['comm'] in observer.COMPILERS], 'active compiler'

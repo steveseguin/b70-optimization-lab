@@ -13,7 +13,7 @@ def limits():
     assert shutil.disk_usage('/').free>=25_000_000_000,'root below 25 GB'
     assert sum(f.stat().st_size for f in B.rglob('*') if f.is_file())<=300_000_000,'build above 300 MB'
 def compiler_turn():
-    path=P.parents[1]/'ops/compile_turn.py';s=importlib.util.spec_from_file_location('packet58ab_compile_turn',path)
+    path=P.parents[1]/'ops/compile_turn.py';s=importlib.util.spec_from_file_location('p58ab_packet58ab_compile_turn',path)
     m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m.turn()
 def translate(arg):
     old=str(P.parent/'packet58x-cache-capacity')
@@ -24,6 +24,7 @@ def translate(arg):
 
 def main():
     from frozen_inputs import restore
+    assert not (P/"READY-FOR-DEVICE.json").exists() and not (P/"evidence/card0-hcfusion-a").exists(),"sealed or started packet"
     restore();limits();native=generate();commands=[];sources={};artifacts={}
     checked=BASE/'build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port'
     # p60 uses exactly this line's arithmetic headers; no packet56 mutable include.
@@ -55,7 +56,7 @@ def main():
                 if path.is_relative_to(ROOT):sources[str(path.relative_to(ROOT))]=sha(path)
         for cmd in [j['command'] for j in jobs]:
             for a in cmd:
-                if a.endswith('.o') and Path(a).exists():sources[str(Path(a).relative_to(ROOT))]=sha(a)
+                if a.endswith('.o') and Path(a).exists():sources[str(Path(a).resolve().relative_to(ROOT))]=sha(a)
     for mode in ('gnu-host','device'):
         src=BASE/'build'/mode/'p58-cache-fixtures';out=B/mode/'p58-cache-fixtures'
         shutil.copy2(src,out);artifacts[str(out.relative_to(P))]=sha(out)

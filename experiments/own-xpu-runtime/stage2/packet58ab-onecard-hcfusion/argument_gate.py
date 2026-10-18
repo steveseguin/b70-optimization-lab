@@ -202,7 +202,8 @@ def probe(name, miss, candidate, old_gate=False):
                 assert [x.split()[0] for x in bt]==[x[0] for x in V.bracket(candidate)]
                 assert [x.split()[2] for x in bt]==[V.digest(v) for _,v in V.bracket(candidate)]
                 assert [x.split()[3] for x in bt]==['overlap']*len(V.bracket(candidate))
-                assert [x.split()[4] for x in bt]==[v for _,v in V.bracket(candidate)]
+                assert [x.split()[4] for x in bt]==['max']*len(V.bracket(candidate))
+                assert [x.split()[5] for x in bt]==[v for _,v in V.bracket(candidate)]
                 table = Path(cmd[cmd.index('--suite-inputs')+1]).read_text().splitlines()
                 assert all(len(x.split())==3 for x in table)
                 assert len(table) == (1 if mode in ('KD','W2m') else 12)

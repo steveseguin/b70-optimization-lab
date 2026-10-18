@@ -2,7 +2,7 @@
 from legacy_memory_plan import *
 import importlib.util
 from pathlib import Path
-_spec=importlib.util.spec_from_file_location('p58x_measured',Path(__file__).parent/'host-admission/memory_plan.py')
+_spec=importlib.util.spec_from_file_location('p58ab_p58x_measured',Path(__file__).parent/'host-admission/memory_plan.py')
 _measured=importlib.util.module_from_spec(_spec);_spec.loader.exec_module(_measured)
 ADMISSION=json.loads((Path(__file__).parent/'admission.json').read_text())['admission']
 CACHE_BYTES=ADMISSION['cache_bytes']

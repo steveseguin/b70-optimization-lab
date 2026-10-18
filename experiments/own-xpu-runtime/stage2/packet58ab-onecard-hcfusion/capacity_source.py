@@ -7,7 +7,7 @@ from native_source import once
 def transform(text):
     text='#include '+json.dumps(str(Path(__file__).resolve().parent/'native/drm_size.hpp'))+'\n'+text
     text=once(text,'uint64_t cache_bytes=18000000000ull;',
-        'uint64_t cache_bytes=21552729600ull;std::string cache_cap="18GB";')
+        'uint64_t cache_bytes=21552729600ull;std::string cache_cap="max";')
     text=once(text,'    if(k=="--cache-maintenance")',
         '    if(k=="--cache-cap")a.cache_cap=value();\n    else if(k=="--cache-maintenance")')
     text=once(text,'a.cache_bytes<=18000000000ull',

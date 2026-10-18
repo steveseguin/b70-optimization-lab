@@ -1,54 +1,37 @@
-"""Construct the prospective marker for temporary planning; write it only last."""
-from datetime import datetime, timezone
-import json
-import subprocess
-import sys
-from build_engine import P, ROOT, sha
-
+"""Write readiness LAST, explicitly refusing the unresolved shared report gate."""
+from datetime import datetime,timezone
+import json,subprocess,sys
+from build_engine import P,ROOT,sha
 
 def document():
-    row=json.loads((P/'READY-FOR-DEVICE.json').read_text())
     build=json.loads((P/'build-receipt.json').read_text())
-    args=json.loads((P/'evidence/argument-gate.json').read_text())
-    tests=json.loads((P/'evidence/python-cpu-gates.json').read_text())
     proposals=[]
-    for arm,tag in [('smoke','smoke'),('max','v5')]:
-        name='proposed-p58ab-'+tag+'-A.txt'
-        local=P/'proposals'/name
-        coordinator=P.parents[1]/'ops/lane-queue'/name
-        assert local.read_bytes()==coordinator.read_bytes()
-        proposals.append(dict(arm=arm,proposal=str(local.relative_to(ROOT)),proposal_sha256=sha(local),
-                              coordinator_path=str(coordinator.relative_to(ROOT))))
-    row.update(created_utc=datetime.now(timezone.utc).isoformat(),
-        previous_implementation_commit=row['implementation_commit'],
+    for tag in ('smoke','v5'):
+        name='proposed-p58ab-'+tag+'-A.txt';local=P/'proposals'/name;external=P.parents[1]/'ops/lane-queue'/name
+        assert local.read_bytes()==external.read_bytes()
+        proposals.append(dict(proposal=str(local.relative_to(ROOT)),proposal_sha256=sha(local),coordinator_path=str(external.relative_to(ROOT))))
+    return dict(schema='own-runtime.packet58ab.ready.v1',created_utc=datetime.now(timezone.utc).isoformat(),
         implementation_commit=subprocess.check_output(['git','rev-parse','HEAD'],stdin=subprocess.DEVNULL,text=True).strip(),
-        readiness='Packet58xd CPU reseal complete; fresh smoke proposal first',
-        amendment='packet58xd: DRM size units repaired; fresh card0-hcfusion-a outputs',
-        build_receipt_sha256=sha(P/'build-receipt.json'),admission_sha256=sha(P/'admission.json'),
-        maintenance_decision_sha256=sha(P/'maintenance-decision.json'),proposals=proposals,
-        cpu_gates=dict(passed=True,python_checks=tests['checks'],entry_probes=args['checks'],
-            sealed_source_count=len(build['sources']),peak_probe_child_rss_bytes=args['peak_child_rss_bytes'],
-            native_artifacts_unchanged=False, device_entry_rebuilt=True, host_binaries_unchanged=True,live_host_admission_passed=True,
-            scope='Minimal CPU reseal: owned comparison replay, policy tests, entry interception, build gate and temporary plans; no full-shape, GGUF-reading or device gates'),
-        failed_smoke_history=['evidence/card0-capacity-a/smoke/','evidence/card0-capacity-c/smoke/'],
-        fresh_output_root='evidence/card0-hcfusion-a/',device_executed=False,services_started=False,
+        passed=False,ready_for_device=False,cpu_preparation_passed=True,device_executed=False,services_started=False,
         queued=False,live_queue_changed=False,last_content_write=True,
-        limitations=['Smoke c passed K1a/K1b, then stopped cooperatively during load on a DRM unit parser refusal; no timing ran; evidence untouched.',
-            'Fresh smoke, physical fit, full model output and speed remain pending.',
-            'No full-shape, GGUF-reading or native device gate ran during this amendment.',
-            'Only the device entry was rebuilt for the DRM parser; host binaries and model arithmetic remain unchanged. Device qualification is pending.'])
-    row['storage']['build_bytes']=build['retained_build_bytes']
-    return row
+        build_receipt_sha256=sha(P/'build-receipt.json'),proposals=proposals,
+        cpu_gates=dict(passed=True,checks=json.loads((P/'evidence/python-cpu-gates.json').read_text())['checks'],
+            hc_byte_proofs='GNU and Intel, production shapes, repeats, exceptional values, real capture and request reset',
+            native_loader_and_parser_passed=True,real_entry_paths=6,one_card_reports_passed=True),
+        required_shared_report_gate=dict(passed=False,reason='Frozen ops/rehearse_entry.py --report only supports two-card screen.main entries; both one-card proposals are rejected before report routing.',
+            retained_reports=['evidence/ops-entry-report-smoke.json','evidence/ops-entry-report-v5.json'],
+            packet_specific_alternative='evidence/report-gate.json'),
+        blocker='Required shared --report gate cannot pass for this one-card entry without changing frozen ops or replacing the runner architecture; no such change is authorized by this brief.',
+        storage=dict(build_bytes=build['retained_build_bytes'],stop_floor_bytes=25_000_000_000,build_cap_bytes=300_000_000),
+        qualification='CPU proofs and temporary plans only. No device equality, physical fit, speed or record claim.')
 
-
-if __name__=='__main__':
+def main():
     assert sys.argv[1:]==['--write-last']
-    import window
-    from reseal_boundary import check
-    check();window.build_gate()
-    plans=json.loads((P/'evidence/queue-plans.json').read_text())
-    assert plans['passed'] and plans['build_receipt_sha256']==sha(P/'build-receipt.json')
+    from seal import verify,read
+    b=read(P/'build-receipt.json');verify(ROOT,b['sources']);verify(P,b['artifacts']);verify(P,b['gates'])
+    plans=read(P/'evidence/queue-plans.json');assert plans['passed'] and plans['build_receipt_sha256']==sha(P/'build-receipt.json')
     row=document();row['queue_plans_sha256']=sha(P/'evidence/queue-plans.json')
-    row['storage'].update(root_free_bytes=plans['storage']['root_free_bytes'])
+    row['temporary_plans_passed']=True
     (P/'READY-FOR-DEVICE.json').write_text(json.dumps(row,indent=2)+'\n')
-    print('READY-FOR-DEVICE.json written last; nothing queued or launched')
+    print('Final marker written: CPU preparation passed; device readiness BLOCKED by required shared report gate')
+if __name__=='__main__':main()

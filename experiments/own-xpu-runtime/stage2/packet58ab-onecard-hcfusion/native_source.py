@@ -101,18 +101,34 @@ def generate():
   void foreground_sync() override {packet18::LifetimeMock::synchronize();}
 ''')
     full=once(full,'    size_t commands=0;', '''    const auto arena=engine.bracket_arena_hash();
-    for(const auto* mode:{"serial","overlap"}) for(const auto* name:{"18GB","max","18GB","max","18GB"}) {
+    for(const auto* mode:{"serial","overlap"}) for(const auto* name:{"production","p60fusion","production","p60fusion","production"}) {
       auto path=fs::path(P58R_SELECTIONS)/"tile16.json";
       std::ifstream f(path,std::ios::binary);std::vector<uint8_t> raw((std::istreambuf_iterator<char>(f)),{});
+      engine.maintenance.running=true;
+      bool hc_refused=false;try{engine.bracket_select(path,hash(raw),name);}catch(const std::exception&){hc_refused=true;}
+      require(hc_refused,"HC switch during active position admitted");engine.maintenance.running=false;
+      *static_cast<uint32_t*>(engine.dev(0).arena.row(engine.slab[0]).pointer)=37;
+      hc_refused=false;try{engine.bracket_select(path,hash(raw),name);}catch(const std::exception&){hc_refused=true;}
+      require(hc_refused,"HC boundary erased sticky failure");
       // FullShapeMock.copy intentionally does no transfer. Its error readback
       // must therefore explicitly represent the clean zero device-error word.
       std::memset(engine.dev(0).arena.row(engine.slab[0]).pointer,0,4);
-      engine.bracket_select(path,hash(raw));engine.cache_mode(mode);engine.cache_capacity(name);require(engine.expert_cache->capacity()==(std::string(name)=="max"?21552729600ull:18000000000ull),"fullshape active cache cap");engine.publish_cache_table(engine.expert_cache->table());require(arena==engine.bracket_arena_hash(),"fullshape switch allocations changed");
+      engine.bracket_select(path,hash(raw),name);engine.cache_mode(mode);engine.cache_capacity("max");require(engine.expert_cache->capacity()==21552729600ull,"fullshape active cache cap");engine.publish_cache_table(engine.expert_cache->table());require(arena==engine.bracket_arena_hash(),"fullshape switch allocations changed");
       // Exercise the selected view at both startup and maximum context, then
       // let the next real switch reset it from 4096 back to 32.
       engine.context_extent=4096;engine.prepared.clear();engine.alternate_prepared.clear();
       engine.issue_sites.clear();engine.matrices.clear();engine.prepare_plan();engine.prepare_commands();
       require(arena==engine.bracket_arena_hash(),"full-context view allocations changed");
+      if(std::string(name)=="p60fusion") {
+        std::array<unsigned,4> counts{};unsigned hooks=0;
+        for(size_t i=0;i<engine.p.launches.size();++i) {
+          const auto& l=engine.p.launches[i];const auto& site=engine.issue_sites[i];int stage=p60::stage(l.label);
+          if(stage>=0){++counts[stage];require(site.commands.size()==size_t(stage<3),"HC absorbed capture/command count");}
+          if(site.layer_end){require(ends(l.label,".ffn.combine"),"ordinary layer hook label");++hooks;}
+        }
+        require(counts[0]==96&&counts[1]==96&&counts[2]==96&&hooks==48,"all 48 layers and both HC sides");
+      }
+
     }
     // Exercise the real full-shape async Engine wiring with delayed mock DMA.
     // No weight bytes are read and no prepared model kernel is executed.

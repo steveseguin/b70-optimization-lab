@@ -29,7 +29,7 @@ def read(path):
 
 
 def load(name, path):
-    spec = importlib.util.spec_from_file_location(name, pin(path))
+    spec = importlib.util.spec_from_file_location('p58ab_'+name, pin(path))
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module

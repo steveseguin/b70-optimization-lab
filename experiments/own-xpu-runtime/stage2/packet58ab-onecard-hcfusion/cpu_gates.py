@@ -43,7 +43,7 @@ def miniature():
     with tempfile.TemporaryDirectory(prefix='reset-',dir=P/'build') as directory:
         tmp=Path(directory);tokens=tmp/'input.tokens';tokens.write_text('2 5 3 7 1\n')
         other=tmp/'other.tokens';other.write_text('7 2 8 3 2\n')
-        base=[binary,'--mini','--pipeline-mini','--memory','resident','--context','32','--tokens','8','--retain-steps','1-8']
+        base=[binary,'--cache-maintenance','overlap','--mini','--pipeline-mini','--memory','resident','--context','32','--tokens','8','--retain-steps','1-8']
         fresh=tmp/'fresh';run([*base,'--input',tokens,'--selection',selection('tile16'),'--selection-sha256',digest('tile16'),'--output',fresh])
         expected=json.loads((fresh/'result.json').read_text())['tokens']
         fixture=lambda out:{str(f.relative_to(out)):sha(f) for f in sorted(out.glob('step*/*')) if f.is_file()}

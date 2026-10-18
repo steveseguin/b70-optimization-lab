@@ -38,6 +38,7 @@
     a.hc=hc;
     sealed_selection=std::move(next);a.selection=selection;a.selection_sha256=digest;
     prepared.clear();alternate_prepared.clear();issue_sites.clear();alternate_issue_sites.clear();matrices.clear();
+    p=::plan(w,a);index_plan();
     context_extent=alternate_context_extent=32;capacity_reprepares=0;
     prepare_plan();prepare_commands();
     require(bank_parity==0&&before==bracket_arena_hash(),"bracket changed loaded arena descriptors");

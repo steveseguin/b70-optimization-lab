@@ -26,13 +26,13 @@ class AsyncPolicy(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d,patch.object(Q,'ROOT',Path(d)):
             with self.assertRaises(FileNotFoundError):Q.verify_smoke()
     def test_smoke_and_bracket_dimensions(self):
-        self.assertEqual(V.bracket('smoke'),[('S0','max')])
-        self.assertEqual([v for _,v in V.bracket('max')],['18GB','max','18GB','max','18GB'])
-        self.assertEqual(V.digest('18GB'),V.digest('max'))
+        self.assertEqual(V.bracket('smoke'),[('S0','p60fusion')])
+        self.assertEqual([v for _,v in V.bracket('p60fusion')],['production','p60fusion','production','p60fusion','production'])
+        self.assertEqual(V.digest('production'),V.digest('p60fusion'))
     def test_streamed_cannot_enter_async_native(self):
         from types import SimpleNamespace
         with self.assertRaisesRegex(ValueError,'zero-copy'):
-            D.native_command(SimpleNamespace(view='max',window='WSCREEN',miss_mode='streamed'),D.oracle_inputs(),Path('/unused'))
+            D.native_command(SimpleNamespace(view='p60fusion',window='WSCREEN',miss_mode='streamed'),D.oracle_inputs(),Path('/unused'))
     def test_recorded_library_not_empty(self):
         lib=json.loads((Q.P/'library-path.json').read_text())['LD_LIBRARY_PATH']
         self.assertIn('/opt/intel/oneapi/compiler/2026.0/lib',lib)

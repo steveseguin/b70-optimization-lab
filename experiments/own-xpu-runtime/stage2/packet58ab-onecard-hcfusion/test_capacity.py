@@ -27,21 +27,21 @@ class Capacity(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'views.tsv'
             for mode in ('serial','overlap'):
-                V.write_table(p,'max',mode)
+                V.write_table(p,'p60fusion',mode)
                 rows=[line.split() for line in p.read_text().splitlines()]
                 self.assertEqual([r[3] for r in rows],[mode]*5)
-                self.assertEqual([r[4] for r in rows],['18GB','max','18GB','max','18GB'])
-            with self.assertRaises(ValueError):V.write_table(p,'max','unknown')
+                self.assertEqual([r[5] for r in rows],['production','p60fusion','production','p60fusion','production'])
+            with self.assertRaises(ValueError):V.write_table(p,'p60fusion','unknown')
 
     def test_smoke_and_every_v5_view_default_to_overlap(self):
         self.assertEqual(V.DEFAULT_MAINTENANCE,'overlap')
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'views.tsv'
-            for candidate in ('smoke','max'):
+            for candidate in ('smoke','p60fusion'):
                 V.write_table(p,candidate)
                 rows=[line.split() for line in p.read_text().splitlines()]
                 self.assertEqual([r[3] for r in rows],['overlap']*len(V.bracket(candidate)))
-                self.assertEqual([r[4] for r in rows],[v for _,v in V.bracket(candidate)])
+                self.assertEqual([r[5] for r in rows],[v for _,v in V.bracket(candidate)])
 
     def test_measured_live_accounting_bounds(self):
         import window as W

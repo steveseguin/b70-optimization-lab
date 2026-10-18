@@ -21,7 +21,7 @@ from launch_identity import lane_unit_prefix
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[3]
-_spec = importlib.util.spec_from_file_location('packet58_supervision', HERE / 'p56_head_support.py')
+_spec = importlib.util.spec_from_file_location('p58ab_packet58_supervision', HERE / 'p56_head_support.py')
 SUPPORT = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(SUPPORT)
 S = SUPPORT.SUPERVISION

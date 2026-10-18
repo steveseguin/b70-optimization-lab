@@ -31,8 +31,10 @@ class DrmSize(unittest.TestCase):
             source.write_text('#include "'+str(P/'native/drm_size.hpp')+'"\n'
                 '#include <iostream>\nint main(int argc,char**argv){try{std::cout<<p58xd::drm_size(argv[1]);}'
                 'catch(const std::exception&){return 1;}}\n')
-            subprocess.run(['g++','-std=c++20','-O0',str(source),'-o',str(binary)],
-                           check=True, stdin=subprocess.DEVNULL, capture_output=True)
+            from build_engine import compiler_turn
+            with compiler_turn():
+                subprocess.run(['g++','-std=c++20','-O0',str(source),'-o',str(binary)],
+                               check=True, stdin=subprocess.DEVNULL, capture_output=True)
             for text, expected in VALID:
                 result = subprocess.run([str(binary), text], stdin=subprocess.DEVNULL, capture_output=True, text=True)
                 self.assertEqual((result.returncode, result.stdout), (0, str(expected)))

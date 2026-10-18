@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet58ab one-card HC fusion prepared on CPU; report gate blocked:**
+The private packet58z copy switches between production HC and packet60's
+three-stage HC within one load. GNU and Intel agree byte for byte; full-size
+switch/reset checks and 111 policy tests pass. The shared entry checker accepts
+both native binaries but cannot rehearse this one-card report layout. Its
+failure is retained, so the final marker says not ready for device work.
+The smoke and five-view proposals remain unqueued. No GPU, service or host
+setting changed, and the 29.259764 record is unchanged.
+[Work note](notes/2026-10-18-own-runtime-packet58ab.md).
+
 **October 18, packet58ac cache publication feasibility closed on CPU:** Sparse
 updates preserve the two-phase pointer and generation rules in both host
 compiler checks. Packing the full tables takes only 0.053–0.060 ms, far short

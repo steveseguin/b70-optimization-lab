@@ -20,9 +20,9 @@ def compare(views):
     drift=max(controls)/min(controls)-1
     drift_passed=max(controls)<=min(controls)*Decimal('1.03')
     return dict(rates=list(map(float,rates)),control_drift_fraction=float(drift),control_drift_passed=drift_passed,
-        candidate_beats_all_controls=drift_passed and all(c>=a*Decimal('1.005') for c in candidates for a in controls),
+        candidate_beats_all_controls=drift_passed and all(c>=a*Decimal('1.02') for c in candidates for a in controls),
         minimum_gain_vs_best_control=float(min(candidates)/max(controls)-1),
         warmup_view=dict(label='A0',rate=float(rates[0]),exact=True,excluded_from_drift_and_comparison=True),
-        comparison_controls=['A1','A2'],readiness_policy='packet58xb: packet58wb first-view warm-up amendment',
-        required_gain_fraction=.005,maximum_control_drift_fraction=.03,
+        comparison_controls=['A1','A2'],readiness_policy='packet58ab: packet58wb first-view warm-up amendment',
+        required_gain_fraction=.02,maximum_control_drift_fraction=.03,
         fresh_process_repeat=False,submission_eligible=False)

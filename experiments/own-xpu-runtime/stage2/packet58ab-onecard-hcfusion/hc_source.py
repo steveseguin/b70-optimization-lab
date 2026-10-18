@@ -5,7 +5,7 @@ from native_source import P,BASE
 from frozen_inputs import FROZEN
 MIRROR=BASE/'build/checked'
 CHECKED=MIRROR/'experiments/own-xpu-runtime/stage2/packet58j-onecard-port'
-s=importlib.util.spec_from_file_location('packet58ab_submission_overlay',BASE/'submission_overlay.py')
+s=importlib.util.spec_from_file_location('p58ab_packet58ab_submission_overlay',BASE/'submission_overlay.py')
 overlay=importlib.util.module_from_spec(s);s.loader.exec_module(overlay)
 def header(source):
     if source.name=="kernel_guard.hpp":return BASE/"kernel_guard.hpp"

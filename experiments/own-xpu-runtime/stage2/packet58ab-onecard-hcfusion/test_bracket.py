@@ -21,7 +21,7 @@ class BracketPolicyTests(unittest.TestCase):
             with self.assertRaises(ValueError):V.bracket(name)
 
     def test_unknown_extra_or_changed_choice_refused(self):
-        row=V.validate('18GB')
+        row=V.validate('production')
         for bad in (dict(row,extra=True),dict(row,choices=dict(row['choices'],other_fusion='fused')),
                     dict(row,choices=dict(row['choices'],down='production'))):
             with patch('views.json.loads',return_value=bad),self.assertRaises(ValueError):V.selection('tile16')
@@ -61,9 +61,9 @@ class BracketPolicyTests(unittest.TestCase):
         self.assertFalse(compare(self.rows((22,28,26,28,26.91)))['control_drift_passed'])
 
     def test_inclusive_decimal_thresholds(self):
-        for rates in ((1,25.125,25,25.125,25),(1,27,25,27,25.75)):
+        for rates in ((1,25.5,25,25.5,25),(1,27,25,27,25.75)):
             self.assertTrue(compare(self.rows(rates))['candidate_beats_all_controls'])
-        self.assertFalse(compare(self.rows((1,25.124999,25,25.125,25)))['candidate_beats_all_controls'])
+        self.assertFalse(compare(self.rows((1,25.499999,25,25.5,25)))['candidate_beats_all_controls'])
         self.assertFalse(compare(self.rows((1,27,25,27,25.750001)))['control_drift_passed'])
 
     def test_no_fresh_process_or_submission_claim(self):
@@ -106,30 +106,41 @@ class SummaryTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):cls.manifest=D.oracle_inputs()
 
-    def fixture(self,out):
+    def fixture(self,out,candidate="p60fusion"):
+        cap=64 if candidate=="smoke" else 128
         run=out/'run';run.mkdir()
         native=dict(passed=True,safe_to_exit=True,device_executed=True,owner_cards=1,
             cpu_affinity=[0,1,2,3,16,17,18,19],observed_nice=0,native_nice=0,
             teardown=[dict(safe_to_exit=True,idle_marker_complete=True,exit_code=0,live_bytes=0,in_flight=0)])
         D.save(run/'receipt.json',native)
-        for label,view in V.bracket('max'):
+        for label,view in V.bracket(candidate):
             folder=run/label;folder.mkdir()
-            D.save(folder/'boundary.json',dict(passed=True,cache_maintenance=V.DEFAULT_MAINTENANCE,cache_cap=view,cache_allocation_bytes=V.MAX_BYTES,cache_started_empty=True,selection_sha256=V.digest(view),allocation_ids_preserved=True,
+            D.save(folder/'boundary.json',dict(passed=True,cache_maintenance=V.DEFAULT_MAINTENANCE,cache_cap="max",hc=view,cache_allocation_bytes=V.MAX_BYTES,cache_started_empty=True,selection_sha256=V.digest(view),allocation_ids_preserved=True,
                 weight_uploads_during_switch=0,model_loads=1,context_extent=32,arena_descriptors_sha256='a'*64,weight_descriptors_sha256='b'*64))
             for e in self.manifest['prompts']:
                 actual=folder/e['prompt_id'];actual.mkdir()
-                tokens=D.CHECK.token_record(D.ORACLE/'results'/e['prompt_id'])[:128]
+                tokens=D.CHECK.token_record(D.ORACLE/'results'/e['prompt_id'])[:cap]
                 interval=.038 if label.startswith('B') else .04
                 D.save(actual/'result.json',dict(passed=True,arithmetic=D.ARITHMETIC,tokens=tokens,cached_tokens=0,gpu_count=1,
-                    decode_mode='plain',context=4096,requested_max_new=128,prompt_tokens=e['prompt_tokens'],
+                    decode_mode='plain',context=4096,requested_max_new=cap,prompt_tokens=e['prompt_tokens'],
                     request_start_monotonic=10.,request_end_monotonic=20.,
                     timing_rows=[dict(completed_monotonic=11+i*interval) for i in range(len(tokens))]))
                 D.save(actual/'reset.json',dict(passed=True,cached_tokens=0,allocation_ids_preserved=True))
 
+    def test_smoke_report_uses_real_exact_checker(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out=Path(tmp);self.fixture(out,'smoke')
+            row=D.summarize_bracket(out,'smoke',self.manifest)
+            self.assertTrue(row['smoke_passed']);self.assertEqual(row['request_count'],12)
+            self.assertEqual(row['requested_max_new'],64)
+            path=out/'run/S0'/self.manifest['prompts'][-1]['prompt_id']/'result.json'
+            bad=D.read(path);bad['tokens'][-1]+=1;D.save(path,bad)
+            with self.assertRaisesRegex(ValueError,'token identity'):D.summarize_bracket(out,'smoke',self.manifest)
+
     def test_all60_actual_oracle_and_metrics(self):
         with tempfile.TemporaryDirectory() as tmp:
             out=Path(tmp);self.fixture(out)
-            row=D.summarize_bracket(out,'max',self.manifest)
+            row=D.summarize_bracket(out,'p60fusion',self.manifest)
             self.assertTrue(row['candidate_beats_all_controls'])
             self.assertEqual(row['request_count'],60)
             self.assertFalse(row['realistic_final_gate']['passed'])
@@ -138,20 +149,20 @@ class SummaryTests(unittest.TestCase):
             # Last token in the last view is checked, not merely a prefix/hash.
             path=out/'run/A2'/self.manifest['prompts'][-1]['prompt_id']/'result.json'
             bad=D.read(path);bad['tokens'][-1]+=1;D.save(path,bad)
-            with self.assertRaisesRegex(ValueError,'token identity'):D.summarize_bracket(out,'max',self.manifest)
+            with self.assertRaisesRegex(ValueError,'token identity'):D.summarize_bracket(out,'p60fusion',self.manifest)
 
     def test_boundary_and_reset_mutations(self):
         with tempfile.TemporaryDirectory() as tmp:
             out=Path(tmp);self.fixture(out)
             path=out/'run/B1/boundary.json';original=D.read(path)
-            for key,value in (('selection_sha256','bad'),('weight_uploads_during_switch',1),('model_loads',2),
+            for key,value in (('selection_sha256','bad'),('hc','production'),('cache_cap','18GB'),('weight_uploads_during_switch',1),('model_loads',2),
                               ('allocation_ids_preserved',False),('context_extent',4096),('arena_descriptors_sha256','other')):
                 D.save(path,dict(original,**{key:value}))
-                with self.subTest(key=key),self.assertRaises(ValueError):D.summarize_bracket(out,'max',self.manifest)
+                with self.subTest(key=key),self.assertRaises(ValueError):D.summarize_bracket(out,'p60fusion',self.manifest)
             D.save(path,original)
             path=out/'run/B1'/self.manifest['prompts'][0]['prompt_id']/'reset.json'
             D.save(path,dict(passed=True,cached_tokens=1,allocation_ids_preserved=True))
-            with self.assertRaisesRegex(ValueError,'reset'):D.summarize_bracket(out,'max',self.manifest)
+            with self.assertRaisesRegex(ValueError,'reset'):D.summarize_bracket(out,'p60fusion',self.manifest)
 
 
 class TeardownIntegrationTests(unittest.TestCase):

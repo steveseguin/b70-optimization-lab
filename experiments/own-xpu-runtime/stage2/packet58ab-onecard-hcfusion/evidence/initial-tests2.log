@@ -1,0 +1,28 @@
+.......E..............F.......................................................................................
+======================================================================
+ERROR: test_postload_proof_requires_cache_KV_and_after_load (test_admission58e.AdmissionTests.test_postload_proof_requires_cache_KV_and_after_load)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ab-onecard-hcfusion/test_admission58e.py", line 177, in test_postload_proof_requires_cache_KV_and_after_load
+    rows=json.loads((W.HERE/'evidence/postload-census.json').read_text())
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ab-onecard-hcfusion/evidence/postload-census.json'
+
+======================================================================
+FAIL: test_inclusive_decimal_thresholds (test_bracket.BracketPolicyTests.test_inclusive_decimal_thresholds)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ab-onecard-hcfusion/test_bracket.py", line 65, in test_inclusive_decimal_thresholds
+    self.assertTrue(compare(self.rows(rates))['candidate_beats_all_controls'])
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 110 tests in 2.309s
+
+FAILED (failures=1, errors=1)

@@ -48,7 +48,18 @@ int main(int argc,char**argv){try{
  if(argc!=2)throw std::runtime_error("output directory required");std::filesystem::create_directories(argv[1]);
  std::ofstream expected(std::filesystem::path(argv[1])/"expected.bin",std::ios::binary),actual(std::filesystem::path(argv[1])/"actual.bin",std::ios::binary);
  unsigned cases=0;
- for(unsigned side=0;side<2;++side)for(unsigned seed:{7u,1337u})for(unsigned row=0;row<3;++row){Data a;a.init(seed+side*101+row);a.position=row?4094+row-1:127;Data b=a;reference(a.bound());host_norm(b.bound());host_low_inject(b.bound());host_gate_mix(b.bound());a.write(expected);b.write(actual);++cases;}
+ for(unsigned side=0;side<2;++side)for(unsigned scenario=0;scenario<9;++scenario){
+  Data a;a.init(7+side*101);a.position=scenario==1?4095:127;
+  if(scenario==2){a.x[0]=0x7fc1;a.x[2560]=0xffc1;}
+  if(scenario==3){a.x[0]=0x7f80;a.x[2560]=0xff80;}
+  if(scenario==4){for(unsigned i=0;i<a.x.size();++i)a.x[i]=i%2?0x8000:0;for(auto&g:a.gain)g=-0.f;}
+  if(scenario==5)a.error=37;
+  if(scenario==6)a.active=0;
+  if(scenario==7)a.position=4096;
+  if(scenario==8){a.gain[3]=iq3::bits_float(0x7fc12345);float inf=iq3::bits_float(0x7f800000);std::memcpy(a.iw.data(),&inf,4);}
+  Data b=a;reference(a.bound());host_norm(b.bound());host_low_inject(b.bound());host_gate_mix(b.bound());
+  a.write(expected);b.write(actual);++cases;
+ }
  expected.close();actual.close();if(!expected||!actual)throw std::runtime_error("fixture write failed");
  std::ifstream e(std::filesystem::path(argv[1])/"expected.bin",std::ios::binary),a(std::filesystem::path(argv[1])/"actual.bin",std::ios::binary);size_t at=0;char x,y;while(e.get(x)){if(!a.get(y)||x!=y)throw std::runtime_error("first differing byte "+std::to_string(at));++at;}if(a.get(y))throw std::runtime_error("extra actual bytes");
  std::cout<<"{\"passed\":true,\"device_executed\":false,\"cases\":"<<cases<<",\"bytes_compared\":"<<at<<"}\n";

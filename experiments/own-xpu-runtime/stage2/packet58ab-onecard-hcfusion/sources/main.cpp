@@ -580,7 +580,7 @@ public:
   Weights &w;
   Options a;
   const bool class_timing,profile_events,resident,prepared_path;
-  const flash::Plan p;
+  flash::Plan p; // Replaced only at the drained HC view boundary.
   const packet26::Dispatch sealed_dispatch=packet26::dispatch;
   std::vector<std::unique_ptr<ownrt::Device>> devices;
 
@@ -690,6 +690,10 @@ public:
                  std::chrono::seconds(a.seconds)) {pending.reserve(4096);prepared.reserve(p.launches.size());matrices.reserve(p.launches.size());gemv_choices.reserve(p.launches.size());
     if(!a.selection.empty()){require(!a.selection_sha256.empty(),"selection requires sealed --selection-sha256");sealed_selection.load(a.selection.string(),a.selection_sha256);}
     else require(a.selection_sha256.empty(),"selection SHA256 requires selection file");
+    index_plan();
+  }
+  void index_plan() {
+    gemv_choices.clear();small_groups.clear();small_followers.clear();
     for(const auto& l:p.launches)if(l.op=="gemv"||l.op=="expert_gate_up"||l.op=="routed_gemv"){
       std::array<unsigned,2> variants{selected_variant(w,a,p,l),0};if(l.op=="expert_gate_up")variants[1]=selected_variant(w,a,p,l,1);
       gemv_choices.emplace(&l,std::make_pair(packet26::dispatch.gemv_for(l.label),variants));
