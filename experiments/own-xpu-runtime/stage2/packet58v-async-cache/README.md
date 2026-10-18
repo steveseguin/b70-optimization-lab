@@ -113,3 +113,5 @@ objects and binaries are ignored and reproducible from pinned parent objects.
 
 Hot-expert cache idea credit: **Niko1221 / Strata**. All code here is lab-authored.
 [Work note](../../../../notes/2026-10-18-own-runtime-packet58v.md).
+[CPU closeout](CPU-PREPARATION-CLOSEOUT.md), [boundaries](DO-NOT-REPEAT.md),
+[sealed evidence](build-receipt.json), [temporary queue plans](evidence/queue-plans.json).

@@ -1,11 +1,14 @@
 # Current Workspace State
 
-**October 18, packet58v cache measurement on CPU:** The current one-card record
-spends 6.99 ms per token maintaining its expert cache, with about 33 fills
-and 65.46 MB copied. The separate time for its 144 pointer-table uploads was
-not recorded. This clears the requested measurement threshold for preparing
-an overlap candidate. CPU implementation and checks are next; no GPU, service
-or live queue was started or changed.
+**October 18, packet58v async cache prepared on CPU:** The one-card record
+spends 6.99 ms per token maintaining its cache. The new copy plans while the
+next position computes, then safely revokes victim pointers before filling
+their slots. This conservative schedule adds one position of lag. Both builds,
+byte/race checks, full-size startup, 87 policy tests and the seal pass. The
+12 × 64 smoke and five-view 12 × 128 bracket pass temporary planning but are
+not queued; the larger run requires the exact device smoke first. The build
+is 80.5 MB. Device correctness and speed remain pending; the 26.228599 record
+is unchanged. No GPU, service or live queue was started or changed.
 [Work note](notes/2026-10-18-own-runtime-packet58v.md).
 
 **October 18, packet136 banked bundle8 prepared on CPU:** The new copy keeps

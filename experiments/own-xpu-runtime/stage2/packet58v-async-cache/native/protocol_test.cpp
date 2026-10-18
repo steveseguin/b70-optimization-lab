@@ -61,6 +61,23 @@ int main(){
   lru.observe({0});lru.commit(next.epoch,true,true);next=lru.prepare({1});
   check(next.table[0].gate!=experts[0].host_gate&&next.table[2].gate==experts[2].host_gate);
   lru.commit(next.epoch,true,true);
+  // Force consecutive evictions of exactly the same physical slot, with a
+  // second eviction attempted while the prior copy is still outstanding.
+  p58::Cache single(experts,uint64_t(device),256);p58v::Protocol serial_slot;
+  unsigned consecutive_reuses=0;
+  for(unsigned id=0;id<4;++id){
+    serial_slot.begin();serial_slot.prepare(single,{id});serial_slot.end(true);
+    auto safe=serial_slot.revoked(single);
+    check(serial_slot.plan->fills.size()==1&&serial_slot.plan->fills[0].offset==0);
+    for(const auto& row:safe)check(row.gate<uint64_t(device)||row.gate>=uint64_t(device)+256);
+    serial_slot.submitted(true,id+1);serial_slot.begin();
+    refuses([&]{serial_slot.prepare(single,{(id+1)%8});});
+    std::memcpy(device,host[id].data(),256);serial_slot.end(true);
+    serial_slot.commit(single,true,true);check(single.resident(id));
+    check(!std::memcmp(reinterpret_cast<void*>(single.table()[id].gate),host[id].data(),256));
+    if(id)++consecutive_reuses;
+  }
+  check(consecutive_reuses==3);
   // Full publication shape: all 144 tables, 512 pointer+generation rows.
   std::vector<uint64_t> source(144*1024),staging(source.size()),tables(source.size());
   std::array<uint64_t*,144> destinations{};
@@ -71,5 +88,5 @@ int main(){
   std::free(device);
   std::cout<<"{\"passed\":true,\"device_executed\":false,\"checks\":"<<checks<<",\"race_refusals\":"<<negatives
            <<",\"fills\":"<<copies<<",\"host_rows\":"<<host_rows<<",\"device_rows\":"<<device_rows
-           <<",\"publication_rows\":73728,\"zero_copy_mixed_streamed_bytes_equal\":true,\"delayed_copy\":true,\"mid_position_completion\":true,\"repeated_slot_evictions\":true}\n";
+           <<",\"publication_rows\":73728,\"zero_copy_mixed_streamed_bytes_equal\":true,\"delayed_copy\":true,\"mid_position_completion\":true,\"consecutive_same_slot_reuses\":"<<consecutive_reuses<<"}\n";
 }

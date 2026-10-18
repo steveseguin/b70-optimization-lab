@@ -46,10 +46,10 @@ cannot safely be revoked during that position, reuse begins at the following
 boundary: this conservative version adds one position of lag. Pending slots
 cannot be evicted again. All actual routes still update LRU recency.
 
-Both GNU and Intel builds have passed; the final full-shape integration checks
-are being refreshed. The protocol/ownership race gates and full-size K1 source
-byte comparisons pass on CPU. The 87 Python policy checks pass. There is no
-device correctness claim. The private packet58u policy, plus a 32 MiB metadata
+Both GNU and Intel builds and the final full-shape integration checks pass.
+The protocol/ownership race gates and full-size K1 source byte comparisons
+pass on CPU. The 87 Python policy checks pass. There is no device correctness
+claim. The private packet58u policy, plus a 32 MiB metadata
 allowance and 1,179,648-byte staging backing, needs 95,435,761,152 bytes of
 available host RAM. The 8 GiB reserve and original device ceiling remain.
 
@@ -63,3 +63,35 @@ not speed results. The impossible all-cache-removal bound is 32.07938 tok/s.
 Hot-expert cache idea credit: Niko1221 / Strata. Implementation is lab-authored.
 Device equality, small async smoke and performance remain pending. No gain
 is measured by this preparation.
+
+## Final CPU handoff
+
+Measurement milestone `2a09e170e` and implementation milestone `8aa900539`
+were each pushed immediately. The final [seal](../experiments/own-xpu-runtime/stage2/packet58v-async-cache/build-receipt.json)
+verifies 537 source/dependency pins and all thirteen CPU evidence gates.
+The build occupies 80,484,411 bytes. The largest compiler child used about
+727 MB RSS; K1 used 339 MB and the full-size sparse startup used 30 MB.
+
+The protocol fixture performs 9,966 checks and 388 expected race refusals
+per repeat, including three consecutive reuses of the same slot. Both repeats
+pass. The owner fixture separately proves foreground retirement leaves DMA
+pending, pending release refuses, and final shutdown drains before freeing.
+The actual Engine full-shape test submits all 1,440 mock projection copies,
+retains incomplete fills, and publishes only at a later boundary. K1 source
+bytes, reset brackets, both real parser paths, six intercepted native launch
+paths, shared oracle, drain fix, admission and all 87 Python checks pass.
+
+The [smoke proposal](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p58v-smoke-A.txt)
+and [v5 proposal](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p58v-v5-A.txt)
+both pass the coordinator planner on temporary queue copies. Expected time is
+10–15 and 20–30 minutes respectively; each watchdog is 7,200 seconds. The
+commands embed the recorded oneAPI library path. The larger runner checks
+the exact smoke's build, output tokens and clean drain before it can launch.
+No live queue or device output directory was created. The plan retained
+36,324,839,424 root-free bytes and budgeted 2,684,354,560 bytes for both jobs,
+leaving the 25 GB floor intact.
+
+[CPU closeout and limitations](../experiments/own-xpu-runtime/stage2/packet58v-async-cache/CPU-PREPARATION-CLOSEOUT.md).
+No frozen packet, screen, live ops file, service, GPU job, host setting, sudo,
+reboot, external submission or unrelated process was touched. Existing dirty
+orchestration files remain outside these commits.
