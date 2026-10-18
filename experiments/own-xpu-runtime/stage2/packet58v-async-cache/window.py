@@ -17,6 +17,7 @@ import onecard_admission as A
 from views import VIEWS, selection, digest
 from exec_limits import check as check_exec_limits
 from owner_teardown import finish_model_owner
+from launch_identity import lane_unit_prefix
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[3]
@@ -113,9 +114,16 @@ def build_gate():
     require({'build/device/own-rt-iq3', 'build/device/p58-cache-fixtures'} <= set(row['artifacts']), 'both native binaries must be bound')
     require('evidence/postload-allocation-cpu.json' in row['gates'], 'post-load allocation gate required')
     require('evidence/fullshape-submit-cpu.json' in row['gates'], 'full-shape submit gate required')
+    require('evidence/argument-gate.json' in row['gates'], 'real launch startup CPU gate required')
     for name in row['gates']:
         gate = json.loads(safe_path(HERE, name).read_text())
         require(gate.get('passed') is True and gate.get('device_executed') is False, 'CPU gate failed: ' + name)
+    startup = json.loads((HERE/'evidence/argument-gate.json').read_text())
+    require({(r['candidate'], r['window']) for r in startup['records']} ==
+            {(v, w) for v in ('smoke', 'overlap') for w in ('K1a', 'K1b', 'WSCREEN')} and
+            all(r.get('real_queue_entry') is True and r.get('real_unit_and_environment_gates') is True
+                and r.get('live_host_admission') is True and r.get('native_exec_intercepted') is True
+                for r in startup['records']), 'complete real startup paths required')
     return row
 
 
@@ -200,8 +208,8 @@ def native_command(args, output, miss_path):
 
 def user_unit_gate(cgroup):
     paths = [line.split(':', 2)[-1] for line in cgroup.splitlines()]
-    require(any('/user@' in p and p.rsplit('/', 1)[-1].startswith(('packet58-', 'screen-packet58r-')) and p.endswith('.service') for p in paths),
-            'coordinator-owned packet58-* systemd user service required')
+    require(any('/user@' in p and p.rsplit('/', 1)[-1].startswith(('packet58-', lane_unit_prefix())) and p.endswith('.service') for p in paths),
+            'coordinator-owned packet58-* or packet58v lanequeue systemd user service required')
 
 
 class PinnedExpertProgress:
@@ -380,7 +388,7 @@ def main(argv=None):
     memory = dict(pending_lane_admission=True, plan=budget)
     disk = storage(output, WRITES[args.window])
     build_bytes = sum(p.stat().st_size for p in (HERE/'build').rglob('*') if p.is_file())
-    require(build_bytes <= 200_000_000, 'packet58r build exceeds 200 MB')
+    require(build_bytes <= 200_000_000, 'packet58v build exceeds 200 MB')
     review, through = S.fault_review(args.faults_reviewed_through, time.time_ns()//1000)
     boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
     latch_path = HERE / ('fault-'+boot+'.json')

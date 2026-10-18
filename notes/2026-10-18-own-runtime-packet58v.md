@@ -95,3 +95,30 @@ leaving the 25 GB floor intact.
 No frozen packet, screen, live ops file, service, GPU job, host setting, sudo,
 reboot, external submission or unrelated process was touched. Existing dirty
 orchestration files remain outside these commits.
+
+## Packet58vb: launch-unit repair and minimal reseal
+
+The 16:23:22 UTC smoke was refused before device work because the copied
+unit gate still named packet58r. The gate now derives packet58v service
+names from lanequeue's own command builder and retains the coordinator
+`packet58-` prefix. Other packet services still refuse. The literal sweep
+also corrected queue receipt labels, diagnostics and scratch names. It
+restored an accidental historical measurement-path rewrite; replay produces
+the exact same measurement bytes. Historical provenance, shared contracts
+and the unchanged CPU parser ABI remain explicit.
+
+Both actual proposals now enter the real queue runner, then all six
+window/native argument paths with the real unit/environment checks, passive
+card topology and live host-memory admission. Both fail on the old gate and
+pass with the fix. Native execution is intercepted. All 91 Python policy
+tests pass; the reseal verifies 540 source/dependency pins. Both temporary
+queue plans pass. The 95,435,761,152-byte model admission and 8 GiB reserve
+are unchanged. No compiler, GPU, service, live queue or settings were used.
+
+The [repair closeout](../experiments/own-xpu-runtime/stage2/packet58v-async-cache/packet58vb-closeout.md)
+records the literal classification and synthetic test boundaries. The
+[minimal-reseal receipt](../experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/minimal-reseal.json)
+confirms identical binaries, native sources, host policy, oracle and
+`iq3-p49-split32-v1` arithmetic. Device correctness remains pending.
+The final `READY-FOR-DEVICE.json` binds the committed repair and proposal
+hashes; it is the last content write and lands in a follow-up commit.

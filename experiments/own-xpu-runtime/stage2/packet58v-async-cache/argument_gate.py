@@ -6,6 +6,7 @@ Each probe is isolated; audit hooks deny execution, device opens and writes
 outside its scratch. No synthetic receipt can be consumed by a device chain.
 """
 import argparse
+import ast
 from contextlib import ExitStack
 import hashlib
 import json
@@ -50,12 +51,13 @@ def sandbox(tmp):
 
 
 def sources():
+    from launch_identity import LANEQUEUE
     files = [*P.glob('*.py'), P/'views.json', P/'oracle-binding.json',
-             P/'selections/route-rec.json', P/'dispatch-speed6.json']
+             P/'selections/route-rec.json', P/'dispatch-speed6.json', LANEQUEUE]
     return {str(f.relative_to(ROOT)): sha(f) for f in files}
 
 
-def probe(name, miss, candidate):
+def probe(name, miss, candidate, old_gate=False):
     # Capture all resource limits BEFORE runtime imports. No cap is installed in
     # this tiny intercepted-exec process: it must test the actual unlimited AS
     # inherited by the future coordinator. Peak RSS is checked by the parent.
@@ -65,13 +67,36 @@ def probe(name, miss, candidate):
     import window as W
     import suite_driver as D
     import views as V
+    import fault_review as F
+    from launch_identity import L, LANEQUEUE, unit_name
+    tag = 'smoke' if candidate == 'smoke' else 'v5'
+    proposal = LANEQUEUE.parent / ('proposed-p58v-' + tag + '-A.txt')
+    job = next(json.loads(line) for line in proposal.read_text().splitlines() if line.startswith('{'))
+    L.validate(job, 'A')
+    library = job['argv'][job['argv'].index('--library-path') + 1]
+    unit = unit_name(job, library)
+    cgroup = '0::/user.slice/user-1000.slice/user@1000.service/app.slice/' + unit + '\n'
+    real_read_text = Path.read_text
+    def read_text(path, *args, **kwargs):
+        if path == Path('/proc/self/cgroup'):
+            return cgroup
+        return real_read_text(path, *args, **kwargs)
+    original_gate = None
+    if old_gate:
+        # Frozen pre-fix implementation, extracted without importing the parent.
+        source = subprocess.check_output(['git', 'show', 'ba0dc6e7b:' + str((P/'window.py').relative_to(ROOT))],
+                                         text=True, stdin=subprocess.DEVNULL)
+        node = next(n for n in ast.parse(source).body if isinstance(n, ast.FunctionDef) and n.name == 'user_unit_gate')
+        namespace = {'require': W.require}
+        exec(compile(ast.Module(body=[node], type_ignores=[]), '<old-user-unit-gate>', 'exec'), namespace)
+        original_gate = namespace['user_unit_gate']
     assert snapshot() == before
     V.validate(candidate)
     native_hashes = {str(f.relative_to(P)):sha(f) for f in (P/'build/device').glob('*') if f.name in ('own-rt-iq3','p58-cache-fixtures')}
     assert len(native_hashes)==2
     model = not name.startswith('K1')
     mode = name if model else 'K1'
-    with tempfile.TemporaryDirectory(prefix='packet58p-arguments-') as directory:
+    with tempfile.TemporaryDirectory(prefix='packet58v-arguments-') as directory:
         tmp = Path(directory)
         sandbox(tmp)
         packet = tmp/'packet'; packet.mkdir(); (packet/'evidence').mkdir()
@@ -96,10 +121,24 @@ def probe(name, miss, candidate):
                 bytes_per_iteration=25_000_000, host_ms=1 if miss == 'zero-copy' else 3,
                 vram_ms=.1, streamed_ms=1.1)
             (dest/'run/k1.json').write_text(json.dumps(native))
-        command = Q.commands(out, 0, '2026-01-01T00:00:00Z', '', candidate)[name]
-        argv = command[command.index(str(P/'window.py'))+1:]
+        out = packet/'evidence'/candidate
         observations = []
-        env = {'PATH':'/usr/bin:/bin', 'OMP_NUM_THREADS':'2'}
+        env = L.closed_env(library)
+        admissions = []
+        topology = []
+        real_admit, real_topology = W.M.admit, W.A.D.onecard_topology
+        def admit(snapshot, budget=None):
+            result = real_admit(snapshot, budget)
+            admissions.append(dict(passed=result['passed'],
+                snapshot={k:snapshot[k] for k in ('MemAvailable', 'GPUActive') if k in snapshot},
+                window=budget['window'], required_available_bytes=budget['host_required_available_bytes'],
+                reserve_bytes=W.M.HOST_RESERVE,
+                plan_sha256=hashlib.sha256(json.dumps(budget,sort_keys=True).encode()).hexdigest()))
+            return result
+        def topology_admit():
+            result = real_topology()
+            topology.append(result)
+            return result
 
         class Admission:
             def __init__(self, *args):
@@ -115,6 +154,22 @@ def probe(name, miss, candidate):
                 postload_memory=dict(W.M.seed_observation(), complete_postload=True))
 
         def capture(cmd, *args, **kwargs):
+            if str(P/'window.py') in cmd:
+                stage = Path(cmd[cmd.index('--output')+1]).name
+                if stage != name:
+                    class Completed:
+                        pid = 999999
+                        def wait(self): return 0
+                        def poll(self): return 0
+                    return Completed()
+                stage_mode = 'K1' if stage.startswith('K1') else stage
+                for previous in (packet/'evidence/chain').iterdir():
+                    shutil.copytree(previous, out/previous.name)
+                with patch.dict(os.environ, env, clear=True), \
+                     patch.object(os, 'getpriority', return_value=0 if stage_mode.startswith('W') else 19), \
+                     patch.object(os, 'sched_getaffinity', return_value=set(range(4))|set(range(16,20)) if stage_mode.startswith('W') else set(range(8,16))|set(range(24,32))):
+                    result = W.main(cmd[cmd.index(str(P/'window.py'))+1:])
+                raise AssertionError('window did not reach native exec: ' + str(result) + ' ' + (out/name/'window.json').read_text())
             limits = check()  # actual getrlimit at every intercepted exec
             observations.append(dict(argv=list(map(str, cmd)), limits=limits))
             if model and len(observations) == 1:
@@ -146,41 +201,69 @@ def probe(name, miss, candidate):
         with ExitStack() as stack:
             changes = [patch.object(W,'HERE',packet), patch.object(D,'HERE',packet),
                 patch.object(W,'build_gate',return_value=build),
-                patch.object(W,'user_unit_gate'), patch.object(W,'closed_environment',return_value=env),
+                patch.object(Path,'read_text',read_text),
+                patch.dict(os.environ,env,clear=True),
+                patch.object(Q,'ROOT',out.parent), patch.object(Q,'GAP_SECONDS',0),
+                patch.object(Q,'verify_smoke',return_value={'synthetic_prerequisite':True}),
+                patch.object(Q,'verify_success',return_value={'synthetic_prerequisite':True}),
+                patch.object(F,'validate',return_value=({'through_us':1767225600000000,'through':'2026-01-01T00:00:00Z'},'', '', None)),
                 patch.object(W,'prerequisite',side_effect=predecessor),
                 patch.object(W.SUPPORT,'storage',return_value={'synthetic':True}),
                 patch.object(W,'memory_fence',return_value={'synthetic':True}),
                 patch.object(W,'selected_clients',return_value={'synthetic':True}),
                 patch.object(W.S,'journal',return_value=('',None)),
                 patch.object(W.S,'ldd_preflight',return_value={'intercepted':True}),
-                patch.object(W.M,'meminfo',return_value={'MemAvailable':124*1024**3}),
+                patch.object(W.M,'admit',side_effect=admit),
                 patch.object(W.A,'Admission',Admission),
-                patch.object(W.A.D,'onecard_topology',return_value={'synthetic':True}),
-                patch.object(os,'getpriority',return_value=0 if mode.startswith('W') else 19),
-                patch.object(os,'sched_getaffinity',return_value=set(range(4))|set(range(16,20)) if mode.startswith('W') else set(range(8,16))|set(range(24,32))),
+                patch.object(W.A.D,'onecard_topology',side_effect=topology_admit),
+                patch.object(os,'getpriority',return_value=0),
+                patch.object(os,'sched_getaffinity',return_value=set(range(4))|set(range(16,20))),
                 patch.object(subprocess,'Popen',side_effect=capture)]
+            if original_gate is not None:
+                changes.append(patch.object(W,'user_unit_gate',original_gate))
             for change in changes: stack.enter_context(change)
+            argv = list(job['argv'][3:])
+            argv[argv.index('--output')+1] = str(out)
+            review = tmp/'review.json'; review.write_text('{}')
+            argv[argv.index('--fault-review')+1] = str(review)
             try:
-                result = W.main(argv)
-                raise AssertionError('window did not reach native exec: '+str(result)+' '+(out/name/'window.json').read_text())
+                result = Q.main(argv)
+                raise AssertionError('queue did not reach native exec: '+str(result)+' '+(out/'queue.json').read_text())
             except Reached:
                 pass
+            except ValueError as error:
+                if not old_gate or 'systemd user service required' not in str(error): raise
+                assert not observations and not topology and not admissions
+                return dict(passed=True, device_executed=False, old_gate_refused=True,
+                            job=job['name'], unit=unit, error=str(error))
+        assert not old_gate, 'pre-fix gate unexpectedly accepted proposal'
         assert len(observations) == (2 if model else 1)
+        assert topology and admissions and all(r['passed'] for r in admissions)
         assert snapshot() == before
         return dict(window=name, miss_path=miss, passed=True, device_executed=False,
             native_exec_intercepted=True, operational_state_synthetic=True,
             selection=V.validate(candidate), candidate=candidate, observations=observations,
+            job=job['name'], unit=unit, cgroup=cgroup, real_queue_entry=True,
+            real_unit_and_environment_gates=True, topology=topology, host_admission=admissions,
+            live_host_admission=True, proposal_sha256=sha(proposal),
+            synthetic_boundaries=['build envelope (verified separately)', 'prior K1/smoke receipts',
+                                  'coordination locks', 'journal review', 'placement observations',
+                                  'ldd', 'device client ownership', 'memory fence'],
             resource_limits_unchanged=True, finite_address_space_limit=False)
 
 
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument('--probe'); ap.add_argument('--miss',default='zero-copy'); ap.add_argument('--candidate',default='overlap'); args=ap.parse_args()
+    ap=argparse.ArgumentParser(); ap.add_argument('--probe'); ap.add_argument('--miss',default='zero-copy'); ap.add_argument('--candidate',default='overlap'); ap.add_argument('--old-gate',action='store_true'); args=ap.parse_args()
     if args.probe:
-        print('ARGUMENT_RESULT='+json.dumps(probe(args.probe,args.miss,args.candidate)))
+        print('ARGUMENT_RESULT='+json.dumps(probe(args.probe,args.miss,args.candidate,args.old_gate)))
         return
     import queue_runner as Q
-    before=sources(); records=[]
+    before=sources(); records=[]; regressions=[]
     for candidate in ('overlap','smoke'):
+      result=subprocess.run([sys.executable,'-B',str(Path(__file__)),'--probe','K1a','--candidate',candidate,'--old-gate'],
+                            stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120)
+      assert result.returncode==0,result.stderr
+      regressions.append(json.loads(next(s.split('=',1)[1] for s in result.stdout.splitlines() if s.startswith('ARGUMENT_RESULT='))))
       for name in Q.ORDER:
         for miss in ('zero-copy',):
             result=subprocess.run([sys.executable,'-B',str(Path(__file__)),'--probe',name,'--miss',miss,'--candidate',candidate],
@@ -192,7 +275,7 @@ def main():
     assert before==sources()
     rss=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024
     assert rss < 4*1024**3
-    row=dict(passed=True,device_executed=False,checks=len(records),records=records,sources=before,
+    row=dict(passed=True,device_executed=False,checks=len(records),records=records,sources=before,old_code_regressions=regressions,
         peak_child_rss_bytes=rss,model_payload_reads=False,services_started=False,
         seal_validation='separate seal verification; construction envelope synthetic to avoid circular gate dependency')
     (P/'evidence/argument-gate.json').write_text(json.dumps(row,indent=2)+'\n')

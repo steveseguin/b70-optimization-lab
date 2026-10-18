@@ -15,14 +15,17 @@ def main():
                     '--library-path',library,'--authorized-device-window'],
                     env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)))
         raw=('# CPU proposal only; card 0, lane A, whole host; lane B paused/drained throughout.\n'
+             '# Packet58vb: real queue/window startup CPU gate; lanequeue-derived unit identity; minimal reseal.\n'
              '# Two K1 fixtures precede one model load. Smoke: 12 x 64 overlap; v5: 12 x 128 serial/overlap/serial/overlap/serial.\n'
              '# Native and Python check every token against iq3-p49-split32-v1. The v5 runner refuses without this exact smoke.\n'
              f'# Expected {expected[0]}-{expected[1]} seconds; watchdog 7200 seconds >= 4x upper estimate.\n'
              '# Required host MemAvailable 95435761152 bytes, including unchanged 8 GiB reserve; BF16 KV, 18 GB cache.\n'
              '# No device run, live queue change, record chain or submission performed by preparation.\n'+json.dumps(record)+'\n')
         proposal=QUEUE/('proposed-p58v-'+tag+'-A.txt')
-        if proposal.exists():assert proposal.read_text()==raw,'never overwrite changed proposal'
-        else:proposal.write_text(raw)
+        if proposal.exists():
+            existing = [json.loads(line) for line in proposal.read_text().splitlines()
+                        if line.strip() and not line.lstrip().startswith('#')]
+            assert existing == [record], 'never overwrite changed proposal job'
         with tempfile.TemporaryDirectory(prefix='p58v-plan-') as directory:
             (Path(directory)/'queue-A.txt').write_text(raw)
             cmd=[sys.executable,'-B',str(QUEUE/'lanequeue.py'),'plan','--lane','A','--directory',directory]
@@ -30,6 +33,7 @@ def main():
         log=P/'evidence'/('queue-plan-'+tag+'.log');log.write_text(r.stdout+r.stderr)
         assert r.returncode==0,log.read_text()
         plan=[json.loads(x) for x in r.stdout.splitlines()];assert len(plan)==1 and plan[0]['plan']=='passed'
+        proposal.write_text(raw)  # Only the named proposal, after its temporary plan passed.
         records.append(dict(arm=arm,proposal=str(proposal.relative_to(ROOT)),proposal_sha256=sha(proposal),plan=plan,
                             expected_duration_seconds=expected,watchdog_seconds=7200,log_sha256=sha(log)))
     import queue_runner as Q

@@ -36,6 +36,9 @@ def create():
     args=read(P/'evidence/argument-gate.json');assert args['checks']==6
     assert {(r['candidate'],r['window']) for r in args['records']}=={(v,w) for v in ('overlap','smoke') for w in ('K1a','K1b','WSCREEN')}
     assert all(r['resource_limits_unchanged'] and r['native_exec_intercepted'] for r in args['records'])
+    assert all(r['real_queue_entry'] and r['real_unit_and_environment_gates'] and
+               r['live_host_admission'] and r['topology'] for r in args['records'])
+    assert len(args['old_code_regressions']) == 2 and all(r['old_gate_refused'] for r in args['old_code_regressions'])
     assert read(P/'evidence/python-cpu-gates.json')['checks']>=80
     files=[*P.glob('*.py'),P/'views.json',P/'copy-manifest.json',P/'oracle-binding.json',P/'library-path.json',P/'k1-cpu.json',P/'dispatch-speed6.json']
     for folder in ('native','sources','lineage','selections','host-admission','evidence/58c-kd','evidence/58c-supervisor'):
@@ -44,7 +47,8 @@ def create():
     sources.update(read(P/'oracle-binding.json')['files_sha256'])
     from shared_oracle import completed_binding
     binding=completed_binding();assert binding==read(P/'evidence/oracle-gate.json')
-    for name in ('experiments/own-xpu-runtime/ops/compile_turn.py','scripts/check_drain_fix.py','scripts/check_teardown_on_error.py',
+    for name in ('experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py',
+                 'experiments/own-xpu-runtime/ops/compile_turn.py','scripts/check_drain_fix.py','scripts/check_teardown_on_error.py',
                  'experiments/own-xpu-runtime/stage1/packet4-prep/driver/window_driver.py',
                  'experiments/own-xpu-runtime/stage2/packet56-draft-prefix/suite_metrics.py'):
         sources[name]=sha(ROOT/name)

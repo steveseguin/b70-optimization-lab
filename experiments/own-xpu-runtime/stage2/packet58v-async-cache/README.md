@@ -4,6 +4,12 @@ CPU-prepared experiment. Device quality and speed are pending. The unchanged
 one-card record remains **26.228599 tok/s**, packet58p, tile16,
 `cmvdukc200064rf01lqsql9x8`. No proposal is queued by this packet.
 
+October 18: [packet58vb repairs the launch-unit gate](packet58vb-closeout.md).
+The real queue/window CPU replay now exercises lanequeue's service name,
+environment, passive topology, host admission and native argument assembly.
+Use [READY-FOR-DEVICE.json](READY-FOR-DEVICE.json) for the committed repair and
+proposal hashes. Device correctness remains pending.
+
 [Current measurement](evidence/measurement.json): the record spends **6.991363
 ms/token** in serial cache work, filling **33.005051 experts / 65.456571 MB**.
 It publishes 144 tables / 1,179,648 bytes per position; separate publication

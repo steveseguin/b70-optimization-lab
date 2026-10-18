@@ -1,0 +1,61 @@
+{
+  "schema": "packet58vb.minimal-reseal.v1",
+  "passed": true,
+  "device_executed": false,
+  "services_started": false,
+  "live_queue_changed": false,
+  "previous_commit": "ba0dc6e7b",
+  "previous_seal_sha256": "3e1694e9c7df1801b1aebde6ae713b4f3c78dab2d569dfef51561df7064d9069",
+  "seal_sha256": "aa5ff17482e3d41f4c6d511da0aac1e8784b3234119322cf0e8f98617730229d",
+  "artifacts_unchanged": true,
+  "native_and_host_policy_sources_unchanged": true,
+  "oracle_unchanged": true,
+  "arithmetic": "iq3-p49-split32-v1",
+  "binaries_rebuilt": false,
+  "measurement_byte_identical": true,
+  "changed_source_pins": [
+    "experiments/own-xpu-runtime/stage2/packet58v-async-cache/plan_queue.py",
+    "experiments/own-xpu-runtime/stage2/packet58v-async-cache/measure.py",
+    "experiments/own-xpu-runtime/stage2/packet58v-async-cache/window.py",
+    "experiments/own-xpu-runtime/stage2/packet58v-async-cache/seal.py",
+    "experiments/own-xpu-runtime/stage2/packet58v-async-cache/argument_gate.py",
+    "experiments/own-xpu-runtime/stage2/packet58v-async-cache/test_fault_boundary.py",
+    "experiments/own-xpu-runtime/stage2/packet58v-async-cache/queue_runner.py"
+  ],
+  "added_source_pins": [
+    "experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+    "experiments/own-xpu-runtime/stage2/packet58v-async-cache/launch_identity.py",
+    "experiments/own-xpu-runtime/stage2/packet58v-async-cache/test_launch_unit.py"
+  ],
+  "changed_gate_pins": [
+    "evidence/argument-gate.json",
+    "evidence/python-cpu-gates.json",
+    "evidence/teardown-integration.json"
+  ],
+  "startup_checks": 6,
+  "old_unit_regressions": [
+    {
+      "passed": true,
+      "device_executed": false,
+      "old_gate_refused": true,
+      "job": "packet58v-v5-A",
+      "unit": "screen-packet58v-v5-A.service",
+      "error": "coordinator-owned packet58-* systemd user service required"
+    },
+    {
+      "passed": true,
+      "device_executed": false,
+      "old_gate_refused": true,
+      "job": "packet58v-smoke-A",
+      "unit": "screen-packet58v-smoke-A.service",
+      "error": "coordinator-owned packet58-* systemd user service required"
+    }
+  ],
+  "peak_cpu_probe_rss_bytes": 33681408,
+  "policy_tests": 91,
+  "queue_plans_sha256": "ccf30ff9898c1d55845febf8fae17c6ed76d702acf7c961df43f7743213830e3",
+  "proposals": {
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58v-smoke-A.txt": "c8fbbdd5e9d0a8d4293502bbc7c0e69e81464b748a6fc8e490342507ef02f4b3",
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58v-v5-A.txt": "a209beba3a12e273f68fa00b67e483ec2e0492657b953b1b1a6d4b1639998f69"
+  }
+}

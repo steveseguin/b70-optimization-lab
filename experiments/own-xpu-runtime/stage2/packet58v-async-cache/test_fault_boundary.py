@@ -89,7 +89,7 @@ class BoundaryTests(unittest.TestCase):
         class CommandsCaptured(Exception):
             pass
         with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)/'card0-loo-a'
+            root = Path(temp)/'card0-async-a'
             for arm, view in Q.STAGES:
                 with (patch.object(Q, 'verify_smoke', return_value={'synthetic':True}), patch.object(Q, 'ROOT', root), patch.object(Q, 'plan', return_value={}),
                       patch.object(Q.W, 'user_unit_gate'), patch.object(Q.W, 'closed_environment'),

@@ -52,7 +52,7 @@ def plan(output, view):
     import suite_driver as D
     manifest = D.oracle_inputs()
     W.require(len(manifest['prompts']) == 12, 'complete 12-prompt suite required')
-    return dict(schema='packet58r.plan.v1', device_executed=False, view=view,
+    return dict(schema='packet58v.plan.v1', device_executed=False, view=view,
         selection_sha256=digest(view), card=0, lane='A', scope='whole-host',
         model_lifetimes=1, k1_fixture_launches=2, windows=list(ORDER),
         planned_arm_seconds=[600,900] if view=='smoke' else [1200,1800], planned_bracket_seconds=[600,900] if view=='smoke' else [1200,1800], watchdog_seconds=7200, view_order=bracket(view), bracket_model_seconds=1560,
@@ -103,7 +103,7 @@ def main(argv=None):
     cmds=commands(output,0,boundary,args.library_path,view)
     W.storage(output,sum(W.WRITES['K1' if n.startswith('K1') else n] for n in ORDER))
     output.mkdir(parents=True)
-    state=dict(schema='packet58n.arm.v1', passed=False, device_executed=False,
+    state=dict(schema='packet58v.arm.v1', passed=False, device_executed=False,
                view=view, arm=args.arm, commands=cmds, completed=[], plan=metadata,
                fault_review_sha256=W.sha(args.fault_review),
                faults_reviewed_through=boundary,
