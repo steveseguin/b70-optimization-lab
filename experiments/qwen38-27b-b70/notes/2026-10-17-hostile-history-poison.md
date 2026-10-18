@@ -605,3 +605,19 @@ server, device marks on. Starts after the two-card stress.
 - **Decision:** if met, hostile streams pass at 2M on 1.2.0.dev2 and the charter's "any history" line gets it; the
   next lever is then the repair gate's room problem (or 4M if room stays blocked). A missed audit: the turns at that
   audit and its recalls are read before anything changes. A hang voids the arm; evidence, probe, hang lane.
+
+## Campaign 36b (01:18-01:54 EDT): all three predictions held
+
+| arm | result | audits | asked again (why) | time | min host room |
+|---|---|---|---|---|---|
+| `K32L retro 0` | **44/45** | **6/6** (34-56 items back) | 9 (4 lookups for waiting lines, 4 working, 1 mentions) | 9 min 1 s | 1.74 GiB |
+| `K32L retroloud 1` | **50/50** | 6/6 | 6 (5 lookups, 1 mentions) | 8 min 27 s | 1.68 GiB |
+| `K32L rules 0` | **39/39** | - | 3 (2 working-start, 1 mentions; **no lookup**) | 7 min 4 s | 1.83 GiB |
+
+The one miss (retro 0, `p5_3`, "In item 126, who watched the barges go by next to the weighbridge?") is a built-in
+lure: item 126 has the head clerk doing it next to the weighbridge and the quartermaster doing it by the east gate; the
+answer was the quartermaster. A detail-reading slip, not a counter, audit or keeper fault. The rules arm is
+token-for-token the campaign 32 (no lookups) and campaign 34 runs (prompt 1,932,094, same asks), so 1.2.0.dev2's wider
+trigger costs nothing on a clean stream. With campaign 35 this closes the 1.2.0.dev2 gate at 240K: quiet audits 12/12
+over two seeds, loud 12/12, clean rules unchanged, and the 1M hostile stream 217/218 with 8/8 audits. The operator
+session stayed silent beside each server; room never went under 1.68 GiB.
