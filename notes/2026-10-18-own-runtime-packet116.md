@@ -57,5 +57,15 @@ cross-compiler NaN hashes are not required to match. CPU exceptional attention
 inputs use the unchanged scalar reference body. Device numerator arithmetic
 uses the original vector2 body; actual device equality remains mandatory.
 
-Device binary compilation, complete-layer checks, startup receipts, seals and
-proposal planning are in progress. Device timing and quality remain pending.
+The micro is compiled and sealed. Two fresh GNU and two fresh Intel complete-
+layer processes each pass 668 byte comparisons, including immediate scratch
+checks. Both temporary lane-B queue plans pass. The new
+[proposal](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p116-micro-B.txt)
+contains two fresh owners: 240 seconds expected and a 1,200-second watchdog
+per owner. Its native source/object snapshot is independent of later v5 edits.
+The frozen packet110 rope is linked and hash-checked, avoiding another 4 MB
+copy. The first plan rejected that link under the packet-local path check;
+the final seal binds its frozen target under the repository root and checks
+the exact relative link. The rejection is retained.
+
+Device timing and device quality remain pending. No live queue was changed.
