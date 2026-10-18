@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, packet118 bundle7 smoke prepared on CPU:** Both fixed prefix
+compositions pass GNU/Intel byte checks, VRAM admission and all 22 startup
+windows. The twelve-prompt smoke proposal passes temporary queue planning.
+The shorter prefix adds no head allocation. Composite preparation continues;
+its control is packet103's record line and both lanes must clear 1.0% over
+both controls. No GPU, service or live queue changed.
+[Work note](notes/2026-10-18-own-runtime-packet118.md).
+
 **October 18, packet116 QSA schedule prepared on CPU:** The candidate
 shares attention score work across more subgroups and selection ranking across
 all lanes. Both compilers pass repeated operator and complete-layer byte checks.
