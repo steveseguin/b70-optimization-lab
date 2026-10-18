@@ -23,10 +23,14 @@ def main():
  require(all(r['passed'] and r['selection_key_consumers_verified'] and 0<r['postload_device_bytes']<=30*1024**3 for r in shape['runs']),'full shape result')
  require(len(shape['negative_allocations'])==12 and len(shape['scope_negatives'])==14,'all startup negatives required')
  require(len(admission['runs'])==6,'all memory admissions required')
+ shape_archives={}
+ for run in shape['runs']:
+  for key in ('native_plan','census'):
+   path=ROOT/run[key];require(sha(path)==run[key+'_sha256'],'startup archive changed: '+str(path));shape_archives[str(path.relative_to(ROOT))]=sha(path)
  require(set(fixture['views'])==set(views()),'all CPU views required')
  spec=importlib.util.spec_from_file_location('p81_generic_seal',P.parent/'screen/seal.py');generic=importlib.util.module_from_spec(spec);spec.loader.exec_module(generic)
  extras=list(P.glob('*.py'))+[P/'shared-wrapper-pin.json',P/'build-device-receipt.json',P/'evidence/cpu-byte-identity.json',P/'evidence/full-shape.json',P/'evidence/python-tests.json',P/'evidence/full-shape-admission.json',*[P/'evidence'/('memory-plan-'+n+'.json') for n in views()],WRAPPER/'wrapper-seal.json',WRAPPER/'placement-validation/wrapper-seal.json']
- sources={**build['sources'],**fixture['sources'],**shape['sources'],**py['sources'],**wrapper['sources'],**pin['sources'],**{str(f.relative_to(ROOT)):sha(f) for f in extras}}
+ sources={**shape_archives,**build['sources'],**fixture['sources'],**shape['sources'],**py['sources'],**wrapper['sources'],**pin['sources'],**{str(f.relative_to(ROOT)):sha(f) for f in extras}}
  sources.update({str(f.relative_to(ROOT)):sha(f) for f in (P/'evidence/cpu-bytes').iterdir() if f.is_file()})
  job_sources={str(f.relative_to(ROOT)):sha(f) for f in extras}
  for name in views():
