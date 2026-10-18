@@ -7,12 +7,12 @@ run. No service, device open, signal or live queue write is possible.
 import contextlib,json,os,resource,subprocess,sys,tempfile,types
 from pathlib import Path
 from unittest.mock import patch
-from build_engine import P,LOCAL,ROOT,sha,save
+from p142_v5_build_engine import P,LOCAL,ROOT,sha,save
 class Reached(BaseException):pass
 class Forbidden(BaseException):pass
 
 def probe(variant,kind,negative=None):
- import screen,bracket_job,readiness,compare,tp2_worker,exec_limits
+ import screen,bracket_job,readiness,p142_v5_compare as compare,tp2_worker,p142_v5_exec_limits as exec_limits
  from cpu_seal import verify
  from common import D
  from launch_env import apply
@@ -108,7 +108,7 @@ def main():
     result=json.loads(next(x[len('ENTRY_RESULT='):] for x in r.stdout.splitlines() if x.startswith('ENTRY_RESULT=')))
     (negative if neg else rows).append(result)
    print(variant,kind,'entry PASS',flush=True)
- save(P/'evidence/entry-gate.json',dict(passed=True,device_executed=False,rows=rows,negative_controls=negative,sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'entry_gate.py',P/'bracket_job.py',P/'screen.py',P/'tp2_worker.py',P/'launch_env.py',P/'launch-environment.json',P/'exec_limits.py']}))
+ save(P/'evidence/entry-gate.json',dict(passed=True,device_executed=False,rows=rows,negative_controls=negative,sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'entry_gate.py',P/'bracket_job.py',P/'screen.py',P/'tp2_worker.py',P/'launch_env.py',P/'launch-environment.json',P/'p142_v5_exec_limits.py']}))
 if __name__=='__main__':
  assert resource.getrlimit(resource.RLIMIT_AS)==(-1,-1)
  if '--probe' in sys.argv:print('ENTRY_RESULT='+json.dumps(probe(sys.argv[-3],sys.argv[-2],None if sys.argv[-1]=='positive' else sys.argv[-1])))

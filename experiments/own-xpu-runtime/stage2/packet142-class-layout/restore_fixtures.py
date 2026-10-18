@@ -4,7 +4,7 @@ from pathlib import Path
 P=Path(__file__).resolve().parent
 def digest(data):return hashlib.sha256(data).hexdigest()
 def main():
- from v5.build_engine import limits
+ from v5.p142_v5_build_engine import limits
  limits();manifest=json.loads((P/'lineage-inputs/legacy-fixtures.json').read_text());archive=P/manifest['archive']
  assert digest(archive.read_bytes())==manifest['sha256']
  with tarfile.open(archive,'r:gz') as t:

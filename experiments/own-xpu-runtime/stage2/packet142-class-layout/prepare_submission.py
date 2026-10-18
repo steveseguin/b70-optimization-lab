@@ -10,7 +10,7 @@ sys.path.insert(0,str(P))
 import packet56_submission as validator
 
 def main(argv=None):
- from v5.build_engine import limits
+ from v5.p142_v5_build_engine import limits
  limits()
  ap=argparse.ArgumentParser();ap.add_argument('--evidence-bundle',type=Path,required=True);ap.add_argument('--rehearsal-parent',choices=('packet136-record-bundle',),required=True);ap.add_argument('--output',type=Path,required=True);a=ap.parse_args(argv)
  assert a.evidence_bundle.resolve().is_relative_to(P) and a.output.resolve().is_relative_to(P)

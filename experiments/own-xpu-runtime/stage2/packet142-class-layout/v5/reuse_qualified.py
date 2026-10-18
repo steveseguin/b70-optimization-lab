@@ -5,7 +5,7 @@ recorded native source and inherited object must match, as must both binaries.
 """
 import json,resource
 from pathlib import Path
-from build_engine import P,LOCAL,ROOT,sha,save,limits
+from p142_v5_build_engine import P,LOCAL,ROOT,sha,save,limits
 
 def main():
  limits();prior=LOCAL/'lineage-inputs/qualified-v5/build.json';row=json.loads(prior.read_text())
@@ -26,7 +26,7 @@ def main():
   else:
    for source,digest in proof['binaries'].items():assert sha(ROOT/source)==digest
   sources[str(original.relative_to(ROOT))]=sha(original)
- sources.update({str(f.relative_to(ROOT)):sha(f) for f in (prior,P/'reuse_qualified.py',P/'build_engine.py',LOCAL/'kernel_guard.hpp')})
+ sources.update({str(f.relative_to(ROOT)):sha(f) for f in (prior,P/'reuse_qualified.py',P/'p142_v5_build_engine.py',LOCAL/'kernel_guard.hpp')})
  save(P/'evidence/build.json',dict(schema='packet142.qualified-native-reuse.v1',passed=True,device_executed=False,compiler_executed=False,reused_same_packet_binaries=True,native_source_differences=0,original_build_receipt=str(prior.relative_to(ROOT)),original_build_receipt_sha256=sha(prior),original_build_driver_sha256=row['sources'][driver],build_driver_change='artifact paths and source-map bookkeeping only; existing compiler commands retained',sources=sources,artifacts=artifacts,commands=row['commands'],max_rss_kib=row['max_rss_kib'],build_bytes=limits()))
  print('Qualified packet142 native inputs and both binary hashes match; CPU receipts retained exactly')
 if __name__=='__main__':

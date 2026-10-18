@@ -1,6 +1,6 @@
 """Local drain, cooperative-stop and source-closure checks; no device calls."""
 import json,resource,subprocess,sys,re
-from build_engine import P,LOCAL,ROOT,sha,save,limits
+from p142_v5_build_engine import P,LOCAL,ROOT,sha,save,limits
 
 def main():
  limits();rows=[]
@@ -17,6 +17,6 @@ def main():
   for inc in re.findall(r'^\s*#include\s*"([^"\n]+)"',f.read_text(),re.M):
    if inc.startswith('/'):
     target=__import__('pathlib').Path(inc);assert target.resolve().is_relative_to(LOCAL),'external native include: '+inc
- source={str(f.relative_to(ROOT)):sha(f) for f in [P/'safety_gate.py',LOCAL/'test_drain_fix.py',LOCAL/'drain_gate.py',P/'drain_gate.py',P/'test_refusal.py',P/'test_timing_report.py',*paths]}
+ source={str(f.relative_to(ROOT)):sha(f) for f in [P/'safety_gate.py',LOCAL/'test_drain_fix.py',LOCAL/'drain_gate.py',P/'p142_v5_drain_gate.py',P/'test_refusal.py',P/'test_timing_report.py',*paths]}
  save(P/'evidence/safety.json',dict(passed=True,device_executed=False,runs=rows,sources=source,native_files=len(paths),external_native_includes=0))
 if __name__=='__main__':resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()

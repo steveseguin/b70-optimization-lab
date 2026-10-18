@@ -78,3 +78,35 @@ texts live in `lineage-inputs/packet136-history/copy142.json` and
 Packet49 authority is accessed through `oracle-binding.json`/`shared_oracle.py`;
 model files and hash-pinned frozen parent binaries are the external allowlist.
 `lineage-inputs/` contains historical receipts as provenance, never readiness.
+
+## Packet142c report repair
+
+The attention lane-B smoke completed all twelve 64-token requests exactly, but
+its original report failed on a Python module collision. All nine duplicate
+root/v5 module names now have unique `p142_v5_*` names. `report_gate.py` uses
+the real entry and manifest-induced import path, reproduces the original
+`check_map` failure, and completes smoke and five-view bracket reports on CPU
+fixtures. Fixture output is never device evidence.
+
+The attention report was regenerated offline through `bracket_job.py
+--report-only`. The original window, failure receipt, summaries, device files,
+and recorded fault count of two are unchanged. `report-regeneration.json`
+checks their hashes, the retained execution seal, native inputs, and the oracle.
+The bracket reader accepts that separately recorded recovery. Attention smoke
+is satisfied; expert gate/up and HC gate/low smokes remain pending. The fresh
+attention smoke proposal is a fallback only, not required work. All brackets
+and the two pending smokes use fresh `142c` output paths. No proposal is queued.
+
+`v5/evidence/attention-report-142c.json.gz` retains the report, regeneration
+receipt, original window, identity, failure and release receipt with individual
+hashes. It is a gzip JSON object: `members` maps relative filenames to original
+UTF-8 text, and `sha256` maps each filename to its digest. Restore those exact
+bytes only alongside the retained device directory; the archive does not invent
+missing raw device evidence. The large report stays compressed in Git because
+its complete requests and proposal identities are needed to audit the smoke.
+`lineage-inputs/pre-142c.json.gz` similarly preserves original Python sources,
+CPU receipts, seals, proposals and readiness before this minimal reseal.
+
+The build-material cap remains 300 MB. Its census now excludes `v5/evidence`,
+where the completed smoke retained 25,775,792 bytes of driver cache; the build
+itself remains 288,775,204 bytes. Those device files are preserved, not removed.

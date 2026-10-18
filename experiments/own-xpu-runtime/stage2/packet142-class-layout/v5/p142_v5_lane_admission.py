@@ -13,7 +13,7 @@ from pathlib import Path
 import time
 import uuid
 
-from chain_devices import require, process_identity
+from p142_v5_chain_devices import require, process_identity
 
 DEFAULT_ROOT = Path('/home/steve/own-xpu-runtime-results/coordination/chain-lanes-v1')
 EXACT_WINDOWS = frozenset(('screen', 'K0', 'K1a', 'K1b', 'K2', 'KD', 'W0p', 'WS',

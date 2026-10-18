@@ -13,7 +13,7 @@ def limits():
  assert os.getpriority(os.PRIO_PROCESS,0)==19
  assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
  assert shutil.disk_usage('/').free>=25_000_000_000
- size=sum(f.stat().st_size for f in LOCAL.rglob('*') if f.is_file() and not f.is_symlink() and 'build' in f.parts)
+ size=sum(f.stat().st_size for f in LOCAL.rglob('*') if f.is_file() and not f.is_symlink() and 'build' in f.parts and not f.is_relative_to(P/'evidence'))
  assert size<=300_000_000,size
  return size
 def compiler_turn():
@@ -47,7 +47,7 @@ def main():
     assert sha(src)==sha(target);inherited[str(src.relative_to(ROOT))]=sha(target);link[i]=str(target)
   commands.append(run(link,mode+'-link'));artifacts[str((dest/'own-rt-iq3').relative_to(ROOT))]=sha(dest/'own-rt-iq3')
   save(P/'engine-commands.json',commands)
- sources={str(f.relative_to(ROOT)):sha(f) for f in [*[P/'native'/n for n in ('engine_bracket.hpp','draft_bracket.hpp','bracket_boundary.hpp')],*P.glob('native-src/*'),*LOCAL.joinpath('native-base').rglob('*'),LOCAL/'class_layout.hpp',P/'build_engine.py'] if f.is_file()}
+ sources={str(f.relative_to(ROOT)):sha(f) for f in [*[P/'native'/n for n in ('engine_bracket.hpp','draft_bracket.hpp','bracket_boundary.hpp')],*P.glob('native-src/*'),*LOCAL.joinpath('native-base').rglob('*'),LOCAL/'class_layout.hpp',P/'p142_v5_build_engine.py'] if f.is_file()}
  sources.update(inherited)
  save(P/'evidence/build.json',dict(passed=True,device_executed=False,sources=sources,artifacts=artifacts,commands=commands,max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss,build_bytes=limits()))
 if __name__=='__main__':

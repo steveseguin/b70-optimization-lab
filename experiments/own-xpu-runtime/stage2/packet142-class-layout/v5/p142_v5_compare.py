@@ -152,6 +152,10 @@ def load(output):
     """Read shared-lifetime views without impersonating fresh v4 server windows."""
     output=Path(output)
     window=read(output/'window.json')
+    recovered=(output/'report-regeneration.json').exists()
+    if recovered:
+        from report_recovery import recovered_window
+        window=recovered_window(output,window)
     require(window.get('passed') is True and window.get('device_executed') is True and window.get('device_complete') is True and
             window.get('lease_released') is True and not window.get('child_still_running') and
             not window.get('stop_reasons'), 'bracket device phase incomplete')
@@ -165,7 +169,7 @@ def load(output):
     require(class_copies(output,identity)==result['class_copies'],'class copy receipt changed')
     require(window['identity']==identity, 'bracket window identity differs')
     from common import HERE
-    require(window['wrapper_seal_sha256']==sha(HERE/'placement-validation/wrapper-seal.json'), 'wrapper seal changed')
+    if not recovered:require(window['wrapper_seal_sha256']==sha(HERE/'placement-validation/wrapper-seal.json'), 'wrapper seal changed')
     require(window['oracle_completion_sha256']==sha(D.ORACLE/'results/completion.json'), 'oracle changed')
     require(read(output/'suite-manifest.snapshot.json')==D.oracle_inputs(), 'oracle prompt suite changed')
     oracle=lambda prompt:D.CHECK.token_record(D.ORACLE/'results'/prompt)

@@ -152,3 +152,55 @@ packet141 verdict, each with its own smoke before its five-view bracket.
 The completed source/evidence commit is pushed before READY-FOR-DEVICE.json is
 written. That marker is the final repository content write, binds the commit and
 six proposal hashes, and explicitly leaves device quality/performance pending.
+
+## Packet142c — offline report repair, October 18
+
+The attention smoke finished with twelve exact 64-token requests, then failed
+while importing its reporter. The oracle manifest loader puts the packet root
+before v5 on Python's search path. The late `compare` import therefore picked
+the root reporter while `build_engine` still referred to v5, causing the
+missing `check_map` error. All nine root/v5 duplicate modules now have unique
+v5 names, with their active imports and helper references updated.
+
+The new CPU report gate reproduces that exact historical failure after the real
+manifest import, then runs smoke and five-view bracket reporting through the
+real `bracket_job.py` entry with the same search path. It retains only test
+results; its synthetic device-shaped fixtures are temporary. The shared report
+function is also used by normal post-device reporting.
+
+The real attention smoke report was regenerated offline. The original failure,
+window, summaries and every original device file are hash-checked and unchanged;
+the original fault count remains two. A separate regeneration receipt binds the
+fixed reporter, retained execution seal, unchanged native inputs and oracle.
+The normal bracket reader accepts the regenerated smoke. No device or model
+payload was read, and no GPU process, service, sudo, setting or live queue was
+used. Arithmetic remains `iq3-p49-split32-v1`; no speed result is claimed.
+
+The minimal reseal preserves prior source and CPU receipt bytes in
+`lineage-inputs/pre-142c.json.gz`. Only Python source identities and dependent
+receipt hashes change; native binaries, native sources, numerical inputs and
+recorded results do not. Existing CPU proofs are explicitly labeled as reused,
+not newly measured. The build census initially refused because it counted the
+completed device smoke's 25,775,792-byte driver cache as build material. It now
+excludes retained evidence; the unchanged build is 288,775,204 bytes, under the
+same 300 MB cap. Nothing was discarded.
+
+All six proposals use fresh packet142c job/output names and are planned on
+temporary queue copies before writing the permitted proposal files. Attention
+smoke is already satisfied; its fresh smoke proposal is fallback only. Expert
+gate/up and HC gate/low still require their own fresh smoke before their
+brackets. All three brackets remain unrun. Packet141 selection requirements
+remain in force. The compact report archive and restoration details are linked
+from the packet README.
+
+Pull refused the unrelated dirty orchestration tree. Fetch confirmed main and
+origin/main both at `4a12843ddbb955f384b277c63b9f93d8c3ff47fa` before editing.
+Only packet142, its six proposal files and this note belong to this repair.
+
+Final CPU validation passes: historical report collision refusal, smoke and
+five-view bracket reporting, all six real entry paths plus twelve unit/environment
+negatives, twelve rank-exec boundaries plus six capped-launch negatives, all 78
+worker requests and corrupted-output cooperative teardown, the pre-exec limit
+gate, and drain/refusal/timing safety tests. Temporary queue planning, the live
+pin guard and `ops/rehearse_entry.py` pass for all six proposals. The recovered
+attention report also passes the real bracket reader. Readiness is written last.

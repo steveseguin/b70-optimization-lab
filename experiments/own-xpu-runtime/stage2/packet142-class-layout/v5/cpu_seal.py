@@ -1,7 +1,7 @@
 """Local closed composition seal. CPU readiness is separate from device evidence."""
 import argparse,json
 from pathlib import Path
-from build_engine import P,LOCAL,ROOT,sha,save
+from p142_v5_build_engine import P,LOCAL,ROOT,sha,save
 GATES=('build','full-shape','bytes','exec-limits','safety','submission-rehearsal','admission')
 
 def check_sources(rows):

@@ -1,6 +1,6 @@
 """Pre-plan requires the CPU composition; launch additionally requires entry/queue proofs."""
 import json
-from build_engine import P,ROOT,sha
+from p142_v5_build_engine import P,ROOT,sha
 from cpu_seal import verify,check_sources
 GATES=('entry-gate','launch-limits','worker-gate','queue-plan','pin-guard')
 def verify_ready(preplan=False):

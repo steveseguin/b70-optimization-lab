@@ -7,7 +7,7 @@ import importlib.util,json,os,resource,subprocess,sys,tempfile
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
-from build_engine import P,ROOT,BASE,sha,save,limits
+from p142_v5_build_engine import P,ROOT,BASE,sha,save,limits
 class Reached(BaseException):pass
 class Forbidden(BaseException):pass
 class LimitRefusal(BaseException):pass
@@ -21,7 +21,7 @@ def identity(kind,variant="attention-order600"):
  return row
 
 def probe(kind,check_limits=False,variant="attention-order600"):
- import exec_limits
+ import p142_v5_exec_limits as exec_limits
  inherited=exec_limits.snapshot();row=identity(kind,variant)
  oracle_command=['nice','-n','19','taskset','-c','8-15,24-31','python3','-B',str(P.parent/'shared_oracle.py'),'--require-complete']
  original_popen=subprocess.Popen;oracle_calls=[]

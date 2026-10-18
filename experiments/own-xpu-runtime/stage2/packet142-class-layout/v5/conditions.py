@@ -1,6 +1,6 @@
 """Fixed screen conditions and passive ownership checks; no device discovery."""
 import fcntl
-from drain_gate import DEFAULT_DRAIN_ROOT, screen_teardown_admit
+from p142_v5_drain_gate import DEFAULT_DRAIN_ROOT, screen_teardown_admit
 import os
 from pathlib import Path
 import time

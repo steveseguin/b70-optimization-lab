@@ -11,8 +11,8 @@ import os
 from pathlib import Path
 import time
 
-from chain_devices import require, process_identity
-from lane_admission import atomic_json, DEFAULT_ROOT
+from p142_v5_chain_devices import require, process_identity
+from p142_v5_lane_admission import atomic_json, DEFAULT_ROOT
 
 DEFAULT_DRAIN_ROOT = Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3')
 

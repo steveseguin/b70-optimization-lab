@@ -1,8 +1,8 @@
 """Real production startup/switch/reset with numerical allocations, no payloads."""
 import importlib.util,json,subprocess,time,sys,os
 from pathlib import Path
-from build_engine import P,ROOT,BASE,B,sha,save,limits,compiler_turn
-from build_engine import CHECKED,LOCAL
+from p142_v5_build_engine import P,ROOT,BASE,B,sha,save,limits,compiler_turn
+from p142_v5_build_engine import CHECKED,LOCAL
 from prepare_sources import once
 from retain_shape import retain
 
@@ -125,7 +125,7 @@ def main():
         print('selected real-parser startup',selection.stem,rank,'PASS',flush=True)
     save(P/'evidence/full-shape.json',dict(passed=True,device_executed=False,model_payload_read=False,
         runs=runs,startup_runs=startup_runs,binary_sha256=sha(out/'fixture'),commands=[compile_cmd,audit_cmd,audit_dispatch,link],
-        sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'full_shape.py',P/'native/full_shape_entry.cpp',*out.glob('*.cpp'),*out.glob('*.hpp')]},
+        sources={str(f.relative_to(ROOT)):sha(f) for f in [P/'p142_v5_full_shape.py',P/'native/full_shape_entry.cpp',*out.glob('*.cpp'),*out.glob('*.hpp')]},
         payload_mocks=['numerical device addresses','weight upload elision','scalar readback','state-dump payload elision'],
         real_paths=['initialize','banks','SpeculativeImage','DraftRuntime','bracket_select','request_reset','bracket_boundary','memory admission']))
     limits()

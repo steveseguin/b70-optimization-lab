@@ -1,7 +1,7 @@
 """Bind real full-shape censuses, class coverage and copied alias closure."""
 import json,tarfile
 from pathlib import Path
-from build_engine import P,LOCAL,ROOT,sha,save,limits
+from p142_v5_build_engine import P,LOCAL,ROOT,sha,save,limits
 
 def main():
  limits();shape=P/'evidence/full-shape.json';proof=json.loads(shape.read_text());assert proof['passed'] and not proof['device_executed']

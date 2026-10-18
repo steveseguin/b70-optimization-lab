@@ -5,8 +5,8 @@ from unittest.mock import patch
 P=Path(__file__).resolve().parent
 
 def main():
- from build_engine import limits,save,sha
- import exec_limits
+ from p142_v5_build_engine import limits,save,sha
+ import p142_v5_exec_limits as exec_limits
  # The normal CLI arrives with unlimited AS. Intercept the final Popen after
  # the real guard checks its complete census, without opening any native owner.
  assert resource.getrlimit(resource.RLIMIT_AS)==(-1,-1)
@@ -27,7 +27,7 @@ import json,subprocess,sys,resource
 resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3))
 from unittest.mock import patch
 sys.path.insert(0,sys.argv[1])
-import exec_limits
+import p142_v5_exec_limits as exec_limits
 called=[]
 with patch.object(subprocess,'Popen',side_effect=lambda *a,**k:called.append(a)):
  exec_limits.install()
@@ -40,6 +40,6 @@ print(json.dumps(dict(passed=True,device_executed=False,capped_launch_refused=Tr
  row=subprocess.run([sys.executable,'-B','-c',code,str(P)],stdin=subprocess.DEVNULL,capture_output=True,text=True,check=True,timeout=30)
  result=json.loads(row.stdout)
  result.update(unchanged_unlimited_launch_intercepted=True,changed_limit_refused=True,unlimited_rlimit_census=baseline)
- result['sources']={str(f.relative_to(P.parents[4])):sha(f) for f in (P/'exec_gate.py',P/'exec_limits.py',P/'screen.py',P/'tp2_worker.py')}
+ result['sources']={str(f.relative_to(P.parents[4])):sha(f) for f in (P/'exec_gate.py',P/'p142_v5_exec_limits.py',P/'screen.py',P/'tp2_worker.py')}
  save(P/'evidence/exec-limits.json',result);print('pre-exec limit gate PASS')
 if __name__=='__main__':main()
