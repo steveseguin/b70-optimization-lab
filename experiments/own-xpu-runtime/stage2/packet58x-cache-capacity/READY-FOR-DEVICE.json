@@ -1,10 +1,10 @@
 {
   "schema": "own-runtime.packet58x.ready-for-device.v1",
-  "created_utc": "2026-10-18T18:13:59.744061+00:00",
-  "implementation_commit": "2fd7e32de2a649a48129d13aab0a7e6f27dbc278",
+  "created_utc": "2026-10-18T18:20:21.774950+00:00",
+  "implementation_commit": "e22fe0662cfc75d21a0b5048015aad63ddbbcf53",
   "admission_milestone_commit": "7cc07d7be3164af267cf043e5c343b8890e63357",
   "passed": true,
-  "readiness": "CPU preparation complete; smoke proposal first",
+  "readiness": "CPU amendment complete; overlap smoke proposal first",
   "device_executed": false,
   "services_started": false,
   "queued": false,
@@ -20,7 +20,7 @@
     "18GB": 18000000000,
     "max": 21552729600
   },
-  "cache_maintenance_default": "serial",
+  "cache_maintenance_default": "overlap",
   "cache_maintenance_selectable": [
     "serial",
     "overlap"
@@ -29,15 +29,15 @@
   "device_reserve_bytes": 1500000000,
   "driver_occupancy_allowance_bytes": 536870912,
   "host_memavailable_required_bytes": 98989727744,
-  "build_receipt_sha256": "61456a50a68bc44325d1262ee8f80f80c18ae2f9465a874f7d984bc40da41034",
+  "build_receipt_sha256": "96ff67ddfbb61379bd79fd4a4e0e228b9b326bd8b0be6546d6d326434f0bd84d",
   "admission_sha256": "f5e47c9eab8b6a6b2d9f44208922758d653f9b178c02df5e689e7880d1b877a4",
-  "maintenance_decision_sha256": "5bc6ab2b4a9d92aad7e1519d7f379803319ef9d35ebeeea7649656b3be7327f5",
-  "queue_plans_sha256": "caf4faa94a44f90113f011b5eea43cd3f885345ffd539eebe201bf105b0a94c1",
+  "maintenance_decision_sha256": "17ee285dc46ae92178c99b3ffea5777359c96ffd42a9abde2bde2177edfb554b",
+  "queue_plans_sha256": "301257a338e383818f3b4417e0a9243d3aff61c285fa5beec691084c4a576af3",
   "proposals": [
     {
       "arm": "smoke",
       "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58x-smoke-A.txt",
-      "proposal_sha256": "cbce8a5ac4f46c3996268fcf91c54fcb3a66f6493c49b05a21beb5e894f74891",
+      "proposal_sha256": "f9c6ac504dcbb498e55f37fd91655b58eb3ad226c12f69626f1028eda1c52bac",
       "plan": [
         {
           "name": "packet58x-smoke-A",
@@ -56,7 +56,7 @@
     {
       "arm": "max",
       "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58x-v5-A.txt",
-      "proposal_sha256": "5cdc8e80c38804c264def1f14bad6dbc8f27ab5ffb7454e964b223b083c8f732",
+      "proposal_sha256": "c84c3f0f0efb02654fc7b78d88aca1e2644aa0a56eb73bc094396747a82fd8aa",
       "plan": [
         {
           "name": "packet58x-v5-A",
@@ -75,21 +75,26 @@
   ],
   "cpu_gates": {
     "passed": true,
-    "python_checks": 96,
-    "sealed_source_count": 550,
-    "scope": "CPU K1 mixed-source bytes, capacity protocol, full-shape startup, admission arithmetic, six real launch entry probes intercepted before native exec, reset/oracle, drain and source/artifact seals"
+    "python_checks": 101,
+    "sealed_source_count": 1250,
+    "scope": "Minimal reseal: amended comparison/default regressions, six actual entry probes, drain/memory checks, parent evidence replay, source/artifact seals and temporary queue plans; unchanged native byte/startup evidence retained",
+    "entry_probes": 6,
+    "peak_probe_child_rss_bytes": 34103296,
+    "native_artifacts_unchanged": true,
+    "live_host_admission_passed": true
   },
   "limitations": [
     "Larger allocation physical fit, device quality, determinism and speed remain unmeasured.",
     "Replay speed estimate is conditional and is not a measured performance result.",
     "Entry probes substitute operational locks, prior-device receipts, journal/memory fence and ldd boundaries; no device execution.",
-    "Serial remains default because packet58v original registered bracket did not pass its control-drift gate."
+    "A0 is reported and exact but excluded from drift/comparison under packet58wb; no packet58x device result exists."
   ],
   "smoke": {
     "prompts": 12,
     "output_tokens": 64,
     "cache_cap": "max",
-    "required_before_v5": true
+    "required_before_v5": true,
+    "cache_maintenance": "overlap"
   },
   "v5": {
     "prompts_per_view": 12,
@@ -101,14 +106,33 @@
       "max",
       "18GB"
     ],
-    "model_loads": 1
+    "model_loads": 1,
+    "cache_maintenance": "overlap",
+    "warmup_view": {
+      "label": "A0",
+      "must_be_exact": true,
+      "reported": true,
+      "excluded_from_drift_and_comparison": true
+    },
+    "comparison_controls": [
+      "A1",
+      "A2"
+    ],
+    "candidate_views": [
+      "B0",
+      "B1"
+    ],
+    "minimum_gain_each_control": 0.005,
+    "maximum_control_drift": 0.03
   },
   "storage": {
-    "root_free_bytes": 32852877312,
+    "root_free_bytes": 32782336000,
     "build_bytes": 80586089,
     "root_stop_floor_bytes": 25000000000,
     "build_limit_bytes": 300000000
   },
   "last_content_write": true,
-  "next_action": "Run the proposed smoke through lanequeue only when lane A owns the whole host; do not queue from this preparation."
+  "next_action": "Run the proposed smoke through lanequeue only when lane A owns the whole host; do not queue from this preparation.",
+  "previous_implementation_commit": "2fd7e32de2a649a48129d13aab0a7e6f27dbc278",
+  "amendment": "packet58xb: overlap selection and packet58wb first-view warm-up rule; before any packet58x device window"
 }
