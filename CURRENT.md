@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, packet58r one-card one-load bracket implemented on CPU:**
+The new tile16 copy can switch route and recurrence without loading the model
+again. It checks every token against packet49 through A/B/A/B/A. Both compilers
+pass kernel bytes; miniature resets and full-size binding checks pass. Fusion
+is unavailable in this engine and is rejected. Final seals and a temporary
+whole-host card-0 proposal plan are being completed; no device result is claimed.
+No GPU job, service, live queue or host setting changed in this preparation.
+[Work note](notes/2026-10-18-own-runtime-packet58r.md).
+
 **October 18, packet128 fresh bundle7 timing job prepared on CPU:** The new copy
 can record every layer on both ranks, including draft, head, copies and waits.
 CPU output, reset, full-size startup and real launch-argument checks pass.
