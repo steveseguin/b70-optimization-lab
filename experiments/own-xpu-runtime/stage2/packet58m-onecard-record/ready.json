@@ -1,0 +1,11 @@
+{
+  "schema": "packet58m.ready.v1",
+  "passed": false,
+  "ready": false,
+  "device_executed": false,
+  "chain_command": "systemd-run --user --unit=packet58-onecard-58m-a --property=Restart=no --property=SendSIGKILL=no --property=TimeoutStopSec=infinity --property=Nice=0 --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH=\"$LD_LIBRARY_PATH\" /usr/bin/python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58m-onecard-record/queue_runner.py --authorized-device-window --card 0 --view port --output-root /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58m-onecard-record/evidence/card0-58m-a --fault-review /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58m-onecard-record/evidence/fault-review-58m.json < /dev/null",
+  "coordinator_only": true,
+  "launch_performed": false,
+  "command_status": "proposed; refuses until fresh receipt verification passes",
+  "reason": "58k receipts pending or invalid: ValueError: incomplete/wrong-view screen"
+}

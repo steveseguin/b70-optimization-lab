@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet58m one-card port chain prepared on CPU:** The copied port
+has all seven record windows, unchanged memory bounds and whole-host exclusion.
+Real parser/startup/oracle checks, 48 K1 byte checks, 110 Python checks and the
+seals pass. The finalized submission tool replays 58g's result and discloses
+host-pinned weights; the build is 72.7 MB. Readiness stays false while 58k's
+bracket is incomplete. The chain rereads all three exact receipts and requires
+at least 0.5% over both controls before any launch. No GPU, service or live
+queue changed. [Work note](notes/2026-10-18-own-runtime-packet58m.md),
+[readiness and proposed command](experiments/own-xpu-runtime/stage2/packet58m-onecard-record/ready.json).
+
 **October 18, packet108 budget and micro prepared on CPU:** Existing receipts
 put the current two-card hit/miss steps at about 15.17/26.09 ms. They do not
 retain fresh per-kernel times, so the budget keeps those gaps explicit. A new

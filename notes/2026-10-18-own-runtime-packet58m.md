@@ -30,5 +30,34 @@ replay does not bypass the current record threshold or emit a new submission.
 The 128-token protocol keeps the strict 512-token gate false and requires a
 second timing run for a speed verdict, exactly as the parent chain.
 
-Milestone 1: copied machinery and CPU native checks. Readiness regression tests,
-final seals and coordinator handoff are being completed. Nothing was launched.
+Milestone 1 was pushed as `b0b11929a`. The final CPU suite passes 110 tests,
+including the complete mocked seven-window queue, graceful KD refusal without
+retry, the two-second journal overlap, whole-host admission for every window,
+submission/API projection and synthetic winner/loser readiness. The exact 0.5%
+boundary passes; 0.496% fails. The submission code and API helpers are finalized
+before the chain, with a one-way build-seal → submission-pins binding. Sealing
+refuses once the registered chain output exists.
+
+The finalized tool/gate milestone was pushed as `638955b93`; that exact
+commit is the seal's runtime revision. The build and submission seals verify
+258 immutable inputs. No live parent
+queue, readiness report, orchestration decision or global threshold is pinned
+into that build seal. The chain plan passes without creating its output. A
+passive storage check found 22.63 GB free against the unchanged 2.953 GB planned
+writes plus 8 GB floor. The largest observed gate child RSS is 63.0 MB.
+A separate read-only review found no launch blockers or port receipt mismatch.
+
+At handoff, production-before has completed; port is still in WSCREEN and
+production-after has not started. `ready.json` is therefore false. The actual
+receipt verifier refuses until the full bracket is present and qualifying;
+the chain calls it again, ignoring any saved ready flag. It also checks that
+screen and chain have identical port selections and native binaries. The
+coordinator's fault capture supplies the newest-kernel-line-minus-two-seconds
+boundary, and the printed command preserves the 58g systemd unit form.
+
+[Packet and CPU evidence](../experiments/own-xpu-runtime/stage2/packet58m-onecard-record/README.md),
+[readiness and exact proposed command](../experiments/own-xpu-runtime/stage2/packet58m-onecard-record/ready.json),
+[CPU closeout](../experiments/own-xpu-runtime/stage2/packet58m-onecard-record/CPU-PREPARATION-CLOSEOUT.md).
+No GPU, service, fault capture, live queue, sudo, power/memory/swap/page-cache
+change, reboot, external API call or submission was performed. All existing
+packet/screen/ops trees and unrelated shared edits were preserved.
