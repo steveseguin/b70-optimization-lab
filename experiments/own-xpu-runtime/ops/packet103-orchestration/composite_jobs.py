@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -56,13 +57,15 @@ def leave_one_out_required(ratios, config):
                 composite_ratios=ratios, comparison='minimum lane gain versus best source gain')
 
 
-def jobs(config, lane, variant='composite'):
+def jobs(config, lane, variant='composite', attempt=''):
+    assert not attempt or re.fullmatch(r'[a-z][a-z0-9]*', attempt), 'invalid attempt suffix'
+    suffix = '-' + attempt if attempt else ''
     assert lane in ('A', 'B')
     choices = variants(config, variant != 'composite')
     assert variant in choices
     return [dict(index=i, lane=lane, mode='grid', choice=label,
                  selection=selection,
-                 out=f'p103-{identity(config)}-{variant}-{lane}-{i}-{label}')
+                 out=f'p103-{identity(config)}-{variant}-{lane}-{i}-{label}{suffix}')
             for i, (label, selection) in enumerate((('control', config['control']),
                 ('candidate', choices[variant]), ('control', config['control'])))]
 
@@ -106,7 +109,7 @@ def validate(config):
                binary=None, dispatch=None, profile='tp2', timing='token', placement='1'))
 
 
-def generate(config, leave_one_out=False, wrapper='v4'):
+def generate(config, leave_one_out=False, wrapper='v4', attempt=''):
     assert wrapper == 'v4', 'unknown wrapper'
     validate(config)
     decision = O / 'decisions' / (identity(config) + '.json')
@@ -121,15 +124,16 @@ def generate(config, leave_one_out=False, wrapper='v4'):
     for lane in ('A', 'B'):
         rows = []
         for variant in variants(config, leave_one_out):
-            for job in jobs(config, lane, variant):
+            for job in jobs(config, lane, variant, **({'attempt': attempt} if attempt else {})):
                 rows.append(dict(name=job['out'], lane=lane, argv=[
                     '/usr/bin/python3', '-B', str((O/'composite_screen.py').relative_to(ROOT)),
                     '--decision', str(decision), '--decision-sha256', digest,
                     '--variant', variant, '--lane', lane, '--index', str(job['index']),
+                    '--attempt', attempt,
                     '--fault-review', '{REVIEW}', '--authorized-device-window'],
                     env_extra={}, review=str((WRAPPER/'fault_review.py').relative_to(ROOT))))
         label = 'leave-one-out' if leave_one_out else 'composite'
-        proposal = QUEUE / f'proposed-p103-{label}-{lane}.txt'
+        proposal = QUEUE / f'proposed-p103{attempt}-{label}-{lane}.txt'
         payloads[lane] = ''.join(json.dumps(row) + '\n' for row in rows).encode()
         paths.append(proposal)
     plans = []
@@ -140,12 +144,21 @@ def generate(config, leave_one_out=False, wrapper='v4'):
             cp = subprocess.run([sys.executable, '-B', str(QUEUE/'lanequeue.py'),
                 'plan', '--lane', lane, '--directory', tmp], cwd=ROOT,
                 stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=240)
-            log = O / f'{label}-plan-{lane}.log'
+            log = O / f'{label}{attempt}-plan-{lane}.log'
             log.write_text(cp.stdout + cp.stderr)
             assert cp.returncode == 0, str(log)
             plans.append(dict(proposal=str(proposal.relative_to(ROOT)),
                 sha256=hashlib.sha256(payloads[lane]).hexdigest(), jobs=len(payloads[lane].splitlines()),
                 plan_log_sha256=sha(log), passed=True))
+    if attempt:
+        registration = O/'attempts'/(identity(config)+'-'+attempt+'.json')
+        registration.parent.mkdir(exist_ok=True)
+        record = dict(decision_sha256=digest, attempt=attempt,
+                      variants=list(variants(config, leave_one_out)))
+        if registration.exists():
+            assert json.loads(registration.read_text()) == record
+        else:
+            save(registration, record)
     # The coordinator watches these names. Expose them only after both plans pass.
     for lane, proposal in zip(('A', 'B'), paths):
         with tempfile.NamedTemporaryFile(dir=QUEUE, prefix='.p103-proposal-', delete=False) as stream:
@@ -154,7 +167,7 @@ def generate(config, leave_one_out=False, wrapper='v4'):
         temporary.replace(proposal)
     receipt = dict(passed=True, device_executed=False, live_queue_modified=False,
                    decision=str(decision.relative_to(ROOT)), decision_sha256=digest, plans=plans)
-    save(O / f'{label}-plans.json', receipt)
+    save(O / f'{label}{attempt}-plans.json', receipt)
     return receipt
 
 
@@ -170,6 +183,20 @@ def prepare_proposals(config, leave_one_out=False):
         return dict(already_started=True, decision=str(decision), decision_sha256=sha(decision),
                     live_queue_modified=False, device_executed=False)
     return generate(config, leave_one_out, wrapper='v4')
+
+
+def attempts(config, variant='composite'):
+    result = ['']
+    decision = O/'decisions'/(identity(config)+'.json')
+    for path in sorted((O/'attempts').glob(identity(config)+'-*.json')):
+        row = json.loads(path.read_text())
+        assert row['decision_sha256'] == sha(decision), 'attempt decision changed'
+        assert path.stem == identity(config)+'-'+row['attempt']
+        assert re.fullmatch(r'[a-z][a-z0-9]*', row['attempt'])
+        assert set(row['variants']) <= set(variants(config)) | set(variants(config, True))
+        if variant in row['variants']:
+            result.append(row['attempt'])
+    return result
 
 
 def read_brackets(config, variant='composite'):
@@ -190,8 +217,9 @@ def main():
     ap.add_argument('--decision', type=Path, required=True)
     ap.add_argument('--leave-one-out', action='store_true')
     ap.add_argument('--wrapper', choices=('v4',), default='v4')
+    ap.add_argument('--attempt', default='')
     args = ap.parse_args()
-    print(json.dumps(generate(json.loads(args.decision.read_text()), args.leave_one_out, args.wrapper), indent=2))
+    print(json.dumps(generate(json.loads(args.decision.read_text()), args.leave_one_out, args.wrapper, args.attempt), indent=2))
 
 
 if __name__ == '__main__':

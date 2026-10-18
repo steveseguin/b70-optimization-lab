@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/verify_ready.py", line 11, in <module>
+    if __name__=='__main__':verify();print('packet103 readiness verified')
+                            ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/verify_ready.py", line 10, in verify
+    return verify_decision(row)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/decision_readiness.py", line 192, in verify
+    assert row['ready'] is True and row['preparation_passed'] is True, 'CPU preparation incomplete'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: CPU preparation incomplete

@@ -60,3 +60,24 @@ blocks; the preparation build, including their logical sizes, stays below 300 MB
 
 Composite filenames watched by the coordinator are published only after both
 temporary queue plans pass. No live queue is changed by this publication.
+
+### Packet103x launch-limit repair
+
+Use `proposed-p103x-composite-A.txt` and `-B.txt` for the fresh bracket after
+review. Their six output names end in `-x`; the failed unsuffixed A control stays
+as evidence. The decision and selections are unchanged. Registered attempts
+are read alongside historical brackets, with the same quality and speed gates.
+
+`read_screens.py` applies its 8 GiB cap only when run as a CPU CLI. Importing it
+must never cap a device-launching process. `launch_limit_gate.py` rehearses the
+real entries through intercepted native launches on CPU, with explicit host
+admission fixtures, and compares every resource limit to its inherited baseline.
+It requires unlimited RLIMIT_AS, rejects the exact old reader, and never opens
+a device or runs a native binary. Run with nice19, helper cores, `python3 -B`
+and stdin from /dev/null. `--chain-only` is a debugging subset, never the full gate.
+
+`reseal103x.py` refreshes only orchestration metadata. It checks the original
+startup/native/selection hashes before and after, and binds current Python
+policies separately from the byte-exact historical policies in `frozen103/`.
+No exhaustive startup rerun or native rebuild is needed for this Python-only fix.
+The full chain remains blocked until measured composite evidence qualifies it.

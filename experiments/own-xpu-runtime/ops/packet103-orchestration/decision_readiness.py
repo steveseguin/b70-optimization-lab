@@ -77,38 +77,42 @@ def collect(config):
         for variant, selection in {**c.variants(source), **c.variants(source, True)}.items():
             if selection != config['candidate'] or source['control'] != config['control']:
                 continue
-            for lane in ('A', 'B'):
-                jobs = c.jobs(source, lane, variant)
-                roots = [c.WRAPPER/'evidence'/job['out'] for job in jobs]
-                if not all(completed(root) for root in roots):
-                    continue
-                entry = dict(decision=o.pin_path(path), decision_sha256=o.sha(path),
-                             variant=variant, lane=lane, outputs=list(map(str, roots)))
-                identities = [json.loads((root/'identity.json').read_text()) for root in roots]
-                if not all(identical(actual, expected[job['choice']])
-                           for actual, job in zip(identities, jobs)):
-                    excluded.append(dict(entry, reason='selection/binary/baseline/seal identity differs'))
-                    continue
-                # Validate every matching decision, not only the requested one.
-                old_view, old_output = compare.view, compare.output
-                try:
-                    validate(source)
-                    choices = {'control': source['control'], 'candidate': selection}
-                    compare.view = lambda label: c.view(choices[label])
-                    compare.output = lambda job: c.WRAPPER/'evidence'/job['out']
-                    entry['rows'] = [compare.load(job) for job in jobs]
-                except (AssertionError, ValueError, OSError, KeyError) as error:
-                    entry['error'] = str(error)
-                    # Retain rates/drift even when a completed receipt fails quality.
-                    entry['raw_rates'] = diagnostic_rates(roots)
-                finally:
-                    compare.view, compare.output = old_view, old_output
-                entry['identities'] = identities
-                brackets.append(entry)
-                receipts[o.pin_path(path)] = o.sha(path)
-                for root in roots:
-                    for receipt in sorted(root.rglob('*.json')):
-                        receipts[o.pin_path(receipt)] = o.sha(receipt)
+            for attempt in c.attempts(source, variant):
+                if attempt:
+                    registration = o.O/'attempts'/(c.identity(source)+'-'+attempt+'.json')
+                    receipts[o.pin_path(registration)] = o.sha(registration)
+                for lane in ('A', 'B'):
+                    jobs = c.jobs(source, lane, variant, attempt)
+                    roots = [c.WRAPPER/'evidence'/job['out'] for job in jobs]
+                    if not all(completed(root) for root in roots):
+                        continue
+                    entry = dict(decision=o.pin_path(path), decision_sha256=o.sha(path),
+                                 variant=variant, attempt=attempt, lane=lane, outputs=list(map(str, roots)))
+                    identities = [json.loads((root/'identity.json').read_text()) for root in roots]
+                    if not all(identical(actual, expected[job['choice']])
+                               for actual, job in zip(identities, jobs)):
+                        excluded.append(dict(entry, reason='selection/binary/baseline/seal identity differs'))
+                        continue
+                    # Validate every matching decision, not only the requested one.
+                    old_view, old_output = compare.view, compare.output
+                    try:
+                        validate(source)
+                        choices = {'control': source['control'], 'candidate': selection}
+                        compare.view = lambda label: c.view(choices[label])
+                        compare.output = lambda job: c.WRAPPER/'evidence'/job['out']
+                        entry['rows'] = [compare.load(job) for job in jobs]
+                    except (AssertionError, ValueError, OSError, KeyError) as error:
+                        entry['error'] = str(error)
+                        # Retain rates/drift even when a completed receipt fails quality.
+                        entry['raw_rates'] = diagnostic_rates(roots)
+                    finally:
+                        compare.view, compare.output = old_view, old_output
+                    entry['identities'] = identities
+                    brackets.append(entry)
+                    receipts[o.pin_path(path)] = o.sha(path)
+                    for root in roots:
+                        for receipt in sorted(root.rglob('*.json')):
+                            receipts[o.pin_path(receipt)] = o.sha(receipt)
     return brackets, excluded, receipts
 
 
@@ -178,7 +182,7 @@ def preparation_config(config, decision):
     # A new CPU preparation binds both the historical evidence and current
     # evaluator, without rewriting the decision or any sealed selection.
     pins = preserved_pins(config)
-    for path in [decision, *o.O.glob('*.py')]:
+    for path in [decision, *o.O.glob('*.py'), o.O/'103x-policy-seal.json']:
         pins[o.pin_path(path)] = o.sha(path)
     return dict(config, evidence_pins=pins)
 

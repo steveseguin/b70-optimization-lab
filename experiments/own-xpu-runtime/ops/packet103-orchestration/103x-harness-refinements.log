@@ -1,0 +1,69 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py", line 309, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py", line 270, in main
+    assert (cp.returncode != 0 and 'RLIMIT_AS is not unlimited' in row.get('error', '')) if old else cp.returncode == 0, row.get('error')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: FileNotFoundError: [Errno 2] No such file or directory: '/tmp/p103x-launch-unty7rfb/old-reader/wrapper/placement-validation/wrapper-seal.json'
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py", line 313, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py", line 274, in main
+    assert (cp.returncode != 0 and 'RLIMIT_AS is not unlimited' in row.get('error', '')) if old else cp.returncode == 0, row.get('error')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError: entry returned without reaching a native launch
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py", line 315, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py", line 276, in main
+    assert (cp.returncode != 0 and 'RLIMIT_AS is not unlimited' in row.get('error', '')) if old else cp.returncode == 0, row.get('error')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AssertionError: entry returned 1 without completing native interception: [['SystemExit: 1\n']]
+old-reader EXPECTED REFUSAL
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py", line 390, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py", line 349, in main
+    assert (cp.returncode != 0 and 'RLIMIT_AS is not unlimited' in row.get('error', '')) if old else cp.returncode == 0, row.get('error')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ValueError: sealed bytes changed: /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py", line 390, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py", line 375, in main
+    assert cp.returncode == 0, cp.stderr[-4000:]
+           ^^^^^^^^^^^^^^^^^^
+AssertionError: Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py", line 390, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py", line 325, in main
+    return shell_python(args.entry_args, args.baseline, args.scratch)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/launch_limit_gate.py", line 307, in shell_python
+    raise AssertionError('unexpected shell Python command')
+AssertionError: unexpected shell Python command
+CalledProcessError: Command '['nice', '-n', '19', 'taskset', '-c', '8-15,24-31', 'python3', '-B', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/check_inputs.py', '--output-root', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/build/device-cards01-a', '--prefix-windows', 'experiments/own-xpu-runtime/stage2/packet56-draft-prefix/evidence/head-k-a/window.json', 'experiments/own-xpu-runtime/stage2/packet56-draft-prefix/evidence/head-k-b/window.json']' returned non-zero exit status 1.
+
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/reseal103x.py", line 54, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/reseal103x.py", line 32, in main
+    validate(config)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/composite_jobs.py", line 102, in validate
+    check_map(ROOT, preserved_pins(config['evidence_pins']))
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/chain_seal.py", line 17, in check_map
+    require(digest(root/name)==expected,'sealed bytes changed: '+str(root/name))
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/chain_seal.py", line 13, in require
+    if not value: raise ValueError(message)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: sealed bytes changed: /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet103-orchestration/decision_readiness.py
+old-reader EXPECTED REFUSAL
+composite-A-0 PASS
+composite-A-1 PASS
+composite-A-2 PASS

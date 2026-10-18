@@ -1,6 +1,5 @@
 """Isolated source adapters, both directions, CPU read-only."""
 import json,subprocess,sys,resource
-resource.setrlimit(resource.RLIMIT_AS,(8*1024**3,8*1024**3))
 from pathlib import Path
 O=Path(__file__).resolve().parent
 ROOT=O.parents[3]
@@ -25,7 +24,10 @@ def collect():
    result[n]=dict(status='excluded',reason=closure['reason'],closed_source=True,live_read=result[n],sources={str(path.relative_to(ROOT)):hashlib.sha256(path.read_bytes()).hexdigest()},receipts={})
  require_current(result)
  return result
-if __name__=='__main__':print(json.dumps(collect()))
+if __name__=='__main__':
+ # CPU-only CLI: imported readers must preserve the device launcher's limits.
+ resource.setrlimit(resource.RLIMIT_AS,(8*1024**3,8*1024**3))
+ print(json.dumps(collect()))
 
 def reject_later_record_lane_losses(config):
  """A frozen first-lane win cannot hide a later completed A confirmation."""

@@ -151,3 +151,88 @@ If measured composite results require leave-one-out work, plan smaller CPU
 batches using the frozen decision before publishing those conditional jobs.
 The final handoff summary distinguishes completed requested work from this
 optional planning limitation. No worker from this preparation remains running.
+
+## Packet103x — inherited address-space limit repair (October 18)
+
+The coordinator's first composite A control stopped at 08:02:48 UTC with
+`mmap failed` after block 23. Its original output is preserved at
+`stage2/screen/v4-lanes/evidence/p103-1ad512f75aab3fce-composite-A-0-control/run/`
+under the own-runtime experiment. This was the CPU reader's 8 GiB hard address-
+space limit leaking through an import into the device launcher and both ranks.
+The coordinator reported no new GPU fault (count remained two), archived the
+marker/latch and removed the six jobs. This repair launched no GPU work.
+
+`read_screens.py` now sets that limit only in its CPU CLI. The imported reader,
+composite validation and device launch process keep their inherited limits.
+`build_engine.limits()` remains unchanged: its callers are explicit CPU
+preparation/build entry points, not the composite worker or chain. The audit
+covers the orchestration and readiness helpers, shell entry, the exact command
+in ready.json, chain queue/window entries, and imported support modules. No
+host setting, service, native arithmetic, selection or quality gate changed.
+
+The frozen decision `1ad512f75aab3fce` is unchanged. Its original orchestration
+sources remain byte-exact in `ops/packet103-orchestration/frozen103/`. The
+replacement policy has a separate `103x-policy-seal.json`; validation checks
+both the historical evidence and current policy bytes. The only bundle files
+resealed are composition-selection.json, screen-jobs-seal.json,
+build-receipt.json and submission-pins.json. All eight screen seals, both native
+binaries and the complete 5,632-window startup receipt/archive stay unchanged.
+The retained before/after evidence is under the orchestration's `evidence/103x-*`.
+
+The new CPU-only `launch_limit_gate.py` runs the actual composite entry and
+worker through both native rank Popen sites, intercepting each before exec.
+It also rehearses the shell part of ready.json's exact chain command through
+the real queue/window and first native K0 launches. Future composite results,
+service/lease/device admission and loader-environment admission are explicit
+synthetic fixtures; they are not device qualification. Source, selection,
+startup, seal, input and oracle validation still use their real files. Native
+execution is blocked, device opens are refused, and rehearsal writes are
+restricted to its temporary directory. No fixture can arm the live ready.json.
+Every native boundary must retain the coordinator harness's complete resource-
+limit snapshot, including unlimited soft and hard RLIMIT_AS. The negative
+control loads the exact old reader in an expendable process, so its irreversible
+8 GiB hard cap is tested without changing the parent process.
+
+Retention: composition-selection.json is an existing approximately 2 MB identity
+map, required by the unchanged selection/readiness consumers. Its small policy-
+pin edit must remain tracked; Git restores the exact revised bytes. The original
+metadata is retained as `evidence/103x-before-composition-selection.json.gz`.
+It was compressed only after checking its original hash, and decompression was
+checked byte-for-byte before removing the new uncompressed backup. `gzip -dc`
+restores that backup; its expected SHA256 is in `evidence/103x-before.json`.
+No original model or device evidence was removed or compacted.
+
+Final launch gate: all six composite entries and the exact ready.json shell/
+chain entry pass, covering fourteen positive native launch boundaries. Every
+one retains unlimited RLIMIT_AS and all other inherited limits. The exact old
+reader fails at the first native boundary with both limits at 8,589,934,592
+bytes. The full import/resource audit covers 159 Python files; only the CPU
+reader CLI and explicit build_engine.limits() contain active resource mutations.
+All 47 policy tests pass, including both-attempt collection and refusal to
+rebind native inputs through the orchestration seal. The authoritative result
+is `ops/packet103-orchestration/evidence/103x-launch-limits.json` with
+`passed=true` and `complete_gate=true`; earlier subset and harness-refinement
+logs are retained only as diagnostic history. The final metadata reseal took
+about 36 seconds. No startup fixture, native binary, or GPU process was run.
+
+Harness isolation correction: before the final gate, early negative-control
+attempts used an ordinary AssertionError at native interception. The shared
+worker caught that error and entered its normal Teardown cleanup with zero
+native children. That path can touch the shared v3 teardown lock/state; the
+transient state was not retained, so a metadata rewrite cannot be ruled out.
+No native child, GPU job, service or live queue was launched or changed. The
+final harness uses a BaseException interception, synthetic Teardown, and a
+filesystem audit that refuses writes outside its temporary directory. Its
+complete final gate passes with those protections. A read at 08:33:35 UTC found
+the shared teardown state drained and owned by the coordinator's real
+p106b A-confirm-0 job (pid 1189428). No shared state was restored, cleared or
+rewritten as cleanup. This caveat is separate from the passed final gate.
+
+Both final temporary queue plans pass. The coordinator proposals are
+`ops/lane-queue/proposed-p103x-composite-A.txt` and
+`ops/lane-queue/proposed-p103x-composite-B.txt`, each with three jobs whose names
+end in `-x`. `compositex-plans.json` binds both payloads and their plan logs.
+The new attempt registration binds the same frozen decision; readiness includes
+both original and suffixed attempts and pins that registration. Neither live
+queue file nor the failed original output was modified. The complete record
+chain still requires measured composite results and remains unarmed.

@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 18, packet103x launch repair checked on CPU:** The first composite
+control failed because a Python import passed an 8 GiB address-space cap to
+the ranks. The cap now applies only to the CPU reader's CLI. The coordinator
+withdrew the old six jobs; their original names and failed output stay as
+evidence. The decision, native binaries and 5,632 startup receipts are unchanged.
+All six fresh suffixed proposals pass temporary queue planning. All 47 policy
+tests and fourteen intercepted native launch checks pass; the old reader fails
+the new gate. The record chain stays blocked on measured composite results.
+No GPU, service or live queue changed. Early test cleanup entered shared teardown
+bookkeeping; the final gate blocks writes outside its temporary directory.
+[Repair note](notes/2026-10-18-own-runtime-packet103.md#packet103x--inherited-address-space-limit-repair-october-18).
+
 **October 18, packet110 fresh class table and GDN timing job prepared on CPU:**
 The table uses both fresh QSA runs and keeps missing GDN times blank. It ranks
 open gate/up transpose, complete-tuple epilogues and exact route selection;

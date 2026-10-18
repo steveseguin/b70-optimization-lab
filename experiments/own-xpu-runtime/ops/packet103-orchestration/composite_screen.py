@@ -12,6 +12,7 @@ def main(argv=None):
     ap.add_argument('--variant', default='composite')
     ap.add_argument('--lane', choices=('A', 'B'), required=True)
     ap.add_argument('--index', type=int, choices=range(3), required=True)
+    ap.add_argument('--attempt', default='')
     ap.add_argument('--plan', action='store_true')
     ap.add_argument('--fault-review')
     ap.add_argument('--authorized-device-window', action='store_true')
@@ -19,7 +20,7 @@ def main(argv=None):
     assert sha(args.decision) == args.decision_sha256, 'decision changed'
     config = json.loads(args.decision.read_text())
     validate(config)
-    job = jobs(config, args.lane, args.variant)[args.index]
+    job = jobs(config, args.lane, args.variant, args.attempt)[args.index]
     lineage = view(job['selection'])
     cmd = ['--profile', 'tp2', '--lane', args.lane, '--placement', '1', '--timing', 'token',
            '--lineage', str(lineage), '--seal', str(lineage/'screen-seal.json'),
