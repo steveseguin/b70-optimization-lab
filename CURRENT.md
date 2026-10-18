@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 18, packet58p tile16-only one-card chain prepared ahead on CPU:**
+The copy keeps production route and recurrence and changes only the down layout.
+All 118 Python tests, twelve full launch-argument paths, native parser/startup
+checks, byte checks and unchanged memory budgets pass. Both copied drain gates
+are fixed, and native launches refuse inherited resource caps. The 72.7 MB
+build reuses existing binaries. The seal and seven-window whole-host plan pass.
+Readiness is false while 58n's tile16 arm is still running and its final control
+is missing; all three arms must be exact and tile16 must beat both controls by
+at least 0.5%. The exact command is prepared for the coordinator, who pauses
+lane B. No GPU, service, live queue or host setting changed here.
+[Work note and handoff](notes/2026-10-18-own-runtime-packet58p.md).
+
 **October 18, packet124b repairs the failed K2 selection check:** The new copy
 passes only K2's three kernel choices to its unchanged strict validator. Native
 binaries, model output identity and bundle7 selection stay unchanged. All eleven
