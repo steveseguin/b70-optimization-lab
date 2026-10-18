@@ -73,6 +73,7 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;std::unique_ptr<mtp36::D
  if(negative=="context")a.context=256;
  if(negative=="legacy")a.legacy=true;
  e=std::make_unique<Engine>(w,a,p);e->initialize();
+ std::unique_ptr<p105::Runtime> head;if(e->split_head())head=std::make_unique<p105::Runtime>(*e);
  if(a.rank==1)p93_target_head=e->dev(0).arena.row(e->weights[0].at("output.weight")).pointer;
  write_plan(a.output/"native-plan.json",p,w,a.cards,a);
  if(negative!="positive"){
@@ -88,7 +89,7 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;std::unique_ptr<mtp36::D
  const auto& choice=e->sealed_selection.choices;
  require((count("p82rec::Kernel<true>")>0)==(choice.at("recurrence")=="rec-parallel"),"rec-parallel consumer");
  require((count("p82brec::Kernel<true>")>0)==(choice.at("recurrence")=="rec-both-plus"),"rec-both-plus consumer");
- const auto& head=choice.at("head");const bool packed=head!="production";
+ const auto& head=choice.at("head");const bool packed=head=="head-transpose";const bool split=e->split_head();
  require((count("p93::Kernel<2u>")>0)==(a.rank==1&&packed),"transposed head consumer");
  const auto& expert=choice.at("experts");
  require((count("p95exp::Kernel")>0)==(expert=="exp-grid-prefetch"||expert=="exp-grid-prefetch+halfcache"),"prefetch consumer");
@@ -101,7 +102,7 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;std::unique_ptr<mtp36::D
  require(e->reply_report.enabled==(a.rank==1&&choice.at("host_retire")=="reply-first"),"reply-first consumer");
  if(a.rank==1){
   auto id=e->weights[0].at("output.weight");const auto&r=e->dev(0).arena.row(id);
-  require(r.bytes==size_t(248320)*(packed?2100:3380),"real selected target-head allocation extent");
+  require(r.bytes==size_t(split?p105::prefix:248320)*(packed?2100:3380),"real selected target-head allocation extent");
   require(count("p33::Kernel<0u, (iq3::Type)14, 2560u, 1u>")>0,"unchanged expanded draft head consumer");
   const std::string expected=head=="head-plane"?"p93::Kernel<1u>":head=="head-transpose"?"p93::Kernel<2u>":"p33::Kernel<0u, (iq3::Type)14, 2560u, 1u>";
   require(p93_head_operations.size()==1&&p93_head_operations.contains(expected),"selected kernel bound to real target head allocation");
@@ -135,8 +136,8 @@ def main():
     native=json.loads((dest/'result.json').read_text());census=json.loads((dest/'census.json').read_text());reported=json.loads((dest/'native-plan.json').read_text())
     weights={r['label'].split('weight:',1)[1]:r['bytes'] for r in census['allocations'] if r['live'] and r['memory']=='device' and r['label'].startswith('card0:weight:')}
     planned={r['name']:r['stored_bytes'] for r in reported['tensor_owners']}
-    assert all(planned[k]==n for k,n in weights.items())
-    packed=v[8]!='production';expected_head=248320*(2100 if packed else 3380) if rank==1 else 0;expected_prefix=91392*3380 if rank==1 and packed else 0
+    assert all(planned[k]==n for k,n in weights.items() if not (rank==0 and k=='output.weight'))
+    packed=v[8]=='head-transpose';split=v[8].startswith('head-split-');expected_head=(202240*3380 if rank==1 else 46080*3380) if split else (248320*(2100 if packed else 3380) if rank==1 else 0);expected_prefix=91392*3380 if rank==1 and packed else 0
     assert weights.get('output.weight',0)==expected_head
     prefix=[r for r in census['allocations'] if r['live'] and r['memory']=='device' and r['label']=='card0:draft:shared-head-host']
     assert sum(r['bytes'] for r in prefix)==expected_prefix

@@ -1,0 +1,183 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "runs": [
+    {
+      "compiler": "GNU",
+      "repeat": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/build/cpu/head-GNU",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/build/cpu/scratch"
+      ],
+      "binary_sha256": "b0f09b9372fc199fc0667ff5206f39e4a9403613806ca562b8a0c2444255d215",
+      "expected_sha256": "523576701c310346b28777f30325639df349502a3ed00866fcb14f75135352f2",
+      "candidate_sha256": "523576701c310346b28777f30325639df349502a3ed00866fcb14f75135352f2",
+      "fixture": "experiments/own-xpu-runtime/stage2/packet105-head-split/evidence/head-523576701c310346b28777f30325639df349502a3ed00866fcb14f75135352f2.bin.gz",
+      "fixture_sha256": "b84e17b1e30ecfbbce04d75cbdf3c173b17f245449f4482f1ba6485152d5e951",
+      "native": {
+        "passed": true,
+        "device_executed": false,
+        "full_vocab_tokens": 3,
+        "cases": 15,
+        "invalid_token_published": false
+      }
+    },
+    {
+      "compiler": "GNU",
+      "repeat": 2,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/build/cpu/head-GNU",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/build/cpu/scratch"
+      ],
+      "binary_sha256": "b0f09b9372fc199fc0667ff5206f39e4a9403613806ca562b8a0c2444255d215",
+      "expected_sha256": "523576701c310346b28777f30325639df349502a3ed00866fcb14f75135352f2",
+      "candidate_sha256": "523576701c310346b28777f30325639df349502a3ed00866fcb14f75135352f2",
+      "fixture": "experiments/own-xpu-runtime/stage2/packet105-head-split/evidence/head-523576701c310346b28777f30325639df349502a3ed00866fcb14f75135352f2.bin.gz",
+      "fixture_sha256": "b84e17b1e30ecfbbce04d75cbdf3c173b17f245449f4482f1ba6485152d5e951",
+      "native": {
+        "passed": true,
+        "device_executed": false,
+        "full_vocab_tokens": 3,
+        "cases": 15,
+        "invalid_token_published": false
+      }
+    },
+    {
+      "compiler": "Intel",
+      "repeat": 1,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/build/cpu/head-Intel",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/build/cpu/scratch"
+      ],
+      "binary_sha256": "b82ab7f356757970b472527da7dab7a4980f1ee87eaa99b5affeba5102ed8682",
+      "expected_sha256": "523576701c310346b28777f30325639df349502a3ed00866fcb14f75135352f2",
+      "candidate_sha256": "523576701c310346b28777f30325639df349502a3ed00866fcb14f75135352f2",
+      "fixture": "experiments/own-xpu-runtime/stage2/packet105-head-split/evidence/head-523576701c310346b28777f30325639df349502a3ed00866fcb14f75135352f2.bin.gz",
+      "fixture_sha256": "b84e17b1e30ecfbbce04d75cbdf3c173b17f245449f4482f1ba6485152d5e951",
+      "native": {
+        "passed": true,
+        "device_executed": false,
+        "full_vocab_tokens": 3,
+        "cases": 15,
+        "invalid_token_published": false
+      }
+    },
+    {
+      "compiler": "Intel",
+      "repeat": 2,
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/build/cpu/head-Intel",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/build/cpu/scratch"
+      ],
+      "binary_sha256": "b82ab7f356757970b472527da7dab7a4980f1ee87eaa99b5affeba5102ed8682",
+      "expected_sha256": "523576701c310346b28777f30325639df349502a3ed00866fcb14f75135352f2",
+      "candidate_sha256": "523576701c310346b28777f30325639df349502a3ed00866fcb14f75135352f2",
+      "fixture": "experiments/own-xpu-runtime/stage2/packet105-head-split/evidence/head-523576701c310346b28777f30325639df349502a3ed00866fcb14f75135352f2.bin.gz",
+      "fixture_sha256": "b84e17b1e30ecfbbce04d75cbdf3c173b17f245449f4482f1ba6485152d5e951",
+      "native": {
+        "passed": true,
+        "device_executed": false,
+        "full_vocab_tokens": 3,
+        "cases": 15,
+        "invalid_token_published": false
+      }
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/p105_cpu.cpp": "d4ea2fba11801ec9f2e244aac828b29a8b95886099b129c77700eb591cf1c830",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/p33_submit.cpp": "a7186a51ffc6deeee3874f8f812cc72f371b62bb574298be48b2a33a218354e5",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/p33_submit.hpp": "b6833e2d825934c64d58d03e5b274e4bd1e87e7bd13082b8ca9caf01e3e302c8",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/p28/submit.hpp": "6d0bddcbb38d635c9d5194b73cba7624db27a7617754af5369bfa51e731c5bbf",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/p28/registry.hpp": "add5690af080348ac78cbc3a19e41ac4e46fcef133cc6c2a162e3089ea377d85",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/performance.hpp": "97048551886ee82850180ef9a7981259d80569fb82981c16e8473793739b2137",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/runtime_kernels.hpp": "f56dff0f8aaa0647857d077dd1fd10ec1ed573403d1cdb7cdd2b4db194ce3538",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/device.hpp": "1044e1a57d101d35a1d02e7fd911c3db9e5faed41248255ac61af52528f98f74",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp": "c11c78c5ef4d4524271cb5e08d98300fd3ed7adc486f8429f91f18ac6b031bf4",
+    "experiments/own-xpu-runtime/stage2/packet2/kernels/grids.hpp": "11fb544e55cfbcefa8b8a0302ade73cef8c4ae1ccce4ae402e8b2747cfee57c9",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/owner.hpp": "ee69610bda3e786e2aecf9888430541879af2d4c51cb64329784cb58d3ba1faf",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/owner_api.hpp": "819d24483877eb31b211312330e6709c9d283a4fe0ec7b8bf016eeb8122c76ed",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/argument_block.hpp": "f2cc8a5709ae443e2fcaa755cfb86e36080a710e9964422b12d3a8425433db35",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/core_v2.hpp": "44a05d7d5cadc7a3de6e3d855f045a5d2156416ac2e463ca0d88d41a42357b1d",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/detmath.hpp": "d699920742292f623317537dbb25d25873b8f8e9afd4f4f329448921890714db",
+    "experiments/own-xpu-runtime/stage2/packet17-detmath/detmath.hpp": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/rope.hpp": "83782198e96337883f7e226d5fc474360841f6ca26a00bce43a6d87f42b74929",
+    "experiments/own-xpu-runtime/stage2/packet3/kernels/api.hpp": "7d33644438281bcc5a1ab2fbbde2310cbff3a55b683312eab3d52178d4fdbe33",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/kernels.hpp": "5122c8e7115d94e0546d7b40fcd9a9a795c45717394a636ac3c806ad6d37dd6e",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/kernels.hpp": "218ec7d39db6272038f05453c84e7823220f6e3d97f7272a17efa1cd9593c706",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/kernels.hpp": "a4c24610451981c3d0d19289919e7b16521ed652605ba557f44c234bc413d54e",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/kernels.hpp": "78f15ee1abaace582eff11e876e9f76a3e69d78159156655e1133dc2ed3aa8c0",
+    "experiments/own-xpu-runtime/stage2/packet7-kopt2/reference.hpp": "7532f67c6d9a0be2a9187ce149b2004d9f1ea045705327d0ce542a283ad5ed72",
+    "experiments/own-xpu-runtime/stage2/packet6-kopt/reference.hpp": "2ec2a1defe33d873b87a121c37bee62d45b8ad0b1b4bc93e7ceb0ba3ca59dc3f",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/reference.hpp": "f744a148509ed091d69a708262d0fcbc94c179da8ca5ed364791e8ba77a328af",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/decode.hpp": "7db4f3b62f899f8d5f245d193ba5e5a39007f8512e4e378f312ed8391b44332c",
+    "experiments/own-xpu-runtime/stage2/packet8-kopt3/dispatch.hpp": "efd7bb4c4dcdc0ee2afa24a7c1146e19a993f4f3cebd73cf025c84bc209053ed",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/reference.hpp": "95bdc549c66d5cb72fd54cc73696187dae08568f15b19d206cc954ca290c85f4",
+    "experiments/own-xpu-runtime/stage2/packet9-kopt4/dispatch.hpp": "8f1895c0209b88057253b44a9aee82c4cd1e73cd207e4c1d3d233da1cc8d6495",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/arithmetic.hpp": "ea9a853c66b3a22eff01e7b53243da0c5a2a33d5306dd4f09faf06c447a4c1ae",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp": "6e96276d9eee2564aa74d2f90b6802d04709f78d2b866b394c6fca2fe818dee3",
+    "experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp": "b5a6c3b39d051853e49761491aaf69f55e7ad882cffef34ea8300a68c608176d",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/p33_candidates.hpp": "17f835ea9642d004eebbeb71c4b68dec5e3b795dbf6166c39a08f08307313797",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/p28/expert.hpp": "fe0edeb0afedccd2b835d636c9d5e53f7725c995c192be2c6526377cdb58f63b",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/p28/dense.hpp": "bc6d77353fa71520e15f2b349db381ced4370d8413fae3b6687cefed56297b47",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/round2.hpp": "bd614a9944e33903a6f0c7c2d4a1dd1de4786f8b1cdc8418df73e6d54b7e38ef",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/specialised.hpp": "0d7489d31fb869a49db3a7a365dbe78af52931c0e7d5cdf38ff05b01e594c126",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/kernels.hpp": "715e38078abaf8e1ee38bbb650c946b754ad29f44e77e5dafbc8db1b077d530f",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/p42_expert.hpp": "2027f73e732700f3c9814f55bcc539fc5fba5bde0cfe8b3a1f78e9e5720b3516",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/expert_down.hpp": "eb327fb716344751870064c00c843ec3147219f996dfd89a8818c70fede03ffb",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/round2_submit.cpp": "9376df1464877b7e5f0e24eb56000df350ade782582bd42ad18cc5cbb2a7c45b",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/round2_submit.hpp": "d9231c86021695fb1e6f0e84f833380bc5e5d685d6a92f52292ffe191718a7ad",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/mock_order.hpp": "d2b1f370518ad0181a0d1f81b370374ceee4e9177abd3531439bd94017980149",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/p105_submit.cpp": "5818567ffc2a6dca12a56b81a591aaaee5eb3dfe8780999b0e36e0136d3971b8",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/p105_submit.hpp": "92de3b78df60ee78df549716f21875832d9c3e91f1d16e10cad3a5b95d77a457",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/p105_common.hpp": "8856d3e7b983c25bab743acfafaa8669109501adf1b3930279523427ef452e5e",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/cpu_gate.py": "33cee0feaf7bfa9268bc463690c99217f7dc1552f2e917ea3020dcf6bf165bdf",
+    "experiments/own-xpu-runtime/stage2/packet105-head-split/compile_turn.py": "233ec14ad07ea902690f3b008cb22af156aaadb6a84f1e200bcdfc2ad1b0f309"
+  },
+  "commands": [
+    [
+      "/usr/bin/g++",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Wl,--gc-sections",
+      "-DOWN_RT_HOST_ONLY",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+      "-MMD",
+      "-MF",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/build/cpu/head-GNU.d",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/p105_cpu.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/build/cpu/head-GNU",
+      "-lcrypto"
+    ],
+    [
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-std=c++20",
+      "-O2",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-Wl,--gc-sections",
+      "-DOWN_RT_HOST_ONLY",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/loader",
+      "-MMD",
+      "-MF",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/build/cpu/head-Intel.d",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/p105_cpu.cpp",
+      "-o",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/build/cpu/head-Intel",
+      "-lcrypto"
+    ]
+  ],
+  "max_rss_kib": 978420
+}

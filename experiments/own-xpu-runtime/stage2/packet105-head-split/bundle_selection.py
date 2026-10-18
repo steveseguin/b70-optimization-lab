@@ -3,12 +3,12 @@ import hashlib,itertools,json
 from pathlib import Path
 P=Path(__file__).resolve().parent
 PLACEMENTS={'1':(1,0,24)}
-DENSE=('production',); EXPERTS=('wide64','wide64+grid-prefetch','wide64+halfcache','wide64+grid-prefetch+halfcache')
-HC=('hc-wide',); HOST=('ordered','ordered+reply-first')
-ROUTE=('production','fast'); NORM=('production',)
-RECURRENCE=('rec-parallel','rec-both-plus')
+DENSE=('production',); EXPERTS=('wide64+halfcache',)
+HC=('hc-wide',); HOST=('ordered',)
+ROUTE=('fast',); NORM=('production',)
+RECURRENCE=('rec-both-plus',)
 DRAFT_HEAD=('production',)
-HEAD=('production','head-transpose'); HC_NORM=('production','normfuse')
+HEAD=('production','head-split-compute','head-split-bcs'); HC_NORM=('production',)
 KEYS=('dense','hc','experts','host','route','norm','recurrence','draft_head','head','hc_norm')
 def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def name(dense,hc,experts,host='production',route='production',norm='production',recurrence='production',draft_head='production',head='production',hc_norm='production'):
@@ -50,3 +50,5 @@ def selected():
         if sha(view/leaf)!=sha(P/leaf):raise ValueError('active bytes differ: '+leaf)
     if row['selection_sha256']!=sha(P/'selection.json') or row['screen_seal_sha256']!=sha(view/'screen-seal.json'):raise ValueError('seal differs')
     return row
+
+def aliases():return {v[8]:v for v in views().values()}

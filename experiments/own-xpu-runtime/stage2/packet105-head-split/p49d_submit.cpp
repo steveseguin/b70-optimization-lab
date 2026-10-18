@@ -55,7 +55,7 @@ Launch mix(Device&d,const Spec&s,IDs a,Allocation,Allocation,Allocation,Deps dep
  p49dmix::Kernel k;k.spec=s;auto e=d.compute(k,a,deps);return {e,e,1};
 }
 Submit resolve(std::string_view cls,std::string_view choice){
- if(cls=="head"&&(choice=="production"||choice=="head-transpose"))return production;
+ if(cls=="head"&&(choice=="production"||choice=="head-transpose"||choice=="head-split-compute"||choice=="head-split-bcs"))return production;
  if(cls=="host_retire"&&(choice=="production"||choice=="ordered"||choice=="reply-first"))return production;
  if(cls=="hc_norm"&&(choice=="production"||choice=="subgroup"||choice=="consumer"))return production;
  if(cls=="hc_gate"&&(choice=="production"||choice=="wide"))return production;

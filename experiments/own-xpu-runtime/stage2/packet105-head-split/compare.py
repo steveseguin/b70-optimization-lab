@@ -87,17 +87,26 @@ def compare(rows, order=ORDER):
     control_acceptance = statistics.mean(r['acceptance'] for r in (rows[0], rows[-1]))
     require(control_rate > 0 and all(math.isfinite(r['rate']) and r['rate'] > 0 for r in rows), 'invalid rates')
     return dict(lane=rows[0]['lane'], diagnostic=True, submission_eligible=False, all_13_exact=True,
+                composition_qualified=rows[1]['rate']>max(rows[0]['rate'],rows[-1]['rate']),
+                record_ready=False,record_lane='A',
                 metric='median of prompt-class medians; 99 intervals between token events 1 and 100',
                 control_mean_tok_s=control_rate, control_mean_acceptance=control_acceptance,
                 control_drift_percent=100 * (rows[-1]['rate'] / rows[0]['rate'] - 1),
                 screens=rows, candidates=[dict(choice=r['choice'], tok_s=r['rate'],
                     gain_percent=100 * (r['rate'] / control_rate - 1),
+                    gain_over_stronger_control_percent=100*(r['rate']/max(rows[0]['rate'],rows[-1]['rate'])-1),
                     faster_than_control_mean=r['rate'] > control_rate,
                     faster_than_both_controls=r['rate'] > max(rows[0]['rate'], rows[-1]['rate']),
                     acceptance=r['acceptance'], acceptance_delta_percentage_points=100 * (r['acceptance'] - control_acceptance))
                     for r in rows[1:-1]])
 
+def compare_grid(rows):
+    require([r['choice'] for r in rows]==list(ORDER),'complete five-screen grid required')
+    brackets=[compare(rows[i:i+3],ORDER[i:i+3]) for i in (0,2)]
+    return dict(passed=True,diagnostic=True,submission_eligible=False,record_ready=False,record_lane='A',brackets=brackets,
+                winners=[r['screens'][1]['choice'] for r in brackets if r['composition_qualified']])
+
 if __name__ == '__main__':
     import argparse
     ap=argparse.ArgumentParser();ap.add_argument('--lane',choices=('A','B'),required=True);a=ap.parse_args();verify()
-    print(json.dumps(compare([load(j) for j in jobs(a.lane)]),indent=2))
+    print(json.dumps(compare_grid([load(j) for j in jobs(a.lane)]),indent=2))

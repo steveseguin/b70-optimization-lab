@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, packet105 implemented on CPU:** The target head can send its
+last 46,080 rows to rank0 using the verified current hidden vector. Both builds,
+both compiler byte checks, hit/miss path mocks and all six allocation checks
+pass. Compute and copy-engine transfers are separate choices. Eleven-window
+startup and seals are next; device quality, residency and speed are pending.
+No GPU, service or live queue changed.
+[Work note](notes/2026-10-18-own-runtime-packet105.md).
+
 **October 18, packet104 micro compiled on CPU:** Seven tile16 weight-layout
 candidates are ready for the proposed lane-B operator test. The build is about
 28 MB. It uses packet100b's real target routes; draft replay is labeled as a

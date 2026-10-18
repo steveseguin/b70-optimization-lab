@@ -1,17 +1,12 @@
-"""CPU plan or coordinator-authorized measured composition job."""
+"""Plan CPU-only; coordinator alone runs sealed v4 windows."""
 import argparse
 from pathlib import Path
-from screen_jobs import P,jobs,view,output,verify,configuration
-
+from screen_jobs import jobs,output,view,verify,ORDER
 def main(argv=None):
  ap=argparse.ArgumentParser();ap.add_argument('--lane',choices=('A','B'),required=True);ap.add_argument('--index',type=int,required=True);ap.add_argument('--output',required=True);ap.add_argument('--plan',action='store_true');ap.add_argument('--fault-review');ap.add_argument('--authorized-device-window',action='store_true');a=ap.parse_args(argv)
- verify();assert 0<=a.index<3;job=jobs(a.lane)[a.index];dest=output(job);assert Path(a.output).resolve()==dest
- if not a.plan:
-  row=configuration();assert row['status']=='confirmed-sources','template cannot execute'
-  from chain_seal import check_map
-  check_map(P.parents[3],row['evidence_pins'])
+ verify();assert 0<=a.index<len(ORDER);job=jobs(a.lane)[a.index];assert Path(a.output).resolve()==output(job)
  from run_screen import main as run
- lineage=view(job['choice']);cmd=['--profile','tp2','--lane',a.lane,'--placement','1','--timing','token','--lineage',str(lineage),'--seal',str(lineage/'screen-seal.json'),'--output',str(dest)]
+ lineage=view(job['choice']);cmd=['--profile','tp2','--lane',a.lane,'--placement','1','--timing','token','--lineage',str(lineage),'--seal',str(lineage/'screen-seal.json'),'--output',str(output(job))]
  if a.plan:cmd+=['--plan']
  else:
   assert a.authorized_device_window and a.fault_review

@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <thread>
 #include "host_spin.hpp"
+#include "p105_common.hpp"
 
 namespace ownrt {
 namespace {
@@ -27,7 +28,22 @@ class SyclDevice final : public Backend, public OrderedQueue {
   std::string label_;
   ze_context_handle_t native_=nullptr;
   std::unique_ptr<sycl::context> context_;
-  std::unique_ptr<sycl::queue> queue_;
+  std::unique_ptr<sycl::queue> queue_,copy_queue_;
+  ze_command_queue_handle_t native_copy_=nullptr;
+  sycl::queue& copy_queue(){
+    if(copy_queue_)return *copy_queue_;
+    auto d=queue_->get_device();auto native_d=sycl::get_native<sycl::backend::ext_oneapi_level_zero>(d);uint32_t n=0;
+    if(zeDeviceGetCommandQueueGroupProperties(native_d,&n,nullptr)!=ZE_RESULT_SUCCESS)throw std::runtime_error("p105 BCS census failed");
+    std::vector<ze_command_queue_group_properties_t> props(n);for(auto&x:props)x.stype=ZE_STRUCTURE_TYPE_COMMAND_QUEUE_GROUP_PROPERTIES;
+    if(zeDeviceGetCommandQueueGroupProperties(native_d,&n,props.data())!=ZE_RESULT_SUCCESS)throw std::runtime_error("p105 BCS census failed");
+    uint32_t ordinal=n;for(uint32_t i=0;i<n;++i)if((props[i].flags&ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY)&&!(props[i].flags&ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE)&&props[i].numQueues){ordinal=i;break;}
+    if(ordinal==n)throw std::runtime_error("p105 dedicated BCS unavailable; no silent fallback");
+    ze_command_queue_desc_t desc{};desc.stype=ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;desc.ordinal=ordinal;desc.index=0;desc.mode=ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;desc.priority=ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    if(zeCommandQueueCreate(native_,native_d,&desc,&native_copy_)!=ZE_RESULT_SUCCESS)throw std::runtime_error("p105 BCS create failed");
+    try{copy_queue_=std::make_unique<sycl::queue>(sycl::make_queue<sycl::backend::ext_oneapi_level_zero>({native_copy_,d,sycl::ext::oneapi::level_zero::ownership::keep,sycl::property_list{sycl::property::queue::in_order{}}},*context_,[this](sycl::exception_list errors){std::lock_guard lock(error_mutex_);if(!error_&&errors.size())error_=*errors.begin();}));}
+    catch(...){zeCommandQueueDestroy(native_copy_);native_copy_=nullptr;throw;}
+    label_+=":p105-BCS-ordinal="+std::to_string(ordinal);return *copy_queue_;
+  }
   std::vector<NativeTracked> events_;int allocation_card_=0;
   sycl::event& event(Event e){auto it=std::lower_bound(events_.begin(),events_.end(),e,[](const auto& v,Event h){return v.handle<h;});if(it==events_.end()||it->handle!=e)throw std::logic_error("foreign native event");return it->event;}
   void capacity(){if(events_.size()>=events_.capacity())throw std::length_error("native event capacity");}
@@ -81,7 +97,9 @@ class SyclDevice final : public Backend, public OrderedQueue {
     if(m==Memory::shadow) ::operator delete(p); else sycl::free(p,*context_);
   }
   Event copy(void* dst,const void* src,std::size_t n,std::span<const Event> deps) override {
-    check_error();capacity();dependencies(deps);return record(queue_->memcpy(dst,src,n));
+    check_error();capacity();
+    if(p105::copy_bcs){std::vector<sycl::event> waits;for(auto e:deps)waits.push_back(event(e));return record(copy_queue().memcpy(dst,src,n,waits));}
+    dependencies(deps);return record(queue_->memcpy(dst,src,n));
   }
   Event marker(std::span<const Event> deps) override {
     check_error();capacity();dependencies(deps);return record(queue_->submit([&](sycl::handler& h){h.single_task<class IdleMarker>([]{});}));
@@ -119,9 +137,9 @@ class SyclDevice final : public Backend, public OrderedQueue {
     if(!p56x::wait([&]{return complete(e);},[&]{check_error();},deadline)) return false;
     event(e).wait_and_throw(); check_error(); return true;
   }
-  void synchronize() override {queue_->wait_and_throw(); check_error();}
+  void synchronize() override {queue_->wait_and_throw();if(copy_queue_)copy_queue_->wait_and_throw();check_error();}
   void clear_events() override {events_.clear();}
-  void close_queue() override {queue_.reset();}
+  void close_queue() override {copy_queue_.reset();if(native_copy_){if(zeCommandQueueDestroy(native_copy_)!=ZE_RESULT_SUCCESS)throw std::runtime_error("p105 BCS destroy failed");native_copy_=nullptr;}queue_.reset();}
   void close_context() override {
     context_.reset();
     if(native_ && zeContextDestroy(native_)!=ZE_RESULT_SUCCESS) throw std::runtime_error("zeContextDestroy failed");

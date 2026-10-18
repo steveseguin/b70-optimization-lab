@@ -29,6 +29,7 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;std::unique_ptr<mtp36::D
  auto p=pipeline::split(plan(w,a),a.rank,false,a.draft_rank,a.target_split);
  require(p.g.h==2560&&p.g.context==4096&&p.g.vocab==248320,"real production dimensions");
  e=std::make_unique<Engine>(w,a,p);e->initialize();
+ std::unique_ptr<p105::Runtime> head;if(e->split_head())head=std::make_unique<p105::Runtime>(*e);
  if(!a.draft_capture.empty()){e->prepare_plan();draft=std::make_unique<mtp36::DraftRuntime>(*e);}
  else{if(a.rank==0)pipeline::banks(*e);else{e->prepare_plan();e->prepare_commands();}
   {pipeline::SpeculativeImage image(*e);if(a.mtp)draft=std::make_unique<mtp36::DraftRuntime>(*e);}}
@@ -242,7 +243,7 @@ def main():
     report['sources']={**initial_sources,**{str(f.relative_to(ROOT)):sha(f) for f in files}}
     report.update(passed=True,old_code_refusal=negative,seconds=time.monotonic()-started,
                   max_rss_kib=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss,
-                  compositions=128,windows_per_composition=11,total_windows=len(report['runs']))
+                  compositions=len(views()),windows_per_composition=11,total_windows=len(report['runs']))
     raw=json.dumps(report,sort_keys=True).encode()
     archive=P/'evidence/startup97e-runs.json.gz';archive.write_bytes(gzip.compress(raw,mtime=0))
     summary={k:v for k,v in report.items() if k not in ('runs','shared_fixtures','commands')}

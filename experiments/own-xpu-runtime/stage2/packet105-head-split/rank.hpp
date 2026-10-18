@@ -153,6 +153,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
   const auto* ready=e.prepared_path?&e.issue_sites[size_t(&l-e.p.launches.data())]:nullptr;
   if(request.fixture==0&&(ready?ready->prefill_skip:(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax")))continue;
   if(e.progress_pending&&e.progress_callback)e.progress_callback();
+  if(l.label=="logits"&&e.head_export)e.head_export(request.sequence,request.position,request.fixture);
   e.enqueue(l,e.logical);
   if(e.progress_pending&&e.progress_callback)e.progress_callback();
   if(ready?ready->layer_end:ends(l.label,".ffn.combine")) {
@@ -170,7 +171,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  e.dev(0).before_compute={};e.dev(0).after_compute={};
  if(cancel_at_boundary())candidate.cancelled=true;
  double enqueue_ms=Engine::ms(enqueue_start)-(e.wait_ms-enqueue_wait);
- e.drain();int error=e.integer(0,"error");require(!error,"sticky rank error (never rolled back)");
+ e.drain();if(request.fixture>0&&e.head_merge)e.head_merge(request.sequence,request.position,request.fixture);int error=e.integer(0,"error");require(!error,"sticky rank error (never rolled back)");
  if(e.a.rank==0&&!candidate.cancelled){e.swap_state_banks();candidate.swapped=true;}
  if(captured_count){auto raw=e.readback(0,e.snapshots[0],48*4*e.p.g.h*2);for(size_t ci=0;ci<captured_count;++ci){int layer=captured[ci];size_t n=4*e.p.g.h*2;candidate.layers[layer]={raw.begin()+layer*n,raw.begin()+(layer+1)*n};}}
  if(captured_count){std::vector<uint8_t> zero(48*4*e.p.g.h*2,0);e.upload(0,e.snapshots[0],0,zero.data(),zero.size());}
@@ -235,6 +236,7 @@ static void pipeline_cancel_check() {
 static int run_rank(const Options& a) {
  using namespace pipeline;
  std::unique_ptr<Weights> weights;std::unique_ptr<Engine> engine;std::unique_ptr<mtp36::DraftRuntime> provider;
+ std::unique_ptr<p105::Runtime> head_runtime;bool native_active=false;
  int fd=-1;void* mapping=MAP_FAILED;std::string error,selection_observed_sha256;std::vector<std::string> teardown;
  pipeline_stop_fd=a.stop_fd;
  try {
@@ -245,7 +247,14 @@ static int run_rank(const Options& a) {
   weights=std::make_unique<Weights>(a);auto p=split(plan(*weights,a),a.rank,a.mini,a.draft_rank,a.target_split);
   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,a);
   engine=std::make_unique<Engine>(*weights,a,p);selection_observed_sha256=engine->sealed_selection.observed_sha256;record_host_memory(a.output,"before_load");engine->initialize();
+  if(engine->split_head())head_runtime=std::make_unique<p105::Runtime>(*engine);
   if(a.rank==0)banks(*engine);else {engine->prepare_plan();engine->prepare_commands();}
+  auto& head_box=*reinterpret_cast<p105::Mailbox*>(static_cast<uint8_t*>(mapping)+reverse_offset);
+  static_assert(sizeof(p105::Mailbox)<=slot_bytes);
+  if(head_runtime&&a.rank==1){
+   engine->head_export=[&](int seq,int pos,int fixture){require(native_active,"p105 requires native controller");head_runtime->export_hidden(head_box,uint32_t(seq),pos,fixture);};
+   engine->head_merge=[&](int seq,int pos,int fixture){head_runtime->merge_target(head_box,uint32_t(seq),pos,fixture,pipeline_cancel_check);};
+  }
   SpeculativeImage image(*engine);
 #ifndef OWN_RT_HOST_ONLY
   if(a.rank==0)weights->warm_lookups();
@@ -285,6 +294,7 @@ static int run_rank(const Options& a) {
     response.busy_ms=Engine::ms(before);response.gpu_ms=engine->gemv_ms+engine->nongemv_ms-gpu;
    }
    else if(r.op==half){
+    require(!head_runtime||native_active,"p105 head split requires native controller");
     bool prepared_inputs=async_half_ready;
     if(prepared_inputs){require(r.position==async_half_position&&r.token==async_half_token,"asynchronous draft/half confirmed identity");provider->queue_half_inputs(r.token,static_cast<uint8_t*>(mapping)+slot_bytes);async_half_ready=false;}
     response=half_step(*engine,c,r,static_cast<uint8_t*>(mapping),image,prepared_inputs);
@@ -318,17 +328,19 @@ static int run_rank(const Options& a) {
     require(!c.pending,"native entry unresolved candidate");
     auto* bytes=static_cast<uint8_t*>(mapping);auto& mailbox=*reinterpret_cast<native38::Mailbox*>(bytes+2*slot_bytes+256);
     auto cancel=[&](){pipeline_cancel_check();if(engine->progress_pending&&engine->progress_callback)engine->progress_callback();};
-    try {
+    try {native_active=true;
      if(a.rank==1)native38::worker(mailbox,a.seconds,execute,cancel,
        [&](const Request& cmd){if(cmd.op==half)engine->reply_report.published();},
        [&](){engine->reply_report.flush();});
      else {
       auto cfg=native38::config(a.shared.parent_path()/"native-request.txt",engine->p.g.context,engine->p.g.vocab);cfg.draft_rank=a.draft_rank;
       native38::Backend backend(mailbox,bytes,a.seconds,execute,cancel);
+      if(head_runtime)backend.before_remote_wait=[&](const Request& req){if(req.op==half&&req.fixture>0)head_runtime->service(head_box,uint32_t(req.sequence),req.position,req.fixture,[&]{cancel();require(!native38::load(mailbox.abort),"p105 native peer failed");});};
       auto result=native38::run(backend,cfg);
       save(a.shared.parent_path()/"native-result.json",native38::json(result,backend,cfg));
      }
-    }catch(...){native38::abort(mailbox);throw;}
+     native_active=false;
+    }catch(...){p105::publish(head_box.abort,1);native38::abort(mailbox);throw;}
     response.sequence=r.sequence;response.rank=a.rank;
    }else response=execute(r);
    transfer(a.channel,&response,sizeof response,true,a.seconds);
@@ -346,6 +358,7 @@ static int run_rank(const Options& a) {
  }
  // Failure receipt is durable before any teardown. Device owns all SYCL borrowers.
  if(engine)engine->progress_callback={};
+ head_runtime.reset();
  provider.reset();
  if(engine){try{teardown=engine->shutdown();}catch(const std::exception& ex){error+=(error.empty()?"":"; ")+std::string(ex.what());}engine.reset();}
  weights.reset();if(mapping!=MAP_FAILED)munmap(mapping,shared_bytes);if(fd>=0)::close(fd);

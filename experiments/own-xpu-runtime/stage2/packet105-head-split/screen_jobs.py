@@ -1,34 +1,20 @@
-"""Decision-bound control/candidate/control; templates are plan-only."""
-import json,hashlib
-from build_engine import P,ROOT,sha,save
-from bundle_selection import KEYS,name
+"""Matched compute/BCS brackets; fresh middle control is shared, records on A."""
+import json
+from build_engine import P,ROOT,sha,save,check_map
 WRAPPER=P.parent/'screen/v4-lanes'
-DEFAULTS=dict(dense='production',hc='hc-wide',experts='wide64',host='ordered',route='production',norm='production',recurrence='rec-parallel',draft_head='production',head='production',hc_norm='production')
-def configuration():return json.loads((P/'composition-selection.json').read_text())
-def selections():
- r=configuration();return {'control':r['control'],'candidate':r['candidate']}
-VIEWS=selections();ORDER=('control','candidate','control')
-def view(label):return P/'selections'/(name(*(selections()[label][k] for k in KEYS))+'--placement-1')
-def jobs(lane,choice=None,mode='grid'):
- assert lane in ('A','B') and mode=='grid'
- r=configuration();identity=sha(P/'composition-selection.json')[:12]
- return [dict(index=i,choice=c,lane=lane,mode='grid',out=f'p97-{identity}-{lane}-{i}-{c}') for i,c in enumerate(ORDER)]
+ORDER=('production','head-split-compute','production','head-split-bcs','production')
+def view(label):
+ assert label in set(ORDER)
+ return P/'selections'/label
+def jobs(lane):
+ assert lane in ('A','B')
+ identity=sha(view('head-split-bcs')/'screen-seal.json')[:12]
+ return [dict(index=i,choice=c,lane=lane,mode='grid',out=f'p105-{identity}-{lane}-grid-{i}-{c}') for i,c in enumerate(ORDER)]
 def output(job):return WRAPPER/'evidence'/job['out']
 def verify():
  from bootstrap import install
- install()
- from chain_seal import check_map
- from screen_seal_support import wrapper_seal
- wrapper_seal();r=configuration()
- for key in ('control','candidate'):name(*(r[key][k] for k in KEYS))
- seal=json.loads((P/'screen-jobs-seal.json').read_text());check_map(ROOT,seal['sources']);assert seal['views']==selections() and seal['order']==list(ORDER)
- return seal
+ install();r=json.loads((P/'screen-jobs-seal.json').read_text());check_map(ROOT,r['sources']);assert r['order']==list(ORDER) and r['record_lane']=='A';return r
 def seal_jobs():
- sources={str((P/n).relative_to(ROOT)):sha(P/n) for n in ('screen_jobs.py','screen_job.py','compare.py','composition-selection.json','run_screen.py','baseline-pins.json','shared-wrapper-pin.json')}
- for c in ORDER:sources[str((view(c)/'screen-seal.json').relative_to(ROOT))]=sha(view(c)/'screen-seal.json')
- save(P/'screen-jobs-seal.json',dict(passed=True,device_executed=False,views=selections(),order=list(ORDER),sources=sources))
-def choose(rows):
- from compare import compare
- compare(rows)
- assert rows[1]['rate']>max(rows[0]['rate'],rows[-1]['rate']),'no candidate beats both same-lane controls'
- return rows[1]
+ sources={str((P/n).relative_to(ROOT)):sha(P/n) for n in ('screen_jobs.py','screen_job.py','compare.py','run_screen.py','bootstrap.py','worker.py','placement.py','placement-policy.json')}
+ for label in set(ORDER):sources[str((view(label)/'screen-seal.json').relative_to(ROOT))]=sha(view(label)/'screen-seal.json')
+ save(P/'screen-jobs-seal.json',dict(passed=True,device_executed=False,order=list(ORDER),sources=sources,record_lane='A',qualification='Each placement must beat its two fresh controls with 13/13 exact checks and identical acceptance. A independently confirms; no CPU or B-only record claim.'))

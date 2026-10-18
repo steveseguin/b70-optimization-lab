@@ -19,6 +19,7 @@
 #include "p74_submit.hpp"
 #include "p93_submit.hpp"
 #include "p93_head.hpp"
+#include "p105_submit.hpp"
 #include "p49d_submit.hpp"
 #include "p25_bridge.hpp"
 #include "p28/submit.hpp"
@@ -789,6 +790,8 @@ public:
     if(c!=0)throw std::logic_error("rank-local device only");
     return *devices.at(0);
   }
+  std::set<Allocation> head_auxiliary; // private p105 scratch, never target/draft state
+  std::function<void(int,int,int)> head_export,head_merge;
   bool progress_pending=false;
   std::function<void()> progress_callback; // same-thread draft readback publication
   void wait(int c, ownrt::Event e) {
@@ -853,12 +856,14 @@ public:
   }
   unsigned variant(const flash::Launch& l,size_t projection=0)const {return gemv_choices.at(&l).second.at(projection);}
   unsigned weight_variant(const std::string& name)const {
+    if(name=="output.weight"&&split_head())return 6;
     for(const auto& l:p.launches)if(l.op=="gemv" && l.weights[0]==name)return variant(l);
     return 2;
   }
   std::string head_choice()const {auto i=sealed_selection.choices.find("head");return i==sealed_selection.choices.end()?"production":i->second;}
+  bool split_head()const {return head_choice()=="head-split-compute"||head_choice()=="head-split-bcs";}
   bool packed_weight(const std::string& name)const {
-    if(name=="output.weight"&&head_choice()!="production")return true;
+    if(name=="output.weight"&&head_choice()=="head-transpose")return true;
     if(a.mini||a.memory!="resident")return false;
     const auto& t=w.directory.at(name);auto type=flash::grid_type(t.grid);
     if(type!=iq3::Type::Q6_K&&type!=iq3::Type::Q8_0)return false;
@@ -891,6 +896,10 @@ public:
     const bool halfcache=p90_expert_weight(name),hccache=p90_hc_weight(name);
     if(halfcache)expanded_bytes=size_t(t.shape[0])*t.shape[1]*p90::expert_stride(t.shape.back());
     if(hccache){require(t.shape.size()==2&&t.shape[0]==10240&&t.shape[1]==320&&type==iq3::Type::Q8_0,"p90 HC shape");expanded_bytes=size_t(t.shape[0])*p90::hc_stride;}
+    const bool head_split=name=="output.weight"&&split_head();
+    const size_t load_rows=head_split?(a.rank==0?p105::suffix:p105::prefix):size_t(t.shape[0]);
+    const size_t first_row=head_split&&a.rank==0?p105::prefix:0;
+    if(head_split)expanded_bytes=load_rows*3380;
     auto id = allocate(c, "weight:" + name, expanded_bytes, Category::weights,
                        Lifetime::process);
     weights[c][name] = id;
@@ -918,8 +927,8 @@ public:
       auto fmt=iq3::layout(type);size_t rb=t.shape[1]/fmt.elements*fmt.bytes;
       size_t er=hccache?p90::hc_stride:arithmetic::row_bytes(type,t.shape[1],v);
       size_t rows_per=std::max(size_t(1),size_t(4*1024*1024)/std::max(rb,er));
-      for(size_t row=0;row<size_t(t.shape[0]);row+=rows_per){
-        auto nr=std::min(rows_per,size_t(t.shape[0])-row);auto raw=w.read(name,row*rb,nr*rb);
+      for(size_t row=0;row<load_rows;row+=rows_per){
+        auto nr=std::min(rows_per,load_rows-row);auto raw=w.read(name,(first_row+row)*rb,nr*rb);
         auto expanded=hccache?p90::hc_repack(raw.data(),raw.size()):iq3::expanded::expand(type,raw.data(),raw.size(),t.shape[1]);
         upload(c,id,row*er,expanded.data(),expanded.size());
       }
@@ -1164,6 +1173,7 @@ public:
     m.x=buffers[c].at(l.inputs[0]).id;m.y=buffers[c].at(l.outputs[projection*2]).id;
     m.rows=l.shape[1];m.columns=l.shape[2];m.span=m.rows;
     m.workspace=workspace[c];
+    if(l.weights[projection]=="output.weight"&&split_head()){require(a.rank==1,"p105 target prefix rank");m.rows=m.span=p105::prefix;}
     if(routed) {
       m.count=p.g.top;m.experts=a.memory=="layer-streaming"?p.g.top:p.g.experts;
       m.status=buffers[c].at(l.outputs[projection*2+1]).id;
@@ -1217,7 +1227,7 @@ public:
       p39::Bindings b;b.error=buffers[c].at("error").id;b.active=buffers[c].at("active").id;b.position=buffers[c].at("position").id;b.capacity=p.g.context;
       finish(c,p49c::dense_submit(dev(c),m,p39::Kind::expert_checks,b),true);return;
     }
-    if(l.weights[0]=="output.weight"&&head_choice()!="production"){require(variant(l)==6,"p93 head arithmetic");finish(c,p93::submit(dev(c),m,head_choice()),true);return;}
+    if(l.weights[0]=="output.weight"&&head_choice()=="head-transpose"){require(variant(l)==6,"p93 head arithmetic");finish(c,p93::submit(dev(c),m,head_choice()),true);return;}
     if(packed_weight(l.weights[0])){finish(c,p74::submit(dev(c),m,variant(l)),true);return;}
     const auto& candidate=gemv_choices.at(&l).first;
     if(candidate=="p30.small.rows4"&&!a.mini) {
@@ -1318,6 +1328,7 @@ public:
       for (auto name : {"error", "position", "active"})
         bindings.push_back(buffers[c].at(name).id);
       bindings.push_back(ropes[c]);
+      if(l.op=="argmax"&&split_head())s.sizes[0]=p105::prefix;
       s.implementation=packet26::dispatch.implementation_for(l.label,s.op);
       // Packet49 arithmetic identity: both verification rows take split32 QSA.
       if(l.op=="qsa_attention" && p.g.h==2560)s.implementation=12;
@@ -1553,7 +1564,7 @@ static void write_plan(const fs::path &path, const flash::Plan &p,
       owner[n] = l.card;
       auto &t = w.directory.at(n);
       auto v=l.op=="gemv"?dispatch(l,t):2;
-      stored[n]=(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head")!="production")?t.bytes:p49b_weight(w,a,p,n)?p49b_weight_bytes(t):arithmetic::is_expanded(v)?size_t(t.shape[0])*arithmetic::row_bytes(flash::grid_type(t.grid),t.shape[1],v):t.bytes;
+      stored[n]=(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head").starts_with("head-split-"))?size_t(p105::prefix)*3380:(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head")=="head-transpose")?t.bytes:p49b_weight(w,a,p,n)?p49b_weight_bytes(t):arithmetic::is_expanded(v)?size_t(t.shape[0])*arithmetic::row_bytes(flash::grid_type(t.grid),t.shape[1],v):t.bytes;
       if(cached_expert&&p49b_weight(w,a,p,n)&&flash::grid_type(t.grid)==iq3::Type::IQ2_S)stored[n]=t.bytes/p49bgemv::source_row_bytes(iq3::Type::IQ2_S,t.shape.back())*p90::expert_stride(t.shape.back());
       if(cached_hc&&n.starts_with("blk.")&&(n.ends_with(".hc_attn_up.weight")||n.ends_with(".hc_ffn_up.weight")))stored[n]=size_t(t.shape[0])*p90::hc_stride;
       o << (comma ? "," : "") << "{\"name\":" << ownrt::quote(n)
@@ -1620,6 +1631,7 @@ static void record_host_memory(const fs::path& output,const char* phase) {
      <<(has_active?std::to_string(active):"null")<<"}\n";out.flush();
 }
 
+#include "p105_runtime.hpp"
 #include "rank.hpp"
 
 // SPEED6_SCRATCH_POLICY_BEGIN

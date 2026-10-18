@@ -46,7 +46,7 @@ def admit(root, seal, receipt, dispatch, name):
     for relative,digest in audit['memory_sources'].items():
         require(seal['sources'].get(relative)==digest and sha(ROOT/relative)==digest, 'memory census changed')
     require(audit['draft_prefix_rows'] in (91392,80128,74752) and audit['rank0_private_prefix_bytes']==(308904960 if rank==0 else 0), 'wrong prefix size')
-    supported,reason=True,'Packet97 full-shape post-load census, selected target storage and unchanged expanded draft prefix; device residency pending'
+    supported,reason=True,'Packet105 complete post-load census, private suffix and unchanged draft prefix; driver residency must pass live admission'
     result = dict(name=name, draft_rank=rank, target_split=split, layer_boundary=boundary,
                   target_layers=[boundary, 48-boundary], context=4096,
                   memory_admitted=True, supported=supported, reason=reason,
