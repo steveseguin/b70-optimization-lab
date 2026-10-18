@@ -6,7 +6,7 @@ import math
 from pathlib import Path
 import statistics
 from types import SimpleNamespace
-from screen_jobs import jobs, verify, choose, lanes, DIRECTIONS, WRAPPER as QUICK
+from screen_jobs import jobs, verify, choose, lanes, DIRECTIONS, GRIDS, WRAPPER as QUICK
 from common import D, HERE, METRICS, read, require, sealed, sha
 from conditions import cpu_gate, LANES
 
@@ -65,8 +65,8 @@ def load(row, lane):
     return dict(choice=row['choice'], rate=rate, exact=exact, acceptance_counts=[(r['stats']['hits'],r['stats']['guesses']) for r in summary['requests']], acceptance=statistics.mean(r['acceptance'] for r in summary['requests']), draft_wall_ms=statistics.mean(r['draft_wall_ms'] for r in summary['requests']) if all('draft_wall_ms' in r for r in summary['requests']) else None)
 
 
-def confirmed(grid, confirmation):
-    best = choose(grid)
+def confirmed(grid, confirmation, grid_name="all"):
+    best = choose(grid, grid_name)
     require([r['choice'] for r in confirmation] == ['production', best['choice'], 'production'],
             'confirmation selection differs from grid winner')
     require(all(r['exact'] for r in confirmation), 'all confirmation requests must be exact')
@@ -78,22 +78,23 @@ def confirmed(grid, confirmation):
     return confirmation[1]
 
 
-def compare_direction(direction='A-grid'):
+def compare_direction(direction='A-grid', grid_name='all'):
     source, other = lanes(direction)
-    grid = [load(row, source) for row in jobs(source, direction=direction)]
-    best = choose(grid)
-    confirmation = [load(row, other) for row in jobs(other, best['choice'], direction)]
-    result = confirmed(grid, confirmation)
-    return dict(passed=True, direction=direction, source_lane=source, confirmation_lane=other,
+    grid = [load(row, source) for row in jobs(source, direction=direction, grid=grid_name)]
+    best = choose(grid, grid_name)
+    confirmation = [load(row, other) for row in jobs(other, best['choice'], direction, grid_name)]
+    result = confirmed(grid, confirmation, grid_name)
+    return dict(passed=True, direction=direction, grid_name=grid_name, source_lane=source, confirmation_lane=other,
                 grid=grid, confirmation=confirmation, winner=result, qualification='screen only; no promotion')
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--direction', choices=DIRECTIONS, default='A-grid')
+    ap.add_argument('--grid', choices=GRIDS, default='all')
     args = ap.parse_args()
     cpu_gate(); verify()
-    print(json.dumps(compare_direction(args.direction), indent=2))
+    print(json.dumps(compare_direction(args.direction,args.grid), indent=2))
 
 
 if __name__ == '__main__':

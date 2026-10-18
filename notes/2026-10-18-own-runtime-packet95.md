@@ -19,3 +19,11 @@ stashed, rebased, changed or killed. New compiler work uses packet94's current
 coordinator-patched turn helper, nice19 and cores8–15,24–31, under8GiB address
 space. Root began with18.28GB free; work stops below12GB and build stays<1GB.
 No GPU, service, sudo or host setting change is authorized or performed.
+
+Both host and device binaries now build. Shared wrapper/admission tests and ten
+packet tests pass. The source review found no arithmetic or dispatch blocker;
+linked scheduling/register proof and full-size startup still remain. Those
+compiler stages respect the coordinator's whole-host record-window hold.
+Build logical size at completion was112,400,318bytes. The full and E3-only job
+families have separate output namespaces and both directions; E2 is refused as
+a closed choice. They are proposals, not live queues.
