@@ -393,3 +393,69 @@ server; arm `K32L` = K32 + `--lookups`):
   - Prediction: the workers drop by 0.2-0.5 GiB each, with arm times within 5 %.
   - If the workers do not drop by at least 0.15 GiB each, `ARENA` is dropped again and noted as no lever.
   - The arms' predictions and decisions are those of campaign 33 above.
+
+## Campaign 33b (21:23-21:35 EDT): 49/50, one audit read from memory; the guard's trigger found; campaign 34 registered (21:47:03 EDT, before any run)
+
+**What ran.** Arm 1 (`K32L retro 1`) ran to the end in 8 min 54 s and was graded: **49/50**, audits 5 of 6, the 44
+counters no audit touched all right, no violations. 17 cuts, all in place, 6 asked again; the same three lookups as in
+campaign 33 (qibape16 + dija83, tuxa48, domi68 + rumohi78), and every one of those counters ended right
+(rumohi78 265). The memory guard then stopped the server at 21:34:52 (1.54 GiB free), 12 s before the arm's end, so
+arms 2-5 did not run. No fault lines this time; the health probe passed at 21:40 and the kernel log stayed clean.
+
+**The miss: vomo85 217 for 245.** The stream: opened at 200 (item 30), down by 28 (item 34), lost 37 (item 54), up 82
+(item 61); item 70's audit reverses item 34's decrease, so 217 + 28 = 245. At the cut that took item 70 the model wrote
+`vomo85: 217 + 10 = 227 (audit item 70 reversed the decrease of 10 entered in item 34)`: an amount from memory,
+and wrong. The near check doubted it and asked for the item to be read again, but item 34 was archived, so the model
+could not; its second reply was unusable and the line was left out. The keeper behaved as designed; the gap is that
+the lookup was only offered to lines that say they wait.
+
+**Fix: ctxkeeper 1.2.0.dev1.** With `--lookups`, a CHANGES line that the checks doubt and that cites an archived item
+gets the same lookup question (that item's sentences about the name, word for word) instead of only "read the item
+again". The question now opens "Some lines of your CHANGES wait on or cite entries that are in the archive". A test
+covers it (`test_lookups_show_the_archived_entry_a_doubted_line_cites`); 90 tests pass. Nothing in notesdelta changed,
+so a replay of saved lines cannot differ.
+
+**MALLOC_ARENA_MAX=2: no lever.** Census at the same moment as campaign 33's: workers 4,008 and 3,940 MiB resident
+(c33: 3,998 and 3,948). Dropped, as registered.
+
+**What trips the guard.** The 5 s samples (`fault-20261017-1831/ps-c32.txt`) and the new kill record agree:
+- The server is flat for the whole arm (workers 4.10 and 4.03 GB, API 1.46, engine 0.97).
+- At the arm's end the client (harbor) grows from 0.30 to 0.40 GB and a `docker-compose` process (47 MB) starts,
+  within 5 s: free memory 1,766 -> 1,576 MiB. The earlier arms' ends show the same burst (harbor peaks of 0.40 and
+  0.49 GB). It is the client's end-of-run work: the token-counted trajectory export (`emit_ctx_trajectory`, which loads
+  a tokenizer and counts every message) and the task container's verifier and teardown.
+- The room is small before the burst: the server comes up with 2.18 GiB free (0.55 above the 1.6 floor); harbor and
+  the task container take 0.23 at the arm's start; this agent's own session process moves between 0.52 and 0.78 GB
+  (up 0.11 GB while it read the census at 21:28).
+- All three of today's kills after campaign 31 (18:31, 21:03, 21:17) and this one came at an arm's end.
+
+**Campaign 34: the same server, a server per arm, no trajectory export.** Runner
+`scripts/longrun-campaign34.sh` (copied from campaign 33's):
+- `PER_ARM=1`: each queue line gets its own server (`...-c34-aN`), started before the arm and stopped after it, as the
+  standing rules allow a registered runner ("start and stop the servers its stages need, each exactly once"). A guard
+  stop at one arm's end no longer ends the queue. After a guard stop, any fault line ends the queue; with none, one
+  bounded health probe runs (`scripts/check-qwen36-xpu-xccl-health.sh`, 300 s) and the next arm starts only if it
+  passes. About 3 min per arm for the start.
+- `TRAJ=0`: `emit_ctx_trajectory=false` for every kind, as the 1M kinds always had. `trajectory.json`, `details.json`
+  and `usage.json` are still written; the scoring and `summarize_results.py --check` read only those (its
+  thinking-length split reads the export and will show 0).
+- Keeper 1.2.0.dev1. Server, overlays, MTP 5, piece 832, `MARKS=1` and `RESTORE=0` as in campaign 33. No `ARENA`.
+- Queue `QUEUE34.txt`: `K32L retro 1 2400`, `K32L retro 0 2400`, `K32L retroloud 1 2400`, `K32L rules 0 2400`,
+  `K32 repair 2x 3600` (`IDLE_MAX=1800`).
+- The agent stays quiet beside each server: no file reads beyond the watch.
+
+**Predictions.**
+1. Retro 1: **50/50**, audits 6/6 (vomo85 245 by a lookup of item 34), the same three waiting lookups or more.
+2. Retro 0: audits 6/6, no new miss.
+3. Retroloud 1: 50/50.
+4. Rules 0: 39/39 or better, with at most one lookup (a doubted line on the plain stream may now ask one).
+5. Repair 2x: 40/40 clean, audit 7/7 (lookups are inactive there: no recall label).
+6. No guard stop at an arm's end; if one comes, it costs no further arm.
+
+**Decision.**
+- 1-5 hold: `--lookups` (1.2.0.dev1) and 1.1.1.dev1 stand for the gate (a release still needs the owner), and
+  `K32L hostile1m 0 9000` goes on the queue with the 17:48 amendment's pass conditions.
+- A doubted-line lookup asks on the plain stream more than once, or any score drops: narrow the trigger (cited item
+  must also be named next to the name) before more runs.
+- An audit missed for a reason other than a cited archived item: read the cut, then fix or withdraw.
+- A guard stop in the middle of an arm: memory comes first again; the kill record names the processes.

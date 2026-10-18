@@ -53,7 +53,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.2.0.dev0"
+__version__ = "1.2.0.dev1"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -199,11 +199,11 @@ RECALL_ROOM_NOTE = ("[[There is no room left in this turn for another archive se
                     "after that step for anything still missing.]]")
 RECALL_NONE_NOTE = "recall: not run, no room left in this turn"
 RECALLED_CHARS = 120_000                             # how much recent archive-search text the note checks may cite
-# --lookups: a CHANGES line that says it waits on an archived entry ("amount not yet known, must recall item 32") is
-# asked again once, with what that entry says about the name
+# --lookups: a CHANGES line that says it waits on an archived entry ("amount not yet known, must recall item 32"), or
+# that the checks doubt and that cites one, is asked again once, with what that entry says about the name
 WAITS = re.compile(r"\b(not (yet )?known|unknown|must (be )?recall(ed)?|to (be )?recall(ed)?|recall (it|the|that|item)|"
                    r"look(ed)? up|pending|from (the )?archive)\b", re.I)
-LOOKUP_RETRY = ("Some lines of your CHANGES wait on entries that are in the archive. Here is what those {unit}s say about "
+LOOKUP_RETRY = ("Some lines of your CHANGES wait on or cite entries that are in the archive. Here is what those {unit}s say about "
                 "each name, word for word:\n{entries}\nApply each entry to the value the NOTES hold and write the line "
                 "with its working (`name: 250 + 15 = 265`); leave a line waiting only if its entry does not settle it. "
                 "Then reply with the three complete sections again.")
@@ -1166,7 +1166,7 @@ class Keeper:
                 req = req + [{"role": "assistant", "content": text},
                              {"role": "user", "content": nd.COUNT_RETRY.format(names=", ".join(missing[:30]))}]
                 continue
-            wait = self.waiting(s, delta["changes"], texts) if self.lookups and not asked_lookup else []
+            wait = self.waiting(s, delta["changes"], texts, set(info.get("mismatch_at", []))) if self.lookups and not asked_lookup else []
             if wait:
                 # asked once, with what the archived entries the lines wait on say; for the checks of the reply that
                 # counts as stated (numbers only), as an archive search's result does
@@ -1209,18 +1209,23 @@ class Keeper:
                    tokens=self.tokens(s, noted) if noted else 0, turns=len(noted))
         return res
 
-    def waiting(self, s: Session, changes: list[tuple[str, str]], texts: list[str]) -> list[tuple[str, list[int], str]]:
-        """--lookups: the CHANGES lines that say they wait on an archived entry, each with the numbers of the units
-        (recall_unit) it names and what those say about the name: every sentence that names it, with the sentence
-        after it (where a pronoun may carry the amount). What the turns being noted say already is not looked up.
+    def waiting(self, s: Session, changes: list[tuple[str, str]], texts: list[str],
+                doubtful: set[int] | frozenset[int] = frozenset()) -> list[tuple[str, list[int], str]]:
+        """--lookups: the CHANGES lines that say they wait on an archived entry, or that the checks doubt (`doubtful`,
+        indices into `changes`) and cite one, each with the numbers of the units (recall_unit) it names and what
+        those say about the name: every sentence that names it, with the sentence after it (where a pronoun may
+        carry the amount). What the turns being noted say already is not looked up.
         Campaign 32 (quiet audits, seed 1): a reversal waited 55 items as `250 + (amount of the decrease entered in
-        item 32) = unknown`; the model's own sum over the whole history at the end was one off (266 for 265)."""
+        item 32) = unknown`; the model's own sum over the whole history at the end was one off (266 for 265).
+        Campaign 33b (the same stream): a reversal was written from memory, `217 + 10 = 227 (... the decrease of 10
+        entered in item 34)`, for a decrease of 28; asked to read the item again, the model could not (item 34 was
+        archived) and the line was left out."""
         unit = re.compile(rf"\b{re.escape(self.recall_unit)}s?[\s#-]*\d+(?:\s*(?:/|,|&|and|or|to|-|\u2013|\u2014)\s*\d+)*", re.I)
         rows = [r for r in s.archive.labelled(self.recall_label) if r["role"] in ("tool", "user")]
         here = "\n".join(texts)
         out = []
-        for name, value in changes:
-            if not WAITS.search(value):
+        for i, (name, value) in enumerate(changes):
+            if not WAITS.search(value) and i not in doubtful:
                 continue
             numbers = sorted({int(x) for m in unit.finditer(value) for x in re.findall(r"\d+", m.group(0))})[:4]
             said = []

@@ -194,7 +194,7 @@ the notes no longer had room to be written in place. Bigger windows are slower: 
 | `--think-when REGEX`, `--think-until REGEX` | turn thinking on only around matching messages (Qwen-style `enable_thinking`) |
 | `--notes-checks near` | extra checks for ledger-like state with names such as `abcd12` (the lab's memory streams); leave it off for ordinary agent work |
 | `--recall-label REGEX` | let `recall` use your content's own numbering (e.g. `'(?m)^ITEM (\d+)/'`) instead of message numbers |
-| `--lookups` | with `--recall-label`: a notes line that waits on an archived item is asked again with what that item says (off by default) |
+| `--lookups` | with `--recall-label`: a notes line that waits on an archived item, or that the checks doubt and that cites one, is asked again with what that item says (off by default) |
 | `--state-dir DIR` | where archives and notes are kept |
 | `--no-memory-note` | do not add the short paragraph that tells the model about its notes and `recall` |
 
@@ -281,6 +281,9 @@ Unreleased (1.2.0.dev0, 2026-10-17), a new option, off by default: `--lookups` (
 it, with the next one, word for word. The note checks count what is shown as stated, as they do an archive
 search's result. In-place notes calls cannot search the archive themselves. Lab campaign 32: such a line waited
 55 items, and the model's own sum over the whole history at the end was one off.
+1.2.0.dev1 (2026-10-17): a line the note checks doubt (an amount the turns do not state) that cites an archived
+item gets the same question, instead of only being asked to read the item again, which it cannot do once the item
+is archived. Lab campaign 33b: a reversal was written from memory with a wrong amount (10 for 28) and then left out.
 
 Also unreleased (1.1.1.dev1, 2026-10-17): a NOTES line whose new value states no number of its own (only item or
 ticket numbers, as in `audit reversal of the entry in item 4, amount not yet known, must recall items 4/5`) no longer
