@@ -1,0 +1,21 @@
+{
+  "schema": "packet115.micro-gate-tests.v1",
+  "passed": true,
+  "device_executed": false,
+  "tests": 10,
+  "command": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15,24-31",
+    "python3",
+    "-B",
+    "experiments/own-xpu-runtime/stage2/packet115-large-grf/test_micro_gate.py"
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet115-large-grf/micro_gate.py": "aef03599dde8a7580d96ef3573cf4749f20ed0fc4401b0f9ba143b2420917115",
+    "experiments/own-xpu-runtime/stage2/packet115-large-grf/test_micro_gate.py": "b6e2091b18859033d0264d0fd04c812cbd45d992c0bf05427951b673fb38ef0b"
+  }
+}

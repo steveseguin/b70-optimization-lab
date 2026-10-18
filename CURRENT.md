@@ -1,10 +1,11 @@
 # Current Workspace State
 
-**October 18, packet115 expert register work started on CPU:** The installed
-offline BMG compiler accepts a large register file for a separate device
-image. The small compiler probe reports 256 registers. Expert spill checks,
-exact bytes and device timing remain pending. A parallel copy is preparing
-the one-load bracket; nothing is queued or launched by this task.
+**October 18, packet115 expert micro prepared on CPU:** Separate expert images
+use 128 registers for production and 256 for LARGE. All four designs have
+zero spills; both compilers pass exact-byte checks twice per view. Two fresh
+B micro proposals pass temporary queue planning and compare against both
+production modes. Device equality and speed remain unmeasured. A parallel
+copy is finishing one-load startup checks; no live queue or GPU changed here.
 [Work note](notes/2026-10-18-own-runtime-packet115.md).
 
 **October 18, packet114 smaller draft prefix prepared on CPU:** The fixed

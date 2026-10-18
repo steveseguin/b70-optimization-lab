@@ -37,3 +37,34 @@ LARGE; retain default production and LARGE production as separate controls.
 All compilation uses packet94's copied `compile_turn.py`, nice19, CPU affinity
 8–15/24–31, Python `-B`, closed stdin and an 8 GiB CPU-only cap. Stop below
 25 GB root free; keep the new build at most 250 MB. No live queue edits.
+
+## Zero-spill and micro milestone
+
+All four expert designs now have zero scratch allocations, zero scratch
+instructions and zero predicate spills in the linked LARGE image. Production's
+separate image uses 128 GRFs; LARGE uses 256. The image kernels have distinct
+names to prevent merging with each other or inherited runtime kernels. The
+exact prepared-command overlay is preserved across the shared-library boundary.
+
+E5 initially spilled three flag stores and six flag loads even at 256. Its
+common output epilogue fixes that while preserving independent V8 chains and
+trees. The rejected source and assembly remain in `evidence/e5-first`.
+
+GNU and Intel each pass two fresh runs per view (20 runs total), with 19
+whole-output/status cases, 110,592 raw-chain and 3,456 raw-tree checks per run.
+All output byte streams share the same SHA256. Exhaustive IQ2 grid/sign and
+IQ4 code/half-scale tests pass. The linked register census and CPU bytes are
+separate gates; neither establishes device speed.
+
+The new [micro proposal](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p115-micro-B.txt)
+contains two fresh-process jobs. Both passed the coordinator planner on a
+temporary queue. Each uses all 384 captured route vectors, both orders, default
+and LARGE production controls. Matched-route medians must be at most 0.85 in
+each order/control/process. Raw per-route ratios remain visible; there is no
+single-noisy-pair veto or route selection. Ten gate/refusal tests pass.
+Expected budget is 180 seconds per process, watchdog 900 seconds; actual
+duration is unmeasured. The frozen packet100b route identity is rechecked.
+
+[Image report](../experiments/own-xpu-runtime/stage2/packet115-large-grf/evidence/images.json),
+[CPU identity](../experiments/own-xpu-runtime/stage2/packet115-large-grf/evidence/cpu-byte-identity.json),
+[temporary plans](../experiments/own-xpu-runtime/stage2/packet115-large-grf/evidence/micro-queue-plan.json).
