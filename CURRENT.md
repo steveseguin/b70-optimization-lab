@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**October 18, packet103 source decision checked on CPU:** The new reader
+selects route, recurrence, half-cache and draft attention from exact source
+brackets. Down-tile16 waits for its engine evidence. Nine decision checks
+pass. The bundle copy waits for packet97e’s committed startup fix; no device
+or live queue ran. [Work note](notes/2026-10-18-own-runtime-packet103.md).
+
 **October 18, packet100b route capture prepared on CPU:** The new lane-B job
 captures both ranks' target expert routes for two standard 64-token requests,
 then checks every output against the existing oracle. The follow-on micro uses

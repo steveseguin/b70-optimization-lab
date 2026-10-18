@@ -1,0 +1,49 @@
+{
+  "schema": "packet103.source-decision-dry-run.v1",
+  "passed": true,
+  "ready": false,
+  "device_executed": false,
+  "control": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64",
+    "host": "ordered",
+    "route": "production",
+    "norm": "production",
+    "recurrence": "rec-parallel",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "down": "production",
+    "draft_attention": "production"
+  },
+  "candidate": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64+halfcache",
+    "host": "ordered",
+    "route": "fast",
+    "norm": "production",
+    "recurrence": "rec-both-plus",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "down": "production",
+    "draft_attention": "split32"
+  },
+  "confirmed_sources": [
+    "91",
+    "101",
+    "90"
+  ],
+  "deferred_sources": [
+    "100"
+  ],
+  "excluded_sources": {
+    "93": "record lane A excludes head-transpose: candidate not faster than both controls",
+    "92": "reply-first no gain (lane A)",
+    "94": "HC norm fusion -23% (lane B)",
+    "95": "Reviewed closed source"
+  },
+  "reason": "CPU decision only; composition brackets and sealed chain gates required"
+}
