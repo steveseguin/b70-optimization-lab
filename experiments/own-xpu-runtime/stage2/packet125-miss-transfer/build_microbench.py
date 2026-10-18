@@ -59,7 +59,7 @@ def main():
  compile=json.loads((e/'micro-compile.json').read_text());assert sha(b/'microbench')==compile['artifact_sha256']
  for path,h in compile['sources'].items():assert sha(ROOT/path)==h,path
  sources=dict(compile['sources']);artifacts={'build/microbench':sha(b/'microbench')}
- for name in ('build_engine.py','compile_turn.py','build_microbench.py','preregistration.json','run_micro.py','micro_gate.py','route_inputs.py','shared-wrapper-pin.json','drain_gate.py','exec_limits.py','evidence/route-inputs.json','evidence/cases.bin','evidence/all-routes.bin','evidence/cpu-tests.json'):
+ for name in ('build_engine.py','compile_turn.py','build_microbench.py','preregistration.json','run_micro.py','micro_gate.py','route_inputs.py','shared-wrapper-pin.json','drain_gate.py','exec_limits.py','evidence/route-inputs.json','evidence/cases.bin','evidence/all-routes.bin','evidence/cpu-tests.json','cpu_bytes.py','cpu_bytes.cpp','micro_common.hpp','evidence/cpu-bytes.json','evidence/accounting.json','evidence/drain-check.json'):
   f=P/name;sources[str(f.relative_to(ROOT))]=sha(f)
  receipt=dict(schema='packet125.micro-build.v1',passed=True,device_executed=False,sources=sources,artifacts=artifacts,command=compile['command'],max_rss_kib=compile['max_rss_kib'],build_bytes=storage(),arithmetic='frozen 58j production IQ2/IQ3 gate/up, p39 activation, production or p100 down; transport only')
  (e/'microbench-build.json').write_text(json.dumps(receipt,indent=2)+'\n');print('micro compiled/sealed; device not executed')

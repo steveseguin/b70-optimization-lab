@@ -83,3 +83,12 @@ p28 paired WG32 kernel, with no arithmetic edits. Compiler commands, source and
 binary hashes, CPU checks and temporary plans are retained in `evidence/`.
 Ignored binaries and compiler dumps are rebuildable and are not public assets.
 [Accounting and PCIe interpretation](../../../../notes/2026-10-18-own-runtime-packet125.md).
+
+Final CPU validation adds [two GNU and two Intel byte runs](evidence/cpu-bytes.json),
+24 checks each, including NaN/subnormal inputs, plus twelve policy tests.
+[Exact memory accounting](evidence/accounting.json) records 6,600,070,264 pinned
+bytes and 569,764,724 device bytes, leaving about 1.38 GB for runtime/transient
+backing inside the 8 GiB process allowance after a 40 MB pageable allowance.
+`cpu_bytes.py` runs these CPU checks before the final device build; `accounting.py`
+recomputes the retained receipt and micro-memory accounting. Both are CPU-only.
+[Preparation closeout](CPU-PREPARATION-CLOSEOUT.md), [boundaries](DO-NOT-REPEAT.md).

@@ -72,7 +72,7 @@ def memory_admit():
     row = M.meminfo()
     require(row['MemAvailable'] >= 16 * GIB, 'micro requires 16 GiB available: 8 GiB reserve plus 8 GiB process budget')
     return dict(snapshot=row, required_bytes=16 * GIB, host_reserve_bytes=8 * GIB,
-                anonymous_budget_bytes=8 * GIB, device_bytes_upper_bound=8 * GIB)
+                anonymous_budget_bytes=8 * GIB, device_bytes_upper_bound=1 * GIB)
 
 
 def fault_latch_gate(boot):
@@ -90,7 +90,7 @@ def native_summary(path):
     import micro_gate
     rows = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
     # Strict completeness and exact-byte gates are mandatory independently of speed.
-    micro_gate.analyze(rows)
+    micro_gate.analyze(rows,owner=int(OUTPUT.name.rsplit("-",1)[1]))
     return rows[-1]
 
 
@@ -127,7 +127,7 @@ def main(argv=None):
              device_mask=MASK, output=str(OUTPUT), reservation_scope='lane-B',
              drain='shared DrainPermit held across entire autonomous native lifetime',
              required_host_available_bytes=16*GIB, host_reserve_bytes=8*GIB,
-             maximum_host_scratch_bytes=8*GIB, device_bytes_upper_bound=8*GIB,
+             maximum_host_scratch_bytes=8*GIB, device_bytes_upper_bound=1*GIB,
              minimum_root_free_bytes=25_000_000_000, watchdog_seconds=WATCHDOG, expected_seconds=EXPECTED_SECONDS, retries=0,
              micro_qualification='same candidate >=1.5x production useful miss bytes / complete route-known-to-output wall time in BOTH fresh processes, all384 routes including no-miss; exact bytes; diagnostic only'), indent=2))
         return 0

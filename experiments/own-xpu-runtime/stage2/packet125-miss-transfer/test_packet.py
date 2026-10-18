@@ -40,6 +40,14 @@ class Tests(unittest.TestCase):
   for v in r:
    if v.get('view')=='bcs_aligned' and v['token']%64!=0:v['wall_ns']=201
   self.assertNotIn('bcs_aligned',G.analyze(r)['speed_qualified'])
+ def test_reverse_order(self):
+  with self.assertRaises(AssertionError):G.analyze(self.fixture(),owner=2)
+ def test_iq3_extraction(self):
+  parent=P.parent/'packet58j-onecard-port'
+  s=(parent/'p28/submit.cpp').read_text();s=s[:s.index('void validate(')]+s[s.index('#ifndef OWN_RT_HOST_ONLY\nstruct Share'):s.index('#ifndef OWN_RT_HOST_ONLY\ntemplate<bool OutputPair>')]+ '\n}\n'
+  for name in ('submit.hpp','dense.hpp','expert.hpp'):s=s.replace('#include "'+name+'"','#include "../packet58j-onecard-port/p28/'+name+'"')
+  expected='// Exact production p28 Kernel/lanes/Share extraction; see build input pins.\n'+s
+  self.assertEqual((P/'iq3_kernel.hpp').read_text(),expected)
  def test_no_resource_import_side_effect(self):
   import exec_limits
   baseline=exec_limits.snapshot();__import__('run_micro');self.assertEqual(exec_limits.snapshot(),baseline)

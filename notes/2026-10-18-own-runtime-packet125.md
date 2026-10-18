@@ -69,3 +69,28 @@ The [README](../experiments/own-xpu-runtime/stage2/packet125-miss-transfer/READM
 defines timings, bytes, memory and all seven arms. Effective route-to-output
 bandwidth is distinct from K1's device-event rate. Actual device equality,
 speed and overlap remain unmeasured; integration is blocked on both micros.
+
+## Final CPU checks and next boundary
+
+The final binary also passes two fresh CPU byte runs under each of GNU and
+Intel: 24 checks each, identical transcript digest, covering pointer relocation,
+reversible tile layout and finite/NaN/subnormal arithmetic. Twelve policy tests
+and the drain check pass; both final temporary queue plans pass. The build is
+about 13 MB, compiler peak RSS below 400 MiB. Exact explicit allocations are
+6,600,070,264 pinned bytes and 569,764,724 device bytes, with more than 1.3 GB
+for runtime/transient backing inside the 8 GiB process allowance.
+
+[accounting.py](../experiments/own-xpu-runtime/stage2/packet125-miss-transfer/accounting.py)
+independently recomputes counts and timers from packet58n's original-byte
+receipt archives. The missing bytes at a hypothetical sustained 14 GB/s would
+cost about 4.68 ms, versus a measured 39.94 ms whole step. That division is a
+throughput-only estimate, not an isolated miss-path duration: the receipts do
+not establish that misses dominate the whole token. The pending micro measures
+actual sparse cases and copy overhead instead of assuming that premise.
+
+The [qualification artifact](../experiments/own-xpu-runtime/stage2/packet125-miss-transfer/evidence/qualification.json)
+has zero device measurements and `engine_integration_allowed=false`.
+Consequently no `proposed-p125-screen-A.txt` or copied model engine was made.
+The next action is the coordinator's two admitted micro windows; their results
+decide whether step 4 applies. No permission question or live-queue edit is
+needed for this handoff. [Preparation closeout](../experiments/own-xpu-runtime/stage2/packet125-miss-transfer/CPU-PREPARATION-CLOSEOUT.md).

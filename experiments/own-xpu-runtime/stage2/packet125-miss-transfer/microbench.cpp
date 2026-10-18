@@ -1,7 +1,6 @@
 // Independently authored transport harness, unchanged lab expert arithmetic.
 #include "../packet58j-onecard-port/p49d_expert.hpp"
 #include "../packet58j-onecard-port/p100_down.hpp"
-#include "iq3_kernel.hpp"
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
 #include <level_zero/ze_api.h>
 #include <atomic>
@@ -20,13 +19,7 @@ static void guard(){check(!stopped,"cooperative stop");}
 static void zecheck(ze_result_t r){check(r==ZE_RESULT_SUCCESS,"Level Zero copy engine operation failed");}
 using Clock=std::chrono::steady_clock;
 static double elapsed(Clock::time_point t){return std::chrono::duration<double,std::nano>(Clock::now()-t).count();}
-struct Case {uint32_t token,layer,mask;iq3::Route routes[10];};
-static_assert(sizeof(Case)==132);
-constexpr size_t DOWN=921600,ALIGN=65536,SCRUB=512ull*1024*1024;
-static size_t align_up(size_t n){return (n+ALIGN-1)&~(ALIGN-1);}
-static size_t gate_bytes(const Case&c){return c.layer==2?704000:524800;}
-static unsigned misses(const Case&c){return std::popcount(c.mask);}
-static const char* modes[]={"production","tile16","bcs_serial3","bcs_inflight3","bcs_contiguous","bcs_aligned","bcs_pipeline3"};
+#include "micro_common.hpp"
 struct Queues {
  sycl::queue q;ze_command_list_handle_t list=nullptr;std::unique_ptr<sycl::queue> copy;
  std::vector<void*> memory;
@@ -47,19 +40,12 @@ struct Queues {
  ~Queues(){try{drain();}catch(...){/* Never free buffers on an unproved drain. */for(;;)std::this_thread::sleep_for(std::chrono::seconds(1));}
   for(auto p:memory)sycl::free(p,q.get_context());copy.reset();if(list&&zeCommandListDestroy(list)!=ZE_RESULT_SUCCESS)for(;;)std::this_thread::sleep_for(std::chrono::seconds(1));}
 };
-static std::vector<uint8_t> fixture(iq3::Type t,unsigned rows,unsigned K,unsigned seed){
- auto l=iq3::layout(t);size_t rawstride=K/l.elements*l.bytes,stride=t==iq3::Type::IQ3_S?rawstride:p49bgemv::layout(t,K).row_bytes;
- std::vector<uint8_t> out(rows*stride),raw(rawstride);uint32_t rng=seed;
- for(unsigned r=0;r<rows;++r){for(auto&v:raw){rng=rng*1664525+1013904223;v=rng>>24;}
-  for(size_t at=0;at<raw.size();at+=l.bytes){uint16_t scale=0x1400+(r+at)%1024;std::memcpy(raw.data()+at,&scale,2);}
-  if(t==iq3::Type::IQ3_S)std::memcpy(out.data()+r*stride,raw.data(),stride);else p49bgemv::repack_row(t,K,raw.data(),out.data()+r*stride);
- }return out;
-}
 struct HostCase {size_t separate,compact,aligned,tiled;};
+struct LocalDrain {Queues& o;~LocalDrain(){try{o.drain();}catch(...){for(;;)std::this_thread::sleep_for(std::chrono::seconds(1));}}};
 void bench(Queues&o,const std::vector<Case>&cases,unsigned owner){
  auto&q=o.q;auto&cq=*o.copy;std::vector<HostCase> offsets;size_t separate_n=0,compact_n=0,aligned_n=0,tile_n=0;
- for(auto&c:cases){offsets.push_back({separate_n,compact_n,aligned_n,tile_n});size_t n=misses(c),g=gate_bytes(c),e=2*g+DOWN;separate_n+=n*e;compact_n+=n*(e+64);aligned_n+=n*align_up(e);tile_n+=n*DOWN;}
- size_t pinned=separate_n+compact_n+aligned_n+tile_n+4*ALIGN;
+ for(auto&c:cases){offsets.push_back({separate_n,compact_n,aligned_n,tile_n});size_t n=misses(c),g=gate_bytes(c),e=2*g+DOWN;separate_n+=n*e;compact_n+=n*align_up(e+64);aligned_n+=n*align_up(e);tile_n+=n*DOWN;}
+ size_t pinned=separate_n+compact_n+aligned_n+tile_n+4*ALIGN+120;
  check(pinned<7ull*1024*1024*1024,"pinned allocation budget");
  auto*host=(uint8_t*)o.alloc(separate_n+ALIGN,true);auto*compact=(uint8_t*)o.alloc(compact_n+ALIGN,true,ALIGN);
  auto*aligned=(uint8_t*)o.alloc(aligned_n+ALIGN,true,ALIGN);auto*tile=(uint8_t*)o.alloc(tile_n+ALIGN,true);
@@ -85,14 +71,14 @@ void bench(Queues&o,const std::vector<Case>&cases,unsigned owner){
  auto launch_gate=[&](const Case&c,const std::vector<sycl::event>&deps){return c.layer==2?iq3gate.submit(q,gb,deps):gate.submit(q,gb,deps);};
  auto activation=[&](sycl::event g){return q.submit([&](sycl::handler&h){h.depends_on(g);h.parallel_for(sycl::range<1>(6400),[=](sycl::id<1>i){act[i]=p39::activation(y[i],uy[i]);});});};
  for(unsigned ci=0;ci<cases.size();++ci){guard();auto&c=cases[ci];auto off=offsets[ci];size_t g=gate_bytes(c),e=2*g+DOWN,n=misses(c);
-  std::vector<uint8_t> all(10*e),tiles(10*DOWN);unsigned mi=0;
+  std::vector<uint8_t> all(10*e),tiles(10*DOWN);LocalDrain case_drain{o};unsigned mi=0;
   for(unsigned s=0;s<10;++s){unsigned seed=125+c.layer*65537+c.routes[s].expert_id*17;auto a=fixture(c.layer==2?iq3::Type::IQ3_S:iq3::Type::IQ2_S,640,2560,seed);auto b=fixture(c.layer==2?iq3::Type::IQ3_S:iq3::Type::IQ2_S,640,2560,seed+1);auto d=fixture(iq3::Type::IQ4_NL,2560,640,seed+2);auto td=p100::transpose(d.data(),2560);
    std::memcpy(all.data()+s*e,a.data(),g);std::memcpy(all.data()+s*e+g,b.data(),g);std::memcpy(all.data()+s*e+2*g,d.data(),DOWN);std::memcpy(tiles.data()+s*DOWN,td.data(),DOWN);
    if(c.mask&(1u<<s)){std::memcpy(host+off.separate+mi*g,a.data(),g);std::memcpy(host+off.separate+n*g+mi*g,b.data(),g);std::memcpy(host+off.separate+2*n*g+mi*DOWN,d.data(),DOWN);
-    std::memcpy(compact+off.compact+mi*(e+64)+64,all.data()+s*e,e);std::memcpy(aligned+off.aligned+mi*align_up(e),all.data()+s*e,e);std::memcpy(tile+off.tiled+mi*DOWN,td.data(),DOWN);++mi;}}
+    std::memcpy(compact+off.compact+mi*align_up(e+64)+64,all.data()+s*e,e);std::memcpy(aligned+off.aligned+mi*align_up(e),all.data()+s*e,e);std::memcpy(tile+off.tiled+mi*DOWN,td.data(),DOWN);++mi;}}
   q.memcpy(device,all.data(),all.size());q.memcpy(down_tile,tiles.data(),tiles.size());
   std::array<iq3::Route,10> hr;for(unsigned s=0;s<10;++s){hr[s]=c.routes[s];hr[s].row_count=640;}q.memcpy(gr,hr.data(),120);q.memcpy(dr,c.routes,120).wait_and_throw();
-  auto tables=[&](unsigned mode){std::array<p58::Pointer,512> a{},b{},d{};unsigned m=0;
+  auto tables=[&](unsigned mode){std::array<p58::Pointer,512> a{},b{},d{};LocalDrain tables_drain{o};unsigned m=0;
    for(unsigned s=0;s<10;++s){auto id=c.routes[s].expert_id;bool miss=c.mask&(1u<<s);auto*aa=device+s*e;auto*bb=aa+g;auto*dd=aa+2*g;
     if(mode<2&&miss){aa=host+off.separate+m*g;bb=host+off.separate+n*g+m*g;dd=mode==1?tile+off.tiled+m*DOWN:host+off.separate+2*n*g+m*DOWN;}
     else if(mode==1)dd=down_tile+s*DOWN;
@@ -107,7 +93,7 @@ void bench(Queues&o,const std::vector<Case>&cases,unsigned owner){
     unsigned m=0;auto copy_one=[&](void*dst,const void*src,size_t bytes){auto ev=cq.memcpy(dst,src,bytes);copies.push_back(ev);if(mode==2){auto w=Clock::now();ev.wait_and_throw();copy_wait+=elapsed(w);}return ev;};
     if(mode==6){for(unsigned s=0;s<10;++s)if(c.mask&(1u<<s)){copy_one(device+s*e,host+off.separate+m*g,g);gate_ready={copy_one(device+s*e+g,host+off.separate+n*g+m*g,g)};++m;}}
     else {for(unsigned s=0;s<10;++s)if(c.mask&(1u<<s)){
-      if(mode==4||mode==5)copy_one(device+s*e,mode==4?compact+off.compact+m*(e+64)+64:aligned+off.aligned+m*align_up(e),e);
+      if(mode==4||mode==5)copy_one(device+s*e,mode==4?compact+off.compact+m*align_up(e+64)+64:aligned+off.aligned+m*align_up(e),e);
       else {copy_one(device+s*e,host+off.separate+m*g,g);copy_one(device+s*e+g,host+off.separate+n*g+m*g,g);copy_one(device+s*e+2*g,host+off.separate+2*n*g+m*DOWN,DOWN);}++m;}
      if(!copies.empty())gate_ready={copies.back()};}
    }
@@ -117,8 +103,11 @@ void bench(Queues&o,const std::vector<Case>&cases,unsigned owner){
    check(output()==expected,"expert gate/up/activation/down/status bytes differ from production resident oracle");
    size_t verified=0;if(mode>=2){std::vector<uint8_t> bytes(e);for(unsigned s=0;s<10;++s)if(c.mask&(1u<<s)){q.memcpy(bytes.data(),device+s*e,e).wait_and_throw();check(std::memcmp(bytes.data(),all.data()+s*e,e)==0,"delivered packed expert bytes differ");verified+=e;}}
    auto event_ns=[](const sycl::event&ev){return ev.get_profiling_info<sycl::info::event_profiling::command_end>()-ev.get_profiling_info<sycl::info::event_profiling::command_start>();};
-   uint64_t copy_sum=0;for(auto&ev:copies){ev.wait_and_throw();copy_sum+=event_ns(ev);}
-   std::cout<<std::setprecision(17)<<"{\"kind\":\"sample\",\"case\":"<<ci<<",\"token\":"<<c.token<<",\"layer\":"<<c.layer<<",\"mask\":"<<c.mask<<",\"misses\":"<<n<<",\"view\":\""<<modes[mode]<<"\",\"miss_bytes\":"<<n*e<<",\"wall_ns\":"<<wall<<",\"route_readback_ns\":"<<route_ns<<",\"serial_copy_wait_ns\":"<<copy_wait<<",\"copy_events\":"<<copies.size()<<",\"copy_event_sum_ns\":"<<copy_sum<<",\"gate_ns\":"<<event_ns(ge)<<",\"activation_ns\":"<<event_ns(ae)<<",\"down_ns\":"<<event_ns(de)<<",\"delivered_bytes_checked\":"<<verified<<",\"all_bytes_exact\":true,\"diagnostic_only\":true}\n"<<std::flush;
+   uint64_t copy_sum=0,copy_first=0,copy_last=0,down_copy_first=0;for(unsigned j=0;j<copies.size();++j){auto&ev=copies[j];ev.wait_and_throw();copy_sum+=event_ns(ev);
+    auto st=ev.get_profiling_info<sycl::info::event_profiling::command_start>();auto en=ev.get_profiling_info<sycl::info::event_profiling::command_end>();if(!j)copy_first=st;copy_last=en;if(mode==6&&j==2*n)down_copy_first=st;}
+   auto gate_start=ge.get_profiling_info<sycl::info::event_profiling::command_start>();auto activation_end=ae.get_profiling_info<sycl::info::event_profiling::command_end>();
+   uint64_t overlap=mode==6&&n&&std::min(copy_last,activation_end)>std::max(down_copy_first,gate_start)?std::min(copy_last,activation_end)-std::max(down_copy_first,gate_start):0;
+   std::cout<<std::setprecision(17)<<"{\"kind\":\"sample\",\"case\":"<<ci<<",\"token\":"<<c.token<<",\"layer\":"<<c.layer<<",\"mask\":"<<c.mask<<",\"misses\":"<<n<<",\"view\":\""<<modes[mode]<<"\",\"miss_bytes\":"<<n*e<<",\"wall_ns\":"<<wall<<",\"route_readback_ns\":"<<route_ns<<",\"serial_copy_wait_ns\":"<<copy_wait<<",\"copy_events\":"<<copies.size()<<",\"copy_event_sum_ns\":"<<copy_sum<<",\"copy_first_ns\":"<<copy_first<<",\"copy_last_ns\":"<<copy_last<<",\"pipeline_envelope_overlap_ns\":"<<overlap<<",\"gate_ns\":"<<event_ns(ge)<<",\"activation_ns\":"<<event_ns(ae)<<",\"down_ns\":"<<event_ns(de)<<",\"delivered_bytes_checked\":"<<verified<<",\"all_bytes_exact\":true,\"diagnostic_only\":true}\n"<<std::flush;
   }
  }o.drain();guard();
 }
