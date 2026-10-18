@@ -60,3 +60,11 @@ def test_ready_requires_resolved_screens_and_only_runs_cpu_checks(tmp_path,monke
  assert result['ready'] is expected and result['preparation_passed'] is True
  assert result['selection']==o.select({})
  assert calls==['reseal','cpu-dry-run','seal','inputs','storage','queue-plan']
+def test_coordinator_closure_only_pending_and_pinned_default():
+ s={'81':dict(status='pending'),'82':winner('rec-parallel'),'83':dict(status='no-winner')}
+ choice,pins=o.apply_pins(o.select(s),['experts=wide64'])
+ closed=o.close_packets(s,choice,pins,['81=closed neutral elsewhere'])
+ assert closed['81']['value']=='wide64' and s['81']['status']=='no-winner' and s['82']['status']=='winner'
+ for bad_screens,bad_pins,value in (({'81':winner('input-packed')},['experts=wide64'],'81=x'),({'81':dict(status='pending')},[],'81=x'),({'81':dict(status='pending')},['experts=wide64'],'81='),({'81':dict(status='pending')},['experts=wide64'],'84=x')):
+  c,p=o.apply_pins(o.select({k:v for k,v in bad_screens.items() if v['status']=='winner'}),bad_pins) if bad_screens['81']['status']!='winner' else (dict(o.select({}),experts='wide64'),dict(experts='wide64'))
+  with pytest.raises(ValueError):o.close_packets(bad_screens,c,p,[value])

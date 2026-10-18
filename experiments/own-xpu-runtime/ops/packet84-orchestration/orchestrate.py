@@ -29,6 +29,19 @@ def apply_pins(choice,values):
         if v not in (choice[k],defaults[k]):raise ValueError('pins may only revert to production/default: '+k)
         pins[k]=v;choice[k]=v
     return choice,pins
+def close_packets(screens,choice,pins,values):
+    # Coordinator closure of a lever closed elsewhere (DO-NOT-REPEAT): only a pending packet whose
+    # dimension is pinned to production/default may be treated as no-winner; never a winner or conflict.
+    keys={'81':'experts','82':'recurrence','83':'draft_head'};defaults=dict(experts='wide64',recurrence='production',draft_head='production');closed={}
+    for value in values:
+        if value.count('=')!=1:raise ValueError('closure must be packet=reason')
+        n,reason=value.split('=')
+        if n not in keys or n in closed or not reason.strip():raise ValueError('unknown, duplicate or unexplained closure '+n)
+        if screens[n].get('status')!='pending':raise ValueError('only a pending packet may be closed: '+n)
+        if pins.get(keys[n])!=defaults[keys[n]] or choice[keys[n]]!=defaults[keys[n]]:raise ValueError('closure requires its dimension pinned to default: '+n)
+        closed[n]=dict(reason=reason,previous_status='pending',dimension=keys[n],value=choice[keys[n]])
+        screens[n]=dict(screens[n],status='no-winner',coordinator_closure=closed[n])
+    return closed
 def command():
     args=['systemd-run','--user','--unit=packet84-chain','--property=Restart=no',
           '--property=Nice=0','--property=CPUAffinity=0-3 16-19','--property=KillMode=process',
@@ -43,7 +56,7 @@ def run(name,args):
         r=subprocess.run([*PREFIX,*map(str,args)],cwd=ROOT,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT)
     if r.returncode:raise ValueError(name+' failed; see '+str(O/(name+'.log')))
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--snapshot-only',action='store_true');ap.add_argument('--pin',action='append',default=[],help='coordinator pin key=value applied after evidence selection (subset only: a pinned key may only be set to production/its default)');a=ap.parse_args()
+    ap=argparse.ArgumentParser();ap.add_argument('--snapshot-only',action='store_true');ap.add_argument('--closed',action='append',default=[],help='coordinator closure packet=reason for a pending packet whose dimension is pinned to default');ap.add_argument('--pin',action='append',default=[],help='coordinator pin key=value applied after evidence selection (subset only: a pinned key may only be set to production/its default)');a=ap.parse_args()
     resource.setrlimit(resource.RLIMIT_AS,(8*1024**3,8*1024**3))
     assert os.getpriority(os.PRIO_PROCESS,0)==19
     assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
@@ -56,6 +69,8 @@ def main():
         row['screens']=screens;save(O/'screens-current.json',screens)
         choice,pins=apply_pins(select(screens),a.pin)
         if pins:row['coordinator_pins']=pins
+        closures=close_packets(screens,choice,pins,a.closed)
+        if closures:row['coordinator_closures']=closures
         row['selection']=choice
         if a.snapshot_only:raise ValueError('snapshot only; prechecks not run')
         run('reseal',[P/'fast_reseal.py',*[s for k,v in choice.items() for s in ('--'+k,v)]])
