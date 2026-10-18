@@ -26,8 +26,18 @@ each half. This is a count, not a speed result.
 
 The first byte gate caught NaN payload selection in the final shared blend.
 The failed source and bytes are retained in `evidence/rejected-v1/`; the
-second form is in `rejected-v2/`. GNU needs separately materialized rounded
-operands to retain its production NaN payload; Intel retains the original
-expression. No NaN is canonicalized by the change. Expanded exhaustive-input
-checks, complete chain startup, final seals and the proposed lane-B device
-bracket remain in progress. No GPU, service, host setting or live queue changed.
+second form is in `rejected-v2/`. Checking final GNU O3/native flags caught
+further differences, retained in rejected-v3/v4. The fixture itself had
+specialized the production reference at the call site. The final reference
+now compiles the actual production NgHost separately with runtime shapes,
+matching the engine. GNU's host implementation keeps the original complete
+blend loop; Intel checks the fused row body used by the device source. No NaN
+is canonicalized. Both compilers now pass 222 cases and 2,320,320 byte checks
+per run, twice from fresh processes, including all BF16 encodings at the
+activation and tail boundaries.
+
+Both selections passed all eleven chain-window CPU startup paths, including
+KD's actual host/device argument paths. Both ranks passed five-view recapture,
+fresh-candidate capture equality and VRAM admission. Final seals and the
+proposed lane-B bracket remain in progress. No GPU, service, host setting or
+live queue changed.
