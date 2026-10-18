@@ -20,11 +20,19 @@
       "snapshot": "evidence/timing-qsa-B-2.jsonl.gz",
       "window_sha256": "9df659e828cb345dfd02589e8ac442f933aab580cfb26de25659aa7844936e19",
       "receipt_sha256": "c8935dd2dd08aa43682b641e3dcadf69ae01e8cbfa14b111619565f436c38eb0"
+    },
+    {
+      "name": "gdn-micro-B-1",
+      "source": "experiments/own-xpu-runtime/stage2/packet110-class-roofline/evidence/micro-B-1/native/iterations.jsonl",
+      "sha256": "1681876740ffc72ee86858e054b4f773b3e48236a103300f28adb772080d3a4c",
+      "snapshot": "evidence/timing-gdn-micro-B-1.jsonl.gz",
+      "window_sha256": "b63576173cd6391e0e317e07973d54cffe6a06932294ba3500823d6f8a0b0d41",
+      "receipt_sha256": "55213d1383d46b5550893f6a034eefe2f089e8eaf3f4283e67f4318f41454f9b"
     }
   ],
   "directory_sha256": "8352dc77cdb0e584068274b388b14bfba716ff315ff613bbe4ba67f62fd58507",
   "byte_model_sha256": "457ac390ddb896d6b39044ee6116caf47194ae3ebfd32c8b16011837c508f82a",
-  "gdn_status": "pending coordinator",
+  "gdn_status": "measured",
   "pending": [],
   "rows": [
     {
@@ -1770,6 +1778,1534 @@
         }
       ],
       "notes": "four-member tuple: router + shared gate/up + shared router"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "attention",
+      "measured_us": 46.6665,
+      "owner_medians_us": [
+        46.6665
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 36.87354934823091,
+      "effective_GBs": 424.3107153954121,
+      "roof_ratio": 0.7901503079989053,
+      "above_floor_us": 9.79295065176909,
+      "headroom_ms_per_half": 0.17627311173184362,
+      "gguf_weight_bytes": 12902400,
+      "runtime_weight_read_bytes": 19660800,
+      "activation_state_read_bytes": 73736,
+      "read_bytes": 19734536,
+      "write_bytes": 66560,
+      "tensors": [
+        {
+          "name": "blk.4.ssm_out.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            6144,
+            2560
+          ]
+        }
+      ],
+      "notes": "two kernels: GEMV partials + BF16 output/stream combine"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "expsact",
+      "measured_us": 5.417,
+      "owner_medians_us": [
+        5.417
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.07150837988826815,
+      "effective_GBs": 7.088794535720879,
+      "roof_ratio": 0.013200734703390836,
+      "above_floor_us": 5.345491620111732,
+      "headroom_ms_per_half": 0.09621884916201116,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 25600,
+      "read_bytes": 25600,
+      "write_bytes": 12800,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "expsdown",
+      "measured_us": 50.8855,
+      "owner_medians_us": [
+        50.8855
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 17.28148975791434,
+      "effective_GBs": 182.3733676587633,
+      "roof_ratio": 0.3396152097928553,
+      "above_floor_us": 33.604010242085664,
+      "headroom_ms_per_half": 0.604872184357542,
+      "gguf_weight_bytes": 9216000,
+      "runtime_weight_read_bytes": 9216000,
+      "activation_state_read_bytes": 12920,
+      "read_bytes": 9228920,
+      "write_bytes": 51240,
+      "tensors": [
+        {
+          "name": "blk.4.ffn_down_exps.weight",
+          "type": "IQ4_NL",
+          "dimensions": [
+            640,
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": "p49d IQ4 planar bank: 360 bytes per K640 row; ten experts; output/status"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "expsgate",
+      "measured_us": 60.365,
+      "owner_medians_us": [
+        60.365
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 20.079925512104282,
+      "effective_GBs": 178.62867555702806,
+      "roof_ratio": 0.33264185392370216,
+      "above_floor_us": 40.28507448789572,
+      "headroom_ms_per_half": 0.7251313407821229,
+      "gguf_weight_bytes": 10496000,
+      "runtime_weight_read_bytes": 10752000,
+      "activation_state_read_bytes": 5240,
+      "read_bytes": 10757240,
+      "write_bytes": 25680,
+      "tensors": [
+        {
+          "name": "blk.4.ffn_gate_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        },
+        {
+          "name": "blk.4.ffn_up_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        }
+      ],
+      "notes": "p90 half-cache IQ2: 840 useful bytes/row, ten experts, both gate/up, status"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "ffn.combine",
+      "measured_us": 11.354,
+      "owner_medians_us": [
+        11.354
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.08582495344506517,
+      "effective_GBs": 4.059186189889026,
+      "roof_ratio": 0.007559005940203028,
+      "above_floor_us": 11.268175046554934,
+      "headroom_ms_per_half": 0.2028271508379888,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 25608,
+      "read_bytes": 25608,
+      "write_bytes": 20480,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "gdn.conv",
+      "measured_us": 9.271,
+      "owner_medians_us": [
+        9.271
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.6102048417132216,
+      "effective_GBs": 35.34462301801315,
+      "roof_ratio": 0.06581866483801332,
+      "above_floor_us": 8.66079515828678,
+      "headroom_ms_per_half": 0.15589431284916203,
+      "gguf_weight_bytes": 163840,
+      "runtime_weight_read_bytes": 163840,
+      "activation_state_read_bytes": 81920,
+      "read_bytes": 245760,
+      "write_bytes": 81920,
+      "tensors": [
+        {
+          "name": "blk.4.ssm_conv1d.weight",
+          "type": "F32",
+          "dimensions": [
+            4,
+            10240
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "gdn.gated",
+      "measured_us": 5.208,
+      "owner_medians_us": [
+        5.208
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.06960148975791434,
+      "effective_GBs": 7.1766513056835635,
+      "roof_ratio": 0.01336434135136604,
+      "above_floor_us": 5.1383985102420855,
+      "headroom_ms_per_half": 0.09249117318435754,
+      "gguf_weight_bytes": 512,
+      "runtime_weight_read_bytes": 512,
+      "activation_state_read_bytes": 24576,
+      "read_bytes": 25088,
+      "write_bytes": 12288,
+      "tensors": [
+        {
+          "name": "blk.4.ssm_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            128
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "gdn.qkv",
+      "measured_us": 68.646,
+      "owner_medians_us": [
+        68.646
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 61.068156424581005,
+      "effective_GBs": 477.72047897911017,
+      "roof_ratio": 0.8896098305011363,
+      "above_floor_us": 7.577843575418996,
+      "headroom_ms_per_half": 0.13640118435754192,
+      "gguf_weight_bytes": 21504000,
+      "runtime_weight_read_bytes": 32768000,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 32773120,
+      "write_bytes": 20480,
+      "tensors": [
+        {
+          "name": "blk.4.attn_qkv.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            10240
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "gdn.recurrence",
+      "measured_us": 23.958,
+      "owner_medians_us": [
+        23.958
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 5.920059590316574,
+      "effective_GBs": 132.6935470406545,
+      "roof_ratio": 0.2471015773568985,
+      "above_floor_us": 18.037940409683426,
+      "headroom_ms_per_half": 0.32468292737430166,
+      "gguf_weight_bytes": 384,
+      "runtime_weight_read_bytes": 384,
+      "activation_state_read_bytes": 1593536,
+      "read_bytes": 1593920,
+      "write_bytes": 1585152,
+      "tensors": [
+        {
+          "name": "blk.4.ssm_a",
+          "type": "F32",
+          "dimensions": [
+            48
+          ]
+        },
+        {
+          "name": "blk.4.ssm_dt.bias",
+          "type": "F32",
+          "dimensions": [
+            48
+          ]
+        }
+      ],
+      "notes": "BF16 state read/write; head normalization repeated per four rows; no FP32 state carry"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "gdn.z",
+      "measured_us": 39.5835,
+      "owner_medians_us": [
+        39.5835
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 36.64470763500931,
+      "effective_GBs": 497.1315826038627,
+      "roof_ratio": 0.9257571370649212,
+      "above_floor_us": 2.9387923649906895,
+      "headroom_ms_per_half": 0.05289826256983241,
+      "gguf_weight_bytes": 12902400,
+      "runtime_weight_read_bytes": 19660800,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 19665920,
+      "write_bytes": 12288,
+      "tensors": [
+        {
+          "name": "blk.4.attn_gate.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            6144
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "hc.a.gate",
+      "measured_us": 22.2395,
+      "owner_medians_us": [
+        22.2395
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 6.951806331471136,
+      "effective_GBs": 167.85988893635198,
+      "roof_ratio": 0.3125882475537281,
+      "above_floor_us": 15.287693668528863,
+      "headroom_ms_per_half": 0.2751784860335196,
+      "gguf_weight_bytes": 3481600,
+      "runtime_weight_read_bytes": 3686400,
+      "activation_state_read_bytes": 21120,
+      "read_bytes": 3707520,
+      "write_bytes": 25600,
+      "tensors": [
+        {
+          "name": "blk.4.hc_attn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "hc.a.low",
+      "measured_us": 10.781500000000001,
+      "owner_medians_us": [
+        10.781500000000001
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 7.210562383612663,
+      "effective_GBs": 359.14037935352223,
+      "roof_ratio": 0.6687902781257397,
+      "above_floor_us": 3.5709376163873383,
+      "headroom_ms_per_half": 0.0642768770949721,
+      "gguf_weight_bytes": 3645440,
+      "runtime_weight_read_bytes": 3850240,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 3870720,
+      "write_bytes": 1352,
+      "tensors": [
+        {
+          "name": "blk.4.hc_attn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.4.hc_attn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "hc.a.norm",
+      "measured_us": 9.791,
+      "owner_medians_us": [
+        9.791
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.15493482309124768,
+      "effective_GBs": 8.49759983658462,
+      "roof_ratio": 0.01582420826179631,
+      "above_floor_us": 9.636065176908753,
+      "headroom_ms_per_half": 0.17344917318435757,
+      "gguf_weight_bytes": 40960,
+      "runtime_weight_read_bytes": 40960,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 61440,
+      "write_bytes": 21760,
+      "tensors": [
+        {
+          "name": "blk.4.hc_attn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "hc.f.gate",
+      "measured_us": 22.604,
+      "owner_medians_us": [
+        22.604
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 6.951806331471136,
+      "effective_GBs": 165.15307025305256,
+      "roof_ratio": 0.3075476168585709,
+      "above_floor_us": 15.652193668528863,
+      "headroom_ms_per_half": 0.28173948603351956,
+      "gguf_weight_bytes": 3481600,
+      "runtime_weight_read_bytes": 3686400,
+      "activation_state_read_bytes": 21120,
+      "read_bytes": 3707520,
+      "write_bytes": 25600,
+      "tensors": [
+        {
+          "name": "blk.4.hc_ffn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "hc.f.low",
+      "measured_us": 10.833,
+      "owner_medians_us": [
+        10.833
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 7.210562383612663,
+      "effective_GBs": 357.43302870857565,
+      "roof_ratio": 0.6656108542059137,
+      "above_floor_us": 3.6224376163873373,
+      "headroom_ms_per_half": 0.06520387709497207,
+      "gguf_weight_bytes": 3645440,
+      "runtime_weight_read_bytes": 3850240,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 3870720,
+      "write_bytes": 1352,
+      "tensors": [
+        {
+          "name": "blk.4.hc_ffn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.4.hc_ffn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "hc.f.norm",
+      "measured_us": 7.604,
+      "owner_medians_us": [
+        7.604
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.15493482309124768,
+      "effective_GBs": 10.941609679116254,
+      "roof_ratio": 0.020375437018838462,
+      "above_floor_us": 7.449065176908753,
+      "headroom_ms_per_half": 0.13408317318435756,
+      "gguf_weight_bytes": 40960,
+      "runtime_weight_read_bytes": 40960,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 61440,
+      "write_bytes": 21760,
+      "tensors": [
+        {
+          "name": "blk.4.hc_ffn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "moe",
+      "measured_us": 5.0,
+      "owner_medians_us": [
+        5.0
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.1335679702048417,
+      "effective_GBs": 14.3452,
+      "roof_ratio": 0.026713594040968344,
+      "above_floor_us": 4.866432029795158,
+      "headroom_ms_per_half": 0.08759577653631284,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 61486,
+      "read_bytes": 61486,
+      "write_bytes": 10240,
+      "tensors": [],
+      "notes": "two kernels: ordered mixture + shared branch combination"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "route",
+      "measured_us": 18.75,
+      "owner_medians_us": [
+        18.75
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.013139664804469273,
+      "effective_GBs": 0.37632,
+      "roof_ratio": 0.0007007821229050279,
+      "above_floor_us": 18.73686033519553,
+      "headroom_ms_per_half": 0.3372634860335195,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 4392,
+      "read_bytes": 4392,
+      "write_bytes": 2664,
+      "tensors": [],
+      "notes": "p78 route-fast single event; input twice, global max/sum/exp scratch and route/probability outputs; local sort scratch excluded"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "shexpact",
+      "measured_us": 3.75,
+      "owner_medians_us": [
+        3.75
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.007150837988826816,
+      "effective_GBs": 1.024,
+      "roof_ratio": 0.0019068901303538174,
+      "above_floor_us": 3.742849162011173,
+      "headroom_ms_per_half": 0.06737128491620112,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 2560,
+      "read_bytes": 2560,
+      "write_bytes": 1280,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "shexpdown",
+      "measured_us": 11.458,
+      "owner_medians_us": [
+        11.458
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 3.444320297951583,
+      "effective_GBs": 161.42433234421364,
+      "roof_ratio": 0.30060397084583546,
+      "above_floor_us": 8.013679702048417,
+      "headroom_ms_per_half": 0.14424623463687153,
+      "gguf_weight_bytes": 1740800,
+      "runtime_weight_read_bytes": 1843200,
+      "activation_state_read_bytes": 1280,
+      "read_bytes": 1844480,
+      "write_bytes": 5120,
+      "tensors": [
+        {
+          "name": "blk.4.ffn_down_shexp.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            640,
+            2560
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "small.ffn.q6",
+      "measured_us": 18.9585,
+      "owner_medians_us": [
+        18.9585
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 17.426119180633147,
+      "effective_GBs": 493.5952738877021,
+      "roof_ratio": 0.9191718321931137,
+      "above_floor_us": 1.5323808193668533,
+      "headroom_ms_per_half": 0.02758285474860336,
+      "gguf_weight_bytes": 7941120,
+      "runtime_weight_read_bytes": 9349120,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 9354240,
+      "write_bytes": 3586,
+      "tensors": [
+        {
+          "name": "blk.4.ffn_gate_inp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            512
+          ]
+        },
+        {
+          "name": "blk.4.ffn_gate_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.4.ffn_up_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.4.ffn_gate_inp_shexp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560
+          ]
+        }
+      ],
+      "notes": "four-member tuple: router + shared gate/up + shared router"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 128,
+      "site": "small.gdn.ab",
+      "measured_us": 6.7705,
+      "owner_medians_us": [
+        6.7705
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 1.8405065176908753,
+      "effective_GBs": 145.9791743593531,
+      "roof_ratio": 0.2718420379131342,
+      "above_floor_us": 4.929993482309125,
+      "headroom_ms_per_half": 0.08873988268156424,
+      "gguf_weight_bytes": 983040,
+      "runtime_weight_read_bytes": 983040,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 988160,
+      "write_bytes": 192,
+      "tensors": [
+        {
+          "name": "blk.4.ssm_alpha.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            48
+          ]
+        },
+        {
+          "name": "blk.4.ssm_beta.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            48
+          ]
+        }
+      ],
+      "notes": "alpha/beta tuple"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "attention",
+      "measured_us": 46.667,
+      "owner_medians_us": [
+        46.667
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 36.87354934823091,
+      "effective_GBs": 424.30616924164826,
+      "roof_ratio": 0.7901418421632184,
+      "above_floor_us": 9.793450651769092,
+      "headroom_ms_per_half": 0.17628211173184366,
+      "gguf_weight_bytes": 12902400,
+      "runtime_weight_read_bytes": 19660800,
+      "activation_state_read_bytes": 73736,
+      "read_bytes": 19734536,
+      "write_bytes": 66560,
+      "tensors": [
+        {
+          "name": "blk.4.ssm_out.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            6144,
+            2560
+          ]
+        }
+      ],
+      "notes": "two kernels: GEMV partials + BF16 output/stream combine"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "expsact",
+      "measured_us": 5.416,
+      "owner_medians_us": [
+        5.416
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.07150837988826815,
+      "effective_GBs": 7.090103397341211,
+      "roof_ratio": 0.013203172062087916,
+      "above_floor_us": 5.344491620111732,
+      "headroom_ms_per_half": 0.09620084916201119,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 25600,
+      "read_bytes": 25600,
+      "write_bytes": 12800,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "expsdown",
+      "measured_us": 51.042,
+      "owner_medians_us": [
+        51.042
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 17.28148975791434,
+      "effective_GBs": 181.81419223384663,
+      "roof_ratio": 0.33857391477438853,
+      "above_floor_us": 33.76051024208566,
+      "headroom_ms_per_half": 0.6076891843575418,
+      "gguf_weight_bytes": 9216000,
+      "runtime_weight_read_bytes": 9216000,
+      "activation_state_read_bytes": 12920,
+      "read_bytes": 9228920,
+      "write_bytes": 51240,
+      "tensors": [
+        {
+          "name": "blk.4.ffn_down_exps.weight",
+          "type": "IQ4_NL",
+          "dimensions": [
+            640,
+            2560,
+            512
+          ]
+        }
+      ],
+      "notes": "p49d IQ4 planar bank: 360 bytes per K640 row; ten experts; output/status"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "expsgate",
+      "measured_us": 60.625,
+      "owner_medians_us": [
+        60.625
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 20.079925512104282,
+      "effective_GBs": 177.86259793814432,
+      "roof_ratio": 0.3312152661790397,
+      "above_floor_us": 40.54507448789572,
+      "headroom_ms_per_half": 0.729811340782123,
+      "gguf_weight_bytes": 10496000,
+      "runtime_weight_read_bytes": 10752000,
+      "activation_state_read_bytes": 5240,
+      "read_bytes": 10757240,
+      "write_bytes": 25680,
+      "tensors": [
+        {
+          "name": "blk.4.ffn_gate_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        },
+        {
+          "name": "blk.4.ffn_up_exps.weight",
+          "type": "IQ2_S",
+          "dimensions": [
+            2560,
+            640,
+            512
+          ]
+        }
+      ],
+      "notes": "p90 half-cache IQ2: 840 useful bytes/row, ten experts, both gate/up, status"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "ffn.combine",
+      "measured_us": 11.354,
+      "owner_medians_us": [
+        11.354
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.08582495344506517,
+      "effective_GBs": 4.059186189889026,
+      "roof_ratio": 0.007559005940203028,
+      "above_floor_us": 11.268175046554934,
+      "headroom_ms_per_half": 0.2028271508379888,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 25608,
+      "read_bytes": 25608,
+      "write_bytes": 20480,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "gdn.conv",
+      "measured_us": 9.375,
+      "owner_medians_us": [
+        9.375
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.6102048417132216,
+      "effective_GBs": 34.952533333333335,
+      "roof_ratio": 0.0650885164494103,
+      "above_floor_us": 8.764795158286779,
+      "headroom_ms_per_half": 0.157766312849162,
+      "gguf_weight_bytes": 163840,
+      "runtime_weight_read_bytes": 163840,
+      "activation_state_read_bytes": 81920,
+      "read_bytes": 245760,
+      "write_bytes": 81920,
+      "tensors": [
+        {
+          "name": "blk.4.ssm_conv1d.weight",
+          "type": "F32",
+          "dimensions": [
+            4,
+            10240
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "gdn.gated",
+      "measured_us": 5.2605,
+      "owner_medians_us": [
+        5.2605
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.06960148975791434,
+      "effective_GBs": 7.105028039159775,
+      "roof_ratio": 0.013230964691172766,
+      "above_floor_us": 5.190898510242086,
+      "headroom_ms_per_half": 0.09343617318435754,
+      "gguf_weight_bytes": 512,
+      "runtime_weight_read_bytes": 512,
+      "activation_state_read_bytes": 24576,
+      "read_bytes": 25088,
+      "write_bytes": 12288,
+      "tensors": [
+        {
+          "name": "blk.4.ssm_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            128
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "gdn.qkv",
+      "measured_us": 68.646,
+      "owner_medians_us": [
+        68.646
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 61.068156424581005,
+      "effective_GBs": 477.72047897911017,
+      "roof_ratio": 0.8896098305011363,
+      "above_floor_us": 7.577843575418996,
+      "headroom_ms_per_half": 0.13640118435754192,
+      "gguf_weight_bytes": 21504000,
+      "runtime_weight_read_bytes": 32768000,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 32773120,
+      "write_bytes": 20480,
+      "tensors": [
+        {
+          "name": "blk.4.attn_qkv.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            10240
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "gdn.recurrence",
+      "measured_us": 23.959,
+      "owner_medians_us": [
+        23.959
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 5.920059590316574,
+      "effective_GBs": 132.68800868149756,
+      "roof_ratio": 0.2470912638389154,
+      "above_floor_us": 18.038940409683427,
+      "headroom_ms_per_half": 0.3247009273743017,
+      "gguf_weight_bytes": 384,
+      "runtime_weight_read_bytes": 384,
+      "activation_state_read_bytes": 1593536,
+      "read_bytes": 1593920,
+      "write_bytes": 1585152,
+      "tensors": [
+        {
+          "name": "blk.4.ssm_a",
+          "type": "F32",
+          "dimensions": [
+            48
+          ]
+        },
+        {
+          "name": "blk.4.ssm_dt.bias",
+          "type": "F32",
+          "dimensions": [
+            48
+          ]
+        }
+      ],
+      "notes": "BF16 state read/write; head normalization repeated per four rows; no FP32 state carry"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "gdn.z",
+      "measured_us": 39.427,
+      "owner_medians_us": [
+        39.427
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 36.64470763500931,
+      "effective_GBs": 499.10487736830095,
+      "roof_ratio": 0.929431801430728,
+      "above_floor_us": 2.7822923649906883,
+      "headroom_ms_per_half": 0.05008126256983239,
+      "gguf_weight_bytes": 12902400,
+      "runtime_weight_read_bytes": 19660800,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 19665920,
+      "write_bytes": 12288,
+      "tensors": [
+        {
+          "name": "blk.4.attn_gate.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            6144
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "hc.a.gate",
+      "measured_us": 22.2915,
+      "owner_medians_us": [
+        22.2915
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 6.951806331471136,
+      "effective_GBs": 167.468317520131,
+      "roof_ratio": 0.31185906428329796,
+      "above_floor_us": 15.339693668528863,
+      "headroom_ms_per_half": 0.2761144860335195,
+      "gguf_weight_bytes": 3481600,
+      "runtime_weight_read_bytes": 3686400,
+      "activation_state_read_bytes": 21120,
+      "read_bytes": 3707520,
+      "write_bytes": 25600,
+      "tensors": [
+        {
+          "name": "blk.4.hc_attn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "hc.a.low",
+      "measured_us": 10.729,
+      "owner_medians_us": [
+        10.729
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 7.210562383612663,
+      "effective_GBs": 360.8977537515146,
+      "roof_ratio": 0.6720628561480718,
+      "above_floor_us": 3.5184376163873363,
+      "headroom_ms_per_half": 0.06333187709497205,
+      "gguf_weight_bytes": 3645440,
+      "runtime_weight_read_bytes": 3850240,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 3870720,
+      "write_bytes": 1352,
+      "tensors": [
+        {
+          "name": "blk.4.hc_attn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.4.hc_attn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "hc.a.norm",
+      "measured_us": 9.792,
+      "owner_medians_us": [
+        9.792
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.15493482309124768,
+      "effective_GBs": 8.49673202614379,
+      "roof_ratio": 0.01582259222745585,
+      "above_floor_us": 9.637065176908752,
+      "headroom_ms_per_half": 0.17346717318435753,
+      "gguf_weight_bytes": 40960,
+      "runtime_weight_read_bytes": 40960,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 61440,
+      "write_bytes": 21760,
+      "tensors": [
+        {
+          "name": "blk.4.hc_attn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "hc.f.gate",
+      "measured_us": 22.604,
+      "owner_medians_us": [
+        22.604
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 6.951806331471136,
+      "effective_GBs": 165.15307025305256,
+      "roof_ratio": 0.3075476168585709,
+      "above_floor_us": 15.652193668528863,
+      "headroom_ms_per_half": 0.28173948603351956,
+      "gguf_weight_bytes": 3481600,
+      "runtime_weight_read_bytes": 3686400,
+      "activation_state_read_bytes": 21120,
+      "read_bytes": 3707520,
+      "write_bytes": 25600,
+      "tensors": [
+        {
+          "name": "blk.4.hc_ffn_up.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            320,
+            10240
+          ]
+        }
+      ],
+      "notes": "fused gate + four-stream mix; no separate mix event"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "hc.f.low",
+      "measured_us": 10.833,
+      "owner_medians_us": [
+        10.833
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 7.210562383612663,
+      "effective_GBs": 357.43302870857565,
+      "roof_ratio": 0.6656108542059137,
+      "above_floor_us": 3.6224376163873373,
+      "headroom_ms_per_half": 0.06520387709497207,
+      "gguf_weight_bytes": 3645440,
+      "runtime_weight_read_bytes": 3850240,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 3870720,
+      "write_bytes": 1352,
+      "tensors": [
+        {
+          "name": "blk.4.hc_ffn_down.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            10240,
+            320
+          ]
+        },
+        {
+          "name": "blk.4.hc_ffn_inject.weight",
+          "type": "F32",
+          "dimensions": [
+            10240,
+            4
+          ]
+        }
+      ],
+      "notes": "fused low + activation + inject; preserved inject split scratch"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "hc.f.norm",
+      "measured_us": 7.604,
+      "owner_medians_us": [
+        7.604
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.15493482309124768,
+      "effective_GBs": 10.941609679116254,
+      "roof_ratio": 0.020375437018838462,
+      "above_floor_us": 7.449065176908753,
+      "headroom_ms_per_half": 0.13408317318435756,
+      "gguf_weight_bytes": 40960,
+      "runtime_weight_read_bytes": 40960,
+      "activation_state_read_bytes": 20480,
+      "read_bytes": 61440,
+      "write_bytes": 21760,
+      "tensors": [
+        {
+          "name": "blk.4.hc_ffn_norm.weight",
+          "type": "F32",
+          "dimensions": [
+            10240
+          ]
+        }
+      ],
+      "notes": "unique streams once; production reduction rereads streams per ten output tiles"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "moe",
+      "measured_us": 5.0,
+      "owner_medians_us": [
+        5.0
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.1335679702048417,
+      "effective_GBs": 14.3452,
+      "roof_ratio": 0.026713594040968344,
+      "above_floor_us": 4.866432029795158,
+      "headroom_ms_per_half": 0.08759577653631284,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 61486,
+      "read_bytes": 61486,
+      "write_bytes": 10240,
+      "tensors": [],
+      "notes": "two kernels: ordered mixture + shared branch combination"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "route",
+      "measured_us": 18.75,
+      "owner_medians_us": [
+        18.75
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.013139664804469273,
+      "effective_GBs": 0.37632,
+      "roof_ratio": 0.0007007821229050279,
+      "above_floor_us": 18.73686033519553,
+      "headroom_ms_per_half": 0.3372634860335195,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 4392,
+      "read_bytes": 4392,
+      "write_bytes": 2664,
+      "tensors": [],
+      "notes": "p78 route-fast single event; input twice, global max/sum/exp scratch and route/probability outputs; local sort scratch excluded"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "shexpact",
+      "measured_us": 3.646,
+      "owner_medians_us": [
+        3.646
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 0.007150837988826816,
+      "effective_GBs": 1.0532089961601756,
+      "roof_ratio": 0.001961283046853213,
+      "above_floor_us": 3.638849162011173,
+      "headroom_ms_per_half": 0.0654992849162011,
+      "gguf_weight_bytes": 0,
+      "runtime_weight_read_bytes": 0,
+      "activation_state_read_bytes": 2560,
+      "read_bytes": 2560,
+      "write_bytes": 1280,
+      "tensors": [],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "shexpdown",
+      "measured_us": 11.5625,
+      "owner_medians_us": [
+        11.5625
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 3.444320297951583,
+      "effective_GBs": 159.96540540540542,
+      "roof_ratio": 0.2978871609039207,
+      "above_floor_us": 8.118179702048417,
+      "headroom_ms_per_half": 0.14612723463687152,
+      "gguf_weight_bytes": 1740800,
+      "runtime_weight_read_bytes": 1843200,
+      "activation_state_read_bytes": 1280,
+      "read_bytes": 1844480,
+      "write_bytes": 5120,
+      "tensors": [
+        {
+          "name": "blk.4.ffn_down_shexp.weight",
+          "type": "Q8_0",
+          "dimensions": [
+            640,
+            2560
+          ]
+        }
+      ],
+      "notes": ""
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "small.ffn.q6",
+      "measured_us": 18.959,
+      "owner_medians_us": [
+        18.959
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 17.426119180633147,
+      "effective_GBs": 493.5822564481249,
+      "roof_ratio": 0.9191475911510706,
+      "above_floor_us": 1.5328808193668522,
+      "headroom_ms_per_half": 0.027591854748603338,
+      "gguf_weight_bytes": 7941120,
+      "runtime_weight_read_bytes": 9349120,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 9354240,
+      "write_bytes": 3586,
+      "tensors": [
+        {
+          "name": "blk.4.ffn_gate_inp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            512
+          ]
+        },
+        {
+          "name": "blk.4.ffn_gate_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.4.ffn_up_shexp.weight",
+          "type": "Q6_K",
+          "dimensions": [
+            2560,
+            640
+          ]
+        },
+        {
+          "name": "blk.4.ffn_gate_inp_shexp.weight",
+          "type": "F32",
+          "dimensions": [
+            2560
+          ]
+        }
+      ],
+      "notes": "four-member tuple: router + shared gate/up + shared router"
+    },
+    {
+      "layer": 4,
+      "kind": "GDN",
+      "context": 4096,
+      "site": "small.gdn.ab",
+      "measured_us": 6.875,
+      "owner_medians_us": [
+        6.875
+      ],
+      "owners": 1,
+      "samples_per_owner": 40,
+      "occurrences_per_half": 18,
+      "floor_us": 1.8405065176908753,
+      "effective_GBs": 143.7602909090909,
+      "roof_ratio": 0.26771003893685463,
+      "above_floor_us": 5.0344934823091245,
+      "headroom_ms_per_half": 0.09062088268156424,
+      "gguf_weight_bytes": 983040,
+      "runtime_weight_read_bytes": 983040,
+      "activation_state_read_bytes": 5120,
+      "read_bytes": 988160,
+      "write_bytes": 192,
+      "tensors": [
+        {
+          "name": "blk.4.ssm_alpha.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            48
+          ]
+        },
+        {
+          "name": "blk.4.ssm_beta.weight",
+          "type": "F32",
+          "dimensions": [
+            2560,
+            48
+          ]
+        }
+      ],
+      "notes": "alpha/beta tuple"
     }
   ]
 }

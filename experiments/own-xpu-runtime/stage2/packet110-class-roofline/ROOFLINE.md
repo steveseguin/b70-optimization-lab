@@ -10,7 +10,7 @@ Formulas: GB/s = (read B + write B) / µs / 1000; ratio = GB/s / 537; floor µs 
 
 Occurrences are 6 QSA and 18 GDN layers per half. This is representative-layer scaling, **not a measured half time**. Layer0 has different formats, and PLE, head, draft, rollback, host gaps and inter-card transfers are excluded. No QSA time is multiplied by 24 or substituted for a GDN time. Packet107 selection retains production expert-down; later down-tile16/composite measurements have a different identity.
 
-GDN status: **pending coordinator**. Run the proposed coordinator job, then rerun `roofline.py`; it fills both GDN tables and recomputes ranking without a GPU call.
+GDN status: **measured**. One GDN process is attribution only; it cannot support a speed verdict.
 
 [Machine-readable rows and input hashes](roofline.json); [byte formulas](byte_model.py); [source derivation](BYTE-MODEL.md); [excluded-arm inventory](evidence/exclusions.json).
 
@@ -76,21 +76,67 @@ GDN status: **pending coordinator**. Run the proposed coordinator job, then reru
 
 ## GDN, occupied context 128
 
-Not measured. No historical or QSA timing substituted.
+| Class | Read B/call | Write B/call | µs/call | GB/s | /537 | Floor µs | Above floor µs | × layers | Headroom ms/half |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| expsgate | 10,757,240 | 25,680 | 60.365 | 178.63 | 0.333 | 20.080 | 40.285 | 18 | 0.7251 |
+| expsdown | 9,228,920 | 51,240 | 50.886 | 182.37 | 0.340 | 17.281 | 33.604 | 18 | 0.6049 |
+| route | 4,392 | 2,664 | 18.750 | 0.38 | 0.001 | 0.013 | 18.737 | 18 | 0.3373 |
+| gdn.recurrence | 1,593,920 | 1,585,152 | 23.958 | 132.69 | 0.247 | 5.920 | 18.038 | 18 | 0.3247 |
+| hc.f.gate | 3,707,520 | 25,600 | 22.604 | 165.15 | 0.308 | 6.952 | 15.652 | 18 | 0.2817 |
+| hc.a.gate | 3,707,520 | 25,600 | 22.239 | 167.86 | 0.313 | 6.952 | 15.288 | 18 | 0.2752 |
+| ffn.combine | 25,608 | 20,480 | 11.354 | 4.06 | 0.008 | 0.086 | 11.268 | 18 | 0.2028 |
+| attention | 19,734,536 | 66,560 | 46.666 | 424.31 | 0.790 | 36.874 | 9.793 | 18 | 0.1763 |
+| hc.a.norm | 61,440 | 21,760 | 9.791 | 8.50 | 0.016 | 0.155 | 9.636 | 18 | 0.1734 |
+| gdn.conv | 245,760 | 81,920 | 9.271 | 35.34 | 0.066 | 0.610 | 8.661 | 18 | 0.1559 |
+| shexpdown | 1,844,480 | 5,120 | 11.458 | 161.42 | 0.301 | 3.444 | 8.014 | 18 | 0.1442 |
+| gdn.qkv | 32,773,120 | 20,480 | 68.646 | 477.72 | 0.890 | 61.068 | 7.578 | 18 | 0.1364 |
+| hc.f.norm | 61,440 | 21,760 | 7.604 | 10.94 | 0.020 | 0.155 | 7.449 | 18 | 0.1341 |
+| expsact | 25,600 | 12,800 | 5.417 | 7.09 | 0.013 | 0.072 | 5.345 | 18 | 0.0962 |
+| gdn.gated | 25,088 | 12,288 | 5.208 | 7.18 | 0.013 | 0.070 | 5.138 | 18 | 0.0925 |
+| small.gdn.ab | 988,160 | 192 | 6.771 | 145.98 | 0.272 | 1.841 | 4.930 | 18 | 0.0887 |
+| moe | 61,486 | 10,240 | 5.000 | 14.35 | 0.027 | 0.134 | 4.866 | 18 | 0.0876 |
+| shexpact | 2,560 | 1,280 | 3.750 | 1.02 | 0.002 | 0.007 | 3.743 | 18 | 0.0674 |
+| hc.f.low | 3,870,720 | 1,352 | 10.833 | 357.43 | 0.666 | 7.211 | 3.622 | 18 | 0.0652 |
+| hc.a.low | 3,870,720 | 1,352 | 10.782 | 359.14 | 0.669 | 7.211 | 3.571 | 18 | 0.0643 |
+| gdn.z | 19,665,920 | 12,288 | 39.584 | 497.13 | 0.926 | 36.645 | 2.939 | 18 | 0.0529 |
+| small.ffn.q6 | 9,354,240 | 3,586 | 18.959 | 493.60 | 0.919 | 17.426 | 1.532 | 18 | 0.0276 |
 
 ## GDN, occupied context 4096
 
-Not measured. No historical or QSA timing substituted.
+| Class | Read B/call | Write B/call | µs/call | GB/s | /537 | Floor µs | Above floor µs | × layers | Headroom ms/half |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| expsgate | 10,757,240 | 25,680 | 60.625 | 177.86 | 0.331 | 20.080 | 40.545 | 18 | 0.7298 |
+| expsdown | 9,228,920 | 51,240 | 51.042 | 181.81 | 0.339 | 17.281 | 33.761 | 18 | 0.6077 |
+| route | 4,392 | 2,664 | 18.750 | 0.38 | 0.001 | 0.013 | 18.737 | 18 | 0.3373 |
+| gdn.recurrence | 1,593,920 | 1,585,152 | 23.959 | 132.69 | 0.247 | 5.920 | 18.039 | 18 | 0.3247 |
+| hc.f.gate | 3,707,520 | 25,600 | 22.604 | 165.15 | 0.308 | 6.952 | 15.652 | 18 | 0.2817 |
+| hc.a.gate | 3,707,520 | 25,600 | 22.291 | 167.47 | 0.312 | 6.952 | 15.340 | 18 | 0.2761 |
+| ffn.combine | 25,608 | 20,480 | 11.354 | 4.06 | 0.008 | 0.086 | 11.268 | 18 | 0.2028 |
+| attention | 19,734,536 | 66,560 | 46.667 | 424.31 | 0.790 | 36.874 | 9.793 | 18 | 0.1763 |
+| hc.a.norm | 61,440 | 21,760 | 9.792 | 8.50 | 0.016 | 0.155 | 9.637 | 18 | 0.1735 |
+| gdn.conv | 245,760 | 81,920 | 9.375 | 34.95 | 0.065 | 0.610 | 8.765 | 18 | 0.1578 |
+| shexpdown | 1,844,480 | 5,120 | 11.562 | 159.97 | 0.298 | 3.444 | 8.118 | 18 | 0.1461 |
+| gdn.qkv | 32,773,120 | 20,480 | 68.646 | 477.72 | 0.890 | 61.068 | 7.578 | 18 | 0.1364 |
+| hc.f.norm | 61,440 | 21,760 | 7.604 | 10.94 | 0.020 | 0.155 | 7.449 | 18 | 0.1341 |
+| expsact | 25,600 | 12,800 | 5.416 | 7.09 | 0.013 | 0.072 | 5.344 | 18 | 0.0962 |
+| gdn.gated | 25,088 | 12,288 | 5.261 | 7.11 | 0.013 | 0.070 | 5.191 | 18 | 0.0934 |
+| small.gdn.ab | 988,160 | 192 | 6.875 | 143.76 | 0.268 | 1.841 | 5.034 | 18 | 0.0906 |
+| moe | 61,486 | 10,240 | 5.000 | 14.35 | 0.027 | 0.134 | 4.866 | 18 | 0.0876 |
+| shexpact | 2,560 | 1,280 | 3.646 | 1.05 | 0.002 | 0.007 | 3.639 | 18 | 0.0655 |
+| hc.f.low | 3,870,720 | 1,352 | 10.833 | 357.43 | 0.666 | 7.211 | 3.622 | 18 | 0.0652 |
+| hc.a.low | 3,870,720 | 1,352 | 10.729 | 360.90 | 0.672 | 7.211 | 3.518 | 18 | 0.0633 |
+| gdn.z | 19,665,920 | 12,288 | 39.427 | 499.10 | 0.929 | 36.645 | 2.782 | 18 | 0.0501 |
+| small.ffn.q6 | 9,354,240 | 3,586 | 18.959 | 493.58 | 0.919 | 17.426 | 1.533 | 18 | 0.0276 |
 
 ## Three open exact levers, ranked for the next brief
 
-Rank on the 128-token budget. Feasibility weights are engineering judgements, not measured probabilities or expected gains. The score is headroom × feasibility; 4096-token results remain separate. Only the observed QSA ×6 contribution is ranked; the GDN ×18 contribution is pending. This ordering is provisional.
+Rank on the 128-token budget. Feasibility weights are engineering judgements, not measured probabilities or expected gains. The score is headroom × feasibility; 4096-token results remain separate. GDN contributes its fresh representative-layer ×18 budget.
 
 | Rank | Lever | QSA ms/half | GDN ms/half | Available headroom | Feasibility | Score ms/half |
 | ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 1 | Exact gate/up tile16 with existing half-cache (packet104b) | 0.2337 | pending | 0.2337 | 0.65 | 0.1519 |
-| 2 | Exact shared-down/mixture/combine and activation epilogues (packet109) | 0.1974 | pending | 0.1974 | 0.50 | 0.0987 |
-| 3 | Pruned top10 selection network after unchanged normalized route probabilities | 0.1124 | pending | 0.1124 | 0.40 | 0.0450 |
+| 1 | Exact gate/up tile16 with existing half-cache (packet104b) | 0.2337 | 0.7251 | 0.9589 | 0.65 | 0.6233 |
+| 2 | Exact shared-down/mixture/combine and activation epilogues (packet109) | 0.1974 | 0.5983 | 0.7957 | 0.50 | 0.3978 |
+| 3 | Pruned top10 selection network after unchanged normalized route probabilities | 0.1124 | 0.3373 | 0.4497 | 0.40 | 0.1799 |
 
 **Exact gate/up tile16 with existing half-cache (packet104b).** Separate open coordinator-authorized gate/up arm. Preserve E1, each chain and BF16 boundary. The 0.892953 operator ratio is only a feasibility clue; the original 15% gate failed and only its explicit screen override permits this arm.
 
