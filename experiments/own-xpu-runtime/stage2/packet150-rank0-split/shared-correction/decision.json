@@ -1,0 +1,65 @@
+{
+  "schema": "packet150.shared-correction-decision.v1",
+  "decision": "do not build shared-correction prototype",
+  "owner_exchange_gate_ms_per_miss": 1.0,
+  "exchange_gate_passed": false,
+  "prototype_built": false,
+  "device_executed_by_this_task": false,
+  "measured_packet149_evidence": true,
+  "validated_utc": "2026-10-18T23:42:33.856893+00:00",
+  "source_reporter_path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/p149_v5_compare.py",
+  "source_reporter_observed_digest": "2bcc57c7d8361d0fccde379e1f9036175084ecab87b2da3a0dc14d8998edb729",
+  "arithmetic": "iq3-p49-split32-v1",
+  "lane": "B",
+  "model_lifetimes": 1,
+  "prompts_per_view": 12,
+  "output_tokens_per_prompt": 128,
+  "control_corrected_half_mean_ms": [
+    11.808600906344411,
+    11.80162084592145,
+    11.803889728096676
+  ],
+  "mean_of_control_means_ms": 11.804703826787513,
+  "probe_corrected_half_mean_ms": [
+    19.489709365558912,
+    19.501849848942598
+  ],
+  "exchange_cost_ms_per_miss": [
+    7.685005538771399,
+    7.697146022155085
+  ],
+  "mean_exchange_cost_ms_per_miss": 7.691075780463242,
+  "control_half_range_ms": 0.006980060422961287,
+  "control_rate_drift_percent": 0.038344651720745304,
+  "misses_per_view": 331,
+  "exchanges_per_probe_miss": 96,
+  "derivation": "E_i = probe-view mean corrected-half time - mean of three control-view means; net saving = G - E - A, so a 2..3 ms net saving needs G >= E + A + 2..3 ms.",
+  "required_gross_saving_for_net_2_to_3_ms_ignoring_additional_cost": [
+    9.691075780463242,
+    10.691075780463242
+  ],
+  "caveat": "Measured serialized 96-exchange surrogate across large attention and routed-expert projections. Not a measurement of an expert-only or coalesced schedule; no subset cost extrapolated. Unchanged target computation still ran in full. No shared compute speed or quality result.",
+  "snapshots": [
+    {
+      "path": "evidence/bracket-summary.json.txt",
+      "sha256": "e61aa6f729f8023280761357e38a46807cb55f4e5e2de5d723c3c13f974f5f95",
+      "original_location": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/evidence/device-xchg-v5-B/bracket-summary.json"
+    },
+    {
+      "path": "evidence/window.json.txt",
+      "sha256": "a0ebb2162761f11563aead6c9ea6337de5b48b3ef519e592a42038961039277a",
+      "original_location": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/evidence/device-xchg-v5-B/window.json"
+    },
+    {
+      "path": "evidence/identity.json.txt",
+      "sha256": "73f203c55a2956982c807a022ff96dbcdbdf2b80b42225640cdc4400840965ae",
+      "original_location": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/evidence/device-xchg-v5-B/identity.json"
+    },
+    {
+      "path": "evidence/run-teardown.json.txt",
+      "sha256": "421853bee5f135362be079c2111639a5c80d36ef04f834457eab89a60926af92",
+      "original_location": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/evidence/device-xchg-v5-B/run/teardown.json"
+    }
+  ],
+  "split_readiness_unchanged": true
+}

@@ -73,3 +73,18 @@ separate `shared-correction/` decision will retain the exact source hashes and
 derivation after the split handoff is sealed. This does not close other
 communication schedules or claim that routed-expert-only exchange costs the
 same as packet149's 96-round-trip projection schedule.
+
+The split marker was written at **23:40:29 UTC**, **33.5 minutes after start**,
+with `ready_for_device: true`. Source commit `12038c773` and marker commit
+`40778f55b` are pushed. A concurrent other-host update required a clean merge
+on main; unrelated dirty work was left in place. Build material is 82.09 MB;
+root had 30.25 GB free at sealing.
+
+The [separate closeout](../experiments/own-xpu-runtime/stage2/packet150-rank0-split/shared-correction/CLOSEOUT.md)
+now retains the fully validated packet149 report snapshots. Control corrected
+halves average 11.804703827 ms; probe means are 19.489709366/19.501849849 ms.
+Subtracting the control mean gives E = 7.685005539/7.697146022 ms per miss,
+mean 7.691075780. A 2–3 ms net cut would therefore require 9.691–10.691 ms
+of gross savings before any additional implementation cost. The condition for
+part (a) fails, so it ends with no prototype or shared device-ready marker.
+All split sources, gates and the final split marker remain unchanged.

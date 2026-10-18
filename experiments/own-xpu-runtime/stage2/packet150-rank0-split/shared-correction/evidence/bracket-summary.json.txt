@@ -1,0 +1,1558 @@
+{
+  "schema": "own-runtime.bracket.summary.v1",
+  "passed": true,
+  "kind": "bracket",
+  "model_lifetimes": 1,
+  "target_loads": 1,
+  "draft_loads": 1,
+  "teardown_count": 1,
+  "views": [
+    {
+      "index": 0,
+      "choice": "control",
+      "all_13_exact": true,
+      "exact_count": 13,
+      "draft_proposals": {
+        "incident64": {
+          "rows": 149,
+          "sha256": "1ece848dfd17e06461b265946d0b15615a22ee9748ae4e041669fa227a6e9fb0"
+        },
+        "incident-retrospective": {
+          "rows": 213,
+          "sha256": "16772b634cadabe6e5c9c5fec9c6cdb45391fed2cba5bf59244ebe0cc1a736a4"
+        },
+        "code-review": {
+          "rows": 216,
+          "sha256": "6bda63732fea9bdea50a1e2b7b700f385f7b5e420e2c3caa3bd2a468b953ebfb"
+        },
+        "customer-email": {
+          "rows": 203,
+          "sha256": "069cdf0997fb2575ddefb9cf8305f616c1bc01aa3ff6d4d698527e0cfa320ac0"
+        },
+        "sql-debugging": {
+          "rows": 209,
+          "sha256": "f5d71a57d95fe983283e2e2b6e4d4d1caa4a3758f076ae5d3e8195c0bf3008f5"
+        },
+        "release-plan": {
+          "rows": 194,
+          "sha256": "a7e7437ec429b6a4f2fb0217f9b5925ac5c69c61af40f317f9c8e3bca3e9aa20"
+        },
+        "benchmark-analysis": {
+          "rows": 191,
+          "sha256": "bd9d9921e09646865d27fa4bb760841f06d3791bf53f00a539a770b6e7531e4d"
+        },
+        "architecture-tradeoff": {
+          "rows": 193,
+          "sha256": "1e8d9b06628ab19fd74839db88638969e204d500791caad3539a71a0d3de83f1"
+        },
+        "bug-report-synthesis": {
+          "rows": 197,
+          "sha256": "95439363aa14cc01e53d87677a2c8c3dbc1cd33e1f57e9a5a1054fcfca4f8332"
+        },
+        "technical-guide": {
+          "rows": 195,
+          "sha256": "d75afc4713b3db515fb5a4e7531b09e6e4df15519837d73d2d00ec53aeb66d50"
+        },
+        "risk-register": {
+          "rows": 187,
+          "sha256": "019a4279a2dd85f1d9557419a81be2c33cb18ab2fc7ce6ff6a566c89ceb370d8"
+        },
+        "performance-hypotheses": {
+          "rows": 190,
+          "sha256": "0a0a20f8d694ee9a3c8479e710bd25941dc77d7c54e4c72647bdf869b5a62397"
+        },
+        "decision-memo": {
+          "rows": 186,
+          "sha256": "6d2f3cb39e1a437084da2699b1d1e2b0d14d685130fe82022b4aec85b8588640"
+        }
+      },
+      "lane": "B",
+      "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+      "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/evidence/device-xchg-v5-B/run/views/00-control",
+      "started_utc_ns": 1792365269223073571,
+      "finished_utc_ns": 1792365391977370891,
+      "rate": 58.701860613064326,
+      "acceptance": 0.7828083989501312,
+      "acceptance_counts": [
+        {
+          "prompt_id": "incident-retrospective",
+          "hits": 96,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "code-review",
+          "hits": 99,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "customer-email",
+          "hits": 96,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "sql-debugging",
+          "hits": 103,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "release-plan",
+          "hits": 98,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "benchmark-analysis",
+          "hits": 101,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "architecture-tradeoff",
+          "hits": 107,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "bug-report-synthesis",
+          "hits": 83,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "technical-guide",
+          "hits": 107,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "risk-register",
+          "hits": 108,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "performance-hypotheses",
+          "hits": 94,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "decision-memo",
+          "hits": 101,
+          "guesses": 127
+        }
+      ],
+      "corrected_half": {
+        "count": 331,
+        "mean_ms": 11.808600906344411,
+        "median_ms": 11.8073,
+        "total_ms": 3908.6469
+      },
+      "miss_count": 331,
+      "exchange_cost_per_miss_ms": null,
+      "probe": "off"
+    },
+    {
+      "index": 1,
+      "choice": "candidate",
+      "all_13_exact": true,
+      "exact_count": 13,
+      "draft_proposals": {
+        "incident64": {
+          "rows": 149,
+          "sha256": "1ece848dfd17e06461b265946d0b15615a22ee9748ae4e041669fa227a6e9fb0"
+        },
+        "incident-retrospective": {
+          "rows": 213,
+          "sha256": "16772b634cadabe6e5c9c5fec9c6cdb45391fed2cba5bf59244ebe0cc1a736a4"
+        },
+        "code-review": {
+          "rows": 216,
+          "sha256": "6bda63732fea9bdea50a1e2b7b700f385f7b5e420e2c3caa3bd2a468b953ebfb"
+        },
+        "customer-email": {
+          "rows": 203,
+          "sha256": "069cdf0997fb2575ddefb9cf8305f616c1bc01aa3ff6d4d698527e0cfa320ac0"
+        },
+        "sql-debugging": {
+          "rows": 209,
+          "sha256": "f5d71a57d95fe983283e2e2b6e4d4d1caa4a3758f076ae5d3e8195c0bf3008f5"
+        },
+        "release-plan": {
+          "rows": 194,
+          "sha256": "a7e7437ec429b6a4f2fb0217f9b5925ac5c69c61af40f317f9c8e3bca3e9aa20"
+        },
+        "benchmark-analysis": {
+          "rows": 191,
+          "sha256": "bd9d9921e09646865d27fa4bb760841f06d3791bf53f00a539a770b6e7531e4d"
+        },
+        "architecture-tradeoff": {
+          "rows": 193,
+          "sha256": "1e8d9b06628ab19fd74839db88638969e204d500791caad3539a71a0d3de83f1"
+        },
+        "bug-report-synthesis": {
+          "rows": 197,
+          "sha256": "95439363aa14cc01e53d87677a2c8c3dbc1cd33e1f57e9a5a1054fcfca4f8332"
+        },
+        "technical-guide": {
+          "rows": 195,
+          "sha256": "d75afc4713b3db515fb5a4e7531b09e6e4df15519837d73d2d00ec53aeb66d50"
+        },
+        "risk-register": {
+          "rows": 187,
+          "sha256": "019a4279a2dd85f1d9557419a81be2c33cb18ab2fc7ce6ff6a566c89ceb370d8"
+        },
+        "performance-hypotheses": {
+          "rows": 190,
+          "sha256": "0a0a20f8d694ee9a3c8479e710bd25941dc77d7c54e4c72647bdf869b5a62397"
+        },
+        "decision-memo": {
+          "rows": 186,
+          "sha256": "6d2f3cb39e1a437084da2699b1d1e2b0d14d685130fe82022b4aec85b8588640"
+        }
+      },
+      "lane": "B",
+      "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+      "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/evidence/device-xchg-v5-B/run/views/01-candidate",
+      "started_utc_ns": 1792365392170459316,
+      "finished_utc_ns": 1792365459810864404,
+      "rate": 52.68381100623167,
+      "acceptance": 0.7828083989501312,
+      "acceptance_counts": [
+        {
+          "prompt_id": "incident-retrospective",
+          "hits": 96,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "code-review",
+          "hits": 99,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "customer-email",
+          "hits": 96,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "sql-debugging",
+          "hits": 103,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "release-plan",
+          "hits": 98,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "benchmark-analysis",
+          "hits": 101,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "architecture-tradeoff",
+          "hits": 107,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "bug-report-synthesis",
+          "hits": 83,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "technical-guide",
+          "hits": 107,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "risk-register",
+          "hits": 108,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "performance-hypotheses",
+          "hits": 94,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "decision-memo",
+          "hits": 101,
+          "guesses": 127
+        }
+      ],
+      "corrected_half": {
+        "count": 331,
+        "mean_ms": 19.489709365558912,
+        "median_ms": 19.4831,
+        "total_ms": 6451.0938
+      },
+      "miss_count": 331,
+      "exchange_cost_per_miss_ms": 7.685005538771399,
+      "probe": "xchg"
+    },
+    {
+      "index": 2,
+      "choice": "control",
+      "all_13_exact": true,
+      "exact_count": 13,
+      "draft_proposals": {
+        "incident64": {
+          "rows": 149,
+          "sha256": "1ece848dfd17e06461b265946d0b15615a22ee9748ae4e041669fa227a6e9fb0"
+        },
+        "incident-retrospective": {
+          "rows": 213,
+          "sha256": "16772b634cadabe6e5c9c5fec9c6cdb45391fed2cba5bf59244ebe0cc1a736a4"
+        },
+        "code-review": {
+          "rows": 216,
+          "sha256": "6bda63732fea9bdea50a1e2b7b700f385f7b5e420e2c3caa3bd2a468b953ebfb"
+        },
+        "customer-email": {
+          "rows": 203,
+          "sha256": "069cdf0997fb2575ddefb9cf8305f616c1bc01aa3ff6d4d698527e0cfa320ac0"
+        },
+        "sql-debugging": {
+          "rows": 209,
+          "sha256": "f5d71a57d95fe983283e2e2b6e4d4d1caa4a3758f076ae5d3e8195c0bf3008f5"
+        },
+        "release-plan": {
+          "rows": 194,
+          "sha256": "a7e7437ec429b6a4f2fb0217f9b5925ac5c69c61af40f317f9c8e3bca3e9aa20"
+        },
+        "benchmark-analysis": {
+          "rows": 191,
+          "sha256": "bd9d9921e09646865d27fa4bb760841f06d3791bf53f00a539a770b6e7531e4d"
+        },
+        "architecture-tradeoff": {
+          "rows": 193,
+          "sha256": "1e8d9b06628ab19fd74839db88638969e204d500791caad3539a71a0d3de83f1"
+        },
+        "bug-report-synthesis": {
+          "rows": 197,
+          "sha256": "95439363aa14cc01e53d87677a2c8c3dbc1cd33e1f57e9a5a1054fcfca4f8332"
+        },
+        "technical-guide": {
+          "rows": 195,
+          "sha256": "d75afc4713b3db515fb5a4e7531b09e6e4df15519837d73d2d00ec53aeb66d50"
+        },
+        "risk-register": {
+          "rows": 187,
+          "sha256": "019a4279a2dd85f1d9557419a81be2c33cb18ab2fc7ce6ff6a566c89ceb370d8"
+        },
+        "performance-hypotheses": {
+          "rows": 190,
+          "sha256": "0a0a20f8d694ee9a3c8479e710bd25941dc77d7c54e4c72647bdf869b5a62397"
+        },
+        "decision-memo": {
+          "rows": 186,
+          "sha256": "6d2f3cb39e1a437084da2699b1d1e2b0d14d685130fe82022b4aec85b8588640"
+        }
+      },
+      "lane": "B",
+      "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+      "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/evidence/device-xchg-v5-B/run/views/02-control",
+      "started_utc_ns": 1792365459999539992,
+      "finished_utc_ns": 1792365524462198640,
+      "rate": 58.679360216757246,
+      "acceptance": 0.7828083989501312,
+      "acceptance_counts": [
+        {
+          "prompt_id": "incident-retrospective",
+          "hits": 96,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "code-review",
+          "hits": 99,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "customer-email",
+          "hits": 96,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "sql-debugging",
+          "hits": 103,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "release-plan",
+          "hits": 98,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "benchmark-analysis",
+          "hits": 101,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "architecture-tradeoff",
+          "hits": 107,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "bug-report-synthesis",
+          "hits": 83,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "technical-guide",
+          "hits": 107,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "risk-register",
+          "hits": 108,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "performance-hypotheses",
+          "hits": 94,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "decision-memo",
+          "hits": 101,
+          "guesses": 127
+        }
+      ],
+      "corrected_half": {
+        "count": 331,
+        "mean_ms": 11.80162084592145,
+        "median_ms": 11.7992,
+        "total_ms": 3906.3365
+      },
+      "miss_count": 331,
+      "exchange_cost_per_miss_ms": null,
+      "probe": "off"
+    },
+    {
+      "index": 3,
+      "choice": "candidate",
+      "all_13_exact": true,
+      "exact_count": 13,
+      "draft_proposals": {
+        "incident64": {
+          "rows": 149,
+          "sha256": "1ece848dfd17e06461b265946d0b15615a22ee9748ae4e041669fa227a6e9fb0"
+        },
+        "incident-retrospective": {
+          "rows": 213,
+          "sha256": "16772b634cadabe6e5c9c5fec9c6cdb45391fed2cba5bf59244ebe0cc1a736a4"
+        },
+        "code-review": {
+          "rows": 216,
+          "sha256": "6bda63732fea9bdea50a1e2b7b700f385f7b5e420e2c3caa3bd2a468b953ebfb"
+        },
+        "customer-email": {
+          "rows": 203,
+          "sha256": "069cdf0997fb2575ddefb9cf8305f616c1bc01aa3ff6d4d698527e0cfa320ac0"
+        },
+        "sql-debugging": {
+          "rows": 209,
+          "sha256": "f5d71a57d95fe983283e2e2b6e4d4d1caa4a3758f076ae5d3e8195c0bf3008f5"
+        },
+        "release-plan": {
+          "rows": 194,
+          "sha256": "a7e7437ec429b6a4f2fb0217f9b5925ac5c69c61af40f317f9c8e3bca3e9aa20"
+        },
+        "benchmark-analysis": {
+          "rows": 191,
+          "sha256": "bd9d9921e09646865d27fa4bb760841f06d3791bf53f00a539a770b6e7531e4d"
+        },
+        "architecture-tradeoff": {
+          "rows": 193,
+          "sha256": "1e8d9b06628ab19fd74839db88638969e204d500791caad3539a71a0d3de83f1"
+        },
+        "bug-report-synthesis": {
+          "rows": 197,
+          "sha256": "95439363aa14cc01e53d87677a2c8c3dbc1cd33e1f57e9a5a1054fcfca4f8332"
+        },
+        "technical-guide": {
+          "rows": 195,
+          "sha256": "d75afc4713b3db515fb5a4e7531b09e6e4df15519837d73d2d00ec53aeb66d50"
+        },
+        "risk-register": {
+          "rows": 187,
+          "sha256": "019a4279a2dd85f1d9557419a81be2c33cb18ab2fc7ce6ff6a566c89ceb370d8"
+        },
+        "performance-hypotheses": {
+          "rows": 190,
+          "sha256": "0a0a20f8d694ee9a3c8479e710bd25941dc77d7c54e4c72647bdf869b5a62397"
+        },
+        "decision-memo": {
+          "rows": 186,
+          "sha256": "6d2f3cb39e1a437084da2699b1d1e2b0d14d685130fe82022b4aec85b8588640"
+        }
+      },
+      "lane": "B",
+      "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+      "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/evidence/device-xchg-v5-B/run/views/03-candidate",
+      "started_utc_ns": 1792365524648983882,
+      "finished_utc_ns": 1792365592184585256,
+      "rate": 52.66872651057898,
+      "acceptance": 0.7828083989501312,
+      "acceptance_counts": [
+        {
+          "prompt_id": "incident-retrospective",
+          "hits": 96,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "code-review",
+          "hits": 99,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "customer-email",
+          "hits": 96,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "sql-debugging",
+          "hits": 103,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "release-plan",
+          "hits": 98,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "benchmark-analysis",
+          "hits": 101,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "architecture-tradeoff",
+          "hits": 107,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "bug-report-synthesis",
+          "hits": 83,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "technical-guide",
+          "hits": 107,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "risk-register",
+          "hits": 108,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "performance-hypotheses",
+          "hits": 94,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "decision-memo",
+          "hits": 101,
+          "guesses": 127
+        }
+      ],
+      "corrected_half": {
+        "count": 331,
+        "mean_ms": 19.501849848942598,
+        "median_ms": 19.4985,
+        "total_ms": 6455.1123
+      },
+      "miss_count": 331,
+      "exchange_cost_per_miss_ms": 7.697146022155085,
+      "probe": "xchg"
+    },
+    {
+      "index": 4,
+      "choice": "control",
+      "all_13_exact": true,
+      "exact_count": 13,
+      "draft_proposals": {
+        "incident64": {
+          "rows": 149,
+          "sha256": "1ece848dfd17e06461b265946d0b15615a22ee9748ae4e041669fa227a6e9fb0"
+        },
+        "incident-retrospective": {
+          "rows": 213,
+          "sha256": "16772b634cadabe6e5c9c5fec9c6cdb45391fed2cba5bf59244ebe0cc1a736a4"
+        },
+        "code-review": {
+          "rows": 216,
+          "sha256": "6bda63732fea9bdea50a1e2b7b700f385f7b5e420e2c3caa3bd2a468b953ebfb"
+        },
+        "customer-email": {
+          "rows": 203,
+          "sha256": "069cdf0997fb2575ddefb9cf8305f616c1bc01aa3ff6d4d698527e0cfa320ac0"
+        },
+        "sql-debugging": {
+          "rows": 209,
+          "sha256": "f5d71a57d95fe983283e2e2b6e4d4d1caa4a3758f076ae5d3e8195c0bf3008f5"
+        },
+        "release-plan": {
+          "rows": 194,
+          "sha256": "a7e7437ec429b6a4f2fb0217f9b5925ac5c69c61af40f317f9c8e3bca3e9aa20"
+        },
+        "benchmark-analysis": {
+          "rows": 191,
+          "sha256": "bd9d9921e09646865d27fa4bb760841f06d3791bf53f00a539a770b6e7531e4d"
+        },
+        "architecture-tradeoff": {
+          "rows": 193,
+          "sha256": "1e8d9b06628ab19fd74839db88638969e204d500791caad3539a71a0d3de83f1"
+        },
+        "bug-report-synthesis": {
+          "rows": 197,
+          "sha256": "95439363aa14cc01e53d87677a2c8c3dbc1cd33e1f57e9a5a1054fcfca4f8332"
+        },
+        "technical-guide": {
+          "rows": 195,
+          "sha256": "d75afc4713b3db515fb5a4e7531b09e6e4df15519837d73d2d00ec53aeb66d50"
+        },
+        "risk-register": {
+          "rows": 187,
+          "sha256": "019a4279a2dd85f1d9557419a81be2c33cb18ab2fc7ce6ff6a566c89ceb370d8"
+        },
+        "performance-hypotheses": {
+          "rows": 190,
+          "sha256": "0a0a20f8d694ee9a3c8479e710bd25941dc77d7c54e4c72647bdf869b5a62397"
+        },
+        "decision-memo": {
+          "rows": 186,
+          "sha256": "6d2f3cb39e1a437084da2699b1d1e2b0d14d685130fe82022b4aec85b8588640"
+        }
+      },
+      "lane": "B",
+      "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+      "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/v5/evidence/device-xchg-v5-B/run/views/04-control",
+      "started_utc_ns": 1792365592374501933,
+      "finished_utc_ns": 1792365656835550578,
+      "rate": 58.6938459668023,
+      "acceptance": 0.7828083989501312,
+      "acceptance_counts": [
+        {
+          "prompt_id": "incident-retrospective",
+          "hits": 96,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "code-review",
+          "hits": 99,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "customer-email",
+          "hits": 96,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "sql-debugging",
+          "hits": 103,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "release-plan",
+          "hits": 98,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "benchmark-analysis",
+          "hits": 101,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "architecture-tradeoff",
+          "hits": 107,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "bug-report-synthesis",
+          "hits": 83,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "technical-guide",
+          "hits": 107,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "risk-register",
+          "hits": 108,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "performance-hypotheses",
+          "hits": 94,
+          "guesses": 127
+        },
+        {
+          "prompt_id": "decision-memo",
+          "hits": 101,
+          "guesses": 127
+        }
+      ],
+      "corrected_half": {
+        "count": 331,
+        "mean_ms": 11.803889728096676,
+        "median_ms": 11.8039,
+        "total_ms": 3907.0875
+      },
+      "miss_count": 331,
+      "exchange_cost_per_miss_ms": null,
+      "probe": "off"
+    }
+  ],
+  "all_13_exact": true,
+  "draft_proposals_identical": true,
+  "class_copies": [],
+  "control_drift_percent": 0.038344651720745304,
+  "control_drift_limit_percent": 3.0,
+  "measured_wall_seconds": 478.841411812,
+  "device_wall_savings_seconds": null,
+  "savings_status": "matched v4 wall reference required; no inferred measured saving",
+  "evidence_label": "screen",
+  "diagnostic": true,
+  "qualifying": false,
+  "submission_eligible": false,
+  "speed_evidence_eligible": false,
+  "realistic_final_gate": {
+    "passed": false,
+    "reason": "screen only; full sealed chain required"
+  },
+  "prompt_kv_response_reuse": false,
+  "candidates": [
+    {
+      "index": 1,
+      "rate": 52.68381100623167,
+      "faster_than_all_controls": false,
+      "gain_percent": -10.25188902699502,
+      "diagnostic_gain_over_control_mean_percent": -10.236335050633338
+    },
+    {
+      "index": 3,
+      "rate": 52.66872651057898,
+      "faster_than_all_controls": false,
+      "gain_percent": -10.277585820069646,
+      "diagnostic_gain_over_control_mean_percent": -10.262036297142219
+    }
+  ],
+  "strict_candidate_control_ratio": 0.8972241417993035,
+  "strict_gain_percent": -10.277585820069646,
+  "both_candidates_faster_than_all_controls": false,
+  "candidate_qualified": false,
+  "required_gain_percent": 0.5,
+  "scheduling_costs": {
+    "definition": "rank0 confirmed HALF host duration, including preparation, waits, exchanges and receipt work; rollback excluded; all generated misses (not only first 100)",
+    "comparison": "candidate mean corrected-half ms minus mean of control-view means; control drift and per-prompt counts retained",
+    "half_busy_definition": "Engine half busy_ms, narrower host interval; no GPU-only claim",
+    "views": [
+      {
+        "index": 0,
+        "choice": "control",
+        "probe": "off",
+        "miss_count": 331,
+        "corrected_half": {
+          "count": 331,
+          "mean_ms": 11.808600906344411,
+          "median_ms": 11.8073,
+          "total_ms": 3908.6469
+        },
+        "corrected_half_clock": "engine completion before reporting",
+        "native_command": {
+          "count": 331,
+          "mean_ms": 11.848916064612315,
+          "median_ms": 11.84917101636529,
+          "total_ms": 3921.991217386676
+        },
+        "engine_busy": {
+          "count": 331,
+          "mean_ms": 11.818249205438066,
+          "median_ms": 11.817031,
+          "total_ms": 3911.840487
+        },
+        "exchange_audit": {
+          "covered_misses": 331,
+          "counts": [
+            0
+          ],
+          "send_bytes_per_miss": [
+            0
+          ],
+          "receive_bytes_per_miss": [
+            0
+          ]
+        },
+        "missing_native_trace": [],
+        "status": "measured",
+        "requests": [
+          {
+            "prompt_id": "incident-retrospective",
+            "miss_count": 31,
+            "corrected_half": {
+              "count": 31,
+              "mean_ms": 11.877092648290038,
+              "median_ms": 11.88297601765953,
+              "total_ms": 368.18987209699117
+            }
+          },
+          {
+            "prompt_id": "code-review",
+            "miss_count": 28,
+            "corrected_half": {
+              "count": 28,
+              "mean_ms": 11.863042537048127,
+              "median_ms": 11.847474001115188,
+              "total_ms": 332.16519103734754
+            }
+          },
+          {
+            "prompt_id": "customer-email",
+            "miss_count": 31,
+            "corrected_half": {
+              "count": 31,
+              "mean_ms": 11.856801030526478,
+              "median_ms": 11.863749998155981,
+              "total_ms": 367.56083194632083
+            }
+          },
+          {
+            "prompt_id": "sql-debugging",
+            "miss_count": 24,
+            "corrected_half": {
+              "count": 24,
+              "mean_ms": 11.861726165079745,
+              "median_ms": 11.8587404867867,
+              "total_ms": 284.68142796191387
+            }
+          },
+          {
+            "prompt_id": "release-plan",
+            "miss_count": 29,
+            "corrected_half": {
+              "count": 29,
+              "mean_ms": 11.835814137533628,
+              "median_ms": 11.823663982795551,
+              "total_ms": 343.2386099884752
+            }
+          },
+          {
+            "prompt_id": "benchmark-analysis",
+            "miss_count": 26,
+            "corrected_half": {
+              "count": 26,
+              "mean_ms": 11.842660927168954,
+              "median_ms": 11.829580005723983,
+              "total_ms": 307.9091841063928
+            }
+          },
+          {
+            "prompt_id": "architecture-tradeoff",
+            "miss_count": 20,
+            "corrected_half": {
+              "count": 20,
+              "mean_ms": 11.848262103740126,
+              "median_ms": 11.851807008497417,
+              "total_ms": 236.96524207480252
+            }
+          },
+          {
+            "prompt_id": "bug-report-synthesis",
+            "miss_count": 44,
+            "corrected_half": {
+              "count": 44,
+              "mean_ms": 11.84722079382151,
+              "median_ms": 11.84070049203001,
+              "total_ms": 521.2777149281465
+            }
+          },
+          {
+            "prompt_id": "technical-guide",
+            "miss_count": 20,
+            "corrected_half": {
+              "count": 20,
+              "mean_ms": 11.846550306654535,
+              "median_ms": 11.852688010549173,
+              "total_ms": 236.9310061330907
+            }
+          },
+          {
+            "prompt_id": "risk-register",
+            "miss_count": 19,
+            "corrected_half": {
+              "count": 19,
+              "mean_ms": 11.804082161305766,
+              "median_ms": 11.804667999967933,
+              "total_ms": 224.27756106480956
+            }
+          },
+          {
+            "prompt_id": "performance-hypotheses",
+            "miss_count": 33,
+            "corrected_half": {
+              "count": 33,
+              "mean_ms": 11.833006091888599,
+              "median_ms": 11.837168975034729,
+              "total_ms": 390.48920103232376
+            }
+          },
+          {
+            "prompt_id": "decision-memo",
+            "miss_count": 26,
+            "corrected_half": {
+              "count": 26,
+              "mean_ms": 11.857899039079292,
+              "median_ms": 11.857892997795716,
+              "total_ms": 308.3053750160616
+            }
+          }
+        ],
+        "exchange_cost_per_miss_ms": null
+      },
+      {
+        "index": 1,
+        "choice": "candidate",
+        "probe": "xchg",
+        "miss_count": 331,
+        "corrected_half": {
+          "count": 331,
+          "mean_ms": 19.489709365558912,
+          "median_ms": 19.4831,
+          "total_ms": 6451.0938
+        },
+        "corrected_half_clock": "engine completion before reporting",
+        "native_command": {
+          "count": 331,
+          "mean_ms": 19.530495927138734,
+          "median_ms": 19.52584899845533,
+          "total_ms": 6464.59415188292
+        },
+        "engine_busy": {
+          "count": 331,
+          "mean_ms": 19.499888078549848,
+          "median_ms": 19.492337,
+          "total_ms": 6454.462954
+        },
+        "exchange_audit": {
+          "covered_misses": 331,
+          "counts": [
+            96
+          ],
+          "send_bytes_per_miss": [
+            849792
+          ],
+          "receive_bytes_per_miss": [
+            1362048
+          ]
+        },
+        "missing_native_trace": [],
+        "status": "measured",
+        "requests": [
+          {
+            "prompt_id": "incident-retrospective",
+            "miss_count": 31,
+            "corrected_half": {
+              "count": 31,
+              "mean_ms": 19.52854528903,
+              "median_ms": 19.53430598950945,
+              "total_ms": 605.3849039599299
+            }
+          },
+          {
+            "prompt_id": "code-review",
+            "miss_count": 28,
+            "corrected_half": {
+              "count": 28,
+              "mean_ms": 19.60459485936943,
+              "median_ms": 19.60208850505296,
+              "total_ms": 548.9286560623441
+            }
+          },
+          {
+            "prompt_id": "customer-email",
+            "miss_count": 31,
+            "corrected_half": {
+              "count": 31,
+              "mean_ms": 19.516979161116684,
+              "median_ms": 19.507204997353256,
+              "total_ms": 605.0263539946172
+            }
+          },
+          {
+            "prompt_id": "sql-debugging",
+            "miss_count": 24,
+            "corrected_half": {
+              "count": 24,
+              "mean_ms": 19.579546165914508,
+              "median_ms": 19.55468898813706,
+              "total_ms": 469.9091079819482
+            }
+          },
+          {
+            "prompt_id": "release-plan",
+            "miss_count": 29,
+            "corrected_half": {
+              "count": 29,
+              "mean_ms": 19.530212583927565,
+              "median_ms": 19.487647979985923,
+              "total_ms": 566.3761649338994
+            }
+          },
+          {
+            "prompt_id": "benchmark-analysis",
+            "miss_count": 26,
+            "corrected_half": {
+              "count": 26,
+              "mean_ms": 19.57040603939766,
+              "median_ms": 19.546322990208864,
+              "total_ms": 508.8305570243392
+            }
+          },
+          {
+            "prompt_id": "architecture-tradeoff",
+            "miss_count": 20,
+            "corrected_half": {
+              "count": 20,
+              "mean_ms": 19.543325851554982,
+              "median_ms": 19.552369485609233,
+              "total_ms": 390.86651703109965
+            }
+          },
+          {
+            "prompt_id": "bug-report-synthesis",
+            "miss_count": 44,
+            "corrected_half": {
+              "count": 44,
+              "mean_ms": 19.500311475315936,
+              "median_ms": 19.491680490318686,
+              "total_ms": 858.0137049139012
+            }
+          },
+          {
+            "prompt_id": "technical-guide",
+            "miss_count": 20,
+            "corrected_half": {
+              "count": 20,
+              "mean_ms": 19.51380499958759,
+              "median_ms": 19.50754999415949,
+              "total_ms": 390.27609999175183
+            }
+          },
+          {
+            "prompt_id": "risk-register",
+            "miss_count": 19,
+            "corrected_half": {
+              "count": 19,
+              "mean_ms": 19.461325153794238,
+              "median_ms": 19.46230899193324,
+              "total_ms": 369.7651779220905
+            }
+          },
+          {
+            "prompt_id": "performance-hypotheses",
+            "miss_count": 33,
+            "corrected_half": {
+              "count": 33,
+              "mean_ms": 19.50765651947057,
+              "median_ms": 19.49930001865141,
+              "total_ms": 643.7526651425287
+            }
+          },
+          {
+            "prompt_id": "decision-memo",
+            "miss_count": 26,
+            "corrected_half": {
+              "count": 26,
+              "mean_ms": 19.517855497095017,
+              "median_ms": 19.520599496900104,
+              "total_ms": 507.46424292447045
+            }
+          }
+        ],
+        "exchange_cost_per_miss_ms": 7.685005538771399
+      },
+      {
+        "index": 2,
+        "choice": "control",
+        "probe": "off",
+        "miss_count": 331,
+        "corrected_half": {
+          "count": 331,
+          "mean_ms": 11.80162084592145,
+          "median_ms": 11.7992,
+          "total_ms": 3906.3365
+        },
+        "corrected_half_clock": "engine completion before reporting",
+        "native_command": {
+          "count": 331,
+          "mean_ms": 11.841646305058894,
+          "median_ms": 11.840985011076555,
+          "total_ms": 3919.584926974494
+        },
+        "engine_busy": {
+          "count": 331,
+          "mean_ms": 11.81112990634441,
+          "median_ms": 11.808624,
+          "total_ms": 3909.483999
+        },
+        "exchange_audit": {
+          "covered_misses": 331,
+          "counts": [
+            0
+          ],
+          "send_bytes_per_miss": [
+            0
+          ],
+          "receive_bytes_per_miss": [
+            0
+          ]
+        },
+        "missing_native_trace": [],
+        "status": "measured",
+        "requests": [
+          {
+            "prompt_id": "incident-retrospective",
+            "miss_count": 31,
+            "corrected_half": {
+              "count": 31,
+              "mean_ms": 11.876195932047501,
+              "median_ms": 11.87994799693115,
+              "total_ms": 368.16207389347255
+            }
+          },
+          {
+            "prompt_id": "code-review",
+            "miss_count": 28,
+            "corrected_half": {
+              "count": 28,
+              "mean_ms": 11.86183200063949,
+              "median_ms": 11.852220995933749,
+              "total_ms": 332.1312960179057
+            }
+          },
+          {
+            "prompt_id": "customer-email",
+            "miss_count": 31,
+            "corrected_half": {
+              "count": 31,
+              "mean_ms": 11.852705838053577,
+              "median_ms": 11.865420994581655,
+              "total_ms": 367.4338809796609
+            }
+          },
+          {
+            "prompt_id": "sql-debugging",
+            "miss_count": 24,
+            "corrected_half": {
+              "count": 24,
+              "mean_ms": 11.848515666012341,
+              "median_ms": 11.84302351612132,
+              "total_ms": 284.3643759842962
+            }
+          },
+          {
+            "prompt_id": "release-plan",
+            "miss_count": 29,
+            "corrected_half": {
+              "count": 29,
+              "mean_ms": 11.825856479719794,
+              "median_ms": 11.807842995040119,
+              "total_ms": 342.94983791187406
+            }
+          },
+          {
+            "prompt_id": "benchmark-analysis",
+            "miss_count": 26,
+            "corrected_half": {
+              "count": 26,
+              "mean_ms": 11.835245772649964,
+              "median_ms": 11.825616005808115,
+              "total_ms": 307.71639008889906
+            }
+          },
+          {
+            "prompt_id": "architecture-tradeoff",
+            "miss_count": 20,
+            "corrected_half": {
+              "count": 20,
+              "mean_ms": 11.833077951450832,
+              "median_ms": 11.838304504635744,
+              "total_ms": 236.66155902901664
+            }
+          },
+          {
+            "prompt_id": "bug-report-synthesis",
+            "miss_count": 44,
+            "corrected_half": {
+              "count": 44,
+              "mean_ms": 11.83502120627302,
+              "median_ms": 11.831467010779306,
+              "total_ms": 520.7409330760129
+            }
+          },
+          {
+            "prompt_id": "technical-guide",
+            "miss_count": 20,
+            "corrected_half": {
+              "count": 20,
+              "mean_ms": 11.836559300718363,
+              "median_ms": 11.838514983537607,
+              "total_ms": 236.73118601436727
+            }
+          },
+          {
+            "prompt_id": "risk-register",
+            "miss_count": 19,
+            "corrected_half": {
+              "count": 19,
+              "mean_ms": 11.802305000233709,
+              "median_ms": 11.801991000538692,
+              "total_ms": 224.24379500444047
+            }
+          },
+          {
+            "prompt_id": "performance-hypotheses",
+            "miss_count": 33,
+            "corrected_half": {
+              "count": 33,
+              "mean_ms": 11.82073802655478,
+              "median_ms": 11.825875990325585,
+              "total_ms": 390.08435487630777
+            }
+          },
+          {
+            "prompt_id": "decision-memo",
+            "miss_count": 26,
+            "corrected_half": {
+              "count": 26,
+              "mean_ms": 11.860201696086174,
+              "median_ms": 11.848056994494982,
+              "total_ms": 308.3652440982405
+            }
+          }
+        ],
+        "exchange_cost_per_miss_ms": null
+      },
+      {
+        "index": 3,
+        "choice": "candidate",
+        "probe": "xchg",
+        "miss_count": 331,
+        "corrected_half": {
+          "count": 331,
+          "mean_ms": 19.501849848942598,
+          "median_ms": 19.4985,
+          "total_ms": 6455.1123
+        },
+        "corrected_half_clock": "engine completion before reporting",
+        "native_command": {
+          "count": 331,
+          "mean_ms": 19.542721770770616,
+          "median_ms": 19.53898198553361,
+          "total_ms": 6468.640906125074
+        },
+        "engine_busy": {
+          "count": 331,
+          "mean_ms": 19.51215793957704,
+          "median_ms": 19.507813,
+          "total_ms": 6458.524278
+        },
+        "exchange_audit": {
+          "covered_misses": 331,
+          "counts": [
+            96
+          ],
+          "send_bytes_per_miss": [
+            849792
+          ],
+          "receive_bytes_per_miss": [
+            1362048
+          ]
+        },
+        "missing_native_trace": [],
+        "status": "measured",
+        "requests": [
+          {
+            "prompt_id": "incident-retrospective",
+            "miss_count": 31,
+            "corrected_half": {
+              "count": 31,
+              "mean_ms": 19.58967948279854,
+              "median_ms": 19.59430699935183,
+              "total_ms": 607.2800639667548
+            }
+          },
+          {
+            "prompt_id": "code-review",
+            "miss_count": 28,
+            "corrected_half": {
+              "count": 28,
+              "mean_ms": 19.57984146533168,
+              "median_ms": 19.56843251537066,
+              "total_ms": 548.235561029287
+            }
+          },
+          {
+            "prompt_id": "customer-email",
+            "miss_count": 31,
+            "corrected_half": {
+              "count": 31,
+              "mean_ms": 19.570560417994255,
+              "median_ms": 19.58762400317937,
+              "total_ms": 606.6873729578219
+            }
+          },
+          {
+            "prompt_id": "sql-debugging",
+            "miss_count": 24,
+            "corrected_half": {
+              "count": 24,
+              "mean_ms": 19.57904058387309,
+              "median_ms": 19.562611501896754,
+              "total_ms": 469.89697401295416
+            }
+          },
+          {
+            "prompt_id": "release-plan",
+            "miss_count": 29,
+            "corrected_half": {
+              "count": 29,
+              "mean_ms": 19.475512656158415,
+              "median_ms": 19.477246009046212,
+              "total_ms": 564.789867028594
+            }
+          },
+          {
+            "prompt_id": "benchmark-analysis",
+            "miss_count": 26,
+            "corrected_half": {
+              "count": 26,
+              "mean_ms": 19.4987018084458,
+              "median_ms": 19.49273950594943,
+              "total_ms": 506.9662470195908
+            }
+          },
+          {
+            "prompt_id": "architecture-tradeoff",
+            "miss_count": 20,
+            "corrected_half": {
+              "count": 20,
+              "mean_ms": 19.604192906990647,
+              "median_ms": 19.597356513259,
+              "total_ms": 392.08385813981295
+            }
+          },
+          {
+            "prompt_id": "bug-report-synthesis",
+            "miss_count": 44,
+            "corrected_half": {
+              "count": 44,
+              "mean_ms": 19.547598183139186,
+              "median_ms": 19.54967700294219,
+              "total_ms": 860.0943200581241
+            }
+          },
+          {
+            "prompt_id": "technical-guide",
+            "miss_count": 20,
+            "corrected_half": {
+              "count": 20,
+              "mean_ms": 19.54813724878477,
+              "median_ms": 19.541145986295305,
+              "total_ms": 390.9627449756954
+            }
+          },
+          {
+            "prompt_id": "risk-register",
+            "miss_count": 19,
+            "corrected_half": {
+              "count": 19,
+              "mean_ms": 19.47336705205472,
+              "median_ms": 19.47182501317002,
+              "total_ms": 369.99397398903966
+            }
+          },
+          {
+            "prompt_id": "performance-hypotheses",
+            "miss_count": 33,
+            "corrected_half": {
+              "count": 33,
+              "mean_ms": 19.48817912136402,
+              "median_ms": 19.487584999296814,
+              "total_ms": 643.1099110050127
+            }
+          },
+          {
+            "prompt_id": "decision-memo",
+            "miss_count": 26,
+            "corrected_half": {
+              "count": 26,
+              "mean_ms": 19.559231228553333,
+              "median_ms": 19.549926990293898,
+              "total_ms": 508.5400119423866
+            }
+          }
+        ],
+        "exchange_cost_per_miss_ms": 7.697146022155085
+      },
+      {
+        "index": 4,
+        "choice": "control",
+        "probe": "off",
+        "miss_count": 331,
+        "corrected_half": {
+          "count": 331,
+          "mean_ms": 11.803889728096676,
+          "median_ms": 11.8039,
+          "total_ms": 3907.0875
+        },
+        "corrected_half_clock": "engine completion before reporting",
+        "native_command": {
+          "count": 331,
+          "mean_ms": 11.844601894354621,
+          "median_ms": 11.846873996546492,
+          "total_ms": 3920.56322703138
+        },
+        "engine_busy": {
+          "count": 331,
+          "mean_ms": 11.813669265861027,
+          "median_ms": 11.813592,
+          "total_ms": 3910.324527
+        },
+        "exchange_audit": {
+          "covered_misses": 331,
+          "counts": [
+            0
+          ],
+          "send_bytes_per_miss": [
+            0
+          ],
+          "receive_bytes_per_miss": [
+            0
+          ]
+        },
+        "missing_native_trace": [],
+        "status": "measured",
+        "requests": [
+          {
+            "prompt_id": "incident-retrospective",
+            "miss_count": 31,
+            "corrected_half": {
+              "count": 31,
+              "mean_ms": 11.874947837749195,
+              "median_ms": 11.875428986968473,
+              "total_ms": 368.12338297022507
+            }
+          },
+          {
+            "prompt_id": "code-review",
+            "miss_count": 28,
+            "corrected_half": {
+              "count": 28,
+              "mean_ms": 11.869062429468613,
+              "median_ms": 11.854819487780333,
+              "total_ms": 332.33374802512117
+            }
+          },
+          {
+            "prompt_id": "customer-email",
+            "miss_count": 31,
+            "corrected_half": {
+              "count": 31,
+              "mean_ms": 11.853696256425351,
+              "median_ms": 11.858145997393876,
+              "total_ms": 367.4645839491859
+            }
+          },
+          {
+            "prompt_id": "sql-debugging",
+            "miss_count": 24,
+            "corrected_half": {
+              "count": 24,
+              "mean_ms": 11.84601875138469,
+              "median_ms": 11.842746491311118,
+              "total_ms": 284.30445003323257
+            }
+          },
+          {
+            "prompt_id": "release-plan",
+            "miss_count": 29,
+            "corrected_half": {
+              "count": 29,
+              "mean_ms": 11.826841689541872,
+              "median_ms": 11.80808199569583,
+              "total_ms": 342.9784089967143
+            }
+          },
+          {
+            "prompt_id": "benchmark-analysis",
+            "miss_count": 26,
+            "corrected_half": {
+              "count": 26,
+              "mean_ms": 11.835507461980272,
+              "median_ms": 11.834596502012573,
+              "total_ms": 307.72319401148707
+            }
+          },
+          {
+            "prompt_id": "architecture-tradeoff",
+            "miss_count": 20,
+            "corrected_half": {
+              "count": 20,
+              "mean_ms": 11.839081298967358,
+              "median_ms": 11.847680492792279,
+              "total_ms": 236.78162597934715
+            }
+          },
+          {
+            "prompt_id": "bug-report-synthesis",
+            "miss_count": 44,
+            "corrected_half": {
+              "count": 44,
+              "mean_ms": 11.839455455959648,
+              "median_ms": 11.833564509288408,
+              "total_ms": 520.9360400622245
+            }
+          },
+          {
+            "prompt_id": "technical-guide",
+            "miss_count": 20,
+            "corrected_half": {
+              "count": 20,
+              "mean_ms": 11.842070351121947,
+              "median_ms": 11.84462002129294,
+              "total_ms": 236.84140702243894
+            }
+          },
+          {
+            "prompt_id": "risk-register",
+            "miss_count": 19,
+            "corrected_half": {
+              "count": 19,
+              "mean_ms": 11.801537581241542,
+              "median_ms": 11.807791015598923,
+              "total_ms": 224.2292140435893
+            }
+          },
+          {
+            "prompt_id": "performance-hypotheses",
+            "miss_count": 33,
+            "corrected_half": {
+              "count": 33,
+              "mean_ms": 11.830136819326347,
+              "median_ms": 11.831245006760582,
+              "total_ms": 390.39451503776945
+            }
+          },
+          {
+            "prompt_id": "decision-memo",
+            "miss_count": 26,
+            "corrected_half": {
+              "count": 26,
+              "mean_ms": 11.86356372692479,
+              "median_ms": 11.860229496960528,
+              "total_ms": 308.45265690004453
+            }
+          }
+        ],
+        "exchange_cost_per_miss_ms": null
+      }
+    ]
+  },
+  "purpose": "diagnostic exchange cost only; no speed promotion"
+}
