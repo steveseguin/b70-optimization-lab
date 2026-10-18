@@ -15,7 +15,7 @@ P = Path(__file__).resolve().parent
 ORDER = ('K1a', 'K1b', 'WSCREEN')
 GAP_SECONDS = 90
 STAGES = (('max','max'),('smoke','smoke'))
-ROOT = P / 'evidence/card0-capacity-c'
+ROOT = P / 'evidence/card0-capacity-d'
 
 
 def commands(output, card, review, library, view='max', maintenance=DEFAULT_MAINTENANCE):

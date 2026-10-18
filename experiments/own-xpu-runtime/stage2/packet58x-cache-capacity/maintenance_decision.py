@@ -8,7 +8,8 @@ ROOT=P.parents[3]
 
 
 def main():
-    assert not (P/'evidence/card0-capacity-c').exists(), 'never amend launched output'
+    from reseal_boundary import check
+    check()
     archive=P/'lineage/58xb-source-snapshot.tar.gz'
     manifest=D.read(P/'lineage/58xb-source-snapshot.json')
     assert D.sha(archive)==manifest['archive_sha256']

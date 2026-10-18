@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+from device_memory import parse_size
 import resource
 import shutil
 import statistics
@@ -52,8 +53,8 @@ def derive():
             census = read(path.parent/'run/run/census.json')[0]
             native = read(path.parent/'run/run/memory.json')
             raw = pin(path.parent/'run/run/drm-memory-after_load.txt').read_text()
-            drm = int(next(line.split(':')[1].split()[0] for line in raw.splitlines()
-                           if line.startswith('drm-total-vram0:'))) * 1024
+            drm = parse_size(next(line.split(':', 1)[1] for line in raw.splitlines()
+                                  if line.startswith('drm-total-vram0:')))
             device = sum(a['bytes'] for a in census['allocations'] if a['live'] and a['memory']=='device')
             assert device == native['peak_device_bytes_per_owner']
             assert sum(a['bytes'] for a in census['allocations'] if a['live'] and a['category']=='KV') == 116391936

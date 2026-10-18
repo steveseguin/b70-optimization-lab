@@ -90,7 +90,7 @@ def inspect_source(source: str, *, drain_gate: bool = False) -> dict | None:
 def rg_paths(args: list[str], root: Path) -> set[Path]:
     result = subprocess.run(
         ["rg", "--threads", "1", "--no-mmap", "--hidden", "--no-ignore", "--glob", "!.git",
-         "--glob", "!__pycache__", *args, "--", str(root)],
+         "--glob", "!__pycache__", "--glob", "!frozen-inputs", *args, "--", str(root)],
         stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         check=False,
     )
@@ -136,7 +136,7 @@ def scan(root: Path) -> dict:
               for status in ("FIXED", "UNFIXED")}
     return {"schema": "drain-fix-report.v1", "root": display_path(root),
             "scope": "all drain_gate.py and matching text files, including hidden/ignored files; "
-                     "excludes .git, __pycache__, binary content and symlink directory traversal",
+                     "excludes .git, __pycache__, frozen-inputs (archived build provenance only), binary content and symlink directory traversal",
             "counts": counts, "passed": bool(rows) and not counts["UNFIXED"], "files": rows}
 
 
