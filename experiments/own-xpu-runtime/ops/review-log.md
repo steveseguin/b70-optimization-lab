@@ -542,3 +542,14 @@ Actions:
 3. Codex **p128**: fresh in-engine per-class attribution of the bundle 7 line on both ranks, hits and misses, every layer, one lane-B load; levers re-ranked by ms on the critical path with a ≥ +0.5% projected bar.
 4. One-card: packet 58n's tile16-only screen runs now in the 124b gap; packet 58p (one-card chain for that view, gated ≥ +0.5%) is prepared to run after bundle 7's chain.
 STOP DOING acknowledged: startup-window passes are not chain readiness without the full argument gate; chain launches are pre-armed when the Codex job starts; no briefs below +0.5% projected in-engine gain; no lane-B pause for drain-fixed bundles.
+
+## Review 24 (2026-10-18 ~13:05 UTC): ACT
+
+2 h: lane A 89%, lane B 42% (lane B idle during the one-card whole-host holds 11:56–12:22 and since 12:46). Bundle 7 waited ~2.5 h through two chain failures (K2 exact-key selection; flattened oracle symlink); packet 124c (both fixed, extended gate covers the queue runner's between-window checks) is armed after the one-card chain. Packet 128's attribution ran but at 0.72 overhead ratio and its analysis failed ("overlapping queues").
+
+Actions:
+1. Codex **p128b**: sampled-token attribution (overhead target ≥ 0.90) + per-queue analysis fix; `autoq-p128b` queues it on lane B when Codex exits and runs `analyze.py` right after the job.
+2. Codex **p129** (2-card lever): draft acceptance via a more faithful draft-expert format, acceptance-first diagnostic on independent calibration text (kill gate +1.5 points), v5 bracket only after; `autoq-p129` queues the diagnostic on lane B when Codex exits. Both run on lane B during the packet124c chain (no lane-B pause for that bundle).
+3. One-card: packet 58r's one-load bracket and packet 58t's resident-lookup screen will run back to back in a single whole-host hold after the packet124c chain (no separate holds; never ahead of a ready 2-card chain).
+4. Launch environment: the packet58p first launch died on a caller-supplied `LD_LIBRARY_PATH`; future WINDOW/ready commands must embed the recorded oneAPI path, and every pre-launch hook runs the closed-environment + argument + queue/oracle gates (packet124c's hook does the latter two).
+STOP DOING acknowledged: all-Codex-on-one-card while lane B is empty; per-question whole-host holds; unanalysed diagnostics; every-token event recording; caller-environment launch commands.
