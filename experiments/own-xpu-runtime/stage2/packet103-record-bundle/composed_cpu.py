@@ -1,3 +1,6 @@
+# Retained ancestor evidence; obsolete entrypoint deliberately refused.
+if __name__ == '__main__':
+ raise SystemExit('Retired ancestor. Use cpu_gate.py, full_shape.py and startup103.py; see README.md.')
 """Execute each selected composition, twice under GNU and Intel, with exact bytes.
 Reuse the parent test vectors while selecting only this view's implementations.
 The generated source is retained and bound by hash; production code is untouched.

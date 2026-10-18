@@ -1,6 +1,6 @@
 # Retained ancestor implementation; not an entrypoint for packet103.
 if __name__ == '__main__':
-    raise SystemExit('Retired inherited entrypoint. Use build_engine.py, cpu_gate.py, composed_cpu.py, full_shape.py, prepare_chain.py, prepare_packet.py, then fast_reseal.py; see README.md.')
+    raise SystemExit('Retired inherited entrypoint. Use build_engine.py, cpu_gate.py, full_shape.py, prepare_chain.py, startup103.py, prepare_packet.py, then fast_reseal.py; see README.md.')
 #!/usr/bin/env python3
 """Seal all eight views, reusing one engine and completed CPU fixtures."""
 import json
