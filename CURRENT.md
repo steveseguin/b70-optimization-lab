@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet114 smaller draft prefix prepared on CPU:** The fixed
+non-benchmark document rule chose 80,128 rows, down from 91,392. Both sizes
+pass the byte checks, all eleven startup paths, reset checks and seals. The
+full target head stays unchanged. The new lane-B one-load bracket proposal
+passes a temporary queue plan; allow 9–15 minutes with a one-hour watchdog.
+Its reports keep acceptance separate for each arm. The build is about 128 MB.
+Actual acceptance, exact model outputs and speed await the device bracket.
+No GPU, service, live queue or host setting changed in this preparation.
+[Work note](notes/2026-10-18-own-runtime-packet114.md).
+
 **October 18, packet111 four-composition bundle prepared on CPU:** The copy
 includes the packet103 launch repair, other-fusion and target-head split.
 Both compilers pass exact-byte checks; all 44 startup windows and 33 policy

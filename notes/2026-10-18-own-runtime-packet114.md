@@ -71,3 +71,24 @@ submission notes: the five exact files, pinned commit, 99.0% objective,
 preregistration hash, and the single selected N. Device acceptance is pending
 for both arms; the prepared report records mean per-prompt acceptance and
 every prompt's hits/guesses separately for A and B. No measured gain is claimed.
+
+## Sealed handoff
+
+Implementation and CPU evidence were pushed in `d10701cd0`. The final native
+and wrapper verification passes. The single proposed job is
+[`proposed-p114-v5-B.txt`](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p114-v5-B.txt);
+its real queue plan passed using a temporary queue copy. Expected duration is
+9–15 minutes (900-second upper estimate); actual watchdog is 3,600 seconds.
+The live queues are unchanged by this work. The coordinator supplies its
+normal fresh fault review and authorized device window.
+
+The A/B/A/B/A report allows between-arm acceptance changes, requires exact
+128-token target outputs on all twelve prompts plus incident64, checks repeat
+counts within each arm, and accepts only if both B rates beat the strongest A
+by at least 0.5% with control drift no greater than 3%. A rejection cannot
+select another N. Actual acceptance is **not measured** for production or
+candidate in packet114; it will appear per view in `bracket-summary.json`.
+
+[Packet and reproduction](../experiments/own-xpu-runtime/stage2/packet114-draft-prefix/README.md) ·
+[CPU closeout](../experiments/own-xpu-runtime/stage2/packet114-draft-prefix/CPU-PREPARATION-CLOSEOUT.md) ·
+[Queue-plan receipt](../experiments/own-xpu-runtime/stage2/packet114-draft-prefix/evidence/queue-plans.json).
