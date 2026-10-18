@@ -5,7 +5,8 @@ the 252 misses in the first 99 intervals of twelve cold requests. It retains
 every command and every outside-command span in
 [`evidence/miss-intervals.json.gz`](evidence/miss-intervals.json.gz), with the
 input hash and ledger inventory in [`evidence/budget.json`](evidence/budget.json).
-The source is the lane-A first p104b production control: packet97 + tile16,+**not a measurement of the packet118 implementation prepared here**.
+The source is the lane-A first p104b production control: packet97 + tile16,
+**not a measurement of the packet118 implementation prepared here**.
 
 There are 936 hits at 15.173465 ms and 252 misses at 26.088644 ms. Misses use
 31.6428% of measured interval time. The requested 0.21 multiplier is rounded;
@@ -59,7 +60,7 @@ restore-only idea is 0.549849 ms/miss (0.115468 ms/step at rounded 0.21).
 
 | Rank | Exact change | Screening scenario: miss saving / hit cost, ms | Weighted saving, ms/step | Decision |
 | --- | --- | --- | ---: | --- |
-| 1 | Reuse the capture descriptor table in reverse for restore | 0.10 / 0.005 | 0.01705 | Prepare one runtime-switchable candidate. Bounds 0–0.20 saving, 0–0.02 cost; actual sign unmeasured. |
+| 1 | Reuse the capture descriptor table in reverse for restore | 0.10 / 0.005 | 0.01705 | Prepare one runtime-switchable candidate. Scenario ranges 0–0.20 saving, 0–0.02 cost; actual sign unmeasured and regressions can exceed this range. |
 | 2 | Prepare corrected token's host lookup payload while restore completes | 0.04 / 0 | 0.00840 | Deferred. The entire rank0 prepare timer is only 0.104678 ms; payload staging must avoid the upload/drain and mutable lookup metadata until restore completes. |
 | 3 | Aligned 16-byte restore loads/stores with exact byte tails | 0.02 / 0 | 0.00420 | Deferred. Restore kernel time is missing and compiler may already vectorize; inspect code generation before any build campaign. Keep capture unchanged. |
 

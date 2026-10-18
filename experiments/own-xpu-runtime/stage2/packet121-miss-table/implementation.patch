@@ -1,0 +1,156 @@
+--- a/main.cpp
++++ b/main.cpp
+@@ -619,6 +619,7 @@
+   bool miss_banks() const {return a.rank==0&&miss_choice().starts_with("banks");}
+   bool miss_batch() const {return miss_choice().find("batch")!=std::string::npos;}
+   bool miss_overlap() const {return miss_choice()=="banks-batch-overlap";}
++  bool reuse_restore_table() const {auto i=sealed_selection.choices.find("restore_table");return i!=sealed_selection.choices.end()&&i->second=="p121";}
+ 
+   struct Prepared { Spec spec; std::vector<Allocation> bindings; p49d::Submit submit=packet18::submit_parallel; };
+   std::unordered_map<const flash::Launch*,Prepared> prepared;
+--- a/p49d_submit.cpp
++++ b/p49d_submit.cpp
+@@ -67,6 +67,7 @@
+  }
+  if(cls=="experts"&&(choice=="production"||choice=="wg64"||choice=="wg128"||choice=="prefetch64"||choice=="wide64"||choice=="experts2-a"||choice=="experts2-b"||choice=="input-packed"||choice=="gate-input-packed"||choice=="down-input-packed"||choice=="exp-halfcache"||choice=="exp-grid-prefetch"||choice=="exp-grid-prefetch+halfcache"))return production;
+  if(cls=="miss"&&(choice=="control"||choice=="batch"))return production;
++ if(cls=="restore_table"&&(choice=="production"||choice=="p121"))return production;
+  if(cls=="route"){if(choice=="route-fast")return route_fast;if(choice=="production")return production_route;if(choice=="route-rank4")return route<256>;if(choice=="route-exp32-rank4")return route<32>;}
+  if(cls=="recurrence"){if(choice=="rec-both")return recurrence82<true>;if(choice=="rec-both-plus")return recurrence82b;if(choice=="rec-gates")return recurrence82<false>;if(choice=="rec-parallel")return recurrence82<true>;if(choice=="production")return production;if(choice=="rows4-shared")return recurrence<4>;if(choice=="rows8-shared")return recurrence<8>;}
+  if(cls=="hc"){if(choice=="production")return production;if(choice=="mix-vector4")return mix;}
+@@ -104,9 +105,10 @@
+    }
+   }else throw std::invalid_argument("p49d unknown selection field");
+  }while(more());take('}');ws();
+- if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision","draft"}||values.size()!=11||!values.contains("head"))throw std::invalid_argument("p49d incomplete/trailing selection");
++ if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision","draft"}||(values.size()!=11&&values.size()!=12)||!values.contains("head")||(values.size()==12&&!values.contains("restore_table")))throw std::invalid_argument("p49d incomplete/trailing selection");
++ if(values.contains("restore_table")&&values.at("restore_table")=="p121"&&values.at("miss")!="batch")throw std::invalid_argument("p121 requires the ordinary batch snapshot");
+  p59c::validate(draft_values);
+- auto target_values=values;target_values.erase("other_fusion");target_values.erase("head");target_values.erase("host_retire");target_values.erase("hc_norm");if(target_values.at("route")=="route-fast")target_values["route"]="route-exp32-rank4";target_values.erase("miss");target_values.erase("experts");target_values.erase("packed_dense");target_values.erase("hc_gate");
++ auto target_values=values;target_values.erase("restore_table");target_values.erase("other_fusion");target_values.erase("head");target_values.erase("host_retire");target_values.erase("hc_norm");if(target_values.at("route")=="route-fast")target_values["route"]="route-exp32-rank4";target_values.erase("miss");target_values.erase("experts");target_values.erase("packed_dense");target_values.erase("hc_gate");
+  if(target_values.at("recurrence")=="rec-both"||target_values.at("recurrence")=="rec-both-plus"||target_values.at("recurrence")=="rec-gates"||target_values.at("recurrence")=="rec-parallel")target_values["recurrence"]="rows4-shared";
+  if(target_values!=std::map<std::string,std::string>{{"route","route-exp32-rank4"},{"recurrence","rows4-shared"},{"hc","production"}})throw std::invalid_argument("p59c target must stay packet56");
+  choices=std::move(values);draft=std::move(draft_values);observed_sha256=digest;
+--- a/strict_snapshot.hpp
++++ b/strict_snapshot.hpp
+@@ -65,6 +65,7 @@
+ #endif
+ };
+ static_assert(sizeof(SnapshotFlat::Item)==32);
++#include "p121_reverse.hpp"
+ // SPEED2_WRITE_SET_BEGIN
+ // Union of all selectable parallel writers, derived from Launch geometry.
+ // Bounds describe bytes which MAY be written, including every cancelled prefix.
+@@ -159,6 +160,11 @@
+  std::vector<size_t> fp32_extents;
+  uint64_t captures=0,restores=0,saved_bytes=0,capture_submissions=0,restore_submissions=0;
+  uint64_t restored_bytes=0,redo_omitted_bytes=0,redo_restores=0,redo_fallbacks=0,completed_redos=0;
++ // These descriptors are valid only from this capture to its accept/restore.
++ // All physical ranges are re-admitted by CopyEngine on EVERY restore below.
++ std::vector<SnapshotFlat::Item> capture_rows;
++ size_t capture_tiles=0,redo_rows=0,redo_tiles=0;
++ uint64_t reused_restore_tables=0;
+  void zero_private() {
+   if(!backup)return;
+   std::vector<uint8_t> zeros(std::min(capacity,size_t(4*1024*1024)),0);
+@@ -190,6 +196,21 @@
+    e.dev(0).end_capture();
+   }catch(...){e.dev(0).end_capture();throw;}
+   require(checked.size()==lengths.size(),"snapshot copy capture cardinality");
++  if(e.reuse_restore_table()&&restore&&!checked.empty()) {
++   require(e.miss_batch()&&!e.miss_banks()&&!capture_rows.empty(),"p121 capture table unavailable");
++   size_t first=deferred_only?redo_rows:0;
++   size_t last=for_redo?redo_rows:capture_rows.size();
++   require(last>=first&&checked.size()==last-first,"p121 restore table cardinality");
++   std::vector<Allocation> ids{table};
++   for(size_t i=0;i<checked.size();++i){const auto& item=checked[i];const auto& row=capture_rows[first+i];
++    require(item.ids.size()==2&&item.pointers.size()==2&&item.pointers[0]==row.src&&item.pointers[1]==row.dst&&lengths[i]==row.bytes,"p121 restore table physical identity");
++    ids.insert(ids.end(),item.ids.begin(),item.ids.end());
++   }
++   SnapshotReverse op;op.count=capture_rows.size();op.first_tile=deferred_only?redo_tiles:0;
++   op.tiles=(for_redo?redo_tiles:capture_tiles)-op.first_tile;
++   require(op.tiles>0,"p121 nonempty restore tile range");
++   e.tail=e.dev(0).compute(op,ids,{});++restore_submissions;++reused_restore_tables;return;
++  }
+   if(e.miss_batch()&&!checked.empty()) {
+    std::vector<SnapshotFlat::Item> rows;std::vector<Allocation> ids{table};size_t tiles=0;
+    for(size_t i=0;i<checked.size();++i){const auto& item=checked[i];
+@@ -199,6 +220,15 @@
+     ids.insert(ids.end(),item.ids.begin(),item.ids.end());
+    }
+    require(rows.size()*sizeof(SnapshotFlat::Item)<=table_capacity,"flat snapshot table capacity");
++   if(e.reuse_restore_table()&&!restore){
++    capture_rows=rows;capture_tiles=tiles;redo_rows=0;redo_tiles=0;bool deferred=false;
++    for(const auto& x:saved){
++     if(x.redo_overwrite)deferred=true;else require(!deferred,"p121 deferred extents must be last");
++     if(!x.redo_overwrite)for(size_t off=0;off<x.bytes;off+=SnapshotBatch::limit){
++      ++redo_rows;redo_tiles+=(std::min(x.bytes-off,SnapshotBatch::limit)+SnapshotFlat::tile-1)/SnapshotFlat::tile;
++     }
++    }
++   }
+    e.upload(0,table,0,rows.data(),rows.size()*sizeof(SnapshotFlat::Item));
+    SnapshotFlat op;op.count=rows.size();op.tiles=tiles;e.tail=e.dev(0).compute(op,ids,{});
+    (restore?restore_submissions:capture_submissions)+=2;return;
+@@ -291,6 +321,9 @@
+    if(bytes)saved.push_back({id,skip,bytes,offset,source.redo_overwrite});offset+=bytes;
+   }
+   require(offset<=capacity,"snapshot extent overflow");valid=true;dirty=true;
++  // Independent disjoint copies may be reordered. Keep backup offsets intact;
++  // the redo prefix and fallback suffix then need no new device descriptor.
++  if(e.reuse_restore_table())std::stable_partition(saved.begin(),saved.end(),[](const Extent& x){return !x.redo_overwrite;});
+   copy(false);if(e.miss_banks()){e.rotate_spare_bank();rotated=true;}++captures;saved_bytes+=offset;
+  }
+  void accept(){require(valid,"snapshot accept without speculation");e.drain();rotated=false;valid=false;}
+@@ -331,11 +364,15 @@
+   require(!valid&&!redo_pending,"snapshot boundary with unresolved speculation");e.drain();if(dirty)zero_private();
+   lookup.clear();selected.clear();loaded.clear();fp32_sources.clear();fp32_extents.clear();saved.clear();
+   protected_active.clear();protected_qsa.clear();history0=history1=0;parity=0;launch_extent=alternate_launch_extent=32;
++  capture_rows.clear();capture_tiles=redo_rows=redo_tiles=0;
++  if(backup)save(e.a.output/"p121-restore-table.json","{\"passed\":true,\"mode\":"+ownrt::quote(e.reuse_restore_table()?"p121":"production")+",\"reused_restore_tables\":"+std::to_string(reused_restore_tables)+",\"device_table_allocations_added\":0,\"restore_extent_guards_unchanged\":true}");
+   shared_before.fill(0);shared_slot=nullptr;
+   require(lookup.empty()&&selected.empty()&&loaded.empty()&&fp32_sources.empty()&&fp32_extents.empty()&&saved.empty(),"private host snapshot retirement");
+   if(backup)save(e.a.output/"speculative-snapshot.json","{\"passed\":true,\"miss_selection\":"+ownrt::quote(e.miss_choice())+",\"bank_capture_bytes_avoided\":"+std::to_string(bank_capture_bytes_avoided)+",\"capacity_bytes\":"+std::to_string(capacity)+",\"captures\":"+std::to_string(captures)+",\"restores\":"+std::to_string(restores)+",\"snapshot_payload_bytes\":"+std::to_string(saved_bytes)+",\"capture_submissions\":"+std::to_string(capture_submissions)+",\"restore_submissions\":"+std::to_string(restore_submissions)+",\"restored_bytes\":"+std::to_string(restored_bytes)+",\"redo_omitted_bytes\":"+std::to_string(redo_omitted_bytes)+",\"redo_restores\":"+std::to_string(redo_restores)+",\"completed_redos\":"+std::to_string(completed_redos)+",\"redo_fallbacks\":"+std::to_string(redo_fallbacks)+",\"copy_extent_guard_unchanged\":true,\"private_backup_zeroed\":true,\"committed_state_scrubbed\":false,\"private_host_backup_empty\":true,\"snapshot_valid\":false,\"counters_are_telemetry\":true,\"rank0_shared_slot_bytes\":65536,\"rank1_shared_regions_untouched\":true}");
+  }
+ #ifdef OWN_RT_HOST_ONLY
++ std::array<uint64_t,3> p121_gate_counts()const{return {capture_submissions,restore_submissions,reused_restore_tables};}
++ void p121_corrupt_descriptor_for_gate(){require(valid&&!capture_rows.empty(),"p121 negative capture missing");++capture_rows.front().dst;}
+  // CPU-only negative control: write a byte excluded from the rollback image.
+  // A subsequent strict final-state comparison MUST detect the corruption.
+  void corrupt_protected_for_gate(int which){
+--- /dev/null
++++ b/p121_reverse.hpp
+@@ -0,0 +1,34 @@
++#pragma once
++// Packet121: reverse the admitted capture table without another host upload.
++// The table has the original SnapshotFlat ABI and owns no model arithmetic.
++#ifdef OWN_RT_HOST_ONLY
++struct SnapshotReverse final:integrated::HostOperation {
++#else
++struct SnapshotReverse final:ownrt::SyclOperation {
++#endif
++ size_t count=0,tiles=0,first_tile=0;
++ static void copy_lane(const SnapshotFlat::Item* rows,size_t n,size_t tile_id,size_t lane) {
++  size_t lo=0,hi=n;
++  while(lo<hi){size_t mid=(lo+hi)/2;if(rows[mid].end_tile<=tile_id)lo=mid+1;else hi=mid;}
++  auto row=rows[lo];size_t start=lo?rows[lo-1].end_tile:0;
++  size_t off=(tile_id-start)*SnapshotFlat::tile+lane*16;
++  auto dst=const_cast<uint8_t*>(row.src);const auto* src=row.dst;
++  for(size_t j=0;j<16&&off+j<row.bytes;++j)dst[off+j]=src[off+j];
++ }
++#ifdef OWN_RT_HOST_ONLY
++ void run(std::span<void*const> p)const override {
++  auto rows=static_cast<const SnapshotFlat::Item*>(p[0]);
++  for(size_t t=first_tile;t<first_tile+tiles;++t)
++   for(size_t lane=0;lane<SnapshotFlat::lanes;++lane)copy_lane(rows,count,t,lane);
++ }
++#else
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
++  auto rows=static_cast<const SnapshotFlat::Item*>(p[0]);auto n=count,total=tiles,first=first_tile;
++  return q.submit([&](sycl::handler& h){h.depends_on(deps);
++   h.parallel_for(sycl::nd_range<1>(total*SnapshotFlat::lanes,SnapshotFlat::lanes),[=](sycl::nd_item<1> id){
++    copy_lane(rows,n,first+id.get_group_linear_id(),id.get_local_linear_id());
++   });
++  });
++ }
++#endif
++};

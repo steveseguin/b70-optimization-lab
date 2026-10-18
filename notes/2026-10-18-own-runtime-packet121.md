@@ -21,3 +21,22 @@ full-precision KV, arithmetic and target verifier remain. Only the table upload
 and reconstruction are removed on a miss. It is a new copy of packet118;
 existing packets and screen wrappers remain frozen. The CPU gates and proposed
 smoke/bracket will determine preparation status; no gain is claimed.
+
+The source implementation and one-load wrapper are now in place. GNU host
+and Intel device compilation pass without opening a device. Both views pass
+all 22 chain startup paths, including the real CPU canary handshake. Reset
+bytes pass twice on each rank. Two fresh native-controller brackets match the
+frozen parent, including 63 forced misses per view. The 16 policy tests, five
+smoke checks and inherited-limit refusal checks pass. Full canonical GNU/Intel
+miss-state repetitions are still running; the final seal and proposals wait
+for them. The build is below 160 MB and root free remains above 36 GB.
+
+Test setup corrections are kept in the logs: position zero needed a distinct
+"no verification publication" sentinel because production never speculates
+there; default CPU threading exceeded the first 300-second byte-test bound,
+so the bounded rerun uses one thread. The frozen KD projection correctly
+rejected the extra selection key; the local adapter validates the original
+choices before restoring that transport key. KD's streaming target shell does
+not have resident prepared commands. The tiny MTP produces only hits, so the
+native protocol gate now adds explicit wrong guesses instead of pretending
+that its ordinary request covered restore. None was a device failure.
