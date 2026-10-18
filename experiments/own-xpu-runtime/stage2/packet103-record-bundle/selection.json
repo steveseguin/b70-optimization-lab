@@ -1,11 +1,11 @@
 {
   "schema": "packet59c.selection.v1",
   "choices": {
-    "route": "route-exp32-rank4",
-    "recurrence": "rec-parallel",
+    "route": "route-fast",
+    "recurrence": "rec-both-plus",
     "hc": "production",
     "miss": "batch",
-    "experts": "wide64",
+    "experts": "exp-halfcache+down-tile16",
     "packed_dense": "production",
     "hc_gate": "wide",
     "host_retire": "ordered",
@@ -43,7 +43,7 @@
     "hidden_norm": "production",
     "hidden_projection": "production",
     "qgate": "production",
-    "qsa_attention": "production",
+    "qsa_attention": "packet59",
     "qsa_ik": "production",
     "qsa_iq": "production",
     "qsa_k": "production",

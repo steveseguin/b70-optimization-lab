@@ -92,14 +92,18 @@ unchanged. No chain, GPU work or live queue was launched. The exact manual
 command is in [ready.json](experiments/own-xpu-runtime/ops/packet97-orchestration/ready.json).
 [Repair and checks](notes/2026-10-18-own-runtime-packet97.md).
 
-**October 18, packet103 bundle built on CPU:** Copied after packet97e’s
+**October 18, packet103 composite prepared on CPU:** Copied after packet97e’s
 committed fix, the new bundle includes down-tile16 and draft attention with
-all earlier choices. Both binaries compile; CPU preparation uses about 145 MB.
+all earlier choices. Both binaries compile; the build is about 222 MB including
+the executed fixture hard links.
 The source decision selects both new options and rechecks later lane-A losses.
 Operator bytes and 529 submission replay checks pass. All 1024 full-size rank
 allocation checks and all 5632 startup-window checks pass on finalized sources.
-Required-view sealing and temporary queue rehearsals are now running. No device
-or live queue ran.
+Eight required views are sealed; both three-job composite proposals pass
+temporary queue planning. All 600 selected-path tests, input checks, storage
+admission and the fresh-chain plan pass. The coordinator can screen the
+proposals; record-chain readiness still needs their measured results. No device
+or live queue ran in this preparation.
 [Work note](notes/2026-10-18-own-runtime-packet103.md).
 
 **October 18, packet100b route capture prepared on CPU:** The new lane-B job

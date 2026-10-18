@@ -128,3 +128,13 @@ fail. Six new regression checks pass, including changed originals, changed
 snapshots, unknown external dependencies and refusal before proposal publication;
 the orchestration suite passes 37 checks. Watched proposal filenames are now
 published only after both temporary plans succeed.
+
+Composite handoff: decision `1ad512f75aab3fce` seals eight required views and
+selects the requested full composition. All 600 selected-path tests pass in
+96.96 seconds; the complete selected rehearsal takes 126.15 seconds. Inputs,
+the chain seal and the fresh `device-cards01-a` plan pass. Storage admission
+passes with 22,632,747,008 bytes free against 18,925,284,380 required.
+Both temporary composite queue plans pass (241.72 seconds together), and the
+coordinator-visible `proposed-p103-composite-A.txt` and `-B.txt` each contain
+control/candidate/control. No live queue or device ran in this preparation.
+Matched device results are still required before record-chain readiness.
