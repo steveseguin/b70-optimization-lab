@@ -44,3 +44,28 @@ def test_window_arrival_during_read_refuses(tmp_path):
  reader.require_current(screens)
  path.write_text('{}')
  with pytest.raises(ValueError,match='results changed during decision'):reader.require_current(screens)
+
+def test_fresh_chain_readiness_replays_matching_entry_tag(tmp_path,monkeypatch):
+ import fresh_chain
+ config=dict(candidate={'down':'tile16'},confirmed_levers=['100'])
+ result=dict(passed=True,chain_policy_passed=True)
+ for attr in ('P','O','ROOT'):monkeypatch.setattr(d.o,attr,tmp_path)
+ monkeypatch.setattr(d.o,'command',lambda:'legacy-command')
+ monkeypatch.setattr(fresh_chain,'command',lambda name:'fresh-command-'+name)
+ calls=[];monkeypatch.setattr(fresh_chain,'startup',lambda:calls.append('startup'))
+ monkeypatch.setattr(d,'validate',lambda config:None)
+ monkeypatch.setattr(d,'matched',lambda config:result)
+ monkeypatch.setattr(d,'preparation_config',lambda config,path:config)
+ (tmp_path/'chain-registration.json').write_text(json.dumps({'output':'device-cards01-c'}))
+ (tmp_path/'composition-selection.json').write_text(json.dumps(config))
+ decision=tmp_path/'decision.json';decision.write_text(json.dumps(config))
+ checks={}
+ for label in ('cpu-dry-run','seal','inputs','storage','queue-plan'):
+  path=tmp_path/(label+'.log');path.write_text('synthetic test only');checks[label]=d.o.sha(path)
+ row=dict(schema='packet103.ready.v1',ready=True,preparation_passed=True,device_executed=False,
+  evidence_rule=d.RULE,chain_entry='packet103',chain_output='device-cards01-c',
+  chain_command='fresh-command-device-cards01-c',boot_id=BOOT,checks=checks,pins={},
+  decision='decision.json',decision_sha256=d.o.sha(decision),selection=config['candidate'],
+  qualified_sources=config['confirmed_levers'],composition=result)
+ assert d.verify(row)==row and calls==['startup']
+ with pytest.raises(AssertionError):d.verify(dict(row,chain_entry='packet103e'))

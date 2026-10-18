@@ -5,7 +5,9 @@ It can run before the packet build or seals exist. Source qualification needs
 one exact winning lane, and any completed lane-A loss excludes that source.
 The first CPU dry run happened before any proposal or launcher was armed.
 
-After the packet CPU gates and 512 seals exist, run `orchestrate.py` to freeze
+After the exhaustive packet CPU gates pass, run `prepare_views.py` to seal
+the control, candidate, leave-one-out, largest-allocation and all-dimensions views. This keeps disk
+space for the chain. It freezes the source decision. Run `orchestrate.py` to use
 an immutable decision and write the six composite jobs in
 `ops/lane-queue/proposed-p103-composite-A.txt` and `-B.txt`. Planning uses a
 temporary queue copy. These files are proposals; no live queue is changed.

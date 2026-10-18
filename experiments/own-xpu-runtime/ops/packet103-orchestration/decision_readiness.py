@@ -187,7 +187,7 @@ def verify(row):
     assert row['schema'] == 'packet103.ready.v1', 'readiness schema differs'
     assert row['ready'] is True and row['preparation_passed'] is True, 'CPU preparation incomplete'
     assert row['device_executed'] is False and row['evidence_rule'] == RULE
-    if row.get('chain_entry')=='packet103e':
+    if row.get('chain_entry')=='packet103':
         from fresh_chain import command, startup
         assert row['chain_command']==command(row['chain_output'])
         assert json.loads((o.P/'chain-registration.json').read_text())['output']==row['chain_output']
@@ -241,6 +241,7 @@ def main():
         if args.chain_output:
             from fresh_chain import prepare
             o.save(o.P/'composition-selection.json', preparation_config(config, decision))
+            o.run('composition-queue-plan', [o.P/'queue_plan.py'])
             chain_output=prepare(config,args.chain_output)
         else:
             from stopped_archive import require_fresh_chain

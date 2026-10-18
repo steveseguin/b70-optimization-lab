@@ -24,7 +24,8 @@ draft geometry, route and recurrence. Its real host command stays below 8 GiB.
 
 Prepare in order with nice19, taskset 8-15,24-31, python3 -B, OMP_NUM_THREADS=2
 and stdin /dev/null: `build_engine.py`, `cpu_gate.py`, `full_shape.py`,
-`prepare_chain.py`, `startup103.py`, `prepare_packet.py`, `queue_plan.py`,
+`prepare_chain.py`, `startup103.py`, then the new orchestration’s
+`prepare_views.py`, followed by this packet’s `queue_plan.py`,
 `fast_reseal.py`, `dry_run.py --cached`, `dry_run.py`. All compilation takes
 packet94's copied compile_turn lock. Preparation build must remain <=300 MB.
 
@@ -43,3 +44,10 @@ new screen seals do not pin mutable parent selection/readiness/evidence outputs.
 Shared immutable 211 MB CPU fixture payloads use verified per-file symlinks in
 a packet-owned directory. They are not copied or modified. The preparation cap
 covers this packet’s new build bytes; inherited payload identity is checked.
+
+All 512 compositions receive the exhaustive CPU gate. With disk tight, only
+the control, candidate, leave-one-out, largest-allocation and all-dimensions view manifests are
+materialized by ops/packet103-orchestration/prepare_views.py. The unchanged
+seal_view API can materialize any other qualified view without recompiling.
+Running prepare_packet.py directly materializes all512 and is unnecessary
+for the proposed campaign.

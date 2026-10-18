@@ -64,3 +64,12 @@ the card. Driver residency is unmeasured. Tile16 keeps the original 360-byte
 DOWN row extent. Startup remains in progress; no device admission is armed.
 The orchestration now has 30 passing policy tests, including a late A veto
 and a window arriving during a source read. Preseal verifier refusal is saved.
+
+Readiness review closed two orchestration mismatches before freezing a decision:
+the fresh-folder path regenerates the composition queue seal before sealing
+the chain, and producer/verifier both use the packet103 entry tag. A temporary
+end-to-end verifier regression brings the policy suite to 31 passing checks.
+To retain disk room for a chain, prepare_views seals only the control, candidate,
+leave-one-out, largest-allocation and all-dimensions views. All512 supported
+compositions still have the exhaustive byte/arena/startup gate; any additional
+view can be sealed later without compilation.
