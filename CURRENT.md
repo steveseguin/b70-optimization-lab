@@ -1,13 +1,15 @@
 # Current Workspace State
 
-**October 18, packet142 class-layout preparation is in progress on CPU:**
-The packet136 copy has three exact allocation-order candidates. Byte checks,
-full-size allocation checks, submission rehearsal and the memory audit pass.
-Six new proposal files are present but unqueued and not yet finally planned.
-The final rebuild is waiting behind a whole-host hold marker; its recorded
-owner has exited, but the marker is left for the coordinator. Final entry,
-planning and seal checks remain. No GPU, service or live queue was changed.
-Only classes flagged by packet141 may be selected afterwards.
+**October 18, packet142 class-layout preparation passes on CPU:** The packet136
+copy has three exact allocation-order candidates. Byte checks, full-size
+allocation checks, entry and limit checks, submission rehearsal, six temporary
+queue plans and the pin guard pass. The tested native build is retained by
+exact source and binary hashes; no compiler hold was bypassed. Six proposals
+remain unqueued. Only classes flagged by a valid packet141 verdict may be
+selected, starting with smoke. The final readiness marker is the handoff gate.
+The expert candidate covers one layer per rank; it cannot settle whole-class
+placement. Device quality and speed remain pending. No GPU, service, live queue
+or host setting was changed by this preparation. The record is unchanged.
 [Work note](notes/2026-10-18-own-runtime-packet142.md).
 
 **October 18, packet141b early exit repaired on CPU:** The first probe stopped
@@ -1158,6 +1160,8 @@ worker/recall trials and five unused tasks. Further worker tuning/integration is
    does not satisfy missing gates.
 
 ## Storage And Recovery
+
+**October 18, disk7 archive pass:** verified archives of closed build and screen files recovered **1.975 GB**. Root went from **31.284 GB to 33.153 GB free** at 20:09:15 UTC. **The requested 40 GB was not reached**: the other large candidates are protected, still referenced, or lack a clear closure. All JSON receipts, notes, sources, live work and record material stayed. The archives were fully checked before their originals were removed. [Archive paths, restore instructions and checks](experiments/own-xpu-runtime/stage2/DISK-CLEANUP-20261018.md#disk7--verified-archive-pass-2026-10-18).
 
 **October 18, disk6 archive pass:** closed experimental builds, private build dependencies and old compiler caches now have verified archives in
 `/mnt/raid-models/own-xpu-runtime-archive/disk6-20261018/`. The pass recovered **9.581 GB** of allocated file space and stopped at **14:26:13 UTC**,

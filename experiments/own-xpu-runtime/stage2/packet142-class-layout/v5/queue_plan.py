@@ -28,6 +28,7 @@ def main():
     with log.open('w') as stream:r=subprocess.run(cmd,cwd=ROOT,stdin=subprocess.DEVNULL,stdout=stream,stderr=subprocess.STDOUT,timeout=300)
     assert r.returncode==0,log.read_text()[-6000:]
    rows.append(dict(proposal_name=str(live.relative_to(ROOT)),sha256=sha(live),mirror=str((copies/name).relative_to(ROOT)),log=str(log.relative_to(ROOT)),log_sha256=sha(log),unit='screen-'+row['name']+'.service',**row['plan']))
- paths=[P/'queue_plan.py',*copies.glob('*.txt'),*(ROOT/r['log'] for r in rows)]
+ for src in snapshot.glob('*.py'):assert sha(src)==sha(QUEUE/src.name),'queue implementation changed during planning'
+ paths=[P/'queue_plan.py',*snapshot.glob('*.py'),*copies.glob('*.txt'),*(ROOT/r['log'] for r in rows)]
  save(P/'evidence/queue-plan.json',dict(passed=True,device_executed=False,live_queue_modified=False,queued=False,rows=rows,sources={str(f.relative_to(ROOT)):sha(f) for f in paths}))
 if __name__=='__main__':main()

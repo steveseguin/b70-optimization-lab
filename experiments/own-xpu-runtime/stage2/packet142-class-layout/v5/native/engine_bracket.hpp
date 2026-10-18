@@ -43,7 +43,6 @@
       domain(selection->draft,"qsa_attention",{"production","packet59"});
     }
     require(resident&&prepared_path,"bracket requires resident prepared path");
-    require(next.choices.at("class_layout")=="production"||next.choices.at("class_layout")==class_capability(),"bracket selection outside loaded class bank");
     if(validate_only)return;
     const auto before=bracket_arena_hash();
     if(miss_banks()){

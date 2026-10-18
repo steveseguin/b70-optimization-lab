@@ -94,3 +94,61 @@ All six new proposal files now exist under ops/lane-queue and have local mirrors
 No live queue was edited. Final real-seal entry tests and temporary queue planning
 remain pending. This intermediate state is published so the coordinator can see
 why the final marker is absent; it grants no device-launch readiness.
+
+## Qualified implementation retained, 19:55 UTC
+
+The compiler hold persisted after its owner exited. I interrupted only my own
+waiting CPU build and shape processes (1592722 and 1605193); no compiler bypass,
+GPU signal, service operation or coordination-marker edit occurred. The extra
+native pre-validation refusal was the only uncompiled C++ change. It is retained
+as lineage-inputs/qualified-v5/deferred-early-bank-refusal.patch and is not adopted.
+The Python config checker already blocks wrong-bank switches before native
+execution, and native class_select still refuses them before rebinding weights.
+
+The active C++ source is restored exactly to the packet142 build that had already
+passed all CPU gates. reuse_qualified.py verifies every recorded native source and
+inherited object, both native binaries, the shape fixture and both byte-test
+binaries. It retains the original build receipt and all CPU receipts unchanged.
+Only the build driver's artifact-path/source-map bookkeeping differs. The new
+build receipt labels this as reuse, not a new compilation. The composition seal,
+updated safety and six-row admission gate now pass; real-seal entry/limit/worker
+and temporary queue planning are running next.
+
+A concurrent two-card-host push rejected the third milestone push. Incoming changes
+had no overlap with dirty files and no suspicious emptied files; the only deleted
+file was replaced package-version metadata. Main merged cleanly, preserving every
+unrelated unstaged edit; the merge index contained incoming paths only. The merge
+and packet142 milestone were then pushed immediately.
+
+## Final CPU closeout, 20:08 UTC
+
+All final gates pass against one composition seal: twelve full-shape runs and
+twelve parser startups; four matching GNU/Intel transcripts; six rank/class
+admissions; six complete wrapper entries with twelve wrong-unit/environment
+refusals; twelve real rank exec boundaries and six finite-cap refusals; all
+78 smoke/bracket requests and both corrupted-output cooperative-stop paths;
+six temporary queue plans; and the live ops pin guard. The wrapper probes reach
+both native exec boundaries with the actual closed environment and screen-<job>
+unit convention; native execution and operational context are explicitly simulated.
+The real oracle authority and all source/identity checks run. No synthetic device
+receipt is retained as device evidence.
+
+Queue planning first caught inherited object alias paths, then scratch-relative
+submission artifact names. Object pins now name their immutable resolved targets.
+The offline rehearsal now retains its six parent-only artifacts under local
+lineage-inputs. Each artifact is byte-identical to the first successful rehearsal;
+the parent's 58.798108759182306 score and corrupt-receipt refusal are unchanged.
+The two pin refusals are retained in evidence/queue-first-pin-refusal.log and
+evidence/queue-second-pin-refusal.log. The final queue implementation snapshots
+are hash-bound locally and checked against the live implementation at planning.
+
+Build storage is 288,775,204 bytes, below 300 MB; root free space remains above
+25 GB. The 4 GiB CPU limits, nice19 and CPU affinity were retained. No model/GGUF
+payload was read, no GPU or service was launched, no live queue was edited, no
+foreign process was signaled, and no host setting changed. The compiler hold
+was left untouched. Only the coordinator can select classes flagged by a valid
+packet141 verdict, each with its own smoke before its five-view bracket.
+
+The completed source/evidence commit is pushed before READY-FOR-DEVICE.json is
+written. That marker is the final repository content write, binds the commit and
+six proposal hashes, and explicitly leaves device quality/performance pending.

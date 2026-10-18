@@ -15,7 +15,7 @@ def seal():
   assert row.get('passed') is True and row.get('device_executed') is False,name
   if 'sources' in row:check_sources(row['sources'])
  shape=rows['full-shape'];assert len(shape['runs'])==12 and len(shape['startup_runs'])==12
- check_sources(rows['build']['artifacts']);check_sources(rows['bytes']['binaries'])
+ check_sources(rows['build']['artifacts']);check_sources(rows['bytes']['binaries']);check_sources(rows['submission-rehearsal']['artifacts'])
  assert sha(P/'build/full-shape/fixture')==shape['binary_sha256']
  for run in shape['runs']+shape['startup_runs']:assert sha(ROOT/run['artifact']['path'])==run['artifact']['sha256']
  for run in rows['bytes']['runs']:assert sha(ROOT/run['artifact'])==run['artifact_sha256']
@@ -31,6 +31,7 @@ def seal():
  paths.update(f for f in LOCAL.iterdir() if f.is_file() and f.suffix in ('.py','.hpp','.cpp','.bf16','.tsv'))
  paths.update(LOCAL/'lineage-inputs'/n for n in ('legacy-fixtures.json','legacy-fixtures.tar.gz','current-aliases.json','packet136-chain-evidence.json.gz'))
  paths.update(P/'evidence'/(name+'.json') for name in GATES)
+ paths.update(ROOT/name for name in rows['submission-rehearsal']['artifacts'])
  for mode in ('device','gnu-host'):paths.add(P/'build'/mode/'own-rt-iq3')
  paths.add(P/'build/full-shape/fixture')
  for run in shape['runs']+shape['startup_runs']:paths.add(ROOT/run['artifact']['path'])

@@ -8,8 +8,11 @@
   (550,502,400 bytes). It failed CPU admission and was replaced by 600 MiB.
 - CopyEngine has a 128 MiB transfer limit. Whole expert matrices exceed it;
   load-time copies use bounded 32 MiB chunks with waits and event retirement.
-- Never accept a class switch outside the bank loaded at startup. Validate before
-  mutating bank roles or captures. No allocation or weight write at view boundaries.
+- Never accept a class switch outside the bank loaded at startup. The Python
+  config gate rejects it before native execution; native class_select also rejects
+  it before rebinding weights. No allocation or weight write at view boundaries.
+  The additional early native refusal remains a deferred patch under
+  lineage-inputs/qualified-v5; it is not part of the qualified binary.
 - Preserve all six rollback bank captures; recapturing only the active pair is unsafe.
 - Allocation order does not imply physical adjacency. These are class-prefix
   experiments. A null result cannot close whole-class layout work.

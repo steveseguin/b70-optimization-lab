@@ -12,10 +12,14 @@ HC gate/low. No device experiment is part of this preparation.
 
 ## Outcome
 
-The final `READY-FOR-DEVICE.json` is the completion authority. No marker means
-preparation remains incomplete. CPU identity and full-shape checks have passed;
-entry, queue and final composition checks are still required before that marker.
-No speed verdict and no change to the 58.798 tok/s record.
+CPU preparation is accepted: composition, twelve full-shape runs, twelve real-parser
+startups, four GNU/Intel byte runs, all six rank/class admissions, six real entry
+paths, twelve unit/environment negatives, twelve rank exec boundaries, six capped
+negatives, worker/error teardown, six temporary queue plans and the live pin guard
+pass. The packet's submission rehearsal reproduces 58.798108759182306 and refuses
+a corrupted receipt, while retaining packet136's identity and strict512=false.
+The final `READY-FOR-DEVICE.json` binds the committed evidence and proposal hashes.
+No speed verdict, device quality result, queue entry or change to the 58.798 record.
 
 ## What worked
 
@@ -30,8 +34,13 @@ The original 512 MiB budget could not hold one expert consumer tuple; 600 MiB
 fits without raising the arena ceiling. Whole-matrix copies exceeded CopyEngine's
 128 MiB limit; 32 MiB chunks resolve it. Initial copied objects exceeded the
 300 MB build cap; allowed hash-bound binary links remove that duplication.
-An inherited oracle-checker lookup and absolute native includes required local
-closure fixes. Initial failures and subsequent passing receipts are retained.
+An inherited oracle-checker lookup, absolute native includes and doubled vendor
+input-root lookup required local closure fixes. Queue planning additionally caught
+mutable binary-alias pins and scratch-relative submission artifact names; pins now
+name immutable targets and the parent-only rehearsal outputs are retained locally.
+An optional extra early native refusal remained uncompiled behind the whole-host
+hold. Its patch is retained but deferred; the already qualified native implementation
+is reused only after every recorded native input and both binary hashes match. Initial failures and subsequent passing receipts are retained.
 Physical adjacency, device output equality, speed transfer, fresh-load determinism
 and strict512 promotion remain unmeasured. This is a bounded class prefix.
 

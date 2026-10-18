@@ -1,6 +1,7 @@
 # Packet142 — class allocation order
 
 CPU-only preparation of frozen packet136 bundle8, ahead of packet141's verdict.
+All CPU gates and all six temporary queue plans pass.
 `READY-FOR-DEVICE.json` is the final readiness authority. Its absence means
 preparation is incomplete. No GPU result or speed improvement is claimed here.
 The two-card record remains packet136's 58.798 tok/s.
