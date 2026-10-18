@@ -8,11 +8,13 @@ startup, memory and final seal checks are pending behind the shared compiler
 turn. No GPU, service or live queue changed.
 [Work note](notes/2026-10-18-own-runtime-packet106.md).
 
-**October 18, packet58j one-card port checked on CPU:** The separate copy of
+**October 18, packet58j one-card port sealed on CPU:** The separate copy of
 58g has down-tile16, route-fast and rec-both-plus, with eight choices including
-production. All 80 full-size startup/submit checks pass, and every host budget
-matches 58g. E1 is excluded because it adds 616 MB of pinned weights.
-Intel compilation and repeated byte checks are underway; no device or queue ran.
+production. Both builds, repeated GNU/Intel byte checks, all 80 full-size
+startup/submit checks, 109 Python checks and ten plan-only rehearsals pass.
+Every host budget matches 58g. E1 is excluded because it adds 616 MB of pinned
+weights. The build is 161 MB. Device exactness and speed await the coordinator's
+whole-host gap after the two-card chain; no device, service or live queue ran.
 [Work note](notes/2026-10-18-own-runtime-packet58j.md).
 
 **October 18, packet105 sealed on CPU:** The target head can send its last
@@ -46,7 +48,7 @@ command is in [ready.json](experiments/own-xpu-runtime/ops/packet97-orchestratio
 
 **October 18, packet103 bundle built on CPU:** Copied after packet97e’s
 committed fix, the new bundle includes down-tile16 and draft attention with
-all earlier choices. Both binaries compile; CPU preparation uses about145 MB.
+all earlier choices. Both binaries compile; CPU preparation uses about 145 MB.
 The source decision selects both new options and rechecks later lane-A losses.
 Operator bytes and 529 submission replay checks pass. All 1024 full-size rank allocation checks pass; every-window startup checks
 are repeating after a temporary-file cleanup fix. No device or live queue ran.
