@@ -41,3 +41,19 @@ six old-code failures). Controller and actual-runtime loader/transfer mocks
 pass. Startup found a frozen fixture copy without execute permission; the new
 packet now links byte-identical executable frozen inputs, leaving both parents
 unchanged. Every-window startup and the 12-prompt smoke proposal are next.
+
+## Twelve-prompt smoke shipped
+
+Both 105b views now pass every startup window (22/22), with individual,
+source-bound resumable receipts under `build/startup97e/receipts/`. Production
+and compute-head views are sealed. The candidate-only
+`ops/lane-queue/proposed-p105b-smoke-B.txt` passes the actual planner on a
+temporary queue. It requires the micro's completed zero-mismatch device receipt
+before execution, then all twelve cold prompts at 64 tokens with a reset before
+each. The known `architecture-tradeoff` token 31 must be 215495, and at least one
+target suffix token must be selected. All prompts compare exactly to the oracle.
+
+This milestone is shipped before the combined matrix. Packet106b byte and
+controller gates pass; its remaining combined validation and proposals continue.
+The new builds link frozen object and fixture inputs without changing their
+bytes. This keeps the combined build footprint inside the 250 MB budget.

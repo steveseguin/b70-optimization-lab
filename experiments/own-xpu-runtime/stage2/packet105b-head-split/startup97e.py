@@ -13,6 +13,7 @@ from compile_turn import turn
 from bundle_selection import views, selection
 import full_shape
 S=B/'startup97e'
+RESUME_SOURCES={}
 WINDOWS=('K0','K1a','K1b','K2','W0p','KD','W2m','WS','WSs','WS128x','WS128')
 
 def build():
@@ -83,6 +84,11 @@ def shared_fixtures():
     # for KD or model ranks; K0's CPU branch explicitly has no host JIT analogue.
     w.admit_output=lambda *args:None  # scratch bounded below, no chain storage write
     for name in ('K0','K1a','K1b','K2'):
+        checkpoint=S/(name+'-startup.json')
+        if checkpoint.is_file():
+            prior=json.loads(checkpoint.read_text())
+            if prior.get('sources')==RESUME_SOURCES:
+                rows[name]=prior['result'];print(name,'retained startup receipt PASS',flush=True);continue
         dest=S/('shared-'+name)
         if dest.exists():
             archive=S/('prior-'+name+'-'+str(time.time_ns()));dest.rename(archive)
@@ -102,7 +108,7 @@ def shared_fixtures():
             receipts=w.run_fixtures(a,dest,dict(os.environ,OMP_NUM_THREADS='2'),watch)
         rows[name]=dict(receipts=receipts,seconds=time.monotonic()-started,
                         children=json.loads((dest/'children.json').read_text()))
-        save(S/(name+'-startup.json'),rows[name]);shutil.rmtree(dest)
+        save(checkpoint,dict(passed=True,device_executed=False,sources=RESUME_SOURCES,result=rows[name]));shutil.rmtree(dest)
         print(name,'shared CPU fixture startup PASS',flush=True)
     return rows
 
@@ -183,6 +189,11 @@ def main():
     limits();os.environ['OMP_NUM_THREADS']='2';started=time.monotonic()
     initial_sources={str((P/n).relative_to(ROOT)):sha(P/n) for n in ('startup97e.py','full_shape.py','bundle_selection.py','kd_reference.py','window.py','queue_runner.py','chain_pipeline.py','memory_plans.py','memory_gate.py')}
     initial_sources.update({str(f.relative_to(ROOT)):sha(f) for f in P.glob('*.hpp')})
+    from math_gate import closure
+    for f in [*closure(),P/'engine-commands.json',P/'selection-template.json',P/'dispatch-speed6.json',*list((B/'gnu-host').glob('*'))]:
+        if f.is_file():initial_sources[str(f.relative_to(ROOT))]=sha(f)
+    global RESUME_SOURCES
+    RESUME_SOURCES=initial_sources
     generated,commands=build()
     shared=shared_fixtures()
     # Exercise the actual W0p shared-memory handshake. The real run_rank returns
@@ -213,6 +224,13 @@ def main():
         for name in WINDOWS:
             configuration(plan(v),4096,1,0)
             window_options(name)
+            receipt=S/'receipts'/label/(name+'.json')
+            if receipt.is_file():
+                prior=json.loads(receipt.read_text())
+                if prior.get('sources')==initial_sources and prior.get('fixture_sha256')==sha(S/'fixture'):
+                    row=prior['run'];report['runs'].append(row)
+                    if name=='KD' and row.get('old_code_refusal'):negative=row['old_code_refusal']
+                    print(label,name,'retained receipt PASS',flush=True);continue
             row=dict(view=label,window=name,window_command=window_commands[name])
             if name in shared:row['shared_fixture']=name
             elif name=='KD':
@@ -222,6 +240,7 @@ def main():
                     for flag in ('--draft-rank','--target-split','--memory'):
                         index=old.index(flag);del old[index:index+2]
                     negative=native(old,old=True)
+                row['old_code_refusal']=negative
                 row['host']=native(cmd)
                 row['device_startup_on_cpu']=native(command(S/'fixture',a,P/'oracle/results/capture-incident-retrospective.tsv',inp,root,ref,binding['reference_selection_sha256'],-1,device=True))
             else:
