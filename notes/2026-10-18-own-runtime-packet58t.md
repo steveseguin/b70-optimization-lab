@@ -49,3 +49,6 @@ above 32 GB. Compiles ran serially through packet94's compiler turn. Work used
 nice19, helper cores and Python -B, with no GPU, service, sudo, settings change,
 cache drop, model-wide pre-read or live queue edit. Frozen parent trees were
 left alone. The first inventory milestone was pushed as `0d9e48b15`.
+The implementation, CPU gates and proposed screen were pushed as `fe5a01d66`.
+The final seal binds that committed source state, and both the screen's
+temporary coordinator plan and the later chain's CPU-only plan pass.

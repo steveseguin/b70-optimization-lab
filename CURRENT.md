@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 18, packet58t resident lookup copy sealed on CPU:**
+The one-card engine now has an exact copy that reads its two sparse lookup
+tables from anonymous memory. This adds 29.32 GB of resident host bytes, checked
+by hashes and included in each window's memory budget. Both compilers preserve
+the tested output bytes; CPU preparation records zero major faults. All 109
+Python tests, native checks, drain and teardown gates pass. The new proposal
+passes a temporary queue plan: tile16 control / resident / control in one load,
+15–25 minutes with a two-hour watchdog. The coordinator must admit the whole
+host. Full-model device equality and speed remain pending; no gain is claimed.
+No GPU, service, live queue or host setting changed in this preparation.
+[Work note and evidence](notes/2026-10-18-own-runtime-packet58t.md).
+
 **October 18, packet124c restores the oracle link and gates the queue:**
 Packet124b stopped cleanly before KD because its oracle was a copied directory.
 The new copy restores the oracle authority link and eight identical file links.
