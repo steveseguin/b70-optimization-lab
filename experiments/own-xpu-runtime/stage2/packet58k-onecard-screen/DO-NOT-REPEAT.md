@@ -14,3 +14,10 @@
   hash-check the two frozen 58j binaries (39.53 MB), within the 150 MB cap.
 
 [CPU closeout and handoff](CPU-PREPARATION-CLOSEOUT.md).
+
+- Do not pass the review's newest timestamp directly as the window boundary:
+  an idle kernel journal has no later line and refuses before device execution.
+  Use the validated capture's newest timestamp minus exactly two seconds,
+  preserving the overlapping fault check. Keep the refused `card0-screen-a`
+  attempt; the fresh proposed bracket uses `card0-screen-b`.
+  [Boundary repair and regression](JOURNAL-BOUNDARY-CLOSEOUT.md).

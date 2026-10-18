@@ -14,7 +14,7 @@ P = Path(__file__).resolve().parent
 ORDER = ('K1a', 'K1b', 'WSCREEN')
 GAP_SECONDS = 90
 STAGES = (('production-before', 'production'), ('port', 'port'), ('production-after', 'production'))
-ROOT = P / 'evidence/card0-screen-a'
+ROOT = P / 'evidence/card0-screen-b'
 
 
 def commands(output, card, review, library, view='production'):
@@ -83,17 +83,21 @@ def main(argv=None):
     W.closed_environment()
     import fault_review as F
     reviewed, _, _, _ = F.validate(args.fault_review)
+    boundary = F.window_boundary(reviewed)
     import compare_screen as C
     index=[s[0] for s in STAGES].index(args.arm)
     for earlier, earlier_view in STAGES[:index]:
         _, _, boot=C.verify_arm(ROOT/earlier,earlier_view)
         W.require(boot==reviewed['boot_id'], 'bracket boot changed')
-    cmds=commands(output,0,reviewed['through'],os.environ.get('LD_LIBRARY_PATH',''),view)
+    cmds=commands(output,0,boundary,os.environ.get('LD_LIBRARY_PATH',''),view)
     W.SUPPORT.storage(output,sum(W.WRITES['K1' if n.startswith('K1') else n] for n in ORDER))
     output.mkdir(parents=True)
     state=dict(schema='packet58k.arm.v1', passed=False, device_executed=False,
                view=view, arm=args.arm, commands=cmds, completed=[], plan=metadata,
-               fault_review_sha256=W.sha(args.fault_review))
+               fault_review_sha256=W.sha(args.fault_review),
+               faults_reviewed_through=boundary,
+               reviewed_capture_through_us=reviewed['through_us'],
+               journal_overlap_us=2_000_000)
     stopped=[];child=None
     def save(): W.save(output/'queue.json',state)
     def stop(sig,frame):

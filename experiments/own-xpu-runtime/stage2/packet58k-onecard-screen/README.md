@@ -75,11 +75,16 @@ To repeat the plan without installing any queue, from the repository root:
 ```bash
 P=experiments/own-xpu-runtime/stage2/packet58k-onecard-screen
 nice -n 19 taskset -c 8-15,24-31 python3 -B "$P/queue_runner.py" \
-  --arm production-before --output "$PWD/$P/evidence/card0-screen-a/production-before" \
+  --arm production-before --output "$PWD/$P/evidence/card0-screen-b/production-before" \
   --plan < /dev/null
 ```
 
-The proposed job file fixes the fresh output root to `evidence/card0-screen-a/`.
+The proposed job file fixes the fresh output root to `evidence/card0-screen-b/`.
+The refused October 18 attempt remains in `card0-screen-a/production-before`.
+Each arm validates its lane-queue review capture, then uses that capture's
+newest kernel timestamp minus exactly two seconds as the window boundary.
+The review and window checks overlap; neither wall time nor a later live
+capture sets this boundary. See the [boundary repair](JOURNAL-BOUNDARY-CLOSEOUT.md).
 Do not rename old output to rerun a losing arm. Later arms validate all earlier
 receipts before launching, including the boot, selections, binaries, K1
 selection, complete allocation observations, native file hashes and every
@@ -112,7 +117,8 @@ lane, before submission. No external submission or record auto-launch is in
 
 ## CPU checks and restoration
 
-[CPU tests](evidence/python-cpu-gates.json): 76 pass, including mutation of all
+[CPU tests](evidence/python-cpu-gates.json): 81 pass, including the journal
+boundary regression and mutation of all
 128 token positions, both K1 miss choices, whole-host admission, masked card
 ownership, memory stops, and complete window refusal/drain tests. The early
 `inherited-tests.log` records adaptation of the old seven-window test fixtures;

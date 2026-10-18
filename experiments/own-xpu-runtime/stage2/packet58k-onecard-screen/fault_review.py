@@ -2,7 +2,7 @@
 """Derive a review boundary only after this boot has exactly two known fault lines."""
 import argparse
 import ast
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import hashlib
 import gzip
 import json
@@ -81,6 +81,24 @@ def validate(path):
     fresh, cursor = S.journal(recorded['cursor'])
     require(not fault_lines(fresh), 'new kernel fault after review')
     return recorded, text, fresh, cursor
+
+
+def window_boundary(reviewed):
+    """RT for windows, called only after validate() binds the saved capture.
+
+    through_us is the maximum captured __REALTIME_TIMESTAMP, not capture
+    wall time or a later live line. Windows scan strictly after RT, so backing
+    up two seconds gives a journal cursor even when no new line has arrived.
+    The review covers through_us inclusively; the window's (RT, ...) scan
+    overlaps it by two seconds, with no unchecked interval. Faults in that
+    overlap still fail the unchanged window fault gate.
+    """
+    newest = reviewed['through_us']
+    require(type(newest) is int and newest >= 2_000_000, 'invalid reviewed journal timestamp')
+    _, through = S.fault_review(reviewed['through'], newest)
+    require(through == newest, 'review boundary differs from captured timestamp')
+    instant = datetime(1970, 1, 1, tzinfo=timezone.utc) + timedelta(microseconds=newest - 2_000_000)
+    return instant.isoformat().replace('+00:00', 'Z')
 
 
 def main():
