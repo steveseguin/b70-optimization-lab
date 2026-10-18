@@ -61,3 +61,9 @@ micro still needs unchanged full-model oracle and fresh model screens.
 
 Build/run commands and final evidence are recorded in the
 [work note](../../../../notes/2026-10-18-own-runtime-packet107.md).
+
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md) records the bounded
+outcome and the remaining gates. [Static access counts](evidence/code-cost.json)
+are estimates, not device performance. `evidence/cpu-leaf.json` intentionally
+has aggregate `passed=false` because GDN is closed; device admission checks
+QSA's explicit passing field and the complete-layer receipt.

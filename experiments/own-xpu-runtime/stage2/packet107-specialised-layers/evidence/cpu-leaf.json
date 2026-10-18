@@ -1,0 +1,127 @@
+{
+  "passed": false,
+  "qsa_passed": true,
+  "qsa_finite_cross_compiler_equal": true,
+  "qsa_all_cross_compiler_equal": false,
+  "exceptional_contract": "candidate matches its own unchanged compiler production; production NaN payloads differ between GNU and Intel",
+  "gdn_passed": false,
+  "device_executed": false,
+  "records": [
+    {
+      "compiler": "gnu",
+      "leaf": "gdn",
+      "passed": true,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-DOWN_RT_HOST_ONLY",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet107-specialised-layers",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet107-specialised-layers/leaf_gdn.cpp",
+        "-lcrypto",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet107-specialised-layers/build/gnu-leaf-gdn"
+      ],
+      "binary_sha256": "b142604f2a0a455ba38b654de101cca0cdbaa77643e9aefa2262bdd9245ed6a9",
+      "repeat_sha256": [
+        "1c736a41c62ef35bdd3916379d6d0279046ba3db9ad5794d734d65ab401e42d7",
+        "1c736a41c62ef35bdd3916379d6d0279046ba3db9ad5794d734d65ab401e42d7"
+      ]
+    },
+    {
+      "compiler": "gnu",
+      "leaf": "qsa",
+      "passed": true,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-DOWN_RT_HOST_ONLY",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet107-specialised-layers",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet107-specialised-layers/leaf_qsa.cpp",
+        "-lcrypto",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet107-specialised-layers/build/gnu-leaf-qsa"
+      ],
+      "binary_sha256": "96c599eb7d413194a0380c193696fa9e2c9a9a9ebf252af8a7fd8428cd0f10a7",
+      "repeat_sha256": [
+        "2c447ae32ba07f23cb3b26f7322f613c0a5f6991a81ae175d2b2c65ae49e3682",
+        "2c447ae32ba07f23cb3b26f7322f613c0a5f6991a81ae175d2b2c65ae49e3682"
+      ]
+    },
+    {
+      "compiler": "intel",
+      "leaf": "gdn",
+      "passed": false,
+      "exit_codes": [
+        1,
+        1
+      ],
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-DOWN_RT_HOST_ONLY",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet107-specialised-layers",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet107-specialised-layers/leaf_gdn.cpp",
+        "-lcrypto",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet107-specialised-layers/build/intel-leaf-gdn"
+      ],
+      "binary_sha256": "5326b7a40f393b25c59a94d1dc4b327b649a2fcecfd7a5fa3f2e2960ece87b6a",
+      "repeat_sha256": [
+        "fd816d5ed977d66f89767be6c2336df3f384ff3be4e38088b39a6bc58534fbb0",
+        "fd816d5ed977d66f89767be6c2336df3f384ff3be4e38088b39a6bc58534fbb0"
+      ]
+    },
+    {
+      "compiler": "intel",
+      "leaf": "qsa",
+      "passed": true,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-DOWN_RT_HOST_ONLY",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet107-specialised-layers",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet107-specialised-layers/leaf_qsa.cpp",
+        "-lcrypto",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet107-specialised-layers/build/intel-leaf-qsa"
+      ],
+      "binary_sha256": "71c624f95a4bc089da4f4ce156ff54d79ff1bdc21d3a5f3a2b9ff4733e200951",
+      "repeat_sha256": [
+        "ddfb99fbf411a61c050c3dc931389a5d269c1ea40b0e490d4417469eb5e1e1e3",
+        "ddfb99fbf411a61c050c3dc931389a5d269c1ea40b0e490d4417469eb5e1e1e3"
+      ]
+    }
+  ]
+}

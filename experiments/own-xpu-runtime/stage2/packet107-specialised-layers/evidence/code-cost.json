@@ -1,0 +1,53 @@
+{
+  "schema": "packet107.code-cost.v1",
+  "device_measured": false,
+  "bandwidth_assumption_bytes_per_second": 550000000000,
+  "qsa": [
+    {
+      "occupied_context": 128,
+      "selected_tokens": 128,
+      "production_logical_kv_read_bytes": 3145728,
+      "candidate_logical_kv_read_bytes": 786432,
+      "logical_global_bytes_removed": 2359296,
+      "added_slm_bytes_per_workgroup": 32768,
+      "bandwidth_quotient_us_at_assumed_550_GB_s": 4.289629090909091,
+      "host_device_syncs_removed": 0,
+      "compute_kernel_count_before": 3,
+      "compute_kernel_count_after": 3
+    },
+    {
+      "occupied_context": 4096,
+      "selected_tokens": 2048,
+      "production_logical_kv_read_bytes": 50331648,
+      "candidate_logical_kv_read_bytes": 12582912,
+      "logical_global_bytes_removed": 37748736,
+      "added_slm_bytes_per_workgroup": 32768,
+      "bandwidth_quotient_us_at_assumed_550_GB_s": 68.63406545454545,
+      "host_device_syncs_removed": 0,
+      "compute_kernel_count_before": 3,
+      "compute_kernel_count_after": 3
+    }
+  ],
+  "gdn": {
+    "closed": true,
+    "production_norm_trees": 3072,
+    "candidate_norm_trees": 32,
+    "products_removed": 389120,
+    "divisions_removed": 583680,
+    "gate_evaluations_before": 1536,
+    "gate_evaluations_after": 48,
+    "production_head_input_bytes": 804864,
+    "candidate_head_input_and_preparation_bytes": 1610688,
+    "recurrent_state_read_write_bytes": 3145728,
+    "host_device_syncs_removed": 0,
+    "compute_kernel_count_before": 1,
+    "compute_kernel_count_after": 2
+  },
+  "limitations": [
+    "Logical accesses are not physical DRAM traffic; production may hit caches.",
+    "The bandwidth quotient is a conditional arithmetic estimate, not a latency prediction or upper bound on compute savings.",
+    "GDN saves repeated math but adds FP32 traffic and one kernel; no credible positive microsecond estimate without measurement.",
+    "80 us at 128 tokens cannot be justified by KV bandwidth removal alone.",
+    "GDN is closed for exactness, not timing."
+  ]
+}

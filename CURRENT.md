@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, packet107 specialised layers checked on CPU:** Both complete
+finite layers match across four fresh GNU/Intel runs. Stronger tests close the
+GDN change: Intel changes a NaN payload. QSA keeps exact FP32 and output bytes
+against each compiler's production and has two proposed single-card B jobs.
+It must save at least 80 microseconds per layer in both fresh processes before
+integration. Device equality and speed are unmeasured. The build is 67.2 MB;
+no GPU, service, live queue, frozen packet or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet107.md).
+
 **October 18, packet58k shorter one-card screen prepared on CPU:** Three
 proposed arms each load once and check every token in the twelve-prompt suite.
 Fresh small K1 fixtures still choose the miss path. Plan 33–39 minutes in a
