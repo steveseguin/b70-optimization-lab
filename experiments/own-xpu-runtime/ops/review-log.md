@@ -482,3 +482,17 @@ STOP-doing items applied:
 - 12-prompt short smokes instead of one-prompt smokes;
 - every confirm has a waiter;
 - storage checks before chains.
+
+## Review 19 (2026-10-18 ~08:07 UTC): ACT
+
+Lanes stopped since 08:02 (p103 composite A-0 "mmap failed" latch blocked both); last 2 h lane A 67%, lane B 36%; p104b, p107, p108, p58k all closed this hour with no gain.
+
+Actions:
+1. Lanes back (08:04): reviewed and archived the latch and dead marker (owner dead, no render holders, locks free, teardown drained, fault count 2), pulled all six p103 composite jobs, restarted drivers `lanequeue-A11`/`-B8`; the p106b B grid started 08:04. Root cause is not FUSE storage: `read_screens.py` sets `RLIMIT_AS=8 GiB` at import and `composite_jobs.validate()` imports it in the device-launching process. Codex **p103x** (40 min) fixes it, adds a getrlimit gate at the exec point, reseals minimally and emits fresh-suffix composite proposals.
+2. Record path: a launch waiter (orchestrate → ready → PAUSE-A → verify_ready → chain_command) will be re-armed for the p103x names; the B composite is queued first and the A composite only after B-0 has finished model load (smoke-first). The p106b A-confirm waits behind PAUSE-A while the chain holds cards 0+1.
+3. p109 not re-briefed: at review time it had already finished the census (636/628 launches per half, 72 removed per half), passed GNU+Intel byte gates including nonfinite inputs, and is sealing a v5 one-load in-engine bracket, which is a stronger kill gate than a micro.
+4. Codex **p110**: fresh per-class roofline table from the p107 QSA device table plus a new current-mode GDN-layer timing micro (lane B), re-ranked levers.
+5. Lean next bundle (p103 + p106b winner, two compositions, device load smoke first) is briefed when the p106b B grid reports (~08:25).
+Also Codex **opslatch**: a software latch with an unchanged kernel fault count stops only its own lane (lanequeue.py only; new fault lines still stop both).
+Lane A's 08:25–08:45 idle gap (waiting for p103x) runs the p58n one-card tile16-only screen (whole host, ~35 min); this delays the p103 composites by ~20 min but uses otherwise idle time.
+STOP DOING acknowledged: long CPU qualification before a first device load, sealing all 512 compositions, optional extras in handoffs, kernel briefs from historical class tables without a kill gate, cross-lane halts on software failures, lane B dry while waiting for Codex.
