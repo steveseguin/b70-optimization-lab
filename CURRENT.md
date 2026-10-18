@@ -108,6 +108,15 @@ coordinator's matched screen; device quality and speed remain unmeasured.
 
 **October 17, packet 57 CPU preparation complete:** The timing tools are built and sealed. Packet 56's saved traces show rank 0 finishing last in 93% of complete cycles; moving a whole layer does not look useful under the available average-cost estimates. The draft still takes about 1.90 ms, but its individual kernel costs remain unmeasured. Four fresh small CPU runs match the old engine exactly, all 19 focused checks pass, and both builds and the final seal pass. The retained build is about 336 MB. No GPU window ran and packet 55's work was left alone. Next is the coordinator's diagnostic run on cards 0+1, after the host is free: about 88 minutes planned, comparing ordinary timing with the new event recording against the same packet 49 answers. This is not a new speed result. [Task record](notes/2026-10-17-own-runtime-packet57.md), [timeline](experiments/own-xpu-runtime/stage2/packet57-attribution/TIMELINE.md), [exact command](experiments/own-xpu-runtime/stage2/packet57-attribution/WINDOW.md).
 
+**October 18, 00:57 UTC — 2-card IQ3 record 55.19 tok/s, submitted and approved (`cmvd48tdv083ale01clv86fbd`).** Packet 80 is packet 70 plus hc-wide HC-gate kernels and ordered rank-1 event retirement, both confirmed on both lanes (route/norm pinned to production). All 12 prompts exact against the packet 49 oracle. WS128 measured 55.189917 class-balanced (+1.90% over 54.162022); hit/miss 15.79/27.14 ms, acceptance 0.787. Closed tonight:
+- depth-2 MTP: −47%;
+- draft on rank 0: −1.3% / −2.3%;
+- packed dense: −0.8% to −2.9%;
+- draft bytes: −0.3% to −0.8%;
+- expert load-count: neutral;
+- miss path: no lossless saving.
+Next: packet 84 (+ rec-parallel, confirmed +0.99%/+0.67%); packet 86 limiter diagnostic for experts and HC; packet 82b recurrence round 2; 58f one-card. [Result packet](experiments/own-xpu-runtime/stage2/packet80-record-bundle/submission/prepared/result-packet.md).
+
 **October 17, 20:35 UTC — 2-card IQ3 record 54.16 tok/s, submitted and approved (`cmvcuvh4q080wle01pgjwixvj`).** Packet 70 is packet 64 plus packet 65 `wide64` routed-expert kernels (exact order; screens +5.4%/+4.8% on both lanes). All 12 prompts exact against the packet 49 oracle. WS128 measured 54.162022 class-balanced (+2.39% over 52.899081); hit/miss 16.09/27.57 ms, acceptance 0.787; 90 s chain gaps. The first attempt stopped at K2 on a CPU-side validator (fixed, fresh chain). Today: 39.42 → 45.70 → 46.00 → 46.96 → 51.03 → 52.90 → 54.16. Next:
 - packet 74 packed-format dense weights (the target head reads 795 MB of expanded Q6_K at 566 GB/s);
 - packet 73 HC gates + experts round 2;
