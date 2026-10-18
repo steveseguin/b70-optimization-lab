@@ -10,11 +10,12 @@ unchanged. No chain, GPU work or live queue was launched. The exact manual
 command is in [ready.json](experiments/own-xpu-runtime/ops/packet97-orchestration/ready.json).
 [Repair and checks](notes/2026-10-18-own-runtime-packet97.md).
 
-**October 18, packet103 source decision checked on CPU:** The new reader
-selects route, recurrence, half-cache and draft attention from exact source
-brackets. Down-tile16 waits for its engine evidence. Nine decision checks
-pass. The bundle copy waits for packet97e’s committed startup fix; no device
-or live queue ran. [Work note](notes/2026-10-18-own-runtime-packet103.md).
+**October 18, packet103 bundle built on CPU:** Copied after packet97e’s
+committed fix, the new bundle includes down-tile16 and draft attention with
+all earlier choices. Both binaries compile; the current build is 113 MB.
+The source decision selects both new options and rechecks later lane-A losses.
+Operator and every-window startup checks are next. No device or live queue ran.
+[Work note](notes/2026-10-18-own-runtime-packet103.md).
 
 **October 18, packet100b route capture prepared on CPU:** The new lane-B job
 captures both ranks' target expert routes for two standard 64-token requests,

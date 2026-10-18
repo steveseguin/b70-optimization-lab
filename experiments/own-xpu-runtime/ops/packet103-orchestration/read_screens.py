@@ -26,3 +26,15 @@ def collect():
  require_current(result)
  return result
 if __name__=='__main__':print(json.dumps(collect()))
+
+def reject_later_record_lane_losses(config):
+ """A frozen first-lane win cannot hide a later completed A confirmation."""
+ selected={}
+ for number in config['confirmed_levers']:
+  run=subprocess.run([sys.executable,'-B',str(O/'source_adapter.py'),number],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=300)
+  if run.returncode:raise ValueError('current source veto read failed: '+number+': '+run.stderr)
+  row=json.loads(run.stdout);selected[number]=row
+  if row.get('record_lane_veto'):raise ValueError('later record-lane A veto for source '+number+': '+row['record_lane_veto']['reason'])
+  if row['status']=='failed':raise ValueError('current source evidence invalid: '+number+': '+row.get('reason',''))
+ require_current(selected)
+ return selected

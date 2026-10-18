@@ -40,7 +40,11 @@ def collect(number):
   import subprocess
   def qualify():
    r=subprocess.run([sys.executable,'-B',str(Path(__file__).with_name('micro_source.py'))],stdin=subprocess.DEVNULL,capture_output=True,text=True,check=True)
-   return tuple(json.loads(r.stdout)['qualified'])
+   qualified=json.loads(r.stdout)
+   result['receipts'].update(qualified['bindings'])
+   result['sources'].update(qualified['validation_sources'])
+   result['micro_qualification']=qualified
+   return tuple(qualified['qualified'])
   jobs.qualified_candidates=qualify
  boot=Path('/proc/sys/kernel/random/boot_id').read_text().strip();result=dict(packet=int(number),status='pending',receipts={},sources={},directions={},record_lane_checks=[],observed_windows={})
  def pin(f,category):
@@ -52,7 +56,7 @@ def collect(number):
   qualified=('down-tile16',) if number=='100' and 'down-tile16' in jobs.qualified_candidates() else jobs.qualified_candidates() if number=='93' else None
   if number=='100':
    assert qualified == ('down-tile16',), 'tile16 not micro-qualified'
-   for f in (p/'evidence').glob('*micro*json'):pin(f,'receipts')
+   pin(STAGE/'packet100b-route-capture/evidence/micro-B/qualification.json','receipts')
   if number=='93':
    for f in (p/'evidence/micro-B2').rglob('*'):pin(f,'receipts')
    pin(p/'evidence/microbench-build.json','receipts')

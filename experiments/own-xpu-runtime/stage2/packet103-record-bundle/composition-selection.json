@@ -1,0 +1,32 @@
+{
+  "status": "template",
+  "control": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64",
+    "host": "ordered",
+    "route": "production",
+    "norm": "production",
+    "recurrence": "rec-parallel",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "down": "production",
+    "draft_attention": "production"
+  },
+  "candidate": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64+grid-prefetch+halfcache",
+    "host": "ordered+reply-first",
+    "route": "fast",
+    "norm": "production",
+    "recurrence": "rec-both-plus",
+    "draft_head": "production",
+    "head": "head-transpose",
+    "hc_norm": "normfuse",
+    "down": "tile16",
+    "draft_attention": "split32"
+  },
+  "confirmed_levers": []
+}

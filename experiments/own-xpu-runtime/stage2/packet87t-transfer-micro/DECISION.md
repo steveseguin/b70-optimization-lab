@@ -1,14 +1,21 @@
-# Packet87t decision pending
+# Packet87t decision
 
-The CPU-only brief prepares the measurement; it does not authorize this agent
-to run devices. Native compilation, a temporary lane-B plan and CPU protocol
-checks are complete. No transfer median/p90 or measured-cost gain is available.
+Measured transfer microbenchmark; gains below are predictions, not model speeds.
 
-The report reproduces packet87's original optimistic +1.0780% target-head and
-+0.7707% draft-prefix estimates, but those still have unknown device costs.
-Neither is a new result or a seal-ready decision.
+- target: +1.0685%; eligible for a seal-ready implementation design.
+- draft: +0.7749%; eligible for a seal-ready implementation design.
 
-The single proposed coordinator job writes receipt-bound latency summaries and
-reruns the unchanged equations. At least +0.5% qualifies an implementation
-design; otherwise the measured-cost option closes with DO-NOT-REPEAT. Details
-and accounting: [README.md](README.md).
+| Transfer | Median µs | p90 µs |
+| --- | ---: | ---: |
+| best16/compute | 64.476 | 66.364 |
+| best16/idle | 14.317 | 16.451 |
+| best8/compute | 64.627 | 66.715 |
+| best8/idle | 14.357 | 16.611 |
+| hidden/compute | 66.435 | 68.820 |
+| hidden/idle | 15.193 | 17.673 |
+| mailbox20480/idle | 1.307 | 1.733 |
+| pipeline20480/compute | 73.342 | 76.063 |
+| pipeline20480/idle | 24.897 | 26.399 |
+
+Exact model inputs and all idle/compute median/p90 sensitivities: [RESULT.json](RESULT.json).
+Any eligible design still requires row arithmetic, tie/finite checks, memory admission and fresh-process output gates.
