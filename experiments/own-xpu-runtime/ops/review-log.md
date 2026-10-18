@@ -387,3 +387,24 @@ STOP-doing items applied:
 5. Codex p98: screen/v5-bracket, one model load per bracket (A/B/A/B, full state reset, per-view incident64 + 13/13, memory admission before the lease). 2-view smoke first.
 
 **STOP-doing items applied:** no second-lane standalone grids under +0.5%; no lane running dry while the other holds > 30 min; diagnostics before composition; no edits to sealed files after a chain. p94's grid still contains the closed `hc-normfuse+weightcache` view (sealed; about 5 min cost, accepted).
+
+## Review 15, 04:08 UTC (2026-10-18): **ACT**
+
+**Evidence:**
+- Last 2 h: 99% in flight (lane A 85%, lane B 71%); no new fault lines; all jobs clean.
+- Root margin over the p97 chain requirement was about 0.12–0.3 GB and shrinking (about 108 MB per screen).
+- Without-93 (p91 + E1) composite: lane A 55.913 vs 55.505 / 55.532 (+0.69%), lane B 56.065 vs 55.652 (closing control done 04:08).
+- The earlier full composite (with p93) froze a source set while p93's lane-A confirmation was failing (−2.8%), which cost about 18 min plus a leave-one-out bracket.
+
+**Actions, 04:05–04:12 UTC:**
+1. **Disk:** archived regenerable bulk of closed screens (p76/p78 driver caches and input bundles, packet86 non-JSON files) to `/mnt/raid-models/own-xpu-runtime-archive/screen-bulk-20261018/`, with full verification before deletion; every JSON/JSONL receipt kept. Codex `opsclean` is writing a standing post-screen cleanup tool (closed packets only, plan/run modes).
+2. **Record path:**
+   - new p97 decision `f1e5d7f47fc0fe54` pinned `head=production` (route fast, rec-both-plus, wide64+halfcache);
+   - its composite brackets run first on both lanes;
+   - `p97-launch` evaluates that exact decision when both finish, then holds lane A, runs `verify_ready` and launches `packet97-chain` only if ready;
+   - p94/p92 grids moved to lane B (single lane each) after the p98 smoke.
+3. **p99:** its single-card microbenchmark ran first: every IQ2 table relocation/compaction is slower (1.24–1.78×), so p99 is closed with no screens. p100 (down locality) continues.
+4. **p101:** re-test of packet 69's shelved draft-geometry win (+0.82%) under the one-lane qualification rule.
+5. **opsclean:** also amends the p97 rule so a completed exact loss on lane A excludes a source; sources are re-checked at decision time.
+
+**STOP-doing items applied:** no source set frozen while its record-lane result is pending or negative; no p93x follow-up (head=production for the record line); chain launch requires the storage check to pass; cleanups become standing, not emergencies; device microbenchmarks before long CPU programs for kernel ideas.
