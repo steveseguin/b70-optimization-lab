@@ -569,4 +569,5 @@ runs after campaign 36b, before the 2M run.
 - **If it is clean:** the trigger needs more of the real server (FP8 projections, full-attention layers, draft passes,
   the host side); next, a server-level prompt stress: one server, a client sending 300-600-token prompt steps on
   cached states back to back for 20 minutes, breadcrumbs and device marks on.
-- Either way the 2M hostile run goes ahead after it (a hang there costs that run, not the cards).
+- If it is clean, the 2M hostile run starts right after it. If it hangs: recovery probes, then the short
+  bisect runs above come first (a reproducer in hand beats two hours of a run the hang may end), then the 2M run.
