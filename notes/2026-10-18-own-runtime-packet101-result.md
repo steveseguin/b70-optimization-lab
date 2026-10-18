@@ -11,3 +11,14 @@ v4 screens on packet 97's base selection; all views 13/13 exact; acceptance unch
 - Packet 69's draft-HC view was already active in the base. Only the attention geometry was new.
 
 **Qualified** as a composition source for the next bundle, together with packet 100 `down-tile16` if its screens confirm (microbenchmark kernel 0.695×). Packet 91 (route-fast + rec-both-plus) and packet 90 E1 are already in the pending packet 97 chain (decision `f1e5d7f47fc0fe54`; KD fix in progress, packet 97e).
+
+## v5 native bracket (packet 98c, lane B, 05:49–05:58 UTC): one model load, five views, all 13/13 exact
+| View | tok/s |
+|---|---|
+| control | 55.603 |
+| draft_attention | 55.805 |
+| control | 55.486 |
+| draft_attention | 55.828 |
+| control | 55.460 |
+
+Candidate mean 55.817 vs control mean 55.516 (**+0.54%**); each candidate exceeds every control. Drift 0.26%, wall 539 s for 5 views (about 25 min as v4 screens). This is the first lever bracket on the native in-process switch path (packet 98c). The route A/B/A smoke passed earlier at 05:45 (0.32% drift, 339 s for 3 views).
