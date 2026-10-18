@@ -496,3 +496,15 @@ Actions:
 Also Codex **opslatch**: a software latch with an unchanged kernel fault count stops only its own lane (lanequeue.py only; new fault lines still stop both).
 Lane A's 08:25–08:45 idle gap (waiting for p103x) runs the p58n one-card tile16-only screen (whole host, ~35 min); this delays the p103 composites by ~20 min but uses otherwise idle time.
 STOP DOING acknowledged: long CPU qualification before a first device load, sealing all 512 compositions, optional extras in handoffs, kernel briefs from historical class tables without a kill gate, cross-lane halts on software failures, lane B dry while waiting for Codex.
+
+## Review 20 (2026-10-18 ~09:11 UTC): ACT
+
+2 h: lane A busy 46%, lane B 49%; the packet 103 composite beat its controls by ~+3% on both lanes (A 57.55 vs 55.61/55.76; B 57.29 vs 55.74/55.59, all exact).
+
+Actions:
+1. Chain first: nothing queued ahead of the packet 103 chain on lane A; `p103x-handoff2` runs orchestrate → ready → PAUSE-A → verify_ready → chain_command; `p103-post` prepares the submission with packet 103's own tools and both dry-runs, then the coordinator submits. Future handoff templates will run orchestrate's CPU tests during the last bracket arm (noted; the running waiter is not edited).
+2. Codex **p115**: expert gate/down kernels in their own SYCL device image with the module-wide large-GRF AOT option; revive p95 E3, p99 IQ4 SLM, p102 V4 batch2/shared and implement E5; gates: zero-spill report, ≤0.85× micro in both orders, v5 bracket prepared in parallel.
+3. v5 one-load brackets are the default in new kernel-only briefs (p114, p115).
+4. Codex **p113i** (v5 integration prepared while the micro ran) was launched, then stopped at 09:15 when the p113 micro showed 1.5× slower (closed). Bundle 6's lane-B composite (`p111r`, candidate fusion + head split) fills lane B during the chain.
+5. Codex **disk5**: one pass to ≥ 40 GB root free via verified RAID archives of exactly named, unreferenced closed data. Before it: old Codex sessions 2026-05..08 moved to RAID (verified, root 20 → 31 GB).
+STOP DOING acknowledged. Also fixed: a failed transient `screen-<job>.service` blocks re-running the same job name (REFUSED-fast with no journal line); reset-failed before re-queueing (memory updated). The smoke-first gate will key on `drm-memory-after_load.txt`, and handoffs that set PAUSE-A will raise an ALERT and remove it on refusal, in the next template.
