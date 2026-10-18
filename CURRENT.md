@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, packet58k shorter one-card screen prepared on CPU:** Three
+proposed arms each load once and check every token in the twelve-prompt suite.
+Fresh small K1 fixtures still choose the miss path. Plan 33–39 minutes in a
+whole-host gap, with 118.31 GB available-memory admission. The unchanged
+binaries occupy 39.53 MB; all 76 CPU checks and three temporary queue plans
+pass. The full submission chain stays in 58j. No GPU, service, live queue or
+host setting changed. [Work note](notes/2026-10-18-own-runtime-packet58k.md).
+
 **October 18, packet105b reset repair prepared on CPU:** The new copy restores
 the suffix search after a request reset. Both binaries compile, and repeated
 CPU byte and reset checks pass. The new device microbenchmark proposal plans
