@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**October 18, packet102 microbenchmark prepared on CPU:** The five IQ2 lookup
+batching/shared-input candidates and half-cache control compile. The lane-B
+proposal passes a temporary queue plan and 15 micro tests pass. Longer byte,
+assembly and startup gates are in progress. No GPU or live queue ran.
+[Task note](notes/2026-10-18-own-runtime-packet102.md).
+
 **October 18, packet97d ready on CPU:** All four brackets of the same sealed
 selection are now counted. Both record-lane brackets clear the required gain;
 the other lane has one qualifying win and its drifting bracket stays above

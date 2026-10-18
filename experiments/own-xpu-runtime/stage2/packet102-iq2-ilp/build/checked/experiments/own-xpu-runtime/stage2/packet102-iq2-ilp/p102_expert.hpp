@@ -1,0 +1,107 @@
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/kernel_guard.hpp"
+#line 1 "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/p102_expert.hpp"
+#ifndef OWN_RT_HOST_ONLY
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/build/checked/experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/prepared_submission.hpp"
+#endif
+#line 1
+#pragma once
+// Packet102: batch dependent grid reads, never reassociate FP32 sums.
+// All weights, half-cache bytes, sign handling and trees come from packet97.
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/build/checked/experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/p95_expert.hpp"
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/build/checked/experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/p90_expert.hpp"
+namespace p102 {
+using iq3::Type;
+template<unsigned Batch,bool Shared>inline std::array<std::array<float,8>,Shared?2:1> chains(const uint8_t*w,const uint8_t*peer,const uint16_t*x,unsigned physical){
+ static_assert(Batch==1||Batch==2||Batch==4);constexpr unsigned Streams=Shared?2:1;
+ constexpr auto l=p49bgemv::layout(Type::IQ2_S,2560);
+ std::array<std::array<float,8>,Streams> sums{};
+ for(unsigned step=0;step<10;++step){
+  uint32_t codes[Streams][4];uint16_t highs[Streams],scales[Streams];float decoded[Streams];
+  #pragma unroll
+  for(unsigned s=0;s<Streams;++s){const auto*src=s?peer:w;
+#if defined(__SYCL_DEVICE_ONLY__)
+   sycl::vec<uint32_t,4> words;words.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(reinterpret_cast<const uint32_t*>(src+step*64+physical*16)));
+   #pragma unroll
+   for(unsigned i=0;i<4;++i)codes[s][i]=words[i];
+#else
+   for(unsigned i=0;i<4;++i)codes[s][i]=p49bgemv::load32(src+step*64+physical*16+4*i);
+#endif
+   highs[s]=p49bgemv::load16(src+l.high+step*8+physical*2);
+   scales[s]=p49bgemv::load16(src+l.scales+step*8+physical*2);
+   decoded[s]=iq3::bits_float(p49bgemv::load32(src+l.halves+4*step));
+  }
+  #pragma unroll
+  for(unsigned base=0;base<8;base+=Batch){
+   p65::RawTile tiles[Streams][Batch];p95exp::GridWord grids[Streams][Batch];
+   // Issue every independent grid read in this batch before any decode/product.
+   #pragma unroll
+   for(unsigned s=0;s<Streams;++s){
+    #pragma unroll
+    for(unsigned i=0;i<Batch;++i){unsigned chain=base+i;auto&t=tiles[s][i];
+     t.a=(codes[s][chain/2]>>(16*(chain%2)))&65535;t.high=(highs[s]>>(8*(chain/4)))&255;t.scale=(scales[s]>>(8*(chain/4)))&255;
+     unsigned index=(t.a&255)|(((t.high>>(2*(chain%4)))&3)<<8);
+     grids[s][i]={p42expert::iq2_words[2*index],p42expert::iq2_words[2*index+1]};
+    }
+   }
+   #pragma unroll
+   for(unsigned i=0;i<Batch;++i){unsigned chain=base+i,k=step*256+physical*64+chain*8;
+#if defined(__SYCL_DEVICE_ONLY__)
+    sycl::vec<uint16_t,8> inputs;inputs.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(x+k));
+#else
+    const auto*inputs=x+k;
+#endif
+    #pragma unroll
+    for(unsigned s=0;s<Streams;++s){float values[8];p95exp::decode_grid(tiles[s][i],k,grids[s][i],values,decoded[s]);
+     #pragma unroll
+     for(unsigned j=0;j<8;++j){float product=values[j]*iq3::bits_float(uint32_t(inputs[j])<<16);sums[s][chain]=sums[s][chain]+product;}
+    }
+   }
+  }
+ }
+ return sums;
+}
+template<unsigned Batch,bool Shared>struct Kernel final:p49b::Base {
+ static constexpr unsigned WG=64,V=8,P=4,SG=2,RowsPerGroup=Shared?16:8;
+ unsigned rows=640,count=10,experts=512;
+ p39::Bound bind(std::span<void*const>p)const{p90exp::Kernel<Type::IQ2_S,2560,64,false,true> base;base.rows=rows;base.count=count;base.experts=experts;return base.bind(p);}
+ static unsigned logical_row(unsigned group,unsigned sub,unsigned lane){return (group*(Shared?2:1)+(Shared?sub:0))*V+lane/P;}
+#ifdef OWN_RT_HOST_ONLY
+ void run(std::span<void*const>p)const override{
+  auto b=bind(p);unsigned total=rows*count,groups=(total+RowsPerGroup-1)/RowsPerGroup;
+  for(unsigned group=0;group<groups;++group)for(unsigned sub=0;sub<SG;++sub)for(unsigned rr=0;rr<V;++rr){
+   unsigned logical=logical_row(group,sub,rr*P);if(logical>=total)continue;unsigned row=logical%rows,slot=logical/rows,stream=Shared?0:sub;
+   auto route=b.routes[slot];bool ok=iq3::valid_route(route,experts,rows,rows),valid=ok&&row<route.row_count;
+   float values[Shared?2:1][P]{};if(valid){size_t source=size_t(route.expert_id)*rows+route.row_begin+row;
+    for(unsigned lane=0;lane<P;++lane){auto c=chains<Batch,Shared>((stream?b.peer:b.w)+source*b.rb,b.peer+source*b.rb,b.x,lane);
+     for(unsigned s=0;s<(Shared?2:1);++s)values[s][lane]=p49dvirtual::local_tree<V>(c[s]);}
+   }
+   for(unsigned s=0;s<(Shared?2:1);++s){for(unsigned width=1;width<P;width*=2)for(unsigned lane=0;lane<P;lane+=2*width)values[s][lane]=values[s][lane]+values[s][lane+width];
+    ((stream||s)?b.py:b.y)[logical]=iq3::bf16_bits(valid?values[s][0]:iq3::bits_float(0x7fc00000));
+    if(!row){((stream||s)?b.peer_status:b.status)[slot]=!ok;if(!ok&&*b.active&&!*b.error)*b.error=1;}
+   }
+  }
+ }
+#else
+ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
+  auto b=bind(p);unsigned total=rows*count,groups=(total+RowsPerGroup-1)/RowsPerGroup;
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(groups)*WG,WG)](sycl::handler& h){
+   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
+    auto sg=it.get_sub_group();unsigned lane=sg.get_local_linear_id(),sub=it.get_local_linear_id()/32,physical=lane%P,stream=Shared?0:sub;
+    unsigned logical=logical_row(it.get_group_linear_id(),sub,lane),row=logical%b.rows,slot=logical/b.rows;bool in_range=logical<total;
+    iq3::Route route{};if(in_range)route=b.routes[slot];bool ok=in_range&&iq3::valid_route(route,b.experts,b.rows,b.rows),valid=ok&&row<route.row_count;
+    float values[Shared?2:1]{};if(valid){size_t source=size_t(route.expert_id)*b.rows+route.row_begin+row;auto c=chains<Batch,Shared>((stream?b.peer:b.w)+source*b.rb,b.peer+source*b.rb,b.x,physical);
+     #pragma unroll
+     for(unsigned s=0;s<(Shared?2:1);++s)values[s]=p49dvirtual::local_tree<V>(c[s]);
+    }
+    #pragma unroll
+    for(unsigned s=0;s<(Shared?2:1);++s){float value=values[s];for(unsigned width=1;width<P;width*=2){float rhs=sycl::select_from_group(sg,value,(lane+width)%32);if(physical%(2*width)==0)value=value+rhs;}
+     if(in_range&&!physical){((stream||s)?b.py:b.y)[logical]=iq3::bf16_bits(valid?value:iq3::bits_float(0x7fc00000));
+      if(!row){((stream||s)?b.peer_status:b.status)[slot]=!ok;if(!ok&&*b.active){uint32_t expected=0;sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(*b.error).compare_exchange_strong(expected,1);}}
+     }
+    }
+   }));
+  });
+ }
+#endif
+};
+}
