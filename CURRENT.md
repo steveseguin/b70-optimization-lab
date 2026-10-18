@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, packet108 budget and micro prepared on CPU:** Existing receipts
+put the current two-card hit/miss steps at about 15.17/26.09 ms. They do not
+retain fresh per-kernel times, so the budget keeps those gaps explicit. A new
+draft load-only micro compiles, passes its temporary queue plan and keeps the
+15% gate before any model integration. The build is under 1 MB. Device speed
+and equality are unmeasured; no GPU, service or live queue changed.
+[Work note](notes/2026-10-18-own-runtime-packet108.md).
+
 **October 18, packet107 specialised layers checked on CPU:** Both complete
 finite layers match across four fresh GNU/Intel runs. Stronger tests close the
 GDN change: Intel changes a NaN payload. QSA keeps exact FP32 and output bytes
