@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 18, packet110 current GDN timing prepared on CPU:** The unchanged
+GDN path compiles and passes two fresh CPU state checks and a temporary queue
+plan. The coordinator proposal measures complete layers at 128 and 4096 tokens;
+closed specialisation arms stay closed. Fresh QSA roofline analysis is in
+progress, and GDN device times remain pending. No device or live queue changed.
+[Work note](notes/2026-10-18-own-runtime-packet110.md).
+
 **October 18, packet58n one-card analysis and single-lever screen prepared on CPU:**
 The losing bundle spends much more time reading its host lookup inputs, with
 many more major page faults. Its expert-cache counts and bytes match production
