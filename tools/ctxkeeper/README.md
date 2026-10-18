@@ -301,6 +301,14 @@ plain streams and at 7 of 75 cuts at 1M, all of them audit lines.
 - On the recorded runs, the wider lookup trigger adds exactly those three lines. The rule scan, with the lab's
   pattern, asks at no cut of the 1.2.0 runs that passed and at the first cut of both 2M runs.
 
+1.2.0.dev4 (2026-10-18), from lab campaign 39 (2M, 413/423, 16/16 audits): a new option, off by default,
+`--hold-open` (needs `--recite-when` and `--think-until`). While a question is open, from the message that asks it
+until one matching `--think-until`, every request gets the RULES recital and the archive searches made since it
+arrived, not only the request whose newest message asks it. In that run the reply that searched printed the answers
+file, and the answers were written one turn later: without the two values the searches had found, and, for a
+confidential counter, without the recital (it was answered with its value). In the recorded 2M runs the option
+reaches about 70 of 1,310 requests.
+
 Also unreleased (1.1.1.dev1, 2026-10-17): a NOTES line whose new value states no number of its own (only item or
 ticket numbers, as in `audit reversal of the entry in item 4, amount not yet known, must recall items 4/5`) no longer
 replaces a number the NOTES hold: the number stays and the line is kept as a remark on it. Before, the value became the

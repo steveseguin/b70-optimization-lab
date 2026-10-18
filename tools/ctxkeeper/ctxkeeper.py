@@ -53,7 +53,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.2.0.dev3"
+__version__ = "1.2.0.dev4"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -221,7 +221,11 @@ RECALL_CUT_NOTE = "\n[cut here: no more room in this turn; narrow the search wit
 CARRY_HEAD = ("[[Message from the context keeper, not part of the task. Your last turn ended without a command. These "
               "are the archive searches you made in it and what they returned; they were not saved anywhere else, "
               "so use them now.]]")
-RECALL_MARGIN = 600                                 # tokens kept free beside the reply reserve while searching
+# --hold-open: the searches made since the open question arrived, shown on each request until it is closed
+CARRY_OPEN_HEAD = ("[[Message from the context keeper, not part of the task. These are the archive searches you made "
+                   "since the open questions arrived and what they returned; they were not saved anywhere else, so use "
+                   "them for your answers.]]")
+RECALL_MARGIN = 600                                # tokens kept free beside the reply reserve while searching
 CARRY_CHARS = 24000                                  # the searches of an unfinished turn that are shown again, at most
 REPEAT_NOTE = ("[[You have made the same tool call {n} times in a row with the same result. Calling it again will not "
                "change anything: use the result you have and decide the next step.]]")
@@ -678,7 +682,7 @@ class Keeper:
                  notes_system: str | None = None, notes_kwargs: dict | None = None, notes_prepass: int = 0,
                  notes_async: str | None = None, prewarm: bool = False, log_calls: bool = False,
                  inplace_fit: bool = False, notes_extra: dict | None = None, notes_prefill: bool = False,
-                 lookups: bool = False, rule_scan: str | None = None) -> None:
+                 lookups: bool = False, rule_scan: str | None = None, hold_open: bool = False) -> None:
         self.ask, self.root = ask, Path(state_dir)
         # ask_notes: a separate keeper model's server for the notes calls (--notes-upstream), with notes_model as its
         # model name, notes_system as its system message (default KEEPER_SYSTEM), notes_kwargs as its
@@ -756,6 +760,14 @@ class Keeper:
         self.lookups = bool(lookups) and self.recall_label is not None
         # rule_scan (in-place notes): see unruled()
         self.rule_scan = re.compile(rule_scan) if rule_scan else None
+        # hold_open: while a question is open (from the message that asks it, a user message or one matching
+        # recite_when, until a later one matching think_until), every request gets the RULES recital and the archive
+        # searches made since it arrived, not only the request whose newest message asks it. Campaign 39 (2M): a
+        # model that first printed its answers file and wrote the answers a turn later had lost both what its
+        # searches had found (p3_2, p3_7) and the recital (p11_4, a confidential counter answered with its value).
+        if hold_open and (self.recite_when is None or self.think_until is None):
+            raise ValueError("--hold-open needs --recite-when and --think-until")
+        self.hold_open = bool(hold_open)
         self.sessions: dict[str, Session] = {}
         self.clock = threading.local()                 # per request thread: seconds spent in the model server
         self.lock = threading.Lock()
@@ -1459,18 +1471,22 @@ class Keeper:
             newest = text_of(messages[-1]) if messages else ""
             from_user = bool(messages) and messages[-1].get("role") == "user"
             asked = from_user or bool(self.recite_when and self.recite_when.search(newest))
-            if self.recite and asked and rule_lines(s.state["notes"]):
+            held = self.hold_open and question_open(messages[head_length(messages) + s.state["cut"]:], self.recite_when, self.think_until)
+            if self.recite and (asked or held) and rule_lines(s.state["notes"]):
                 view.append({"role": "user", "content": RECITE_HEAD + "\n" + "\n".join("- " + r for r in rule_lines(s.state["notes"]))})
             carry, carried = s.state.get("carry"), ""
             # The proxy answers `recall` itself, so the client's history never holds the searches. A turn that
             # ends without a command (the model thought its reply away, or the search limit stopped it) would
             # lose all it found: X32m at 1M left six answers blank that way. They are shown once more: only to a
-            # history that continues the one they were made in, and only as far as the window has room.
-            if carry and len(messages) >= carry["n"] and fingerprint(messages[:carry["n"]]) == carry["of"]:
-                room = self.budget - self.reply_reserve - RECALL_MARGIN - self.tokens(s, view + [{"role": "user", "content": CARRY_HEAD}])
+            # history that continues the one they were made in, and only as far as the window has room. With
+            # hold_open, the searches made while a question is open are shown on every request until it is closed.
+            if (carry and len(messages) >= carry["n"] and fingerprint(messages[:carry["n"]]) == carry["of"]
+                    and (held or not carry.get("held"))):
+                head = CARRY_OPEN_HEAD if carry.get("held") else CARRY_HEAD
+                room = self.budget - self.reply_reserve - RECALL_MARGIN - self.tokens(s, view + [{"role": "user", "content": head}])
                 carried = carry["text"][-int(max(room, 0) * s.state["ratio"]):] if room > 0 else ""
             if carried:
-                view.append({"role": "user", "content": CARRY_HEAD + "\n" + carried})
+                view.append({"role": "user", "content": head + "\n" + carried})
             else:
                 s.state["carry"] = None
             stuck = self.repeat_limit and repeats(messages) >= self.repeat_limit
@@ -1583,10 +1599,11 @@ class Keeper:
                 out = dict(out, messages=out["messages"] + [msg] + results)
             # What the searches found stays for the next request only if this turn gave the client nothing to act on
             empty = not msg.get("tool_calls") and not str(msg.get("content") or "").strip()
-            if empty and (rounds or carried):
+            if (empty or held) and (rounds or carried):
                 text = "\n\n".join(([carried] if carried else []) + rounds)
-                s.state["carry"] = {"text": text[-CARRY_CHARS:], "n": len(messages), "of": fingerprint(messages)}
-                s.state["carried"] = s.state.get("carried", 0) + 1
+                s.state["carry"] = {"text": text[-CARRY_CHARS:], "n": len(messages), "of": fingerprint(messages),
+                                    "held": not empty}
+                s.state["carried" if empty else "held_carried"] = s.state.get("carried" if empty else "held_carried", 0) + 1
             else:
                 s.state["carry"] = None
             if self.notes_async and (msg.get("tool_calls") or str(msg.get("content") or "").strip()):
@@ -1745,6 +1762,10 @@ def main() -> None:
                     "matches this regular expression and that no RULES line has (by its words, or by citing its "
                     "--recall-unit) is shown once per cut, asking for any rule among them")
     ap.add_argument("--recite-when", help="also repeat the RULES when the newest message matches this regular expression")
+    ap.add_argument("--hold-open", action="store_true",
+                    help="with --recite-when and --think-until: while a question is open (from the message that asks it "
+                         "until one matching --think-until), every request gets the RULES recital and the archive "
+                         "searches made since it arrived, not only the request that asks it")
     ap.add_argument("--think-when", help="set enable_thinking per call: on for a user message or a newest message "
                                          "matching this regular expression, off otherwise (default: leave the client's setting)")
     ap.add_argument("--think-until", help="with --think-when: thinking stays on from a matching message until a later "
@@ -1854,7 +1875,7 @@ def main() -> None:
                     notes_kwargs=json.loads(a.notes_kwargs) if a.notes_kwargs else None, notes_prepass=a.notes_prepass,
                     notes_extra=json.loads(a.notes_extra) if a.notes_extra else None, notes_prefill=a.notes_prefill,
                     notes_async=a.notes_async, prewarm=a.prewarm, log_calls=a.log_calls, inplace_fit=a.inplace_fit,
-                    lookups=a.lookups, rule_scan=a.rule_scan)
+                    lookups=a.lookups, rule_scan=a.rule_scan, hold_open=a.hold_open)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper {__version__}" + (f" (recipe {a.recipe})" if a.recipe else "")
           + f": http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"

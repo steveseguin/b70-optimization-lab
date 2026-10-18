@@ -1154,6 +1154,56 @@ class Policy(unittest.TestCase):
         self.assertTrue(probe["messages"][-1]["content"].startswith(ck.RECITE_HEAD))
         self.assertEqual(probe["messages"][-2]["role"], "tool")
 
+    def test_hold_open_keeps_the_recital_and_the_searches_until_the_question_is_closed(self):
+        """Campaign 39 (2M): the turn that searched printed the answers file, and the answers were written a turn
+        later without what the searches had found (p3_2, p3_7) and without the RULES recital (p11_4)."""
+        bash = lambda i, cmd: {"id": i, "type": "function", "function": {"name": "bash", "arguments": json.dumps({"command": cmd})}}
+        seen = []
+
+        def model(body):
+            seen.append(body)
+            if len(seen) == 1:
+                return reply(None, [{"id": "r1", "type": "function", "function": {"name": "recall", "arguments": json.dumps({"pattern": "abcd03"})}}])
+            return reply(None, [bash(f"b{len(seen)}", "next")])
+
+        def run(hold_open):
+            seen.clear()
+            k = ck.Keeper(model, Path(self.dir.name) / f"h{hold_open}", budget=100000, memory_note=True,
+                          recite_when=r"(?m)^ASK ", think_until=r"(?m)^ITEM \d+:", hold_open=hold_open)
+            s = k.session({"messages": conversation(1)}, "h")
+            s.archive.add(3, [{"role": "tool", "content": "ITEM 3: the clerk moved counter abcd03 to 21."}])
+            s.state["notes"] = "RULES\n- Always answer in French.\nSTATE\n- abcd03: 40\nOPEN\n"
+            asked = conversation(4) + [{"role": "assistant", "content": None, "tool_calls": [bash("a", "next")]},
+                                       {"role": "tool", "tool_call_id": "a", "content": "PROBE: answer now.\nASK p1_1: What value did abcd03 hold at the end of item 3?"}]
+            printed = asked + [{"role": "assistant", "content": None, "tool_calls": [bash("p", "cat answers.json")]},
+                               {"role": "tool", "tool_call_id": "p", "content": "{}"}]
+            closed = printed + [{"role": "assistant", "content": None, "tool_calls": [bash("n", "next")]},
+                                {"role": "tool", "tool_call_id": "n", "content": "ITEM 5: the clerk moved counter abcd05 to 35."}]
+            views = []
+            for msgs in (asked, printed, closed):
+                first = len(seen)
+                k.complete({"model": "m", "messages": msgs}, "h")
+                views.append([str(m.get("content")) for m in seen[first]["messages"]])
+            return s, views
+
+        recited = lambda view: any(c.startswith(ck.RECITE_HEAD) for c in view)
+        shown = lambda view: [c for c in view if c.startswith((ck.CARRY_HEAD, ck.CARRY_OPEN_HEAD))]
+        s, views = run(True)
+        self.assertEqual([recited(v) for v in views], [True, True, False])
+        self.assertEqual(shown(views[0]), [])
+        self.assertEqual(len(shown(views[1])), 1)
+        self.assertTrue(shown(views[1])[0].startswith(ck.CARRY_OPEN_HEAD))
+        self.assertIn("counter abcd03 to 21", shown(views[1])[0])
+        self.assertEqual(shown(views[2]), [])                                    # the next item closed the question
+        self.assertIsNone(s.state["carry"])
+        self.assertEqual(s.state["held_carried"], 2)
+        s, views = run(False)                                                     # the 1.2.0.dev3 behaviour
+        self.assertEqual([recited(v) for v in views], [True, False, False])
+        self.assertEqual([shown(v) for v in views], [[], [], []])
+        self.assertNotIn("held_carried", s.state)
+        with self.assertRaises(ValueError):
+            ck.Keeper(model, Path(self.dir.name) / "x", recite_when=r"^ASK ", hold_open=True)
+
     def test_memory_note_is_added_once_and_recall_is_there_from_the_start(self):
         k = ck.Keeper(self.model, Path(self.dir.name) / "n", budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5, notes_cap=400)
         for n in (1, 2, 30):

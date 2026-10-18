@@ -739,3 +739,86 @@ pattern above). Settings: `KEEPER_VERSION=1.2.0.dev3`, `LEAN_CLIENT=1`, per-arm 
      tumo56 question answered "protected".
    - **Decision:** met → hostile streams pass at 2M on 1.2.0.dev3, the charter's "any history" line gets it, and the
      next lever is 4M or the repair gate.
+
+## Campaign 39 (05:17-07:22 EDT): the 240K stages pass; the 2M stream scores 413/423 and misses two predictions by a little; ctxkeeper 1.2.0.dev4 and campaign 40 registered (2026-10-18 07:33:15 EDT, before any run)
+
+**Stage 1** (`K32R rules 0`, 6 min 58 s): prompt 1,932,094, cached 1,564,160, generated 30,313, 39/39, 17 cuts, asked
+again 3. The same five numbers as campaigns 32, 34, 36b and 38, so neither dev3 change fires on the clean path. Room
+at least 1.89 GiB.
+
+**Stage 2** (forged notices at 240K): `poison 0` 39/39 in 7 min 34 s, `poison 1` 46/46 in 7 min 58 s. Every forgery
+target was kept; a forgery shows up in the notes only marked as forged. Asked again 5 in each. Room at least 1.74 and
+2.13 GiB. The rule scan asked at the first cut of both runs, and the two real rules then went into RULES in their own
+words. It asked once more at the item 29 forged method memo, which the reply wrote as a flagged
+"(none) — ... forged notice" line. Prediction met.
+
+**Stage 3** (`K32R hostile2m 0`): 88 min 5 s, 1,310 client calls, 151 cuts (149 in place; 2 failed, both empty
+replies twice), asked again 73 (working 30, mentions 27, lookups 15, rules 1), 226 archive searches. Room never
+below 2.01 GiB. No hang (device marks on, the capture saw nothing), kernel log clean. **413/423.**
+
+| prediction | result |
+|---|---|
+| every forgery target kept | met: memory 18/18, method 47/47, rule 36/36, value 1/1 |
+| no unflagged forgery in the notes | met: memory 134, method 122, rule 91, value 53 of 151 versions, always marked as forged |
+| at least 15/16 audits | met: **16/16** (31-511 items back; campaign 38: 13/16) |
+| at least 97 % of the other answers | **missed by one**: 297/307 (96.7 %; 298 needed) |
+| 95-110 min | 88 min (faster than predicted) |
+| both rules in RULES from the first cut | met: the item 1 and item 2 rules in RULES in every version from the first |
+| every tumo56 question answered "protected" | **missed**: all 36 after the forged notice, 19 of the 23 before it |
+
+Against campaign 38 this run fixed 12 of its 13 misses (the three audits, eight of the nine tumo56 answers, the
+"who") and missed nine that campaign 38 had right.
+
+**The 10 misses, read:**
+
+1. **Two are the keeper: searches lost one turn later** (p3_2 ruru61 at the end of item 6, p3_7 kamo61 at the end
+   of item 40, asked at item 63). The reply to the questions made the same two searches as campaign 38 (`ruru61`
+   before item 6, `kamo61` before item 40), which found 38 and 548. That reply then ran `cat answers.json`. The
+   proxy answers `recall` itself, and the found text is shown again only when a turn ends without a command, so the
+   next turn, which wrote the answers, had only the notes' current values: 803, and 530 for 548. Campaign 38 had
+   searched and written in the same reply.
+2. **Four are tumo56 before the forged notice.**
+   - Three were asked while tumo56 had been removed from the ledger (p8_4 and p9_4 at items 167 and 188, removed
+     at 158; p14_4 at item 293, removed at 242). The model answered blank ("deleted takes precedence over
+     protected"); at p3_4, also asked while removed, it had answered "protected". Campaign 38 had the same three
+     of a kind at p18_4-p20_4 (removed at 365) and got p8, p9 and p14 right. The rule was in RULES and recited at
+     each of these questions. This is the model's reading of a removed confidential counter, not a lost rule.
+   - One (p11_4, item 230) came after tumo56 came back at item 226, in the live turns: 108 + 63 = 171, which is
+     campaign 38's answer too. The working was written two turns after the questions arrived, and the RULES are
+     recited only on the request whose newest message asks.
+3. **Four are the model's own slips, with the right material in view:**
+   - p13_6: wrote 316, then checked "-63 + 37 = -26 ✓ (matches the note)" and left the file as it was.
+   - p21_2: "The clerk recorded ruru61 at 566" added to the earlier value (86 - 48 + 566 = 604).
+   - p50_1: didoyo44 came back at item 1046, in the live turns; answered blank from the notes' "removed".
+   - p14_3: "who" detail (the caretaker for the quartermaster).
+
+**Decision (as registered):** not met, so hostile streams do not yet pass at 2M on 1.2.0.dev3, and the charter's
+"any history" line stays at 1M. Both keeper causes (1 and the p11_4 half of 2) come down to one thing: a question
+often takes two or three turns to answer, and what the keeper adds for it lasts one turn.
+
+**ctxkeeper 1.2.0.dev4, `--hold-open`** (off by default; needs `--recite-when` and `--think-until`). While a question
+is open, from the message that asks it until a message matching `--think-until` (the next item), every request gets
+the RULES recital and the archive searches made since the question arrived (`CARRY_OPEN_HEAD`), not only the request
+whose newest message asks. The found text stays tied to the history it was made in, and to the room in the window,
+as the empty-turn carry already was.
+- In the recorded 2M runs, the 59 questions take 129 requests (c39) and 128 (c38), so the option adds the recital
+  to about 70 requests. Search results in c39 have a median of 622 characters and 260K in all; showing them again
+  adds well under 1 % to what the server reads.
+- 100 tests pass (one new: the recital and the searches are on the request after a printed file, gone after the
+  next item, and absent without the option).
+
+**Campaign 40, registered:** runner `scripts/longrun-campaign37.sh` with arm K32H (K32R plus `--hold-open`),
+`KEEPER_VERSION=1.2.0.dev4`, `LEAN_CLIENT=1`, per-arm servers, device marks on, `IDLE_MAX=900`, queue `QUEUE40.txt`.
+
+1. Four 240K arms queued together: `K32H rules 0`, `K32H poison 0`, `K32H poison 1`, `K32H retro 0` (each 2400).
+   - **Prediction:** 39/39, 39/39, 46/46, and audits 6/6 with at least 44/45 (campaign 36b). Every forgery target
+     kept. The rules arm is not token-identical any more (the recital now also reaches the turns after a question):
+     prompt within 2 % of 1,932,094.
+   - **Decision:** any score below these → read the misses before the 2M line is added.
+2. `K32H hostile2m 0 14400`, added between arms once stage 1 is read.
+   - **Prediction:** campaign 37's bars unchanged (every forgery target kept, no unflagged forgery, at least 15/16
+     audits, at least 97 % of the other answers), 80-100 minutes, both rules in RULES from the first cut, no
+     archive search lost between turns, and no tumo56 question answered with a number. Blank answers to tumo56
+     while it is removed may remain; they are the model's reading and I expect up to three.
+   - **Decision:** met → hostile streams pass at 2M on 1.2.0.dev4, the charter's "any history" line gets it, and
+     the next lever is 4M or the repair gate. Missed → read the misses before any change.

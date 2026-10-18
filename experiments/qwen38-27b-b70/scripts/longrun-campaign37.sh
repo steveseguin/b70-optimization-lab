@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Campaign 40 (2026-10-18, notes/2026-10-17-hostile-history-poison.md, registered before any run): arm K32H is K32R
+# with ctxkeeper 1.2.0.dev4's --hold-open (while a question is open, every request gets the RULES recital and the
+# archive searches made since it arrived). The tools/ctxkeeper check also requires --hold-open. Earlier header follows.
 # Campaign 39 (2026-10-18, notes/2026-10-17-hostile-history-poison.md, registered before any run): arm K32R is K32L
 # with ctxkeeper 1.2.0.dev3's --rule-scan "$RULE_RE" (a rule-like sentence no RULES line covers is asked about once
 # per cut). The tools/ctxkeeper check also requires --rule-scan. Earlier header follows.
@@ -109,14 +112,14 @@ mline() {
 arm_window() {  # arm -> "budget inplace_tokens"
   case $1 in
     K06) echo "6144 2800" ;;   K08) echo "8192 3750" ;;   K12 | R12) echo "12288 5600" ;;
-    K16 | R16) echo "16384 7500" ;;   K12f) echo "12288 5600" ;;   K08f) echo "8192 3750" ;;   K24) echo "24576 11250" ;;   K32 | K32L | K32R | A32d | A32dp | M32dp) echo "32768 15000" ;;
+    K16 | R16) echo "16384 7500" ;;   K12f) echo "12288 5600" ;;   K08f) echo "8192 3750" ;;   K24) echo "24576 11250" ;;   K32 | K32L | K32R | K32H | A32d | A32dp | M32dp) echo "32768 15000" ;;
     K48 | R48) echo "49152 22500" ;;   K64) echo "65536 30000" ;;   S08) echo "8192 3000" ;;   S16) echo "16384 5000" ;;
     *) return 1 ;;
   esac
 }
 arm_async() {  # arm -> background-notes options
   case $1 in A32d) echo "--notes-async defer" ;; A32dp | M32dp | S08 | S16) echo "--notes-async defer --prewarm" ;;
-    K12f | K08f) echo "--inplace-fit" ;; K32L | K32R) echo "--lookups" ;; *) echo "" ;; esac
+    K12f | K08f) echo "--inplace-fit" ;; K32L | K32R | K32H) echo "--lookups" ;; *) echo "" ;; esac
 }
 start_proxy() {  # tag arm kind
   local tag=$1 arm=$2 kind=$3 w b i fl=()
@@ -130,7 +133,7 @@ start_proxy() {  # tag arm kind
                     --recite-when "$RECITE_RE_REPAIR" --notes-mode inplace --notes-checks off --max-recalls 16) ;;
     smoke)      fl=(--recipe qwen) ;;
   esac
-  local rs=(); [[ $arm == K32R ]] && rs=(--rule-scan "$RULE_RE")
+  local rs=(); [[ $arm == K32R || $arm == K32H ]] && rs=(--rule-scan "$RULE_RE"); [[ $arm == K32H ]] && rs+=(--hold-open)
   systemctl --user reset-failed ctx-keeper-proxy 2>/dev/null
   # shellcheck disable=SC2046
   systemd-run --user --unit=ctx-keeper-proxy --collect -p WorkingDirectory=$LAB python3 tools/ctxkeeper/ctxkeeper.py \
@@ -312,6 +315,7 @@ for u in lfm25-srv lfm25-pkg-srv ctx-keeper-proxy; do systemctl --user is-active
 python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --inplace-fit || { say "ABORT: tools/ctxkeeper has no --inplace-fit"; exit 2; }
 python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --lookups || { say "ABORT: tools/ctxkeeper has no --lookups"; exit 2; }
 python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --rule-scan || { say "ABORT: tools/ctxkeeper has no --rule-scan"; exit 2; }
+python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --hold-open || { say "ABORT: tools/ctxkeeper has no --hold-open"; exit 2; }
 cd "$CTX" || exit 2
 while read -r arm kind seed cap; do
   [[ -z $arm || $arm == \#* ]] && continue
