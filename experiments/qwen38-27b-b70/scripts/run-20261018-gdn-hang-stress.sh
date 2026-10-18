@@ -2,7 +2,7 @@
 # GDN prompt-kernel hang stress (2026-10-18, registered in notes/2026-10-17-hang-repro.md before any run): one container
 # per card at the same time, each calling the fused `_xpu_C.gdn_attention` prompt kernel in layer-50 shapes (TP2
 # split, 300-600 new tokens from a cached state) for MINUTES minutes, in the context server's own image. Cards must be
-# empty. A kernel that never finishes shows as `STUCK` in the card's log, then as a driver timeout in the kernel log.
+# empty (the mask leaves one device, numbered 0, so the selector is always level_zero:0). A kernel that never finishes shows as `STUCK` in the card's log, then as a driver timeout in the kernel log.
 set -uo pipefail
 LAB=/home/steve/b70-optimization-lab
 S=$LAB/experiments/qwen38-27b-b70/scripts
@@ -19,7 +19,7 @@ say "GDN hang stress: $MINUTES min per card, both cards at once, image $IMAGE; M
 pids=()
 for c in 0 1; do
   docker run --rm --name gdn-hang-stress-$c --device /dev/dri:/dev/dri --group-add render --memory 4g --memory-swap 4g \
-    --ulimit core=0 -e ONEAPI_DEVICE_SELECTOR=level_zero:$c -e ZE_AFFINITY_MASK=$c -e VLLM_TARGET_DEVICE=xpu \
+    --ulimit core=0 -e ONEAPI_DEVICE_SELECTOR=level_zero:0 -e ZE_AFFINITY_MASK=$c -e VLLM_TARGET_DEVICE=xpu \
     -v "$S/qwen38-gdn-prefill-hang-stress.py:/stress.py:ro" -v "$OUT:/out" --workdir / --entrypoint python3 "$IMAGE" \
     /stress.py --out /out/card$c.json --minutes "$MINUTES" --seed $((20261018 + c)) > "$OUT/card$c.log" 2>&1 &
   pids+=($!)
