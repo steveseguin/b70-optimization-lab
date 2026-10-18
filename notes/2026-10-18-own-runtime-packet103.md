@@ -93,3 +93,16 @@ nonexecuted historical source snapshots move into local immutable inputs. The
 wrapper and policy hashes verify. Inherited closeouts are retained byte-for-byte
 in lineage-inputs with hashes in copy-lineage.json; the packet103 closeout now
 describes this preparation instead of repeating the parent’s old outcome.
+
+Resume after the 06:46 UTC authentication interruption: the finalized-source
+startup process was gone and no structured startup receipt had been written.
+Its log records 164 passing compositions and is preserved as
+`evidence/startup103-auth-interrupted.log.gz`; structured per-window rows had
+existed only in process memory. The complete startup gate is therefore running
+again, with the same finalized sources. Finished binary, operator and allocation
+gates are reused; their source, binary and executed-dependency pins still pass.
+The new CPU source decision also passes unchanged: route-fast, rec-both-plus,
+wide64+halfcache, production head, tile16 DOWN and split32 draft attention.
+Packet97's submitted 56.087 result remains the record; this preparation makes
+no composite speed claim. Pull again refused unrelated shared-checkout edits;
+fetch confirmed main and origin/main equal. No foreign change was stashed.
