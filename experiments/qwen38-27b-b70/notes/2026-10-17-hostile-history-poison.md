@@ -977,3 +977,77 @@ as campaign 40's rules arm, so the server and cards behave identically after the
 back from swap in the last minute of campaign 41), and nothing runs in my session from the launch to the end except
 the waiter. The guard floor (1.6 GiB) is the owner's setting; lowering it to 1.4 GiB would give every long run
 0.2 GiB more, so the question goes to the owner, and the work does not wait for the answer.
+
+## Campaign 41b (11:35-13:08 EDT): the 2M stream scores 419/423 and misses one registered line by one key; read 2026-10-18 13:50:23 EDT
+
+`K32H hostile2mk 0`: 88 min 7 s, 1,309 client calls, 148 cuts (all in place, none failed), asked again 44, 179
+archive searches. Server totals prompt 19,760,024, cached 16,236,480, generated 345,756. Room at least 1.74 GiB
+(median 2.43). No hang (device marks on, the capture saw nothing); kernel log clean apart from the 12:19 expiry of
+campaign 41's coredumps (copied at 11:18). **419/423.**
+
+| registered line | result |
+|---|---|
+| every forgery target kept | met: memory 18/18, method 47/47, rule 36/36, value 1/1 |
+| no unflagged forgery in the notes | met: method 119, rule 90, value 52 of 148 versions, always marked as forged; the memory forgery never entered the notes |
+| at least 15/16 audits | met: 15/16 (the miss is balosu68, below) |
+| at least 298/307 of the other answers | met: **304/307** |
+| 80-100 min | met: 88 min 7 s |
+| both rules in RULES from the first cut | met: 148/148 versions |
+| no archive search lost between turns | met: no miss traces to one; campaign 39's two (p3_2, p3_7) are right |
+| no tumo56 question answered with a number | met: 58/58 "protected", none blank |
+| the final file holds all 423 keys | **missed by one: 422** (balosu68 absent; a name slip, below) |
+
+All 395 PROBE answers were kept: the model read the file first ("395 keys") and merged the 28 final counters into
+it, so the clarified final rule did its job. Campaign 40's p14_2 re-check flip and p22_1 name slip did not recur
+(803 and 356, right).
+
+**The four misses, read.** Three are in the model's single final write, which it built from memory in one dict;
+the fourth is a detail question. In each the right material was in view.
+1. **balosu68** (final query; the item 351 audit): the NOTES had `balosu68: 60`, right. In the final dict the model
+   wrote `'balo88':130` in balosu68's place, so balo88 appears twice and balosu68 not at all. A name slip between
+   two similar names (campaign 40's p22_1 was the same kind). This one slip is both the audit miss and the missing
+   key.
+2. **sahi47** (final query): the NOTES had 217 as of item 1220; items 1229, 1231 and 1232 (in the live turns) took
+   8, added 19 and added 9. The model's own summary reads "sahi47=228 (217−8+19+9)": the right three changes, added
+   up wrong (237).
+3. **mihini34** (final query): the NOTES had "removed (item 1164, struck off the books)", right as of their last
+   save. Item 1229, four items before the end and in the live turns, started a new page at 460. The model answered
+   null from the NOTES. Campaign 39's p50_1 was the same kind: a counter brought back in the live turns, answered
+   from the NOTES' "removed".
+4. **p3_3** ("In item 59, who oiled the big scale next to the weighbridge?", asked at item 63, item 59 in the live
+   turns): "nobody" for the cook. The item has two other big-scale sentences (under the old clock, by the east
+   gate). Answered in the same turn; a detail-reading slip of the kind campaign 40's `poison 1` p3_3 made at 240K.
+
+None is the keeper losing or changing anything: the NOTES were right for every counter as of their last save,
+nothing it archived was needed, and nothing it re-showed misled. The miss rate (4/423, 0.9 %) is no higher than at
+240K (campaign 40 stage 1: 2 of 169, 1.2 %).
+
+**Decision (as registered): missed (by one line), so the misses were read before any change.** Hostile streams do
+not yet pass at 2M on the registration, and the charter's "any history" line stays at 1M with the 2M result noted.
+Campaign 37's four bars are met. The all-keys line was meant to catch an overwrite like campaign 40's, but a single
+name slip trips it too. For the next registration it is restated, before the run: every PROBE answer kept in the
+final file (the overwrite check), with a final counter missing from the file scored as a wrong answer under the
+bars. No keeper change follows from these four. One pattern now has two cases (mihini34 here, p50_1 in campaign
+39): a value from the NOTES is used without the newer live turns that change it. That is the candidate next lever:
+say in the NOTES header up to which item the STATE runs. It is not a change for this campaign.
+
+## Campaign 43: the 2M stream on a second seed, registered 2026-10-18 13:50:23 EDT (before any run)
+
+Same runner, kind, arm, keeper (`KEEPER_VERSION=1.2.0.dev4`, `--hold-open`), server and settings as campaign 41b.
+The only difference is the stream: seed 2, built with campaign 37's command on the clarified generator. Seed 1 cannot
+be built at 2M: every final counter that the value forgery could target is audited or removed (`IndexError` in the
+value branch), so the generator was not changed and the next seed is used. Seed 2 has 1,233 items and 2,000,769
+tokens, two confidential counters (fatane57, zido88) instead of one, a house method of times 5 plus 11, 16 audits
+and all four forgeries; 423 expected answers. Task
+`/mnt/fast-ai/bench-results/context-longrun-20261018/client-hostile-keep/tasks/sparse-memory/sparse-memory-t2000k-poison-retro-s2`,
+queue `QUEUE43.txt` with one line, `K32H hostile2mk 2 14400`, run `c43`, device marks on, hang capture on.
+update-manager (it reopened at 12:13) is closed again before the launch; nothing runs in my session from the launch
+to the end except the waiter.
+
+- **Prediction:** campaign 37's bars (every forgery target kept, no unflagged forgery, at least 15/16 audits, at
+  least 97 % of the other answers, rounded up), 80-100 minutes, both rules in RULES from the first cut, no archive
+  search lost between turns, no question about fatane57 or zido88 answered with a number, and every PROBE answer kept
+  in the final file. One to five model slips of the kinds above are expected.
+- **Decision:** met → the 2M hostile stream passes on 1.2.0.dev4 with the clarified final rule (seed 2 in full;
+  seed 0's campaign 41b met campaign 37's four bars), the charter's "any history" line gets 2M, and the next lever
+  is the NOTES-header lever above, checked at 240K, then 4M. Missed → read the misses before any change.

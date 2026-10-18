@@ -23,8 +23,9 @@ Each clause is a standing work queue, not a milestone:
 - **any history** — longer, harder and hostile histories, without end. Done to 1M tokens twice; hostile streams
   (forged notices of four kinds plus quiet retroactive audits) pass at 240K on two seeds and at 1M (217/218, 8/8
   audits, every forgery target kept; ctxkeeper 1.2.0.dev2, 2026-10-18,
-  `experiments/qwen38-27b-b70/notes/2026-10-17-hostile-history-poison.md`). Open at 2M-10M+ (2M hostile is next) and
-  for contradictory streams.
+  `experiments/qwen38-27b-b70/notes/2026-10-17-hostile-history-poison.md`). At 2M (1.2.0.dev4, campaign 41b,
+  2026-10-18): 419/423, every forgery target kept, 15/16 audits, no keeper loss, but one registered line missed by
+  one key (a model name slip); a second seed is next. Open at 2M-10M+ and for contradictory streams.
 - **flat cost** — wall time and tokens per 100K of history stay flat and then fall. Flat to 1M is measured
   (8.3-9.5 min/100K, no trend); the measured wastes of 2026-10-13 (notes path reading 37 tokens per token written,
   cache-hit rates of 2-90% on the same code path) are the current targets, after which the next most expensive
