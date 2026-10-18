@@ -1,0 +1,19 @@
+gnu-host-entry-main PASS
+gnu-host-p49d_submit PASS
+gnu-host-link PASS
+device-entry-main PASS
+device-p49d_submit PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build_engine.py", line 49, in <module>
+    resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+                                                                 ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build_engine.py", line 43, in main
+    commands.append(run(link,mode+'-link'));artifacts[str((dest/'own-rt-iq3').relative_to(P))]=sha(dest/'own-rt-iq3')
+                    ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build_engine.py", line 22, in run
+    limits();t=time.monotonic()
+    ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build_engine.py", line 17, in limits
+    assert size<=300_000_000,size
+           ^^^^^^^^^^^^^^^^^
+AssertionError: 306110535
