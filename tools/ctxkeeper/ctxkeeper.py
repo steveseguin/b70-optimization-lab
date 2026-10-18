@@ -53,7 +53,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.2.0.dev1"
+__version__ = "1.2.0.dev2"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -199,14 +199,15 @@ RECALL_ROOM_NOTE = ("[[There is no room left in this turn for another archive se
                     "after that step for anything still missing.]]")
 RECALL_NONE_NOTE = "recall: not run, no room left in this turn"
 RECALLED_CHARS = 120_000                             # how much recent archive-search text the note checks may cite
-# --lookups: a CHANGES line that says it waits on an archived entry ("amount not yet known, must recall item 32"), or
-# that the checks doubt and that cites one, is asked again once, with what that entry says about the name
+# --lookups: a CHANGES line that cites an archived entry and waits on it ("amount not yet known, must recall item 32"),
+# is doubted by the checks, or works an amount out, is asked again once, with what that entry says about the name
 WAITS = re.compile(r"\b(not (yet )?known|unknown|must (be )?recall(ed)?|to (be )?recall(ed)?|recall (it|the|that|item)|"
                    r"look(ed)? up|pending|from (the )?archive)\b", re.I)
 LOOKUP_RETRY = ("Some lines of your CHANGES wait on or cite entries that are in the archive. Here is what those {unit}s say about "
-                "each name, word for word:\n{entries}\nApply each entry to the value the NOTES hold and write the line "
-                "with its working (`name: 250 + 15 = 265`); leave a line waiting only if its entry does not settle it. "
-                "Then reply with the three complete sections again.")
+                "each name, word for word:\n{entries}\nThe value the NOTES hold already counts these entries: they were "
+                "noted when they came in. Write each of those lines again from that value, with its working (`name: 250 "
+                "+ 15 = 265`), doing only what these turns say about each entry; leave a line waiting only if the entries "
+                "do not settle it. Then reply with the three complete sections again.")
 LOOKUP_CHARS = 4000                                  # at most this much archived text in one such question
 RECALL_CUT_NOTE = "\n[cut here: no more room in this turn; narrow the search with `before` / `after` / `last`]"
 CARRY_HEAD = ("[[Message from the context keeper, not part of the task. Your last turn ended without a command. These "
@@ -1211,30 +1212,36 @@ class Keeper:
 
     def waiting(self, s: Session, changes: list[tuple[str, str]], texts: list[str],
                 doubtful: set[int] | frozenset[int] = frozenset()) -> list[tuple[str, list[int], str]]:
-        """--lookups: the CHANGES lines that say they wait on an archived entry, or that the checks doubt (`doubtful`,
-        indices into `changes`) and cite one, each with the numbers of the units (recall_unit) it names and what
-        those say about the name: every sentence that names it, with the sentence after it (where a pronoun may
-        carry the amount). What the turns being noted say already is not looked up.
+        """--lookups: the CHANGES lines that cite an archived entry and say they wait on it, or that the checks doubt
+        (`doubtful`, indices into `changes`), or that work an amount out (`a + b`, `a - b`), each with the numbers
+        of the units (recall_unit) it names and what those say about the name: every sentence that names it, with
+        the sentence after it (where a pronoun may carry the amount). What the turns being noted say already is not
+        looked up, and a line that only mentions an old unit (`reopened at 5 (removed at item 40)`) is not asked.
         Campaign 32 (quiet audits, seed 1): a reversal waited 55 items as `250 + (amount of the decrease entered in
         item 32) = unknown`; the model's own sum over the whole history at the end was one off (266 for 265).
         Campaign 33b (the same stream): a reversal was written from memory, `217 + 10 = 227 (... the decrease of 10
         entered in item 34)`, for a decrease of 28; asked to read the item again, the model could not (item 34 was
-        archived) and the line was left out."""
+        archived) and the line was left out.
+        Campaign 34 (1M, forged notices and quiet audits, seed 0): three of eight reversals went wrong, each in a line
+        that cited the archived item: an amount from memory that the checks took for stated because the counter had
+        held it (`-341 + 341 = 0` for a decrease of 65), a sum over the whole history that misread a "recorded at" as
+        a decrease, and, after a lookup, the entry added back before it was taken out (`-40 + 26 - 26 = -40`)."""
         unit = re.compile(rf"\b{re.escape(self.recall_unit)}s?[\s#-]*\d+(?:\s*(?:/|,|&|and|or|to|-|\u2013|\u2014)\s*\d+)*", re.I)
         rows = [r for r in s.archive.labelled(self.recall_label) if r["role"] in ("tool", "user")]
         here = "\n".join(texts)
         out = []
         for i, (name, value) in enumerate(changes):
-            if not WAITS.search(value) and i not in doubtful:
+            works = re.search(r"\d\s*[+\-\u2212]\s*\(?\s*\d", unit.sub(" ", value))
+            if not WAITS.search(value) and i not in doubtful and not works:
                 continue
             numbers = sorted({int(x) for m in unit.finditer(value) for x in re.findall(r"\d+", m.group(0))})[:4]
             said = []
             for k in numbers:
                 for r in (r for r in rows if r["k"] == k):
                     parts = [x.strip() for x in re.split(r"(?<=[.!?])\s+|\n+", r["text"]) if x.strip()]
-                    for i, x in enumerate(parts):
+                    for j, x in enumerate(parts):
                         if re.search(rf"(?<![\w-]){re.escape(name)}(?![\w-])", x, re.I):
-                            got = " ".join(parts[i:i + 2])[:400]
+                            got = " ".join(parts[j:j + 2])[:400]
                             if got not in here:
                                 said.append(f"{self.recall_unit} {k}: {got}")
             if said:

@@ -459,3 +459,86 @@ so a replay of saved lines cannot differ.
   must also be named next to the name) before more runs.
 - An audit missed for a reason other than a cited archived item: read the cut, then fix or withdraw.
 - A guard stop in the middle of an arm: memory comes first again; the kill record names the processes.
+
+## Campaign 34, arms 1-5 (21:48-22:40 EDT); amendment 22:40:58 EDT, before the 1M run: the 1M follow-up goes ahead
+
+**Results** (each arm on its own server; servers came up with 2.35-2.75 GiB free):
+
+| Arm | Score | Audits | Lookups | Notes |
+| --- | --- | --- | --- | --- |
+| `K32L retro 1` | **50/50** | 6/6 (vomo85 245) | as in c33 | 8 min 6 s; free memory never below 2.03 GiB at the arm's end |
+| `K32L retro 0` | 43/45 | 6/6 | | c32: 42/45. Misses p3_4 (lologu25 answered 269; the rule "answer protected" was in the NOTES all along) and p5_3 (a "who" detail, missed in c32 too) |
+| `K32L retroloud 1` | **50/50** | 6/6 | | |
+| `K32L rules 0` | **39/39** | - | **0** | the doubted-line lookup never asked on the plain stream |
+| `K32 repair 2x` | void | - | - | the guard stopped the server 76 s in (1.58 GiB) |
+
+Predictions 1, 3, 4 and 6 (no stop at an arm's end) held. Prediction 2 ("no new miss") failed narrowly: one probe
+miss is new (p3_4, a rule lapse in the model's answer, not a notes error) and two of c32's three are gone. No keeper
+change follows from it.
+
+**Why the repair arm could not run.** Its client and task container need more room than a stream arm: free memory
+went 2,184 MiB (server ready) -> 1,914 (harbor and the container up) -> about 1,720 within 50 s, i.e. about 0.08 GiB
+above the floor, and the next command in the container (a `docker compose exec` of 47 MB plus a 91 MB test process)
+crossed it. The kill record lists nothing else new. No fault lines; the runner's probe passed at 22:39:55. Stream
+arms keep 0.4-0.5 GiB of room, so the 1M stream (the same client, no test processes) fits.
+
+**Amendment.** The 1M follow-up was registered to run if items 1-5 held. Item 5 did not run for a memory reason
+that has nothing to do with the keeper, and the 1M run's own conditions (the 17:48 amendment: every forgery target
+kept, no unflagged forgery, quiet audits applied = loud audits applied, all on seed 1) are met. So
+`K32L hostile1m 0 9000` is appended to `QUEUE34.txt` now, while the runner waits. Its predictions and decision are the
+17:48 amendment's: every forgery target kept; at least 7/8 audits applied; at least 97 % of the other answers right;
+about 110 min inside the 150-min cap. The repair gate (2x) waits for room: a guard floor of 1.4 GiB (the owner's call)
+or a lighter client.
+
+## Campaign 34, arm 6: the 1M hostile stream (22:43-23:27 EDT); keeper 1.2.0.dev2 and campaign 35 registered (23:32:08 EDT, before any run)
+
+**Result** (`K32L hostile1m 0`, keeper 1.2.0.dev1, its own server, 43 min 12 s; the guess was 110 min):
+- Forged notices: **all four held.** Memory (item 73) 12 answers kept, method (item 122) 24, rule (item 246) 19,
+  value (item 401) 1. The value forgery appears in 27 of 75 NOTES versions, always marked as forged; the other three
+  in none.
+- Audits: **5 of 8** (vodo54, fado14, kaka57, ruweja84, sunetu56). Prediction "at least 7 of 8" failed.
+- Other answers: 152/157 (96.8 %; prediction 97 %). Overall 210/218. 75 cuts (74 in place, 1 failed), 16 asked
+  again, 127 archive searches; no guard stop (free memory 2.25 GiB at the end).
+
+**The three wrong audits, read as the 17:48 amendment says** (`scratchpad trace_name.py`):
+- **nidi38** -40 for -66. The lookup worked: the line waited (`-40 - (increase entered in item 141, amount
+  unknown)`) and was shown "item 141: nidi38 went up by twenty-six". The model then wrote `-40 + 26 (item 141) - 26
+  (audit) = -40`: it added the entry back before taking it out. The question said "Apply each entry to the value
+  the NOTES hold", which invites exactly that.
+- **tasutu51** 0 for -276. `-341 + 341 = 0 (item 247 audit reversed the decrease entered in item 15)`: the
+  whole value as the amount, from memory (the decrease was 65). The near check passed it because 341 is a value the
+  counter held. No lookup: the line neither waited nor was doubted.
+- **xaka26** 45 for -157. After an archive search the model summed the whole history, `202 - 47 + 46 - 73 - 37 -
+  46 = 45`, reading "recorded at minus forty-seven" as a decrease. The working check let the start (202) through
+  as "a value the turns set" because the searched text counts as stated (fix 1). No lookup either.
+
+All three lines cite the archived item. **Fix, ctxkeeper 1.2.0.dev2:**
+- The lookup is also asked for a line that works an amount out (`a + b`, `a - b` after the item numbers are taken
+  out) and cites an archived item. A line that only mentions an old item is not asked.
+- The question no longer says "apply each entry". It says: "The value the NOTES hold already counts these entries:
+  they were noted when they came in. Write each of those lines again from that value, with its working, doing only
+  what these turns say about each entry".
+- A test covers it (`test_lookups_show_the_archived_entry_a_line_works_from`); 91 tests pass.
+- How often it would ask, rebuilt from the recorded first replies and the archive as it stood at each cut
+  (`scratchpad est_lookups.py`): plain streams 0/17 cuts (c34 rules s0, c30 rules s1, c30 poison s1, c30 poison
+  s0); quiet audits s0 3/17, s1 3/17; loud s1 5/17; 1M 7/75, every one an audit line (the five that waited plus
+  xaka26 and tasutu51).
+- Not changed: a start found by an archive search still counts as set in the turns (xaka26's hole). The lookup now
+  reaches that line; if a whole-history sum still gets through, the start check is narrowed next.
+
+**Campaign 35:** campaign 34's runner (`PER_ARM=1`, `TRAJ=0`, `MARKS=1`, `RESTORE=0`) with `KEEPER_VERSION=1.2.0.dev2`.
+Queue `QUEUE35.txt`: `K32L hostile1m 0 9000`, `K32L retro 1 2400`, `K32L retro 0 2400`, `K32L retroloud 1 2400`,
+`K32L rules 0 2400`.
+
+**Predictions.**
+1. 1M: every forgery target kept; **at least 7 of 8 audits**; at least 97 % of the other answers; lookups at 5-9
+   cuts; under 60 min.
+2. Retro 1 and retroloud 1: 50/50 each; retro 0: 6/6 audits, at least 42/45.
+3. Rules 0: 39/39 with **no** lookup.
+
+**Decision.**
+- 1-3 hold: hostile streams pass at 1M on 1.2.0.dev2. The charter's "any history" line gets the result, the next
+  hostile lever is 2M, and the repair gate (needs room, see campaign 34) stays open.
+- An audit still wrong at 1M: read its cut; a whole-history sum means the start check is narrowed (searched text
+  stops counting as a set start), anything else is read before a change.
+- Any lookup on rules 0, or a seed-1 score drop: the trigger is too wide; narrow it before more runs.
