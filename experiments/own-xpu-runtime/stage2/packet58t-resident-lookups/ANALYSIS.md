@@ -58,3 +58,8 @@ not a claimed elimination of the historical disk delay. No selected prompts
 or prompt/KV/response state are reused. The repeated suite is a diagnostic
 screen, never an independent fresh-process performance repeat or final gate.
 Every token retains preparation and whole-token fault counters alongside times.
+
+The inherited `model_payload_bytes_read` field counts logical weight reads,
+including anonymous lookup reads. It is not a disk-I/O counter. The new
+preparation fault fields measure process faults around the actual preparation
+call; the CPU replay separately proves zero file-reader calls for resident rows.
