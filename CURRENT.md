@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, packet105b reset repair prepared on CPU:** The new copy restores
+the suffix search after a request reset. Both binaries compile, and repeated
+CPU byte and reset checks pass. The new device microbenchmark proposal plans
+successfully: it stresses suffix winners, ties, nonfinite rows and resets.
+Device execution is pending; the complete smoke and grid preparation continues.
+No GPU, service or live queue changed.
+[Work note](notes/2026-10-18-own-runtime-packet105b.md).
+
 **October 18, packet106 prepared on CPU:** The draft head splits only after
 a verified hit; misses keep the complete prefix on rank1. Both compiler byte
 checks, hit/miss and transfer mocks, all eight allocation checks and all 44

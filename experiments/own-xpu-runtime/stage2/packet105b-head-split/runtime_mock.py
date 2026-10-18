@@ -68,7 +68,7 @@ int main(int argc,char**argv){try{
   with turn(),(S/f'build-{i}.log').open('w') as log:subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=600)
  (S/'entry.o').unlink() # reproducible intermediate, not gate evidence
  runs=[]
- for choice in ('head-split-compute','head-split-bcs'):
+ for choice in ('head-split-compute',):
   dest=S/'scratch';cmd=[str(S/'fixture'),str(P/'selections'/choice/'selection.json'),str(dest)]
   r=subprocess.run(cmd,stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120)
   assert r.returncode==0,r.stderr

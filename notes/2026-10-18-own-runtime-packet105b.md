@@ -20,6 +20,24 @@ production, head split and combined head/draft split in 106b. BCS and draft-only
 are outside this request. Every selected composition requires all 11 startup
 windows, with an individual receipt written immediately after each window.
 
-Implementation and CPU gates are in progress. Device results remain pending.
-The first deliverables will be new microbenchmark and 12-prompt/64-token smoke
-proposals, planned on temporary queue copies. No proposal is a device pass.
+The suffix microbenchmark compiles and its new proposal passes the real queue
+planner on a temporary queue. It runs 4,096 hidden vectors with full-vocabulary
+production Q6 head and argmax kernels. At least 2,000 must have suffix winners;
+256 cases have exact cross-boundary ties, 768 inject NaN/+Inf/-Inf rows, and
+256 batch resets clear the private controls. A negative control must detect
+the old skipped-suffix bug. Both complete logit bytes and finite winner payloads
+must match; nonfinite rows must refuse output. Synthetic weights make these
+stress cases reproducible: this is device operator validation, not a model
+speed or quality claim. Device execution remains pending.
+
+First deliverable: `ops/lane-queue/proposed-p105b-micro-B.txt`, under the
+own-runtime experiment. Only the coordinator may execute it. Its existing
+supervisor retains lane admission, fault review, memory/FD monitoring, graceful
+stop and drain. No live queue was installed.
+
+Both host and device binaries compile for 105b. GNU and Intel each pass two
+fresh full-vocabulary byte checks and the reset regression (21 cases per run,
+six old-code failures). Controller and actual-runtime loader/transfer mocks
+pass. Startup found a frozen fixture copy without execute permission; the new
+packet now links byte-identical executable frozen inputs, leaving both parents
+unchanged. Every-window startup and the 12-prompt smoke proposal are next.
