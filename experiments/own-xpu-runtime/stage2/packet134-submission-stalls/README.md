@@ -118,6 +118,30 @@ checks every speculative/correction half's 564 launches and 24-layer coverage.
 Input pin creation is a one-time operation and refuses to overwrite a pin file.
 The original dirty packet128b `BUDGET.md` is read and pinned, never edited.
 
+**All 16 analysis tests pass**, including wrong clock domains, omitted event
+IDs, overlapping intervals, sample boundaries, duplicated IDs, changed input
+bytes/symlinks, a missing correction receipt, and a falsely upgraded overhead
+gate. The complete report reproduces from the retained raw inputs. CPU peak
+RSS was 73,624 KiB; root had 39.115 GB available at validation. These are
+point-in-time process/storage readings, not reservations.
+
+Run the tests without replacing the retained validation receipt:
+
+```sh
+nice -n 19 taskset -c 8-15,24-31 python3 -B \
+  experiments/own-xpu-runtime/stage2/packet134-submission-stalls/test_analysis.py </dev/null
+nice -n 19 taskset -c 8-15,24-31 python3 -B \
+  experiments/own-xpu-runtime/stage2/packet134-submission-stalls/seal.py --verify </dev/null
+```
+
+[Validation receipt](evidence/validation.json), [test log](evidence/tests.log),
+and [analysis seal](evidence/analysis-seal.json) bind this analysis only. The
+seal is explicitly **not a device admission seal**. `validate.py` generated
+the retained receipt once; future validation can use the non-writing test
+entry above. The packet124c native controller is byte-identical to packet128b's;
+the reviewed `main.cpp`/`rank.hpp` differences add the sampled timing machinery
+and its reset bookkeeping, not a different target enqueue schedule.
+
 No arithmetic, runtime, controller, reset, drain, launch environment, native
 argument or queue code changed. GNU/Intel byte gates, mock hit/miss/rollback,
 reset, full-window argument/queue gates and device seals are therefore **not
@@ -137,4 +161,5 @@ under current memory admission. A separate draft-startup timing should retain
 the pending-command wait, not just publication polling. Neither follow-up
 changes host page-cache settings or bypasses output checks.
 
-[Work note](../../../../notes/2026-10-18-own-runtime-packet134.md).
+[Closeout](CLOSEOUT.md), [negative-result index](DO-NOT-REPEAT.md), and
+[work note](../../../../notes/2026-10-18-own-runtime-packet134.md).

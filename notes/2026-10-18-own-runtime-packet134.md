@@ -23,10 +23,18 @@ optimization is adopted and the record is unchanged. Packet34's old replay
 test was also neutral; prepared argument blocks and pure-spin waits already
 exist in the current source.
 
-Milestone 1: added the CPU-only analyzer, 70 pinned inputs, per-cycle report and
-source explanation. The next closeout step is adversarial clock/continuity
-tests and a seal of the retained analysis. No runtime build or device proposal
-is justified under the brief's conditional branch.
+Milestone 1, committed and pushed as `bcfe38026`: added the CPU-only analyzer,
+70 pinned inputs, per-cycle report and source explanation.
+
+Milestone 2: all 16 adversarial clock/continuity/identity tests pass. The full
+report reproduces; a falsely passed overhead gate, altered source/symlink and
+missing correction receipt are rejected. The retained validation used 73,624
+KiB peak RSS, left 39.115 GB free on root, and created no build. The
+[analysis seal](../experiments/own-xpu-runtime/stage2/packet134-submission-stalls/evidence/analysis-seal.json)
+binds the artifacts without granting device admission. All 182 packet124c
+symlinks are unchanged. The [closeout](../experiments/own-xpu-runtime/stage2/packet134-submission-stalls/CLOSEOUT.md)
+and negative-result index record the decision and concrete reopening condition.
+No runtime build or device proposal is justified under the brief's conditional branch.
 
 `git pull --rebase` refused unrelated dirty work. `git fetch origin` confirmed
 HEAD and origin/main matched at entry (`34e2603b0b2c5879e59867c8e57543cd29c75b49`).
