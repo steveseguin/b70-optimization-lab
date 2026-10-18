@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, packet58x larger-cache CPU admission passes:** A 21.553 GB cache
+fits while keeping the device reserve, all transient allowances and a separate
+driver allowance. Host admission rises to 98.990 GB under the measured policy.
+Independent route replay projects +2.20% from fewer fill copies; no speed has
+been measured. Next is the switchable private copy and CPU launch checks.
+No GPU, service, live queue or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet58x.md).
+
 **October 18, packet58w one-card overlap chain prepared on CPU:** The fresh
 seven-window chain reuses packet58v's binaries and seals tile16 with overlapped
 cache maintenance. All 120 tests, seven real entry paths, 28 wrong-unit/environment
