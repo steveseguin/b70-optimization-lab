@@ -14,7 +14,9 @@ changes an Intel NaN output payload (`check1751`, before adding pre-gate checks)
 No finite output mismatch was observed before those failures.
 
 Evidence: [recursive source/log](evidence/depth-first-rejected/),
-[stack-array source/log and attention failure](evidence/scalar-tree-rejected/).
+[stack-array source/log and attention failure transcript](evidence/scalar-tree-rejected/).
+The third failure’s on-disk log was overwritten before archival; its tool
+transcript and reconstructed variant are explicitly labeled, not raw receipts.
 Each comparison was raw `memcmp`, not a numerical tolerance. Compiler lowering
 can choose different NaN operands despite an identical mathematical tree.
 

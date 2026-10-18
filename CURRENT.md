@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet116 QSA schedule prepared on CPU:** The new schedule
+shares attention score work across more subgroups and selection ranking across
+all lanes. Both compilers pass repeated operator byte checks. Two proposed
+value-tree rewrites changed NaN payloads and were rejected; the candidate keeps
+the original value arithmetic. Complete-layer checks passed before the final
+binding guard was tightened. Final builds and the separate one-load bracket
+checks are waiting for the coordinator's whole-host run to release the shared
+compiler gate. Nothing has been queued or launched by this task.
+[Work note](notes/2026-10-18-own-runtime-packet116.md).
+
 **October 18, packet117 HC gate preparation:** The source shows that each
 HC gate event also runs four serial software sigmoids per mixed output. The
 new candidate places those independent products on existing lanes and keeps

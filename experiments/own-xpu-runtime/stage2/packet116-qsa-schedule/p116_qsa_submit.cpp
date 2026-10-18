@@ -41,6 +41,7 @@ integrated::Launch submit(ownrt::Device&d,const integrated::Spec&s,std::span<con
  for(int j=0;j<19;++j)if(a[j]==a[19])throw std::invalid_argument("p116 scratch aliases binding");
  for(int j:{0,1,2,3,4,15,17,18}){if(select&&(j==2||j==3||j==4))continue;if(a[j]==a[select?2:5])throw std::invalid_argument("p116 output alias");}
  for(int j:{0,1,2,15,17,18})if(select&&uintptr_t(d.arena.row(a[j]).pointer)%4)throw std::invalid_argument("p116 selection binding alignment");
+ if(select)for(int j:{0,1,2,17,18})if(a[15]==a[j])throw std::invalid_argument("p116 selection error aliases binding");
  integrated::Launch out{};auto issue=[&]<bool Select,int Stage>(){Kernel<Select,Stage> k;k.s=shape;std::array<ownrt::Event,1>after{out.last};auto e=d.compute(k,a,out.last?std::span<const ownrt::Event>(after):deps);if(!out.first)out.first=e;out.last=e;++out.passes;};
  if(select){issue.template operator()<true,0>();issue.template operator()<true,1>();}else{issue.template operator()<false,0>();issue.template operator()<false,1>();issue.template operator()<false,2>();}return out;
 }

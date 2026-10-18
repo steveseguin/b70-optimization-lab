@@ -1,0 +1,12 @@
+Transcribed from the CPU gate tool's captured stderr on 2026-10-18.
+The on-disk Intel-1.log was overwritten by the subsequent successful gate
+before its attempted archive; that success is post-fallback-Intel-1.log.
+This is a tool-transcript record, not the original raw log file.
+
+RuntimeError: Intel 1 check=1751 bytes=12288 offset=512 expected=192 actual=195
+raw mismatch
+
+This occurred with the original vector adjacent helper but independently
+scheduled attention, before the exceptional-input fallback and pre-gate check
+were added. vector-helper-no-fallback.hpp reconstructs that variant from the
+final source by removing those additions; it is labeled reconstructed.
