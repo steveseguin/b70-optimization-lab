@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet123 partial-layer move held at its timing check:** The
+saved bundle7 traces appear to leave 0.483 ms on rank0, but that includes
+head work missing from the command trace. The logged copies alone use at
+least 0.043 ms; total head time is unknown. We cannot establish the required
+0.3 ms spare time, or claim it is below that threshold. The next prerequisite
+is separately timed head work in an authorized device window. No candidate,
+build or queue proposal was made. CPU accounting and original-byte inputs
+are retained. No GPU, service, frozen tree or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet123.md).
+
 **October 18, packet122 draft CPU preparation complete:** The full draft
 probe covers 47 classes and both context lengths. The separate HC change
 passes both compilers' byte checks twice; both views and ranks pass startup,

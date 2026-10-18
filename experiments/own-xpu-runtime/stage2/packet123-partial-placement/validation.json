@@ -1,0 +1,20 @@
+{
+  "schema": "packet123.cpu-review.v1",
+  "device_executed": false,
+  "placement_preparation_admitted": false,
+  "replay_command": "nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/stage2/packet123-partial-placement/extract.py --check </dev/null",
+  "deterministic_replay_passed": true,
+  "historical_method_snapshots_byte_identical": true,
+  "independent_read_only_review": {
+    "method": "Sweep-line recomputation of clipped command-envelope unions from archived receipts",
+    "intervals": 2376,
+    "rank_unions": 4752,
+    "maximum_difference_ms": 0.0,
+    "candidate_requests": 12,
+    "candidate_intervals": 1188,
+    "pinned_original_members": 43,
+    "all_pins_and_current_original_bytes_match": true,
+    "minimum_copy_bound_valid": true,
+    "usable_slack_is_unknown": true
+  }
+}
