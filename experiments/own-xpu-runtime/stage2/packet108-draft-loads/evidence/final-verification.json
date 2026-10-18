@@ -1,0 +1,63 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "checks": [
+    {
+      "name": "protocol-tests",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet108-draft-loads",
+        "-p",
+        "test_micro_gate.py"
+      ],
+      "passed": true,
+      "log_sha256": "08db23b69440ef3ef6abfc8c2188f104e93906dda0ac7dcafbf344bda51c47e2"
+    },
+    {
+      "name": "source-audit",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet108-draft-loads/source_audit.py"
+      ],
+      "passed": true,
+      "log_sha256": "65b9545f2b4ae7e546db22b3532a2b3a245a9cb001831b96946a294c469a9105"
+    },
+    {
+      "name": "direct-plan",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet108-draft-loads/run_micro.py",
+        "--plan"
+      ],
+      "passed": true,
+      "log_sha256": "456881e895f799fb90a42b4b4d1f2e021cd19615e00821edba5e531ed167b50e"
+    }
+  ],
+  "protocol_test_count": 13,
+  "build_logical_bytes": 491486,
+  "build_peak_rss_kib": 386860,
+  "pending": [
+    "coordinator device micro",
+    "GNU/Intel byte execution after micro pass",
+    "all chain-window startup/host-reference paths",
+    "full-size VRAM admission",
+    "qualified engine seals",
+    "B grid",
+    "A confirmation"
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet108-draft-loads/verify_preparation.py": "88a7e0dc7683aff7e7e305ea895562ac0e0286f508ecac397782a3cf024eb9f5",
+    "experiments/own-xpu-runtime/stage2/packet108-draft-loads/evidence/source-audit.json": "8e1b11ddc1c6cdb8092f12dfec56d254d0012c70fdf9d92987746a1f4eaaaba4",
+    "experiments/own-xpu-runtime/stage2/packet108-draft-loads/evidence/microbench-build.json": "01f51efc0ac43f63f164d477d75127c5938b98be27018a1f16aa69ad2aece76b",
+    "experiments/own-xpu-runtime/stage2/packet108-draft-loads/evidence/queue-plan.json": "96eacabb445eb439a2c9dbf729605006f7efea332f680df4352da42b43c0357f",
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p108-micro-B.txt": "8507ecce399c3d4e2671665b24a6982b547d72f2146dad8fecb34a300090350e"
+  }
+}

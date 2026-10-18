@@ -12,3 +12,6 @@
 - All FP operations, output/status bytes and reductions must stay exact.
   No approximate math, new early exit, prefix change or KV compression.
 - The CPU-only preparation cannot run its own device job or edit live queues.
+
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md). No measured verdict
+exists for the new load-only arm yet.

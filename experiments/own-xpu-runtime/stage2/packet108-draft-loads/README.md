@@ -63,3 +63,5 @@ are ignored, with the complete source closure/hash receipt retained.
 
 See [budget](../packet108-attribution/BUDGET.md) and
 [work note](../../../../notes/2026-10-18-own-runtime-packet108.md).
+The [CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md) records the pending
+device gate and rebuild path.

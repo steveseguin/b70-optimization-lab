@@ -39,3 +39,23 @@ and prior negative boundaries recorded explicitly.
 Full GNU/Intel byte checks, every-window engine startup/host-reference paths,
 VRAM checks, seals and B/A model grids remain conditional on a measured micro
 win. No speed, device-exactness or qualified integration result is claimed.
+
+## CPU handoff verified
+
+Milestone `5c2624f7d` shipped the budget and compiled proposal and was pushed
+immediately. A final static audit confirms the baseline is the copied packet103
+mtp36 body, and that only the candidate's INT8 raw-load function differs; launch
+geometry, reduction, output stores and status handling are unchanged. This is
+source verification, not a numerical byte gate.
+
+The direct plan, private queue plan and 13 protocol tests pass. The budget
+extractor reproduces all twelve runs and 559 input pins byte-for-byte. Build
+size is **491,486 bytes**, with **386,860 KiB** peak compiler child RSS. The
+46,080-byte real-route payload is explicitly retained despite the repository's
+generic binary ignore rule. The [final receipt](../experiments/own-xpu-runtime/stage2/packet108-draft-loads/evidence/final-verification.json)
+and [CPU closeout](../experiments/own-xpu-runtime/stage2/packet108-draft-loads/CPU-PREPARATION-CLOSEOUT.md)
+record all remaining gates and the rebuild path.
+
+The next authorized device action belongs to the coordinator: the new B micro
+proposal. No device was used, no process was killed, and no service, live queue,
+frozen packet, screen, or host setting was changed by packet108 preparation.
