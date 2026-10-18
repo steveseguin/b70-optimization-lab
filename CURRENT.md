@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 18, packet124c restores the oracle link and gates the queue:**
+Packet124b stopped cleanly before KD because its oracle was a copied directory.
+The new copy restores the oracle authority link and eight identical file links.
+Native binaries and bundle7 selection are unchanged. All eleven window paths
+and the whole queue rehearsal pass on CPU, including six real oracle checks;
+the old tree reproduces the reported refusal. All 65 tests and 11 subtests pass.
+Readiness is true from packet118's original composites and the native identity
+chain. The fresh packet124c chain is unlaunched; the coordinator verifies
+readiness and live admission before launch. No GPU, service, live queue or
+host setting changed in this preparation.
+[Work note and handoff](notes/2026-10-18-own-runtime-packet124.md#packet124c--restore-oracle-authority-and-gate-the-whole-queue-october-18).
+
 **October 18, packet58r one-card one-load bracket implemented on CPU:**
 The new tile16 copy can switch route and recurrence without loading the model
 again. It checks every token against packet49 through A/B/A/B/A. Both compilers
@@ -37,8 +49,8 @@ real Python window paths pass on CPU, covering 31 intercepted launch arguments;
 the original packet124 code fails the retained K2 replay and the fix passes.
 All 51 policy/submission tests and four subtests pass, along with startup,
 memory, drain and launch-limit checks. Readiness uses the original packet118
-composites and pinned packet124 identity. The fresh packet124b chain is prepared
-but has not been launched. Only evidence reading remains for the coordinator.
+composites and pinned packet124 identity. That packet124b chain later stopped cleanly before KD at the oracle link check.
+Packet124c supersedes this preparation; its handoff is above.
 [Work note](notes/2026-10-18-own-runtime-packet124.md#packet124b--k2-selection-repair-in-a-new-copy-october-18).
 
 **October 18, packet126 early-draft analysis held at its timing gate:** Moving

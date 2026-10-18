@@ -213,3 +213,104 @@ Final CPU audit and independent `verify_ready.py` both pass with `ready=true`.
 Build size is **235,503,422 bytes**, below 250 MB; root has **34,272,280,576 bytes**
 free at final audit. All preparation and verification completed within the
 45-minute box. Native code whitespace and historical bytes were preserved.
+
+## Packet124c — restore oracle authority and gate the whole queue (October 18)
+
+The reported packet124b chain passed K0, K1a, K1b, K2 and W0p, then stopped
+cleanly before KD. Its queue invoked `shared_oracle.py --require-complete` in
+a fresh process. Unlike the in-process orchestration adapter, that process
+saw the real bundle's copied `oracle` directory and correctly refused it:
+`packet49c must use the unchanged packet49 oracle authority`.
+The K2 fix was not the cause. The owner's failure report records no new GPU
+fault, drained teardown and no markers; this CPU task performs no recovery.
+
+Pull refused unrelated dirty files. Fetch confirmed entry HEAD and origin/main
+at `6bf515a44f200e14d24ede24a398d2c3aea024bc` on `main`. Other workers continued
+advancing main; their work and all existing packet/ops trees were preserved.
+This follow-up writes only the new packet124c bundle/orchestration, this note
+and the cross-repository state entry. No chain, GPU, service, live queue,
+sudo, setting, reboot or external submission was launched or changed.
+
+### Copy and authority repair
+
+The new copy preserves symlinks and excludes old chain output. Comparing every
+link in packet103 and packet97 found nine dereferences: `oracle`,
+`build/fusion-rope.hpp`, and seven GNU CPU fixture binaries. All nine are
+restored to their exact original link targets. The eight regular files had
+identical bytes. Packet97's two absent startup97e scratch links were not
+copied directories/files; the audit records them as obsolete absent scratch.
+Existing links remain preserved. `prepare_chain.py` no longer materializes
+those seven fixture links. Native source, arithmetic and selection are unchanged.
+
+The screen sealer correctly refused external-resolving source paths after the
+repair. It remains unchanged. New `seal_view.py` makes eight local byte snapshots
+for its source map (seven CPU fixtures and the suite manifest), while preserving
+the actual links. The chain adapter checks original and snapshot hashes at
+admission and uses the actual bundle root for `shared_oracle.P`; it no longer
+redirects that check to the orchestration-local oracle alias. This preserves
+both the sealer's path restriction and packet49's authority rule.
+
+The identity audit confirms **207 native source/configuration files** equal
+packet124b. Both runtime binaries retain their original hashes, also matching
+packet124 and packet118. K2 projection, strict selection validator, queue
+runner, fixture support, drain gate and exec-limit helper are byte-identical;
+the existing error-teardown paths remain inherited. The pinned bundle7 target,
+BF16 KV, unchanged verifier, full target head and non-benchmark-selected
+80,128-row draft prefix are unchanged.
+
+### Queue coverage and CPU results
+
+The extended argument gate keeps all eleven real Python window paths, **31
+intercepted native arguments**, and the complete retained K2 replay. The old
+packet124 K2 implementation still fails and the corrected one passes.
+
+It additionally runs the real `queue_runner.run` loop against the real bundle
+with temporary scratch output. It executes **twelve input preflights**, **six
+real pre-LATE oracle subprocesses**, actual storage and retention checks,
+real prefix verification, fresh-chain/resume prerequisites and actual
+`validate_success`/admission validation. It checks **55 malformed receipt or
+failed-child cases**. Scheduler context, journal, elapsed gaps and generated
+window receipts are explicitly synthetic; native launch is intercepted and
+all synthetic evidence is deleted with scratch. Actual storage is checked
+before redirecting queue writes. No synthetic device qualification is retained.
+
+The exact `oracle_ready()` subprocess **fails on packet124b's real tree** with
+the reported authority error and **passes on packet124c**, without installing
+an adapter for either comparison. Symlink preservation and copied-directory
+refusal tests are mandatory. The readiness verifier requires this source-bound
+extended gate; an old window-only result cannot satisfy it.
+
+All **65 policy, submission, argument and resume tests plus 11 subtests pass**.
+The complete portable submission replay passes; it keeps the inherited
+128-token scope and `realistic_final_gate.passed=false`, with no strict512
+claim. Four fresh GNU/Intel CPU repeats match packet118's saved bytes, both
+real-shape memory checks pass, all eleven native startup windows pass, and
+all six actual rank exec interceptions preserve inherited limits. Both recursive
+drain scans pass. CPU startup peaks at **1,249,564 KiB child RSS**.
+
+### Handoff
+
+`ready.json` is **true** and independent `verify_ready.py` succeeds. Decision:
+`73cbd92bb2de4603`. Readiness uses packet118's original exact smoke and matched
+composites, with ratios **1.0147922893 on A** and **1.0140366894 on B** against
+the stronger control, plus the native identity chain. These remain the original
+bundle7 measurements; no gain is credited to this repair and parent-chain
+success is not required.
+
+The fresh output is `stage2/packet124c-record-bundle/build/device-cards01-a`,
+absent and unlaunched. The command is prepared in `ready.json`; the coordinator
+still owns launch and normal live admission. Later refresh needs only
+`orchestrate.py --evidence-only` and `verify_ready.py`. No manual lane pause,
+automatic retry or relaxed gate was introduced.
+
+Final build size: **236,694,499 bytes**, below 250 MB. Root retains
+**32,806,629,376 bytes** at final audit, above the 25 GB floor. CPU verification
+completed at about 12:54 UTC, within the 45-minute box. New runtime binaries
+were not built; only CPU fixtures compiled. Large inherited source/provenance
+files retain their bytes and restoration instructions in `RETENTION.md`.
+
+[Readiness](../experiments/own-xpu-runtime/ops/packet124c-orchestration/ready.json),
+[extended gate](../experiments/own-xpu-runtime/ops/packet124c-orchestration/evidence/argument-gate.json),
+[symlink audit](../experiments/own-xpu-runtime/ops/packet124c-orchestration/inputs/symlink-audit.json),
+[final CPU audit](../experiments/own-xpu-runtime/ops/packet124c-orchestration/cpu-final.json),
+[closeout](../experiments/own-xpu-runtime/stage2/packet124c-record-bundle/CPU-PREPARATION-CLOSEOUT.md).
