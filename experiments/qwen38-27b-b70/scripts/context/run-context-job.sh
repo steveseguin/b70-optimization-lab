@@ -47,6 +47,8 @@
 #   SUMMARY_TRIGGER   SummaryAgent trigger fraction of the enforced limit [0.75]
 #   EXTRA_KWARGS      extra "k=v k=v" agent kwargs
 #   SKIP_ENDPOINT_CHECK=1 to skip the /v1/models probe
+#   LEAN_CLIENT=1     use lean_litellm/ (a ~20 MB stand-in for the ~190 MB litellm import; byte-identical requests on the
+#                     checked path, lean-client-check.sh) [0]
 set -euo pipefail
 
 AGENT_KIND=${1:?usage: run-context-job.sh <clm|plain|summary|improved> <out_dir> [harbor args...]}
@@ -98,6 +100,7 @@ export TIKTOKEN_CACHE_DIR=${TIKTOKEN_CACHE_DIR:-/mnt/fast-ai/cache/tiktoken}
 export LITELLM_LOCAL_MODEL_COST_MAP=True
 export OPENAI_API_KEY=${OPENAI_API_KEY:-EMPTY}
 export PYTHONPATH="$HERE${PYTHONPATH:+:$PYTHONPATH}"
+[[ ${LEAN_CLIENT:-0} == 1 ]] && export PYTHONPATH="$HERE/lean_litellm:$PYTHONPATH"
 
 if [[ "${SKIP_ENDPOINT_CHECK:-0}" != 1 ]]; then
   "$PY" - "$API_BASE" "$MODEL_NAME" "$CONTEXT_BUDGET" "$MAX_TOKENS" <<'PY'

@@ -295,7 +295,7 @@ run_line() {  # arm kind seed cap
 }
 PY=/mnt/fast-ai/venvs/clm/bin/python
 
-say "campaign 37 runner ($RUN, per-arm servers $PER_ARM, trajectory export $TRAJ, keeper $KV, depth $MTP, piece $PIECE, one launch $ONE_LAUNCH, tail $TAIL) start; queue $Q ($(grep -cvE '^\s*(#|$)' "$Q" 2>/dev/null || echo 0) lines); MemAvailable $(avail) MiB"
+say "campaign 37 runner ($RUN, per-arm servers $PER_ARM, trajectory export $TRAJ, lean client ${LEAN_CLIENT:-0}, keeper $KV, depth $MTP, piece $PIECE, one launch $ONE_LAUNCH, tail $TAIL) start; queue $Q ($(grep -cvE '^\s*(#|$)' "$Q" 2>/dev/null || echo 0) lines); MemAvailable $(avail) MiB"
 [[ -s $Q ]] || { say "ABORT: the queue file is missing or empty"; exit 2; }
 [[ -e $SRVB || -e $SRVB-a1 ]] && { say "ABORT: $SRVB already exists"; exit 2; }
 for p in $PORT $PPORT; do ss -tln | grep -q ":$p " && { say "ABORT: port $p is in use"; exit 2; }; done

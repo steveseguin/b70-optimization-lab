@@ -16,7 +16,7 @@ FAKE_PLAN=improved-fold | improved-probe (+ FAKE_CORRUPT=1): scripted clm_improv
 tasks (fold items into /tmp/.live_ctx/STATE.txt; see plan_improved). FAKE_THINKCAP=1: every tool
 request without continue_final_message gets a "length" reply with thinking only, so the
 improved agent's think-cap continuation (continue_final_message) is exercised.
-FAKE_REASONING=1: every tool-call reply carries reasoning_content (to check that the harness strips
+FAKE_REASONING=1: every tool-call reply carries reasoning_content (alt: every other one) (to check that the harness strips
 earlier thinking; the request log has asst_with_reasoning per request).
 FAKE_PLAN=improved-read (+ FAKE_REFERENCE=<task>/tests/reference.json): read-mode agent for sparse
 prose; takes the true state after each batch from the reference; first writes an incomplete
@@ -36,8 +36,15 @@ FAKE_PLAN=improved-ctxfold: writes a buggy /tmp/.live_ctx/FOLD.py first (ctxfold
 then a correct one, and folds every item with `ctxfold`. Without tools (e.g. a summary request) it
 returns fixed text. /v1/completions returns fixed text. Usage numbers are rough
 (chars/4) so the harness's tokenizer calibration has something to read.
+FAKE_VLLM_SHAPE=1: chat replies in the served vLLM 0.29 shape (every message/choice/response field, nulls
+included, thinking as `reasoning`, usage with prompt_tokens_details), built from ChatCompletionResponse.model_dump()
+in the R314 image (2026-10-18), so a client sees what the real server sends. FAKE_DETERMINISTIC=1: ids, tool-call
+ids and `created` come from a request counter, so two runs of one job get byte-identical replies.
+FAKE_BODY_LOG=<path>: append every request body, exactly as received, one JSON line per request ({"path", "body"}).
+Together they let two clients be compared request by request (lean-client-check.sh). A POST to
+/statusNNN/... answers with HTTP status NNN in vLLM's error shape (400: a context-length message).
 """
-import json, os, re, sys, time
+import json, os, re, sys, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 MODEL = os.environ.get("FAKE_MODEL", "qwen38-27b-fp8")
@@ -304,11 +311,53 @@ def plan(msgs):
     return "next"
 
 
+_COUNT = [0]
+_COUNT_LOCK = threading.Lock()
+
+
+def _ident(kind: str) -> str:
+    if os.environ.get("FAKE_DETERMINISTIC") == "1":
+        with _COUNT_LOCK:
+            _COUNT[0] += 1
+            return "%s-%016x" % (kind, _COUNT[0])
+    return "%s-%d" % (kind, time.time_ns())
+
+
+def vllm_shape(obj: dict) -> dict:
+    """The reply as vLLM 0.29's ChatCompletionResponse.model_dump() writes it (field order included)."""
+    choices = []
+    for ch in obj.get("choices") or []:
+        m = dict(ch.get("message") or {})
+        msg = {"role": m.get("role", "assistant"), "content": m.get("content"), "refusal": None, "annotations": None,
+               "audio": None, "function_call": None}
+        if m.get("tool_calls"):
+            msg["tool_calls"] = [{"id": tc.get("id"), "type": "function",
+                                  "function": {"name": tc["function"]["name"], "arguments": tc["function"]["arguments"]}}
+                                 for tc in m["tool_calls"]]
+        msg["reasoning"] = m.get("reasoning") or m.get("reasoning_content")
+        choices.append({"index": ch.get("index", 0), "message": msg, "logprobs": None,
+                        "finish_reason": ch.get("finish_reason"), "stop_reason": None, "token_ids": None,
+                        "routed_experts": None})
+    u = obj.get("usage") or {}
+    pt = int(u.get("prompt_tokens") or 0)
+    usage = {"prompt_tokens": pt, "total_tokens": pt + int(u.get("completion_tokens") or 0),
+             "completion_tokens": int(u.get("completion_tokens") or 0),
+             "prompt_tokens_details": {"cached_tokens": (pt // 64) * 32, "created_cache_tokens": None,
+                                       "multimodal_tokens": None},
+             "completion_tokens_details": None}
+    return {"id": obj.get("id"), "object": "chat.completion", "created": obj.get("created"), "model": obj.get("model"),
+            "choices": choices, "service_tier": None, "system_fingerprint": None, "usage": usage,
+            "prompt_logprobs": None, "prompt_token_ids": None, "prompt_text": None, "kv_transfer_params": None,
+            "ec_transfer_params": None, "metrics": None}
+
+
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a):
         sys.stderr.write("fake: " + (a[0] % a[1:]) + "\n")
 
     def _send(self, obj, code=200):
+        if os.environ.get("FAKE_VLLM_SHAPE") == "1" and obj.get("object") == "chat.completion":
+            obj = vllm_shape(obj)
         b = json.dumps(obj).encode()
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
@@ -320,7 +369,18 @@ class H(BaseHTTPRequestHandler):
         self._send({"object": "list", "data": [{"id": MODEL, "object": "model", "max_model_len": int(os.environ.get("FAKE_MAX_MODEL_LEN", "262144"))}]})
 
     def do_POST(self):
-        req = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
+        raw = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+        if os.environ.get("FAKE_BODY_LOG"):
+            with _COUNT_LOCK, open(os.environ["FAKE_BODY_LOG"], "a") as f:
+                f.write(json.dumps({"path": self.path, "body": raw.decode("utf-8", "replace")}) + "\n")
+        req = json.loads(raw or b"{}")
+        st = re.match(r"/status(\d{3})/", self.path)
+        if st:   # error replies in vLLM's shape, for client error-handling checks (lean-client-check.sh)
+            code = int(st.group(1))
+            text = ("This model's maximum context length is 262144 tokens. However, your request has 300000 input "
+                    "tokens. Please reduce the length of the input messages." if code == 400 else "stub error %d" % code)
+            return self._send({"error": {"message": text, "type": "BadRequestError" if code == 400 else "Error",
+                                         "param": None, "code": code}}, code)
         msgs = req.get("messages") or []
         lt = next((str(m.get("content") or "") for m in reversed(msgs) if m.get("role") == "tool"), "")
         sys.stderr.write("fake-req: " + json.dumps({k: v for k, v in req.items()
@@ -332,7 +392,8 @@ class H(BaseHTTPRequestHandler):
                                                     and (m.get("reasoning_content") or m.get("reasoning")))}) + "\n")
         pt = sum(len(json.dumps(m)) for m in msgs) // 4 or 1
         usage = {"prompt_tokens": pt, "completion_tokens": 12, "total_tokens": pt + 12}
-        base = {"id": "fake-%d" % time.time_ns(), "created": int(time.time()), "model": MODEL, "usage": usage}
+        det = os.environ.get("FAKE_DETERMINISTIC") == "1"
+        base = {"id": _ident("chatcmpl"), "created": 1792300000 if det else int(time.time()), "model": MODEL, "usage": usage}
         if self.path.endswith("/completions") and "chat" not in self.path:
             return self._send({**base, "object": "text_completion",
                                "choices": [{"index": 0, "text": "OK", "finish_reason": "stop"}]})
@@ -362,10 +423,11 @@ class H(BaseHTTPRequestHandler):
         if req.get("tools"):
             cmd = plan(msgs)
             msg = {"role": "assistant", "content": "THOUGHT: scripted stub step.",
-                   "tool_calls": [{"id": "call_%d" % time.time_ns(), "type": "function",
+                   "tool_calls": [{"id": _ident("chatcmpl-tool"), "type": "function",
                                    "function": {"name": "bash", "arguments": json.dumps({"command": cmd})}}]}
             fr = "tool_calls"
-            if os.environ.get("FAKE_REASONING") == "1":   # replies carry thinking the harness must strip later
+            if os.environ.get("FAKE_REASONING") == "1" or (os.environ.get("FAKE_REASONING") == "alt" and len(msgs) % 4 < 2):
+                # replies carry thinking the harness must strip later (alt: every other reply, so both shapes occur)
                 msg["reasoning_content"] = "stub thinking for call %d" % len(msgs)
         else:
             # a keeper notes request (clm_keeper / tools/ctxkeeper) is answered in the layout it asks for: a full

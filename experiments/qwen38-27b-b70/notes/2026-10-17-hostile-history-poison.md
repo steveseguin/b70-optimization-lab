@@ -621,3 +621,39 @@ token-for-token the campaign 32 (no lookups) and campaign 34 runs (prompt 1,932,
 trigger costs nothing on a clean stream. With campaign 35 this closes the 1.2.0.dev2 gate at 240K: quiet audits 12/12
 over two seeds, loud 12/12, clean rules unchanged, and the 1M hostile stream 217/218 with 8/8 audits. The operator
 session stayed silent beside each server; room never went under 1.68 GiB.
+
+## Campaign 37 (02:15-02:46 EDT): the memory guard stops the 2M run at 28 minutes
+
+`K32L hostile2m 0 14400` ran 28 min 3 s (515 client calls, 48 cuts, 1,010 items archived, 90 recalls) before the guard
+stopped the server at 02:45:32: free host memory fell 1.805 -> 1.556 GiB in one second. Room had sat at 1.64-1.76 GiB
+(2-minute minima) the whole run, about 0.15 GiB over the 1.6 GiB floor. At that second the operator session woke for
+a watch's 30-minute expiry (its process grew 597 -> 677 MB) and the desktop file indexer started `tracker-extract`
+(29 MB). Mid-step kill, so the copy engines faulted on both cards; probe 1 hung, both GTs reset (02:49:02-03), probe 2
+passed. Evidence `fault-20261018-0246/`, latch `server/FAULT-20261018-c37.json`. No score.
+
+**The room lever: the client's model library.** The Harbor client process is about 300 MB; `import litellm` alone is
+190 MB of it (httpx is 29 MB). The clients use five litellm names on one path (`openai/<model>` at an api_base), so
+`scripts/context/lean_litellm/` is a standard-library stand-in for exactly that path, opt-in with `LEAN_CLIENT=1` in
+`run-context-job.sh`. It reproduces litellm 1.104 byte for byte: request body field order and compact JSON, replayed
+messages with their top-level nulls dropped, the reply read the way the OpenAI SDK then litellm read it
+(`provider_specific_fields` built by the same set difference, so its order follows PYTHONHASHSEED exactly as litellm's
+does; seed 1 puts `reasoning` first, seeds 2-4 `refusal`), the same exception names. `scripts/context/lean-client-check.sh`
+(CPU, recording fake server in the served vLLM 0.29 reply shape, built from the image's ChatCompletionResponse):
+three hash seeds x 14 probe requests byte-identical with identical rebuilt messages, usage fields and errors; a plain
+Harbor job on a small sparse-memory task, 26 requests byte-identical, trajectory and grader output identical. Client
+peak memory 291 -> 129 MiB (-162 MiB). Also from campaign 37: no 30-minute watches beside a long arm; one waiter that
+wakes the session only on the arm's end or a fault.
+
+## Campaign 38, registered 2026-10-18 03:05:44 EDT (before any run)
+
+Runner `scripts/longrun-campaign37.sh` with `LEAN_CLIENT=1`, keeper 1.2.0.dev2, per-arm servers, device marks on,
+`IDLE_MAX=900`, queue `QUEUE38.txt`.
+
+1. `K32L rules 0 2400`, the real-server check of the lean client. This arm has given the same totals in campaigns 32,
+   34 and 36b: prompt 1,932,094, cached 1,564,160, generated 30,313, 39/39, 17 cuts, asked again 3.
+   **Prediction:** the same five numbers and 39/39, and host room at least 0.12 GiB higher than campaign 36b's arm
+   (min 1.83 GiB). **Decision:** identical totals -> the lean client is lossless on the real server, and the 2M line
+   below is added to the queue (between arms, no server up). Any difference -> stop; compare the keeper's call logs
+   before anything else runs.
+2. `K32L hostile2m 0 14400`, the campaign 37 registration unchanged (every forgery target kept, at least 15/16
+   audits, at least 97 % of the other answers, about 95-110 minutes).
