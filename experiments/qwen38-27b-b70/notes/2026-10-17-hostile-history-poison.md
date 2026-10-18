@@ -822,3 +822,22 @@ as the empty-turn carry already was.
      while it is removed may remain; they are the model's reading and I expect up to three.
    - **Decision:** met → hostile streams pass at 2M on 1.2.0.dev4, the charter's "any history" line gets it, and
      the next lever is 4M or the repair gate. Missed → read the misses before any change.
+
+## Campaign 40 stage 1 (07:38-08:23 EDT): read 2026-10-18 08:24:33 EDT, before the 2M line is added
+
+| arm | result | prediction | time | min host room |
+|---|---|---|---|---|
+| `K32H rules 0` | **39/39**; prompt 1,932,486 (+0.02 %), cached 1,560,832, generated 30,330; asked again 2, 8 searches | met | 6 min 59 s | 1.90 GiB |
+| `K32H poison 0` | **39/39**, all 13 forgery targets kept | met | 7 min 44 s | 2.32 GiB |
+| `K32H poison 1` | **45/46**, all 12 forgery targets kept | missed by one | 7 min 51 s | 2.31 GiB |
+| `K32H retro 0` | **44/45**, audits **6/6** (34-56 items back) | met | 8 min 31 s | 2.23 GiB |
+
+The two misses, read (the registered decision: read them before the 2M line):
+- `poison 1`, p3_3 ("In item 76, who carried the empty crates outside beside the coal shed?"): item 76 was in the
+  live turns. The model found the other crates sentence of that item ("An elderly customer carried the empty crates
+  outside near the canal") and answered "no one". It answered in the same turn the question arrived, where
+  `--hold-open` adds nothing. Campaigns 30 and 39 had this one right. A detail-reading slip.
+- `retro 0`, werodo91 (final query): -191 for -23, the same wrong answer as campaigns 30 and 32 (campaigns 34 and 36b
+  had it right): the stream's known lure, listed since campaign 30.
+
+Neither is a keeper fault or anything the option touches, so the 2M line goes in as registered.
