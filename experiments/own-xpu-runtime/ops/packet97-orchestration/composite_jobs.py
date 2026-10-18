@@ -91,7 +91,8 @@ def validate(config):
         check_winner(evidence)
         assert evidence['ratios'] == config['source_ratios'][source]
         assert all(row['boot_id'] == boot for rows in evidence['lanes'].values() for row in rows), 'stale source boot'
-    check_map(ROOT, config['evidence_pins'])
+    from historical_pins import preserved_pins
+    check_map(ROOT, preserved_pins(config['evidence_pins']))
     # Verify the sealed selection dependencies without changing any seal.
     from common import sealed
     from types import SimpleNamespace
@@ -101,7 +102,11 @@ def validate(config):
                binary=None, dispatch=None, profile='tp2', timing='token', placement='1'))
 
 
-def generate(config, leave_one_out=False):
+def generate(config, leave_one_out=False, wrapper='v4'):
+    if wrapper == 'v5':
+        from v5_jobs import generate_composite
+        return generate_composite(config, leave_one_out)
+    assert wrapper == 'v4', 'unknown wrapper'
     validate(config)
     decision = O / 'decisions' / (identity(config) + '.json')
     decision.parent.mkdir(exist_ok=True)
@@ -156,7 +161,7 @@ def prepare_proposals(config, leave_one_out=False):
         assert json.loads(decision.read_text()) == config, 'started screen decision differs'
         return dict(already_started=True, decision=str(decision), decision_sha256=sha(decision),
                     live_queue_modified=False, device_executed=False)
-    return generate(config, leave_one_out)
+    return generate(config, leave_one_out, wrapper='v5')
 
 
 def read_brackets(config, variant='composite'):
@@ -176,8 +181,9 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--decision', type=Path, required=True)
     ap.add_argument('--leave-one-out', action='store_true')
+    ap.add_argument('--wrapper', choices=('v5', 'v4'), default='v5')
     args = ap.parse_args()
-    print(json.dumps(generate(json.loads(args.decision.read_text()), args.leave_one_out), indent=2))
+    print(json.dumps(generate(json.loads(args.decision.read_text()), args.leave_one_out, args.wrapper), indent=2))
 
 
 if __name__ == '__main__':

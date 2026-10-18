@@ -5,6 +5,9 @@ from orchestrate import O,P,ROOT,sha,command,select,apply_pins,composition,match
 
 def verify():
  row=json.loads((O/'ready.json').read_text());assert row['schema']=='packet97.ready.v1'
+ if row.get('evidence_rule')=='identical-selection-v1':
+  from decision_readiness import verify as verify_decision
+  return verify_decision(row)
  assert row['ready'] is True and row['preparation_passed'] is True and row['device_executed'] is False
  assert row['chain_command']==command() and row['boot_id']==Path('/proc/sys/kernel/random/boot_id').read_text().strip()
  assert set(row['checks'])=={'cpu-dry-run','seal','inputs','storage','queue-plan'}

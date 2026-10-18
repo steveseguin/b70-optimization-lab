@@ -2,25 +2,25 @@
   "passed": true,
   "device_executed": false,
   "selection": {
-    "name": "production--hc-wide--wide64--ordered--production--production--rec-parallel--production--production--production",
+    "name": "production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production",
     "placement": "1",
     "draft": "draft-hc",
     "miss": "batch",
     "draft_rank": 1,
     "target_split": 0,
     "layer_boundary": 24,
-    "experts": "wide64",
+    "experts": "wide64+halfcache",
     "dense": "production",
     "hc": "hc-wide",
     "host": "ordered",
-    "route": "production",
+    "route": "fast",
     "norm": "production",
-    "recurrence": "rec-parallel",
+    "recurrence": "rec-both-plus",
     "draft_head": "production",
     "head": "production",
     "hc_norm": "production",
-    "selection_sha256": "2cb03124193cfe9e3fd3ea93464a3e6ed75ce1b9c0170a7806ccb390db0012cb",
-    "screen_seal_sha256": "2babaece60b6909be0d755f00ea1b84e9b5dee54cd28bbdb28c9ce64810b386f"
+    "selection_sha256": "6c58206cad748a8385b41389d5b9c05ff1891340b4bd0b12ce3611b5cddca739",
+    "screen_seal_sha256": "254e281548ca9439856b47e5064da13e49310fed89be45b9ba93be041e57bd77"
   },
   "checks": [
     {
@@ -46,9 +46,9 @@
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/test_packet97.py",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/test_lane_admission.py",
         "--basetemp",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/build/tmp/selected-test-_amou265/pytest"
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/build/tmp/selected-test-vqhfdkg8/pytest"
       ],
-      "sha256": "f6d80f5dd8924a6f8f48b8d9dc2e36169342fe067eddb0d48f4f394024edc001"
+      "sha256": "3e87c6d749ef9dc68190997c013e452e25038aaaac0f334c95501174be8d2a13"
     },
     {
       "name": "windows",
@@ -57,7 +57,7 @@
         "-B",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/plan_gate.py"
       ],
-      "sha256": "3ae137994da429a43b2442a2d019340856dc687eaeb2729fc6254266fb4e61dc"
+      "sha256": "daa78900341239e6037ec1cbcd7cd966dae4a2a2588c057e5efd91ea64800482"
     },
     {
       "name": "screen-A",
@@ -72,14 +72,14 @@
         "--placement",
         "1",
         "--lineage",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/selections/production--hc-wide--wide64--ordered--production--production--rec-parallel--production--production--production--placement-1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--placement-1",
         "--seal",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/selections/production--hc-wide--wide64--ordered--production--production--rec-parallel--production--production--production--placement-1/screen-seal.json",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--placement-1/screen-seal.json",
         "--output",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p97-selection-plan-A",
         "--plan"
       ],
-      "sha256": "33ab52ddc3e00aefa430759ae23f8ccb186681f1c088d7429bf4374f80c46ed9"
+      "sha256": "074045c7ce784a598797a8498185b2f13c561f261c1c6af0b5a90d7b92e6d62d"
     },
     {
       "name": "screen-B",
@@ -94,16 +94,16 @@
         "--placement",
         "1",
         "--lineage",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/selections/production--hc-wide--wide64--ordered--production--production--rec-parallel--production--production--production--placement-1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--placement-1",
         "--seal",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/selections/production--hc-wide--wide64--ordered--production--production--rec-parallel--production--production--production--placement-1/screen-seal.json",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet97-record-bundle/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--placement-1/screen-seal.json",
         "--output",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p97-selection-plan-B",
         "--plan"
       ],
-      "sha256": "59068f387c7e6c6612770265a50baab4c93ea8d52560f5e8dc171aa5ab13630a"
+      "sha256": "f9e19b27bd6506443ad11c83c21f64fd347fc4a8693da29c6b18d135607e2237"
     }
   ],
-  "seconds": 37.98028545602574,
+  "seconds": 32.60562209499767,
   "cached_proof_sha256": "f5aa7d34117897cf63c248eda62d9a6a5e294d55bb7a9c1678b2353b42707cf5"
 }

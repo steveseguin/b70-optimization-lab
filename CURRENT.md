@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 18, packet97d ready on CPU:** All four brackets of the same sealed
+selection are now counted. Both record-lane brackets clear the required gain;
+the other lane has one qualifying win and its drifting bracket stays above
+the first control. All outputs and acceptance counts agree. The unchanged
+chain policy and every CPU readiness check pass; `ready.json` is true for
+decision `f1e5d7f47fc0fe54`. No device work or live queue ran. The two frozen
+decisions are unchanged. [Evidence and checks](notes/2026-10-18-own-runtime-packet97d.md).
+
 **October 18, packet101 resealed on CPU after a parent-selection change:**
 The new seals exclude packet97's changing orchestration outputs and keep
 packet101's own selections. Binaries and quality gates are unchanged; no

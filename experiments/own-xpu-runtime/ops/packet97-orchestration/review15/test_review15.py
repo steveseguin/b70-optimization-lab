@@ -173,7 +173,7 @@ def test_review15_readiness_retains_exclusion_decision(tmp_path,monkeypatch):
     assert 'device-entry-review15.sh' in verifier.command()
 
 
-def test_frozen_decisions_and_original_tools_still_match_pins():
+def test_frozen_decisions_and_original_tools_still_match_pins(monkeypatch):
     root=orchestration.ROOT
     for identity in ('d27742791d5b859d','f1e5d7f47fc0fe54'):
         path=orchestration.O/'decisions'/(identity+'.json')
@@ -185,7 +185,11 @@ def test_frozen_decisions_and_original_tools_still_match_pins():
         sources={n:config['qualified_screens'].get(n,dict(status='pending' if n in config['deferred_sources'] else 'no-winner',receipts={},sources={})) for n in original.DIMENSIONS}
         control,candidate,confirmed=original.select(sources)
         candidate,pins=original.apply_pins(candidate,[k+'='+v for k,v in config['coordinator_pins'].items()])
+        # Reconstruct the frozen decision with its historical provenance,
+        # then check those exact bytes at their explicit archive locations.
+        monkeypatch.setattr(original,'source_pins',lambda screens:config['evidence_pins'])
         assert original.composition(sources,control,candidate,confirmed,pins,config['coordinator_closures'])==config
-        for name,sha in config['evidence_pins'].items():
+        from historical_pins import preserved_pins
+        for name,sha in preserved_pins(config['evidence_pins']).items():
             if '/ops/packet97-orchestration/' in name:
                 assert hashlib.sha256((root/name).read_bytes()).hexdigest()==sha

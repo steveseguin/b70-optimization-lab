@@ -163,4 +163,8 @@ def main():
   row.update(preparation_passed=True,ready=True)
  except (ValueError,OSError,AssertionError,KeyError,subprocess.SubprocessError) as error:row['reason']=str(error)
  save(O/'ready.json',row);print(json.dumps({k:row.get(k) for k in ('ready','reason','selection','chain_command')},indent=2));return 0 if row['ready'] else 2
-if __name__=='__main__':raise SystemExit(main())
+if __name__=='__main__':
+ if any(arg=='--decision' or arg.startswith('--decision=') for arg in sys.argv[1:]):
+  from decision_readiness import main as decision_main
+  raise SystemExit(decision_main())
+ raise SystemExit(main())
