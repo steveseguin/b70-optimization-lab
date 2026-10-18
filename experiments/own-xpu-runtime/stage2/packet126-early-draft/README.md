@@ -1,5 +1,12 @@
 # Packet126: guessed-token draft before target verification
 
+**Decision: not admitted; the gain is not identifiable from the retained
+timings.** The zero-recovered-wait scenario predicts a 1.95–1.96% loss. An
+unmeasured head decomposition consistent with the same traces can predict a
+gain above 0.5%. Neither is a measured runtime result. This is inconclusive,
+not a proved sub-0.5% lever. [Numbers and reproduction](RESULTS.md),
+[closeout](ANALYSIS-CLOSEOUT.md), [boundaries](DO-NOT-REPEAT.md).
+
 CPU dependency study of packet124 bundle8 BASE, whose native source is
 packet118 bundle7. No runtime source is changed or executed. Target arithmetic
 is `iq3-p49-split32-v1`, BF16 KV, 24/24 layers, rank1 draft, packet114's fixed
@@ -81,13 +88,16 @@ D* and the rank1 head remain serialized on its single CCS. Two concrete
 orders must be distinguished:
 
 1. **Move D before the existing head-export/prefix/publish sequence.**
-   Both head branches are delayed by D. A hit gets its next draft early
-   relative to the new emission, but that emission moved later. There is no
-   steady-state rank1 saving; a miss adds a wasted draft before correction.
+   Both head branches become eligible later by D. A hit gets its next draft
+   early relative to the new emission, but that emission can move later.
+   Without an exposed dependency wait there is no steady-state rank1 saving;
+   a miss adds a wasted draft before correction. If the old suffix was waiting
+   for A, some of that delay could be absorbed. Its duration is unobserved.
 2. **Publish the ready hidden vector before D, or run D after prefix compute
    but before merge.** The suffix can then run concurrently with D. This can
    fill rank1's wait for the suffix. It is a distinct head-publication/progress
    change, whose useful wait is not separately measured in the saved traces.
+   Variant1 also needs a draft transaction; none is a safe one-line move.
 
 Rank0 cannot simply start a second speculative target half while its previous
 candidate is unresolved: the current controller has one candidate/snapshot.

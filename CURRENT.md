@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 18, packet126 early-draft analysis held at its timing gate:** Moving
+the next draft before target verification does not by itself save rank1 work.
+Without recovering head wait, the saved-command model is about 1.95% slower
+because misses add a discarded draft. It needs about 0.43 ms of recoverable
+wait per interval to clear the requested 0.5% gain, before rollback costs.
+The traces do not measure that wait, so the actual gain remains unknown.
+Both lanes' 2,376 intervals reproduce, eight analysis tests pass, and all 141
+negative indexes were checked. No runtime build, GPU job, service or queue
+proposal was made. Next prerequisite: separately timed head readiness,
+suffix service and merge wait. [Work note](notes/2026-10-18-own-runtime-packet126.md).
+
 **October 18, packet127 head retune passes CPU gates:** The 81,920-row and
 122,880-row rank0 suffixes fit the unchanged 24/24 bundle7 line. Both compilers
 pass repeated exact byte and reset checks, and all 33 startup windows pass.
