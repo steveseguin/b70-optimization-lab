@@ -1,0 +1,942 @@
+{
+  "packet44_commit": "421a4ab50",
+  "packet40_commit": "50d9e0031",
+  "packet40_base": "e21d87c0c1169eb733939236d164875d53508729",
+  "conflicts": [
+    "build.py",
+    "draft_window.py",
+    "kernel-submissions.json",
+    "main.cpp",
+    "mtp.hpp",
+    "rank.hpp",
+    "seal.py",
+    "suite.py",
+    "test_draft_window_cleanup.py",
+    "test_window_seal_admission.py",
+    "test_window_storage.py",
+    "window.py"
+  ],
+  "copied44": {
+    ".gitignore": {
+      "packet44": "c7cd0fc55d4b88bc4ed87b1cdc33670d9046174ab762188a0f2ce10290bb56e0"
+    },
+    "CMakeLists.txt": {
+      "packet44": "0137a49b173573768706cca6d07a7686d4936b6b5301b10fc6e7a010d698c54d"
+    },
+    "adapter.cpp": {
+      "packet44": "031609948a0bc912e127ca56428577e2f882b86a5f6e1b0526e8a9adf8bf5ff6"
+    },
+    "adapter.hpp": {
+      "packet44": "ed38260c7ca1ddeab55f465e2635ae9f97f31970424b412d7e9ba9ca071a63be"
+    },
+    "adapter_fixture.cpp": {
+      "packet44": "8b72f5892f11bdea401964b76ddd640e0cc1e60bfd8bcb56ed19fd0eec5104a8"
+    },
+    "adapter_fixture.hpp": {
+      "packet44": "3d5f54acad04c13009ffe15457d373496df0e191d2625718ff7cc6b24c95dfc5"
+    },
+    "amend_long_suite.py": {
+      "packet44": "1f3b51d582a6afac2fd80eea95e1d49426b2545d2974367bad1a836d41f7f404"
+    },
+    "argument_block.hpp": {
+      "packet44": "f2cc8a5709ae443e2fcaa755cfb86e36080a710e9964422b12d3a8425433db35"
+    },
+    "argument_block_test.cpp": {
+      "packet44": "5f00c97ed3c3a5fb3b499427bfd9625eebc76a811aaa3a4b97868d01ffaf38e2"
+    },
+    "argument_state_gate.py": {
+      "packet44": "7d82e2c7fe0fd7e888b469beaac0bbd8ed575b1b530c0369c54bb20c392a2b35"
+    },
+    "arithmetic.hpp": {
+      "packet44": "4eea12510e598964cd901860bc0375e96918fc3eaefdaea009edefb20bcd6999"
+    },
+    "audit_rollback.py": {
+      "packet44": "e64222e3317f980bfc7b8f92f78bb1b65184692961f49ccfa6813d85dbb8af91"
+    },
+    "authority_test.cpp": {
+      "packet44": "d15d1e01a7b27fce68c5ca6ed03574aff3d2db05a638c7070496e27723d18fe1"
+    },
+    "backend.hpp": {
+      "packet44": "0496927e624ec32e44be489d7e1ffe3248ecf8d6021ff92f791d0619e02760e4"
+    },
+    "build.py": {
+      "packet44": "8274efd8b12869fc9c7ffa1c19e5a561b1b1597fc28672ddd60491fe9603b860"
+    },
+    "build_native_controller.py": {
+      "packet44": "e1986fe83f844e626ae6b2208edf12ad37889419e903dd817ce96296026362b1"
+    },
+    "canary.hpp": {
+      "packet44": "f935960a7c01433fbc1333abc68587fe437b73e7b27616c85e7070abd46a7854"
+    },
+    "canary_host_gate.py": {
+      "packet44": "324e95d17009bc1109ccb139019c3dd48fedd98f59a88e7e63a9358beb52427b"
+    },
+    "capacity_cpu_gate.py": {
+      "packet44": "d4708b464b18ec643790caab8f9af62398979ace0dfece7dad873624f4b75d5f"
+    },
+    "capacity_draft_gate.py": {
+      "packet44": "6ccc1f79196cc4cb48d8c145ff22d0d4928063931fb80edc04fcb025361c6898"
+    },
+    "capacity_fixture_gate.py": {
+      "packet44": "a83814ece7334b3bd277c936aefa2d2edf097088cc5dc40fe5e1881af0dd7c4d"
+    },
+    "capacity_rollback_asan.py": {
+      "packet44": "e1c5d66f2e8d0e2c64b2bf32f38e470229dac57a849aa847f68eef03d908890a"
+    },
+    "capacity_selection_gate.cpp": {
+      "packet44": "d2135ab287d8456a4c87851e46ad1a9e9b37b360e90d76410fe533d3966c71ba"
+    },
+    "capacity_selection_gate.py": {
+      "packet44": "22dde3b8596fd3ca832e21d951ef86eded742173df08a19cc8059157430fe36d"
+    },
+    "capture_cpu.py": {
+      "packet44": "be51260a96b63566e659123ff4d5df0ebf903ffb6563cc2af855a297ec629233"
+    },
+    "capture_gate.py": {
+      "packet44": "11bd9bd9d10814c5e565696af13db63a82234d059ef81ffe6ba90f6c71f42334"
+    },
+    "chain_test.cpp": {
+      "packet44": "ad003ecd4336f09a643950894bada31c76fece436a0f7c5d2d72bddda5f670d4"
+    },
+    "cleanup.py": {
+      "packet44": "8d4b37733d3355c3ece31390574d141244ad5a3f6b8e8663134e1c519bf3ad2e"
+    },
+    "cleanup_objects.py": {
+      "packet44": "97489526288f91eda0405d964e32a401105c7fc40bdba8724f41ed28b72d040f"
+    },
+    "compare_controllers.py": {
+      "packet44": "7ae05d33287a23db33b3a7482735dfbab57fc479590d786ca42015c087f99cfb"
+    },
+    "compare_draft.py": {
+      "packet44": "ab8174523bb3bcfe9134aa519cbe128b41db16303864ec6445b14c3316ae404c"
+    },
+    "context_window_gate.py": {
+      "packet44": "739e69c542c13f50e95625302e17e8521e3c03b865d7be7e99486641a43a7497"
+    },
+    "core_v2.hpp": {
+      "packet44": "c3c265894d5041e0d6e026d53094b67f9b58bb86bd1aa1c8fea06ab4d8692ffd"
+    },
+    "cpu_campaign.py": {
+      "packet44": "7d76ffe1b2db7486f5d62e73580dbe042d2ba4bd9cdc153a079ac1103d4aeb39"
+    },
+    "cpu_gates.py": {
+      "packet44": "98c883e721bf867436d4a1964aba218d0c955685bfe47e2fc95ec193b5f40e58"
+    },
+    "cpu_handover_report.py": {
+      "packet44": "b2305a04e1dc16fd1eefbd2ecf0885292e99aee4926d7e23e3b949d38b992186"
+    },
+    "cpu_status.py": {
+      "packet44": "f22965b4c6484f2c257ffa477b6d71c797f538f4379c1ff95bf595119a03a6ca"
+    },
+    "detmath.hpp": {
+      "packet44": "eba96cc4599d21ab24fe97276bda0c954c60878d3b696a77393abbfa2a4e049c"
+    },
+    "dispatch-all-new.json": {
+      "packet44": "9cfbed87822c21243004a56ff20748b7134d631e7247c3843a0358b55827f454"
+    },
+    "dispatch-default.json": {
+      "packet44": "b05c2b3688f30772a878e8ba9f6477271dc65dd28978f89f25e0ee1884ee9fd9"
+    },
+    "dispatch-incumbent.json": {
+      "packet44": "f913ec4073ee9b8a2717cc56b55de5e36c2df40bab3c996b928e867b178f6b0f"
+    },
+    "dispatch-p33.json": {
+      "packet44": "51954f199abfb68414fa20d1d717fca76cad2d08e6f6d53d86236e98e2edcd5e"
+    },
+    "dispatch-p38.json": {
+      "packet44": "2c7783ae00f9bbaee355a285b56fe46fc2178e483274c5e03c8e0e1bcbf335a5"
+    },
+    "dispatch.hpp": {
+      "packet44": "976a59a53d77d4456efaf7b6883180543e571a3afa5f3d0b4637f0df61b28196"
+    },
+    "dispatch_registry.hpp": {
+      "packet44": "72d9ad5510b40489e6baf7728bd414ce2c4739b9d2e7ddff4f4071b2ce8144a5"
+    },
+    "draft_auth_gate.py": {
+      "packet44": "30a167ca3a30d5da04ffe87d5b53232b1002e839c09b9b4158260473bda3e7d0"
+    },
+    "draft_baseline.py": {
+      "packet44": "36cd4c796542133223257dcdb2cba47770669a4e2fdbfd1ee40c2d8f241eb790"
+    },
+    "draft_window.py": {
+      "packet44": "0fad1a3a5f0a21bc54aad838585eadc46d27e66a52da65d681ac75c406c4591c"
+    },
+    "entry_codes.py": {
+      "packet44": "f85208c77c7f7111161a9436e7170032be84143785198315e80d88b89c42545a"
+    },
+    "epilogue_hook.hpp": {
+      "packet44": "37a1d35582ff2d542f85a802cbf9ac9d7ba536222123edcc2050bc2ff8b33a96"
+    },
+    "expert_down.cpp": {
+      "packet44": "027dd4750e4d285b55dd83e4289c19bee59398fbe84ca54e63d139866e1451ba"
+    },
+    "expert_down.hpp": {
+      "packet44": "eb327fb716344751870064c00c843ec3147219f996dfd89a8818c70fede03ffb"
+    },
+    "expert_down_review_gate.py": {
+      "packet44": "d7b3cfb3c843cb24b087bdcded2cfe65179443d78e18ae95fd993b50f7bd582e"
+    },
+    "expert_down_review_test.cpp": {
+      "packet44": "cc7e193293eb46a4581eff59f24a05c8fd1d774c584f7ef1c8bdf0fb86e304ee"
+    },
+    "failure.hpp": {
+      "packet44": "7b02ca42a4d27a0aa47e9db0fb478194998cbe26dfc38670b80f0f36252e5c36"
+    },
+    "fault_gates.py": {
+      "packet44": "aacd1e55f0c9a2871d2802656a1e47b42b2074489c63ee6c72c45d01261cd168"
+    },
+    "final_build.py": {
+      "packet44": "20ad97b47e0ddbd596ab7b0880e9bd4dbce6bf359d72963eb444ebab128cf1df"
+    },
+    "final_checks.py": {
+      "packet44": "bc3f777c57973697e9786490365dc6fc48f9830c446dbd6b59f62b4f813d1b43"
+    },
+    "finalize_docs.py": {
+      "packet44": "7de3dd4690a4d8502991d5154b38497e9a0621ad881f085d6a2eebc7d8cb0668"
+    },
+    "finish_cpu.py": {
+      "packet44": "f394bb0e67b9499a1b828962e1ce91c71a6b5a4aee64bceaebb3589d410aceb2"
+    },
+    "finish_cpu_gates.py": {
+      "packet44": "d97065d24da804ba99011a847e17b1f4f823f830106c0d8bc6b1933b7e538ec1"
+    },
+    "fixture_driver.cpp": {
+      "packet44": "139123d27d61582e8d2f6dd443cacc7d12337d79a600d44063489d87f30a9fd1"
+    },
+    "fixture_gate.py": {
+      "packet44": "4b18ad0a141cab57b5b221556ef24723d2e39a0ac23f24ac41cf9391a1807715"
+    },
+    "fixture_support.py": {
+      "packet44": "e6ce81fc08bc32862ed88dee24131dccd92cd11e6101834714d3a099877aa0e4"
+    },
+    "fixture_validation.hpp": {
+      "packet44": "747bb6149c2783bffaa5df2fc3d48ac61f5fc87bbfb03ed7c08bcf33ea4f0858"
+    },
+    "gates.py": {
+      "packet44": "c47cde3fbbd9a9ad1753ac164133f57da1316e0c8252ba709d42e6a963a16b2a"
+    },
+    "gemv_timing.cpp": {
+      "packet44": "4181a6d79c5c84886d2a052213d5a84d584e142bc310468bb7e9407c601ca205"
+    },
+    "generate_rope.py": {
+      "packet44": "ae2491090146d5665c66cb4d44a68c26b76bd270ac4534e5b819a1069f52b74a"
+    },
+    "host_issue_benchmark.cpp": {
+      "packet44": "2368aaed46469f309f2421412cc789af295f1ae4421d8902aed7a3106286b6fc"
+    },
+    "identity_tree_test.py": {
+      "packet44": "2edace0d97492b2ec37390e9f19e887e529bd2fab0726301ff05e26794b6e9ca"
+    },
+    "integration_inventory.py": {
+      "packet44": "169a3fe1563b3a504e4b492693f40d1d0c83c76691a81d71c0abd4619906e2ac"
+    },
+    "integrity_audit.py": {
+      "packet44": "3db31bf0949ceed3c04fb7d8c27941689978420559db837131430d422d4a3120"
+    },
+    "jit_smoke.cpp": {
+      "packet44": "e55ed2bfe8baaf3e976cd5a1334aee3bd901ba45fdcb8769e37b66db5324e0da"
+    },
+    "k2-class-registry.json": {
+      "packet44": "fedf79c7dcc975a286d47da8ef8550bf46c3d03386a18ca622d652a3c754dbe2"
+    },
+    "k2_failure.hpp": {
+      "packet44": "0b5edc160fe37e77e7293ffa937eac531ec29773275c517627a57e930a1ac900"
+    },
+    "k2_fixture.cpp": {
+      "packet44": "d579d8599c0941759b54a4afcae6d0b5dfe3169c84b4ebfd268ee3860ff16030"
+    },
+    "k2_incumbents.hpp": {
+      "packet44": "0443bb11aced12e3c9c96745f285e02779e217f991c57d7092b72832a7849616"
+    },
+    "k2_summary.py": {
+      "packet44": "caf95768673ae391d4bc26a930f9086e49bd4d2f03695da97b42e39012d8915d"
+    },
+    "kernel-registry.json": {
+      "packet44": "f90172f6c0a36b80e38165c6ab4dec4cc580e60056e29a80a6814dc1f3e13b41"
+    },
+    "kernel-sizes.json": {
+      "packet44": "dfa006ca3102c61ffae8e4b8d67b938959e50b72c3afd9ef4e54ba712e01f2c5"
+    },
+    "kernel-submissions.json": {
+      "packet44": "2292be86d2ba069b1faed46e389fd4d85433a16925ccf0c27944cbb9fc673239"
+    },
+    "kernel_gate.py": {
+      "packet44": "dda5ca15289d17e9405ea9a8fcca6da5b002b1bcbec222e324943225159232c7"
+    },
+    "kernel_guard.hpp": {
+      "packet44": "3ea4ec84bfcc75b51d98163afc6c4912ce1b34e9f248b9a348a55d2d0e29d4ad"
+    },
+    "kernel_overlay.py": {
+      "packet44": "ce04187e0c9aa194668f864991d8a7a6feb699f57c2f512e7a5bc0d1c780cfcd"
+    },
+    "kernels.hpp": {
+      "packet44": "a8c19f5ccf8dec343f70ca14223d5ac52df42c8c3ae68072179f61e285e17466"
+    },
+    "lifetime_mock.hpp": {
+      "packet44": "97afe6f81d53824d2c5636a0d34aa924c63d11e3c2263e950812d464d79dfa62"
+    },
+    "lifetime_test.cpp": {
+      "packet44": "c812297c867bd719ef0ce1ea29b71f0e9a82218ff79da2d3f4ad976ecc66121a"
+    },
+    "long_suite_cpu_gate.py": {
+      "packet44": "0c051448f49e55ffe433697fe54cead9d9882653dd3db93076a97c421da58ebe"
+    },
+    "main.cpp": {
+      "packet44": "ba06d8010554bca23463c9acade6872e603d279b7253adf7fdd60611137472d5"
+    },
+    "math_bridge.cpp": {
+      "packet44": "f8ee94baa5c748dd3f2cdbe974435b89d9b26094a0063b7d0655313bfba82c1f"
+    },
+    "math_gate.py": {
+      "packet44": "63611b83ffafeb436a4a8fb445f301665d66a57f4364f46a445d2369560ae35c"
+    },
+    "memory_gate.py": {
+      "packet44": "68481c0c90c802e2a2a3295d98cd2eca9a0985f9052b4708ab19aa234a623b50"
+    },
+    "memory_plan.py": {
+      "packet44": "4f5dc2d8256781e8989b7828024084702c17cc7e0147f72644c81ad88ef32f31"
+    },
+    "merge_dispatch.py": {
+      "packet44": "f78ae9b6fff6d9fddd56a661f413cb2aca0a80bec1da108f2b3b8d5c3e33ad02"
+    },
+    "mock_order.hpp": {
+      "packet44": "d2b1f370518ad0181a0d1f81b370374ceee4e9177abd3531439bd94017980149"
+    },
+    "mtp-manifest.tsv": {
+      "packet44": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9"
+    },
+    "mtp.hpp": {
+      "packet44": "cdf088f333b9fb52da1e3b509676676c824d83435edc7615b83e4f7b6b50307a"
+    },
+    "mtp_gates.py": {
+      "packet44": "b23be80f838ba645a02373b70cffb16485c76ad442740d95cc5dbedc2cf51b7e"
+    },
+    "mtp_kernels.cpp": {
+      "packet44": "1b179214aecb9e4910cc414c5ecb272510143f02d9edf4a1de5ae44d455370b4"
+    },
+    "mtp_kernels.hpp": {
+      "packet44": "f6ae6a4781051e85dbc82b429b3eb06d2f07a625237138d67ffacd6992a2a674"
+    },
+    "native.cpp": {
+      "packet44": "4e8f5683b6ad8fe2a8a9b44fd1a0cba7dfc6c90616eb06cd583bc0d7ba087b8d"
+    },
+    "native.hpp": {
+      "packet44": "c0b710b43748dfeb23bb317254053106d68fc967d9ecdfe43f17f56a80d372b4"
+    },
+    "native_controller.hpp": {
+      "packet44": "582097261c478c30fb511c43771e53b071eabf17ea87c2f4af1196657e9a43a0"
+    },
+    "native_controller_gate.py": {
+      "packet44": "2efc60baca2cbbb364fb70f70a4e649654bb412070c3d866c01c157ccfeebca3"
+    },
+    "native_controller_test.cpp": {
+      "packet44": "db276644ce9fcb90871533b141f768723361c78e52f28533aadb6c8769a587e7"
+    },
+    "native_mailbox_fault_test.cpp": {
+      "packet44": "f6d1102a02c9bb0594cf9681d87c9f34a417f35715c0be3ac3be1a8905ec044a"
+    },
+    "native_mini_gate.py": {
+      "packet44": "aa5859a27c141476abb8885f1feda049de9a0622d757a8b85655659d61d8c8c7"
+    },
+    "nongemv_fixture.cpp": {
+      "packet44": "acc4c0a6d2aed8b377fadf5b35f59adf67510b44b9229f8e765f51ab46f374a9"
+    },
+    "owner.cpp": {
+      "packet44": "b792de9ae31c600e81f44b2496de49d4ce08c091a4d33a9b7ba70df41b223b45"
+    },
+    "owner.hpp": {
+      "packet44": "ee69610bda3e786e2aecf9888430541879af2d4c51cb64329784cb58d3ba1faf"
+    },
+    "owner_api.hpp": {
+      "packet44": "70009b6570429a2888ab5111a80e001e7b0097f85faff924585a79edb1baf223"
+    },
+    "owner_retire.cpp": {
+      "packet44": "e35c366f640d8909b519891fa814aa80228b01ce69bd19ccdf00a8d13cae0da2"
+    },
+    "p25_bridge.cpp": {
+      "packet44": "b6bbeedea17c3d52e32f1a9adcc9d9be0876d300f55ab1756b2a481fbb874905"
+    },
+    "p25_bridge.hpp": {
+      "packet44": "c5d1765997de414df8df8df3a0c19de29f5d0250fbe387e5dc303762ef0bff80"
+    },
+    "p25_candidates.hpp": {
+      "packet44": "98d34f0ac7ce729410780c61016e88f6789baf5e2ec5510c79142ea33888df57"
+    },
+    "p28/dense.hpp": {
+      "packet44": "bc6d77353fa71520e15f2b349db381ced4370d8413fae3b6687cefed56297b47"
+    },
+    "p28/expert.hpp": {
+      "packet44": "fe0edeb0afedccd2b835d636c9d5e53f7725c995c192be2c6526377cdb58f63b"
+    },
+    "p28/registry.hpp": {
+      "packet44": "add5690af080348ac78cbc3a19e41ac4e46fcef133cc6c2a162e3089ea377d85"
+    },
+    "p28/submit.cpp": {
+      "packet44": "10ba4dee0b311c7d0f487d11159d06d8f16304ff3f9e745e62950d5ff54aa92d"
+    },
+    "p28/submit.hpp": {
+      "packet44": "6d0bddcbb38d635c9d5194b73cba7624db27a7617754af5369bfa51e731c5bbf"
+    },
+    "p30_attention.cpp": {
+      "packet44": "72403adc474cad4c112e59b2f2ffbff7fe0e52dba2874a36feb8c41df829e815"
+    },
+    "p30_attention.hpp": {
+      "packet44": "9d5eb89f4aa6515922a74b144a4bc3d19813169261f1cb1bb2ce6bf042608ddf"
+    },
+    "p30_attention_cpu.cpp": {
+      "packet44": "d961c8e9b194fd8a0c890ce8d225855142600e5ddbcfa0c37f55350a2daf643c"
+    },
+    "p30_small.cpp": {
+      "packet44": "fe8eee300850e3531ceeeecfff9c25300a99b7c7ef4202c3bda791e0f7f9733a"
+    },
+    "p30_small.hpp": {
+      "packet44": "4304140e67c89512773d3adefa306f2153d1dd13585224e2ce0bb61182ca4261"
+    },
+    "p30_small_cpu.cpp": {
+      "packet44": "999d4e9cd642945328c2fca175e01708cbf5d85e69f951961a1f69045a95c885"
+    },
+    "p30_submit.cpp": {
+      "packet44": "dab72a991d33df0becdedd69e1e659720ad725465940d704d3badb15c689449f"
+    },
+    "p30_submit.hpp": {
+      "packet44": "16502b1bf1d7c2f6669bd60d59ecb0885274958907371851a8d82951654f3fbd"
+    },
+    "p33_candidate_cpu.cpp": {
+      "packet44": "711b730573ef4d600108cc455f79dabdfbdb557f3c57a4df64171e010ad2d53f"
+    },
+    "p33_candidate_gates.py": {
+      "packet44": "9e392836d79f43cc3da4bab945dbae85c66f172a3b3b480972ec7a209bd05988"
+    },
+    "p33_candidates.hpp": {
+      "packet44": "17f835ea9642d004eebbeb71c4b68dec5e3b795dbf6166c39a08f08307313797"
+    },
+    "p33_linked_fixture.cpp": {
+      "packet44": "1abb466123de8a71898ade5d65cf35aee16395481331cf99836e33d6051b4fe6"
+    },
+    "p33_linked_fixture_gate.py": {
+      "packet44": "aac1dac3a41c78f075d750179d76be52c4bc94f0928042b5834ab7d158aed9d2"
+    },
+    "p33_submit.cpp": {
+      "packet44": "c7bcacd934e0d06639aaecf46625a0c3e1a8fea47dda799d415e5c392f21b84a"
+    },
+    "p33_submit.hpp": {
+      "packet44": "b6833e2d825934c64d58d03e5b274e4bd1e87e7bd13082b8ca9caf01e3e302c8"
+    },
+    "p33r2.cpp": {
+      "packet44": "f6ad0f6150aff1d337264bda76e7f30afecd4b20558af601bcf2231b6fde25c4"
+    },
+    "p33r2.hpp": {
+      "packet44": "f7d736727f5c77bd78a2eff8460c1b56e7984ef7bbb21c4cd803507df73c6895"
+    },
+    "p38_kernel_gate.py": {
+      "packet44": "78291d7566b02562641fddc06c8d5f2c974c416430803be08b943d4a6a761248"
+    },
+    "p38_qsa_cpu.cpp": {
+      "packet44": "5235d2dfc19618141484c821262a9c3772283dee9a9e94d36a85ad14ee74d38c"
+    },
+    "performance.cpp": {
+      "packet44": "9f0b52da35dff6d71a4f4eea72b0cfee26a9796934aa033295cf73256bca04d1"
+    },
+    "performance.hpp": {
+      "packet44": "97048551886ee82850180ef9a7981259d80569fb82981c16e8473793739b2137"
+    },
+    "pipeline.py": {
+      "packet44": "a2c7f11bde5877df1234581fdafc9ade9b29fe4ea423ead5c7cbc3f334ff4d34"
+    },
+    "pipeline_draft_agreement.py": {
+      "packet44": "281a0df7b60a7b896aeaabd56f5205d52ecd965d3073f14d9019cd4691bd2b35"
+    },
+    "post_python_gates.py": {
+      "packet44": "c623b4ea02b3e026cdccfa0965a0bcb8f22eda0645db19fa80ccac90a7e7c42d"
+    },
+    "prepare.py": {
+      "packet44": "6af3404d6dd8a492e9f9270c4de8eac0aaf2838e2160f878471a4ee3e1900ef4"
+    },
+    "prepare_mtp.py": {
+      "packet44": "aa3f59f9b6817dfdfc5168d0396c6f82eeee66d9040cbe40c754efc00adf58a0"
+    },
+    "prepared_host_benchmark.py": {
+      "packet44": "cdde1566b26f1c04be41bf8a33d47747fc957ea410af2bd6f026e0002fcc4677"
+    },
+    "prepared_invalidation_test.cpp": {
+      "packet44": "b082a461f27c10b7e678e6c37f810e78fef6fa587645ae0e327a730ece01f27d"
+    },
+    "prepared_issue_benchmark.cpp": {
+      "packet44": "722edbeb96cf5794b8494323c80d8a7e50554610377956c3d0ad68ff8da479ba"
+    },
+    "prepared_submission.hpp": {
+      "packet44": "41405cfc3c10727e245536993f647601b99705cdc9ac070e29f2ef695ffed2b9"
+    },
+    "prepared_unit_gate.py": {
+      "packet44": "f384f0ea9dfdc9c39b07a51dd7b44cd707febb700218b69e1aff1f38cb84d75f"
+    },
+    "prototype/fixtures.py": {
+      "packet44": "79e063e49e7202e2a640297c5ee64a3e9daee4f6bafe5d9e1502387f9da35b6c"
+    },
+    "prototype/snapshot/core_v2.hpp": {
+      "packet44": "279a51b16593f1a8432205ea65422b037a533783bdbd79152f17e2b4a9d8b6bb"
+    },
+    "prototype/snapshot/detmath.hpp": {
+      "packet44": "fbc845e5327579447fed4a6fb3d2638b6b5a389330ea712c45f9d8f2bf043cfc"
+    },
+    "prototype/snapshot/kernels.hpp": {
+      "packet44": "804c720eb7339e1d90c786ca43c8399fbe52999dd668ea43c30ad7a559a677f1"
+    },
+    "prototype/snapshot/reference.hpp": {
+      "packet44": "41ff760abf1a4f7234f02ee209e232f4be2071273a3c703935472350a4db668b"
+    },
+    "prototype/snapshot/rope.hpp": {
+      "packet44": "1cef648de09ac4b115f1966033f2e341c870203a7415a39d58a8bbe2adb6c643"
+    },
+    "queue_gate.py": {
+      "packet44": "8ab69ee0c421f521715476280289017b644695fd5dc2b95c0f8d59280d5010e6"
+    },
+    "queue_test.cpp": {
+      "packet44": "92864c3a1ab28b9432f9fea437698259f9286fe7fde818573ab2975488906a1b"
+    },
+    "rank.hpp": {
+      "packet44": "37a9e7ad4b2ce7559c39c9beeac5ea3a8c08ebcd49ac97f20e38cfe518dd353a"
+    },
+    "rank_canary.hpp": {
+      "packet44": "e5ac0589c32fde6e25ab57da94f90fd4e3d1608a4a70f5d3382a490d105e303d"
+    },
+    "real_campaign.py": {
+      "packet44": "af2e22772394f947abe369d41a557178e6638b0da10061bdfcf94700a2a4b3fa"
+    },
+    "real_controller_gate.py": {
+      "packet44": "da0f50f4a4c54a87d5c4e7889c95dc821b2a794c83ba4e8f964a266db9c05818"
+    },
+    "rebind_agreement.py": {
+      "packet44": "945e5eb811b909fc5d6c1c692a5c3d54eb9b46efcf0a4408992a00e3a9006b66"
+    },
+    "reference_reproduce.py": {
+      "packet44": "b2aa903cd8f34aefa8c4e976f10bbba1725934d21b8c9b3a35ac4411f69847a3"
+    },
+    "remaining_cpu.py": {
+      "packet44": "bc3f777c57973697e9786490365dc6fc48f9830c446dbd6b59f62b4f813d1b43"
+    },
+    "remaining_cpu_gates.py": {
+      "packet44": "a519a64c61be941fcd28f355996166dcdc4b1966ab5d3a95a37cabc7347950b6"
+    },
+    "repair_build.py": {
+      "packet44": "f6a45a493853d9750ea29356b21f1f488b04f98feb0eda4a2b717361490a735b"
+    },
+    "repair_gates.py": {
+      "packet44": "fe59d610c2cd277348b271f100f8be7b51c040d4224934f97659d927f60e4c3c"
+    },
+    "repair_qualification.py": {
+      "packet44": "7bf94aa13252de36e26895c6124e1999ba4b5f393e2436fb79f74eb184c663ea"
+    },
+    "request_reset.hpp": {
+      "packet44": "b35ad7753e3b2155e62e9d02700c24c52292f773c5f0b5f496914c705b6fbe99"
+    },
+    "request_state_inventory.hpp": {
+      "packet44": "1341737c1005f0bf7ae216648c4ee29805d5e3efa384184ee76e98521a275902"
+    },
+    "resident_host_gate.py": {
+      "packet44": "8bcf55a3902a2be944c0ae5761f87eb885302f92159839540c5e7c32e409cfeb"
+    },
+    "resume_draft_references.py": {
+      "packet44": "4b5de0c30b689dad4a206d52e585e1f1264d6366c7d2a7662d87fc8d8f605986"
+    },
+    "resume_intel_composite.py": {
+      "packet44": "e05316af5774c6c122ab3f92eab03b0c1aed1d42f8949bf5d2124ae0dae3fa4b"
+    },
+    "resume_qualification.py": {
+      "packet44": "27c39b4149710f6516d8d18b2261e61614afc8f4f0ec4eeda0ea65d6946566a8"
+    },
+    "resume_suite_after_refusal.py": {
+      "packet44": "3740b372c024b5e9f5a7fd8b2ea6a5addafe2328fd9f27fc1238ad517cd96476"
+    },
+    "retain_window.py": {
+      "packet44": "df41b4a74b23739e770cd5a74b3ccd325513e941ff18b0b9edd4eb3d7c797aff"
+    },
+    "review_prepared_gate.py": {
+      "packet44": "fdc2369b51459a3dd294a57b602158fa22cb54289a1fec509d8ff4f0fd22c183"
+    },
+    "rope.bf16": {
+      "packet44": "92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390"
+    },
+    "rope.hpp": {
+      "packet44": "83782198e96337883f7e226d5fc474360841f6ca26a00bce43a6d87f42b74929"
+    },
+    "round2.hpp": {
+      "packet44": "bd614a9944e33903a6f0c7c2d4a1dd1de4786f8b1cdc8418df73e6d54b7e38ef"
+    },
+    "round2_submit.cpp": {
+      "packet44": "9376df1464877b7e5f0e24eb56000df350ade782582bd42ad18cc5cbb2a7c45b"
+    },
+    "round2_submit.hpp": {
+      "packet44": "d9231c86021695fb1e6f0e84f833380bc5e5d685d6a92f52292ffe191718a7ad"
+    },
+    "run_fault_gate.py": {
+      "packet44": "f3620395b2d5b0fbd5f7178a88f978ea6fdcdda9f68b8d2da245393247c8f146"
+    },
+    "run_native_gates.py": {
+      "packet44": "76fa98e087e3915e1df2449b9562f8511c90b36f6b5254d1c8378f9d3ddc6ac1"
+    },
+    "runtime_kernels.cpp": {
+      "packet44": "ff95284fda68e0097c35e7ee0b03851563b77cf935602b4e2ea0d5ba526f37f0"
+    },
+    "runtime_kernels.hpp": {
+      "packet44": "49e2a958a36a087b379b2e85d90ee34c63817659b31c617ced9e5854f7774501"
+    },
+    "seal.py": {
+      "packet44": "831346232991f2e8d4fc137dd17a0239ed28fc3ad91ef165503a1785813aae4d"
+    },
+    "seal_context.py": {
+      "packet44": "e04215cdd10dba791f4f7ab4d74168719a502b7a9a565f5aded0145bb1f3b5f1"
+    },
+    "single_device.cpp": {
+      "packet44": "4275f214b3727f5d23231b844992db35443446d004c0d34b5cc30b374a3fe11b"
+    },
+    "small_gemv.cpp": {
+      "packet44": "36f250c15ef6de5081f934bbb85daf7476c9b36efb70f0708ef0bba2b39123af"
+    },
+    "small_gemv.hpp": {
+      "packet44": "8da011c8025e8a3fec2c7d8e4e23eec08d212ad85be649ad0fc1009d75d4e872"
+    },
+    "small_gemv_fixture.cpp": {
+      "packet44": "eabb9be3ad02ffa3794a8d2591634c2f538e7cbd1ad99f05a2076c17b98c4338"
+    },
+    "small_gemv_fixture.hpp": {
+      "packet44": "8bd00ce4476cd9427c1f1bc9d222c3ee6ec66c41fb95d3fedbf663323a690180"
+    },
+    "specialised.hpp": {
+      "packet44": "0d7489d31fb869a49db3a7a365dbe78af52931c0e7d5cdf38ff05b01e594c126"
+    },
+    "specialised_submit.cpp": {
+      "packet44": "46f74d87620ff9f627a098905b8d6cfca7e2d2ebb3077a32ed906060442ade7d"
+    },
+    "specialised_submit.hpp": {
+      "packet44": "bfbff1b46cf52ef5dd07ab0ea78350295af8932d3d18379623ab0b95967b742a"
+    },
+    "storage.py": {
+      "packet44": "7285e6f08cb592f7ef5f85a599a62bffc74f64ce4c21d49bba31717b4992cbc5"
+    },
+    "submission_overlay.py": {
+      "packet44": "c5c5d24589c3311d48676b5932df0c2316b8f2891b9378910f1a7377bc6ec868"
+    },
+    "suite.py": {
+      "packet44": "ed127772210ddcef8d797aef422cbfb5ae5302210c3bc0aa510ecef5aa360dfb"
+    },
+    "suite_export.py": {
+      "packet44": "6c4b0a2a2d5778d81263c3101335eb35b1a389d79a4977217ce15ae3780c548f"
+    },
+    "suite_gates.py": {
+      "packet44": "d209c17d779c2e8710d8ac78a791552436da1084e2515f6f65bdf663504be17b"
+    },
+    "synthetic.hpp": {
+      "packet44": "0f3285642055d61ff84790f668b7e19fdf347b2c7875aed804a88db5f9c06f35"
+    },
+    "test_cleanup_paths.py": {
+      "packet44": "d3e2c988d384dc349b96dbbba797d5e755fa6e87307331ab01558c156505c9b1"
+    },
+    "test_controller_review.py": {
+      "packet44": "d794647d3ca3e40143f13288153ec16588832cf7c3a8ad698f45cf45e33f6661"
+    },
+    "test_draft_window_cleanup.py": {
+      "packet44": "fa46a1cc85bdb1b43f54e8217bb3d911388e2d7b9c63339ecfbcf2675ae06c34"
+    },
+    "test_failure_storage.py": {
+      "packet44": "d2bc95e6db229729949e696d6429616586a7a6dd4bb8e9e1712fc08a941735d2"
+    },
+    "test_k2_admission.py": {
+      "packet44": "3474170b4d2746faca9803617aa73608f48f05d4860e92e29feed78d384a6e78"
+    },
+    "test_k2_selection.py": {
+      "packet44": "afb6669afb518093ad9f1a4c5f57ae56cf318801047fd404cfa905de6729122b"
+    },
+    "test_mtp_controller.py": {
+      "packet44": "446fefdcef898d10629bff5698eb3bbdbc9b2238ab42f05ebfb50ca2be1d0dd3"
+    },
+    "test_p38_k2.py": {
+      "packet44": "be6a2902b448c721e7bbcb4cd902b391c55fdfcfe9b5620244300fd5e68932d9"
+    },
+    "test_receipt_metadata.py": {
+      "packet44": "b09e74107a178cb01111f4fd1a27588b440ef88da24841c097c7556f686b7316"
+    },
+    "test_retain_window.py": {
+      "packet44": "a452f368591e295b4c1eb1a7058d308ee5b0e5fde1cf0e6d6671e6ea0d00722e"
+    },
+    "test_seal_bootstrap.py": {
+      "packet44": "514a7192d35fe4015a45a23484acc8772809d30a4abf884588ef199ea5c7042c"
+    },
+    "test_state_machine.py": {
+      "packet44": "a92c0b8da6d974e3357f9211e513294eee15e0975e7ce48b40d331782c6b33d2"
+    },
+    "test_state_retention.py": {
+      "packet44": "3a5dbca0a17937139df29adfd4b0dd110e9dadd1d3f2e894545932218f9f4811"
+    },
+    "test_storage_race.py": {
+      "packet44": "4633a0f7df6a7e70c4ed416b38a13ba509b59f7cd4c72e06d5fa78b6d36474a6"
+    },
+    "test_submission_overlay.py": {
+      "packet44": "32ca9c17e17dc1b9bbd61780ebd6198a8e3783dd710e3329b3f6aae761479895"
+    },
+    "test_suite_compiler.py": {
+      "packet44": "73358d245bcb339fb4a9efadce522b8459d56b4cfd15b65e558a48b93a67c117"
+    },
+    "test_suite_export_retention.py": {
+      "packet44": "d53b93827ec7f5b1d583ef6b1886ce0e9d7ede940e3d8d40a2f1b1d28448c1e4"
+    },
+    "test_suite_long.py": {
+      "packet44": "0d9c7c631f7782f15fe7b3293547841b8b14e268c9d417a254f356212ed02d33"
+    },
+    "test_suite_warmup.py": {
+      "packet44": "7c0dd710ac4f7cca3f8fe1fae084636b8d7875bc7f2f5c434fafb51021960d8c"
+    },
+    "test_window.py": {
+      "packet44": "cb05ab154b11d516a763bd054fdbc6ced0aac030a963c04e42d5acc30e3c29ee"
+    },
+    "test_window_seal_admission.py": {
+      "packet44": "ab26efc28f2b0c9542c4a8645adf04b32fdfd74418c0bc84afad17e94ff4dd95"
+    },
+    "test_window_storage.py": {
+      "packet44": "ee3f366a8ccc8bf9336721c716a38b0110ab8a3fbc334315941bed834cdd5b1a"
+    },
+    "validation_gate.py": {
+      "packet44": "bd4fa79e0b8a0cbe03d8b2f79355f18e44ec8ab81bfcb9cfe556e9709a018fef"
+    },
+    "validation_mirror.py": {
+      "packet44": "1006456d47ac73d0425cf33e04e440e567959fe6783d8106d0c5ebcec65b2fde"
+    },
+    "window.py": {
+      "packet44": "f78c10c54349177ebeb480aa45daf5ffb4546a067610de8fbbe43d5567bb24d5"
+    },
+    "window_cpu_gate.py": {
+      "packet44": "219f065ae77f0306b603a2ac88bafde8b8b73acfe9f85d60423707eb6d86868b"
+    },
+    "window_safety.py": {
+      "packet44": "353ce418d0570d3b85d23dc63dc91f7e005e528e91057d7a7ee620d390d02264"
+    }
+  },
+  "packet44_commit_full": "421a4ab5029680c2f88c78c7c7fdb4a05d6fc6c4",
+  "packet40_commit_full": "50d9e00311a6bc8dcb43297f9d02ac7285e6e788",
+  "kernel_source_and_measurement_pins": [
+    {
+      "packet": "packet39-epilogues",
+      "commit": "321b2c2c64a21ce2a314b341e54b524dea90350b",
+      "git_tree": "2d476bcba0216785964d91f1e89b81fa3494c3e8",
+      "path": "experiments/own-xpu-runtime/stage2/packet39-epilogues",
+      "files": {
+        "case_runner.hpp": {
+          "sha256": "741ee238703a98980b2f7163ca1b5a02c2a7928ac2c883d0e91c02d95ddf63e8",
+          "git_blob": "aec12ba21e2610391a2100c1b5491de5ef6fec9d"
+        },
+        "cpu_gate.cpp": {
+          "sha256": "2bd1b2d8c7d125cd622308cb7a301e43a84c2455681d0a86f2d8ce8fceff4ddc",
+          "git_blob": "d86920434b15a1164279d2c31d2b3874a2247a58"
+        },
+        "fused.hpp": {
+          "sha256": "de5d1c2ca6fb1aaf9b67d219d30a6307edf83d50e3f9d4febc5a4eba04443432",
+          "git_blob": "f92d6f38fb6b04fbedb8a0cd48ce8273fcb4b546"
+        },
+        "fused_sycl.hpp": {
+          "sha256": "afa845da9a8bacb6266fe55d580c09b2c9349a5c0079c5650cba898a89cb35ce",
+          "git_blob": "0d7407ad1c626448162e368556e47aee198ca46c"
+        },
+        "g4_binding_gate.cpp": {
+          "sha256": "f6d5f788c16dd0d7b4351ff83111e51b8c0c8ba24a972e8e8bfd1b625b9f0bbd",
+          "git_blob": "5fc21a154d7ee69f12a8d29590faae673272995f"
+        },
+        "g4_fixture.hpp": {
+          "sha256": "0a7e8d1ef80924846d51098e34ede10d6b4532701bf065cdd049fb1874559913",
+          "git_blob": "bf5050fac088b9300194070d100b985816704a37"
+        },
+        "host_overlay.inc": {
+          "sha256": "98ae3e739d4b9f47e1868f63e9aa4bcfd4915757ee1a848393bfd53ce3462f2b",
+          "git_blob": "0d4290210a22412fdd7e0829557be1f6288f385a"
+        },
+        "k0.cpp": {
+          "sha256": "0b5e1fdb8b779958a4c399b421da1ab5f85de69d3f7948ee41a552b2e06b2385",
+          "git_blob": "09580d0e7d0f1e8d89fc0e7a19a30bddf6b2a73c"
+        },
+        "receipts-card3-20261012-g4/README.md": {
+          "sha256": "3d305a7ae550890c0ece2eac5ddf0f95b924a83cf94420129c90ae3fe1b22168",
+          "git_blob": "0849ac6046925a91137967340f4f21b3714a4aea"
+        },
+        "receipts-card3-20261012-g4/dispatch-measured.json": {
+          "sha256": "37e3e52708697141ffe5c7d520354ca0e97433388d25c5126bee429269e41a95",
+          "git_blob": "e1a1a519c2b44eb71ee89881fbba26276a44ac28"
+        },
+        "receipts-card3-20261012-g4/dispatch-selection.json": {
+          "sha256": "ab869c75a6feee934a2ef60bad51a6bc5b87f8dcadf1c64d1b33521a9452031e",
+          "git_blob": "7d6723e09a3a789a943691245cf266bd3d298728"
+        },
+        "receipts-card3-20261012-g4/receipt.json": {
+          "sha256": "8498a9c701ce0b417c2e5c670bf2b4ba536bd4f45754ba60d1f85b25c30574d8",
+          "git_blob": "5367ac0c359fbb91cd3ee610ee72d696344b07a0"
+        },
+        "runtime_baseline.hpp": {
+          "sha256": "c2c121fb048104c044ed0efc25d6ddec229d3cbac9fc512c4f110bd473b66b14",
+          "git_blob": "e2bff880180e0e2f98fedd657fa149176c125a40"
+        },
+        "runtime_bodies.hpp": {
+          "sha256": "d29272822353595cf2e053e73c08b022b267398c3a4f73fe478b4ab3489b6214",
+          "git_blob": "b29cded6f76b8a2c3b6bdc3ffb5d3ec0cdb23e74"
+        },
+        "timing.cpp": {
+          "sha256": "5d6ae23b038122ae91de7e761604411e990cf704e4cdd48aae040ab1f116c7ed",
+          "git_blob": "b15e12dddec44533ad75791329f0b3dc41687aa0"
+        }
+      }
+    },
+    {
+      "packet": "packet42-codegen2",
+      "commit": "321b2c2c64a21ce2a314b341e54b524dea90350b",
+      "git_tree": "614f9c1829b748ef8ef7e722dd0bf43ef1a9ccbd",
+      "path": "experiments/own-xpu-runtime/stage2/packet42-codegen2",
+      "files": {
+        "binding_negative.cpp": {
+          "sha256": "b38fd2ea9391f7b3eb156e21c0354b81d53b8684321c6d03bcebfe4632564573",
+          "git_blob": "c8f1c9ba28d7d87a8998922add8c2e5038b54829"
+        },
+        "compile_smoke.hpp": {
+          "sha256": "ef508c46c46d24bb26059ef437da87bfbc587135bc29e515443dcc824f495079",
+          "git_blob": "ca540ca59fda67a8297f8338eea1dac7d0c4d91f"
+        },
+        "expert_candidates.hpp": {
+          "sha256": "d8d09b28928b98ce2b09ef23dac3e35169710a576045102734e40efcaf41a008",
+          "git_blob": "36088720a06deb27b68934ead2c6438889456238"
+        },
+        "expert_cpu.cpp": {
+          "sha256": "36cf81e79ebd2fd1febc2c2e3070e54557c5defb9b14987d6ba3e8f75ff0aa4f",
+          "git_blob": "b5dd87826ccaf35bbd7aae233e9300478d336335"
+        },
+        "expert_submit.cpp": {
+          "sha256": "090f3423c28d40c7f25ad9ddc78d4f1553c4d650d61690fb127f7b9aa8ea9029",
+          "git_blob": "587c292317bdf9001eb15cbc961f6884a8ebee71"
+        },
+        "expert_submit.hpp": {
+          "sha256": "50bfbde5a8468a60db3f4b9f97177bb28921ac42149b90715c47f137ee06e5e9",
+          "git_blob": "04009b3c3d7afbca55f3713178d60f428f9fdedb"
+        },
+        "extras_core.hpp": {
+          "sha256": "041f30fe4249ae0fd1b635633fbf1bcff5e4110e77169f09e5880038899450ef",
+          "git_blob": "568d711bdadea7b6113a24ba722e8076c8106e31"
+        },
+        "extras_cpu.cpp": {
+          "sha256": "fabd59274115d0fa39afe81f33c94cc9f09d6006c3d900cbaea3a5eb53ce1c53",
+          "git_blob": "680af90c04f127e4e0310f3f03158966a74d490a"
+        },
+        "extras_incumbent.hpp": {
+          "sha256": "8286959f802180c26e29f106d06dd85fc9694ba5a03c9f42eacb5baa8723aca8",
+          "git_blob": "44d42c54641264deb98d700d77412d11091012dd"
+        },
+        "extras_native.hpp": {
+          "sha256": "094a051e482df96eecf541900341d357954d60ae1f6de8f8478befab8daca274",
+          "git_blob": "bd8f86d36b7c676d3e05b64a60d470a5fa5a284b"
+        },
+        "extras_timing.cpp": {
+          "sha256": "1aea8a58afe707dbfab4370ca477f8f1ff2a89f583cab7595fa68c41b23a5fc0",
+          "git_blob": "148033b8e64c9e2183a31095691edc0372a0e59c"
+        },
+        "gate_mode.hpp": {
+          "sha256": "2e74be6d6eb59f8069de764e6dff8ddfe4cd8be4b7de50dde6be369deb631030",
+          "git_blob": "d1bd95badabd5baf7492a18b8671ab43f834dcdc"
+        },
+        "gemv_main.cpp": {
+          "sha256": "d27ab28aee473093a8b7bba0a6a8fbd6f38950f2a5b9a55e6c6b49076b35903c",
+          "git_blob": "8c329e5272d7cb69095cc5db08379d3f1d662e28"
+        },
+        "launch_floor.cpp": {
+          "sha256": "c812ee22b83fb9e01fe5142c4a484744f74e18ee502d2d19387833bcf7f15cf9",
+          "git_blob": "88d6602e6ae01ee8c01a99401393e28d8fa5030a"
+        },
+        "launch_native.hpp": {
+          "sha256": "defd1b9cb5e173ce524078ed5735244d25e1ee59c3f359ba90cb896b39fc0567",
+          "git_blob": "2ef3360fe272174073803676cc8117bbc98bfaee"
+        },
+        "parallel.hpp": {
+          "sha256": "94e13105298711f01cb283a284806297e93f0f69302447c212392804bd85478a",
+          "git_blob": "7767f1b744d5311fa8369825c7c99b9399c74429"
+        },
+        "parallel_cpu.cpp": {
+          "sha256": "a2eaf69eb8969f6675b6c249b31bfbee73a512e3808ee6e42db381060e091c83",
+          "git_blob": "22170e01bce9a5ecd6a818771cb7c8cebbc0b0d2"
+        },
+        "parallel_gdn.inc": {
+          "sha256": "695c96a963151ae947892e7134edffde2c6149437f1451c19c27989191c8a07b",
+          "git_blob": "157c899b802f293ae58577b4c6ebcc74f93b8a81"
+        },
+        "parallel_native.cpp": {
+          "sha256": "a3ebbfc4e6f278b3fbea638a75cb57104da265b11eb1cc0f4bc68056efba698b",
+          "git_blob": "8ddac722d90c4fa9d85bf210c3e5f2af453a57e5"
+        },
+        "parallel_submit.cpp": {
+          "sha256": "8c7c25aa8451003f0a18bdb0930fb720d79d503c2af7ffa0e0ad213a49f1986b",
+          "git_blob": "398e77f65731802b3ec363be153b7ab3d39ee75c"
+        },
+        "receipts-card2-20261012/README.md": {
+          "sha256": "d4b9059b318f7dbff403fec5b1f55c9da2707c3ff840a032f98ed4014638d0db",
+          "git_blob": "94176583d19a3d9d2e4f18ca7ea6f33734d74105"
+        },
+        "receipts-card2-20261012/dispatch-measured.json": {
+          "sha256": "02fc6b94767261d09368541f713b3a14a00122bef487f9b19f428ca320d99435",
+          "git_blob": "f2ca08d9ae17d3350f8d0fdddb5572f9154e9a52"
+        },
+        "receipts-card2-20261012/table.md": {
+          "sha256": "bd2ff8b83383b354b29fe041ad7d6dbed9213c3a9017c5d579f0458107379125",
+          "git_blob": "d23adee85b9409993ca69b3cc776b9baf791b69f"
+        },
+        "route42.hpp": {
+          "sha256": "96a9c2809d8416bbd24c37fb89c101ca810221cdabe324ed36fc357486b1f51f",
+          "git_blob": "af309f631a0dc3a9c5247a085eb191333b7ff1dd"
+        },
+        "route42_cpu.cpp": {
+          "sha256": "142deed2b70610f58ae5dabecf5587b7da7c96eb74cd8f349f37243728bab22a",
+          "git_blob": "1fdb1d139eefdb9e1517144cc755e3b987c0e99e"
+        },
+        "route42_fixture.hpp": {
+          "sha256": "4ad5cfa9ff35663ea54fe0a14f69517ff6a251f54499403b979809dcb7e6c019",
+          "git_blob": "2ed45b689489587efc1100d31efe3d191e10c660"
+        },
+        "route42_native.cpp": {
+          "sha256": "cc091b0a06a989f37c54cd56353075f7f8f18e7d663ac29a5651de5f295b9c0e",
+          "git_blob": "e6c520a8ad07a63ed4f6e2d91c7a1f0c742f316c"
+        },
+        "route42_reference.hpp": {
+          "sha256": "327aae9adc0c288b3e11c4ba747dac95726e9489a1a7b30f5d27829fdde8c2f1",
+          "git_blob": "e41562ccaed681dc2d0cfc32179586777199b54d"
+        },
+        "route42_submit.cpp": {
+          "sha256": "96a1eac29ad37a1da75f20ec66e454448cc0ab958d659694c348cdbbe311de8d",
+          "git_blob": "8d06ad3ecb0fe092cfe09a48e91b0fbd9da7636f"
+        },
+        "route42_timing.cpp": {
+          "sha256": "fc27d0633d52815dbe54318cd84ee58f255bf441bb3d82fbf25a2fe051482834",
+          "git_blob": "81ede7eba30bc996f49c0f5a63723aac3578752d"
+        },
+        "stop.hpp": {
+          "sha256": "e8a2b146065d39f3b4ec576f81bad78b62d23ed77458130e8a82567ce971e69e",
+          "git_blob": "9cdc30709ec76c7286c8c16f508791bf84f27dd0"
+        },
+        "tiny_cooperative_core.hpp": {
+          "sha256": "b95248f22c2a312a1df84adc10d5f872a124f0a59c2a1d0f87e082c8cda0c167",
+          "git_blob": "e4196d8fdc91b17ce64e46b19a768ea2e2f04e38"
+        },
+        "tiny_core.hpp": {
+          "sha256": "c4abc1d2631169be29c04dc5644836c5585671fff8696cddddd565e2d2ef2d65",
+          "git_blob": "f0c472afeb2e26f72e75f8be6aec265f075e9833"
+        },
+        "tiny_cpu.cpp": {
+          "sha256": "6c0d8d8ab6d79c9f960f9507bc3fefe04d6e1ba92d220c8e397ff4b44928d019",
+          "git_blob": "159492c2f5ffb5540042a7d1110a447cc5f4ad41"
+        },
+        "tiny_fixture.hpp": {
+          "sha256": "24e31dbf1fa1b3d053332ed73a623be2cb6832b52d81a94aab48adff1a068015",
+          "git_blob": "3de371e32d6ad2a819904bc009a5ad3ce8b4fef8"
+        },
+        "tiny_native.hpp": {
+          "sha256": "ee40113da9f264f2ddd56d39b21494f56629ffc3f1f305bd052a0da0fafd73ca",
+          "git_blob": "0496f3acaeb18696cf4ad7a56189aee040ca0deb"
+        },
+        "tiny_timing.cpp": {
+          "sha256": "096ed8b35dd821bf037eb1d92daddd69961cd45f41837420a5c9b7b428fd47f3",
+          "git_blob": "1cf6296485c670f98d3481faf9d2d82aba87deba"
+        }
+      }
+    }
+  ]
+}

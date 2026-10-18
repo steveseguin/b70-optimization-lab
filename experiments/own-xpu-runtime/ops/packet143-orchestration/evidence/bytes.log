@@ -1,0 +1,83 @@
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+Waiting for compiler turn: [(-1, 'hold-lane-B')]
+GNU production--production--production--original 1 MATCH
+GNU production--production--production--original 2 MATCH
+GNU production--production--production--both 1 MATCH
+GNU production--production--production--both 2 MATCH
+GNU production--production--order600--original 1 MATCH
+GNU production--production--order600--original 2 MATCH
+GNU production--production--order600--both 1 MATCH
+GNU production--production--order600--both 2 MATCH
+GNU production--order600--production--original 1 MATCH
+GNU production--order600--production--original 2 MATCH
+GNU production--order600--production--both 1 MATCH
+GNU production--order600--production--both 2 MATCH
+GNU production--order600--order600--original 1 MATCH
+GNU production--order600--order600--original 2 MATCH
+GNU production--order600--order600--both 1 MATCH
+GNU production--order600--order600--both 2 MATCH
+GNU order600--production--production--original 1 MATCH
+GNU order600--production--production--original 2 MATCH
+GNU order600--production--production--both 1 MATCH
+GNU order600--production--production--both 2 MATCH
+GNU order600--production--order600--original 1 MATCH
+GNU order600--production--order600--original 2 MATCH
+GNU order600--production--order600--both 1 MATCH
+GNU order600--production--order600--both 2 MATCH
+GNU order600--order600--production--original 1 MATCH
+GNU order600--order600--production--original 2 MATCH
+GNU order600--order600--production--both 1 MATCH
+GNU order600--order600--production--both 2 MATCH
+GNU order600--order600--order600--original 1 MATCH
+GNU order600--order600--order600--original 2 MATCH
+GNU order600--order600--order600--both 1 MATCH
+GNU order600--order600--order600--both 2 MATCH
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet143-record-bundle/byte_gate143.py", line 58, in <module>
+    resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+                                                                 ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet143-record-bundle/byte_gate143.py", line 50, in main
+    identity,row=run_one(selection,binary,repeat)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet143-record-bundle/byte_gate143.py", line 31, in run_one
+    with patch.object(pipeline,'P',adapter):result=pipeline.run(args)
+                                                   ^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet143-record-bundle/pipeline.py", line 527, in run
+    if failure:raise failure
+               ^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet143-record-bundle/pipeline.py", line 467, in run
+    transport=Transport.__new__(Transport);transport.__init__(args,args.output,environment,check_all,launch_hook)
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet143-record-bundle/pipeline.py", line 321, in __init__
+    for rank in range(2):self.receive(rank,args.seconds,ready=True)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet143-record-bundle/pipeline.py", line 369, in receive
+    values=REPLY.unpack(self.io(rank,timeout=timeout))
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet143-record-bundle/pipeline.py", line 365, in io
+    raise ValueError("rank receive EOF")
+ValueError: rank receive EOF

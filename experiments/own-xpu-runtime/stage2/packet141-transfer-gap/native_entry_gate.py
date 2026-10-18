@@ -10,7 +10,7 @@ from build_engine import P, B, sha, save, limits
 
 def main():
     limits()
-    evidence = P / 'evidence/repair141b'
+    evidence = P / 'evidence/repair141c'
     receipt = json.loads((P / 'build-receipt.json').read_text())
     cmd = next(r['command'] for r in receipt['commands'] if r['name'] == 'device-entry')
     assert '-fsycl' in cmd and not any('OWN_RT_HOST_ONLY' in x for x in cmd)

@@ -100,7 +100,7 @@ def sealed(args):
     if row.get('schema') == 'own-runtime.screen.cpu-seal.v1':
         timing_modes = row.get('timing_modes', ['token'])
     require(args.timing in timing_modes, 'timing mode unsupported by sealed lineage')
-    from placement import admit
+    from p142_v5_placement import admit
     placement = admit(root, row, receipt, dispatch, getattr(args, 'placement', '1-split23'))
     return dict(placement=placement, timing=args.timing, timing_modes=timing_modes, lineage=str(root), seal=str(receipt), seal_sha256=sha(receipt),
                 binary=str(binary), binary_sha256=sha(binary), dispatch=str(dispatch),

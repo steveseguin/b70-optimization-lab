@@ -1,0 +1,116 @@
+{
+  "passed": false,
+  "packet_plan_passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "model_reads": false,
+  "operational_admission_synthetic": true,
+  "retained_checks": [
+    "projection table hash",
+    "complete oracle payload validation"
+  ],
+  "production_checks_unchanged": true,
+  "proposals": [
+    {
+      "name": "packet137b-smoke-B",
+      "lane": "B",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/bracket_job.py",
+        "--kind",
+        "smoke",
+        "--lane",
+        "B",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/evidence/device-smoke-137b-B",
+        "--fault-review",
+        "{REVIEW}",
+        "--authorized-device-window"
+      ],
+      "env_extra": {},
+      "review": "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/fault_review.py",
+      "plan": {
+        "host_required_available_bytes": 105424393216,
+        "expected_seconds": [
+          240,
+          360
+        ],
+        "watchdog_seconds": 4800
+      }
+    },
+    {
+      "name": "packet137b-bracket-B",
+      "lane": "B",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/bracket_job.py",
+        "--kind",
+        "bracket",
+        "--lane",
+        "B",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/evidence/device-v5-137b-B",
+        "--fault-review",
+        "{REVIEW}",
+        "--authorized-device-window"
+      ],
+      "env_extra": {},
+      "review": "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/fault_review.py",
+      "plan": {
+        "host_required_available_bytes": 105424393216,
+        "expected_seconds": [
+          720,
+          1200
+        ],
+        "watchdog_seconds": 4800
+      },
+      "depends_on": [
+        "packet137b-smoke-B"
+      ]
+    }
+  ],
+  "plans": [
+    {
+      "name": "packet137b-smoke-B",
+      "plan": "refused",
+      "pin_error_count": 4578,
+      "first_errors": [
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/parent-snapshot/build-device-receipt.json)",
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/parent-snapshot/build-device-receipt.json)",
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/parent-snapshot/build-device-receipt.json)",
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/driver/window_driver.py (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/placement-validation/wrapper-seal.json)",
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/disk-cleanup-20261017-1510/archives/packet21-fused--fusion-fixtures.tar.gz (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/input-fixtures.json)",
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/parent-snapshot/build-device-receipt.json)",
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/parent-snapshot/build-device-receipt.json)",
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/parent-snapshot/build-device-receipt.json)"
+      ],
+      "refusal": {
+        "path": "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/evidence/report137b-pin-refusal-packet137b-smoke-B.json.gz",
+        "sha256": "21438bfc399e2778a4facfdba5fb72381fb1c5028c8bafd7b1935d8752d38ace"
+      },
+      "packet_plan_passed": true
+    },
+    {
+      "name": "packet137b-bracket-B",
+      "plan": "refused",
+      "pin_error_count": 4578,
+      "first_errors": [
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/mock_device.hpp (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/parent-snapshot/build-device-receipt.json)",
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/owner.hpp (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/parent-snapshot/build-device-receipt.json)",
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet3-prep/src/sycl_operation.hpp (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/parent-snapshot/build-device-receipt.json)",
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/driver/window_driver.py (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/v5/placement-validation/wrapper-seal.json)",
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/disk-cleanup-20261017-1510/archives/packet21-fused--fusion-fixtures.tar.gz (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/input-fixtures.json)",
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/expanded.hpp (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/parent-snapshot/build-device-receipt.json)",
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.cpp (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/parent-snapshot/build-device-receipt.json)",
+        "cross-packet mutable pin /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet10-kopt5/kernels.hpp (sealed by /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet137-token-input/parent-snapshot/build-device-receipt.json)"
+      ],
+      "refusal": {
+        "path": "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/evidence/report137b-pin-refusal-packet137b-bracket-B.json.gz",
+        "sha256": "21438bfc399e2778a4facfdba5fb72381fb1c5028c8bafd7b1935d8752d38ace"
+      },
+      "packet_plan_passed": true
+    }
+  ]
+}

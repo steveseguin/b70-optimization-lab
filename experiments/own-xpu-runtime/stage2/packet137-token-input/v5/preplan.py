@@ -1,6 +1,6 @@
 """Non-circular pre-plan prerequisites; queue success/failure is sealed afterward."""
 from common import HERE,ROOT,read,require,verify_map,sha
-GATES=('argument-gate','legacy-windows','all-windows','worker-gate','launch-limits')
+GATES=('argument-gate','legacy-windows','all-windows','worker-gate','launch-limits','report137b-gate')
 def verify():
  for name in GATES:
   row=read(HERE/'evidence'/(name+'.json'))

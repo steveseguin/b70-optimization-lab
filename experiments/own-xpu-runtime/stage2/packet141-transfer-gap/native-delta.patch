@@ -38,10 +38,13 @@
 -    if(normfuse)require(!a.mini&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&(a.rank==0||a.rank==1)&&a.draft_rank==1&&a.target_split==0&&a.context==4096&&!a.legacy,"p94 fusion requires sealed 24/24 rank1-draft resident r5 parallel context4096 prepared path");
 -    if(head_choice()!="production")require(!a.mini&&!a.legacy&&a.memory=="resident"&&a.gemv=="r5"&&a.nongemv=="parallel"&&a.context==4096&&a.draft_rank==1&&a.target_split==0&&sealed_selection.choices.at("packed_dense")=="production","p93 packed head requires sealed resident r5 parallel 4K rank1 draft 24/24");
 +    p141_validate_selection(a,sealed_selection);
-@@ -1654 +1662 @@
+@@ -1653,2 +1661,3 @@
+-#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/p105_runtime.hpp"
 -#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/rank.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/build/cow/p105_runtime.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/probe_dispatch.hpp"
 +#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/build/cow/rank.hpp"
-@@ -1691,0 +1700,28 @@
+@@ -1691,0 +1701,28 @@
 +// CPU-only entry into the real device binary. No model, IPC, or SYCL API calls.
 +// This returns before the ordinary output creation and run_rank boundary.
 +#include <dlfcn.h>
@@ -70,7 +73,7 @@
 +#endif
 +}
 +
-@@ -1719,0 +1756 @@
+@@ -1719,0 +1757 @@
 +    if(a.p141_cpu_entry_gate)return p141_cpu_entry(a);
 --- parent/rank.hpp
 +++ packet141/rank.hpp
@@ -78,7 +81,7 @@
 -#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/request_reset.hpp"
 +#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet141-transfer-gap/build/cow/request_reset.hpp"
 @@ -315,0 +316 @@
-+   else if(r.op==13){require(a.rank==0&&!c.pending,"p141 unresolved candidate/rank");image.boundary();engine->p141_probe(r.token,r.position);}
++   else if(r.op==13){require(a.rank==0&&!c.pending,"p141 unresolved candidate/rank");image.boundary();p141_run_probe(*engine,head_runtime.get(),r.token,r.position);}
 @@ -329 +330 @@
 -   if(r.op==finish){if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");image.boundary();if(provider)provider->dump_all_state(engine->a.output/"draft-final-state");break;}
 +   if(r.op==finish){if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");image.boundary();/* p141: no full-state file output. */break;}
@@ -89,3 +92,19 @@
 @@ -15 +15 @@
 - state_dump(e,2147483647);request_state_inventory(e);if(provider)provider->dump_all_state(e.a.output/"draft-final-state");
 + // p141: omit full-state files; allocation reset and arithmetic unchanged.
+--- parent/p105_runtime.hpp
++++ packet141/p105_runtime.hpp
+@@ -19,0 +20,8 @@
++   p141_prepare_suffix();
++  }else{
++   hidden=e.buffers[0].at("final.mix").id;logits=e.buffers[0].at("logits").id;
++   index=e.buffers[0].at("next_token").id;error=e.buffers[0].at("error").id;
++  }
++ }
++ void p141_prepare_suffix(){
++  require(e.a.rank==0,"p141 suffix refresh rank");e.drain();suffix_commands.clear();
+@@ -26,4 +33,0 @@
+-  }else{
+-   hidden=e.buffers[0].at("final.mix").id;logits=e.buffers[0].at("logits").id;
+-   index=e.buffers[0].at("next_token").id;error=e.buffers[0].at("error").id;
+-  }

@@ -154,3 +154,68 @@ promotion changed. The preparation finished within the 2.5-hour time box.
 
 [CPU preparation closeout](../experiments/own-xpu-runtime/stage2/packet137-token-input/CPU-PREPARATION-CLOSEOUT.md)
 links the retained proofs and the conditions for continuing.
+
+## Packet137b — report import repair, October 18
+
+The smoke finished its device work and exact checks, then failed while writing
+the report. Its original receipts, including the report failure and the
+recorded fault count of two, remain untouched. No v5 bracket result is claimed.
+
+The cause was `v5/cpu_seal.py:oracle()`: it left the packet root first in
+`sys.path`. The later `from compare import finish_bracket` therefore imported
+the historical root `compare.py`, which has no such function. The oracle
+helper now restores the path on both success and failure. The active report
+module is uniquely named `packet137_report.py`. The shared CPU report step
+dispatches smoke directly to `finish_smoke`; only a five-view bracket calls
+`finish_bracket`. The bracket's smoke prerequisite now names the fresh 137b
+smoke output.
+
+The report gate passes both complete report paths using synthetic evidence
+through the real `screen.report_step` entry. It reproduces the exact import
+failure in both old-code paths from commit `981a673c8`, even with the wrong
+`compare` already cached. It refuses corrupted target tokens and asserts that
+smoke cannot enter bracket finishing. Fifteen policy/timing tests also pass;
+their process peaked at 32,612 KiB RSS. This work used nice 19, CPUs
+8–15/24–31, Python `-B`, closed stdin and a 2 GiB address-space limit.
+No model data, GPU, service, sudo or host setting was used.
+
+The whole packet Python tree was scanned. Nine other duplicate module names
+remain: `protocol_gate`, `build_engine`, `chain_devices`, `queue_plan`,
+`drain_gate`, `placement`, `lane_admission`, `full_shape` and `exec_limits`.
+The detailed import census is retained in
+`v5/evidence/report137b-collision-audit.json`. Restoring the oracle helper's
+search path removes the identified cause for late imports; historical entries
+remain historical. The active report no longer uses an ambiguous module name.
+
+The minimal reseal retains all original affected receipts in a verified
+compressed snapshot. It changes report dependencies only; no native binary,
+table, numerical result or device receipt was rebuilt or replaced. The old
+queue test's stale shared-source pin now points to an exact local snapshot
+from `981a673c8`, verified against its original SHA-256. No shared file was
+edited or repinned to new bytes.
+
+Fresh B proposals name `packet137b-smoke-B` / `device-smoke-137b-B` and
+`packet137b-bracket-B` / `device-v5-137b-B`. The latter depends on the former.
+Both packet plan paths pass in a model-free rehearsal: full-table rehashing
+and complete-oracle payload admission use retained receipts in that rehearsal
+only. Actual device admission still performs the original checks.
+
+**The current real queue planner refuses both proposals.** Its new pin guard
+finds 4,578 inherited pin errors, including mutable sources in other packet
+trees. Full refusal receipts are compressed under `v5/evidence/`; the compact
+planning report is `v5/evidence/report137b-plans.json`. This was not bypassed
+or relabeled as a queue pass. Repairing that inherited closure would exceed
+the authorized minimal report reseal. Overall qualification and the final
+`READY-FOR-DEVICE.json` explicitly remain false, while report repair is marked
+passed. The two proposals were rewritten only after the temporary-copy
+rehearsal and remain unqueued. The live queue and all other packet trees are
+untouched.
+
+Packet137 stays deferred. Reopen only stacked with another measured two-card
+gain of at least 1.5%, after resolving the inherited pin closure and passing
+the current queue guard. No speed gain or new device qualification is claimed.
+
+Pull refused because unrelated orchestration files were dirty; fetch confirmed
+HEAD equaled origin/main at `4918800df49f7ff3cadcc7f8975e5758903351bd` before
+editing. Only the packet137 repair, two allowed proposals and this note are
+included in the focused commit.

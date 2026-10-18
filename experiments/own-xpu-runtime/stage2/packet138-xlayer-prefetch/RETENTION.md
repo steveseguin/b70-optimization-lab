@@ -10,6 +10,17 @@ are in the tracked `evidence/capture-inputs.json`; that manifest does not replac
 the binary bytes. The coordinator completed the capture on October 18. A copied oracle
 folder is not acceptable: preserve the original authority symlink/binding.
 
+The [disk7 cleanup record](../DISK-CLEANUP-20261018.md#disk7--verified-archive-pass-2026-10-18)
+tracks the verified archive of selected closed capture/build files at
+`/mnt/raid-models/own-xpu-runtime-archive/disk7-20261018/packet138-xlayer-prefetch-closed-bulk.tar.gz`.
+Before rerunning `router_replay.py` or a historical build, verify the adjacent
+archive SHA-256, extract `payload/` into scratch space, and verify every extracted
+file against `.disk7/manifest.json`. Restore only its enumerated paths under the
+manifest's original root, preserving existing files and links. The pinned
+`evidence/capture-B/run/incident-retrospective/rank0/capture.bin` stays on root;
+all capture JSON, compressed analysis JSON, notes and sources stay too. The
+archive receipt and cleanup record distinguish completed moves from plans.
+
 Retain `evidence/predictions.json.gz` (3,960,231 bytes, above the 1 MiB review
 threshold) in Git. It contains the real route truth and all top-16 predictions
 for every registered predictor, prompt, token and eligible layer. `simulate.py`

@@ -1,0 +1,92 @@
+{
+  "schema": "packet142.preregistered-class-layout.v1",
+  "baseline": "packet136 bundle8",
+  "arithmetic": "iq3-p49-split32-v1",
+  "kv_dtype": "BF16",
+  "device_executed": false,
+  "queued": false,
+  "class_layout_choices": [
+    "production",
+    "attention-order600",
+    "expert-gate-up-order600",
+    "hc-gate-low-order600"
+  ],
+  "per_rank_copy_budget_bytes": 629145600,
+  "bank_creation": "load time only, 32 MiB bounded copies, complete consumer tuples in plan order",
+  "switch": "existing bindings only; six bank captures rebuilt; complete request reset",
+  "physical_adjacency_guaranteed": false,
+  "coverage": "class prefix, not complete class",
+  "packet141_trigger": {
+    "required_valid_verdict": true,
+    "cold_over_warm_min": 1.3,
+    "class_ms_per_half_min": 0.5,
+    "close_ratio_max": 1.15,
+    "intermediate": "inconclusive; do not queue automatically",
+    "observer_and_natural_sequence_checks": "must satisfy packet141 preregistration"
+  },
+  "class_map": {
+    "attention-order600": {
+      "packet141_class": "attention",
+      "subset": "weighted GDN/QSA attention projections only"
+    },
+    "expert-gate-up-order600": {
+      "packet141_class": "MoE gate/up",
+      "subset": "routed expert gate/up; unchanged E1 halfcache rows; no tile transpose"
+    },
+    "hc-gate-low-order600": {
+      "packet141_class": "HC",
+      "subset": "hc.a.gate, hc.a.low, hc.f.gate, hc.f.low only"
+    }
+  },
+  "proposal": {
+    "lane": "B",
+    "smoke": {
+      "prompts": 12,
+      "max_new": 64,
+      "incident64": true,
+      "expected_seconds": [
+        240,
+        360
+      ]
+    },
+    "bracket": {
+      "model_loads": 1,
+      "views": [
+        "production",
+        "candidate",
+        "production",
+        "candidate",
+        "production"
+      ],
+      "prompts_per_view": 12,
+      "max_new": 128,
+      "incident64_per_view": true,
+      "expected_seconds": [
+        720,
+        1200
+      ]
+    },
+    "watchdog_seconds": 4800,
+    "minimum_watchdog_multiple": 4
+  },
+  "screen_pass": {
+    "exact_oracle": true,
+    "cached_tokens": 0,
+    "unchanged_acceptance_counts": true,
+    "max_control_drift_percent": 3,
+    "both_candidates_gain_over_every_control_percent_min": 0.5
+  },
+  "promotion": {
+    "eligible": false,
+    "strict512": false,
+    "fresh_load_determinism_pending": true
+  },
+  "exclusions": [
+    "packet104/104b gate/up tile16",
+    "changed arithmetic or reductions",
+    "prompt/KV/response reuse",
+    "compressed KV",
+    "new quantization",
+    "device work during preparation"
+  ]
+}

@@ -125,3 +125,73 @@ checks; this CPU repair supplies no timing result or new model speed claim.
 
 Repair evidence: `stage2/packet141-transfer-gap/evidence/repair141b/`.
 Original attempt: `stage2/packet141-transfer-gap/evidence/probe-B/`.
+
+## Packet141c — prepared generation repair, October 18
+
+Started 20:02 UTC; second and last repair, 40-minute limit. Main was already
+equal to origin/main after fetch; pull --rebase refused the unrelated dirty
+orchestration files. Those files and every other packet stay untouched.
+
+The failure is after the diagnostic arms, not during warm replay. The retained
+141b attempt has `p141-complete.json`, all 16 half rows and four controls.
+`p141_probe` then releases its touch sink and eviction buffer. `Arena::release`
+advances the whole Device generation, including prepared commands for unrelated
+live model allocations. `request_reset` changes contents but deliberately does
+not re-prepare. The next prepared model launch therefore raises `stale prepared
+launch`; rank1 reports the peer failure. The final eight-token oracle never
+completed, so these raw events are not a qualified timing result. The supplied
+fault count stayed at two; this CPU repair does not claim a new device health check.
+
+`probe_lifetime.hpp` now calls the production `prepare_commands` after the two
+releases, visiting all six recurrent-bank pairs through the production rotation
+and swap methods. The traversal preserves each pair's context extent and returns
+to the original active/spare pair and parity. It changes no model buffer contents,
+allocation sizes, kernel arithmetic, weight bytes, selection or arm order. The
+owner generation check remains strict; no command generation is patched by hand.
+
+Read-only review while the GPU timing window ran found a second rank0 cache:
+the split output head's suffix commands. Shared native/CPU dispatch now refreshes
+that cache as well, using its original constructor capture extracted into a
+reusable method in the generated private header. The CPU gate compares its
+binding bytes and calls its real mailbox service after reset. The draft belongs
+to rank1, whose generation did not change; speculative snapshots capture fresh
+commands per copy. The intermediate bank-only pass is retained as development
+evidence and is not final admission.
+
+The CPU gate compiles the real Engine and owner bookkeeping with address-token
+device storage, tiny payload stand-ins and synthetic event clocks. It executes
+the actual `probe.hpp` arm loop, its cleanup, the real request reset and model
+continuation. It then visits all six bank pairs. The archived old probe must
+fail specifically at post-reset enqueue; the repaired probe must pass with
+identical mandatory allocation/pointer argument blocks across all six caches.
+This tests bookkeeping, not numerical device outputs. A preliminary optional
+scalar audit stopped on an operation the inherited scalar serializer does not
+cover; that development log is retained. The gate does not expand that serializer
+or substitute a numerical quality oracle.
+
+The two engine builds, both real native entry paths, six parser refusals, both
+early-error logs, the two launch-argument interceptions, 28 Python checks and
+15 inherited prepared-invalidation checks pass. The final sequence gate rejects
+the old probe exactly at post-reset enqueue and passes the repaired 16 arms,
+four controls, all six bank continuations and split-head service. Binding bytes
+are unchanged, including a noninitial bank/parity and distinct context buckets.
+Compilation and mock sequence execution use `ops/compile_turn.py`; they waited
+for the protected one-card window to finish before reading full-shape metadata.
+No model payload was read. Peak compiler child RSS was 730,588 KiB; the sequence
+gate peaked at 719,824 KiB. Physical build files total 199,057,290 bytes.
+
+Final seal and temporary lane-B queue plan pass. The historical failure manifest
+is byte-verified gzip so the pin reader cannot mistake old run metadata for
+current executable dependencies. All active source pins stay under packet141
+apart from the existing immutable parent objects and explicit oracle authority.
+The original allocation admission remains valid: allocation logic and sizes are
+unchanged. Numerical model outputs and a complete qualified timing result still
+require the coordinator's fresh device attempt; none is claimed here.
+
+The fresh proposal is `packet141c-probe-B`, service
+`screen-packet141c-probe-B.service`, output `evidence/probe-B-repair141c/`.
+It is a proposal only. The old readiness marker is withdrawn. The failed 141b
+tree is preserved byte-for-byte and bound by
+`evidence/repair141c/failed-attempt-manifest.json.gz`; previous build, seal,
+readiness, proposal and probe source are preserved in `prior-metadata.json.gz`.
+No GPU, service, live queue, sudo or host setting is changed by this repair.

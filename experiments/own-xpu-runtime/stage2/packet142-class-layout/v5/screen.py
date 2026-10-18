@@ -1,12 +1,12 @@
-from exec_limits import install as _install_exec_limits
+from p142_v5_exec_limits import install as _install_exec_limits
 _install_exec_limits()
 #!/usr/bin/env python3
 """Coordinator-only diagnostic screen. --plan is CPU-only and never opens a device."""
 import argparse
 import fcntl
-from lane_admission import Reservation, atomic_json, admission_scope
-from chain_devices import process_identity, admit_clients
-from drain_gate import DEFAULT_DRAIN_ROOT, screen_teardown_admit
+from p142_v5_lane_admission import Reservation, atomic_json, admission_scope
+from p142_v5_chain_devices import process_identity, admit_clients
+from p142_v5_drain_gate import DEFAULT_DRAIN_ROOT, screen_teardown_admit
 import json
 import os
 from pathlib import Path
@@ -250,21 +250,7 @@ def screen_main(argv=None, *, release=None):
             record.update(device_complete=True, lease_released=True)
             atomic_json(args.output / 'lane-coordination.json', coordination)
             persist()
-            proof = read(args.output / 'run/report-inputs.json')
-            require(proof.get('passed') is True and proof.get('device_isolation', {}).get('passed') is True,
-                    'screen exactness/isolation unproven')
-            require(proof['lane'] == args.lane and len(proof['requests']) == 12
-                    and proof['incident64'].get('passed') is True
-                    and all(r.get('passed') is True and r.get('exact_oracle') is True for r in proof['requests']),
-                    'screen quality incomplete')
-            result = summary(proof['requests'], proof['incident64'], args.profile)
-            result.update(placement=proof['placement'], lane=args.lane, conditions=LANES[args.lane],
-                          timing=identity['timing'], device_isolation=proof['device_isolation'])
-            save(args.output / 'run/summary.json', result)
-            save(args.output / 'summary.json', label(result))
-            if identity.get('bracket'):
-                from compare import finish_bracket
-                finish_bracket(args.output, record, identity, coordination)
+            report_completed(args.output, record, identity, coordination)
             record.update(passed=True, finished_utc_ns=time.time_ns(),
                           elapsed_seconds=(time.time_ns()-record['started_utc_ns'])/1e9,
                           files={str(p.relative_to(args.output)):sha(p) for p in args.output.rglob('*')
@@ -291,6 +277,26 @@ def screen_main(argv=None, *, release=None):
             signal.signal(s, handler)
 
 
+
+
+def report_completed(output, record, identity, coordination):
+    """CPU report shared by the real screen entry and retained-evidence recovery."""
+    proof = read(output / 'run/report-inputs.json')
+    require(proof.get('passed') is True and proof.get('device_isolation', {}).get('passed') is True,
+            'screen exactness/isolation unproven')
+    require(proof['lane'] == identity['lane'] and len(proof['requests']) == 12
+            and proof['incident64'].get('passed') is True
+            and all(r.get('passed') is True and r.get('exact_oracle') is True for r in proof['requests']),
+            'screen quality incomplete')
+    result = summary(proof['requests'], proof['incident64'], identity['profile'])
+    result.update(placement=proof['placement'], lane=identity['lane'], conditions=LANES[identity['lane']],
+                  timing=identity['timing'], device_isolation=proof['device_isolation'])
+    save(output / 'run/summary.json', result)
+    save(output / 'summary.json', label(result))
+    if identity.get('bracket'):
+        from p142_v5_compare import finish_bracket
+        finish_bracket(output, record, identity, coordination)
+    return read(output / 'bracket-summary.json')
 
 def main(argv=None):
     args = parser().parse_args(argv)

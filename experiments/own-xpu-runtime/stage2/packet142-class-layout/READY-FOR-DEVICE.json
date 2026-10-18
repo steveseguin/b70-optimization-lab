@@ -1,0 +1,279 @@
+{
+  "schema": "packet142c.ready-for-device.v1",
+  "passed": true,
+  "commit": "881e7de43c0c9f04e5f18bb41a072e8b1910c6aa",
+  "created_utc": "2026-10-18T20:50:48.559369+00:00",
+  "host": "steve-b70s",
+  "device_executed": false,
+  "queued": false,
+  "device_quality_pending": true,
+  "device_performance_pending": true,
+  "record_unchanged": 58.798,
+  "arithmetic": "iq3-p49-split32-v1",
+  "kv_dtype": "BF16",
+  "native_implementation": "same-packet qualified native sources and binaries; optional extra early refusal patch deferred",
+  "cpu_seal": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/cpu-seal.json",
+  "cpu_seal_sha256": "00eb55efabc3f47e0c99bc05a50894a986dea7b75a60369f0f44d5c4e9afddcf",
+  "cpu_gate_sha256": {
+    "build": "229def9fb3eaa09db9a5189815c5e6da0fea356619514353c795c7fe7a283e06",
+    "full-shape": "59cd08e1fa696d30bde20f773470e1072deca94333f27518f4f144c956d8381c",
+    "bytes": "952b79b61b3e0acbb89bd36ebb3adf756bf95f048175625043638ca76b658168",
+    "exec-limits": "15a5603aacd287fe43452ace23b8e9032967ce574283f70797306f1052f581f1",
+    "safety": "807408352d6e10583e4a18dab7d931a5a838a3d57f83143a82de91151c88bc97",
+    "submission-rehearsal": "b3947e9a6c611707f46414eda1f0ac5142f1910cc0eb15204791983aa3490ace",
+    "admission": "f1666385fcfe7353cca21f3c56dc8e26f9495ac02e0df24ee385dbfca60d9440",
+    "entry-gate": "c55386073bdc473ae36473a9ff50865cc5b87c353151ab77441aa858446d50f9",
+    "launch-limits": "57ff64bc1a2bdd00aa9b85db62b08e3c4dc8a8142a9022477838a46081641e4d",
+    "worker-gate": "2d2fb9096760e578e1f338011c1559d8f50f5a63fc2125079f2ec91d80fd96c3",
+    "queue-plan": "0d3f9ad4c2f192f9809adbe61418ec0ee2c15704d7b81bad17c38c107a8fdd35",
+    "pin-guard": "75a4ee54184a605dc1a3c6b2a144a06548665ea086189e8ae1b629a53ab72356",
+    "report-gate-142c": "5004150d685951378dd51569d703976b6033eed8970c9a493250ed7fd7e1c800"
+  },
+  "gates": {
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/build.json": "229def9fb3eaa09db9a5189815c5e6da0fea356619514353c795c7fe7a283e06",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/full-shape.json": "59cd08e1fa696d30bde20f773470e1072deca94333f27518f4f144c956d8381c",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/bytes.json": "952b79b61b3e0acbb89bd36ebb3adf756bf95f048175625043638ca76b658168",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/exec-limits.json": "15a5603aacd287fe43452ace23b8e9032967ce574283f70797306f1052f581f1",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/safety.json": "807408352d6e10583e4a18dab7d931a5a838a3d57f83143a82de91151c88bc97",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/submission-rehearsal.json": "b3947e9a6c611707f46414eda1f0ac5142f1910cc0eb15204791983aa3490ace",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/admission.json": "f1666385fcfe7353cca21f3c56dc8e26f9495ac02e0df24ee385dbfca60d9440",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/entry-gate.json": "c55386073bdc473ae36473a9ff50865cc5b87c353151ab77441aa858446d50f9",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/launch-limits.json": "57ff64bc1a2bdd00aa9b85db62b08e3c4dc8a8142a9022477838a46081641e4d",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/worker-gate.json": "2d2fb9096760e578e1f338011c1559d8f50f5a63fc2125079f2ec91d80fd96c3",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/queue-plan.json": "0d3f9ad4c2f192f9809adbe61418ec0ee2c15704d7b81bad17c38c107a8fdd35",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/pin-guard.json": "75a4ee54184a605dc1a3c6b2a144a06548665ea086189e8ae1b629a53ab72356",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/report-gate-142c.json": "5004150d685951378dd51569d703976b6033eed8970c9a493250ed7fd7e1c800",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/rehearse-142c-proposed-p142-attention-order600-smoke-B.json": "91873481b008fd04235993e04134e45a084c308768ade73b6f470f103407066c",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/rehearse-142c-proposed-p142-attention-order600-v5-B.json": "bef0283fbdf1db3522de32b39eb3188f052be54ca95f6092f7efe97e5fe16f98",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/rehearse-142c-proposed-p142-expert-gate-up-order600-smoke-B.json": "15dec7b088f2302dda0c839964c36c16edb05b719450bbcc39ddb4d0efbeb33d",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/rehearse-142c-proposed-p142-expert-gate-up-order600-v5-B.json": "e17dd4b1bd4b0768d25a3a9d288b92cf9eb8492164300065c49b3ec0b90ef27e",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/rehearse-142c-proposed-p142-hc-gate-low-order600-smoke-B.json": "edaf481d8522aa2346b2cd510757411ab98b1e9bb7f08127e1294048ca686b55",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/rehearse-142c-proposed-p142-hc-gate-low-order600-v5-B.json": "20b72b262669fc10a3735209c06963f0b1b854d7e9eb27d4d57b2f05e4a07070",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/attention-report-142c.json.gz": "d7343119b8b0e7b04eb703c2cfb41da172850fdb41c3fea1f138e7e6a5ad1432",
+    "experiments/own-xpu-runtime/stage2/packet142-class-layout/lineage-inputs/pre-142c.json.gz": "451c892fca304fb70c56bc70d3be69c52ec0ce961c2495159fa313ecc1de57f6"
+  },
+  "proposals": [
+    {
+      "proposal_name": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p142-attention-order600-smoke-B.txt",
+      "sha256": "6ced9ed848c957ec7cb614f08f703eae88ddbcda71a13d2f770f6db4822cc08a",
+      "log": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/plan-attention-order600-smoke.log",
+      "log_sha256": "8865b0e83c52ca7bcf5eb2b375b32976381ab53e7e227930b47e7b57b938f4a4",
+      "unit": "screen-packet142c-attention-order600-smoke-B.service",
+      "entry_rehearsal": {
+        "binaries": [
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build/device/own-rt-iq3",
+            "sha256": "ebacd4c1c0ba20fdde8ae1c8640d188f3eb190605bb72e5c0f6b10252efd1292"
+          },
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build/gnu-host/own-rt-iq3",
+            "sha256": "40fdeb3cd43207d82407ee1cc25084fe19d9495faa6b2cf3a79a1ce2567261f5"
+          }
+        ]
+      },
+      "host_required_available_bytes": 105411248128,
+      "expected_seconds": [
+        240,
+        360
+      ],
+      "watchdog_seconds": 4800,
+      "snapshot": "experiments/own-xpu-runtime/stage2/packet142-class-layout/proposals/proposed-p142-attention-order600-smoke-B.txt",
+      "snapshot_sha256": "6ced9ed848c957ec7cb614f08f703eae88ddbcda71a13d2f770f6db4822cc08a",
+      "needed": false,
+      "status": "fallback only; retained attention smoke already satisfied"
+    },
+    {
+      "proposal_name": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p142-attention-order600-v5-B.txt",
+      "sha256": "6a05cda7a6d5c4a24a224925189d80074c4d2acccb9899a15e1aa6c89129dc71",
+      "log": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/plan-attention-order600-bracket.log",
+      "log_sha256": "4b536e40b555ab94905cc3dc62f0c0a13e3d0d411bd4724c957d3f3c95e76093",
+      "unit": "screen-packet142c-attention-order600-bracket-B.service",
+      "entry_rehearsal": {
+        "binaries": [
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build/device/own-rt-iq3",
+            "sha256": "ebacd4c1c0ba20fdde8ae1c8640d188f3eb190605bb72e5c0f6b10252efd1292"
+          },
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build/gnu-host/own-rt-iq3",
+            "sha256": "40fdeb3cd43207d82407ee1cc25084fe19d9495faa6b2cf3a79a1ce2567261f5"
+          }
+        ]
+      },
+      "host_required_available_bytes": 105411248128,
+      "expected_seconds": [
+        720,
+        1200
+      ],
+      "watchdog_seconds": 4800,
+      "snapshot": "experiments/own-xpu-runtime/stage2/packet142-class-layout/proposals/proposed-p142-attention-order600-v5-B.txt",
+      "snapshot_sha256": "6a05cda7a6d5c4a24a224925189d80074c4d2acccb9899a15e1aa6c89129dc71",
+      "needed": true
+    },
+    {
+      "proposal_name": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p142-expert-gate-up-order600-smoke-B.txt",
+      "sha256": "def7ab988a13519a6644b84c8b37cddfbf37111aa7ef2b9c531cfc9875fa45bf",
+      "log": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/plan-expert-gate-up-order600-smoke.log",
+      "log_sha256": "4f3ee8957b27bc6c92a2850bd9e5207a06674ed6d809efe953061b300f594099",
+      "unit": "screen-packet142c-expert-gate-up-order600-smoke-B.service",
+      "entry_rehearsal": {
+        "binaries": [
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build/device/own-rt-iq3",
+            "sha256": "ebacd4c1c0ba20fdde8ae1c8640d188f3eb190605bb72e5c0f6b10252efd1292"
+          },
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build/gnu-host/own-rt-iq3",
+            "sha256": "40fdeb3cd43207d82407ee1cc25084fe19d9495faa6b2cf3a79a1ce2567261f5"
+          }
+        ]
+      },
+      "host_required_available_bytes": 105411248128,
+      "expected_seconds": [
+        240,
+        360
+      ],
+      "watchdog_seconds": 4800,
+      "snapshot": "experiments/own-xpu-runtime/stage2/packet142-class-layout/proposals/proposed-p142-expert-gate-up-order600-smoke-B.txt",
+      "snapshot_sha256": "def7ab988a13519a6644b84c8b37cddfbf37111aa7ef2b9c531cfc9875fa45bf",
+      "needed": true
+    },
+    {
+      "proposal_name": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p142-expert-gate-up-order600-v5-B.txt",
+      "sha256": "fafac727f2d4c8eeeb767d4997127fa15ccf6a2c1ddb96ba8a0e1ccf4ede4772",
+      "log": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/plan-expert-gate-up-order600-bracket.log",
+      "log_sha256": "12a45388569496086a5cfacf567100446682580134ab0250ad3e2b93beeda676",
+      "unit": "screen-packet142c-expert-gate-up-order600-bracket-B.service",
+      "entry_rehearsal": {
+        "binaries": [
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build/device/own-rt-iq3",
+            "sha256": "ebacd4c1c0ba20fdde8ae1c8640d188f3eb190605bb72e5c0f6b10252efd1292"
+          },
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build/gnu-host/own-rt-iq3",
+            "sha256": "40fdeb3cd43207d82407ee1cc25084fe19d9495faa6b2cf3a79a1ce2567261f5"
+          }
+        ]
+      },
+      "host_required_available_bytes": 105411248128,
+      "expected_seconds": [
+        720,
+        1200
+      ],
+      "watchdog_seconds": 4800,
+      "snapshot": "experiments/own-xpu-runtime/stage2/packet142-class-layout/proposals/proposed-p142-expert-gate-up-order600-v5-B.txt",
+      "snapshot_sha256": "fafac727f2d4c8eeeb767d4997127fa15ccf6a2c1ddb96ba8a0e1ccf4ede4772",
+      "needed": true
+    },
+    {
+      "proposal_name": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p142-hc-gate-low-order600-smoke-B.txt",
+      "sha256": "7fdd277b615f763dc6544d6b0486e2a0567a9e48b158692e6ecd07e07220d792",
+      "log": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/plan-hc-gate-low-order600-smoke.log",
+      "log_sha256": "b72762d6639eab5121ec9271dc21dcc32baa40e8b9662c2d12c5491c92661a87",
+      "unit": "screen-packet142c-hc-gate-low-order600-smoke-B.service",
+      "entry_rehearsal": {
+        "binaries": [
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build/device/own-rt-iq3",
+            "sha256": "ebacd4c1c0ba20fdde8ae1c8640d188f3eb190605bb72e5c0f6b10252efd1292"
+          },
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build/gnu-host/own-rt-iq3",
+            "sha256": "40fdeb3cd43207d82407ee1cc25084fe19d9495faa6b2cf3a79a1ce2567261f5"
+          }
+        ]
+      },
+      "host_required_available_bytes": 105411248128,
+      "expected_seconds": [
+        240,
+        360
+      ],
+      "watchdog_seconds": 4800,
+      "snapshot": "experiments/own-xpu-runtime/stage2/packet142-class-layout/proposals/proposed-p142-hc-gate-low-order600-smoke-B.txt",
+      "snapshot_sha256": "7fdd277b615f763dc6544d6b0486e2a0567a9e48b158692e6ecd07e07220d792",
+      "needed": true
+    },
+    {
+      "proposal_name": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p142-hc-gate-low-order600-v5-B.txt",
+      "sha256": "6e1a2e65f7f7633fe4439b8cf000240b268d5a7ba450a1d9e4ed1f87964cc17e",
+      "log": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/plan-hc-gate-low-order600-bracket.log",
+      "log_sha256": "26980ac838c5909e3871bb6e1a9fa9094a14cfe02b2deac9249c939d572ba4e6",
+      "unit": "screen-packet142c-hc-gate-low-order600-bracket-B.service",
+      "entry_rehearsal": {
+        "binaries": [
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build/device/own-rt-iq3",
+            "sha256": "ebacd4c1c0ba20fdde8ae1c8640d188f3eb190605bb72e5c0f6b10252efd1292"
+          },
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build/gnu-host/own-rt-iq3",
+            "sha256": "40fdeb3cd43207d82407ee1cc25084fe19d9495faa6b2cf3a79a1ce2567261f5"
+          }
+        ]
+      },
+      "host_required_available_bytes": 105411248128,
+      "expected_seconds": [
+        720,
+        1200
+      ],
+      "watchdog_seconds": 4800,
+      "snapshot": "experiments/own-xpu-runtime/stage2/packet142-class-layout/proposals/proposed-p142-hc-gate-low-order600-v5-B.txt",
+      "snapshot_sha256": "6e1a2e65f7f7633fe4439b8cf000240b268d5a7ba450a1d9e4ed1f87964cc17e",
+      "needed": true
+    }
+  ],
+  "variant_to_packet141_class": {
+    "attention-order600": {
+      "packet141_class": "attention",
+      "subset": "weighted GDN/QSA attention projections only"
+    },
+    "expert-gate-up-order600": {
+      "packet141_class": "MoE gate/up",
+      "subset": "routed expert gate/up; unchanged E1 halfcache rows; no tile transpose"
+    },
+    "hc-gate-low-order600": {
+      "packet141_class": "HC",
+      "subset": "hc.a.gate, hc.a.low, hc.f.gate, hc.f.low only"
+    }
+  },
+  "packet141_verdict_evaluated": false,
+  "coordinator_only": true,
+  "requires_valid_packet141_positive": {
+    "required_valid_verdict": true,
+    "cold_over_warm_min": 1.3,
+    "class_ms_per_half_min": 0.5,
+    "close_ratio_max": 1.15,
+    "intermediate": "inconclusive; do not queue automatically",
+    "observer_and_natural_sequence_checks": "must satisfy packet141 preregistration"
+  },
+  "sequence": "Only packet141-flagged classes. Attention smoke already satisfied by offline regeneration; other classes require their fresh 142c smoke. Then each own fresh 142c v5 bracket.",
+  "class_copy_budget_bytes_per_rank": 629145600,
+  "coverage_limit": "Attention prefix: 27 tensors/rank; routed gate/up: one layer/rank; HC gate/low: 24 layers/rank. Physical adjacency is not guaranteed.",
+  "conservative_rank1_arena_headroom_bytes": 155895078,
+  "build_bytes": 288775204,
+  "no_services_started": true,
+  "no_live_queue_edits": true,
+  "commit_meaning": "repository HEAD before the focused packet142c commit",
+  "report_repair_passed": true,
+  "smokes": {
+    "attention-order600": {
+      "satisfied": true,
+      "report_regenerated_offline": true,
+      "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/device-attention-order600-smoke-B",
+      "original_failure_preserved": true,
+      "requests_exact": 12,
+      "max_new": 64,
+      "recorded_fault_count": 2
+    },
+    "expert-gate-up-order600": {
+      "satisfied": false,
+      "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/device-expert-gate-up-order600-smoke-142c-B"
+    },
+    "hc-gate-low-order600": {
+      "satisfied": false,
+      "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/evidence/device-hc-gate-low-order600-smoke-142c-B"
+    }
+  },
+  "all_brackets_pending": true
+}

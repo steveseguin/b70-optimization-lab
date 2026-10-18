@@ -1,0 +1,66 @@
+{
+  "schema": "packet103.exact-layout-memory.v1",
+  "capacity_bytes": 34242297856,
+  "minimum_free_bytes": 1500000000,
+  "arena_limit_bytes": 32212254720,
+  "placements": {
+    "1": {
+      "draft_rank": 1,
+      "layer_boundary": 24,
+      "capacities": {
+        "4096": {
+          "context_capacity": 4096,
+          "ranks": [
+            {
+              "rank": 0,
+              "draft_rank": 1,
+              "target_layers": 24,
+              "target_modeled_allocations_bytes": 28773327988,
+              "allocation_reserve_bytes": 46500548,
+              "draft_total_bytes": 0,
+              "draft_duplicate_head_bytes": 0,
+              "target_total_bytes": 28819828536,
+              "total_with_mtp_bytes": 28819828536,
+              "free_with_mtp_bytes": 5422469320,
+              "allocation_margin_passed": true,
+              "arena_device_bytes": 28773327988,
+              "arena_headroom_bytes": 3438926732,
+              "arena_margin_passed": true
+            },
+            {
+              "rank": 1,
+              "draft_rank": 1,
+              "target_layers": 24,
+              "target_modeled_allocations_bytes": 28700766628,
+              "allocation_reserve_bytes": 1228800,
+              "draft_total_bytes": 3354364214,
+              "draft_duplicate_head_bytes": 0,
+              "target_total_bytes": 28701995428,
+              "total_with_mtp_bytes": 32056359642,
+              "free_with_mtp_bytes": 2185938214,
+              "allocation_margin_passed": true,
+              "arena_device_bytes": 32055130842,
+              "arena_headroom_bytes": 157123878,
+              "arena_margin_passed": true
+            }
+          ]
+        }
+      }
+    }
+  },
+  "scope": "Conservative inherited allocation ledger plus one temporary 600 MiB bank; class originals freed before next class; driver residency unmeasured",
+  "view": "order600--order600--order600--both",
+  "extra_weight_bytes_per_rank": [
+    458787872,
+    158822416
+  ],
+  "down_layout": "tile16",
+  "down_row_bytes": 360,
+  "down_transpose_extra_device_bytes": 0,
+  "composition": {
+    "attention_layout": "order600",
+    "expert_gate_up_layout": "order600",
+    "hc_layout": "order600",
+    "token_input": "both"
+  }
+}

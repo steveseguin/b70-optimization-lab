@@ -1,0 +1,99 @@
+{
+  "schema": "packet145.preregistered-class-layout.v1",
+  "baseline": "packet136 bundle8",
+  "arithmetic": "iq3-p49-split32-v1",
+  "kv_dtype": "BF16",
+  "device_executed": false,
+  "queued": false,
+  "class_layout_choices": [
+    "production",
+    "router-order600",
+    "gdnz-order600"
+  ],
+  "per_rank_copy_budget_bytes": 629145600,
+  "bank_creation": "load time only, 32 MiB bounded copies, complete consumer tuples in plan order",
+  "switch": "existing bindings only; six bank captures rebuilt; complete request reset",
+  "physical_adjacency_guaranteed": false,
+  "coverage": "complete selected class if census fits fixed 600 MiB cap; measured by CPU allocation census",
+  "packet141_trigger": {
+    "required_valid_verdict": true,
+    "cold_over_warm_min": 1.3,
+    "class_ms_per_half_min": 0.5,
+    "close_ratio_max": 1.15,
+    "intermediate": "inconclusive; do not queue automatically",
+    "observer_and_natural_sequence_checks": "must satisfy packet141 preregistration",
+    "source": "notes/2026-10-18-own-runtime-packet141-result.md",
+    "router_cold_warm_ratio": 1.86,
+    "gdn_z_cold_warm_ratio": 1.3
+  },
+  "class_map": {
+    "router-order600": {
+      "packet141_class": "router",
+      "subset": "complete router/shared four-weight tuple per layer in kernel consumer order"
+    },
+    "gdnz-order600": {
+      "packet141_class": "gdn.z",
+      "subset": "all admitted GDN z projections in layer execution order"
+    }
+  },
+  "proposal": {
+    "smoke": {
+      "prompts": 12,
+      "max_new": 64,
+      "incident64": true,
+      "expected_seconds": [
+        240,
+        360
+      ]
+    },
+    "bracket": {
+      "model_loads": 1,
+      "views": [
+        "production",
+        "candidate",
+        "production",
+        "candidate",
+        "production"
+      ],
+      "prompts_per_view": 12,
+      "max_new": 128,
+      "incident64_per_view": true,
+      "expected_seconds": [
+        720,
+        1200
+      ]
+    },
+    "watchdog_seconds": 4800,
+    "minimum_watchdog_multiple": 4,
+    "lanes": {
+      "A": [
+        0,
+        1
+      ],
+      "B": [
+        2,
+        3
+      ]
+    }
+  },
+  "screen_pass": {
+    "exact_oracle": true,
+    "cached_tokens": 0,
+    "unchanged_acceptance_counts": true,
+    "max_control_drift_percent": 3,
+    "both_candidates_gain_over_every_control_percent_min": 0.5
+  },
+  "promotion": {
+    "eligible": false,
+    "strict512": false,
+    "fresh_load_determinism_pending": true
+  },
+  "exclusions": [
+    "packet104/104b gate/up tile16",
+    "changed arithmetic or reductions",
+    "prompt/KV/response reuse",
+    "compressed KV",
+    "new quantization",
+    "device work during preparation"
+  ]
+}

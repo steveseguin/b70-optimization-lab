@@ -1,11 +1,43 @@
 # Current Workspace State
 
-**October 18, packet141b early exit repaired on CPU:** The first probe stopped
-before any model step because an Intel loader library was missing. The repaired
-copy includes that library and prints rank errors directly. Both native entry
-checks, error logging, 28 Python tests and temporary queue planning pass. The
-analysis script is ready. The failed attempt is preserved; the fresh proposal
-is unqueued. The coordinator's device diagnostic is next; the record is unchanged.
+**October 18, packet145 router and GDN z layouts prepared on CPU:** The new
+packet142c copy preserves exact row bytes and arithmetic. Both compilers,
+full-size startup/reset checks, both-lane entry/report tests and all eight
+temporary queue/loader/pin checks pass. The lane-A router milestone met the 40-minute
+deadline; both variants now have smoke and five-view proposals on A
+and B. The final readiness marker is the handoff. Nothing was queued, and no
+GPU, service or host setting changed. Device output quality and speed remain
+pending; the 58.798 record is unchanged. [Work note](notes/2026-10-18-own-runtime-packet145.md).
+
+**October 18, packet58z larger-cache record chain prepared on CPU:** The
+new seven-window chain uses packet58x's exact binaries with a 21.55 GB cache,
+tile16 and overlapped maintenance. Smoke and the exact five-view comparison
+pass: 4.13% strict gain, 0.15% warm-control drift. The 128 policy tests, all
+seven entry paths, loader checks, submission rehearsal, seals and pin guard
+pass. The coordinator must hold the whole host and freeze Codex and compiles
+from WS through WS128. No chain was launched or queued; the 28.042989 record
+is unchanged. [Work note](notes/2026-10-18-own-runtime-packet58z.md).
+
+**October 18, packet142 class-layout preparation passes on CPU:** The packet136
+copy has three exact allocation-order candidates. Byte checks, full-size
+allocation checks, entry and limit checks, submission rehearsal, six temporary
+queue plans and the pin guard pass. The tested native build is retained by
+exact source and binary hashes; no compiler hold was bypassed. Six proposals
+remain unqueued. Only classes flagged by a valid packet141 verdict may be
+selected, starting with smoke. The final readiness marker is the handoff gate.
+The expert candidate covers one layer per rank; it cannot settle whole-class
+placement. Device quality and speed remain pending. No GPU, service, live queue
+or host setting was changed by this preparation. The record is unchanged.
+[Work note](notes/2026-10-18-own-runtime-packet142.md).
+
+**October 18, packet141c second and last probe repair completed on CPU:** The
+previous attempt finished its diagnostic arms, then failed after cleanup made
+its saved launches stale. The repair refreshes all six bank combinations and
+the split output head. The CPU gate reproduces the old failure and passes the
+full repaired sequence, reset and continuation with unchanged binding bytes.
+Native entry checks, 28 Python tests and temporary queue planning pass. Both
+failed attempts are preserved. The fresh proposal is unqueued; a complete
+device result remains pending. No GPU, service or live queue changed here.
 [Work note](notes/2026-10-18-own-runtime-packet141.md).
 
 **October 18, packet58y one-card attribution prepared on CPU:** The new copy
@@ -819,6 +851,8 @@ coordinator's matched screen; device quality and speed remain unmeasured.
 
 **October 17, packet 57 CPU preparation complete:** The timing tools are built and sealed. Packet 56's saved traces show rank 0 finishing last in 93% of complete cycles; moving a whole layer does not look useful under the available average-cost estimates. The draft still takes about 1.90 ms, but its individual kernel costs remain unmeasured. Four fresh small CPU runs match the old engine exactly, all 19 focused checks pass, and both builds and the final seal pass. The retained build is about 336 MB. No GPU window ran and packet 55's work was left alone. Next is the coordinator's diagnostic run on cards 0+1, after the host is free: about 88 minutes planned, comparing ordinary timing with the new event recording against the same packet 49 answers. This is not a new speed result. [Task record](notes/2026-10-17-own-runtime-packet57.md), [timeline](experiments/own-xpu-runtime/stage2/packet57-attribution/TIMELINE.md), [exact command](experiments/own-xpu-runtime/stage2/packet57-attribution/WINDOW.md).
 
+**October 18, 21:20 UTC — 1-card IQ3 record 29.26 tok/s on one Arc Pro B70, submitted and approved (`cmvebtu5f009frf01gsnfi2eh`).** Packet58z = the packet58w line (tile16 + overlapped cache maintenance) with packet58x's 21.55 GB admitted device expert cache; all 12 prompts exact (+4.34% over 28.04). Bracket: max cache 29.57/29.36 vs warm 18 GB 28.16/28.20 (+4.13%). Chain 20:52–21:16 UTC (one pre-device refusal from a coordinator waiter filename slip; relaunched). Submission via `ops/packet58zs-submission/submit58z.py` (fixes only the vendored CLI's REPO_ROOT; sealed tree untouched). Ledger: `results/localmaxxing-submissions.md`.
+
 **October 18, 19:12 UTC — 1-card IQ3 record 28.04 tok/s on one Arc Pro B70, submitted and approved (`cmve789qr008vrf01pm678ee8`).** Packet58w = packet58p tile16 line + packet58v overlapped expert-cache maintenance (fills on the copy engine during the next position); all 12 prompts exact (+6.92% over 26.23). Bracket: overlap 28.12/28.15 vs warm serial 26.05/26.08 (cold-cache first view excluded by a disclosed pre-chain amendment). Chain a (WS128 25.77 under concurrent Codex GGUF reads) was not submitted; one preregistered quiet-host rerun (chain b, Codex frozen) gave WS128 28.04 / WS128x 28.20. Ledger: `results/localmaxxing-submissions.md`.
 
 **October 18, 17:50 UTC — 2-card IQ3 record 58.80 tok/s, submitted and approved (`cmve4dtir007wrf01k57sdf23`).** Bundle 8 (packet 136) = bundle 7 + packet 131b banked rollback state (rotating snapshot banks remove ~61% of rank 0's per-cycle snapshot bytes); all 12 prompts exact (+0.99% over 58.22). Screens: lane B +0.81% strict (drift 0.11%), lane A confirm 58.33 → 58.81. Chain `packet136-chain-a` 16:55–17:42 UTC, all windows passed, fault count unchanged. Submission evidence prepared with the packet 136s tool copy (fixes only the oracle-checker binding lookup; sealed tree untouched). Ledger: `results/localmaxxing-submissions.md`.
@@ -1148,6 +1182,8 @@ worker/recall trials and five unused tasks. Further worker tuning/integration is
    does not satisfy missing gates.
 
 ## Storage And Recovery
+
+**October 18, disk7 archive pass:** verified archives of closed build and screen files recovered **1.975 GB**. Root went from **31.284 GB to 33.153 GB free** at 20:09:15 UTC. **The requested 40 GB was not reached**: the other large candidates are protected, still referenced, or lack a clear closure. All JSON receipts, notes, sources, live work and record material stayed. The archives were fully checked before their originals were removed. The final check covered 1,191 moved paths and 28,170 retained files or links, with no errors. [Archive paths, restore instructions and checks](experiments/own-xpu-runtime/stage2/DISK-CLEANUP-20261018.md#disk7--verified-archive-pass-2026-10-18).
 
 **October 18, disk6 archive pass:** closed experimental builds, private build dependencies and old compiler caches now have verified archives in
 `/mnt/raid-models/own-xpu-runtime-archive/disk6-20261018/`. The pass recovered **9.581 GB** of allocated file space and stopped at **14:26:13 UTC**,

@@ -1,0 +1,13 @@
+full-shape candidate 0 switch PASS
+full-shape candidate 0 fresh PASS
+full-shape candidate 1 switch PASS
+full-shape candidate 1 fresh PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/full_shape.py", line 134, in <module>
+    resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+                                                                 ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/full_shape.py", line 100, in main
+    subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=180)
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/full-shape/fixture', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/expert-gate-up-order512/selection.json', 'dd7c783053c52a32e235c4e0351d3fc70e4bda05bdd7578061202f6a869697c9', '0', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/build/full-shape/expert-gate-up-order512-rank0', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/v5/lineage/expert-gate-up-order512/candidate.json', 'b655dd9452f610e36721259060ccc018e7e60ac249d46dc267970e0e2b7d248b']' returned non-zero exit status 1.

@@ -1,4 +1,4 @@
-from exec_limits import install as _install_exec_limits
+from p142_v5_exec_limits import install as _install_exec_limits
 _install_exec_limits()
 #!/usr/bin/env python3
 """Internal screen worker: one rank pair, one load, 64-token gate then 12x128."""
@@ -52,7 +52,7 @@ def run(identity, output, seconds, pair_dir=None):
     import subprocess
     from common import HERE
     subprocess.run(["nice","-n","19","taskset","-c","8-15,24-31","python3","-B",str(HERE.parent/"shared_oracle.py"),"--require-complete"],stdin=subprocess.DEVNULL,check=True,timeout=180)
-    from placement import verify_identity
+    from p142_v5_placement import verify_identity
     placement, memory_gate = verify_identity(identity)
     # Use this lineage's admission for both prelaunch and live census checks.
     sys.modules['memory_gate'] = memory_gate
@@ -61,6 +61,8 @@ def run(identity, output, seconds, pair_dir=None):
     sys.path.insert(0, str(P56))
     import pipeline
     import suite
+    # Vendor metadata paths are repository-relative after bound oracle admission.
+    suite.ROOT = ROOT
     import storage
     manifest = D.oracle_inputs()
     entries = manifest['prompts']

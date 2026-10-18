@@ -1,0 +1,62 @@
+"""Initial immutable-input copy; never writes a parent or follows its symlinks."""
+import hashlib,json,os,resource,shutil,subprocess
+from pathlib import Path
+ROOT=Path('/home/steve/llm-optimizations');S=ROOT/'experiments/own-xpu-runtime/stage2';P=S/'packet143-record-bundle';O=ROOT/'experiments/own-xpu-runtime/ops/packet143-orchestration'
+def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def save(p,r):p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(r,indent=2)+'\n')
+def main():
+ assert not P.exists() and shutil.disk_usage('/').free>=25_000_000_000
+ old=S/'packet136-record-bundle';layout=S/'packet142-class-layout'
+ def ignore(d,names):return [n for n in names if n in ('__pycache__','build','selections','submission','evidence')]
+ shutil.copytree(old,P,symlinks=True,ignore=ignore)
+ links={str(f.relative_to(old)):str(f.readlink()) for f in old.rglob('*') if f.is_symlink()}
+ for name,target in links.items():
+  dest=P/name;dest.parent.mkdir(parents=True,exist_ok=True)
+  if not dest.is_symlink():dest.symlink_to(target)
+ for name in ('native-base','v5','lineage-inputs/vendor','lineage-inputs/submission-tools','lineage-inputs/queue'):
+  dest=P/name
+  if dest.exists():shutil.rmtree(dest)
+  shutil.copytree(layout/name,dest,symlinks=True,ignore=ignore)
+ for name in ('immutable-binaries.json','class_layout.hpp','layout_bytes.cpp','prepare_submission.py','packet56_submission.py'):
+  shutil.copy2(layout/name,P/name)
+ for name in ('packet136-history','qualified-v5'):
+  shutil.copytree(layout/'lineage-inputs'/name,P/'lineage-inputs'/name,symlinks=True,ignore=ignore)
+ for name in ('packet136-chain-evidence.json.gz','legacy-fixtures.json','legacy-fixtures.tar.gz','current-aliases.json'):
+  shutil.copy2(layout/'lineage-inputs'/name,P/'lineage-inputs'/name)
+ # Keep every old metadata receipt as history, never as a fresh p143 pass.
+ history=P/'lineage-inputs/inherited-root';history.mkdir()
+ keep={'selection-template.json','selection.json','memory-plan.json','dispatch-speed6.json','oracle-binding.json','immutable-binaries.json'}
+ for f in P.glob('*.json'):
+  if f.name not in keep:shutil.move(f,history/f.name)
+ for f in (P/'v5').glob('*.json'):shutil.move(f,P/'lineage-inputs'/('p142-v5-'+f.name))
+ for folder in ('lineage','placement-validation','configs'):
+  path=P/'v5'/folder
+  if path.exists():shutil.move(path,P/'lineage-inputs'/('p142-'+folder))
+ # Localize all mutable include dependencies, preserving each link object.
+ aliases={}
+ for name,target in links.items():
+  dest=P/name;source=(old/name).resolve()
+  if name=='oracle' or source==S/'packet49-integrate/oracle':continue
+  if not source.exists():continue
+  if source.is_file() and source.read_bytes()[:8].startswith((b'\x7fELF',b'!<arch>\n')):continue
+  local=P/'lineage-inputs/link-targets'/name
+  local.parent.mkdir(parents=True,exist_ok=True)
+  if source.is_dir():shutil.copytree(source,local,symlinks=True,ignore=ignore)
+  else:shutil.copy2(source,local)
+  dest.unlink();dest.symlink_to(os.path.relpath(local,dest.parent),target_is_directory=source.is_dir())
+ # Rewrite only own text copies, never external link destinations or frozen evidence.
+ old_text=str(layout);new_text=str(P)
+ for f in P.rglob('*'):
+  if f.is_symlink() or not f.is_file() or 'lineage-inputs' in f.relative_to(P).parts:continue
+  if f.suffix in ('.py','.hpp','.cpp','.inc','.json','.sh'):
+   text=f.read_text();f.write_text(text.replace(old_text,new_text).replace('packet142-class-layout','packet143-record-bundle'))
+ nb=P/'native-base'/layout.relative_to(ROOT)
+ renamed=P/'native-base'/P.relative_to(ROOT);renamed.parent.mkdir(parents=True,exist_ok=True);nb.rename(renamed)
+ for f in P.rglob('*'):
+  if f.is_symlink():aliases[str(f.relative_to(P))]=str(f.readlink())
+ save(P/'lineage-inputs/copy143.json',dict(parent='packet136-record-bundle',parent_commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),symlinks=links,current_symlinks=aliases,preserved_symlink_objects=len(links),layout_commit='65589e393',token_commit='981a673c8',token_note='p137b not committed at copy time; pin original as authorized'))
+ (P/'evidence').mkdir(exist_ok=True);(P/'v5/evidence').mkdir(exist_ok=True);(O/'evidence').mkdir(exist_ok=True)
+ print('Copied packet136 with',len(links),'symlink objects; vendor closure from pinned packet142')
+if __name__=='__main__':
+ resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));assert os.getpriority(os.PRIO_PROCESS,0)==19
+ assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32));main()

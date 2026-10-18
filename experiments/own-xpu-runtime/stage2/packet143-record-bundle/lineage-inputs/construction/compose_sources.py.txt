@@ -1,0 +1,63 @@
+"""Compose pinned p137 byte-preserving changes into the local p142 native mirror."""
+import difflib,json,re,subprocess,shutil
+from pathlib import Path
+from copy_bundle import ROOT,S,P,O,sha,save
+N=P/'native-base'/P.relative_to(ROOT)
+def git(path):return subprocess.check_output(['git','show','981a673c8:'+str(path.relative_to(ROOT))],text=True)
+def delta(text,base,changed):
+ a=base.splitlines(keepends=True);b=changed.splitlines(keepends=True)
+ for tag,i,j,k,l in reversed(difflib.SequenceMatcher(None,a,b,autojunk=False).get_opcodes()):
+  if tag=='equal':continue
+  left,right=i,j
+  old=''.join(a[left:right]);new=''.join(b[k:l])
+  while not old or text.count(old)!=1:
+   if left>0:left-=1
+   elif right<len(a):right+=1
+   else:raise ValueError('source delta not found '+repr(''.join(a[i:j])[:150]))
+   old=''.join(a[left:right]);new=''.join(a[left:i])+''.join(b[k:l])+''.join(a[j:right])
+  text=text.replace(old,new,1)
+ return text
+for name in ('main.cpp','mtp.hpp'):
+ base=(S/'packet136-record-bundle'/name).read_text();changed=git(S/'packet137-token-input'/name)
+ path=N/name; original=S/'packet142-class-layout/native-base'/(S/'packet142-class-layout').relative_to(ROOT)/name; text=original.read_text().replace(str(S/'packet142-class-layout'),str(P))
+ # Native mirror has absolute include strings; normalize to original header spelling for merge.
+ includes={}
+ def normalize(m):
+  original=m[0];leaf=Path(m[1]).name;short='#include "'+leaf+'"';includes[short]=original;return short
+ text=re.sub(r'#include "([^"]+/[^"]+)"',normalize,text)
+ text=delta(text,base,changed)
+ for short,original in includes.items():text=text.replace(short,original)
+ path.write_text(text)
+for name in ('token_input.hpp','table_cpu.cpp','target_cpu.cpp','target_gate.py','table_build.py'):
+ (P/name).write_text(git(S/'packet137-token-input'/name))
+math=P/'native-base/experiments/own-xpu-runtime/stage2/packet2/kernels/math.hpp'
+t=(P/'token_input.hpp').read_text().replace('"../packet2/kernels/math.hpp"',json.dumps(str(math)));(P/'token_input.hpp').write_text(t)
+t=(N/'main.cpp').read_text().replace('"token_input.hpp"',json.dumps(str(P/'token_input.hpp')));(N/'main.cpp').write_text(t)
+# Three independent copy banks, each retaining p142's exact consumer order and 600 MiB bound.
+t=(P/'class_layout.hpp').read_text();t=t.replace('  size_t class_copy_bytes=0;','  size_t class_copy_bytes=0;\n  std::string current_class_bank;\n  std::map<std::string,size_t> class_bytes;')
+t=t.replace('return sealed_selection.choices.at("class_layout_bank");','return current_class_bank;')
+t=t.replace('    std::set<std::string> seen;','    std::set<std::string> seen;\n    for(const auto& dimension:{"attention_layout","expert_gate_up_layout","hc_layout"}) {\n    const auto value=sealed_selection.choices.at(dimension);\n    require(value=="production"||value=="order600","invalid class dimension");\n    if(value=="production")continue;\n    current_class_bank=std::string(dimension)=="attention_layout"?"attention-order600":std::string(dimension)=="expert_gate_up_layout"?"expert-gate-up-order600":"hc-gate-low-order600";\n    class_copy_bytes=0;')
+t=t.replace('    class_select(sealed_selection.choices.at("class_layout"));','    class_bytes[current_class_bank]=class_copy_bytes;\n    }\n    for(const auto& [n,id]:class_ordered)weights.at(0).at(n)=id;')
+# Composition is fixed for a fresh model lifetime. No wrapper may switch a dimension after ready.
+(P/'class_layout.hpp').write_text(t)
+t=(N/'p49d_submit.cpp').read_text()
+t=t.replace('Submit resolve(std::string_view cls,std::string_view choice){','Submit resolve(std::string_view cls,std::string_view choice){\n if(cls=="token_input"&&(choice=="original"||choice=="both"))return production;\n if(cls=="token_table_path"&&choice.starts_with("/"))return production;\n if(cls=="token_table_sha256"&&choice.size()==64&&choice.find_first_not_of("0123456789abcdef")==std::string_view::npos)return production;')
+t=t.replace('values.size()!=13','values.size()!=17')
+t=t.replace('auto target_values=values;','auto target_values=values;target_values.erase("token_input");target_values.erase("token_table_path");target_values.erase("token_table_sha256");')
+t=t.replace(' if((cls=="class_layout"', ' if((cls=="attention_layout"||cls=="expert_gate_up_layout"||cls=="hc_layout")&&(choice=="production"||choice=="order600"))return production;\n if((cls=="class_layout"')
+t=t.replace('auto target_values=values;','auto target_values=values;target_values.erase("attention_layout");target_values.erase("expert_gate_up_layout");target_values.erase("hc_layout");');(N/'p49d_submit.cpp').write_text(t)
+f=P/'v5/native/engine_bracket.hpp';t=f.read_text().replace('if(key!="class_layout")','if(false)')
+# Actually immutable ALL choices for record compositions: no v5 switch supported here.
+t=t.replace('if(false)\n        require','if(true)\n        require')
+t=t.replace('      domain(selection->choices,"class_layout",{"production","attention-order600","expert-gate-up-order600","hc-gate-low-order600"});','      for(auto key:{"attention_layout","expert_gate_up_layout","hc_layout"})domain(selection->choices,key,{"production","order600"});\n      domain(selection->choices,"token_input",{"original","both"});')
+t=t.replace('    class_select(next.choices.at("class_layout"));','    // Immutable composed load: all choices were required equal above.');f.write_text(t)
+# Entry compilation consumes the composed native mirror directly.
+(P/'v5/native-src/entry-main.cpp').write_text('#define main packet26_model_entry\n#include '+json.dumps(str(N/'main.cpp'))+'\n#undef main\n')
+# p142 native-base does not include bracket helpers itself; record runtime needs no bracket switching.
+# Top-level runtime sources reflect the local compiled mirror for review.
+for name in ('main.cpp','mtp.hpp','p49d_submit.cpp'):(P/name).write_bytes((N/name).read_bytes())
+# Never reuse p142 full-shape/byte passes for this new composition.
+save(P/'evidence/composition-status.json',dict(passed=False,device_executed=False,reason='Composed native build and byte/shape gates pending',memory_warning='All selected class banks must fit unchanged arena; no silent budget increase'))
+# Pin metadata-only table receipt; table payload remains unread during one-card hold.
+shutil.copy2(S/'packet137-token-input/evidence/table.json',P/'lineage-inputs/token-table-receipt.json')
+print('Merged p137 at 981a673c8 with p142 local native sources')

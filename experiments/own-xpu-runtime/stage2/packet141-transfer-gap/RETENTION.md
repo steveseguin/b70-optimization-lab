@@ -11,6 +11,24 @@ original build/seal/readiness receipts, loader reproduction, real-argv traces an
 early-exception tests in `evidence/repair141b/`. The repaired attempt uses
 `evidence/probe-B-repair141b/`. The analyzer never writes inside an input attempt.
 
+Packet141c retains that second failed attempt unchanged on disk, with every
+file bound by `evidence/repair141c/failed-attempt-manifest.json.gz`. It contains
+completed diagnostic arms but no successful post-probe oracle check and earns
+no speed verdict. The third output name is `evidence/probe-B-repair141c/`.
+Keep `repair141c/prior-metadata.json.gz`: it preserves the prior probe source,
+build/seal/readiness and proposal metadata byte-for-byte. The CPU regression
+builds that old probe directly from this archive and must reproduce its stale
+generation failure. Keep the new gate sources, compile/run logs, receipt and
+the mock-generated sources under `build/prepared-sequence-final/`; rebuild them with
+`prepared_sequence_gate.py` from the pinned parent objects if absent. Generated
+clocks and payloads are synthetic bookkeeping evidence only. A preliminary
+mock audit stopped because the inherited optional scalar serializer does not
+cover every selected operation; the final gate uses the mandatory real
+allocation/pointer argument blocks, not an expanded or bypassed scalar oracle.
+`bank-only-prototype.json.gz` records the intermediate bank-only gate; it is
+historical development evidence, not final admission. Read-only review found
+the additional split-head cache and the final gate covers that service too.
+
 `runtime/libumf.so.1` is an unmodified 321,648-byte Intel UMF 1.1.0 library,
 vendored to close the Level Zero adapter's missing dependency without changing
 the shared environment or another packet. Its source path/hash and Apache 2.0

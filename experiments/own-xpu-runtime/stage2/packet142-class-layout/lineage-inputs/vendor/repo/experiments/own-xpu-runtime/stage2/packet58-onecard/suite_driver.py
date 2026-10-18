@@ -49,7 +49,9 @@ def oracle_inputs():
     packet=next(p for p in Path(__file__).resolve().parents if p.name=='packet142-class-layout')
     sys.path.insert(0,str(packet))
     authority=module('p142_oracle_authority',packet/'shared_oracle.py')
-    authority.completed_binding()
+    # Keep --plan stdout one JSON object; authority errors still propagate.
+    import contextlib,io
+    with contextlib.redirect_stdout(io.StringIO()):authority.completed_binding()
     completion = read(ORACLE / 'results/completion.json')
     require(completion['passed'] is True and completion['device_executed'] is False
             and completion['arithmetic'] == ARITHMETIC and completion['prompts'] == 12

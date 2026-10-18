@@ -4,8 +4,8 @@ from pathlib import Path
 from common import HERE,require,read,sha
 
 def smoke_gate():
- from compare import load
- row=load(HERE/'evidence/device-smoke-B')
+ from packet137_report import load
+ row=load(HERE/'evidence/device-smoke-137b-B')
  require(row.get('kind')=='smoke' and row.get('passed') is True and row.get('request_count')==12 and row.get('max_new')==64,'twelve-prompt exact smoke required')
  return row
 

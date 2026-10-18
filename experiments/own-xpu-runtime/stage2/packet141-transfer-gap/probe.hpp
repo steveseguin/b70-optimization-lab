@@ -1,4 +1,5 @@
 // Included inside Engine: diagnostic calls use the same prepared commands.
+#include "probe_lifetime.hpp"
 using P141Snapshot=std::map<Allocation,std::vector<uint8_t>>;
 P141Snapshot p141_snapshot(const std::set<Allocation>& ids) {
  P141Snapshot s;size_t total=0;
@@ -154,6 +155,9 @@ void p141_probe(int token,int position) {
   }
  }
  p141_restore(initial);release(0,sink);release(0,eviction);
+ // Arena release invalidates the shared owner's entire prepared generation,
+ // including inactive recurrent-bank pairs used by the post-probe request.
+ p141_reprepare_after_release();
  save(a.output/"p141-complete.json","{\"passed\":true,\"diagnostic_only\":true,\"blocks\":4,\"arms\":4,\"arithmetic\":\"iq3-p49-split32-v1\"}\n");
 #else
  (void)token;(void)position;throw std::runtime_error("p141 diagnostic requires coordinator device window");

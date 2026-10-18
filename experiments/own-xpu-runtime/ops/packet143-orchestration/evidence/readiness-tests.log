@@ -1,0 +1,39 @@
+F.....FE..
+======================================================================
+ERROR: test_strict_best_control (__main__.Rules.test_strict_best_control)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet143-orchestration/test_readiness.py", line 10, in test_strict_best_control
+    row=fixture(.005,.01);self.assertAlmostEqual(qualify_bracket(row)['strict_ratio'],1.005)
+                                                 ^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet143-orchestration/verify_ready.py", line 26, in qualify_bracket
+    return dict(passed=True,strict_ratio=ratio,strict_gain_percent=100*(ratio-1),control_drift_percent=100*drift,controls=controls,candidates=candidates,evidence={k:row[k] for k in ('window_sha256','summary_sha256','selection_sha256','evidence_path','coordination_sha256')})
+                                                                                                                                                                     ~~~^^^
+KeyError: 'coordination_sha256'
+
+======================================================================
+FAIL: test_all_products (__main__.Rules.test_all_products)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet143-orchestration/test_readiness.py", line 30, in test_all_products
+    row=choose(lambda d:fixture(.005));self.assertAlmostEqual(row['combined_ratio'],1.005**4);self.assertGreaterEqual(row['combined_ratio'],1.02)
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 1.0201505006249996 within 7 places (0.020150500624999568 difference)
+
+======================================================================
+FAIL: test_select_only_winners (__main__.Rules.test_select_only_winners)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet143-orchestration/test_readiness.py", line 27, in test_select_only_winners
+    self.assertEqual(row['selection'],dict(attention_layout='production',expert_gate_up_layout='production',hc_layout='order600',token_input='original'))
+AssertionError: {'att[59 chars]duction', 'hc_layout': 'production', 'token_input': 'original'} != {'att[59 chars]duction', 'hc_layout': 'order600', 'token_input': 'original'}
+  {'attention_layout': 'production',
+   'expert_gate_up_layout': 'production',
+-  'hc_layout': 'production',
++  'hc_layout': 'order600',
+   'token_input': 'original'}
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.001s
+
+FAILED (failures=2, errors=1)

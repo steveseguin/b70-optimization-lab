@@ -1,0 +1,39 @@
+{
+  "schema": "packet137.report-repair.readiness.v1",
+  "passed": false,
+  "device_ready": false,
+  "report_repair_passed": true,
+  "device_executed": false,
+  "device_quality_and_speed_pending": true,
+  "cpu_tests": 15,
+  "report_paths": [
+    "smoke",
+    "bracket"
+  ],
+  "old_code_negative_controls_passed": true,
+  "model_reads": false,
+  "queue_plans_passed": false,
+  "packet_plan_rehearsals_passed": true,
+  "operational_admission_synthetic": true,
+  "live_queue_modified": false,
+  "status": "deferred; report repair complete, inherited queue pin closure blocked",
+  "blocker": "current queue pin guard refuses inherited cross-packet mutable pins",
+  "pin_error_counts": [
+    4578,
+    4578
+  ],
+  "reopen_condition": "stack with another measured two-card gain >= 1.5%, then resolve inherited pins and pass current admission",
+  "proposed_jobs": [
+    "packet137b-smoke-B",
+    "packet137b-bracket-B"
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/evidence/report137b-gate.json": "2f32e6e73f90d054028da87679b6f489111ddaf7da95871a3a9c8cfe89acf6af",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/evidence/report137b-tests.json": "c421b582dd718eec3feba365432dc3a600ec9e98b5474c50c01f80ed35abc95f",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/evidence/report137b-collision-audit.json": "24a309640cdd51323415289e362be7819c33617eeab4412057ca9540dfefab20",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/evidence/report137b-plans.json": "bbf230c4018610d02ef9d52c1e35988ba37936c0b1e705195616c24a7bed488a",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/evidence/reseal137b/receipt.json": "43e094dbd8b5f1b9ac2b94eb2f1d11c8525b4708b76c8c4cff897d1676a8e074",
+    "experiments/own-xpu-runtime/stage2/packet137-token-input/v5/evidence/qualification.json": "7b630a160d9cc85c61efdfb9194d38835d204ef052f39515e9df158ef9846e26"
+  },
+  "written_last": true
+}

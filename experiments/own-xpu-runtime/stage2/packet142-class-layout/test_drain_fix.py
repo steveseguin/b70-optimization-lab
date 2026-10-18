@@ -8,6 +8,8 @@ import unittest
 
 P=Path(__file__).resolve().parent
 O=P/'v5'
+import sys
+sys.path.append(str(O))
 
 def load(path, old=False):
     # The negative control changes only the clamp in an in-memory source copy.
@@ -40,18 +42,18 @@ def race(module):
 
 class DrainFixTests(unittest.TestCase):
     def test_both_copies_survive_deadline_crossing(self):
-        for path in (P/'drain_gate.py',O/'drain_gate.py'):
+        for path in (P/'drain_gate.py',O/'p142_v5_drain_gate.py'):
             with self.subTest(path=path):self.assertEqual(race(load(path)),[0.0])
     def test_old_code_fails_same_scenario(self):
-        for path in (P/'drain_gate.py',O/'drain_gate.py'):
+        for path in (P/'drain_gate.py',O/'p142_v5_drain_gate.py'):
             with self.subTest(path=path),self.assertRaisesRegex(ValueError,'non-negative'):race(load(path,old=True))
     def test_copies_identical(self):
-        self.assertEqual((P/'drain_gate.py').read_bytes(),(O/'drain_gate.py').read_bytes())
+        self.assertEqual((P/'drain_gate.py').read_bytes(),(O/'p142_v5_drain_gate.py').read_bytes().replace(b'p142_v5_chain_devices',b'chain_devices').replace(b'p142_v5_lane_admission',b'lane_admission'))
     def test_static_scanner_rejects_old_code(self):
         root=P.parents[3]
         spec=importlib.util.spec_from_file_location('scan124',P/'lineage-inputs/submission-tools/check_drain_fix.py')
         scanner=importlib.util.module_from_spec(spec);spec.loader.exec_module(scanner)
-        for path in (P/'drain_gate.py',O/'drain_gate.py'):
+        for path in (P/'drain_gate.py',O/'p142_v5_drain_gate.py'):
             source=path.read_text()
             self.assertEqual(scanner.inspect_source(source,drain_gate=True)['status'],'FIXED')
             source=source.replace('max(0.0, min(.25, until - self.now()))','min(.25, until - self.now())')

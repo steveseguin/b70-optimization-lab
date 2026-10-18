@@ -4,13 +4,35 @@ CPU-repaired diagnostic; no completed device timing or speed claim. The only pro
 is [lane B](../../ops/lane-queue/proposed-p141-probe-B.txt), **not queued**.
 [Preregistration and work note](../../../../notes/2026-10-18-own-runtime-packet141.md).
 
+Packet141c is the second and last repair. Packet141b finished the 16 diagnostic
+halves and four controls, then failed on the model continuation after reset.
+The end of `p141_probe` released the touch sink and eviction buffer; each arena
+release advances the shared device generation. The active and five cached
+bank-pair command lists were still bound to the old generation. Reset only
+restores contents, so it cannot repair these stale bindings. The failed attempt
+is retained unchanged and is **not a qualified timing result**.
+
+Cleanup now re-prepares all six bank pairs with the production capture and
+bank traversal, preserving each pair's context extent, active/spare selection
+and parity. Shared native/CPU dispatch then refreshes the split output head's
+separate suffix capture using its original preparation code. No arithmetic,
+allocation size, model bytes or arm schedule changes.
+`prepared_sequence_gate.py` runs the actual arm loop and request reset using
+the real Engine, Device and sealed selection, with mock device payloads and
+clocks. It requires the old probe to fail at post-reset enqueue and the repaired
+probe to preserve the real allocation/pointer argument bytes and execute all
+six bank-pair continuations plus the real split-head service. This is CPU
+bookkeeping evidence, not a numerical
+model-output or timing test. The fresh unqueued proposal is `packet141c-probe-B`,
+writing to `evidence/probe-B-repair141c/`.
+
 Packet141b fixes the first attempt's early exit. Both original rank receipts
 say `Level Zero GPU index`: the closed environment could not load the Level Zero
 adapter because `libumf.so.1` was missing. Authorization and device compilation
 were correct. The private Intel UMF dependency is now explicitly linked, and
 rank exceptions print immediately to stderr as well as their existing receipts.
-The failed `evidence/probe-B/` is preserved. The fresh proposal writes only to
-`evidence/probe-B-repair141b/`; it remains unqueued by this repair.
+The failed `evidence/probe-B/` is preserved. That repair proposed
+`evidence/probe-B-repair141b/`, now also retained as failed history.
 
 `native_entry_gate.py` runs the actual device binary with both saved rank argv
 plus a CPU-only exit flag. It shares the native parser and selection checks,
@@ -90,7 +112,7 @@ measured; the probe does not equate useful bytes with measured DRAM traffic.
 
 Expected device duration: 10–20 minutes; watchdog: 4,800 seconds (4× upper
 estimate). One load, one attempt, no retry. The proposal uses
-`screen-packet141b-probe-B.service` and embeds the oneAPI library path. Existing
+`screen-packet141c-probe-B.service` and embeds the oneAPI library path. Existing
 lane reservation, fault review, memory floor, masks and cooperative drain apply.
 The native boundary refuses finite address-space limits or changed getrlimit
 values. CPU resource caps exist only in CPU command entrypoints.
@@ -102,7 +124,10 @@ Compilation uses `ops/compile_turn.py`; root must retain 25 GB, physical build
 files stay below 300 MB, probe output below 200 MB. No live queue, device,
 service, power, memory, swap or page-cache setting is touched by preparation.
 For a minimal repair, run `localize_pins.py` after `build_engine.py`, then
-`native_entry_gate.py`, `argument_gate.py`, `seal.py` and `queue_plan.py`.
+`prepared_sequence_gate.py`, `native_entry_gate.py`, `argument_gate.py`, `seal.py`
+and `queue_plan.py`. The prepared-sequence gate holds the compiler turn for
+its mock execution as well, keeping full-shape metadata reads out of protected
+one-card timing windows. It never opens model payloads.
 The original full-size allocation receipt is reused: neither allocation logic
 nor kernel arithmetic changed. The repair used one compiler turn and no model
 or full-size allocation run.

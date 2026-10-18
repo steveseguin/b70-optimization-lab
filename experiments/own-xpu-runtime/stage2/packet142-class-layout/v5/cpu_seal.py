@@ -1,8 +1,8 @@
 """Local closed composition seal. CPU readiness is separate from device evidence."""
 import argparse,json
 from pathlib import Path
-from build_engine import P,LOCAL,ROOT,sha,save
-GATES=('build','full-shape','bytes','exec-limits','safety','submission-rehearsal')
+from p142_v5_build_engine import P,LOCAL,ROOT,sha,save
+GATES=('build','full-shape','bytes','exec-limits','safety','submission-rehearsal','admission')
 
 def check_sources(rows):
  for name,digest in rows.items():
@@ -15,18 +15,23 @@ def seal():
   assert row.get('passed') is True and row.get('device_executed') is False,name
   if 'sources' in row:check_sources(row['sources'])
  shape=rows['full-shape'];assert len(shape['runs'])==12 and len(shape['startup_runs'])==12
+ check_sources(rows['build']['artifacts']);check_sources(rows['bytes']['binaries']);check_sources(rows['submission-rehearsal']['artifacts'])
+ assert sha(P/'build/full-shape/fixture')==shape['binary_sha256']
+ for run in shape['runs']+shape['startup_runs']:assert sha(ROOT/run['artifact']['path'])==run['artifact']['sha256']
+ for run in rows['bytes']['runs']:assert sha(ROOT/run['artifact'])==run['artifact_sha256']
  assert all(r['result']['passed'] and r['result']['views']==5 for r in shape['runs'])
  assert len(rows['bytes']['runs'])==4 and len({r['sha256'] for r in rows['bytes']['runs']})==1
  assert rows['submission-rehearsal']['rehearsal_only'] and rows['submission-rehearsal']['corrupt_receipt_refused']
- paths=set(P.glob('*.py'))|set(P.glob('native/*'))|set(P.glob('native-src/*'))|set(P.glob('configs/*.json'))
+ paths=set((LOCAL/'proposals').glob('*.txt'))|set(P.glob('*.py'))|set(P.glob('native/*'))|set(P.glob('native-src/*'))|set(P.glob('configs/*.json'))
  paths.update(f for f in (P/'lineage').rglob('*.json') if f.name!='screen-seal.json')
- paths.update(LOCAL/n for n in ('class_layout.hpp','layout_bytes.cpp','shared_oracle.py','oracle-binding.json','prepare_submission.py','packet56_submission.py','bundle_selection.py','selection-template.json'))
+ paths.update(LOCAL/n for n in ('class_layout.hpp','layout_bytes.cpp','shared_oracle.py','oracle-binding.json','prepare_submission.py','packet56_submission.py','bundle_selection.py','selection-template.json','preregistration.json'))
  paths.update(f for f in (LOCAL/'native-base').rglob('*') if f.is_file())
  for root in (LOCAL/'lineage-inputs/vendor/repo',LOCAL/'lineage-inputs/submission-tools'):
   paths.update(f for f in root.rglob('*') if f.is_file() and 'build' not in f.relative_to(root).parts)
  paths.update(f for f in LOCAL.iterdir() if f.is_file() and f.suffix in ('.py','.hpp','.cpp','.bf16','.tsv'))
  paths.update(LOCAL/'lineage-inputs'/n for n in ('legacy-fixtures.json','legacy-fixtures.tar.gz','current-aliases.json','packet136-chain-evidence.json.gz'))
  paths.update(P/'evidence'/(name+'.json') for name in GATES)
+ paths.update(ROOT/name for name in rows['submission-rehearsal']['artifacts'])
  for mode in ('device','gnu-host'):paths.add(P/'build'/mode/'own-rt-iq3')
  paths.add(P/'build/full-shape/fixture')
  for run in shape['runs']+shape['startup_runs']:paths.add(ROOT/run['artifact']['path'])

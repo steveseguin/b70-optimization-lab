@@ -15,18 +15,26 @@ def main():
  for name,digest in sources.items():assert sha(ROOT/name)==digest,name
  for name,digest in artifacts.items():assert sha(P/name)==digest,name
  args=json.loads((P/'evidence/arguments.json').read_text());assert args['passed'] and len(args['rank_execs'])==2 and not args['device_executed']
- native=json.loads((P/'evidence/repair141b/native-entry.json').read_text())
+ native=json.loads((P/'evidence/repair141c/native-entry.json').read_text())
  assert native['passed'] and not native['device_executed'] and not native['model_read']
  assert native['binary_sha256']==sha(B/'device/own-rt-iq3') and native['build_receipt_sha256']==sha(P/'build-receipt.json')
  assert len(native['rank_execs'])==2 and all(len(r['negatives'])==3 for r in native['rank_execs'])
+ sequence=json.loads((P/'evidence/repair141c/prepared-sequence.json').read_text())
+ assert sequence['passed'] and sequence['old_code_rejected'] and not sequence['device_executed'] and not sequence['model_payload_read']
+ assert [r['returncode'] for r in sequence['runs']]==[1,0]
+ assert sequence['runs'][1]['result']['post_reset_bank_pairs']==6
+ assert sequence['runs'][1]['result']['split_head_service']
+ for name,digest in sequence['sources'].items():assert sha(ROOT/name)==digest,name
+ sources.update(sequence['sources'])
  with (P/'evidence/python-tests.log').open('w') as log:subprocess.run([sys.executable,'-B',str(P/'test_probe.py')],stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=120)
  save(P/'evidence/python-tests.json',dict(passed=True,device_executed=False,tests=15,log_sha256=sha(P/'evidence/python-tests.log')))
- with (P/'evidence/repair141b/analyzer-tests.log').open('w') as log:subprocess.run([sys.executable,'-B',str(P/'test_analyze.py')],stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=120)
- save(P/'evidence/repair141b/analyzer-tests.json',dict(passed=True,device_executed=False,synthetic_only=True,tests=13,log_sha256=sha(P/'evidence/repair141b/analyzer-tests.log')))
+ with (P/'evidence/repair141c/analyzer-tests.log').open('w') as log:subprocess.run([sys.executable,'-B',str(P/'test_analyze.py')],stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=120)
+ save(P/'evidence/repair141c/analyzer-tests.json',dict(passed=True,device_executed=False,synthetic_only=True,tests=13,log_sha256=sha(P/'evidence/repair141c/analyzer-tests.log')))
  names=['build_engine.py','full_shape.py','probe.hpp','probe_touch.hpp','capture_worker.py','capture_identity.py','run_capture.py','exec_limits.py','launch_guard.py','shared_oracle.py','input_gate.py','argument_gate.py','queue_plan.py','seal.py','test_probe.py','preserve_links.py','memory_gate.py','memory-plan.json','selection.json','dispatch-speed6.json','suite.snapshot.json','oracle-binding.json','copy-provenance.json','symlinks.json','capture-binding.json','routes.bin','probe-plan.json','README.md','RETENTION.md','native-delta.patch','DO-NOT-REPEAT.md','preregistration.json']
  names+=['cpu_entry.hpp','native_entry_gate.py','analyze.py','test_analyze.py','localize_pins.py','compiled-source-snapshots.json','proposal.snapshot.txt']
+ names+=['probe_lifetime.hpp','probe_dispatch.hpp','prepared_sequence_gate.py']
  for name in names:sources[str((P/name).relative_to(ROOT))]=sha(P/name)
- for f in sorted((P/'evidence/repair141b').iterdir()):
+ for f in sorted((P/'evidence/repair141c').iterdir()):
   if f.is_file() and f.suffix in ('.json','.log','.strace','.gz') and not f.name.startswith(('analysis-', 'seal-')):sources[str(f.relative_to(ROOT))]=sha(f)
  for f in (P/'inputs').glob('*/*'):
   if f.is_file():sources[str(f.relative_to(ROOT))]=sha(f)

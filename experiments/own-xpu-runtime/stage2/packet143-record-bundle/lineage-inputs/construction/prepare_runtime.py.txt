@@ -1,0 +1,26 @@
+"""Local fixed-load record/smoke glue; preserve frozen inherited inputs as history."""
+import json,os,shutil
+from pathlib import Path
+from copy_bundle import ROOT,S,P,O,sha,save
+# Historical trees are explicitly history; scanner skips the local links.
+for name in ('parent-snapshot','calibration','prefix-calibration'):
+ src=P/name;dest=P/'lineage-inputs'/name
+ if src.exists() and not src.is_symlink():
+  if dest.exists():shutil.rmtree(dest)
+  src.rename(dest);src.symlink_to(os.path.relpath(dest,src.parent),target_is_directory=True)
+for f in (P/'lineage-inputs/vendor').rglob('*.py'):
+ s=f.read_text();f.write_text(s.replace('packet142-class-layout','packet143-record-bundle'))
+for name in ('dispatch-default.json','dispatch-p45.json','dispatch-speed6-provenance.json','input-fixtures.json','chain-binding.json','placement-policy.json','reference.json','runtime-revision.json','k2-class-registry.json'):
+ shutil.copy2(S/'packet136-record-bundle'/name,P/name)
+# Preserve the original bundle API under a clearly local name.
+shutil.copy2(S/'packet136-record-bundle/bundle_selection.py',P/'bundle8_selection.py')
+# Frozen v4 wrapper is an allowlisted immutable input. Its hashes are retained.
+for name in ('dependency-pins.json','shared-wrapper-pin.json'):
+ shutil.copy2(S/'packet136-record-bundle'/name,P/'lineage-inputs'/name)
+# Copies of the chain argument/queue gates, adapted below, never edit their parents.
+for name in ('argument_gate.py','queue_gate.py','drain_check.py','drain_gate.py','launch_limit_gate.py','submission_evidence.py','submission.py','prepare_submission.py','device-entry.sh'):
+ dest=O/name
+ if not dest.exists():
+  text=(ROOT/'experiments/own-xpu-runtime/ops/packet139-orchestration'/name).read_text().replace('packet139','packet143').replace('packet136-orchestration','packet143-orchestration')
+  dest.write_text(text)
+print('Local runtime and orchestration templates installed')

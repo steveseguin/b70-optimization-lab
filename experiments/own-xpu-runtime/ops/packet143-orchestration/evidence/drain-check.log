@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet143-orchestration/drain_check.py", line 16, in <module>
+    report=check();save(O/'evidence/drain-fix.json',report);print(json.dumps(report,indent=2))
+           ^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet143-orchestration/drain_check.py", line 11, in check
+    assert all(r['passed'] and r['counts']['UNFIXED']==0 for r in reports),'drain-fix hard gate failed'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: drain-fix hard gate failed
