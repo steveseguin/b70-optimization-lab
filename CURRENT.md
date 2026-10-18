@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, packet128 fresh bundle7 timing job prepared on CPU:** The new copy
+can record every layer on both ranks, including draft, head, copies and waits.
+CPU output, reset, full-size startup and real launch-argument checks pass.
+One temporary lane-B plan passes: twelve prompts, 64 tokens each, one load.
+The coordinator runs it next, then generates the budget. Actual device equality,
+overhead and class costs remain pending; no speed gain is claimed. No GPU,
+service, live queue or host setting changed.
+[Work note](notes/2026-10-18-own-runtime-packet128.md).
+
 **October 18, packet58p tile16-only one-card chain prepared ahead on CPU:**
 The copy keeps production route and recurrence and changes only the down layout.
 All 118 Python tests, twelve full launch-argument paths, native parser/startup

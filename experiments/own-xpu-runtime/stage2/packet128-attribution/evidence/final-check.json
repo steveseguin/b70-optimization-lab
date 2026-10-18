@@ -1,0 +1,105 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "parent_files_unchanged": 341,
+  "inherited_arithmetic_objects_unchanged": true,
+  "identity": {
+    "placement": {
+      "name": "1",
+      "draft_rank": 1,
+      "target_split": 0,
+      "layer_boundary": 24,
+      "target_layers": [
+        24,
+        24
+      ],
+      "context": 4096,
+      "memory_admitted": true,
+      "supported": true,
+      "reason": "Packet97 full-shape post-load census, selected target storage and unchanged expanded draft prefix; device residency pending",
+      "memory_gate": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/memory_gate.py",
+      "memory_gate_sha256": "3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232",
+      "memory_plan_sha256": "3f157407ea1306780633e45b6104993dde8c32d87011ae3b770c0111d3a6532e",
+      "configuration": {
+        "context_capacity": 4096,
+        "ranks": [
+          {
+            "rank": 0,
+            "draft_rank": 1,
+            "target_layers": 24,
+            "target_modeled_allocations_bytes": 28144182388,
+            "allocation_reserve_bytes": 46500548,
+            "draft_total_bytes": 0,
+            "draft_duplicate_head_bytes": 0,
+            "target_total_bytes": 28190682936,
+            "total_with_mtp_bytes": 28190682936,
+            "free_with_mtp_bytes": 6051614920,
+            "allocation_margin_passed": true,
+            "arena_device_bytes": 28144182388,
+            "arena_headroom_bytes": 4068072332,
+            "arena_margin_passed": true
+          },
+          {
+            "rank": 1,
+            "draft_rank": 1,
+            "target_layers": 24,
+            "target_modeled_allocations_bytes": 28071621028,
+            "allocation_reserve_bytes": 1228800,
+            "draft_total_bytes": 3354364214,
+            "draft_duplicate_head_bytes": 0,
+            "target_total_bytes": 28072849828,
+            "total_with_mtp_bytes": 31427214042,
+            "free_with_mtp_bytes": 2815083814,
+            "allocation_margin_passed": true,
+            "arena_device_bytes": 31425985242,
+            "arena_headroom_bytes": 786269478,
+            "arena_margin_passed": true
+          }
+        ]
+      },
+      "dispatch_policy": "same sealed class dispatch on both ranks",
+      "rank_dispatch_sha256": [
+        "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612"
+      ],
+      "policy_sha256": "4e1694f31d6c47516dc7ebc64b75e32ef1fd294ea6399cb2fc80a6c2fab19eb8",
+      "plan_sha256": "7abd0d26e613e3e33c96967d709d48f5ae3e580c83d8772bbf48958565e81d1b"
+    },
+    "timing": "attribution",
+    "timing_modes": [
+      "attribution"
+    ],
+    "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet128-attribution/selections/bundle7-attribution",
+    "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet128-attribution/selections/bundle7-attribution/screen-seal.json",
+    "seal_sha256": "5cfba6f79473a72444aecb0e3ea619b6a5ee936dacf616162866d806f2527477",
+    "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet128-attribution/selections/bundle7-attribution/build/device/own-rt-iq3",
+    "binary_sha256": "9bc575488f44912ee3d8fa9107ebe74a24b5b83352ddfee724d5b8abef0b3eba",
+    "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet128-attribution/selections/bundle7-attribution/dispatch-speed6.json",
+    "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "selection_sha256": "0a43e349d1bd86562c2b674392a12f917d36d9918839b34aee8c33a5df22545c",
+    "memory_plan_sha256": "3f157407ea1306780633e45b6104993dde8c32d87011ae3b770c0111d3a6532e",
+    "profile": "tp2"
+  },
+  "argument_gate_sha256": "363a69fa186661ba93d09ffb2f9908daa9b7d11b4830e62aa32de86b4d728fed",
+  "proposal_sha256": "9fccff421a7a4a375d5a3352417d6b5fa47385888f5f2e93ffa6db03abf55631",
+  "plan": [
+    {
+      "name": "p128-attribution-B-a",
+      "plan": "passed",
+      "seal": "checked by packet plan/wrapper"
+    }
+  ],
+  "build_logical_bytes": 127628611,
+  "root_free_bytes": 33944039424,
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet128-attribution/final_check.py": "fb13c299b20b6c34706739d0be538810a983228f7677cca7bd99573683e5fa92",
+    "experiments/own-xpu-runtime/stage2/packet128-attribution/analyze.py": "585976176346149a72a6576821eb465e3b118e52c48de20fe8872b9dbf5d589d",
+    "experiments/own-xpu-runtime/stage2/packet128-attribution/worker.py": "c4c9a68b02daa98bbe903af64dac73f116151834696b7eabae2e93a253cda716",
+    "experiments/own-xpu-runtime/stage2/packet128-attribution/run_screen.py": "fac4d8d53d28ae9c4571b47ac91575e1bdc8d33716c8b2615ea96fe453daa956",
+    "experiments/own-xpu-runtime/stage2/packet128-attribution/screen128.py": "4ad14393d7af9b57d12facfd6dbe4c170da1d57cb3b9e59c27ec3661bab2be48",
+    "experiments/own-xpu-runtime/stage2/packet128-attribution/teardown.py": "d89421174b4d7dab1ec9cf6a7872f5dce3e531c4c297011856fb450ee2fcff3f",
+    "experiments/own-xpu-runtime/stage2/packet128-attribution/preregistration.json": "58878e0b7b5d2c6634cf4632ef17d0ecb4fe7c28e559f49ce1e3c0a0716a8d0e",
+    "experiments/own-xpu-runtime/stage2/packet128-attribution/test_analysis.py": "23e915279dd637854d511f925282d3ca417c5c7ba9ed2ef9f71de8e0f86e0f73",
+    "experiments/own-xpu-runtime/stage2/packet128-attribution/test_worker.py": "c492cc28f37a7699142e54969c9fa4471c4ef78e44defc35333076fbe649f5fe"
+  }
+}

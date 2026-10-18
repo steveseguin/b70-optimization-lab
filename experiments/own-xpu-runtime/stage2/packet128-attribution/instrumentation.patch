@@ -1,0 +1,392 @@
+--- packet124b/main.cpp
++++ packet128/main.cpp
+@@ -566,14 +566,13 @@
+   Scalar type;
+ };
+ static size_t target_scratch_bytes(const flash::Plan&,const Options&);
+-#include "p65_attribution.hpp"
++#include "attribution.hpp"
+ #include "p109_fusion.hpp"
+ class Engine final : public flash::Backend {
+ public:
+   Weights &w;
+   Options a;
+   const bool class_timing,profile_events,resident,prepared_path;
+-  p65timing::Recorder attribution;
+   const flash::Plan p;
+   const packet26::Dispatch sealed_dispatch=packet26::dispatch;
+   std::vector<std::unique_ptr<ownrt::Device>> devices;
+@@ -581,6 +580,7 @@
+   std::vector<size_t> owned_bytes;
+   std::map<Allocation,std::pair<int,size_t>> allocations;
+   std::vector<Allocation> ropes, controls, scores, probabilities, snapshots;
++  p57::Recorder attribution;
+   struct Pending { Launch launch; bool gemv; int cls; };
+   std::map<std::string,int> class_ids;
+   std::vector<std::string> class_names;
+@@ -664,20 +664,38 @@
+   void finish(int, Launch l, bool gemv) {
+     // Submission only. Owner::compute appends the preceding owned event.
+     if(preparing_commands)return;
+-    if(profile_events||draft_timing)pending.push_back({l,gemv,current_cls});
+-    if(!draft_timing&&attribution.active())for(auto event=l.first;event<=l.last;++event)attribution.record(event);
+-    tail=l.last; submitted+=l.passes;
++    if(profile_events||draft_timing||attribution.active())pending.push_back({l,gemv,current_cls});
++    if(attribution.active())for(auto event=l.first;event<=l.last;++event)attribution.record(event); tail=l.last; submitted+=l.passes;
+   }
+   void finish(int c, ownrt::Event event) { finish(c,{event,event,1},false); }
++  std::ostringstream site_buffer;
++  void flush_attribution(){site_timings<<site_buffer.str();site_timings.flush();site_buffer.str("");site_buffer.clear();require(bool(site_timings),"attribution write");}
++  void attribution_host(const char* label,std::chrono::steady_clock::time_point start){
++   if(!attribution.active())return;
++   auto end=std::chrono::steady_clock::now();site_buffer<<"{\"schema\":\"packet128.host.v1\",\"request\":"<<attribution.request<<",\"rank\":"<<a.rank<<",\"fixture\":"<<attribution.current.fixture<<",\"position\":"<<attribution.current.position<<",\"label\":"<<ownrt::quote(label)<<",\"start_ns\":"<<std::chrono::duration_cast<std::chrono::nanoseconds>(start.time_since_epoch()).count()<<",\"end_ns\":"<<std::chrono::duration_cast<std::chrono::nanoseconds>(end.time_since_epoch()).count()<<"}\n";
++  }
+   void attribution_row(ownrt::Event event,const ownrt::EventTiming& t) {
++    if(!attribution.enabled)return;
+     auto found=attribution.events.find(event);if(found==attribution.events.end())return;
+     const auto& site=found->second;
+-    site_timings<<"{\"schema\":\"packet65.event.v1\",\"diagnostic\":true,\"rank\":"<<a.rank
+-      <<",\"half\":"<<site.half<<",\"fixture\":"<<site.fixture<<",\"position\":"<<site.position
++    site_buffer<<"{\"schema\":\"packet128.event.v1\",\"diagnostic\":true,\"rank\":"<<a.rank
++      <<",\"request\":"<<attribution.request<<",\"fixture\":"<<site.fixture<<",\"position\":"<<site.position
+       <<",\"speculative\":"<<(site.speculative?"true":"false")<<",\"label\":"<<ownrt::quote(site.label)
+-      <<",\"class\":\"moe_experts\",\"event\":"<<event
+-      <<",\"start_ns\":"<<t.start_ns<<",\"end_ns\":"<<t.end_ns<<"}\n";
++      <<",\"class\":"<<ownrt::quote(p57::category(site.label))<<",\"event\":"<<event
++      <<",\"layer_boundary\":"<<ownrt::quote(p57::layer_boundary(site.label))
++      <<",\"start_ns\":"<<t.start_ns<<",\"end_ns\":"<<t.end_ns
++      <<",\"device_ms\":"<<double(t.end_ns-t.start_ns)/1e6<<"}\n";
+     attribution.events.erase(found);
++  }
++  void attribution_copy(ownrt::Event event,const char* label,bool completed=false) {
++    if(!attribution.enabled||!p57::sample(attribution.current.fixture))return;
++    auto previous=attribution.current.label;attribution.current.label=label;attribution.record(event);attribution.current.label=previous;
++#ifndef OWN_RT_HOST_ONLY
++    if(completed){auto t=dev(0).timing(event);require(t.start_ns&&t.end_ns>=t.start_ns,"invalid transfer interval");attribution_row(event,t);}
++    else pending.push_back({{event,event,1},false,current_cls});
++#else
++    attribution.events.erase(event);
++#endif
+   }
+   void drain() {
+     if(!tail && pending.empty())return;
+@@ -709,7 +727,7 @@
+   bool poisoned = false;bool draft_timing=false;
+   std::chrono::steady_clock::time_point deadline;
+   Engine(Weights &source, const Options &args, flash::Plan q)
+-      : w(source), a(args), class_timing(args.timing=="class"),profile_events(args.timing!="token"),resident(args.memory=="resident"),prepared_path(resident&&!args.legacy),p(std::move(q)),
++      : w(source), a(args), class_timing(args.timing=="class"),profile_events(args.timing=="class"||args.timing=="launch"),resident(args.memory=="resident"),prepared_path(resident&&!args.legacy),p(std::move(q)),
+         timings(a.output / "timings.jsonl"), prefill_timings(a.output/"prefill-timings.jsonl"), site_timings(a.output/"sites.jsonl"), progress(a.output / "progress.jsonl"),
+         deadline(std::chrono::steady_clock::now() +
+                  std::chrono::seconds(a.seconds)) {attribution.enabled=args.timing=="attribution";pending.reserve(4096);prepared.reserve(p.launches.size());matrices.reserve(p.launches.size());gemv_choices.reserve(p.launches.size());
+@@ -830,7 +848,8 @@
+       std::memcpy(dev(c).arena.row(slab[c]).pointer,
+                   static_cast<const uint8_t *>(src) + i, k);
+       ownrt::CopyEngine copy(dev(c));
+-      wait(c, copy.copy(dst, offset + i, slab[c], 0, k, {}));
++      auto event=copy.copy(dst, offset+i, slab[c], 0, k, {});wait(c,event);
++      attribution_copy(event,draft_timing?"draft.transfer.upload":attribution.current.label.starts_with("head.")?"transfer.head.upload":"transfer.upload",true);
+       retire_events(c);
+     }
+     transfer_ms+=ms(started);
+@@ -842,7 +861,8 @@
+     for (size_t i = 0; i < n; i += 4 * 1024 * 1024) {
+       size_t k = std::min(n - i, size_t(4 * 1024 * 1024));
+       ownrt::CopyEngine copy(dev(c));
+-      wait(c, copy.copy(slab[c], 0, src, i, k, {}));
++      auto event=copy.copy(slab[c],0,src,i,k,{});wait(c,event);
++      attribution_copy(event,draft_timing?"draft.transfer.readback":"transfer.readback",true);
+       retire_events(c);
+       std::memcpy(b.data() + i, dev(c).arena.row(slab[c]).pointer, k);
+     }
+@@ -1010,7 +1030,7 @@
+ #ifdef OWN_RT_HOST_ONLY
+     devices.push_back(std::make_unique<ownrt::Device>(std::make_unique<Host>()));
+ #else
+-    devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,profile_events||a.rank==0||a.mtp||!a.draft_capture.empty())));
++    devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,profile_events||attribution.enabled||a.rank==0||a.mtp||!a.draft_capture.empty())));
+     save(a.output/"device-contact.json","{\"device_contact\":true}");
+ #endif
+     if(a.argument_audit){argument_log.open(a.output/"argument-equivalence.jsonl");dev(0).argument_audit=&argument_log;dev(0).audit_prepare_each=a.audit_prepare_each;}
+@@ -1500,7 +1520,7 @@
+     auto previous_submitted=submitted;
+     auto started=class_timing?std::chrono::steady_clock::now():std::chrono::steady_clock::time_point{};
+     double waited=wait_ms;
+-    for(const auto& cmd:site.commands){if(site.copy)drain();auto event=dev(c).issue(cmd);if(site.copy)tail=event;else finish(c,{event,event,1},site.family<=4);}
++    for(const auto& cmd:site.commands){if(site.copy)drain();auto event=dev(c).issue(cmd);if(site.copy){tail=event;attribution_copy(event,"transfer.target_site");}else finish(c,{event,event,1},site.family<=4);}
+     if(class_timing)family_ms[site.family]+=ms(started)-(wait_ms-waited);
+     if(a.checked&&site.layer_end&&integer(c,"error"))throw std::runtime_error("device sticky error at layer end "+p.launches[index].label);
+     if(a.mini||a.checked)site_timings<<"{\"kind\":\"site\",\"label\":"<<ownrt::quote(p.launches[index].label)<<",\"wall_ms\":null,\"kernel_submissions\":"<<submitted-previous_submitted<<"}\n";
+--- packet124b/rank.hpp
++++ packet128/rank.hpp
+@@ -111,6 +111,8 @@
+  }
+ }
+ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uint8_t* shared,SpeculativeImage& image,bool prepared_inputs=false) {
++ if(e.attribution.enabled){if(request.fixture>0)e.attribution.generation_origin=request.position-request.fixture;
++  e.attribution.current={"transfer.target_begin",request.fixture,request.position,bool(request.speculative)};}
+  require(!candidate.pending,"half before resolving prior candidate");
+  require(request.position>=0&&request.position<e.p.g.context,"half position bound");
+  if(!prepared_inputs)require(e.integer(0,"position")==request.position,"position sequence mismatch");
+@@ -118,7 +120,6 @@
+  require(request.token>=0&&request.token<e.p.g.vocab,"half token bound");
+  require(e.a.rank==0||!request.speculative,"rank1 must never speculate");
+  e.verify_configuration();e.guard();
+- if(e.attribution.enabled)e.attribution.begin(request.fixture,request.position,request.speculative);
+  // Snapshot the prior launch extents before admitting a speculative bucket.
+  if(request.speculative)image.begin(shared);
+  e.admit_position(request.position);
+@@ -182,8 +183,8 @@
+  if(!e.resident){e.release_layer(0);e.loaded_layer[0]=-1;}
+  if(e.a.rank==1)e.reply_report.begin(request.sequence,request.fixture,request.position);
+  getrusage(RUSAGE_SELF,&after);getrusage(RUSAGE_THREAD,&thread_after);
+- const bool report_site=e.attribution.enabled&&p65timing::sample(request.fixture),report_cancelled=candidate.cancelled;
+- const auto report_half=e.attribution.current.half;const auto report_retirement_calls=e.retirement_calls-retire_calls;
++ const bool report_site=e.attribution.enabled&&p57::sample(request.fixture),report_cancelled=candidate.cancelled;
++ const auto report_half=0;const auto report_retirement_calls=e.retirement_calls-retire_calls;
+  const auto report_reprepares=e.capacity_reprepares,report_waits=e.host_waits-waits,report_checks=e.parity_argument_checks;
+  const double report_retirement_ms=e.retirement_ms-retire_ms,report_profiling_ms=e.profiling_ms-profile_ms,report_wait_ms=e.wait_ms-waited;
+  const auto report_families=e.family_ms;
+@@ -268,9 +269,16 @@
+   save(a.output/"census.json",engine->dev(0).arena.census());
+   Reply ready{};ready.rank=a.rank;transfer(a.channel,&ready,sizeof ready,true,a.seconds);
+   Candidate c;int sequence=0,accepted=0;bool async_half_ready=false;int async_half_position=-1,async_half_token=-1;
++  auto previous_command_end=std::chrono::steady_clock::now();
+   auto execute=[&](const Request& r)->Reply {
+    if(a.rank==1)engine->reply_report.before(r.op);
+    auto received=std::chrono::steady_clock::now();
++   if(engine->attribution.enabled){
++    engine->attribution.current={"command",r.fixture,r.position,bool(r.speculative)};
++    if(r.op==pipeline::accept&&c.pending)engine->attribution.current={"transfer.accept",c.fixture,c.position,c.speculative};
++    if(r.op==draft)engine->attribution.current.fixture=engine->attribution.generation_origin<0?0:r.position-engine->attribution.generation_origin;
++   }
++   engine->attribution_host("host.command_gap",previous_command_end);
+    Reply response{};response.sequence=r.sequence;response.rank=a.rank;
+    bool completing_redo=image.before_command(r.op==half&&!r.speculative,r.position,r.token);
+    if(r.op==draft){
+@@ -279,6 +287,7 @@
+     else {auto* bytes=static_cast<uint8_t*>(mapping);require(__atomic_load_n(&reverse_ready(bytes).position_plus_one,__ATOMIC_ACQUIRE)==uint32_t(r.position),"reverse stream position mismatch");
+      if(__atomic_load_n(&verification(bytes).position_plus_one,__ATOMIC_ACQUIRE)){auto& v=verification(bytes);require(__atomic_load_n(&v.position_plus_one,__ATOMIC_ACQUIRE)==uint32_t(r.position)&&v.token==r.token,"rank0 draft requires target confirmation");}
+      provider->set_reverse_hidden(bytes+reverse_offset);}
++    if(engine->attribution.enabled)engine->attribution.current={"draft.transfer.begin",engine->attribution.generation_origin<0?0:r.position-engine->attribution.generation_origin,r.position,false};
+     auto before=std::chrono::steady_clock::now();double gpu=engine->gemv_ms+engine->nongemv_ms;
+     struct Publication{int32_t valid,position,token,error;uint64_t elapsed_ns;int32_t sequence,reserved;double gpu_ms;};static_assert(sizeof(Publication)==40);
+     auto publish_draft=[&,r](int token,double wall_ms,double gpu_ms){
+@@ -296,6 +305,7 @@
+     response.busy_ms=Engine::ms(before);response.gpu_ms=engine->gemv_ms+engine->nongemv_ms-gpu;
+    }
+    else if(r.op==half){
++    if(engine->attribution.enabled)engine->attribution.current={"transfer.target_begin",r.fixture,r.position,bool(r.speculative)};
+     require(!head_runtime||native_active,"p105 head split requires native controller");
+     bool prepared_inputs=async_half_ready;
+     if(prepared_inputs){require(r.position==async_half_position&&r.token==async_half_token,"asynchronous draft/half confirmed identity");provider->queue_half_inputs(r.token,static_cast<uint8_t*>(mapping)+slot_bytes);async_half_ready=false;}
+@@ -304,6 +314,7 @@
+    }
+    else if(r.op==pipeline::accept){require(c.pending,"accept without candidate");publish(*engine,c);if(c.speculative)image.accept();if(c.fixture>0)++accepted;c={};}
+    else if(r.op==rollback){
++    if(engine->attribution.enabled)engine->attribution.current={"transfer.rollback",r.fixture,r.position,false};
+     bool redo=r.speculative==1;require(r.speculative==0||redo,"rollback mode");
+     if(redo){auto& v=verification(static_cast<uint8_t*>(mapping));
+      require(c.pending&&c.speculative&&r.position==c.position&&r.fixture==c.fixture&&r.token>=0&&r.token<engine->p.g.vocab,"redo identity");
+@@ -311,7 +322,7 @@
+     undo(*engine,c,image,redo,r.position,r.token);
+    }
+    else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();state_dump(*engine,r.position);if(r.position==2147483647)request_state_inventory(*engine);}
+-   else if(r.op==11){image.boundary();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
++   else if(r.op==11){require(r.token==0||r.token==1,"attribution reset mode");engine->flush_attribution();++engine->attribution.request;engine->attribution.enabled=false;image.boundary();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);engine->attribution.generation_origin=-1;engine->attribution.current={};engine->attribution.enabled=a.timing=="attribution"&&r.token==0;accepted=0;}
+    #ifdef OWN_RT_HOST_ONLY
+    else if(r.op==12){require(a.rank==0&&c.pending&&c.speculative,"negative control ownership");image.corrupt_protected_for_gate(r.token);}
+ #endif
+@@ -321,6 +332,7 @@
+    if(a.rank==1)engine->reply_report.after(r.op);
+    response.redo_ms=std::chrono::duration<double>(received.time_since_epoch()).count();
+    response.reserved_ms=std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
++   previous_command_end=std::chrono::steady_clock::now();
+    return response;
+   };
+   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
+@@ -348,6 +360,7 @@
+    transfer(a.channel,&response,sizeof response,true,a.seconds);
+    if(a.rank==1&&r.op==half)engine->reply_report.published();
+   }
++  engine->flush_attribution();
+   engine->dump_classes(engine->a.output/"class-times.json",accepted);
+  }catch(const std::exception& ex){
+   error=ex.what();
+--- packet124b/mtp.hpp
++++ packet128/mtp.hpp
+@@ -47,7 +47,7 @@
+ class DraftRuntime {
+  Engine& e;std::unique_ptr<Store> store;flash::Plan p;std::map<std::string,Slot> buffers;std::map<std::string,Weight> weights;
+  std::map<const flash::Launch*,Engine::Prepared> prepared;
+- struct Site { std::vector<ownrt::PreparedCompute> commands; bool gemv=false; int cls=0; bool head=false; };
++ struct Site { std::vector<ownrt::PreparedCompute> commands; bool gemv=false; int cls=0; bool head=false; std::string label; };
+  std::vector<Site> issue_sites;
+  std::vector<flash::Launch> merge_plan;
+  bool captured=false;int context_extent=32; const void* reverse_hidden=nullptr;
+@@ -76,7 +76,7 @@
+   if(!e.prepared_path)return;
+   e.drain();const int saved_class=e.current_cls;
+   auto capture=[&](const flash::Launch& l){
+-   Site site;site.gemv=l.op=="gemv"||l.op=="routed_gemv"||l.op=="expert_gate_up";
++   Site site;site.label="draft."+l.label;site.gemv=l.op=="gemv"||l.op=="routed_gemv"||l.op=="expert_gate_up";
+    site.head=l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax";
+    e.set_class("draft."+l.label);site.cls=e.current_cls;
+    e.preparing_commands=true;e.dev(0).begin_capture(site.commands);
+@@ -225,27 +225,27 @@
+  int compute(int confirmed,int target_position,bool head,bool asynchronous=false){
+   require(!async_pending,"draft publication still pending");if(disabled)return -1;admit_position();require(confirmed>=0&&confirmed<p.g.vocab,"draft confirmed token bound");require(target_position==position+1,"draft confirmed position sequence");auto start=std::chrono::steady_clock::now();
+   if(e.a.draft_fault=="error"||e.a.draft_fault=="stall"){if(e.a.draft_fault=="stall"){auto until=std::chrono::steady_clock::now()+std::chrono::milliseconds(50);while(std::chrono::steady_clock::now()<until){e.guard();poll(nullptr,0,5);}}throw ProviderError("cooperative injected provider failure before submission");}
+-  e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);ownrt::CopyEngine copy(e.dev(0));if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");e.upload(0,id("merge.hidden"),0,reverse_hidden,4*p.g.h*2);reverse_hidden=nullptr;}else e.tail=copy.copy(id("merge.hidden"),0,e.buffers[0].at("streams").id,0,4*p.g.h*2,{});e.drain();
++  e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);ownrt::CopyEngine copy(e.dev(0));if(e.a.rank==0&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");e.upload(0,id("merge.hidden"),0,reverse_hidden,4*p.g.h*2);reverse_hidden=nullptr;}else {e.tail=copy.copy(id("merge.hidden"),0,e.buffers[0].at("streams").id,0,4*p.g.h*2,{});e.attribution_copy(e.tail,"draft.transfer.hidden");}e.drain();
+   // Bounded target embedding row only. No target PLE/history/token preparation.
+   auto t=e.w.directory.at("token_embd.weight");auto type=flash::grid_type(t.grid);auto fmt=iq3::layout(type);size_t rb=p.g.h/fmt.elements*fmt.bytes;auto raw=e.w.read(t.name,size_t(confirmed)*rb,rb);std::vector<uint16_t> emb(p.g.h);for(int k=0;k<p.g.h;++k)emb[k]=iq3::bf16_bits(iq3::element(type,raw.data(),k));e.upload(0,id("embedding"),0,emb.data(),emb.size()*2);
+   if(captured) {
+    for(const auto& site:issue_sites){if(!head&&site.head)continue;
+     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
+-    e.guard();e.current_cls=site.cls;
++    e.guard();e.current_cls=site.cls;if(e.attribution.enabled)e.attribution.current.label=site.label;
+     for(const auto& cmd:site.commands){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);}
+    }
+   } else {
+-   for(const auto& l:merge_plan){if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);}
++   for(const auto& l:merge_plan){if(e.a.timing=="class")e.set_class("draft."+l.label);if(e.attribution.enabled)e.attribution.current.label="draft."+l.label;direct(l);}
+    for(const auto& l:p.launches){if(!head&&(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax"))continue;
+     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
+-    e.guard();if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);
++    e.guard();if(e.a.timing=="class")e.set_class("draft."+l.label);if(e.attribution.enabled)e.attribution.current.label="draft."+l.label;direct(l);
+    }
+   }
+   if(asynchronous) {
+    // Copies belong to the same in-order queue and to private pinned memory.
+    // No host access occurs until the final copy event reports completion.
+-   ownrt::CopyEngine copy(e.dev(0));copy.copy(publication,0,id("error"),0,4,{});
+-   publication_event=copy.copy(publication,4,id("next_token"),0,4,{});e.tail=publication_event;
++   ownrt::CopyEngine copy(e.dev(0));auto status_event=copy.copy(publication,0,id("error"),0,4,{});e.attribution_copy(status_event,"draft.transfer.status");
++   publication_event=copy.copy(publication,4,id("next_token"),0,4,{});e.tail=publication_event;e.attribution_copy(publication_event,"draft.transfer.proposal");
+    pending_start=start;pending_head=head;pending_confirmed=confirmed;async_pending=true;e.progress_pending=true;
+    return -1;
+   }
+@@ -283,8 +283,8 @@
+   // copy captured its target hidden input before these ordered overwrites.
+   auto* bytes=static_cast<uint8_t*>(e.dev(0).arena.row(half_staging).pointer);
+   std::memcpy(bytes,&token,4);std::memcpy(bytes+4,streams,4*p.g.h*2);
+-  ownrt::CopyEngine copy(e.dev(0));copy.copy(e.buffers[0].at("token").id,0,half_staging,0,4,{});
+-  e.tail=copy.copy(e.buffers[0].at("streams").id,0,half_staging,4,4*p.g.h*2,{});
++  ownrt::CopyEngine copy(e.dev(0));auto token_event=copy.copy(e.buffers[0].at("token").id,0,half_staging,0,4,{});e.attribution_copy(token_event,"transfer.half_token");
++  e.tail=copy.copy(e.buffers[0].at("streams").id,0,half_staging,4,4*p.g.h*2,{});e.attribution_copy(e.tail,"transfer.half_streams");
+  }
+  // Reset is quiescent and never frees/reallocates a shared-owner allocation.
+  void reset_request(const fs::path& output) {
+--- packet124b/p105_runtime.hpp
++++ packet128/p105_runtime.hpp
+@@ -28,7 +28,7 @@
+  }
+  void transfer(Allocation dst,Allocation src,size_t n,const char*leg){
+   auto start=std::chrono::steady_clock::now();CopyScope scope(bcs);ownrt::CopyEngine copy(e.dev(0));
+-  auto event=copy.copy(dst,0,src,0,n,{});e.wait(0,event);e.retire_events(0);
++  auto event=copy.copy(dst,0,src,0,n,{});e.wait(0,event);e.attribution_copy(event,(std::string("transfer.head.")+leg).c_str(),true);e.retire_events(0);
+   timings<<"{\"leg\":\""<<leg<<"\",\"placement\":\""<<(bcs?"bcs":"compute")<<"\",\"bytes\":"<<n<<",\"host_us\":"<<Engine::ms(start)*1000<<",\"backend\":"<<ownrt::quote(e.dev(0).identity())<<"}\n";
+   require(bool(timings),"p105 timing write");
+  }
+@@ -39,7 +39,7 @@
+   // CopyEngine binds the current final.mix writer event. BCS waits that event
+   // on its own queue; the following prefix head only reads the same input.
+   export_started=std::chrono::steady_clock::now();CopyScope scope(bcs);ownrt::CopyEngine copy(e.dev(0));
+-  export_event=copy.copy(staging,0,hidden,0,hidden_bytes,{});
++  export_event=copy.copy(staging,0,hidden,0,hidden_bytes,{});e.attribution_copy(export_event,"transfer.head.hidden_export");
+   export_sequence=sequence;export_position=pos;export_fixture=fixture;
+  }
+  void publish_hidden(Mailbox& box){
+@@ -54,24 +54,30 @@
+  }
+  template<class Cancel> void service(Mailbox& box,uint32_t seq,int pos,int fixture,Cancel cancel){
+   require(e.a.rank==0&&seq&&fixture>0,"p105 suffix ownership");
++  e.attribution.current={"head.suffix",fixture,pos,false};
+   auto check=[&]{cancel();require(!load(box.abort),"p105 peer failed");};
++  auto wait_start=std::chrono::steady_clock::now();
+   require(p56x::wait([&]{return load(box.request)==seq;},check,std::chrono::steady_clock::now()+std::chrono::seconds(e.a.seconds)),"p105 hidden timeout");check();
++  e.attribution_host("wait.head.hidden",wait_start);
+   require(box.position==pos&&box.fixture==fixture&&load(box.reply)<seq,"p105 stale position/duplicate service");
+   e.drain(); // local speculative half has completed; no model-state writes below.
+   std::memcpy(e.dev(0).arena.row(staging).pointer,box.hidden,hidden_bytes);
+   transfer(hidden,staging,hidden_bytes,"hidden-import");
+   uint32_t zero=0,one=1;e.upload(0,error,0,&zero,4);e.upload(0,active,0,&one,4);
+-  for(const auto& command:suffix_commands)e.tail=e.dev(0).issue(command);
++  e.attribution.current.label="head.suffix";
++  for(const auto& command:suffix_commands){auto event=e.dev(0).issue(command);e.finish(0,event);}
+   e.drain();transfer(staging,best,16,"best-export");
+   std::memcpy(&box.best,e.dev(0).arena.row(staging).pointer,16);check();publish(box.reply,seq);
+  }
+  template<class Cancel> void merge_target(Mailbox& box,uint32_t seq,int pos,int fixture,Cancel cancel){
+   require(e.a.rank==1&&load(box.request)==seq&&box.position==pos&&box.fixture==fixture,"p105 merge ownership");
+   // Pack uses the unchanged prefix argmax and its sticky finite flag.
+-  e.tail=pack(e.dev(0),logits,index,error,best,prefix,0);e.drain();transfer(staging,best,16,"prefix-export");
++  e.attribution.current.label="head.pack.prefix";e.tail=pack(e.dev(0),logits,index,error,best,prefix,0);e.finish(0,e.tail);e.drain();transfer(staging,best,16,"prefix-export");
+   Best local;std::memcpy(&local,e.dev(0).arena.row(staging).pointer,16);
+   auto check=[&]{cancel();require(!load(box.abort),"p105 peer failed");};
++  auto wait_start=std::chrono::steady_clock::now();
+   require(p56x::wait([&]{return load(box.reply)==seq;},check,std::chrono::steady_clock::now()+std::chrono::seconds(e.a.seconds)),"p105 best timeout");check();
++  e.attribution_host("wait.head.suffix",wait_start);
+   auto result=merge(local,box.best);
+   // Invalid partitions may have diagnostic indices; no nonfinite winner emits.
+   if(result.error){e.upload(0,error,0,&result.error,4);throw std::runtime_error("p105 sticky nonfinite target head");}
+--- packet124b/strict_snapshot.hpp
++++ packet128/strict_snapshot.hpp
+@@ -200,7 +200,7 @@
+    }
+    require(rows.size()*sizeof(SnapshotFlat::Item)<=table_capacity,"flat snapshot table capacity");
+    e.upload(0,table,0,rows.data(),rows.size()*sizeof(SnapshotFlat::Item));
+-   SnapshotFlat op;op.count=rows.size();op.tiles=tiles;e.tail=e.dev(0).compute(op,ids,{});
++   SnapshotFlat op;op.count=rows.size();op.tiles=tiles;e.tail=e.dev(0).compute(op,ids,{});e.attribution_copy(e.tail,restore?"rollback.restore.flat":"snapshot.capture.flat");
+    (restore?restore_submissions:capture_submissions)+=2;return;
+   }
+   // Similar-sized pieces share one kernel, limiting padded work. Each batch
+@@ -221,6 +221,7 @@
+    require(batch.count&&batch.total<=SnapshotBatch::limit,"snapshot batch bound");
+    if(batch.count==1)e.tail=e.dev(0).issue(checked[order[start]]);
+    else e.tail=e.dev(0).compute(batch,ids,{});
++   e.attribution_copy(e.tail,batch.count==1?(restore?"rollback.transfer.restore.single":"snapshot.transfer.capture.single"):(restore?"rollback.restore.batch":"snapshot.capture.batch"));
+    ++submissions;
+   }
+   (restore?restore_submissions:capture_submissions)+=submissions;
+--- packet124b/attribution.hpp
++++ packet128/attribution.hpp
+@@ -0,0 +1,37 @@
++#pragma once
++#include <map>
++#include <string>
++// Packet57 observation only. Device timestamps never compare different cards.
++namespace p57 {
++inline bool sample(int fixture) { return fixture>=1 && fixture<=64; }
++inline const char* layer_boundary(const std::string& label) {
++ if(label=="blk.0.hc.a.norm"||label=="blk.24.hc.a.norm")return "begin";
++ if(label=="blk.23.ffn.combine"||label=="blk.47.ffn.combine")return "end";
++ return "";
++}
++inline bool selected(const std::string&) { return true; }
++inline std::string category(std::string label) {
++ if(label.starts_with("head.suffix"))return "target_head_suffix";
++ if(label.starts_with("head.pack"))return "target_head_merge";
++ if(label.starts_with("snapshot."))return "snapshot_capture";
++ if(label.starts_with("rollback."))return "rollback";
++ if(label.find("transfer")!=std::string::npos)return "transfers";
++ if(label=="argmax")return "target_head_prefix";
++ if(label.ends_with("argmax"))return "argmax";
++ if(label=="logits")return "target_head_prefix";
++ if(label.starts_with("final."))return "final_norm_merge";
++ if(label.ends_with("logits"))return "head_prefix";
++ if(label.find("embedding")!=std::string::npos||label.find("ple.")!=std::string::npos)return "embedding_ple";
++ if(label.find("shexp")!=std::string::npos||label.find("shared")!=std::string::npos)return "shared_expert";
++ if(label.find("hc.")!=std::string::npos||label.find("norm")!=std::string::npos||label.find("final.")!=std::string::npos||label.find("merge.")!=std::string::npos)return "hc_norm_merge";
++ if(label.find("gather")!=std::string::npos||label.find("moe")!=std::string::npos||label.find("exps")!=std::string::npos||label.find("expert")!=std::string::npos||label.find("router")!=std::string::npos||label.find("route")!=std::string::npos||label.find("ffn.")!=std::string::npos)return "moe_experts";
++ if(label.find("attention")!=std::string::npos||label.find("qsa")!=std::string::npos||label.find("gdn")!=std::string::npos||label.find("attn")!=std::string::npos)return "attention";
++ return "other";
++}
++struct Site {std::string label;int fixture=0,position=-1;bool speculative=false;};
++struct Recorder {
++ bool enabled=false;int request=0;int generation_origin=-1;Site current;std::map<unsigned long long,Site> events;
++ bool active()const{return enabled&&sample(current.fixture)&&selected(current.label);}
++ void record(unsigned long long event){if(active())events.emplace(event,current);}
++};
++}
