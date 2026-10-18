@@ -47,6 +47,24 @@ def build_gate():
                 wrapper_seal_sha256=sha(WRAPPER / 'wrapper-seal.json'))
 
 
+def execution_gate():
+    # A proposal is shippable immediately after compilation. Device execution
+    # remains closed until independent CPU identity and linked-assembly gates.
+    for leaf in ('evidence/cpu-byte-identity.json', 'register-report-offline.json'):
+        path=P/leaf
+        require(path.is_file(), 'micro prerequisite pending: '+leaf)
+        row=read(path)
+        require(row.get('passed') is True and row.get('device_executed') is False,
+                'micro CPU prerequisite failed: '+leaf)
+        verify_map(ROOT,row['sources'])
+    report=read(P/'register-report-offline.json')
+    require(len(report['kernels'])==6 and all(r['spill_free'] or r['rejected'] for r in report['kernels']),
+            'micro requires all admitted linked kernels spill-free')
+    proof=read(P/'evidence/lookup-issue-proof.json')
+    require(proof.get('passed') is True, 'earlier lookup issue not established')
+    verify_map(ROOT,proof['sources'])
+
+
 def storage_admit():
     free = shutil.disk_usage('/').free
     require(free >= 12 * GIB + 32 * 1024**2, 'root free below 12 GiB plus micro log budget')
@@ -110,6 +128,7 @@ def main(argv=None):
              minimum_root_free_bytes=12*GIB, watchdog_seconds=WATCHDOG, retries=0,
              micro_qualification='pending measured >=15% faster; no engine speed verdict'), indent=2))
         return 0
+    execution_gate()
     lane_gate('B')
     require(args.authorized_device_window and args.fault_review,
             'coordinator authorization and fault review required')

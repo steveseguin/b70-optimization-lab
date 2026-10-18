@@ -33,3 +33,41 @@ will use v4, one candidate per B bracket and A confirmation. Records stay on A.
 Byte identity under GNU and Intel, linked offline assembly, full startup-path
 CPU dry runs, memory admission and screen seals are still in progress. No GPU,
 service, sudo, host setting or existing packet/ops file was changed.
+
+## CPU and assembly milestone
+
+All six views (control and five built candidates) pass GNU and Intel twice.
+Each run compares ten cases, 73,728 raw FP32 chain values and 2,304 tree values,
+plus all 1,024 IQ2 grid indices × 256 sign bytes across six exceptional/finite
+scale patterns. The output gate includes full gate/up row counts, partial and
+invalid routes, inactive/error state, NaNs, infinities, subnormals and signed zero.
+No tolerance is used. See `evidence/cpu-byte-identity.json` in the packet.
+
+The final eligible set is **batch2, batch4 and shared-input-only**. All use 128
+registers with zero scratch messages and zero flag spills in linked offline
+BMG assembly. `lookup_proof.py` checks vISA aliases, maps grid-load instruction
+IDs to final assembly, and rejects a batch consumed or waited on before all
+its sends issue. All eight grid reads per step are checked. Shared-input code
+has sixteen activation d32 reads per step versus thirty-two in production.
+These are code-generation findings, not measured speedups.
+
+The initial shared V8 mapping spilled. V4 preserves the same 32 logical chains
+and adjacent reduction tree with less live state. Consolidating its duplicate
+output/status paths removed the remaining spills for shared-input-only.
+The V4 batch2/shared and batch4/shared combinations still spill; they are
+built and byte-exact but **closed at the no-spill gate**, excluded from micro
+and screen candidates. A per-kernel 256-register property compiled to an
+extension the installed offline stack rejects; it is not used. All these
+attempts retain their source and assembly under `evidence/attempt*`.
+
+The early micro proposal is unchanged. Its rebuilt binary now includes only
+the three eligible candidates. Device execution additionally requires the
+completed CPU identity, linked assembly and issue-order proof. Planning can
+still run before those gates; no plan is a speed or quality verdict.
+
+The generated build mirror was mistakenly included in the first commit and
+removed from tracking immediately in the next pushed commit. It remains on
+disk and is reproducible with `kernel_gate.py`; no unique evidence was deleted.
+The copied 4 MiB `rope.bf16` is required by real startup, carries its parent hash
+in `copy-lineage.json`, and restores byte-for-byte from packet97 or Git.
+The build is approximately 153 MB logically, below the 300 MB cap.

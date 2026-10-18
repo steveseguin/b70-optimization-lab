@@ -11,7 +11,8 @@ sys.path.insert(0, str(WRAPPER))
 from common import read, require, sha, verify_map
 from cpu_seal import verify as verify_wrapper
 
-from bundle_selection import VIEWS
+from micro_gate import CANDIDATES
+VIEWS=('production',*CANDIDATES)
 DIRECTIONS = ('B-grid',)  # record host A is always the deciding confirmation
 
 

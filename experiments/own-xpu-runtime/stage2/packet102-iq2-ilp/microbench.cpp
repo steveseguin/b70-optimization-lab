@@ -15,7 +15,7 @@ struct Buffers{
  ~Buffers(){try{q.wait_and_throw();}catch(...){}for(auto p:values)sycl::free(p,q);}
  void*alloc(size_t bytes){auto*p=sycl::malloc_device(bytes,q);if(!p)throw std::bad_alloc();values.push_back(p);return p;}
 };
-const char*names[]={"production","exp-lookup-batch2","exp-lookup-batch4","exp-gateup-shared","exp-lookup-batch2-shared","exp-lookup-batch4-shared"};
+const char*names[]={"production","exp-lookup-batch2","exp-lookup-batch4","exp-gateup-shared"};
 template<iq3::Type T,unsigned K,unsigned Rows>void bench(sycl::queue&q){
  constexpr bool paired=T==iq3::Type::IQ2_S;constexpr unsigned Experts=512,Count=10;
  constexpr size_t rb=p49bgemv::layout(T,K).row_bytes;
@@ -53,8 +53,6 @@ template<iq3::Type T,unsigned K,unsigned Rows>void bench(sycl::queue&q){
    case 1:{p102::Kernel<2,false> k;return k.submit(q,a,{});}
    case 2:{p102::Kernel<4,false> k;return k.submit(q,a,{});}
    case 3:{p102::Kernel<1,true> k;return k.submit(q,a,{});}
-   case 4:{p102::Kernel<2,true> k;return k.submit(q,a,{});}
-   case 5:{p102::Kernel<4,true> k;return k.submit(q,a,{});}
   }return production.submit(q,a,{});
  };
  auto bytes=[&]{std::vector<uint8_t>r(Rows*Count*2*(paired?2:1)+Count*4*(paired?2:1)+4);size_t off=0;
@@ -63,7 +61,7 @@ template<iq3::Type T,unsigned K,unsigned Rows>void bench(sycl::queue&q){
  };
  auto poison=[&]{q.memset(y,0xa5,Rows*Count*2);q.memset(py,0xa5,Rows*Count*2);q.memset(status,0xa5,Count*4);q.memset(peer_status,0xa5,Count*4).wait_and_throw();};
  poison();launch(0).wait_and_throw();auto expected=bytes();
- for(unsigned mode=1;mode<6;++mode){guard();poison();launch(mode).wait_and_throw();if(bytes()!=expected)throw std::runtime_error("expert output/status byte mismatch");
+ for(unsigned mode=1;mode<4;++mode){guard();poison();launch(mode).wait_and_throw();if(bytes()!=expected)throw std::runtime_error("expert output/status byte mismatch");
   std::cout<<"{\"kind\":\"correctness\",\"view\":\""<<names[mode]<<"\",\"rows\":"<<Rows<<",\"columns\":"<<K<<",\"experts\":512,\"selected_experts\":10,\"bf16_exact\":true,\"status_exact\":true}\n"<<std::flush;
   for(unsigned rep=0;rep<40;++rep)for(unsigned pos=0;pos<2;++pos){guard();unsigned arm=(pos^(rep&1))?mode:0;auto start=std::chrono::steady_clock::now();auto event=launch(arm);event.wait_and_throw();auto ns=event.template get_profiling_info<sycl::info::event_profiling::command_end>()-event.template get_profiling_info<sycl::info::event_profiling::command_start>();double wall=std::chrono::duration<double,std::nano>(std::chrono::steady_clock::now()-start).count();
    std::cout<<"{\"kind\":\"sample\",\"pair\":\""<<names[mode]<<"\",\"view\":\""<<names[arm]<<"\",\"repeat\":"<<rep<<",\"position\":"<<pos<<",\"event_ns\":"<<ns<<",\"wall_ns\":"<<std::setprecision(17)<<wall<<",\"rows\":"<<Rows<<",\"columns\":"<<K<<",\"experts\":512,\"selected_experts\":10,\"wg\":64,\"sg\":32,\"diagnostic_only\":true}\n"<<std::flush;

@@ -78,15 +78,21 @@ template<Type T,unsigned K>void run_shape(Recorder& rec,unsigned rows,unsigned s
   const auto* weight=(stream?peer:w).data()+row*stride;const auto* input=x.data()+(paired?0:(row%10)*K);
   float baseline[32],pipelined[32],wide[32];
   for(unsigned lane=0;lane<32;++lane)baseline[lane]=p49bgemv::lane<T,K>(weight,input,0,K,lane);
-  for(unsigned physical=0;physical<32/V;++physical){auto c=[&]{
- const auto* cached=(stream?cp:cw).data()+row*cached_stride;
- const auto* gate=cw.data()+row*cached_stride;const auto* up=cp.data()+row*cached_stride;
- if(selected==1)return p102::chains<2,false>(cached,cached,input,physical)[0];
- if(selected==2)return p102::chains<4,false>(cached,cached,input,physical)[0];
- if(selected==3)return p102::chains<1,true>(gate,up,input,physical)[stream];
- if(selected==4)return p102::chains<2,true>(gate,up,input,physical)[stream];
- if(selected==5)return p102::chains<4,true>(gate,up,input,physical)[stream];
- return p90exp::wide_chains<T,K,V>(cached,input,physical);}();for(unsigned chain=0;chain<V;++chain){unsigned lane=physical*V+chain;pipelined[lane]=c[chain];require(std::bit_cast<uint32_t>(baseline[lane])==std::bit_cast<uint32_t>(c[chain]),"raw FP32 chain equality");++rec.chain_checks;}}
+  auto check_chains=[&]<unsigned Batch,bool Shared>(){
+   constexpr unsigned L=Shared?4:8;
+   for(unsigned physical=0;physical<32/L;++physical){
+    const auto* gate=cw.data()+row*cached_stride;const auto* up=cp.data()+row*cached_stride;
+    const auto* cached=stream?up:gate;
+    auto c=p102::chains<Batch,Shared>(Shared?gate:cached,up,input,physical)[Shared?stream:0];
+    for(unsigned chain=0;chain<L;++chain){unsigned lane=physical*L+chain;pipelined[lane]=c[chain];require(std::bit_cast<uint32_t>(baseline[lane])==std::bit_cast<uint32_t>(c[chain]),"raw FP32 chain equality");++rec.chain_checks;}
+   }
+  };
+  if(selected==1)check_chains.template operator()<2,false>();
+  else if(selected==2)check_chains.template operator()<4,false>();
+  else if(selected==3)check_chains.template operator()<1,true>();
+  else if(selected==4)check_chains.template operator()<2,true>();
+  else if(selected==5)check_chains.template operator()<4,true>();
+  else for(unsigned physical=0;physical<4;++physical){auto c=p90exp::wide_chains<T,K,8>((stream?cp:cw).data()+row*cached_stride,input,physical);for(unsigned chain=0;chain<8;++chain){unsigned lane=physical*8+chain;pipelined[lane]=c[chain];require(std::bit_cast<uint32_t>(baseline[lane])==std::bit_cast<uint32_t>(c[chain]),"control raw chain");++rec.chain_checks;}}
   for(unsigned physical=0;physical<32/V;++physical){auto c=[&]{if constexpr(!paired)return p65::wide_chains<T,K,V>(weight,input,physical);else return p65::wide_chains<T,K,V>(weight,input,physical);}();for(unsigned chain=0;chain<V;++chain){unsigned lane=physical*V+chain;wide[lane]=c[chain];require(std::bit_cast<uint32_t>(baseline[lane])==std::bit_cast<uint32_t>(c[chain]),"wide raw FP32 chain equality");++rec.chain_checks;}}
   float a=iq3::tree32(baseline),b=iq3::tree32(pipelined),c=iq3::tree32(wide);require(std::bit_cast<uint32_t>(a)==std::bit_cast<uint32_t>(b),"raw FP32 tree equality");require(std::bit_cast<uint32_t>(a)==std::bit_cast<uint32_t>(c),"wide raw FP32 tree equality");rec.tree_checks+=2;
  }

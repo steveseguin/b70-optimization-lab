@@ -2,7 +2,7 @@
 import json,math,statistics
 from pathlib import Path
 from build_engine import P,ROOT,sha,save
-CANDIDATES=('exp-lookup-batch2','exp-lookup-batch4','exp-gateup-shared','exp-lookup-batch2-shared','exp-lookup-batch4-shared')
+CANDIDATES=('exp-lookup-batch2','exp-lookup-batch4','exp-gateup-shared')
 MICRO_DIRECTORY='evidence/micro-B'
 def require(ok,message):
  if not ok:raise ValueError(message)

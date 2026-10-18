@@ -38,7 +38,7 @@ class MicroRunnerTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'root free'): runner.storage_admit()
 
     def test_run_refuses_missing_authorization_before_launch(self):
-        with tempfile.TemporaryDirectory() as tmp, patch.object(runner, 'OUTPUT', Path(tmp) / 'fresh'), patch.object(runner, 'build_gate', return_value={}), patch.object(runner, 'lane_gate'), patch.object(runner, 'Reservation') as lease, patch.object(runner.subprocess, 'Popen') as launch:
+        with tempfile.TemporaryDirectory() as tmp, patch.object(runner, 'OUTPUT', Path(tmp) / 'fresh'), patch.object(runner, 'build_gate', return_value={}), patch.object(runner, 'lane_gate'), patch.object(runner, 'execution_gate'), patch.object(runner, 'Reservation') as lease, patch.object(runner.subprocess, 'Popen') as launch:
             with self.assertRaisesRegex(ValueError, 'authorization'): runner.main(['--run'])
             lease.assert_not_called()
             launch.assert_not_called()
