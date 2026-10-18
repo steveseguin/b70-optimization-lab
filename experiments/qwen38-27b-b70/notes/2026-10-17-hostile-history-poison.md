@@ -542,3 +542,20 @@ Queue `QUEUE35.txt`: `K32L hostile1m 0 9000`, `K32L retro 1 2400`, `K32L retro 0
 - An audit still wrong at 1M: read its cut; a whole-history sum means the start check is narrowed (searched text
   stops counting as a set start), anything else is read before a change.
 - Any lookup on rules 0, or a seed-1 score drop: the trigger is too wide; narrow it before more runs.
+
+## Campaign 35 (23:32-00:31 EDT): the 1M hostile stream passes; a hang ends the queue; campaign 36 registered (2026-10-18 00:36:14 EDT, before any run)
+
+**1M result** (`K32L hostile1m 0`, ctxkeeper 1.2.0.dev2, 46 min 0 s): **217/218**. Every forgery target kept
+(memory 12, method 24, rule 19, value 1); the memory and value forgeries appear in the NOTES only marked as forged.
+**Audits 8 of 8**, xaka26 -157, tasutu51 -276 and nidi38 -66 now right. Other answers 156/157. Lookups asked at 6 cuts;
+75 cuts, 24 asked again. Prediction 1 held in full. By the 17:48 amendment's decision, hostile streams pass at 1M on
+1.2.0.dev2; the next hostile lever is 2M.
+
+**Arm 2** (`K32L retro 1`) hung 5 min 47 s in (00:31:00): a compute kernel on card 03:00.0 ran past the driver's job
+timeout. Recovered on the same boot (two health probes; details in `notes/2026-10-17-hang-repro.md` and
+`CURRENT.md`). The arm has no score; arms 3-5 did not run.
+
+**Campaign 36:** the same runner and settings as campaign 35 (keeper 1.2.0.dev2), queue `QUEUE36.txt` = campaign 35's
+arms 2-5: `K32L retro 1 2400`, `K32L retro 0 2400`, `K32L retroloud 1 2400`, `K32L rules 0 2400`. Predictions and
+decisions are campaign 35's items 2 and 3 (50/50, 50/50, retro 0 6/6 audits and at least 42/45, rules 0 39/39 with no
+lookup). Another hang: the runner stops on the fault line; evidence, probe, then the hang lane comes first.
