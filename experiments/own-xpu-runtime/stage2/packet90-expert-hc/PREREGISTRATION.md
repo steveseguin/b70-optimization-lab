@@ -99,8 +99,17 @@ exact screen; do not silently substitute incomplete diagnostic rows.
 5. Coordinator uses the pinned wrapper’s built-in **one prompt ×64-token**
    startup oracle gate for each new path before any timed suite (stronger token
    coverage than the memory note’s 32-token minimum; no modified wrapper).
-   Then production / exp-halfcache / hc-weightcache / production full screens on lane A,
-   exact improving winner bracketed on the other. Complete fixed-suite oracle,
+   `--direction A-grid` (default) runs production / exp-halfcache /
+   hc-weightcache / production on lane A, then production / winner / production
+   on lane B. `--direction B-grid` mirrors this: B grids, A confirms. The
+   confirmation refuses until the complete source grid is exact, every prompt's
+   acceptance counts are unchanged, and the fastest candidate beats both
+   controls. Final interpretation requires that exact same winner on the other
+   lane, all confirmation requests exact, acceptance counts equal to the grid,
+   and its rate above both confirmation controls. Never substitute the other
+   candidate, combine directions, or use one lane alone as confirmation.
+   Direction and lane are part of every fresh output name. Both directions use
+   fixed 90-second gaps and zero retries. Complete fixed-suite oracle,
    status, acceptance and no-regression checks required; two fresh owners before
    speed verdict. No retries and no automatic chain promotion.
 

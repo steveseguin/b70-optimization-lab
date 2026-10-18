@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """CPU-only diagnostic comparison, same-lane controls; never a promotion gate."""
 import argparse
+import json
 import math
 from pathlib import Path
 import statistics
 from types import SimpleNamespace
-from screen_jobs import jobs, verify, WRAPPER as QUICK
+from screen_jobs import jobs, verify, choose, lanes, DIRECTIONS, WRAPPER as QUICK
 from common import D, HERE, METRICS, read, require, sealed, sha
 from conditions import cpu_gate, LANES
 
@@ -62,3 +63,38 @@ def load(row, lane):
               and incident.get('passed') is True and incident.get('exact_oracle') is True
               and len(incident['tokens']) == 64 and incident['tokens'] == oracle(D.CHECK.PROMPT_IDS[0])[:64])
     return dict(choice=row['choice'], rate=rate, exact=exact, acceptance_counts=[(r['stats']['hits'],r['stats']['guesses']) for r in summary['requests']], acceptance=statistics.mean(r['acceptance'] for r in summary['requests']), draft_wall_ms=statistics.mean(r['draft_wall_ms'] for r in summary['requests']) if all('draft_wall_ms' in r for r in summary['requests']) else None)
+
+
+def confirmed(grid, confirmation):
+    best = choose(grid)
+    require([r['choice'] for r in confirmation] == ['production', best['choice'], 'production'],
+            'confirmation selection differs from grid winner')
+    require(all(r['exact'] for r in confirmation), 'all confirmation requests must be exact')
+    require(all(r['acceptance_counts'] == grid[0]['acceptance_counts'] for r in confirmation),
+            'per-prompt target/draft acceptance changed on confirmation')
+    require(all(math.isfinite(r['rate']) and r['rate'] > 0 for r in confirmation), 'invalid confirmation rate')
+    require(confirmation[1]['rate'] > max(confirmation[0]['rate'], confirmation[-1]['rate']),
+            'confirmation winner must beat both fresh controls')
+    return confirmation[1]
+
+
+def compare_direction(direction='A-grid'):
+    source, other = lanes(direction)
+    grid = [load(row, source) for row in jobs(source, direction=direction)]
+    best = choose(grid)
+    confirmation = [load(row, other) for row in jobs(other, best['choice'], direction)]
+    result = confirmed(grid, confirmation)
+    return dict(passed=True, direction=direction, source_lane=source, confirmation_lane=other,
+                grid=grid, confirmation=confirmation, winner=result, qualification='screen only; no promotion')
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('--direction', choices=DIRECTIONS, default='A-grid')
+    args = ap.parse_args()
+    cpu_gate(); verify()
+    print(json.dumps(compare_direction(args.direction), indent=2))
+
+
+if __name__ == '__main__':
+    main()

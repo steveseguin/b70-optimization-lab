@@ -32,9 +32,11 @@ are mocked. No real model payload or device is needed for preparation.
 The shared pinned v4 wrapper owns all future device admission, supervision,
 first-request oracle checking, timing, drain and release. Its built-in single
 64-token incident gate precedes the twelve timed requests for each view. The
-lane-A bracket is production / expert / HC / production. Lane B runs only the
-exact lane-A winner, bracketed by controls. Every prompt's acceptance counts
-must stay equal. Proposed queues are never live queues.
+default `--direction A-grid` bracket is production / expert / HC / production
+on A, with only its exact improving winner bracketed on B. `--direction B-grid`
+runs the grid on B and confirms on A. Every prompt's acceptance counts must
+stay equal across both lanes; the same winner must beat both controls on each.
+Output names include the direction. Proposed queues are never live queues.
 
 These are screen candidates. Existing K2 and submission consumers reject the
 new choices; a future bundle must integrate and qualify them explicitly. No

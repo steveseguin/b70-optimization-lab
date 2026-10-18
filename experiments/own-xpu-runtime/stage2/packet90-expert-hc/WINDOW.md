@@ -11,8 +11,12 @@ The proposed queue files are
 [proposed-p90-A.txt](../../ops/lane-queue/proposed-p90-A.txt) and
 [proposed-p90-B.txt](../../ops/lane-queue/proposed-p90-B.txt).
 They were planned in a temporary queue, with the exact pinned shared v4 wrapper.
-The coordinator owns live queue insertion and must wait for lane A to complete
-before admitting B. Never queue both without that dependency.
+These retain the default `A-grid` direction. For B first, use
+[proposed-p90-B-grid.txt](../../ops/lane-queue/proposed-p90-B-grid.txt), then
+[proposed-p90-A-confirm.txt](../../ops/lane-queue/proposed-p90-A-confirm.txt).
+Both new proposals explicitly set `--direction B-grid`. The coordinator owns
+live queue insertion and waits for the source grid to complete before admitting
+the other lane's confirmation. Never queue both without that dependency.
 
 A runs production / expert / HC / production, each in a fresh owner, with the
 shared 64-token startup oracle gate before twelve timed requests. B refuses
@@ -21,7 +25,13 @@ are unchanged, and a candidate beats both controls. B then runs production /
 that winner / production. A alone is screening evidence; do not call a lone
 candidate's A run a two-owner performance verdict. B and final analysis still
 must pass both quality and speed requirements. All outputs are fresh, no
-retries, fixed 90-second inter-screen gaps, no resident service.
+retries, fixed 90-second inter-screen gaps, no resident service. In `B-grid`
+the same rules apply with A and B exchanged. Outputs are named
+`p90-<direction>-<lane>-<index>-<choice>`; neither direction reuses old outputs.
+Run `compare.py --direction A-grid` or `compare.py --direction B-grid` under
+the CPU restrictions below for final interpretation. It refuses a different
+confirmation choice, changed acceptance, inexact output, or failure to beat
+either confirmation control.
 
 CPU-only verification from repository root:
 
