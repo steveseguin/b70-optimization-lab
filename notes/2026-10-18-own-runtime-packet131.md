@@ -33,7 +33,7 @@ bytes avoided on every cycle. The third bank costs exactly that amount, and
 backup capacity shrinks by the same amount. Total device allocation is
 unchanged: 28,144,182,388 bytes on rank0 and 31,425,985,242 on rank1. These are
 CPU allocation-ledger results, not a driver-residency measurement. Evidence:
-`evidence/preflight-census131.json` in the packet. Both retain two submissions.
+`evidence/census131.json` in the packet. Both retain two submissions.
 
 Two fresh miniature runs per choice match frozen packet124c target tokens,
 96 retained layer outputs and draft state/proposals. Ten Python tests pass,
@@ -67,7 +67,12 @@ retained as incomplete. The Intel CPU fixture needed its own linker and an
 explicit non-PIE link. A separate production recurrence test passes raw
 bank-versus-reference equality under both compilers, but an additional
 cross-compiler comparison found different reference transcripts. Localization
-is pending; this is not accepted as a new arithmetic or quality change.
+found only the deliberately supplied NaN case: GNU and Intel produce different
+NaN payloads in their unchanged references. All 72 production bank cases pass
+raw candidate/reference equality within each compiler, twice. A diagnostic
+normalization of copied output confirms that all other cross-compiler bytes
+agree; it is not used to accept candidate/reference differences. Runtime bytes
+and arithmetic remain unchanged.
 
 Planned CPU gates: production allocation/descriptor census, actual snapshot
 and miniature target state under GNU and Intel, every logical committed/spare

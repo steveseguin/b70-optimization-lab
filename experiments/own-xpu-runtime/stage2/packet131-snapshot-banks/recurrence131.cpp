@@ -17,8 +17,15 @@ int main(){try{
    actual.state=banks[spare];check(actual.bytes()==expected.bytes(),"different destination changed production recurrence bytes");
    check(banks[active]==reference.input&&banks[3-active-spare]==untouched,"read-only bank changed");
    auto raw=actual.bytes();const auto digest=packet26::hash(raw.data(),raw.size());transcript<<digest<<'\n';bytes+=raw.size();
+   // Diagnostic only, AFTER strict raw candidate/reference equality above:
+   // locate inherited compiler differences in NaN payload propagation.
+   auto nan_only=raw;unsigned nan_count=0;
+   for(size_t j=0;j<(actual.state.size()+actual.y.size())*2;j+=2){
+    uint16_t value;std::memcpy(&value,nan_only.data()+j,2);
+    if((value&0x7f80)==0x7f80&&(value&0x7f)){value=0x7fc0;std::memcpy(nan_only.data()+j,&value,2);++nan_count;}
+   }
    if(cases)case_rows<<',';
-   case_rows<<"{\"scenario\":"<<scenario<<",\"packed\":"<<packed<<",\"active\":"<<active<<",\"spare\":"<<spare<<",\"sha256\":\""<<digest<<"\"}";++cases;
+   case_rows<<"{\"scenario\":"<<scenario<<",\"packed\":"<<packed<<",\"active\":"<<active<<",\"spare\":"<<spare<<",\"sha256\":\""<<digest<<"\",\"nan_count\":"<<nan_count<<",\"nan_diagnostic_sha256\":\""<<packet26::hash(nan_only.data(),nan_only.size())<<"\"}";++cases;
   }
  }
  const auto raw=transcript.str();

@@ -51,7 +51,13 @@ must agree. Unchanged arithmetic dependencies remain the pinned GNU objects.
 Separately, both compilers run the actual production-size `rec-both-plus`
 kernel against differently poisoned destination buffers for every ordered
 pair, including exceptional floating-point inputs. All output and recurrent
-state bytes are compared directly, with cross-compiler/repeat digest checks.
+state bytes are compared directly against the unchanged kernel under each
+compiler, and raw repeats must agree. GNU and Intel's unchanged host kernels
+propagate NaN payloads differently in the explicit NaN fixture. A separate
+diagnostic canonicalizes NaNs only after the strict raw bank comparison to
+confirm that all other bytes agree. It never qualifies candidate/reference
+equality, and no runtime byte is normalized. The eight full-Engine transcripts
+still require raw digest equality across their GNU/Intel builds.
 The reset regression retains the original failing control and repaired
 21-case test. These are CPU gates, not a substitute for exact full-model device
 outputs. The proposed smoke and two fresh candidate loads must still pass

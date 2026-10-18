@@ -2,8 +2,10 @@
 import resource
 from build131 import cpu_main
 def main():
- import extra131,startup131
- extra131.main();startup131.main()
+ import extra131
+ extra131.main()
+ # Full K2 CPU startup needs more than this auxiliary cap. qualify131 runs
+ # startup131 only after all four concurrent state workers have exited.
 if __name__=='__main__':
  cpu_main()
  # Four state workers reserve at most 6 GiB. Bound each auxiliary CPU process

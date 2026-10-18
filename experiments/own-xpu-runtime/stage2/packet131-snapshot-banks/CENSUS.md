@@ -60,6 +60,8 @@ separate descriptor searches, memory transactions and workgroup overhead.
 It therefore cannot establish a bandwidth-only explanation. The snapshot
 does create 1,021 guarded host copy descriptors, but it submits just one copy
 kernel; hundreds of small device launches do not explain the measured event.
+Bank rotation also drains the queue before changing prepared-command ownership;
+the device bracket must account for that synchronization.
 The candidate removes 29,601,792 bytes per cycle and 37 extents; it does not
 claim a 0.523-ms saving. Only the proposed exact device bracket can measure it.
 
