@@ -24,3 +24,7 @@ Frozen sources remain references or packet-owned copies with provenance.
 New code is the warming header, binding/parser delta, pair/cache probes,
 fail-closed micro analyzer and the copied v5 wrapper. The other copied native
 sources exist to keep includes and checked submission preparation local.
+
+[Final CPU receipt](evidence/cpu-preparation.json) ·
+[CPU closeout](CPU-PREPARATION-CLOSEOUT.md) · [Boundaries](DO-NOT-REPEAT.md) ·
+[Retention](RETENTION.md).

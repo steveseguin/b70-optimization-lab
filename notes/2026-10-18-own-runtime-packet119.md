@@ -75,3 +75,30 @@ Both strict micro proposals pass temporary queue planning after the CPU and
 ISA prerequisites. Eleven analyzer refusal tests pass. The 1,200-second watchdog
 is five times the estimated 240 seconds for each fresh process. The runtime
 and coordinator still own the device equality and speed decisions.
+
+## Final CPU handoff
+
+The micro milestone was committed and pushed as `9000061cd`. The parallel v5
+bracket now passes GNU-host/Intel-device compilation, all four actual startup
+view/rank paths, four fresh/switched full-shape runs, four poisoned-byte reset
+runs and two fresh five-view IPC brackets. Its 17 policy checks and pre-exec
+limit checks pass; the micro's eleven analyzer checks also pass. The seal now
+binds retained startup archives, fixture and protocol binaries, and imported
+safety/transport/oracle dependencies as well as the native source.
+
+The proposed conditional bracket is
+[`proposed-p119-v5-B.txt`](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p119-v5-B.txt).
+Its temporary plan passes with an expected 900 seconds and a 3,600-second
+watchdog. Missing measured micro qualification is an explicit nonzero refusal
+at the real CLI, before the device path. No live queue was edited.
+
+The combined new build is **120,620,121 bytes**, below 250 MB. Peak recorded
+compiler RSS is below 0.9 GB. Final root free space is recorded in the
+[CPU preparation receipt](../experiments/own-xpu-runtime/stage2/packet119-down-warm/evidence/cpu-preparation.json)
+and exceeds the 25 GB floor. Every newly tracked individual artifact is below
+1 MiB; generated builds remain ignored.
+
+[CPU closeout](../experiments/own-xpu-runtime/stage2/packet119-down-warm/CPU-PREPARATION-CLOSEOUT.md)
+records the exact next gate. Cache measurements, device output parity and
+speed are still pending. The shared-expert/small-GEMV extension was not opened;
+this packet tests the requested routed-DOWN mechanism first.
