@@ -55,3 +55,12 @@ transcripts. Split32's linked attention fixture passes 88 cases per run. All
 529 synthetic submission tests pass, including every selection and rejection
 cases. The 512 real-size two-rank allocation checks and 5632 chain startup
 checks are running, so no seal or ready claim is made yet.
+
+Arena milestone: all 512 compositions pass on both ranks (1024 actual
+initialization/capture/allocation checks with mock payload/backend and real
+model shapes). Largest device extent is 31,581,735,626 bytes on rank1; its
+arena margin is 630,519,094 bytes, with 2,660,562,230 bytes planned free on
+the card. Driver residency is unmeasured. Tile16 keeps the original 360-byte
+DOWN row extent. Startup remains in progress; no device admission is armed.
+The orchestration now has 30 passing policy tests, including a late A veto
+and a window arriving during a source read. Preseal verifier refusal is saved.

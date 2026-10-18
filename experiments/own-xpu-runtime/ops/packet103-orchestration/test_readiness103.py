@@ -28,3 +28,19 @@ def test_fresh_folder(tmp_path,monkeypatch):
  with pytest.raises(AssertionError):output('device-cards01-a')
  assert output('device-cards01-b')==tmp_path/'build/device-cards01-b'
  with pytest.raises(AssertionError):output('../bad')
+
+@pytest.mark.parametrize('row,reason',[
+ (dict(status='no-winner',record_lane_veto=dict(reason='A loss')), 'later record-lane A veto'),
+ (dict(status='failed',reason='broken receipt'), 'current source evidence invalid')])
+def test_later_source_veto_blocks_frozen_decision(monkeypatch,row,reason):
+ import read_screens as reader
+ from types import SimpleNamespace
+ monkeypatch.setattr(reader.subprocess,'run',lambda *a,**kw:SimpleNamespace(returncode=0,stdout=json.dumps(row),stderr=''))
+ with pytest.raises(ValueError,match=reason):reader.reject_later_record_lane_losses(dict(confirmed_levers=['100']))
+
+def test_window_arrival_during_read_refuses(tmp_path):
+ import read_screens as reader
+ path=tmp_path/'window.json';screens={'100':dict(observed_windows={str(path):None})}
+ reader.require_current(screens)
+ path.write_text('{}')
+ with pytest.raises(ValueError,match='results changed during decision'):reader.require_current(screens)
