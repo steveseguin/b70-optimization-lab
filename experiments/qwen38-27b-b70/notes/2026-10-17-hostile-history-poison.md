@@ -559,3 +559,22 @@ timeout. Recovered on the same boot (two health probes; details in `notes/2026-1
 arms 2-5: `K32L retro 1 2400`, `K32L retro 0 2400`, `K32L retroloud 1 2400`, `K32L rules 0 2400`. Predictions and
 decisions are campaign 35's items 2 and 3 (50/50, 50/50, retro 0 6/6 audits and at least 42/45, rules 0 39/39 with no
 lookup). Another hang: the runner stops on the fault line; evidence, probe, then the hang lane comes first.
+
+## Campaign 36 (00:36-00:53 EDT): the replay passes; the guard kills arm 2 mid-run
+
+**Arm 1** (`K32L retro 1`, the arm that hung at 00:31): **50/50**, audits 6 of 6. Its first 132 calls equal the hung
+run's; the call that hung (7,951 prompt tokens) returned. So the hang is a race, not the data
+(`notes/2026-10-17-hang-repro.md`).
+
+**Arm 2** (`K32L retro 0`) has no score. Free host memory sat 20-50 MB above the 1.6 GiB floor from about a minute
+in; at 00:53:17 it dipped to 1.59 GiB and the guard killed the server while it was working. The client got a bad
+gateway (`ended_by=EXC:BadGatewayError`, 39 calls). Room at server ready was 2,238 MiB against 2,413 MiB for arm 1;
+the operator session (this assistant's process, 0.72-0.74 GB and growing) ran a `git commit` at that moment, the
+likely last straw. Rule taken: no git or other multi-file work beside a running server, only single small reads.
+
+Because the server was killed mid-step, both cards' copy engines took page faults on the torn-down address space
+(`Engine memory CAT error`, class bcs, 00:53:17). The first health probe's all-reduce hung; the driver timed its job
+out and reset both GTs at 00:57:19; the second probe passed. Evidence in
+`/mnt/fast-ai/bench-results/context-longrun-20261016/fault-20261018-0053/`; latch renamed
+`server/FAULT-20261018-c36.json`. Arms 3-4 did not run. The three remaining lines rerun as campaign 36b after the GDN
+stress, with the operator session silent beside each server.

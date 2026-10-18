@@ -543,3 +543,10 @@ campaign 36 logged no fault line.
   surroundings (exchanges on the copy engines, the other card, the rest of the step). The next stress then adds an
   all-gather loop across both cards beside the kernel loop.
 - Faults from this stress are our own and handled as such: copy the coredumps, one health probe, then carry on.
+
+**Amendment 00:58:20 EDT (launch, nothing measured yet):** the runner's card 1 container set both
+`ONEAPI_DEVICE_SELECTOR=level_zero:1` and `ZE_AFFINITY_MASK=1`; the mask leaves one device numbered 0, so the
+selector found nothing (`No XPU devices are available`). Card 1 was started again by hand at 00:58:20 with
+`level_zero:0` and the mask 1 (`card1b.log`, 19 min, seed 20261019). Card 0 runs as registered. The rate is about
+2,200 calls a second per card (p50 0.42 ms), so each card makes about 2.5 million calls, more than the registered
+million.
