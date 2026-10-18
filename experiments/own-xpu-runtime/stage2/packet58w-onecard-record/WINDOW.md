@@ -2,7 +2,7 @@
 
 Use the exact environment-embedded `chain_command` from `ready.json` only
 after `verify_ready.py` passes. The service name is
-`packet58-onecard-58w-a`; output is the fresh `evidence/card0-58w-a` directory.
+`packet58-onecard-58w-b`; output is the fresh `evidence/card0-58w-b` directory.
 The final orchestration marker binds the command hash and preparation commit.
 
 Before launch, the coordinator pauses and drains lane B and keeps the

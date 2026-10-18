@@ -223,6 +223,13 @@ class SubmissionTests(unittest.TestCase):
         self.assertIn('overlapped cache maintenance',notes)
         self.assertIn('realistic_final_gate.passed=false',notes)
         self.assertIn(S.POLICY['readiness_amendment'],notes)
+        self.assertIn(S.RERUN_DISCLOSURE,notes)
+        self.assertEqual(r['chain_attempt'],'b')
+
+    def test_chain_a_refused_before_reading_evidence(self):
+        with patch.object(S.Evidence, 'add', side_effect=AssertionError('must refuse before read')):
+            with self.assertRaisesRegex(ValueError, 'only the registered card0-58w-b'):
+                S.collect(S.ROOT / S.PACKET / 'evidence/card0-58w-a')
 
     def test_missing_fault_counter_refuses(self):
         key='WS128/run/run/code-review/timings.jsonl'
@@ -352,6 +359,7 @@ class SubmissionTests(unittest.TestCase):
             row = S.update_record(result_path, 'synthetic-coordinator-id', repo)
             self.assertEqual(row['threshold_tok_s'], item['payload']['tokSOut'])
             self.assertEqual(row['readiness_amendment'],S.POLICY['readiness_amendment'])
+            self.assertEqual(row['rerun_disclosure'],S.RERUN_DISCLOSURE)
             with self.assertRaisesRegex(ValueError, 'improve threshold'):
                 S.update_record(result_path, 'another-id', repo)
             self.assertTrue(S.scope_problems(item, repo))

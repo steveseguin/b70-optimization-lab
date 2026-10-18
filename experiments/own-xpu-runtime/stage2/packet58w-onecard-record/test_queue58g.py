@@ -13,7 +13,7 @@ class QueueTests(unittest.TestCase):
     def run_chain(self, fail=None):
         with tempfile.TemporaryDirectory() as tmp:
             packet=Path(tmp)/'packet';packet.mkdir();(packet/'evidence').mkdir()
-            out=packet/'evidence/card0-58w-a';seen=[]
+            out=packet/'evidence/card0-58w-b';seen=[]
             review=packet/'review.json';review.write_text('{}')
             def spawn(command,**kwargs):
                 name=Path(command[command.index('--output')+1]).name

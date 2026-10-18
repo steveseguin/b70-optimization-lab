@@ -62,11 +62,17 @@ class ReadyTests(unittest.TestCase):
                 stack.enter_context(patch.object(obj,name,return_value=value))
             stack.enter_context(patch.object(R,'verify',side_effect=ValueError('missing smoke')))
             spawn=stack.enter_context(patch.object(Q.subprocess,'Popen',side_effect=AssertionError('launch forbidden')))
-            with self.assertRaisesRegex(ValueError,'missing smoke'):Q.main(['--output-root',str(root/'evidence/card0-58w-a'),'--fault-review','/unused','--view','down-tile16','--authorized-device-window'])
-            spawn.assert_not_called();self.assertFalse((root/'evidence/card0-58w-a').exists())
+            with self.assertRaisesRegex(ValueError,'missing smoke'):Q.main(['--output-root',str(root/'evidence/card0-58w-b'),'--fault-review','/unused','--view','down-tile16','--authorized-device-window'])
+            spawn.assert_not_called();self.assertFalse((root/'evidence/card0-58w-b').exists())
     def test_command_closed_embedded_environment(self):
         command=R.chain_command()
-        for value in ('--unit=packet58-onecard-58w-a','--property=Restart=no','--property=SendSIGKILL=no','--property=Nice=0','--view down-tile16','--fault-review','card0-58w-a','< /dev/null','/usr/bin/env -i','LD_LIBRARY_PATH=/opt/intel/oneapi/'):
+        for value in ('--unit=packet58-onecard-58w-b','--property=Restart=no','--property=SendSIGKILL=no','--property=Nice=0','--view down-tile16','--fault-review','card0-58w-b','< /dev/null','/usr/bin/env -i','LD_LIBRARY_PATH=/opt/intel/oneapi/'):
             self.assertIn(value,command)
         self.assertNotIn('$',command)
 if __name__=='__main__':unittest.main()
+
+class ChainAttemptTests(unittest.TestCase):
+    def test_old_unit_refused(self):
+        import window as W
+        with self.assertRaisesRegex(ValueError, 'systemd user service required'):
+            W.user_unit_gate('0::/user.slice/user-1000.slice/user@1000.service/app.slice/packet58-onecard-58w-a.service')

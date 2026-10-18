@@ -138,3 +138,56 @@ it binds that commit and is committed and pushed separately. Fetch confirmed
 HEAD == origin/main after the dirty-tree pull refusal. Commits use explicit
 paths with `git commit --only`. No GPU, service, sudo, setting, live queue or
 frozen packet was touched, and no chain was launched.
+
+## Packet58wc — fresh final chain-b handoff, October 18
+
+Chain a passed all seven exact windows but WS128 was 25.773 tok/s, below
+26.228599, and was not submitted. The coordinator found concurrent CPU gates
+reading the GGUF and preregistered exactly one quiet-host rerun in
+[the chain-a result note](2026-10-18-own-runtime-packet58w-chain-a-result.md).
+That explanation remains a finding, not measured proof. Chain b's WS128 is
+final whichever way it lands; no third run and no selection between attempts.
+
+The fresh output is `evidence/card0-58w-b`, owned by the exact unit
+`packet58-onecard-58w-b`. The command differs only in those two names.
+Selection, five native binaries, oracle, seven windows, 90-second gaps,
+admission, pinned record and amended p58wb readiness policy are unchanged.
+The submission tool refuses chain a before reading its evidence and always
+discloses 25.773, its non-submission and the rerun reason in chain-b notes,
+result and ledger template. The old chain-a seal and submission pins are
+retained under `lineage/58w-chain-a-*`; its evidence and earlier marker were
+not changed or reused.
+
+Only light checks ran: 126 mocked/passive Python tests, all seven actual
+queue-to-native entry probes, 28 wrong-unit/environment refusals, the literal
+audit, minimal reseal and seal verification, passive seven-window plan, and
+`verify_ready.py`. A stale old-unit test failed on the first pass; its
+expectation was corrected and an explicit chain-a unit refusal was added.
+Both the submission refusal and mandatory disclosure are tested offline.
+
+All entry probes used the real chain-b command environment and unit gate;
+native execution was intercepted. Every live host admission snapshot passed,
+so no memory fixture was needed. Peak child RSS was 59,822,080 bytes for tests
+and 32,997,376 bytes for probes, below 2 GB. Binaries were only hashed; no
+native/full-shape gate, GGUF/model read, compilation, GPU work, service,
+sudo, setting change, live queue edit or public submission occurred.
+Existing native/full-shape receipts were retained unchanged.
+
+The 637-file seal verifies. Regenerated `ready.json` is true on packet58v's
+actual smoke and five-view evidence under the unchanged p58wb rule. The
+pinned identity comparison and check summary are in
+[58wc-light-gates.json](../experiments/own-xpu-runtime/ops/packet58w-orchestration/58wc-light-gates.json);
+the readiness replay is in
+[58wc-readiness.log](../experiments/own-xpu-runtime/ops/packet58w-orchestration/58wc-readiness.log).
+The command SHA-256 (UTF-8, no trailing newline) is
+`de786c365f2718d9b45e517700a1144fcf5ceeef5fb7027a83e6c11d412e30d0`.
+
+Pull refused because of unrelated dirty files; fetch confirmed
+HEAD == origin/main. Preparation is committed with explicit paths using
+`git commit --only` and pushed immediately. The last content write is
+[READY-FOR-DEVICE-b.json](../experiments/own-xpu-runtime/ops/packet58w-orchestration/READY-FOR-DEVICE-b.json),
+binding that pushed preparation commit and command hash, then committed and
+pushed separately. No chain-b output directory was created. The coordinator
+still owns fresh fault review, lane-B drain, the whole-host hold and freezing
+all Codex units from before K1a until completion; model-reading CPU work must
+stay excluded throughout. This preparation does not launch anything.

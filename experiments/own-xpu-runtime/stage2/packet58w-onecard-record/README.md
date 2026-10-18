@@ -49,8 +49,8 @@ views is checked again against packet49. The record value comes only from the
 chain's own fresh WS128 window. No smoke, exactness, fault, chain, window or
 submission validation gate is otherwise changed.
 
-The fresh output is `evidence/card0-58w-a`; the exact service is
-`packet58-onecard-58w-a`. `ready.json` carries the complete command, including
+The fresh output is `evidence/card0-58w-b`; the exact service is
+`packet58-onecard-58w-b`. `ready.json` carries the complete command, including
 the recorded oneAPI library path. It contains no shell environment expansion.
 Only PATH, LD_LIBRARY_PATH and OMP_NUM_THREADS are supplied to Python;
 Python's automatic `LC_CTYPE=C.UTF-8` is the only permitted locale addition.
@@ -73,10 +73,10 @@ nice -n 19 taskset -c 8-15,24-31 python3 -B "$P/verify_ready.py" --output "$P/re
 ```
 
 The final coordinator marker is
-[READY-FOR-DEVICE.json](../../ops/packet58w-orchestration/READY-FOR-DEVICE.json).
+[READY-FOR-DEVICE-b.json](../../ops/packet58w-orchestration/READY-FOR-DEVICE-b.json).
 It identifies the committed preparation and the SHA-256 of the exact command.
-The amended readiness gate passes the real parent evidence; packet58w's own
-chain is still unrun. Readiness is rechecked at launch.
+The amended readiness gate passes the real parent evidence; packet58w's chain b
+is still unrun. Readiness is rechecked at launch.
 
 ## CPU evidence
 
@@ -112,8 +112,8 @@ peak stays below the 4 GiB preparation ceiling. Imported launch code changes
 no resource limits; `getrlimit` checks run immediately before native exec.
 
 Root must retain at least 25 GB free, including planned writes. `build/` is
-ignored, hash-restorable from 58v and below 300 MB. Never reseal after chain
-output exists. Existing packet trees and live queues remain untouched.
+ignored, hash-restorable from 58v and below 300 MB. Never reseal after chain-b
+output exists. The chain-a seal is retained under lineage; its evidence stays frozen. Existing packet trees and live queues remain untouched.
 
 ## Prepared submission tool
 
@@ -136,3 +136,21 @@ payload, public submission or live ledger update is made here.
 
 [CPU closeout](CPU-PREPARATION-CLOSEOUT.md), [boundaries](DO-NOT-REPEAT.md),
 [work note](../../../../notes/2026-10-18-own-runtime-packet58w.md).
+
+## Packet58wc: final preregistered rerun
+
+Chain a passed exactness but WS128 was 25.773 tok/s, below 26.228599;
+it was not submitted. Concurrent GGUF-reading CPU gates may have disturbed
+the host. The [coordinator preregistration](../../../../notes/2026-10-18-own-runtime-packet58w-chain-a-result.md)
+allows exactly one identical rerun, chain b. Its WS128 is final, whichever
+way it lands; no third run and no choosing between a and b. The submission
+tool admits only chain b and discloses chain a and this reason in every
+prepared payload and ledger row.
+
+Before K1a through completion, the coordinator freezes all Codex units and
+excludes other CPU work reading the model, holds the whole host and drains
+lane B. This preparation neither freezes units nor launches the chain.
+All selection, binary, window, gap, readiness (packet58wb), admission and
+record-threshold inputs remain unchanged. Chain-a evidence and its previous
+readiness marker remain history. Only light entry, Python policy, seal and
+parent-readiness checks are rerun; native/full-shape/GGUF gates are retained.

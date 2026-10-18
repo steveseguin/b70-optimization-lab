@@ -76,7 +76,7 @@ def main(argv=None):
     W.require(set(os.sched_getaffinity(0)) == set(range(4)) | set(range(16,20)), 'coordinator must use lane-A cores 0-3,16-19')
     W.closed_environment()
     W.build_gate()
-    W.require(output == P/'evidence/card0-58w-a' and args.view == 'down-tile16', 'fixed fresh tile16-only chain required')
+    W.require(output == P/'evidence/card0-58w-b' and args.view == 'down-tile16', 'fixed fresh tile16-only chain required')
     W.require(args.fault_review and not args.faults_reviewed_through, 'validated fault-review capture required for launch')
     import verify_ready as R
     import fault_review as F
@@ -89,7 +89,7 @@ def main(argv=None):
     W.storage(output, sum(W.WRITES['K1' if n.startswith('K1') else n] for n in ORDER))
     output.mkdir(parents=True)
     stopped, handlers, child = [], {}, None
-    state = dict(schema='own-runtime.packet58.queue.v1', passed=False, card=args.card, view=args.view, completed=[], commands=cmds,
+    state = dict(schema='own-runtime.packet58.queue.v1', passed=False, card=args.card, view=args.view, completed=[], commands=cmds, chain_attempt='b',
                  readiness=readiness, fault_review_sha256=W.sha(args.fault_review),
                  reviewed_capture_through_us=reviewed['through_us'], faults_reviewed_through=review,
                  journal_overlap_us=2_000_000)

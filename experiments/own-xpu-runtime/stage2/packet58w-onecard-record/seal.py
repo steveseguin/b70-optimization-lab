@@ -21,7 +21,7 @@ def create():
     require(os.getpriority(os.PRIO_PROCESS,0)==19,'nice19 required')
     require(set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32)),'helper cores required')
     require(shutil.disk_usage('/').free>=25_000_000_000,'root free below 25 GB')
-    require(not (P/'evidence/card0-58w-a').exists(),'never reseal a started chain')
+    require(not (P/'evidence/card0-58w-b').exists(),'never reseal a started chain')
     parent=read(P/'lineage/58v-build-receipt.json')
     require(parent==read(P.parent/'packet58v-async-cache/build-receipt.json'),'parent build changed')
     verify_files(ROOT,parent['sources']);verify_files(P,parent['artifacts']);verify_files(P.parent/'packet58v-async-cache',parent['gates'])

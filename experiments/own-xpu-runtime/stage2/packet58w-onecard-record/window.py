@@ -196,8 +196,8 @@ def native_command(args, output, miss_path):
 
 def user_unit_gate(cgroup):
     paths = [line.split(':', 2)[-1] for line in cgroup.splitlines()]
-    require(any('/user@' in p and p.rsplit('/', 1)[-1] == 'packet58-onecard-58w-a.service' for p in paths),
-            'coordinator-owned packet58-onecard-58w-a systemd user service required')
+    require(any('/user@' in p and p.rsplit('/', 1)[-1] == 'packet58-onecard-58w-b.service' for p in paths),
+            'coordinator-owned packet58-onecard-58w-b systemd user service required')
 
 
 class PinnedExpertProgress:

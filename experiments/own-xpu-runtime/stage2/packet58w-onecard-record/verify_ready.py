@@ -34,14 +34,14 @@ def evaluate(rows,policy=None):
                 comparison_controls=['A1','A2'],readiness_policy=policy['readiness_policy'])
 def command_argv():
     lib=json.loads((P/'library-path.json').read_text())['LD_LIBRARY_PATH']
-    return ['systemd-run','--user','--unit=packet58-onecard-58w-a','--property=Restart=no','--property=SendSIGKILL=no','--property=TimeoutStopSec=infinity','--property=Nice=0','--working-directory='+str(ROOT),'/usr/bin/taskset','-c','0-3,16-19','/usr/bin/env','-i','PATH=/usr/bin:/bin','LD_LIBRARY_PATH='+lib,'OMP_NUM_THREADS=2','/usr/bin/python3','-B',str(P/'queue_runner.py'),'--authorized-device-window','--card','0','--view','down-tile16','--output-root',str(P/'evidence/card0-58w-a'),'--fault-review',str(P/'evidence/fault-review-58w.json')]
+    return ['systemd-run','--user','--unit=packet58-onecard-58w-b','--property=Restart=no','--property=SendSIGKILL=no','--property=TimeoutStopSec=infinity','--property=Nice=0','--working-directory='+str(ROOT),'/usr/bin/taskset','-c','0-3,16-19','/usr/bin/env','-i','PATH=/usr/bin:/bin','LD_LIBRARY_PATH='+lib,'OMP_NUM_THREADS=2','/usr/bin/python3','-B',str(P/'queue_runner.py'),'--authorized-device-window','--card','0','--view','down-tile16','--output-root',str(P/'evidence/card0-58w-b'),'--fault-review',str(P/'evidence/fault-review-58w.json')]
 def chain_command():return shlex.join(command_argv())+' < /dev/null'
 def verify():
     import window as W
     seal=W.build_gate();pins=json.loads((P/'submission-pins.json').read_text())
     require(pins['build_receipt_sha256']==W.sha(P/'build-receipt.json'),'submission pins stale')
     W.verify_files(ROOT,pins['sources'])
-    require(not (P/'evidence/card0-58w-a').exists(),'fresh chain output required; no retry')
+    require(not (P/'evidence/card0-58w-b').exists(),'fresh chain output required; no retry')
     run=subprocess.run(['/usr/bin/python3','-B',str(P/'screen_gate.py')],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=180)
     require(run.returncode==0,'58v smoke/v5 pending or invalid: '+run.stderr.strip()[-1800:])
     screen=json.loads(run.stdout)

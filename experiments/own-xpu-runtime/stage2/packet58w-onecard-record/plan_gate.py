@@ -12,8 +12,8 @@ P=Path(__file__).resolve().parent
 
 def main():
     import queue_runner as Q
-    output=P/'evidence/card0-58w-a'
-    assert not output.exists() and not (P/'evidence/fault-review-58w.json').exists()
+    output=P/'evidence/card0-58w-b'
+    assert not output.exists()
     command=[sys.executable,'-B',str(P/'queue_runner.py'),'--plan','--card','0','--view','down-tile16',
         '--output-root',str(output),'--faults-reviewed-through','2026-01-01T00:00:00Z']
     env=dict(PATH='/usr/bin:/bin',OMP_NUM_THREADS='2',LD_LIBRARY_PATH=json.loads((P/'library-path.json').read_text())['LD_LIBRARY_PATH'])

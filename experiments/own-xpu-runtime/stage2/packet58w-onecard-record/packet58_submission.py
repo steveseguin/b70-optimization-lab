@@ -25,7 +25,7 @@ HERE = Path(__file__).resolve().parent
 STAGE = Path('experiments/own-xpu-runtime/stage2')
 PACKET = STAGE / 'packet58w-onecard-record'
 OUTPUT = STAGE / 'packet58w-onecard-record/submission'
-CHAIN = PACKET / 'evidence/card0-58w-a'
+CHAIN = PACKET / 'evidence/card0-58w-b'
 AUTHORITY = STAGE / 'packet49-integrate/oracle'
 ORACLE = Path('/home/steve/own-xpu-runtime-results/packet49-integrate/oracle/results')
 FROZEN = STAGE / 'suite-inputs-20261012-cap128/suite-manifest.json'
@@ -44,6 +44,10 @@ GATES = ('varied_task_quality_passed', 'exact_or_target_oracle_passed',
          'target_model_unchanged', 'no_quality_loss')
 FAULT = re.compile(r'Fault response|CAT error|engine.*reset|reset.*engine|devcoredump|device coredump|GPU.*coredump|GuC.*(?:hang|lockup)|timed.out.*(?:job|fence)|job.*timed.out', re.I)
 SCOPE = POLICY['scope']
+CHAIN_ATTEMPT = 'b'
+RERUN_DISCLOSURE = ('Chain a: WS128 25.773 tok/s, not submitted. One preregistered quiet-host rerun: '
+                    'concurrent GGUF-reading CPU gates may have disturbed chain a. '
+                    'Chain b WS128 is final; no third run or choosing between attempts.')
 
 
 def require(condition, message):
@@ -129,7 +133,7 @@ def validate_threshold(row):
 
 def collect(chain=ROOT / CHAIN, oracle=ORACLE, repo=ROOT):
     chain = Path(chain).resolve()
-    require(chain == (repo / CHAIN).resolve(), 'only the registered card0-58w-a queue is admitted')
+    require(chain == (repo / CHAIN).resolve(), 'only the registered card0-58w-b queue is admitted')
     e = Evidence()
     e.add('queue.json', chain / 'queue.json')
     queue = e.read('queue.json')
@@ -442,7 +446,8 @@ def derive(e):
     w = windows['WS128']
     return dict(schema='lab.packet58w.realistic-suite-result.v1', packet='packet58w-onecard-record',
                 model=MODEL, gpu_count=1, decode_mode='plain', miss_path=w['miss_path'],
-                label='qwen38-flash-next-unsloth-iq3xxs-ownrt-tp1-packet58w-realistic-20261018',
+                chain_attempt=CHAIN_ATTEMPT, rerun_disclosure=RERUN_DISCLOSURE,
+                label='qwen38-flash-next-unsloth-iq3xxs-ownrt-tp1-packet58w-chain-b-realistic-20261018',
                 promotionIdentity=dict(model_revision=MODEL_REVISION, runtime_revision=seal['runtime_revision'],
                     optimization_identity='packet58w-tile16-overlap-tp1-plain-lru18gb-c4096-' + w['miss_path'] + '-seal-' + SEAL_SHA,
                     arithmetic=ARITHMETIC, suite_sha256=SUITE_SHA),
@@ -477,7 +482,7 @@ def submission_notes(result):
           'and full natural completion unmeasured. '
           f"Per-token process faults over {fault['tokens']} tokens: major={fault['major']}, minor={fault['minor']}; new GPU fault lines={fault['new_gpu_fault_lines']}. "
           f"Supersedes pinned local one-card record {previous['reference_submission']} ({previous['threshold_tok_s']:.6f} tok/s). "
-          +result['public_record_check']['disclosure']+' '+POLICY['readiness_amendment'])
+          +result['public_record_check']['disclosure']+' '+POLICY['readiness_amendment']+' '+RERUN_DISCLOSURE)
     require(len(text)<=2000,'submission notes exceed 2000 characters')
     return text
 
@@ -598,7 +603,8 @@ def update_record(result_path, submission_id, repo=ROOT):
     require(current['threshold_tok_s'] is None or value > current['threshold_tok_s'], 'record update must improve threshold')
     policy['records'].append(dict(reference_submission=submission_id, threshold_tok_s=value,
                                   result=dict(path=str(path.relative_to(repo)), sha256=sha(raw)),
-                                  readiness_amendment=POLICY['readiness_amendment']))
+                                  readiness_amendment=POLICY['readiness_amendment'],
+                                  chain_attempt=CHAIN_ATTEMPT, rerun_disclosure=RERUN_DISCLOSURE))
     validate_threshold(policy)
     require(ledger.read_bytes() == before, 'threshold changed during update')
     ledger.write_bytes(encoded(policy))

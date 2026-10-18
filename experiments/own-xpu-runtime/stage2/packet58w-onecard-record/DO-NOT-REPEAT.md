@@ -25,3 +25,8 @@
   use the prepare-time pinned ledger ID; public-list wording is explicitly stale.
 
 [CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md).
+
+- Packet58wc: chain a is immutable history (WS128 25.773, not submitted).
+  Only the preregistered fresh chain b is admissible. Its WS128 is final;
+  no third run or selection between attempts. Freeze Codex units and exclude
+  model-reading CPU work throughout the chain under coordinator ownership.

@@ -68,8 +68,8 @@ class WindowTests(unittest.TestCase):
             (fd/'3').write_text('drm-driver: xe\n')
             with self.assertRaises(ValueError):W.selected_clients(0,root)
     def test_service_scope(self):
-        W.user_unit_gate('0::/user.slice/user-1000.slice/user@1000.service/app.slice/packet58-onecard-58w-a.service')
-        for s in ('0::/system.slice/packet58-onecard-58w-a.service','0::/user.slice/user@1000.service/app.slice/packet57-run.service'):
+        W.user_unit_gate('0::/user.slice/user-1000.slice/user@1000.service/app.slice/packet58-onecard-58w-b.service')
+        for s in ('0::/system.slice/packet58-onecard-58w-b.service','0::/user.slice/user@1000.service/app.slice/packet57-run.service'):
             with self.assertRaises(ValueError):W.user_unit_gate(s)
     def test_queue_single_card_no_mtp(self):
         commands=Q.commands(Path('/tmp/evidence'),0,'2026-01-01T00:00:00Z','/lib')
