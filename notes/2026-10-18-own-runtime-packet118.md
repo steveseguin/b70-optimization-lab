@@ -93,3 +93,8 @@ free. [Final audit](../experiments/own-xpu-runtime/ops/packet118-orchestration/c
 [orchestration](../experiments/own-xpu-runtime/ops/packet118-orchestration/README.md).
 No GPU, service, sudo, live queue, host setting, reboot or external submission
 was performed. The two sealed views and shipped smoke proposal remain unchanged.
+
+Milestones pushed: smoke `27494913b`, finalized orchestration `8c0ac28b5`.
+CPU preparation and final evidence audit completed by 10:09 UTC, within the
+75-minute box. The final state entry follows separately after the other lane's
+concurrent CURRENT.md update was committed, preserving its work.

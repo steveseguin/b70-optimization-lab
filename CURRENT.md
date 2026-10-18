@@ -1,11 +1,14 @@
 # Current Workspace State
 
-**October 18, packet118 bundle7 smoke prepared on CPU:** Both fixed prefix
-compositions pass GNU/Intel byte checks, VRAM admission and all 22 startup
-windows. The twelve-prompt smoke proposal passes temporary queue planning.
-The shorter prefix adds no head allocation. Composite preparation continues;
-its control is packet103's record line and both lanes must clear 1.0% over
-both controls. No GPU, service or live queue changed.
+**October 18, packet118 bundle7 preparation complete on CPU:** Both fixed
+prefix compositions pass GNU/Intel byte checks, VRAM admission and all 22
+startup windows. The twelve-prompt smoke shipped first; it and both composite
+proposals pass temporary queue planning. All 31 policy/submission tests and
+six rank-launch limit checks pass. The shorter prefix adds no head allocation.
+The build is 208 MB. Readiness stays false while smoke and composites await
+execution; packet103's record line is the control, and both lanes must clear
+1.0% over both controls with exact prompts. After those runs, only the evidence
+reader remains. No GPU, service, live queue or host setting changed.
 [Work note](notes/2026-10-18-own-runtime-packet118.md).
 
 **October 18, packet116 QSA schedule prepared on CPU:** The candidate
