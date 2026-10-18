@@ -986,6 +986,13 @@ worker/recall trials and five unused tasks. Further worker tuning/integration is
 
 ## Storage And Recovery
 
+**October 18, disk6 archive pass:** closed experimental builds, private build dependencies and old compiler caches now have verified archives in
+`/mnt/raid-models/own-xpu-runtime-archive/disk6-20261018/`. The pass recovered **9.581 GB** of allocated file space and stopped at **14:26:13 UTC**,
+when root first reached **40.023 GB free**, up from 31.285 GB. Every selected archive member and original file was checked before removal.
+Live packets, their pinned parents, record chains and weights stayed in place. This was a one-time threshold; the running chain continues to use disk.
+Restore historical closed builds/caches from the exact manifests before replaying them. The [disk6 cleanup record](experiments/own-xpu-runtime/stage2/DISK-CLEANUP-20261018.md#disk6--verified-archive-pass-for-record-chain-headroom-2026-10-18)
+contains all 58 archive paths, hashes, restoration instructions and the audit limits.
+
 Retain the **50 GiB free-space reserve** and admit the peak temporary writes before creating archives or copies with `scripts/check-storage-headroom.py`; old free-space numbers are not admission. Verify current capacity, mount identity and ownership
 before new model downloads. Do not do bulk reads of the protected external trees during this documentation cleanup.
 
