@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 18, packet124b repairs the failed K2 selection check:** The new copy
+passes only K2's three kernel choices to its unchanged strict validator. Native
+binaries, model output identity and bundle7 selection stay unchanged. All eleven
+real Python window paths pass on CPU, covering 31 intercepted launch arguments;
+the original packet124 code fails the retained K2 replay and the fix passes.
+All 51 policy/submission tests and four subtests pass, along with startup,
+memory, drain and launch-limit checks. Readiness uses the original packet118
+composites and pinned packet124 identity. The fresh packet124b chain is prepared
+but has not been launched. Only evidence reading remains for the coordinator.
+[Work note](notes/2026-10-18-own-runtime-packet124.md#packet124b--k2-selection-repair-in-a-new-copy-october-18).
+
 **October 18, packet126 early-draft analysis held at its timing gate:** Moving
 the next draft before target verification does not by itself save rank1 work.
 Without recovering head wait, the saved-command model is about 1.95% slower

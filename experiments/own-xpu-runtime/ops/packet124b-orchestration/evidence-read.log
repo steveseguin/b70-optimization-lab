@@ -1,0 +1,590 @@
+{
+  "schema": "packet124.ready.v1",
+  "ready": true,
+  "device_executed": false,
+  "evidence_rule": "bundle7-identical-selection-v1",
+  "decision": "experiments/own-xpu-runtime/ops/packet124-orchestration/decisions/d7029dc254088641.json",
+  "decision_sha256": "6616c86a09af8b410ba06af924813d1a0fb848020e0edf9492c9665356264ff2",
+  "selection": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64+halfcache",
+    "host": "ordered",
+    "route": "fast",
+    "norm": "production",
+    "recurrence": "rec-both-plus",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "down": "tile16",
+    "draft_attention": "split32",
+    "other_fusion": "fused",
+    "target_head": "split",
+    "draft_prefix": "80128"
+  },
+  "chain_output": "device-cards01-a",
+  "other_lane_pause_required": false,
+  "timing_exclusivity": "Existing whole-host timing windows still acquire their normal exclusive reservation",
+  "chain_command": "systemd-run --user --unit=packet124-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet124-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet124-record-bundle/build/device-cards01-a </dev/null",
+  "drain_fix": {
+    "passed": true,
+    "device_executed": false,
+    "scanner_sha256": "70d18ffb0abf9cbb59ea84737e09ecb700951805c6b3dc499f40e42d476aa62f",
+    "reports": [
+      {
+        "schema": "drain-fix-report.v1",
+        "root": "experiments/own-xpu-runtime/stage2/packet124-record-bundle",
+        "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+        "counts": {
+          "FIXED": 1,
+          "UNFIXED": 0
+        },
+        "passed": true,
+        "files": [
+          {
+            "path": "experiments/own-xpu-runtime/stage2/packet124-record-bundle/drain_gate.py",
+            "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+            "status": "FIXED",
+            "sleeps": [
+              {
+                "line": 51,
+                "status": "FIXED"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "schema": "drain-fix-report.v1",
+        "root": "experiments/own-xpu-runtime/ops/packet124-orchestration",
+        "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+        "counts": {
+          "FIXED": 1,
+          "UNFIXED": 0
+        },
+        "passed": true,
+        "files": [
+          {
+            "path": "experiments/own-xpu-runtime/ops/packet124-orchestration/drain_gate.py",
+            "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+            "status": "FIXED",
+            "sleeps": [
+              {
+                "line": 51,
+                "status": "FIXED"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "launch_limits_sha256": "93652e70f39c18c6f47950dd571ec150cc2a5b33a0fcaa797a7ae7c0742546fd",
+  "cpu_tests_sha256": "5df275bbc42541966410d809c62e46c3b19afebd2c0938422571f358167f0a5e",
+  "smoke": {
+    "passed": true,
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p118-062db6263022-B-smoke12",
+    "window_sha256": "10c9b18b30c39ed542c618920245c37dfbc4120c1cfc0d00996b4618b2086ceb"
+  },
+  "composition": {
+    "passed": true,
+    "ratios": {
+      "A": 1.0147922892701942,
+      "B": 1.0140366894145474
+    },
+    "brackets": {
+      "A": [
+        {
+          "index": 0,
+          "choice": "control",
+          "exact": true,
+          "exact_count": 13,
+          "lane": "A",
+          "all_13_exact": true,
+          "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p118-89f2d60778eb2d6e-composite-A-0-control",
+          "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+          "started_utc_ns": 1792321968750552947,
+          "finished_utc_ns": 1792322196662374926,
+          "window_sha256": "f5f4b2bd998563c2d6c4b1ac28ea319861d436c28c863cb673a5dc292c1aba79",
+          "rate": 57.35083358246443,
+          "acceptance": 0.7854330708661417,
+          "acceptance_counts": [
+            {
+              "prompt_id": "incident-retrospective",
+              "hits": 97,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "code-review",
+              "hits": 99,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "customer-email",
+              "hits": 96,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "sql-debugging",
+              "hits": 104,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "release-plan",
+              "hits": 98,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "benchmark-analysis",
+              "hits": 101,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "architecture-tradeoff",
+              "hits": 107,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "bug-report-synthesis",
+              "hits": 83,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "technical-guide",
+              "hits": 107,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "risk-register",
+              "hits": 109,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "performance-hypotheses",
+              "hits": 95,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "decision-memo",
+              "hits": 101,
+              "guesses": 127
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "choice": "candidate",
+          "exact": true,
+          "exact_count": 13,
+          "lane": "A",
+          "all_13_exact": true,
+          "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p118-89f2d60778eb2d6e-composite-A-1-candidate",
+          "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+          "started_utc_ns": 1792322355243885579,
+          "finished_utc_ns": 1792322586834878338,
+          "window_sha256": "7514a3da5b5e882fa1ca0e25f8af8eebee7e2365e16c101b881671a58533b25e",
+          "rate": 58.34542077864114,
+          "acceptance": 0.7828083989501312,
+          "acceptance_counts": [
+            {
+              "prompt_id": "incident-retrospective",
+              "hits": 96,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "code-review",
+              "hits": 99,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "customer-email",
+              "hits": 96,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "sql-debugging",
+              "hits": 103,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "release-plan",
+              "hits": 98,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "benchmark-analysis",
+              "hits": 101,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "architecture-tradeoff",
+              "hits": 107,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "bug-report-synthesis",
+              "hits": 83,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "technical-guide",
+              "hits": 107,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "risk-register",
+              "hits": 108,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "performance-hypotheses",
+              "hits": 94,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "decision-memo",
+              "hits": 101,
+              "guesses": 127
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "choice": "control",
+          "exact": true,
+          "exact_count": 13,
+          "lane": "A",
+          "all_13_exact": true,
+          "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p118-89f2d60778eb2d6e-composite-A-2-control",
+          "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+          "started_utc_ns": 1792322778655656217,
+          "finished_utc_ns": 1792323102035346134,
+          "window_sha256": "159f0f9d035365ed0e701fec0c76174d6bd6d7d63c5c12b5964e128440e27dac",
+          "rate": 57.49493900924423,
+          "acceptance": 0.7854330708661417,
+          "acceptance_counts": [
+            {
+              "prompt_id": "incident-retrospective",
+              "hits": 97,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "code-review",
+              "hits": 99,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "customer-email",
+              "hits": 96,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "sql-debugging",
+              "hits": 104,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "release-plan",
+              "hits": 98,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "benchmark-analysis",
+              "hits": 101,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "architecture-tradeoff",
+              "hits": 107,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "bug-report-synthesis",
+              "hits": 83,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "technical-guide",
+              "hits": 107,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "risk-register",
+              "hits": 109,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "performance-hypotheses",
+              "hits": 95,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "decision-memo",
+              "hits": 101,
+              "guesses": 127
+            }
+          ]
+        }
+      ],
+      "B": [
+        {
+          "index": 0,
+          "choice": "control",
+          "exact": true,
+          "exact_count": 13,
+          "lane": "B",
+          "all_13_exact": true,
+          "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p118-89f2d60778eb2d6e-composite-B-0-control",
+          "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+          "started_utc_ns": 1792321266755008725,
+          "finished_utc_ns": 1792321473352256117,
+          "window_sha256": "5a40b338c4427435168905cc7b9e5cc09dc3eb6ba9ddbcb4e52bc5d5d03fe9de",
+          "rate": 57.142366033943475,
+          "acceptance": 0.7854330708661417,
+          "acceptance_counts": [
+            {
+              "prompt_id": "incident-retrospective",
+              "hits": 97,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "code-review",
+              "hits": 99,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "customer-email",
+              "hits": 96,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "sql-debugging",
+              "hits": 104,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "release-plan",
+              "hits": 98,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "benchmark-analysis",
+              "hits": 101,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "architecture-tradeoff",
+              "hits": 107,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "bug-report-synthesis",
+              "hits": 83,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "technical-guide",
+              "hits": 107,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "risk-register",
+              "hits": 109,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "performance-hypotheses",
+              "hits": 95,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "decision-memo",
+              "hits": 101,
+              "guesses": 127
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "choice": "candidate",
+          "exact": true,
+          "exact_count": 13,
+          "lane": "B",
+          "all_13_exact": true,
+          "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p118-89f2d60778eb2d6e-composite-B-1-candidate",
+          "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+          "started_utc_ns": 1792321595799911267,
+          "finished_utc_ns": 1792321807239034962,
+          "window_sha256": "1b6ff60072567804a9b94cb2514431a52d0f517e537b5d1340f03237e979f61f",
+          "rate": 58.01346346775482,
+          "acceptance": 0.7828083989501312,
+          "acceptance_counts": [
+            {
+              "prompt_id": "incident-retrospective",
+              "hits": 96,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "code-review",
+              "hits": 99,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "customer-email",
+              "hits": 96,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "sql-debugging",
+              "hits": 103,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "release-plan",
+              "hits": 98,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "benchmark-analysis",
+              "hits": 101,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "architecture-tradeoff",
+              "hits": 107,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "bug-report-synthesis",
+              "hits": 83,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "technical-guide",
+              "hits": 107,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "risk-register",
+              "hits": 108,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "performance-hypotheses",
+              "hits": 94,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "decision-memo",
+              "hits": 101,
+              "guesses": 127
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "choice": "control",
+          "exact": true,
+          "exact_count": 13,
+          "lane": "B",
+          "all_13_exact": true,
+          "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p118-89f2d60778eb2d6e-composite-B-2-control",
+          "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+          "started_utc_ns": 1792321929363284350,
+          "finished_utc_ns": 1792322135637681965,
+          "window_sha256": "54be9019b1335d5889126a480cd644b91a1f490e9d190e23f3d8121599a19918",
+          "rate": 57.21041859072062,
+          "acceptance": 0.7854330708661417,
+          "acceptance_counts": [
+            {
+              "prompt_id": "incident-retrospective",
+              "hits": 97,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "code-review",
+              "hits": 99,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "customer-email",
+              "hits": 96,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "sql-debugging",
+              "hits": 104,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "release-plan",
+              "hits": 98,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "benchmark-analysis",
+              "hits": 101,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "architecture-tradeoff",
+              "hits": 107,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "bug-report-synthesis",
+              "hits": 83,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "technical-guide",
+              "hits": 107,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "risk-register",
+              "hits": 109,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "performance-hypotheses",
+              "hits": 95,
+              "guesses": 127
+            },
+            {
+              "prompt_id": "decision-memo",
+              "hits": 101,
+              "guesses": 127
+            }
+          ]
+        }
+      ]
+    },
+    "evidence_rule": "bundle7-identical-selection-v1",
+    "new_performance_claim": false
+  },
+  "storage": {
+    "passed": true,
+    "device_executed": false,
+    "root_free_bytes": 35255476224,
+    "required_free_bytes": 31925054836,
+    "margin_bytes": 3330421388,
+    "build_bytes": 221749644,
+    "build_budget_bytes": 1200000000,
+    "retained_build_bytes": 221749644,
+    "retained_build_fits": true,
+    "cpu_build_peak_limit_bytes": 250000000,
+    "free_floor_bytes": 25000000000,
+    "parent_model_reserve_bytes": 0,
+    "parent_model_maximum_reserve_bytes": 0,
+    "oracle_growth_reserve_bytes": 0,
+    "early_retained_limit_bytes": 128000000,
+    "own_chain_peak_bytes": 5946804480,
+    "full_chain_uncompressed_bytes": 10582804480
+  },
+  "pins": {
+    "experiments/own-xpu-runtime/stage2/packet124-record-bundle/build-receipt.json": "f12e2387d926a2b5c258a28aabfd5eee7b95f78cd6020da60cf5b8710bf007f0",
+    "experiments/own-xpu-runtime/stage2/packet124-record-bundle/submission-pins.json": "40c5f5178df4c639a29bd0991d02c66a105bbf9868a4ba541ac1654f745119c6",
+    "experiments/own-xpu-runtime/stage2/packet124-record-bundle/startup103.json": "6207525f3e312d19ba3736116150df6e0bdd03576b726f054821bf3868091195"
+  }
+}
