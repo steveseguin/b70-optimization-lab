@@ -1,22 +1,25 @@
 # Current Workspace State
 
-**October 18, packet116 QSA schedule prepared on CPU:** The new schedule
+**October 18, packet116 QSA schedule prepared on CPU:** The candidate
 shares attention score work across more subgroups and selection ranking across
-all lanes. Both compilers pass repeated operator byte checks. Two proposed
-value-tree rewrites changed NaN payloads and were rejected; the candidate keeps
-the original value arithmetic. Complete-layer checks passed before the final
-binding guard was tightened. Final builds and the separate one-load bracket
-checks are waiting for the coordinator's whole-host run to release the shared
-compiler gate. Nothing has been queued or launched by this task.
+all lanes. Both compilers pass repeated operator and complete-layer byte checks.
+Two value-tree rewrites changed NaN payloads and were rejected; the candidate
+keeps the original value arithmetic. Both fresh micro proposals pass temporary
+queue planning. Each must cut combined attention and selection time by at least
+40% before the separate one-load bracket can run. That bracket passes its
+startup, reset, protocol, limit and seal checks and has a conditional proposal.
+The build is 121.5 MB. Device equality and speed remain unmeasured. No GPU,
+service, live queue or host setting changed.
 [Work note](notes/2026-10-18-own-runtime-packet116.md).
 
-**October 18, packet117 HC gate preparation:** The source shows that each
-HC gate event also runs four serial software sigmoids per mixed output. The
-new candidate places those independent products on existing lanes and keeps
-the original weight reads and sum order. Initial GNU byte checks pass; final
-GNU/Intel checks and compilation wait behind the coordinator's whole-host
-hold. A copied whole-layer micro and conditional one-load bracket are being
-prepared. No GPU, service, live queue or host setting changed.
+**October 18, packet117 HC micro prepared on CPU:** The candidate shares
+independent sigmoid work across existing lanes and preserves the original
+sum order. Stronger NaN tests caught and fixed a payload difference; both
+compilers now pass sixteen exact cases twice. The native binary compiles,
+both HC kernels remain spill-free, and two fresh B proposals pass temporary
+queue planning. Each must cut both HC gate times by at least 30% before the
+parallel one-load bracket can run. Device equality and speed are unmeasured.
+No GPU, service, live queue or host setting changed.
 [Work note](notes/2026-10-18-own-runtime-packet117.md).
 
 **October 18, packet115 expert micro prepared on CPU:** Separate expert images

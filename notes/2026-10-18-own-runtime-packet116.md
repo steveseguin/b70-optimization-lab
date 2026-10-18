@@ -41,7 +41,8 @@ The starting `git pull --rebase` refused unrelated dirty orchestration files;
 
 All existing packets, screen files and operational files are frozen. Only new
 proposed queue files may be written; no live queue edits. No GPU, services,
-sudo, secrets, process termination or host-setting changes. CPU work uses
+sudo, secrets or host-setting changes. Only our own idle CPU wrappers were
+stopped when the shared compiler gate was held; no other process was stopped. CPU work uses
 nice19, affinity8–15/24–31, Python without bytecode and closed stdin. Compiler
 turns use packet94's shared lock. CPU CLI caps are8GiB, never import side
 effects. Root must retain25GB free and packet116 builds stay below250MB.
@@ -69,3 +70,32 @@ the final seal binds its frozen target under the repository root and checks
 the exact relative link. The rejection is retained.
 
 Device timing and device quality remain pending. No live queue was changed.
+
+
+## One-load bracket ready
+
+The [conditional v5 proposal](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p116-v5-B.txt)
+also passes a temporary lane-B queue plan. It runs five views in one load:
+production, p116, production, p116, production. Both inherit packet111r's
+combined head split and other fusion; only target QSA scheduling changes.
+Expected duration is 900 seconds, with a 3,600-second watchdog. The actual
+launch checks the current sealed micro identity and both fresh exact micro
+receipts, including the 0.6 threshold, before admission. Direct screen entry
+has the same gate. No device performance result exists yet.
+
+All selected-view CPU checks pass: four full-size capture/switch runs, four
+reset runs, two fresh protocol brackets, all 22 startup/host-reference paths,
+unchanged limits on import, both native pre-exec checks and eight policy tests.
+The initial full-shape audit refused inherited kernel types with missing
+capture serializers. The new audit fixture explicitly includes their actual
+fields; it retains the refusal logs and backtraces and still rejects unknown
+types. `v5/evidence/cpu-sequence.json` is the retained failed first sequence,
+not the final status. The final individual receipts are bound by
+`v5/lineage/screen-seal.json`.
+
+Full-shape captures are retained in four compressed archives with member hash
+checks and restoration instructions in `v5/RETENTION.md`. Generated builds
+are ignored. Final build size is 121,537,879 bytes (under 250 MB), and root
+has 38.8 GB free (above 25 GB). Existing packets and live queues were untouched.
+The next action belongs to the coordinator: run the two proposed micros,
+then queue v5 only if both pass. Failure closes this schedule without a v5 run.
