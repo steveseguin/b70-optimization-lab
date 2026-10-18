@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 18, packet133 bundle8 prepared on CPU:** The new copy preserves all
+182 parent links and seals only bundle7 control and bundle7 plus suffix
+interleave. Both compositions pass their CPU startup checks; all 83 tests and
+11 subtests, the full argument/queue rehearsal, drain and native-limit gates
+pass. The lane-A proposal is planned but not queued; no job or service was
+launched. Packet130 B finished during preparation: its output is exact, but
+the candidate is 1.61% slower than the fastest control and fails the required
+0.5% gain. The fresh chain stays blocked; lane A and the composed smoke are
+unrun. Packet131 remains a disabled slot. The 58.223834 record is unchanged.
+[Work note and handoff](notes/2026-10-18-own-runtime-packet133.md).
+
 **October 18, packet130 early suffix scheduling sealed on CPU:** The new
 copy checks for rank1's hidden state between rank0's speculative layers and
 runs the head suffix when it is ready. It preserves the tested output bytes,
