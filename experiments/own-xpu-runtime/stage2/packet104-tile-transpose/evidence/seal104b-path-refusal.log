@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet104-tile-transpose/seal104b.py", line 72, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet104-tile-transpose/seal104b.py", line 67, in main
+    generic.create(v,'tp2',bp,fp,v/'build/device/own-rt-iq3',v/'dispatch-speed6.json',v/'screen-seal.json');print(name,'sealed',flush=True)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/seal.py", line 17, in create
+    verify_map(ROOT, sources)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/common.py", line 42, in verify_map
+    path = W.safe_path(root, name)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard/window.py", line 78, in safe_path
+    require(not rel.is_absolute() and '..' not in rel.parts and path.is_relative_to(root.resolve()), 'unsafe identity path')
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet34-replay-bench/window.py", line 27, in require
+    raise ValueError(reason)
+ValueError: unsafe identity path

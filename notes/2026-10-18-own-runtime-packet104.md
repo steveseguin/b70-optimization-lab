@@ -126,3 +126,85 @@ load layout and dispatch: only complete resident Q6 tuples without outside
 consumers of the selected banks can transpose. Partial plans retain their
 original bytes and kernels; both Q6 banks are admitted together. This fix
 still needs the conditional full-window CPU gates after a micro win.
+
+## Packet104b: explicit coordinator override, 2026-10-18
+
+The lane-B micro completed at about 06:21 UTC. No candidate met the original
+<=0.85 gate. The coordinator explicitly authorized one B screen grid for
+TARGET gate/up tile16 (0.898048) and gate/up halfcache tile16 (0.892953), followed
+by an A confirmation of the exact improving winner. The gate/up operation is
+large; packet100's down improvement transferred to the engine. The suggested
+0.3–0.5% gain is a hypothesis, not a measured or extrapolated result.
+The original qualification remains failed. All seven other arms are closed
+with individual rows in the packet's DO-NOT-REPEAT and micro closeout.
+
+The requested `git pull --rebase` refused pre-existing shared-tree edits.
+Fetching origin showed no incoming commits (one local commit ahead). Nothing
+was stashed or changed in other packets, the shared screen wrapper or live ops.
+CPU work uses nice19, cores 8–15/24–31, Python -B, closed stdin, an 8 GiB address
+space bound and packet94's compiler turn. Compilation yields to whole-host
+record windows; the coordinator's running chain is preserved.
+
+The old packet104 baseline was packet100's standalone selection, not packet97's
+current selection. Packet104b instead copies packet97's selected route-fast,
+rec-both-plus, E1 half-cache and draft choices into a local immutable snapshot,
+then adds down-tile16. Production and both candidates share those choices.
+The plain gate-tile16 arm removes E1; the gate-halfcache-tile16 arm preserves it.
+This is explicit in the proposed grid and its seal. No parent live selection,
+readiness output or orchestration log is a seal dependency.
+
+### Completed CPU qualification and proposals
+
+GNU and Intel each ran all three views twice. Every run passes 36 cases,
+13,824 raw FP32 chains, 432 trees, 401,587,200 permuted byte checks and all
+65,536 half-scale patterns. All twelve runs have the same output digest.
+Packet100's unchanged down-tile16 proof is copied as a local receipt snapshot,
+checked against identical local C++ source and its original repeated GNU/Intel
+bytes. This is a factored gate/up + down proof, not a claim that the gate fixture
+executes the entire model.
+
+All six full-size view/rank startup and allocation checks pass. Both gate and
+down banks reject short and misaligned allocations (24 refusals), all 21
+unsupported-mode cases refuse, and five malformed selections refuse. The
+smallest arena margin is 630,519,094 bytes on rank1 with E1; the plain gate arm
+has 945,091,894 bytes. Physical driver residency is still device work.
+
+All **33 chain-window startup cases** pass: all eleven actual window paths for
+each of the three views. The harness runs the real parser/native command
+construction, real dimensions, allocation and selected consumers, with only
+payload/backend mocked. KD's host and device-argument startup use the sealed
+draft-only projection and match each resident view's draft identity. K0 is the
+explicit structural CPU shim, not a JIT/device pass; W0p runs the real CPU
+handshake. Peak child RSS is about 1.2 GiB. Both new gate families and the
+unchanged down-tile16 consumer are checked. All tested selection JSON files
+and full draft choices are hash-bound, not merely their target choice labels.
+
+Two preparation omissions were fixed and their evidence retained: the first
+successful startup run could not save its receipt because inherited KD support
+files were missing; the first seal attempt rejected external fixture symlinks.
+The final run includes those support files and pins local, content-addressed
+hardlink snapshots of the exact immutable fixture bytes and oracle manifest.
+The shared paths remain unchanged. Reproducible link scratch was removed after
+linking; the **final build is 186,640,277 bytes**, below the 200 MB cap.
+
+All three view seals, 13 protocol tests and both temporary lanequeue plans pass.
+The proposals are:
+
+- `experiments/own-xpu-runtime/ops/lane-queue/proposed-p104b-B-grid.txt`
+- `experiments/own-xpu-runtime/ops/lane-queue/proposed-p104b-A-confirm.txt`
+
+A execution refuses before its first control until all four B screens complete,
+all 13 requests per screen are exact, per-prompt target/draft acceptance stays
+unchanged, and the winner beats both fresh controls. A CPU plan shows both
+possible winners and labels the B dependency pending. No live queue was edited.
+The micro failure remains unchanged; the exception waives only its 15%
+performance threshold. Device exactness, speed transfer and A confirmation are
+pending, and no record chain is registered.
+
+Evidence: [final verification](../experiments/own-xpu-runtime/stage2/packet104-tile-transpose/evidence/final-verification104b.json),
+[all-window receipt](../experiments/own-xpu-runtime/stage2/packet104-tile-transpose/startup97e.json),
+[temporary plans](../experiments/own-xpu-runtime/stage2/packet104-tile-transpose/evidence/queue-plans104b.json).
+The original micro samples and preflight log remain locally and have verified
+compressed Git copies with restoration hashes. Existing concurrent `CURRENT.md`
+edits were preserved; this task changed no loaded-card state, service, settings,
+frozen packet, shared screen wrapper or live operations file.
