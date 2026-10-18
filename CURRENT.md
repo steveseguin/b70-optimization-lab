@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet101 prepared on CPU:** Packet69's draft-HC settings are
+already active in packet97. Its draft attention option remains distinct, so
+the new packet prepares that choice alone. Both compilers pass repeated byte
+checks; all 512 full-size startup checks, four allocation refusals, four seals
+and six temporary queue plans pass. B has a control/candidate/control proposal
+and A its mirror; records stay on A. Device outputs, acceptance and speed remain
+pending. Scratch is cleaned and the build is below 65 MB. No GPU, service, live
+queue, existing packet or host setting changed.
+[Evidence and handoff](notes/2026-10-18-own-runtime-packet101.md).
+
 **October 18, packet100 prepared on CPU:** Two exact DOWN locality choices
 and production pass both compilers, all 34 full-size startup checks, three
 seals and five temporary queue plans. The build uses about 151 MB. The device

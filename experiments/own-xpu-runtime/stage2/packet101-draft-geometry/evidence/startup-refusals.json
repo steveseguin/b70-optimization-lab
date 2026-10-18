@@ -1,0 +1,74 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "runs": [
+    {
+      "view": "control",
+      "mode": "short",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet101-draft-geometry/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet101-draft-geometry/build/full-shape/negative-selection.json",
+        "2cb03124193cfe9e3fd3ea93464a3e6ed75ce1b9c0170a7806ccb390db0012cb",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet101-draft-geometry/build/full-shape/negative-scratch",
+        "short",
+        "1",
+        "0"
+      ],
+      "returncode": 1,
+      "error": "p28 extent/alignment\ncontext lifetime PASS: 1090 destructions, native release last, zero late destructions"
+    },
+    {
+      "view": "control",
+      "mode": "misaligned",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet101-draft-geometry/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet101-draft-geometry/build/full-shape/negative-selection.json",
+        "2cb03124193cfe9e3fd3ea93464a3e6ed75ce1b9c0170a7806ccb390db0012cb",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet101-draft-geometry/build/full-shape/negative-scratch",
+        "misaligned",
+        "1",
+        "0"
+      ],
+      "returncode": 1,
+      "error": "p28 extent/alignment\ncontext lifetime PASS: 1090 destructions, native release last, zero late destructions"
+    },
+    {
+      "view": "draft_attention",
+      "mode": "short",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet101-draft-geometry/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet101-draft-geometry/build/full-shape/negative-selection.json",
+        "d15430b76b2712750b20eb6598fc22f8bc5286e6fed227427774355e4933d9f0",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet101-draft-geometry/build/full-shape/negative-scratch",
+        "short",
+        "1",
+        "0"
+      ],
+      "returncode": 1,
+      "error": "p28 extent/alignment\ncontext lifetime PASS: 1090 destructions, native release last, zero late destructions"
+    },
+    {
+      "view": "draft_attention",
+      "mode": "misaligned",
+      "command": [
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet101-draft-geometry/build/full-shape/fixture",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet101-draft-geometry/build/full-shape/negative-selection.json",
+        "d15430b76b2712750b20eb6598fc22f8bc5286e6fed227427774355e4933d9f0",
+        "1",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet101-draft-geometry/build/full-shape/negative-scratch",
+        "misaligned",
+        "1",
+        "0"
+      ],
+      "returncode": 1,
+      "error": "p28 extent/alignment\ncontext lifetime PASS: 1090 destructions, native release last, zero late destructions"
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet101-draft-geometry/negative_gate.py": "fbb5e573cbd38d23eda8898c03b86836436f5652bb5087d8dc49c801fdcd6dec",
+    "experiments/own-xpu-runtime/stage2/packet101-draft-geometry/evidence/full-shape.json": "6cc5bf4ae06ac449f89f12d00c7d7367098b4e27143b53e36b843a5a5d265536"
+  }
+}
