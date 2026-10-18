@@ -1,0 +1,34 @@
+{
+  "schema": "drain-fix-report.v1",
+  "root": "experiments/own-xpu-runtime/stage2/packet127-head-retune",
+  "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+  "counts": {
+    "FIXED": 2,
+    "UNFIXED": 0
+  },
+  "passed": true,
+  "files": [
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet127-head-retune/conditions.py",
+      "sha256": "7b58f5a499a7358b61873ced66dd56f229f3559b731cdf1ff69114f9c3eec836",
+      "status": "FIXED",
+      "sleeps": [
+        {
+          "line": 89,
+          "status": "FIXED"
+        }
+      ]
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet127-head-retune/drain_gate.py",
+      "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+      "status": "FIXED",
+      "sleeps": [
+        {
+          "line": 51,
+          "status": "FIXED"
+        }
+      ]
+    }
+  ]
+}

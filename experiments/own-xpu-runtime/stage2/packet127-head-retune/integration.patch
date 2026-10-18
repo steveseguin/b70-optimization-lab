@@ -1,0 +1,110 @@
+--- experiments/own-xpu-runtime/stage2/packet124-record-bundle/main.cpp
++++ experiments/own-xpu-runtime/stage2/packet127-head-retune/main.cpp
+@@ -867,7 +867,9 @@
+     return 2;
+   }
+   std::string head_choice()const {auto i=sealed_selection.choices.find("head");return i==sealed_selection.choices.end()?"production":i->second;}
+-  bool split_head()const {return head_choice()=="head-split-compute"||head_choice()=="head-split-bcs";}
++  bool split_head()const {return head_choice().starts_with("head-split-");}
++  unsigned head_prefix()const{return p105::prefix_for(head_choice());}
++  unsigned head_suffix()const{return p105::suffix_for(head_choice());}
+   bool packed_weight(const std::string& name)const {
+     if(name=="output.weight"&&head_choice()=="head-transpose")return true;
+     if(a.mini||a.memory!="resident")return false;
+@@ -904,8 +906,8 @@
+     if(hccache){require(t.shape.size()==2&&t.shape[0]==10240&&t.shape[1]==320&&type==iq3::Type::Q8_0,"p90 HC shape");expanded_bytes=size_t(t.shape[0])*p90::hc_stride;}
+     const bool head_split=name=="output.weight"&&split_head();
+     if(head_split)require(type==iq3::Type::Q6_K&&t.shape.size()==2&&t.shape[0]==248320&&t.shape[1]==2560,"p105 Q6 target head shape");
+-    const size_t load_rows=head_split?(a.rank==0?p105::suffix:p105::prefix):size_t(t.shape[0]);
+-    const size_t first_row=head_split&&a.rank==0?p105::prefix:0;
++    const size_t load_rows=head_split?(a.rank==0?head_suffix():head_prefix()):size_t(t.shape[0]);
++    const size_t first_row=head_split&&a.rank==0?head_prefix():0;
+     if(head_split)expanded_bytes=load_rows*3380;
+     auto id = allocate(c, "weight:" + name, expanded_bytes, Category::weights,
+                        Lifetime::process);
+@@ -1189,7 +1191,7 @@
+     m.x=buffers[c].at(l.inputs[0]).id;m.y=buffers[c].at(l.outputs[projection*2]).id;
+     m.rows=l.shape[1];m.columns=l.shape[2];m.span=m.rows;
+     m.workspace=workspace[c];
+-    if(l.weights[projection]=="output.weight"&&split_head()){require(a.rank==1,"p105 target prefix rank");m.rows=m.span=p105::prefix;}
++    if(l.weights[projection]=="output.weight"&&split_head()){require(a.rank==1,"p105 target prefix rank");m.rows=m.span=head_prefix();}
+     if(routed) {
+       m.count=p.g.top;m.experts=a.memory=="layer-streaming"?p.g.top:p.g.experts;
+       m.status=buffers[c].at(l.outputs[projection*2+1]).id;
+@@ -1344,7 +1346,7 @@
+       for (auto name : {"error", "position", "active"})
+         bindings.push_back(buffers[c].at(name).id);
+       bindings.push_back(ropes[c]);
+-      if(l.op=="argmax"&&split_head())s.sizes[0]=p105::prefix;
++      if(l.op=="argmax"&&split_head())s.sizes[0]=head_prefix();
+       s.implementation=packet26::dispatch.implementation_for(l.label,s.op);
+       // Packet49 arithmetic identity: both verification rows take split32 QSA.
+       if(l.op=="qsa_attention" && p.g.h==2560)s.implementation=12;
+@@ -1582,7 +1584,7 @@
+       owner[n] = l.card;
+       auto &t = w.directory.at(n);
+       auto v=l.op=="gemv"?dispatch(l,t):2;
+-      stored[n]=(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head").starts_with("head-split-"))?size_t(p105::prefix)*3380:(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head")=="head-transpose")?t.bytes:p49b_weight(w,a,p,n)?p49b_weight_bytes(t):arithmetic::is_expanded(v)?size_t(t.shape[0])*arithmetic::row_bytes(flash::grid_type(t.grid),t.shape[1],v):t.bytes;
++      stored[n]=(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head").starts_with("head-split-"))?size_t(p105::prefix_for(selected.choices.at("head")))*3380:(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head")=="head-transpose")?t.bytes:p49b_weight(w,a,p,n)?p49b_weight_bytes(t):arithmetic::is_expanded(v)?size_t(t.shape[0])*arithmetic::row_bytes(flash::grid_type(t.grid),t.shape[1],v):t.bytes;
+       if(cached_expert&&p49b_weight(w,a,p,n)&&flash::grid_type(t.grid)==iq3::Type::IQ2_S)stored[n]=t.bytes/p49bgemv::source_row_bytes(iq3::Type::IQ2_S,t.shape.back())*p90::expert_stride(t.shape.back());
+       if(cached_hc&&n.starts_with("blk.")&&(n.ends_with(".hc_attn_up.weight")||n.ends_with(".hc_ffn_up.weight")))stored[n]=size_t(t.shape[0])*p90::hc_stride;
+       o << (comma ? "," : "") << "{\"name\":" << ownrt::quote(n)
+--- experiments/own-xpu-runtime/stage2/packet124-record-bundle/p105_common.hpp
++++ experiments/own-xpu-runtime/stage2/packet127-head-retune/p105_common.hpp
+@@ -1,11 +1,19 @@
+ #pragma once
+ #include <cstdint>
+ #include <stdexcept>
++#include <string_view>
+ namespace p105 {
+ inline constexpr unsigned prefix=202240,suffix=46080,vocab=248320,hidden_bytes=5120;
+ struct Best {float value;int32_t index;uint32_t error,reserved;};
+ static_assert(sizeof(Best)==16);
+-inline Best merge(Best a,Best b){
++inline unsigned suffix_for(std::string_view choice){
++ if(choice=="head-split-compute"||choice=="head-split-bcs")return 46080;
++ if(choice=="head-split-81920")return 81920;
++ if(choice=="head-split-122880")return 122880;
++ throw std::invalid_argument("p127 unregistered split");
++}
++inline unsigned prefix_for(std::string_view choice){return vocab-suffix_for(choice);}
++inline Best merge(Best a,Best b,unsigned prefix=p105::prefix){
+  if(a.index<0||a.index>=int(prefix)||b.index<int(prefix)||b.index>=int(vocab)||a.reserved||b.reserved)
+   throw std::invalid_argument("p105 invalid partition payload");
+  Best out=(b.value>a.value||(b.value==a.value&&b.index<a.index))?b:a;
+--- experiments/own-xpu-runtime/stage2/packet124-record-bundle/p105_runtime.hpp
++++ experiments/own-xpu-runtime/stage2/packet127-head-retune/p105_runtime.hpp
+@@ -3,11 +3,11 @@
+ namespace p105 {
+ // Private auxiliary state. Never inserted in target/draft buffers or snapshots.
+ struct Runtime {
+- Engine& e;bool bcs;Allocation hidden=0,logits=0,index=0,error=0,active=0,position=0,workspace=0,best=0,staging=0;
++ Engine& e;const unsigned prefix,suffix;bool bcs;Allocation hidden=0,logits=0,index=0,error=0,active=0,position=0,workspace=0,best=0,staging=0;
+  ownrt::Event export_event=0;uint32_t export_sequence=0;int export_position=-1,export_fixture=-1;std::chrono::steady_clock::time_point export_started;
+  std::vector<ownrt::PreparedCompute> suffix_commands;
+  std::ofstream timings;
+- explicit Runtime(Engine& engine):e(engine),bcs(e.head_choice()=="head-split-bcs"),timings(e.a.output/"p105-transfers.jsonl") {
++ explicit Runtime(Engine& engine):e(engine),prefix(engine.head_prefix()),suffix(engine.head_suffix()),bcs(e.head_choice()=="head-split-bcs"),timings(e.a.output/"p105-transfers.jsonl") {
+   require(e.split_head()&&e.p.g.h==2560&&e.p.g.vocab==vocab,"p105 dimensions");
+   auto alloc=[&](const char*n,size_t bytes,Memory memory=Memory::device){auto id=e.allocate(0,std::string("p105:")+n,bytes,Category::runtime_overhead,Lifetime::process,memory);e.head_auxiliary.insert(id);return id;};
+   best=alloc("best16",16);staging=alloc("staging",hidden_bytes,Memory::pinned);
+@@ -72,7 +72,7 @@
+   Best local;std::memcpy(&local,e.dev(0).arena.row(staging).pointer,16);
+   auto check=[&]{cancel();require(!load(box.abort),"p105 peer failed");};
+   require(p56x::wait([&]{return load(box.reply)==seq;},check,std::chrono::steady_clock::now()+std::chrono::seconds(e.a.seconds)),"p105 best timeout");check();
+-  auto result=merge(local,box.best);
++  auto result=merge(local,box.best,prefix);
+   // Invalid partitions may have diagnostic indices; no nonfinite winner emits.
+   if(result.error){e.upload(0,error,0,&result.error,4);throw std::runtime_error("p105 sticky nonfinite target head");}
+   e.upload(0,index,0,&result.index,4);
+--- experiments/own-xpu-runtime/stage2/packet124-record-bundle/p49d_submit.cpp
++++ experiments/own-xpu-runtime/stage2/packet127-head-retune/p49d_submit.cpp
+@@ -57,7 +57,7 @@
+ }
+ Submit resolve(std::string_view cls,std::string_view choice){
+  if(cls=="other_fusion"&&(choice=="production"||choice=="fused"))return production;
+- if(cls=="head"&&(choice=="production"||choice=="head-transpose"||choice=="head-split-compute"||choice=="head-split-bcs"))return production;
++ if(cls=="head"&&(choice=="production"||choice=="head-transpose"||choice=="head-split-81920"||choice=="head-split-122880"||choice=="head-split-compute"||choice=="head-split-bcs"))return production;
+  if(cls=="host_retire"&&(choice=="production"||choice=="ordered"||choice=="reply-first"))return production;
+  if(cls=="hc_norm"&&(choice=="production"||choice=="subgroup"||choice=="consumer"))return production;
+  if(cls=="hc_gate"&&(choice=="production"||choice=="wide"))return production;

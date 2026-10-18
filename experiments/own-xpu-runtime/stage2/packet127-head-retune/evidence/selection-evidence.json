@@ -1,0 +1,234 @@
+{
+  "schema": "packet127.selection-evidence.v1",
+  "device_executed": false,
+  "historical_device_evidence": true,
+  "created_utc": "2026-10-18T11:47:38Z",
+  "choices": [
+    81920,
+    122880
+  ],
+  "predictions": [
+    {
+      "suffix_rows": 46080,
+      "old_model": {
+        "k_rank1_rows": 202240,
+        "rank0_rows": 46080,
+        "hit_ms": 15.809179808517396,
+        "miss_ms": 27.462504411039454,
+        "predicted_tok_s": 54.6846769585575,
+        "gain_percent_vs_measured_control": 1.0685364547492915,
+        "gain_percent_vs_packet85_model": 1.2979609953303495,
+        "unmeasured_extra_ms_export_import_return": [
+          0.007058522896841168,
+          0.007819995516911149,
+          0.015379161782572924
+        ],
+        "rank0_head_time_multiplier": 1.0
+      }
+    },
+    {
+      "suffix_rows": 81920,
+      "old_model": {
+        "k_rank1_rows": 166400,
+        "rank0_rows": 81920,
+        "hit_ms": 16.011773354479594,
+        "miss_ms": 27.434156727686233,
+        "predicted_tok_s": 54.22948182082385,
+        "gain_percent_vs_measured_control": 0.2272421666450919,
+        "gain_percent_vs_packet85_model": 0.45475697782555446,
+        "unmeasured_extra_ms_export_import_return": [
+          0.007058522896841168,
+          0.007819995516911149,
+          0.015379161782572924
+        ],
+        "rank0_head_time_multiplier": 1.0
+      }
+    },
+    {
+      "suffix_rows": 122880,
+      "old_model": {
+        "k_rank1_rows": 125440,
+        "rank0_rows": 122880,
+        "hit_ms": 16.24330883557925,
+        "miss_ms": 27.66569220878589,
+        "predicted_tok_s": 53.557017278838046,
+        "gain_percent_vs_measured_control": -1.015610691893798,
+        "gain_percent_vs_packet85_model": -0.7909171439479779,
+        "unmeasured_extra_ms_export_import_return": [
+          0.007058522896841168,
+          0.007819995516911149,
+          0.015379161782572924
+        ],
+        "rank0_head_time_multiplier": 1.0
+      }
+    }
+  ],
+  "model_scope": "Original packet87/87t lane, not bundle7. Predictions are not measurements. Larger suffixes test whether the balance moved with newer composition; no rank0 idle time is inferred.",
+  "packet118_slack_admission": {
+    "threshold_ms": 0.3,
+    "usable_hit_slack_ms": null,
+    "status": "blocked-missing-head-service-timestamps",
+    "placement_preparation_admitted": false
+  },
+  "packet120": [
+    {
+      "path": "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p120-B-grid-0-production",
+      "complete": true,
+      "exact": true,
+      "rate": 58.17358121447697,
+      "request_count": 12,
+      "tokens": 128,
+      "first99": {
+        "intervals": 1188,
+        "paths": {
+          "hit": {
+            "n": 932,
+            "mean_ms": {
+              "elapsed_ms": 14.905718275617664,
+              "A": 12.799747637004637,
+              "B": 13.277986319142327,
+              "C": 0.0,
+              "D": 1.6085285583924194,
+              "R": 0.0,
+              "rank0_slack_ms": 0.4787452661273941,
+              "unresolved_control_gaps_ms": 0.019203398082916958
+            }
+          },
+          "miss": {
+            "n": 256,
+            "mean_ms": {
+              "elapsed_ms": 25.72383215294849,
+              "A": 12.796721149129553,
+              "B": 13.34161220677288,
+              "C": 11.822124617538066,
+              "D": 1.6086514621065362,
+              "R": 0.5470144775472363,
+              "rank0_slack_ms": 0.5445301550253134,
+              "unresolved_control_gaps_ms": 0.013080851090307988
+            }
+          }
+        },
+        "definitions": {
+          "A": "next rank0 speculative HALF",
+          "B": "rank1 target HALF including head",
+          "C": "rank0 corrected HALF on miss",
+          "D": "rank1 draft",
+          "R": "rank0 rollback"
+        },
+        "timing_scope": "host command envelopes; GPU work, transfers and waits overlap; not GPU idle"
+      }
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p120-B-grid-1-25-23",
+      "complete": true,
+      "exact": true,
+      "rate": 55.96556055177861,
+      "request_count": 12,
+      "tokens": 128,
+      "first99": {
+        "intervals": 1188,
+        "paths": {
+          "hit": {
+            "n": 932,
+            "mean_ms": {
+              "elapsed_ms": 15.51041039409013,
+              "A": 13.392788338078468,
+              "B": 13.875944582935794,
+              "C": 0.0,
+              "D": 1.6124092877526215,
+              "R": 0.0,
+              "rank0_slack_ms": 0.4836442705022487,
+              "unresolved_control_gaps_ms": 0.02205652340171387
+            }
+          },
+          "miss": {
+            "n": 256,
+            "mean_ms": {
+              "elapsed_ms": 26.784250092532602,
+              "A": 13.387650164304432,
+              "B": 13.872436214683148,
+              "C": 12.304805347753245,
+              "D": 1.6136552017087524,
+              "R": 0.5929216174536123,
+              "rank0_slack_ms": 0.48428179616166744,
+              "unresolved_control_gaps_ms": 0.014086912642596872
+            }
+          }
+        },
+        "definitions": {
+          "A": "next rank0 speculative HALF",
+          "B": "rank1 target HALF including head",
+          "C": "rank0 corrected HALF on miss",
+          "D": "rank1 draft",
+          "R": "rank0 rollback"
+        },
+        "timing_scope": "host command envelopes; GPU work, transfers and waits overlap; not GPU idle"
+      }
+    },
+    {
+      "path": "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p120-B-grid-2-production",
+      "complete": false
+    }
+  ],
+  "packet120_complete": false,
+  "census": [
+    {
+      "suffix_rows": 46080,
+      "rank": 0,
+      "arena_bytes": 28144182388,
+      "arena_headroom_bytes": 4068072332,
+      "weight_bytes": 155750400
+    },
+    {
+      "suffix_rows": 46080,
+      "rank": 1,
+      "arena_bytes": 31425985242,
+      "arena_headroom_bytes": 786269478,
+      "weight_bytes": 683571200
+    },
+    {
+      "suffix_rows": 81920,
+      "rank": 0,
+      "arena_bytes": 28266540148,
+      "arena_headroom_bytes": 3945714572,
+      "weight_bytes": 276889600
+    },
+    {
+      "suffix_rows": 81920,
+      "rank": 1,
+      "arena_bytes": 31304846042,
+      "arena_headroom_bytes": 907408678,
+      "weight_bytes": 562432000
+    },
+    {
+      "suffix_rows": 122880,
+      "rank": 0,
+      "arena_bytes": 28406377588,
+      "arena_headroom_bytes": 3805877132,
+      "weight_bytes": 415334400
+    },
+    {
+      "suffix_rows": 122880,
+      "rank": 1,
+      "arena_bytes": 31166401242,
+      "arena_headroom_bytes": 1045853478,
+      "weight_bytes": 423987200
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/RESULT.json": "b17fa4ae389f613ff881b300430cd0d1bd9b5a91e4c4cc9fbb29d4d05b0670c7",
+    "experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/report.py": "1cac7fa52ddb906629e3e76a4f421b9773711ab6825482376d8c880ba5df9682",
+    "experiments/own-xpu-runtime/stage2/packet87-slack-model/model.py": "6d2f41364acf6504d7d9e642246efdbd974d993a505747595b887cedd155b62f",
+    "experiments/own-xpu-runtime/stage2/packet87-slack-model/DECISION.json": "45c224e5295921c2863a9c9b600206561ed3e137134b19eb4a21c8c964b2e0e5",
+    "experiments/own-xpu-runtime/stage2/packet85-critical-path/model.py": "6627ffa350361a85aed5160f1f5738409cb23bab4f9ca1f34fea7317a0b63ad4",
+    "experiments/own-xpu-runtime/stage2/packet123-partial-placement/slack.json": "6e77394a295df1180e2553532b77906add082747aae1afe9b1da7aa19af096e4",
+    "experiments/own-xpu-runtime/stage2/packet127-head-retune/evidence/full-shape.json": "f6276a7d6a04ad963464ceec5c7b0277b004fe6d15063ee9807073ef3b781176",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p120-B-grid-0-production/window.json": "ab4c63749023812bc423d9bd88106f34cf85ce19cda52f6f93799d9eb90ae075",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p120-B-grid-0-production/summary.json": "932abe55234851c396e4d5b2829012499460f483cded27e9133b04eaf7550bdd",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p120-B-grid-1-25-23/window.json": "0a2f64f2b78887635f8c20cbd55195808ec4c1f06edd438db75efa153efb95ad",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p120-B-grid-1-25-23/summary.json": "03899cae7fcced687f31477989b705c2c84808a1602282614d057508e22d4ad6"
+  },
+  "packet120_relative_to_first_control_percent": [
+    -3.7955728641799302
+  ]
+}
