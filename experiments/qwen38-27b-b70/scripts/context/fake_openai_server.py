@@ -393,7 +393,8 @@ class H(BaseHTTPRequestHandler):
         pt = sum(len(json.dumps(m)) for m in msgs) // 4 or 1
         usage = {"prompt_tokens": pt, "completion_tokens": 12, "total_tokens": pt + 12}
         det = os.environ.get("FAKE_DETERMINISTIC") == "1"
-        base = {"id": _ident("chatcmpl"), "created": 1792300000 if det else int(time.time()), "model": MODEL, "usage": usage}
+        base = {"id": _ident("chatcmpl") if det else "fake-%d" % time.time_ns(),
+                "created": 1792300000 if det else int(time.time()), "model": MODEL, "usage": usage}
         if self.path.endswith("/completions") and "chat" not in self.path:
             return self._send({**base, "object": "text_completion",
                                "choices": [{"index": 0, "text": "OK", "finish_reason": "stop"}]})
@@ -423,7 +424,8 @@ class H(BaseHTTPRequestHandler):
         if req.get("tools"):
             cmd = plan(msgs)
             msg = {"role": "assistant", "content": "THOUGHT: scripted stub step.",
-                   "tool_calls": [{"id": _ident("chatcmpl-tool"), "type": "function",
+                   "tool_calls": [{"id": _ident("chatcmpl-tool") if os.environ.get("FAKE_DETERMINISTIC") == "1"
+                                   else "call_%d" % time.time_ns(), "type": "function",
                                    "function": {"name": "bash", "arguments": json.dumps({"command": cmd})}}]}
             fr = "tool_calls"
             if os.environ.get("FAKE_REASONING") == "1" or (os.environ.get("FAKE_REASONING") == "alt" and len(msgs) % 4 < 2):
