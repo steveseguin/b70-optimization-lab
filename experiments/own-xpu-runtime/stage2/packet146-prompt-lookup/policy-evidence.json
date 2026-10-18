@@ -1,0 +1,646 @@
+{
+  "schema": "packet146.policy-review.v1",
+  "captured_utc": "2026-10-18T21:29:05.225393+00:00",
+  "review_head": "07b543293a4be4681384650152548048340734cb",
+  "entry_head": "10aff58c871968c4750c56dbc3cf75862d0bf1f5",
+  "decision_recorded_utc": "2026-10-18T21:27:44Z",
+  "decision": "closed-policy-ineligible-or-ambiguous",
+  "acceptance_study_run": false,
+  "net_acceptance_percentage_points": null,
+  "projected_tokens_per_second": null,
+  "design_gate_evaluated": false,
+  "sources": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "37854e0932a3195903c0b0bceae4821bc4b2bb8cbc61b0de3bedc77d82b3fba9",
+      "bytes": 40994,
+      "head_blob": "19963b64b44b7f6a1cb11ab772533a8ac434ffca",
+      "excerpts": [
+        {
+          "first_line": 260,
+          "last_line": 301,
+          "lines": [
+            {
+              "line": 260,
+              "text": "synthetic or repetitive prompts, but promotion and LocalMaxxing submissions now"
+            },
+            {
+              "line": 261,
+              "text": "require the fixed realistic final gate:"
+            },
+            {
+              "line": 262,
+              "text": ""
+            },
+            {
+              "line": 263,
+              "text": "- use the fixed realistic prompt suite;"
+            },
+            {
+              "line": 264,
+              "text": "- require its declared varied classes (at minimum prose, code, analysis,"
+            },
+            {
+              "line": 265,
+              "text": "  operations, and documentation/structured writing); repeated variants of one"
+            },
+            {
+              "line": 266,
+              "text": "  easy prompt shape are not representative;"
+            },
+            {
+              "line": 267,
+              "text": "- run each prompt once as a cold first response;"
+            },
+            {
+              "line": 268,
+              "text": "- require `cached_tokens=0` for every request;"
+            },
+            {
+              "line": 269,
+              "text": "- disable prompt/KV cache reuse, context checkpoints, response reuse,"
+            },
+            {
+              "line": 270,
+              "text": "  n-gram/history acceleration, and warmed repeated prompts;"
+            },
+            {
+              "line": 271,
+              "text": "- keep the target model and quantization unchanged;"
+            },
+            {
+              "line": 272,
+              "text": "- allow speculative decoding/MTP only when accepted tokens are verified by the"
+            },
+            {
+              "line": 273,
+              "text": "  declared target model;"
+            },
+            {
+              "line": 274,
+              "text": "- report the median within each input class and then the median across those"
+            },
+            {
+              "line": 275,
+              "text": "  class medians, using the conventional rate across the 99 inter-token"
+            },
+            {
+              "line": 276,
+              "text": "  intervals between generated-token timestamps 1 and 100 after TTFT, as the"
+            },
+            {
+              "line": 277,
+              "text": "  primary metric; retain the all-prompt median as a secondary diagnostic; also"
+            },
+            {
+              "line": 278,
+              "text": "  report p10, mean, TTFT, wall tok/s,"
+            },
+            {
+              "line": 279,
+              "text": "  full-natural-completion tok/s under the fixed 512-token response cap,"
+            },
+            {
+              "line": 280,
+              "text": "  prompt/output hashes, model identity, runtime commit, env vars, flags, and"
+            },
+            {
+              "line": 281,
+              "text": "  logs. Record the event count, interval count, numerator, and endpoints;"
+            },
+            {
+              "line": 282,
+              "text": "  historical 100-event/99-interval compatibility fields must be labeled."
+            },
+            {
+              "line": 283,
+              "text": ""
+            },
+            {
+              "line": 284,
+              "text": "\u201cCold response\u201d does not require reloading model weights for every prompt. A"
+            },
+            {
+              "line": 285,
+              "text": "loaded model, resident weights, initialized runtime, and compiled kernels are"
+            },
+            {
+              "line": 286,
+              "text": "valid steady-state conditions. It does require that every fixed prompt is used"
+            },
+            {
+              "line": 287,
+              "text": "once per suite attempt, reports `cached_tokens=0`, and cannot benefit from"
+            },
+            {
+              "line": 288,
+              "text": "prompt/KV/response reuse, a learned draft, repeated-prompt n-grams, or a"
+            },
+            {
+              "line": 289,
+              "text": "selected high-acceptance fixture. Run the complete varied suite; a `--prompt-id`"
+            },
+            {
+              "line": 290,
+              "text": "subset or a response cap below 512 is screening evidence and must make"
+            },
+            {
+              "line": 291,
+              "text": "`realistic_final_gate.passed=false`."
+            },
+            {
+              "line": 292,
+              "text": ""
+            },
+            {
+              "line": 293,
+              "text": "Performance and quality are independent promotion gates. The optimized path"
+            },
+            {
+              "line": 294,
+              "text": "must pass the model lane's registered exact-output or quality oracle and its"
+            },
+            {
+              "line": 295,
+              "text": "repeat/fresh-server determinism requirement. Speculative accepted tokens must"
+            },
+            {
+              "line": 296,
+              "text": "be verified by the unchanged declared target. A speed result cannot substitute"
+            },
+            {
+              "line": 297,
+              "text": "for those checks, and a quality pass cannot upgrade a diagnostic workload into"
+            },
+            {
+              "line": 298,
+              "text": "a performance headline."
+            },
+            {
+              "line": 299,
+              "text": ""
+            },
+            {
+              "line": 300,
+              "text": "Before building an external submission, require a hash-bound"
+            },
+            {
+              "line": 301,
+              "text": "`neural.download.promotion-attestation.v1` artifact linking the exact"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "docs/localmaxxing.md",
+      "sha256": "e640b6cd065db87c061ad4f47d58f7916f60448f85a8e23141873d6d6d7ce1c3",
+      "bytes": 9078,
+      "head_blob": "6b1e942da3de1d86756987d23ab480f1d72dbb92",
+      "excerpts": [
+        {
+          "first_line": 103,
+          "last_line": 113,
+          "lines": [
+            {
+              "line": 103,
+              "text": "For Gemma/Qwen-style optimization records, synthetic or repetitive prompts may"
+            },
+            {
+              "line": 104,
+              "text": "guide search but are not submit-worthy real-world throughput. Promotion and"
+            },
+            {
+              "line": 105,
+              "text": "submission require the fixed realistic final gate:"
+            },
+            {
+              "line": 106,
+              "text": ""
+            },
+            {
+              "line": 107,
+              "text": "- each prompt in the fixed suite is run exactly once as a cold response;"
+            },
+            {
+              "line": 108,
+              "text": "- every request reports `usage.prompt_tokens_details.cached_tokens=0`;"
+            },
+            {
+              "line": 109,
+              "text": "- prompt/KV cache reuse, context checkpoints, response reuse, n-gram/history"
+            },
+            {
+              "line": 110,
+              "text": "  acceleration, and warmed repeated prompts are disabled;"
+            },
+            {
+              "line": 111,
+              "text": "- target model and quantization are unchanged;"
+            },
+            {
+              "line": 112,
+              "text": "- speculative decoding/MTP is allowed only when accepted tokens are verified by"
+            },
+            {
+              "line": 113,
+              "text": "  the declared target model;"
+            }
+          ]
+        },
+        {
+          "first_line": 179,
+          "last_line": 186,
+          "lines": [
+            {
+              "line": 179,
+              "text": "`--allow-non-headline` is for local `--dry-run` inspection only. It must not be"
+            },
+            {
+              "line": 180,
+              "text": "used to post diagnostic synthetic, repeated, warmed, history, or n-gram"
+            },
+            {
+              "line": 181,
+              "text": "artifacts to LocalMaxxing."
+            },
+            {
+              "line": 182,
+              "text": ""
+            },
+            {
+              "line": 183,
+              "text": "Do not submit a fresh-response record when the speedup depends on prior"
+            },
+            {
+              "line": 184,
+              "text": "generated continuation history, n-gram history, prefix/cache reuse, context"
+            },
+            {
+              "line": 185,
+              "text": "checkpoints, or response reuse. Label those results as warmed/history"
+            },
+            {
+              "line": 186,
+              "text": "throughput instead."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "scripts/submit_localmaxxing_results.py",
+      "sha256": "669981683fd5de5b38e3c29a93b7a073a81bf3f345946af079f898c1d02e4c17",
+      "bytes": 28272,
+      "head_blob": "002ae717939b611cd04cb49a86ba33bc7602d263",
+      "excerpts": [
+        {
+          "first_line": 166,
+          "last_line": 196,
+          "lines": [
+            {
+              "line": 166,
+              "text": "def preflight_payload(item: dict, *, allow_non_headline: bool = False) -> list[str]:"
+            },
+            {
+              "line": 167,
+              "text": "    try:"
+            },
+            {
+              "line": 168,
+              "text": "        require_qualifying(item)"
+            },
+            {
+              "line": 169,
+              "text": "    except ValueError as error:"
+            },
+            {
+              "line": 170,
+              "text": "        return [str(error)]"
+            },
+            {
+              "line": 171,
+              "text": "    label = str(item.get(\"label\", \"\"))"
+            },
+            {
+              "line": 172,
+              "text": "    payload = item.get(\"payload\") or {}"
+            },
+            {
+              "line": 173,
+              "text": "    engine = payload.get(\"engineFlags\") or {}"
+            },
+            {
+              "line": 174,
+              "text": "    notes = str(payload.get(\"notes\", \"\"))"
+            },
+            {
+              "line": 175,
+              "text": "    problems: list[str] = []"
+            },
+            {
+              "line": 176,
+              "text": ""
+            },
+            {
+              "line": 177,
+              "text": "    history_markers = ["
+            },
+            {
+              "line": 178,
+              "text": "        bool(engine.get(\"historyAccelerated\")),"
+            },
+            {
+              "line": 179,
+              "text": "        engine.get(\"freshResponseHeadlineValid\") is False,"
+            },
+            {
+              "line": 180,
+              "text": "        str(engine.get(\"headlineUse\", \"\")).lower()"
+            },
+            {
+              "line": 181,
+              "text": "        in {\"diagnostic-only\", \"non-headline\"},"
+            },
+            {
+              "line": 182,
+              "text": "        \"history-accelerated\" in label.lower(),"
+            },
+            {
+              "line": 183,
+              "text": "        \"history-accelerated\" in notes.lower(),"
+            },
+            {
+              "line": 184,
+              "text": "        \"non-headline\" in notes.lower(),"
+            },
+            {
+              "line": 185,
+              "text": "    ]"
+            },
+            {
+              "line": 186,
+              "text": "    ngram_markers = ["
+            },
+            {
+              "line": 187,
+              "text": "        \"ngram\" in label.lower(),"
+            },
+            {
+              "line": 188,
+              "text": "        \"ngram\" in notes.lower(),"
+            },
+            {
+              "line": 189,
+              "text": "        any(str(key).lower().startswith(\"ngram\") for key in engine),"
+            },
+            {
+              "line": 190,
+              "text": "    ]"
+            },
+            {
+              "line": 191,
+              "text": "    if any(history_markers):"
+            },
+            {
+              "line": 192,
+              "text": "        problems.append(\"payload is labeled history-accelerated or non-headline\")"
+            },
+            {
+              "line": 193,
+              "text": "    if any(ngram_markers) and not engine.get(\"freshResponseNgramValidated\"):"
+            },
+            {
+              "line": 194,
+              "text": "        problems.append("
+            },
+            {
+              "line": 195,
+              "text": "            \"payload appears to be n-gram/history based without fresh-response validation\""
+            },
+            {
+              "line": 196,
+              "text": "        )"
+            }
+          ]
+        },
+        {
+          "first_line": 528,
+          "last_line": 535,
+          "lines": [
+            {
+              "line": 528,
+              "text": "    parser.add_argument("
+            },
+            {
+              "line": 529,
+              "text": "        \"--allow-non-headline\","
+            },
+            {
+              "line": 530,
+              "text": "        action=\"store_true\","
+            },
+            {
+              "line": 531,
+              "text": "        help=("
+            },
+            {
+              "line": 532,
+              "text": "            \"Inspect diagnostic/non-headline payloads such as warmed/history \""
+            },
+            {
+              "line": 533,
+              "text": "            \"n-gram artifacts. This is restricted to --dry-run; real \""
+            },
+            {
+              "line": 534,
+              "text": "            \"submissions fail closed.\""
+            },
+            {
+              "line": 535,
+              "text": "        ),"
+            }
+          ]
+        },
+        {
+          "first_line": 571,
+          "last_line": 577,
+          "lines": [
+            {
+              "line": 571,
+              "text": "    if args.allow_non_headline and not args.dry_run:"
+            },
+            {
+              "line": 572,
+              "text": "        print("
+            },
+            {
+              "line": 573,
+              "text": "            \"--allow-non-headline is restricted to --dry-run inspection; \""
+            },
+            {
+              "line": 574,
+              "text": "            \"LocalMaxxing submissions must pass the realistic fresh-response gate\","
+            },
+            {
+              "line": 575,
+              "text": "            file=sys.stderr,"
+            },
+            {
+              "line": 576,
+              "text": "        )"
+            },
+            {
+              "line": 577,
+              "text": "        return 2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "docs/model-optimization-guide.md",
+      "sha256": "81da5b32c0036b885346aad982a445eb213efea5ac7e4900d38ea72dbc36275a",
+      "bytes": 26298,
+      "head_blob": "71b821728828189643a8244aaa7b0b6d98d74810",
+      "excerpts": [
+        {
+          "first_line": 415,
+          "last_line": 431,
+          "lines": [
+            {
+              "line": 415,
+              "text": ""
+            },
+            {
+              "line": 416,
+              "text": "- MTP/draft-model speculation;"
+            },
+            {
+              "line": 417,
+              "text": "- verifier-accepted multi-token paths;"
+            },
+            {
+              "line": 418,
+              "text": "- draft model quantization;"
+            },
+            {
+              "line": 419,
+              "text": "- `n_max`, `n_min`, and probability threshold sweeps;"
+            },
+            {
+              "line": 420,
+              "text": "- backend argmax IDs or top-k paths;"
+            },
+            {
+              "line": 421,
+              "text": "- reducing verifier host/device copies;"
+            },
+            {
+              "line": 422,
+              "text": "- exact row-adaptive verifier designs;"
+            },
+            {
+              "line": 423,
+              "text": "- candidate-bound proofs only if mathematically sound."
+            },
+            {
+              "line": 424,
+              "text": ""
+            },
+            {
+              "line": 425,
+              "text": "Avoid:"
+            },
+            {
+              "line": 426,
+              "text": ""
+            },
+            {
+              "line": 427,
+              "text": "- n-gram/history speedups as headline fresh-response throughput when the"
+            },
+            {
+              "line": 428,
+              "text": "  history learned the repeated benchmark answer;"
+            },
+            {
+              "line": 429,
+              "text": "- accepting draft tokens without target verification;"
+            },
+            {
+              "line": 430,
+              "text": "- treating a speculation speedup as valid before canaries pass at scale;"
+            },
+            {
+              "line": 431,
+              "text": "- averaging warmed repeated prompts into fresh metrics."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "CURRENT.md",
+      "sha256": "0823a7079a550dd5c6b97862d323ae0a292a02b7e820b1143413047d13f116aa",
+      "bytes": 209611,
+      "head_blob": "acf8c41efc579a5df69d3ad761afa0d9083fba95",
+      "excerpts": [
+        {
+          "first_line": 1162,
+          "last_line": 1173,
+          "lines": [
+            {
+              "line": 1162,
+              "text": "## Known Issues And Next Actions"
+            },
+            {
+              "line": 1163,
+              "text": ""
+            },
+            {
+              "line": 1164,
+              "text": "1. **Owner decision dated October 11:** the fourth software incident is closed; the certified-recipe calibration floor still needs approval. Follow the bounded-generation next step above with current coordinator admission; the old engine-window receipt is spent and LTX stays off."
+            },
+            {
+              "line": 1165,
+              "text": "2. Finish the CPU runtime tokenizer/operator and adapter work, retaining the fixture memory-floor, receipt and native-window blockers above. Keep H3's missing publication evidence explicit; its source acceptance is already resolved."
+            },
+            {
+              "line": 1166,
+              "text": "3. Keep each certified result under its exact model, weights, arithmetic, topology, metric and quality identity. Preserve historical high scores and negative patches; host/session drift does not by itself justify merging different benchmark"
+            },
+            {
+              "line": 1167,
+              "text": "   identities or lowering a record. Consult the [reproducibility map](docs/current-reproducibility-map.md), [effort index](docs/model-effort-index.md) and [scoreboard](results/scoreboard.md)."
+            },
+            {
+              "line": 1168,
+              "text": "4. The GDN PR #45 community contribution still needs its actual mixed-session soak before production promotion; shorter strict-oracle passes do not verify that incident. Historical replay hash mismatches remain evidence, not permission to repin"
+            },
+            {
+              "line": 1169,
+              "text": "   shared tools blindly. Follow the [replay audit](notes/2026-09-09-replay-and-validator-audit.md)."
+            },
+            {
+              "line": 1170,
+              "text": "5. ML Bottleneck automatic refresh stays paused: 4070 interpretation, nine ambiguous measurements and calibration thresholds block publication in that repository's `docs/refresh-review-2026-09-08.md`. Keep its published evidence unchanged. Duplicate"
+            },
+            {
+              "line": 1171,
+              "text": "   LocalMaxxing record `cmu6ytvxr082alq015dpjgiz4` remains flagged for owner-only withdrawal; canonical record is `cmu6ytqyr0827lq01b76whp6d`."
+            },
+            {
+              "line": 1172,
+              "text": "6. A reproducible package needs pinned inputs, a clean build, unchanged quality gates and graceful teardown, with the public asset/replay checks required by [AGENTS.md](AGENTS.md). An older runnable command, CPU test pass or accepted model choice"
+            },
+            {
+              "line": 1173,
+              "text": "   does not satisfy missing gates."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
