@@ -110,3 +110,12 @@ inconsistent traces before success. They establish CPU behavior, not device corr
 [CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md),
 [do-not-repeat boundaries](DO-NOT-REPEAT.md), [seal](build-receipt.json).
 Hot-expert-cache idea credit: Niko1221 / Strata. Implementation is lab-authored.
+
+## Evidence reader ready
+
+[Analysis instructions and boundaries](analysis/README.md),
+[current report](analysis/report.md). The reader is CPU-only and requires no
+further implementation after the coordinator's batch. It rechecks the exact
+oracle, all traces, predecessor receipt coverage and raw capacity results before
+ranking bounds against +3%. Eleven synthetic tests cover its positive and
+refusal paths. The current report remains pending; no device result exists yet.

@@ -79,12 +79,31 @@ Nothing was queued. Expected 58y duration is 10–15 minutes with a 120-minute
 watchdog. Native output checking, library path, environment closure, drain and
 getrlimit gates are retained. No GPU, service or host setting changed here.
 
-The first-ready marker will bind the implementation commit, exact proposal and
-seal after this milestone is committed. Analysis preparation follows separately;
-no speed result or selected next lever is claimed before actual device evidence.
+The readiness marker binds implementation commit `015291e69`, the exact proposal
+and seal. It was the final content write of preparation and was committed and
+pushed as `2c7f66d1f`. No speed result or selected next lever is claimed before
+actual device evidence.
 
 A parallel read-only review caught a trace-integrity gap before readiness.
 The real suite now refuses missing, truncated, reordered, wrong-token or
 inconsistent traces before it can pass; all twelve traces are required. The
 reviewer rechecked this fix. Same-hold checks also enforce predecessor stage
 chronology; the coordinator still owns excluding intervening lane-A jobs.
+
+## Evidence reader prepared after readiness
+
+[The analysis reader](../experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/analysis/README.md)
+is ready. It checks the sealed build, all eight predecessor receipts, hashes,
+boot and stage order, recorded hold identity, exact output and complete traces.
+It ranks six measured host/wait buckets against the preregistered +3% gate,
+retaining the cold first prompt and the 99-interval class-balanced definition.
+Perfect-removal bounds are labeled bounds; none passes an implementation gate.
+It also rereads the larger-cache bracket and reports whether its measured
+screen clears +3%, without claiming an independently known miss-path cost.
+
+Eleven synthetic CPU tests pass, including exact +3% boundaries, corrupted
+traces, empty predecessor coverage and replacement of stale successful reports
+after invalid evidence. A read-only review prompted those last three checks.
+The actual report is **pending device evidence**, with no split or ranking.
+The analyzer is separate from the sealed launch sources; the readiness marker,
+proposal and binary remain unchanged. No new hold or queue entry was created.

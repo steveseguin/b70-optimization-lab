@@ -6,7 +6,8 @@ overlap change. Both builds, exact miniature repeats and 98 policy tests pass.
 The temporary queue plan puts it after 58x's smoke and bracket in their same
 whole-host hold; it refuses a separate hold. No job was queued or launched.
 Device timings that cannot be measured remain unknown. The next-lever ranking
-waits for the diagnostic, under a preregistered 3% gain gate.
+waits for the diagnostic, under a preregistered 3% gain gate. The evidence reader
+is ready and its 11 synthetic tests pass; its current report says data is pending.
 [Work note](notes/2026-10-18-own-runtime-packet58y.md).
 
 **October 18, packet58xb overlap amendment prepared on CPU:** The larger-cache
