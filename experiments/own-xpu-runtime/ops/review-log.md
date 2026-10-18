@@ -348,3 +348,20 @@ STOP-doing items applied:
 5. Watcher re-armed: all lane events, stale markers, latches, undrained teardown, fault lines, Codex exits.
 
 **STOP-doing items applied:** state from `ps`/event files, not memory; one-card chains only after a full-shape check of the real submit-time checks; a lane-A failure must not hold the shared teardown record; p82b runs only as filler; check root free space against the next chain before builds.
+
+## Review 13, 02:05 UTC (2026-10-18): **ACT**
+
+**Evidence:**
+- Last 2 h: 98% combined device use (lane A 95%, lane B 84%; one 7-min lane-B gap). Fault count 2; root 18 GB free.
+- The compile-turn guard in packets 90/92/93/94 matched any `python3` under `/packet58g-onecard/` as a "foreign compiler". Once 58g's device run started (after the p84 chain), p93 and p94 compiles would have waited out the whole 58g chain and hit their 3600 s deadline.
+- p86 `exp-nodeq` (lane A) bounds expert dequantization at about 1.14 ms per half on rank 1 (≈3 tok/s ceiling); `hc-nodeq` about 0.36 ms; `hc-constscale` about 0. p90 E1 `exp-halfcache` screened +0.25%. The remaining p86 views decide the next expert design but sat behind 60–75 min of p91/p92 screens.
+- Three record chains used about 47% of lane A in 6 h for sub-1% increments.
+
+**Actions, 02:06–02:10 UTC:**
+1. Patched `compile_turn.py` in p93 and p94: dropped the packet58g path match; the guard now also waits while `hold-lane-B` or a whole-host lane marker exists. The running waiter script was not edited.
+2. Lane B reordered: p90 grid, then the four p86 views, then the p91 grid and p92 grid.
+3. Codex p95: E3 grid-prefetch and E2 scale-cache (with an arena-fit proof), optional E5, sealed with single-candidate and full grids for both lanes, ready for the p86 verdict.
+4. Lane A: queued the p91 A grid behind 58g. A new `laneA-release-after-58g` waiter removes PAUSE-A after any clean end (fault count 2, no marker, drained, no latch), not only rc=0; otherwise it alerts.
+5. Chain policy: the next record chain only when a composed lane-B screen beats the record line by at least 1.5%, or two or more confirmed levers are ready (p91 plus any p90/p92/p93/p94/p95 winner).
+
+**STOP-doing items applied:** no packet-path substring matches in lock/turn checks; no rc=0-only lane hand-backs; diagnostics that choose the next big lever go before composition screens; no record chain per sub-1% increment; no second-lane copy of a diagnostic whose signal is far above control drift.
