@@ -16,7 +16,8 @@ def test_every_composition_consumed_and_disclosed():
   for resumed in (False,True):
    notes=s.submission_notes(row,resumed=resumed);assert len(notes)<=2000
    assert 'Recurrence='+row['recurrence'] in notes and 'route='+row['route'] in notes
-   assert 'prefix rows [0,91,392)' in notes and 'shared 248,320-row head on rank1' in notes
+   if row['head']=='production':assert 'prefix rows [0,91,392)' in notes and 'shared 248,320-row head on rank1' in notes
+   else:assert 'separate unchanged expanded 91,392-row prefix' in notes and 'packed transposed head' in notes
    assert 'private' not in notes and 'verifies every accepted token' in notes
    assert 'Q4/g32 changes' not in notes
    rank0=dict(row,draft_rank=0);text=s.submission_notes(rank0,resumed=resumed)
@@ -57,4 +58,5 @@ def test_recurrence_dispatch_normalization(tmp_path,monkeypatch):
 def test_future_slot_and_unsupported_compositions_refuse():
  for values in (('production','hc-wide','input-packed','ordered','fast','production','rec-parallel','production'),('production','hc-wide','wide64','ordered','fast','production','rec-both','production')):
   with pytest.raises(ValueError):b.name(*values)
- slot=json.loads((P/'extension-slots.json').read_text())['slots']['90'];assert slot['status']=='empty' and slot['allowed']==['none']
+ assert 'hc-weightcache' in json.loads((P/'extension-slots.json').read_text())['closed']
+ assert len(b.views())==128

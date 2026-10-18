@@ -3,7 +3,8 @@
 Coordinator code is bound by ready.json, not by this expensive CPU proof.
 Changing --pin never changes the cached proof or compiler identity.
 """
-import argparse,json,os,subprocess,sys,time
+import argparse,json,os,subprocess,sys,time,tempfile
+from pathlib import Path
 from build_engine import P,ROOT,B,limits,sha,save
 from chain_seal import check_map
 def verify():
@@ -24,9 +25,11 @@ def selected_check():
  for lane in ('A','B'):
   commands.append(('screen-'+lane,[python,'-B',str(P/'run_screen.py'),'--profile','tp2','--lane',lane,'--placement',choice['placement'],'--lineage',str(view),'--seal',str(view/'screen-seal.json'),'--output',str(P.parent/'screen/v4-lanes/evidence'/('p97-selection-plan-'+lane)),'--plan']))
  rows=[]
- for label,cmd in commands:
-  with (P/'evidence'/('selected-'+label+'.log')).open('w') as log:r=subprocess.run(cmd,cwd=P,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,env=env,timeout=240)
-  assert r.returncode==0,label+' failed';rows.append(dict(name=label,command=cmd,sha256=sha(P/'evidence'/('selected-'+label+'.log'))))
+ with tempfile.TemporaryDirectory(prefix='selected-test-',dir=B/'tmp') as tmp:
+  commands[1][1].extend(['--basetemp',str(Path(tmp)/'pytest')])
+  for label,cmd in commands:
+   with (P/'evidence'/('selected-'+label+'.log')).open('w') as log:r=subprocess.run(cmd,cwd=P,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,env=env,timeout=240)
+   assert r.returncode==0,label+' failed';rows.append(dict(name=label,command=cmd,sha256=sha(P/'evidence'/('selected-'+label+'.log'))))
  elapsed=time.monotonic()-started;assert elapsed<300,'selection rehearsal exceeded five minutes'
  save(P/'evidence/selection-dry-run.json',dict(passed=True,device_executed=False,selection=choice,checks=rows,seconds=elapsed,cached_proof_sha256=sha(P/'evidence/dry-run.json')))
  print('Selected full rehearsal PASS in',round(elapsed,2),'seconds')

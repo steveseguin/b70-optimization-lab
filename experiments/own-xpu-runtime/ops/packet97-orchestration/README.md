@@ -20,7 +20,7 @@ runs control / candidate / control, with a selection hash in every output path.
 The live queue is never touched. The coordinator schedules these jobs.
 
 A later invocation reads both complete composition brackets, applies the 1.5%
-or two-confirmed-new-lever rule, selects already sealed bytes, and performs the
+or two-confirmed-lever rule, selects already sealed bytes, and performs the
 full CPU chain rehearsal. Only then can `ready.json` become true. The printed
 coordinator command calls `verify_ready.py` before any device work. Reverted
 combinations require their own composition screen; no source-winner shortcut.
@@ -28,3 +28,8 @@ combinations require their own composition screen; no source-winner shortcut.
 Both `verify_receipt(window, data=...)` and the packed-head placement disclosure
 are present before any packet97 seal. The temp-ops-path regression is covered
 by pytest through `/home/steve/.venvs/deepseek-v4-xpu/bin/python`.
+
+The confirmed packet91 winning selection counts once against the packet84
+record baseline; its two dimensions do not imply two independent confirmations.
+Partly or fully reverting that selection removes its count. The measured composition must still
+beat both same-lane controls on both lanes.

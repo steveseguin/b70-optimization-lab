@@ -35,7 +35,7 @@ def select(screens):
  if r['status']=='winner':
   options={'route-fast':dict(route='fast'),'rec-both-plus':dict(recurrence='rec-both-plus'),'route-fast-rec-both-plus':dict(route='fast',recurrence='rec-both-plus')}
   if r['winner'] not in options:raise ValueError('unregistered packet91 winner')
-  control.update(options[r['winner']])
+  control.update(options[r['winner']]);confirmed.append('91')
  candidate=dict(control)
  for n,options in SOURCE_CHOICES.items():
   r=screens[n]
@@ -90,9 +90,14 @@ def source_pins(screens):
 def composition(screens,control,candidate,confirmed,pins,closures):
  assert all(r['status'] in ('winner','no-winner') for r in screens.values()),'source decisions pending'
  assert candidate!=control,'no new selected candidate'
- # Only retained changes count. A reverted expert dimension removes both levers.
- selected=[n for n in confirmed if any(candidate[k]!=control[k] for k in DIMENSIONS[n])]
+ # Count each confirmed source selection once. Packet91's winning composition
+ # is one confirmed source arm, not two inferred independent confirmations.
+ selected=[n for n in confirmed if (all(candidate[k]==control[k] for k in DIMENSIONS[n]) and any(control[k]!=DEFAULTS[k] for k in DIMENSIONS[n]) if n=='91' else any(candidate[k]!=control[k] for k in DIMENSIONS[n]))]
  return dict(schema='packet97.composition-selection.v1',status='confirmed-sources',control=control,candidate=candidate,confirmed_levers=selected,coordinator_pins=pins,coordinator_closures=closures,evidence_pins=source_pins(screens))
+def chain_policy(ratios,levers):
+ assert set(ratios)=={'A','B'} and all(type(r) in (int,float) and math.isfinite(r) and r>1 for r in ratios.values()),'both lanes must improve'
+ assert len(levers)==len(set(levers)) and set(levers)<=set(SOURCE_CHOICES)|{'90','95','91'},'unknown/duplicate lever'
+ return min(ratios.values())>=1.015 or len(levers)>=2
 def matched_composition(config):
  from screen_jobs import jobs,verify
  from compare import load,compare
@@ -104,7 +109,7 @@ def matched_composition(config):
   for row in rows:
    for f in Path(row['output']).rglob('*.json'):receipts[pin_path(f)]=sha(f)
  assert lanes['A'][0]['acceptance_counts']==lanes['B'][0]['acceptance_counts'],'composition acceptance changed across lanes'
- eligible=min(ratios.values())>=1.015 or len(config['confirmed_levers'])>=2
+ eligible=chain_policy(ratios,config['confirmed_levers'])
  assert eligible,'chain policy needs >=1.5% composed on both lanes or >=2 confirmed selected levers'
  return dict(passed=True,lanes=lanes,ratios=ratios,confirmed_levers=config['confirmed_levers'],chain_policy_passed=True,receipts=receipts)
 def main():
@@ -114,9 +119,7 @@ def main():
   from read_screens import collect
   screens=collect();save(O/'screens-current.json',screens);row['screens']=screens
   control,candidate,confirmed=select(screens);candidate,pins=apply_pins(candidate,a.pin);closures=close_packets(screens,candidate,pins,a.closed)
-  # A packet91 revert also defines the measured control for this new bracket.
-  for k in ('route','recurrence'):
-   if k in pins:control[k]=pins[k]
+  # Pins change the candidate only; control stays packet91's winning selection.
   row.update(control=control,selection=candidate,coordinator_pins=pins,coordinator_closures=closures)
   if a.snapshot_only:raise ValueError('snapshot only; no preparation changed')
   config=composition(screens,control,candidate,confirmed,pins,closures)

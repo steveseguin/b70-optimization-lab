@@ -1,0 +1,19 @@
+........................................................................ [ 49%]
+.................................................................F...... [ 99%]
+.                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_payload_names_both_prefix_and_spin_changes ________________
+
+tmp_path = PosixPath('/tmp/pytest-of-steve/pytest-51/test_payload_names_both_prefix0')
+
+    def test_payload_names_both_prefix_and_spin_changes(tmp_path):
+        result = p.derive(prefix_fixture(), p.P56_PACKET)
+        item = p.payload_for(result, {'path': 'r', 'sha256': 'a'}, {'path': 'a', 'sha256': 'b'}, 'doc')
+        notes = item['payload']['notes']
+>       assert '91,392' in notes and 'Controller spin' in notes and 'pure PAUSE spin' in notes and '256' in notes
+E       AssertionError: assert ('91,392' in 'Quantized compressed Unsloth UD-IQ3_XXS, separate from FP8. Two B70 cards 0+1. Packet97: host=ordered (rank1 ordered-... chain gaps; graceful drain and lease release before report. Wall rate: output tokens/(last timestamp-request start). ' and 'Controller spin' in 'Quantized compressed Unsloth UD-IQ3_XXS, separate from FP8. Two B70 cards 0+1. Packet97: host=ordered (rank1 ordered-... chain gaps; graceful drain and lease release before report. Wall rate: output tokens/(last timestamp-request start). ')
+
+experiments/own-xpu-runtime/stage2/packet97-record-bundle/test_submission56.py:208: AssertionError
+=========================== short test summary info ============================
+FAILED experiments/own-xpu-runtime/stage2/packet97-record-bundle/test_submission56.py::test_payload_names_both_prefix_and_spin_changes
+1 failed, 144 passed in 9.42s

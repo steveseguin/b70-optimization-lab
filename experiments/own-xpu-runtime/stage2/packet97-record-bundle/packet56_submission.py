@@ -50,6 +50,8 @@ LINEAGE[D_PACKET] = None  # Filled only by a verified post-device fast reseal.
 PINS_FILE = STAGE / P56_PACKET / 'submission-pins.json'
 SPIN = dict(wait_policy='spin', yield_iterations=256, mailbox_fallback_us=0, device_fallback_us=0, progress_callback_wait=True, rank0_queue_profiling=True, timing_reads=False)
 HC_FUSION = dict(packet='packet60-hc-fusion', kernels_per_side=3, sides=2, rows='M1 and both serial M2', arithmetic_unchanged=True)
+def selected_hc_fusion(bundle):
+    return dict(HC_FUSION, kernels_per_side=2, packet='packet94-hc-norm-fusion') if bundle.get('hc_norm')=='normfuse' else dict(HC_FUSION)
 THRESHOLD_FILE = Path('scripts/packet49_record_threshold.json')
 # Historical 49c scope stays replayable; 49d uses its explicit sealed pin.
 OWNER_128_PACKET49 = {(LINEAGE[TEMPLATE_PACKET]): TEMPLATE_PACKET}
@@ -169,7 +171,7 @@ def lineage_pin(e, packet):
         require(seal['screen_seal_sha256'] == pin['screen_seal_sha256'], 'spin screen seal mismatch')
         require(screen['artifacts']['build/device/own-rt-iq3'] == seal['artifacts_sha256']['device/own-rt-iq3'], 'spin binary mismatch')
         require(seal['controller_spin'] == SPIN, 'controller spin identity mismatch')
-        require(seal['hc_fusion'] == HC_FUSION, 'HC fusion identity mismatch')
+        require(seal['hc_fusion'] == selected_hc_fusion(seal['bundle_selection']), 'HC fusion identity mismatch')
         bundle = e.read('bundle-selection.json', seal['sources'][str(STAGE / packet / 'bundle-selection.json')])
         require(bundle == seal.get('bundle_selection'), 'bundle selection differs from seal')
         validate_bundle(bundle, e.read('selection.json'))
@@ -491,7 +493,7 @@ def derive(e, packet):
             require(w.get('timing_claim_eligible') is (proof['scope']=='whole-host'), 'timing admission differs')
             require(name not in ('W2m','WSs','WS128') or proof['timing_claim_eligible'] is True, 'speed window did not hold whole host')
             require(w.get('screen_seal_sha256') == seal['screen_seal_sha256'] and w.get('controller_spin') == SPIN, 'spin window identity mismatch: ' + name)
-            require(w.get('hc_fusion') == HC_FUSION, 'HC fusion window identity mismatch: ' + name)
+            require(w.get('hc_fusion') == selected_hc_fusion(bundle), 'HC fusion window identity mismatch: ' + name)
             require(w.get('draft_vocab_rows')==seal['draft_prefix']['draft_vocab_rows'],'selected prefix row count differs: '+name)
             require(w.get('draft_prefix_selection_sha256') == sha(e.raw('draft-prefix-selection.json'))
                     and w.get('draft_prefix_config_sha256') == sha(e.raw('draft-prefix-config.hpp')),
@@ -719,7 +721,7 @@ def payload_for(result, result_ref, attestation_ref, result_doc):
     changes = {key:bundle[key] for key in ('host','route','norm','hc','placement','experts','dense','recurrence','draft_head','head','hc_norm')}
     flags = dict(
         draftHeadPrefix=dict(rows=__import__('bundle_selection').prefix_rows(bundle['draft_head']),format=bundle['draft_head'],full_head_rows=248320,unchanged_full_target_verifier=True),
-        controllerSpin=SPIN, targetHCFusion=HC_FUSION,
+        controllerSpin=SPIN, targetHCFusion=selected_hc_fusion(bundle),
         draftHCFusion=dict(packet='packet59',schedules=8,fusions=6),
         missPath=dict(mode=bundle['miss'],third_bank=False,overlap=False),
         chainGapSeconds=90, packet97Changes=changes,

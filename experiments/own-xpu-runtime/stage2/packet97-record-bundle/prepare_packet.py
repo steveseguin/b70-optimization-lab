@@ -10,6 +10,8 @@ def proof():
  build=provenance();reports={n:json.loads((P/'evidence'/n).read_text()) for n in GATES};sources=dict(build['sources'])
  for r in reports.values():
   assert r['passed'] and r['device_executed'] is False;check_map(ROOT,r['sources']);sources.update(r['sources'])
+ copied=json.loads((P/'copy-lineage.json').read_text());memory_source=str((P.parent/'packet91-record-bundle/memory-plan.json').relative_to(ROOT));sources[memory_source]=copied[memory_source]
+ sources[str((P/'copy-lineage.json').relative_to(ROOT))]=sha(P/'copy-lineage.json')
  shape=reports['full-shape.json'];assert {(r['view'],r['rank']) for r in shape['runs']}=={(n,rank) for n in views() for rank in (0,1)}
  for row in shape['runs']:
   assert row['passed'] and row['selection_key_consumers_verified']
@@ -47,7 +49,7 @@ def seal_view(v,placement):
  for n in ('expected','actual'):
   dest=view/('fixture-'+n+'.bin.gz');dest.write_bytes(fixture.read_bytes())
  parent=PARENTS[v[6]]
- audit=dict(placement=placement,draft_rank=1,target_split=0,layer_boundary=24,target_layers=[24,24],draft_prefix_rows=91392,rank0_private_prefix_bytes=0,dispatch_sha256=sha(view/'dispatch-speed6.json'),binary_sha256=binaries['device']['sha256'],engine_sources={str((parent/n).relative_to(ROOT)):sha(parent/n) for n in ('main.cpp','rank.hpp','mtp.hpp','native_controller.hpp','p56_config.hpp','p56_prefix.hpp')},memory_sources=reports['full-shape.json']['sources'])
+ audit=dict(placement=placement,draft_rank=1,target_split=0,layer_boundary=24,target_layers=[24,24],draft_prefix_rows=91392,rank0_private_prefix_bytes=0,target_head=v[8],rank1_separate_expanded_prefix_bytes=91392*3380 if v[8]!='production' else 0,dispatch_sha256=sha(view/'dispatch-speed6.json'),binary_sha256=binaries['device']['sha256'],engine_sources={str((parent/n).relative_to(ROOT)):sha(parent/n) for n in ('main.cpp','rank.hpp','mtp.hpp','native_controller.hpp','p56_config.hpp','p56_prefix.hpp')},memory_sources=reports['full-shape.json']['sources'])
  save(view/'placement-audit.json',audit);sources[str((view/'placement-audit.json').relative_to(ROOT))]=sha(view/'placement-audit.json')
  bp=view/'build-receipt.json';fp=view/'byte-fixture.json';save(bp,dict(passed=True,device_executed=False,sources=sources,artifacts=artifacts))
  save(fp,dict(schema='own-runtime.screen.byte-fixture.v1',passed=True,device_executed=False,build_receipt_sha256=sha(bp),sources=reports['cpu-byte-identity.json']['sources'],changed_class='Packet97 compiled runtime. All selected GNU/Intel raw operator bytes, joint expert grid/cache arithmetic, host report-state bytes, and complete joint startup/admission.',command=['python3','-B',str(P/'cpu_gate.py')],**{k:dict(path='fixture-'+k+'.bin.gz',sha256=sha(view/('fixture-'+k+'.bin.gz'))) for k in ('expected','actual')}))

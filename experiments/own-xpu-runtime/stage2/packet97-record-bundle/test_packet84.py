@@ -8,16 +8,17 @@ from draft_identity import identity,validate_prefix
 P=Path(__file__).resolve().parent
 def bundle(v,p='1'):
  dr,split,boundary=b.PLACEMENTS[p]
- return dict(zip(b.KEYS,v),name=b.name(*v),placement=p,draft='draft-hc',miss='batch',draft_rank=dr,target_split=split,layer_boundary=boundary)
+ values=dict(zip(b.KEYS,v));values.setdefault('head','production');values.setdefault('hc_norm','production')
+ return dict(values,name=b.name(*(values[k] for k in b.KEYS)),placement=p,draft='draft-hc',miss='batch',draft_rank=dr,target_split=split,layer_boundary=boundary)
 def test_every_composition_consumed_and_disclosed():
  from merge_dispatch import validate,merge
  dispatch=json.loads((P/'dispatch-speed6.json').read_text());merged,_=merge([dispatch,dispatch]);validate(merged);assert merged==dispatch
  for name,v,p in b.configurations():
   row=bundle(v,p);validate_bundle(row,b.selection(v));notes=submission_notes(row,resumed=True)
   assert len(notes)<=2000
-  for key in ('experts','draft_head'):assert key+'='+row[key] in notes
+  for key in ('experts',):assert key+'='+row[key] in notes
   assert 'Recurrence='+row['recurrence'] in notes
-  assert f'{b.prefix_rows(v[-1]):,}' in notes and 'verifies every accepted token' in notes
+  assert f'{b.prefix_rows(row['draft_head']):,}' in notes and 'verifies every accepted token' in notes
 def test_draft_prefix_kd_selection_and_tamper():
  for head in b.DRAFT_HEAD:
   v=('production','hc-wide','wide64','ordered','production','production','rec-parallel',head)

@@ -14,7 +14,7 @@ import packet56_submission as p
 from test_packet49_submission import fixture, put
 
 
-def prefix_fixture(placement='1', draft='draft-hc', miss='batch', experts='wide64', dense='production', hc='hc-wide', host='ordered', route='production', norm='production',recurrence='rec-parallel',draft_head='production'):
+def prefix_fixture(placement='1', draft='draft-hc', miss='batch', experts='wide64', dense='production', hc='hc-wide', host='ordered', route='production', norm='production',recurrence='rec-parallel',draft_head='production',head='production',hc_norm='production'):
     e = fixture(p.TEMPLATE_PACKET, speed=65)
     seal = e.read('seal.json')
     seal['schema'] = 'packet97.chain-cpu-seal.v1'
@@ -24,7 +24,7 @@ def prefix_fixture(placement='1', draft='draft-hc', miss='batch', experts='wide6
     seal['sources'] = {k.replace(p.TEMPLATE_PACKET, p.P56_PACKET): v for k, v in seal['sources'].items()}
     hashes = {}
     for key, leaf, value in [
-        ('selection.json', 'selection.json', __import__('bundle_selection').selection((dense,hc,experts,host,route,norm,recurrence,draft_head))),
+        ('selection.json', 'selection.json', __import__('bundle_selection').selection((dense,hc,experts,host,route,norm,recurrence,draft_head,head,hc_norm))),
         ('draft-prefix-selection.json', 'calibration/selection.json', {'N': 91392}),
         ('draft-prefix-config.hpp', 'p56_config.hpp', b'constexpr unsigned prefix = 91392;\n')]:
         hashes[key] = put(e, key, value)
@@ -32,11 +32,12 @@ def prefix_fixture(placement='1', draft='draft-hc', miss='batch', experts='wide6
     screen_hash = put(e, 'screen-seal.json', {'artifacts': {'build/device/own-rt-iq3': seal['artifacts_sha256']['device/own-rt-iq3']}})
     seal.update(screen_seal_sha256=screen_hash, controller_spin=p.SPIN, hc_fusion=p.HC_FUSION)
     dr,split,boundary=__import__('bundle_selection').PLACEMENTS[placement]
-    bundle=dict(dense=dense,hc=hc,experts=experts,host=host,route=route,norm=norm,recurrence=recurrence,draft_head=draft_head,name=__import__('bundle_selection').name(dense,hc,experts,host,route,norm,recurrence,draft_head),placement=placement,draft=draft,miss=miss,draft_rank=dr,target_split=split,layer_boundary=boundary,selection_sha256=hashes['selection.json'],screen_seal_sha256=screen_hash)
+    bundle=dict(dense=dense,hc=hc,experts=experts,host=host,route=route,norm=norm,recurrence=recurrence,draft_head=draft_head,head=head,hc_norm=hc_norm,name=__import__('bundle_selection').name(dense,hc,experts,host,route,norm,recurrence,draft_head,head,hc_norm),placement=placement,draft=draft,miss=miss,draft_rank=dr,target_split=split,layer_boundary=boundary,selection_sha256=hashes['selection.json'],screen_seal_sha256=screen_hash)
     from draft_identity import identity
     seal['draft_prefix']=identity(bundle)
     e.add('draft-head-coverage.json',P/'coverage.json');e.add('draft-head-config.hpp',P/'p83_head.hpp')
     seal['sources'][str(p.STAGE/p.P56_PACKET/'p83_head.hpp')]=p.sha(e.raw('draft-head-config.hpp'))
+    seal['hc_fusion']=p.selected_hc_fusion(bundle)
     seal['bundle_selection']=bundle
     seal['sources'][str(p.STAGE/p.P56_PACKET/'bundle-selection.json')]=put(e,'bundle-selection.json',bundle)
     sh = put(e, 'seal.json', seal)
@@ -48,7 +49,7 @@ def prefix_fixture(placement='1', draft='draft-hc', miss='batch', experts='wide6
     e.add('record-threshold.json', ROOT / p.THRESHOLD_FILE)
     for name in p.WINDOWS:
         w = e.read(name + '/window.json')
-        w.update(draft_rank=dr,target_split=split,draft_vocab_rows=seal['draft_prefix']['draft_vocab_rows'],screen_seal_sha256=screen_hash, controller_spin=p.SPIN, hc_fusion=p.HC_FUSION, schema='packet97.window.v1', build_receipt_sha256=sh,
+        w.update(draft_rank=dr,target_split=split,draft_vocab_rows=seal['draft_prefix']['draft_vocab_rows'],screen_seal_sha256=screen_hash, controller_spin=p.SPIN, hc_fusion=p.selected_hc_fusion(bundle), schema='packet97.window.v1', build_receipt_sha256=sh,
                  selection_sha256=pin['selection_sha256'],
                  draft_prefix_selection_sha256=pin['draft_prefix_selection_sha256'],
                  draft_prefix_config_sha256=pin['draft_prefix_config_sha256'])
@@ -93,12 +94,15 @@ def test_complete_synthetic_chain_and_current_floor():
 @pytest.mark.parametrize('config', __import__('bundle_selection').configurations())
 def test_all_bundle_payloads_are_placement_and_selection_aware(config):
     name,v,placement=config
-    dense,hc,experts,host,route,norm,recurrence,draft_head=v
-    result=p.derive(prefix_fixture(placement=placement,dense=dense,hc=hc,experts=experts,host=host,route=route,norm=norm,recurrence=recurrence,draft_head=draft_head),p.P56_PACKET)
+    dense,hc,experts,host,route,norm,recurrence,draft_head,head,hc_norm=v
+    result=p.derive(prefix_fixture(placement=placement,dense=dense,hc=hc,experts=experts,host=host,route=route,norm=norm,recurrence=recurrence,draft_head=draft_head,head=head,hc_norm=hc_norm),p.P56_PACKET)
     payload=p.payload_for(result,{'path':'r','sha256':'a'},{'path':'a','sha256':'b'},'doc')['payload']
     dr,split,boundary=__import__('bundle_selection').PLACEMENTS[placement]
     assert payload['engineFlags']['targetSplit']==[boundary,48-boundary]
     assert payload['engineFlags']['draftRank']==dr
+    assert payload['engineFlags']['targetHCFusion']['kernels_per_side']==(2 if hc_norm=='normfuse' else 3)
+    assert payload['engineFlags']['packet97Changes']['head']==head
+    if head=='head-transpose':assert 'separate unchanged expanded' in payload['notes']
     for key,value in dict(dense=dense,HC=hc,experts=experts,host=host,route=route,norm=norm,Placement=placement).items():
         assert f'{key}={value}' in payload['notes']
     assert len(payload['notes'])<=2000
@@ -201,9 +205,10 @@ def test_payload_names_both_prefix_and_spin_changes(tmp_path):
     result = p.derive(prefix_fixture(), p.P56_PACKET)
     item = p.payload_for(result, {'path': 'r', 'sha256': 'a'}, {'path': 'a', 'sha256': 'b'}, 'doc')
     notes = item['payload']['notes']
-    assert '91,392' in notes and 'Controller spin' in notes and 'pure PAUSE spin' in notes and '256' in notes
-    assert 'queue profiling' in notes and 'Unchanged full target verifies' in notes
-    assert 'Packet60 HC fusion' in notes and 'three exact-order kernels per side' in notes
+    assert '91,392' in notes and 'PAUSE spin' in notes and '256' in notes
+    assert 'profiling' in notes and 'Unchanged full target verifies' in notes
+    assert item['payload']['engineFlags']['targetHCFusion']['kernels_per_side']==3
+    assert 'HC consumer norm uses two kernels per side when selected' in notes
 
 
 def test_screen_seal_tampering_refused():

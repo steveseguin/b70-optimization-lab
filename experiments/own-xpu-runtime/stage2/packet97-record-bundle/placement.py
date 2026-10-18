@@ -33,10 +33,10 @@ def admit(root, seal, receipt, dispatch, name):
             [r['target_layers'] for r in configuration['ranks']] == [boundary, 48-boundary],
             'memory-plan rank/layer ownership differs')
     policy = read(POLICY)
-    require(root.parent.name=='selections' and root.parent.parent==POLICY.parent, 'packet91 selection required')
+    require(root.parent.name=='selections' and root.parent.parent==POLICY.parent, 'packet97 selection required')
     audit_path=root/'placement-audit.json'
     require(seal['sources'].get(str(audit_path.relative_to(ROOT)))==sha(audit_path), 'unsealed placement audit')
-    require(seal['sources'].get(str(POLICY.relative_to(ROOT)))==sha(POLICY), 'unsealed packet91 placement policy')
+    require(seal['sources'].get(str(POLICY.relative_to(ROOT)))==sha(POLICY), 'unsealed packet97 placement policy')
     audit=read(audit_path)
     require(audit['placement']==name and audit['draft_rank']==rank and audit['target_split']==split and audit['layer_boundary']==boundary, 'placement differs from sealed selection')
     require(audit['dispatch_sha256']==sha(dispatch), 'placement dispatch changed')
@@ -46,7 +46,7 @@ def admit(root, seal, receipt, dispatch, name):
     for relative,digest in audit['memory_sources'].items():
         require(seal['sources'].get(relative)==digest and sha(ROOT/relative)==digest, 'memory census changed')
     require(audit['draft_prefix_rows'] in (91392,80128,74752) and audit['rank0_private_prefix_bytes']==(308904960 if rank==0 else 0), 'wrong prefix size')
-    supported,reason=True,'Packet91 full-shape post-load census, rank1 shared-head prefix; device residency pending'
+    supported,reason=True,'Packet97 full-shape post-load census, selected target storage and unchanged expanded draft prefix; device residency pending'
     result = dict(name=name, draft_rank=rank, target_split=split, layer_boundary=boundary,
                   target_layers=[boundary, 48-boundary], context=4096,
                   memory_admitted=True, supported=supported, reason=reason,
