@@ -10,6 +10,16 @@ def closure():
         assert row.get('passed') is True and row.get('device_executed') is False,name
         for leaf,digest in row.get('sources',{}).items():assert sha(ROOT/leaf)==digest,leaf
         sources.update(row.get('sources',{}));sources[str(path.relative_to(ROOT))]=sha(path)
+        for leaf,digest in row.get('artifacts',{}).items():
+            assert sha(P/leaf)==digest,leaf
+            sources[str((P/leaf).relative_to(ROOT))]=digest
+        for leaf,digest in row.get('binaries',{}).items():
+            assert sha(ROOT/leaf)==digest,leaf
+            sources[leaf]=digest
+        if 'binary_sha256' in row:
+            fixture=B/('full-shape' if name=='full-shape' else 'reset-bytes')/'fixture'
+            assert sha(fixture)==row['binary_sha256'],str(fixture)
+            sources[str(fixture.relative_to(ROOT))]=sha(fixture)
     for path in [*P.glob('native/*'),*P.glob('configs/*.json'),*P.glob('lineage/*.json'),
                  P/'bracket_config.py',P/'seal_native.py',P/'selection-provenance.json']:
         if path.name!='screen-seal.json':sources[str(path.relative_to(ROOT))]=sha(path)

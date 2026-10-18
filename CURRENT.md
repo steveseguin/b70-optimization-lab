@@ -1,8 +1,9 @@
 # Current Workspace State
 
-**October 18, packet98 CPU preparation:** A separate v5 screen wrapper now keeps
+**October 18, packet98 sealed on CPU:** A separate v5 screen wrapper now keeps
 one rank pair for a whole bracket. Both native builds, full-size startup and
-reset checks, real miniature byte checks and rank-message tests pass. V4 and
+reset checks, real miniature byte checks, rank-message tests and 119 wrapper
+checks pass. Both lane-B proposals passed planning in a temporary queue. V4 and
 existing packets are untouched. No GPU or service ran. The first device step
 will be a two-view packet84 A/A smoke on lane B; only after it passes may the
 five-view packet91 comparison run. Device output parity and wall-time savings

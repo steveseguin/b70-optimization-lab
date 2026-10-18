@@ -13,6 +13,8 @@ def main(argv=None):
     ap.add_argument('--authorized-device-window',action='store_true')
     ap.add_argument('--plan',action='store_true')
     a=ap.parse_args(argv)
+    from cpu_seal import verify
+    verify()
     if a.kind=='bracket' and not a.plan:
         from compare import load
         smoke=HERE/'evidence/p98-smoke-B'

@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "live_queue_modified": false,
+  "plans": [
+    {
+      "kind": "smoke",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p98-smoke-B.txt",
+      "sha256": "9f07871afd43524b5c1b19a2b1e740e7260fbabcd456048ee1e395d9e45ac2a4",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v5-bracket/build/p98-queue-l_2xt3nf"
+      ],
+      "log_sha256": "aa84560838e9324209efd1d1c88c3e41cc341f3f34846dc5cf0e392dfd4cce96",
+      "passed": true
+    },
+    {
+      "kind": "bracket",
+      "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p98-bracket-B.txt",
+      "sha256": "794d671ebda186dcbf18647dd3c56acde8fed0288462532441a87be972efb8f1",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v5-bracket/build/p98-queue-l_2xt3nf"
+      ],
+      "log_sha256": "14c9795d186d986002d712b110f97c26a9a074c4c1782f9b21417ad5a0b36e75",
+      "passed": true
+    }
+  ]
+}

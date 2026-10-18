@@ -19,6 +19,7 @@ def sources():
     paths.update(HERE.glob('lineage/*.json'))
     paths.update(HERE / 'evidence' / (n + '.json') for n in ('build','full-shape','reset-bytes','protocol'))
     paths.update(HERE / n for n in ('v4-copy-provenance.json','selection-provenance.json'))
+    paths.update(HERE / n for n in ('CPU-PREPARATION-CLOSEOUT.md','DO-NOT-REPEAT.md'))
     paths.update(HERE / name for name in ('reference.json','integration.patch','screen-integration.patch'))
     paths.add(HERE / 'placements.json')
     paths.update(HERE / name for name in ('chain-reference.json', 'chain-window-drain.patch',
