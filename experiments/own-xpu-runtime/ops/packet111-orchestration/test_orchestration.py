@@ -4,11 +4,11 @@ import composite_jobs as c
 class PolicyTests(unittest.TestCase):
  def test_current_sources_and_selections(self):
   _,row=c.current();c.validate(row)
- def test_unqualified_head_cannot_enter(self):
-  _,row=c.current();row=copy.deepcopy(row);row['candidate']['target_head']='split'
+ def test_eligible_head_cannot_be_omitted(self):
+  _,row=c.current();row=copy.deepcopy(row);row['candidate']['target_head']='production'
   with self.assertRaises(AssertionError):c.validate(row)
  def test_forged_eligibility_cannot_enter(self):
-  _,row=c.current();row=copy.deepcopy(row);row['sources']['target_head']['eligible']=True;row['candidate']['target_head']='split';row['extra_dimension_selected']=True
+  _,row=c.current();row=copy.deepcopy(row);row['sources']['target_head']['eligible']=False;row['candidate']['target_head']='production';row['extra_dimension_selected']=True
   with self.assertRaisesRegex(AssertionError,'qualification differs'):c.validate(row)
  def test_identical_selection_is_not_speed_evidence(self):
   from verify_ready import matched

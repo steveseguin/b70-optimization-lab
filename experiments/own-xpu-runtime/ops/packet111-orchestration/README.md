@@ -3,25 +3,34 @@
 CPU preparation only. No launcher runs automatically.
 
 The fixed base is packet103 decision `1ad512f75aab3fce`. Only other-fusion and
-the repaired target-head split can enter. A completed exact B grid must beat
-both controls by at least 0.5%; a v5 bracket must beat all controls by at least
-0.5% in both candidate views. A lane-A loss vetoes the dimension. Draft splitting
-is excluded. Missing or failed evidence admits nothing.
+the repaired target-head split can enter. The owner's packet111r rule admits a
+dimension only when every completed exact bracket that measured it beats all
+of that bracket's controls. Both v5 candidates must win. A lane-A loss vetoes
+the dimension; missing or failed required evidence admits nothing. Draft
+splitting is excluded. The candidate is base plus every eligible dimension.
 
 Every composite screen must use the exact decision selection, binary, lane,
 boot and oracle. Control / candidate / control runs are required independently
 on A and B. Identical selections do not establish an improvement. The full
-record chain remains blocked until its complete checks and device smoke pass.
+record chain remains blocked until the candidate beats both controls by at
+least 0.5% on **each** lane, all prompts are exact, per-prompt acceptance is
+unchanged, and `packet111-smoke12-B` passes. Source eligibility is not a speed
+qualification. Submission tooling must be complete before the chain.
 
-The current decision is base/base: head gains 0.3697% on B, fusion 0.3176%.
-Head's later A gain (0.5327%) does not replace the B threshold. Both composite
-files pass temporary planning but execution refuses an identical candidate.
-`ready.json` records the refusal. `device-entry.sh` is coordinator-only and does
+The current candidate is the sealed `+both`: head gains 0.3697% on B and
+0.5327% on A, and fusion's weaker candidate gains 0.3176% over its strongest
+control. Decision `762f6ebd546b0092` remains unchanged as history. The fresh
+`proposed-p111r-composite-{A,B}.txt` files use control/candidate/control and are
+planned on temporary queues. Old proposals are historical, not executable
+under the new source rule. `ready.json` records pending composite evidence.
+`device-entry.sh` is coordinator-only and does
 not launch through preparation. The registered chain folder is fresh:
 `stage2/packet111-record-bundle/build/device-cards01-a`.
 
 Run CPU preparation with `nice -n 19 taskset -c 8-15,24-31 python3 -B
 experiments/own-xpu-runtime/ops/packet111-orchestration/prepare.py </dev/null`.
+This copies the selected sealed view into active chain metadata; it does not
+rebuild binaries or rewrite any of the four sealed composition directories.
 The exec-limit proof is `launch_limit_gate.py`; its expendable CPU subprocesses
 intercept both rank launches and prohibit device opens/native execution. Its
 negative case alone sets an address-space cap. No device-imported module does.

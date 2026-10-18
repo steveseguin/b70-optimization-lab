@@ -97,3 +97,69 @@ sudo or reboot action was performed. All work is within the 90-minute box.
 
 [Preparation closeout](../experiments/own-xpu-runtime/stage2/packet111-record-bundle/CPU-PREPARATION-CLOSEOUT.md),
 [orchestration instructions](../experiments/own-xpu-runtime/ops/packet111-orchestration/README.md).
+
+## Packet111r: admit the combined candidate, retain the composite speed gate
+
+The coordinator replaced only the source eligibility rule on October 18.
+Every completed exact bracket that measures a dimension must beat all its
+controls. A lane-A loss excludes that dimension. The candidate includes every
+eligible dimension; its combined speed is still unmeasured. The combined
+candidate must beat both controls by at least 0.5% on **each** lane, with all
+prompts exact and unchanged per-prompt acceptance, before chain readiness.
+
+The requested pull refused unrelated dirty files. Fetch confirmed HEAD and
+origin/main both at `40cfa4ac6cb35e568450f6ccd0d3a18ea5e3e105`.
+The CPU receipt replay produced decision `c9277d2c52987576`: head split is
++0.3697% on B and +0.5327% on A; other-fusion's weaker candidate is +0.3176%
+over its strongest control. Both qualify for the combined candidate. The
+previous base/base decision `762f6ebd546b0092` remains unchanged as history.
+Control remains packet103's fixed base. Candidate is the existing sealed
+`+both`; no arithmetic, draft split, binary or composition was rebuilt.
+
+Fresh proposals `ops/lane-queue/proposed-p111r-composite-A.txt` and
+`proposed-p111r-composite-B.txt` each pass the real planner on temporary queues.
+Each has three new names in control/candidate/control order, bound to the new
+decision hash. All six device output paths and the registered chain folder
+are fresh. Active chain metadata now selects the sealed combined view; exact
+previous metadata is retained under `ops/packet111-orchestration/evidence/
+p111r-prior-chain/`. The four composition directories, binaries, previous
+evidence and old proposals are unchanged. This task did not edit live queues;
+the coordinator changed the live B queue during the final CPU audit.
+
+The final CPU suite passes **33 tests**, including both eligible dimensions,
+either lane-A loss, every source bracket and both v5 candidate views, the
+stronger composite control, the exact +0.5% boundary, failure below it on
+either lane, output and acceptance rejection, immutable source hashes and
+four-composition submission/payload replay. Device imports preserve every
+inherited resource limit. The smoke, composite and chain rank-exec interception
+probes pass; the isolated negative child still refuses the old 8 GiB cap.
+No resource-setting code was added to a device-imported module.
+
+At the first readiness check, `packet111-smoke12-B` was **not passed**: its window had
+`passed=false`, no completion or lease-release success, and no `summary.json`.
+Its path is `stage2/screen/v4-lanes/evidence/p111-98fc88ef1364-B-smoke12`.
+The receipt was not edited by this task. `verify_ready.py` now reports that blocker clearly;
+it does not convert the source decision or CPU tests into smoke evidence.
+During the final audit the coordinator completed the smoke: its full validation
+now passes, with twelve exact cold prompts and the suffix-token check. Readiness
+remains false because both new composite measurements are pending. The
+identical-selection refusal, fresh chain folder, smoke gate and finalized
+submission tool are still required. Nothing was launched or submitted.
+
+CPU commands use nice19, CPUs 8–15/24–31, Python `-B` and closed stdin:
+
+```bash
+nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/ops/packet111-orchestration/source_decision.py </dev/null
+nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/ops/packet111-orchestration/policy_seal.py </dev/null
+nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/ops/packet111-orchestration/prepare_combined.py </dev/null
+nice -n 19 taskset -c 8-15,24-31 python3 -B experiments/own-xpu-runtime/ops/packet111-orchestration/audit_combined.py </dev/null
+```
+
+System Python lacks pytest; the failed invocation is retained. Tests used
+`/home/steve/.venvs/deepseek-v4-xpu/bin/python3 -B -m pytest -q -p no:cacheprovider`
+with `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`, the same CPU restrictions, all four
+ops test files and stage `test_packet111.py`. No packages were installed.
+Final evidence: [CPU audit](../experiments/own-xpu-runtime/ops/packet111-orchestration/p111r-cpu-final.json),
+[test log](../experiments/own-xpu-runtime/ops/packet111-orchestration/p111r-final-tests.log),
+[queue plans](../experiments/own-xpu-runtime/ops/packet111-orchestration/p111r-composite-plans.json).
+No GPU, service, sudo, host setting or live queue action was performed.

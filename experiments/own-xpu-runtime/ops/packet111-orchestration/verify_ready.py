@@ -39,9 +39,11 @@ def evaluate():
   seal=verify()
   assert seal['bundle_selection']['selection_sha256']==sha(view(config['candidate'])/'selection.json'),'chain selection differs'
   assert not (P/'build/device-cards01-a').exists(),'chain folder is not fresh'
-  assert config['extra_dimension_selected'],'no new dimension meets the +0.5% source rule; identical-selection proposals are plan-only'
+  assert config['extra_dimension_selected'],'no eligible new dimension; identical-selection proposals are plan-only'
   from smoke_validation import require_smoke
-  row['smoke']=require_smoke()
+  try:row['smoke']=require_smoke()
+  except (AssertionError,ValueError,OSError,KeyError) as error:
+   raise ValueError('packet111-smoke12-B has not passed complete exact smoke validation: '+(str(error) or type(error).__name__)) from error
   row['composition']=matched(config)
   from source_decision import read_sources,decide
   current_sources=decide(read_sources());assert all(config['candidate'][k]==v for k,v in current_sources.items()),'source evidence changed'

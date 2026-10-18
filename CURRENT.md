@@ -2,12 +2,18 @@
 
 **October 18, packet111 four-composition bundle prepared on CPU:** The copy
 includes the packet103 launch repair, other-fusion and target-head split.
-Both compilers pass exact-byte checks; all 44 startup windows and 23 policy
+Both compilers pass exact-byte checks; all 44 startup windows and 33 policy
 and submission tests pass. The combined twelve-prompt smoke proposal shipped
-first. Both composite proposals plan, but neither added change reaches the
-required B gain of 0.5%: head is +0.37%, fusion +0.32%. They stay excluded and
-the record chain stays blocked. The build is 208 MB. Launch checks reject the
-old inherited memory cap. No GPU, service, live queue or host setting changed.
+first. The October 18 packet111r owner decision admits both added changes
+because each beats all its source controls: head is +0.37% on B and +0.53%
+on A, fusion +0.32% on B. Fresh combined proposals pass temporary planning.
+The combined candidate must still beat both controls by at least 0.5% on
+each lane, with exact prompts and unchanged per-prompt acceptance. The
+coordinator's smoke completed during the CPU review and passes; composite
+measurements are still missing, so the record chain stays blocked.
+The four sealed compositions and binaries are unchanged. The build is 208 MB.
+Launch checks reject the old inherited memory cap. This CPU update launched
+no jobs and changed no host setting or live queue.
 [Work note](notes/2026-10-18-own-runtime-packet111.md).
 
 **October 18, packet113 GDN row micro prepared on CPU:** The candidate gives
