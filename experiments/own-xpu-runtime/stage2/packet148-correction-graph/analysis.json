@@ -1,0 +1,1038 @@
+{
+  "causal_pair_barrier_sensitivities": {
+    "1.0": {
+      "gain_percent": 0.0,
+      "projected_tok_s": 58.798108759182306
+    },
+    "1.2": {
+      "gain_percent": -2.859287404699662,
+      "projected_tok_s": 57.1169018412294
+    },
+    "1.700307": {
+      "gain_percent": -9.341705994775406,
+      "projected_tok_s": 53.30536230841121
+    }
+  },
+  "causal_pair_free_row_and_diagnostic_suffix_credit": {
+    "assumed_B_cut_ms_on_misses": 1.46874,
+    "gain_percent": 1.8639857713343755,
+    "projected_tok_s": 59.89409714026718,
+    "qualification": "unmatched diagnostic suffix wait; not an ordinary-run removable budget"
+  },
+  "external_inputs": {
+    "experiments/own-xpu-runtime/stage2/packet136-record-bundle/submission/prepared-a/evidence.json.gz": "e768ee3dc3d5100312d3226c273b3e02a569f99aedf9e9894f5eec80d93e7122"
+  },
+  "head_chain_free_coherence_sensitivity": {
+    "all_messages_5KiB_idle": {
+      "GDN_head_cut_ms": 1.0981770968603342,
+      "QSA_head_cut_ms": 0.04570903228677808,
+      "cut_ms": 1.5077620919053571,
+      "gain_percent": 1.9144603647015312,
+      "qualification": "no: zero-cost state/KV coherence is unsupported"
+    },
+    "idle": {
+      "GDN_head_cut_ms": 1.010845654814355,
+      "QSA_head_cut_ms": 0.0,
+      "cut_ms": 1.2400026788604765,
+      "gain_percent": 1.569122954455704,
+      "qualification": "no: zero-cost state/KV coherence is unsupported"
+    }
+  },
+  "inputs_sha256": "a902d3316aa12f0b18e30e7907129c024b9a8eef5e2458357e36fffb0b17f6c0",
+  "memory": {
+    "all_first_half_weights": 27205763840,
+    "expert_bank_bytes": 24707072000,
+    "expert_equal_fraction_max_before_scratch": 0.031823660772106056,
+    "expert_half_rows_bytes": 12353536000.0,
+    "layer23_packed_expert_bytes": 1009254400,
+    "layer_categories": {
+      "0": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "1": {
+        "recurrent-state": 3637248,
+        "weights": 1166352256,
+        "workspace": 416266
+      },
+      "2": {
+        "recurrent-state": 3268608,
+        "weights": 1291541376,
+        "workspace": 283018
+      },
+      "3": {
+        "KV": 9699328,
+        "weights": 1118902272,
+        "workspace": 280022
+      },
+      "4": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "5": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "6": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "7": {
+        "KV": 9699328,
+        "weights": 1118902272,
+        "workspace": 280022
+      },
+      "8": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "9": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "10": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "11": {
+        "KV": 9699328,
+        "weights": 1118902272,
+        "workspace": 280022
+      },
+      "12": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "13": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "14": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "15": {
+        "KV": 9699328,
+        "weights": 1118902272,
+        "workspace": 280022
+      },
+      "16": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "17": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "18": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "19": {
+        "KV": 9699328,
+        "weights": 1118902272,
+        "workspace": 280022
+      },
+      "20": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "21": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "22": {
+        "recurrent-state": 3268608,
+        "weights": 1127153536,
+        "workspace": 283018
+      },
+      "23": {
+        "KV": 9699328,
+        "weights": 1118902272,
+        "workspace": 280022
+      }
+    },
+    "ranks": [
+      {
+        "allocation_margin_passed": true,
+        "allocation_reserve_bytes": 46500548,
+        "arena_device_bytes": 28144182388,
+        "arena_headroom_bytes": 4068072332,
+        "arena_margin_passed": true,
+        "draft_duplicate_head_bytes": 0,
+        "draft_rank": 1,
+        "draft_total_bytes": 0,
+        "free_with_mtp_bytes": 6051614920,
+        "rank": 0,
+        "target_layers": 24,
+        "target_modeled_allocations_bytes": 28144182388,
+        "target_total_bytes": 28190682936,
+        "total_with_mtp_bytes": 28190682936
+      },
+      {
+        "allocation_margin_passed": true,
+        "allocation_reserve_bytes": 1228800,
+        "arena_device_bytes": 31425985242,
+        "arena_headroom_bytes": 786269478,
+        "arena_margin_passed": true,
+        "draft_duplicate_head_bytes": 0,
+        "draft_rank": 1,
+        "draft_total_bytes": 3354364214,
+        "free_with_mtp_bytes": 2815083814,
+        "rank": 1,
+        "target_layers": 24,
+        "target_modeled_allocations_bytes": 28071621028,
+        "target_total_bytes": 28072849828,
+        "total_with_mtp_bytes": 31427214042
+      }
+    ],
+    "scope": "Actual allocation calls with mock backend; physical driver residency unmeasured",
+    "selected10_half_rows_bytes_all_layers": 241280000.0,
+    "weights_by_tensor_suffix": {
+      "attn_gate.weight": 371712000,
+      "attn_k.weight": 10383360,
+      "attn_k_norm.weight": 6144,
+      "attn_output.weight": 124600320,
+      "attn_q.weight": 249200640,
+      "attn_q_norm.weight": 6144,
+      "attn_qkv.weight": 619520000,
+      "attn_v.weight": 10383360,
+      "ffn_down_exps.weight": 11324620800,
+      "ffn_down_shexp.weight": 46694400,
+      "ffn_gate_exps.weight": 6691225600,
+      "ffn_gate_inp.weight": 125829120,
+      "ffn_gate_inp_shexp.weight": 245760,
+      "ffn_gate_shexp.weight": 51699200,
+      "ffn_up_exps.weight": 6691225600,
+      "ffn_up_shexp.weight": 51699200,
+      "hc_attn_down.weight": 93388800,
+      "hc_attn_inject.weight": 3932160,
+      "hc_attn_norm.weight": 983040,
+      "hc_attn_up.weight": 93388800,
+      "hc_ffn_down.weight": 93388800,
+      "hc_ffn_inject.weight": 3932160,
+      "hc_ffn_norm.weight": 983040,
+      "hc_ffn_up.weight": 93388800,
+      "indexer.k_norm.weight": 3072,
+      "indexer.k_proj.weight": 3932160,
+      "indexer.q_norm.weight": 3072,
+      "indexer.q_proj.weight": 15728640,
+      "ple_conv1d.weight": 163840,
+      "ple_key.weight": 31129600,
+      "ple_norm_conv.weight": 40960,
+      "ple_norm_key.weight": 40960,
+      "ple_norm_query.weight": 40960,
+      "ple_value.weight": 7782400,
+      "ssm_a": 3456,
+      "ssm_alpha.weight": 8847360,
+      "ssm_beta.weight": 8847360,
+      "ssm_conv1d.weight": 2949120,
+      "ssm_dt.bias": 3456,
+      "ssm_norm.weight": 9216,
+      "ssm_out.weight": 373800960
+    }
+  },
+  "micro_transfers": {
+    "best16/compute": {
+      "mean": 64.86423109890893,
+      "median": 64.47649502661079,
+      "n": 200,
+      "p90": 66.36400939896703
+    },
+    "best16/idle": {
+      "mean": 14.858779904898256,
+      "median": 14.316989108920097,
+      "n": 200,
+      "p90": 16.45099837332964
+    },
+    "best8/compute": {
+      "mean": 64.95686364360154,
+      "median": 64.62699093390256,
+      "n": 200,
+      "p90": 66.71500159427524
+    },
+    "best8/idle": {
+      "mean": 14.973590441513807,
+      "median": 14.356992323882878,
+      "n": 200,
+      "p90": 16.610982129350305
+    },
+    "hidden/compute": {
+      "mean": 65.7105450227391,
+      "median": 66.43500819336623,
+      "n": 200,
+      "p90": 68.82002344354987
+    },
+    "hidden/idle": {
+      "mean": 15.845425223233178,
+      "median": 15.193494618870318,
+      "n": 200,
+      "p90": 17.672980902716517
+    },
+    "mailbox20480/idle": {
+      "mean": 1.3474447769112885,
+      "median": 1.3070093700662255,
+      "n": 200,
+      "p90": 1.7330166883766651
+    },
+    "pipeline20480/compute": {
+      "mean": 73.20157543290406,
+      "median": 73.34249676205218,
+      "n": 200,
+      "p90": 76.06300641782582
+    },
+    "pipeline20480/idle": {
+      "mean": 25.47576921642758,
+      "median": 24.896988179534674,
+      "n": 200,
+      "p90": 26.399007765576243
+    }
+  },
+  "production_transfers": {
+    "p105b-eeccee46f0f1-B-smoke12": {
+      "best-export/host_us/16": {
+        "mean_us": 23.209911458333334,
+        "median_us": 22.963,
+        "n": 768,
+        "p90_nearest_lower_us": 23.894
+      },
+      "hidden-export/host_dependency_wait_us/5120": {
+        "mean_us": 8912.312139322918,
+        "median_us": 8903.55,
+        "n": 768,
+        "p90_nearest_lower_us": 9061.85
+      },
+      "hidden-import/host_us/5120": {
+        "mean_us": 24.721364583333333,
+        "median_us": 22.763,
+        "n": 768,
+        "p90_nearest_lower_us": 24.095
+      },
+      "prefix-export/host_us/16": {
+        "mean_us": 26.589044270833334,
+        "median_us": 26.65,
+        "n": 768,
+        "p90_nearest_lower_us": 27.412
+      }
+    },
+    "p106b-13e3630d590c-B-grid-1-head-split": {
+      "best-export/host_us/16": {
+        "mean_us": 23.1653625,
+        "median_us": 22.943,
+        "n": 1600,
+        "p90_nearest_lower_us": 23.734
+      },
+      "hidden-export/host_us/5120": {
+        "mean_us": 56.72498625,
+        "median_us": 53.991,
+        "n": 1600,
+        "p90_nearest_lower_us": 60.704
+      },
+      "hidden-import/host_us/5120": {
+        "mean_us": 23.877761875,
+        "median_us": 22.452,
+        "n": 1600,
+        "p90_nearest_lower_us": 23.645
+      },
+      "prefix-export/host_us/16": {
+        "mean_us": 25.623551875,
+        "median_us": 25.428,
+        "n": 1600,
+        "p90_nearest_lower_us": 26.23
+      }
+    }
+  },
+  "record": {
+    "cut_ms_for_2percent": 1.5738046002058657,
+    "hits": 932,
+    "intervals": 1188,
+    "minimum_miss_B_minus_A_offset_ms": 0.4939679929520935,
+    "miss_means_ms": {
+      "A": 12.485768394867591,
+      "B": 13.230429008103783,
+      "C": 11.81880729347995,
+      "D": 1.5958276829906026,
+      "R": 0.5511682297765219
+    },
+    "misses": 256,
+    "rate_tok_s": 58.798108759182306,
+    "sensitivities_percent": {
+      "0.5": 0.6268194768220159,
+      "1": 1.2615741511182055,
+      "1.5": 1.9044161957246786,
+      "2": 2.5555017131257296,
+      "3": 3.8830479982412847
+    }
+  },
+  "row_split_sensitivities": {
+    "all_messages_5KiB_idle": {
+      "cut_ms": 1.0482796934281446,
+      "gain_percent": 1.323291372643065,
+      "islands": [
+        {
+          "admitted_fraction_of_islands": 1.0,
+          "calls": 18,
+          "cut_ms": 0.6787520968603342,
+          "fraction": 0.3563994690703105,
+          "name": "GDN qkv+z",
+          "proxy_ms": 1.9044699999999999,
+          "return_bytes_at_half_rows": 16384,
+          "roundtrip_ms_per_call": 0.030386989237740636,
+          "send_bytes": 5120,
+          "weight_bytes": 353274558.525502
+        },
+        {
+          "admitted_fraction_of_islands": 1.0,
+          "calls": 24,
+          "cut_ms": 0.19996112914711242,
+          "fraction": 0.17708055113496374,
+          "name": "attention output",
+          "proxy_ms": 1.12921,
+          "return_bytes_at_half_rows": 2560,
+          "roundtrip_ms_per_call": 0.030386989237740636,
+          "send_bytes": 12288,
+          "weight_bytes": 88257173.34877138
+        },
+        {
+          "admitted_fraction_of_islands": 1.0,
+          "calls": 6,
+          "cut_ms": 0.1401890322867781,
+          "fraction": 0.3029804026081221,
+          "name": "QSA qgate",
+          "proxy_ms": 0.4627,
+          "return_bytes_at_half_rows": 12288,
+          "roundtrip_ms_per_call": 0.030386989237740636,
+          "send_bytes": 5120,
+          "weight_bytes": 75502910.2374017
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC low A",
+          "proxy_ms": 0.27311,
+          "return_bytes_at_half_rows": 648,
+          "roundtrip_ms_per_call": 0.030386989237740636,
+          "send_bytes": 20480,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC low F",
+          "proxy_ms": 0.28945,
+          "return_bytes_at_half_rows": 648,
+          "roundtrip_ms_per_call": 0.030386989237740636,
+          "send_bytes": 20480,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC gate A",
+          "proxy_ms": 0.52647,
+          "return_bytes_at_half_rows": 12800,
+          "roundtrip_ms_per_call": 0.030386989237740636,
+          "send_bytes": 10880,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC gate F",
+          "proxy_ms": 0.5298,
+          "return_bytes_at_half_rows": 12800,
+          "roundtrip_ms_per_call": 0.030386989237740636,
+          "send_bytes": 10880,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "router tuple",
+          "proxy_ms": 0.53323,
+          "return_bytes_at_half_rows": 1794,
+          "roundtrip_ms_per_call": 0.030386989237740636,
+          "send_bytes": 5120,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.08038346864722613,
+          "calls": 24,
+          "cut_ms": 0.36546612914711235,
+          "fraction": 0.25028155288046483,
+          "name": "expert gate+up",
+          "proxy_ms": 1.46022,
+          "return_bytes_at_half_rows": 12840,
+          "roundtrip_ms_per_call": 0.030386989237740636,
+          "send_bytes": 5240,
+          "weight_bytes": 3349380667.68304
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.10112612914711243,
+          "fraction": 0.1085580105493188,
+          "name": "expert down",
+          "proxy_ms": 0.93154,
+          "return_bytes_at_half_rows": 25620,
+          "roundtrip_ms_per_call": 0.030386989237740636,
+          "send_bytes": 12920,
+          "weight_bytes": 1229378304.273435
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "shared down",
+          "proxy_ms": 0.35413,
+          "return_bytes_at_half_rows": 2560,
+          "roundtrip_ms_per_call": 0.030386989237740636,
+          "send_bytes": 1280,
+          "weight_bytes": 0.0
+        }
+      ],
+      "projected_tok_s": 59.576179059669855,
+      "unfunded_cut_ms": 1.4854945165884494,
+      "weight_only_fit_bytes": 786269478.0000001
+    },
+    "compute": {
+      "cut_ms": 0.0,
+      "gain_percent": 0.0,
+      "islands": [
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 18,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "GDN qkv+z",
+          "proxy_ms": 1.9044699999999999,
+          "return_bytes_at_half_rows": 16384,
+          "roundtrip_ms_per_call": 0.1397775049554184,
+          "send_bytes": 5120,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "attention output",
+          "proxy_ms": 1.12921,
+          "return_bytes_at_half_rows": 2560,
+          "roundtrip_ms_per_call": 0.1397775049554184,
+          "send_bytes": 12288,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 6,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "QSA qgate",
+          "proxy_ms": 0.4627,
+          "return_bytes_at_half_rows": 12288,
+          "roundtrip_ms_per_call": 0.1397775049554184,
+          "send_bytes": 5120,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC low A",
+          "proxy_ms": 0.27311,
+          "return_bytes_at_half_rows": 648,
+          "roundtrip_ms_per_call": 0.1397775049554184,
+          "send_bytes": 20480,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC low F",
+          "proxy_ms": 0.28945,
+          "return_bytes_at_half_rows": 648,
+          "roundtrip_ms_per_call": 0.1397775049554184,
+          "send_bytes": 20480,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC gate A",
+          "proxy_ms": 0.52647,
+          "return_bytes_at_half_rows": 12800,
+          "roundtrip_ms_per_call": 0.14668499352410436,
+          "send_bytes": 10880,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC gate F",
+          "proxy_ms": 0.5298,
+          "return_bytes_at_half_rows": 12800,
+          "roundtrip_ms_per_call": 0.14668499352410436,
+          "send_bytes": 10880,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "router tuple",
+          "proxy_ms": 0.53323,
+          "return_bytes_at_half_rows": 1794,
+          "roundtrip_ms_per_call": 0.13287001638673246,
+          "send_bytes": 5120,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "expert gate+up",
+          "proxy_ms": 1.46022,
+          "return_bytes_at_half_rows": 12840,
+          "roundtrip_ms_per_call": 0.14668499352410436,
+          "send_bytes": 5240,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "expert down",
+          "proxy_ms": 0.93154,
+          "return_bytes_at_half_rows": 25620,
+          "roundtrip_ms_per_call": 0.22002749028615654,
+          "send_bytes": 12920,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "shared down",
+          "proxy_ms": 0.35413,
+          "return_bytes_at_half_rows": 2560,
+          "roundtrip_ms_per_call": 0.13287001638673246,
+          "send_bytes": 1280,
+          "weight_bytes": 0.0
+        }
+      ],
+      "projected_tok_s": 58.798108759182306,
+      "unfunded_cut_ms": 0.0,
+      "weight_only_fit_bytes": 0.0
+    },
+    "idle": {
+      "cut_ms": 0.8276741180479477,
+      "gain_percent": 1.0418992821233486,
+      "islands": [
+        {
+          "admitted_fraction_of_islands": 1.0,
+          "calls": 18,
+          "cut_ms": 0.591420654814355,
+          "fraction": 0.31054343455888256,
+          "name": "GDN qkv+z",
+          "proxy_ms": 1.9044699999999999,
+          "return_bytes_at_half_rows": 16384,
+          "roundtrip_ms_per_call": 0.04009048279840499,
+          "send_bytes": 5120,
+          "weight_bytes": 307820589.7246703
+        },
+        {
+          "admitted_fraction_of_islands": 1.0,
+          "calls": 24,
+          "cut_ms": 0.08351920641914012,
+          "fraction": 0.07396251044459412,
+          "name": "attention output",
+          "proxy_ms": 1.12921,
+          "return_bytes_at_half_rows": 2560,
+          "roundtrip_ms_per_call": 0.04009048279840499,
+          "send_bytes": 12288,
+          "weight_bytes": 36863009.877599075
+        },
+        {
+          "admitted_fraction_of_islands": 1.0,
+          "calls": 6,
+          "cut_ms": 0.11107855160478501,
+          "fraction": 0.24006602897079105,
+          "name": "QSA qgate",
+          "proxy_ms": 0.4627,
+          "return_bytes_at_half_rows": 12288,
+          "roundtrip_ms_per_call": 0.04009048279840499,
+          "send_bytes": 5120,
+          "weight_bytes": 59824608.06177967
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC low A",
+          "proxy_ms": 0.27311,
+          "return_bytes_at_half_rows": 648,
+          "roundtrip_ms_per_call": 0.04009048279840499,
+          "send_bytes": 20480,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC low F",
+          "proxy_ms": 0.28945,
+          "return_bytes_at_half_rows": 648,
+          "roundtrip_ms_per_call": 0.04009048279840499,
+          "send_bytes": 20480,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC gate A",
+          "proxy_ms": 0.52647,
+          "return_bytes_at_half_rows": 12800,
+          "roundtrip_ms_per_call": 0.04979397635906935,
+          "send_bytes": 10880,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC gate F",
+          "proxy_ms": 0.5298,
+          "return_bytes_at_half_rows": 12800,
+          "roundtrip_ms_per_call": 0.04979397635906935,
+          "send_bytes": 10880,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "router tuple",
+          "proxy_ms": 0.53323,
+          "return_bytes_at_half_rows": 1794,
+          "roundtrip_ms_per_call": 0.030386989237740636,
+          "send_bytes": 5120,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.3141875675237184,
+          "calls": 24,
+          "cut_ms": 0.13258228369116787,
+          "fraction": 0.09079610174574232,
+          "name": "expert gate+up",
+          "proxy_ms": 1.46022,
+          "return_bytes_at_half_rows": 12840,
+          "roundtrip_ms_per_call": 0.04979397635906935,
+          "send_bytes": 5240,
+          "weight_bytes": 1215074400.7626314
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "expert down",
+          "proxy_ms": 0.93154,
+          "return_bytes_at_half_rows": 25620,
+          "roundtrip_ms_per_call": 0.07469096453860402,
+          "send_bytes": 12920,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "shared down",
+          "proxy_ms": 0.35413,
+          "return_bytes_at_half_rows": 2560,
+          "roundtrip_ms_per_call": 0.030386989237740636,
+          "send_bytes": 1280,
+          "weight_bytes": 0.0
+        }
+      ],
+      "projected_tok_s": 59.41072583224633,
+      "unfunded_cut_ms": 0.918600696529448,
+      "weight_only_fit_bytes": 786269478.0
+    },
+    "production_5KiB_proxy": {
+      "cut_ms": 0.0,
+      "gain_percent": 0.0,
+      "islands": [
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 18,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "GDN qkv+z",
+          "proxy_ms": 1.9044699999999999,
+          "return_bytes_at_half_rows": 16384,
+          "roundtrip_ms_per_call": 0.152886,
+          "send_bytes": 5120,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "attention output",
+          "proxy_ms": 1.12921,
+          "return_bytes_at_half_rows": 2560,
+          "roundtrip_ms_per_call": 0.152886,
+          "send_bytes": 12288,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 6,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "QSA qgate",
+          "proxy_ms": 0.4627,
+          "return_bytes_at_half_rows": 12288,
+          "roundtrip_ms_per_call": 0.152886,
+          "send_bytes": 5120,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC low A",
+          "proxy_ms": 0.27311,
+          "return_bytes_at_half_rows": 648,
+          "roundtrip_ms_per_call": 0.152886,
+          "send_bytes": 20480,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC low F",
+          "proxy_ms": 0.28945,
+          "return_bytes_at_half_rows": 648,
+          "roundtrip_ms_per_call": 0.152886,
+          "send_bytes": 20480,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC gate A",
+          "proxy_ms": 0.52647,
+          "return_bytes_at_half_rows": 12800,
+          "roundtrip_ms_per_call": 0.152886,
+          "send_bytes": 10880,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "HC gate F",
+          "proxy_ms": 0.5298,
+          "return_bytes_at_half_rows": 12800,
+          "roundtrip_ms_per_call": 0.152886,
+          "send_bytes": 10880,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "router tuple",
+          "proxy_ms": 0.53323,
+          "return_bytes_at_half_rows": 1794,
+          "roundtrip_ms_per_call": 0.152886,
+          "send_bytes": 5120,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "expert gate+up",
+          "proxy_ms": 1.46022,
+          "return_bytes_at_half_rows": 12840,
+          "roundtrip_ms_per_call": 0.152886,
+          "send_bytes": 5240,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "expert down",
+          "proxy_ms": 0.93154,
+          "return_bytes_at_half_rows": 25620,
+          "roundtrip_ms_per_call": 0.152886,
+          "send_bytes": 12920,
+          "weight_bytes": 0.0
+        },
+        {
+          "admitted_fraction_of_islands": 0.0,
+          "calls": 24,
+          "cut_ms": 0.0,
+          "fraction": 0.0,
+          "name": "shared down",
+          "proxy_ms": 0.35413,
+          "return_bytes_at_half_rows": 2560,
+          "roundtrip_ms_per_call": 0.152886,
+          "send_bytes": 1280,
+          "weight_bytes": 0.0
+        }
+      ],
+      "projected_tok_s": 58.798108759182306,
+      "unfunded_cut_ms": 0.0,
+      "weight_only_fit_bytes": 0.0
+    }
+  },
+  "schema": "packet148.correction-graph-analysis.v1",
+  "scope": "CPU projections; no candidate speed or quality measurement",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md": "49a1e0c230b87d63a380137b8058b3469e96e8932f1d0d67a1089686f75719a4",
+    "experiments/own-xpu-runtime/stage2/packet105b-head-split/p105_runtime.hpp": "77657fb587123aa3f655fac475bcdd61ca25de8d68d584bc221837fa0abb07eb",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md": "9320dadd93528e0195e95d3294f9bbbefec1028b76e3a4c937ef216742ad73e4",
+    "experiments/own-xpu-runtime/stage2/packet106b-draft-split/p105_runtime.hpp": "b9ab1d78512f8227f0cfe7c0b63d50464455670e439dd8a1ee327be1b58327cf",
+    "experiments/own-xpu-runtime/stage2/packet110-class-roofline/BYTE-MODEL.md": "0f99eb605e029b834f5ca91b27ea6d19a4124a8bc67c0d5d237afd55c51d84da",
+    "experiments/own-xpu-runtime/stage2/packet119-down-warm/DO-NOT-REPEAT.md": "2bb3ee67df2fbdb928afc7f17117619c0f161a9c9982be61218e8375e8682eff",
+    "experiments/own-xpu-runtime/stage2/packet12-peer/DO-NOT-REPEAT.md": "57a2df6688f80bcc1bb4f7f7ea64bd713d72c3c597a71beb06c14f14fea91e80",
+    "experiments/own-xpu-runtime/stage2/packet120-placement/DO-NOT-REPEAT.md": "a16da2ea3da820c1f9aa312e27a498496f754f8c0a65279fafd59247f6d5d389",
+    "experiments/own-xpu-runtime/stage2/packet121-miss-table/DO-NOT-REPEAT.md": "2b8189ecc9cf5ebd2bbc4cfe175c58cadd6f565e3e31d020cffbc549d81cbe59",
+    "experiments/own-xpu-runtime/stage2/packet123-partial-placement/DO-NOT-REPEAT.md": "f33a39d717e1b9a07a1cc0ff674ed6be050b1fedcca057db7f234aa811fa2606",
+    "experiments/own-xpu-runtime/stage2/packet125-miss-transfer/DO-NOT-REPEAT.md": "3aa7a8b4551e1eae4b47838c3addb2d24e5284990e565adc56b03793fed5b49a",
+    "experiments/own-xpu-runtime/stage2/packet126-early-draft/method/p85_model.py": "6627ffa350361a85aed5160f1f5738409cb23bab4f9ca1f34fea7317a0b63ad4",
+    "experiments/own-xpu-runtime/stage2/packet127-head-retune/DO-NOT-REPEAT.md": "e886b29b24266d85f1b6ffd77a030b55a65ad789890b681cb4dd3082afa4703c",
+    "experiments/own-xpu-runtime/stage2/packet128b-attribution/BUDGET.md": "a4d87c75433f687550666bf16368b8690a9bdae05314540e7cadf921e781c1cd",
+    "experiments/own-xpu-runtime/stage2/packet128b-attribution/DO-NOT-REPEAT.md": "8f3c0b0850f5d8ab3d0681f242262524425a1f729648fefeb4a1e2ebebfc08f4",
+    "experiments/own-xpu-runtime/stage2/packet130-suffix-interleave/DO-NOT-REPEAT.md": "abd8dbd660522a795b83fb875601b3cbfc9f4fdb450ef0c0c2069be2b929c7bf",
+    "experiments/own-xpu-runtime/stage2/packet134-submission-stalls/ATTRIBUTION.md": "6352455aedabf19912b516c3c895d1795ffe56e1aa3f7c6e46d3de1e2c5e077a",
+    "experiments/own-xpu-runtime/stage2/packet135-critical-path/ANALYSIS.md": "c8d1157521f1808a0a1ae4d44330b96d81d79ff1e5cf6b1453354144cd47a287",
+    "experiments/own-xpu-runtime/stage2/packet136-record-bundle/DO-NOT-REPEAT.md": "fdb931ef68ad2311a1e0db4f339f2cdb2eb5352ff30be09ecadc4701225b7846",
+    "experiments/own-xpu-runtime/stage2/packet136-record-bundle/evidence/shape-ab825c135700b7e9abf2ac9ba3bc8865e0d280ccc7191bd1b5a711c26fa77b9b-census.json.gz": "a8b4bd3360f576eae463ec97fefec46e9ee2ea88008ade75a773db1cee6cac56",
+    "experiments/own-xpu-runtime/stage2/packet136-record-bundle/native_controller.hpp": "b4f054c4425e84dcb3561c4efcd5b92a2caa8fa3449b4548800ad997fff0f81c",
+    "experiments/own-xpu-runtime/stage2/packet136-record-bundle/p105_runtime.hpp": "77657fb587123aa3f655fac475bcdd61ca25de8d68d584bc221837fa0abb07eb",
+    "experiments/own-xpu-runtime/stage2/packet136-record-bundle/p60_math.hpp": "b3b58a512aa3a79cee5edd7d68833c0e449a06124511603aadad6d837b219dd6",
+    "experiments/own-xpu-runtime/stage2/packet136-record-bundle/parent-snapshot/memory-plan.json": "3f157407ea1306780633e45b6104993dde8c32d87011ae3b770c0111d3a6532e",
+    "experiments/own-xpu-runtime/stage2/packet136-record-bundle/rank.hpp": "ed1a58995fff84a9a1d26391a59432ee7cffc75248518499789fee9fbf5aa9db",
+    "experiments/own-xpu-runtime/stage2/packet136-record-bundle/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--fused--split--80128--banks--placement-1/memory-plan.json": "40512e2a1c2cf7b8fa98c8290c9bf4fe4c3790f85e6dbb95422b34e3629b33b9",
+    "experiments/own-xpu-runtime/stage2/packet136-record-bundle/submission/prepared-a/result.json": "bb332db12448927db479141661938c156f9b85c85bb9d6d27612e3f3f7c9fc38",
+    "experiments/own-xpu-runtime/stage2/packet138-xlayer-prefetch/DO-NOT-REPEAT.md": "4feccc10979cd0a9dc8a181d68208c8ff6d44a81aebf7f22157b890fb8a7a98e",
+    "experiments/own-xpu-runtime/stage2/packet140-body-lever/DO-NOT-REPEAT.md": "98673765312c1495bd2671931dc3bd2eb450cef19763803a6941d332c8bca230",
+    "experiments/own-xpu-runtime/stage2/packet144-miss-path/ANALYSIS.md": "19ba528112a0fdceca72dac0781f8966e69ba21ba93629405c8bc950baf7694c",
+    "experiments/own-xpu-runtime/stage2/packet144-miss-path/DO-NOT-REPEAT.md": "76c65e8144212cb13eeca2d58a237eb387fc72acf7cfee58968cc901c7813484",
+    "experiments/own-xpu-runtime/stage2/packet147-lever-synthesis/PLAN.md": "4a44678ea8338c9042c347c465599f51e1fb798cacf55c0ab84f0a37113dcbb4",
+    "experiments/own-xpu-runtime/stage2/packet34-replay-bench/directory.tsv": "8352dc77cdb0e584068274b388b14bfba716ff315ff613bbe4ba67f62fd58507",
+    "experiments/own-xpu-runtime/stage2/packet68b-batched-rows/DO-NOT-REPEAT.md": "3ae025343e51e7fde0432f37b93be60d42ca3633a906765574727043ca814f3c",
+    "experiments/own-xpu-runtime/stage2/packet68c-m2-from-production/DO-NOT-REPEAT.md": "1c76e833f6b8d9ded68a18b37d42bbec9fc2368e138cf7350f3dbd62af4e1732",
+    "experiments/own-xpu-runtime/stage2/packet71c-depth2-engine/DO-NOT-REPEAT.md": "ba5ffd35713c5dc1c9e31e7607b9e62605833dac7bcb190ed016b4389023803b",
+    "experiments/own-xpu-runtime/stage2/packet79-draft-rank0/DO-NOT-REPEAT.md": "3f77401f2a6570c3d0c8fba92fa92f9d8decc7bf93dc7e5f4a67c13afc3cfe21",
+    "experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/RESULT.json": "b17fa4ae389f613ff881b300430cd0d1bd9b5a91e4c4cc9fbb29d4d05b0670c7",
+    "experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/microbench.cpp": "83ec9ba95a8ed1334e9f43ad4bfa735a994112053246cd3b56e2f613a0050565",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p105b-eeccee46f0f1-B-smoke12/identity.json": "72e8af70b155babe90bb6ddd2989372f7651672df94ca2e4989d765bac681ff1",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p105b-eeccee46f0f1-B-smoke12/run/ranks/rank0/p105-transfers.jsonl": "02987ed5d00f63c0a9241f4247ea21b596db9f67d7b85a14532859c2af06bea7",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p105b-eeccee46f0f1-B-smoke12/run/ranks/rank1/p105-transfers.jsonl": "5d4361d9903936233b52d298053ce2b8f5ffef315568c794a8e5e3f34537081f",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p105b-eeccee46f0f1-B-smoke12/summary.json": "ec5aa1d6239e0e6a1903ac57a306bc13c93f5ec4e78df38ad7bd97bb683e3982",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/identity.json": "db59cfd325dc78dbce54fb12c5885dd301cc4e997a07b663153b3c8315be0842",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/after-suite/rank0/p105-transfers.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/after-suite/rank1/p105-transfers.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/architecture-tradeoff/rank0/p105-transfers.jsonl": "8fb72d97cfa47ceba4749b6d3ae3d5357658a52b752a33e74d94dcbcd8fc7155",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/architecture-tradeoff/rank1/p105-transfers.jsonl": "2d35ada3ae2f083efea970fbd2b58e6eeb4f622bdc7b2ee15c59347dd8fcd438",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/benchmark-analysis/rank0/p105-transfers.jsonl": "fe9ca871f48937bc5929d1604fbbdfac134a984bf5c0b44d2fe9102ad683314e",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/benchmark-analysis/rank1/p105-transfers.jsonl": "ac2738441b3c560567647e1e84ff0f2b6ec1d12c964de9d0576f509dc671567f",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/bug-report-synthesis/rank0/p105-transfers.jsonl": "191fdca00b17b1a73cf3db8291a7ab5979e82497a0329a63810fd302a81fae21",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/bug-report-synthesis/rank1/p105-transfers.jsonl": "355d6d070f1177a5abad1c387d8d58636ee340daad46d8220cbd6cb83537b85b",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/code-review/rank0/p105-transfers.jsonl": "808edc6b6a06f23d6f7fd10882925866c3113d31939b2d66f00abed208b575e9",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/code-review/rank1/p105-transfers.jsonl": "9d80c8e5593bcf242e4244761538ca185c467079e199ef62cf02cef13f5b9855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/customer-email/rank0/p105-transfers.jsonl": "e79e99549fbbd3e3f2364783f623309d2c573f438682124c1779056f9fa623cf",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/customer-email/rank1/p105-transfers.jsonl": "cb873897ab6bf0a1f066989ce9eed107987819be2d8e07fcc11b5754a705824b",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/decision-memo/rank0/p105-transfers.jsonl": "27690e3f5ef28d6dba682bc35905cc556422ec8cb72016449aa064d7abc9e747",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/decision-memo/rank1/p105-transfers.jsonl": "1fa0e0542341cdf2177db6b130c3fb33a0d9dd4692af742d1da1cdf3266546f3",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/incident-retrospective/rank0/p105-transfers.jsonl": "0d78e08d9a542b14f15e8878db23307d736063c8c5b8dcf9ad0a892b0e15bca8",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/incident-retrospective/rank1/p105-transfers.jsonl": "85f4f79e631ec59523c2e7029da171c7c54022580bf260ec05826c9b259464e0",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/incident64/rank0/p105-transfers.jsonl": "1b23a38e722204e8ad3560f3d4305f55caff64b2e1ac75e15c048d9af8d60a64",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/incident64/rank1/p105-transfers.jsonl": "9a5a3befceb356745d87f41c3cdd4ccb0edc3caa0c63677cdf794f704be3b543",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/performance-hypotheses/rank0/p105-transfers.jsonl": "878ae9a52364f1ea2f8aa3f1c0267bca613325ce2d62b69b2f9e74aeb32f5ccd",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/performance-hypotheses/rank1/p105-transfers.jsonl": "a16780803699169fe3cee29270adb1072a20ea78424ef5bbeb8f163be35a4c8a",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/ranks/rank0/p105-transfers.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/ranks/rank1/p105-transfers.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/release-plan/rank0/p105-transfers.jsonl": "958c61b6abb09a17e0e35f92e7593e39b2067cb758bc13d0c8a24ae9187c4989",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/release-plan/rank1/p105-transfers.jsonl": "6e741fb9f344bff10c84a217f4641a587afde68b6d9a231d77ea8e22e4e62076",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/risk-register/rank0/p105-transfers.jsonl": "6a36ab34c5fffaed24f6971a4230c000fa336bde9a90dedac2cf527ca00f5fbd",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/risk-register/rank1/p105-transfers.jsonl": "b407a358bcba8a7eec4f8dcf83773287354d0778172a398c5166116d0c898cf0",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/sql-debugging/rank0/p105-transfers.jsonl": "ed8dee6ad23e566c2f307e0c52e630e9928564d63f6ad021963e535ff7b13280",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/sql-debugging/rank1/p105-transfers.jsonl": "f922b9e954c8288b58149f508b53e1518ff0682868b7c8c5b72eb1783fa093e9",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/technical-guide/rank0/p105-transfers.jsonl": "49e8901911c4647fca4b408afa06fe2103e127e3a54118a71349cbf2b5babbaa",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/run/technical-guide/rank1/p105-transfers.jsonl": "ae8d1d1159184a0af5fe6efc06701535c991626227dffbb480b9dd29a53bb403",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/p106b-13e3630d590c-B-grid-1-head-split/summary.json": "1bacb232553014d530bb139f7108ecfb2b108dbb87edeb242a6ca974b09e26d4"
+  },
+  "stream_half_selected_experts": {
+    "assumed_end_to_end_GBs_copy_ms": {
+      "20": 12.064,
+      "40": 6.032,
+      "80": 3.016
+    },
+    "bytes_per_miss": 241280000.0,
+    "mean_bytes_per_layer": 10053333.333333334,
+    "perfect_half_expert_GEMV_cut_before_transfers_ms": 1.19588,
+    "qualification": "bulk PCIe/peer service unmeasured; assumptions are sensitivities only"
+  }
+}
