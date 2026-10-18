@@ -1,0 +1,314 @@
+Wrote experiments/own-xpu-runtime/stage2/packet88-miss-path/attribution.json
+{
+  "counts": {
+    "intervals": 1188,
+    "hits": 936,
+    "misses": 252
+  },
+  "first99_host_ms": {
+    "A": {
+      "command_ms": {
+        "n": 1188,
+        "mean": 13.688277306587056,
+        "median": 13.683286495506763,
+        "minimum": 13.504468006431125,
+        "maximum": 14.03413200750947
+      },
+      "busy_ms": {
+        "n": 1188,
+        "mean": 13.041570923400673,
+        "median": 13.0668695,
+        "minimum": 12.524482,
+        "maximum": 13.384804
+      },
+      "outside_busy_ms": {
+        "n": 1188,
+        "mean": 0.6467063831863825,
+        "median": 0.6163600083556888,
+        "minimum": 0.5516829918137631,
+        "maximum": 1.2652200074787654
+      },
+      "prepare_ms": {
+        "n": 1188,
+        "mean": 0.10610514814814814,
+        "median": 0.1050065,
+        "minimum": 0.098314,
+        "maximum": 0.236604
+      },
+      "enqueue_excluding_wait_ms": {
+        "n": 1188,
+        "mean": 3.173792584175084,
+        "median": 3.16522,
+        "minimum": 3.0453,
+        "maximum": 4.68364
+      },
+      "wait_ms": {
+        "n": 1188,
+        "mean": 9.513017104377104,
+        "median": 9.542455,
+        "minimum": 7.96594,
+        "maximum": 9.73984
+      },
+      "busy_remainder_ms": {
+        "n": 1188,
+        "mean": 0.24865608670033673,
+        "median": 0.2363704999999996,
+        "minimum": 0.2095210000000005,
+        "maximum": 0.4505669999999995
+      },
+      "reported_gpu_ms": {
+        "n": 1188,
+        "mean": 0,
+        "median": 0.0,
+        "minimum": 0,
+        "maximum": 0
+      },
+      "cancelled": {
+        "n": 1188,
+        "mean": 0,
+        "median": 0.0,
+        "minimum": false,
+        "maximum": false
+      },
+      "launches": {
+        "n": 1188,
+        "mean": 708,
+        "median": 708.0,
+        "minimum": 708,
+        "maximum": 708
+      }
+    },
+    "C": {
+      "command_ms": {
+        "n": 252,
+        "mean": 12.655226409165946,
+        "median": 12.657930492423475,
+        "minimum": 12.534677996882237,
+        "maximum": 12.791964996722527
+      },
+      "busy_ms": {
+        "n": 252,
+        "mean": 12.62266192063492,
+        "median": 12.6265025,
+        "minimum": 12.507057,
+        "maximum": 12.761698
+      },
+      "outside_busy_ms": {
+        "n": 252,
+        "mean": 0.03256448853102567,
+        "median": 0.029590500638145834,
+        "minimum": 0.027011009492889926,
+        "maximum": 0.0814819922027521
+      },
+      "prepare_ms": {
+        "n": 252,
+        "mean": 0.10585709523809524,
+        "median": 0.10467599999999999,
+        "minimum": 0.098394,
+        "maximum": 0.129282
+      },
+      "enqueue_excluding_wait_ms": {
+        "n": 252,
+        "mean": 3.157025396825397,
+        "median": 3.151785,
+        "minimum": 3.05071,
+        "maximum": 3.69286
+      },
+      "wait_ms": {
+        "n": 252,
+        "mean": 9.12393126984127,
+        "median": 9.133105,
+        "minimum": 8.62504,
+        "maximum": 9.31226
+      },
+      "busy_remainder_ms": {
+        "n": 252,
+        "mean": 0.2358481587301587,
+        "median": 0.22697499999999948,
+        "minimum": 0.20602000000000054,
+        "maximum": 0.34813500000000097
+      },
+      "reported_gpu_ms": {
+        "n": 252,
+        "mean": 0,
+        "median": 0.0,
+        "minimum": 0,
+        "maximum": 0
+      },
+      "cancelled": {
+        "n": 252,
+        "mean": 0,
+        "median": 0.0,
+        "minimum": false,
+        "maximum": false
+      },
+      "launches": {
+        "n": 252,
+        "mean": 708,
+        "median": 708.0,
+        "minimum": 708,
+        "maximum": 708
+      }
+    }
+  },
+  "miss_schedule": {
+    "R_ms": {
+      "n": 252,
+      "mean": 0.5693899839238766,
+      "median": 0.5592929956037551,
+      "minimum": 0.5385190015658736,
+      "maximum": 0.7576890056952834
+    },
+    "C_ms": {
+      "n": 252,
+      "mean": 12.655226409165946,
+      "median": 12.657930492423475,
+      "minimum": 12.534677996882237,
+      "maximum": 12.791964996722527
+    },
+    "D_ms": {
+      "n": 252,
+      "mean": 1.7949495198240222,
+      "median": 1.796440003090538,
+      "minimum": 1.7076289950637147,
+      "maximum": 1.9403039914323017
+    },
+    "R_D_overlap_ms": {
+      "n": 252,
+      "mean": 0.5693254999410812,
+      "median": 0.5592929956037551,
+      "minimum": 0.5383480020100251,
+      "maximum": 0.7576890056952834
+    },
+    "restore_to_C_start_ms": {
+      "n": 252,
+      "mean": 0.0012330835618610894,
+      "median": 0.0011619995348155499,
+      "minimum": 0.0010419898899272084,
+      "maximum": 0.001954002073034644
+    },
+    "draft_to_R_start_ms": {
+      "n": 252,
+      "mean": 1.2504021888450971e-05,
+      "median": 0.0,
+      "minimum": -0.00034998811315745115,
+      "maximum": 0.0009119976311922073
+    },
+    "R_covered_by_D": {
+      "n": 252,
+      "mean": 0.503968253968254,
+      "median": 1.0,
+      "minimum": false,
+      "maximum": true
+    }
+  },
+  "instrumented_complete_sample": {
+    "A": {
+      "layer_span_ms": {
+        "n": 96,
+        "mean": 12.168772770833334,
+        "median": 12.165833500000002,
+        "minimum": 12.1325,
+        "maximum": 12.245729
+      },
+      "instrumented_command_ms": {
+        "n": 96,
+        "mean": 14.237608760292156,
+        "median": 14.229922999220435,
+        "minimum": 14.183298000716604,
+        "maximum": 14.368611999088898
+      },
+      "control_command_ms": {
+        "n": 96,
+        "mean": 13.606556989543606,
+        "median": 13.574898992374074,
+        "minimum": 13.504468006431125,
+        "maximum": 13.94593199074734
+      },
+      "instrumented_outside_span_ms": {
+        "n": 96,
+        "mean": 2.0688359894588233,
+        "median": 2.061182999071441,
+        "minimum": 2.0257919913905713,
+        "maximum": 2.1941089975411963
+      }
+    },
+    "C": {
+      "layer_span_ms": {
+        "n": 20,
+        "mean": 12.157776049999999,
+        "median": 12.152448,
+        "minimum": 12.13177,
+        "maximum": 12.197604
+      },
+      "instrumented_command_ms": {
+        "n": 20,
+        "mean": 13.224988248111913,
+        "median": 13.216279992775526,
+        "minimum": 13.19220800360199,
+        "maximum": 13.286656001582742
+      },
+      "control_command_ms": {
+        "n": 20,
+        "mean": 12.58721179983695,
+        "median": 12.574510503327474,
+        "minimum": 12.534677996882237,
+        "maximum": 12.699624989181757
+      },
+      "instrumented_outside_span_ms": {
+        "n": 20,
+        "mean": 1.0672121981119131,
+        "median": 1.0600699997764567,
+        "minimum": 1.0433770030367224,
+        "maximum": 1.1376970015827421
+      }
+    }
+  },
+  "rollback": {
+    "capture_payload_bytes": 48627432,
+    "restore_payload_bytes": 19025640,
+    "omitted_spare_bank_bytes": 29601792,
+    "payload_components": {
+      "parallel_controls": 12,
+      "attention_scores": 196896,
+      "attention_probabilities": 196896,
+      "layer_snapshots": 983040,
+      "fp32_input": 696320,
+      "gemv_workspace": 8388608,
+      "compact_routes": 120,
+      "ordered_mixture": 5120,
+      "operator_scratch_written_span": 1609936,
+      "nonbank_plan_buffers_remainder": 6948692
+    },
+    "descriptor_uploads_per_restore": 1,
+    "flat_compute_kernels_per_restore": 1,
+    "kernel_device_time_ms": null,
+    "descriptor_upload_device_time_ms": null,
+    "restore_transfer_event_count": 60,
+    "positive_width_restore_transfer_events": 0,
+    "cumulative_final_counters": {
+      "passed": true,
+      "miss_selection": "batch",
+      "bank_capture_bytes_avoided": 0,
+      "capacity_bytes": 373633560,
+      "captures": 3111,
+      "restores": 664,
+      "snapshot_payload_bytes": 151279940952,
+      "capture_submissions": 6222,
+      "restore_submissions": 1328,
+      "restored_bytes": 12633024960,
+      "redo_omitted_bytes": 19655589888,
+      "redo_restores": 664,
+      "completed_redos": 664,
+      "redo_fallbacks": 0,
+      "copy_extent_guard_unchanged": true,
+      "private_backup_zeroed": true,
+      "committed_state_scrubbed": false,
+      "private_host_backup_empty": true,
+      "snapshot_valid": false,
+      "counters_are_telemetry": true,
+      "rank0_shared_slot_bytes": 65536,
+      "rank1_shared_regions_untouched": true
+    }
+  }
+}
