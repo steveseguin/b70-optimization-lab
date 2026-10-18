@@ -577,3 +577,10 @@ runs after campaign 36b, before the 2M run.
 17-19 ms, p50 0.42 ms), no error, kernel log clean. About ten times the server's per-hang call count without a hang:
 the fused GDN prompt kernel alone does not hang at this rate. By the registered decision the two-card stress
 (kernel + exchanges) runs next, after campaign 36b.
+
+**Two-card stress result (01:55-02:15 EDT): clean.** 72,064 steps per rank, each 16 layer stand-ins on the same
+300-600 tokens: 1,153,024 fused GDN prompt-kernel calls and as many all-gather all-reduces per card, p50 16.6 ms per
+step, none over 1 s, no error. Kernel and exchange together do not hang at about 3-5 times the server's per-hang
+count. By the registered decision the trigger needs more of the real server (FP8 projections, full attention, draft
+passes, the host side); the 2M hostile run (campaign 37) is that server-level test, with device marks, breadcrumbs
+and the hang capture on.
