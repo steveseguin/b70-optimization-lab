@@ -35,8 +35,12 @@ The 5.920 us byte floor is an opportunity bound, not an achievable prediction.
 M=2 verify work remains state-dependent: token 1 must consume token 0's rounded
 state. It cannot safely run both tokens concurrently. Packet110 measures M=1;
 no M=2 timing is inferred from it. The named memory note “Flash-Next second
-verify row cost is GDN glue” was not present in available local memory or repo
-Markdown; the source-level dependency is recorded here without inventing it.
+verify row cost is GDN glue” was located in `/home/steve/.claude/projects/-home-steve/memory/flash-next-second-verify-row-cost-is-gdn-glue.md` during final review.
+It concerns the historical vLLM TP4/EP4 serial selector, not this runtime. Its
+updates warn that launch counts mispredict graph replay, that a multirow kernel
+can differ by one ULP despite apparently identical source, and that later exact
+C++ serial work removed the GDN excess. This packet preserves rounding and tests
+multirow bytes; it does not import those old timing deltas or selector settings.
 
 ## New mechanism and exactness proof
 
@@ -65,7 +69,7 @@ Multi-token checks, complete-layer builds and coordinator proposal are next.
 Builds use packet94's serial compiler turn, nice 19, CPUs 8–15/24–31, stdin
 `/dev/null`, and an 8 GiB cap only inside CPU CLI processes. Build budget 150 MB.
 
-## Milestone 2 — micro compiled, sealed and proposed (08:54 UTC)
+## Milestone 2 — micro compiled, sealed and proposed (08:53 UTC)
 
 GNU, Intel and device complete-layer binaries compile. GNU and Intel each pass
 **two fresh CPU processes**, each with 572 whole-layer boundary/state checks
@@ -94,7 +98,7 @@ Fifteen Python policy/refusal checks pass, including missing byte cases, wrong
 order, incomplete pairs, invalid event accounting, CPU receipts passed as device
 results, per-context/order losses and import-time resource-cap preservation.
 The build is **66,586,092 bytes**, below 150 MB. Peak compiler child RSS is
-under 700 MiB; all CPU CLIs use the requested 8 GiB cap. Generated binaries are
+under 800 MiB; all CPU CLIs use the requested 8 GiB cap. Generated binaries are
 ignored; the first milestone accidentally tracked the two small leaf binaries,
 corrected in this milestone while preserving them locally under `build/retained-*`.
 Their source, commands, hashes and prior commit remain available.
@@ -109,4 +113,24 @@ seals and v5 one-load proposal. None of those later steps is claimed here.
 Evidence: [CPU leaves](../experiments/own-xpu-runtime/stage2/packet113-gdn-row/evidence/cpu-leaf.json),
 [complete layers](../experiments/own-xpu-runtime/stage2/packet113-gdn-row/evidence/cpu-layers.json),
 [device build](../experiments/own-xpu-runtime/stage2/packet113-gdn-row/evidence/build-device.json),
-[queue plans](../experiments/own-xpu-runtime/stage2/packet113-gdn-row/evidence/queue-plans.json).
+[queue plans](../experiments/own-xpu-runtime/stage2/packet113-gdn-row/evidence/queue-plans-final.json).
+
+## Final CPU handoff — 08:57 UTC
+
+Final review tightened CPU provenance: fresh output directories are mandatory,
+and each process records its binary and build-receipt hashes before launch.
+All four final processes pass again, including exact exceptional transcripts
+across each compiler's repeats. Earlier successful runs remain as evidence.
+The final CPU subprocess peak RSS is 1216952 KiB. The complete
+synthetic layer and recurrence transcripts also agree across GNU and Intel in
+this full-harness build; the separate leaf builds retain their compiler-specific
+production NaN payloads.
+
+Precision flags are present on both SYCL compilation and link commands;
+packet110's source hashes remain unchanged. The final seals and two temporary
+queue plans pass. [Final review](../experiments/own-xpu-runtime/stage2/packet113-gdn-row/evidence/final-review.json)
+and [CPU preparation closeout](../experiments/own-xpu-runtime/stage2/packet113-gdn-row/CPU-PREPARATION-CLOSEOUT.md)
+retain the handoff. The micro gate explicitly reports **pending**, with
+`integration_allowed=false`. Packet111 is now committed (`83d5518ba`) and is
+the conditional integration base after a qualifying micro; no integration or
+v5 runtime proposal was built ahead of that gate.

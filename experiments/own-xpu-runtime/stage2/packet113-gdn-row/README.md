@@ -19,3 +19,15 @@ Kill gate: both fresh lane-B processes must have recurrence time at most 0.6 of
 current, at contexts 128 and 4096 and in each alternating order. All state and
 output bytes must match; failures close the arm. No integration before this gate.
 GNU/Intel exceptional CPU checks and complete layers precede device admission.
+
+[Proposed B jobs](../../ops/lane-queue/proposed-p113-micro-B.txt): two fresh
+processes, expected 240 seconds each, watchdog 1,200 seconds each. The native
+micro checks 768 full-state recurrence cases before timing, then four serial
+complete layers and 100 alternating timing pairs with complete state equality.
+Only the coordinator launches devices; CPU preparation does not install a queue.
+
+[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md),
+[build/retention instructions](RETENTION.md), [evidence seal](seal.json).
+After both device windows, `python3 -B qualification.py` recomputes the gate
+from hash-bound raw transcripts and event endpoints. Missing windows are pending;
+failed bytes, identity changes and incomplete data cannot qualify.
