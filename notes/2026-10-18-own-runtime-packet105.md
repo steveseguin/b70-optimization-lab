@@ -14,7 +14,7 @@ rollback overlap, or treat lane-B head results as lane-A confirmation.
 
 ## Implementation and gates
 
-In progress. Target range: rank1 [0,202240), rank0 [202240,248320).
+Target range: rank1 [0,202240), rank0 [202240,248320).
 Expanded suffix weights require 155750400 bytes plus private scratch and logits.
 The transfer request carries only the verified target final.mix (5120 bytes),
 with position/sequence ownership; the return is 16 bytes. Tie rule is the lowest
@@ -48,8 +48,9 @@ rather than silently relabeling compute-queue copies. Both variants write
 per-leg host transfer timings and the backend/queue identity. GPU contention,
 residency, outputs and performance remain unmeasured.
 
-GNU and Intel each pass two fresh full-vocabulary byte runs, three consecutive
-input vectors, forced ties, signed zero, boundary IDs, infinities and NaNs.
+GNU and Intel each pass two fresh full-vocabulary byte runs, five input vectors
+(three finite, one NaN and one infinity), forced ties, signed zero, boundary IDs,
+infinities and NaNs.
 Both compiler native-controller mocks pass hit/miss/no-guess/EOS. The actual
 Runtime runs against payload-backed CPU mock owners, proving verified hidden
 bytes, unchanged speculative state and stale/duplicate/cancel/peer-exit refusal.
@@ -64,4 +65,56 @@ admission only: the coordinator must still check real card residency and refuse
 driver paging. No claim that a full card has free usable VRAM follows from this.
 
 Evidence: `stage2/packet105-head-split/evidence/{cpu-byte-identity,full-shape,
-runtime-mock,controller}.json`. Every-window startup and seals are next.
+runtime-mock,controller}.json`. The final refresh below completes startup and seals.
+
+## Final refresh
+
+Hidden export is now asynchronous: submit the prefix head before waiting to
+publish the completed copy. This lets BCS overlap the prefix without exposing
+unfinished bytes. `host_dependency_wait_us` includes the target producer wait;
+it is not pure DMA latency. The queue identity and per-leg timing stay in the
+screen artifacts. The chunked loader also checks the exact Q6 head shape.
+
+The memory-plan base is copied locally, so the new seals depend on no mutable
+parent selection or orchestration output. The refreshed six-view/rank census
+passes. All 18 unsupported-layout refusals pass. Their harness initially
+expected a lifetime-success message on a refusal, which this fixture never
+prints; that mistaken assertion was removed. The waiting startup harness was
+stopped before compilation and restarted against the corrected source closure.
+No device process was involved.
+
+## Completed CPU handoff
+
+The actual loader now compares all 248320 expanded rows, independently rechunked
+from their global source offsets, for both transfer choices. Both actual-runtime
+mocks pass verified hidden bytes, unchanged state and stale/duplicate/cancel/exit
+refusal. Every one of the 11 chain windows passes for all three views (33 total),
+including the actual W0p host handshake and KD reference projection. Seven
+admission/comparison tests pass and are bound into the seals. Startup took
+302.83 seconds including its compiler wait; peak child RSS was 1250892 KiB.
+
+Sealing first refused inherited fixture symlinks that resolved outside the
+repository. Byte-identical local fixture copies and a copied small oracle
+manifest resolve that containment problem without changing any gate bytes.
+Only the needed static oracle links are retained; no parent orchestration
+outputs enter the seals. The localization receipt records the file hashes.
+
+All three view seals pass. Both new proposals pass five-job plans on temporary
+queues, ten jobs total:
+
+- `experiments/own-xpu-runtime/ops/lane-queue/proposed-p105-B-grid.txt`
+- `experiments/own-xpu-runtime/ops/lane-queue/proposed-p105-A-grid.txt`
+
+Each grid is production / compute split / production / BCS split / production.
+Each placement needs its own matched bracket; lane A independently confirms
+and remains the record lane. No live queue was installed, and no GPU, service,
+sudo, host setting or power setting was touched.
+
+The build receipt records 286257140 bytes during the final build; removing
+reproducible fixture entry objects leaves 278808437 bytes. All local compilation
+used the shared turn lock. The CPU byte gate peaked at 978356 KiB RSS. Real BCS
+availability/overlap, card residency, unchanged device output and speed are
+still pending. There is no measured gain or device-ready claim.
+
+The packet's [closeout](../experiments/own-xpu-runtime/stage2/packet105-head-split/closeout.md)
+links all evidence and the remaining device gates.

@@ -15,12 +15,14 @@ matches 58g. E1 is excluded because it adds 616 MB of pinned weights.
 Intel compilation and repeated byte checks are underway; no device or queue ran.
 [Work note](notes/2026-10-18-own-runtime-packet58j.md).
 
-**October 18, packet105 implemented on CPU:** The target head can send its
-last 46,080 rows to rank0 using the verified current hidden vector. Both builds,
-both compiler byte checks, hit/miss path mocks and all six allocation checks
-pass. Compute and copy-engine transfers are separate choices. Eleven-window
-startup and seals are next; device quality, residency and speed are pending.
-No GPU, service or live queue changed.
+**October 18, packet105 sealed on CPU:** The target head can send its last
+46,080 rows to rank0 using the verified current hidden vector. Both builds,
+both compiler byte checks, every head row's loader check, hit/miss mocks,
+all six allocation checks and all 33 startup checks pass. Three views are
+sealed. Ten proposed jobs pass temporary queue plans: both transfer choices
+on lane B, then independent lane-A confirmation. The build is 279 MB.
+Device quality, real card residency and speed remain pending. No GPU,
+service or live queue changed.
 [Work note](notes/2026-10-18-own-runtime-packet105.md).
 
 **October 18, packet104 micro compiled on CPU:** Nine tile16 weight-layout

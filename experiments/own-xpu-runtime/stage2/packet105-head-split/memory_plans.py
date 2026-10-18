@@ -7,7 +7,7 @@ TARGET_SAVING=248320*(3380-2100)
 DRAFT_PREFIX=91392*3380
 EXPERT_DELTA=(301465600,314572800)
 def plan(v):
- row=copy.deepcopy(json.loads((P.parent/'packet91-record-bundle/memory-plan.json').read_text()))
+ row=copy.deepcopy(json.loads((P/'base-memory-plan.json').read_text()))
  row.update(schema='packet105.exact-layout-memory.v1',view=name(*v))
  row['placements']={'1':row['placements']['1']};row['placements']['1']['capacities']={'4096':row['placements']['1']['capacities']['4096']}
  half='halfcache' in v[2];head=v[8]=='head-transpose';split=v[8].startswith('head-split-');deltas=[]

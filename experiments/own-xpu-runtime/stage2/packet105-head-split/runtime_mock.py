@@ -9,10 +9,16 @@ def main():
  limits();full_shape.S=S;generated=full_shape.generate()
  f=S/'main.cpp';t=f.read_text()
  t=t.replace('struct Item{size_t bytes;ownrt::Memory memory;}', 'struct Item{size_t bytes;ownrt::Memory memory;bool backed;}')
- t=t.replace('if(m==ownrt::Memory::device){p=', 'if(m==ownrt::Memory::device&&n>24576){p=')
- t=t.replace('Item{n,m}', 'Item{n,m,m!=ownrt::Memory::device||n<=24576}')
+ t=t.replace('if(m==ownrt::Memory::device){p=', 'if(m==ownrt::Memory::device&&n>24576&&n!=size_t(p105::prefix)*3380&&n!=size_t(p105::suffix)*3380){p=')
+ t=t.replace('Item{n,m}', 'Item{n,m,m!=ownrt::Memory::device||n<=24576||n==size_t(p105::prefix)*3380||n==size_t(p105::suffix)*3380}')
  t=t.replace('if(m!=ownrt::Memory::device)::operator delete(p);', 'if(dry.at(uintptr_t(p)).backed)::operator delete(p);')
  t=t.replace('bounds(a,n);bounds(b,n);return marker(d);', 'bounds(a,n);bounds(b,n);auto da=std::prev(dry.upper_bound(uintptr_t(a))),db=std::prev(dry.upper_bound(uintptr_t(b)));if(da->second.backed&&db->second.backed)std::memcpy(a,b,n);return marker(d);')
+ # Keep the actual chunked Q6 loader for both head partitions. The backend
+ # stores only these weight allocations; all other model weights remain fake.
+ t=t.replace('weights[c][name] = id; return; // test-only payload elision','weights[c][name] = id; if(name!="output.weight")return; // head loader executes')
+ t=full_shape.body(t,'std::vector<uint8_t> read(const std::string &name', r'''
+ require(name=="output.weight","synthetic mock read escaped head");std::vector<uint8_t> raw(n);for(size_t i=0;i<n;++i){size_t global=off+i;raw[i]=uint8_t(global*73+global/210);if(global%210==208)raw[i]=0;if(global%210==209)raw[i]=0x30;}return raw;
+''')
  f.write_text(t)
  entry=r'''#include <cxxabi.h>
 #define main unused_model_entry
@@ -22,6 +28,12 @@ int main(int argc,char**argv){try{
  require(argc==3,"selection output");std::unique_ptr<Engine> es[2];std::unique_ptr<Weights> ws[2];std::unique_ptr<p105::Runtime> rt[2];
  for(int r=0;r<2;++r){Options a;a.context=4096;a.cards=1;a.rank=r;a.draft_rank=1;a.target_split=0;a.memory="resident";a.gemv="r5";a.nongemv="parallel";a.selection=argv[1];a.selection_sha256=packet26::hash_file(a.selection);a.output=fs::path(argv[2])/std::to_string(r);fs::create_directories(a.output);a.plan=ROOT/"../suite-inputs-20261012/code-review/plan.tsv";a.draft_manifest=ROOT/"mtp-manifest.tsv";packet26::dispatch.load((ROOT/"dispatch-speed6.json").string());ws[r]=std::make_unique<Weights>(a);auto p=pipeline::split(plan(*ws[r],a),r,false,1,0);es[r]=std::make_unique<Engine>(*ws[r],a,p);es[r]->initialize();rt[r]=std::make_unique<p105::Runtime>(*es[r]);}
  auto pointer=[&](int r,Allocation id){return es[r]->dev(0).arena.row(id).pointer;};
+ // Independently re-chunk source reads (137 rows, versus the production 4 MB
+ // loader chunks). Compare every expanded row, including both end boundaries.
+ for(int r=0;r<2;++r){unsigned rows=r==0?p105::suffix:p105::prefix,first=r==0?p105::prefix:0;auto*actual=static_cast<const uint8_t*>(pointer(r,es[r]->weights[0].at("output.weight")));
+  for(unsigned row=0;row<rows;row+=137){unsigned n=std::min(137u,rows-row);auto raw=ws[r]->read("output.weight",size_t(first+row)*2100,size_t(n)*2100);auto expected=iq3::expanded::expand(iq3::Type::Q6_K,raw.data(),raw.size(),2560);require(expected.size()==size_t(n)*3380&&!std::memcmp(actual+size_t(row)*3380,expected.data(),expected.size()),"wrong actual loader row range");}
+ }
+
  p105::Mailbox box{};int callbacks=0;
  for(int step=1;step<=2;++step){ // hit and miss: speculative streams deliberately disagree.
   std::vector<uint8_t> verified(5120),speculative(20480,uint8_t(step==1?0x33:0xcc));for(size_t i=0;i<verified.size();++i)verified[i]=uint8_t(i*17+step);
@@ -31,6 +43,8 @@ int main(int argc,char**argv){try{
   p105::Best a{step==1?1.f:3.f,100,0,0},b{2.f,int32_t(p105::prefix+7),0,0};
   std::memcpy(pointer(0,rt[0]->best),&b,16);std::memcpy(pointer(1,rt[1]->best),&a,16);
   rt[1]->export_hidden(box,step,step+31,step);
+  require(p105::load(box.request)==uint32_t(step-1),"hidden published before completed copy");
+  rt[1]->publish_hidden(box);
   rt[0]->service(box,step,step+31,step,[&]{++callbacks;});
   require(!std::memcmp(pointer(0,rt[0]->hidden),verified.data(),5120),"suffix used speculative hidden");
   require(!std::memcmp(pointer(0,stream),speculative.data(),20480)&&es[0]->history0==123+step&&es[0]->history1==456+step,"suffix mutated speculative state");
@@ -41,7 +55,7 @@ int main(int argc,char**argv){try{
  bool cancelled=false;box.position=34;try{rt[0]->service(box,3,34,3,[]{throw std::runtime_error("cancel");});}catch(const std::exception&){cancelled=true;}require(cancelled&&p105::load(box.reply)==2,"cancel published");
  p105::publish(box.abort,1);bool aborted=false;try{rt[0]->service(box,3,34,3,[]{});}catch(const std::exception&){aborted=true;}require(aborted,"peer exit ignored");
  for(int r=0;r<2;++r){rt[r].reset();es[r]->shutdown();es[r].reset();}
- std::cout<<"{\"passed\":true,\"device_executed\":false,\"verified_hidden_hit_miss\":true,\"private_state_unchanged\":true,\"stale_duplicate_cancel_exit_refused\":true,\"callbacks\":"<<callbacks<<"}\n";return 0;
+ std::cout<<"{\"passed\":true,\"device_executed\":false,\"loaded_head_rows_compared\":248320,\"verified_hidden_hit_miss\":true,\"private_state_unchanged\":true,\"stale_duplicate_cancel_exit_refused\":true,\"callbacks\":"<<callbacks<<"}\n";return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}
 '''.replace('ROOT', 'fs::path('+json.dumps(str(P))+')')
  # No new hash implementation: pass the sealed selection digest explicitly.
@@ -52,6 +66,7 @@ int main(int argc,char**argv){try{
  link=list(next(r['command'] for r in cmds if r['name']=='gnu-host-link'));link=[x for x in link if not x.endswith('/entry-main.o') and not x.endswith('own-rt-iq3-entry.cpp.o')];link.insert(link.index('-o'),str(S/'entry.o'));link[link.index('-o')+1]=str(S/'fixture');commands.append(link)
  for i,cmd in enumerate(commands):
   with turn(),(S/f'build-{i}.log').open('w') as log:subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=600)
+ (S/'entry.o').unlink() # reproducible intermediate, not gate evidence
  runs=[]
  for choice in ('head-split-compute','head-split-bcs'):
   dest=S/'scratch';cmd=[str(S/'fixture'),str(P/'selections'/choice/'selection.json'),str(dest)]

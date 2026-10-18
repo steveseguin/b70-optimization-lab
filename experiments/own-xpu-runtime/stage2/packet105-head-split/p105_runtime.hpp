@@ -4,6 +4,7 @@ namespace p105 {
 // Private auxiliary state. Never inserted in target/draft buffers or snapshots.
 struct Runtime {
  Engine& e;bool bcs;Allocation hidden=0,logits=0,index=0,error=0,active=0,position=0,workspace=0,best=0,staging=0;
+ ownrt::Event export_event=0;uint32_t export_sequence=0;int export_position=-1,export_fixture=-1;std::chrono::steady_clock::time_point export_started;
  std::vector<ownrt::PreparedCompute> suffix_commands;
  std::ofstream timings;
  explicit Runtime(Engine& engine):e(engine),bcs(e.head_choice()=="head-split-bcs"),timings(e.a.output/"p105-transfers.jsonl") {
@@ -34,10 +35,22 @@ struct Runtime {
  void export_hidden(Mailbox& box,uint32_t sequence,int pos,int fixture){
   require(e.a.rank==1&&sequence&&fixture>0,"p105 export identity");
   require(!load(box.abort)&&load(box.request)==load(box.reply)&&sequence>load(box.request),"p105 outstanding/stale export");
-  e.drain(); // final.mix's last writer, including final normalization, is complete.
-  transfer(staging,hidden,hidden_bytes,"hidden-export");
+  require(!export_event,"p105 duplicate hidden export");
+  // CopyEngine binds the current final.mix writer event. BCS waits that event
+  // on its own queue; the following prefix head only reads the same input.
+  export_started=std::chrono::steady_clock::now();CopyScope scope(bcs);ownrt::CopyEngine copy(e.dev(0));
+  export_event=copy.copy(staging,0,hidden,0,hidden_bytes,{});
+  export_sequence=sequence;export_position=pos;export_fixture=fixture;
+ }
+ void publish_hidden(Mailbox& box){
+  require(e.a.rank==1&&export_event&&!load(box.abort),"p105 hidden publication ownership");
+  // Called just after prefix submission. Do not retire events: that head is
+  // still running. Both queues are drained by the normal half boundary.
+  e.wait(0,export_event);e.guard();require(!load(box.abort),"p105 cancelled hidden export");
   std::memcpy(box.hidden,e.dev(0).arena.row(staging).pointer,hidden_bytes);
-  box.position=pos;box.fixture=fixture;publish(box.request,sequence);
+  box.position=export_position;box.fixture=export_fixture;publish(box.request,export_sequence);
+  timings<<"{\"leg\":\"hidden-export\",\"placement\":\""<<(bcs?"bcs":"compute")<<"\",\"bytes\":5120,\"host_dependency_wait_us\":"<<Engine::ms(export_started)*1000<<",\"prefix_submitted_before_publication\":true,\"backend\":"<<ownrt::quote(e.dev(0).identity())<<"}\n";
+  require(bool(timings),"p105 export timing write");export_event=0;
  }
  template<class Cancel> void service(Mailbox& box,uint32_t seq,int pos,int fixture,Cancel cancel){
   require(e.a.rank==0&&seq&&fixture>0,"p105 suffix ownership");

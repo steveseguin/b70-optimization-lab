@@ -33,10 +33,10 @@ def admit(root, seal, receipt, dispatch, name):
             [r['target_layers'] for r in configuration['ranks']] == [boundary, 48-boundary],
             'memory-plan rank/layer ownership differs')
     policy = read(POLICY)
-    require(root.parent.name=='selections' and root.parent.parent==POLICY.parent, 'packet97 selection required')
+    require(root.parent.name=='selections' and root.parent.parent==POLICY.parent, 'packet105 selection required')
     audit_path=root/'placement-audit.json'
     require(seal['sources'].get(str(audit_path.relative_to(ROOT)))==sha(audit_path), 'unsealed placement audit')
-    require(seal['sources'].get(str(POLICY.relative_to(ROOT)))==sha(POLICY), 'unsealed packet97 placement policy')
+    require(seal['sources'].get(str(POLICY.relative_to(ROOT)))==sha(POLICY), 'unsealed packet105 placement policy')
     audit=read(audit_path)
     require(audit['placement']==name and audit['draft_rank']==rank and audit['target_split']==split and audit['layer_boundary']==boundary, 'placement differs from sealed selection')
     require(audit['dispatch_sha256']==sha(dispatch), 'placement dispatch changed')

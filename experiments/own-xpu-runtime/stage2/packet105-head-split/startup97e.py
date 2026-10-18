@@ -49,6 +49,7 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;std::unique_ptr<mtp36::D
     for label,cmd in [('compile',compile),('link',link)]:
         with turn(),(S/(label+'.log')).open('w') as log:
             subprocess.run(cmd,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,check=True,timeout=600)
+    (S/"entry.o").unlink()  # reproducible intermediate; fixture remains hash-bound
     return generated,[compile,link]
 
 def native(cmd, *, old=False):

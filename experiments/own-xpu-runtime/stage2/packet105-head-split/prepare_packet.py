@@ -5,10 +5,12 @@ from bundle_selection import aliases,name,selection
 from memory_plans import plan
 def main():
  limits();build=provenance();sources=dict(build['sources'])
- reports={leaf:json.loads((P/leaf).read_text()) for leaf in ('evidence/cpu-byte-identity.json','evidence/full-shape.json','evidence/runtime-mock.json','evidence/controller.json','startup97e.json')}
+ reports={leaf:json.loads((P/leaf).read_text()) for leaf in ('evidence/cpu-byte-identity.json','evidence/full-shape.json','evidence/runtime-mock.json','evidence/controller.json','evidence/startup-refusals.json','evidence/guardrails.json','startup97e.json')}
  for leaf,r in reports.items():
   assert r['passed'] and r['device_executed'] is False,leaf
   check_map(ROOT,r['sources']);sources.update(r['sources']);sources[str((P/leaf).relative_to(ROOT))]=sha(P/leaf)
+ from startup_receipt97e import verify as verify_startup
+ verify_startup()
  startup=reports['startup97e.json'];assert startup['compositions']==3 and startup['windows_per_composition']==11 and startup['total_windows']==33
  archive=startup['archive'];assert sha(ROOT/archive['path'])==archive['sha256'];sources[archive['path']]=archive['sha256']
  shape=reports['evidence/full-shape.json'];assert len(shape['runs'])==6
@@ -21,6 +23,8 @@ def main():
  # Parent composition outputs change while chains run. No seal binds them.
  forbidden=('bundle-selection.json','selection-dry-run.json','composition-selection.json','/ops/')
  assert not any('packet105-head-split' not in n and any(k in n for k in forbidden) for n in sources)
+ for f in [*(P/'build/input').glob('*'),P.parent/'suite-inputs-20261012/code-review/plan.tsv',*[P/n for n in ('kernel-registry.json','k2-class-registry.json','extension-slots.json','runtime-revision.json','chain-registration.json','base-memory-plan.json')]]:
+  if f.is_file():sources[str(f.relative_to(ROOT))]=sha(f)
  check_map(ROOT,sources)
  from bootstrap import install
  install();spec=importlib.util.spec_from_file_location('p105_generic_seal',P.parent/'screen/seal.py');generic=importlib.util.module_from_spec(spec);spec.loader.exec_module(generic)

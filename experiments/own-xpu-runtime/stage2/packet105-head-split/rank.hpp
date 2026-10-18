@@ -155,6 +155,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
   if(e.progress_pending&&e.progress_callback)e.progress_callback();
   if(l.label=="logits"&&e.head_export)e.head_export(request.sequence,request.position,request.fixture);
   e.enqueue(l,e.logical);
+  if(l.label=="logits"&&e.head_publish)e.head_publish();
   if(e.progress_pending&&e.progress_callback)e.progress_callback();
   if(ready?ready->layer_end:ends(l.label,".ffn.combine")) {
    int layer=ready?ready->layer:std::stoi(l.label.substr(4));
@@ -253,6 +254,7 @@ static int run_rank(const Options& a) {
   static_assert(sizeof(p105::Mailbox)<=slot_bytes);
   if(head_runtime&&a.rank==1){
    engine->head_export=[&](int seq,int pos,int fixture){require(native_active,"p105 requires native controller");head_runtime->export_hidden(head_box,uint32_t(seq),pos,fixture);};
+   engine->head_publish=[&](){head_runtime->publish_hidden(head_box);};
    engine->head_merge=[&](int seq,int pos,int fixture){head_runtime->merge_target(head_box,uint32_t(seq),pos,fixture,pipeline_cancel_check);};
   }
   SpeculativeImage image(*engine);

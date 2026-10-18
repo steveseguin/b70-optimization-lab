@@ -792,6 +792,7 @@ public:
   }
   std::set<Allocation> head_auxiliary; // private p105 scratch, never target/draft state
   std::function<void(int,int,int)> head_export,head_merge;
+  std::function<void()> head_publish;
   bool progress_pending=false;
   std::function<void()> progress_callback; // same-thread draft readback publication
   void wait(int c, ownrt::Event e) {
@@ -897,6 +898,7 @@ public:
     if(halfcache)expanded_bytes=size_t(t.shape[0])*t.shape[1]*p90::expert_stride(t.shape.back());
     if(hccache){require(t.shape.size()==2&&t.shape[0]==10240&&t.shape[1]==320&&type==iq3::Type::Q8_0,"p90 HC shape");expanded_bytes=size_t(t.shape[0])*p90::hc_stride;}
     const bool head_split=name=="output.weight"&&split_head();
+    if(head_split)require(type==iq3::Type::Q6_K&&t.shape.size()==2&&t.shape[0]==248320&&t.shape[1]==2560,"p105 Q6 target head shape");
     const size_t load_rows=head_split?(a.rank==0?p105::suffix:p105::prefix):size_t(t.shape[0]);
     const size_t first_row=head_split&&a.rank==0?p105::prefix:0;
     if(head_split)expanded_bytes=load_rows*3380;

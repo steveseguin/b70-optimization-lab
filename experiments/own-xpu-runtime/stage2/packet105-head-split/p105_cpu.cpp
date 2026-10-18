@@ -26,9 +26,10 @@ int main(int argc,char**argv){try{
  std::vector<uint16_t>x(2560),ey(vocab),ay(vocab);
  auto head=[&](uint8_t*w,unsigned n,uint16_t*y){p33::Kernel<0,iq3::Type::Q6_K,2560,1>op;op.b.rows=n;op.b.count=op.b.experts=1;op.b.rb=3380;std::array<void*,9> ptrs{w,w,x.data(),y,y,x.data(),y,y,y};op.run(ptrs);};
  unsigned tests=0;
- for(unsigned token=0;token<3;++token){for(unsigned k=0;k<2560;++k)x[k]=iq3::bf16_bits(float(int((k*7+token*19)%113)-56)/64);
+ for(unsigned token=0;token<5;++token){for(unsigned k=0;k<2560;++k)x[k]=iq3::bf16_bits(float(int((k*7+token*19)%113)-56)/64);
+  if(token==3)x[0]=0x7fc1;if(token==4)x[0]=0x7f80;
   head(weights.data(),vocab,ey.data());head(weights.data(),prefix,ay.data());head(suffix_weights.data(),suffix,ay.data()+prefix);
-  check(ey.data(),ay.data(),vocab*2);auto e=reduce(ey.data(),vocab,0),a=merge(reduce(ay.data(),prefix,0),reduce(ay.data()+prefix,suffix,prefix));check(&e,&a,16);++tests;
+  check(ey.data(),ay.data(),vocab*2);auto e=reduce(ey.data(),vocab,0),a=merge(reduce(ay.data(),prefix,0),reduce(ay.data()+prefix,suffix,prefix));if(!e.error)check(&e,&a,16);else{check(&e.error,&a.error,4);int32_t emitted_e=e.error?-1:e.index,emitted_a=a.error?-1:a.index;check(&emitted_e,&emitted_a,4); }++tests;
  }
  // Forced rounded ties, boundary rows, signed zeros, infinities and NaNs.
  // Invalid argmax is an error, never a published token. Finite payloads match
@@ -38,9 +39,9 @@ int main(int argc,char**argv){try{
   else if(mode<6){std::fill(ey.begin(),ey.end(),uint16_t(mode==4?0x8000:0));ey[prefix]=mode==4?0:0x8000;}
   else {ey[(mode%3==0)?0:(mode%3==1)?prefix-1:prefix]=(mode<8?0x7f80:mode<10?0xff80:0x7fc1);}
   auto e=reduce(ey.data(),vocab,0),a=merge(reduce(ey.data(),prefix,0),reduce(ey.data()+prefix,suffix,prefix));
-  if(!e.error)check(&e,&a,16);else{if(!a.error)throw std::runtime_error("nonfinite escaped");int32_t no_token=-1;check(&e.error,&a.error,4);check(&no_token,&no_token,4);}++tests;
+  if(!e.error)check(&e,&a,16);else{if(!a.error)throw std::runtime_error("nonfinite escaped");int32_t emitted_e=e.error?-1:e.index,emitted_a=a.error?-1:a.index;check(&e.error,&a.error,4);check(&emitted_e,&emitted_a,4);}++tests;
  }
  bool refused=false;try{merge({0,0,0,0},{0,int(prefix)-1,0,0});}catch(const std::invalid_argument&){refused=true;}if(!refused)throw std::runtime_error("partition bound");
- std::ofstream(out/"native.json")<<"{\"passed\":true,\"device_executed\":false,\"full_vocab_tokens\":3,\"cases\":"<<tests<<",\"invalid_token_published\":false}\n";
+ std::ofstream(out/"native.json")<<"{\"passed\":true,\"device_executed\":false,\"full_vocab_tokens\":5,\"cases\":"<<tests<<",\"invalid_token_published\":false}\n";
  std::cout<<"full-vocabulary logits, exact finite argmax, ties and nonfinite refusal PASS\n";return 0;
 }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}

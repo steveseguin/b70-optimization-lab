@@ -1,23 +1,9 @@
-Traceback (most recent call last):
-  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/startup97e.py", line 253, in <module>
-    if __name__=='__main__':main()
-                            ^^^^^^
-  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/startup97e.py", line 186, in main
-    shared=shared_fixtures()
-           ^^^^^^^^^^^^^^^^^
-  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/startup97e.py", line 78, in shared_fixtures
-    import window as w
-  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/window.py", line 13, in <module>
-    from fixture_support import journal,ldd_preflight,oracle_gate,fixture_receipt_gate,k1_gate,sequential_teardown
-  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/fixture_support.py", line 16, in <module>
-    from merge_dispatch import validate as validate_dispatch, covered_by_k1, REGISTRY, SECTIONS
-  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/merge_dispatch.py", line 12, in <module>
-    REGISTRY=json.loads((HERE/'kernel-registry.json').read_text())
-                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
-    with self.open(mode='r', encoding=encoding, errors=errors) as f:
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
-    return io.open(self, mode, buffering, encoding, errors, newline)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet105-head-split/kernel-registry.json'
+K0 shared CPU fixture startup PASS
+K1a shared CPU fixture startup PASS
+K1b shared CPU fixture startup PASS
+K2 shared CPU fixture startup PASS
+W0p actual CPU canary handshake PASS
+production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production all 11 windows PASS
+production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--head-split-compute--production all 11 windows PASS
+production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--head-split-bcs--production all 11 windows PASS
+{"passed": true, "seconds": 302.82986008300213, "max_rss_kib": 1250892, "total_windows": 33}

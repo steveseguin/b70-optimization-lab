@@ -125,6 +125,7 @@ def main():
  with turn(),(S/'compile.log').open('w') as f:subprocess.run(command,stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,check=True,timeout=600)
  link=list(next(r['command'] for r in cmds if r['name']=='gnu-host-link'));link=[x for x in link if not x.endswith('/entry-main.o') and not x.endswith('own-rt-iq3-entry.cpp.o')];link.insert(link.index('-o'),str(S/'entry.o'));link[link.index('-o')+1]=str(S/'fixture')
  with turn(),(S/'link.log').open('w') as f:subprocess.run(link,stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,check=True,timeout=300)
+ (S/'entry.o').unlink() # reproducible intermediate, not gate evidence
  report=dict(passed=False,device_executed=False,model_payload_read=False,runs=[],sources={},commands=[command,link])
  for label,v in views().items():
   path=S/'selection.json';save(path,selection(v));ledger=plan(v)
