@@ -1,0 +1,58 @@
+{
+  "schema": "packet118.source-decision.v1",
+  "source_rule": "packet118.fixed-prefix80128.v1",
+  "evidence_rule": "identical-selection-v1",
+  "threshold_ratio": 1.01,
+  "control": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64+halfcache",
+    "host": "ordered",
+    "route": "fast",
+    "norm": "production",
+    "recurrence": "rec-both-plus",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "down": "tile16",
+    "draft_attention": "split32",
+    "other_fusion": "production",
+    "target_head": "production"
+  },
+  "candidate": {
+    "dense": "production",
+    "hc": "hc-wide",
+    "experts": "wide64+halfcache",
+    "host": "ordered",
+    "route": "fast",
+    "norm": "production",
+    "recurrence": "rec-both-plus",
+    "draft_head": "production",
+    "head": "production",
+    "hc_norm": "production",
+    "down": "tile16",
+    "draft_attention": "split32",
+    "other_fusion": "fused",
+    "target_head": "split",
+    "draft_prefix": "80128"
+  },
+  "sources": {
+    "bundle6-decision.json": {
+      "path": "experiments/own-xpu-runtime/ops/packet118-orchestration/inputs/bundle6-decision.json",
+      "sha256": "f1536a32c2b39a09d543520f5c6e9afa7a754ef79c88e036f8ddbdd59c1358e5"
+    },
+    "prefix-preregistration.json": {
+      "path": "experiments/own-xpu-runtime/ops/packet118-orchestration/inputs/prefix-preregistration.json",
+      "sha256": "e34fa40630fcf3143112f5864f82b0d57529755ec0d0a175feccb9ef84fd0c68"
+    },
+    "prefix-selection.json": {
+      "path": "experiments/own-xpu-runtime/ops/packet118-orchestration/inputs/prefix-selection.json",
+      "sha256": "77b0169d87d55b184eb04266b78067f1b51c1fb811ace8207b51dc8109861414"
+    }
+  },
+  "device_executed": false,
+  "extra_dimension_selected": true,
+  "control_lineage": "experiments/own-xpu-runtime/stage2/packet103-record-bundle/selections/production--hc-wide--wide64+halfcache--ordered--fast--production--rec-both-plus--production--production--production--tile16--split32--placement-1",
+  "control_seal_sha256": "5384395381113d28e60039b5ec759c6179c003e464f4b125ac421866fb7c8126",
+  "prefix_rule": "80128 fixed by packet114 non-benchmark preregistration; never retune from benchmark data"
+}

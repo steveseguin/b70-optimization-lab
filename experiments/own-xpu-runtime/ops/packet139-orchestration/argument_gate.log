@@ -1,0 +1,47 @@
+K0 PASS
+K1a PASS
+K1b PASS
+K2 PASS
+W0p PASS
+KD PASS
+W2m PASS
+WS PASS
+WSs PASS
+WS128x PASS
+WS128 PASS
+old-k2 PASS
+k2-replay PASS
+old-oracle PASS
+real-oracle PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet139-orchestration/argument_gate.py", line 221, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet139-orchestration/argument_gate.py", line 205, in main
+    assert cp.returncode==0, name+': '+cp.stderr[-3500:]+' '+cp.stdout[-1000:]
+           ^^^^^^^^^^^^^^^^
+AssertionError: queue: Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet139-orchestration/argument_gate.py", line 221, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet139-orchestration/argument_gate.py", line 194, in main
+    result=queue_probe() if a.probe=='queue' else oracle_probe(a.probe=='old-oracle')
+           ^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet139-orchestration/queue_gate.py", line 146, in probe
+    chain_entry.main()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet139-orchestration/chain_entry.py", line 47, in main
+    return chain103.main()
+           ^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet139-record-bundle/chain103.py", line 30, in main
+    if role=='queue':return q.main()
+                            ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet139-record-bundle/queue_runner.py", line 279, in main
+    run(args)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet139-record-bundle/queue_runner.py", line 168, in run
+    verify()  # Selection/device decision must be sealed before any queue write or launch.
+    ^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet139-record-bundle/chain_seal.py", line 60, in verify
+    require(row==checked(),'chain source/build/selection binding changed')
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet139-record-bundle/chain_seal.py", line 13, in require
+    if not value: raise ValueError(message)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: chain source/build/selection binding changed
+ 

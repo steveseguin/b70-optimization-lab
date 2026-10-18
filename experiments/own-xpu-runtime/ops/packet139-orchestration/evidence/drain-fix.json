@@ -1,0 +1,86 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "scanner_sha256": "70d18ffb0abf9cbb59ea84737e09ecb700951805c6b3dc499f40e42d476aa62f",
+  "reports": [
+    {
+      "schema": "drain-fix-report.v1",
+      "root": "experiments/own-xpu-runtime/stage2/packet139-record-bundle",
+      "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+      "counts": {
+        "FIXED": 3,
+        "UNFIXED": 0
+      },
+      "passed": true,
+      "files": [
+        {
+          "path": "experiments/own-xpu-runtime/stage2/packet139-record-bundle/drain_gate.py",
+          "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+          "status": "FIXED",
+          "sleeps": [
+            {
+              "line": 51,
+              "status": "FIXED"
+            }
+          ]
+        },
+        {
+          "path": "experiments/own-xpu-runtime/stage2/packet139-record-bundle/v5/conditions.py",
+          "sha256": "7b58f5a499a7358b61873ced66dd56f229f3559b731cdf1ff69114f9c3eec836",
+          "status": "FIXED",
+          "sleeps": [
+            {
+              "line": 89,
+              "status": "FIXED"
+            }
+          ]
+        },
+        {
+          "path": "experiments/own-xpu-runtime/stage2/packet139-record-bundle/v5/drain_gate.py",
+          "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+          "status": "FIXED",
+          "sleeps": [
+            {
+              "line": 51,
+              "status": "FIXED"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "schema": "drain-fix-report.v1",
+      "root": "experiments/own-xpu-runtime/ops/packet139-orchestration",
+      "scope": "all drain_gate.py and matching text files, including hidden/ignored files; excludes .git, __pycache__, binary content and symlink directory traversal",
+      "counts": {
+        "FIXED": 2,
+        "UNFIXED": 0
+      },
+      "passed": true,
+      "files": [
+        {
+          "path": "experiments/own-xpu-runtime/ops/packet139-orchestration/drain_gate.py",
+          "sha256": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+          "status": "FIXED",
+          "sleeps": [
+            {
+              "line": 51,
+              "status": "FIXED"
+            }
+          ]
+        },
+        {
+          "path": "experiments/own-xpu-runtime/ops/packet139-orchestration/lanequeue.py",
+          "sha256": "85e07a88a0e6fddaa0cd4ae1a39180014119b47d65ec88eefba4a546ffce3008",
+          "status": "FIXED",
+          "sleeps": [
+            {
+              "line": 715,
+              "status": "FIXED"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
