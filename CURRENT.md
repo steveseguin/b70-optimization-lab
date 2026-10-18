@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet100b route capture prepared on CPU:** The new lane-B job
+captures both ranks' target expert routes for two standard 64-token requests,
+then checks every output against the existing oracle. The follow-on micro uses
+packet100's unchanged kernels and 15% gate. Both compilers, both full-size
+startup checks, 23 Python checks and six temporary queue plans pass. The build
+is about 66 MB. Real capture, device equality and speed remain pending. No GPU,
+service, live queue or frozen packet changed. Use the new capture/micro proposals
+and updated proposed B/A grids; records stay on A.
+[Evidence and handoff](notes/2026-10-18-own-runtime-packet100b.md).
+
 **October 18, packet98c native switching built on CPU:** A separate copy of
 packet97 can switch route, recurrence, HC gate and draft attention without
 reloading weights. Both builds, full-size capture/reset checks, layout refusals,
