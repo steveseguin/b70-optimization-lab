@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 18, packet58n one-card analysis and single-lever screen prepared on CPU:**
+The losing bundle spends much more time reading its host lookup inputs, with
+many more major page faults. Its expert-cache counts and bytes match production
+at every position; the receipts do not prove why the host state changed.
+The small retained tests favor tile16 even for host weights, so a new proposal
+tests tile16 alone between two production runs in a 33–39 minute whole-host
+gap. All 82 CPU checks and three temporary plans pass; the unchanged binaries
+use 39.53 MB. No device, service or live queue changed.
+[Analysis and proposed screen](notes/2026-10-18-own-runtime-packet58n.md).
+
 **October 18, packet58m one-card port chain prepared on CPU:** The copied port
 has all seven record windows, unchanged memory bounds and whole-host exclusion.
 Real parser/startup/oracle checks, 48 K1 byte checks, 110 Python checks and the
