@@ -525,5 +525,109 @@ class ReportFailureTests(QueueTestCase):
         self.assertEqual([r['job']['name'] for r in self.done()], ['one', 'two'])
 
 
+class LaneLatchTests(unittest.TestCase):
+    """Real admission guards with temporary latches and a fake fault counter."""
+
+    BOOT = '2cba7160-0000-0000-0000-000000000000'
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.latches = self.root / 'screen/v3'
+        self.latches.mkdir(parents=True)
+        for name in ('STAGE', 'COORD'):
+            patcher = patch.object(q, name, self.root)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        self.backend = q.Backend()
+        patcher = patch.object(self.backend, 'faults', return_value=q.BASE)
+        self.counter = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def latch(self, lane=None, name=None):
+        path = self.latches / (name or f'fault-{self.BOOT}{"-" + lane if lane else ""}.json')
+        path.write_text(json.dumps(dict(boot_id=self.BOOT, reason='screen failed or interrupted')))
+        self.addCleanup(lambda: self.assertTrue(path.exists(), 'latch was removed'))
+        return path
+
+    def assert_both_stop(self, reason):
+        for lane in ('A', 'B'):
+            with self.subTest(lane=lane), self.assertRaisesRegex(ValueError, reason):
+                self.backend.guards(lane)
+
+    def test_lane_a_latch_allows_b_only_when_count_unchanged(self):
+        path = self.latch('A')
+        before = path.read_bytes()
+        self.assertEqual(self.backend.guards('B'), q.BASE)
+        with self.assertRaisesRegex(ValueError, 'fault latch'):
+            self.backend.guards('A')
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_lane_b_latch_allows_a_only(self):
+        self.latch('B')
+        self.assertEqual(self.backend.guards('A'), q.BASE)
+        with self.assertRaisesRegex(ValueError, 'fault latch'):
+            self.backend.guards('B')
+
+    def test_third_fault_stops_both_even_after_backend_restart(self):
+        self.latch('A')
+        self.assertEqual(self.backend.guards('B'), q.BASE)
+        self.counter.return_value = 3
+        self.assert_both_stop('kernel fault count')
+        with patch.object(q.Backend, 'faults', return_value=3):
+            for lane in ('A', 'B'):
+                with self.assertRaisesRegex(ValueError, 'kernel fault count'):
+                    q.Backend().guards(lane)
+
+    def test_fault_change_without_latch_still_stops_both(self):
+        for count in (1, 3):
+            self.counter.return_value = count
+            self.assert_both_stop('kernel fault count')
+
+    def test_laneless_latch_stops_both(self):
+        self.latch()
+        self.assert_both_stop('fault latch')
+
+    def test_ambiguous_or_other_boot_latches_remain_global(self):
+        for name in ('fault-old-B.json', f'fault-{self.BOOT}-C.json',
+                     f'fault-{self.BOOT}-B.json.tmp',
+                     'fault-ffffffff-0000-0000-0000-000000000000-B.json'):
+            stage = self.root / name
+            self.latches = stage / 'screen/v3'
+            self.latches.mkdir(parents=True)
+            with self.subTest(name=name), patch.object(q, 'STAGE', stage):
+                path = self.latch(name=name)
+                self.assert_both_stop('fault latch')
+                self.assertTrue(path.exists())
+
+    def test_two_lane_latches_stop_both(self):
+        self.latch('A')
+        self.latch('B')
+        self.assert_both_stop('fault latch')
+
+    def test_unreadable_fault_counter_stops_both(self):
+        self.latch('A')
+        for count in (None, '2', 2.0, True):
+            with self.subTest(count=count):
+                self.counter.return_value = count
+                self.assert_both_stop('kernel fault count')
+        for error in (ValueError('journal unavailable'), PermissionError('journal unreadable'),
+                      subprocess.TimeoutExpired('journalctl', 30)):
+            self.counter.side_effect = error
+            for lane in ('A', 'B'):
+                with self.assertRaises(type(error)):
+                    self.backend.guards(lane)
+
+    def test_other_lane_latch_does_not_bypass_dead_owner(self):
+        self.latch('A')
+        marker = self.root / 'active-lane-B.json'
+        marker.write_text(json.dumps(dict(pid=12345)))
+        with patch.object(q.os, 'kill', side_effect=ProcessLookupError()):
+            with self.assertRaisesRegex(ValueError, 'dead owner'):
+                self.backend.guards('B')
+        self.assertTrue(marker.exists())
+
+
 if __name__ == '__main__':
     unittest.main()

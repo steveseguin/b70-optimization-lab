@@ -170,7 +170,8 @@ class Backend:
 
     def guards(self, lane):
         faults = self.faults()
-        require(faults == BASE, 'kernel fault count changed from reviewed base 2')
+        require(type(faults) is int and faults == BASE,
+                'kernel fault count changed from reviewed base 2 or is unreadable')
         marker = COORD / f'active-lane-{lane}.json'
         if os.path.lexists(marker):
             try:
@@ -186,7 +187,16 @@ class Backend:
             except (ValueError, OSError):
                 state = 'unknown'
             raise ValueError(f'active lane marker has {state} owner; retained for coordinator review: {marker}')
-        require(not any((STAGE / 'screen/v3').glob('fault-*')), 'screen/v3 fault latch present; retained for review')
+        for latch in (STAGE / 'screen/v3').glob('fault-*'):
+            # V4 records the lane in the filename, not the JSON body. Only a
+            # known other-lane latch on the reviewed boot can be scoped locally.
+            # The global journal check above must pass first; never learn a
+            # higher baseline from a latch or a restarted driver.
+            match = re.fullmatch(
+                r'fault-([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})-([AB])\.json',
+                latch.name)
+            require(match is not None and match[1].startswith(BOOT) and match[2] != lane,
+                    'screen/v3 fault latch present; retained for review: ' + str(latch))
         return faults
 
     def review(self, job, directory):
