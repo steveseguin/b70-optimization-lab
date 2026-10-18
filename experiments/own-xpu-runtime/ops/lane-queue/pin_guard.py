@@ -245,6 +245,13 @@ def immutable_reason(path, digest, packet, oracle_targets, stage):
             return 'hash-pinned parent binary'
     if completed_evidence(path, stage):
         return 'completed chain evidence'
+    # A packet's own coordinator proposals (READY-FOR-DEVICE files record their hashes).
+    # Only proposed-p<N>-* for this packet's number; the drift check below still applies.
+    lanequeue = stage.parent / 'ops/lane-queue'
+    number = packet.name.split('-', 1)[0][len('packet'):]
+    if (number and path.parent == lanequeue and path.suffix == '.txt'
+            and path.name.startswith('proposed-p' + number + '-')):
+        return "packet's own coordinator proposal (hash still checked)"
     return None
 
 
