@@ -1,0 +1,8 @@
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet109-other-fusion/build/full-shape/entry.cpp: In function ‘void census(const Engine&, const std::filesystem::__cxx11::path&)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet109-other-fusion/build/full-shape/entry.cpp:23:59: error: passing ‘const Engine’ as ‘this’ argument discards qualifiers [-fpermissive]
+   23 |    for(size_t k=0;k<cmd.ids.size();++k){const auto&r=e.dev(0).arena.row(cmd.ids[k]);f<<(k?",":"")<<"{\"id\":"<<cmd.ids[k]<<",\"label\":"<<ownrt::quote(r.label)<<",\"bytes\":"<<r.bytes<<",\"category\":"<<int(r.category)<<"}";}
+      |                                                      ~~~~~^~~
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet109-other-fusion/build/full-shape/entry.cpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet103-record-bundle/main.cpp:735:18: note:   in call to ‘ownrt::Device& Engine::dev(int)’
+  735 |     // Only move sibling projections whose shared input already exists here.
+      |                  ^~~

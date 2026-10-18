@@ -20,7 +20,7 @@ def sources():
     paths.update(HERE / 'evidence' / (n + '.json') for n in ('build','full-shape','reset-bytes','protocol','native-source-audit','cpu-byte-identity','startup109'))
     paths.add(HERE/'native-overlay.patch')
     paths.update(HERE / n for n in ('v4-copy-provenance.json','selection-provenance.json'))
-    paths.update(HERE / n for n in ('CPU-PREPARATION-CLOSEOUT.md','DO-NOT-REPEAT.md','LAYOUT-AUDIT.md','RETENTION.md','source-copy-provenance.json'))
+    paths.update(HERE / n for n in ('CPU-PREPARATION-CLOSEOUT.md','DO-NOT-REPEAT.md','LAYOUT-AUDIT.md','RETENTION.md','PREREGISTRATION.md','source-copy-provenance.json'))
     paths.update(HERE / name for name in ('reference.json','integration.patch','screen-integration.patch'))
     paths.add(HERE / 'placements.json')
     paths.update(HERE / name for name in ('chain-reference.json', 'chain-window-drain.patch',

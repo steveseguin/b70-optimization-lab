@@ -38,6 +38,22 @@ activation and tail boundaries.
 
 Both selections passed all eleven chain-window CPU startup paths, including
 KD's actual host/device argument paths. Both ranks passed five-view recapture,
-fresh-candidate capture equality and VRAM admission. Final seals and the
-proposed lane-B bracket remain in progress. No GPU, service, host setting or
-live queue changed.
+fresh-candidate capture equality and VRAM admission. The final native reset
+fixture passed both ranks twice, including poisoned mutable bytes and protected
+weights. Two miniature five-view IPC repeats matched fresh parent/new-binary
+references. The small fixtures explicitly use wide64 expert layout because
+packet100 correctly rejects miniature shapes; real selected layouts are covered
+by the full-shape and eleven-window checks.
+
+Completed 2026-10-18, within the three-hour box. Native and wrapper seals pass,
+including 127 wrapper tests. The [lane B proposal](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p109-v5-B.txt)
+passed planning in a temporary queue copy. It requests one loaded A/B/A/B/A
+bracket, incident64 plus twelve 128-token prompts per view, with exact tokens
+against the unchanged oracle. Expected runtime is at most 15 minutes and the
+watchdog is 60 minutes. The build occupies about 94 MiB, below the 300 MB cap.
+
+The next evidence is the actual engine screen. Device quality and speed are
+unmeasured; 72 fewer launches per half is not a speed claim. Preparation used
+no GPU, service, sudo or host setting changes, and did not change live queues.
+See the [CPU closeout](../experiments/own-xpu-runtime/stage2/packet109-other-fusion/CPU-PREPARATION-CLOSEOUT.md)
+and [preregistered screen](../experiments/own-xpu-runtime/stage2/packet109-other-fusion/PREREGISTRATION.md).

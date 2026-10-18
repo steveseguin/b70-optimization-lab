@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet109-other-fusion/reset_gate.py", line 30, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet109-other-fusion/reset_gate.py", line 22, in main
+    with (out/f'rank{rank}-{repeat}.log').open('w') as f:subprocess.run(command,stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,check=True,timeout=180)
+                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet109-other-fusion/build/reset-bytes/fixture', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet109-other-fusion/lineage/selection.json', '6e11006ef279589ddd94f878a922095541138ab78919f6525142fc40f5047688', '0', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet109-other-fusion/build/reset-bytes/rank0-0', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet109-other-fusion/lineage/candidate.json', '486b58d47642841c5f8f48ca59411bfccc558cf3cfdef2008e680df5a7cde5f2']' returned non-zero exit status 1.
