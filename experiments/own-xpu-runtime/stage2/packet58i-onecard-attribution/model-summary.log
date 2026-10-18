@@ -1,0 +1,128 @@
+{
+  "policy_scenarios": [
+    {
+      "name": "18GB_LRU",
+      "predicted_class_balanced_tok_s": 24.338653323339745,
+      "gain_pct": 0.0
+    },
+    {
+      "name": "20.121GB_LRU_conditional_budget",
+      "predicted_class_balanced_tok_s": 25.88183960351353,
+      "gain_pct": 6.34047520901222
+    },
+    {
+      "name": "18GB_LFU",
+      "predicted_class_balanced_tok_s": 11.456635498033403,
+      "gain_pct": -52.92822759816801
+    },
+    {
+      "name": "18GB_twohit_admission",
+      "predicted_class_balanced_tok_s": 24.676314010004653,
+      "gain_pct": 1.387343343031655
+    },
+    {
+      "name": "18GB_frequency_one_prefetch_per_visit",
+      "predicted_class_balanced_tok_s": 17.53988185717781,
+      "gain_pct": -27.934049496658876
+    }
+  ],
+  "costs": {
+    "all_host_linear": {
+      "0": 0.156005475,
+      "2": 0.135582555
+    },
+    "mixed_half_host_linear": {
+      "0": 0.10399324999999998,
+      "2": 0.09253650999999999
+    }
+  },
+  "fits": [
+    {
+      "window": "WS",
+      "no_eviction_samples": 184,
+      "intercept_ms": 2.2542699841091416,
+      "slope_ms_per_fill": 0.0807666556525533,
+      "metric_residual_mean_ms": 2.873642290186637,
+      "interpretation": "Estimate/confounded: cannot identify victim-scan cost separately from fragmentation, occupancy, or scheduling."
+    },
+    {
+      "window": "WS128x",
+      "no_eviction_samples": 184,
+      "intercept_ms": 2.240534854170736,
+      "slope_ms_per_fill": 0.08102017593033646,
+      "metric_residual_mean_ms": 2.8674800210578053,
+      "interpretation": "Estimate/confounded: cannot identify victim-scan cost separately from fragmentation, occupancy, or scheduling."
+    },
+    {
+      "window": "WS128",
+      "no_eviction_samples": 184,
+      "intercept_ms": 2.1932193645905995,
+      "slope_ms_per_fill": 0.08177045094561147,
+      "metric_residual_mean_ms": 2.9428113916573584,
+      "interpretation": "Estimate/confounded: cannot identify victim-scan cost separately from fragmentation, occupancy, or scheduling."
+    }
+  ],
+  "postrouter": [
+    {
+      "name": "postrouter:all_host_linear:overlap=0:new_overhead_ms=0.48",
+      "predicted_class_balanced_tok_s": 27.6305522244825
+    },
+    {
+      "name": "postrouter:all_host_linear:overlap=0:new_overhead_ms=2.4",
+      "predicted_class_balanced_tok_s": 26.238555621105473
+    },
+    {
+      "name": "postrouter:all_host_linear:overlap=0.5:new_overhead_ms=0.48",
+      "predicted_class_balanced_tok_s": 28.695442144421072
+    },
+    {
+      "name": "postrouter:all_host_linear:overlap=0.5:new_overhead_ms=2.4",
+      "predicted_class_balanced_tok_s": 27.197000135781618
+    },
+    {
+      "name": "postrouter:all_host_linear:overlap=1:new_overhead_ms=0.48",
+      "predicted_class_balanced_tok_s": 29.845752283616875
+    },
+    {
+      "name": "postrouter:all_host_linear:overlap=1:new_overhead_ms=2.4",
+      "predicted_class_balanced_tok_s": 28.22816059556017
+    },
+    {
+      "name": "postrouter:mixed_half_host_linear:overlap=0:new_overhead_ms=0.48",
+      "predicted_class_balanced_tok_s": 26.355043193653835
+    },
+    {
+      "name": "postrouter:mixed_half_host_linear:overlap=0:new_overhead_ms=2.4",
+      "predicted_class_balanced_tok_s": 25.085634439028432
+    },
+    {
+      "name": "postrouter:mixed_half_host_linear:overlap=0.5:new_overhead_ms=0.48",
+      "predicted_class_balanced_tok_s": 27.322119144166184
+    },
+    {
+      "name": "postrouter:mixed_half_host_linear:overlap=0.5:new_overhead_ms=2.4",
+      "predicted_class_balanced_tok_s": 25.960257629375512
+    },
+    {
+      "name": "postrouter:mixed_half_host_linear:overlap=1:new_overhead_ms=0.48",
+      "predicted_class_balanced_tok_s": 28.362907694823118
+    },
+    {
+      "name": "postrouter:mixed_half_host_linear:overlap=1:new_overhead_ms=2.4",
+      "predicted_class_balanced_tok_s": 26.89810471461204
+    }
+  ],
+  "decision": {
+    "status": "closeout_no_build",
+    "threshold_tok_s": 26.774,
+    "rationale": "No measured critical-path split or one-card route replay supports a >=10% prediction. Favorable post-router sensitivities exceed it only by assigning unmeasured overlap and synchronization costs.",
+    "highest_simple_DMA_only_scenario_tok_s": 26.1082285900795,
+    "postrouter_point_prediction": null,
+    "device_quality_gate_ran": false,
+    "seal_ready_runtime_design": false,
+    "runtime_code_written": false,
+    "queue_job_created": false,
+    "ranking_basis": "Rank interpretable isolated scenarios; leave unidentifiable mechanisms unranked, not assigned fake speeds.",
+    "revisit": "A matched one-card route trace plus short bounded stage timing separating router readback, cache planning, DMA, publication and resident gate/up, within original memory admission."
+  }
+}

@@ -1,0 +1,1235 @@
+{
+  "schema": "packet58i.lever-models.v1",
+  "baseline_tok_s": 24.338653323339745,
+  "k1_estimated_remote_penalty_ms_per_missing_expert": {
+    "all_host_linear": {
+      "0": 0.156005475,
+      "2": 0.135582555
+    },
+    "mixed_half_host_linear": {
+      "0": 0.10399324999999998,
+      "2": 0.09253650999999999
+    }
+  },
+  "policy_scenarios": [
+    {
+      "name": "18GB_LRU",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 24.338653323339745,
+      "gain_pct": 0.0,
+      "assumptions": [
+        "Transfer packet55 held-out miss/fill byte ratios to WS128; this is not a native one-card route replay.",
+        "Charge K1 mixed-five-miss host-minus-resident time linearly by inferred missing experts.",
+        "Scale the ENTIRE cache wall by fill-byte ratio, including fixed costs; optimistic for smaller fill volumes.",
+        "No new CPU policy cost. Full speculative traffic is charged.",
+        "20.121 GB is conditional on proving unused allowance reusable under the same host bound; not admitted."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": 0.0,
+          "predicted_tok_s": 24.436544381170194
+        },
+        "code-review": {
+          "assumed_saved_ms": 0.0,
+          "predicted_tok_s": 24.874263656211447
+        },
+        "customer-email": {
+          "assumed_saved_ms": 0.0,
+          "predicted_tok_s": 23.96069855861266
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": 0.0,
+          "predicted_tok_s": 23.607260874807142
+        },
+        "release-plan": {
+          "assumed_saved_ms": 0.0,
+          "predicted_tok_s": 23.588931912788663
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": 0.0,
+          "predicted_tok_s": 26.628892637457735
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": 0.0,
+          "predicted_tok_s": 25.715693645295296
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": 0.0,
+          "predicted_tok_s": 25.814287454435455
+        },
+        "technical-guide": {
+          "assumed_saved_ms": 0.0,
+          "predicted_tok_s": 24.233231155924184
+        },
+        "risk-register": {
+          "assumed_saved_ms": 0.0,
+          "predicted_tok_s": 24.58010562823688
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": 0.0,
+          "predicted_tok_s": 25.26623736792564
+        },
+        "decision-memo": {
+          "assumed_saved_ms": 0.0,
+          "predicted_tok_s": 22.69079771266353
+        }
+      },
+      "miss_byte_ratio": 1.0,
+      "fill_byte_ratio": 1.0
+    },
+    {
+      "name": "20.121GB_LRU_conditional_budget",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 25.88183960351353,
+      "gain_pct": 6.34047520901222,
+      "assumptions": [
+        "Transfer packet55 held-out miss/fill byte ratios to WS128; this is not a native one-card route replay.",
+        "Charge K1 mixed-five-miss host-minus-resident time linearly by inferred missing experts.",
+        "Scale the ENTIRE cache wall by fill-byte ratio, including fixed costs; optimistic for smaller fill volumes.",
+        "No new CPU policy cost. Full speculative traffic is charged.",
+        "20.121 GB is conditional on proving unused allowance reusable under the same host bound; not admitted."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": 2.4223226133809233,
+          "predicted_tok_s": 25.974030190424912
+        },
+        "code-review": {
+          "assumed_saved_ms": 2.2234144962511215,
+          "predicted_tok_s": 26.330492569974727
+        },
+        "customer-email": {
+          "assumed_saved_ms": 2.6025073018111566,
+          "predicted_tok_s": 25.55420493447402
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": 2.723377407671265,
+          "predicted_tok_s": 25.229289242877865
+        },
+        "release-plan": {
+          "assumed_saved_ms": 2.7511718293934697,
+          "predicted_tok_s": 25.22603080432364
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": 1.719276648224395,
+          "predicted_tok_s": 27.90652107671997
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": 1.9866812122492323,
+          "predicted_tok_s": 27.100213339596774
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": 1.9884361908487609,
+          "predicted_tok_s": 27.211031422974425
+        },
+        "technical-guide": {
+          "assumed_saved_ms": 2.4904019588318818,
+          "predicted_tok_s": 25.789649016602148
+        },
+        "risk-register": {
+          "assumed_saved_ms": 2.411483959643222,
+          "predicted_tok_s": 26.12888289286383
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": 2.1401836860193657,
+          "predicted_tok_s": 26.71059655716556
+        },
+        "decision-memo": {
+          "assumed_saved_ms": 3.1230988937241797,
+          "predicted_tok_s": 24.421437674128438
+        }
+      },
+      "miss_byte_ratio": 0.7883631205778547,
+      "fill_byte_ratio": 0.7883631205778547
+    },
+    {
+      "name": "18GB_LFU",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 11.456635498033403,
+      "gain_pct": -52.92822759816801,
+      "assumptions": [
+        "Transfer packet55 held-out miss/fill byte ratios to WS128; this is not a native one-card route replay.",
+        "Charge K1 mixed-five-miss host-minus-resident time linearly by inferred missing experts.",
+        "Scale the ENTIRE cache wall by fill-byte ratio, including fixed costs; optimistic for smaller fill volumes.",
+        "No new CPU policy cost. Full speculative traffic is charged.",
+        "20.121 GB is conditional on proving unused allowance reusable under the same host bound; not admitted."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": -45.894527329948225,
+          "predicted_tok_s": 11.518502141469021
+        },
+        "code-review": {
+          "assumed_saved_ms": -42.125915350959666,
+          "predicted_tok_s": 12.146519515081497
+        },
+        "customer-email": {
+          "assumed_saved_ms": -49.308395929415056,
+          "predicted_tok_s": 10.983771828596081
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": -51.598460987688995,
+          "predicted_tok_s": 10.643018194114074
+        },
+        "release-plan": {
+          "assumed_saved_ms": -52.12506790631468,
+          "predicted_tok_s": 10.580014272567077
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": -32.57426929171304,
+          "predicted_tok_s": 14.259748430203137
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": -37.64064897375785,
+          "predicted_tok_s": 13.06721365555591
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": -37.67389966995108,
+          "predicted_tok_s": 13.0869261896921
+        },
+        "technical-guide": {
+          "assumed_saved_ms": -47.18439242188289,
+          "predicted_tok_s": 11.305817262083606
+        },
+        "risk-register": {
+          "assumed_saved_ms": -45.68917281299125,
+          "predicted_tok_s": 11.57776173996814
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": -40.54898308199836,
+          "predicted_tok_s": 12.480111077099425
+        },
+        "decision-memo": {
+          "assumed_saved_ms": -59.17178279242506,
+          "predicted_tok_s": 9.6859324833139
+        }
+      },
+      "miss_byte_ratio": 5.0097774313834496,
+      "fill_byte_ratio": 5.0097774313834496
+    },
+    {
+      "name": "18GB_twohit_admission",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 24.676314010004653,
+      "gain_pct": 1.387343343031655,
+      "assumptions": [
+        "Transfer packet55 held-out miss/fill byte ratios to WS128; this is not a native one-card route replay.",
+        "Charge K1 mixed-five-miss host-minus-resident time linearly by inferred missing experts.",
+        "Scale the ENTIRE cache wall by fill-byte ratio, including fixed costs; optimistic for smaller fill volumes.",
+        "No new CPU policy cost. Full speculative traffic is charged.",
+        "20.121 GB is conditional on proving unused allowance reusable under the same host bound; not admitted."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": 0.5462492324339487,
+          "predicted_tok_s": 24.767147249651178
+        },
+        "code-review": {
+          "assumed_saved_ms": 0.5302346768189709,
+          "predicted_tok_s": 25.206720056564038
+        },
+        "customer-email": {
+          "assumed_saved_ms": 0.6077085635922662,
+          "predicted_tok_s": 24.314748571761474
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": 0.6310086896617776,
+          "predicted_tok_s": 23.964241484152208
+        },
+        "release-plan": {
+          "assumed_saved_ms": 0.6357725281033629,
+          "predicted_tok_s": 23.94808602586047
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": 0.43229401725275957,
+          "predicted_tok_s": 26.939001245908106
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": 0.48726718937915914,
+          "predicted_tok_s": 26.042010816106174
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": 0.48562542697586925,
+          "predicted_tok_s": 26.142005580498726
+        },
+        "technical-guide": {
+          "assumed_saved_ms": 0.5835799041131156,
+          "predicted_tok_s": 24.580854253437227
+        },
+        "risk-register": {
+          "assumed_saved_ms": 0.5729535793610989,
+          "predicted_tok_s": 24.931218447300655
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": 0.5151078893299925,
+          "predicted_tok_s": 25.599409541168185
+        },
+        "decision-memo": {
+          "assumed_saved_ms": 0.7041675790083806,
+          "predicted_tok_s": 23.059241128867054
+        }
+      },
+      "miss_byte_ratio": 1.029519753403355,
+      "fill_byte_ratio": 0.9155131304587119
+    },
+    {
+      "name": "18GB_frequency_one_prefetch_per_visit",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 17.53988185717781,
+      "gain_pct": -27.934049496658876,
+      "assumptions": [
+        "Transfer packet55 held-out miss/fill byte ratios to WS128; this is not a native one-card route replay.",
+        "Charge K1 mixed-five-miss host-minus-resident time linearly by inferred missing experts.",
+        "Scale the ENTIRE cache wall by fill-byte ratio, including fixed costs; optimistic for smaller fill volumes.",
+        "No new CPU policy cost. Full speculative traffic is charged.",
+        "20.121 GB is conditional on proving unused allowance reusable under the same host bound; not admitted."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": -15.602716757806004,
+          "predicted_tok_s": 17.691276674738738
+        },
+        "code-review": {
+          "assumed_saved_ms": -14.721071977835651,
+          "predicted_tok_s": 18.20721988244324
+        },
+        "customer-email": {
+          "assumed_saved_ms": -17.051864443669146,
+          "predicted_tok_s": 17.01059981788257
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": -17.775595900758507,
+          "predicted_tok_s": 16.62912789368859
+        },
+        "release-plan": {
+          "assumed_saved_ms": -17.933789238989004,
+          "predicted_tok_s": 16.576448725924315
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": -11.691954173756576,
+          "predicted_tok_s": 20.30656856842748
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": -13.34054653532691,
+          "predicted_tok_s": 19.147072126897072
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": -13.323622197394565,
+          "predicted_tok_s": 19.207919281982196
+        },
+        "technical-guide": {
+          "assumed_saved_ms": -16.345726697797815,
+          "predicted_tok_s": 17.357683196738655
+        },
+        "risk-register": {
+          "assumed_saved_ms": -15.936736715396918,
+          "predicted_tok_s": 17.661589826289703
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": -14.235425495134766,
+          "predicted_tok_s": 18.582547654880052
+        },
+        "decision-memo": {
+          "assumed_saved_ms": -20.115031695592997,
+          "predicted_tok_s": 15.579779486257353
+        }
+      },
+      "miss_byte_ratio": 1.2930172813421714,
+      "fill_byte_ratio": 2.8725055452847994
+    }
+  ],
+  "postrouter_sensitivities": [
+    {
+      "name": "postrouter:all_host_linear:overlap=0:new_overhead_ms=0.48",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 27.6305522244825,
+      "gain_pct": 13.525394595213536,
+      "assumptions": [
+        "Demand copy replaces zero-copy reads and reuses the baseline admission transfer exactly once.",
+        "25 GB/s is the inherited copy-floor proxy, not measured pure DMA in WS128.",
+        "Assume 0% of fill-DMA service hidden by resident gate/up; this overlap was NOT measured.",
+        "Assume 0.48 ms total new synchronization/launch/policy cost; NOT measured.",
+        "0.48 ms charges only 96 launches at 5 us; 2.4 ms is a 50 us/layer sensitivity, not a measured delay.",
+        "No compute/compute overlap; future layer routes are unavailable until their router runs.",
+        "Victims cannot be overwritten while current readers own them; more frequent publication may change hit rates."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": 5.05279890878788,
+          "predicted_tok_s": 27.878825001175407
+        },
+        "code-review": {
+          "assumed_saved_ms": 4.2185750195454546,
+          "predicted_tok_s": 27.790422372617684
+        },
+        "customer-email": {
+          "assumed_saved_ms": 5.190719797727272,
+          "predicted_tok_s": 27.36405571312079
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": 5.518265304242423,
+          "predicted_tok_s": 27.143241591114542
+        },
+        "release-plan": {
+          "assumed_saved_ms": 5.602138727121211,
+          "predicted_tok_s": 27.180838046813637
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": 2.860390646363636,
+          "predicted_tok_s": 28.82442098014802
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": 3.5411990539393945,
+          "predicted_tok_s": 28.292096120565553
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": 3.5718901430303034,
+          "predicted_tok_s": 28.43627710265029
+        },
+        "technical-guide": {
+          "assumed_saved_ms": 4.919267398333334,
+          "predicted_tok_s": 27.513055452577934
+        },
+        "risk-register": {
+          "assumed_saved_ms": 4.6447378972727265,
+          "predicted_tok_s": 27.748048996387062
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": 3.981263431363636,
+          "predicted_tok_s": 28.09206126572263
+        },
+        "decision-memo": {
+          "assumed_saved_ms": 6.654896218030302,
+          "predicted_tok_s": 26.726653447609937
+        }
+      }
+    },
+    {
+      "name": "postrouter:all_host_linear:overlap=0:new_overhead_ms=2.4",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 26.238555621105473,
+      "gain_pct": 7.8061110141365075,
+      "assumptions": [
+        "Demand copy replaces zero-copy reads and reuses the baseline admission transfer exactly once.",
+        "25 GB/s is the inherited copy-floor proxy, not measured pure DMA in WS128.",
+        "Assume 0% of fill-DMA service hidden by resident gate/up; this overlap was NOT measured.",
+        "Assume 2.4 ms total new synchronization/launch/policy cost; NOT measured.",
+        "0.48 ms charges only 96 launches at 5 us; 2.4 ms is a 50 us/layer sensitivity, not a measured delay.",
+        "No compute/compute overlap; future layer routes are unavailable until their router runs.",
+        "Victims cannot be overwritten while current readers own them; more frequent publication may change hit rates."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": 3.1327989087878803,
+          "predicted_tok_s": 26.462364892463288
+        },
+        "code-review": {
+          "assumed_saved_ms": 2.298575019545455,
+          "predicted_tok_s": 26.382704300594515
+        },
+        "customer-email": {
+          "assumed_saved_ms": 3.270719797727272,
+          "predicted_tok_s": 25.99813978569684
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": 3.5982653042424233,
+          "predicted_tok_s": 25.798739658390154
+        },
+        "release-plan": {
+          "assumed_saved_ms": 3.682138727121212,
+          "predicted_tok_s": 25.8327014556257
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": 0.9403906463636362,
+          "predicted_tok_s": 27.312849027745532
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": 1.6211990539393946,
+          "predicted_tok_s": 26.83442787218129
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": 1.6518901430303035,
+          "predicted_tok_s": 26.964100524709142
+        },
+        "technical-guide": {
+          "assumed_saved_ms": 2.9992673983333336,
+          "predicted_tok_s": 26.132599164696426
+        },
+        "risk-register": {
+          "assumed_saved_ms": 2.724737897272727,
+          "predicted_tok_s": 26.34451207751452
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": 2.061263431363636,
+          "predicted_tok_s": 26.654408874483686
+        },
+        "decision-memo": {
+          "assumed_saved_ms": 4.734896218030302,
+          "predicted_tok_s": 25.42211326616237
+        }
+      }
+    },
+    {
+      "name": "postrouter:all_host_linear:overlap=0.5:new_overhead_ms=0.48",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 28.695442144421072,
+      "gain_pct": 17.900697968787572,
+      "assumptions": [
+        "Demand copy replaces zero-copy reads and reuses the baseline admission transfer exactly once.",
+        "25 GB/s is the inherited copy-floor proxy, not measured pure DMA in WS128.",
+        "Assume 50% of fill-DMA service hidden by resident gate/up; this overlap was NOT measured.",
+        "Assume 0.48 ms total new synchronization/launch/policy cost; NOT measured.",
+        "0.48 ms charges only 96 launches at 5 us; 2.4 ms is a 50 us/layer sensitivity, not a measured delay.",
+        "No compute/compute overlap; future layer routes are unavailable until their router runs.",
+        "Victims cannot be overwritten while current readers own them; more frequent publication may change hit rates."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": 6.465184524949496,
+          "predicted_tok_s": 29.021568152622258
+        },
+        "code-review": {
+          "assumed_saved_ms": 5.420518292272728,
+          "predicted_tok_s": 28.75077030006344
+        },
+        "customer-email": {
+          "assumed_saved_ms": 6.637461131060606,
+          "predicted_tok_s": 28.4920179623042
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": 7.050769223434342,
+          "predicted_tok_s": 28.32132736051516
+        },
+        "release-plan": {
+          "assumed_saved_ms": 7.153721110959596,
+          "predicted_tok_s": 28.377616030287047
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": 3.7142514948484844,
+          "predicted_tok_s": 29.551749967020264
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": 4.568974407474748,
+          "predicted_tok_s": 29.13940951278355
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": 4.6079195571717175,
+          "predicted_tok_s": 29.299463302662645
+        },
+        "technical-guide": {
+          "assumed_saved_ms": 6.297659317525252,
+          "predicted_tok_s": 28.59758373531582
+        },
+        "risk-register": {
+          "assumed_saved_ms": 5.953006503333333,
+          "predicted_tok_s": 28.793300553526322
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": 5.119997976818182,
+          "predicted_tok_s": 29.02040668109215
+        },
+        "decision-memo": {
+          "assumed_saved_ms": 8.47625605641414,
+          "predicted_tok_s": 28.094249284398373
+        }
+      }
+    },
+    {
+      "name": "postrouter:all_host_linear:overlap=0.5:new_overhead_ms=2.4",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 27.197000135781618,
+      "gain_pct": 11.744063134753802,
+      "assumptions": [
+        "Demand copy replaces zero-copy reads and reuses the baseline admission transfer exactly once.",
+        "25 GB/s is the inherited copy-floor proxy, not measured pure DMA in WS128.",
+        "Assume 50% of fill-DMA service hidden by resident gate/up; this overlap was NOT measured.",
+        "Assume 2.4 ms total new synchronization/launch/policy cost; NOT measured.",
+        "0.48 ms charges only 96 launches at 5 us; 2.4 ms is a 50 us/layer sensitivity, not a measured delay.",
+        "No compute/compute overlap; future layer routes are unavailable until their router runs.",
+        "Victims cannot be overwritten while current readers own them; more frequent publication may change hit rates."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": 4.545184524949496,
+          "predicted_tok_s": 27.48979783328682
+        },
+        "code-review": {
+          "assumed_saved_ms": 3.500518292272728,
+          "predicted_tok_s": 27.2467115265615
+        },
+        "customer-email": {
+          "assumed_saved_ms": 4.717461131060606,
+          "predicted_tok_s": 27.014214169616373
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": 5.130769223434342,
+          "predicted_tok_s": 26.860723197658693
+        },
+        "release-plan": {
+          "assumed_saved_ms": 5.233721110959596,
+          "predicted_tok_s": 26.91135048606309
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": 1.7942514948484845,
+          "predicted_tok_s": 27.965031953376887
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": 2.6489744074747485,
+          "predicted_tok_s": 27.595505386990755
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": 2.687919557171718,
+          "predicted_tok_s": 27.739006345590717
+        },
+        "technical-guide": {
+          "assumed_saved_ms": 4.377659317525252,
+          "predicted_tok_s": 27.10909488241019
+        },
+        "risk-register": {
+          "assumed_saved_ms": 4.033006503333333,
+          "predicted_tok_s": 27.284905389153046
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": 3.199997976818182,
+          "predicted_tok_s": 27.488755729852127
+        },
+        "decision-memo": {
+          "assumed_saved_ms": 6.55625605641414,
+          "predicted_tok_s": 26.656378665673113
+        }
+      }
+    },
+    {
+      "name": "postrouter:all_host_linear:overlap=1:new_overhead_ms=0.48",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 29.845752283616875,
+      "gain_pct": 22.626966607869203,
+      "assumptions": [
+        "Demand copy replaces zero-copy reads and reuses the baseline admission transfer exactly once.",
+        "25 GB/s is the inherited copy-floor proxy, not measured pure DMA in WS128.",
+        "Assume 100% of fill-DMA service hidden by resident gate/up; this overlap was NOT measured.",
+        "Assume 0.48 ms total new synchronization/launch/policy cost; NOT measured.",
+        "0.48 ms charges only 96 launches at 5 us; 2.4 ms is a 50 us/layer sensitivity, not a measured delay.",
+        "No compute/compute overlap; future layer routes are unavailable until their router runs.",
+        "Victims cannot be overwritten while current readers own them; more frequent publication may change hit rates."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": 7.8775701411111125,
+          "predicted_tok_s": 30.261996665560613
+        },
+        "code-review": {
+          "assumed_saved_ms": 6.622461565,
+          "predicted_tok_s": 29.779867059618038
+        },
+        "customer-email": {
+          "assumed_saved_ms": 8.084202464393938,
+          "predicted_tok_s": 29.71696864746278
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": 8.583273142626261,
+          "predicted_tok_s": 29.60631686579889
+        },
+        "release-plan": {
+          "assumed_saved_ms": 8.70530349479798,
+          "predicted_tok_s": 29.68463679631525
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": 4.568112343333333,
+          "predicted_tok_s": 30.31673462696154
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": 5.596749761010102,
+          "predicted_tok_s": 30.039041773162268
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": 5.643948971313131,
+          "predicted_tok_s": 30.2166942536623
+        },
+        "technical-guide": {
+          "assumed_saved_ms": 7.676051236717171,
+          "predicted_tok_s": 29.771122017627246
+        },
+        "risk-register": {
+          "assumed_saved_ms": 7.261275109393939,
+          "predicted_tok_s": 29.9203825496065
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": 6.258732522272727,
+          "predicted_tok_s": 30.012206243529427
+        },
+        "decision-memo": {
+          "assumed_saved_ms": 10.297615894797978,
+          "predicted_tok_s": 29.609352051570752
+        }
+      }
+    },
+    {
+      "name": "postrouter:all_host_linear:overlap=1:new_overhead_ms=2.4",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 28.22816059556017,
+      "gain_pct": 15.980782587056908,
+      "assumptions": [
+        "Demand copy replaces zero-copy reads and reuses the baseline admission transfer exactly once.",
+        "25 GB/s is the inherited copy-floor proxy, not measured pure DMA in WS128.",
+        "Assume 100% of fill-DMA service hidden by resident gate/up; this overlap was NOT measured.",
+        "Assume 2.4 ms total new synchronization/launch/policy cost; NOT measured.",
+        "0.48 ms charges only 96 launches at 5 us; 2.4 ms is a 50 us/layer sensitivity, not a measured delay.",
+        "No compute/compute overlap; future layer routes are unavailable until their router runs.",
+        "Victims cannot be overwritten while current readers own them; more frequent publication may change hit rates."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": 5.957570141111113,
+          "predicted_tok_s": 28.600236181783256
+        },
+        "code-review": {
+          "assumed_saved_ms": 4.702461565,
+          "predicted_tok_s": 28.169225539480813
+        },
+        "customer-email": {
+          "assumed_saved_ms": 6.164202464393938,
+          "predicted_tok_s": 28.112940418948448
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": 6.663273142626261,
+          "predicted_tok_s": 28.013891614382164
+        },
+        "release-plan": {
+          "assumed_saved_ms": 6.785303494797979,
+          "predicted_tok_s": 28.084003012241617
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": 2.648112343333333,
+          "predicted_tok_s": 28.64912275159147
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": 3.6767497610101016,
+          "predicted_tok_s": 28.401014397991485
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": 3.7239489713131317,
+          "predicted_tok_s": 28.55976917261753
+        },
+        "technical-guide": {
+          "assumed_saved_ms": 5.7560512367171714,
+          "predicted_tok_s": 28.161400742081987
+        },
+        "risk-register": {
+          "assumed_saved_ms": 5.341275109393939,
+          "predicted_tok_s": 28.29492044903835
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": 4.338732522272727,
+          "predicted_tok_s": 28.377024583901118
+        },
+        "decision-memo": {
+          "assumed_saved_ms": 8.377615894797978,
+          "predicted_tok_s": 28.016609060898062
+        }
+      }
+    },
+    {
+      "name": "postrouter:mixed_half_host_linear:overlap=0:new_overhead_ms=0.48",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 26.355043193653835,
+      "gain_pct": 8.284722427022938,
+      "assumptions": [
+        "Demand copy replaces zero-copy reads and reuses the baseline admission transfer exactly once.",
+        "25 GB/s is the inherited copy-floor proxy, not measured pure DMA in WS128.",
+        "Assume 0% of fill-DMA service hidden by resident gate/up; this overlap was NOT measured.",
+        "Assume 0.48 ms total new synchronization/launch/policy cost; NOT measured.",
+        "0.48 ms charges only 96 launches at 5 us; 2.4 ms is a 50 us/layer sensitivity, not a measured delay.",
+        "No compute/compute overlap; future layer routes are unavailable until their router runs.",
+        "Victims cannot be overwritten while current readers own them; more frequent publication may change hit rates."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": 3.2106477892929295,
+          "predicted_tok_s": 26.516991631620527
+        },
+        "code-review": {
+          "assumed_saved_ms": 2.6546195118181815,
+          "predicted_tok_s": 26.632878017941774
+        },
+        "customer-email": {
+          "assumed_saved_ms": 3.3024986954545446,
+          "predicted_tok_s": 26.019637007498837
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": 3.521363483232322,
+          "predicted_tok_s": 25.74765707764594
+        },
+        "release-plan": {
+          "assumed_saved_ms": 3.5769030825252517,
+          "predicted_tok_s": 25.76266510978347
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": 1.7484040078787872,
+          "predicted_tok_s": 27.92922315797075
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": 2.2025577391919184,
+          "predicted_tok_s": 27.259690706368673
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": 2.2231035779797974,
+          "predicted_tok_s": 27.385905261512494
+        },
+        "technical-guide": {
+          "assumed_saved_ms": 3.1215921047474735,
+          "predicted_tok_s": 26.21640416130534
+        },
+        "risk-register": {
+          "assumed_saved_ms": 2.9384600006060597,
+          "predicted_tok_s": 26.49368222600233
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": 2.4958610748484844,
+          "predicted_tok_s": 26.966790647936815
+        },
+        "decision-memo": {
+          "assumed_saved_ms": 4.2793249188888876,
+          "predicted_tok_s": 25.13105580302825
+        }
+      }
+    },
+    {
+      "name": "postrouter:mixed_half_host_linear:overlap=0:new_overhead_ms=2.4",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 25.085634439028432,
+      "gain_pct": 3.06911440729698,
+      "assumptions": [
+        "Demand copy replaces zero-copy reads and reuses the baseline admission transfer exactly once.",
+        "25 GB/s is the inherited copy-floor proxy, not measured pure DMA in WS128.",
+        "Assume 0% of fill-DMA service hidden by resident gate/up; this overlap was NOT measured.",
+        "Assume 2.4 ms total new synchronization/launch/policy cost; NOT measured.",
+        "0.48 ms charges only 96 launches at 5 us; 2.4 ms is a 50 us/layer sensitivity, not a measured delay.",
+        "No compute/compute overlap; future layer routes are unavailable until their router runs.",
+        "Victims cannot be overwritten while current readers own them; more frequent publication may change hit rates."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": 1.2906477892929296,
+          "predicted_tok_s": 25.232346655413643
+        },
+        "code-review": {
+          "assumed_saved_ms": 0.7346195118181815,
+          "predicted_tok_s": 25.337254330467395
+        },
+        "customer-email": {
+          "assumed_saved_ms": 1.3824986954545446,
+          "predicted_tok_s": 24.781604946376373
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": 1.6013634832323222,
+          "predicted_tok_s": 24.534768490925096
+        },
+        "release-plan": {
+          "assumed_saved_ms": 1.6569030825252518,
+          "predicted_tok_s": 24.548395493011068
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": -0.17159599212121268,
+          "predicted_tok_s": 26.5077677452779
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": 0.2825577391919185,
+          "predicted_tok_s": 25.903915856453676
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": 0.3031035779797975,
+          "predicted_tok_s": 26.017861686619263
+        },
+        "technical-guide": {
+          "assumed_saved_ms": 1.2015921047474736,
+          "predicted_tok_s": 24.960028735011235
+        },
+        "risk-register": {
+          "assumed_saved_ms": 1.0184600006060598,
+          "predicted_tok_s": 25.21124014304563
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": 0.5758610748484845,
+          "predicted_tok_s": 25.63928492821464
+        },
+        "decision-memo": {
+          "assumed_saved_ms": 2.359324918888888,
+          "predicted_tok_s": 23.974258806114264
+        }
+      }
+    },
+    {
+      "name": "postrouter:mixed_half_host_linear:overlap=0.5:new_overhead_ms=0.48",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 27.322119144166184,
+      "gain_pct": 12.258138448298705,
+      "assumptions": [
+        "Demand copy replaces zero-copy reads and reuses the baseline admission transfer exactly once.",
+        "25 GB/s is the inherited copy-floor proxy, not measured pure DMA in WS128.",
+        "Assume 50% of fill-DMA service hidden by resident gate/up; this overlap was NOT measured.",
+        "Assume 0.48 ms total new synchronization/launch/policy cost; NOT measured.",
+        "0.48 ms charges only 96 launches at 5 us; 2.4 ms is a 50 us/layer sensitivity, not a measured delay.",
+        "No compute/compute overlap; future layer routes are unavailable until their router runs.",
+        "Victims cannot be overwritten while current readers own them; more frequent publication may change hit rates."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": 4.623033405454546,
+          "predicted_tok_s": 27.548753542938094
+        },
+        "code-review": {
+          "assumed_saved_ms": 3.856562784545454,
+          "predicted_tok_s": 27.51362232047709
+        },
+        "customer-email": {
+          "assumed_saved_ms": 4.749240028787877,
+          "predicted_tok_s": 27.03742531120102
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": 5.053867402424242,
+          "predicted_tok_s": 26.805353027700143
+        },
+        "release-plan": {
+          "assumed_saved_ms": 5.128485466363635,
+          "predicted_tok_s": 26.835351875522505
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": 2.6022648563636355,
+          "predicted_tok_s": 28.611541769522823
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": 3.230333092727272,
+          "predicted_tok_s": 28.04543512602972
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": 3.2591329921212115,
+          "predicted_tok_s": 28.185604231506254
+        },
+        "technical-guide": {
+          "assumed_saved_ms": 4.499984023939392,
+          "predicted_tok_s": 27.19929077892955
+        },
+        "risk-register": {
+          "assumed_saved_ms": 4.246728606666666,
+          "predicted_tok_s": 27.444947509402816
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": 3.63459562030303,
+          "predicted_tok_s": 27.821122113462415
+        },
+        "decision-memo": {
+          "assumed_saved_ms": 6.100684757272726,
+          "predicted_tok_s": 26.336550726147134
+        }
+      }
+    },
+    {
+      "name": "postrouter:mixed_half_host_linear:overlap=0.5:new_overhead_ms=2.4",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 25.960257629375512,
+      "gain_pct": 6.6626706272229,
+      "assumptions": [
+        "Demand copy replaces zero-copy reads and reuses the baseline admission transfer exactly once.",
+        "25 GB/s is the inherited copy-floor proxy, not measured pure DMA in WS128.",
+        "Assume 50% of fill-DMA service hidden by resident gate/up; this overlap was NOT measured.",
+        "Assume 2.4 ms total new synchronization/launch/policy cost; NOT measured.",
+        "0.48 ms charges only 96 launches at 5 us; 2.4 ms is a 50 us/layer sensitivity, not a measured delay.",
+        "No compute/compute overlap; future layer routes are unavailable until their router runs.",
+        "Victims cannot be overwritten while current readers own them; more frequent publication may change hit rates."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": 2.7030334054545455,
+          "predicted_tok_s": 26.164802754004363
+        },
+        "code-review": {
+          "assumed_saved_ms": 1.9365627845454543,
+          "predicted_tok_s": 26.133110574421597
+        },
+        "customer-email": {
+          "assumed_saved_ms": 2.829240028787878,
+          "predicted_tok_s": 25.703128205680425
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": 3.1338674024242414,
+          "predicted_tok_s": 25.493307387327068
+        },
+        "release-plan": {
+          "assumed_saved_ms": 3.2084854663636357,
+          "predicted_tok_s": 25.52043990459526
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": 0.6822648563636355,
+          "predicted_tok_s": 27.121637395993265
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": 1.310333092727272,
+          "predicted_tok_s": 26.612429375750686
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": 1.3391329921212116,
+          "predicted_tok_s": 26.73860808704033
+        },
+        "technical-guide": {
+          "assumed_saved_ms": 2.5799840239393927,
+          "predicted_tok_s": 25.84936855472778
+        },
+        "risk-register": {
+          "assumed_saved_ms": 2.326728606666666,
+          "predicted_tok_s": 26.071146704023246
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": 1.71459562030303,
+          "predicted_tok_s": 26.410371087988885
+        },
+        "decision-memo": {
+          "assumed_saved_ms": 4.180684757272726,
+          "predicted_tok_s": 25.06891169052448
+        }
+      }
+    },
+    {
+      "name": "postrouter:mixed_half_host_linear:overlap=1:new_overhead_ms=0.48",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 28.362907694823118,
+      "gain_pct": 16.53441674862217,
+      "assumptions": [
+        "Demand copy replaces zero-copy reads and reuses the baseline admission transfer exactly once.",
+        "25 GB/s is the inherited copy-floor proxy, not measured pure DMA in WS128.",
+        "Assume 100% of fill-DMA service hidden by resident gate/up; this overlap was NOT measured.",
+        "Assume 0.48 ms total new synchronization/launch/policy cost; NOT measured.",
+        "0.48 ms charges only 96 launches at 5 us; 2.4 ms is a 50 us/layer sensitivity, not a measured delay.",
+        "No compute/compute overlap; future layer routes are unavailable until their router runs.",
+        "Victims cannot be overwritten while current readers own them; more frequent publication may change hit rates."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": 6.035419021616162,
+          "predicted_tok_s": 28.664056599721395
+        },
+        "code-review": {
+          "assumed_saved_ms": 5.0585060572727265,
+          "predicted_tok_s": 28.4546109922768
+        },
+        "customer-email": {
+          "assumed_saved_ms": 6.195981362121211,
+          "predicted_tok_s": 28.13807892965855
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": 6.586371321616161,
+          "predicted_tok_s": 27.953670483149175
+        },
+        "release-plan": {
+          "assumed_saved_ms": 6.680067850202018,
+          "predicted_tok_s": 28.00124705816315
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": 3.456125704848484,
+          "predicted_tok_s": 29.328033707947842
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": 4.258108446262625,
+          "predicted_tok_s": 28.877821197550468
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": 4.295162406262625,
+          "predicted_tok_s": 29.033412242376084
+        },
+        "technical-guide": {
+          "assumed_saved_ms": 5.878375943131312,
+          "predicted_tok_s": 28.25874746661493
+        },
+        "risk-register": {
+          "assumed_saved_ms": 5.554997212727272,
+          "predicted_tok_s": 28.467067923031305
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": 4.773330165757574,
+          "predicted_tok_s": 28.73135656751073
+        },
+        "decision-memo": {
+          "assumed_saved_ms": 7.922044595656564,
+          "predicted_tok_s": 27.66352393075415
+        }
+      }
+    },
+    {
+      "name": "postrouter:mixed_half_host_linear:overlap=1:new_overhead_ms=2.4",
+      "measured": false,
+      "conditional_estimate": true,
+      "predicted_class_balanced_tok_s": 26.89810471461204,
+      "gain_pct": 10.51599427983918,
+      "assumptions": [
+        "Demand copy replaces zero-copy reads and reuses the baseline admission transfer exactly once.",
+        "25 GB/s is the inherited copy-floor proxy, not measured pure DMA in WS128.",
+        "Assume 100% of fill-DMA service hidden by resident gate/up; this overlap was NOT measured.",
+        "Assume 2.4 ms total new synchronization/launch/policy cost; NOT measured.",
+        "0.48 ms charges only 96 launches at 5 us; 2.4 ms is a 50 us/layer sensitivity, not a measured delay.",
+        "No compute/compute overlap; future layer routes are unavailable until their router runs.",
+        "Victims cannot be overwritten while current readers own them; more frequent publication may change hit rates."
+      ],
+      "per_prompt": {
+        "incident-retrospective": {
+          "assumed_saved_ms": 4.115419021616162,
+          "predicted_tok_s": 27.16882085191897
+        },
+        "code-review": {
+          "assumed_saved_ms": 3.138506057272727,
+          "predicted_tok_s": 26.980584673137628
+        },
+        "customer-email": {
+          "assumed_saved_ms": 4.275981362121211,
+          "predicted_tok_s": 26.695833544624925
+        },
+        "sql-debugging": {
+          "assumed_saved_ms": 4.666371321616161,
+          "predicted_tok_s": 26.529788926103787
+        },
+        "release-plan": {
+          "assumed_saved_ms": 4.760067850202018,
+          "predicted_tok_s": 26.572638393867624
+        },
+        "benchmark-analysis": {
+          "assumed_saved_ms": 1.5361257048484842,
+          "predicted_tok_s": 27.76461320497752
+        },
+        "architecture-tradeoff": {
+          "assumed_saved_ms": 2.3381084462626256,
+          "predicted_tok_s": 27.360790753026635
+        },
+        "bug-report-synthesis": {
+          "assumed_saved_ms": 2.3751624062626253,
+          "predicted_tok_s": 27.500424417201828
+        },
+        "technical-guide": {
+          "assumed_saved_ms": 3.9583759431313124,
+          "predicted_tok_s": 26.804425256725235
+        },
+        "risk-register": {
+          "assumed_saved_ms": 3.634997212727272,
+          "predicted_tok_s": 26.99178417249884
+        },
+        "performance-hypotheses": {
+          "assumed_saved_ms": 2.853330165757575,
+          "predicted_tok_s": 27.229275255921404
+        },
+        "decision-memo": {
+          "assumed_saved_ms": 6.002044595656564,
+          "predicted_tok_s": 26.268309817614846
+        }
+      }
+    }
+  ],
+  "cache_eviction_regression": [
+    {
+      "window": "WS",
+      "no_eviction_samples": 184,
+      "intercept_ms": 2.2542699841091416,
+      "slope_ms_per_fill": 0.0807666556525533,
+      "metric_residual_mean_ms": 2.873642290186637,
+      "interpretation": "Estimate/confounded: cannot identify victim-scan cost separately from fragmentation, occupancy, or scheduling."
+    },
+    {
+      "window": "WS128x",
+      "no_eviction_samples": 184,
+      "intercept_ms": 2.240534854170736,
+      "slope_ms_per_fill": 0.08102017593033646,
+      "metric_residual_mean_ms": 2.8674800210578053,
+      "interpretation": "Estimate/confounded: cannot identify victim-scan cost separately from fragmentation, occupancy, or scheduling."
+    },
+    {
+      "window": "WS128",
+      "no_eviction_samples": 184,
+      "intercept_ms": 2.1932193645905995,
+      "slope_ms_per_fill": 0.08177045094561147,
+      "metric_residual_mean_ms": 2.9428113916573584,
+      "interpretation": "Estimate/confounded: cannot identify victim-scan cost separately from fragmentation, occupancy, or scheduling."
+    }
+  ],
+  "copy_threshold_proxies": [
+    {
+      "window": "K1a",
+      "format": 22,
+      "host_device_ms": 0.816984,
+      "resident_device_ms": 0.141781,
+      "streamed_wall_ms": 2.22363,
+      "estimated_reuses_break_even": 3.083293468779019,
+      "caveat": "Streaming wall includes host waits; host/resident fields are kernel event times. Device sums are not end-to-end matched costs."
+    },
+    {
+      "window": "K1a",
+      "format": 21,
+      "host_device_ms": 0.691948,
+      "resident_device_ms": 0.193125,
+      "streamed_wall_ms": 2.2454,
+      "estimated_reuses_break_even": 4.114234908975728,
+      "caveat": "Streaming wall includes host waits; host/resident fields are kernel event times. Device sums are not end-to-end matched costs."
+    },
+    {
+      "window": "K1a",
+      "format": 20,
+      "host_device_ms": 0.91688,
+      "resident_device_ms": 0.0452967,
+      "streamed_wall_ms": 1.12921,
+      "estimated_reuses_break_even": 1.2436141215647432,
+      "caveat": "Streaming wall includes host waits; host/resident fields are kernel event times. Device sums are not end-to-end matched costs."
+    },
+    {
+      "window": "K1b",
+      "format": 22,
+      "host_device_ms": 0.819792,
+      "resident_device_ms": 0.0898126,
+      "streamed_wall_ms": 2.22323,
+      "estimated_reuses_break_even": 2.922572061622561,
+      "caveat": "Streaming wall includes host waits; host/resident fields are kernel event times. Device sums are not end-to-end matched costs."
+    },
+    {
+      "window": "K1b",
+      "format": 21,
+      "host_device_ms": 0.691255,
+      "resident_device_ms": 0.193354,
+      "streamed_wall_ms": 2.2443,
+      "estimated_reuses_break_even": 4.119184335841865,
+      "caveat": "Streaming wall includes host waits; host/resident fields are kernel event times. Device sums are not end-to-end matched costs."
+    },
+    {
+      "window": "K1b",
+      "format": 20,
+      "host_device_ms": 0.894323,
+      "resident_device_ms": 0.0509792,
+      "streamed_wall_ms": 1.12933,
+      "estimated_reuses_break_even": 1.2786609683974672,
+      "caveat": "Streaming wall includes host waits; host/resident fields are kernel event times. Device sums are not end-to-end matched costs."
+    }
+  ],
+  "decision": {
+    "status": "closeout_no_build",
+    "threshold_tok_s": 26.774,
+    "rationale": "No measured critical-path split or one-card route replay supports a >=10% prediction. Favorable post-router sensitivities exceed it only by assigning unmeasured overlap and synchronization costs.",
+    "highest_simple_DMA_only_scenario_tok_s": 26.1082285900795,
+    "postrouter_point_prediction": null,
+    "device_quality_gate_ran": false,
+    "seal_ready_runtime_design": false,
+    "runtime_code_written": false,
+    "queue_job_created": false,
+    "ranking_basis": "Rank interpretable isolated scenarios; leave unidentifiable mechanisms unranked, not assigned fake speeds.",
+    "revisit": "A matched one-card route trace plus short bounded stage timing separating router readback, cache planning, DMA, publication and resident gate/up, within original memory admission."
+  }
+}
