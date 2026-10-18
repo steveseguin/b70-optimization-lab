@@ -1,0 +1,422 @@
+{
+  "schema": "packet58ac.cpu-feasibility.v1",
+  "device_executed": false,
+  "model_read": false,
+  "decision": "no_build_60pct_not_supported",
+  "census": {
+    "record_tok_s": 29.259764156562692,
+    "positions": 1188,
+    "all_positions": 2386,
+    "means": {
+      "fill_bytes_total": 31369352.18855219,
+      "fills_total": 15.824915824915825,
+      "publication_uploads_total": 1,
+      "publication_bytes_total": 1179648,
+      "publication_host_ms_total": 1.2312542087542089
+    },
+    "publication_count_histogram": {
+      "1": 1188
+    },
+    "state_transitions": {
+      "2->1": 596,
+      "1->2": 592
+    },
+    "per_prompt": [
+      {
+        "id": "incident-retrospective",
+        "cls": "operations",
+        "interval_ms": 37.490456282735025,
+        "publication_ms": 1.2333939393939393
+      },
+      {
+        "id": "code-review",
+        "cls": "code",
+        "interval_ms": 33.380972454618345,
+        "publication_ms": 1.234787878787879
+      },
+      {
+        "id": "customer-email",
+        "cls": "prose",
+        "interval_ms": 33.83925338387442,
+        "publication_ms": 1.2298989898989898
+      },
+      {
+        "id": "sql-debugging",
+        "cls": "code",
+        "interval_ms": 35.775344899086505,
+        "publication_ms": 1.23080808080808
+      },
+      {
+        "id": "release-plan",
+        "cls": "operations",
+        "interval_ms": 35.56974289904706,
+        "publication_ms": 1.22979797979798
+      },
+      {
+        "id": "benchmark-analysis",
+        "cls": "analysis",
+        "interval_ms": 32.926685505163285,
+        "publication_ms": 1.2303030303030322
+      },
+      {
+        "id": "architecture-tradeoff",
+        "cls": "analysis",
+        "interval_ms": 32.82306589876452,
+        "publication_ms": 1.2349494949494948
+      },
+      {
+        "id": "bug-report-synthesis",
+        "cls": "operations",
+        "interval_ms": 32.48199625228852,
+        "publication_ms": 1.2266666666666672
+      },
+      {
+        "id": "technical-guide",
+        "cls": "documentation",
+        "interval_ms": 33.823972979779214,
+        "publication_ms": 1.2288888888888874
+      },
+      {
+        "id": "risk-register",
+        "cls": "structured-writing",
+        "interval_ms": 33.33989405067346,
+        "publication_ms": 1.2296969696969722
+      },
+      {
+        "id": "performance-hypotheses",
+        "cls": "analysis",
+        "interval_ms": 33.07656724255231,
+        "publication_ms": 1.2325252525252524
+      },
+      {
+        "id": "decision-memo",
+        "cls": "prose",
+        "interval_ms": 35.554158818235415,
+        "publication_ms": 1.2333333333333325
+      }
+    ],
+    "conditional_recovery_gain_percent": {
+      "0.3": 1.0930279301587298,
+      "0.5": 1.8350949616051437,
+      "0.6": 2.2102318586477043,
+      "0.7": 2.5881448599534895,
+      "1": 3.738852335196996
+    },
+    "required_remaining_boundary_ms": 0.49250168350168355,
+    "by_publications": {
+      "1": {
+        "n": 1188,
+        "publication_ms": 1.2312542087542089,
+        "fills": 15.824915824915825
+      }
+    },
+    "by_transition": {
+      "1->2": {
+        "n": 592,
+        "publication_ms": 1.2348699324324295,
+        "fills": 31.756756756756758,
+        "max_fills": 241,
+        "zero_fill_tokens": 0
+      },
+      "2->1": {
+        "n": 596,
+        "publication_ms": 1.2276627516778555,
+        "fills": 0,
+        "max_fills": 0,
+        "zero_fill_tokens": 596
+      }
+    }
+  },
+  "host_probes": {
+    "gnu": {
+      "result": {
+        "protocol": {
+          "passed": true,
+          "transactions": 480,
+          "generation_only_revocations": 6241,
+          "evictions": 6057
+        },
+        "benchmarks": {
+          "full_pack_hot": {
+            "min_ms": 0.0587028,
+            "median_ms": 0.0591261,
+            "p90_ms": 0.0597538,
+            "max_ms": 0.0599364
+          },
+          "full_pack_rotating_8": {
+            "min_ms": 0.0592762,
+            "median_ms": 0.0595098,
+            "p90_ms": 0.0596522,
+            "max_ms": 0.0598618
+          },
+          "cpu_memcpy_1179648": {
+            "min_ms": 0.0219569,
+            "median_ms": 0.0220126,
+            "p90_ms": 0.0220465,
+            "max_ms": 0.0221548
+          },
+          "cpu_scatter_144_banks": {
+            "min_ms": 0.289978,
+            "median_ms": 0.290069,
+            "p90_ms": 0.290207,
+            "max_ms": 0.290211
+          },
+          "delta_pack_32": {
+            "min_ms": 2.41875e-05,
+            "median_ms": 2.60625e-05,
+            "p90_ms": 2.63828e-05,
+            "max_ms": 2.84922e-05
+          },
+          "delta_pack_64": {
+            "min_ms": 4.51641e-05,
+            "median_ms": 4.57109e-05,
+            "p90_ms": 4.61016e-05,
+            "max_ms": 8.44531e-05
+          },
+          "delta_pack_128": {
+            "min_ms": 9.25156e-05,
+            "median_ms": 9.29141e-05,
+            "p90_ms": 9.31484e-05,
+            "max_ms": 9.77656e-05
+          }
+        },
+        "checksum": 32
+      },
+      "compiler_version": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+      "flags": [
+        "-std=c++20",
+        "-O3",
+        "-march=native",
+        "-fno-fast-math",
+        "-ffp-contract=off"
+      ],
+      "binary_sha256": "5eafc159863e54b8aea7805d6b11fe540757661f8acb29b440931f76183d72ca"
+    },
+    "intel_host": {
+      "result": {
+        "protocol": {
+          "passed": true,
+          "transactions": 480,
+          "generation_only_revocations": 6241,
+          "evictions": 6057
+        },
+        "benchmarks": {
+          "full_pack_hot": {
+            "min_ms": 0.0525955,
+            "median_ms": 0.0526581,
+            "p90_ms": 0.0534308,
+            "max_ms": 0.0535825
+          },
+          "full_pack_rotating_8": {
+            "min_ms": 0.0526481,
+            "median_ms": 0.0527415,
+            "p90_ms": 0.0527811,
+            "max_ms": 0.053332
+          },
+          "cpu_memcpy_1179648": {
+            "min_ms": 0.0475799,
+            "median_ms": 0.0476109,
+            "p90_ms": 0.0476391,
+            "max_ms": 0.0477373
+          },
+          "cpu_scatter_144_banks": {
+            "min_ms": 0.32853,
+            "median_ms": 0.328669,
+            "p90_ms": 0.328758,
+            "max_ms": 0.329022
+          },
+          "delta_pack_32": {
+            "min_ms": 4.15625e-05,
+            "median_ms": 4.59453e-05,
+            "p90_ms": 4.61797e-05,
+            "max_ms": 4.63359e-05
+          },
+          "delta_pack_64": {
+            "min_ms": 8.10938e-05,
+            "median_ms": 8.21094e-05,
+            "p90_ms": 8.25781e-05,
+            "max_ms": 9.25937e-05
+          },
+          "delta_pack_128": {
+            "min_ms": 0.0001675,
+            "median_ms": 0.000168367,
+            "p90_ms": 0.000169852,
+            "max_ms": 0.000206563
+          }
+        },
+        "checksum": 32
+      },
+      "compiler_version": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)",
+      "flags": [
+        "-std=c++20",
+        "-O3",
+        "-march=native",
+        "-fno-fast-math",
+        "-ffp-contract=off"
+      ],
+      "binary_sha256": "87ef4367c53ed497ab1b4395b4528ed2d9eb54fed43892aab75895d2ff245d7b"
+    }
+  },
+  "original_entry_compile_commands": [
+    {
+      "name": "gnu-host-entry-main",
+      "command": [
+        "/usr/bin/g++",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/gnu-host/validation",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/../../stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/../packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/../packet2/loader",
+        "-std=gnu++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-O3",
+        "-march=native",
+        "-fopenmp",
+        "-MMD",
+        "-MF",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/build/gnu-host/entry-main.d",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/build/gnu-host/entry-main.o",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/build/native/entry-main.cpp"
+      ],
+      "seconds": 17.068556646991055
+    },
+    {
+      "name": "device-entry-main",
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/device/validation",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/../../stage1/packet3-prep/src",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/../packet2/kernels",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/../packet2/loader",
+        "-std=gnu++20",
+        "-O2",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-fsycl",
+        "-Werror=deprecated-this-capture",
+        "-MMD",
+        "-MF",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/build/device/entry-main.d",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/build/device/entry-main.o",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/build/native/entry-main.cpp"
+      ],
+      "seconds": 24.176382394012762
+    }
+  ],
+  "diagnostic_58y": {
+    "cache_bytes": 18000000000,
+    "publication_wait_ms": 1.0693870126262626,
+    "publication_wait_calls": 2,
+    "boundary_exclusive_ms": 0.5144054570707071,
+    "note": "Different cache/instrumented identity. Wait includes device execution and host synchronization, not pure synchronization."
+  },
+  "modeled_host_only_saving_ms": 0.052659390599999994,
+  "additional_device_saving_required_ms": 0.6860931346525253,
+  "additional_device_saving_required_with_20us_overhead_ms": 0.7060931346525253,
+  "assumed_transport_scenarios": [
+    {
+      "assumed_H2D_GB_s": 4,
+      "assumed_delta_entries": 64,
+      "assumed_unchanged_fixed_and_scatter_cost": true,
+      "assumed_new_bookkeeping_and_apply_overhead_ms": 0.02,
+      "saving_ms": 0.3269313906,
+      "recovery_fraction": 0.26552712532921313,
+      "gain_percent": 0.9665173629566093
+    },
+    {
+      "assumed_H2D_GB_s": 8,
+      "assumed_delta_entries": 64,
+      "assumed_unchanged_fixed_and_scatter_cost": true,
+      "assumed_new_bookkeeping_and_apply_overhead_ms": 0.02,
+      "saving_ms": 0.1797953906,
+      "recovery_fraction": 0.14602621401953877,
+      "gain_percent": 0.5292310219001672
+    },
+    {
+      "assumed_H2D_GB_s": 16,
+      "assumed_delta_entries": 64,
+      "assumed_unchanged_fixed_and_scatter_cost": true,
+      "assumed_new_bookkeeping_and_apply_overhead_ms": 0.02,
+      "saving_ms": 0.10622739059999999,
+      "recovery_fraction": 0.0862757583647016,
+      "gain_percent": 0.3120061620143888
+    },
+    {
+      "assumed_H2D_GB_s": 25,
+      "assumed_delta_entries": 64,
+      "assumed_unchanged_fixed_and_scatter_cost": true,
+      "assumed_new_bookkeeping_and_apply_overhead_ms": 0.02,
+      "saving_ms": 0.07974291059999998,
+      "recovery_fraction": 0.06476559432896022,
+      "gain_percent": 0.23403499926750726
+    }
+  ],
+  "max_rss_kib_self": 34952,
+  "max_rss_kib_probe_children": 284916,
+  "inputs_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/summary.json": "4bd5ddfd3588b5cabd4685a90d49281dcd957ac2008e76fecd3b7a3df5e1136b",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/window.json": "46effe5c6ca5ca093338276c5a4d0af0e603f7657a54d6c0b70cf1762d681da1",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/cache.jsonl": "cc181ecff1d3ae99c82565c6487e48cf0b596ce97b6b951a6d32501619d0a743",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/incident-retrospective/prefill-timings.jsonl": "eefe2ab90810c9ed1d97ea051a7f1ceb83191762e2278a8bd85b20c7e902aedb",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/incident-retrospective/timings.jsonl": "0a4a9e53a1294dfd77f2a82ed38b0eb3f9d046c316b164c55b934ff7dba7cbfe",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/code-review/prefill-timings.jsonl": "dead5aff70aa81ee44ef7919bca10f588d5178cd387bd360fad06016a661c0e0",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/code-review/timings.jsonl": "b57fdaff70f5f3fc34b5c9feb8f6ed656caf062e1895fcd5f956587d3fc4bf52",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/customer-email/prefill-timings.jsonl": "c232a1f616a8bd410a8f073301a664b0239222ea9025b9382c035c012852a860",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/customer-email/timings.jsonl": "41b849fc66aef9a19e6816703ed530d36d7bc59928adfa3e45c6a9a80607bb0d",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/sql-debugging/prefill-timings.jsonl": "706415150c654d35c066f808af2b4e05e61a3e9a9e8dd2d0ebe94a72a6c3aa67",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/sql-debugging/timings.jsonl": "e81680b350bc106954ff2ce9e0800f89594767c119080c82c2371a0c052e0a48",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/release-plan/prefill-timings.jsonl": "c7276204293319d76bb1d58895a54764f8d5a5cf9594b6208c8505f67eb9c486",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/release-plan/timings.jsonl": "d79b9830b36f50d29afad1d4fe91f78be367519e3f34a7294a54d83f9da701c4",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/benchmark-analysis/prefill-timings.jsonl": "236aa997d89eca127ca6641c692f496af9225c0ad96c7d477a2a399ac5b833c8",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/benchmark-analysis/timings.jsonl": "82c41b79246c9363385494dde2d130033d3133e66b65123f02bad0948a4fe9aa",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/architecture-tradeoff/prefill-timings.jsonl": "e4852be70a51dae1641280a0cdf321d50f5f1e7b8256129b7ec15c8a504ced4a",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/architecture-tradeoff/timings.jsonl": "25f9dd9560cb1bac5dcebe9e902183a8c753222e656d0c21fbfdbb62e865f429",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/bug-report-synthesis/prefill-timings.jsonl": "79fd72eb4c671d070f8ecfb4824b9b4b7227d43c55382cda114ececed8534596",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/bug-report-synthesis/timings.jsonl": "ac8ade083b6099133aeea11b338512b926e940235ab5bcdb90fb499f9d1d03ae",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/technical-guide/prefill-timings.jsonl": "404c65a75121d02d795f99dbe94f584f0a61c227a1e7114774176b2b0d7652ca",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/technical-guide/timings.jsonl": "d6ccd2279a6f17569a4b64c59b8bab97f140eaba9d7ac85a1a1ab8235a320275",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/risk-register/prefill-timings.jsonl": "4df05c42abeb4f825ee108c7a3ba22c4fa092cdfffd4688a33c5972449e3ec31",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/risk-register/timings.jsonl": "7c01c7aa3a9a9d71b77d34f9cd721f6eb53aa09cbe399849b2e53fb458db6ab8",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/performance-hypotheses/prefill-timings.jsonl": "f538df8f61cdf6129a272ea9bcec5110fcab72f912daac7bc26daf8794b3b829",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/performance-hypotheses/timings.jsonl": "00364c171bf47b762a5d623c0d8cb0424a4fea07d30fb14a867e6480e3c2541d",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/decision-memo/prefill-timings.jsonl": "a2370880bfe3d97bb6125abc717daa48dff3e9998551ec206d71e4efe6486e4b",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/evidence/card0-58z-a/WS128/run/run/decision-memo/timings.jsonl": "81a8906712473c7914c02edbade7c3a983b534e729790a458e905a744576235e",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/submission/prepared-a/result.json": "69ea4d606b4c11fb4b13c1eb319f924eaf74d67da4bd177a5940ac9eb1c35ad6",
+    "experiments/own-xpu-runtime/stage2/packet58z-onecard-record/lineage/58x-build-source.tar.gz": "efd357edc751e929553880b2638cada3fedb869d2f8584c51ce9bc2646d3ab9f",
+    "archive:experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/build/native/main.cpp": "846111843195398047f1edef02f082061c1d760af7ba865c8142d02e75ef0fa6",
+    "archive:experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/native/cache_table.hpp": "cb3062c07de59548fbc02f16e65ddd135f0192d780dd8895f286fac7ec4dba88",
+    "archive:experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/native/cache_protocol.hpp": "0f66d8862c7c1dec7f9346f4c07c7f07a7126a5865de9f071ed449ecd72be813",
+    "archive:experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/native/publish.hpp": "26e92623e731d6121a7fea507bca62d8e7675f268ed089f3a0b14bc78ec91e01",
+    "archive:experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/async_source.py": "dc5626c4c7fe50acefe5d9c9b98a51819dce264400762e84fc9d16868b74675a",
+    "experiments/own-xpu-runtime/stage2/packet58ac-cache-publication/host_probe.cpp": "13a13af3a4df303edc7b2778a28563e3a033644518e0f6a4c924ab2990f46fc4",
+    "experiments/own-xpu-runtime/stage2/packet58ac-cache-publication/host-probe.json": "59590b3ecfc16f94c78d32e961c334cfc202fad58da103e7a0b812f9a2b080c4",
+    "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/analysis/report.json": "740b06831335ba77082c907776a1822818b67d5644a699864f266b24c6334071",
+    "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/attribution_source.py": "cebc799925663792e3f59e41583ff69f74bde8e9e0ab38d0ec0ac468a151ef3a",
+    "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/card0-attribution-b/attrib/WSCREEN/run/run/D0/decision-memo/attribution.jsonl": "9956d06bdf6d10e600271df6d61f69cc7c065a6d6bdb5880be396faf0211bcd9",
+    "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/card0-attribution-b/attrib/WSCREEN/run/run/D0/risk-register/attribution.jsonl": "3e9cc818cf7ce0bdbb89236d29aae2779b6936132a1c09ac64b745bb3789e39e",
+    "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/card0-attribution-b/attrib/WSCREEN/run/run/D0/technical-guide/attribution.jsonl": "ef258eaaa93e8c908b449c5050243867cd65e5f096c3a07a705143274d4d981f",
+    "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/card0-attribution-b/attrib/WSCREEN/run/run/D0/performance-hypotheses/attribution.jsonl": "1350c0417c28482fd64c3aeb76e02972df2212af629a831620db097c83bf1fb9",
+    "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/card0-attribution-b/attrib/WSCREEN/run/run/D0/architecture-tradeoff/attribution.jsonl": "37849707ed582cb8344fa907d4ce5166e34c18fe0687ebe98848a736b3cb0a24",
+    "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/card0-attribution-b/attrib/WSCREEN/run/run/D0/code-review/attribution.jsonl": "52894bd1ec006088468db4cc576cfe0c6507bd03df21bbc1519faf38e810a2c8",
+    "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/card0-attribution-b/attrib/WSCREEN/run/run/D0/customer-email/attribution.jsonl": "d74d2d44ca04fa1928dfff23caad3838a3ffee783b03823bbc083a372e7a7faf",
+    "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/card0-attribution-b/attrib/WSCREEN/run/run/D0/incident-retrospective/attribution.jsonl": "2d2f30aa76c09e4592e1b5ec0c57d8e7a936a9ff11d65541fd971caf7bfd7289",
+    "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/card0-attribution-b/attrib/WSCREEN/run/run/D0/benchmark-analysis/attribution.jsonl": "859fc4ec05073eeded6f56a12baf2e20b1c4abff95349f1e3c0e45ac187e6b8a",
+    "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/card0-attribution-b/attrib/WSCREEN/run/run/D0/release-plan/attribution.jsonl": "293107b2bd934bb0a1e2477d085c353212f4626516b21f9acafb6d59f5f20f58",
+    "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/card0-attribution-b/attrib/WSCREEN/run/run/D0/sql-debugging/attribution.jsonl": "828346b59e1f1bc295919aa661d99452ad44aa1fff8750f7f3b045c4871802de",
+    "experiments/own-xpu-runtime/stage2/packet58y-onecard-attribution/evidence/card0-attribution-b/attrib/WSCREEN/run/run/D0/bug-report-synthesis/attribution.jsonl": "f2992533d709bfe7e16f00b881ce3128c249113dfc291bf17414875a6ba8423c",
+    "experiments/own-xpu-runtime/stage2/packet58ac-cache-publication/replay.py": "bfc53a9f54fcd6d0c44051479729b74ecbfcd100112962c69535ee7b8360194b"
+  }
+}

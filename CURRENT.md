@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 18, packet58ac cache publication feasibility closed on CPU:** Sparse
+updates preserve the two-phase pointer and generation rules in both host
+compiler checks. Packing the full tables takes only 0.053–0.060 ms, far short
+of the required 0.739 ms saving. Existing receipts do not separate the remaining
+device and wait costs well enough to support 60% net removal. No build brief
+or device work was started. The 29.259764 one-card record stays unchanged.
+Reopen with a measured cost split supporting a complete safe boundary below
+0.493 ms. [Analysis and work note](notes/2026-10-18-own-runtime-packet58ac.md).
+
 **October 18, packet58aa one-card MTP re-check closed on CPU:** The measured
 host policy removes the old RAM blocker, but a resident draft cuts target
 cache from 21.55 to 18.22 GB. Saved-route projections give 25.03–29.16 tok/s,
