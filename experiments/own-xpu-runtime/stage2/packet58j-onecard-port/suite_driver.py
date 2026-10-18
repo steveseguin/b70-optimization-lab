@@ -10,6 +10,7 @@ import signal
 import subprocess
 import sys
 import time
+from views import VIEWS,selection,digest
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
@@ -141,12 +142,13 @@ def native_command(args, manifest, table):
         '--memory','resident','--miss-path',('zero-copy' if args.miss_mode=='zerocopy' else 'streamed'),'--native-nice',('0' if args.window.startswith('W') else '19'),'--timing','token',
         '--retain-steps',retain,'--suite-inputs',str(table),'--input',str(bundle/'tokens.txt'),
         '--plan',str(bundle/'plan.tsv'),'--identity',str(bundle/'identity.tsv'),'--model-dir',str(model),
-        '--selection',str(HERE/'selection.json'),'--selection-sha256',sha(HERE/'selection.json'),
+        '--selection',str(selection(getattr(args,'view','production'))),'--selection-sha256',digest(getattr(args,'view','production')),
         '--dispatch',str(HERE/'dispatch-speed6.json'),'--output',str(args.output/'run'),
         '--seconds','3600']
 
 def main(argv=None):
     ap=argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('--view',choices=VIEWS,default='production')
     ap.add_argument('--window',choices=WINDOWS,required=True);ap.add_argument('--card',type=int,choices=(0,2),required=True)
     ap.add_argument('--output',type=Path,required=True);ap.add_argument('--miss-mode',choices=('zerocopy','streamed'),required=True)
     ap.add_argument('--authorized-device-window',action='store_true')
@@ -182,7 +184,9 @@ def main(argv=None):
             status=child.wait()
         row['safe_to_exit']=True
         require(status==0 and not stopping,'native failed or coordinator stopped')
-        summary=summarize(args.output,args.window,manifest);save(args.output/'summary.json',summary)
+        summary=summarize(args.output,args.window,manifest)
+        require(read(args.output/'run/receipt.json').get('selection_sha256')==digest(args.view),'native selection differs')
+        summary.update(view=args.view,selection_sha256=digest(args.view),lane_scope='whole-host');save(args.output/'summary.json',summary)
         row.update(passed=True,summary_sha256=sha(args.output/'summary.json'))
         return 0
     except Exception as error:

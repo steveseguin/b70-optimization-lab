@@ -60,7 +60,7 @@ int main(int argc,char**argv){try{
   Data a(1,scenario),b=a;ng::Shape s{};s.op=ng::gdn;s.tokens=1;s.capacity=4096;s.flags=2|8|(packed?4:0);
   if(alias){a.state=a.input;b.state=b.input;}
   for(unsigned t=0;t<4;++t){
-   p82rec::host<true>(s,a.args(alias));run(view,s,b,alias);
+   p49drec::recurrence_host<4>(s,a.args(alias));run(view,s,b,alias);
    compare(a,b,"serial-s"+std::to_string(scenario)+"-a"+std::to_string(alias)+"-p"+std::to_string(packed)+"-t"+std::to_string(t),1);
    if(!alias){a.input=a.state;b.input=b.state;}
    // New input each token, including after inactive/error decisions; preserve guards.
@@ -69,7 +69,7 @@ int main(int argc,char**argv){try{
   }
   // A single multi-token call must reread rounded state, also with distinct input/output.
   Data c(4,scenario),d=c;s.tokens=4;if(alias){c.state=c.input;d.state=d.input;}
-  p82rec::host<true>(s,c.args(alias));run(view,s,d,alias);
+  p49drec::recurrence_host<4>(s,c.args(alias));run(view,s,d,alias);
   compare(c,d,"batch4-s"+std::to_string(scenario)+"-a"+std::to_string(alias)+"-p"+std::to_string(packed),4);
  }
  std::ofstream(out/"native.json")<<"{\"passed\":true,\"cases\":"<<checks<<",\"tokens_checked\":"<<tokens_checked<<",\"bytes_compared\":"<<bytes_checked<<",\"full_state_elements\":786432,\"raw_bytes_compared\":true,\"transcript\":\"sha256 after raw equality\"}\n";

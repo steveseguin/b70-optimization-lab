@@ -32,6 +32,7 @@ class MaskTests(unittest.TestCase):
             self.assertEqual(proof['native_indices'],[0])
             self.assertEqual([r['pci'] for r in proof['nodes']],['0000:23:00.0'])
             with L.Reservation('B',root=root/'lanes') as b:
+                b.complete(drained=True)  # 58j waits for whole-host gap even at K1
                 with L.Reservation('A',window='K1',root=root/'lanes') as a:
                     env=D.onecard_environment(W.closed_environment({'PATH':'/usr/bin:/bin','OMP_NUM_THREADS':'2', 'LD_LIBRARY_PATH':'/usr/lib/x86_64-linux-gnu'}),root/'home')
                     code='import os,json; print(json.dumps(dict(os.environ)))'
@@ -50,7 +51,6 @@ class MaskTests(unittest.TestCase):
                         with self.assertRaisesRegex(ValueError,'pre-open mask differs'):
                             D.verify_onecard_environment(bad)
                     a.complete(drained=True)
-                b.complete(drained=True)
 
     def test_mapping_and_debug_override_refused(self):
         with tempfile.TemporaryDirectory() as tmp:

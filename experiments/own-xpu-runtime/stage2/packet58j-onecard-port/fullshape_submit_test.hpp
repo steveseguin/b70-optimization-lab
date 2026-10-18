@@ -17,12 +17,12 @@ public:
   }
   ownrt::Event compute(const ownrt::Operation&,std::span<void*const>,std::span<const ownrt::Event>) override {throw std::logic_error("fullshape compute forbidden");}
 };
-static int fullshape_submit_test(const fs::path& destination) {
+static int fullshape_submit_test(const fs::path& destination,const fs::path& selection,const std::string& window,const std::string& miss) {
   require(getpriority(PRIO_PROCESS,0)==19,"nice19 required");
   require(!fs::exists(destination),"fresh fullshape output");fs::create_directories(destination);
   const auto packet=fs::path(__FILE__).parent_path();
-  Options a;a.card=0;a.cards=1;a.context=4096;a.stage="decode";a.memory="resident";a.miss_path="zero-copy";a.output=destination;
-  a.selection=packet/"selection.json";
+  Options a;a.card=0;a.cards=1;a.context=4096;a.stage="decode";a.memory="resident";a.miss_path=miss;a.output=destination;
+  a.selection=selection;a.tokens=(window=="KD"||window=="W2m")?8:128;a.retain_steps.parse((window=="KD"||window=="W2m"||window=="WS")?"1-8":"none");
   {std::ifstream f(a.selection,std::ios::binary);std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(f)),{});a.selection_sha256=hash(bytes);}
   packet26::dispatch.load(packet/"dispatch-speed6.json");
   Options metadata_only;metadata_only.mini=true;Weights weights(metadata_only);

@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 18, packet58j one-card port checked on CPU:** The separate copy of
+58g has down-tile16, route-fast and rec-both-plus, with eight choices including
+production. All 80 full-size startup/submit checks pass, and every host budget
+matches 58g. E1 is excluded because it adds 616 MB of pinned weights.
+Intel compilation and repeated byte checks are underway; no device or queue ran.
+[Work note](notes/2026-10-18-own-runtime-packet58j.md).
+
 **October 18, packet105 implemented on CPU:** The target head can send its
 last 46,080 rows to rank0 using the verified current hidden vector. Both builds,
 both compiler byte checks, hit/miss path mocks and all six allocation checks

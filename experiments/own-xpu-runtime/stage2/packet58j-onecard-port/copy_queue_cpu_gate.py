@@ -4,6 +4,7 @@ No SYCL library, Level Zero loader or device is loaded. The old handle must be
 rejected by the documented v2 contract; the fixed handle must retain the
 copy-only ordinal, asynchronous mode and explicit ownership.
 """
+from compile_turn import turn
 import hashlib,json,os,subprocess,tempfile
 from pathlib import Path
 P=Path(__file__).resolve().parent
@@ -53,7 +54,7 @@ std::unique_ptr<sycl::queue>copy_queue_;
    suffix='return created&&bool(copy_queue_)?0:2;}catch(const std::exception&e){return std::string(e.what())=="UR_RESULT_ERROR_UNSUPPORTED_FEATURE"?44:3;}}'
    code=pre+"int main(){"+handle+" native_copy_=nullptr;try {"+body+suffix
    cpp=Path(tmp)/(name+".cpp");binary=Path(tmp)/name;cpp.write_text(code)
-   subprocess.run(["g++","-std=c++20","-O0",str(cpp),"-o",str(binary)],check=True)
+   with turn():subprocess.run(["g++","-std=c++20","-O0",str(cpp),"-o",str(binary)],check=True)
    result=subprocess.run([str(binary)])
    assert result.returncode==(0 if fixed else 44),(name,result.returncode)
    sources[str(source.relative_to(ROOT))]=sha(source)

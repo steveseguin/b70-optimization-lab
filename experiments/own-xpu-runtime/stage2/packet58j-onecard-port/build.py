@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Serial low priority CPU builds only; never executes a device binary."""
+from compile_turn import turn
 import argparse,hashlib,json,os,subprocess,time
 from pathlib import Path
 P=Path(__file__).resolve().parent; B=P/'build'
@@ -12,7 +13,7 @@ def main():
  a=argparse.ArgumentParser();a.add_argument('stage',choices=['prepare','gnu-host','device']);args=a.parse_args()
  if os.getpriority(os.PRIO_PROCESS,0)!=19:raise SystemExit('nice19 required')
  if not set(os.sched_getaffinity(0))<=set(range(4,16))|set(range(20,32)):raise SystemExit('CPU affinity outside admission')
- if (sum(x.stat().st_size for x in B.rglob('*') if x.is_file()) if B.exists() else 0) > 1000000000:raise SystemExit('build cap')
+ if (sum(x.stat().st_size for x in B.rglob('*') if x.is_file()) if B.exists() else 0) > 300000000:raise SystemExit('build cap')
  B.mkdir(exist_ok=True)
  parent=P.parent/'packet56-draft-prefix/build'
  for name in ('input','fusion-fixtures','fusion-rope.hpp'):
@@ -26,12 +27,12 @@ def main():
  if mode=='gnu-host':cmds[-1].insert(-1,'fullshape-submit')
  if (P/'p58_native_fixture.cpp').exists():cmds[-1].insert(-1,'p58-cache-fixtures')
  for i,cmd in enumerate(cmds):
-  with (B/(mode+'-'+str(i)+'.log')).open('w') as f:
-   subprocess.run(cmd,env=env,stdout=f,stderr=subprocess.STDOUT,check=True)
+  with turn(), (B/(mode+'-'+str(i)+'.log')).open('w') as f:
+   subprocess.run(cmd,env=env,stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,check=True)
  after=source_identity()
  if before!=after:raise SystemExit('source changed while compiler ran; rebuild required')
  actual_bytes=sum(x.stat().st_size for x in B.rglob('*') if x.is_file())
- if actual_bytes>1000000000:raise SystemExit('build exceeded1GB')
+ if actual_bytes>300000000:raise SystemExit('build exceeded1GB')
  binaries=[dest/n for n in ('own-rt-iq3','p58-cache-fixtures','fullshape-submit') if (dest/n).is_file()]
  (P/('build-'+mode+'-receipt.json')).write_text(json.dumps({'schema':'packet58.build.v1','device_executed':False,'passed':True,'sources_sha256':after,'build_bytes':actual_bytes,'commands':cmds,'binaries':{str(x.relative_to(P)):sha(x) for x in binaries},'built_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())},indent=2)+'\n')
 if __name__=='__main__':main()

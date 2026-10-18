@@ -68,9 +68,9 @@ template<unsigned Mode>struct Kernel final:p49b::Base {
  static constexpr auto T=iq3::Type::IQ4_NL;static constexpr unsigned K=640,WG=64;static constexpr bool paired=false;
  static constexpr unsigned V=paired?8:16,P=32/V,SG=WG/32,RowsPerGroup=(paired?SG/2:SG)*V;
  static_assert(WG==64||WG==128);static_assert((paired&&K==2560)||(!paired&&K==640));
- unsigned rows=paired?640:2560,count=10,experts=512;
+ unsigned rows=paired?640:2560,count=10,experts=512;bool indirect=false;
  p39::Bound bind(std::span<void*const>p)const{
-  p49dvirtual::Kernel<T,K,paired?2:3> base;base.rows=rows;base.count=count;base.experts=experts;return base.bind(p);
+  p49dvirtual::Kernel<T,K,paired?2:3> base;base.indirect=indirect;base.rows=rows;base.count=count;base.experts=experts;return base.bind(p);
  }
  static unsigned logical_row(unsigned group,unsigned sub,unsigned lane){return (group*(paired?SG/2:SG)+(paired?sub/2:sub))*V+lane/P;}
  static unsigned mapped_group(unsigned group,unsigned rows,unsigned count){
@@ -88,8 +88,8 @@ template<unsigned Mode>struct Kernel final:p49b::Base {
    unsigned logical=logical_row(mapped_group(group,rows,count),sub,rr*P);if(logical>=total)continue;
    unsigned row=logical%rows,slot=logical/rows,stream=paired?sub%2:0;
    auto route=b.routes[slot];bool ok=iq3::valid_route(route,experts,rows,rows),valid=ok&&row<route.row_count;
-   float values[P]{};if(valid){size_t source=size_t(route.expert_id)*rows+route.row_begin+row;
-    for(unsigned lane=0;lane<P;++lane)values[lane]=p49dvirtual::local_tree<V>(chains((stream?b.peer:b.w),source,b.x+(paired?0:slot*K),lane));
+   float values[P]{};if(valid){size_t source=size_t(route.expert_id)*rows+route.row_begin+row;const uint8_t* bank=b.w; if(b.indirect){bank=p58::resolve(bank,size_t(route.expert_id)*rows*row_bytes,size_t(rows)*row_bytes,true);source=route.row_begin+row;}
+    for(unsigned lane=0;lane<P;++lane)values[lane]=p49dvirtual::local_tree<V>(chains(bank,source,b.x+(paired?0:slot*K),lane));
    }
    for(unsigned width=1;width<P;width*=2)for(unsigned lane=0;lane<P;lane+=2*width)values[lane]=values[lane]+values[lane+width];
    (stream?b.py:b.y)[logical]=iq3::bf16_bits(valid?values[0]:iq3::bits_float(0x7fc00000));
@@ -104,8 +104,8 @@ template<unsigned Mode>struct Kernel final:p49b::Base {
     auto sg=it.get_sub_group();unsigned lane=sg.get_local_linear_id(),sub=it.get_local_linear_id()/32,physical=lane%P,stream=paired?sub%2:0;
     unsigned logical=logical_row(mapped_group(it.get_group_linear_id(),b.rows,b.count),sub,lane),row=logical%b.rows,slot=logical/b.rows;bool in_range=logical<total;
     iq3::Route route{};if(in_range)route=b.routes[slot];bool ok=in_range&&iq3::valid_route(route,b.experts,b.rows,b.rows),valid=ok&&row<route.row_count;
-    float value=0;if(valid){size_t source=size_t(route.expert_id)*b.rows+route.row_begin+row;
-     value=p49dvirtual::local_tree<V>(chains((stream?b.peer:b.w),source,b.x+(paired?0:slot*K),physical));
+    float value=0;if(valid){size_t source=size_t(route.expert_id)*b.rows+route.row_begin+row;const uint8_t* bank=b.w; if(b.indirect){bank=p58::resolve(bank,size_t(route.expert_id)*b.rows*row_bytes,size_t(b.rows)*row_bytes,true);source=route.row_begin+row;}
+     value=p49dvirtual::local_tree<V>(chains(bank,source,b.x+(paired?0:slot*K),physical));
     }
     for(unsigned width=1;width<P;width*=2){float rhs=sycl::select_from_group(sg,value,(lane+width)%32);if(physical%(2*width)==0)value=value+rhs;}
     if(in_range&&!physical){(stream?b.py:b.y)[logical]=iq3::bf16_bits(valid?value:iq3::bits_float(0x7fc00000));

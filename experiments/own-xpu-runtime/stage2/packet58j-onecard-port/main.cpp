@@ -10,6 +10,7 @@
 #include "dispatch.hpp"
 #include "p39_plan.hpp"
 #include "p49b_expert_submit.hpp"
+#include "p100_down.hpp"
 #include "p49c_submit.hpp"
 #include "p49d_submit.hpp"
 #include "cache_table.hpp"
@@ -830,10 +831,13 @@ public:
     int layer=std::stoi(name.substr(4)),projection=name.find("ffn_gate_")!=std::string::npos?0:name.find("ffn_up_")!=std::string::npos?1:2;
     auto host=allocate(0,"pinned-experts:"+name,bytes,Category::weights,Lifetime::process,Memory::pinned);
     auto dest=static_cast<uint8_t*>(dev(0).arena.row(host).pointer);require(dest,"pinned expert allocation failed");
-    size_t chunk=std::max(size_t(1),size_t(4*1024*1024)/std::max(src_stride,stride));
+    const bool tile=projection==2&&sealed_selection.choices.at("down")=="down-tile16";
+    if(tile)require(planes&&type==iq3::Type::IQ4_NL&&k==640&&t.shape[1]%16==0,"p58j down layout");
+    size_t chunk=std::max(size_t(1),size_t(4*1024*1024)/std::max(src_stride,stride));if(tile)chunk=(chunk/16)*16;
     for(size_t row=0;!allocation_probe && row<total;row+=chunk){guard();size_t n=std::min(chunk,total-row);auto raw=w.read(name,row*src_stride,n*src_stride);
       if(planes)for(size_t r=0;r<n;++r)p49bgemv::repack_row(type,k,raw.data()+r*src_stride,dest+(row+r)*stride);
       else std::memcpy(dest+row*stride,raw.data(),raw.size());
+      if(tile){auto transposed=p100::transpose(dest+row*stride,n);std::memcpy(dest+row*stride,transposed.data(),transposed.size());}
     }
     auto table=allocate(0,"expert-table:"+name,p.g.experts*sizeof(p58::Pointer),Category::weights,Lifetime::process);
     weights[0][name]=table;expert_banks[name]={host,table,bytes/size_t(p.g.experts),layer,projection};
@@ -1184,7 +1188,7 @@ public:
       std::vector<Matrix> selected{m};if(l.op=="expert_gate_up")selected.push_back(a.memory=="resident"?it->second[1]:matrix(l,1));
       // Same engine call for ordinary decode and each serial M=2 row.
       const bool round2=!a.mini&&a.memory=="resident"&&((kind==p39::Kind::silu_div4&&(cls=="hc.a.low"||cls=="hc.f.low"))||kind==p39::Kind::attention_combine);
-      finish(c,round2?p49c::dense_submit(dev(c),m,kind,b):p49b_site(w,a,l)?p49d::expert(dev(c),selected,kind,b):p39::submit(dev(c),selected,kind,b),true);return;
+      finish(c,round2?p49c::dense_submit(dev(c),m,kind,b):p49b_site(w,a,l)?p49d::expert(dev(c),selected,kind,b,sealed_selection.choices.at("down")):p39::submit(dev(c),selected,kind,b),true);return;
     }
     const auto cls=packet26::Dispatch::class_name(l.label);
     if(!a.mini&&a.memory=="resident"&&(cls=="hc.a.gate"||cls=="hc.f.gate")){
@@ -1641,8 +1645,8 @@ static void p58_reset_request(Engine& e,const fs::path& destination) {
 
 int main(int argc, char **argv) {
 #ifdef OWN_RT_HOST_ONLY
-  if(argc==3 && std::string(argv[1])=="--fullshape-submit-test") {
-    try {return fullshape_submit_test(argv[2]);}
+  if(argc>=3 && argc<=6 && std::string(argv[1])=="--fullshape-submit-test") {
+    try {return fullshape_submit_test(argv[2],argc>3?argv[3]:(fs::path(__FILE__).parent_path()/"selection.json").string(),argc>4?argv[4]:"KD",argc>5?argv[5]:"zero-copy");}
     catch(const std::exception& error){std::cerr<<error.what()<<"\n";return 1;}
   }
   if(argc==3 && std::string(argv[1])=="--postload-allocation-test") {

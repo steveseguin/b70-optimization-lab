@@ -13,6 +13,7 @@ import time
 
 import memory_plan as M
 import onecard_admission as A
+from views import VIEWS, selection, digest
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[3]
@@ -112,7 +113,7 @@ def prerequisite(path, name, identity):
             and row.get('window') == name and row.get('stop_reasons') == []
             and row.get('qualifying') is (name != 'K1'), 'invalid prerequisite ' + name)
     A.verify(row)
-    for key in ('boot_id', 'build_receipt_sha256', 'artifacts_sha256', 'environment', 'card', 'context', 'gpu_count'):
+    for key in ('boot_id', 'build_receipt_sha256', 'artifacts_sha256', 'environment', 'card', 'context', 'gpu_count', 'view', 'selection_sha256'):
         require(row.get(key) == identity.get(key), 'prerequisite differs: ' + key)
     require(type(row.get('pid')) is int and row['pid'] > 0
             and type(row.get('process_start_ticks')) is int and row['process_start_ticks'] > 0, 'fresh owner identity missing')
@@ -176,8 +177,8 @@ def selected_miss_path(paths, identity):
 def native_command(args, output, miss_path):
     if args.window == 'K1':
         return [str(HERE/'build/device/p58-cache-fixtures'), '--card', '0', '--output', str(output/'run'),
-                '--iterations', '20', '--authorized-device-window']
-    return ['/usr/bin/python3', '-B', str(HERE/'suite_driver.py'), '--window', args.window,
+                '--iterations', '20', '--down-layout', json.loads(selection(getattr(args,'view','production')).read_text())['choices']['down'], '--authorized-device-window']
+    return ['/usr/bin/python3', '-B', str(HERE/'suite_driver.py'), '--window', args.window, '--view', getattr(args,'view','production'),
             '--card', str(args.card), '--output', str(output/'run'), '--miss-mode', 'zerocopy' if miss_path == 'zero-copy' else 'streamed',
             '--authorized-device-window']
 
@@ -340,6 +341,7 @@ def finish_k1_devices(child, reasons, admission):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--window', choices=tuple(CONFIG), required=True)
+    parser.add_argument('--view', choices=VIEWS, default='production')
     parser.add_argument('--card', type=int, choices=(0,), default=0)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--previous', type=Path)
@@ -362,7 +364,7 @@ def main(argv=None):
     memory = dict(pending_lane_admission=True, plan=budget)
     storage = SUPPORT.storage(output, WRITES[args.window])
     build_bytes = sum(p.stat().st_size for p in (HERE/'build').rglob('*') if p.is_file())
-    require(build_bytes <= 1_000_000_000, 'packet58 build exceeds 1 GB')
+    require(build_bytes <= 300_000_000, 'packet58 build exceeds 1 GB')
     review, through = S.fault_review(args.faults_reviewed_through, time.time_ns()//1000)
     boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
     latch_path = HERE / ('fault-'+boot+'.json')
@@ -370,6 +372,7 @@ def main(argv=None):
     record = dict(schema='own-runtime.packet58.window.v1', window=args.window, passed=False, qualifying=False,
                   device_executed=False, child_still_running=False, card=args.card, pci_bdf=PCI[args.card],
                   native_visible_card=0, context=4096, gpu_count=1, decode_mode='plain',
+                  view=args.view,selection_sha256=digest(args.view),
                   boot_id=boot, build_receipt_sha256=sha(HERE/'build-receipt.json'),
                   artifacts_sha256=build['artifacts'], environment=dict(env, **A.D.onecard_mask()), coordinator_fault_review=review,
                   started_utc_ns=time.time_ns(), expected_seconds=CONFIG[args.window][0],

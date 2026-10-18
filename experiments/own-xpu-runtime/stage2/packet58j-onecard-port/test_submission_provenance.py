@@ -61,7 +61,7 @@ class ProvenanceTests(unittest.TestCase):
         row=dict(identity,schema='own-runtime.packet58.window.v1',window='K1',passed=True,qualifying=False,
             device_executed=True,child_still_running=False,stop_reasons=[],pid=10,process_start_ticks=20,
             native_files={leaf:W.sha(directory/leaf) for leaf in names})
-        row['lane_admission']=dict(passed=True,card=0,scope='lane-A',timing_claim_eligible=False,reservation=dict(boot_id='boot'))
+        row['lane_admission']=dict(passed=True,card=0,scope='whole-host',timing_claim_eligible=False,reservation=dict(boot_id='boot'))
         self.save(directory/'window.json',row);W.prerequisite(directory/'window.json','K1',identity)
         del row['native_files']['run/k1.json'];self.save(directory/'window.json',row)
         with self.assertRaisesRegex(ValueError,'closure incomplete'):W.prerequisite(directory/'window.json','K1',identity)

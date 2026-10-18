@@ -13,7 +13,7 @@ def main():
   env={'PATH':'/usr/bin:/bin','OMP_NUM_THREADS':'2'}
   base=[str(binary),'--mini','--pipeline-mini','--memory','resident','--context','32','--tokens','8','--retain-steps','1-8']
   for name,extra in [('fresh1',['--input',str(b)]),('fresh2',['--input',str(b)]),('suite',['--suite-inputs',str(suite)])]:
-   out=t/name;r=subprocess.run(base+extra+['--output',str(out)],env=env,text=True,capture_output=True,timeout=60)
+   out=t/name;r=subprocess.run(base+extra+['--output',str(out)],env=env,stdin=subprocess.DEVNULL,text=True,capture_output=True,timeout=60)
    if r.returncode:raise RuntimeError(name+': '+r.stdout+r.stderr)
    runs.append({'name':name,'exit_code':r.returncode})
   def result(dir):

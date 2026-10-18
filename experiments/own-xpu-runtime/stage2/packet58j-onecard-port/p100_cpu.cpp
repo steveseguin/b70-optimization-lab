@@ -1,5 +1,6 @@
 // Compare every output/status byte, packed byte and raw FP32 chain/tree.
 #include "p100_down.hpp"
+#include "failure.hpp"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -10,7 +11,7 @@ uint32_t next(uint32_t&s){s=s*1664525u+1013904223u;return s;}
 struct Recorder{
  std::ofstream a,b,c;size_t cases=0,chains=0,trees=0,layout_bytes=0;
  Recorder(const std::filesystem::path&p):a(p/"expected.bin",std::ios::binary),b(p/"candidate.bin",std::ios::binary),c(p/"cases.jsonl"){}
- void compare(const void*x,const void*y,size_t n){require(std::memcmp(x,y,n)==0,"raw byte mismatch");a.write((const char*)x,n);b.write((const char*)y,n);}
+ void compare(const void*x,const void*y,size_t n){require(std::memcmp(x,y,n)==0,"raw byte mismatch");a<<packet26::hash(x,n)<<"\n";b<<packet26::hash(y,n)<<"\n";}
 };
 template<unsigned Mode>void test(Recorder&r,unsigned rows,unsigned count,unsigned scenario){
  constexpr unsigned experts=10,K=640;size_t extent=size_t(rows)*experts*360;uint32_t seed=0x100+
@@ -39,9 +40,22 @@ template<unsigned Mode>void test(Recorder&r,unsigned rows,unsigned count,unsigne
  uint32_t error=scenario==3?7:0,other=error,active=scenario==2?0:1,position=0;
  std::array<void*,19> a{};a[0]=w.data();a[1]=w.data();a[2]=x.data();a[3]=y.data();a[4]=y.data();a[5]=routes.data();a[6]=status.data();a[7]=status.data();a[16]=&error;a[17]=&active;a[18]=&position;
  auto b=a;b[0]=Mode==2?tiled.data():w.data();b[1]=b[0];b[3]=z.data();b[4]=z.data();b[6]=actual.data();b[7]=actual.data();b[16]=&other;
- p65::Kernel<Type::IQ4_NL,640,64,false,true> control;control.rows=rows;control.count=count;control.experts=experts;control.run(a);
+ p49dvirtual::DownKernel control;control.rows=rows;control.count=count;control.experts=experts;control.run(a);
  if constexpr(Mode==0)control.run(b);else{p100::Kernel<Mode>k;k.rows=rows;k.count=count;k.experts=experts;k.run(b);}
  r.compare(y.data(),z.data(),y.size()*2);r.compare(status.data(),actual.data(),status.size()*4);r.compare(&error,&other,4);
+ if constexpr(Mode==2){
+  // Same bytes copied into disjoint simulated cache slots. Device tables choose
+  // untouched host experts, mixed hit/miss placements, then fully copied experts.
+  std::vector<std::vector<uint8_t>> cache(experts);std::vector<p58::Pointer> table(experts);
+  for(unsigned e=0;e<experts;++e)cache[e].assign(tiled.begin()+size_t(e)*rows*360,tiled.begin()+size_t(e+1)*rows*360);
+  for(unsigned placement=0;placement<3;++placement){
+   for(unsigned e=0;e<experts;++e)table[e]={uint64_t(placement==0||(placement==1&&e%2)?tiled.data()+size_t(e)*rows*360:cache[e].data()),1};
+   b[0]=table.data();b[1]=table.data();std::fill(z.begin(),z.end(),0x7e31);std::fill(actual.begin(),actual.end(),9);other=scenario==3?7:0;
+   p100::Kernel<2>k;k.indirect=true;k.rows=rows;k.count=count;k.experts=experts;k.run(b);
+   r.compare(y.data(),z.data(),y.size()*2);r.compare(status.data(),actual.data(),status.size()*4);r.compare(&error,&other,4);
+  }
+ }
+
  for(unsigned row: {0u,1u,15u,16u,rows-1,rows*experts-1})for(unsigned slot=0;slot<count;++slot){
   float expected[32],candidate[32];
   for(unsigned lane=0;lane<32;++lane)expected[lane]=p49bgemv::lane<Type::IQ4_NL,640>(w.data()+size_t(row)*360,x.data()+slot*K,0,K,lane);

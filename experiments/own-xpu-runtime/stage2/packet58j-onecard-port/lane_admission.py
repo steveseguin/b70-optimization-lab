@@ -24,7 +24,7 @@ TIMING_WINDOWS = frozenset(('WS128',))
 def window_scope(window, *, timing_claim=False):
     require(window in EXACT_WINDOWS | TIMING_WINDOWS, 'unregistered window policy')
     # A new timing use can upgrade an exactness window, never downgrade speed.
-    return 'whole-host' if timing_claim or window in TIMING_WINDOWS else 'lane-A'
+    return 'whole-host'  # 58j: every full-model window excludes lane B; K1 is conservative too.
 
 
 def present(path):

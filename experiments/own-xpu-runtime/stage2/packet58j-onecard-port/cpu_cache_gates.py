@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Small synthetic CPU-only cache and production-pointer gates; no model reads."""
+from compile_turn import turn
 import argparse
 import hashlib
 import json
@@ -39,7 +40,8 @@ def run(output):
                 obj = build/(mode+'-'+source+'.o')
                 include = P.parent/'packet49d-round3' if source == 'expert_reference.cpp' else P
                 cmd = flags+extra+['-I'+str(include), '-I'+str(P.parent/'packet2/kernels'), '-I'+str(P.parent/'packet2/loader'), '-c',str(P/source),'-o',str(obj)]
-                result = subprocess.run(cmd,env=env,capture_output=True,text=True)
+                with turn():
+                    result = subprocess.run(cmd,env=env,stdin=subprocess.DEVNULL,capture_output=True,text=True)
                 if result.returncode:
                     raise RuntimeError(result.stderr)
                 dep = obj.with_suffix('.d')
@@ -48,7 +50,8 @@ def run(output):
             for name,sources in (('state',('cache_table_test.cpp',)),('expert',('expert_reference.cpp','expert_cache_test.cpp'))):
                 binary = build/(mode+'-'+name)
                 cmd = flags[:-1]+extra+[str(build/(mode+'-'+s+'.o')) for s in sources]+['-o',str(binary)]
-                result = subprocess.run(cmd,env=env,capture_output=True,text=True)
+                with turn():
+                    result = subprocess.run(cmd,env=env,stdin=subprocess.DEVNULL,capture_output=True,text=True)
                 if result.returncode:
                     raise RuntimeError(result.stderr)
                 for repeat in range(1):

@@ -92,7 +92,7 @@ class WindowTests(unittest.TestCase):
             files={str(p.relative_to(root)):W.sha(p) for p in root.rglob('*') if p.is_file()}
             identity=dict(boot_id='boot',build_receipt_sha256='seal',artifacts_sha256={'binary':'hash'},environment={'x':'y'},card=0,context=4096,gpu_count=1)
             row=dict(identity,schema='own-runtime.packet58.window.v1',passed=True,device_executed=True,child_still_running=False,window='K1',qualifying=False,stop_reasons=[],pid=42,process_start_ticks=123,native_files=files)
-            row['lane_admission']=dict(passed=True,card=0,scope='lane-A',timing_claim_eligible=False,reservation=dict(boot_id='boot'))
+            row['lane_admission']=dict(passed=True,card=0,scope='whole-host',timing_claim_eligible=False,reservation=dict(boot_id='boot'))
             p=root/'window.json';p.write_text(json.dumps(row))
             self.assertEqual(W.prerequisite(p,'K1',identity)['pid'],42)
             with self.assertRaises(ValueError):W.prerequisite(p,'K1',dict(identity,card=2))

@@ -32,8 +32,7 @@ class AdmissionTests(unittest.TestCase):
         for name in Q.ORDER:
             with self.subTest(window=name), tempfile.TemporaryDirectory() as tmp:
                 root=Path(tmp);proc=root/'proc';proc.mkdir();drain=root/'drain';drain.mkdir()
-                # A foreign B owner is allowed for every exactness window.
-                if name!='WS128': self.proc_owner(proc,43,'0000:43:00.0')
+                # Every 58j window requires a whole-host gap.
                 with A.Admission(name,root/'receipt',lambda:None,root=root/'lanes',
                                  drain_root=drain,proc=proc) as a:
                     self.assertTrue((root/'lanes/active-lane-A.json').exists())
@@ -96,19 +95,17 @@ class AdmissionTests(unittest.TestCase):
         for value in (-1, float('nan'), True, 26_409_219_601):
             with self.assertRaises(ValueError): M.exact_plan(dict(peak_shadow_bytes=value))
 
-    def test_each_exactness_window_coexists_with_real_B_lease(self):
-        for name in Q.ORDER[:-1]:
+    def test_each_window_waits_for_real_B_lease(self):
+        for name in Q.ORDER:
             with self.subTest(window=name), tempfile.TemporaryDirectory() as tmp:
-                root=Path(tmp)/'lanes'
+                root=Path(tmp)/'lanes';clock=Clock();saw=[]
                 with L.Reservation('B',root=root) as b:
-                    with L.Reservation('A',window=name,root=root) as a:
-                        self.assertEqual(a.scope,'lane-A')
-                        self.assertFalse(a.hold.exists())
-                        self.assertTrue((root/'active-lane-A.json').exists())
-                        with self.assertRaises(ValueError):
-                            L.Reservation('A',window='WS',root=root).__enter__()
+                    def sleep(seconds):
+                        self.assertTrue((root/'hold-lane-B').exists())
+                        saw.append('held');b.complete(drained=True);clock.sleep(seconds)
+                    with L.Reservation('A',window=name,root=root,now=clock.now,sleep=sleep) as a:
+                        self.assertEqual(a.scope,'whole-host');self.assertTrue(saw)
                         a.complete(drained=True)
-                    b.complete(drained=True)
                 self.assertFalse((root/'active-lane-A.json').exists())
 
     def test_timing_holds_B_before_wait_and_allows_current_screen_to_finish(self):
@@ -142,11 +139,11 @@ class AdmissionTests(unittest.TestCase):
             root=Path(tmp)/'lanes'; drain=Path(tmp)/'drain';drain.mkdir()
             with L.Reservation('A',window='KD',root=root) as a:
                 with DrainPermit(Path(tmp)/'receipt',root=drain,reservation=a.record) as d:
-                    with L.Reservation('B',root=root) as b:
+                    clock=Clock()
+                    with self.assertRaisesRegex(ValueError,'timed out'):
+                        L.Reservation('B',root=root,now=clock.now,sleep=clock.sleep,wait_seconds=1).__enter__()
+                    with self.assertRaises(ValueError):
                         screen_teardown_admit('B',root=drain,coordination_root=root)
-                        with self.assertRaises(ValueError):
-                            screen_teardown_admit('A',root=drain,coordination_root=root)
-                        b.complete(drained=True)
                     d.complete()
                 a.complete(drained=True)
 
@@ -197,7 +194,7 @@ class AdmissionTests(unittest.TestCase):
     def test_card0_only_and_fixed_gaps(self):
         self.assertEqual(Q.GAP_SECONDS,90)
         with self.assertRaises(ValueError): Q.commands(Path('/tmp/unused'),2,'2026-01-01T00:00:00Z','')
-        self.assertEqual([L.window_scope(n) for n in Q.ORDER], ['lane-A']*6+['whole-host'])
+        self.assertEqual([L.window_scope(n) for n in Q.ORDER], ['whole-host']*7)
         for name in Q.ORDER:
             cmd=Q.commands(Path('/tmp/unused'),0,'2026-01-01T00:00:00Z','')[name]
             self.assertEqual(cmd[cmd.index('--card')+1],'0')

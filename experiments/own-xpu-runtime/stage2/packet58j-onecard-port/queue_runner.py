@@ -10,13 +10,14 @@ import signal
 import subprocess
 import time
 import window as W
+from views import VIEWS
 
 P = Path(__file__).resolve().parent
 ORDER = ('K1a', 'K1b', 'KD', 'W2m', 'WS', 'WS128x', 'WS128')
 GAP_SECONDS = 90
 
 
-def commands(output, card, review, library):
+def commands(output, card, review, library, view="production"):
     W.require(card == 0, 'packet58g requires card 0 and lane A')
     result = {}
     for index, name in enumerate(ORDER):
@@ -25,7 +26,7 @@ def commands(output, card, review, library):
                '/usr/bin/env', '-i', 'PATH=/usr/bin:/bin', 'OMP_NUM_THREADS=2', 'LD_LIBRARY_PATH='+library,
                '/usr/bin/python3', '-B', str(P/'window.py'), '--authorized-device-window',
                '--window', mode, '--card', str(card), '--output', str(output/name),
-               '--faults-reviewed-through', review]
+               '--faults-reviewed-through', review, '--view', view]
         if name not in ('K1a', 'K1b'):
             cmd += ['--previous', str(output/ORDER[index-1]/'window.json')]
             for k1 in ('K1a', 'K1b'):
@@ -50,12 +51,13 @@ def main(argv=None):
     parser.add_argument('--card', type=int, choices=(0,), default=0)
     parser.add_argument('--faults-reviewed-through', required=True)
     parser.add_argument('--plan', action='store_true')
+    parser.add_argument('--view', choices=VIEWS, default='production')
     parser.add_argument('--authorized-device-window', action='store_true')
     args = parser.parse_args(argv)
     output = args.output_root.resolve()
     W.require(output.is_relative_to((P/'evidence').resolve()), 'queue output must be inside packet58/evidence')
     review, _ = W.S.fault_review(args.faults_reviewed_through, time.time_ns()//1000)
-    cmds = commands(output, args.card, review, os.environ.get('LD_LIBRARY_PATH',''))
+    cmds = commands(output, args.card, review, os.environ.get('LD_LIBRARY_PATH',''),args.view)
     if args.plan:
         W.build_gate()  # Planning must reject a missing/stale post-load CPU gate.
         for name in ORDER:
@@ -75,7 +77,7 @@ def main(argv=None):
     W.SUPPORT.storage(output, sum(W.WRITES['K1' if n.startswith('K1') else n] for n in ORDER))
     output.mkdir(parents=True)
     stopped, handlers, child = [], {}, None
-    state = dict(schema='own-runtime.packet58.queue.v1', passed=False, card=args.card, completed=[], commands=cmds)
+    state = dict(schema='own-runtime.packet58.queue.v1', passed=False, card=args.card, view=args.view, completed=[], commands=cmds)
     def persist():
         W.save(output/'queue.json', state)
     def stop(signum, frame):

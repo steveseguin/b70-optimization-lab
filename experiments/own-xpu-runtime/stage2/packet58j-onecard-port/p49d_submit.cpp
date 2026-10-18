@@ -1,6 +1,8 @@
 #include "p49d_submit.hpp"
 #include "p49c_submit.hpp"
 #include "p49d_route.hpp"
+#include "p78_route.hpp"
+#include "p82b_recurrence.hpp"
 #include "p49d_recurrence.hpp"
 #include "p49d_mix.hpp"
 #include "p49d_small.hpp"
@@ -13,6 +15,7 @@ namespace p49d {
 using integrated::Launch;using integrated::Spec;using ownrt::Allocation;using ownrt::Event;using ownrt::Device;
 using IDs=std::span<const Allocation>;using Deps=std::span<const Event>;
 Launch production(Device&d,const Spec&s,IDs a,Allocation c,Allocation sc,Allocation pr,Deps deps){return packet18::submit_parallel(d,s,a,c,sc,pr,deps);}
+Launch route_fast(Device&d,const Spec&s,IDs a,Allocation,Allocation,Allocation,Deps deps){return p78route::submit(d,s,a,deps);}
 Launch production_route(Device&d,const Spec&s,IDs a,Allocation,Allocation,Allocation,Deps deps){return p49c::route_submit(d,s,a,deps);}
 template<unsigned ExpWG>Launch route(Device&d,const Spec&s,IDs a,Allocation,Allocation,Allocation,Deps deps){return p49droute::submit<4,ExpWG>(d,s,a,deps);}
 // Validate the full production ABI before binding the fixed geometry candidate.
@@ -33,6 +36,7 @@ void recurrence_validate(Device&d,const Spec&s,IDs a,const p49drec::RecurrenceBi
 template<unsigned Rows>Launch recurrence(Device&d,const Spec&s,IDs a,Allocation,Allocation,Allocation,Deps deps){
  auto b=p49drec::recurrence_bindings(s,a);recurrence_validate(d,s,a,b);p49drec::RecurrenceKernel<Rows>k;k.shape=b.shape;auto e=d.compute(k,b.ids,deps);return {e,e,1};
 }
+Launch recurrence_plus(Device&d,const Spec&s,IDs a,Allocation,Allocation,Allocation,Deps deps){auto b=p49drec::recurrence_bindings(s,a);recurrence_validate(d,s,a,b);p82brec::Kernel<true> k;k.shape=b.shape;auto e=d.compute(k,b.ids,deps);return {e,e,1};}
 Launch mix(Device&d,const Spec&s,IDs a,Allocation,Allocation,Allocation,Deps deps){
  const unsigned tail=s.ni+s.no+s.nw;
  if(s.special!=integrated::Special::normal||s.fused_combine_norm||s.op!=integrated::Op::hc_mix||s.g.h!=2560||s.site.shape[1]!=2560||(s.ni!=2&&s.ni!=4)||s.no!=1||s.nw||a.size()!=tail+5||s.sizes[0]!=10240||s.sizes[1]!=10240||s.sizes[s.ni]!=2560)throw std::invalid_argument("p49d mix production shape");
@@ -45,8 +49,9 @@ Launch mix(Device&d,const Spec&s,IDs a,Allocation,Allocation,Allocation,Deps dep
  p49dmix::Kernel k;k.spec=s;auto e=d.compute(k,a,deps);return {e,e,1};
 }
 Submit resolve(std::string_view cls,std::string_view choice){
- if(cls=="route"){if(choice=="production")return production_route;if(choice=="route-rank4")return route<256>;if(choice=="route-exp32-rank4")return route<32>;}
- if(cls=="recurrence"){if(choice=="production")return production;if(choice=="rows4-shared")return recurrence<4>;if(choice=="rows8-shared")return recurrence<8>;}
+ if(cls=="down"&&(choice=="production"||choice=="down-tile16"))return production;
+ if(cls=="route"){if(choice=="route-fast")return route_fast;if(choice=="production")return production_route;if(choice=="route-rank4")return route<256>;if(choice=="route-exp32-rank4")return route<32>;}
+ if(cls=="recurrence"){if(choice=="rec-both-plus")return recurrence_plus;if(choice=="production")return production;if(choice=="rows4-shared")return recurrence<4>;if(choice=="rows8-shared")return recurrence<8>;}
  if(cls=="hc"){if(choice=="production")return production;if(choice=="mix-vector4")return mix;}
  throw std::invalid_argument("p49d unregistered selection");
 }
@@ -80,7 +85,7 @@ void Selection::load(const std::string&path,const std::string&expected_sha256){
    }
   }else throw std::invalid_argument("p49d unknown selection field");
  }while(more());take('}');ws();
- if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision"}||values.size()!=3)throw std::invalid_argument("p49d incomplete/trailing selection");choices=std::move(values);observed_sha256=digest;
+ if(at!=text.size()||fields!=std::set<std::string>{"schema","choices","decision"}||(values.size()!=3&&values.size()!=4))throw std::invalid_argument("p49d incomplete/trailing selection");if(!values.contains("down"))values["down"]="production";for(auto cls:{"route","recurrence","hc","down"})if(!values.contains(cls))throw std::invalid_argument("missing selection class");choices=std::move(values);observed_sha256=digest;
 }
 Launch small(Device&d,std::string_view name,std::span<const integrated::Matrix>ms,std::span<const unsigned>variants){
  if(name!="small.ffn.q6")throw std::invalid_argument("p49d only banked small.ffn.q6 tuple");packet27::small::validate(d,name,ms,variants);

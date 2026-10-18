@@ -59,6 +59,7 @@ std::vector<uint16_t>activation(size_t n,unsigned scenario,unsigned row){std::ve
 }
 #include "p49d_expert.hpp"
 #include "p58_pointer.hpp"
+#include "p100_down.hpp"
 #include <csignal>
 namespace {
 static volatile std::sig_atomic_t p58_stopping=0;
@@ -72,7 +73,7 @@ std::vector<uint8_t> fixture_bank(iq3::Type t,unsigned k,unsigned rows,unsigned 
   auto*dest=bank.data()+size_t(row)*stride;if(compact)p49bgemv::repack_row(t,k,raw.data(),dest);else std::memcpy(dest,raw.data(),stride);
  }return bank;
 }
-template<iq3::Type T,unsigned K,bool Gate>Times exercise(Runner&r,unsigned iterations,std::ofstream&detail){
+template<iq3::Type T,unsigned K,bool Gate>Times exercise(Runner&r,unsigned iterations,std::ofstream&detail,const std::string& down){
  constexpr unsigned rows=Gate?640:2560,experts=10,count=10;constexpr auto kind=Gate?p39::Kind::expert_checks:p39::Kind::down_status;
  auto bank=fixture_bank(T,K,rows,experts,5801,T!=iq3::Type::IQ3_S),peer=Gate?fixture_bank(T,K,rows,experts,5802,T!=iq3::Type::IQ3_S):bank;
  const size_t expert_bytes=bank.size()/experts;Times times;times.bytes=bank.size()*(Gate?2:1);
@@ -85,9 +86,13 @@ template<iq3::Type T,unsigned K,bool Gate>Times exercise(Runner&r,unsigned itera
  std::vector<iq3::Route> routes(count);for(unsigned j=0;j<count;++j)routes[j]={(j*7)%experts,0,rows};a.routes=r.vec(routes);auto b=a;b.w=u;if(Gate){b.y=r.vec(std::vector<uint16_t>(rows*count,0));b.status=r.vec(std::vector<uint32_t>(count,0));}
  p39::Bindings control;control.error=r.word(0);control.active=r.word(1);control.position=r.word(0);control.capacity=4096;
  auto invoke=[&](bool indirect){auto aa=a,bb=b;aa.w=indirect?table:w;bb.w=indirect?up_table:u;std::vector<Matrix>m{aa};if(Gate)m.push_back(bb);auto controls=control;controls.indirect=indirect;
-  if constexpr(T==iq3::Type::IQ3_S){if(indirect)return p28::submit(r.d,m,"p28.paired.wg32",true,2,true);return p39::submit(r.d,m,kind,controls);}else return p49d::expert(r.d,m,kind,controls);};
+  if constexpr(T==iq3::Type::IQ3_S){if(indirect)return p28::submit(r.d,m,"p28.paired.wg32",true,2,true);return p39::submit(r.d,m,kind,controls);}else return p49d::expert(r.d,m,kind,controls,(!Gate&&indirect)?down:"production");};
  std::vector<Allocation>outputs{a.y,a.status,control.error};if(Gate){outputs.push_back(b.y);outputs.push_back(b.status);}
  r.finish(invoke(false).last);auto expected=r.snapshot(outputs);std::vector<uint8_t> flattened;for(auto&v:expected)flattened.insert(flattened.end(),v.begin(),v.end());times.digest=packet26::hash(flattened.data(),flattened.size());
+ if constexpr(!Gate){if(down=="down-tile16"){
+  bank=p100::transpose(bank.data(),rows*experts);r.write(w,bank.data(),bank.size());
+  for(size_t j=0;j<rotation;++j)std::memcpy(static_cast<uint8_t*>(r.d.arena.row(h).pointer)+j*bank.size(),bank.data(),bank.size());
+ }}
  for(unsigned mode=0;mode<4;++mode){check(!p58_stopping,"K1 cooperative stop");std::vector<p58::Pointer>pt(experts),ut(experts);
   for(unsigned id=0;id<experts;++id){bool host=mode==1||(mode==2&&id%2);pt[id]={uint64_t(r.d.arena.row(host?h:w).pointer)+id*expert_bytes,mode+1};ut[id]={uint64_t(r.d.arena.row(host?hu:u).pointer)+id*expert_bytes,mode+1};}
   r.write(table,pt.data(),pt.size()*sizeof(p58::Pointer));if(Gate)r.write(up_table,ut.data(),ut.size()*sizeof(p58::Pointer));
@@ -118,8 +123,9 @@ template<iq3::Type T,unsigned K,bool Gate>Times exercise(Runner&r,unsigned itera
  r.clear();return times;
 }
 }
-int main(int argc,char**argv){std::filesystem::path out;unsigned card=0,iterations=20;bool authorized=false;std::unique_ptr<Runner>r;
- try{for(int i=1;i<argc;++i){std::string key=argv[i];auto value=[&](){check(i+1<argc,"missing argument");return std::string(argv[++i]);};if(key=="--output")out=value();else if(key=="--card")card=std::stoul(value());else if(key=="--iterations")iterations=std::stoul(value());else if(key=="--authorized-device-window")authorized=true;else if(key=="--stop-fd")ownrt::set_stop_channel(std::stoi(value()));else throw std::invalid_argument("K1 unknown option");}
+int main(int argc,char**argv){std::filesystem::path out;unsigned card=0,iterations=20;bool authorized=false;std::string down="production";std::unique_ptr<Runner>r;
+ try{for(int i=1;i<argc;++i){std::string key=argv[i];auto value=[&](){check(i+1<argc,"missing argument");return std::string(argv[++i]);};if(key=="--output")out=value();else if(key=="--down-layout")down=value();else if(key=="--card")card=std::stoul(value());else if(key=="--iterations")iterations=std::stoul(value());else if(key=="--authorized-device-window")authorized=true;else if(key=="--stop-fd")ownrt::set_stop_channel(std::stoi(value()));else throw std::invalid_argument("K1 unknown option");}
+ check(down=="production"||down=="down-tile16","down layout");
  check(!out.empty()&&!std::filesystem::exists(out)&&iterations>0&&iterations<=20,"K1 bounds/output");
 #ifdef OWN_RT_HOST_ONLY
  check(!authorized,"host cannot execute device window");
@@ -127,7 +133,7 @@ int main(int argc,char**argv){std::filesystem::path out;unsigned card=0,iteratio
  check(authorized,"device authorization required");
 #endif
  std::filesystem::create_directories(out);std::signal(SIGTERM,p58_stop);std::signal(SIGINT,p58_stop);r=std::make_unique<Runner>(card,900);r->d.before_compute=[]{check(!p58_stopping,"K1 cooperative stop");};std::ofstream detail(out/"k1-cases.jsonl");
- auto a=exercise<iq3::Type::IQ2_S,2560,true>(*r,iterations,detail),b=exercise<iq3::Type::IQ3_S,2560,true>(*r,iterations,detail),c=exercise<iq3::Type::IQ4_NL,640,false>(*r,iterations,detail);
+ auto a=exercise<iq3::Type::IQ2_S,2560,true>(*r,iterations,detail,down),b=exercise<iq3::Type::IQ3_S,2560,true>(*r,iterations,detail,down),c=exercise<iq3::Type::IQ4_NL,640,false>(*r,iterations,detail,down);
  auto shutdown=r->d.shutdown(std::chrono::seconds(60));check(shutdown.safe_to_exit&&shutdown.exit_code==0,"K1 teardown");
  std::ofstream receipt(out/"k1.json");receipt<<"{\"schema\":\"packet58.k1.v1\",\"passed\":true,\"safe_to_exit\":true,\"device_executed\":"<<(authorized?"true":"false")<<",\"zero_copy_supported\":true,\"zero_copy_bytes_equal\":true,\"mixed_bytes_equal\":true,\"streamed_bytes_equal\":true,\"host_ms\":"<<a.host+b.host+c.host<<",\"vram_ms\":"<<a.vram+b.vram+c.vram<<",\"streamed_ms\":"<<a.streamed+b.streamed+c.streamed<<",\"bytes_per_iteration\":"<<a.bytes+b.bytes+c.bytes<<",\"exact_output_sha256\":"<<quote(packet26::hash((a.digest+b.digest+c.digest).data(),(a.digest+b.digest+c.digest).size()))<<",\"working_set_bytes\":"<<std::max({a.working_set,b.working_set,c.working_set})<<",\"cold_rotation\":true,\"checks\":"<<a.checks+b.checks+c.checks<<",\"iterations\":"<<iterations<<",\"teardown\":"<<shutdown.json()<<"}\n";return 0;
  }catch(const std::exception&e){std::cerr<<e.what()<<'\n';if(r)packet26::failure(r->d,out,e.what());return 1;}}
