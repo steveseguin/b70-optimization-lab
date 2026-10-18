@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Coordinator-only serial packet49 chain; --plan is CPU-only and never launches."""
+from record_scope import require_record_scope
+require_record_scope()  # Copied chain tooling is outside this packet qualification.
 import argparse
 import fcntl
 import json

@@ -44,7 +44,7 @@ def build_gate():
     verify_map(ROOT, row['sources'])
     verify_map(P, row['artifacts'])
     require(row['artifacts'].get('build/microbench') == sha(BINARY), 'micro binary not bound')
-    return dict(build_receipt_sha256=sha(BUILD), binary_sha256=sha(BINARY),
+    return dict(runner_pins_sha256=sha(P/'runner-pins.json'), build_receipt_sha256=sha(BUILD), binary_sha256=sha(BINARY),
                 wrapper_seal_sha256=sha(WRAPPER / 'wrapper-seal.json'))
 
 

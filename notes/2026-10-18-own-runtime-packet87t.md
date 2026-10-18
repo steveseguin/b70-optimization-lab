@@ -27,3 +27,29 @@ the separate 4-byte token upload is outside that calibration.
 dirty. A fetch showed no incoming main commits. Existing dirty work and frozen
 packet trees are preserved. The new build uses packet94's unchanged serial
 compiler turn, nice19, cores 8–15/24–31, Python -B and closed stdin.
+
+CPU closeout: the first proposal was pushed in `11a13504c`, immediately after
+its compile and temporary queue plan. The final build includes the pipeline's
+separate queued 4-byte token upload, host-vector/shared staging and observed
+compute-pending flags. Its native and CPU scratch total about 4.5 MB, below the
+200 MB cap. The copied source files remain byte-identical to their parents.
+
+All **19 CPU tests pass**, including receipt mutation refusals, both modeled
+decision branches, the memory floor and memory admission before reservation.
+The actual micro control flow also passes **1,800 samples in two CPU processes**
+with a host-backed device substitute, poisoned destinations, token/stream checks
+and graceful drain. Those CPU timings are discarded. Both original packet87
+optima reproduce exactly, and the final proposal passes a fresh temporary plan.
+[Validation receipt](../experiments/own-xpu-runtime/stage2/packet87t-transfer-micro/evidence/cpu-validation.json).
+
+The model uses measured idle transfer costs when receipts arrive: A/B/D already
+charge compute. Busy-queue totals are retained as contention sensitivities;
+charging that outstanding synthetic compute again would falsely close a split.
+The copied queues are in-order, so a transfer cannot bypass its own card's
+compute. The job records pending-compute observations instead of asserting
+unproved overlap. Median and p90 remain pending until the coordinator runs it.
+
+The earlier note's token omission describes the first shipped build. The final
+calibration includes the token upload; full model acceptance/state checks remain
+outside this tiny transport diagnostic. No GPU, service, live queue, frozen
+packet, settings or pre-existing dirty file was changed by this preparation.

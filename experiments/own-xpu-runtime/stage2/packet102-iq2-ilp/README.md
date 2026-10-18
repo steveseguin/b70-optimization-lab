@@ -4,11 +4,13 @@
 [preregistration](PREREGISTRATION.md), and
 [boundaries](DO-NOT-REPEAT.md).
 
-CPU preparation only. The first delivered proposal is the full-shape device
-microbenchmark; future device execution belongs to the coordinator.
+CPU preparation is complete. The coordinator independently ran the early
+microbenchmark proposal while CPU gates finished: **no candidate passed the
+15% gate**. [Micro closeout](MICRO-CLOSEOUT.md). This task launched no GPU work.
 Build: `build_microbench.py`, then `build_engine.py`, `cpu_gate.py`,
-`inspect_registers.py`, `full_shape.py`, `memory_plans.py`, `python_gate.py`,
-`seal.py`, `propose_jobs.py`, `queue_plan.py`.
+`inspect_registers.py`, `lookup_proof.py`, `full_shape.py`, `memory_plans.py`,
+`startup_import_gate.py`, `python_gate.py`, `seal.py`, `propose_jobs.py`,
+`queue_plan.py`, `final_check.py`.
 Use `nice -n 19 taskset -c 8-15,24-31 python3 -B` and stdin `/dev/null`.
 
 Three spill-free micro candidates remain: batch2, batch4, and shared input.

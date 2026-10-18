@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Coordinator-only device windows. Preparation never executes this entry."""
+from record_scope import require_record_scope
+require_record_scope()  # Copied chain tooling is outside this packet qualification.
 import argparse,gzip,hashlib,json,math,os,re,signal,subprocess,time
 from pathlib import Path
 from bundle_selection import selected

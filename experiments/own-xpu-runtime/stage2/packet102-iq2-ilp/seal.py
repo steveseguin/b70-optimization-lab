@@ -1,4 +1,4 @@
-"""Seal three byte-checked views only after actual full-shape startup succeeds."""
+"""Seal four byte-checked views only after actual full-shape startup succeeds."""
 import importlib.util,json,os,gzip,hashlib
 from pathlib import Path
 from build_engine import P,ROOT,B,sha,save,limits
@@ -13,10 +13,12 @@ def link(src,dst):
 def main():
  limits();wrapper=verify_wrapper()
  build=json.loads((P/'build-device-receipt.json').read_text());fixture=json.loads((P/'evidence/cpu-byte-identity.json').read_text());shape=json.loads((P/'evidence/full-shape.json').read_text());py=json.loads((P/'evidence/python-tests.json').read_text())
+ startup=json.loads((P/'evidence/startup-imports.json').read_text())
+ proof=json.loads((P/'evidence/lookup-issue-proof.json').read_text())
  micro=json.loads((P/'evidence/microbench-build.json').read_text());offline=json.loads((P/'register-report-offline.json').read_text())
  verify_map(P,micro['artifacts'])
  admission=json.loads((P/'evidence/full-shape-admission.json').read_text())
- for row in (build,fixture,shape,py,admission,micro,offline):
+ for row in (build,fixture,shape,py,admission,micro,offline,proof,startup):
   require(row['passed'] and not row['device_executed'],'CPU gate failed');verify_map(ROOT,row['sources'])
  verify_map(P,build['artifacts']);verify_map(ROOT,json.loads((P/'parent-source-manifest.json').read_text()))
  pin=json.loads((P/'shared-wrapper-pin.json').read_text());verify_map(ROOT,pin['sources'])
@@ -27,8 +29,8 @@ def main():
  require(len(admission['runs'])==2*len(views()),'all memory admissions required')
  require(set(fixture['views'])==set(views()),'all CPU views required')
  spec=importlib.util.spec_from_file_location('p81_generic_seal',P.parent/'screen/seal.py');generic=importlib.util.module_from_spec(spec);spec.loader.exec_module(generic)
- extras=list(P.glob('*.py'))+[P/'shared-wrapper-pin.json',P/'evidence/microbench-build.json',P/'register-report-offline.json',P/'build-device-receipt.json',P/'evidence/cpu-byte-identity.json',P/'evidence/full-shape.json',P/'evidence/python-tests.json',P/'evidence/full-shape-admission.json',*[P/'evidence'/('memory-plan-'+n+'.json') for n in views()],WRAPPER/'wrapper-seal.json',WRAPPER/'placement-validation/wrapper-seal.json']
- sources={**build['sources'],**fixture['sources'],**shape['sources'],**py['sources'],**wrapper['sources'],**pin['sources'],**micro['sources'],**offline['sources'],**{str(f.relative_to(ROOT)):sha(f) for f in extras}}
+ extras=list(P.glob('*.py'))+[P/'shared-wrapper-pin.json',P/'lineage-inputs/control-selection.json',P/'lineage-inputs/control-provenance.json',P/'evidence/lookup-issue-proof.json',P/'evidence/startup-imports.json',P/'kernel-registry.json',P/'evidence/microbench-build.json',P/'register-report-offline.json',P/'build-device-receipt.json',P/'evidence/cpu-byte-identity.json',P/'evidence/full-shape.json',P/'evidence/python-tests.json',P/'evidence/full-shape-admission.json',*[P/'evidence'/('memory-plan-'+n+'.json') for n in views()],WRAPPER/'wrapper-seal.json',WRAPPER/'placement-validation/wrapper-seal.json']
+ sources={**build['sources'],**fixture['sources'],**shape['sources'],**py['sources'],**wrapper['sources'],**pin['sources'],**micro['sources'],**offline['sources'],**proof['sources'],**startup['sources'],**{str(f.relative_to(ROOT)):sha(f) for f in extras}}
  sources.update({str(f.relative_to(ROOT)):sha(f) for f in (P/'evidence/cpu-bytes').iterdir() if f.is_file()})
  for row in shape['runs']:
   for a in row['artifacts'].values():
@@ -49,7 +51,7 @@ def main():
    require(run['candidate_sha256']==run['expected_sha256'],'bytes differ')
    retained=ROOT/run['raw_evidence'];require(sha(retained)==run['raw_evidence_sha256'],'raw archive changed');require(hashlib.sha256(gzip.decompress(retained.read_bytes())).hexdigest()==run['expected_sha256'],'raw bytes changed');require(sha(ROOT/run['cases_path'])==run['cases_sha256'],'case evidence changed')
   require(len({r['candidate_sha256'] for r in selected['runs']})==1,'cross compiler bytes differ')
-  s=json.loads((P/'selection-template.json').read_text());s['choices']=choices(name);save(v/'selection.json',s)
+  s=json.loads((P/'lineage-inputs/control-selection.json').read_text());s['choices']=choices(name);save(v/'selection.json',s)
   (v/'dispatch-speed6.json').write_bytes((P/'dispatch-speed6.json').read_bytes());(v/'memory-plan.json').write_bytes((P/'evidence'/('memory-plan-'+name+'.json')).read_bytes())
   for leaf in build['artifacts']:link(P/leaf,v/leaf)
   # Retain compact digest receipts after reading and checking all raw fixture bytes.
@@ -61,9 +63,9 @@ def main():
   if refresh.exists():
    receipt['provenance_refresh']=json.loads(refresh.read_text());receipt['sources'][str(refresh.relative_to(ROOT))]=sha(refresh)
   save(bp,receipt)
-  save(fp,dict(schema='own-runtime.screen.byte-fixture.v1',passed=True,device_executed=False,changed_class='exact IQ2 grid address space and representation; unchanged FP32 accumulation order; complete raw comparisons retained compressed',command=selected['runs'][0]['command'],build_receipt_sha256=sha(bp),sources=fixture['sources'],expected=dict(path='expected.bin',sha256=sha(v/'expected.bin')),actual=dict(path='candidate.bin',sha256=sha(v/'candidate.bin')),raw_runs=selected['runs'],choices=choices(name)))
+  save(fp,dict(schema='own-runtime.screen.byte-fixture.v1',passed=True,device_executed=False,changed_class='exact IQ2 lookup batching and shared activations; unchanged FP32 accumulation order; complete raw comparisons retained compressed',command=selected['runs'][0]['command'],build_receipt_sha256=sha(bp),sources=fixture['sources'],expected=dict(path='expected.bin',sha256=sha(v/'expected.bin')),actual=dict(path='candidate.bin',sha256=sha(v/'candidate.bin')),raw_runs=selected['runs'],choices=choices(name)))
   generic.create(v,'tp2',bp,fp,v/'build/device/own-rt-iq3',v/'dispatch-speed6.json',v/'screen-seal.json')
   for leaf in ('selection.json','screen-seal.json','build-receipt.json','byte-fixture.json'):job_sources[str((v/leaf).relative_to(ROOT))]=sha(v/leaf)
  save(P/'screen-jobs-seal.json',dict(passed=True,device_executed=False,sources=job_sources,wrapper=str(WRAPPER.relative_to(ROOT)),wrapper_seal_sha256=sha(WRAPPER/'wrapper-seal.json')))
- print('six IQ2 views sealed; no GPU')
+ print('four eligible IQ2 views sealed; combined arms excluded; no GPU')
 if __name__=='__main__':main()

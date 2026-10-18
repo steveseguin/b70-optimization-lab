@@ -52,6 +52,8 @@ def verify_coverage(summary, pinned, registry):
 
 
 def pin_production_dispatch(root, summary, *, round3_root):
+    from record_scope import require_record_scope
+    require_record_scope()
     root = Path(root)
     from p49d_k2 import measured_coverage
     selection=json.loads((P/'selection.json').read_text())

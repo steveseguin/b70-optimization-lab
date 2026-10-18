@@ -71,3 +71,60 @@ disk and is reproducible with `kernel_gate.py`; no unique evidence was deleted.
 The copied 4 MiB `rope.bf16` is required by real startup, carries its parent hash
 in `copy-lineage.json`, and restores byte-for-byte from packet97 or Git.
 The build is approximately 153 MB logically, below the 300 MB cap.
+
+The final screen control snapshots packet97's selected half-cache composition:
+`route-fast`, `rec-both-plus`, HC wide and ordered retirement, with all other
+choices and draft settings preserved. The local immutable snapshot is
+`lineage-inputs/control-selection.json` (SHA-256
+`6c58206cad748a8385b41389d5b9c05ff1891340b4bd0b12ce3611b5cddca739`).
+Its original mutable selection/orchestration files are not seal dependencies.
+The final byte metadata and full startup gates were rerun for this exact
+composition; the earlier rec-parallel setup is not the screen baseline.
+
+
+## Final CPU handoff
+
+All twelve full-shape startup runs pass (six views, both ranks), including
+24 short/misaligned allocation refusals and five selection refusals. These
+exercise real Engine initialization/capture and actual allocation accounting,
+without reading model payloads or calling a device. All twelve memory
+admissions pass. The shared worker imports in the actual restricted queue
+environment. Eighty shared-wrapper tests and 23 packet tests pass.
+
+Four views are sealed: half-cache production, batch2, batch4 and shared input.
+Seven proposed jobs pass the real queue planner on a temporary copy. The first
+is [`proposed-p102-micro-B.txt`](../experiments/own-xpu-runtime/ops/lane-queue/proposed-p102-micro-B.txt).
+The other six are single-candidate B control/candidate/control brackets and
+conditional A confirmations. They refuse device admission until the measured
+micro gate passes; A additionally requires an exact B win with unchanged
+acceptance counts. The micro gate requires at least 15% lower kernel time
+overall and separately in both alternating orders. Records remain on lane A.
+
+Packet97's separate KD host-reference refusal was reported during preparation.
+Packet102 does not claim record-chain readiness: copied K2/submission and
+chain entry points explicitly refuse, and the original copied implementations
+are retained where replaced. All six selections exercise these refusal
+boundaries in CPU tests. Qualifying every record window and its host reference
+is separate follow-up work. No inherited chain is submitted or proposed here.
+
+The final verification receipt binds the CPU evidence, four seals and seven
+proposals. This task ran CPU preparation only and edited no live queue.
+
+## Coordinator result observed during final checks
+
+The coordinator independently executed the early micro proposal while these
+CPU gates finished. [Its result note](2026-10-18-own-runtime-packet102-result.md)
+reports no qualifying arm. The local hash-bound receipt verifies all three
+byte/status checks passed and the micro drained cleanly. Batch2 reduced kernel
+time by 1.89%; batch4 increased it by 0.16%; shared input increased it by 3.31%.
+None approached the required 15% reduction in either alternating order.
+
+All six conditional screens remain closed. The seven original successful
+pre-execution plans are retained; the final planner checks six screen plans
+and correctly refuses to overwrite the completed micro output. No device
+retry, model screen or record submission was launched by this task.
+[Closeout](../experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/MICRO-CLOSEOUT.md).
+
+The coordinator's retained boot-journal capture exceeds 1 MiB. It is required
+to audit fault review and clean drain under that exact boot; keep its original
+bytes with the window receipt. Restore it from this evidence commit.

@@ -19,10 +19,12 @@ route-only A/B/A on lane B; full brackets require that same-binary smoke first.
 Device outputs and speed remain unmeasured. No GPU, service, live queue or existing
 packet changed. [Evidence and handoff](notes/2026-10-18-own-runtime-packet98c.md).
 
-**October 18, packet102 microbenchmark prepared on CPU:** The five IQ2 lookup
-batching/shared-input candidates and half-cache control compile. The lane-B
-proposal passes a temporary queue plan and 15 micro tests pass. Longer byte,
-assembly and startup gates are in progress. No GPU or live queue ran.
+**October 18, packet102 closed at the microbenchmark gate:** CPU byte,
+assembly and full startup checks pass. The coordinator's micro run found
+batch2 only 1.9% faster, batch4 unchanged and shared input 3.3% slower; none
+meets the required 15%. Both combined variants spill. All conditional model
+screens stay closed, and no record chain is qualified. The CPU preparation
+changed no live queue or device state.
 [Task note](notes/2026-10-18-own-runtime-packet102.md).
 
 **October 18, packet97d ready on CPU:** All four brackets of the same sealed

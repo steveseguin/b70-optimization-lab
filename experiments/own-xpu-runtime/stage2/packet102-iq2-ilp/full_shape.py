@@ -185,6 +185,6 @@ def main():
   finally:shutil.rmtree(dest)
  report.update(negative_allocations=negatives,negative_extent_rejected=True,selection_negatives_rejected=5)
  from math_gate import closure
- for f in [*closure(),P/'full_shape.py',P/'memory_plans.py',P/'memory_gate.py',P/'bundle_selection.py',P/'selection-template.json',P/'dispatch-speed6.json',*generated]:report['sources'][str(f.relative_to(ROOT))]=sha(f)
+ for f in [*closure(),P/'full_shape.py',P/'memory_plans.py',P/'memory_gate.py',P/'bundle_selection.py',P/'selection-template.json',P/'lineage-inputs/control-selection.json',P/'dispatch-speed6.json',*generated]:report['sources'][str(f.relative_to(ROOT))]=sha(f)
  report.update(passed=True,binary_sha256=sha(S/'fixture'));save(P/'evidence/full-shape.json',report)
 if __name__=='__main__':main()

@@ -6,7 +6,10 @@ VIEWS=('production', 'exp-lookup-batch2', 'exp-lookup-batch4', 'exp-gateup-share
 def views():return {n:(n,) for n in VIEWS}
 def choices(name):
  if name not in VIEWS:raise ValueError('unregistered packet102 expert choice')
- return dict(route='route-exp32-rank4',recurrence='rec-parallel',hc='production',miss='batch',experts='exp-halfcache' if name=='production' else name,packed_dense='production',hc_gate='wide',host_retire='ordered',hc_norm='production',head='production')
+ result=json.loads((P/'lineage-inputs/control-selection.json').read_text())['choices']
+ result['experts']='exp-halfcache' if name=='production' else name
+ return result
+
 def selection(v):
  name=v if isinstance(v,str) else v[0]
- s=json.loads((P/'selection-template.json').read_text());s['choices']=choices(name);return s
+ s=json.loads((P/'lineage-inputs/control-selection.json').read_text());s['choices']=choices(name);return s

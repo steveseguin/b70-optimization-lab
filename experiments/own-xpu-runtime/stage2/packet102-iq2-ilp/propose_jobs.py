@@ -19,5 +19,5 @@ def main():
  content=json.dumps(row)+'\n'
  if path.exists():assert path.read_text()==content
  else:path.write_text(content)
- print('thirteen new proposals; no live queue changes')
+ print('seven new proposals; no live queue changes')
 if __name__=='__main__':main()

@@ -1,0 +1,39 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "command": [
+    "/usr/bin/python3",
+    "-B",
+    "-c",
+    "import sys;sys.path.insert(0,sys.argv[1]);import tp2_worker;from lane_admission import admission_scope;assert admission_scope('A','screen')=='lane-A';assert admission_scope('B','screen')=='lane-B';assert admission_scope('A','WS128')=='whole-host';print('closed worker imports and A/B screen policies PASS')",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes"
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/startup_import_gate.py": "0106dd156211cb5cd70d4c3af647488a170fe4fb131cd5a8b042d85a91cda3d7",
+    "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/bundle_selection.py": "1a81bbf7fc90eab7608c82bfabe0c397646c712174e0ddfa72f9d484bcf3c86f",
+    "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/lineage-inputs/control-selection.json": "6c58206cad748a8385b41389d5b9c05ff1891340b4bd0b12ce3611b5cddca739",
+    "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/dispatch-speed6.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+    "experiments/own-xpu-runtime/stage2/packet102-iq2-ilp/evidence/full-shape.json": "063cb135370cd8c376fbeeef12bfb6077d853c1cec113fd1165e9237c385d007",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/tp2_worker.py": "47ee765b9e4d38ecc480e244571bcf278dd4544efd4cb60ae80e6a31eee604d9",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/common.py": "8fc128066434f6dd42f8063dbd76ba33b0581daa1795af6ebf568a6f0537443a",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/lane_admission.py": "fcd61deafe52b170cd20c649ff5690d6a92a1e0584db90ed982e54781752e4f4",
+    "experiments/own-xpu-runtime/stage2/packet56-draft-prefix/merge_dispatch.py": "29497efa3d2090aa69f0985db384a3252a64d12e9314ec5c77099a2238827e6c"
+  },
+  "selections": [
+    "production",
+    "exp-lookup-batch2",
+    "exp-lookup-batch4",
+    "exp-gateup-shared",
+    "exp-lookup-batch2-shared",
+    "exp-lookup-batch4-shared"
+  ],
+  "lanes": [
+    "A",
+    "B"
+  ],
+  "window": "screen",
+  "model_screen_initial_exact_gate_tokens": 64,
+  "dispatch_merge_unchanged": true,
+  "record_chain_ready": false,
+  "record_chain_scope": "No packet102 record-chain proposal. Every chain-window host-reference path still requires qualification; inherited packet97 KD halfcache refusal is not waived."
+}

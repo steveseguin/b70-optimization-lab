@@ -1,4 +1,6 @@
 """One pinned early-window import. Never imports or executes a model window."""
+from record_scope import require_record_scope
+require_record_scope()  # Copied chain tooling is outside this packet qualification.
 import json
 from pathlib import Path
 import shutil

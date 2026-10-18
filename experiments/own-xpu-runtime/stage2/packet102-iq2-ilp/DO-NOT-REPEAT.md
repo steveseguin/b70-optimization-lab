@@ -15,5 +15,9 @@ V5 expert switching is unavailable in its frozen native engine; use v4.
 | V4 batch2/shared and batch4/shared | Exact, but still scratch spills; no micro/screen | Concrete lower-register composition |
 | Per-kernel 256 GRFs | Offline stack rejects `SPV_INTEL_maximum_registers` | Separately qualified compiler support |
 
-[Combined-arm closeout](COMBINED-CLOSEOUT.md). Standalone batching and shared
-input remain open pending their device microbenchmark; no speed verdict yet.
+| Batch2 standalone | 1.89% lower micro kernel time; fails 15% gate | Materially different scheduling design |
+| Batch4 standalone | 0.16% higher micro kernel time; fails gate | Materially different scheduling design |
+| Shared input standalone | 3.31% higher micro kernel time; fails gate | Materially lower live state/overhead |
+
+[Combined-arm closeout](COMBINED-CLOSEOUT.md) and
+[coordinator micro closeout](MICRO-CLOSEOUT.md). No candidate reaches screens.
