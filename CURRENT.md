@@ -1,5 +1,7 @@
 # Current Workspace State
 
+**October 19, 04:18 UTC — 1-card IQ3 record 31.97 tok/s on one Arc Pro B70, submitted and approved (`cmveqsmsl00ebrf014yvrsosx`).** Packet58aj = the packet58ah line + exact resident lookup copies (29.3 GB anonymous, every row). The bracket gave +1.27%, 60/60 exact. Chain a WS128 **31.966820**, 12/12 exact, 0 major faults, +0.96% over 31.662719. WS128x 31.975 agreed within 0.03%: resident lookups remove the paging variance that cost chain 58ah-a 5%. The readiness wording was amended after the result to non-inferiority, disclosed. Scope: 128 tokens; strict512 false. [Result](notes/2026-10-19-own-runtime-packet58aj-result.md), [ledger](results/localmaxxing-submissions.md).
+
 **October 19, packet156 draft-slack arm closed before a build:** The full
 packet154 test confirms that rank 0 waits for the draft, but the proposed
 place to move hidden work has too little spare time. Even a generous bound

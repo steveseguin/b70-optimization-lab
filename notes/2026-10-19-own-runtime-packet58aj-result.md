@@ -21,3 +21,15 @@ The line is packet58ah (the 31.663 tok/s record line) with every row of `token_e
 - Because both lanes are idle, the lab rule allows a record chain below +2% (projected ≈ 32.0 tok/s). The chain's WS128 must still beat 31.662719 for a submission. Resident tables should also stop the 5–8% WS128 paging losses seen in chains 58w-a and 58ah-a.
 
 Evidence: `experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/evidence/card0-58ajb-screen-a/resident/WSCREEN/summary.json`.
+
+## Record chain (submitted)
+
+The chain `packet58-onecard-58aj-a` ran 03:40–04:15 UTC; all seven windows passed and were exact.
+
+| Window | tok/s | Major faults |
+| --- | ---: | ---: |
+| WS128x | 31.975 | 1,716 |
+| **WS128** | **31.967** | 0 |
+
+- The two windows agree within 0.03% despite the faults, so the line is paging-immune.
+- **Submitted** 04:18 UTC: `cmveqsmsl00ebrf014yvrsosx`, APPROVED, +0.96% over 31.662719. Receipt in `data/localmaxxing-responses/2026-10-19-packet58aj-chain-a-onecard-ws128.txt`.
