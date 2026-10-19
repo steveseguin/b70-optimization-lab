@@ -1,0 +1,264 @@
+{
+ "date": "2026-10-18",
+ "review": "Owner review 15 post-screen cleanup brief; coordinator maintains this file",
+ "packets": {
+  "76": {
+   "status": "CLOSED",
+   "reason": "Consumed by submitted packet80"
+  },
+  "78": {
+   "status": "CLOSED",
+   "reason": "Consumed by submitted packet80"
+  },
+  "86": {
+   "status": "CLOSED",
+   "reason": "Diagnostics reviewed; retain all JSON receipts"
+  },
+  "90": {
+   "status": "CLOSED",
+   "reason": "H1 view only; E1 and production remain live",
+   "views": [
+    "hc-weightcache"
+   ]
+  },
+  "95": {
+   "status": "CLOSED",
+   "reason": "Reviewed closed source"
+  },
+  "96": {
+   "status": "CLOSED",
+   "reason": "Reviewed closed model study"
+  },
+  "83": {
+   "status": "CLOSED",
+   "reason": "Reviewed closed screen"
+  },
+  "81": {
+   "status": "CLOSED",
+   "reason": "Reviewed closed screen"
+  },
+  "79": {
+   "status": "CLOSED",
+   "reason": "Reviewed closed screen"
+  },
+  "84s": {
+   "status": "CLOSED",
+   "reason": "Reviewed packet84 screen views"
+  },
+  "93": {
+   "status": "CLOSED",
+   "reason": "head-transpose closed for the record line (lane A -2.8%); packet97 decisions keep JSON receipts"
+  },
+  "99": {
+   "status": "CLOSED",
+   "reason": "IQ2 table placement microbench: all candidates slower (1.24-1.78x)"
+  },
+  "92": {
+   "status": "CLOSED",
+   "reason": "reply-first no gain (lane A)"
+  },
+  "94": {
+   "status": "CLOSED",
+   "reason": "HC norm fusion -23% (lane B)"
+  },
+  "107": {
+   "status": "CLOSED",
+   "reason": "QSA specialised layer slower in both lane-B micros (-8.0/-8.5 us at 128, -33 us at 4096; gate +80 us); GDN closed on CPU (Intel NaN payload)"
+  },
+  "58k": {
+   "status": "CLOSED",
+   "reason": "one-card port view -11.2% (22.18 vs 24.97), exact; production-after pulled; see packet58n for per-lever analysis"
+  },
+  "108": {
+   "status": "CLOSED",
+   "reason": "draft load8 micro below 0.85 gate: gate 0.993x, down 0.901x (lane B 07:54 UTC); about 6 us per hit at best"
+  },
+  "112": {
+   "status": "CLOSED",
+   "reason": "route-select micro 0.926x / 0.920x (16.9 -> 15.6 us), exact 2048 cases incl. 512 nonfinite; kill gate 0.5x"
+  },
+  "113": {
+   "status": "CLOSED",
+   "reason": "GDN row recurrence 1.50x slower in device micro (23.96 -> 35.94 us at 128 and 4096), 768/768 recurrence cases and 572 layer checks exact; kill gate 0.6x"
+  },
+  "115": {
+   "status": "CLOSED",
+   "reason": "large-GRF expert image: production-large ~1.44x slower than production; best revived design iq4-bytepair 0.995x vs production (e3 1.70x, e5 1.50x, v4-batch2 1.38x); gate 0.85x"
+  },
+  "121": {
+   "status": "CLOSED",
+   "reason": "miss-path budget: top lever ~0.017 ms per step (~0.1%), ceiling ~0.66% (restore 0.55 ms per miss); stopped by coordinator after review 22, no device work"
+  },
+  "116": {
+   "status": "CLOSED",
+   "reason": "QSA attention+select parallel schedule 0.936x at ctx 128 (68.3->64.0 us), 0.944x at 4096 (588->555 us), exact; gate 0.6x; second process pulled"
+  },
+  "117": {
+   "status": "CLOSED",
+   "reason": "HC gate parallel sigmoid 0.98x (44.38->43.54 us for both gates, ctx 128), exact; gate 0.70x; second process pulled"
+  },
+  "119": {
+   "status": "CLOSED",
+   "reason": "expert down-weight L2 warming during gate/up: 1.079x slower (97.6->105.3 us gate+down, 384 routes, both orders 1.079), exact; gate 0.85x"
+  },
+  "122": {
+   "status": "CLOSED",
+   "reason": "draft-HC exact fusion: HC classes 0.913x (123.9->113.1 us), whole draft step 1382->1366 us at ctx 128 (~0.1% of a hit); gate 0.8x; draft budget micros retained as the fresh draft class table"
+  },
+  "120": {
+   "status": "CLOSED",
+   "reason": "25/23 placement -3.9% on lane B (55.906 vs 58.174, hit +0.59 ms), exact; rank 0 has little slack; closing control cascaded-failed (undrained K2 teardown) and was not rerun"
+  },
+  "126": {
+   "status": "CLOSED",
+   "reason": "draft-before-head reordering: simulation inconclusive; without recoverable head wait it predicts -1.95% (wasted drafts on misses); needs ~0.43 ms recoverable wait per interval that traces do not show"
+  },
+  "123": {
+   "status": "CLOSED",
+   "reason": "partial-layer move blocked on untraced rank-0 head time; packet120 25/23 (-3.9%) shows little rank-0 slack"
+  },
+  "125": {
+   "status": "CLOSED",
+   "reason": "one-card miss transfer micro: best tile16 layout 1.26/1.27x and bcs_pipeline3 1.22/1.21x vs production (234.8 us, 8.76 GB/s useful), exact; gate 1.5x; the tile16 effect is tested in-engine by packet58n"
+  },
+  "127": {
+   "status": "CLOSED",
+   "reason": "head split retune: 81,920 suffix rows on rank 0 -1.95% (56.987 vs 58.119, hit +0.34 ms), exact; rank 0 saturated (cf. packet120 -3.9%); 122,880 arm and closing control pulled"
+  },
+  "129": {
+   "status": "CLOSED",
+   "reason": "draft acceptance: publisher-FP8-faithful draft experts vs production INT8: +0.08 points (975 -> 976 of 1,230 hits on independent text), gate +1.5; draft format does not limit acceptance; no further draft-quantization variants"
+  },
+  "130": {
+   "status": "CLOSED",
+   "reason": "suffix interleave at first ready layer boundary: v5 bracket -1.61% (57.23/57.28 vs 58.13/58.15/58.16), exact, drift 0.05%; delaying rank 0's speculative half costs more than rank 1's suffix wait saves"
+  },
+  "133": {
+   "status": "CLOSED",
+   "reason": "bundle 8 (packet124c + packet130 interleave) prepared and sealed; blocked because packet130 lost; slot retained for future levers"
+  },
+  "132": {
+   "status": "CLOSED",
+   "reason": "two-candidate speculation CPU study: best projected +2.25% (+1.77% held out), gate +3%; second choice matched 13 of 56 misses"
+  },
+  "134": {
+   "status": "CLOSED",
+   "reason": "rank-0 host gaps are mostly waits on rank 1's draft (1.276 ms) plus suffix/verification (0.598 ms), not enqueue-bound; no submission rewrite warranted"
+  },
+  "58r": {
+   "status": "CLOSED",
+   "reason": "one-card one-load bracket: route-fast+rec-both-plus on tile16 26.551/26.419 vs tile16 26.015/26.323/26.040; +0.37% over best control (< +0.5%), control drift 1.18%; exact"
+  },
+  "135": {
+   "status": "CLOSED",
+   "reason": "critical-path synthesis done; next levers: snapshot rotation (packet131b, +1.18-1.78% conditional) and combined exact token-input changes (+0.62% conditional)"
+  },
+  "58t": {
+   "status": "CLOSED",
+   "reason": "one-card resident lookup tables (29.3 GB anon copy): 26.092 vs warm tile16 control 26.134 (-0.16%), first control cold 21.41; exact; no gain"
+  },
+  "140": {
+   "status": "CLOSED",
+   "reason": "target-body lever ranking gate: no supported >=+3% exact lever on the bundle 8 line; best (N1 same-bit scale multicast across six groups) +1.31% at 20% transfer, needs >45% transfer without evidence; N2 IQ2 5-byte cells and N3 norm-leaf epilogue below gate"
+  },
+  "138": {
+   "status": "CLOSED",
+   "reason": "one-card cross-layer expert prefetch phase 1: next-layer router recall 66.5/72.5/79.9% at widths 10/12/16; all 45 simulated cases exceed per-layer PCIe copy windows (best optimistic +5.75% with 248 late batches; width-12 range -16.35%..+5.75%); no phase-2 design"
+  },
+  "137": {
+   "status": "CLOSED-DEFERRED",
+   "reason": "token-input (+0.26-0.62% projected): lane-B 12x64 smoke ran exact on device (summary passed, fault count 2) but its report step failed (cannot import finish_bracket from packet137 compare.py); the same import would end the bracket. Review 27 rule 5: one smoke + one bracket, no repair copy. Reopen only stacked with another >= +1.5% 2-card gain"
+  },
+  "139": {
+   "status": "DORMANT",
+   "reason": "bundle 9 = bundle 8 + packet137 sealed (READY 9ce32f1ce/f4f3b8add); no evidence path while packet137 is deferred; lane-A smoke withdrawn before launch"
+  },
+  "144": {
+   "status": "CLOSED",
+   "reason": "2-card miss-path study: +3% needs 2.338 ms saved per miss on bundle 8; no new exact mechanism with supported transfer reaches it (ranked table in stage2/packet144-miss-path/ANALYSIS.md)"
+  },
+  "58y": {
+   "status": "CLOSED",
+   "reason": "one-card attribution diagnostic (instrumented 22.86 tok/s vs 28.04 uninstrumented; tracing adds ~8 ms/token); buckets are bounds only; no lever briefed; next one-card lever = port packet142 2-card winners"
+  },
+  "58x": {
+   "status": "WON",
+   "reason": "21.55 GB device expert cache +4.13% strict exact on the overlap line (29.569/29.364 vs 28.157/28.200); record chain packet58z in preparation"
+  },
+  "141": {
+   "status": "CLOSED",
+   "reason": "transfer-gap attribution: cold in-order vs warm micros a/b = attention 1.47x (1.14 ms/half), router 1.86x (0.54), gdn.z 1.30x (0.71); expsgate 1.22x, HC ~1.1x; analyzer refused on touch-row bookkeeping, coordinator raw-event reading only; no p141d"
+  },
+  "142": {
+   "status": "CLOSED",
+   "reason": "class-layout order600: attention bracket null (58.585/58.620 vs 58.624/58.634/58.636, exact); expert-gate-up and hc-gate-low ruled out by packet141 attribution and not run; report step needs a p105 receipt (coordinator read per-view summaries)"
+  },
+  "146": {
+   "status": "CLOSED",
+   "reason": "within-request prompt-lookup: headline eligibility ambiguous under the blanket n-gram prohibition (no explicit within-request exception); no study run"
+  },
+  "58aa": {
+   "status": "CLOSED",
+   "reason": "one-card MTP re-check under measured bounds: host fits (103.3 GB) but resident draft cuts the target cache to 18.2 GB; projected 25.03-29.16 tok/s, favorable shared-cache 30.62 < 30.723 (+5%) gate; no build"
+  },
+  "145": {
+   "status": "CLOSED",
+   "reason": "router-order600 (58.549/58.481 vs 58.635/58.540/58.516) and gdnz-order600 (58.604/58.574 vs 58.638/58.616/58.595) both null, exact; with packet142 attention null, class-layout order600 closed for all classes"
+  },
+  "143": {
+   "status": "PARKED",
+   "reason": "bundle 9 (packet136 + class layouts + token_input) sealed; no qualifying bracket winners (all layouts null, token_input has no device bracket)"
+  },
+  "58ac": {
+   "status": "CLOSED",
+   "reason": "changed-entry cache publication: CPU packing 0.053-0.060 ms vs 0.739 ms needed; device transfer/scatter/wait not separable enough to support 60% net removal; design retained, no build"
+  },
+  "148": {
+   "status": "CLOSED",
+   "reason": "2-card correction-graph CPU study: no graph >= +2% while fitting memory (row-split projections ~1.04-1.x%, microbenchmark transfer costs); packet149 in-engine exchange probe pending as the device check"
+  },
+  "149": {
+   "status": "CLOSED",
+   "reason": "in-engine output-neutral exchange probe: 58.70 -> 52.68 tok/s (-10.3%, exact) = ~9 ms exchange cost per miss vs <=1 ms needed; shared miss correction closed on device evidence"
+  },
+  "58af": {
+   "status": "CLOSED",
+   "reason": "one-card measurement arms: device run exact (K1a/K1b/WSCREEN passed) but Arm 2 emitted no separate expert partitions; analyzer refuses ('both separate expert partitions required'); diagnostic stops at its primary gate; one-card levers measured directly by brackets (p58ag)"
+  },
+  "58ae": {
+   "status": "CLOSED",
+   "reason": "superseded by 58af (blocked prototype)"
+  }
+ },
+ "reviewed_jobs": [
+  "packet78-grid-A",
+  "packet79-grid-A",
+  "packet81-grid-A",
+  "packet86-production-A",
+  "packet86-exp-nodeq-A",
+  "packet95-exp-grid-prefetch-B-grid-B-grid",
+  "packet86-exp-loadkeep-B",
+  "packet86-hc-loadkeep-B",
+  "packet86-exp-constgrid-B",
+  "packet86-exp-onecached-B",
+  "packet93-micro-B",
+  "packet93-micro-B2",
+  "packet93-B-grid-B2",
+  "packet93-A-confirm-B2",
+  "packet99-micro-B",
+  "packet98-smoke-B",
+  "packet92-A-grid",
+  "packet94-B-grid",
+  "packet102-micro-B"
+ ],
+ "keep": [
+  "82",
+  "90 E1/production",
+  "91",
+  "97",
+  "98",
+  "100",
+  "101"
+ ],
+ "previous_archive": "/mnt/raid-models/own-xpu-runtime-archive/screen-bulk-20261018/"
+}

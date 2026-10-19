@@ -1,0 +1,755 @@
+{
+  "captured_utc": "2026-10-19T00:27:06.971047+00:00",
+  "device_executed_by_packet152": false,
+  "source_summary": "experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/bracket-summary.json",
+  "source_summary_sha256": "0f819f64c999dd6533b0c97327f6efe3ce9c5e27024e48ce8aaf0934cf7b5d8e",
+  "source_bracket_inputs_sha256": "4abe3b18a7fb6215c4fd5cf123ea48f1697cc2498e609cd1b0f622147e9656fd",
+  "read_only_analyzer_replay_equal": true,
+  "passed": true,
+  "all_13_exact": true,
+  "draft_proposals_identical": true,
+  "control_drift_percent": 0.1357149784689815,
+  "decisions": [
+    {
+      "segment": "token_prep",
+      "control_median_ms_per_cycle": 0.12293510317460316,
+      "control_range_ms": 0.004937920634920587,
+      "replay_minus_skip_ms_per_cycle": [
+        0.08390741005291005,
+        0.08378994973544973
+      ],
+      "at_least_0_4_ms_in_every_control": false,
+      "removable": false,
+      "verdict": "below threshold or unresolved drift",
+      "reason": "replay isolates duplicate service; required target work and peer dependencies remain"
+    },
+    {
+      "segment": "capture_snapshot",
+      "control_median_ms_per_cycle": 0.7432465476190475,
+      "control_range_ms": 0.01824765079365087,
+      "replay_minus_skip_ms_per_cycle": [
+        0.3345469417989417,
+        0.33621528306878307
+      ],
+      "at_least_0_4_ms_in_every_control": true,
+      "removable": false,
+      "verdict": "large measured boundary; removal unproven",
+      "reason": "replay isolates duplicate service; required target work and peer dependencies remain"
+    },
+    {
+      "segment": "suffix_head",
+      "control_median_ms_per_cycle": 0.3108202777777777,
+      "control_range_ms": 0.0003244126984127127,
+      "replay_minus_skip_ms_per_cycle": [
+        0.30033046560846566,
+        0.30061883862433864
+      ],
+      "at_least_0_4_ms_in_every_control": false,
+      "removable": false,
+      "verdict": "below threshold or unresolved drift",
+      "reason": "replay isolates duplicate service; required target work and peer dependencies remain"
+    },
+    {
+      "segment": "merge_handoff_waits",
+      "control_median_ms_per_cycle": 1.8520654285714289,
+      "control_range_ms": 0.020706087301587184,
+      "replay_minus_skip_ms_per_cycle": [
+        0.000538867724867725,
+        0.0005448042328042327
+      ],
+      "at_least_0_4_ms_in_every_control": true,
+      "removable": false,
+      "verdict": "large measured boundary; removal unproven",
+      "reason": "replay isolates duplicate service; required target work and peer dependencies remain"
+    },
+    {
+      "segment": "draft_wait",
+      "control_median_ms_per_cycle": 0.006097015873015872,
+      "control_range_ms": 0.00011328571428571247,
+      "replay_minus_skip_ms_per_cycle": [
+        2.194444444444446e-05,
+        2.090476190476191e-05
+      ],
+      "at_least_0_4_ms_in_every_control": false,
+      "removable": false,
+      "verdict": "below threshold or unresolved drift",
+      "reason": "replay isolates duplicate service; required target work and peer dependencies remain"
+    }
+  ],
+  "control_subscopes": [
+    {
+      "index": 0,
+      "segments_ms_per_cycle": {
+        "token_prep": 0.12759261904761904,
+        "capture_snapshot": 0.7607526904761905,
+        "suffix_head": 0.31064616666666667,
+        "merge_handoff_waits": 1.8398378095238104,
+        "draft_wait": 0.006097015873015872
+      },
+      "subscope_prompt_medians_ms_per_cycle": {
+        "snapshot": 0.6461579206349206,
+        "accept": 0.0002758492063492063,
+        "rollback": 0.11339389682539681,
+        "head_hidden_wait": 0.18136881746031747,
+        "head_import": 0.02464828571428572,
+        "head_export": 0.025407666666666676,
+        "handoff_export": 0.06844780158730157,
+        "handoff_host": 0.0005930476190476189,
+        "remote_reply_wait": 1.5375702857142866,
+        "draft_wait": 0.006097015873015872
+      }
+    },
+    {
+      "index": 2,
+      "segments_ms_per_cycle": {
+        "token_prep": 0.12265469841269845,
+        "capture_snapshot": 0.7425050396825397,
+        "suffix_head": 0.3109705793650794,
+        "merge_handoff_waits": 1.8520654285714289,
+        "draft_wait": 0.0060683571428571444
+      },
+      "subscope_prompt_medians_ms_per_cycle": {
+        "snapshot": 0.6316615873015874,
+        "accept": 0.0002730714285714286,
+        "rollback": 0.11073578571428572,
+        "head_hidden_wait": 0.18168644444444443,
+        "head_import": 0.027658825396825397,
+        "head_export": 0.025366761904761906,
+        "handoff_export": 0.06549151587301588,
+        "handoff_host": 0.0005692539682539684,
+        "remote_reply_wait": 1.549005658730159,
+        "draft_wait": 0.0060683571428571444
+      }
+    },
+    {
+      "index": 4,
+      "segments_ms_per_cycle": {
+        "token_prep": 0.12293510317460316,
+        "capture_snapshot": 0.7432465476190475,
+        "suffix_head": 0.3108202777777777,
+        "merge_handoff_waits": 1.8605438968253976,
+        "draft_wait": 0.006181642857142857
+      },
+      "subscope_prompt_medians_ms_per_cycle": {
+        "snapshot": 0.6329391984126984,
+        "accept": 0.0002757857142857143,
+        "rollback": 0.10990027777777778,
+        "head_hidden_wait": 0.18205961904761905,
+        "head_import": 0.024583007936507938,
+        "head_export": 0.025521269841269845,
+        "handoff_export": 0.06487375396825396,
+        "handoff_host": 0.0005725714285714286,
+        "remote_reply_wait": 1.5628610634920643,
+        "draft_wait": 0.006181642857142857
+      }
+    }
+  ],
+  "subscope_warning": "Medians of subscopes are not additive; they are prioritization evidence, not an exact partition of aggregate medians. remote_reply_wait contains multiple command types.",
+  "next_design": "capture_snapshot",
+  "transport_only_build_admitted": false,
+  "reason": "head import/export medians total roughly 0.05 ms; large merge bucket dominated by remote reply, not a supported >=0.4 ms transfer saving.",
+  "raw_input_pins": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/00-control/incident-retrospective/rank0/timings.jsonl",
+      "bytes": 510511,
+      "sha256": "1368ea1f794a9ae2c32fb8cbeaa0ecb9c03b914dfd3d09a7ef9de5115b7510af"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/00-control/code-review/rank0/timings.jsonl",
+      "bytes": 531005,
+      "sha256": "591af29a15a0a1c85efa7693bfa4a91d9a348125a5333540d98fd2e0636b2a6f"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/00-control/customer-email/rank0/timings.jsonl",
+      "bytes": 487552,
+      "sha256": "d1637f56e600f5e081693c4aec33d7ae947b7b8f9a44d0d3d83993559d540b14"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/00-control/sql-debugging/rank0/timings.jsonl",
+      "bytes": 504048,
+      "sha256": "3273dfc2ede21b350d4c8c28a8098cdd01ac5b1b3c6a4210bfa1dd0b8f848dbb"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/00-control/release-plan/rank0/timings.jsonl",
+      "bytes": 470176,
+      "sha256": "39c29cf445fd2919dd89fd070ae6b45b9eebdf706baf3e3322e389966261f998"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/00-control/benchmark-analysis/rank0/timings.jsonl",
+      "bytes": 458312,
+      "sha256": "cbf63c3d6a0e87d84f8479dcbdf4bdf80d94925340d9f4f2ceb60b72e9c1b21f"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/00-control/architecture-tradeoff/rank0/timings.jsonl",
+      "bytes": 452426,
+      "sha256": "f7bf449992fd16748965fc51607c8b54e5cc03db401c82894cf73ee76383b40e"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/00-control/bug-report-synthesis/rank0/timings.jsonl",
+      "bytes": 490949,
+      "sha256": "d37ca369152cc9f16e93b3fc2bfe1412e00121fee60fa464b565a2d5a4cdcddd"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/00-control/technical-guide/rank0/timings.jsonl",
+      "bytes": 460028,
+      "sha256": "0965c3dcaf0b327158c978e4f541da1a7b5a03daf1d179e50ba95507e3ee946e"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/00-control/risk-register/rank0/timings.jsonl",
+      "bytes": 443215,
+      "sha256": "3fb8b0eb9abff942ff730222dae478214d29a4301438bff99e8354ce965c8b10"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/00-control/performance-hypotheses/rank0/timings.jsonl",
+      "bytes": 462808,
+      "sha256": "ac3196dc6708e09ccc98929d1c1b6a2b9f425a772fb22ceaf0a2e34af78ef3b6"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/00-control/decision-memo/rank0/timings.jsonl",
+      "bytes": 427214,
+      "sha256": "92268d9bd94612ef15632c4f94bdffa4286c08dcb21bb4f0defc0fb634fb815f"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/01-candidate/incident-retrospective/rank0/timings.jsonl",
+      "bytes": 510893,
+      "sha256": "c48c5ea6d11eff22096b604fe2ab2e9634de9fd60160b8789b34f8fc5e6ffcd2"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/01-candidate/code-review/rank0/timings.jsonl",
+      "bytes": 530329,
+      "sha256": "edf53cb97ce609954988290f3a0df67df0c6580b1c3fdff72c01da671905f65b"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/01-candidate/customer-email/rank0/timings.jsonl",
+      "bytes": 487093,
+      "sha256": "4013196d48232a6520ecfeb4019b9a49aa7f6a184b83298ca76d56aaf9cc859d"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/01-candidate/sql-debugging/rank0/timings.jsonl",
+      "bytes": 503694,
+      "sha256": "98f994f4fae830ba5ac437b25e3d37d02a6b14cc52a020c109c06e4dd2a24692"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/01-candidate/release-plan/rank0/timings.jsonl",
+      "bytes": 470235,
+      "sha256": "76888df29b4512e212636600a9168fd880a886c66565aab6db2633a8e9ffedf4"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/01-candidate/benchmark-analysis/rank0/timings.jsonl",
+      "bytes": 458139,
+      "sha256": "25f4a8e405bdfdb44a2995648b74377c202579160d02863667a9e10050d3cdb1"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/01-candidate/architecture-tradeoff/rank0/timings.jsonl",
+      "bytes": 453236,
+      "sha256": "4b0de2b83a31793b296345bfc597af5761ebac56a086336c97e286dadb6f4575"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/01-candidate/bug-report-synthesis/rank0/timings.jsonl",
+      "bytes": 491888,
+      "sha256": "11ad77e8c50e4873d91eccfb016e1f45bdcb78a51e20cd4fef9f2661269425a4"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/01-candidate/technical-guide/rank0/timings.jsonl",
+      "bytes": 460329,
+      "sha256": "af51678158c53bc3d180e1b255eda38f72f6fca8371f7f0b0b8715a1b1da183d"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/01-candidate/risk-register/rank0/timings.jsonl",
+      "bytes": 443677,
+      "sha256": "3818679a24a6a7d766b329c9114466cb03303e956b048e3122712e3b0c350c3b"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/01-candidate/performance-hypotheses/rank0/timings.jsonl",
+      "bytes": 463407,
+      "sha256": "cb62dee28045c5ddd0111d721ab3a3b4474a936127e6a04e0a6aceb85b64f789"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/01-candidate/decision-memo/rank0/timings.jsonl",
+      "bytes": 428484,
+      "sha256": "a0108de33ade61f5ffb0a4a07db6cb2d7b8359984f45c6680d4f0300cfca0cc4"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/02-control/incident-retrospective/rank0/timings.jsonl",
+      "bytes": 512132,
+      "sha256": "167779213d5f34a093b34579750c1dce19e1dc3f8c93aec9bbb3cc6aa074549b"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/02-control/code-review/rank0/timings.jsonl",
+      "bytes": 531509,
+      "sha256": "9597792736f5ebd1080db8b83f59ed6b0b8f4614833f9531c34e36afeab2aaf0"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/02-control/customer-email/rank0/timings.jsonl",
+      "bytes": 488127,
+      "sha256": "5624ebf6b84c044202ac4c42e499b6621087608c8763bfc308b97c3a570cd99b"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/02-control/sql-debugging/rank0/timings.jsonl",
+      "bytes": 504214,
+      "sha256": "15945ee552b96ce584a1280a9a669c3d8cea294b4f252f62783261701a20bd84"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/02-control/release-plan/rank0/timings.jsonl",
+      "bytes": 470658,
+      "sha256": "c8cf842883bf1db0865fbdb8a19d4af7732fa37f8cde8413f7218dc4203da17f"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/02-control/benchmark-analysis/rank0/timings.jsonl",
+      "bytes": 458957,
+      "sha256": "2da18099adfa3be1dac6895a8c690ff6e71daa380f0125ac9cc2e0e9fa58f87f"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/02-control/architecture-tradeoff/rank0/timings.jsonl",
+      "bytes": 453729,
+      "sha256": "3cfb93c00f288b284a05c4d12490a892cc8739208891d7972ed8a063a6e6c547"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/02-control/bug-report-synthesis/rank0/timings.jsonl",
+      "bytes": 490213,
+      "sha256": "cd777651c475cb93e61642fe9a00e28f694e5d676b57e2c58cd86a6fc0d290be"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/02-control/technical-guide/rank0/timings.jsonl",
+      "bytes": 460681,
+      "sha256": "a46830cf15fa4d14a79a50299abdc4a9ecd6dc548c83b4070dd39998c6293f4a"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/02-control/risk-register/rank0/timings.jsonl",
+      "bytes": 444050,
+      "sha256": "e146b03fd434362dc87ed67d4d7dc2c7e77c801feade4b34d7a9c8200804ddb1"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/02-control/performance-hypotheses/rank0/timings.jsonl",
+      "bytes": 463583,
+      "sha256": "fa35f4d07fe3b53814e285689ae6cc7dabb2ea5a4ab4c6e98ab2a2d923fd293d"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/02-control/decision-memo/rank0/timings.jsonl",
+      "bytes": 428994,
+      "sha256": "15bd449e40acd1721a82297d42881f91a1ce3c876ba6716018bc4f6d5a5a5fb1"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/03-candidate/incident-retrospective/rank0/timings.jsonl",
+      "bytes": 511519,
+      "sha256": "9d2131a5440a6c4a908f022b99b18a2d7cd6977e2ac115b356c50211496d1d3c"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/03-candidate/code-review/rank0/timings.jsonl",
+      "bytes": 530683,
+      "sha256": "07f1941acada1ee4a7f7d3b6ea7ce8a3738782b038aef872d07129189767c6c9"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/03-candidate/customer-email/rank0/timings.jsonl",
+      "bytes": 486781,
+      "sha256": "b24a7d6eafc58aa045737b0b2756e59590a3cc3e6abe8130ee269ce210907448"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/03-candidate/sql-debugging/rank0/timings.jsonl",
+      "bytes": 503644,
+      "sha256": "66b9685bf181bc82b7e324e534c22bdc6b38bad59fe2748274e8ddca7408cb17"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/03-candidate/release-plan/rank0/timings.jsonl",
+      "bytes": 470420,
+      "sha256": "c7f41cfc2be26f1042806a9c30acc3452d3088b55d5c299ec3d4c5cd6dc4edec"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/03-candidate/benchmark-analysis/rank0/timings.jsonl",
+      "bytes": 458726,
+      "sha256": "0ef4844315a33ccc2698fd8f38d804dd28692bb4b3e77d0146194aa0028e4f4f"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/03-candidate/architecture-tradeoff/rank0/timings.jsonl",
+      "bytes": 452715,
+      "sha256": "8e53b185d961320fb1c2ccfa3713ff5a183b98be583aa5121be460628b5de7f9"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/03-candidate/bug-report-synthesis/rank0/timings.jsonl",
+      "bytes": 491715,
+      "sha256": "8ae814abf74fcac31608808d29fdeda839ae34db597cdb1b6b709ca6bf525b45"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/03-candidate/technical-guide/rank0/timings.jsonl",
+      "bytes": 460307,
+      "sha256": "a4291c9d72cfa4b783d1478fb1e158b11be9418b27fe59b0008e825da24957be"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/03-candidate/risk-register/rank0/timings.jsonl",
+      "bytes": 444028,
+      "sha256": "e638a5b7d12eb862d6e1f9f5e63433fb057851daa817f1c01418eca00dd9961a"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/03-candidate/performance-hypotheses/rank0/timings.jsonl",
+      "bytes": 463606,
+      "sha256": "bd0e4d6e6c8fd41620b7c7f7eac073b9a9d66074e08b9019e1ce409838dde9c6"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/03-candidate/decision-memo/rank0/timings.jsonl",
+      "bytes": 427864,
+      "sha256": "7408ef3f651bc65bb8bb12892ec28b542e1b624d21e43f6143ebc2d3df2e2e85"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/04-control/incident-retrospective/rank0/timings.jsonl",
+      "bytes": 511715,
+      "sha256": "e778b7fbf07fba0be0a3c8ff28fe16b9f3beef31d56b6930aedb5ffcd3ff437a"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/04-control/code-review/rank0/timings.jsonl",
+      "bytes": 531282,
+      "sha256": "c78402f6504ab84202cb3892fa7a43fecba37312f6dd6b21852aa9870cc43b1d"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/04-control/customer-email/rank0/timings.jsonl",
+      "bytes": 488112,
+      "sha256": "35de578aaf4105c441041810b4a30aef5e6303d2b7df3e6f9525cbe01ad071ce"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/04-control/sql-debugging/rank0/timings.jsonl",
+      "bytes": 504381,
+      "sha256": "633ae61a745ca606d2cc78354839253e71a0b6c19f6280fb379f454813c6be33"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/04-control/release-plan/rank0/timings.jsonl",
+      "bytes": 470889,
+      "sha256": "f1fea81449f3d28ede8769bd27b5076e7308cb09641bb911e4d21d382f5bd22e"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/04-control/benchmark-analysis/rank0/timings.jsonl",
+      "bytes": 458506,
+      "sha256": "fc5e56c456dfa9bc9677b34827f7d58037a9cb37581c2f8b0817137bbc13b087"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/04-control/architecture-tradeoff/rank0/timings.jsonl",
+      "bytes": 453160,
+      "sha256": "bc24686d70f4dc07d28ae4f5483fca63bc31b4c8993ddfd54f5fc22525402c07"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/04-control/bug-report-synthesis/rank0/timings.jsonl",
+      "bytes": 491873,
+      "sha256": "69fa35fad6f4286e1fda97eab7438a9c72dcacb05e4cd5b3828158d7b9e8a4e1"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/04-control/technical-guide/rank0/timings.jsonl",
+      "bytes": 460153,
+      "sha256": "faa81f0ac6b5bc4900dc1c80d7f8231cac93bfa044f64faf5401a9d85c7ba950"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/04-control/risk-register/rank0/timings.jsonl",
+      "bytes": 443822,
+      "sha256": "55f98d16381daec5de13c31ea9d2979cfb7c660670162f5522e18a2b346f0e64"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/04-control/performance-hypotheses/rank0/timings.jsonl",
+      "bytes": 463200,
+      "sha256": "970d4a1e3488739379de82e0b7fc5e65bf737c56c83a02133fcbeee19b0161d0"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/run/views/04-control/decision-memo/rank0/timings.jsonl",
+      "bytes": 428347,
+      "sha256": "3342cacd0a0baaf01111d8d1ba87f036f4fb02fed0cee4feb35940cdf8b22d6b"
+    }
+  ],
+  "analyzer_fallback_inputs": [
+    {
+      "view": 0,
+      "prompt_id": "incident-retrospective",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 0,
+      "prompt_id": "code-review",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 0,
+      "prompt_id": "customer-email",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 0,
+      "prompt_id": "sql-debugging",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 0,
+      "prompt_id": "release-plan",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 0,
+      "prompt_id": "benchmark-analysis",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 0,
+      "prompt_id": "architecture-tradeoff",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 0,
+      "prompt_id": "bug-report-synthesis",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 0,
+      "prompt_id": "technical-guide",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 0,
+      "prompt_id": "risk-register",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 0,
+      "prompt_id": "performance-hypotheses",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 0,
+      "prompt_id": "decision-memo",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 1,
+      "prompt_id": "incident-retrospective",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 1,
+      "prompt_id": "code-review",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 1,
+      "prompt_id": "customer-email",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 1,
+      "prompt_id": "sql-debugging",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 1,
+      "prompt_id": "release-plan",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 1,
+      "prompt_id": "benchmark-analysis",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 1,
+      "prompt_id": "architecture-tradeoff",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 1,
+      "prompt_id": "bug-report-synthesis",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 1,
+      "prompt_id": "technical-guide",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 1,
+      "prompt_id": "risk-register",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 1,
+      "prompt_id": "performance-hypotheses",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 1,
+      "prompt_id": "decision-memo",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 2,
+      "prompt_id": "incident-retrospective",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 2,
+      "prompt_id": "code-review",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 2,
+      "prompt_id": "customer-email",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 2,
+      "prompt_id": "sql-debugging",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 2,
+      "prompt_id": "release-plan",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 2,
+      "prompt_id": "benchmark-analysis",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 2,
+      "prompt_id": "architecture-tradeoff",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 2,
+      "prompt_id": "bug-report-synthesis",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 2,
+      "prompt_id": "technical-guide",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 2,
+      "prompt_id": "risk-register",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 2,
+      "prompt_id": "performance-hypotheses",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 2,
+      "prompt_id": "decision-memo",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 3,
+      "prompt_id": "incident-retrospective",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 3,
+      "prompt_id": "code-review",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 3,
+      "prompt_id": "customer-email",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 3,
+      "prompt_id": "sql-debugging",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 3,
+      "prompt_id": "release-plan",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 3,
+      "prompt_id": "benchmark-analysis",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 3,
+      "prompt_id": "architecture-tradeoff",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 3,
+      "prompt_id": "bug-report-synthesis",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 3,
+      "prompt_id": "technical-guide",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 3,
+      "prompt_id": "risk-register",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 3,
+      "prompt_id": "performance-hypotheses",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 3,
+      "prompt_id": "decision-memo",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 4,
+      "prompt_id": "incident-retrospective",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 4,
+      "prompt_id": "code-review",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 4,
+      "prompt_id": "customer-email",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 4,
+      "prompt_id": "sql-debugging",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 4,
+      "prompt_id": "release-plan",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 4,
+      "prompt_id": "benchmark-analysis",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 4,
+      "prompt_id": "architecture-tradeoff",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 4,
+      "prompt_id": "bug-report-synthesis",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 4,
+      "prompt_id": "technical-guide",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 4,
+      "prompt_id": "risk-register",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 4,
+      "prompt_id": "performance-hypotheses",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    },
+    {
+      "view": 4,
+      "prompt_id": "decision-memo",
+      "native_source": "request object in hash-bound bracket-inputs.json; same fallback as analyzer"
+    }
+  ]
+}

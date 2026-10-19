@@ -1,0 +1,379 @@
+experiments/own-xpu-runtime/stage2/packet100b-route-capture/DO-NOT-REPEAT.md:9:| Reseal parent orchestration after this preparation | Not required or authorized here | Snapshot controls locally; keep frozen driver/seals |
+experiments/own-xpu-runtime/stage2/packet101-draft-geometry/DO-NOT-REPEAT.md:5:| Seal packet97's mutable selection or orchestration evidence as a live dependency | Its selection changed after the original A control, refusing A grid-1. Fresh seals keep only allowed parent build inputs, snapshot the build identity receipt locally, and use packet101's own selections. Restart the complete bracket with fresh outputs; never reuse old A grid-0. [Reseal](RESEAL.md). |
+experiments/own-xpu-runtime/stage2/packet104-tile-transpose/DO-NOT-REPEAT.md:36:| Reuse packet104's old baseline as packet97's selected composition | Refused: old baseline omitted route-fast, rec-both-plus and E1. Packet104b snapshots packet97's actual selection locally and adds down-tile16. |
+experiments/own-xpu-runtime/stage2/packet105-head-split/DO-NOT-REPEAT.md:7:- Do not snapshot suffix scratch. The first census found 1,572,128 unwanted bytes;
+experiments/own-xpu-runtime/stage2/packet105-head-split/DO-NOT-REPEAT.md:8:  only explicitly marked private allocations may be excluded from rollback.
+experiments/own-xpu-runtime/stage2/packet105-head-split/DO-NOT-REPEAT.md:10:  before submitting the prefix head. BCS must be a dedicated copy-only queue;
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:14:- Do not snapshot suffix scratch. The first census found 1,572,128 unwanted bytes;
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:15:  only explicitly marked private allocations may be excluded from rollback.
+experiments/own-xpu-runtime/stage2/packet105b-head-split/DO-NOT-REPEAT.md:17:  before submitting the prefix head. BCS must be a dedicated copy-only queue;
+experiments/own-xpu-runtime/stage2/packet106-draft-split/DO-NOT-REPEAT.md:7:- Keep target and draft suffix state/mailboxes separate and outside rollback.
+experiments/own-xpu-runtime/stage2/packet106-draft-split/DO-NOT-REPEAT.md:14:- Pin immutable inputs and local source snapshots, never parent orchestration
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:13:- Keep target and draft suffix state/mailboxes separate and outside rollback.
+experiments/own-xpu-runtime/stage2/packet106b-draft-split/DO-NOT-REPEAT.md:20:- Pin immutable inputs and local source snapshots, never parent orchestration
+experiments/own-xpu-runtime/stage2/packet121-miss-table/DO-NOT-REPEAT.md:13:| Omit more restore bytes or arbitrary double buffers | Canonical tails, terminal rollback and prepared pointers remain observable. | A complete ownership/terminal-state proof before implementation. |
+experiments/own-xpu-runtime/stage2/packet124c-record-bundle/DO-NOT-REPEAT.md:35:- Keep external-target snapshots for the screen sealer separate from the real
+experiments/own-xpu-runtime/stage2/packet126-early-draft/DO-NOT-REPEAT.md:8:| Discarding the guessed token repairs a missed early draft | DRAFT advances cache, position and async state. Require an exact private transaction, terminal rollback and forced-miss tests. |
+experiments/own-xpu-runtime/stage2/packet126-early-draft/DO-NOT-REPEAT.md:9:| Start A[p+2] while A[p+1] is unresolved in the current controller | One pending candidate/snapshot; a second unresolved target half needs a separate state design. |
+experiments/own-xpu-runtime/stage2/packet127-head-retune/DO-NOT-REPEAT.md:5:- Never infer spare GPU time from packet118's rank command tail: suffix head
+experiments/own-xpu-runtime/stage2/packet127-head-retune/DO-NOT-REPEAT.md:21:- No live queues, frozen packets or frozen wrappers may be edited for handoff.
+experiments/own-xpu-runtime/stage2/packet128-attribution/DO-NOT-REPEAT.md:6:- Snapshot capture on hits is not rollback. Preserve separate labels.
+experiments/own-xpu-runtime/stage2/packet128b-attribution/DO-NOT-REPEAT.md:5:- SnapshotFlat and multi-item SnapshotBatch are compute kernels, even though their work copies bytes.
+experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/DO-NOT-REPEAT.md:9:  the flat snapshot.
+experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/DO-NOT-REPEAT.md:52:- Keep external-target snapshots for the screen sealer separate from the real
+experiments/own-xpu-runtime/stage2/packet131b-snapshot-banks/DO-NOT-REPEAT.md:9:  the flat snapshot.
+experiments/own-xpu-runtime/stage2/packet131b-snapshot-banks/DO-NOT-REPEAT.md:52:- Keep external-target snapshots for the screen sealer separate from the real
+experiments/own-xpu-runtime/stage2/packet134-submission-stalls/DO-NOT-REPEAT.md:5:| Treat 1.679 ms as speculative enqueue-loop starvation | 1.594 ms is snapshot-to-begin; only 0.085 ms is internal. [Attribution](ATTRIBUTION.md). | Matched low-overhead current-runtime evidence of material internal gaps. |
+experiments/own-xpu-runtime/stage2/packet136-record-bundle/DO-NOT-REPEAT.md:35:- Keep external-target snapshots for the screen sealer separate from the real
+experiments/own-xpu-runtime/stage2/packet136-record-bundle/DO-NOT-REPEAT.md:41:- Exactly two views: rollback_state=copy|banks. Bundle7's remaining choices and
+experiments/own-xpu-runtime/stage2/packet137-token-input/DO-NOT-REPEAT.md:35:- Keep external-target snapshots for the screen sealer separate from the real
+experiments/own-xpu-runtime/stage2/packet142-class-layout/DO-NOT-REPEAT.md:16:- Preserve all six rollback bank captures; recapturing only the active pair is unsafe.
+experiments/own-xpu-runtime/stage2/packet142-class-layout/lineage-inputs/packet136-history/DO-NOT-REPEAT.md:35:- Keep external-target snapshots for the screen sealer separate from the real
+experiments/own-xpu-runtime/stage2/packet142-class-layout/lineage-inputs/packet136-history/DO-NOT-REPEAT.md:41:- Exactly two views: rollback_state=copy|banks. Bundle7's remaining choices and
+experiments/own-xpu-runtime/stage2/packet143-record-bundle/lineage-inputs/packet136-history/DO-NOT-REPEAT.md:35:- Keep external-target snapshots for the screen sealer separate from the real
+experiments/own-xpu-runtime/stage2/packet143-record-bundle/lineage-inputs/packet136-history/DO-NOT-REPEAT.md:41:- Exactly two views: rollback_state=copy|banks. Bundle7's remaining choices and
+experiments/own-xpu-runtime/stage2/packet144-miss-path/DO-NOT-REPEAT.md:9:| 2026-10-18 | Corrected layer-granular handoff | Layer24 requires layer23 streams. Tile streaming advancing only B has the same +0.916% component-only bound; earlier C completion is unproved. | A concrete unchanged-reduction producer/consumer split with net measured transfer, not skipped layers or static placement. |
+experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/lineage-inputs/packet136-history/DO-NOT-REPEAT.md:35:- Keep external-target snapshots for the screen sealer separate from the real
+experiments/own-xpu-runtime/stage2/packet145-router-gdnz-layout/lineage-inputs/packet136-history/DO-NOT-REPEAT.md:41:- Exactly two views: rollback_state=copy|banks. Bundle7's remaining choices and
+experiments/own-xpu-runtime/stage2/packet148-correction-graph/DO-NOT-REPEAT.md:10:| 2026-10-18 / whole attention-head cooperation | Even free state/KV coherence and storage yield +1.569/+1.914% sensitivities; real state movement and hit-path maintenance remain unpriced. | A complete state ownership/rollback plan, measured state-transfer or exact coherent placement, memory fit and a supported ≥2% whole-graph projection. Free persistent mirrors are not evidence. |
+experiments/own-xpu-runtime/stage2/packet148-correction-graph/DO-NOT-REPEAT.md:13:| 2026-10-18 / causal C+A weight sharing | With B fixed, even V2=C gives 0%; B is later than A on all 256 misses. Also granting the historical 1.468740 ms diagnostic suffix wait free gives only +1.864%, without matched ordinary-run support. A first-half mirror needs 27.206 GB before state. | An exact causal graph advances C or proves an additional critical suffix benefit, with complete two-row state lifetimes, supported transfer, fitting weights and measured pair timing. Independent-snapshot M2 or free future A does not establish this. |
+experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/lineage-inputs/packet136-history/DO-NOT-REPEAT.md:35:- Keep external-target snapshots for the screen sealer separate from the real
+experiments/own-xpu-runtime/stage2/packet149-shared-correction-probe/lineage-inputs/packet136-history/DO-NOT-REPEAT.md:41:- Exactly two views: rollback_state=copy|banks. Bundle7's remaining choices and
+experiments/own-xpu-runtime/stage2/packet150-rank0-split/DO-NOT-REPEAT.md:5:- Never skip real token preparation, snapshot state, target head work, verifier
+experiments/own-xpu-runtime/stage2/packet150-rank0-split/DO-NOT-REPEAT.md:6:  or required peer/draft waits to create a speed claim.
+experiments/own-xpu-runtime/stage2/packet150-rank0-split/DO-NOT-REPEAT.md:7:- The snapshot duplicate belongs before spare-bank rotation; token replay must
+experiments/own-xpu-runtime/stage2/packet150-rank0-split/DO-NOT-REPEAT.md:9:- Snapshot host submission is not completed GPU copy time. Subtract nested
+experiments/own-xpu-runtime/stage2/packet150-rank0-split/lineage-inputs/packet136-history/DO-NOT-REPEAT.md:35:- Keep external-target snapshots for the screen sealer separate from the real
+experiments/own-xpu-runtime/stage2/packet150-rank0-split/lineage-inputs/packet136-history/DO-NOT-REPEAT.md:41:- Exactly two views: rollback_state=copy|banks. Bundle7's remaining choices and
+experiments/own-xpu-runtime/stage2/packet151-draft-census/DO-NOT-REPEAT.md:35:- Keep external-target snapshots for the screen sealer separate from the real
+experiments/own-xpu-runtime/stage2/packet151-draft-census/DO-NOT-REPEAT.md:41:- Exactly two views: rollback_state=copy|banks. Bundle7's remaining choices and
+experiments/own-xpu-runtime/stage2/packet151-sibling-cost/lineage-inputs/packet136-history/DO-NOT-REPEAT.md:35:- Keep external-target snapshots for the screen sealer separate from the real
+experiments/own-xpu-runtime/stage2/packet151-sibling-cost/lineage-inputs/packet136-history/DO-NOT-REPEAT.md:41:- Exactly two views: rollback_state=copy|banks. Bundle7's remaining choices and
+experiments/own-xpu-runtime/stage2/packet18-decode-v2/DO-NOT-REPEAT.md:9:| Never-written full snapshot readback | Packet19 sanitizer; initialize every byte before first capture, including unowned slices. | Never restore uninitialized readbacks. |
+experiments/own-xpu-runtime/stage2/packet24-kernels/DO-NOT-REPEAT.md:10:| Infer new-kernel fixture coverage from copied snapshot tests | Closed. A separate actual-kernel gate compares all72 inherited cases plus20 odd-width cases against Core and v1. | Every new body must appear in the executed fixture path. |
+experiments/own-xpu-runtime/stage2/packet24-kernels/DO-NOT-REPEAT.md:12:| K2 v2 starts from v1's mutated state | Closed using identical deterministic logical-buffer snapshots restored outside each measured class/sequence. | Retain matching inputs and distinguish stateful synthetic repeats from real decode. |
+experiments/own-xpu-runtime/stage2/packet32-pipeline/DO-NOT-REPEAT.md:8:| Two-layer mini split used as complete rollback gate | Rank0 lacks PLE/QSA. | Four-layer split with all state classes on rank0. |
+experiments/own-xpu-runtime/stage2/packet36-draft/DO-NOT-REPEAT.md:6:| Draft with the previous guessed embedding | Makes draft cache speculative. | Separate rollback design and gates; outside this packet. |
+experiments/own-xpu-runtime/stage2/packet36-draft/DO-NOT-REPEAT.md:18:Packet32's rollback, owner, fault and arithmetic exclusions remain binding.
+experiments/own-xpu-runtime/stage2/packet40-suite/DO-NOT-REPEAT.md:54:| Carry old 16/20-byte rollback accounting into strict restoration | Reconcile current snapshot ranges against authenticated owner archives and report copy bytes separately from unmeasured device cost; `rollback-inventory.json` and `rollback-audit-unit-tests.json`. |
+experiments/own-xpu-runtime/stage2/packet44-context/DO-NOT-REPEAT.md:29:| Claim 25 GNU real-model cases | The retained 25 include 13 GNU real-model and 12 both-compiler rollback cases. |
+experiments/own-xpu-runtime/stage2/packet45-merged3/DO-NOT-REPEAT.md:5:| A terminal rollback and a rollback followed by a verified redo have different restore needs | [SPEED4](SPEED4-CLOSEOUT.md), complete spare-bank overwrite proof and abandoned-redo fallback | Skip only proved physical spare banks for the matching confirmed HALF; keep full restore for every observable terminal state and reject incomplete coverage |
+experiments/own-xpu-runtime/stage2/packet45-merged3/DO-NOT-REPEAT.md:6:| Whole-allocation scratch and invalid QSA tails dominate snapshot bytes even after batching | [SPEED2](SPEED2-CLOSEOUT.md), checked per-site write union and complete-state comparisons | Save a proved superset of writes; unknown writers fall back to full coverage; never infer hit-cycle savings from overlapped capture cost |
+experiments/own-xpu-runtime/stage2/packet45-merged3/DO-NOT-REPEAT.md:7:| Write-before-read was proposed as sufficient to exclude overwritten snapshot outputs; terminal full-state rollback still observes the old bytes | [SPEED1](SPEED1-CLOSEOUT.md), four deliberately omitted streams extents rejected by the full-state comparator; standalone scratch coverage is incomplete | Use private speculative storage or proved modified-range backups; never mask output/scratch state hashes |
+experiments/own-xpu-runtime/stage2/packet45-merged3/DO-NOT-REPEAT.md:20:| Snapshot after context admission left terminal rollback launch metadata changed | [ROLLBACK.md](ROLLBACK.md), boundary cases in cpu-merged-gates.json | Snapshot first; restore both banks and QSA prepared commands |
+experiments/own-xpu-runtime/stage2/packet49-integrate/DO-NOT-REPEAT.md:5:| Packet45's current tree is later than the SPEED6 record | SPEED7 and K2 probe closeouts in packet45 | Derive the selected historical snapshot explicitly; do not inherit unqualified later changes silently |
+experiments/own-xpu-runtime/stage2/packet49-integrate/DO-NOT-REPEAT.md:10:| M=2 bridge support is not full-engine batching | [README](README.md) and independent attention review | A separate scheduling change with complete rollback and quality gates |
+experiments/own-xpu-runtime/stage2/packet49b-gemv/DO-NOT-REPEAT.md:13:| M=2 bridge support does not mean batched engine scheduling | [Integration](INTEGRATION.md) | Separate scheduling change with rollback/quality gates |
+experiments/own-xpu-runtime/stage2/packet49c-round2/DO-NOT-REPEAT.md:16:SPEED6 rollback conclusions and all inherited negative results remain in
+experiments/own-xpu-runtime/stage2/packet52-freeorder/DO-NOT-REPEAT.md:9:| Full mutable-arena restoration for every candidate arm | Replaced with scoped operand/output/control resets from four snapshots | Require explicit dependency and output coverage for any reset change |
+experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/DO-NOT-REPEAT.md:14:  the paired snapshot kernel probe a causal verifier.
+experiments/own-xpu-runtime/stage2/packet58c-onecard/DO-NOT-REPEAT.md:27:  time series from 58b's untimed progress and endpoint-only snapshots. See
+experiments/own-xpu-runtime/stage2/packet58d-onecard/DO-NOT-REPEAT.md:27:  time series from 58b's untimed progress and endpoint-only snapshots. See
+experiments/own-xpu-runtime/stage2/packet58e-onecard/DO-NOT-REPEAT.md:34:  time series from 58b's untimed progress and endpoint-only snapshots. See
+experiments/own-xpu-runtime/stage2/packet58f-onecard/DO-NOT-REPEAT.md:40:  time series from 58b's untimed progress and endpoint-only snapshots. See
+experiments/own-xpu-runtime/stage2/packet58g-onecard/DO-NOT-REPEAT.md:52:  time series from 58b's untimed progress and endpoint-only snapshots. See
+experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/DO-NOT-REPEAT.md:5:| 2026-10-18 / one-card IQ3, unchanged one-token draft-HC, 91,392-row shared head, retained 58g cache/admission | CPU no-build. Primary model 24.62 tok/s versus 28.8 required. Resident and shared-cache draft options require about 121.65 GB available host RAM, above every retained admission snapshot. [Exact accounting](FEASIBILITY.md), [reproducer](feasibility.py), [closeout](CLOSEOUT.md). | A new causal M2 mechanism with a credible complete-cycle budget below the 60.27 ms zero-overhead verify limit, plus a complete host budget that fits with reserve and margin. Recheck both gates together before copying/building. |
+experiments/own-xpu-runtime/stage2/packet58i-onecard-attribution/DO-NOT-REPEAT.md:9:| Seal post-router BCS speed from perfect overlap | Missing router wait, split dispatch, sparse-miss and overlap costs | Matched one-card stage trace and unchanged output gates |
+experiments/own-xpu-runtime/stage2/packet58i-onecard-attribution/DO-NOT-REPEAT.md:14:in the input snapshots. Static host expert identity tuning, MTP and load-count
+experiments/own-xpu-runtime/stage2/packet58k-onecard-screen/DO-NOT-REPEAT.md:16:[CPU closeout and handoff](CPU-PREPARATION-CLOSEOUT.md).
+experiments/own-xpu-runtime/stage2/packet58v-async-cache/DO-NOT-REPEAT.md:9:| Publish a fill immediately when it completes mid-position | Refused; current kernels own their table snapshot | Publish only at a later drained boundary |
+experiments/own-xpu-runtime/stage2/packet62-miss-path/DO-NOT-REPEAT.md:6:| Claim removal of the whole 11.4 ms miss penalty from rollback | Current rollback is only about 0.74 ms; corrected work is about 12.51 ms and remains required. |
+experiments/own-xpu-runtime/stage2/packet62-miss-path/DO-NOT-REPEAT.md:9:| Claim bank rotation removes confirmed-redo bank restores | Packet61 already omits those 29.6 MB. The new saving is capture and terminal/fallback rollback traffic. |
+experiments/own-xpu-runtime/stage2/packet62-miss-path/DO-NOT-REPEAT.md:10:| Rank controller dispatch as a large miss lever | Current verify-to-rollback and rollback-to-redo gaps are about 12 us and 1.5 us. Only host bookkeeping overlap is prepared. |
+experiments/own-xpu-runtime/stage2/packet73-hc-experts2/DO-NOT-REPEAT.md:12:[CPU preparation closeout](CPU-PREPARATION-CLOSEOUT.md) records the handoff.
+experiments/own-xpu-runtime/stage2/packet88-miss-path/DO-NOT-REPEAT.md:5:| 2026-10-18 | Create R/D overlap by moving rank0 restore to BCS | Cross-card overlap already exists: 0.569325 ms of 0.569390 ms R. Revisit transport only with isolated copy timings and an end-to-end saving, not the same overlap argument. |
+experiments/own-xpu-runtime/stage2/packet88-miss-path/DO-NOT-REPEAT.md:6:| 2026-10-18 | A minus C as copy time | Invalid: snapshot setup is outside the busy timer, waits differ, and instrumentation changes the sample. Flat restore has no registered device timer. |
+notes/2026-10-17-own-runtime-iq3-speed-roadmap.md:73:lookup/transfer commands and speculation snapshots. A speculative rank-0
+notes/2026-10-17-own-runtime-iq3-speed-roadmap.md:98:| Draft, rank 1 | About 2.81 ms complete command on hits; about 2.79 on misses, already overlapping rollback/redo. The duplicate profiling pass is already removed. |
+notes/2026-10-17-own-runtime-iq3-speed-roadmap.md:99:| Snapshot, rank 0 | Capture 48,332,354 B in 31 submissions; matched speculative-minus-redo command difference 1.526 ms is an enclosing proxy, **not isolated copy time**. |
+notes/2026-10-17-own-runtime-iq3-speed-roadmap.md:100:| Miss restore, rank 0 | 18,730,562 B in 30 submissions; ROLLBACK envelope median 1.607 ms includes drains, status reads, host/bank restoration and transport. |
+notes/2026-10-17-own-runtime-iq3-speed-roadmap.md:101:| Cross-card handoff | 20,480 B forward via shared host slots, rank-1 draft uses its local hidden state (the alternate draft-rank-0 placement needs a reverse stream). Transfer events are not separately timed. HALF sent-to-received medians .0067/.0098 ms hit/miss describe mailbox latency, not complete PCIe transfer. |
+notes/2026-10-17-own-runtime-iq3-speed-roadmap.md:107:rank 0, A corrected rank 0, B rank 1, D draft, R rollback. Rank 0 and rank 1
+notes/2026-10-17-own-runtime-iq3-speed-roadmap.md:144:| [45](2026-10-14-packet45-device-qualification-rounds.md) | Actual SPEED6 budget above; snapshots, split, arithmetic and dispatch differ from the older probes. |
+notes/2026-10-17-own-runtime-iq3-speed-roadmap.md:149:QSA .970–.977 ms. These exclude final head, draft, copies and snapshots and
+notes/2026-10-17-own-runtime-iq3-speed-roadmap.md:183:| 2. Temporal M=2, then M=3 verification | Reuse dense weight reads/dequant across token rows with independent exact accumulators; preserve causal state and prefix rollback | Current M3 schedule **23.1–29.9**, unattractive; new T3=48 ms gives **43.0–48.9** depending on draft overlap | Large, multi-day | Very high | Dense QKV/head M2/M3 against serial rows, then full T3 and accepted-prefix state; only reopen full controller below 52.90 ms, preferably 48 |
+notes/2026-10-17-own-runtime-iq3-speed-roadmap.md:185:| 4. Miss-cycle reduction | Avoid exposed restore/control work and shorten the corrected rank-0 half; shared kernel improvements count in rank 1 too | Entire rollback removed gives only about **40.0**; eliminating the whole miss penalty is an impossible-work-free upper scenario around **45–46** | Medium | High | Separate restore/redo timers and full-state hit/miss/terminal checks; do not repeat SPEED7 padding-only work |
+notes/2026-10-17-own-runtime-iq3-speed-roadmap.md:186:| 5. Copy-engine overlap | Overlap only genuinely independent copies with compute; preserve producer completion and buffer lifetimes | No supported positive range; likely near **39.4**, unless new trace exposes a larger copy stall | Medium | Medium/high | Timestamp actual transfer/drain phases with changed payloads, without double-counting existing overlap |
+notes/2026-10-17-own-runtime-iq3-speed-roadmap.md:214:adds bank/rollback/accepted-prefix lifetime rules. A graph cannot capture a
+notes/2026-10-17-own-runtime-iq3-speed-roadmap.md:234:0/1/2-accepted rollback; routing reuse is unmeasured.
+notes/2026-10-17-own-runtime-packet46.md:44:## Results and handoff
+notes/2026-10-17-own-runtime-packet46.md:67:Full mutable snapshots include scratch and padding without masks. Every timed
+notes/2026-10-17-own-runtime-packet47.md:103:## Coordinator handoff
+notes/2026-10-17-own-runtime-packet48.md:98:## CPU gates and coordinator handoff
+notes/2026-10-17-own-runtime-packet49.md:10:from the packet45 SPEED6 snapshot at `34c62b433`. The current packet45 tree
+notes/2026-10-17-own-runtime-packet49.md:12:Keep 23/25 target layers, draft rank 1, capacity 4096, write-set snapshots,
+notes/2026-10-17-own-runtime-packet49.md:115:Six owner/lifetime suites pass. The miniature snapshot gate passes 31 cases
+notes/2026-10-17-own-runtime-packet49.md:122:snapshot gate also passes 31 cases and 26 full-state/negative checks. Both
+notes/2026-10-17-own-runtime-packet49.md:124:The normal snapshot receipt was refreshed after that gate-source change.
+notes/2026-10-17-own-runtime-packet49.md:133:20 GiB remains free on root. The oracle unit is still active at handoff.
+notes/2026-10-17-own-runtime-packet49b.md:41:Python admission tests pass. GNU and sanitizer snapshot gates each passed
+notes/2026-10-17-own-runtime-packet49b.md:60:The same packet49 oracle is still running at handoff. No device qualification
+notes/2026-10-17-own-runtime-packet49b.md:86:## Coordinator handoff and record scope
+notes/2026-10-17-own-runtime-packet49b.md:103:- The final seal checkpoint records the corrected fixture, all fresh gate receipts, independent review and this handoff. Its exact commit is in Git history and the coordinator report.
+notes/2026-10-17-own-runtime-packet49c.md:27:Run fresh fixture, ownership, plan, snapshot, sanitizer and admission gates.
+notes/2026-10-17-own-runtime-packet49c.md:43:## Coordinator handoff plan
+notes/2026-10-17-own-runtime-packet49c.md:132:CPU receipts, archive retention, seal and handoff; each carries the requested
+notes/2026-10-17-own-runtime-packet49d.md:28:- Inherited fresh-owner, plan, GNU/ASAN full-state snapshot, split32, expert and round-two gates pass.
+notes/2026-10-17-own-runtime-packet52.md:61:reset overhead, and missing manifest handoff. No GPU or arithmetic failure
+notes/2026-10-17-own-runtime-packet52.md:78:estimates; packet52 device wall time is unmeasured. Four cached input snapshots
+notes/2026-10-17-own-runtime-packet53.md:72:## Coordinator handoff
+notes/2026-10-17-own-runtime-packet53.md:111:Device byte identity and speed remain pending at handoff.
+notes/2026-10-17-own-runtime-packet55.md:86:another from the same route. The corrected policy snapshots all ten hits and
+notes/2026-10-17-own-runtime-packet55.md:147:- **No overlap with packet 49d's chain.** The H2D probe drives the copy engine on cards 2/3:
+notes/2026-10-17-own-runtime-packet55.md:149:  - card 3 = `0000:47:00.0`, which had today's 01:09 BCS engine reset.
+notes/2026-10-17-own-runtime-packet55.md:184:**H2D on card 2 (two fresh windows, after one refusal on the fence check).** Bandwidth is 24.6 GB/s for 4 experts (7.9 MB) and **27.7 GB/s for 10 (19.7 MB)**, about 72 µs per 1.97 MB expert. The copy engine overlapped synthetic compute almost completely: concurrent ≈ copy + 10 µs.
+notes/2026-10-17-own-runtime-packet55.md:203:**Decision: the one-card design is a GPU expert cache, 18 GB LRU, with exact H2D streaming of misses on the copy engine.**
+notes/2026-10-17-own-runtime-packet56.md:47:## Validation and handoff
+notes/2026-10-17-own-runtime-packet56w.md:20:requests, replies and draft publication, including accept and miss rollback.
+notes/2026-10-17-own-runtime-packet56w.md:80:## Coordinator handoff
+notes/2026-10-17-own-runtime-packet56w.md:162:### Final chain seal and handoff
+notes/2026-10-17-own-runtime-packet56x.md:26:- The wait audit also covers handoff, queue drains, socket transport, fault
+notes/2026-10-17-own-runtime-packet56x.md:81:## Coordinator handoff
+notes/2026-10-17-own-runtime-packet57.md:43:**15.9551 ms**. Miss medians are D **1.8890 ms**, rollback **1.6111 ms**,
+notes/2026-10-17-own-runtime-packet57.md:66:the sealed packet 56 operator and handoff proofs, then checks the new binary
+notes/2026-10-17-own-runtime-packet57.md:78:measure complete GPU idle; direct bulk snapshot copies remain outside the
+notes/2026-10-17-own-runtime-packet57.md:85:## Evidence and handoff
+notes/2026-10-17-own-runtime-packet58.md:41:The passive CPU snapshot passed; it is not permission to rely on that old
+notes/2026-10-17-own-runtime-packet58.md:94:MTP is deferred: the initial passive snapshot had only 1,953,649,648 B beyond
+notes/2026-10-17-own-runtime-packet58.md:99:## Final CPU handoff
+notes/2026-10-17-own-runtime-packet58.md:112:handoff commit records the updated authority and refreshed seal. Only this
+notes/2026-10-17-own-runtime-packet58c.md:28:snapshots show 120,966,356,992 and 120,907,894,784 bytes available; those are
+notes/2026-10-17-own-runtime-packet58c.md:64:## Coordinator handoff
+notes/2026-10-17-own-runtime-packet58e.md:27:after_load snapshot. The new code never uses its peak alone as the full shadow
+notes/2026-10-17-own-runtime-packet59.md:53:## Final CPU handoff
+notes/2026-10-17-own-runtime-packet59b.md:16:existing reverse-handoff/controller protocol; it allocates only the INT8
+notes/2026-10-17-own-runtime-packet59b.md:89:The exact command below is the handoff command **after that profile is
+notes/2026-10-17-own-runtime-packet61.md:26:own-folder scope takes precedence for this handoff, apart from this requested
+notes/2026-10-17-own-runtime-packet62.md:7:rank1 now finishes last in almost every cycle. Snapshot preparation is about
+notes/2026-10-17-own-runtime-packet62.md:8:0.81 ms by a host-envelope estimate, but sits behind rank1. Rollback itself is
+notes/2026-10-17-own-runtime-packet62.md:11:packet61. The controller gaps are about 12 us before rollback and 1.5 us before
+notes/2026-10-17-own-runtime-packet62.md:21:| `batch` | One descriptor upload and one flat copy kernel | Below the old 0.74 ms rollback envelope; a point estimate is not supported |
+notes/2026-10-17-own-runtime-packet62.md:38:Removing the entire old rollback would save only about 0.16 ms per average
+notes/2026-10-17-own-runtime-packet63.md:156:## Git handoff
+notes/2026-10-17-own-runtime-packet63.md:162:this handoff; no history was rewritten. Repository hygiene over the combined
+notes/2026-10-17-own-runtime-packet64-attribution.md:5:with the production draft on rank 1 and ordinary rollback copies. The target
+notes/2026-10-17-own-runtime-packet64-attribution.md:73:this task's state and handoff live only in the new folders and this note.
+notes/2026-10-17-own-runtime-packet64.md:4:draft rank1, production draft, control rollback copies**. All eight selections
+notes/2026-10-17-own-runtime-packet67.md:9:The selected sites are recurrence and both HC gates. The HC candidate groups four streams into one subgroup and preserves each output's reduction tree, BF16 rounding and stream sum order. The recurrence candidate calculates shared head normalization/decay/beta once, then runs the unchanged state arithmetic. It adds one kernel and uses 49,920 bytes of existing scratch; rollback includes the new scratch range. Route is deferred for a separate study of its existing packet54 changes.
+notes/2026-10-17-own-runtime-packet68c.md:31:The probe adds consecutive real engine-input snapshots at 8/9, 16/17 and
+notes/2026-10-17-own-runtime-packet70.md:12:target HC fusion, packet59 draft-HC fusion through packet63, batched rollback
+notes/2026-10-17-own-runtime-packet70.md:51:At the retained 18:18 UTC snapshot, lane A had not started and lane B had two
+notes/2026-10-17-own-runtime-packet71.md:67:Coordinator handoff: [exact commands and jobs](../experiments/own-xpu-runtime/stage2/packet71-depth2-engine/README.md),
+notes/2026-10-17-own-runtime-packet72.md:43:directory. Live queues were not edited. [Coordinator handoff and proposals](../experiments/own-xpu-runtime/stage2/packet72-occupancy/WINDOW.md)
+notes/2026-10-17-own-runtime-packet73.md:15:Production means packet70's wide64 experts, draft-HC, batch rollback and 24/24
+notes/2026-10-17-own-runtime-packet73.md:56:## Sealed handoff
+notes/2026-10-17-own-runtime-packet74.md:100:[Handoff and queue proposals](../experiments/own-xpu-runtime/stage2/packet74-packed-dense/WINDOW.md),
+notes/2026-10-17-own-runtime-packet75.md:27:head rows, allocation gates, command capture, speculative snapshots and draft
+notes/2026-10-17-own-runtime-packet75.md:43:speculative snapshots and the rank-one draft prefix. A deliberately undersized
+notes/2026-10-17-own-runtime-packet75.md:65:## Final CPU milestone and screen snapshot
+notes/2026-10-17-own-runtime-packet75.md:74:At the final preparation snapshot, packet74 has a complete exact lane-A grid
+notes/2026-10-17-own-runtime-packet77.md:46:[handoff](../experiments/own-xpu-runtime/stage2/packet77-attribution/WINDOW.md).
+notes/2026-10-17-own-runtime-packet78.md:38:hashes verify. `CURRENT.md` records the handoff.
+notes/2026-10-17-own-runtime-packet78.md:46:packet49 exact checks. Gaps are 90 seconds, with no retries. This handoff is
+notes/2026-10-17-own-runtime-packet79.md:8:packet75 sources, preserving packet70's wide64/draft-HC/batch rollback choices
+notes/2026-10-17-own-runtime-packet79.md:16:keeps 24/24 and rank1 draft. The existing asynchronous reverse handoff and
+notes/2026-10-17-own-runtime-packet79.md:17:unchanged native verification/rollback remain in use.
+notes/2026-10-17-own-runtime-packet79.md:30:admission, native reverse-handoff state-machine checks, GNU/Intel byte checks,
+notes/2026-10-17-own-runtime-packet79.md:49:across both draft ranks: all hits, all misses, mixed, no proposal, rollback and
+notes/2026-10-17-own-runtime-packet80.md:21:reverse-handoff and selection-consumer checks are in progress. This is not yet
+notes/2026-10-17-own-runtime-packet80.md:39:state all agree. Ordered retirement's error/refusal tests and20 reverse-handoff
+notes/2026-10-17-own-runtime-packet80.md:74:below the 1.5 GB limit. The numerical, allocation, handoff, K2, dispatch and
+notes/2026-10-17-own-runtime-packet80.md:84:are authoritative; ready-first-pass.json retains the earlier readiness snapshot.
+notes/2026-10-17-own-runtime-packet83.md:28:The [handoff](../experiments/own-xpu-runtime/stage2/packet83-draft-bytes/WINDOW.md)
+notes/2026-10-17-own-runtime-screen-v3.md:61:## Validation and handoff
+notes/2026-10-18-own-runtime-ops-drain-guard.md:32:## Snapshot and validation
+notes/2026-10-18-own-runtime-ops-drain-guard.md:39:SHA256 and each recognized sleep has its line number. These are snapshot
+notes/2026-10-18-own-runtime-ops-lane-overlap.md:108:## Repository and handoff
+notes/2026-10-18-own-runtime-ops-predevice-refusals.md:77:| Lane | Snapshot rows | Plan result |
+notes/2026-10-18-own-runtime-ops-predevice-refusals.md:82:A snapshot SHA-256:
+notes/2026-10-18-own-runtime-ops-predevice-refusals.md:84:B snapshot SHA-256:
+notes/2026-10-18-own-runtime-opsguard.md:23:  Historical lineage snapshots are not treated as active manifests.
+notes/2026-10-18-own-runtime-opsguard.md:80:snapshot of the concurrently maintained metadata. Overlapping seal
+notes/2026-10-18-own-runtime-p92-p94-results.md:3:## Packet 92 rank-1 reply-first (lane A)
+notes/2026-10-18-own-runtime-p92-p94-results.md:7:| reply-first | 55.466 | 15.711 |
+notes/2026-10-18-own-runtime-packet100.md:69:## Completed gates and handoff
+notes/2026-10-18-own-runtime-packet100b.md:48:Parent selection, ledger and compiler-command controls are snapshots owned by
+notes/2026-10-18-own-runtime-packet101.md:48:[Packet handoff](../experiments/own-xpu-runtime/stage2/packet101-draft-geometry/README.md),
+notes/2026-10-18-own-runtime-packet102.md:75:The final screen control snapshots packet97's selected half-cache composition:
+notes/2026-10-18-own-runtime-packet102.md:77:choices and draft settings preserved. The local immutable snapshot is
+notes/2026-10-18-own-runtime-packet102.md:85:## Final CPU handoff
+notes/2026-10-18-own-runtime-packet102.md:132:Git handoff: concurrent commit `944963d2c` consumed the staged packet102
+notes/2026-10-18-own-runtime-packet103.md:26:`screens-current.json`, and `source-tests.log`. The closed-source snapshot is
+notes/2026-10-18-own-runtime-packet103.md:89:06:15 UTC. That guard is unchanged and will be rechecked at handoff. The new
+notes/2026-10-18-own-runtime-packet103.md:94:nonexecuted historical source snapshots move into local immutable inputs. The
+notes/2026-10-18-own-runtime-packet103.md:128:snapshots, unknown external dependencies and refusal before proposal publication;
+notes/2026-10-18-own-runtime-packet103.md:132:Composite handoff: decision `1ad512f75aab3fce` seals eight required views and
+notes/2026-10-18-own-runtime-packet103.md:147:the requested six-job composite handoff, which is complete and pushed. No
+notes/2026-10-18-own-runtime-packet103.md:152:The final handoff summary distinguishes completed requested work from this
+notes/2026-10-18-own-runtime-packet103.md:192:limit snapshot, including unlimited soft and hard RLIMIT_AS. The negative
+notes/2026-10-18-own-runtime-packet104.md:24:The full 384-vector packet100b target-route snapshot is hash verified against
+notes/2026-10-18-own-runtime-packet104.md:83:snapshots are now explicit build inputs. The old receipt and binary are
+notes/2026-10-18-own-runtime-packet104.md:150:rec-both-plus, E1 half-cache and draft choices into a local immutable snapshot,
+notes/2026-10-18-own-runtime-packet104.md:161:Packet100's unchanged down-tile16 proof is copied as a local receipt snapshot,
+notes/2026-10-18-own-runtime-packet104.md:186:hardlink snapshots of the exact immutable fixture bytes and oracle manifest.
+notes/2026-10-18-own-runtime-packet105.md:13:rollback overlap, or treat lane-B head results as lane-A confirmation.
+notes/2026-10-18-own-runtime-packet105.md:28:head-split-compute, and head-split-bcs. Other choices are fixed to hc-wide,
+notes/2026-10-18-own-runtime-packet105.md:42:state. Its allocations are explicitly excluded from rollback, with a no-alias
+notes/2026-10-18-own-runtime-packet105.md:45:BCS uses a dedicated copy-only Level Zero queue in the same owner/context,
+notes/2026-10-18-own-runtime-packet105.md:46:explicit event dependencies and bounded waits. It refuses unavailable BCS
+notes/2026-10-18-own-runtime-packet105.md:60:snapshotting. The explicit auxiliary-allocation exclusion removes that copy.
+notes/2026-10-18-own-runtime-packet105.md:73:publish the completed copy. This lets BCS overlap the prefix without exposing
+notes/2026-10-18-own-runtime-packet105.md:86:## Completed CPU handoff
+notes/2026-10-18-own-runtime-packet105.md:108:Each grid is production / compute split / production / BCS split / production.
+notes/2026-10-18-own-runtime-packet105.md:115:used the shared turn lock. The CPU byte gate peaked at 978356 KiB RSS. Real BCS
+notes/2026-10-18-own-runtime-packet105b.md:19:production, head split and combined head/draft split in 106b. BCS and draft-only
+notes/2026-10-18-own-runtime-packet105b.md:61:## Completed CPU handoff
+notes/2026-10-18-own-runtime-packet106.md:14:rollback overlap. Packet87t predicts +0.7749%; no measured model gain yet.
+notes/2026-10-18-own-runtime-packet107.md:66:## Final CPU evidence and handoff
+notes/2026-10-18-own-runtime-packet108.md:43:## CPU handoff verified
+notes/2026-10-18-own-runtime-packet110.md:41:byte-for-byte in gzip snapshots with hashes and window/native receipts.
+notes/2026-10-18-own-runtime-packet111.md:94:this snapshot is not a reservation and launch rechecks it. Larger retained files
+notes/2026-10-18-own-runtime-packet113.md:118:## Final CPU handoff — 08:57 UTC
+notes/2026-10-18-own-runtime-packet113.md:133:retain the handoff. The micro gate explicitly reports **pending**, with
+notes/2026-10-18-own-runtime-packet114.md:46:suffix and native rollback/controller gates. Four full-size rank/startup
+notes/2026-10-18-own-runtime-packet114.md:75:## Sealed handoff
+notes/2026-10-18-own-runtime-packet116.md:66:per owner. Its native source/object snapshot is independent of later v5 edits.
+notes/2026-10-18-own-runtime-packet117.md:92:## Prepared checks and coordinator handoff
+notes/2026-10-18-own-runtime-packet117.md:147:## Final CPU handoff
+notes/2026-10-18-own-runtime-packet117.md:168:at handoff. Peak compiler RSS remains recorded in each build receipt and all
+notes/2026-10-18-own-runtime-packet119.md:79:## Final CPU handoff
+notes/2026-10-18-own-runtime-packet120.md:23:Its source snapshot and compressed allocation lists are retained alongside it.
+notes/2026-10-18-own-runtime-packet120.md:80:corrects the initial expectation: the 1.78 ms draft wait is not spare time in
+notes/2026-10-18-own-runtime-packet123.md:8:rank-0 tail, but packet105b's suffix head runs outside the command trace and
+notes/2026-10-18-own-runtime-packet124.md:185:### Handoff
+notes/2026-10-18-own-runtime-packet124.md:246:repair. It remains unchanged. New `seal_view.py` makes eight local byte snapshots
+notes/2026-10-18-own-runtime-packet124.md:248:the actual links. The chain adapter checks original and snapshot hashes at
+notes/2026-10-18-own-runtime-packet124.md:291:### Handoff
+notes/2026-10-18-own-runtime-packet125-micro-result.md:9:| BCS pipeline ×3 | 192.2 | 194.9 | 10.3 | 1.22 / 1.21 |
+notes/2026-10-18-own-runtime-packet125-micro-result.md:10:| BCS aligned / contiguous | ~221 | ~222 | 9.0 | 1.06 |
+notes/2026-10-18-own-runtime-packet125-micro-result.md:11:| BCS in-flight ×3 | 230 | 230 | 8.6 | 1.02 |
+notes/2026-10-18-own-runtime-packet125-micro-result.md:12:| BCS serial ×3 | 253 | 252 | 7.9 | 0.93 |
+notes/2026-10-18-own-runtime-packet125-micro-result.md:14:Kill gate ≥ 1.5× in both processes: nothing qualifies; closed. Copy-engine prefetch does not beat zero-copy materially; the tile16 layout's 1.27× miss-path gain is real and is being tested in-engine by packet 58n's tile16-only one-card screen (production / tile16 / production, whole host).
+notes/2026-10-18-own-runtime-packet125.md:38:[Full path snapshot](../experiments/own-xpu-runtime/stage2/packet125-miss-transfer/evidence/pcie-links.json).
+notes/2026-10-18-own-runtime-packet125.md:96:needed for this handoff. [Preparation closeout](../experiments/own-xpu-runtime/stage2/packet125-miss-transfer/CPU-PREPARATION-CLOSEOUT.md).
+notes/2026-10-18-own-runtime-packet127.md:35:will be read before final handoff, with missing evidence explicitly pending.
+notes/2026-10-18-own-runtime-packet127.md:38:## Required handoff gates
+notes/2026-10-18-own-runtime-packet127.md:100:## Final coordinator handoff
+notes/2026-10-18-own-runtime-packet127.md:144:[handoff and budgets](../experiments/own-xpu-runtime/stage2/packet127-head-retune/README.md),
+notes/2026-10-18-own-runtime-packet128.md:12:tokens, the draft, head partitions, transfers and snapshot/restore work. Event
+notes/2026-10-18-own-runtime-packet128.md:13:records are buffered until reset. Native receipts retain draft waits; additional
+notes/2026-10-18-own-runtime-packet128.md:22:rollback and gaps remain visible even when recoverability is unknown.
+notes/2026-10-18-own-runtime-packet128b-findings.md:7:- **Rank 0 `snapshot_capture` 0.52** on every cycle (rollback snapshot), on a near-critical rank.
+notes/2026-10-18-own-runtime-packet128b-findings.md:10:Briefed: packet 130 (compute the suffix as soon as the hidden arrives: high-priority queue or chunked interleave, exact) and packet 131 (double-buffered state instead of the per-cycle snapshot copy, exact).
+notes/2026-10-18-own-runtime-packet128b.md:25:The analyzer separates compute, automatic-copy and explicit BCS-copy routes,
+notes/2026-10-18-own-runtime-packet128b.md:26:and accepts additional identified queues. Physical automatic-copy engine IDs
+notes/2026-10-18-own-runtime-packet128b.md:32:SnapshotFlat and batched snapshot kernels are correctly labeled compute.
+notes/2026-10-18-own-runtime-packet128b.md:78:## Coordinator handoff
+notes/2026-10-18-own-runtime-packet130.md:43:rollback remain required. Test early, boundary, late, stale and aborted arrivals,
+notes/2026-10-18-own-runtime-packet130.md:69:and miss rollback; owner cancellation and explicit cancel-launch tests stay live.
+notes/2026-10-18-own-runtime-packet130.md:94:active. Their partial build is explicitly superseded. The final build snapshots
+notes/2026-10-18-own-runtime-packet130.md:98:## Final CPU result and coordinator handoff
+notes/2026-10-18-own-runtime-packet131.md:1:# Packet131: preserve recurrent rollback state by rotating buffers
+notes/2026-10-18-own-runtime-packet131.md:16:The original snapshot already submits one descriptor upload and one flat
+notes/2026-10-18-own-runtime-packet131.md:64:GNU and Intel compile the changed Engine/snapshot fixture; unchanged arithmetic
+notes/2026-10-18-own-runtime-packet131.md:90:[Packet and reproduction commands](../experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/README.md),
+notes/2026-10-18-own-runtime-packet131.md:91:[complete census](../experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/CENSUS.md),
+notes/2026-10-18-own-runtime-packet131.md:92:[exactness argument](../experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/EXACTNESS.md),
+notes/2026-10-18-own-runtime-packet131.md:93:[readiness](../experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/evidence/ready131.json),
+notes/2026-10-18-own-runtime-packet131.md:94:[closeout](../experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/CPU-PREPARATION-CLOSEOUT.md),
+notes/2026-10-18-own-runtime-packet131.md:107:The new `stage2/packet131b-snapshot-banks/` is a symlink-preserving copy.
+notes/2026-10-18-own-runtime-packet131.md:147:plans, readiness and six entry tests were regenerated against the snapshot.
+notes/2026-10-18-own-runtime-packet131.md:158:P=experiments/own-xpu-runtime/stage2/packet131b-snapshot-banks
+notes/2026-10-18-own-runtime-packet131.md:175:Evidence: [copy/native audit](../experiments/own-xpu-runtime/stage2/packet131b-snapshot-banks/evidence/copy-audit131b.json),
+notes/2026-10-18-own-runtime-packet131.md:176:[entry and gate regressions](../experiments/own-xpu-runtime/stage2/packet131b-snapshot-banks/evidence/gate131b.json),
+notes/2026-10-18-own-runtime-packet131.md:177:[readiness](../experiments/own-xpu-runtime/stage2/packet131b-snapshot-banks/evidence/ready131.json),
+notes/2026-10-18-own-runtime-packet131.md:178:[temporary queue checks](../experiments/own-xpu-runtime/stage2/packet131b-snapshot-banks/evidence/queue131.json),
+notes/2026-10-18-own-runtime-packet135.md:16:recommends finishing the pending recurrent snapshot test first. Removing
+notes/2026-10-18-own-runtime-packet135.md:19:draft-embedding projection table with faster target token preparation. Its
+notes/2026-10-18-own-runtime-packet135.md:35:gate and both completed 122 draft micros. The 1.52 MB compressed input snapshot
+notes/2026-10-18-own-runtime-packet136.md:1:# Packet136 — prepare bundle8 with banked rollback before lane B decides
+notes/2026-10-18-own-runtime-packet136.md:12:The only new dimension is `rollback_state=copy|banks`. Native selections are
+notes/2026-10-18-own-runtime-packet136.md:15:[bank-state proof](../experiments/own-xpu-runtime/stage2/packet131b-snapshot-banks/EXACTNESS.md)
+notes/2026-10-18-own-runtime-packet137.md:18:Existing history and device rollback remain authoritative.
+notes/2026-10-18-own-runtime-packet137.md:85:The bank reserve replaces an equal-size snapshot region: net device arena
+notes/2026-10-18-own-runtime-packet137.md:99:all six pairings and verify five host/device history rollbacks per rank0 run.
+notes/2026-10-18-own-runtime-packet137.md:126:## CPU handoff complete, 17:02 UTC
+notes/2026-10-18-own-runtime-packet137.md:191:compressed snapshot. It changes report dependencies only; no native binary,
+notes/2026-10-18-own-runtime-packet137.md:193:queue test's stale shared-source pin now points to an exact local snapshot
+notes/2026-10-18-own-runtime-packet139.md:3:Bundle9 is bundle8's banked rollback plus packet137 `token_input=both`.
+notes/2026-10-18-own-runtime-packet139.md:62:## Device handoff and submission
+notes/2026-10-18-own-runtime-packet141.md:111:compiled source bytes are now snapshotted under this packet; original commands
+notes/2026-10-18-own-runtime-packet141.md:115:proposal is sealed through a packet-local snapshot, with no mutable ops pin.
+notes/2026-10-18-own-runtime-packet141.md:157:to rank1, whose generation did not change; speculative snapshots capture fresh
+notes/2026-10-18-own-runtime-packet142.md:8:Non-allowlisted dependencies are local snapshots. The packet49 oracle remains
+notes/2026-10-18-own-runtime-packet142.md:33:no cap was raised. Source snapshots are tracked separately in `native-base`.
+notes/2026-10-18-own-runtime-packet142.md:46:These use numerical allocations and never read model payloads. All six rollback
+notes/2026-10-18-own-runtime-packet142.md:142:evidence/queue-second-pin-refusal.log. The final queue implementation snapshots
+notes/2026-10-18-own-runtime-packet144.md:18:snapshot committed as `a00b33d36` and pushed immediately at 20:29 UTC, within
+notes/2026-10-18-own-runtime-packet145.md:44:The five-view checks include six rollback bank pairs, complete mutable-state
+notes/2026-10-18-own-runtime-packet145.md:101:all-lane handoff follow in milestone 2. No GPU, service or live queue changed.
+notes/2026-10-18-own-runtime-packet145.md:118:snapshot changed here; all final plans checked that snapshot against the live
+notes/2026-10-18-own-runtime-packet145.md:121:The first scoped marker and its original gate snapshots remain provenance;
+notes/2026-10-18-own-runtime-packet145.md:125:vendored patches, native snapshots and historical logs. Those original bytes
+notes/2026-10-18-own-runtime-packet149.md:13:binding. It keeps banked rollback, exact target arithmetic `iq3-p49-split32-v1`,
+notes/2026-10-18-own-runtime-packet149.md:27:Private scratch has its own strict non-aliasing snapshot exclusion; the p105
+notes/2026-10-18-own-runtime-packet149.md:83:## Validation and handoff
+notes/2026-10-18-own-runtime-packet150.md:18:Source inspection confirms that the old half `busy_ms` clock omits snapshot
+notes/2026-10-18-own-runtime-packet150.md:19:capture, and rank0's suffix head lives outside `half_step` entirely. The new
+notes/2026-10-18-own-runtime-packet150.md:20:host scopes separate those costs, token preparation, handoff/peer waits and
+notes/2026-10-18-own-runtime-packet150.md:21:draft waiting. Whole-half minus layer-body and whole-head minus named head
+notes/2026-10-18-own-runtime-packet150.md:26:identical token preparation after restoring pre-call host histories, copies
+notes/2026-10-18-own-runtime-packet150.md:27:identical state to the private snapshot before rotation, and repeats the
+notes/2026-10-18-own-runtime-packet150.md:28:private suffix head before publication. Original required work always runs.
+notes/2026-10-18-own-runtime-packet150.md:36:It explicitly refuses to call duplicate service removable. Snapshot time is
+notes/2026-10-18-own-runtime-packet150.md:49:snapshot restore. Both compiler controller mocks pass twice. The device suffix
+notes/2026-10-18-own-runtime-packet150.md:73:derivation after the split handoff is sealed. This does not close other
+notes/2026-10-18-own-runtime-packet150.md:84:now retains the fully validated packet149 report snapshots. Control corrected
+notes/2026-10-18-own-runtime-packet58ae.md:13:is the handoff: `ready_for_device=false`, written last.
+notes/2026-10-18-own-runtime-packet58ah.md:61:while active pins point at the owned snapshots. This avoids importing mutable
+notes/2026-10-18-own-runtime-packet58h.md:14:the WS128x admission snapshot and 0.73 GB more than the best saved snapshot.
+notes/2026-10-18-own-runtime-packet58j.md:49:Coordinator handoff: [exact plan/launch commands](../experiments/own-xpu-runtime/stage2/packet58j-onecard-port/WINDOW.md),
+notes/2026-10-18-own-runtime-packet58k.md:39:- [Packet, commands, budget and full-chain handoff](../experiments/own-xpu-runtime/stage2/packet58k-onecard-screen/README.md)
+notes/2026-10-18-own-runtime-packet58m.md:50:At handoff, production-before has completed; port is still in WSCREEN and
+notes/2026-10-18-own-runtime-packet58n.md:8:The losing bundle spends **8.41 ms/token preparing host lookup inputs versus
+notes/2026-10-18-own-runtime-packet58n.md:49:submitted. [Handoff and restoration](../experiments/own-xpu-runtime/stage2/packet58n-onecard-loo/README.md),
+notes/2026-10-18-own-runtime-packet58p.md:34:snapshot and refuses finite address-space limits or any limit change. Limits
+notes/2026-10-18-own-runtime-packet58p.md:59:inputs**. Build → submission-pins binding is one-way. A private source snapshot
+notes/2026-10-18-own-runtime-packet58p.md:64:At handoff, production-before is complete, down-tile16 has completed both K1s
+notes/2026-10-18-own-runtime-packet58q.md:43:snapshots preserve its small inputs and reproduce the outputs without reading
+notes/2026-10-18-own-runtime-packet58r.md:69:Final handoff, 13:06 UTC (inside the two-hour time box): native build milestone
+notes/2026-10-18-own-runtime-packet58u.md:107:[copy-forward handoff](../experiments/own-xpu-runtime/stage2/packet58u-host-admission/README.md#copy-forward-into-a-new-sealed-packet),
+notes/2026-10-18-own-runtime-packet58v.md:41:host pointers before reusing victim slots; copy on a separate BCS event chain;
+notes/2026-10-18-own-runtime-packet58v.md:67:## Final CPU handoff
+notes/2026-10-18-own-runtime-packet58w.md:23:All seven current host admission snapshots passed; the fixture fallback in the
+notes/2026-10-18-own-runtime-packet58w.md:142:## Packet58wc — fresh final chain-b handoff, October 18
+notes/2026-10-18-own-runtime-packet58w.md:169:native execution was intercepted. Every live host admission snapshot passed,
+notes/2026-10-18-own-runtime-packet58x.md:115:snapshot, including every native token against `iq3-p49-split32-v1`. A0 is
+notes/2026-10-18-own-runtime-packet58x.md:120:owned historical snapshot; this amendment does not rebuild the executables.
+notes/2026-10-18-own-runtime-packet58y.md:33:## Coordinator handoff constraint
+notes/2026-10-18-own-runtime-packet58y.md:68:observation and separately uses a clearly labeled synthetic admitted snapshot
+notes/2026-10-18-own-runtime-packet58y.md:124:a local byte-identical proposal snapshot so it does not pin mutable ops state.
+notes/2026-10-18-own-runtime-packet58y.md:125:The external proposal file was checked against that snapshot before readiness.
+notes/2026-10-18-own-runtime-packet58y.md:129:were localized as byte-checked snapshots/archives. Historical manifests remain
+notes/2026-10-18-own-runtime-packet58z.md:58:## Handoff
+notes/2026-10-18-own-runtime-packet87t.md:16:handoff using copies of packet97's owner/queue/wait/mailbox primitives.
+notes/2026-10-18-own-runtime-packet88.md:1:# Packet88: corrected-half and rollback attribution
+notes/2026-10-18-own-runtime-packet88.md:4:Rollback already overlaps drafting. The corrected token changes the embedding,
+notes/2026-10-18-own-runtime-packet88.md:13:not zero and not the entire rollback command's 0.569390 ms.
+notes/2026-10-18-own-runtime-packet90.md:37:[Coordinator handoff](../experiments/own-xpu-runtime/stage2/packet90-expert-hc/WINDOW.md), [CPU closeout](../experiments/own-xpu-runtime/stage2/packet90-expert-hc/CPU-PREPARATION-CLOSEOUT.md), and [retention/rebuild](../experiments/own-xpu-runtime/stage2/packet90-expert-hc/ARTIFACT-RETENTION.md) give the next steps. Build scratch stayed below 146 MB before fixture cleanup. Final independent review found no blocking issue and verified all four seals. The preregistration and all expected-saving ranges remain hypotheses until the coordinator measures them.
+notes/2026-10-18-own-runtime-packet92.md:5:The next draft waits for rank1 accept, so sending a half reply before doing the
+notes/2026-10-18-own-runtime-packet92.md:7:ordered retirement, profiling safety checks and resource snapshots, then move
+notes/2026-10-18-own-runtime-packet92.md:10:must refuse the next half. [Ordered source audit](../experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/ATTRIBUTION.md).
+notes/2026-10-18-own-runtime-packet92.md:23:Resource snapshots and mutable counters are frozen at the original boundary.
+notes/2026-10-18-own-runtime-packet92.md:32:snapshots and draft construction. Two bad extents and two bad host selections
+notes/2026-10-18-own-runtime-packet92.md:34:All four memory checks and 87 Python checks pass. [CPU closeout and receipts](../experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/CPU-PREPARATION-CLOSEOUT.md).
+notes/2026-10-18-own-runtime-packet92.md:42:qualification remain pending. [Handoff and proposed files](../experiments/own-xpu-runtime/stage2/packet92-rank1-reply-first/WINDOW.md).
+notes/2026-10-18-own-runtime-packet93.md:76:[Coordinator handoff and all five proposed files](../experiments/own-xpu-runtime/stage2/packet93-packed-head2/WINDOW.md).
+notes/2026-10-18-own-runtime-packet93x.md:12:handoff gaps do not explain it. Both candidates have identical rank-1 logical
+notes/2026-10-18-own-runtime-packet94.md:58:[Screen handoff](../experiments/own-xpu-runtime/stage2/packet94-hc-norm-fusion/WINDOW.md)
+notes/2026-10-18-own-runtime-packet95.md:35:The [handoff](../experiments/own-xpu-runtime/stage2/packet95-expert-dequant/WINDOW.md)
+notes/2026-10-18-own-runtime-packet97.md:3:The new bundle copies packet91 and adds the packed target head, reply-first
+notes/2026-10-18-own-runtime-packet97.md:10:every changed operator, including the combined expert path and reply-first
+notes/2026-10-18-own-runtime-packet97.md:24:The final snapshot rejects packet91's A screen with the source comparator's
+notes/2026-10-18-own-runtime-packet97.md:80:pending in the final snapshot. Packet95 finished during this work: its E3 path
+notes/2026-10-18-own-runtime-packet97.md:111:receipts; the base snapshot identifies where its read stopped, not a preserved
+notes/2026-10-18-own-runtime-packet97.md:251:original guard message. Sources are snapshotted before the gate and must remain
+notes/2026-10-18-own-runtime-packet98.md:47:## Final CPU seal and coordinator handoff
+notes/2026-10-18-own-runtime-packet98b.md:30:| Packet92 reply-first | `host_retire` cannot switch in this native engine | V4; a new native switch needs qualification |
+notes/2026-10-18-own-runtime-packet98b.md:107:## Validation and handoff
+notes/2026-10-18-own-runtime-packet98b.md:130:files, refusal receipts, test logs and this handoff.
