@@ -101,3 +101,72 @@ the coordinator's local review commit ahead of origin; a later fetch confirmed
 HEAD == origin/main at `ca9822f755899d9b0aec1b96ed8298fe1d8f4202`.
 Only this packet and this note belong to the prep commit. No live state was
 changed, so CURRENT's running-lane authority is left to the coordinator.
+
+## Packet58an — resident record parent and real queue rows
+
+October 19, CPU-only release work began at 05:07 UTC. The stopped packet58amc
+work was reviewed in its owned packet58am tree. Its useful direct-screen,
+harness and proposal changes were retained. The old blocked handoff, failed
+probes and original decision remain preserved.
+
+The candidate now has packet58aj's exact resident lookup copies and lookup
+read path, pinned by source hash. Both controls and candidate use that
+**31.966820 tok/s record line**, `cmveqsmsl00ebrf014yvrsosx`. The same-parent
+mapped fallback was not needed. The coordinator's 04:40 census override is
+recorded in `RELEASE-AMENDMENT.md`; `DECISION.md` is unchanged. This is CPU
+qualification, not a new measured speed or device-quality pass.
+
+GNU and Intel pass the resident packed/BF16 row byte fixtures and the real
+production-shape demand partition fixtures, twice each. The ownership tests
+cover all 1,024 masks across 48 layers and delayed leases. Miniature lookup
+and request-reset outputs match. An attempted miniature demand bracket
+correctly lacked the demand transport backend; that diagnostic is retained,
+not presented as a pass. Actual smoke/v5 argv instead exercise the real device
+binary parser, prepared hooks, both parity banks and first decode through
+explicit CPU storage/transport mocks. Strace shows no model or device opens.
+
+The private queue harness vendors all 43 packet58aj originals by hash,
+including sensors, fault review, admission, drain and teardown. Active
+admission inputs have private exact copies. Unused inherited vendor manifests
+remain byte-identical `.snapshot` records with a relocation inventory; no
+shared pin guard or sibling packet was changed. The K1 help adapter execs the
+unchanged pinned fixture in the same PID. Every proposed model/K1/queue flag
+is checked against executable help.
+
+The fresh inert rows are `packet58an-demand-smoke-A` and
+`packet58an-demand-v5-A`, in the two requested `proposed-p58am-*-A.txt` files.
+Both are lane A, card 0, `screen-<job>`, K1a/K1b/WSCREEN, one model load,
+879-second operation waits and a 25 GB device floor plus reserved writes.
+Smoke executes 24 requests across S0/S1. Its legacy report count describes
+12 distinct prompts; a separate total and both complete view reports retain
+all 24. V5 executes 60 requests, A0/B0/A1/B1/A2, with A0 excluded only from
+speed and drift. Both isolated plans and both shared entry/report rehearsals
+pass. The generic missing-rank preparation adapter and identity classifications
+remain WARNs, supplemented by the real one-card preparation and environment
+probes; no warning is relabeled a shared preparation pass.
+
+In-run analysis now checks stream presence/format and exact oracle tokens.
+Inherited duplicate-event, byte accounting, timestamp ordering and timing
+consistency checks run after native exit. Native completion markers follow
+stream flushes. Safety, cooperative waits and drain guards remain. Real
+packet58ah and packet58aj complete 12-request device streams pass offline
+replay; synthetic demand schema tests are labeled separately. A read-only
+parallel audit verified resident source parity, all harness snapshots,
+routing and deferred analysis and found no further concrete blocker.
+
+The final marker is written after proof verification and immutable pin checks.
+It makes the smoke CPU-ready for fresh coordinator admission. **V5 still needs
+a successful same-parent smoke and actual measured storage refresh/reseal**;
+there is no fabricated smoke result. Device overlap, overhead, oracle quality,
+actual memory peaks and speed remain pending.
+
+Work used nice 19, helper cores 8–15/24–31, Python -B and closed stdin.
+Every compile went through `ops/compile_turn.py`; peak compiler RAM was
+758,566,912 bytes, and build plus source closure was about 250 MB. The 300 MB
+build limit counts retained proof logs separately; an earlier overly broad
+whole-packet limit refused an ownership rerun as new evidence accumulated.
+Its refusal is retained, and the rerun passed under the brief's build limit.
+Root remained above the 27 GB CPU stop floor. No GPU, service, sudo, setting,
+GGUF read or live queue edit was performed. CURRENT remains the coordinator's
+live-state authority. Details and all receipts are in the
+[packet README](../experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/README.md).

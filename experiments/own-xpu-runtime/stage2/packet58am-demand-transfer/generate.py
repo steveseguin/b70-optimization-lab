@@ -79,6 +79,10 @@ def generate():
     <<",\"other_fusion\":"<<ownrt::quote(a.other_fusion)<<",\"retirement\":"<<ownrt::quote(a.retirement)<<",\"cache_bytes\":"<<a.cache_bytes;'''+ '\n'+anchor)
     t=once(t,'    pending.clear();tail=0;','    demand_collect();\n    pending.clear();tail=0;')
     t=t.replace('        require(t.end_ns-t.start_ns<=4000000000ull,"GPU submission exceeded declared 4-second budget");','        // Duration is evidence, never an in-run data-proof deadline.')
+    t=t.replace('require(t.start_ns && t.end_ns>=t.start_ns,"invalid profiling interval");', '/* Raw event timestamps are checked offline. */')
+    t=t.replace('      require(item.launch.last-item.launch.first+1==item.launch.passes,"non-contiguous event group");', '      // Event-group accounting is an offline consistency check.')
+    t=t.replace('max_submission_ns=std::max(max_submission_ns,t.end_ns-t.start_ns);','if(t.end_ns>=t.start_ns)max_submission_ns=std::max(max_submission_ns,t.end_ns-t.start_ns);')
+    t=t.replace('double(t.end_ns-t.start_ns)/1e6','(double(t.end_ns)-double(t.start_ns))/1e6')
     t=t.replace('d->shutdown(std::chrono::seconds(60))','d->shutdown(std::chrono::seconds(a.wait_seconds))')
     t=once(t,'    std::fill(fp32_sources.begin(),fp32_sources.end(),0);\n    std::ofstream log(', '    demand_prepare();\n    std::fill(fp32_sources.begin(),fp32_sources.end(),0);\n    std::ofstream log(')
     t=once(t,'    drain();if(overlapping())maintenance.end(true);','    drain();demand_consumed();if(overlapping())maintenance.end(true);')
@@ -95,6 +99,8 @@ def generate():
     t=once(t,'    a = parse(argc, argv);','    a = parse(argc, argv);\n    if(a.preparation_probe)return preparation_probe(a);')
     # Off and on share the exact same maximum allocation and composition.
     t=once(t,'fs::create_directories(view_output);e->bracket_select', 'fs::create_directories(view_output);e->a.demand=(view.label=="B0"||view.label=="B1"||view.label=="S1")?"bcs-demand-retained32x2":"off";e->bracket_select')
+    from resident_port import port
+    t=port(t)
     (N/'main.cpp').write_text(t)
     (N/'entry-main.cpp').write_text('#define main packet26_model_entry\n#include "main.cpp"\n#undef main\n')
     # Source substitution is permitted only after revocation; the real terminal

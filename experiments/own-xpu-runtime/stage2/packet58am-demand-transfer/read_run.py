@@ -1,7 +1,7 @@
 """Offline smoke/v5 reader; all device streams must exist, no time-based abort."""
 import argparse,json,statistics
 from pathlib import Path
-from prepare import P,AH,sha,save
+from packet_io import P,AH,sha,save
 from analyze import request,stream,demand_stream,require
 CLASSES={'incident-retrospective':'operations','code-review':'code','customer-email':'prose','sql-debugging':'code','release-plan':'operations','benchmark-analysis':'analysis','architecture-tradeoff':'analysis','bug-report-synthesis':'operations','technical-guide':'documentation','risk-register':'structured-writing','performance-hypotheses':'analysis','decision-memo':'prose'}
 def summary(rows):
@@ -38,6 +38,11 @@ def read(proposal_path,root):
     require(native['demand_variant']=='bcs-demand-retained32x2' and native['hc']=='p60fusion' and native['hc_geometry']=='hc-wide' and native['experts']=='wide64+halfcache' and native['other_fusion']=='fused' and native['retirement']=='ordered-foreground' and native['cache_bytes']==21552729600,'full parent composition')
     require(native['submission_data_deadline_enforced'] is False and native['submission_budget_ns'] is None,'no data-proof deadline')
     require(all(t['safe_to_exit'] and t['in_flight']==0 and t['live_bytes']==0 and t['idle_marker_complete'] for t in native['teardown']),'complete native owner teardown')
+    # Resident-parent identity is a required part of this amended screen.
+    import importlib.util
+    spec=importlib.util.spec_from_file_location('demand_resident_receipt',P/'screen/resident_receipt.py')
+    resident=importlib.util.module_from_spec(spec);spec.loader.exec_module(resident)
+    resident.check_lookups(native)
     all_events=[]
     for view in proposal['views']:
         rows[view]={}
@@ -68,16 +73,16 @@ def read(proposal_path,root):
                 if view=='S1':all_events.extend(events)
             else:require(not path.exists() or path.stat().st_size==0,'v5 detailed profiling forbidden')
     report=dict(exact=True,device_executed=True,promotable=False,proposal_sha256=sha(proposal_path),
-        job_name=proposal['job_name'],views={k:dict(requests=v,**summary(v)) for k,v in rows.items()},evidence_hashes=pins)
+        job_name=proposal['job_name'],release_condition='coordinator direct-screen release (RELEASE-AMENDMENT.md)',release_amendment_sha256=sha(P/'RELEASE-AMENDMENT.md'),census_gate_superseded=True,views={k:dict(requests=v,**summary(v)) for k,v in rows.items()},evidence_hashes=pins)
     if cap==128:report.update(decision({k:v['primary'] for k,v in report['views'].items()}))
     else:
         parent={}
         for prompt in CLASSES:
-            result=json.loads((AH/f'evidence/card0-58ah-b/WS128/run/run/{prompt}/result.json').read_text());t=result['timing_rows'];parent[prompt]=dict(rate=63/(t[63]['completed_monotonic']-t[0]['completed_monotonic']))
+            result=json.loads((P.parent/f'packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/{prompt}/result.json').read_text());t=result['timing_rows'];parent[prompt]=dict(rate=63/(t[63]['completed_monotonic']-t[0]['completed_monotonic']))
         anchor=summary(parent)['primary'];overhead=report['views']['S0']['primary']/anchor-1
         report.update(same_parent=True,observed_overlap_ns=overlap(all_events),eligible_staged_entries=sum(e['staged_entries'] for e in all_events),
             overhead_vs_frozen_parent_fraction=overhead,overhead_qualified=abs(overhead)<=.02,
-            overhead_limitations='different process/session; frozen 58ah first-64 intervals, not a new primary ceiling or record',
+            overhead_limitations='different process/session; frozen 58aj resident first-64 intervals, not a new primary ceiling or record',
             screening_indices='2..64 only; never the census 2..100 primary bound',
             storage_volume_measured=True,actual_volume_bytes=sum(f.stat().st_size for f in root.rglob('*') if f.is_file()))
         report['smoke_passed']=report['observed_overlap_ns']>0 and report['eligible_staged_entries']>0 and report['overhead_qualified']

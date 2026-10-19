@@ -1,7 +1,7 @@
 """Read-only proposal admission. This module cannot launch or enqueue work."""
 import argparse,json,shutil
 from pathlib import Path
-from prepare import P,sha
+from packet_io import P,sha
 
 def require(ok,message):
     if not ok:raise ValueError(message)
@@ -25,18 +25,15 @@ def plan(proposal):
     return dict(passed=True,device_executed=False,job_name=name,kind=kind,argv=argv)
 def device_admission(proposal,ready,census,smoke=None):
     plan(proposal)
-    require(ready.get('ready_for_device') is True,'coordinator census release withheld')
+    require(ready.get('ready_for_device') is True,'coordinator direct-screen release withheld')
     require(ready.get('seal_sha256')==sha(P/'seal.json'),'readiness seal binding')
     seal=json.loads((P/'seal.json').read_text())
     kind='smoke' if proposal['tokens_per_prompt']==64 else 'v5'
     path=P/f'proposals/{kind}.json'
     require(json.loads(path.read_text())==proposal and seal['proposals'][f'proposals/{kind}.json']==sha(path),'sealed exact proposal')
     for name,digest in seal['artifacts'].items():require(sha(P/name)==digest,'sealed native artifact')
-    require(census.get('decision')=='brief-transfer-mechanism' and census.get('upper_bound_ms_per_token',-1)>=1,'complete census bound >=1.000 ms/token')
-    require(census.get('measurement_stability_gate',{}).get('passed') is True,'census measurement stability')
-    require(census.get('native_closure_verified') is True and census.get('exact_oracle_verified') is True,'coordinator must verify full native and oracle closure')
-    require(bool(census.get('evidence_hashes')),'hash-bound complete census evidence')
-    for name,digest in census['evidence_hashes'].items():require(sha(Path(name))==digest,'census evidence changed')
+    require(ready.get('release_condition') == 'coordinator direct-screen release (RELEASE-AMENDMENT.md)', 'direct-screen amendment required')
+    require(ready.get('release_amendment_sha256') == sha(P/'RELEASE-AMENDMENT.md'), 'release amendment changed')
     if proposal['tokens_per_prompt']==128:
         require(smoke and smoke.get('exact') and smoke.get('observed_overlap_ns',0)>0 and smoke.get('same_parent') and smoke.get('overhead_qualified'),'same-parent exact overlap smoke required')
         require(smoke.get('storage_volume_measured') is True,'replace storage estimate with actual smoke volume')

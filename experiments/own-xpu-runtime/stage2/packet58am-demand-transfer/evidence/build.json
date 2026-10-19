@@ -29,7 +29,7 @@
         "-c",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/build/native/p60_submit.cpp"
       ],
-      "seconds": 1.6719777009857353
+      "seconds": 1.6349765170016326
     },
     {
       "name": "gnu-host-p58ag_submit",
@@ -59,7 +59,7 @@
         "-c",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/build/native/p58ag_submit.cpp"
       ],
-      "seconds": 2.3381970929913223
+      "seconds": 2.2519692180212587
     },
     {
       "name": "gnu-host-entry-main",
@@ -89,7 +89,7 @@
         "-c",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/build/native/entry-main.cpp"
       ],
-      "seconds": 20.12013643598766
+      "seconds": 19.66187006997643
     },
     {
       "name": "gnu-host-owner",
@@ -119,7 +119,7 @@
         "-c",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/build/native/owner.cpp"
       ],
-      "seconds": 2.6019943740102462
+      "seconds": 2.5953435910050757
     },
     {
       "name": "gnu-host-owner_retire",
@@ -149,7 +149,7 @@
         "-c",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/build/native/owner_retire.cpp"
       ],
-      "seconds": 1.3534821840003133
+      "seconds": 0.9102260209911037
     },
     {
       "name": "gnu-host-own-rt-iq3",
@@ -197,7 +197,7 @@
         "-Wl,-rpath,/usr/lib/x86_64-linux-gnu",
         "/usr/lib/x86_64-linux-gnu/libcrypto.so"
       ],
-      "seconds": 0.5437099619884975
+      "seconds": 0.2511156870168634
     },
     {
       "name": "device-p60_submit",
@@ -228,7 +228,7 @@
         "-c",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/build/native/p60_submit.cpp"
       ],
-      "seconds": 5.99221485099406
+      "seconds": 5.682839947985485
     },
     {
       "name": "device-p58ag_submit",
@@ -259,7 +259,7 @@
         "-c",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/build/native/p58ag_submit.cpp"
       ],
-      "seconds": 6.732523206999758
+      "seconds": 6.094735074002529
     },
     {
       "name": "device-entry-main",
@@ -290,7 +290,7 @@
         "-c",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/build/native/entry-main.cpp"
       ],
-      "seconds": 24.54828038898995
+      "seconds": 24.39757853600895
     },
     {
       "name": "device-owner",
@@ -321,7 +321,7 @@
         "-c",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/build/native/owner.cpp"
       ],
-      "seconds": 5.963726468995446
+      "seconds": 5.773442235979019
     },
     {
       "name": "device-owner_retire",
@@ -352,7 +352,7 @@
         "-c",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/build/native/owner_retire.cpp"
       ],
-      "seconds": 4.150741366989678
+      "seconds": 4.058052456006408
     },
     {
       "name": "device-single_device",
@@ -383,7 +383,7 @@
         "-c",
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/build/native/single_device.cpp"
       ],
-      "seconds": 5.144779449998168
+      "seconds": 5.173706175992265
     },
     {
       "name": "device-own-rt-iq3",
@@ -443,7 +443,7 @@
         "/usr/lib/x86_64-linux-gnu/libcrypto.so",
         "-lze_loader"
       ],
-      "seconds": 2.888586838002084
+      "seconds": 3.082177447999129
     }
   ],
   "device_executed": false,
@@ -516,7 +516,8 @@
     "vendor/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/async_backend.hpp": "a66b7c5d2bf6662442db379005de2f690652091291b492b8e2d36f56c15bf1b7",
     "build/native/owner_retire.cpp": "197d7ff1341b210e2a57600bf3398f69641edd42b5499f352aae708d08e7ea58",
     "build/native/entry-main.cpp": "8bf9d77ea962ebe23a895b589049f94d3681daf8e14b52ecf9ad8a6eca826815",
-    "build/native/main.cpp": "7f914f6097145c925ecc84072f3a1678354987e3d0fe200b00e26621db67958a",
+    "build/native/main.cpp": "99c40501d32dd6b092b96a31fd4b28dfffecdc569c47efada8aa37b460d8ee0e",
+    "native/resident_lookup.hpp": "ff1a6d99ca1572168966394dd02f8566d2de653c316a1d9cec34780b7b6d26da",
     "vendor/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/drm_size.hpp": "ebf13fe1432762469ce323d84d13f4d219986365ebeb37f9c234b5dbbf4977d8",
     "vendor/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/cache_protocol.hpp": "0f66d8862c7c1dec7f9346f4c07c7f07a7126a5865de9f071ed449ecd72be813",
     "vendor/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/cache_table.hpp": "cb3062c07de59548fbc02f16e65ddd135f0192d780dd8895f286fac7ec4dba88",
@@ -540,6 +541,7 @@
     "vendor/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/build/native/p109_fusion.hpp": "4f2d07edad554d605f135bcd9f83c1fd898a6cd90ff713a68932730e3cc7e679",
     "vendor/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/build/native/p109_route.hpp": "fd8275d5928e40eaab43138fa00885ca9ee58ff2614a0e4212346e0638ae0f5a",
     "vendor/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/p49d_route.hpp": "936f816c1ab6295a7ed38f21cb718f5f769eae1cf42ec434c5bb246f56f86130",
+    "native/resident_weights.hpp": "f9a6f15f0294d1808291741404bbcb4d8c4d78c19541417a0df3633279f51cbc",
     "native/engine_demand.inc": "a8c00736a56ae18edf64551cc10142cc5e6e6c8ba39c43decbcfcda720fbf8b8",
     "vendor/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/engine_bracket.hpp": "d7737549f00f28c44ca1f719643d1e0104d6daebab12740c87560bfdf79774fa",
     "vendor/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/checked/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/mtp.hpp": "d19d7dcbf9e0ce2a428ecb59715447dce0d7bd18233f1eb2d38a253fc0b13b28",
@@ -560,27 +562,123 @@
     "vendor/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/build/native/postload_allocation_test.hpp": "adf2701d92d6a8036172cc871d0e348ccdd2e692f601f36a17bd40f0109cd074",
     "vendor/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/build/native/fullshape_submit_test.hpp": "c5ed27f8a433067bc1a7a404293cff386e306379eb7fceb570f062e0859b4b4f",
     "native/ownership_test.cpp": "01d5c8947838da4c874c0c5de7090fb130f73a560b3563304879b369cbc4475a",
-    "ownership_gate.py": "f84754e327950ffbcd4a65c208305b7630110096425561533ad34b408a7220b1",
-    "check_streams.py": "2c29eb37b734804730f12634b7af36f98c2c74e92da8ed8a721c272814e5a5fe",
-    "proposals.py": "3cf69e246e490b0a836a451e1445be39c179238a22bae2922a8c5857979288db",
-    "read_run.py": "08255cd05096d69bd50a2a972ad97f0cf354f35b30f47a6111aae7adcb74663d",
-    "generate.py": "95ec048befb73ce70241dcb74b2cadf09314595ae7c1bb4c28de8778a3682741",
-    "test_admit.py": "208422968177037125ea2cfd706014f3faf42e022b808cffcbb67b752b720948",
-    "admit.py": "7397c651b94b90a36b5e39f1f4e46004655cf7f3c61eb4636ad2d21cebf1d21f",
-    "build_engine.py": "3fef275b464dc73372676f51ec07c74138f7d54af6ad27727848878fd3e1a703",
-    "byte_gate.py": "837c77f31244225a0f1f650c0e8df135702f3a717c482a3a4a4950963424373b",
-    "budgets.py": "1924192633ecb3207a49cd11ec72acb11d90942a0b2f579d2734a519b083bcc4",
-    "test_read_run.py": "c4f6a88b3652eb77df7d96fd278a7d9abc0e0c2c70f17ec26ec4e6a70fc07d49",
-    "checks.py": "cad135178cd62a94f3187936d0bab7463f34f560ded32a97b97c0da6e43349cf",
-    "seal.py": "22f671f50c4911dd9e6e1487112956d53b9b9a11321e3bafb2e6ff97882d878f",
-    "preparation_gate.py": "492bb5cd2f6c147a5e03da4d970e4fe8655fb0a31404e714501cca4f088bcc5b",
-    "analyze.py": "6fd30c616d69296203e0ca64e09eb4e06d904f678a44688495463f8ccaea699e",
-    "test_analysis.py": "e40addc29b03ce9b8f0389e6bfe54f17493abd6760149c41e30afbd75056e60d",
-    "prepare.py": "914cccddc1b27d905dc32e5abb3098eb12363cf22c146d0c982eda13d3321474"
+    "native/k1_cli.cpp": "5306b4f11323bd6244c8b3dfeb7eca02d4c5e812cdc8166a9b907fa8be93bd7b",
+    "native/resident_cpu.cpp": "dcf743bfef123c69b81a48b230c8576b5d0b39c73a6e9d42df7940100441bee6"
   },
-  "max_rss_bytes": 754372608,
+  "max_rss_bytes": 758566912,
   "artifacts": {
-    "build/device/own-rt-iq3": "295a95a4c28c66e5cea8fdc493de5da28ea7e8538be2222fbb642f80737471fa",
-    "build/gnu-host/own-rt-iq3": "ac45b8dcc397d8800fe949e5a95dedd5d5d3b522686211c88caf125191dd8b3a"
-  }
+    "build/device/own-rt-iq3": "6e2df98c4096aa80a99c76c0507da754a31c7bdca7500ce713d4c98c083abb2f",
+    "build/gnu-host/own-rt-iq3": "07e97c4e4ebd6f82d1b499ea442c7a4b340a5868344bbfaecf358ae99452198f"
+  },
+  "noncompiled_build_time_python_observations": [
+    {
+      "name": "check_queue.py",
+      "observed_sha256": "17dceaa7918ed8bb6cf7fac26428cbd4ece1a8c2fbc429c88a5a90ef207e37af"
+    },
+    {
+      "name": "verify_queue_cpu.py",
+      "observed_sha256": "f267b317df876b87eae2e0f03abba38a50f78425bcec40d7bf020282a3cc2f7a"
+    },
+    {
+      "name": "ownership_gate.py",
+      "observed_sha256": "f84754e327950ffbcd4a65c208305b7630110096425561533ad34b408a7220b1"
+    },
+    {
+      "name": "check_streams.py",
+      "observed_sha256": "b492a061244e7cedd4322fde39100fb4b35903af03ab86fdd4e807774bbd4a5d"
+    },
+    {
+      "name": "recheck_native_cpu.py",
+      "observed_sha256": "77daa5d37b8657858046a2cdd50834d0a91335b4aa6802b65446ce79489ab333"
+    },
+    {
+      "name": "proposals.py",
+      "observed_sha256": "d6a0070374e1d827a9a311c34e325ca5b732f89569f523180908a1945bd3964d"
+    },
+    {
+      "name": "resident_gate.py",
+      "observed_sha256": "748e1aeb664c74a083ae0075751e341576d372e782b6c1735390c457210c0f20"
+    },
+    {
+      "name": "read_run.py",
+      "observed_sha256": "96108ea8e82e9e9fff5da09f1de33cbceca76a194ea92bef595f82c10d96fedc"
+    },
+    {
+      "name": "generate.py",
+      "observed_sha256": "bdde888cf554cba779863ef5418ee09513eb61b03699649aa7be7787cf2a8ff5"
+    },
+    {
+      "name": "test_admit.py",
+      "observed_sha256": "208422968177037125ea2cfd706014f3faf42e022b808cffcbb67b752b720948"
+    },
+    {
+      "name": "admit.py",
+      "observed_sha256": "5dd8a7215d2905617487bfde88c6cf50f836fd1318906a776067dc0c46f3cbc3"
+    },
+    {
+      "name": "close_metadata.py",
+      "observed_sha256": "0e61fb66cd406f0d303c84a37cd8511b9c216ee5bd890f073041e247f5cbcafc"
+    },
+    {
+      "name": "build_engine.py",
+      "observed_sha256": "3fef275b464dc73372676f51ec07c74138f7d54af6ad27727848878fd3e1a703"
+    },
+    {
+      "name": "k1_cli.py",
+      "observed_sha256": "440b23c5c637e2c7b43de95923116b79d79697f28343894995a68bc938dcfb3a"
+    },
+    {
+      "name": "byte_gate.py",
+      "observed_sha256": "3cc904c34acb913cc0336a67b0872bf9ac51f536821d1b2d91a68554542c6952"
+    },
+    {
+      "name": "queue_proposals.py",
+      "observed_sha256": "ec79ff166ffe6a7fbcc09e084f9dd93f9a737a790919bf8304e60a1fc2cf4902"
+    },
+    {
+      "name": "budgets.py",
+      "observed_sha256": "1924192633ecb3207a49cd11ec72acb11d90942a0b2f579d2734a519b083bcc4"
+    },
+    {
+      "name": "test_read_run.py",
+      "observed_sha256": "c4f6a88b3652eb77df7d96fd278a7d9abc0e0c2c70f17ec26ec4e6a70fc07d49"
+    },
+    {
+      "name": "finalize_queue_handoff.py",
+      "observed_sha256": "6646ba34e9ccc9603caee41bdb3f926d9561bfc186820400880f92e2230dcace"
+    },
+    {
+      "name": "checks.py",
+      "observed_sha256": "a4d60378269a1646703b4795d6418fe96981bca9eb371f48b647f01bcc4cfc37"
+    },
+    {
+      "name": "packet_io.py",
+      "observed_sha256": "e0dd8c4e38393541bdd1cf4a9947bb70aa5229e89688afa8afb72bc4847ff19f"
+    },
+    {
+      "name": "seal.py",
+      "observed_sha256": "22a1ca8e312a9e5031324ea5434b215f45bed957d9b38afadeb77277a9cf9ed5"
+    },
+    {
+      "name": "preparation_gate.py",
+      "observed_sha256": "492bb5cd2f6c147a5e03da4d970e4fe8655fb0a31404e714501cca4f088bcc5b"
+    },
+    {
+      "name": "analyze.py",
+      "observed_sha256": "648a68899f676b947ae27359bcd907b443f6ec4b4b2b2bf384a925cc254a2959"
+    },
+    {
+      "name": "test_analysis.py",
+      "observed_sha256": "94f6e6b5fb815c871c3fcffe74f4ab7c1a2b33d6d61aac1dfa8e9853ba8f6ade"
+    },
+    {
+      "name": "resident_port.py",
+      "observed_sha256": "0e54a45a7494f85e95225f87ee2c9b9f1f0756abfcf2b838cf17fe4babac7286"
+    },
+    {
+      "name": "prepare.py",
+      "observed_sha256": "914cccddc1b27d905dc32e5abb3098eb12363cf22c146d0c982eda13d3321474"
+    }
+  ],
+  "scope_note": "Native compilation dependency hashes unchanged. Historical Python helper observations are provenance, not compiled dependencies; active helpers are bound by screen-packaging.json."
 }

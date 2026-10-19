@@ -7,8 +7,9 @@ def main():
     with compiler_turn(),(P/'evidence/python-tests.log').open('w') as log:
         result=subprocess.run([sys.executable,'-B','-m','unittest','discover','-s',str(P),'-p','test_*.py','-v'],stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT)
     assert result.returncode==0
-    from analyze import replay
+    from analyze import replay,replay_resident
     replay()
+    replay_resident()
     save(P/'evidence/python-tests.json',dict(passed=True,device_executed=False,log_sha256=sha(P/'evidence/python-tests.log'),
          test_sources={f.name:sha(f) for f in P.glob('test_*.py')}))
     print('Python failure/reader/admission tests and real-parent replay PASS')

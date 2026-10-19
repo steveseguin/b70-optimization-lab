@@ -1,0 +1,61 @@
+{
+  "schema": "packet58x.plan.v1",
+  "device_executed": false,
+  "view": "demand",
+  "selection_sha256": "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+  "card": 0,
+  "lane": "A",
+  "scope": "whole-host",
+  "model_lifetimes": 1,
+  "k1_fixture_launches": 2,
+  "windows": [
+    "K1a",
+    "K1b",
+    "WSCREEN"
+  ],
+  "planned_arm_seconds": [
+    1200,
+    1800
+  ],
+  "planned_bracket_seconds": [
+    1200,
+    1800
+  ],
+  "watchdog_seconds": 7200,
+  "view_order": [
+    [
+      "A0",
+      "parent"
+    ],
+    [
+      "B0",
+      "demand"
+    ],
+    [
+      "A1",
+      "parent"
+    ],
+    [
+      "B1",
+      "demand"
+    ],
+    [
+      "A2",
+      "parent"
+    ]
+  ],
+  "bracket_model_seconds": 1560,
+  "internal_gap_seconds": 90,
+  "inter_arm_gap_seconds": 90,
+  "host_required_available_bytes": 99119554560,
+  "host_reserve_bytes": 8589934592,
+  "pinned_expert_bytes": 48627712000,
+  "host_peak_bound_bytes": 90529619968,
+  "request_count": 60,
+  "prompts_per_view": 12,
+  "requested_max_new": 128,
+  "oracle": "packet49-integrate",
+  "timing_claim_eligible": false,
+  "submission_eligible": false,
+  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/screen/evidence/card0-demand-n/v5"
+}

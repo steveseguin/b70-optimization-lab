@@ -1,0 +1,27 @@
+GNU-resident-bytes PASS 0.9
+GNU 0 resident byte/dequant PASS
+GNU 1 resident byte/dequant PASS
+Intel-resident-bytes PASS 0.88
+Intel 0 resident byte/dequant PASS
+Intel 1 resident byte/dequant PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/resident_gate.py", line 58, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/resident_gate.py", line 45, in main
+    execute(base+['--lookups','resident','--suite-inputs',str(suite),'--bracket-inputs',str(P/f'inputs/{kind}-views.tsv'),'--output',str(out)])
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/resident_gate.py", line 25, in execute
+    if cp.returncode:raise RuntimeError(cp.stdout[-2000:]+cp.stderr[-2000:])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: card 0 owned_bytes 281903260 weights 164752 dispatch r5
+token_id 1
+token_id 1
+token_id 1
+token_id 1
+token_id 1
+token_id 1
+token_id 1
+token_id 1
+owned demand backend unavailable
+context lifetime PASS: 3465 destructions, native release last, zero late destructions
+

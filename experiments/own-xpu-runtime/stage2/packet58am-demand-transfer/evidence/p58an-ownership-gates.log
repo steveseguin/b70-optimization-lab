@@ -1,0 +1,17 @@
+GNU-ownership PASS 0.47
+Intel-ownership PASS 0.47
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/ownership_gate.py", line 15, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/ownership_gate.py", line 10, in main
+    with compiler_turn():cp=subprocess.run([str(binary)],stdin=subprocess.DEVNULL,capture_output=True,text=True,check=True)
+  File "/usr/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/compile_turn.py", line 117, in turn
+    limits()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/build_engine.py", line 10, in limits
+    assert sum(f.stat().st_size for f in P.rglob('*') if f.is_file())<300_000_000,'300 MB total preparation budget'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 300 MB total preparation budget

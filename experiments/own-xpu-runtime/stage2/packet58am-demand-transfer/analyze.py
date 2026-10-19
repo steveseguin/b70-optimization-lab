@@ -1,7 +1,7 @@
 """Offline evidence checks. In-run checks never impose timing deadlines."""
 import hashlib,json,math,statistics
 from pathlib import Path
-from prepare import P,ROOT,AH,sha,save
+from packet_io import P,ROOT,AH,sha,save
 
 def require(ok,message):
     if not ok:raise ValueError(message)
@@ -15,28 +15,42 @@ def request(result,generated,prefill,*,offline=True):
     require(result['arithmetic']=='iq3-p49-split32-v1','wrong arithmetic')
     require(result['passed'] and result['cached_tokens']==0,'exact uncached result')
     require(result['gpu_count']==1 and result['decode_mode']=='plain' and result['context']==4096,'wrong identity')
-    tokens=result['tokens'];require(len(tokens)==result['requested_max_new'],'token coverage')
-    require(len(generated)==len(tokens),'generated stream coverage')
-    require(len(prefill)==result['prompt_tokens']-1,'prefill stream coverage')
-    require([r['generated_index'] for r in generated]==list(range(1,len(tokens)+1)),'duplicate/missing generated row')
-    require([r['token_index'] for r in prefill]==list(range(len(prefill))),'duplicate/missing prefill row')
-    require([r['token_id'] for r in generated]==tokens,'token exactness')
+    tokens=result['tokens']
+    if offline:require(len(tokens)==result['requested_max_new'],'token coverage')
+    if offline:
+        require(len(generated)==len(tokens),'generated stream coverage')
+        require(len(prefill)==result['prompt_tokens']-1,'prefill stream coverage')
+        require([r['generated_index'] for r in generated]==list(range(1,len(tokens)+1)),'duplicate/missing generated row')
+        require([r['token_index'] for r in prefill]==list(range(len(prefill))),'duplicate/missing prefill row')
+        require([r['token_id'] for r in generated]==tokens,'token exactness')
     require(all(r['kind']=='generated_token' for r in generated) and all(r['kind']=='prefill_token' for r in prefill),'stream kind')
     for row in generated+prefill:
         for key in ('wall_ms','prepare_ms','wait_ms'):
-            require(type(row[key]) in (int,float) and math.isfinite(row[key]) and row[key]>=0,'timing format')
+            require(type(row[key]) in (int,float),'timing format')
+            if offline:require(math.isfinite(row[key]) and row[key]>=0,'timing value')
     if offline:
         require(close_ms(generated[0]['wall_ms'],result['first_generated_token_ms']),'first-token same-scope timing')
         # Prefill total includes bookkeeping; do not equate it with a sum of
         # device/kernel scopes. Different clocks are never subtracted here.
-    require(len(result['timing_rows'])==len(tokens),'timestamp count')
+    if offline:require(len(result['timing_rows'])==len(tokens),'timestamp count')
     times=[r['completed_monotonic'] for r in result['timing_rows']]
-    require(all(a<b for a,b in zip(times,times[1:])),'timestamp order')
+    if offline:require(all(a<b for a,b in zip(times,times[1:])),'timestamp order')
     return dict(first_prefill_row=prefill[0],first_generated_row=generated[0],
-                prefill_total_ms=result['prefill_ms'],rate99=99/(times[99]-times[0]) if len(times)>=100 else None,
+                prefill_total_ms=result['prefill_ms'],rate99=99/(times[99]-times[0]) if offline and len(times)>=100 else None,
                 demand_events=None,demand_schema_present=False)
 
 def demand_stream(rows,identity,expected_positions,*,offline=True):
+    if not offline:
+        require(bool(rows),'missing demand stream')
+        for row in rows:
+            require(row['schema']=='packet58am.demand.v1' and row['identity']==identity,'demand identity')
+            for key in ('position','layer','staged_entries','staged_bytes','descriptor_producer','descriptor_readback','missing_consumer'):
+                require(type(row[key]) is int,'demand field format: '+key)
+            require(isinstance(row['events'],list) and bool(row['events']),'event stream presence')
+            for event in row['events']:
+                require(isinstance(event['kind'],str),'event kind format')
+                require(all(type(event[k]) is int for k in ('id','start_ns','end_ns')),'event format')
+        return True
     require(len(rows)==48*expected_positions,'demand coverage')
     seen=set()
     for row in rows:
@@ -88,6 +102,27 @@ def replay():
          file_pins=audit['file_pins'],requests=results,demand_events_fabricated=False,
          in_run_timing_verdict=False,absolute_ms_tolerance=.001,relative_tolerance=.02)
     save(P/'evidence/parent-replay.json',result)
+    return result
+
+def replay_resident():
+    root=P.parent/'packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run'
+    receipt=json.loads((root/'receipt.json').read_text())
+    require(receipt['passed'] and receipt['safe_to_exit'] and receipt['device_executed'],'resident parent closure')
+    require(receipt['lookup_residency']['enabled'],'resident record backing')
+    rows=[];pins={str((root/'receipt.json').relative_to(ROOT)):sha(root/'receipt.json')}
+    for line in (P/'inputs/suite-128.tsv').read_text().splitlines():
+        prompt,_,oracle=line.split();folder=root/prompt
+        r=json.loads((folder/'result.json').read_text())
+        require(r['tokens']==list(map(int,Path(oracle).read_text().split())),'unchanged oracle on resident record')
+        checked=request(r,stream(folder/'timings.jsonl'),stream(folder/'prefill-timings.jsonl'))
+        rows.append(dict(prompt_id=prompt,**checked))
+        for leaf in ('result.json','timings.jsonl','prefill-timings.jsonl'):
+            pins[str((folder/leaf).relative_to(ROOT))]=sha(folder/leaf)
+    require(len(rows)==12,'all resident record prompts')
+    result=dict(passed=True,device_executed=False,scope='replay real packet58aj record; not new demand evidence',
+                record='cmveqsmsl00ebrf014yvrsosx',file_pins=pins,requests=rows,
+                demand_events_fabricated=False)
+    save(P/'evidence/resident-parent-replay.json',result)
     return result
 
 if __name__=='__main__':

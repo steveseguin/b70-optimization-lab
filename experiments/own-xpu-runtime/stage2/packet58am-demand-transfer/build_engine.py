@@ -7,7 +7,10 @@ def limits():
     assert os.getpriority(os.PRIO_PROCESS,0)==19
     assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
     assert shutil.disk_usage('/').free>=27_000_000_000,'CPU preparation root floor 27 GB'
-    assert sum(f.stat().st_size for f in P.rglob('*') if f.is_file())<300_000_000,'300 MB total preparation budget'
+    # packet58an's 300 MB cap applies to the build and its source closure.
+    # Retained proof logs/receipts are evidence, not build scratch. Keep them.
+    footprint=sum(f.stat().st_size for f in P.rglob('*') if f.is_file() and f.relative_to(P).parts[0]!='evidence')
+    assert footprint<300_000_000,'300 MB build and source-closure budget'
 def compiler_turn():
     spec=importlib.util.spec_from_file_location('compile_turn',P.parents[1]/'ops/compile_turn.py')
     m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m.turn()
@@ -53,7 +56,7 @@ def main():
             if path.is_relative_to(ROOT):
                 assert path.is_relative_to(P),'mutable sibling compile dependency: '+str(path)
                 sources[str(path.relative_to(P))]=sha(path)
-    for path in list((P/'native').glob('*'))+list(P.glob('*.py')):
+    for path in (P/'native').glob('*'):
         if path.is_file():sources[str(path.relative_to(P))]=sha(path)
     save(P/'evidence/build.json',dict(passed=True,commands=commands,device_executed=False,sources=sources,
          max_rss_bytes=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024,

@@ -1,4 +1,4 @@
-"""Write inert, fresh coordinator proposals; no enqueue or device invocation."""
+"""Write native specs for the private queue wrapper; no enqueue or device invocation."""
 import json,shutil,math
 from pathlib import Path
 from prepare import P,ROOT,AH,AG,sha,save
@@ -53,22 +53,26 @@ def main():
         values={'--max-new':str(cap),'--suite-inputs':str(inputs/f'suite-{cap}.tsv'),
             '--input':str(inputs/'incident-retrospective/tokens.txt'),'--plan':str(inputs/'incident-retrospective/plan.tsv'),
             '--identity':str(inputs/'incident-retrospective/identity.tsv'),'--selection':str(selection),
-            '--dispatch':str(dispatch),'--output':str(P/f'evidence/card0-demand-a/{kind}/run')}
+            '--dispatch':str(dispatch),'--output':str(P/f'screen/evidence/card0-demand-n/{kind}/WSCREEN/run/run')}
         for key,value in values.items():command[command.index(key)+1]=value
         command+=['--wait-seconds',str(wait),'--demand','bcs-demand-retained32x2','--bracket-inputs',str(views)]
-        job=f'packet58am-demand-a-{kind}-A';assert not Path(values['--output']).exists()
-        command+=['--demand-identity',job]
+        job=f'packet58an-demand-{kind}-A';assert not Path(values['--output']).exists()
+        command+=['--demand-identity',job,'--lookups','resident']
         if kind=='smoke':command+=['--demand-diagnostics']
         precommands=[]
-        if kind=='smoke':
+        if kind in ('smoke','v5'):
             for stage in ('K1a','K1b'):
-                old=json.loads((AH/f'evidence/card0-58ah-b/{stage}/window.json').read_text())['command'];old[0]=str(P/'build/device/p58-cache-fixtures');old[old.index('--output')+1]=str(P/f'evidence/card0-demand-a/smoke/{stage}/run');precommands.append(dict(stage=stage,argv=old,binary_sha256=expected,gap_after_seconds=90))
+                old=json.loads((AH/f'evidence/card0-58ah-b/{stage}/window.json').read_text())['command'];old[0]=str(P/'build/device/p58-cache-fixtures-cli');old[old.index('--output')+1]=str(P/f'screen/evidence/card0-demand-n/{kind}/{stage}/run');precommands.append(dict(stage=stage,argv=old,binary_sha256=sha(P/'build/device/p58-cache-fixtures-cli'),gap_after_seconds=90))
         save(out/f'{kind}.json',dict(schema='packet58am.proposal.v1',job_name=job,lane='A',card=0,
-            output=str(P/f'evidence/card0-demand-a/{kind}'),native_argv=command,
-            environment={'OMP_NUM_THREADS':'2','LD_LIBRARY_PATH':'/opt/intel/oneapi/compiler/2026.0/lib'},
-            ready_for_device=False,release_condition='packet58ai census bound >= 1.000 ms/token',
+            output=str(P/f'screen/evidence/card0-demand-n/{kind}'),native_argv=command,
+            environment={'OMP_NUM_THREADS':'2','LD_LIBRARY_PATH':json.loads((P/'screen/library-path.json').read_text())['LD_LIBRARY_PATH']},
+            ready_for_device=False,release_condition='coordinator direct-screen release (RELEASE-AMENDMENT.md)',
+            expected_parent='packet58aj resident lookup line; same resident copies in every view',
+            native_capability='resident lookup port from packet58aj, compile authorized by packet58an',
+            entry=str(P/'screen/queue_runner.py'),unit='screen-'+job,
+            whole_host_hold='coordinator holds PAUSE-B, drains both lanes and all other GPU owners',
             coordinator_only=True,queue_write_authorized=False,model_loads=1,views=labels,tokens_per_prompt=cap,prompts=12,
-            pre_stages=['K1a','K1b'] if kind=='smoke' else [],gap_seconds=90,
+            pre_stages=['K1a','K1b'],gap_seconds=90,
             pre_stage_commands=precommands,
             scope='diagnostic screening, no record',whole_host_quiet_required=True,
             detailed_events=(kind=='smoke'),profiling=(kind=='smoke'),

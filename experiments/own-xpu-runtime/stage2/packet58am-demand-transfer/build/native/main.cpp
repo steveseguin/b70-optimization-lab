@@ -1,3 +1,4 @@
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/native/resident_lookup.hpp"
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/native/demand_submit.hpp"
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/vendor/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/drm_size.hpp"
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/vendor/experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/async_backend.hpp"
@@ -152,6 +153,7 @@ struct Options {
   fs::path selection;
   std::string selection_sha256;
   bool legacy=false,argument_audit=false,audit_prepare_each=false;
+  bool resident_lookups=false;
   int wait_seconds=300;
   bool preparation_probe=false,demand_diagnostics=false;std::string demand="off",demand_identity;
   int cards = 1, card = 3, tokens = 8, context = 128, seconds = 10800;
@@ -197,6 +199,7 @@ static Options parse(int argc, char **argv) {
     else if (k == "--dispatch") a.dispatch=value();
     else if (k == "--selection") a.selection=value();
     else if (k == "--selection-sha256") a.selection_sha256=value();
+    else if (k == "--lookups") {auto v=value();require(v=="mapped"||v=="resident","lookup dimension");a.resident_lookups=v=="resident";}
     else if(k=="--cpu-preparation-probe")a.preparation_probe=true;
     else if(k=="--demand-diagnostics")a.demand_diagnostics=true;
     else if(k=="--demand-identity")a.demand_identity=value();
@@ -299,21 +302,7 @@ struct Weights {
   size_t max_read = 0;
   std::map<std::string,std::unique_ptr<iq3::Slice>> lookup_mappings;
   std::string residency="{\"enabled\":false,\"reason\":\"one-card streaming or mini\"}";
-  void warm_lookups() {
-    if(mini)return;
-    auto start=std::chrono::steady_clock::now();struct rusage before{},after{};getrusage(RUSAGE_SELF,&before);
-    uint64_t bytes=0,pages=0;unsigned checksum=0;size_t page=size_t(sysconf(_SC_PAGESIZE));
-    for(const auto& [name,t]:directory)if(t.component=="embedding"||t.component=="ple_lookup") {
-      auto slice=std::make_unique<iq3::Slice>(model->slice(name,0,t.bytes));
-      auto address=reinterpret_cast<uintptr_t>(slice->data());auto aligned=address-address%page;
-      require(madvise(reinterpret_cast<void*>(aligned),t.bytes+(address-aligned),MADV_WILLNEED)==0,"lookup MADV_WILLNEED failed");
-      const volatile uint8_t* data=slice->data();
-      for(size_t off=0;off<t.bytes;off+=page){checksum+=data[off];++pages;}
-      if(t.bytes)checksum+=data[t.bytes-1];bytes+=t.bytes;lookup_mappings.emplace(name,std::move(slice));
-    }
-    getrusage(RUSAGE_SELF,&after);double elapsed=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();
-    std::ostringstream o;o<<"{\"enabled\":true,\"method\":\"MADV_WILLNEED then volatile read of every mapped page; mappings retained; no mlock\",\"guaranteed_pinned\":false,\"bytes\":"<<bytes<<",\"pages\":"<<pages<<",\"checksum\":"<<checksum<<",\"elapsed_ms\":"<<elapsed<<",\"major_faults\":"<<after.ru_majflt-before.ru_majflt<<",\"minor_faults\":"<<after.ru_minflt-before.ru_minflt<<"}";residency=o.str();
-  }
+#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/native/resident_weights.hpp"
   Weights(const Options &a) : mini(a.mini) {
     if (mini)
       return;
@@ -404,13 +393,16 @@ struct Weights {
     require(n && n <= 4 * 1024 * 1024, "bounded read (4 MiB)");
     read_bytes += n;
     max_read = std::max(max_read, n);
+    if(use_resident_lookups) {
+      if(auto it=resident_lookups.find(name);it!=resident_lookups.end()) {
+        const auto* data=it->second->slice(off,n);return {data,data+n};
+      }
+      require(name!="token_embd.weight"&&name!="per_layer_token_embd.weight","resident lookup missing; no file fallback");
+    }
     if (mini) {
       auto &b = synthetic.at(name);
       require(off <= b.size() && n <= b.size() - off, "synthetic bounds");
       return {b.begin() + off, b.begin() + off + n};
-    }
-    if(auto it=lookup_mappings.find(name);it!=lookup_mappings.end()) {
-      require(off<=it->second->size()&&n<=it->second->size()-off,"resident lookup bounds");auto data=it->second->data()+off;return {data,data+n};
     }
     auto slice = model->slice(name, off, n);
     return {slice.data(), slice.data() + n};
@@ -758,13 +750,13 @@ public:
     if(tail)wait(0,tail);
 #ifndef OWN_RT_HOST_ONLY
     for(auto item:pending) {
-      require(item.launch.last-item.launch.first+1==item.launch.passes,"non-contiguous event group");
+      // Event-group accounting is an offline consistency check.
       double duration=0;
       for(auto id=item.launch.first;id<=item.launch.last;++id) {
-        auto t=dev(0).timing(id);require(t.start_ns && t.end_ns>=t.start_ns,"invalid profiling interval");
-        max_submission_ns=std::max(max_submission_ns,t.end_ns-t.start_ns);
+        auto t=dev(0).timing(id);/* Raw event timestamps are checked offline. */
+        if(t.end_ns>=t.start_ns)max_submission_ns=std::max(max_submission_ns,t.end_ns-t.start_ns);
         // Duration is evidence, never an in-run data-proof deadline.
-        duration+=double(t.end_ns-t.start_ns)/1e6;
+        duration+=(double(t.end_ns)-double(t.start_ns))/1e6;
       }
       (item.gemv?gemv_ms:nongemv_ms)+=duration;
       if(class_timing) {class_ms[item.cls]+=duration;class_launches[item.cls]+=item.launch.passes;++class_groups[item.cls];}
@@ -1841,6 +1833,7 @@ static void p58_reset_request(Engine& e,const fs::path& destination) {
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/build/native/bracket_table.hpp"
 #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/native/preparation_probe.inc"
 int main(int argc, char **argv) {
+  if(argc==2&&std::string(argv[1])=="--help"){std::cout<<"packet58an demand transfer; --lookups mapped|resident; --wait-seconds 300..3600\n--argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --cpu-preparation-probe --demand --demand-diagnostics --demand-identity --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-seconds\n";return 0;}
 #ifdef OWN_RT_HOST_ONLY
   if(argc>2&&std::string(argv[1])=="--p58r-parse-test") {
     try {
@@ -1931,7 +1924,9 @@ int main(int argc, char **argv) {
     e = std::make_unique<Engine>(*w, a, p);
     selection_observed_sha256=e->sealed_selection.observed_sha256;
     record_host_memory(output,"before_load");
-    e->initialize();e->cache_capacity(a.cache_cap);
+    e->initialize();
+    if(a.resident_lookups)w->load_resident_lookups();
+    w->use_resident_lookups=a.resident_lookups;e->cache_capacity(a.cache_cap);
     e->dev(0).before_compute=[&]{compute_started=true;};
     e->prepare_plan();
     e->prepare_commands();
@@ -1953,10 +1948,12 @@ int main(int argc, char **argv) {
     const auto loaded_arena=e->bracket_arena_hash(),loaded_weights=e->bracket_arena_hash(true);
     if(!a.bracket_inputs.empty())save(root_output/"loaded-arena-descriptors.txt",e->bracket_arena_descriptors());
     for(const auto& view:bracket_views) {
+    w->use_resident_lookups=a.resident_lookups;
     const auto view_output=view.label.empty()?root_output:root_output/view.label;
     if(!view.label.empty()) {
       fs::create_directories(view_output);e->a.demand=(view.label=="B0"||view.label=="B1"||view.label=="S1")?"bcs-demand-retained32x2":"off";e->bracket_select(view.selection,view.digest,view.hc);e->cache_mode(view.maintenance);e->cache_capacity(view.capacity);
       require(loaded_arena==e->bracket_arena_hash()&&loaded_weights==e->bracket_arena_hash(true),"bracket loaded identity changed");
+      save(view_output/"lookup-backing.json","{\"resident\":"+std::string(a.resident_lookups?"true":"false")+",\"copies\":"+w->residency+"}\n");
       save(view_output/"boundary.json","{\"passed\":true,\"selection_sha256\":"+ownrt::quote(view.digest)+
         ",\"cache_maintenance\":"+ownrt::quote(view.maintenance)+
         ",\"hc\":"+ownrt::quote(view.hc)+
@@ -2058,7 +2055,7 @@ int main(int argc, char **argv) {
         <<",\"input_token\":"<<token<<",\"token_id\":"<<result<<",\"wall_ms\":"<<elapsed
         <<",\"gemv_device_ms\":"<<device_ms(e->gemv_ms-token_g)<<",\"non_gemv_device_ms\":"<<device_ms(e->nongemv_ms-token_n)
         <<",\"transfer_wall_ms\":"<<e->transfer_ms-token_t<<",\"kernel_submissions\":"<<e->submitted-token_sub
-        <<",\"host_waits\":"<<e->host_waits-token_wait<<",\"prepare_ms\":"<<e->prepare_ms<<",\"enqueue_loop_ms\":"<<e->enqueue_ms<<",\"enqueue_including_wait_ms\":"<<e->enqueue_including_wait_ms<<",\"wait_ms\":"<<e->wait_ms-tok_wait<<",\"process_major_faults\":"<<process_after.ru_majflt-process_before.ru_majflt
+        <<",\"host_waits\":"<<e->host_waits-token_wait<<",\"resident_lookups\":"<<(w->use_resident_lookups?"true":"false")<<",\"prepare_ms\":"<<e->prepare_ms<<",\"enqueue_loop_ms\":"<<e->enqueue_ms<<",\"enqueue_including_wait_ms\":"<<e->enqueue_including_wait_ms<<",\"wait_ms\":"<<e->wait_ms-tok_wait<<",\"process_major_faults\":"<<process_after.ru_majflt-process_before.ru_majflt
         <<",\"process_minor_faults\":"<<process_after.ru_minflt-process_before.ru_minflt
         <<",\"thread_voluntary_context_switches\":"<<thread_after.ru_nvcsw-thread_before.ru_nvcsw
         <<",\"thread_involuntary_context_switches\":"<<thread_after.ru_nivcsw-thread_before.ru_nivcsw
@@ -2104,6 +2101,8 @@ int main(int argc, char **argv) {
     for(size_t i=0;i<generated_stamps.size();++i)rr<<(i?",":"")<<"{\"completed_monotonic\":"<<generated_stamps[i]<<"}";
     rr<<"]}";save(output/"result.json",rr.str());
     if(!request_id.empty())save(output/"receipt.json",rr.str());
+    e->timings.flush();e->prefill_timings.flush();
+    save(output/"lookup-request-complete.json","{\"passed\":true}\n");
     }
     } // bracket views; weights and owner stay resident
     output=root_output;

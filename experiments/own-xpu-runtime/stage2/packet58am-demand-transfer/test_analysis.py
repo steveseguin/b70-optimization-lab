@@ -24,6 +24,11 @@ class Evidence(unittest.TestCase):
         with self.assertRaises(ValueError):request(self.r,g,self.p,offline=True)
     def test_relative_rounding(self):
         self.assertTrue(close_ms(23457.6,23457.612));self.assertFalse(close_ms(1,2))
+    def test_inrun_defers_consistency(self):
+        g=copy.deepcopy(self.g);g[1]=g[0]
+        r=copy.deepcopy(self.r);r['timing_rows'][1]=r['timing_rows'][0]
+        self.assertTrue(request(r,g,self.p,offline=False))
+        with self.assertRaises(ValueError):request(r,g,self.p)
     def test_first_completed_real_parent(self):
         from check_streams import check
         proposal=json.loads((P/'proposals/v5.json').read_text())
@@ -47,5 +52,9 @@ class Evidence(unittest.TestCase):
             with self.assertRaises(ValueError):demand_stream(changed,'synthetic-not-device',1)
         with self.assertRaises(ValueError):demand_stream(rows[:-1],'synthetic-not-device',1)
         changed=copy.deepcopy(rows);changed[1]=changed[0]
+        with self.assertRaises(ValueError):demand_stream(changed,'synthetic-not-device',1)
+        changed=copy.deepcopy(rows);changed[0]['events'][1]['id']=changed[0]['events'][0]['id']
+        changed[0]['staged_bytes']=1
+        self.assertTrue(demand_stream(changed,'synthetic-not-device',1,offline=False))
         with self.assertRaises(ValueError):demand_stream(changed,'synthetic-not-device',1)
 if __name__=='__main__':unittest.main()
