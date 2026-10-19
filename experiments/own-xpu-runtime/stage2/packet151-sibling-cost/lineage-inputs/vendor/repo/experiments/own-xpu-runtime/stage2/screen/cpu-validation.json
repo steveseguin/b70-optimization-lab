@@ -1,0 +1,61 @@
+{
+  "schema": "own-runtime.screen.cpu-validation.v1",
+  "passed": true,
+  "device_executed": false,
+  "command": [
+    "python3",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "experiments/own-xpu-runtime/stage2/screen",
+    "-p",
+    "test_*.py",
+    "-v"
+  ],
+  "elapsed_seconds": 0.8108594559889752,
+  "tests_run": 16,
+  "plans": [
+    {
+      "profile": "tp2",
+      "returncode": 0,
+      "identity": {
+        "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix",
+        "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/build-receipt.json",
+        "seal_sha256": "8c1d90e124fbdcd3d932dcfd31b8819674011137fbbded2a2a8340590a639cec",
+        "binary": "/home/steve/own-xpu-runtime-results/packet56-draft-prefix/build/device/own-rt-iq3",
+        "binary_sha256": "b3458fb16bdcd4b5c8a1ad2004275b6fb26cae624727ef01149358afac878edd",
+        "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/dispatch-speed6.json",
+        "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "selection_sha256": "9cf79904a9df1ca0a3a124a3bae286c6e641d859688d2ebacc14bb17913f1f2e",
+        "memory_plan_sha256": "cd2abbaff5892b304a4049adb0803ab34b5f4d3fd8abc34e32a20da6ef367f9f",
+        "profile": "tp2"
+      }
+    },
+    {
+      "profile": "onecard",
+      "returncode": 0,
+      "identity": {
+        "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard",
+        "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard/build-receipt.json",
+        "seal_sha256": "a0a80537a633556cfcc0cec7551511256ce1d782bf25f8cd8447425be1656cf2",
+        "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard/build/device/own-rt-iq3",
+        "binary_sha256": "bf5d379ef79e7eddc2841d1c344c90787026ce17f0c8b3f8500019a5d28c606c",
+        "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58-onecard/dispatch-speed6.json",
+        "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+        "selection_sha256": "9cf79904a9df1ca0a3a124a3bae286c6e641d859688d2ebacc14bb17913f1f2e",
+        "memory_plan_sha256": "423cc3ddf883755503554fd17a096b9eef003aa0178f64706f53b747cb0a68be",
+        "profile": "onecard"
+      }
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/screen/screen.py": "09f17b8f6b94f1dcb62d8823825ec74b320a1b6236ffc56baecdf8c2a88c5f5f",
+    "experiments/own-xpu-runtime/stage2/screen/tp2_worker.py": "6e925102cdcb6ffead7b4cdfdceed9730026609dc8f29e14a4bb3bbbe89424d4",
+    "experiments/own-xpu-runtime/stage2/screen/common.py": "7bd5d3887fdb8c521441f0bdd7d64334fce5d044fe65ee1a1e63e39ad0cc8ba5",
+    "experiments/own-xpu-runtime/stage2/screen/test_screen.py": "60ffeb0c3c9929a6a5c8bb028e28b4578bd2694916cbe7900ac04a8ec85b7123",
+    "experiments/own-xpu-runtime/stage2/screen/seal.py": "c2cc49cdf30fa056a9c519d03ef1f8e3e44aaabb05c05afc385d855e6376aced"
+  },
+  "test_log_sha256": "8d09e5bf1322479a4bd8b717c0911806a6cc2c6313828af59e710a5495437dda"
+}
