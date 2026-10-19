@@ -1,0 +1,68 @@
+{
+  "schema": "packet154.ready-for-device.v1",
+  "ready_for_device": true,
+  "passed": true,
+  "prepared_utc": "2026-10-19T01:37:24.072980+00:00",
+  "commit": "3813d8dd9b5044a5ac8f77d71f0e4e762f8fc4bc",
+  "device_executed": false,
+  "queued": false,
+  "lane": "B",
+  "arithmetic": "iq3-p49-split32-v1",
+  "readiness_scope": "CPU-qualified smoke and one-load C/X/C/X/C; fresh coordinator admission mandatory",
+  "device_quality_pending": true,
+  "device_attribution_pending": true,
+  "speed_evidence_eligible": false,
+  "cpu_seal_sha256": "010ceca2d900865a6eff1b52406065694e0c707b632e9b1f44530f6f5fef7e2f",
+  "cpu_gate_sha256": {
+    "entry-gate": "3f98646e50a5644c718f9aeb0255f4b2e6298037d807b56a81929244abdc5b78",
+    "launch-limits": "0b0e223af30c14ab12f5309c74bea437cf3cbf05fab5960f97526cced27a2546",
+    "worker-gate": "4846b3ab55d1dba8dc2fe60dc40cee9d32106f841c003364173e18d4c9069e17",
+    "report-gate": "8f046248660b74c1bdbc342ed1c2cb3be9687279ba28a5182395dac701a57953",
+    "queue-plan": "3d68ded3f73a91199120f1424a82c297494c3d7226c6db143135a3668d8348e8",
+    "pin-guard": "0b60b097f4c62ffd458fb888c635afedc91fb5af40b860b7529ecf458694a8dc"
+  },
+  "proposals": [
+    {
+      "path": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p154-smoke-B.txt",
+      "sha256": "8f6f4cc591d3cf38c47792224e84bd71fc9039244f785e0ba8472a827bfddb54"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p154-split-B.txt",
+      "sha256": "65cabedafb7e93fbdd96bb5a9700f351edd293d0c6bb0d8578b8c27e400204eb"
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet154-rank1-split/README.md": "cceb6becc5d13a7f3ffa6e5fd9f514fb87dc491f638b38f3321257173131dcb5",
+    "experiments/own-xpu-runtime/stage2/packet154-rank1-split/DO-NOT-REPEAT.md": "99c08416282078b8982b686e10cf2907fbb5ea21428434e883ec504fb3a8b8b2",
+    "experiments/own-xpu-runtime/stage2/packet154-rank1-split/RETENTION.md": "dbc87fa3393e54ac76059d8e8deb30e15d25742184cf130127c1758f811325fa",
+    "experiments/own-xpu-runtime/stage2/packet154-rank1-split/retention-census.json": "f7788bbb0d1d26f437840c3f633774662fa096ead8a5cde00c8b68a0504e18dd",
+    "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/final-validation.json": "54004ed63d8bd5f1e20817f1e7fb448313395a9cae2ee3f69fa70f79fec89541",
+    "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/scope-origins.json": "604a32422e6d4cbe91a62c4ec71857dd5063451f66e6b632757819e647b5aafa",
+    "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/rank1-scopes.patch": "48a1e7e7da24dd19fbd18df42217e257a9d9db2b7552dc961bf8784233aad952",
+    "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/ops-launch-env.json": "a84371271901f44dabfec211f2898ad15d7b3e4f1be851deff1c95d33c55dc58",
+    "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/operational-observation.json": "fce56734ac862de3c7e53881458dda0fd4225b028f1a8dfff51e1d1ae41bb387",
+    "notes/2026-10-19-own-runtime-packet154.md": "b7ad2499f3d7e062546bde1d65960b133647e6ffa65a44e3b06b302c0a801ee3"
+  },
+  "build_material_bytes": 101120734,
+  "root_free_bytes": 30287101952,
+  "root_free_floor_bytes": 30000000000,
+  "planned_write_bytes_per_view": 145000000,
+  "planned_write_bytes_split": 725000000,
+  "required_root_free_bytes_for_split": 30725000000,
+  "storage_admission_currently_fits": false,
+  "expected_seconds": [
+    420,
+    600
+  ],
+  "watchdog_seconds": 2400,
+  "model_loaded": false,
+  "model_payload_read": false,
+  "full_shape_startup_executed": false,
+  "services_started": false,
+  "live_queues_modified": false,
+  "coordinator_admission_pending": true,
+  "native_source_closure_vendored": true,
+  "inherited_object_bytes_vendored": true,
+  "first_completed_incident_requires_both_scope_streams": true,
+  "remaining": "Native 13/13 exactness, identical draft proposals, control drift and measured rank1 attribution; no optimization selected yet"
+}
