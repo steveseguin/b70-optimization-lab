@@ -1,0 +1,20 @@
+K0 shared CPU fixture startup PASS
+K1a shared CPU fixture startup PASS
+K1b shared CPU fixture startup PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/startup103.py", line 262, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/startup103.py", line 195, in main
+    shared=shared_fixtures()
+           ^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/startup103.py", line 101, in shared_fixtures
+    receipts=w.run_fixtures(a,dest,dict(os.environ,OMP_NUM_THREADS='2'),watch)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/window.py", line 313, in run_fixtures
+    wait_for_children()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/window.py", line 290, in wait_for_children
+    check_child_failures()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle/window.py", line 286, in check_child_failures
+    raise pp.DeviceOwnerFailure('fixture rank failed with exit '+str(child.returncode), out/entry['directory'])
+chain_pipeline.DeviceOwnerFailure: fixture rank failed with exit 1
