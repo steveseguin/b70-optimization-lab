@@ -1,0 +1,56 @@
+{
+  "schema": "packet58asc.chain-native-interface.v1",
+  "passed": false,
+  "diagnostic_passed": true,
+  "device_executed": false,
+  "native_recompiled": false,
+  "binary_sha256": "83abf236dcfe73bc9da6309fdc1a0c523aab104faa3adcabee3d5589f0b0b1d2",
+  "matches_completed_bracket": true,
+  "reason": "Existing bracket binary has no --wait-policy option; --hc spin also refuses. Single-view bracket_table uses a.hc (production/p60fusion), so spin_enabled is false. Spin is selectable only through --bracket-inputs, which permits S0 at 64 tokens or A0/B0/A1/B1/A2 at 128 tokens, requires 12 prompts and retain-steps none; it cannot express KD/W2m (8 tokens) or WS (retained layers). No compliant seven-window spin chain is possible without changing the native binary.",
+  "checks": [
+    {
+      "argv": [
+        "--help"
+      ],
+      "returncode": 0,
+      "stdout": "--argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-seconds --p58r-parse-test --help\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "--wait-policy",
+        "spin"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "unknown option --wait-policy\n"
+    },
+    {
+      "argv": [
+        "--hc",
+        "spin"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "HC dimension\n"
+    }
+  ],
+  "source_evidence": [
+    {
+      "name": "native/generated/main.cpp",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/native/generated/main.cpp",
+      "parent_digest": "e36a9894ed337f04b75713258d554a37303b76c6948155ae49d9872c7e5c98c4"
+    },
+    {
+      "name": "native/bracket_table.hpp",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/native/bracket_table.hpp",
+      "parent_digest": "bfecf9c8f0eecfa979fc768ca5c50776444bfc1e262c6f16c13385219d3b3623"
+    },
+    {
+      "name": "native/spin_wait.hpp",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/native/spin_wait.hpp",
+      "parent_digest": "7d20a148eb1dcb1df4ba5a598c75ec4395a936543c92d68f3c6753c0b366035c"
+    }
+  ],
+  "peak_rss_bytes": 19398656
+}

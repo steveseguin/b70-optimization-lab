@@ -10,8 +10,8 @@
     "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/plan_queue.py": "e254abe6e1299da1c3a11a458e01a10b16a56409b7bd1be7c4d22940a3a42685",
     "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/.gitignore": "f62e4ed3a1eb2613fe929eedd9612d52b654da21c0f2e06f3d535a2ddeb0ab12",
     "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/flags_gate.py": "f17b7540a7c2dc0dcb700fccab1e7423d3ed44ef49f7e54294caf6e0b60b16f7",
-    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/record-threshold.snapshot": "9f59b9d5e23b827cfc1e57e64407494996704d819d93207da662c91db88790bb",
-    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/runtime-selection.json": "b190f7469e2a3e1a55b4dc00f47ad7a15b92cf5edbd9c2969f81ca18634f7d07",
+    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/lineage/packet58asc-before/record-threshold.snapshot": "9f59b9d5e23b827cfc1e57e64407494996704d819d93207da662c91db88790bb",
+    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/lineage/packet58asc-before/runtime-selection.json": "b190f7469e2a3e1a55b4dc00f47ad7a15b92cf5edbd9c2969f81ca18634f7d07",
     "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/restore-inputs.json": "1c272493c5992b0d457fe9c48219d8ebc93369a9945e6451538f702994743e38",
     "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/k1-cpu.json": "1ae15c4c66611ab3b28bd6590ea2c0c58d9b98931c2f194871d360b7c417c39f",
     "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/build_engine.py": "b17cd2a1b382bff64305cafdba8c0d22dd9406658be72034fdad99515b408d8a",
@@ -24,7 +24,7 @@
     "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/payload-sizes.json": "b810436d8c4a510ce76a87ef528690bb20a76662b4dad5f484e78dd06442d965",
     "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/launch_env.py": "a55f31e6052e33d5b4702b01eddd4e5af5c4029fda6fc452dd8f564f3dfdc364",
     "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/cpu_gate.py": "a28b5812b2712a0f44cd18f644dec97f41794a3430a5c28e2cdcd792869ec386",
-    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/seal.py": "43bda864478281dd2eb6d85cc0dcfdba99706f09f2f33995b27b50a306344a24",
+    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/lineage/packet58asc-before/seal.py": "43bda864478281dd2eb6d85cc0dcfdba99706f09f2f33995b27b50a306344a24",
     "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/preparation_gate.py": "ade8d7f310e2d8af99866a38f0ec8a9c5161ef70c3f793442433922247ff67af",
     "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/finalize.py": "3e945dd859257505ed639733e9f00985dfd898bf4f30afe08fb6a8da1220e4ec",
     "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/legacy_memory_plan.py": "73f745ae22078f92ba05cfcd10d3e9d3b97abdc5c41a0d802f482a41d06ba128",
@@ -1102,5 +1102,10 @@
   },
   "arithmetic": "iq3-p49-split32-v1",
   "kv_dtype": "BF16",
-  "model_loads": 1
+  "model_loads": 1,
+  "historical_screen_seal": {
+    "name": "original screen seal",
+    "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/lineage/packet58asc-before/screen-build-receipt.json",
+    "parent_digest": "e9e378972c9f6cf1c5173b52dc89f6c26deba15c403ec1fa76261ee7692a07e6"
+  }
 }

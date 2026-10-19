@@ -1,79 +1,153 @@
 {
-  "schema": "own-runtime.packet58as.ready.v1",
-  "ready_for_device": true,
-  "passed": true,
-  "device_executed": false,
-  "lane": "A",
-  "scope": "whole-host",
-  "gpu_count": 1,
-  "card": 0,
-  "model_loads": 1,
+  "schema": "packet58as.ready-for-device.v1",
+  "packet": "packet58as-onecard-spinwait",
+  "revision": "packet58asc",
+  "prepared_utc": "2026-10-19T09:04:57.128584+00:00",
+  "preparation_passed": true,
+  "passed": false,
+  "ready_for_device": false,
+  "ready_for_device_chain": false,
+  "ready_for_coordinator_check": true,
+  "reason": "Existing bracket binary has no --wait-policy option; --hc spin also refuses. Single-view bracket_table uses a.hc (production/p60fusion), so spin_enabled is false. Spin is selectable only through --bracket-inputs, which permits S0 at 64 tokens or A0/B0/A1/B1/A2 at 128 tokens, requires 12 prompts and retain-steps none; it cannot express KD/W2m (8 tokens) or WS (retained layers). No compliant seven-window spin chain is possible without changing the native binary.",
+  "coordinator_unit": "packet58-onecard-58as-a",
+  "chain_unit": "packet58-onecard-58as-a",
+  "chain_output": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/evidence/card0-58as-a",
+  "fault_review": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/evidence/fault-review-58as-a.json",
+  "chain_command": "systemd-run --user --unit=packet58-onecard-58as-a --property=Restart=no --property=SendSIGKILL=no --property=TimeoutStopSec=infinity --property=Nice=0 --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/env -i PATH=/usr/bin:/bin LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib OMP_NUM_THREADS=2 /usr/bin/python3 -B /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/queue_runner.py --authorized-device-window --card 0 --view down-tile16 --output-root /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/evidence/card0-58as-a --fault-review /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/evidence/fault-review-58as-a.json < /dev/null",
+  "chain_command_digest_sha256": "cda98bc372408f2b242691fb73a2bfd92f7cc1bbb91da5281c024422781fd33e",
+  "command_hash_encoding": "UTF-8, no trailing newline",
   "windows": [
     "K1a",
     "K1b",
-    "WSCREEN"
+    "KD",
+    "W2m",
+    "WS",
+    "WS128x",
+    "WS128"
   ],
-  "separate_smoke_required": false,
-  "opening_contract": "No separate smoke: bracket opens with K1a/K1b and exact A0 control.",
-  "arm_order": [
-    "poll",
-    "spin",
-    "poll",
-    "spin",
-    "poll"
-  ],
-  "labels": [
-    "A0",
-    "B0",
-    "A1",
-    "B1",
-    "A2"
-  ],
-  "warmup": "A0 exact, excluded only from speed and drift",
-  "prompts_per_view": 12,
-  "max_new": 128,
-  "required_exact_requests": 60,
-  "oracle": "iq3-p49-split32-v1",
-  "kv_dtype": "BF16",
-  "resident_lookups_all_views": true,
-  "winner_minimum_gain_over_every_warm_control": 0.005,
-  "maximum_control_drift_fraction": 0.03,
-  "per_operation_wait_seconds": 600,
-  "spin_budget_microseconds": 250,
-  "sleep_after_spin_microseconds": 20,
-  "yield_every_iterations": 256,
-  "device_disk_floor_bytes": 25000000000,
-  "cpu_disk_stop_bytes": 27000000000,
-  "host_required_available_bytes": 98990252032,
-  "owner_thread_cpu_utilization": "Measured per request by CLOCK_THREAD_CPUTIME_ID; reported per view as percent of one core; pending device run",
-  "no_wall_clock_data_proof_limits": true,
-  "live_checks": "stream presence/format and exactness only",
-  "native_readers": "ionice -c3",
-  "build_receipt_sha256": "e9e378972c9f6cf1c5173b52dc89f6c26deba15c403ec1fa76261ee7692a07e6",
-  "checks": {
-    "evidence/cpu-exactness.json": "8b3648b283b142c73a1287c3e83ff1b8ba7ea4025e36479634f5ecffbc55b843",
-    "evidence/wait-tests.json": "b6ad87b2f6d4ac2d93a5cf6c300996145f1aa366c680b1632179f6dee094bc70",
-    "evidence/preparation.json": "5ad188bc5681d497f55e9b2b714d87622d26a9dc2a94b6d7de3a9643fe845760",
-    "evidence/analyzer-real-parent.json": "b6bd1b0900952ad937262c4993dc69f5630a9fb1a4811a768d166f46e808d9fe",
-    "evidence/source-delta.json": "216d8663f1e3b9be0fc9dadcc595b2fee128ca9301e4a630442e90a07dc82a83",
-    "evidence/flags.json": "c3f203d93ab9e3404122a99cde31e0ccefcb612c3eed0c842cc604e5883d3c04",
-    "evidence/queue-plans.json": "1c7faac6a8ff61d0db8e9970f4bb36c1e9a24f80e8ee1d07024b2eb90171535e",
-    "evidence/shared-entry-report-final.json": "45860d76a86e7ddb1c86f64b3ab7d39a17ff6739e1e7c90cf49133a92ffb2ded",
-    "evidence/closure-audit.json": "23f227293434979d4c23369e3c0617a069f5427e75ecfe333fe775ff7f6589b0"
+  "gap_seconds": 90,
+  "wait_seconds": 300,
+  "lane": "A",
+  "card": 0,
+  "scope": "whole-host",
+  "configuration": {
+    "view": "down-tile16",
+    "cache_maintenance": "overlap",
+    "miss_path": "zero-copy",
+    "cache_cap": "max",
+    "cache_allocation_bytes": 21552729600,
+    "cache_bytes": 21552729600,
+    "kv_dtype": "BF16",
+    "context": 4096,
+    "hc": "p60fusion",
+    "hc_geometry": "hc-wide",
+    "experts": "wide64+halfcache",
+    "other_fusion": "fused",
+    "retirement": "ordered-foreground",
+    "lookups": "resident",
+    "wait_policy": "spin"
   },
-  "proposals": {
-    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58as-v5-A.txt": "d70e05df0f2adf81beb95cf60825898cc93bf59bd9c0e1a79fe120fd1a910ea1"
-  },
-  "shared_tool_limitations": [
-    "Shared --report passes. Its generic smoke report is synthetic only; no separate smoke row exists.",
-    "Shared preparation adapter has no unranked one-card CPU transport probe. Private preparation_gate.py exercised real device argv/plan and all reset paths; synthetic transport/weights, no GPU."
+  "whole_host_hold_required_through_gaps": true,
+  "both_lanes_pause_and_drain_required": true,
+  "codex_frozen_from": "WS",
+  "codex_frozen_through": "WS128 completion",
+  "bracket_rates_tok_s": [
+    31.900929457585114,
+    34.576943918764464,
+    31.83773787531652,
+    34.56840016469365,
+    31.807236518013138
   ],
-  "device_exactness": "pending",
-  "device_speed": "pending",
-  "fresh_process_repeat": false,
-  "strict512": false,
-  "submission_eligible": false,
-  "compile_turns": 1,
-  "coordinator_requirements": "Whole-host lane A; lane B drained/excluded; fresh fault review; no retry; graceful drain; leave cards empty",
-  "preparation_base_commit": "28f63a70fed646a4d77e2da5c25ae76f7321b70c"
+  "control_drift_fraction": 0.0009589439587468848,
+  "minimum_gain": 0.08576810011034688,
+  "candidate_beats_all_controls": true,
+  "bracket_exact_requests": 60,
+  "pinned_predecessor": {
+    "reference_submission": "cmveqsmsl00ebrf014yvrsosx",
+    "threshold_tok_s": 31.966819787781944
+  },
+  "submission_scope_tokens": 128,
+  "strict512_claim": false,
+  "fresh_timing_repeat_passed": false,
+  "submission_rehearsal_passed": true,
+  "chain_native_interface_passed": false,
+  "python_tests": 137,
+  "preparation_ram_budget_bytes": 2000000000,
+  "files_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/build-receipt.json": "5f7c08a116742711cc03dbff67418e955fd4c0ed299b757404d311fd40ef561f",
+    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/submission-pins.json": "9cd05a171da6d50dc9248a9307816d2a1cec1a7efe27f2d2f6d290d570b8bae1",
+    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/ready.json": "6ce99f7706d8c5b6a1c44902caa3598d84d950d092106530463a6d44351c047f",
+    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/WINDOW.md": "b782ab2bc742070641b304265b91039e44ff40aaae016f33a8dd097fbeb26f05",
+    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/runtime-selection.json": "deb4230de93cc1f369cb37511057c2005acc08ed543625a1b846dff20c91c0d4",
+    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/submission-policy.json": "f56950678eaa0e1d6f4fd76e4be3ac683a774fd39163edb1bd048b04d7808225",
+    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/record-threshold.snapshot": "94335c55066802dd5ac6e011efddbfddf7e82955592a6de4ea5e9903e966d57d",
+    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/evidence/chain-native-interface.json": "6e787b2a8ebeabbc12fefc50451ecac46334fb86150eab3ab37ad0322ed1a17b",
+    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/evidence/submission-rehearsal.json": "846d7a721a391680288b47c919a771dec0cf8ff84a6bca0769020aea8afdb56c",
+    "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/evidence/argument-gate.json": "afdcba2da41a9ca966b87532c14273a8e0ad44f67a8170a37d842d6ae3db3786"
+  },
+  "orchestration_provenance": [
+    {
+      "name": "chain-checks.json",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58as-orchestration/chain-checks.json",
+      "parent_digest": "b59017d438a6846c68dc5ed6a8084abf4d1beae0819556ceafa7f71f70088c82"
+    },
+    {
+      "name": "queue-plan.log",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58as-orchestration/queue-plan.log",
+      "parent_digest": "e635837627369828e65dec0a8668bf1dbba9473833b73b5aa1ef49f592fd9ee4"
+    },
+    {
+      "name": "python-tests.log",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58as-orchestration/python-tests.log",
+      "parent_digest": "d76f9985af3d1f6d68a3d2b545ba0443853f5b19776343cb071f3f671bc73990"
+    },
+    {
+      "name": "check_chain.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58as-orchestration/check_chain.py",
+      "parent_digest": "8963ecc912c6c7f516e82e09d01aa0870331e44193906fd24e170babd7aea7b4"
+    },
+    {
+      "name": "check_native_interface.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58as-orchestration/check_native_interface.py",
+      "parent_digest": "2795369e2a79959c824ea04568a78d9283e04086aaf137bd5d17cb96b4a01f4a"
+    },
+    {
+      "name": "finalize_chain.py",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58as-orchestration/finalize_chain.py",
+      "parent_digest": "c21caf5724d6a625ebc8f2874733d01619157292a83a90d2f0d32f7660703797"
+    },
+    {
+      "name": "entry-proposal.jsonl",
+      "parent_relpath": "experiments/own-xpu-runtime/ops/packet58as-orchestration/entry-proposal.jsonl",
+      "parent_digest": "06bba40f675dce7814a1d92d1e312f65b6ff68368644a3507758d469f29338d7"
+    }
+  ],
+  "native_identity": [
+    {
+      "name": "build/device/own-rt-iq3",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/build/device/own-rt-iq3",
+      "parent_digest": "83abf236dcfe73bc9da6309fdc1a0c523aab104faa3adcabee3d5589f0b0b1d2"
+    },
+    {
+      "name": "build/device/p58-cache-fixtures",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/build/device/p58-cache-fixtures",
+      "parent_digest": "1b822cfdc1fd664f8fc02a571d3b346e4560cd31d8b1fe7956c6284eaca6a485"
+    },
+    {
+      "name": "build/device/p58-cache-fixtures-core",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/build/device/p58-cache-fixtures-core",
+      "parent_digest": "ba49aa8156437e0a1f95e52efe5b6b61141f96af62614a8f903c0c627f9e9c35"
+    }
+  ],
+  "chain_quality_pending": true,
+  "chain_performance_pending": true,
+  "no_retry": true,
+  "queued": false,
+  "device_executed": false,
+  "native_recompiled": false,
+  "services_started": false,
+  "model_payload_reads": false,
+  "live_queue_changed": false,
+  "submission_performed": false,
+  "final_content_write": true
 }
