@@ -955,3 +955,16 @@ Also on record:
 - **p58asd** (09:06) adds a process-wide `--wait-policy` option, defaulting to poll, does one rebuild with byte gates, and makes the chain READY. `fn-run/chain-58as2.sh` launches the quiet chain after `--check`.
 
 STOP DOING acknowledged: hand-copying chain orchestration for a one-flag change while cards idle; compute-only parity audits; a third preparation job for one diagnostic; letting two cards sit > 1 h with nothing READY; and (mine) "no rebuild" constraints in chain-handoff briefs when the winning option was only reachable through the bracket table.
+
+## Review 43b — 2026-10-19 10:05 UTC — VERDICT: ACT
+
+The reviewer found 44% device-in-flight and 11.7% card-busy over 2 h, with all cards idle from 09:57. Codex hit its usage limit at 09:09 (until Oct 26). The one-card record went 31.97 → 34.573 (cmvf31py400furf01tv54rxo7) about 1.5 h after the v5 win. Two cards has been flat for about 16 h.
+
+Actions taken (10:05–10:15):
+1. **Process-wide switch:** the p171b subagent was asked to add `--foreground-copies compute|copy`, because `apply_cqcopy_delta.py:87` made the mechanism reachable only through the bracket. p171b's READY had already been picked up, and its v5 started at 10:07:36, so the request was **withdrawn for the running tree**. The subagent was told not to touch packet171b and to put the flag in a new `packet171c` copy (no READY, no proposal) as the chain-binary candidate.
+2. **QUIET for every one-card timing window:** `fn-run/ready-run.sh` (a READY-mtime waiter that replaces the Codex-unit waiters) writes `fn-run/QUIET` from queueing through `hold-single` completion. Every subagent brief carries the QUIET poll.
+3. **One hand-off for both pending jobs:** `ready-run.sh` instances for p171b (one-card, whole host) and p168b (lane B) both fired at 10:07:30. p171b runs first; p168's `packet168-body-census-B-v2` waits behind PAUSE-B and runs when the hold releases.
+4. **Two-card lever ready before the census lands:** subagent **p173** writes the census-to-lever table (threshold per class, open mechanisms checked against DO-NOT-REPEAT, kill-test design, file:line) and pre-stages a bundle-8 copy, documenting the process-wide flag pattern.
+5. **Codex outage recorded:** CURRENT.md (coordinator line only), memory `codex-usage-limit-until-2026-10-26`, heartbeat. Codex-unit tooling is inert until the reset; monitor-loop4's codex count reads 0 and is harmless.
+
+STOP DOING acknowledged: bracket-only kill-test switches; relying on codex-* freezes; lane B without its own READY row for over 1 h; any p168c; counting one-card records as two-card progress.
