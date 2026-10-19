@@ -1,0 +1,63 @@
+{
+  "schema": "own-runtime.packet175.d2-analysis.v1",
+  "device_measurement": true,
+  "samples_sha256": "660aa91292a2c8cf4178ef6a8862e6e4468983a30d721bfb043256da29015b7d",
+  "threshold_reduction": 0.030000000000000027,
+  "maximum_b_over_a": 0.97,
+  "weighted_b_over_a": 0.9704999133035676,
+  "dense_classes": [
+    "hc_low_inject",
+    "hc_gate_mix",
+    "projection",
+    "small_tuple",
+    "attention_projection",
+    "shared_down_mix"
+  ],
+  "layer_weights": {
+    "0": 36,
+    "3": 12
+  },
+  "layers": {
+    "0": {
+      "repeats": 240,
+      "rows_per_pass": 2,
+      "dense_a_ms_per_row": 1.1033,
+      "dense_b_gemv_only_ms_per_row": 1.0487525,
+      "warm_b_prime_ms_per_row": 0.022,
+      "dense_b_including_warm_ms_per_row": 1.0707525,
+      "reduction_median": 0.02950004540913631,
+      "reduction_p10": 0.02949977385798286,
+      "reduction_p90": 0.029500181093806588,
+      "reduction_mean": 0.02950000674986615,
+      "reduction_stdev": 1.4368079832119017e-07,
+      "gemv_only_reduction_median": 0.04944031541738425,
+      "layer_span_a_ms_per_row": 1.8243,
+      "layer_span_b_ms_per_row": 1.8027525
+    },
+    "3": {
+      "repeats": 240,
+      "rows_per_pass": 2,
+      "dense_a_ms_per_row": 1.3039,
+      "dense_b_gemv_only_ms_per_row": 1.243435,
+      "warm_b_prime_ms_per_row": 0.022,
+      "dense_b_including_warm_ms_per_row": 1.265435,
+      "reduction_median": 0.02949999999999997,
+      "reduction_p10": 0.029499846460924295,
+      "reduction_p90": 0.02950019135093762,
+      "reduction_mean": 0.029500016755951274,
+      "reduction_stdev": 1.1001090282118926e-07,
+      "gemv_only_reduction_median": 0.0463724211979446,
+      "layer_span_a_ms_per_row": 2.1799,
+      "layer_span_b_ms_per_row": 2.152435
+    }
+  },
+  "weighted_reduction": 0.029500086696432403,
+  "worst_layer_reduction_p10": 0.02949977385798286,
+  "projected_census_saving_ms": 0.34019499978325846,
+  "census_dense_ms": 11.532,
+  "projected_token_gain_percent": 1.22865808743845,
+  "decision": "close D2",
+  "eligible_combined_bundle9": false,
+  "combined_with": "packet153 static descriptors (+0.35%, exact, retained); D2 is never built alone",
+  "realism": "real packet166 M1 launch order (HC, projections, GDN/QSA, routed experts, shared) per row, plus a 256 MiB stream-read interposer before each row pass (other layers of the token)"
+}

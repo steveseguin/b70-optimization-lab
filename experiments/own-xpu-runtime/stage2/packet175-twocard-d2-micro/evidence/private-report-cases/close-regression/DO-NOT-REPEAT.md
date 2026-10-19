@@ -1,0 +1,2 @@
+Synthetic decision rehearsal only
+| D2 dense-weight L2 warm-ahead (separate warm kernel before every dense GEMV, real packet166 M1 launch order + 256 MiB interposer) | packet175 device micro: weighted reduction -25.00% including warm time, B/A 1.2500 > 0.97; GEMV-only median per layer L0 -23.01%, L3 -23.31%; warm alone L0 0.022 ms/row, L3 0.022 ms/row. Evidence synthetic-fixture/close-regression. | A warm-ahead that costs no serial device time (folded into a latency-bound predecessor) AND a measured GEMV-only reduction of at least 3% on its own. |

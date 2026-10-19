@@ -1,0 +1,63 @@
+{
+  "schema": "own-runtime.packet175.d2-analysis.v1",
+  "device_measurement": true,
+  "samples_sha256": "63d1578f99e8ca8c9326e21fb75c7a79f38b927cd83299d84ea195696d7a17cd",
+  "threshold_reduction": 0.030000000000000027,
+  "maximum_b_over_a": 0.97,
+  "weighted_b_over_a": 1.25,
+  "dense_classes": [
+    "hc_low_inject",
+    "hc_gate_mix",
+    "projection",
+    "small_tuple",
+    "attention_projection",
+    "shared_down_mix"
+  ],
+  "layer_weights": {
+    "0": 36,
+    "3": 12
+  },
+  "layers": {
+    "0": {
+      "repeats": 240,
+      "rows_per_pass": 2,
+      "dense_a_ms_per_row": 1.1033,
+      "dense_b_gemv_only_ms_per_row": 1.357125,
+      "warm_b_prime_ms_per_row": 0.022,
+      "dense_b_including_warm_ms_per_row": 1.379125,
+      "reduction_median": -0.25,
+      "reduction_p10": -0.25,
+      "reduction_p90": -0.25,
+      "reduction_mean": -0.25,
+      "reduction_stdev": 0.0,
+      "gemv_only_reduction_median": -0.2300598205383848,
+      "layer_span_a_ms_per_row": 1.8243,
+      "layer_span_b_ms_per_row": 2.111125
+    },
+    "3": {
+      "repeats": 240,
+      "rows_per_pass": 2,
+      "dense_a_ms_per_row": 1.3039,
+      "dense_b_gemv_only_ms_per_row": 1.607875,
+      "warm_b_prime_ms_per_row": 0.022,
+      "dense_b_including_warm_ms_per_row": 1.629875,
+      "reduction_median": -0.25,
+      "reduction_p10": -0.25,
+      "reduction_p90": -0.25,
+      "reduction_mean": -0.25,
+      "reduction_stdev": 0.0,
+      "gemv_only_reduction_median": -0.2331275404555564,
+      "layer_span_a_ms_per_row": 2.1799,
+      "layer_span_b_ms_per_row": 2.516875
+    }
+  },
+  "weighted_reduction": -0.25,
+  "worst_layer_reduction_p10": -0.25,
+  "projected_census_saving_ms": -2.883,
+  "census_dense_ms": 11.532,
+  "projected_token_gain_percent": -10.29642857142857,
+  "decision": "close D2",
+  "eligible_combined_bundle9": false,
+  "combined_with": "packet153 static descriptors (+0.35%, exact, retained); D2 is never built alone",
+  "realism": "real packet166 M1 launch order (HC, projections, GDN/QSA, routed experts, shared) per row, plus a 256 MiB stream-read interposer before each row pass (other layers of the token)"
+}

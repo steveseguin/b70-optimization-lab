@@ -1,0 +1,31 @@
+{
+  "schema": "own-runtime.packet175.oracle-inheritance.v1",
+  "passed": true,
+  "model_reads": false,
+  "position": 31,
+  "oracle_rows": 138,
+  "oracle_sha256": "74f63299a8073155a36d4eb10f8d97c14928c95509f19375ff632be1bd0e8ae2",
+  "parents": [
+    {
+      "name": "packet166 real-weight oracle",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/real-oracle.tsv",
+      "parent_digest": "2fdbe1d3a01a1466045b8633291d1460a51f5ad30d5527f427e0a0148fedd857"
+    },
+    {
+      "name": "packet166 real CPU parity receipt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/cpu-real-parity.json",
+      "parent_digest": "c109828b01024eb9ce387c5e1107526d7bd541e580dfb1c38949fb405d3f288d"
+    },
+    {
+      "name": "packet166 synthetic CPU parity receipt",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/cpu-synthetic-parity.json",
+      "parent_digest": "b8020f0f49f806c51934914d684ed9726cf0e34b4e99969c9dbbc4a365a6773d"
+    },
+    {
+      "name": "packet166 lane-B device stream (cpu_oracle_match true)",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/samples.jsonl",
+      "parent_digest": "5fbfc71866374f1f6c20daad383931f7bc7b602ec50aaf71e8cd449b926a898d"
+    }
+  ],
+  "reason": "packet175 host reference equals packet166 synthetic trace for all parent buffers at position 31 (GNU and Intel); arm B is byte-identical to arm A on both compilers; packet166 real oracle and device match carry over."
+}

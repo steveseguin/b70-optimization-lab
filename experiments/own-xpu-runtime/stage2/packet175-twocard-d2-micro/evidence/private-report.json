@@ -1,0 +1,62 @@
+{
+  "schema": "packet175.private-report.v1",
+  "passed": true,
+  "device_executed": false,
+  "actual_entry": "run_micro.report_completed -> micro_analyze.evaluate",
+  "proposal_sha256": {
+    "A": "494d5aa4c05b0dd03523069f1bd67f4ce0c00f8809efbf03c1ca86af4249c377",
+    "B": "72cd2fb81f7334c2ee9a2a049a8800e232d890b416ee616035e1fa99e5b782b2"
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet175-twocard-d2-micro/report_adapter.py": "fca6e09b1bfd1612da5ba811f863e8e0bd02915a531a7c6571431d87b4ce8758",
+    "experiments/own-xpu-runtime/stage2/packet175-twocard-d2-micro/micro_analyze.py": "67cf63d258c58b7285971ad8895ae6c03b78d2fc687427f9e97503498d0d7b39",
+    "experiments/own-xpu-runtime/stage2/packet175-twocard-d2-micro/run_micro.py": "c76f059359b545e28a708effedf95193684bda40569b519ec5eae983efb07739",
+    "experiments/own-xpu-runtime/stage2/packet175-twocard-d2-micro/test_analyzer.py": "382a326b0dbb7f099ee3cf7454356f0e1b26dad7c1530eac1fde0385020c256d",
+    "experiments/own-xpu-runtime/stage2/packet175-twocard-d2-micro/evidence/oracle-inheritance.json": "63e8f8fe18d13cc037e6c83ff954f043f2c5fbf8d8862963ebb158b7c0b7a1e5",
+    "experiments/own-xpu-runtime/stage2/packet175-twocard-d2-micro/evidence/real-oracle.tsv": "74f63299a8073155a36d4eb10f8d97c14928c95509f19375ff632be1bd0e8ae2",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/samples.jsonl": "5fbfc71866374f1f6c20daad383931f7bc7b602ec50aaf71e8cd449b926a898d",
+    "experiments/own-xpu-runtime/stage2/packet175-twocard-d2-micro/evidence/private-report-cases/close-just-below/DO-NOT-REPEAT.md": "d694b96add5935815f2b8850ee3b477051872b38c953a8b024394bed5e2b2c35",
+    "experiments/own-xpu-runtime/stage2/packet175-twocard-d2-micro/evidence/private-report-cases/close-just-below/analysis.json": "339732acdf7e993d9d0a2a0416cabf2aa7128279b97d3ea1ff49acc8352ac8a2",
+    "experiments/own-xpu-runtime/stage2/packet175-twocard-d2-micro/evidence/private-report-cases/close-regression/DO-NOT-REPEAT.md": "b4f7faedc0000f7d635cf6cd581cc9d04a9abdf9da6ad75773b75fef0a198ab5",
+    "experiments/own-xpu-runtime/stage2/packet175-twocard-d2-micro/evidence/private-report-cases/close-regression/analysis.json": "df5939d416ade447942a0cc6be9ddad3a6affbddb94bd046c5c84c2ca98947d2",
+    "experiments/own-xpu-runtime/stage2/packet175-twocard-d2-micro/evidence/private-report-cases/eligible-boundary/COMBINED-BUNDLE9-ELIGIBLE.md": "99b347c93bb9cd02e6421fcdb3a4d04293d50cd974c13dc5ba4fd48cc99570e4",
+    "experiments/own-xpu-runtime/stage2/packet175-twocard-d2-micro/evidence/private-report-cases/eligible-boundary/DO-NOT-REPEAT.md": "e1325909edf68a46ea5b9de964a71a6a398515861508719e05f18529e0b9afe4",
+    "experiments/own-xpu-runtime/stage2/packet175-twocard-d2-micro/evidence/private-report-cases/eligible-boundary/analysis.json": "ff4fef342d6628d46eb053234eac45c797671087234e77a05ab2ea0c69f9ac95"
+  },
+  "synthetic_cases": [
+    {
+      "name": "eligible-boundary",
+      "synthetic_fixture": true,
+      "device_measurement": false,
+      "reduction": 0.03,
+      "eligible": true,
+      "weighted_b_over_a": 0.97,
+      "samples_digest": "40545b1f48f34c9eee201ef0aa30a3e3d74863c1f55dcb9dd991fcbfb6083cd8"
+    },
+    {
+      "name": "close-just-below",
+      "synthetic_fixture": true,
+      "device_measurement": false,
+      "reduction": 0.0295,
+      "eligible": false,
+      "weighted_b_over_a": 0.9704999133035676,
+      "samples_digest": "660aa91292a2c8cf4178ef6a8862e6e4468983a30d721bfb043256da29015b7d"
+    },
+    {
+      "name": "close-regression",
+      "synthetic_fixture": true,
+      "device_measurement": false,
+      "reduction": -0.25,
+      "eligible": false,
+      "weighted_b_over_a": 1.25,
+      "samples_digest": "63d1578f99e8ca8c9326e21fb75c7a79f38b927cd83299d84ea195696d7a17cd"
+    }
+  ],
+  "invalid_oracle_refused_without_tails": true,
+  "packet166_device_stream_rejected": {
+    "rejected": true,
+    "reason": "oracle gate or identity-matched D2 device summary failed"
+  },
+  "maximum_b_over_a": 0.97,
+  "threshold_checks": true
+}

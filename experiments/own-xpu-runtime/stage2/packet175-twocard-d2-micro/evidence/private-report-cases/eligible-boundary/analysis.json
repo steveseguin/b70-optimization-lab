@@ -1,0 +1,63 @@
+{
+  "schema": "own-runtime.packet175.d2-analysis.v1",
+  "device_measurement": true,
+  "samples_sha256": "40545b1f48f34c9eee201ef0aa30a3e3d74863c1f55dcb9dd991fcbfb6083cd8",
+  "threshold_reduction": 0.030000000000000027,
+  "maximum_b_over_a": 0.97,
+  "weighted_b_over_a": 0.97,
+  "dense_classes": [
+    "hc_low_inject",
+    "hc_gate_mix",
+    "projection",
+    "small_tuple",
+    "attention_projection",
+    "shared_down_mix"
+  ],
+  "layer_weights": {
+    "0": 36,
+    "3": 12
+  },
+  "layers": {
+    "0": {
+      "repeats": 240,
+      "rows_per_pass": 2,
+      "dense_a_ms_per_row": 1.1033,
+      "dense_b_gemv_only_ms_per_row": 1.048201,
+      "warm_b_prime_ms_per_row": 0.022,
+      "dense_b_including_warm_ms_per_row": 1.070201,
+      "reduction_median": 0.030000000000000027,
+      "reduction_p10": 0.030000000000000027,
+      "reduction_p90": 0.030000000000000027,
+      "reduction_mean": 0.030000000000000027,
+      "reduction_stdev": 0.0,
+      "gemv_only_reduction_median": 0.04994017946161511,
+      "layer_span_a_ms_per_row": 1.8243,
+      "layer_span_b_ms_per_row": 1.802201
+    },
+    "3": {
+      "repeats": 240,
+      "rows_per_pass": 2,
+      "dense_a_ms_per_row": 1.3039,
+      "dense_b_gemv_only_ms_per_row": 1.242783,
+      "warm_b_prime_ms_per_row": 0.022,
+      "dense_b_including_warm_ms_per_row": 1.264783,
+      "reduction_median": 0.030000000000000027,
+      "reduction_p10": 0.030000000000000027,
+      "reduction_p90": 0.030000000000000027,
+      "reduction_mean": 0.030000000000000027,
+      "reduction_stdev": 0.0,
+      "gemv_only_reduction_median": 0.046872459544443634,
+      "layer_span_a_ms_per_row": 2.1799,
+      "layer_span_b_ms_per_row": 2.151783
+    }
+  },
+  "weighted_reduction": 0.03000000000000001,
+  "worst_layer_reduction_p10": 0.030000000000000027,
+  "projected_census_saving_ms": 0.3459600000000001,
+  "census_dense_ms": 11.532,
+  "projected_token_gain_percent": 1.249852941176471,
+  "decision": "eligible for combined bundle-9",
+  "eligible_combined_bundle9": true,
+  "combined_with": "packet153 static descriptors (+0.35%, exact, retained); D2 is never built alone",
+  "realism": "real packet166 M1 launch order (HC, projections, GDN/QSA, routed experts, shared) per row, plus a 256 MiB stream-read interposer before each row pass (other layers of the token)"
+}
