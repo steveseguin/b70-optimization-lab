@@ -24,6 +24,7 @@ Ordered retirement and prepared submission are present on both lines. Profiling 
   - 0.20 ms on 59.5% of tokens;
   - **2.63 ms on 40.5%** of tokens, which also wait 2.33 ms longer.
 - A slow readback follows a fill-submission token (72.9 MB of fills, 49.4% of positions) with **P = 0.94**. It lands on that same token with P = 0.04.
+- Packet58v's poll-era serial-vs-overlap bracket shows the same coupling independently. Mean readback was 0.46 ms/token with serial maintenance and 2.13–2.18 ms/token with overlap fills. The readback penalty arrived with asynchronous fills on the second BCS list.
 - The packet58aq publication drain of 1.108 ms/token was a 1 ms poll artifact. Under spin, the whole publication costs 0.200 ms, almost all of it host construction and submission.
 - **Codex picked ordered publication first. Do not package it on the spin line.**
 

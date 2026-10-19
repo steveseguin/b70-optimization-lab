@@ -29,6 +29,11 @@ Labels: **measured** = read from a device run; **transferred** = a two-card devi
 - Cache fills land on 49.4% of positions, at 72.9 MB each.
 - A slow readback follows a token with high pre-enqueue host time (the fill-submission position) with **P = 0.94**. It coincides with that same token with P = 0.04.
 - Mean excess: **0.99 ms/token** in readback (measured), plus **0.95 ms/token** in wait on those tokens (measured, not attributed).
+- **A second, independent run shows the same coupling.** This is packet58v's poll-era serial-vs-overlap bracket (`packet58v-async-cache/evidence/card0-async-a/overlap/WSCREEN/run/run`, `cache.jsonl` sha256 `0f9f7659…2088`):
+  - mean readback is **0.46 ms/token** in the warm serial-maintenance views (A1/A2);
+  - it is **2.13–2.18 ms/token** in the overlap views (B0/B1);
+  - p90 rises from 1.2 to 4.9–5.5 ms.
+  - Overlap still won overall (35.3 vs 38.0 ms/token wall), but it put about 1.7 ms/token of readback delay on the token boundary. The excess therefore arrived with asynchronous fills on the second BCS list.
 
 ## Mechanism table
 

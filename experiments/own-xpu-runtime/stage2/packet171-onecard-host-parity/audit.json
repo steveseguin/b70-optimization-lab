@@ -61,7 +61,7 @@
     "label": "measured excess; causal attribution to shared copy ordinal assumed"
    },
    "status": "MISSING-top-item",
-   "evidence": "measured.json views.B0/B1 slow_tokens, p_slow_readback_given_previous_token_high_other"
+   "evidence": "measured.json views.B0/B1 slow_tokens, p_slow_readback_given_previous_token_high_other; corroboration_58v (readback 0.46 serial -> 2.13-2.18 overlap)"
   },
   {
    "rank": 2,
@@ -323,6 +323,39 @@
    "name": "bundle8-host_spin.hpp",
    "parent_relpath": "experiments/own-xpu-runtime/stage2/packet136-record-bundle/host_spin.hpp",
    "parent_digest": "5f56024f2678d7ab90eb5b1818c34d2241066b4c7dff74fb7a5a4ccc388b799e"
+  },
+  {
+   "name": "cache.jsonl(58v-overlap-bracket)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/card0-async-a/overlap/WSCREEN/run/run/cache.jsonl",
+   "parent_digest": "0f9f7659db1f86012d23a2afc6c308c0db879d8850cffffa681ffc7aa5142088"
   }
- ]
+ ],
+ "corroboration_58v": {
+  "description": "poll-era serial vs overlap maintenance bracket; token/error readback mean ms/token",
+  "serial_warm_A1_A2": [
+   0.461,
+   0.461
+  ],
+  "overlap_B0_B1": [
+   2.129,
+   2.177
+  ],
+  "overlap_p90_ms": [
+   4.933,
+   5.452
+  ],
+  "serial_p90_ms": [
+   1.201,
+   1.207
+  ],
+  "wall_ms_serial_warm": [
+   37.989,
+   37.921
+  ],
+  "wall_ms_overlap": [
+   35.31,
+   35.242
+  ],
+  "label": "measured"
+ }
 }
