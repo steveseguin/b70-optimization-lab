@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.promotion-attestation.v1",
+  "identity": {
+    "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+    "runtime_revision": "6643c3e206117ead12fd140047582855df645287",
+    "optimization_identity": "packet58as-resident-tile16-overlap-tp1-plain-lru21.55gb-c4096-zero-copy-seal-09ba9cf5b49dc7c9b86029a0f36d54d8574db7c7ae87393eb083dc6477fc6389",
+    "arithmetic": "iq3-p49-split32-v1",
+    "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812"
+  },
+  "performance_evidence": {
+    "path": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/submission/chain-a/result.json",
+    "sha256": "4d9d33cee4f8fd95feee7ec3460a777543a508a04e3b96310fbf2d83d2b65ebc"
+  },
+  "quality_evidence": [
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/submission/chain-a/evidence.json.gz",
+      "sha256": "942353cb8563fdff5719c9cbf126bc66b48a6ab83ba402f66c3a344b73b49e27",
+      "supports": [
+        "varied_task_quality_passed",
+        "exact_or_target_oracle_passed",
+        "deterministic_repeats_passed",
+        "fresh_server_repeat_passed",
+        "target_model_unchanged",
+        "no_quality_loss"
+      ]
+    }
+  ],
+  "gates": {
+    "varied_task_quality_passed": true,
+    "exact_or_target_oracle_passed": true,
+    "deterministic_repeats_passed": true,
+    "fresh_server_repeat_passed": true,
+    "target_model_unchanged": true,
+    "no_quality_loss": true,
+    "strict_512_token_final_gate_passed": false,
+    "fresh_timing_repeat_passed": false
+  },
+  "submission_scope": {
+    "rule": "packet58as.onecard-128-preparation.2026-10-19",
+    "date": "2026-10-19",
+    "requested_max_new": 128,
+    "strict_512_gate_passed": false,
+    "authority": "Owner packet58asc brief; preparation only; coordinator submits.",
+    "preparation_only": true,
+    "fresh_timing_repeat_passed": false
+  }
+}
