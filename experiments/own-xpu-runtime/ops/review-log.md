@@ -919,3 +919,22 @@ STOP DOING acknowledged:
 - pre-sealing chains without device speed evidence;
 - appending rows while a dead-owner marker is unarchived;
 - packaging-repair loops of more than two jobs before a first speed number.
+
+## Review 42 — 2026-10-19 08:0x UTC — VERDICT: ACT
+
+The reviewer found 62% device-in-flight and 23.2% card-busy over 2 h, up from 41% / 14.7%. When the p58aq split ends (~08:12) the decode pipeline would drain again: no READY decode row on either lane, two cards flat at 58.798 for about 14 h, and p166/p167 frozen since 07:58.
+
+Actions taken (08:05–08:15):
+1. **Briefs ready before the thaw.**
+   - Launch: `fn-run/after-p58aq-codex.sh` starts Codex **p168** and **p169** as soon as run-p58aq thaws Codex, then **p166b** when p166 exits.
+   - One-card follow-up: `p58ar` (build the exact replacement p58aq's analyzer qualifies, then a one-load kill-test v5, no smoke) is pre-written for the ≥ 0.67 ms/token outcome. Otherwise p58aq closes on its own DO-NOT-REPEAT, and the next one-card lever comes from p166b's MTP projection.
+2. **p168: measured two-card body census on bundle 8** (lane B, one load). It uses skip/zero-input differencing arms with snapshot restore + repair, mirroring p58aq U0/S0, with exact controls at start/middle/end. Output: a ranked class → ms/token table, replacing CPU pricing from packet110 synthetic numbers or an assumed 20% transfer.
+3. **p166b:** qualify p166 with a packet-private report adapter and keep the failed shared receipt (the p58aq precedent). It also adds the one-card MTP decode projection (packet147 §5: cycle = D + V2 + (1−a)R, a = 0.787, D = 1.79 ms) to the analyzer's decision rule. **p169 (ops):** generalize the shared standalone-micro / one-card window report rehearsal, with a seal-safety check first; if any READY packet pins `rehearse_entry.py` bytes, a new module is used instead.
+4. **No optional smokes** before diagnostics that open with K1a/K1b plus an exact control (written into the p168 and p58ar briefs).
+5. **Selective Codex freeze:** `fn-run/codex-freeze-heavy.sh <stop-file>` freezes only units that read model files, compile, or exceed 4 GB, re-checking every 20 s. It is for device-bound screens. Record chains and host-wait diagnostics (p58aq) keep the full freeze.
+
+Also on record:
+- p167 closed on CPU: the two-card bundle-8 streams show no recurring lookup-table major faults, so there is nothing to port from p58aj.
+- The 07:46 p58aq pin-guard refusal (`records[].pins = {passed: true}`) was fixed in 436389c0a. Briefs now forbid pin-guard map keys outside path → SHA256 maps.
+
+STOP DOING acknowledged: no READY decode row at window end; briefs whose gate needs a frozen path changed; pricing two-card levers from synthetic or failed-gate numbers; optional smokes before K1-opening diagnostics; publication rows ahead of decode rows; pin-guard key names in evidence JSON.
