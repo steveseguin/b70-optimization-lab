@@ -1,0 +1,145 @@
+{
+  "passed": false,
+  "jobs": [
+    {
+      "job": "packet151-sibling-bracket-B",
+      "unit": "screen-packet151-sibling-bracket-B",
+      "passed": false,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/v5/build/device/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        },
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet151-sibling-cost/v5/build/gnu-host/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "report": {
+        "passed": false,
+        "kinds": [
+          {
+            "passed": false,
+            "kind": "smoke",
+            "collisions": [],
+            "locations": [
+              {
+                "file": "rehearse_entry.py",
+                "line": 617
+              },
+              {
+                "file": "screen.py",
+                "line": 253
+              },
+              {
+                "file": "screen.py",
+                "line": 298
+              },
+              {
+                "file": "p151_v5_compare.py",
+                "line": 55
+              },
+              {
+                "file": "p151_v5_compare.py",
+                "line": 149
+              },
+              {
+                "file": "analyze.py",
+                "line": 55
+              },
+              {
+                "file": "analyze.py",
+                "line": 25
+              },
+              {
+                "file": "analyze.py",
+                "line": 15
+              },
+              {
+                "file": "analyze.py",
+                "line": 7
+              }
+            ],
+            "error_type": "ValueError",
+            "error": "report code failed"
+          },
+          {
+            "passed": false,
+            "kind": "bracket",
+            "collisions": [],
+            "locations": [
+              {
+                "file": "rehearse_entry.py",
+                "line": 617
+              },
+              {
+                "file": "screen.py",
+                "line": 253
+              },
+              {
+                "file": "screen.py",
+                "line": 298
+              },
+              {
+                "file": "p151_v5_compare.py",
+                "line": 119
+              },
+              {
+                "file": "analyze.py",
+                "line": 55
+              },
+              {
+                "file": "analyze.py",
+                "line": 25
+              },
+              {
+                "file": "analyze.py",
+                "line": 15
+              },
+              {
+                "file": "analyze.py",
+                "line": 7
+              }
+            ],
+            "error_type": "ValueError",
+            "error": "report code failed"
+          }
+        ],
+        "synthetic_evidence": true,
+        "device_executed": false
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false
+    }
+  ]
+}

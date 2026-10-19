@@ -78,3 +78,23 @@ without deleting the local files: the two generated build directories are
 moved aside only during the explicit-path commit, then restored unchanged.
 The binaries remain locally available and hash-bound; source, build commands,
 original constants, receipts and historical manifests remain tracked.
+
+Final packet151c review: all 15 current CPU receipts pass and their recorded
+sources match. This includes real closed-environment/unit-name entry through
+both intercepted native execs, unchanged resource-limit checks, all 78 worker
+requests, cooperative failure handling, strict real smoke/bracket reporting,
+private `ops/rehearse_entry.py --report`, the unchanged shared `ops/launch_env.py`,
+temporary queue plans and the live pin guard. The CPU-only replay entry now
+runs these gates without inherited GGUF/full-shape steps. Earlier failed
+pre-seal report/pin diagnostics remain under lineage-inputs/preseal-diagnostics.
+
+Final checked build footprint: 84,313,763 bytes, below 300 MB. Root free was
+30.335 GB at the final source review, above the 30 GB stop floor. All compilation
+used the shared compiler-turn arbiter. No GGUF payload was read, no GPU or service
+was started, and no host setting or live queue was changed.
+
+The source, receipts, proposals and this note are committed before the finalizer
+writes READY-FOR-DEVICE.json as the last packet write. That marker records the
+source commit and exact proposal hashes, with ready_for_device=true and
+queued=false. This admits an upper-bound measurement, not a quality or speed
+claim: device output equality and the actual sibling cost remain pending.

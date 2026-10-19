@@ -60,3 +60,9 @@ temporary plans and pin-guard receipts. The static rank admission retains the
 1.5 GB physical-free floor; live allocation/residency is still checked at launch.
 Historical pre-rebuild retention/payload manifests are preserved byte-for-byte
 under `lineage-inputs/p151-first-build/`, outside active pin discovery.
+
+All 15 current CPU receipts pass. The reproducible pending-gate runner is
+`v5/qualify_cpu.py`; it verifies the existing build/operator pins and performs no
+GGUF/full-shape reads. `v5/finalize_ready.py` writes the final marker only after
+source, receipts and proposals are committed. Earlier pre-seal refusals are
+retained under `lineage-inputs/preseal-diagnostics/`.
