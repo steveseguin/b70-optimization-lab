@@ -1,0 +1,582 @@
+{
+  "schema": "own-runtime.packet58.window.v1",
+  "window": "K1",
+  "passed": true,
+  "qualifying": false,
+  "device_executed": true,
+  "child_still_running": false,
+  "card": 0,
+  "pci_bdf": "0000:23:00.0",
+  "native_visible_card": 0,
+  "context": 4096,
+  "gpu_count": 1,
+  "decode_mode": "plain",
+  "view": "resident",
+  "selection_sha256": "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "build_receipt_sha256": "985a4f7f9a2ea615d309cc1053e5ad97ec132a307750cdcf3a1b02dd4a02e7b1",
+  "artifacts_sha256": {
+    "build/device/own-rt-iq3": "d8478fe89571774f822a773531b71509fa7e556fc89b4f8a4294779358a90128",
+    "build/device/p58-cache-fixtures": "f5e1d9e46020abf1550f2f56103b2e53013614490bdcb26c23b7ff0eb4f97af5",
+    "build/device/p58-cache-fixtures-core": "ba49aa8156437e0a1f95e52efe5b6b61141f96af62614a8f903c0c627f9e9c35"
+  },
+  "environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:23:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+  },
+  "coordinator_fault_review": "2026-10-19T10:00:13.098452Z",
+  "started_utc_ns": 1792404458299010009,
+  "expected_seconds": 20,
+  "watchdog_seconds": 600,
+  "memory_admission": {
+    "passed": true,
+    "available_bytes": 121053655040,
+    "required_bytes": 12884901888,
+    "margin_bytes": 108168753152,
+    "baseline_gpuactive_bytes": 114688,
+    "snapshot": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 121053655040,
+      "SwapTotal": 8589930496,
+      "SwapFree": 8083271680,
+      "GPUActive": 114688
+    },
+    "plan": {
+      "admission_mode": "bounded-K1",
+      "admitted": false,
+      "allocation_inventory": {
+        "kv_index_bytes": 116391936,
+        "recurrent_bytes": 59019280,
+        "sources": {
+          "experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/lineage/owned-inputs/experiments/own-xpu-runtime/stage2/packet45-merged3/evidence/audit6/W2m-c4096-dr1-r0/census.json": "4e1074519846cc27084e574c32f2ec923153237b1cd522d15196fac017344d49",
+          "experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/lineage/owned-inputs/experiments/own-xpu-runtime/stage2/packet45-merged3/evidence/audit6/W2m-c4096-dr1-r1/census.json": "29d020fc2b753636517655d1b9c9b226c595765a9ee350e0bce6951cd60cedb0"
+        },
+        "target_nonexpert_bytes": 5815529984
+      },
+      "arena_limit_bytes": 32212254720,
+      "card_capacity_floor_bytes": 32000000000,
+      "caveat": "Empirical bound for the pinned one-card target-only 18 GB cache, 4K BF16 allocation and <=128 generated-token receipts. Resident lookup bytes are a design substitution, not measured. Keep whole-host ownership, all native census/quality gates and live stops.",
+      "census": {
+        "file_backed_nonexpert_bytes": 33323087360,
+        "layers": [
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 0,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 1,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 2329600,
+            "experts": 512,
+            "layer": 2,
+            "layer_bytes": 1192755200
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 3,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 4,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 5,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 6,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 7,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 8,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 9,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 10,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 11,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 12,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 13,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 14,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 15,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 16,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 17,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 18,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 19,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 20,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 21,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 22,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 23,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 24,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 25,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 26,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 27,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 28,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 29,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 30,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 31,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 32,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 33,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 34,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 35,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 36,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 37,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 38,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 39,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 40,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 41,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 42,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 43,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 44,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 45,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 46,
+            "layer_bytes": 1009254400
+          },
+          {
+            "expert_bytes": 1971200,
+            "experts": 512,
+            "layer": 47,
+            "layer_bytes": 1009254400
+          }
+        ],
+        "pinned_expert_bytes": 48627712000,
+        "source_path": "experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/host-admission/tensor-census.json",
+        "source_sha256": "3312f5a18582788c5c6c84572fd616488b6835b454272c81eec218a58521607c"
+      },
+      "context": 4096,
+      "decode_mode": "plain",
+      "device_categories": {
+        "control_transaction_bound": 1073741824,
+        "expert_cache_arena": 18000000000,
+        "expert_pointer_generation_tables": 2359296,
+        "target_4k_bf16_kv_index": 116391936,
+        "target_nonexpert": 5815529984,
+        "target_recurrent": 59019280,
+        "transfer_bound": 268435456,
+        "workspace_bound": 1073741824
+      },
+      "device_executed": false,
+      "device_margin_bytes": 4090780400,
+      "device_owned_bound_bytes": 26409219600,
+      "device_reserve_bytes": 1500000000,
+      "file_backed_expert_duplicate_allowed": false,
+      "gpu_count": 1,
+      "host_categories": {
+        "pinned_packed_experts": 48627712000,
+        "file_backed_nonexpert_and_lookup_bound": 4001477120,
+        "resident_lookup_bytes": 29321610240,
+        "measured_process_overhead_allowance": 565325824,
+        "gpuactive_shadow_bound": 4294967296
+      },
+      "host_required_available_bytes": 12884901888,
+      "host_reserve_bytes": 8589934592,
+      "kv_dtype": "BF16",
+      "large_pinning_cpu_test_allowed": false,
+      "schema": "own-runtime.packet58u.memory.v1",
+      "memory_view": "tile16-resident",
+      "window": "K1",
+      "whole_host_required": true,
+      "host_bound_bytes": 4294967296,
+      "derivation": {
+        "design_increment_to_core_bytes": 29321610240,
+        "empirical_core_peak_bytes": 49193037824,
+        "extra_margin_bytes": 4294967296,
+        "file_allowance_bytes": 4001477120,
+        "full_model_windows": 0,
+        "host_bound_bytes": 86811092480,
+        "host_required_available_bytes": 95401027072,
+        "measured_normalized_peak_bytes": 82516125184,
+        "measured_view": "tile16",
+        "replaced_lookup_file_allowance_bytes": 29321610240,
+        "resident_device_measured": false,
+        "resident_lookup_bytes": 29321610240,
+        "shadow_bound_bytes": 4294967296
+      },
+      "source_seal_sha256": "e1c61ecd7c31f626b8c9e71aa025f8986324d4198a167afaf6e9eb54d13df852"
+    }
+  },
+  "storage_admission": {
+    "free_bytes": 32420630528,
+    "planned_write_bytes": 8093428,
+    "min_free_bytes": 8000000000,
+    "root_free_bytes": 32420630528,
+    "root_stop_floor_bytes": 25000000000
+  },
+  "systemd_cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet171b-v5-A.service\n",
+  "miss_path": null,
+  "device_topology": {
+    "mask": {
+      "NEOReadDebugKeys": "1",
+      "FilterBdfPath": "0000:23:00.0",
+      "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+      "ZE_AFFINITY_MASK": "0",
+      "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+    },
+    "native_indices": [
+      0
+    ],
+    "nodes": [
+      {
+        "pci": "0000:23:00.0",
+        "node": "/dev/dri/renderD130",
+        "path": "/dev/dri/by-path/pci-0000:23:00.0-render",
+        "driver": "xe"
+      }
+    ],
+    "device_nodes_opened": false
+  },
+  "native_environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:23:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+    "HOME": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/screen/evidence/card0-171b-v5-a/resident/K1a/native-home"
+  },
+  "stop_reasons": [],
+  "lane_admission": {
+    "passed": true,
+    "scope": "whole-host",
+    "card": 0,
+    "timing_claim_eligible": false,
+    "reservation": {
+      "schema": "own-runtime.chain-lanes.v1",
+      "token": "6c30560b44a5488aa464f17f09421f08",
+      "lane": "A",
+      "window": "K1",
+      "scope": "whole-host",
+      "pid": 2289955,
+      "start_ticks": 24716569,
+      "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+      "started_monotonic": 247166.197325598
+    },
+    "owners": {
+      "2289974": {
+        "start_ticks": 24716658,
+        "seen": true,
+        "fds": [
+          {
+            "pid": 2289974,
+            "fd": "3",
+            "driver": "xe",
+            "pci": "0000:23:00.0",
+            "client_id": "15013"
+          }
+        ]
+      }
+    },
+    "clients": {
+      "scope": "whole-host",
+      "blocked": [],
+      "other": [],
+      "inaccessible_processes": 480,
+      "hidden_clients_require_coordinator_ownership": true,
+      "device_nodes_opened": false
+    },
+    "clients_latest": {
+      "scope": "whole-host",
+      "blocked": [],
+      "other": [],
+      "inaccessible_processes": 489,
+      "hidden_clients_require_coordinator_ownership": true,
+      "device_nodes_opened": false
+    },
+    "clients_after_drain": {
+      "scope": "whole-host",
+      "blocked": [],
+      "other": [],
+      "inaccessible_processes": 483,
+      "hidden_clients_require_coordinator_ownership": true,
+      "device_nodes_opened": false
+    },
+    "devices_drained": true
+  },
+  "memory_fence": {
+    "53": "offline",
+    "54": "offline",
+    "55": "offline",
+    "56": "offline",
+    "57": "online"
+  },
+  "clients": {
+    "selected": [],
+    "other": [],
+    "inaccessible_entries": 480,
+    "hidden_clients_require_coordinator_ownership": true
+  },
+  "ldd": {
+    "returncode": 0,
+    "stdout": "\tlinux-vdso.so.1 (0x00007221f9b27000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007221f9800000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007221f9400000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007221f9717000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007221f9b29000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007221f9ad8000)\n",
+    "stderr": ""
+  },
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/screen/build/device/p58-cache-fixtures",
+    "--card",
+    "0",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/screen/evidence/card0-171b-v5-a/resident/K1a/run",
+    "--iterations",
+    "20",
+    "--down-layout",
+    "down-tile16",
+    "--authorized-device-window"
+  ],
+  "pid": 2289974,
+  "process_start_ticks": 24716658,
+  "anonymous_peak_bytes": 228716544,
+  "anonymous_limit_bytes": 4294967296,
+  "anonymous_stop_bytes": 4026531840,
+  "memory_last_sample": {
+    "anonymous_bytes": 228716544,
+    "root_seen": true,
+    "processes": [
+      {
+        "pid": 2289974,
+        "rss_anon_bytes": 228716544
+      }
+    ],
+    "sample_utc_ns": 1792404463556343710,
+    "host": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 120160890880,
+      "SwapTotal": 8589930496,
+      "SwapFree": 8083271680,
+      "GPUActive": 600342528
+    },
+    "gpuactive_growth_bytes": 600227840,
+    "pinned_expert_bytes": 0,
+    "gpuactive_pinned_credit_bytes": 0,
+    "gpuactive_shadow_bytes": 600227840,
+    "gpuactive_shadow_bound_bytes": 4294967296
+  },
+  "returncode": 0,
+  "sigterm_sent": false,
+  "elapsed_seconds": 10.156748497014632,
+  "memory_samples_sha256": "3f00772d5d9e40c0c2dd2893510c819cbc26263658fced2c0638bfbb4b83655b",
+  "native_files": {
+    "run/k1.json": "206d73539df65678a525301dee20870d9089a07a1fbd33aa451461cfb3121f5d",
+    "run/k1-cases.jsonl": "2d75f0ddd650e30c63cca325467c522e3f14b48d43360880c95d3e86d0e14d93",
+    "summary.json": "8789565b6ec7fa945aaa336a9c8b1e8dc7f5481af7480a24cd929641828f6e6d",
+    "kernel-before.jsonl": "10e506062c742d07af71910dc2c5141863e5ec6b7651a9f8a0080d7472f5cbd1",
+    "kernel-window.jsonl": "f7c9713d12529a34316bb0a87ce90fe518cafa1c25e1f920ee4da5997ac708d1"
+  },
+  "finished_utc_ns": 1792404468946246027
+}

@@ -39,7 +39,7 @@ Labels: **measured** = read from a device run; **transferred** = a two-card devi
 
 | # | Mechanism | Bundle 8 (P) | One card (O, HEAD) | Two-card measured gain | One-card price on the spin line | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | **Foreground copies on the single in-order compute queue** | Every foreground copy is `queue_->memcpy` on the in-order compute queue (`single_device.cpp:83-84,101`). One queue sync (`:122`). | Foreground copies go on a separate BCS immediate list plus a compute-queue barrier per copy (`sd:108-113`). `foreground_sync` waits on both queues (`sd:187-188`). Maintenance fills use a second BCS list on the same copy ordinal (`sd:88,169-175`). | None isolated: the two-card line always had one queue and has no cache fills. | **0.99 ms/token** readback excess, measured. Up to **+0.95** wait excess, measured but not attributed. Causal link to the shared copy ordinal is **assumed**. | **MISSING. Top item.** |
+| 1 | **Foreground copies on the single in-order compute queue** | Every foreground copy is `queue_->memcpy` on the in-order compute queue (`single_device.cpp:83-84,101`). One queue sync (`:122`). | Foreground copies go on a separate BCS immediate list plus a compute-queue barrier per copy (`sd:108-113`). `foreground_sync` waits on both queues (`sd:187-188`). Maintenance fills use a second BCS list on the same copy ordinal (`sd:88,169-175`). | None isolated: the two-card line always had one queue and has no cache fills. | **0.99 ms/token** readback excess, measured. Up to **+0.95** wait excess, measured but not attributed. Causal link to the shared copy ordinal is **assumed**. | **CLOSED by packet171b: neutral (+0.40%), slow mode unchanged.** |
 | 2 | Non-blocking token input | Rank 1 stages token and streams asynchronously when `async_half_ready` (`rank.hpp:300` → `mtp.hpp:281-287`: pinned memcpy plus an ordered copy, no wait). Otherwise it uses a blocking `put` (`rank.hpp:133`). The p137 device token input (bundle-9 candidate): exact smoke, **no speed number**. | Synchronous `put` (`main:2006`): drain, memcpy, BCS copy, barrier, wait and retire (`main:888-902`). Host `prepare_token` (`main:1210`) needs the token on the host. | None: p137 never produced a bracket. | **0.05–0.3 ms/token, assumed.** It sits inside the measured "other" median of 1.25 ms. | PARTIAL in P, MISSING in O |
 | 3 | Pure spin (`sleep20=0`) | `host_spin.hpp:28` with `P56X_SLEEP20=0` | 250 µs spin, then 20 µs sleeps (`spin_wait.hpp:29-30`) | Not isolated. 56x has no device result. The 61x record gain of +8.67% is pure spin vs 1 ms poll plus HC fusion. | 275 switches/token gives about 75 µs per sleep cycle and about 37 µs detection latency per long wait. With 1.4–2 long waits per token, **0.05–0.08 ms/token** (measured counts, **assumed** latency model). | PARTIAL |
 | 4 | Ordered (non-blocking) cache publication, the packet58ar design | Not applicable: no expert cache | `publish_cache_table` always drains (`main:977`), reached via `cache_boundary` (`main:630,635`) | Not applicable | Spin total **0.200 ms/position, measured**. Construction plus submission is 0.183 (58aq, policy-independent). Drain **≤ 0.018 ms/token**. The poll-era 1.108 ms no longer applies. | MISSING but **DEAD under spin** |
@@ -71,6 +71,14 @@ Labels: **measured** = read from a device run; **transferred** = a two-card devi
 
 ## Kill-test status
 
-Only row 1 clears the threshold. It was **not** packaged to READY inside the 60-minute box. Its brief is `BUILD-BRIEF.md` in this directory. No READY file, no queue row and no launch exist.
+**Row 1 outcome (2026-10-19, CLOSED):** packet171b (`../packet171b-onecard-cqcopy/`) ran job `packet171b-v5-A`.
+
+- **Speed:** B0/B1 reached 34.740/34.761 tok/s against warm A1/A2 at 34.563/34.602. That is +0.40% minimum, below the +0.5% gate.
+- **Quality:** 60/60 exact, with drift 0.11%.
+- **Mechanism:** the slow readback mode did not change. The slow fraction was 0.40 in every view, P(slow after a fill token) was 0.92–0.96, and the slow-token wait excess was about 2.3 ms.
+
+The ~2.6 ms slow mode is therefore fill-traffic contention, not foreground-copy queue ordering. Row 1 transfers 0, and its DO-NOT-REPEAT entry is in packet171b. Results are in `notes/2026-10-19-own-runtime-packet171b-result.md`.
+
+Only row 1 cleared the threshold. It was **not** packaged to READY inside the 60-minute box. Its brief is `BUILD-BRIEF.md` in this directory. No READY file, no queue row and no launch exist.
 
 Measured inputs, by digest, are in `audit.json` → `inputs` (records of `name`, `parent_relpath`, `parent_digest`).
