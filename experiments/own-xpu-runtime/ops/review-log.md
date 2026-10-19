@@ -788,3 +788,29 @@ STOP DOING acknowledged:
 - growing a measurement's scope when a one-sided bound decides;
 - wall-clock limits in freezable Codex units;
 - waiter deadlines that leave Codex frozen.
+
+## Review 36 — 2026-10-19 ~02:06 UTC — VERDICT: ACT
+
+**Finding:** 18.7% of card-minutes were busy over 2 h, and all four cards were idle 47% of the time. Lane A had been idle since 01:16. Two device-ready two-card jobs were serialized on lane B. Three of the last six lane-B launches failed for packaging reasons:
+- p153: a 60 s data-proof deadline;
+- p151: an op that bypassed the preparation registry;
+- p154: a 30 GB device floor.
+
+The Codex two-card prep queue was empty, and root was at 29.6 GB and falling.
+
+**Actions (coordinator, 02:06–02:10 UTC):**
+1. **p151 v5 to lane A.** It was re-planned, rehearsed and queued on lane A, but it **refused pre-device**: `readiness.py` asserts "registered lane-B probe only". The row went back on lane B behind p154's split, the A driver was restarted (`lanequeue-A34`), and a lesson was recorded: CPU plan and rehearsal do not run a packet's readiness lane assertion.
+2. **p58ai ordering.** It will run last in the next one-card session, only if root ≥ 31.2 GB: its `window.py:41` has a 30 GB device floor and it is not resealed. p58aj runs first.
+3. **Codex opsreview7:** `rehearse_entry.py` gains checks for storage-floor literals ≠ 25 GB (with a 25.5 GB + planned-writes admission replay), device-path wall deadlines < 2× the measured phase (cold TTFT 60 s; no deadline on data proofs), and a preparation-path probe (or a WARN when none is declared). Tests replay tonight's three pre-fix files.
+4. **Two-card prep refilled from p154's smoke** (02:03–02:07):
+   - rank 0 waits 1.546 ms/interval on rank 1, of which **1.227 ms is rank 1's draft** (B half 0.171, transport 0.051, merge 0.020);
+   - this meets packet126's reopen condition (measured recoverable wait);
+   - Codex **p156** runs p152's prepared draft_wait brief: hidden-only draft work in rank 1's suffix slack, proposals for both lanes, no wall-clock data proofs, preparation-path probe;
+   - p151's smoke already showed an upper bound far above 1.952 ms (interval 40.1 ms vs 17.0, half A 34.0 ms). Its v5 runs for a clean closure; no full-M=2 brief.
+5. **Disk.** disk10 freed only 27 MB, because most candidates are protected or referenced. Codex **disk11** archives the untracked bulk `run/` evidence of closed diagnostics to the RAID with sha256 manifests, keeping the summary JSONs, until root ≥ 33 GB.
+
+STOP DOING acknowledged:
+- lane-B-only two-card proposals;
+- per-packet disk floor literals;
+- READY without device-path deadline checks;
+- an empty two-card Codex queue with verdicts < 1 h away.
