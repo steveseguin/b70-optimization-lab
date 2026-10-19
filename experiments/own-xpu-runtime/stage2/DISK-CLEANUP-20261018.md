@@ -1042,3 +1042,94 @@ in `audit/disk10-scan-replacement.txt` and `audit/disk10-compressed-scan.json`.
 Other agents advanced shared main during the audit; the final pre-commit fetch
 confirmed both at `d86cecda76acc0172fcbb1d30058cbb2b84f6ab3`.
 Only this log is included in the explicit-path `git commit --only` and push.
+
+
+## disk11 — closed diagnostic bulk audit; no eligible originals (2026-10-19)
+
+**The 33 GB target was not reached. No evidence was archived or removed:**
+the candidate runs either remain protected by READY markers or have file
+paths/hashes referenced by receipts or tracked files. The requested protection
+rules were applied even where the closed-run list and a retained READY marker
+disagree. No READY marker, seal, tracked packet file or live queue was edited.
+
+Started at **02:09 UTC** on `steve-b70s`; root's initial available space was
+**29,460,480,000 bytes (29.460 GB)**. At **2026-10-19T02:14:53.903158+00:00**, root had
+**29,296,058,368 bytes (29.296 GB)** available.
+Cleanup reclaimed **0 bytes**. Other work continued to write to root; the
+free-space difference is not an archive yield. The audit ended when the
+listed candidates were exhausted, within the 40-minute limit.
+
+### Candidate inventory and keep decisions
+
+Sizes below are allocated regular-file/link bytes from no-follow inventories
+of the original device-run folders, excluding directory blocks. They are
+screening sizes, not reclaimable totals. Copied lineage, chain record evidence,
+record submission folders and `stage2/screen/*` were not cleanup candidates.
+
+| Packet | Device-run bytes inventoried | Qualification / reason retained |
+| --- | ---: | --- |
+| 149 | 410,247,168 | Closed exchange probe in `ops/screen-cleanup/closed.json`; `READY-FOR-DEVICE.json` remains, so the packet stays. |
+| 150 | 246,370,304 | Finished split bracket, confirmed by `notes/2026-10-19-own-runtime-packet150-result.md`; 771 otherwise eligible bulk files (174,342,144 allocated bytes) all have path or SHA-256 references. |
+| 142 | 353,529,856 | Closed attention layout diagnostic; READY marker remains. |
+| 145 | 733,032,448 | Closed router/GDN layout diagnostics; READY marker remains. |
+| 144, 146, 147, 148 | 0 | No original device-run bulk tree found; CPU study/plan material retained. |
+| 153 | 396,582,912 | Listed failed first smoke and finished p153b bracket confirmed by `notes/2026-10-19-own-runtime-packet153-result.md`; READY marker remains. The successful p153b smoke was outside the requested pair. |
+| 151 | 164,261,888 | Failed smoke evidence retained: completed v5 was not established, and READY remains. Only smoke bracket summaries were present at inspection. |
+| 58aa, 58ac | 0 | Closed CPU studies; no original device-run bulk tree. |
+| 58ae | 0 | No original device-run tree; readiness marker exists, and copied lineage stays. |
+| 58af | 43,909,120 | Closed measurement diagnostic; READY marker remains. |
+| 58x | 85,340,160 | Finished cache screen/winner; READY marker remains, with later record ancestry retained. |
+| 58y | 14,467,072 | Closed attribution diagnostic; READY marker remains. |
+
+The fresh `python3 -B experiments/own-xpu-runtime/ops/frozen_paths.py` run
+completed successfully with **62,135 paths and no diagnostics**. Active/ready
+packet admission used the same module's `active_packets` function. Packet154
+was observed running on lane B and was untouched. All explicit packet exclusions,
+GGUF/model files, oracle results, external runtime-results evidence and frozen
+paths stayed in place.
+
+For packet150, tracked files, symlinks/hardlinks, frozen paths, named decision
+files and small JSON/text/compressed receipts were excluded first. The remaining
+771 bulk files were SHA-256 hashed. Exact repository-relative paths,
+stage2-relative paths, packet-relative paths and hashes were searched across
+tracked, hidden and ignored repository text, including compressed metadata.
+Binary model/tensor/object payload extensions and `.git` were excluded from
+content search. The ordinary scan recorded 68 inaccessible old Qwen paths
+under `experiments/qwen38-flash-next-fp8-b70/reopen-20261008`; these are not
+claimed inspected. They do not affect the refusal: **every candidate already
+has a positive reference in an accessible tracked file or JSON receipt**.
+
+An independent check read the actual ten reference sources, verified the
+matched strings, and saved each source's SHA-256. For example, packet150's
+`window.json` pins `run/bracket-inputs.json` and `run/report-inputs.json` by hash;
+the candidate set includes hashes also pinned by later receipts. The complete
+771-file mapping is retained. No absence-of-reference claim is needed or made.
+
+### Audit location and operating record
+
+Audit and README:
+`/mnt/raid-models/own-xpu-runtime-archive/disk11-2026-10-19/`.
+The RAID had **5,171,873,964,032 available bytes** at the initial explicit
+capacity check. `audit/all-candidate-sizes.json` records per-run sizes and
+readiness markers; `inventory.json`, `candidates.json` and `kept.json` record
+selection; `qualified-reference-blocks.json` maps every rejected bulk file to
+its reference; `reference-source-identities.json` pins those sources.
+The frozen list, reference search outputs, errors and audit scripts are retained.
+`receipt.json` records free space and zero removals.
+
+**No tar was created, so there is nothing to restore and no `tar -df` result
+to claim.** `README.txt` states that explicitly and includes the required
+repository-relative extraction form for a future qualified archive. Every
+original and every small decision file remains in place.
+
+Bulk work used `nice -n 19 ionice -c3 taskset -c 8-15,24-31`, Python `-B`,
+closed stdin and a 2 GiB address-space cap. Checks found no one-card PAUSE-B
+hold or active `packet58-onecard-*` unit; the scan wrapper monitored both and
+would pause its own I/O if either appeared. No sudo, GPU launch, service or
+settings change, cache drop, journal vacuum, process signal, or evidence
+removal occurred.
+
+`git pull --rebase` refused the unrelated dirty files. Fetch confirmed
+`HEAD == origin/main == 9e547e4d9343ef996a9ab3e3bc4515cfcc757e0b` initially
+and again before publication. Only this cleanup log is committed using
+`git commit --only -- <this path>` and pushed immediately afterwards.
