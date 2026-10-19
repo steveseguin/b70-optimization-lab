@@ -1,0 +1,104 @@
+[
+  {
+    "source": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58aj-smoke-A.txt",
+    "sha256": "a5f14a0853aefd3351af5dd16b04a3820aba99e8506624528de66881d0cfd4d4",
+    "source_row": {
+      "name": "packet58ajb-smoke-A",
+      "lane": "A",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/queue_runner.py",
+        "--arm",
+        "smoke",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/evidence/card0-58ajb-screen-a/smoke",
+        "--cache-maintenance",
+        "overlap",
+        "--fault-review",
+        "{REVIEW}",
+        "--library-path",
+        "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+        "--authorized-device-window"
+      ],
+      "review": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/fault_review.py",
+      "env_extra": {},
+      "planned_write_bytes": 48683776,
+      "plan": {
+        "entry_rehearsal": {
+          "preparation_probe_note": "Local device-define CPU preparation receipt: packet58aj-onecard-resident/evidence/packet58ajb-preparation.json. Shared prepare_probe cannot admit this unranked one-card argv and private 4 MiB RoPE; keep its WARN explicit.",
+          "timing_evidence": [
+            "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/evidence/card0-58aj-screen-a/smoke/WSCREEN/run/run/cold-start.json"
+          ],
+          "binaries": [
+            {
+              "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/device/own-rt-iq3",
+              "sha256": "8bcb6d8c7ee06657ffa398408d5bc4506b41c170a981f6aafca7b79736073a3c"
+            },
+            {
+              "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/device/p58-cache-fixtures",
+              "sha256": "ba49aa8156437e0a1f95e52efe5b6b61141f96af62614a8f903c0c627f9e9c35",
+              "args": [
+                "--help"
+              ],
+              "returncode": 1,
+              "contains": "K1 unknown option"
+            }
+          ]
+        }
+      }
+    },
+    "status": "documentary future build contract; private entry absent; pins and rehearsal required"
+  },
+  {
+    "source": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58aj-v5-A.txt",
+    "sha256": "dbe3f929d24ebdb48f38045edc2a317d9725b8d39b387971a66fc97178f30cd7",
+    "source_row": {
+      "name": "packet58ajb-v5-A",
+      "lane": "A",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/queue_runner.py",
+        "--arm",
+        "resident",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/evidence/card0-58ajb-screen-a/resident",
+        "--cache-maintenance",
+        "overlap",
+        "--fault-review",
+        "{REVIEW}",
+        "--library-path",
+        "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+        "--authorized-device-window"
+      ],
+      "review": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/fault_review.py",
+      "env_extra": {},
+      "planned_write_bytes": 78362228,
+      "plan": {
+        "entry_rehearsal": {
+          "preparation_probe_note": "Local device-define CPU preparation receipt: packet58aj-onecard-resident/evidence/packet58ajb-preparation.json. Shared prepare_probe cannot admit this unranked one-card argv and private 4 MiB RoPE; keep its WARN explicit.",
+          "timing_evidence": [
+            "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/screen/evidence/card0-58aj-screen-a/smoke/WSCREEN/run/run/cold-start.json"
+          ],
+          "binaries": [
+            {
+              "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/device/own-rt-iq3",
+              "sha256": "8bcb6d8c7ee06657ffa398408d5bc4506b41c170a981f6aafca7b79736073a3c"
+            },
+            {
+              "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/build/device/p58-cache-fixtures",
+              "sha256": "ba49aa8156437e0a1f95e52efe5b6b61141f96af62614a8f903c0c627f9e9c35",
+              "args": [
+                "--help"
+              ],
+              "returncode": 1,
+              "contains": "K1 unknown option"
+            }
+          ]
+        }
+      }
+    },
+    "status": "documentary future build contract; private entry absent; pins and rehearsal required"
+  }
+]
