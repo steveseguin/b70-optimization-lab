@@ -29,3 +29,7 @@
   against completed output. Import/help/argv tests miss lazily read fixture
   manifests. Keep all three vendored fixture directories and their hash inventory.
   Recovered exactness never changes the original failed overhead verdict.
+
+| Date | Attempt | Measured outcome | Revisit only when |
+| --- | --- | --- | --- |
+| 2026-10-19 | Post-router demand transfer `bcs-demand-retained32x2` on the packet58aj resident record line (packet147 rank 4; census gate superseded by this direct screen, disclosed) | One-load v5 `packet58ame-demand-v5-A` (06:35–06:52 UTC), 60/60 exact, drift 0.46%: parent 31.886/32.033 (warm), candidate **15.255/15.194**, i.e. **−52.6%** vs the best control. The candidate halves one-card decode. Earlier device attempts hit a wrong-layout capture (240 vs 236) and an unvendored report fixture; both were fixed. | Closed. Only a demand-transfer design whose own micro shows the staged copies fully hidden behind resident expert compute (no serialization on the single CCS), with a measured bound ≥ 1 ms/token. |

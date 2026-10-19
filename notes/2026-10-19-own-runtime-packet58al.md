@@ -254,3 +254,20 @@ entry/report rehearsal and isolated lanequeue planning pass. READY is written
 last. No GPU, service, sudo, settings, model read or live queue change occurred.
 See the [recovery closeout](../experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/p58ame-closeout.md)
 for evidence paths, preserved failure, overhead caveat and exact next action.
+
+## Packet58am result (coordinator, 06:55 UTC): demand transfer halves one-card decode; closed
+
+One-load v5 `packet58ame-demand-v5-A`, card 0 whole-host, 06:35–06:52 UTC, run in v5-only mode because the recovered smoke report was exact.
+
+| View | Choice | tok/s |
+| --- | --- | ---: |
+| A0 | parent | 31.649 (warm-up, excluded) |
+| B0 | demand | **15.255** |
+| A1 | parent | 31.886 |
+| B1 | demand | **15.194** |
+| A2 | parent | 32.033 |
+
+- 60/60 exact, drift 0.46%; the candidate is **−52.6%** vs the best warm control.
+- The parent views confirm the 31.97 record line (31.89/32.03).
+- **Closed**, with a DO-NOT-REPEAT row in packet58am. The pre-sealed record chain (packet58ap) is not run.
+- With packet58ao's audit (no other one-card lever ≥ 2%), the one-card single-stream decode line has no open lever above the bar. Next widened target: batched prefill (packet165).
