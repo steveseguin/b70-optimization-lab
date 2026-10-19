@@ -1,0 +1,112 @@
+{
+  "placement": {
+    "name": "1",
+    "draft_rank": 1,
+    "target_split": 0,
+    "layer_boundary": 24,
+    "target_layers": [
+      24,
+      24
+    ],
+    "context": 4096,
+    "memory_admitted": true,
+    "supported": true,
+    "reason": "packet142 full-shape and 600 MiB class-bank bound",
+    "configuration": {
+      "context_capacity": 4096,
+      "ranks": [
+        {
+          "rank": 0,
+          "draft_rank": 1,
+          "target_layers": 24,
+          "target_modeled_allocations_bytes": 28773327988,
+          "allocation_reserve_bytes": 46500548,
+          "draft_total_bytes": 0,
+          "draft_duplicate_head_bytes": 0,
+          "target_total_bytes": 28819828536,
+          "total_with_mtp_bytes": 28819828536,
+          "free_with_mtp_bytes": 5422469320,
+          "allocation_margin_passed": true,
+          "arena_device_bytes": 28773327988,
+          "arena_headroom_bytes": 3438926732,
+          "arena_margin_passed": true
+        },
+        {
+          "rank": 1,
+          "draft_rank": 1,
+          "target_layers": 24,
+          "target_modeled_allocations_bytes": 28700766628,
+          "allocation_reserve_bytes": 1228800,
+          "draft_total_bytes": 3354364214,
+          "draft_duplicate_head_bytes": 0,
+          "target_total_bytes": 28701995428,
+          "total_with_mtp_bytes": 32056359642,
+          "free_with_mtp_bytes": 2185938214,
+          "allocation_margin_passed": true,
+          "arena_device_bytes": 32055130842,
+          "arena_headroom_bytes": 157123878,
+          "arena_margin_passed": true
+        }
+      ]
+    },
+    "memory_gate": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/packet56-draft-prefix/memory_gate.py",
+    "memory_gate_sha256": "3563edbcdfaf7bf75ed0301e4c2f507cbe36a863f6f09d9dce5d5ba167bb4232"
+  },
+  "timing": "token",
+  "timing_modes": [
+    "token"
+  ],
+  "lineage": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/lineage/attention-order600",
+  "seal": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/lineage/attention-order600/screen-seal.json",
+  "seal_sha256": "99c97a775409d8a2c2bfb94a7983f28e6238fbd003fd732f6c42f94268247a9f",
+  "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/build/device/own-rt-iq3",
+  "binary_sha256": "ebacd4c1c0ba20fdde8ae1c8640d188f3eb190605bb72e5c0f6b10252efd1292",
+  "dispatch": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/lineage/attention-order600/dispatch-speed6.json",
+  "dispatch_sha256": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612",
+  "profile": "tp2",
+  "selection_sha256": "0827c5f09d9324b8655c8d812bdbd79ef157fb7ad457838e12bff7a82b6d9f23",
+  "memory_plan_sha256": "6d4a1916a16bc77892a49c9845a52eae83f71a07a3a916125e7a44aec619787b",
+  "lane": "B",
+  "conditions": {
+    "card": 2,
+    "cards": [
+      2,
+      3
+    ],
+    "pci": [
+      "0000:43:00.0",
+      "0000:47:00.0"
+    ],
+    "cores": [
+      4,
+      5,
+      6,
+      7,
+      20,
+      21,
+      22,
+      23
+    ],
+    "affinity": "4-7,20-23",
+    "nice": 0,
+    "native_card": 0,
+    "native_cards": [
+      0,
+      1
+    ]
+  },
+  "bracket": {
+    "kind": "smoke",
+    "views": [
+      {
+        "choice": "candidate",
+        "selection": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/lineage/attention-order600/candidate.json",
+        "selection_sha256": "5a865b5fc3d1c0af3e0e728e666c02339082376b197c01399d5396d7106797b5",
+        "max_new": 64
+      }
+    ],
+    "class_layout": "attention-order600"
+  },
+  "bracket_config": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet142-class-layout/v5/configs/attention-order600-smoke.json",
+  "bracket_config_sha256": "a9c041da1540b067c3200641bbfc799521f593719a37167d42b67d2a9fbf32d5"
+}
