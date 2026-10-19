@@ -968,3 +968,18 @@ Actions taken (10:05–10:15):
 5. **Codex outage recorded:** CURRENT.md (coordinator line only), memory `codex-usage-limit-until-2026-10-26`, heartbeat. Codex-unit tooling is inert until the reset; monitor-loop4's codex count reads 0 and is harmless.
 
 STOP DOING acknowledged: bracket-only kill-test switches; relying on codex-* freezes; lane B without its own READY row for over 1 h; any p168c; counting one-card records as two-card progress.
+
+## Review 44 — 2026-10-19 11:05 UTC — VERDICT: ACT
+
+The reviewer found 47% device-in-flight and 15.3% card-busy over 2 h. The host behaves as one serial lane: in 6 h no two GPU jobs overlapped. Idle gaps come from preparation starting only after each result. Two cards has been flat for about 17 h. Lever choice is sound: p174 targets the measured fill drain, and D2 is the census's top row, gated by a micro.
+
+Actions taken (11:05–11:15):
+1. **QUIET only for one-card brackets and record chains.** Two-card censuses, micros and brackets run without it; `ready-run.sh` lane mode never set QUIET. The manual `quiet-on-start.sh` for the census v3 will not be reused for two-card jobs.
+2. **p174 win path prepared:** `fn-run/p174-win.sh` reads the bracket on DONE. On a win it runs `ops/onecard_chain_derive.py` (parent packet58aj orchestration, flags `wait-policy=spin` and `fill-kick=on`, packet `packet174c-chain`, unit `packet58-onecard-174-a`), then `onecard-chain.sh --check`, then the quiet chain under QUIET and `onecard-hold.lock`. It fails closed with an ALERT if the derive or check refuses. A subagent is fixing the generator's two real-repo pin-guard refusals (prefix collision; inherited parent pins).
+3. **Next jobs ready behind the running ones:** subagents **p175b** (D1 scale-sharing micro on the p175 harness, waiting for p175's commit) and **p176** (one-card d2: token readback written by a compute kernel to host-visible memory, a process-wide flag, parent packet58as).
+4. **Micros on either lane:** p175 was asked for a lane-A twin proposal (card 0), so micros run on whichever lane is free. Lanequeue host admission still decides.
+5. **Two-card D2 rule changed:** build only if the micro shows ≤ 0.97×, and then only as a combined bundle-9 candidate with packet153's static descriptors (+0.35%). No sub-1% levers alone (D1, R1, N3, G1, E1n2).
+
+Also on record: the p174 plan refusal at 11:01:47 (README edited after the build-receipt seal) was fixed in b2b9772bf by restoring the sealed README and moving the text to CPU-GATES.md. Briefs now say "no edits after the seal".
+
+STOP DOING acknowledged: QUIET on two-card diagnostics; preparation started only after already-ranked results; editing after READY; unprepared chain paths; sub-1% two-card levers one at a time.
