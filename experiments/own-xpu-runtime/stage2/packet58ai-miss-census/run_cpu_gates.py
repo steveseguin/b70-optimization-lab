@@ -4,8 +4,9 @@ from pathlib import Path
 from build_engine import P,ROOT,sha,save,limits
 
 def run(args,log):
-    with log.open('w') as f:
-        cp=subprocess.run(args,stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,timeout=120)
+    with log.open('w') as f,log.with_suffix('.stderr.log').open('w') as errors:
+        cp=subprocess.run(args,stdin=subprocess.DEVNULL,stdout=f,
+                          stderr=errors if log.suffix=='.json' else subprocess.STDOUT,timeout=120)
     if cp.returncode:raise RuntimeError('CPU check failed: '+str(log))
     return cp
 
@@ -30,7 +31,7 @@ def main():
     run([sys.executable,'-B',str(ops/'launch_env.py'),*binaries],P/'evidence/loader.log')
     save(P/'evidence/loader.json',dict(passed=True,device_executed=False,log_sha256=sha(P/'evidence/loader.log'),
         binaries={str(Path(x).relative_to(P)):sha(x) for x in binaries}))
-    assert resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024<4*1024**3
+    assert resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024<2*1024**3
     save(P/'evidence/cpu-resource-use.json',dict(passed=True,device_executed=False,max_child_rss_bytes=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024))
     print(f'{tests} tests, 3 native launch paths, 2 loaders and 2 report kinds PASS')
 if __name__=='__main__':main()

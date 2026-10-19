@@ -24,7 +24,7 @@
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/sources/dcb5fe7b5e7b-entry-main.cpp"
       ],
       "returncode": 0,
-      "seconds": 58.520933436986525
+      "seconds": 17.3848986030207
     },
     {
       "name": "gnu-host-expert",
@@ -96,7 +96,7 @@
         "/usr/lib/x86_64-linux-gnu/libcrypto.so"
       ],
       "returncode": 0,
-      "seconds": 27.65902695900877
+      "seconds": 0.264120403007837
     },
     {
       "name": "device-entry-main",
@@ -121,7 +121,7 @@
         "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/sources/dcb5fe7b5e7b-entry-main.cpp"
       ],
       "returncode": 0,
-      "seconds": 27.763756751985056
+      "seconds": 25.098641038988717
     },
     {
       "name": "device-expert",
@@ -231,13 +231,13 @@
         "-lze_loader"
       ],
       "returncode": 0,
-      "seconds": 2.9541795669938438
+      "seconds": 3.0683206520043314
     }
   ],
   "artifacts": {
-    "build/gnu-host/own-rt-iq3": "d92269e802018ce39583974202c1181280511419fba3626c0d4dc5b586658180",
+    "build/gnu-host/own-rt-iq3": "c8fc0b6edb9220b36f5d8733b11b64eb161fe9ccba46bee6449d393c8f67eb2c",
     "build/gnu-host/p58-cache-fixtures": "9baf4775c18c9d45dcec842279e80136d8e8a351bf894ce7599234849d272277",
-    "build/device/own-rt-iq3": "ecd08fff937ab74265e473e7b90cae7afdd165b6d57bc1dae44c553da16e8509",
+    "build/device/own-rt-iq3": "71189abda2f61b91a81cf106e1ff4ab1233fe9645edeaf566728a27d2bf87bad",
     "build/device/p58-cache-fixtures": "ba49aa8156437e0a1f95e52efe5b6b61141f96af62614a8f903c0c627f9e9c35"
   },
   "immutable_binary_inputs": {
@@ -311,6 +311,12 @@
     "experiments/own-xpu-runtime/stage2/packet58j-onecard-port/build/device/CMakeFiles/programs.dir/entry-k2_fixture.cpp.o": "36763189af3213a340c09899a5ce72e0bd15320deb54fd6ebb970e40fef432ba",
     "experiments/own-xpu-runtime/stage2/packet58ab-onecard-hcfusion/build/device/p60_submit.o": "9607b5f19989fc1b0d6c77ec7d0fc792345938a1d740e85d73b57ac506dfa2b2"
   },
-  "max_rss_kib": 726728,
-  "binary_pin_resolution": "Resolve the original symlink names to the same immutable ELF objects; no byte or link change"
+  "max_rss_kib": 726484,
+  "binary_pin_resolution": "Resolve the original symlink names to the same immutable ELF objects; no byte or link change",
+  "p58aib_rebuilt_commands": [
+    "gnu-host-entry-main",
+    "gnu-host-own-rt-iq3",
+    "device-entry-main",
+    "device-own-rt-iq3"
+  ]
 }

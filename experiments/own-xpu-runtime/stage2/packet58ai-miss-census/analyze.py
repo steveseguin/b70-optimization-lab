@@ -126,6 +126,31 @@ def native_closure(folder,receipt):
     require(set(receipt.get('native_files',{}))==expected,'complete native census closure required')
     require({'run/receipt.json','run/summary.json','run/run/receipt.json'}<=expected,'native receipts missing')
 
+def first_request(folder):
+    """Validate the smoke's own completed request, with no elapsed-time gate."""
+    folder=Path(folder)
+    result=read(folder/'result.json')
+    require(result.get('passed') is True and result.get('tokens'),'first request output missing')
+    require(result.get('arithmetic')=='iq3-p49-split32-v1','first request arithmetic')
+    with (folder/'measure.jsonl').open() as stream:
+        rows=[json.loads(line) for line in stream if line.strip()]
+    require(rows,'first request census stream empty')
+    require(all(r.get('arm')==2 for r in rows),'first request split stream required')
+    generated=[r for r in rows if r.get('generated_index',0)>0]
+    require([r['token_id'] for r in generated]==result['tokens'],'first request output binding')
+    require([r['generated_index'] for r in generated]==list(range(1,len(result['tokens'])+1)),
+            'first request generated coverage')
+    require([r['position'] for r in rows]==list(range(len(rows))),'first request position coverage')
+    layers=[layer for row in rows for layer in token(row)]
+    streams={key:[layer[key] for layer in layers] for key in
+             ('misses','miss_kernel_ms','resident_kernel_ms','router_to_first_expert_ms',
+              'resident_compute_while_miss_waits_ms')}
+    require(all(values and all(math.isfinite(v) and v>=0 for v in values)
+                for values in streams.values()),'missing or empty first request streams')
+    return dict(passed=True,diagnostic_only=True,request=str(folder),
+                result_sha256=sha(folder/'result.json'),measure_sha256=sha(folder/'measure.jsonl'),
+                streams={k:len(v) for k,v in streams.items()},wall_deadline_seconds=None)
+
 def analyze(root):
     root=Path(root)
     if not (root/'queue.json').exists():return dict(passed=False,status='pending-device',device_executed=False,upper_bound_ms_per_token=None,decision=None)

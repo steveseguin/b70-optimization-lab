@@ -15,7 +15,7 @@ P = Path(__file__).resolve().parent
 ORDER = ('K1a', 'K1b', 'WSCREEN')
 GAP_SECONDS = 90
 STAGES = (('combined','p60fusion'),('smoke','smoke'))
-ROOT = P / 'evidence/card0-census-a'
+ROOT = P / 'evidence/card0-census-b'
 
 
 def commands(output, card, review, library, view='p60fusion', maintenance=DEFAULT_MAINTENANCE):
@@ -63,7 +63,7 @@ def plan(output, view):
         pinned_expert_bytes=W.M.plan()['census']['pinned_expert_bytes'],
         host_peak_bound_bytes=W.M.window_plan('WSCREEN')['host_required_available_bytes']-W.M.HOST_RESERVE,
         planned_write_bytes=sum(W.WRITES['K1' if n.startswith('K1') else n] for n in ORDER),
-        root_stop_floor_bytes=30_000_000_000,
+        root_stop_floor_bytes=25_000_000_000,
         request_count=12 if view=='smoke' else 60, prompts_per_view=12, requested_max_new=64 if view=='smoke' else 128, oracle='packet49-integrate',
         timing_claim_eligible=False, submission_eligible=False, output=str(output))
 
@@ -140,7 +140,12 @@ def main(argv=None):
                     time.sleep(min(1,max(0,end-time.monotonic())))
         state['passed']=True;save()
         import analyze
-        report=analyze.analyze(output)
+        if view=='smoke':
+            import suite_driver as D
+            first=D.oracle_inputs()['prompts'][0]['prompt_id']
+            report=analyze.first_request(output/'WSCREEN/run/run/S0'/first)
+        else:
+            report=analyze.analyze(output)
         W.save(output/'census-analysis.json',report)
         W.require(report['passed'],'census analysis failed')
         decision=json.loads((output/'WSCREEN/run/summary.json').read_text())

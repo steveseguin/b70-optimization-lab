@@ -20,15 +20,15 @@
         },
         "decision": null
       },
-      "candidate": "p60fusion",
+      "candidate": "smoke",
       "observations": [
         {
           "argv": [
-            "/tmp/packet58ab-arguments-g8zw6qvt/packet/build/device/p58-cache-fixtures",
+            "/tmp/packet58ab-arguments-4iegkrq2/packet/build/device/p58-cache-fixtures",
             "--card",
             "0",
             "--output",
-            "/tmp/packet58ab-arguments-g8zw6qvt/packet/evidence/combined/K1a/run",
+            "/tmp/packet58ab-arguments-4iegkrq2/packet/evidence/smoke/K1a/run",
             "--iterations",
             "20",
             "--down-layout",
@@ -99,9 +99,9 @@
           }
         }
       ],
-      "job": "packet58ai-census-A",
-      "unit": "screen-packet58ai-census-A.service",
-      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-A.service\n",
+      "job": "packet58ai-census-b-smoke-A",
+      "unit": "screen-packet58ai-census-b-smoke-A.service",
+      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-b-smoke-A.service\n",
       "real_queue_entry": true,
       "real_unit_and_environment_gates": true,
       "topology": [
@@ -131,8 +131,8 @@
         {
           "passed": true,
           "snapshot": {
-            "MemAvailable": 111031578624,
-            "GPUActive": 9310928896
+            "MemAvailable": 118559678464,
+            "GPUActive": 15761408
           },
           "window": "K1",
           "required_available_bytes": 12884901888,
@@ -142,8 +142,8 @@
         {
           "passed": true,
           "snapshot": {
-            "MemAvailable": 111031578624,
-            "GPUActive": 9310928896
+            "MemAvailable": 118556688384,
+            "GPUActive": 15761408
           },
           "window": "K1",
           "required_available_bytes": 12884901888,
@@ -152,7 +152,7 @@
         }
       ],
       "live_host_admission": true,
-      "proposal_sha256": "9a6df926f58a219754948ceb578e421aa331708c6636345597953c32a18727c3",
+      "proposal_sha256": "fe9c9af8b8a8f462afbea99ffbedc2189c43b07346b4e82ea23f5ac9d5d48607",
       "synthetic_boundaries": [
         "build envelope (verified separately)",
         "prior K1/smoke receipts",
@@ -183,15 +183,15 @@
         },
         "decision": null
       },
-      "candidate": "p60fusion",
+      "candidate": "smoke",
       "observations": [
         {
           "argv": [
-            "/tmp/packet58ab-arguments-ofn2md8f/packet/build/device/p58-cache-fixtures",
+            "/tmp/packet58ab-arguments-lf9f9xy4/packet/build/device/p58-cache-fixtures",
             "--card",
             "0",
             "--output",
-            "/tmp/packet58ab-arguments-ofn2md8f/packet/evidence/combined/K1b/run",
+            "/tmp/packet58ab-arguments-lf9f9xy4/packet/evidence/smoke/K1b/run",
             "--iterations",
             "20",
             "--down-layout",
@@ -262,9 +262,9 @@
           }
         }
       ],
-      "job": "packet58ai-census-A",
-      "unit": "screen-packet58ai-census-A.service",
-      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-A.service\n",
+      "job": "packet58ai-census-b-smoke-A",
+      "unit": "screen-packet58ai-census-b-smoke-A.service",
+      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-b-smoke-A.service\n",
       "real_queue_entry": true,
       "real_unit_and_environment_gates": true,
       "topology": [
@@ -294,8 +294,8 @@
         {
           "passed": true,
           "snapshot": {
-            "MemAvailable": 111018835968,
-            "GPUActive": 9310928896
+            "MemAvailable": 118530580480,
+            "GPUActive": 15761408
           },
           "window": "K1",
           "required_available_bytes": 12884901888,
@@ -305,8 +305,8 @@
         {
           "passed": true,
           "snapshot": {
-            "MemAvailable": 111018835968,
-            "GPUActive": 9310928896
+            "MemAvailable": 118531874816,
+            "GPUActive": 15761408
           },
           "window": "K1",
           "required_available_bytes": 12884901888,
@@ -315,7 +315,7 @@
         }
       ],
       "live_host_admission": true,
-      "proposal_sha256": "9a6df926f58a219754948ceb578e421aa331708c6636345597953c32a18727c3",
+      "proposal_sha256": "fe9c9af8b8a8f462afbea99ffbedc2189c43b07346b4e82ea23f5ac9d5d48607",
       "synthetic_boundaries": [
         "build envelope (verified separately)",
         "prior K1/smoke receipts",
@@ -346,23 +346,23 @@
         },
         "decision": null
       },
-      "candidate": "p60fusion",
+      "candidate": "smoke",
       "observations": [
         {
           "argv": [
             "/usr/bin/python3",
             "-B",
-            "/tmp/packet58ab-arguments-xphccmva/packet/suite_driver.py",
+            "/tmp/packet58ab-arguments-m1pvjtx3/packet/suite_driver.py",
             "--window",
             "WSCREEN",
             "--view",
-            "p60fusion",
+            "smoke",
             "--cache-maintenance",
             "overlap",
             "--card",
             "0",
             "--output",
-            "/tmp/packet58ab-arguments-xphccmva/packet/evidence/combined/WSCREEN/run",
+            "/tmp/packet58ab-arguments-m1pvjtx3/packet/evidence/smoke/WSCREEN/run",
             "--miss-mode",
             "zerocopy",
             "--authorized-device-window"
@@ -434,7 +434,7 @@
           "argv": [
             "ionice",
             "-c3",
-            "/tmp/packet58ab-arguments-xphccmva/packet/build/device/own-rt-iq3",
+            "/tmp/packet58ab-arguments-m1pvjtx3/packet/build/device/own-rt-iq3",
             "--authorized-device-window",
             "--card",
             "0",
@@ -443,7 +443,7 @@
             "--context",
             "4096",
             "--max-new",
-            "128",
+            "64",
             "--stage",
             "decode",
             "--memory",
@@ -457,7 +457,7 @@
             "--retain-steps",
             "none",
             "--suite-inputs",
-            "/tmp/packet58ab-arguments-xphccmva/packet/evidence/combined/WSCREEN/run/suite-inputs.tsv",
+            "/tmp/packet58ab-arguments-m1pvjtx3/packet/evidence/smoke/WSCREEN/run/suite-inputs.tsv",
             "--input",
             "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/incident-retrospective/tokens.txt",
             "--plan",
@@ -471,9 +471,9 @@
             "--selection-sha256",
             "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
             "--dispatch",
-            "/tmp/packet58ab-arguments-xphccmva/packet/dispatch-speed6.json",
+            "/tmp/packet58ab-arguments-m1pvjtx3/packet/dispatch-speed6.json",
             "--output",
-            "/tmp/packet58ab-arguments-xphccmva/packet/evidence/combined/WSCREEN/run/run",
+            "/tmp/packet58ab-arguments-m1pvjtx3/packet/evidence/smoke/WSCREEN/run/run",
             "--hc",
             "p60fusion",
             "--cache-bytes",
@@ -485,7 +485,7 @@
             "--seconds",
             "7200",
             "--bracket-inputs",
-            "/tmp/packet58ab-arguments-xphccmva/packet/evidence/combined/WSCREEN/run/bracket-inputs.tsv"
+            "/tmp/packet58ab-arguments-m1pvjtx3/packet/evidence/smoke/WSCREEN/run/bracket-inputs.tsv"
           ],
           "limits": {
             "0": [
@@ -551,9 +551,9 @@
           }
         }
       ],
-      "job": "packet58ai-census-A",
-      "unit": "screen-packet58ai-census-A.service",
-      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-A.service\n",
+      "job": "packet58ai-census-b-smoke-A",
+      "unit": "screen-packet58ai-census-b-smoke-A.service",
+      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-b-smoke-A.service\n",
       "real_queue_entry": true,
       "real_unit_and_environment_gates": true,
       "topology": [
@@ -583,8 +583,8 @@
         {
           "passed": true,
           "snapshot": {
-            "MemAvailable": 111010729984,
-            "GPUActive": 9310928896
+            "MemAvailable": 118497472512,
+            "GPUActive": 15761408
           },
           "window": "WSCREEN",
           "required_available_bytes": 98989727744,
@@ -594,8 +594,8 @@
         {
           "passed": true,
           "snapshot": {
-            "MemAvailable": 111010729984,
-            "GPUActive": 9310928896
+            "MemAvailable": 118495285248,
+            "GPUActive": 15761408
           },
           "window": "WSCREEN",
           "required_available_bytes": 98989727744,
@@ -604,7 +604,7 @@
         }
       ],
       "live_host_admission": true,
-      "proposal_sha256": "9a6df926f58a219754948ceb578e421aa331708c6636345597953c32a18727c3",
+      "proposal_sha256": "fe9c9af8b8a8f462afbea99ffbedc2189c43b07346b4e82ea23f5ac9d5d48607",
       "synthetic_boundaries": [
         "build envelope (verified separately)",
         "prior K1/smoke receipts",
@@ -625,6 +625,7 @@
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/coordinator_gate.py": "0e0e39744a84ed8a7deb0502574582013fec4fa1b22ca6122e5d1ac54ca93d12",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/fullshape_submit_gate.py": "492a99449f5b150feec9b897ec5d4329990414c6178d71f676f30cb2bbd2e5c5",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/shared_submission_cli.py": "558c5f9981943c58b45668b3c4bf0c877c398f801a2bab145f09fa1c8838f5d0",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/rebuild_smoke.py": "d4dbfa7c94f290aa698dd8ce418606a592e6e89e35b1b826b0f11e95299535c8",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/packet58_submission.py": "381c9d1660b133585a4ca647c2b3913315657db9fbb480641f98346447193be3",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/screen_gate.py": "424cbb46d45d5a692f0b842d2dab1fb250159c5caffc0698c0fb6865940bad56",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/rehearse_submission.py": "1fad3003467ae99d696a8ea2a0b71fbd16eb1235e8adc053aa1a2ef65056aa98",
@@ -632,8 +633,8 @@
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/plan_gate.py": "aff948d4bdc11ce9c2b668cbf7bed4ddfcb14e571df2766954df6d9c9f1f3ed7",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/shared_oracle.py": "d6d6049e2d068af54b2198df9f42e30e3ea22f94035ea07a905a1839b48083c9",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/startup_gate.py": "492a99449f5b150feec9b897ec5d4329990414c6178d71f676f30cb2bbd2e5c5",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/suite_driver.py": "0dfb7481a1a2f30bcdbd9f2f373962680c5d13b7b3692dce895036396c471abb",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/miniature_gate.py": "ca07f594af4e265759e9bd0666deb050d4936354242e1582c722e75e792964c8",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/suite_driver.py": "ec0a908462e61b9ead3dbc20f604155d56d1e0a65d7d494c53a748ef06a6cd7f",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/miniature_gate.py": "aa0a77a485841a2ade5b1ac60ad9cf501460c3ae7f42ec7c8a00df5ffea54224",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/native_cpu_gates.py": "1b518133de0f9a3525c122478c0e82d5b684c2304ef071730fc378b7e04441ae",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/compare_bracket.py": "dc31cb064348a32fe981c8481b466e115cde2a61411ed14908869389fddf93a2",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/input_scope.py": "7254916a0ef7bbf2320e52ba117f204a80a25ef5dc5e2f2bbbc9331472d3d4b4",
@@ -643,18 +644,20 @@
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/native_parser_gate.py": "a3c8d2383e27669109f0c85c8f09f632153985d4164189f9bbd341ad022f37e8",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/coordinator_snapshot.py": "ad74939fbeaca4a1fc67852e7b83b8b8182a5470ca599e331f37f47916f0a5ed",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/owner_teardown.py": "9986f367c29780b3a236edf6f864b5e1e0c976b5b9cb4875f00299c84d6f6560",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/build_engine.py": "7c317f12c20ecbcec0c0e4053c71bb869380e1472d44c16e5cc3bdb6f5a512dd",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/run_cpu_gates.py": "359e013d6f862d6c43752161c90b09752277b2516a71d5fc9dea50c9268b2167",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/build_engine.py": "2e78befe06c2791ccaeafff5f9bf787b555b91da3356e4fb509e3f27ab9a2057",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/run_cpu_gates.py": "a20bf1b2b5cffb75b2c2738288939506124fdb5e4e89c5fbb86bd4beb1c31bbc",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/supervision.py": "20426ac90dd439953fbb4857fa2afca05f233fd6b08e326eb1abb48c03d10017",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/window.py": "c863dfa9c711dccd0aa294c6a312bbf11de3a1491c0d48a9c60e19ea14670960",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/test_first_request.py": "098250b3f388407aa51f311e69863016d8eb558e6f2ca61f7bdaf74213c9bf44",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/window.py": "511c25f80f6152560fcb589ae3e80ed32884c93ec64734380150451ed1965768",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/chain_devices.py": "c409060588c0e36d77af6caa0b6368c5b1653cd8f00cf37e240762b13487c9df",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/memory_plan.py": "b787c1b19153d98ad42844a579d63e1d7cf34e78bca60595409f28acd5407f5c",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/fault_review.py": "1c131cf0230787ad68dd82dc9a0247589e4c44b960f3aa81244efff0cec0dded",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/fault_review.py": "f27e10c9e2f990309578fdd1b1a535327202ff14728014c9a7c69753962677f8",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/p56_head_support.py": "0938139e314575b9715149d5b86f7b2cfb26261aae44f26fd2ea7531c3378c7e",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/submission_cli.py": "db39b0e77ad87084018f4de5342190269f08389b1c5af9a7e856b5c281acfc0b",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/postload_allocation_gate.py": "492a99449f5b150feec9b897ec5d4329990414c6178d71f676f30cb2bbd2e5c5",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/k1_cpu_gate.py": "492a99449f5b150feec9b897ec5d4329990414c6178d71f676f30cb2bbd2e5c5",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/drain_gate.py": "c4b6ff2a3fb95d11330ce7caef6fca7035f69b788397a4758070143ed5335b72",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/fault_patterns.py": "fed5d2a0e17f3208c0bd65ad6e04745b6e60e07f6a444419e7bcc68b3ee876aa",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/onecard_admission.py": "a668468ac011416d42dae1bdc6cafc6fb705586e0a8e2037717cc2ecc5fe49c5",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/literal_audit.py": "85d72e7c451ad6b52b3a5efe713ade196f88d1f0891412fda54f70b4ae73117b",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/suite_metrics.py": "4eef50d1272c759904b64947297c865b71b683a52c5590fb822301bcdc7f04aa",
@@ -662,17 +665,18 @@
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/launch_env.py": "a55f31e6052e33d5b4702b01eddd4e5af5c4029fda6fc452dd8f564f3dfdc364",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/test_census_policy.py": "4bfb20c462dade40a44c7ff3562f1e6990efffcf90dd67126b1a2bb9cbb4960f",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/budget_gate.py": "7d52551c7f91c3bd5e13ba808a7bdc93701529eed527777701ea0bdc5e63b1cf",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/first_request_gate.py": "e99d9490329011aad531673a8cf9ac2b28e076ee89d183ebd35f8457bdef35fb",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/fault_driver_snapshot.py": "41a57d623b87d5de4726bfa739d4bacf97d41dabf2759d1aa381ed90b14d14c8",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/seal.py": "cf5d96223ba681fb5e3338ad90572ac01cef282b0fd7c81e017cf44e713e2c71",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/argument_gate.py": "bf3404d301d43fffbb99d9c8a198becac370c394fcd020ccdbd53ad0c4c78631",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/seal.py": "2bfd3b6d62e87c83d221273bd22d8be731c6117c418703f8347a5b5489129dc9",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/argument_gate.py": "2f4977be4017d6169da299ff6212cf8de72ec02d3eaaccb6a175349c703d762d",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/partition_gate.py": "2b2d2ba2bef3864ed76a8e58a4bc02bfc5a71aeaf3c5114786cc165aaa290e68",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/test_fault_boundary.py": "f704a566357b96a0ed3e818fb7e23336363fdd4b3096848be3a5c6fe0f261d86",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/analyze.py": "04ca99e100e9e069ce2a8281a1bfbfe6630120a53152445addafab8172cc5953",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/analyze.py": "08db0e1dea67788f3da9a12026af9d196e48af14ae99ef85f12dc27107893fe7",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/test_drain_fix.py": "314db689b308e461f0dfef11cc4b244223a781bea071b5f43bcaa836e4250290",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/drain_cpu_gate.py": "3747ba83d53a9e76b9d4c7dacd2aa7dd8789948e0ecd4ddeaf4efd96463f4ef3",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/launch_identity.py": "4e18965832be288095b0e0582ef2d2d4d7f72033b72b607bebad5c2ce0d58c58",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/views.py": "bea9a5cbc963b16662250815da91d17391b2f8a3c2e9e8bec0a5f9bb8256ded0",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/queue_runner.py": "2409d32df5e41529b32fbd2d05bc96a05e16253d3a37c674e0711e8819159db0",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/queue_runner.py": "e844bc1393d0608349a9f58d2bbd11662a8b044e2aeee90e783cfdd43fec30e5",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/legacy_memory_plan.py": "73f745ae22078f92ba05cfcd10d3e9d3b97abdc5c41a0d802f482a41d06ba128",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lane_admission.py": "08b8d50b94ac3e86de0a8ced7e6b0abfad4b44693d769e6899bb840c37d5868f",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/receipt_qualification.py": "1ed8f5bc44817c2dab4f975816d24f4957ea93a3a0a7a25eeec720c039d7a8e6",
@@ -683,7 +687,7 @@
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/dispatch-speed6.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612"
   },
   "old_code_regressions": [],
-  "peak_child_rss_bytes": 34299904,
+  "peak_child_rss_bytes": 35569664,
   "model_payload_reads": false,
   "services_started": false,
   "seal_validation": "separate seal verification; construction envelope synthetic to avoid circular gate dependency"

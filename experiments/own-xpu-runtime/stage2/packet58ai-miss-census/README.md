@@ -43,7 +43,7 @@ Retention: the requested source copy deliberately includes previously retained
 archives/receipts over 1 MiB. lineage/58ad-copy.json identifies their original
 bytes and commit; restore the tracked copy from Git. New build outputs are
 ignored, rebuildable from build_engine.py, and capped at 300 MB. Preparation
-uses nice19, helper cores, closed stdin, Python -B and at most 4 GiB.
+uses nice19, helper cores, closed stdin, Python -B and at most 2 GiB.
 
 CPU evidence: [build](evidence/build.json), [partition exactness](evidence/partition-cpu.json),
 [miniature parent/reset comparison](evidence/reset-gate.json),
@@ -53,14 +53,21 @@ CPU evidence: [build](evidence/build.json), [partition exactness](evidence/parti
 and [immutable input admission](evidence/pin-admission.json).
 The [proposal](../../ops/lane-queue/proposed-p58ai-census-A.txt) remains outside
 the live queues. Its model watchdog is 7200 seconds against an expected job
-duration of at most 1800 seconds. Queue and in-flight checks refuse other work.
+duration of at most 900 seconds. Queue and in-flight checks refuse other work.
 
-After a coordinator run, `analyze.py evidence/card0-census-a/combined`
+After a coordinator run, `analyze.py evidence/card0-census-b/combined`
 reads the sealed native receipts and checks the complete log closure, all
 48 layers at each position, oracle/record tokens, control drift and overhead.
 It writes no speed claim. The [plan](PLAN.md) defines both thresholds and the
 meaning of the conservative ceiling. A future run rechecks memory, storage,
 device ownership, fault review, unit identity and the closed environment.
-The total write allowance is 1088 MiB while preserving 30 GB root free;
+The total write allowance is 1088 MiB while preserving 25 GB root free;
 [storage evidence](evidence/storage-budget.json) explains the unchanged K1
 allowance. These are admission requirements, not promises about future free space.
+
+Packet58aib prepares a fresh 12 × 64 smoke first. S0 enables the existing
+resident/miss partition diagnostic. On the first completed request, the real
+analyzer requires nonempty counts, both kernel event partitions and router
+events for overlap. It reads that request only, without a wall-clock deadline.
+The five-view census remains a later separate proposal; smoke is diagnostic.
+CPU preparation stops below 27 GB; device admission reserves writes above 25 GB.

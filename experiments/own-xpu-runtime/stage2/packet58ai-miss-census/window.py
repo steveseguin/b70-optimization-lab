@@ -38,9 +38,9 @@ PREVIOUS = {}  # Screening has no KD/layer-repeat/model-reload prerequisite.
 
 def storage(output, writes):
     free=shutil.disk_usage('/').free
-    require(free-writes>=30_000_000_000,'root storage below 30 GB after reserved writes')
+    require(free-writes>=25_000_000_000,'root storage below 25 GB after reserved writes')
     row=SUPPORT.storage(output,writes)
-    return dict(row,root_free_bytes=free,root_stop_floor_bytes=30_000_000_000)
+    return dict(row,root_free_bytes=free,root_stop_floor_bytes=25_000_000_000)
 
 
 def install_fault_policy():
@@ -126,7 +126,7 @@ def build_gate():
         require(gate.get('passed') is True and gate.get('device_executed') is False, 'CPU gate failed: ' + name)
     startup = json.loads((HERE/'evidence/argument-gate.json').read_text())
     require({(r['candidate'], r['window']) for r in startup['records']} ==
-            {(v, w) for v in ('p60fusion',) for w in ('K1a', 'K1b', 'WSCREEN')} and
+            {(v, w) for v in ('smoke',) for w in ('K1a', 'K1b', 'WSCREEN')} and
             all(r.get('real_queue_entry') is True and r.get('real_unit_and_environment_gates') is True
                 and r.get('live_host_admission') is True and r.get('native_exec_intercepted') is True
                 for r in startup['records']), 'complete real startup paths required')

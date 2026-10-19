@@ -220,6 +220,14 @@ def main(argv=None):
             child=subprocess.Popen(command,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT)
             row.update(device_executed=True,native_pid=child.pid)
             save(args.output/'receipt.json',row)
+            if args.view=='smoke':
+                import analyze
+                first=args.output/'run'/'S0'/entries[0]['prompt_id']
+                # Completion-driven: cold TTFT is not a failure deadline.
+                while not (first/'receipt.json').exists() and child.poll() is None:
+                    time.sleep(.1)
+                row['first_request_data']=analyze.first_request(first)
+                save(args.output/'first-request-data.json',row['first_request_data'])
             status=child.wait()
         row['safe_to_exit']=True
         require(status==0 and not stopping,'native failed or coordinator stopped')

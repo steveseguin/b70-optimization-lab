@@ -2,7 +2,7 @@
 import argparse,json,os,shutil,subprocess
 from pathlib import Path
 from build_engine import P,ROOT,sha,save,limits
-GATES=('evidence/fullshape-submit-cpu.json','evidence/postload-allocation-cpu.json',
+GATES=('evidence/first-request-data-gate.json','evidence/fullshape-submit-cpu.json','evidence/postload-allocation-cpu.json',
        'evidence/argument-gate.json','evidence/partition-cpu.json','evidence/reset-gate.json',
        'evidence/python-tests.json','evidence/shared-entry.json','evidence/loader.json')
 
@@ -17,7 +17,7 @@ def verify():
 
 def create():
     limits()
-    if (P/'evidence/card0-census-a').exists():raise ValueError('never reseal started census')
+    if (P/'evidence/card0-census-b').exists():raise ValueError('never reseal started census')
     build=json.loads((P/'evidence/build.json').read_text())
     assert build['passed'] and not build['device_executed']
     gates={}

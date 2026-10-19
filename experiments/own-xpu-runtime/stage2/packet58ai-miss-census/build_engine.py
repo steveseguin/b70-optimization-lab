@@ -10,7 +10,7 @@ def save(p,row):p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dum
 def limits():
     assert os.getpriority(os.PRIO_PROCESS,0)==19
     assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
-    assert shutil.disk_usage('/').free>=30_000_000_000,'root below 30 GB'
+    assert shutil.disk_usage('/').free>=27_000_000_000,'root below 27 GB'
     assert sum(p.stat().st_size for p in B.rglob('*') if p.is_file())<=300_000_000,'build exceeds 300 MB'
 def turn():
     spec=importlib.util.spec_from_file_location('p58ai_compile_turn',P.parents[1]/'ops/compile_turn.py')

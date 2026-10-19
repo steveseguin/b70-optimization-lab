@@ -67,3 +67,50 @@ required. That refusal is retained separately. Every source hash from the
 earlier passing live-admission probes still matches; no memory observation was
 substituted to make a probe pass. Readiness means prepared for the coordinator,
 conditional on fresh live admission after the other work clears.
+
+## Packet58aib — first device smoke repairs
+
+Device admission now reserves all planned writes above the unchanged 25 GB
+floor. CPU preparation stops at 27 GB. The real storage helper accepts
+25.5 GB after writes and refuses 24.9 GB. No host settings changed.
+
+The original S0 smoke disabled every census event. The minimal native change
+enables the existing B1 partition diagnostic for S0 and flushes its stream
+before publishing the request result. Only the entry object and executable
+were rebuilt with GNU and Intel; other native objects were reused. Compilation
+waited for the shared hold to clear. Smoke and both five-view miniature repeats
+match the parent tokens and retained layer bytes. Arithmetic remains
+`iq3-p49-split32-v1`; device equality is still pending.
+
+The driver runs the packet analyzer on the first S0 request as soon as that
+request publishes its completion receipt. It requires that request’s token
+binding, all positions and layers, miss counts, resident and miss kernel
+events, and router/overlap events. Missing or empty streams fail and trigger
+the existing graceful stop. There is no first-request wall-clock deadline;
+the inherited whole-job watchdog remains. The real analyzer passes complete
+synthetic streams and rejects empty and missing data, without patching it out.
+[First-request evidence](../experiments/own-xpu-runtime/stage2/packet58ai-miss-census/evidence/first-request-data-gate.json).
+
+Shared entry/report rehearsal has no FAIL lines. Its initial deadline finding
+was an unused HTTP health poll in the retained driver snapshot. The live fault
+reader now consumes only the exact unchanged FAULT/DELETED expressions in a
+small passive source; the old snapshot is retained. A preparation-path probe
+is not declared: the shared checker requires a native real-rank-argv harness
+with `--rank`, which this one-card entry does not have. The miniature host test
+is not presented as a device-define, full-shape preparation pass. This remains
+an explicit WARN. The real local storage test covers the shared importer’s
+storage-helper WARN.
+
+The fresh proposal is `packet58ai-census-b-smoke-A`, output
+`evidence/card0-census-b/smoke`: one load, S0, 12 prompts × 64 tokens. The
+five-view census remains a separate later run. No job was queued or launched,
+no GPU or service was used, and no GGUF/full-shape reads were made. The final
+readiness marker binds the new proposal, seal and CPU checks; coordinator
+admission and device quality remain mandatory.
+
+Final validation: 35 Python tests, three real smoke launch paths, both native
+loaders, both shared report kinds, seal verification and the temporary queue
+plan pass. Pin admission checks 630 pins before the final readiness marker.
+Compiler peak RSS was 726484 KiB; CPU-check peak RSS was 40656896 bytes,
+both below 2 GiB. The proposal was copied back from the successful temporary
+plan. Shared rehearsal warnings are disclosed above; there are no FAIL lines.

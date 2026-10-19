@@ -1912,7 +1912,7 @@ int main(int argc, char **argv) {
     const auto view_output=view.label.empty()?root_output:root_output/view.label;
     if(!view.label.empty()) {
       fs::create_directories(view_output);
-      e->drain();e->cache_quiesce();p58af::arm=view.label=="B0"?1:view.label=="B1"?2:0;
+      e->drain();e->cache_quiesce();p58af::arm=view.label=="B0"?1:(view.label=="B1"||view.label=="S0")?2:0;
 #ifndef OWN_RT_HOST_ONLY
       auto* measure=dynamic_cast<p58af::Backend*>(p58v::backend(e->dev(0)));require(measure,"measurement backend");measure->profiling(p58af::arm!=0);
 #endif
@@ -2066,6 +2066,7 @@ int main(int argc, char **argv) {
     for(size_t i=0;i<generated.size();++i)rr<<(i?",":"")<<generated[i];
     rr<<"],\"timing_rows\":[";
     for(size_t i=0;i<generated_stamps.size();++i)rr<<(i?",":"")<<"{\"completed_monotonic\":"<<generated_stamps[i]<<"}";
+    e->measure_log.flush();
     rr<<"]}";save(output/"result.json",rr.str());
     if(!request_id.empty())save(output/"receipt.json",rr.str());
     }

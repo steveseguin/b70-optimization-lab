@@ -131,7 +131,7 @@ def probe(name, miss, candidate, old_gate=False):
                 bytes_per_iteration=25_000_000, host_ms=1 if miss == 'zero-copy' else 3,
                 vram_ms=.1, streamed_ms=1.1)
             (dest/'run/k1.json').write_text(json.dumps(native))
-        out = packet/'evidence'/'combined'
+        out = packet/'evidence'/('smoke' if candidate=='smoke' else 'combined')
         observations = []
         env = L.closed_env(library)
         admissions = []
@@ -274,7 +274,7 @@ def main():
         return
     import queue_runner as Q
     before=sources(); records=[]; regressions=[]
-    for candidate in ('p60fusion',):
+    for candidate in ('smoke',):
       for name in Q.ORDER:
         for miss in ('zero-copy',):
             result=subprocess.run([sys.executable,'-B',str(Path(__file__)),'--probe',name,'--miss',miss,'--candidate',candidate],
@@ -295,5 +295,5 @@ def main():
 if __name__=='__main__':
     assert os.getpriority(os.PRIO_PROCESS,0)==19
     assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
-    assert shutil.disk_usage('/').free>=30_000_000_000
+    assert shutil.disk_usage('/').free>=27_000_000_000
     main()

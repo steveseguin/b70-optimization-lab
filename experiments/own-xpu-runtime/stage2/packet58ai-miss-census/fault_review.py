@@ -16,7 +16,7 @@ def cpu_gate():
     require(os.getpriority(os.PRIO_PROCESS,0)==19, 'nice19 required')
     require(set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32)), 'helper cores required')
 
-DRIVER = HERE / 'fault_driver_snapshot.py'
+DRIVER = HERE / 'fault_patterns.py'
 
 
 def patterns():

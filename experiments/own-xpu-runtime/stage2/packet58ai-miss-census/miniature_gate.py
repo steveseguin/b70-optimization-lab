@@ -35,6 +35,15 @@ def miniature():
                 rows.append(dict(view=view,repeat=repeat,passed=True,all_layer_bytes_equal=True))
                 shutil.rmtree(out)
             print('miniature',view,'PASS',flush=True)
+        # S0 now enables the existing split diagnostic; verify its exact bytes too.
+        smoke_table=tmp/'smoke.tsv';write_table(smoke_table,'smoke')
+        smoke_out=tmp/'smoke'
+        run([*base,'--suite-inputs',suite,'--bracket-inputs',smoke_table,
+             '--selection',selection('tile16'),'--selection-sha256',digest('tile16'),
+             '--output',smoke_out])
+        assert fixture(smoke_out/'S0/a')==reference
+        assert json.loads((smoke_out/'S0/a/result.json').read_text())['tokens']==expected
+        rows.append(dict(view='smoke',passed=True,all_layer_bytes_equal=True))
         # Wrong oracle fails during A0; no B0 request is allowed to run.
         expected_file.write_text(str((expected[0]+1)%32)+'\n')
         out=tmp/'bad-oracle'
