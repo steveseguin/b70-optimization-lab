@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 19, packet156 draft-slack arm closed before a build:** The full
+packet154 test confirms that rank 0 waits for the draft, but the proposed
+place to move hidden work has too little spare time. Even a generous bound
+allows only about 0.29–0.32% improvement in the three controls, below the 2%
+goal. Complete log replays and 14 parser checks pass. No runtime, GPU job,
+service or live queue changed; device readiness is false. The next prepared
+ideas were checked, and none has a new qualifying bound.
+[Work note and evidence](notes/2026-10-19-own-runtime-packet156.md).
+
 **October 19, packet58aj resident lookup preparation complete on CPU:** The
 private packet58ah copy keeps exact lookup bytes in memory. GNU/Intel output
 and reset checks, policy tests, entry/report checks, seals and pin admission
