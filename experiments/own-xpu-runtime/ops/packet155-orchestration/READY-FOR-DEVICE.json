@@ -1,0 +1,39 @@
+{
+  "schema": "packet155.ready-for-device.v1",
+  "created_utc": "2026-10-19T01:44:22.199196+00:00",
+  "commit": "ea05c83a217980d4c8f088ad665092cce2bd6613",
+  "unit": "packet155-chain-a",
+  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet155-record-bundle9/build/device-cards01-p155-a",
+  "command": "systemd-run --user --unit=packet155-chain-a --property=Restart=no --property=Nice=0 '--property=CPUAffinity=0-3 16-19' --property=KillMode=process --property=SendSIGKILL=no --property=ExitType=cgroup --property=TimeoutStopSec=infinity --working-directory=/home/steve/llm-optimizations /usr/bin/taskset -c 0-3,16-19 /usr/bin/bash /home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet155-orchestration/device-entry.sh chain /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet155-record-bundle9/build/device-cards01-p155-a </dev/null",
+  "command_sha256": "3da82d237c5190dc96cbf0c74ca436f3293ac1c2d29a41a7813d095dea071c6d",
+  "command_digest_definition": "SHA-256 of UTF-8 command string including stdin redirection, without newline",
+  "ready_for_device": false,
+  "cpu_preparation_ready": false,
+  "coordinator_confirmed": false,
+  "device_executed": false,
+  "queued": false,
+  "submitted": false,
+  "last_packet_write": true,
+  "root_free_bytes": 29990686720,
+  "stop_floor_bytes": 30000000000,
+  "reason": "CPU preparation stopped below the owner-specified disk floor; bracket confirmation also pending",
+  "pending": [
+    "complete chain adaptation and immutable seals",
+    "composition GNU/Intel and real-shape execution",
+    "real entry/unit/environment and rank admission",
+    "report rehearsal",
+    "launch_env loader checks",
+    "pin guard",
+    "planned writes <=3x measured",
+    "submission rehearsal from final location",
+    "full bracket recomputation and coordinator confirmation"
+  ],
+  "scope": {
+    "output_tokens": 128,
+    "strict512": false,
+    "arithmetic": "iq3-p49-split32-v1",
+    "bundle": "bundle8 plus packet153 snapshot_host=static"
+  },
+  "native_binding_sha256": "dfb5b2721bf7532ad0936452347463f6388005811ddb454497fb1198f5ad7834",
+  "launch_status": "UNCONDITIONALLY REFUSED; command is an unfinished plan, not authorization"
+}
