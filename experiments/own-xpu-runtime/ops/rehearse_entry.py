@@ -5,6 +5,9 @@ Reads JSONL proposals, reconstructs lanequeue.command (never executes it),
 and tests each declared native ELF with ldd and its help/argument parser.
 Both modes scan device/report source and replay safe storage helpers in isolated
 children, and run declared CPU preparation probes with the real rank argv.
+Both also check Python gate identities throughout the packet, excluding lineage
+trees: stale job/unit literals and rejecting lane assertions FAIL; ambiguous
+uses WARN without importing or executing packet gates.
 --report additionally imports the real entry and
 executes its unchanged post-device report source on temporary synthetic receipts.
 Packet58 queue runners use one-card WSCREEN or record-window report adapters.
@@ -45,7 +48,7 @@ import launch_env
 OPS = Path(__file__).resolve().parent
 ROOT = OPS.parents[2]
 
-PACKAGING_CHECKS = ('storage_floor', 'wall_deadlines', 'preparation_path')
+PACKAGING_CHECKS = ('storage_floor', 'wall_deadlines', 'preparation_path', 'gate_identity')
 STORAGE_FLOOR = 25_000_000_000
 COLD_TTFT = 60.0
 
@@ -53,6 +56,146 @@ COLD_TTFT = 60.0
 def check_result(findings=(), **extra):
     return dict(status='FAIL' if findings else 'PASS', passed=not findings,
                 findings=list(findings), **extra)
+
+
+JOB_IDENTITY = re.compile(r'packet\d+[a-z]*-[a-z0-9-]+-[AB]')
+UNIT_IDENTITY = re.compile(r'(?:screen-[A-Za-z0-9_.-]+|packet58-onecard-[A-Za-z0-9_.-]+)')
+
+
+def gate_sources(packet):
+    """Read Python source only, including gates omitted by packet_sources.
+
+    Never follow symlinks or enter frozen lineage trees. No packet imports,
+    binaries, receipts or model data are needed for this check.
+    """
+    if packet is None:
+        return {}
+    sources = {}
+    for directory, dirs, files in os.walk(packet, followlinks=False):
+        dirs[:] = sorted(d for d in dirs if not d.startswith('lineage')
+                         and not (Path(directory) / d).is_symlink())
+        for name in sorted(files):
+            path = Path(directory) / name
+            if path.suffix == '.py' and not path.is_symlink():
+                sources[path] = ast.parse(path.read_text())
+    return sources
+
+
+def lane_value(node, lane):
+    """Three-valued evaluation: unknown conditions never become a refusal."""
+    if (isinstance(node, ast.Name) and node.id == 'lane' or
+            isinstance(node, ast.Attribute) and node.attr == 'lane' or
+            isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Constant)
+            and node.slice.value == 'lane' or
+            isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+            and node.func.attr == 'get' and node.args
+            and isinstance(node.args[0], ast.Constant) and node.args[0].value == 'lane'):
+        return lane
+    if isinstance(node, ast.Constant) and node.value in ('A', 'B'):
+        return node.value
+    if isinstance(node, (ast.Tuple, ast.List, ast.Set)):
+        values = [lane_value(n, lane) for n in node.elts]
+        return values if all(v is not None for v in values) else None
+    if isinstance(node, ast.Compare) and len(node.ops) == 1:
+        a, b = lane_value(node.left, lane), lane_value(node.comparators[0], lane)
+        if a is None or b is None:
+            return None
+        op = node.ops[0]
+        if isinstance(op, ast.Eq):
+            return a == b
+        if isinstance(op, ast.NotEq):
+            return a != b
+        if isinstance(op, (ast.In, ast.NotIn)) and isinstance(b, list):
+            return (a in b) if isinstance(op, ast.In) else (a not in b)
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+        value = lane_value(node.operand, lane)
+        return not value if isinstance(value, bool) else None
+    if isinstance(node, ast.BoolOp):
+        values = [lane_value(n, lane) for n in node.values]
+        decisive = False if isinstance(node.op, ast.And) else True
+        if any(v is decisive for v in values):
+            return decisive
+        if all(v is (not decisive) for v in values):
+            return not decisive
+    return None
+
+
+def gate_identity(job, sources):
+    """Find stale identities without executing gates or guessing dynamic values.
+
+    Complete job/unit literals are checked exactly (optional .service suffix).
+    Paths, command strings, fragments and CPU fixtures are not gate identities;
+    ambiguous uses WARN. Lane dispatch alone is not a lane refusal. A definite
+    rejecting assert or if/raise fails; conditional/custom require calls WARN.
+    Diagnostics contain locations/reasons, never arbitrary source strings.
+    """
+    findings, warnings = [], []
+    name, lane = job.get('name'), job.get('lane')
+    unit = 'screen-' + name if isinstance(name, str) else None
+    for path, tree in sources.items():
+        parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
+        fixture = (path.name.startswith('test_') or path.name.endswith('_test.py')
+                   or any(isinstance(n, ast.ImportFrom) and n.module == 'unittest.mock'
+                          for n in ast.walk(tree)))
+        for node in ast.walk(tree):
+            ancestors, parent = [], parents.get(node)
+            while parent is not None:
+                ancestors.append(parent)
+                parent = parents.get(parent)
+            row = dict(file=str(path), line=getattr(node, 'lineno', 1))
+            if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                value = node.value
+                bare = value.removesuffix('.service')
+                kind = ('job' if JOB_IDENTITY.fullmatch(value) else
+                        'unit' if UNIT_IDENTITY.fullmatch(value) else None)
+                # Obvious filenames and existing source subdirectories are paths.
+                if kind == 'unit' and (Path(value).suffix not in ('', '.service')
+                                      or (path.parent / value).is_dir()):
+                    continue
+                partial = any(isinstance(p, (ast.JoinedStr, ast.BinOp)) for p in ancestors)
+                comparison = any(isinstance(p, ast.Compare) for p in ancestors)
+                data_literal = (any(isinstance(p, (ast.Call, ast.Dict, ast.List, ast.Tuple))
+                                    for p in ancestors) and not comparison)
+                if kind and not partial and not fixture and not data_literal:
+                    expected = name if kind == 'job' else unit
+                    if expected is None:
+                        warnings.append(dict(row, reason='proposal identity unavailable'))
+                    elif (value if kind == 'job' else bare) != expected:
+                        findings.append(dict(row, reason='foreign ' + kind + ' literal'))
+                elif kind or JOB_IDENTITY.search(value) or re.search(r'(?:screen-|packet58-onecard-)', value):
+                    warnings.append(dict(row, reason='unclassified identity literal'))
+            if not isinstance(node, ast.Compare):
+                continue
+            if not any((isinstance(n, ast.Name) and n.id == 'lane') or
+                       (isinstance(n, ast.Attribute) and n.attr == 'lane') or
+                       (isinstance(n, ast.Constant) and n.value == 'lane') for n in ast.walk(node)):
+                continue
+            if not any(isinstance(n, ast.Constant) and n.value in ('A', 'B') for n in ast.walk(node)):
+                continue
+            assertion = next((p for p in ancestors if isinstance(p, ast.Assert)), None)
+            guard = next((p for p in ancestors if isinstance(p, ast.If)), None)
+            # A loop may bind lane to another job, and an enclosing branch may
+            # make a restriction conditional on state we cannot know here.
+            conditional = fixture or any(isinstance(p, (ast.For, ast.While, ast.comprehension)) for p in ancestors)
+            rejected = False
+            if lane in ('A', 'B') and not conditional:
+                if assertion is not None and guard is None:
+                    rejected = lane_value(assertion.test, lane) is False
+                elif guard is not None and sum(isinstance(p, ast.If) for p in ancestors) == 1:
+                    rejected = (lane_value(guard.test, lane) is True
+                                and bool(guard.body) and isinstance(guard.body[0], ast.Raise))
+                    rejected |= (lane_value(guard.test, lane) is False
+                                 and bool(guard.orelse) and isinstance(guard.orelse[0], ast.Raise))
+            if rejected:
+                findings.append(dict(row, reason='proposal lane rejected'))
+            elif (assertion is None or conditional or guard is not None or
+                  lane_value(assertion.test, lane) is None and lane_value(node, lane) is not True):
+                warnings.append(dict(row, reason='conditional or unclassified lane check'))
+    result = check_result(findings, warnings=warnings, files_scanned=len(sources))
+    if warnings and not findings:
+        result['status'] = 'WARN'
+    result['message'] = f'{len(findings)} identity refusals; {len(warnings)} unclassified uses'
+    return result
 
 
 def source_path(node, values):
@@ -554,10 +697,12 @@ def packaging_checks(job, env, runner=entry_sandbox.run):
                     row.update(status='FAIL', passed=False)
             elif key == 'wall_deadlines':
                 row = deadline_scan(sources, measured_phases(job))
+            elif key == 'gate_identity':
+                row = gate_identity(job, gate_sources(packet))
             else:
                 row = preparation_probe(job, packet, env, runner)
             rows[key] = row
-        except (OSError, ValueError, KeyError, TypeError, RuntimeError, StopIteration):
+        except (OSError, ValueError, KeyError, TypeError, RuntimeError, StopIteration, SyntaxError):
             rows[key] = dict(status='FAIL', passed=False, message='packaging check could not complete safely')
     return rows
 

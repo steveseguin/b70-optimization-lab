@@ -103,6 +103,146 @@ class RehearsalTest(unittest.TestCase):
         self.assertFalse(result['passed'])
 
 
+class GateIdentityTest(unittest.TestCase):
+    STAGE = entry.ROOT / 'experiments/own-xpu-runtime/stage2'
+
+    def scan(self, source, lane='A', name='packet58ai-census-c-smoke-A'):
+        return entry.gate_identity(dict(name=name, lane=lane),
+                                   {Path('gate.py'): ast.parse(source)})
+
+    def proposal(self, filename):
+        path = entry.OPS / 'lane-queue' / filename
+        return next(json.loads(line) for line in path.read_text().splitlines()
+                    if line.strip() and not line.lstrip().startswith('#'))
+
+    def test_packet58ai_before_fix_refuses_current_name_fixed_gate_passes(self):
+        path = self.STAGE / 'packet58ai-miss-census/coordinator_gate.py'
+        source = subprocess.check_output(['git', '-c', 'core.packedGitWindowSize=16m',
+            '-c', 'core.packedGitLimit=64m', 'show',
+            'a032d73a6^:' + str(path.relative_to(entry.ROOT))], cwd=entry.ROOT,
+            text=True, stdin=subprocess.DEVNULL)
+        job = self.proposal('proposed-p58ai-census-A.txt')
+        for text, expected in ((source, False), (path.read_text(), True)):
+            result = entry.gate_identity(job, {path: ast.parse(text)})
+            self.assertEqual(result['passed'], expected, result)
+            if not expected:
+                self.assertEqual(result['status'], 'FAIL')
+                self.assertEqual(len(result['findings']), 2)
+                self.assertTrue(all(r['reason'] == 'foreign job literal' for r in result['findings']))
+
+    def test_packet151_real_readiness_rejects_a_accepts_b(self):
+        path = self.STAGE / 'packet151-sibling-cost/v5/readiness.py'
+        sources = {path: ast.parse(path.read_text())}
+        for lane, status in [('A', 'FAIL'), ('B', 'PASS')]:
+            result = entry.gate_identity(dict(name='packet151-sibling-smoke-' + lane, lane=lane), sources)
+            self.assertEqual(result['status'], status, result)
+
+    def test_current_fixed_packet_trees_have_no_identity_refusals(self):
+        for filename in ('proposed-p58ai-census-A.txt', 'proposed-p151-smoke-B.txt',
+                         'proposed-p151-v5-B.txt', 'proposed-p153-smoke-B.txt',
+                         'proposed-p154-smoke-B.txt'):
+            with self.subTest(proposal=filename):
+                job = self.proposal(filename)
+                packet, _ = entry.packet_sources(job)
+                result = entry.gate_identity(job, entry.gate_sources(packet))
+                self.assertTrue(result['passed'], result)
+                self.assertGreater(result['files_scanned'], 1)
+
+    def test_exact_jobs_units_service_suffix_and_no_secret_echo(self):
+        for literal, passed in [
+                ('packet58ai-census-c-smoke-A', True),
+                ('packet58ai-census-A', False),
+                ('screen-packet58ai-census-c-smoke-A', True),
+                ('screen-packet58ai-census-c-smoke-A.service', True),
+                ('screen-packet58ai-census-c-smoke-B.service', False),
+                ('packet58-onecard-58ad-a.service', False)]:
+            with self.subTest(literal=literal):
+                result = self.scan(f'assert current == {literal!r}, "secret-error-text"')
+                self.assertEqual(result['passed'], passed, result)
+                self.assertNotIn('secret-error-text', json.dumps(result))
+                self.assertNotIn(literal, json.dumps(result))
+
+    def test_unclassified_literals_warn_and_do_not_refuse(self):
+        for source in [
+                "message = 'old packet58ai-census-A requires inspection'",
+                "unit = 'screen-packet58ai-' + suffix",
+                "unit = f'screen-packet58ai-{suffix}'",
+                "command = ['--unit=packet58-onecard-58ad-a']",
+                "proposal = dict(name='packet58ai-census-A')",
+                "require(lane == 'B', 'only when overlapping')",
+                "assert lane == 'B' or override"]:
+            with self.subTest(source=source):
+                result = self.scan(source)
+                self.assertEqual(result['status'], 'WARN', result)
+                self.assertTrue(result['passed'])
+                self.assertTrue(result['warnings'])
+
+    def test_lane_boolean_assertions_guards_and_dispatch(self):
+        for source, passed in [
+                ("assert lane == 'B' and variant == 'sibling'", False),
+                ("assert 'B' == args.lane", False),
+                ("assert job['lane'] != 'A'", False),
+                ("assert job.get('lane') in ('A', 'B')", True),
+                ("assert not (lane == 'A')", False),
+                ("if lane != 'B':\n raise ValueError('wrong lane')", False),
+                ("if lane == 'A':\n raise ValueError('wrong lane')", False),
+                ("if lane == 'B':\n run()\nelse:\n raise ValueError('wrong lane')", False),
+                ("if lane == 'B':\n run()", True),
+                ("if overlap:\n assert lane == 'B'", True),
+                ("for lane in ('A', 'B'):\n assert lane == 'B'", True)]:
+            with self.subTest(source=source):
+                self.assertEqual(self.scan(source)['passed'], passed)
+
+    def test_unimported_gates_scanned_lineage_and_symlinks_excluded(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            packet = root / 'packet-test'
+            packet.mkdir()
+            (packet / 'entry.py').write_text('')
+            (packet / 'coordinator_gate.py').write_text("assert job == 'packet58ai-census-A'")
+            for name in ('lineage', 'lineage-inputs', 'nested/lineage-old'):
+                path = packet / name
+                path.mkdir(parents=True)
+                (path / 'bad.py').write_text('this is invalid Python!')
+            outside = root / 'outside'
+            outside.mkdir()
+            (outside / 'bad.py').write_text('invalid Python!')
+            (packet / 'linked').symlink_to(outside, target_is_directory=True)
+            (packet / 'linked.py').symlink_to(outside / 'bad.py')
+            sources = entry.gate_sources(packet)
+            self.assertEqual(len(sources), 2)
+            self.assertFalse(entry.gate_identity(dict(name='packet58ai-census-c-smoke-A', lane='A'), sources)['passed'])
+
+    def test_both_modes_and_json_cli_require_identity_check(self):
+        base = RehearsalTest()
+        base.setUp()
+        base.job.update(name='packet999-probe-A', lane='A')
+        runner = lambda argv, **kw: subprocess.CompletedProcess(argv, 0, 'GNU coreutils', '')
+        with tempfile.TemporaryDirectory() as directory:
+            packet = Path(directory) / 'packet999-test'
+            packet.mkdir()
+            script = packet / 'entry.py'
+            script.write_text("assert lane == 'B'\n")
+            base.job['argv'] = ['/usr/bin/python3', '-B', str(script)]
+            proposal = Path(directory) / 'proposal.txt'
+            proposal.write_text(json.dumps(base.job))
+            for report in (False, True):
+                with patch.object(entry, 'rehearse_report', return_value=dict(passed=True)):
+                    result = entry.rehearse(base.job, base.queue, launch_env.library_path(), runner, report=report)
+                self.assertEqual(result['gate_identity']['status'], 'FAIL', result)
+                self.assertFalse(result['passed'])
+                self.assertTrue(all(b['passed'] for b in result['binaries']))
+                out, err = io.StringIO(), io.StringIO()
+                with patch.object(entry, 'rehearse', return_value=result), \
+                     patch.object(entry, 'lanequeue', return_value=base.queue), \
+                     patch.object(base.queue, 'library_path', return_value=launch_env.library_path()), \
+                     patch('sys.argv', ['rehearse_entry.py', str(proposal), '--json', *(['--report'] if report else [])]), \
+                     contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                    self.assertEqual(entry.main(), 1)
+                self.assertIn('gate_identity', err.getvalue())
+                self.assertEqual(json.loads(out.getvalue())['jobs'][0]['gate_identity']['status'], 'FAIL')
+
+
 class ReportRehearsalTest(unittest.TestCase):
     PACKET = 'experiments/own-xpu-runtime/stage2/packet142-class-layout'
     FIX = '3d08f0a2289b32e5bb892df60690287c12e4110b'
@@ -261,7 +401,7 @@ class OnecardReportTest(unittest.TestCase):
                 target.write_bytes(source.read_bytes())
             for name in ('lanequeue.py', 'pin_guard.py'):
                 source = entry.OPS / 'lane-queue' / name
-                target = root / source.relative_to(entry.ROOT)
+                target = root / source.resolve().relative_to(entry.ROOT)
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(source.read_bytes())
             script = Path(job['argv'][2])
@@ -382,6 +522,12 @@ class PackagingTest(unittest.TestCase):
     def test_packet58ai_floor_is_caught_through_real_entry(self):
         script = self.STAGE / 'packet58ai-miss-census/queue_runner.py'
         packet, sources = entry.packet_sources(dict(argv=['python3', '-B', str(script)]))
+        result = entry.storage_scan(sources)
+        self.assertTrue(result['passed'], result)
+        # The live packet was repaired; keep the old refusal as a pinned
+        # regression instead of requiring the live packet to remain broken.
+        window = script.with_name('window.py')
+        sources[window] = ast.parse(self.blob('60a56785a^', window))
         result = entry.storage_scan(sources)
         self.assertTrue(any(Path(r['file']).name == 'window.py' and r['floor_bytes'] == 30_000_000_000
                             for r in result['findings']), result)
