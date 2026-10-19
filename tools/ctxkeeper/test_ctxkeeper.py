@@ -1,5 +1,6 @@
 """Tests of ctxkeeper.py against a scripted model (no model server, no GPU, standard library only)."""
 import json
+import re
 import tempfile
 import threading
 import unittest
@@ -95,6 +96,17 @@ class InPlace(unittest.TestCase):
                 body["tools"] = tools
             keeper.complete(body)
         return next(iter(keeper.sessions.values()))
+
+    def test_notes_upto_names_the_last_item_an_in_place_cut_moved_out(self):
+        model = LedgerModel()
+        keeper = self.keeper(model, recall_label=r"ITEM (\d+):", recall_unit="item", notes_upto=True)
+        s = self.run_conversation(keeper, 24)
+        self.assertGreaterEqual(s.state["inplace_cuts"], 2)
+        archived = [r["k"] for r in s.archive.labelled(keeper.recall_label) if r["own"] and r["role"] == "tool"]
+        self.assertEqual(s.state["upto_unit"], max(archived))
+        sent = [r for r in model.requests if r not in model.notes_requests][-1]["messages"]
+        pin = next(m["content"] for m in sent if str(m.get("content", "")).startswith("[[NOTES kept"))
+        self.assertIn(f"as of the end of item {max(archived)}.", pin)
 
     def test_turns_are_noted_in_place_and_all_moved_out(self):
         model = LedgerModel()
@@ -974,6 +986,35 @@ class Policy(unittest.TestCase):
         k.complete({"model": "m", "messages": asked})
         text = self.model.requests[-1]["messages"][-1]["content"]
         self.assertTrue(text.startswith(f"NOTES as saved after item {first_item}. Anything said in items {first_item + 1}-{first_item + 1} is not in them"), text[:160])
+
+    def test_notes_upto_says_which_item_the_state_runs_to(self):
+        """Campaigns 39-46 (2M): seven answers read a NOTES value for a point it does not cover (an earlier item, or
+        without the newer turns). With --notes-upto the NOTES heading names the last item in the archive; without it,
+        the heading is as before."""
+        def run(**kw):
+            model = Model()
+            k = ck.Keeper(model, Path(self.dir.name) / f"upto{len(kw)}", budget=2400, reply_reserve=400, headroom=100,
+                          target_ratio=0.5, notes_cap=400, memory_note=False, recall_label=r"ITEM (\d+):", recall_unit="item", **kw)
+            for n in range(1, 31):
+                k.complete({"model": "m", "messages": conversation(n)})
+            return model, next(iter(k.sessions.values()))
+        model, s = run(notes_upto=True)
+        self.assertGreater(s.state["cuts"], 1)
+        sent = model.requests[-1]["messages"]
+        pin = next(m["content"] for m in sent if str(m.get("content", "")).startswith("[[NOTES kept"))
+        upto = int(re.search(r"as of the end of item (\d+)\.", pin).group(1))
+        self.assertEqual(upto, s.state["upto_unit"])
+        archived = [r["k"] for r in s.archive.labelled(re.compile(r"ITEM (\d+):")) if r["own"] and r["role"] == "tool"]
+        self.assertEqual(max(archived), upto)                                      # the last item moved out ...
+        shown = [int(m["content"].split(":")[0][5:]) for m in sent[sent.index(next(m for m in sent if m.get("content") == pin)) + 1:]
+                 if m.get("role") == "tool" and str(m.get("content", "")).startswith("ITEM ")]
+        self.assertEqual(min(shown), upto + 1)                                     # ... and the first one still in view
+        self.assertIn("a value at an earlier item is not the one the STATE shows", pin)
+        model, s = run()
+        pin = next(m["content"] for m in model.requests[-1]["messages"] if str(m.get("content", "")).startswith("[[NOTES kept"))
+        self.assertEqual(pin.split("\n", 1)[0], ck.PIN_HEAD.format(n=s.state["cut"]))
+        with self.assertRaises(ValueError):
+            ck.Keeper(Model(), Path(self.dir.name) / "x", notes_upto=True)
 
     def test_notes_history_answers_what_was_true_then(self):
         s = self.run_conversation(30)

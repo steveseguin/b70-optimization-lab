@@ -332,6 +332,12 @@ stayed 56 off for 117 versions and five answers. Replayed through about 2,500 no
 other verdicts: the wrong lines of that run, a reversal of campaign 43 written with a wrong amount, one false alarm
 (one more question) and swapped questions about the same line.
 
+1.2.0.dev8 (2026-10-18), from lab campaigns 39-46 (2M): a new option, off by default, `--notes-upto` (needs
+`--recall-label`). The NOTES heading then says up to which unit the STATE runs ("as of the end of item K"), that what
+the turns after it say is newer, and that a value at an earlier unit is not the STATE's (search the archive, or
+`notes_at`). In the recorded 2M runs seven answers read a NOTES value for a point it did not cover: the value as of
+item 1211 for "the end of item 1207", or "removed" as of item 1003 for a counter reopened in view at item 1004.
+
 Also unreleased (1.1.1.dev1, 2026-10-17): a NOTES line whose new value states no number of its own (only item or
 ticket numbers, as in `audit reversal of the entry in item 4, amount not yet known, must recall items 4/5`) no longer
 replaces a number the NOTES hold: the number stays and the line is kept as a remark on it. Before, the value became the

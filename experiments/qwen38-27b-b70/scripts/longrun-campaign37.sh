@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Campaign 47 (2026-10-18, notes/2026-10-17-hostile-history-poison.md, registered before any run): arm K32U is K32H
+# with ctxkeeper 1.2.0.dev8's --notes-upto (the NOTES heading says up to which item the STATE runs). The
+# tools/ctxkeeper check also requires --notes-upto. Earlier header follows.
 # Campaign 41 (2026-10-18, notes/2026-10-17-hostile-history-poison.md, registered before any run): kind hostile2mk is
 # hostile2m on the clarified copy of the 2M stream ($ODK: the final rule says to add the answers and keep the PROBE
 # answers already in the file; the stream is otherwise byte-identical). Earlier header follows.
@@ -116,14 +119,14 @@ mline() {
 arm_window() {  # arm -> "budget inplace_tokens"
   case $1 in
     K06) echo "6144 2800" ;;   K08) echo "8192 3750" ;;   K12 | R12) echo "12288 5600" ;;
-    K16 | R16) echo "16384 7500" ;;   K12f) echo "12288 5600" ;;   K08f) echo "8192 3750" ;;   K24) echo "24576 11250" ;;   K32 | K32L | K32R | K32H | A32d | A32dp | M32dp) echo "32768 15000" ;;
+    K16 | R16) echo "16384 7500" ;;   K12f) echo "12288 5600" ;;   K08f) echo "8192 3750" ;;   K24) echo "24576 11250" ;;   K32 | K32L | K32R | K32H | K32U | A32d | A32dp | M32dp) echo "32768 15000" ;;
     K48 | R48) echo "49152 22500" ;;   K64) echo "65536 30000" ;;   S08) echo "8192 3000" ;;   S16) echo "16384 5000" ;;
     *) return 1 ;;
   esac
 }
 arm_async() {  # arm -> background-notes options
   case $1 in A32d) echo "--notes-async defer" ;; A32dp | M32dp | S08 | S16) echo "--notes-async defer --prewarm" ;;
-    K12f | K08f) echo "--inplace-fit" ;; K32L | K32R | K32H) echo "--lookups" ;; *) echo "" ;; esac
+    K12f | K08f) echo "--inplace-fit" ;; K32L | K32R | K32H | K32U) echo "--lookups" ;; *) echo "" ;; esac
 }
 start_proxy() {  # tag arm kind
   local tag=$1 arm=$2 kind=$3 w b i fl=()
@@ -137,7 +140,8 @@ start_proxy() {  # tag arm kind
                     --recite-when "$RECITE_RE_REPAIR" --notes-mode inplace --notes-checks off --max-recalls 16) ;;
     smoke)      fl=(--recipe qwen) ;;
   esac
-  local rs=(); [[ $arm == K32R || $arm == K32H ]] && rs=(--rule-scan "$RULE_RE"); [[ $arm == K32H ]] && rs+=(--hold-open)
+  local rs=(); [[ $arm == K32R || $arm == K32H || $arm == K32U ]] && rs=(--rule-scan "$RULE_RE"); [[ $arm == K32H || $arm == K32U ]] && rs+=(--hold-open)
+  [[ $arm == K32U ]] && rs+=(--notes-upto)
   systemctl --user reset-failed ctx-keeper-proxy 2>/dev/null
   # shellcheck disable=SC2046
   systemd-run --user --unit=ctx-keeper-proxy --collect -p WorkingDirectory=$LAB python3 tools/ctxkeeper/ctxkeeper.py \
@@ -321,6 +325,7 @@ python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --inplace-fit ||
 python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --lookups || { say "ABORT: tools/ctxkeeper has no --lookups"; exit 2; }
 python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --rule-scan || { say "ABORT: tools/ctxkeeper has no --rule-scan"; exit 2; }
 python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --hold-open || { say "ABORT: tools/ctxkeeper has no --hold-open"; exit 2; }
+python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --notes-upto || { say "ABORT: tools/ctxkeeper has no --notes-upto"; exit 2; }
 cd "$CTX" || exit 2
 while read -r arm kind seed cap; do
   [[ -z $arm || $arm == \#* ]] && continue

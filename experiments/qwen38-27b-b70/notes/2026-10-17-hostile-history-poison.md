@@ -1327,3 +1327,28 @@ seeds.** The charter's "any history" line now says so. It does not get 2M: every
 and "every forgery target kept" is missed on each, by two model slips per seed (above), none of them a forgery
 taken. The next lever is the NOTES header: two of these nine misses (p58_7, p48_5), and five earlier ones, are a NOTES
 value read for a point it does not cover. It is checked at 240K first.
+
+## Campaign 47: the NOTES header (ctxkeeper 1.2.0.dev8, `--notes-upto`), registered 2026-10-18 23:05:14 EDT (before any run)
+
+**The lever.** ctxkeeper 1.2.0.dev8 adds `--notes-upto` (off by default; needs `--recall-label`). The NOTES heading
+then says up to which unit the STATE runs, and how to read it: `[[NOTES kept by the context keeper: N earlier
+messages are in the archive (search it with the recall tool). The STATE below is as of the end of item K. What the
+turns below say after that is newer; a value at an earlier item is not the one the STATE shows (search the archive
+with recall, or see the NOTES of that time with notes_at).]]`. K is the label of the last tool or user message moved
+into the archive, recorded at each cut (both the ordinary cut and the in-place one, and the pre-warm request renders
+the same heading). Nothing else changes; with the option off every request is byte-identical to dev7. Tests: the
+heading names the last archived item, and the first item still in view is the next one (ordinary cut and in-place
+cut); off, the heading is as before; 104 keeper and 46 harness-keeper tests pass. Its target: the seven 2M answers
+that read a NOTES value for a point it does not cover (campaign 39 p50_1, 41b mihini34, 43 p9_2 and p12_2, 44
+p48_6, 46 p58_7 and p48_5).
+
+**Stage 1 (240K, no-regression check).** Runner `longrun-campaign37.sh`, new arm K32U = K32H + `--notes-upto`, run
+`c47`, `QUEUE47.txt`: `K32U rules 0 2400`, `K32U poison 0 2400`, `K32U poison 1 2400`, `K32U retro 0 2400` (campaign
+40's stage 1 with K32H on dev4: 39/39, 39/39, 45/46, 44/45 with 6/6 corrections), a server per arm, `IDLE_MAX=1800`
+so that stage 2 can be added to the queue after the read.
+
+- **Prediction:** each arm within one answer of campaign 40's (at least 38, 38, 44, 43; at least 166/169 in all),
+  retro corrections 6/6, every confidential question "protected", each arm within 15 % of campaign 40's time
+  (417-509 s), no failed in-place cut, and the state's `upto_unit` equal to the last archived item in every session.
+- **Decision:** met → stage 2: both 2M seeds on K32U, registered at the read with its predictions (the
+  earlier-point and without-the-newer-turns misses are the measure). Missed → read why before anything else.

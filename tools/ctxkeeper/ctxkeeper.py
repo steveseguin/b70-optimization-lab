@@ -53,7 +53,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.2.0.dev7"
+__version__ = "1.2.0.dev8"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -72,6 +72,10 @@ OPEN_HEAD = "[[Still open, kept in view by the context keeper while you work on 
 OPEN_CHARS = 12000                                   # of a kept question that is shown; the rest is in the archive
 INPLACE_FIT_FLOOR = 1000                             # --inplace-fit never asks for notes on fewer turns than this
 PIN_HEAD = "[[NOTES kept by the context keeper: {n} earlier messages are in the archive (search it with the `recall` tool)]]"
+# --notes-upto: the point the STATE is as of, in the content's own numbering, said in that heading
+UPTO_NOTE = (" The STATE below is as of the end of {unit} {k}. What the turns below say after that is newer; a value at an "
+             "earlier {unit} is not the one the STATE shows (search the archive with `recall`, or see the NOTES of that "
+             "time with `notes_at`).")
 RECITE_HEAD = "[[RULES in force (from NOTES); apply every one that covers this before you answer]]"
 MEMORY_NOTE = """
 
@@ -661,7 +665,7 @@ class Session:
         if self.pending is not None:                 # its notes are of no use now; its counts are settled later
             self.abandoned.append(self.pending)
             self.pending = None
-        self.state.update(cut=0, notes="", boundary="", cuts=0, largest_turn=0, hold=0, kept_user=None, kept_open=None, carry=None,
+        self.state.update(cut=0, notes="", boundary="", cuts=0, largest_turn=0, hold=0, kept_user=None, kept_open=None, carry=None, upto_unit=None,
                           restarts=self.state.get("restarts", 0) + 1)
         self.save()
 
@@ -699,7 +703,8 @@ class Keeper:
                  notes_system: str | None = None, notes_kwargs: dict | None = None, notes_prepass: int = 0,
                  notes_async: str | None = None, prewarm: bool = False, log_calls: bool = False,
                  inplace_fit: bool = False, notes_extra: dict | None = None, notes_prefill: bool = False,
-                 lookups: bool = False, rule_scan: str | None = None, hold_open: bool = False) -> None:
+                 lookups: bool = False, rule_scan: str | None = None, hold_open: bool = False,
+                 notes_upto: bool = False) -> None:
         self.ask, self.root = ask, Path(state_dir)
         # ask_notes: a separate keeper model's server for the notes calls (--notes-upstream), with notes_model as its
         # model name, notes_system as its system message (default KEEPER_SYSTEM), notes_kwargs as its
@@ -785,6 +790,13 @@ class Keeper:
         if hold_open and (self.recite_when is None or self.think_until is None):
             raise ValueError("--hold-open needs --recite-when and --think-until")
         self.hold_open = bool(hold_open)
+        # notes_upto (needs recall_label): the NOTES heading says up to which unit the STATE runs. Campaigns 39-46
+        # (2M): seven answers read a NOTES value for a point it does not cover: for an earlier item (campaign 46
+        # p58_7, ziru41 "at the end of item 1207" answered with the value as of item 1211), or without the newer turns
+        # (p48_5: "removed" as of item 1003, reopened in view at item 1004).
+        if notes_upto and self.recall_label is None:
+            raise ValueError("--notes-upto needs --recall-label")
+        self.notes_upto = bool(notes_upto)
         self.sessions: dict[str, Session] = {}
         self.clock = threading.local()                 # per request thread: seconds spent in the model server
         self.lock = threading.Lock()
@@ -832,7 +844,24 @@ class Keeper:
             s.state["ratio"] = round(0.8 * s.state["ratio"] + 0.2 * r, 4)
 
     def pin(self, s: Session) -> dict[str, Any]:
-        return {"role": "user", "content": PIN_HEAD.format(n=s.state["cut"]) + "\n" + (s.state["notes"] or "(no notes yet)")}
+        return {"role": "user", "content": self.pin_head(s.state["cut"], s.state.get("upto_unit")) + "\n" + (s.state["notes"] or "(no notes yet)")}
+
+    def pin_head(self, n: int, upto: int | None) -> str:
+        head = PIN_HEAD.format(n=n)
+        if self.notes_upto and upto is not None:
+            head = head[:-2] + "." + UPTO_NOTE.format(unit=self.recall_unit, k=upto) + "]]"
+        return head
+
+    def unit_upto(self, s: Session, gone: list[dict[str, Any]]) -> int | None:
+        """--notes-upto: the unit the archive runs to once `gone` is in it: the label of its last tool or user message
+        that carries one (as Archive.labelled numbers them), else the one before."""
+        if not self.notes_upto:
+            return None
+        for m in reversed(gone):
+            got = self.recall_label.search(text_of(m)) if m.get("role") in ("tool", "user") else None
+            if got and got.group(1) and got.group(1).isdigit():
+                return int(got.group(1))
+        return s.state.get("upto_unit")
 
     def fixed(self, s: Session, messages: list[dict[str, Any]], h: int) -> list[dict[str, Any]]:
         """What stands before the turns still in view: the protected start, then (after the first cut) NOTES and,
@@ -1002,6 +1031,7 @@ class Keeper:
         gone = body[:n]
         s.archive.add(h + s.state["cut"] + 1, gone)
         self.notes_call(s, model, messages[:h], gone, upto=h + s.state["cut"] + n)
+        s.state["upto_unit"] = self.unit_upto(s, gone)
         s.state["cut"] += n
         s.state["boundary"] = fingerprint(messages[h:h + s.state["cut"]])   # everything archived so far, not only its end
         s.state["cuts"] += 1
@@ -1356,6 +1386,7 @@ class Keeper:
         try:
             s.archive.add(h + s.state["cut"] + 1, messages[h + s.state["cut"]:h + s.state["cut"] + n])
             s.state["notes"] = new
+            s.state["upto_unit"] = self.unit_upto(s, messages[h + s.state["cut"]:h + s.state["cut"] + n])
             s.log_notes(h + s.state["cut"] + n)
             s.state["cut"] += n
             s.state["boundary"] = fingerprint(messages[h:h + s.state["cut"]])
@@ -1412,7 +1443,7 @@ class Keeper:
                 # what the first request after the cut will begin with (the opening messages, unchanged, and the new
                 # NOTES), read now so that the server's prefix cache has it: one token asked for, nothing kept
                 # rendered as the main calls are: the client's own fields, its tools with `recall`, the same effort
-                pin = {"role": "user", "content": PIN_HEAD.format(n=cut_now + len(noted)) + "\n" + job["result"]["new"]}
+                pin = {"role": "user", "content": self.pin_head(cut_now + len(noted), self.unit_upto(s, noted)) + "\n" + job["result"]["new"]}
                 warm = {k: v for k, v in client.items() if k not in ("stream", "stream_options", "max_completion_tokens", "n")}
                 tools_then = list(client.get("tools") or []) + ([self.recall_tool] if self.max_recalls else [])
                 warm.update(messages=head + [pin], max_tokens=1, stream=False)
@@ -1788,6 +1819,9 @@ def main() -> None:
                     "matches this regular expression and that no RULES line has (by its words, or by citing its "
                     "--recall-unit) is shown once per cut, asking for any rule among them")
     ap.add_argument("--recite-when", help="also repeat the RULES when the newest message matches this regular expression")
+    ap.add_argument("--notes-upto", action="store_true",
+                    help="with --recall-label: the NOTES heading says up to which --recall-unit the STATE runs, that "
+                         "the turns after it are newer, and that a value at an earlier one is not the STATE's")
     ap.add_argument("--hold-open", action="store_true",
                     help="with --recite-when and --think-until: while a question is open (from the message that asks it "
                          "until one matching --think-until), every request gets the RULES recital and the archive "
@@ -1901,7 +1935,8 @@ def main() -> None:
                     notes_kwargs=json.loads(a.notes_kwargs) if a.notes_kwargs else None, notes_prepass=a.notes_prepass,
                     notes_extra=json.loads(a.notes_extra) if a.notes_extra else None, notes_prefill=a.notes_prefill,
                     notes_async=a.notes_async, prewarm=a.prewarm, log_calls=a.log_calls, inplace_fit=a.inplace_fit,
-                    lookups=a.lookups, rule_scan=a.rule_scan, hold_open=a.hold_open)
+                    lookups=a.lookups, rule_scan=a.rule_scan, hold_open=a.hold_open,
+                    notes_upto=a.notes_upto)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper {__version__}" + (f" (recipe {a.recipe})" if a.recipe else "")
           + f": http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"
