@@ -1,0 +1,134 @@
+{
+  "passed": false,
+  "jobs": [
+    {
+      "job": "packet166-causal-m2-layer-micro-B1",
+      "unit": "screen-packet166-causal-m2-layer-micro-B1",
+      "passed": false,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/build/micro-device",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 0,
+          "entry_kind": "explicit",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "storage_floor": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "admissions": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/run_micro.py",
+            "line": 71,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          }
+        ],
+        "replays": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/run_micro.py",
+            "function": "storage_admit",
+            "status": "PASS",
+            "message": "storage helper accepts 25.5 GB plus planned writes"
+          }
+        ]
+      },
+      "wall_deadlines": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "limits": [],
+        "measured_seconds": {
+          "first_request": 60.0
+        }
+      },
+      "preparation_path": {
+        "status": "PASS",
+        "passed": true,
+        "executed": true,
+        "returncode": 0,
+        "real_rank_argv": true,
+        "first_decode_required": true,
+        "argv_sha256": "939bc8fc9d270069a9c20fe5339a14645890af88a50ef2f2ce57da21d19c4e65",
+        "binary_sha256": "205b733a724e26c1f6bfb6cdf605a07fc74189bb6f850221f32ba64b539714eb",
+        "legacy_receipt": null,
+        "preparation_bypassed": false,
+        "message": "preparation-path probe completed"
+      },
+      "gate_identity": {
+        "status": "WARN",
+        "passed": true,
+        "findings": [],
+        "warnings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/prepare_proposal.py",
+            "line": 17,
+            "reason": "unclassified identity literal"
+          }
+        ],
+        "files_scanned": 15,
+        "message": "0 identity refusals; 1 unclassified uses"
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false,
+      "report": {
+        "passed": false,
+        "kinds": [
+          {
+            "passed": false,
+            "kind": "micro",
+            "error_type": "ValueError",
+            "locations": [
+              {
+                "file": "rehearse_entry.py",
+                "line": 1482
+              },
+              {
+                "file": "rehearse_entry.py",
+                "line": 1352
+              },
+              {
+                "file": "rehearse_entry.py",
+                "line": 1308
+              },
+              {
+                "file": "run_micro.py",
+                "line": 115
+              },
+              {
+                "file": "micro_analyze.py",
+                "line": 85
+              },
+              {
+                "file": "micro_analyze.py",
+                "line": 30
+              },
+              {
+                "file": "micro_analyze.py",
+                "line": 13
+              }
+            ],
+            "error": "entry import, report schema, or CPU isolation failed"
+          }
+        ],
+        "synthetic_evidence": true,
+        "device_executed": false
+      }
+    }
+  ]
+}

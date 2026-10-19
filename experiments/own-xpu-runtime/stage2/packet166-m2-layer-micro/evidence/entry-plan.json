@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "runnable": false,
+  "lane": "B",
+  "command": [
+    "/usr/bin/ionice",
+    "-c3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/build/micro-device",
+    "--rank",
+    "0",
+    "--mode",
+    "device",
+    "--weights",
+    "real",
+    "--oracle",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/real-oracle.tsv",
+    "--repeats",
+    "200",
+    "--coordinator-admitted-device-window"
+  ],
+  "identity": {
+    "build_receipt_sha256": "3b79e8e758db37711a43d418aa5a5bc62ca006c4c7f597fab205df825ae07365",
+    "binary_sha256": "205b733a724e26c1f6bfb6cdf605a07fc74189bb6f850221f32ba64b539714eb",
+    "source_seal_sha256": "7afaa65729e8e789fee07884677aa25fb247679a28a4b5ae6823a32555e7f707"
+  },
+  "physical_cards": [
+    2
+  ],
+  "native_card": 0,
+  "device_mask": {
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:43:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+  },
+  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1",
+  "reservation_scope": "lane-B",
+  "drain": "shared DrainPermit held across entire autonomous native lifetime",
+  "host_required_available_bytes": 12884901888,
+  "host_reserve_bytes": 8589934592,
+  "maximum_host_scratch_bytes": 4294967296,
+  "device_bytes_upper_bound": 2147483648,
+  "minimum_root_free_bytes": 25000000000,
+  "watchdog_seconds": 7200,
+  "retries": 0,
+  "per_operation_wait_seconds": 300,
+  "micro_qualification": "pending full-layer M2/M1 <=1.5 and exact unchanged target oracle; no model-output speed claim"
+}

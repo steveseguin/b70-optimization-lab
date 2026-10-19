@@ -1,0 +1,45 @@
+{
+  "passed": false,
+  "records": [
+    {
+      "compiler": "gnu-host",
+      "argv": [
+        "/usr/bin/ionice",
+        "-c3",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/build/micro-gnu-host",
+        "--rank",
+        "0",
+        "--mode",
+        "cpu",
+        "--weights",
+        "real",
+        "--repeats",
+        "200"
+      ],
+      "returncode": 0,
+      "binary_sha256": "57e82c457a1b5d5a90260e6adc0929a201514621095a8a504e6b6ebbd01fef31",
+      "stdout": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/cpu-real-1792396078967435483/gnu-host.jsonl",
+      "stdout_sha256": "8d71d81da9b35cbda759dd1452a4a6603115653caab0bf3a3566beb813b6ea1d"
+    },
+    {
+      "compiler": "intel-host",
+      "argv": [
+        "/usr/bin/ionice",
+        "-c3",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/build/micro-intel-host",
+        "--rank",
+        "0",
+        "--mode",
+        "cpu",
+        "--weights",
+        "real",
+        "--repeats",
+        "200"
+      ],
+      "returncode": 1,
+      "binary_sha256": "0ec555f596588e0ec87ed9dbc2af78296776a86c0965a539ab1f68be91fa0449",
+      "stdout": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/cpu-real-1792396078967435483/intel-host.jsonl",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}
