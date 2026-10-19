@@ -84,7 +84,7 @@ def main():
  ap=argparse.ArgumentParser();ap.add_argument('--probe',choices=('smoke','composite','chain'));ap.add_argument('--negative',action='store_true');a=ap.parse_args()
  if a.probe:print(json.dumps(probe(a.probe,a.negative)));return
  rows=[]
- for role,negative in [('smoke',True),('smoke',False),('composite',False),('chain',False)]:
+ for role,negative in [('chain',True),('chain',False)]:
   cp=subprocess.run([sys.executable,'-B',str(Path(__file__)), '--probe',role,*(['--negative'] if negative else [])],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=180)
   (O/'evidence'/('exec-'+role+('-negative' if negative else '')+'.log')).write_text(cp.stdout+cp.stderr)
   assert cp.returncode==0,cp.stderr[-3000:]

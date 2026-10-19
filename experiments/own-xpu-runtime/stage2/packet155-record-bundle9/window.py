@@ -294,7 +294,7 @@ def run_fixtures(a,out,env,watch):
         # second sequential K1 program and the second K0 card process.
         for name,_,_ in jobs:watch.check();ldd_preflight(B/binary_group/name)
         for index,(name,card,directory) in enumerate(jobs):
-            watch.check();admit_output(out,projected_write_bytes('K2',context=a.context) if a.window=='K2' else 550_000_000 if a.window!='K0' else 16_000_000);binary=B/binary_group/name
+            watch.check();admit_output(out,projected_write_bytes(a.window,context=a.context));binary=B/binary_group/name
             dest=out/directory;log=(out/f'fixture{index}.log').open('w');logs.append(log)
             cmd=[str(binary),*([] if cpu_rehearsal else ['--authorized-device-window']),'--card',str(card),'--output',str(dest)]
             if name in ('nongemv-fixtures','k2-fixtures'):cmd+=['--context',str(a.context),'--fixtures',str(B/'fusion-fixtures')]

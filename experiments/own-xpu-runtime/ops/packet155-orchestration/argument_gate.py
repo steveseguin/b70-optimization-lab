@@ -19,7 +19,7 @@ class Forbidden(BaseException):pass
 
 def sources():
  from source_gate136 import verify_sources
- return verify_sources({str(f.relative_to(ROOT)):sha(f) for f in [*P.glob('*.py'),O/'argument_gate.py',O/'chain_adapter.py',O/'queue_gate.py',O/'copy_bundle.py',O/'inputs/symlink-audit.json',*(O/'inputs/k2-replay').glob('*'),P/'selection.json',P/'bundle-selection.json',P/'memory-plan.json',P/'oracle-binding.json']})
+ return verify_sources({str(f.relative_to(ROOT)):sha(f) for f in [*P.glob('*.py'),O/'argument_gate.py',O/'chain_adapter.py',O/'queue_gate.py',O/'lineage-p155-scaffolding/copy_bundle.py',O/'inputs/packet155-symlinks.json',*(O/'inputs/k2-replay').glob('*'),P/'selection.json',P/'bundle-selection.json',P/'memory-plan.json',P/'oracle-binding.json']})
 
 def sandbox(tmp):
  def audit(event,values):
@@ -133,6 +133,10 @@ def probe(name,entry=False):
     stack.enter_context(patch.object(window_adapter,'WindowAdmission',side_effect=lambda *a,**k:original_admission(*a,topology=topology,**k)))
     stack.enter_context(patch.object(source_gate136,'oracle',return_value=oracle_result))
     stack.enter_context(patch.object(exec_limits,'install'))  # separate launch-limit gate checks the real guard
+    from launch_identity import verify as unit_identity,UNIT
+    unit_identity('0::/user.slice/user@1000.service/app.slice/'+UNIT,dict(os.environ))
+    import launch_identity
+    stack.enter_context(patch.object(launch_identity,'verify',side_effect=lambda:unit_identity('0::/user.slice/user@1000.service/app.slice/'+UNIT,dict(os.environ))))
     stack.enter_context(patch.object(sys,'argv',[str(O/'chain_entry.py'),'window',*argv]))
    try:
     code=chain_entry.main() if entry else w.main(admission=admission)
@@ -217,5 +221,5 @@ if __name__=='__main__':
  resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3))
  assert os.getpriority(os.PRIO_PROCESS,0)==19
  assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
- assert shutil.disk_usage('/').free>=25_000_000_000
+ assert shutil.disk_usage('/').free>=27_000_000_000
  main()

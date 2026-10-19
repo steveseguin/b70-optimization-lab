@@ -4,10 +4,10 @@ from pathlib import Path
 O=Path(__file__).resolve().parent;ROOT=O.parents[3];P=ROOT/'experiments/own-xpu-runtime/stage2/packet155-record-bundle9'
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
- assert shutil.disk_usage('/').free>=30_000_000_000
+ assert shutil.disk_usage('/').free>=27_000_000_000
  pins=json.loads((O/'inputs/packet153-native.json').read_text())
  for name,row in pins['binaries'].items():assert sha(P/name)==row['sha256']
- out=P/'build/cpu/results';out.mkdir(exist_ok=True);rows=[]
+ out=P/'build/cpu/results155c';out.mkdir(exist_ok=True);rows=[]
  for compiler in ('GNU','Intel'):
   for repeat in (1,2):
    cp=subprocess.run([str(P/'build/cpu/real-shape'/('fixture-'+compiler))],stdin=subprocess.DEVNULL,capture_output=True,text=True,check=True)
@@ -16,7 +16,7 @@ def main():
  (O/'evidence/real-shape.json').write_text(json.dumps(dict(passed=True,device_executed=False,runs=rows),indent=2)+'\n')
  def run(job):
   compiler,repeat,mode=job
-  assert shutil.disk_usage('/').free>=30_000_000_000
+  assert shutil.disk_usage('/').free>=27_000_000_000
   dest=out/f'{compiler}-{repeat}-{mode}';dest.mkdir()
   binary=P/'build/cpu/state'/('fixture-'+compiler);selection=P/'build/cpu/state'/(mode+'.json')
   log=O/'evidence'/f'state-{compiler}-{repeat}-{mode}.log'

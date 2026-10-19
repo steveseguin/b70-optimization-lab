@@ -1,0 +1,130 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "jobs": [
+    {
+      "job": "packet155-chain-A",
+      "unit": "screen-packet155-chain-A",
+      "passed": true,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet155-record-bundle9/build/device/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        },
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet155-record-bundle9/build/gnu-host/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 1,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "storage_floor": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "admissions": [],
+        "replays": []
+      },
+      "wall_deadlines": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "limits": [],
+        "measured_seconds": {
+          "first_request": 60.0
+        }
+      },
+      "preparation_path": {
+        "status": "PASS",
+        "passed": true,
+        "executed": true,
+        "returncode": 0,
+        "real_rank_argv": true,
+        "first_decode_required": true,
+        "argv_sha256": "c34fed039f3eee82813fafddb70a66fe080113316fdb6356d7ab4b20ffc67ae6",
+        "binary_sha256": "b7866d3b254eebce9620286570e4a1bc8a5642d7dfaaa3e5b5bd880a893c5327",
+        "legacy_receipt": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet155-orchestration/evidence/preparation-build.json",
+        "preparation_bypassed": false,
+        "message": "preparation-path probe completed"
+      },
+      "gate_identity": {
+        "status": "WARN",
+        "passed": true,
+        "findings": [],
+        "warnings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet155-orchestration/argument_gate.py",
+            "line": 99,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet155-orchestration/drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet155-orchestration/drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet155-orchestration/drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          }
+        ],
+        "files_scanned": 28,
+        "message": "0 identity refusals; 4 unclassified uses"
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false,
+      "report": {
+        "passed": true,
+        "device_executed": false,
+        "real_evidence": true,
+        "adapter": "packet155 record-chain report adapter",
+        "windows": [
+          "WS",
+          "WSs",
+          "WS128x",
+          "WS128"
+        ],
+        "sources": {
+          "experiments/own-xpu-runtime/ops/packet155-orchestration/real_report.py": "aa48593ca0dc89d4f504e105ce49d069d9054052c1a85dc60efba8d963414cc1"
+        },
+        "generic_screen_report_not_applicable": true
+      }
+    }
+  ],
+  "shared_checker_sha256": "8c31ddbbc9306368367761906a47274f57a5964792099151a5063c8b817bccac",
+  "proposal_sha256": "d57061cefbcae65095496aa1b4f77fb01cfc104c5aca6aa2e121c3a510d23847",
+  "extension_scope": "Only the unsupported two-card report adapter. Original four packaging checks and native loader/parser tests execute unchanged. Actual coordinator-unit entry is separately tested by entry155.py."
+}

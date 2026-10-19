@@ -1,0 +1,21 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet155-orchestration/argument_gate.py", line 223, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet155-orchestration/argument_gate.py", line 207, in main
+    assert cp.returncode==0, name+': '+cp.stderr[-3500:]+' '+cp.stdout[-1000:]
+           ^^^^^^^^^^^^^^^^
+AssertionError: K0: Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet155-orchestration/argument_gate.py", line 223, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet155-orchestration/argument_gate.py", line 197, in main
+    else:result=replay(a.probe=='old-k2') if a.probe in ('k2-replay','old-k2') else probe(a.probe)
+                                                                                    ^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/packet155-orchestration/argument_gate.py", line 140, in probe
+    code=chain_entry.main() if entry else w.main(admission=admission)
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet155-record-bundle9/window.py", line 437, in main
+    from p49_seal import verify as verify_packet49
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet155-record-bundle9/p49_seal.py", line 2, in <module>
+    from chain_seal import verify, main
+ImportError: cannot import name 'main' from 'chain_seal' (/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet155-record-bundle9/chain_seal.py)
+ 

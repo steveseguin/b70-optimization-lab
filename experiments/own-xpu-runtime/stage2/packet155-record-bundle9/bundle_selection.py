@@ -12,14 +12,14 @@ HEAD=('production',); HC_NORM=('production',)
 DOWN=('tile16',); DRAFT_ATTENTION=('split32',)
 OTHER_FUSION=('fused',); TARGET_HEAD=('split',)
 DRAFT_PREFIX=('80128',)
-ROLLBACK_STATE=('copy','banks')
+ROLLBACK_STATE=('banks',)
 KEYS=('dense','hc','experts','host','route','norm','recurrence','draft_head','head','hc_norm','down','draft_attention','other_fusion','target_head','draft_prefix','rollback_state')
 def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def name(dense,hc,experts,host='production',route='production',norm='production',recurrence='production',draft_head='production',head='production',hc_norm='production',down='production',draft_attention='split32',other_fusion='production',target_head='split',draft_prefix='80128',rollback_state='copy'):
     values=(dense,hc,experts,host,route,norm,recurrence,draft_head,head,hc_norm,down,draft_attention,other_fusion,target_head,draft_prefix,rollback_state)
     if any(v not in allowed for v,allowed in zip(values,(DENSE,HC,EXPERTS,HOST,ROUTE,NORM,RECURRENCE,DRAFT_HEAD,HEAD,HC_NORM,DOWN,DRAFT_ATTENTION,OTHER_FUSION,TARGET_HEAD,DRAFT_PREFIX,ROLLBACK_STATE))):
         raise ValueError('unregistered composition; dense must be production, experts wide64')
-    return '--'.join(values)
+    return '--'.join(values)+'--snapshot-static'
 def views():return {name(*v):v for v in itertools.product(DENSE,HC,EXPERTS,HOST,ROUTE,NORM,RECURRENCE,DRAFT_HEAD,HEAD,HC_NORM,DOWN,DRAFT_ATTENTION,OTHER_FUSION,TARGET_HEAD,DRAFT_PREFIX,ROLLBACK_STATE)}
 def placements(v):
     # Packet83 preregisters rank1 / 24+24 only. Q4 also exceeds split23's arena.
@@ -45,6 +45,7 @@ def choices(dense,hc,experts,host='production',route='production',norm='producti
     result['miss']={'copy':'batch','banks':'banks-batch'}[rollback_state]
     result['other_fusion']=other_fusion
     result['head']='head-split-compute' if target_head=='split' else 'production'
+    result.update(probe='off',snapshot_host='static')
     return result
 def view_path(row):return P/'selections'/(row['name']+'--placement-'+row['placement'])
 def selected():
@@ -63,4 +64,4 @@ def selected():
     return row
 
 def aliases():
-    return {"base":list(views().values())[0],"both":list(views().values())[1]}
+    return {"base":list(views().values())[0],"both":list(views().values())[0]}

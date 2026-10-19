@@ -13,7 +13,7 @@ from source_decision import P,O,ROOT,sha,save
 ORACLE_ERROR='packet49c must use the unchanged packet49 oracle authority'
 
 def symlinks():
- audit=json.loads((O/'inputs/symlink-audit.json').read_text())
+ audit=json.loads((O/'inputs/packet155-symlinks.json').read_text())
  for name,target in audit['restored'].items():
   f=P/name
   assert f.is_symlink() and os.readlink(f)==target,'restored symlink lost: '+name

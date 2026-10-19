@@ -406,6 +406,9 @@ def run(args,environment=None,check=None,failure_hook=None,launch_hook=None):
                 if compare and result['passed']:
                     pipeline.require(result['oracle_check']['tokens']==count,'oracle count differs from requested token cap')
                     result.update(fixture_steps_checked=pipeline.retention_steps(result['retain_steps'],count))
+                if compare:
+                    from stream_gate155 import check as stream_check
+                    result['stream_presence_and_exactness']=stream_check(result)
                 pipeline.save(output/'receipt.json',result)
                 row={key:result.get(key) for key in ('prompt_id','prompt_class','repeat','passed','decode_tok_s',
                     'tok_s_1_100_intervals_after_ttft','fixed64_tok_s','reference_table','prompt_wall_ms','acceptance','stats','hit_miss_cycles',

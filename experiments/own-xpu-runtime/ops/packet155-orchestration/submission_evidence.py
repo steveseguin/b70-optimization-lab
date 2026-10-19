@@ -402,6 +402,8 @@ def derive(e, packet):
     revision, seal_hash = lineage_pin(e, packet)
     threshold, threshold_hash = threshold_policy(e)
     floor = threshold['threshold_tok_s']
+    if packet == 'packet155-record-bundle9':
+        floor = max(floor, 58.798109)  # Owner's rounded hard floor; ledger retains full precision.
     seal = e.read('seal.json', seal_hash)
     require(seal['passed'] is True and seal['runtime_revision' if packet in DYNAMIC_PACKETS else 'parent_commit'] == revision
             and seal['arithmetic'] == ARITHMETIC, 'sealed runtime identity mismatch')
@@ -727,13 +729,15 @@ def draft_disclosure(bundle):
 
 
 def submission_notes(bundle, *, resumed=False):
-    text = ('Own Intel Xe runtime, packet136 bundle8; supersedes cmvdx8urg0068rf01vvb32bcs (58.223834 tok/s) only after a qualifying faster chain. '
-            'Unsloth UD-IQ3_XXS quantized compressed version; exact to iq3-p49-split32-v1, not FP8. '
-            'Bundle7 plus rollback_state='+bundle['rollback_state']+'; other_fusion='+bundle['other_fusion']+'; target_head='+bundle['target_head']+'. '
-            'Draft prefix 80,128 rows fixed by packet114 preregistered non-benchmark text; never selected using benchmark timing. '
-            'BF16 KV; unchanged full target verifies MTP tokens. Twelve cold 128-token prompts, cached_tokens=0; class-balanced 99 intervals between tokens 1 and 100. '
-            'Owner-authorized 128-token scope; strict512 realistic_final_gate.passed=false. Fresh chain with exact output, deterministic repeats and fresh-process checks. '
-            'Bank rotation admitted only after both fresh-load v4 lanes clear +0.5% against every control and a composed 12x64 smoke. No speed claim from CPU tests.'
+    text = ('Own Intel Xe runtime, packet155 bundle9 = bundle8 + packet153 static snapshot descriptors (snapshot_host=static, probe=off). '
+            'Supersedes cmve4dtir007wrf01k57sdf23 (58.798109 tok/s) only with a faster exact fresh-chain WS128. '
+            'Unsloth UD-IQ3_XXS quantized compressed version; lossless to iq3-p49-split32-v1, not FP8. '
+            'BF16 KV; unchanged full target verifies MTP; all other bundle8 choices unchanged. '
+            'Draft prefix 80,128 fixed by packet114 non-benchmark preregistration. Twelve cold 128-token prompts, cached_tokens=0; class-balanced 99 intervals across tokens 1-100. '
+            '128-token scope; strict512 false and realistic_final_gate.passed=false. Exact output, deterministic repeats and fresh processes required. '
+            'Packet153 one-load screen: static 58.874008/58.878497 versus controls 58.637969/58.671236/58.663023; minimum +0.34561%, drift 0.05673%, all 65 checks exact. '
+            'Packet150 attributed 0.743 ms/cycle to capture_snapshot host work; this is attribution, not a promised speed gain. '
+            'Coordinator authorized the lab idle-lane exception to the normal +2% chain rule on 2026-10-19. The screen is not the submitted measurement.'
             + (' Registered resume; inherited windows remain identified.' if resumed else ''))
     require(len(text)<=2000, 'submission notes exceed 2000 characters')
     return text
@@ -861,6 +865,11 @@ def is_packet49(item):
             or flags.get('buildReceiptSha256') in {v[1] for v in LINEAGE.values() if v is not None})
 
 
+def require_new_record(rate):
+    require(type(rate) in (int,float) and math.isfinite(rate) and rate > 58.798109,
+            'packet155 WS128 must beat 58.798109; no tie or bracket substitution')
+
+
 def write_prepared(e, packet, output, repo=ROOT):
     if 'record-threshold.json' in e.members:
         require((repo / THRESHOLD_FILE).read_bytes() == e.raw('record-threshold.json'),
@@ -869,6 +878,7 @@ def write_prepared(e, packet, output, repo=ROOT):
         require((repo / PINS_FILE).read_bytes() == e.raw('submission-pins.json'),
                 'packet49d lineage pin changed during preparation')
     result = derive(e, packet)  # Refuse before writing any eligible output.
+    if packet == 'packet155-record-bundle9':require_new_record(result['primary_metric']['value_tok_s'])
     output = output.absolute()
     require(output.resolve().is_relative_to(repo.resolve()), 'output must be inside repository')
     require(not output.exists(), 'new output directory required; never overwrite evidence')

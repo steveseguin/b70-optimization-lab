@@ -11,6 +11,9 @@ def embed_environment(argv):
  raise ValueError('chain child is missing its closed library environment')
 
 def main():
+ if "--plan" not in sys.argv:
+  from launch_identity import verify as identity
+  identity()
  from source_gate136 import oracle
  oracle()
  if '--plan' in sys.argv:

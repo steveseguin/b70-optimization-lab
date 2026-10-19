@@ -77,7 +77,7 @@ def inventory(packet, build, out, windows, prompts):
             add(name, 'compressed retention', root / (leaf + '.log.gz'), root)
         if name == 'KD':
             # Audit siblings against THEIR current rule, not the repaired 61x rule.
-            kd_boundary = build if packet.name == 'packet136-record-bundle' else (packet / 'build').resolve()
+            kd_boundary = build if packet.name == 'packet155-record-bundle9' else (packet / 'build').resolve()
             for leaf in ('host-reference','host-reference.jsonl.gz','host-reference.jsonl.gz.tmp'):
                 add(name, 'KD host-reference admission', root / leaf, kd_boundary)
         if name.startswith('W'):

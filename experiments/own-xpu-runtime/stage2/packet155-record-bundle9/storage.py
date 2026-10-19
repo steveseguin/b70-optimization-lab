@@ -18,7 +18,7 @@ def packet_relative(path):
     raise ValueError('path outside packet storage: '+str(path))
 
 FREE_FLOOR = 25_000_000_000
-BUILD_BASE_BUDGET = 1_200_000_000
+BUILD_BASE_BUDGET = 250_000_000
 CPU_BUILD_LIMIT = 250_000_000
 REGISTERED_CHAIN = json.loads((P / 'chain-registration.json').read_text())['output']
 import re
@@ -39,18 +39,14 @@ def request_write_bytes(retained_steps):
     # steps in both trees plus logs/metadata; reserve both logical extents.
     return 32_000_000 + 2*48*20480*max(0,retained_steps-8)
 
-def projected_write_bytes(name, requests=1, context=32768, retained_steps=16):
-    if type(requests) is not int or requests<1:raise ValueError('positive request count required')
-    state=state_write_bytes(context)
-    if name=='K2':return 2_500_000_000
-    if name in ('K1a','K1b'):return 1_100_000_000
-    if name in ('K0','W0p'):return 32_000_000
-    if name=='KD':
-        # Host reference and two fresh device captures coexist until comparison.
-        return 550_000_000 + 3*2368*(context-256)
-    # At most one raw state survives RESET; retained layer bytes grow per request.
-    # Account for both rank files and combined checker copies at WS128x.
-    return state + requests*request_write_bytes(retained_steps)
+def projected_write_bytes(name, requests=1, context=4096, retained_steps=16):
+    if context != 4096 or name not in CHAIN_WINDOWS:
+        raise ValueError('packet155 permits only registered 4K chain windows')
+    measured=json.loads((P/'storage-measurements.json').read_text())['windows'][name]
+    planned=measured['planned_write_bytes']
+    if not 0 < planned <= 3*measured['measured_generated_upper_bound_bytes']:
+        raise ValueError('planned writes exceed three times measured')
+    return planned
 
 # One registered4K chain. The owner retires the superseded49b reserve;
 #49c is complete before device admission, and the shared oracle is complete.
@@ -65,7 +61,7 @@ CHAIN_RESERVE = MODEL_CHAIN_BYTES + ORACLE_GROWTH_RESERVE
 # after binding its hashes and restoration argv. Enforce the retained cap in
 # the queue. Model outputs need no compression credit in this envelope.
 EARLY_RETAINED_LIMIT = 128_000_000
-OWN_CHAIN_PEAK = EARLY_RETAINED_LIMIT + max(MODEL_CHAIN_BYTES, 2_500_000_000)
+OWN_CHAIN_PEAK = EARLY_RETAINED_LIMIT + max(MODEL_CHAIN_BYTES, max(chain_window_bytes(n) for n in CHAIN_WINDOWS))
 BUILD_LIMIT = BUILD_BASE_BUDGET + OWN_CHAIN_PEAK
 
 def parent_pending_bytes(chain=None):

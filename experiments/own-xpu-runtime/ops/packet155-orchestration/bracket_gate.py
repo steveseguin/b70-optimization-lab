@@ -23,11 +23,15 @@ def verify(path=SUMMARY):
  need(summary['passed'] is True and summary['all_13_exact'] is True and summary['model_lifetimes']==1,'complete one-load exact bracket required')
  need(len(views)==5 and [x['choice'] for x in views]==['control','candidate','control','candidate','control'],'C/X/C/X/C required')
  identity=read(root/'identity.json');binding=read(O/'inputs/packet153-native.json')
+ need(read(root/'window.json')['passed'] is True and read(root/'run/device-isolation.json')['passed'] is True,'bracket completion/isolation failed')
+ active=read(STAGE/'packet155-record-bundle9/selection.json')
  need(identity['binary_sha256']==binding['binaries']['build/device/own-rt-iq3']['sha256'],'bracket binary identity differs')
  rates=[];all_counts=[];all_proposals=[]
  for i,view in enumerate(views):
   need(view['index']==i and view['all_13_exact'] is True and view['exact_count']==13,'view exactness failed')
   dest=root/'run/views'/f'{i:02d}-{view["choice"]}';need(Path(view['output'])==dest,'view path differs')
+  selection=identity['bracket']['views'][i];expected=json.loads(json.dumps(active));expected['choices']['snapshot_host']='production' if view['choice']=='control' else 'static'
+  selection_path=Path(selection['selection']);need(read(selection_path)==expected and sha(selection_path)==selection['selection_sha256'] and selection['max_new']==128,'bracket selection differs from bundle8/static-only delta')
   row=read(dest/'summary.json');need(row['arithmetic']=='iq3-p49-split32-v1' and row['kv_dtype']=='BF16' and row['cached_tokens']==0,'arithmetic/cache differs')
   need(row['requested_max_new']==128 and row['request_count']==12 and row['passed'] is True,'complete 128-token suite required')
   requests=row['requests'];need([r['prompt_id'] for r in requests]==list(CLASSES),'fixed complete suite required')
@@ -49,7 +53,9 @@ def verify(path=SUMMARY):
    counts.append(dict(prompt_id=prompt,hits=r['hits'],guesses=r['guesses']))
   rate=statistics.median(statistics.median(v) for v in grouped.values())
   need(rate==view['rate'] and counts==view['acceptance_counts'] and proposals==view['draft_proposals'],'stored summary differs from retained evidence')
-  need(all(read(dest/'boundary'/f'boundary-rank{rank}.json')['total_reset'] is True for rank in (0,1)),'request state reset failed')
+  for rank in (0,1):
+   boundary=read(dest/'boundary'/f'boundary-rank{rank}.json')
+   need(boundary['passed'] is True and boundary['total_reset'] is True and boundary['cached_tokens']==0 and boundary['weight_uploads_after_load']==0 and boundary['selection_sha256']==selection['selection_sha256'],'request state reset/selection failed')
   rates.append(rate);all_counts.append(counts);all_proposals.append(proposals)
  need(all(x==all_counts[0] for x in all_counts) and all(x==all_proposals[0] for x in all_proposals),'acceptance/proposal trace differs')
  result=evaluate(rates);result.update(all_views_exact=True,exact_count=65,evidence=pins,bracket_lane='B',chain_lane='A',chain_cards=[0,1]);return result
