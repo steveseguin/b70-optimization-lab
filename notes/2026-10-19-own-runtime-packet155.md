@@ -67,3 +67,12 @@ implementation and negative tests; projections must be labeled unmeasured.
 The final marker records **both** incomplete CPU preparation and pending
 coordinator/bracket confirmation. It cannot become ready from a bracket pass
 alone. The planned launch command is informational and has never executed.
+
+## Chain a outcome (coordinator, 05:23 UTC): failed in W0p; not repaired (hourly review 39)
+
+`packet155-chain-a` (lane A, cards 0+1) started 05:05:19 under the idle-lane rule.
+- K0, K1a, K1b and K2 passed.
+- **W0p failed:** both ranks exited 1 with `shared extent` (`build/device-cards01-p155-a/W0p/run/rank*/failure.txt`), and the queue runner stopped with no retry.
+- No GPU faults (count 2). stale-sweep archived the marker and the undrained teardown; the coordinator removed its own PAUSE-A/B.
+
+`shared extent` comes from the static snapshot path in a window that packet153's one-load bracket did not exercise (W0p, the warm prefix/prefill-side window). Packet153's +0.35% bracket stays valid evidence for its own windows; the chain never reached a timing window. Hourly review 39 recorded "no bundle-10 or p155d for sub-1% items", so this chain is **not repaired**. Bundle 9 is parked. The two-card record stays 58.798109 (`cmve4dtir007wrf01k57sdf23`).
