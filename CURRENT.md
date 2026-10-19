@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 19, 01:20 UTC — 1-card IQ3 record 31.66 tok/s on one Arc Pro B70, submitted and approved (`cmvekebvh00a0rf01q3v2c3cz`).**
+- **Change:** packet58ah = packet58ad + packet58ag's one-card ports (HC-wide, p109 other-fusion, E1 exact half-scale cache).
+- **Bracket:** +3.38% strict, 60/60 exact.
+- **Chain a** WS128 was 30.050, below the record, with 3,736 host major faults. It was not submitted and is disclosed.
+- **Chain b**, the single preregistered quiet-host rerun, measured WS128 **31.662719** with 12/12 prompts exact. It supersedes 30.395631 (+4.17%).
+- **Scope:** 128 tokens; strict512 false.
+- **Next:** packet58aj (resident lookup copies) is being prepared to remove the window-to-window paging variance.
+- [Result note](notes/2026-10-19-own-runtime-packet58ah-chain-a-result.md), [ledger](results/localmaxxing-submissions.md).
+
 **October 19, packet58ahb final quiet-host rerun prepared on CPU:** Chain a
 passed exactness but its 30.050 tok/s timing missed the 30.395631 record; it
 was not submitted. Its evidence and original pins are preserved. Chain b is
