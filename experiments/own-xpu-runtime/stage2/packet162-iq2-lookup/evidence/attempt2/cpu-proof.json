@@ -1,0 +1,159 @@
+{
+  "passed": false,
+  "device_executed": false,
+  "results": [
+    {
+      "compiler": "gnu",
+      "command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet28-dense",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/gnu"
+      ],
+      "results": [
+        {
+          "fixture": 0,
+          "columns": 2560,
+          "rows_per_expert": 640,
+          "selected_experts": 10,
+          "streams": 2,
+          "logic_chain_bytes_equal": true,
+          "logic_bf16_bytes_equal": true,
+          "enum_chain_bytes_equal": true,
+          "enum_bf16_bytes_equal": true,
+          "production_cpu_ms": 51.725838,
+          "logic_cpu_ms": 1294.416098,
+          "enum_cpu_ms": 215.399665,
+          "logic_cpu_ratio_diagnostic_only": 25.024555387580186,
+          "enum_cpu_ratio_diagnostic_only": 4.164256652545677
+        },
+        {
+          "fixture": 1,
+          "columns": 2560,
+          "rows_per_expert": 640,
+          "selected_experts": 10,
+          "streams": 2,
+          "logic_chain_bytes_equal": true,
+          "logic_bf16_bytes_equal": true,
+          "enum_chain_bytes_equal": true,
+          "enum_bf16_bytes_equal": true,
+          "production_cpu_ms": 51.745736,
+          "logic_cpu_ms": 1293.501682,
+          "enum_cpu_ms": 215.023609,
+          "logic_cpu_ratio_diagnostic_only": 24.9972612622613,
+          "enum_cpu_ratio_diagnostic_only": 4.155387972450522
+        },
+        {
+          "fixture": 2,
+          "columns": 2560,
+          "rows_per_expert": 640,
+          "selected_experts": 10,
+          "streams": 2,
+          "logic_chain_bytes_equal": true,
+          "logic_bf16_bytes_equal": true,
+          "enum_chain_bytes_equal": true,
+          "enum_bf16_bytes_equal": false,
+          "production_cpu_ms": 57.39914,
+          "logic_cpu_ms": 1297.630939,
+          "enum_cpu_ms": 220.145355,
+          "logic_cpu_ratio_diagnostic_only": 22.607149497361803,
+          "enum_cpu_ratio_diagnostic_only": 3.8353423936316813
+        },
+        {
+          "passed": false,
+          "grid_entries": 1024,
+          "signed_decoded_float_checks_per_candidate": 2097152,
+          "device_executed": false,
+          "scope": "synthetic real-shape chains and output; no routing or model qualification"
+        }
+      ],
+      "returncode": 2,
+      "binary_sha256": "b6603d31f3c3e9ee879fab807eef6a6434407597492f33d13da1ef6bece6c211"
+    },
+    {
+      "compiler": "intel",
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet136-record-bundle",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet28-dense",
+        "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/intel"
+      ],
+      "results": [
+        {
+          "fixture": 0,
+          "columns": 2560,
+          "rows_per_expert": 640,
+          "selected_experts": 10,
+          "streams": 2,
+          "logic_chain_bytes_equal": true,
+          "logic_bf16_bytes_equal": true,
+          "enum_chain_bytes_equal": true,
+          "enum_bf16_bytes_equal": true,
+          "production_cpu_ms": 28.087957,
+          "logic_cpu_ms": 1107.592693,
+          "enum_cpu_ms": 132.12301,
+          "logic_cpu_ratio_diagnostic_only": 39.43301013313286,
+          "enum_cpu_ratio_diagnostic_only": 4.703902458979128
+        },
+        {
+          "fixture": 1,
+          "columns": 2560,
+          "rows_per_expert": 640,
+          "selected_experts": 10,
+          "streams": 2,
+          "logic_chain_bytes_equal": true,
+          "logic_bf16_bytes_equal": true,
+          "enum_chain_bytes_equal": true,
+          "enum_bf16_bytes_equal": true,
+          "production_cpu_ms": 28.163068,
+          "logic_cpu_ms": 1107.801757,
+          "enum_cpu_ms": 132.085179,
+          "logic_cpu_ratio_diagnostic_only": 39.33526549735277,
+          "enum_cpu_ratio_diagnostic_only": 4.690013850763703
+        },
+        {
+          "fixture": 2,
+          "columns": 2560,
+          "rows_per_expert": 640,
+          "selected_experts": 10,
+          "streams": 2,
+          "logic_chain_bytes_equal": false,
+          "logic_bf16_bytes_equal": true,
+          "enum_chain_bytes_equal": false,
+          "enum_bf16_bytes_equal": true,
+          "production_cpu_ms": 35.339723,
+          "logic_cpu_ms": 1112.417184,
+          "enum_cpu_ms": 139.866088,
+          "logic_cpu_ratio_diagnostic_only": 31.477812771763944,
+          "enum_cpu_ratio_diagnostic_only": 3.957758469131181
+        },
+        {
+          "passed": false,
+          "grid_entries": 1024,
+          "signed_decoded_float_checks_per_candidate": 2097152,
+          "device_executed": false,
+          "scope": "synthetic real-shape chains and output; no routing or model qualification"
+        }
+      ],
+      "returncode": 2,
+      "binary_sha256": "8792213489845f357a394014ae99e864ff6cbe40e7e10c976b7f0a38052d7c85"
+    }
+  ],
+  "max_child_rss_kib": 273544
+}

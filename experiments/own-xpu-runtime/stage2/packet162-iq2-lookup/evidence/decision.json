@@ -1,0 +1,74 @@
+{
+  "schema": "packet162.decision.v1",
+  "cpu_strict_exact": false,
+  "device_executed": false,
+  "device_performance_gate": "not measured",
+  "device_time_ratio": null,
+  "build_brief_gate_passed": false,
+  "decision": "close current implementations; retain exact encoding research",
+  "compilers": [
+    {
+      "compiler": "gnu",
+      "finite_fixture_count": 2,
+      "finite_exact": true,
+      "native_output_and_status_exact": true,
+      "differences": [
+        {
+          "kind": "difference",
+          "fixture": 2,
+          "field": "enum-tree",
+          "mismatch_count": 2114,
+          "first_index": 0,
+          "production_bits": 65474,
+          "candidate_bits": 65472
+        }
+      ],
+      "logic_cpu_ratios": [
+        24.61884384719133,
+        24.608527264493,
+        22.217730612882253
+      ],
+      "enum_cpu_ratios": [
+        4.115794443960251,
+        4.143573985595557,
+        3.791512596024982
+      ]
+    },
+    {
+      "compiler": "intel",
+      "finite_fixture_count": 2,
+      "finite_exact": true,
+      "native_output_and_status_exact": true,
+      "differences": [
+        {
+          "kind": "difference",
+          "fixture": 2,
+          "field": "logic-chains",
+          "mismatch_count": 70383,
+          "first_index": 3,
+          "production_bits": 4290772992,
+          "candidate_bits": 4290904064
+        },
+        {
+          "kind": "difference",
+          "fixture": 2,
+          "field": "enum-chains",
+          "mismatch_count": 70383,
+          "first_index": 3,
+          "production_bits": 4290772992,
+          "candidate_bits": 4290904064
+        }
+      ],
+      "logic_cpu_ratios": [
+        39.60955786014238,
+        39.518182546181365,
+        32.0713167476541
+      ],
+      "enum_cpu_ratios": [
+        4.957504923893023,
+        4.947189106506085,
+        4.208242401057088
+      ]
+    }
+  ]
+}
