@@ -74,6 +74,7 @@ def verify_smoke(maintenance=DEFAULT_MAINTENANCE):
 def main(argv=None):
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--cache-maintenance',choices=('serial','overlap'),default=DEFAULT_MAINTENANCE)
+    ap.add_argument('--localize', action='store_true')
     ap.add_argument('--arm', choices=[s[0] for s in STAGES], required=True)
     ap.add_argument('--output', type=Path, required=True)
     ap.add_argument('--fault-review', type=Path)
@@ -83,16 +84,19 @@ def main(argv=None):
     args=ap.parse_args(argv)
     recorded=json.loads((P/'library-path.json').read_text())['LD_LIBRARY_PATH']
     W.require(args.library_path==recorded,'recorded oneAPI library path required')
-    view=dict(STAGES)[args.arm]; output=args.output.resolve()
-    W.require(output == ROOT/args.arm and not output.exists(), 'fixed fresh arm output required')
-    metadata=plan(output,view)
+    view='checked' if args.localize else dict(STAGES)[args.arm]; output=args.output.resolve()
+    if args.localize:
+        W.require(args.arm=='smoke','checked localization uses smoke safety gates')
+    W.require(output == (P/'evidence/card0-demand-amd-checked/checked' if args.localize else ROOT/args.arm) and not output.exists(), 'fixed fresh arm output required')
+    metadata=plan(output,'smoke' if args.localize else view)
+    if args.localize:metadata.update(view='checked',view_order=[('S1','demand')],request_count=1,prompts_per_view=1,diagnostic_only=True)
     if args.plan:
         print(json.dumps(metadata,indent=2)); return 0
     if args.arm=='v5':
         verify_smoke(args.cache_maintenance)
     W.require(args.authorized_device_window and args.fault_review, 'coordinator authorization and fresh fault review required')
     from release_gate import authorize
-    authorize(args.arm)
+    authorize('checked' if args.localize else args.arm)
     W.user_unit_gate(Path('/proc/self/cgroup').read_text())
     W.require(os.getpriority(os.PRIO_PROCESS,0)==0 and set(os.sched_getaffinity(0))=={0,1,2,3,16,17,18,19}, 'nice0 lane-A timing placement required')
     W.closed_environment()

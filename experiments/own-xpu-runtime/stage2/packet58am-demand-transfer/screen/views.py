@@ -2,7 +2,7 @@
 import hashlib,json
 from pathlib import Path
 P=Path(__file__).resolve().parent
-VIEWS=('parent','demand','smoke')
+VIEWS=('parent','demand','smoke','checked')
 DEFAULT_MAINTENANCE='overlap'
 MAX_BYTES=21552729600
 def validate(view):

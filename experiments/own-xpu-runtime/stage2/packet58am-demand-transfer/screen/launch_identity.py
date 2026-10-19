@@ -16,11 +16,11 @@ def unit_name(job, library=''):
 def lane_unit_prefix():
     import json
     root=Path(__file__).resolve().parent.parent
-    names=[json.loads((root/'proposals'/f'{kind}.json').read_text())['job_name'] for kind in ('smoke','v5')]
+    names=[json.loads((root/'proposals'/f'{kind}.json').read_text())['job_name'] for kind in ('smoke','v5','checked')]
     # The caller also checks the complete service name, below.
     return 'screen-'+names[0].split('-smoke-')[0]+'-'
 
 def allowed_units():
     import json
     root=Path(__file__).resolve().parent.parent
-    return {unit_name(dict(name=json.loads((root/'proposals'/f'{kind}.json').read_text())['job_name'],lane='A',argv=[])) for kind in ('smoke','v5')}
+    return {unit_name(dict(name=json.loads((root/'proposals'/f'{kind}.json').read_text())['job_name'],lane='A',argv=[])) for kind in ('smoke','v5','checked')}

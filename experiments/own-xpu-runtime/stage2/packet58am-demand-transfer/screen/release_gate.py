@@ -34,6 +34,9 @@ def verify_smoke():
     require(report.get('smoke_passed') is True and report.get('exact') is True and report.get('same_parent') is True,'same-parent exact eligible overlap and overhead smoke required')
     return report
 def authorize(kind):
+    if kind=='checked':
+        from checked_release import authorize_checked
+        return authorize_checked()
     ready=read(P/'READY-FOR-DEVICE.json')
     require(ready.get('ready_for_device') is True,'device release withheld: resident-parent native support and full entry checks required')
     require(ready.get('release_condition')=='coordinator direct-screen release (RELEASE-AMENDMENT.md)' and ready.get('release_amendment_sha256')==sha(P/'RELEASE-AMENDMENT.md'),'coordinator release amendment binding')

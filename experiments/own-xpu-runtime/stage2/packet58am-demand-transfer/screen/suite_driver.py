@@ -172,9 +172,16 @@ def summarize_bracket(out,candidate,manifest,maintenance=DEFAULT_MAINTENANCE):
         expert_cache_policy='single immutable allocation; empty residency at each view; no prompt/KV/response reuse')
 
 
+def summarize_checked(out,manifest):
+    entry=manifest['prompts'][0]
+    row=compare_request(out/'run',ORACLE/'results'/entry['prompt_id'],entry,64,'none')
+    return dict(passed=True,diagnostic_only=True,view='S1',request_count=1,requests=[row],
+                candidate_beats_all_controls=False,timing_claim_eligible=False,submission_eligible=False)
+
+
 def native_command(args, manifest, table):
     require(args.miss_mode=='zerocopy','demand requires qualified zero-copy')
-    spec=read(HERE.parent/'proposals'/('smoke.json' if args.view=='smoke' else 'v5.json'))
+    spec=read(HERE.parent/'proposals'/('checked.json' if args.view=='checked' else 'smoke.json' if args.view=='smoke' else 'v5.json'))
     command=list(spec['native_argv'])
     require(command[command.index('--output')+1]==str(args.output/'run'),'exact proposal output required')
     return ['ionice','-c3',*command]
@@ -198,7 +205,9 @@ def main(argv=None):
     args.output=args.output.resolve();require(args.output.is_relative_to(HERE/'evidence'), 'packet evidence output required')
     args.output.mkdir(parents=True,exist_ok=True)
     require(not (args.output/'run').exists() and not (args.output/'receipt.json').exists(), 'output already used')
-    manifest=oracle_inputs();save(args.output/'suite-manifest.snapshot.json',manifest)
+    manifest=oracle_inputs()
+    if args.view=='checked':manifest=dict(manifest,prompts=manifest['prompts'][:1])
+    save(args.output/'suite-manifest.snapshot.json',manifest)
     entries=manifest['prompts'][:1] if args.window in ('KD','W2m') else manifest['prompts']
     table=args.output/'suite-inputs.tsv'
     expected=args.output/'oracle-tokens';expected.mkdir()
@@ -206,7 +215,7 @@ def main(argv=None):
         tokens=CHECK.token_record(ORACLE/'results'/e['prompt_id'])[:64 if args.view=='smoke' else 128]
         (expected/(e['prompt_id']+'.txt')).write_text(' '.join(map(str,tokens))+'\n')
     table.write_text(''.join(f"{e['prompt_id']} {(ROOT/e['input_bundle']/'tokens.txt').resolve()} {expected/(e['prompt_id']+'.txt')}\n" for e in entries))
-    write_table(args.output/'bracket-inputs.tsv',args.view,args.cache_maintenance)
+    if args.view!='checked':write_table(args.output/'bracket-inputs.tsv',args.view,args.cache_maintenance)
     command=native_command(args,manifest,table)
     row=dict(schema='own-runtime.packet58.driver.v1',passed=False,safe_to_exit=False,device_executed=False,
              window=args.window,arithmetic=ARITHMETIC,command=command,card=args.card,gpu_count=1)
@@ -232,11 +241,12 @@ def main(argv=None):
         row['safe_to_exit']=True
         require(status==0 and not stopping,'native failed or coordinator stopped')
         verify_lookup_views(args.output,args.view)
-        summary=summarize_bracket(args.output,args.view,manifest,args.cache_maintenance)
+        summary=summarize_checked(args.output,manifest) if args.view=='checked' else summarize_bracket(args.output,args.view,manifest,args.cache_maintenance)
         save(args.output/'summary.json',summary)
         row.update(summary_sha256=sha(args.output/'summary.json'))
         from release_gate import demand_report
-        report=demand_report(args.view,args.output/'run')
+        if args.view=='checked':report=dict(diagnostic_only=True,full_suite_passed=False)
+        else:report=demand_report(args.view,args.output/'run')
         save(args.output/'demand-summary.json',report)
         row.update(passed=True,demand_summary_sha256=sha(args.output/'demand-summary.json'))
         return 0

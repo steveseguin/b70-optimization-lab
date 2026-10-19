@@ -170,3 +170,25 @@ Root remained above the 27 GB CPU stop floor. No GPU, service, sudo, setting,
 GGUF read or live queue edit was performed. CURRENT remains the coordinator's
 live-state authority. Details and all receipts are in the
 [packet README](../experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/README.md).
+
+## Packet58amd — token-zero device-flag localization
+
+The failed packet58an smoke retains all original evidence under
+`screen/evidence/card0-demand-n/smoke`. S0 passed all twelve prompts. S1 has
+empty progress/site streams and 48 demand rows for its first token: every
+layer reports zero resident slots and zero staged entries. The first failure
+is therefore in the candidate partition/fallback path before any expert
+staging copy; the old streams cannot identify which layer set the flag.
+This is an engine flag, not a new kernel driver fault.
+
+A separate inert `proposed-p58am-checked-A.txt` row names
+`packet58amd-demand-checked-A`: the unchanged native binary, `--checked`,
+one candidate model load, first prompt only, and inherited K1a/K1b and
+whole-host safety gates. Every native/K1/queue flag passes executable help;
+temporary lanequeue planning and shared report rehearsal pass. The shared
+report adapter covers the inherited smoke/bracket reports, not a synthetic
+claim of a successful checked device run. `checked-READY.json` authorizes
+only this diagnostic row; the main READY is false during repair. The
+coordinator observed the marker and began the row; this CPU task launched
+no device or service and changed no live queue. Native sources/binaries
+are unchanged pending localized evidence.

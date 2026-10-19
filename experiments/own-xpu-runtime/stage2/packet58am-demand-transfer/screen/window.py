@@ -33,7 +33,7 @@ WRITES = {'K1': 8093428, 'WSCREEN': 62175372}
 
 def planned_writes(window,view):
     if window=='K1':return WRITES['K1']
-    row=json.loads((HERE.parent/'proposals'/('smoke.json' if view=='smoke' else 'v5.json')).read_text())
+    row=json.loads((HERE.parent/'proposals'/('checked.json' if view=='checked' else 'smoke.json' if view=='smoke' else 'v5.json')).read_text())
     return row['storage']['planned_outstanding_write_bytes']
 
 PREVIOUS = {}
