@@ -102,8 +102,10 @@ measure queueing and contention rather than assuming immediate DMA service.
    gate/up IQ2_S 640×2560, wide64+halfcache; down IQ4_NL tile16 2560×640;
    ten slots, 512 IDs, all 48 layer bindings. Compare every gate/up,
    activation, down, status, sticky error and final-combination byte against
-   original unpartitioned arithmetic. Exercise masks 0..1023, original slot
-   order, invalid routes, bounds, sentinel untouched slots, BF16/signed-zero,
+   original unpartitioned arithmetic. Exhaust masks 0..1023 for slot/address
+   and lease bookkeeping; use all-resident, all-miss, every single-miss slot,
+   alternating and pool-exhaustion masks for full real-shape arithmetic.
+   Exercise original slot order, invalid routes, bounds, sentinel untouched slots, BF16/signed-zero,
    exceptional/subnormal values, all half-table encodings, delayed copy and
    D2D completion, pool exhaustion and reset. Batch fixtures to stay ≤2 GB;
    do not materialize a full 512-expert weight bank. Reuse accepted arithmetic

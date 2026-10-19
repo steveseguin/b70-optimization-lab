@@ -77,6 +77,25 @@ build-release status are retained in
 [evidence/poll.json](../experiments/own-xpu-runtime/stage2/packet58al-demand-transfer-prep/evidence/poll.json).
 The prep keeps build release withheld until a qualified verdict arrives.
 
+The later 03:42 UTC poll still has no completed census. The owning note records
+that the b-smoke attempt refused **before device work** at 03:34:35 because
+its coordinator gate used an old job name. The c-smoke identity repair is
+committed, with fresh proposal checks passing; that preparation is not a
+device verdict. Its readiness hash, repair receipt and the failed attempt's
+exit receipt are now pinned in the poll. No partial/missing number is used
+to build or close rank 4. The initial design commit `2952181a5` was pushed
+immediately; the final update retains this newer observation. Preparation
+finished inside the 60-minute limit.
+
+Final audit peak RSS was approximately **18 MiB**. It also checks the proposed
+staging/host arithmetic against the parent admission metadata, explicitly
+leaving real simultaneous-lifetime and live admission gates pending. Document
+links and Git whitespace checks pass. Review clarified that exhaustive masks
+apply to ownership/address bookkeeping, with representative full-shape
+arithmetic cases, and that v5 disables event profiling in both arms. New-schema
+storage sizes measured from synthetic serialization stay labeled as such
+until the actual smoke replaces that estimate.
+
 Git: initial `git pull --rebase` refused unrelated dirty files. Fetch showed
 the coordinator's local review commit ahead of origin; a later fetch confirmed
 HEAD == origin/main at `ca9822f755899d9b0aec1b96ed8298fe1d8f4202`.

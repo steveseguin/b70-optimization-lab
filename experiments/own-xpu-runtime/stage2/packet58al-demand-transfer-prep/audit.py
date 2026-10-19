@@ -31,7 +31,7 @@ def rel(path):
 
 
 def digest(path):
-    require(path.suffix in {'.py', '.cpp', '.hpp', '.json', '.jsonl', '.tsv'},
+    require(path.suffix in {'.py', '.cpp', '.hpp', '.json', '.jsonl', '.tsv', '.md'},
             'only source/evidence hashing allowed')
     with path.open('rb') as stream:
         return hashlib.file_digest(stream, 'sha256').hexdigest()
@@ -164,6 +164,32 @@ def parent_audit():
                           method='stat sizes only; no model or binary reads'))
     # Enclosing phase is a conservative wait-sizing input, not a per-op measurement.
     phase_ms = max(r['prefill_total_ms'] for r in cold)
+    admission_path = AH / 'admission.json'
+    admission = read(admission_path)['admission']
+    per_expert = 2 * 640 * 820 + 2560 * 360
+    staged = 2 * 32 * per_expert
+    host_increment = staged + 1024**2 + 2 * 1024**2
+    require(staged == 126_156_800, 'stage arithmetic')
+    require(admission['host_bound_bytes'] + host_increment == 90_529_619_968,
+            'proposed host bound')
+    require(admission['host_required_available_bytes'] + host_increment == 99_119_554_560,
+            'proposed host available floor')
+    accounting = dict(source=rel(admission_path), sha256=digest(admission_path),
+        planned_not_measured=True, admitted_for_device=False,
+        per_expert_bytes=per_expert, stage_bytes=staged,
+        device_map_cap_bytes=1024**2, host_metadata_cap_bytes=2 * 1024**2,
+        inherited_transfer_allowance_bytes=admission['device_categories']['transfer_bound'],
+        transfer_allowance_left_for_inherited_allocations_bytes=
+            admission['device_categories']['transfer_bound'] - staged - 1024**2,
+        host_added_backing_and_metadata_bytes=host_increment,
+        host_bound_bytes=admission['host_bound_bytes'] + host_increment,
+        host_required_available_bytes=admission['host_required_available_bytes'] + host_increment,
+        unchanged_host_reserve_bytes=admission['host_reserve_bytes'],
+        unchanged_device_owned_bound_bytes=admission['device_owned_bound_bytes'],
+        unassigned_device_capacity_bytes=admission['physical_capacity_floor_bytes']
+            - admission['device_owned_bound_bytes'] - admission['driver_allowance_bytes']
+            - admission['device_reserve_bytes'],
+        remaining_gate='full simultaneous allocation census, live admission, owner lifetime and bounded metadata proof')
     return dict(schema='packet58al.parent-audit.v1', passed=True,
                 scope='read-only real parent timings/source identity; not new quality or demand validation',
                 result=rel(result_path), result_sha256=digest(result_path),
@@ -178,7 +204,8 @@ def parent_audit():
                                     data_wall_clock_limit_seconds=None),
                 proposed_initial_wait_seconds=max(300, math.ceil(4 * phase_ms / 1000)),
                 wait_basis='4x largest enclosing measured parent prefill, minimum300s; not a per-op measurement; refresh with completed census',
-                measured_directory_sizes=sizes, file_pins=inventory)
+                measured_directory_sizes=sizes, proposed_stage_accounting=accounting,
+                file_pins=inventory)
 
 
 def poll():
@@ -200,11 +227,21 @@ def poll():
                             fields={k: data[k] for k in keep if k in data},
                             qualification='observed report; owning analyzer/native closure must still be replayed before build release'))
     ready = read(AI / 'READY-FOR-DEVICE.json')
+    attempts = []
+    for path in sorted((STAGE.parent / 'ops/lane-queue').glob('packet58ai*.exit.json')):
+        attempts.append(dict(path=rel(path), sha256=digest(path), fields=read(path)))
+    note = ROOT / 'notes/2026-10-19-own-runtime-packet58ai.md'
+    identity = AI / 'evidence/p58aic-identity.json'
     return dict(schema='packet58al.census-observation.v1',
                 observed_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 census_readiness_sha256=digest(AI / 'READY-FOR-DEVICE.json'),
                 census_declared_record_tok_s=ready.get('record_tok_s'),
                 census_preparation_probe=ready.get('preparation_path_probe'),
+                census_preparation_scope=ready.get('readiness_scope'),
+                census_attempt_exits=attempts,
+                coordinator_identity_repair=dict(path=rel(identity), sha256=digest(identity),
+                    evidence=read(identity)) if identity.exists() else None,
+                census_work_note=dict(path=rel(note), sha256=digest(note)),
                 reports=reports,
                 status='reports-observed-review-required' if reports else 'pending-completed-census',
                 upper_bound_ms_per_token=None if not reports else 'see individual report; no unqualified aggregate',
@@ -223,4 +260,5 @@ if __name__ == '__main__':
     print(json.dumps(dict(passed=True, source_map=True, real_parent_requests=audit['requests'],
                           primary_reconstructed_tok_s=audit['primary_reconstructed_tok_s'],
                           first_prefill_ms=audit['first_request']['first_prefill_row']['wall_ms'],
+                          peak_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
                           device_executed=False, model_reads=False)))
