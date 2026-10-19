@@ -99,3 +99,19 @@ Then [READY-FOR-DEVICE.json](../experiments/own-xpu-runtime/ops/packet58ah-orche
 is the last content write, binding that pushed preparation commit. The
 requested waiter `--check` runs read-only after it, and the marker is committed
 and pushed separately. No chain-b evidence directory has been created.
+
+## Chain b result (final) — submitted
+
+The quiet-host chain `packet58-onecard-58ah-b` ran 00:52:18–01:16:19 UTC. Every Codex unit was frozen from before K1a, both lanes were paused, and the waiter ended clean. All seven windows passed and were exact.
+
+| Window | Class-balanced tok/s | Major faults | Minor faults |
+| --- | ---: | ---: | ---: |
+| WS128x | 31.027 | 2,079 | — |
+| **WS128 (final)** | **31.663** | **24** | 26,114 |
+
+- WS128 is 31.662719 tok/s, +4.17% over 30.395631.
+- **Submitted** 01:20 UTC: HTTP 201, `cmvekebvh00a0rf01q3v2c3cz`, APPROVED.
+- The submission discloses chain a.
+- Receipt: `data/localmaxxing-responses/2026-10-19-packet58ah-chain-b-onecard-ws128.txt`.
+
+Even with everything frozen, WS128x took a paging hit (2,079 major faults). So the freeze does not control which fresh window pays for host paging. This confirms review 35's point: the fix belongs in the engine (packet58aj, resident lookup copies), not in reruns. There will be no further quiet-host reruns.
