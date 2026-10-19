@@ -1,0 +1,375 @@
+{
+  "admission": {
+    "schema": "packet58x.admission.v1",
+    "device_executed": false,
+    "device_categories": {
+      "control_transaction_bound": 1073741824,
+      "expert_cache_arena": 21552729600,
+      "expert_pointer_generation_tables": 2359296,
+      "target_4k_bf16_kv_index": 116391936,
+      "target_nonexpert": 5815529984,
+      "target_recurrent": 59019280,
+      "transfer_bound": 268435456,
+      "workspace_bound": 1073479680,
+      "async_publication_staging": 1179648,
+      "exact_half_decode_table": 262144
+    },
+    "cache_bytes": 21552729600,
+    "extra_cache_bytes": 3552729600,
+    "old_cache_bytes": 18000000000,
+    "driver_allowance_bytes": 536870912,
+    "device_owned_bound_bytes": 29963128848,
+    "device_reserve_bytes": 1500000000,
+    "physical_capacity_floor_bytes": 32000000000,
+    "physical_bound_with_driver_bytes": 30499999760,
+    "measured_host_peak_bytes": 82517362176,
+    "host_margin_bytes": 4294967296,
+    "host_reserve_bytes": 8589934592,
+    "host_required_available_bytes": 98990252032,
+    "host_bound_bytes": 90400317440,
+    "historical_available_floor_bytes": 119233388544,
+    "historical_host_margin_bytes": 20243136512,
+    "shadow_stop_bytes": 4294967296,
+    "windows": [
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/KD/window.json",
+        "device_bytes": 24287732980,
+        "drm_bytes": 24644968448,
+        "driver_overhead_bytes": 357235468,
+        "measured_normalized_peak_bytes": 82513434112,
+        "shadow_peak_bytes": 624869376,
+        "admitted_available_bytes": 120571949056
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/W2m/window.json",
+        "device_bytes": 24287732980,
+        "drm_bytes": 24637571072,
+        "driver_overhead_bytes": 349838092,
+        "measured_normalized_peak_bytes": 82515547648,
+        "shadow_peak_bytes": 657899520,
+        "admitted_available_bytes": 120854290432
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS/window.json",
+        "device_bytes": 24287732980,
+        "drm_bytes": 24620167168,
+        "driver_overhead_bytes": 332434188,
+        "measured_normalized_peak_bytes": 82513831424,
+        "shadow_peak_bytes": 579248128,
+        "admitted_available_bytes": 120264548352
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128/window.json",
+        "device_bytes": 24287732980,
+        "drm_bytes": 24619012096,
+        "driver_overhead_bytes": 331279116,
+        "measured_normalized_peak_bytes": 82514036224,
+        "shadow_peak_bytes": 579248128,
+        "admitted_available_bytes": 120524980224
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet58p-onecard-record/evidence/card0-58p-a/WS128x/window.json",
+        "device_bytes": 24287732980,
+        "drm_bytes": 24624967680,
+        "driver_overhead_bytes": 337234700,
+        "measured_normalized_peak_bytes": 82513556992,
+        "shadow_peak_bytes": 654229504,
+        "admitted_available_bytes": 120916934656
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet58r-onecard-v5/evidence/card0-v5-a/route-rec/WSCREEN/window.json",
+        "device_bytes": 24287732980,
+        "drm_bytes": 24655818752,
+        "driver_overhead_bytes": 368085772,
+        "measured_normalized_peak_bytes": 82513966592,
+        "shadow_peak_bytes": 579248128,
+        "admitted_available_bytes": 120344002560
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet58t-resident-lookups/evidence/card0-resident-a/resident/WSCREEN/window.json",
+        "device_bytes": 24287732980,
+        "drm_bytes": 24632283136,
+        "driver_overhead_bytes": 344550156,
+        "measured_normalized_peak_bytes": 82238087680,
+        "shadow_peak_bytes": 657899520,
+        "admitted_available_bytes": 119233388544
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/card0-async-a/overlap/WSCREEN/window.json",
+        "device_bytes": 24288912628,
+        "drm_bytes": 24621572096,
+        "driver_overhead_bytes": 332659468,
+        "measured_normalized_peak_bytes": 82517362176,
+        "shadow_peak_bytes": 636993536,
+        "admitted_available_bytes": 120830705664
+      },
+      {
+        "path": "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/card0-async-a/smoke/WSCREEN/window.json",
+        "device_bytes": 24288912628,
+        "drm_bytes": 24641609728,
+        "driver_overhead_bytes": 352697100,
+        "measured_normalized_peak_bytes": 82517304832,
+        "shadow_peak_bytes": 581943296,
+        "admitted_available_bytes": 120861556736
+      }
+    ],
+    "transient_policy": "Retain all original 1 GiB workspace, 1 GiB transaction, 256 MiB transfer, full 4K BF16 KV, double pointer tables; add async publication buffer. Fills write inside the one arena, never allocate a second arena.",
+    "live_admission_required": true,
+    "half_decode_accounting": {
+      "device_bytes": 262144,
+      "charged_from_existing_workspace_allowance": true,
+      "workspace_allowance_total_unchanged": 1073741824,
+      "extra_host_shadow_and_transient_bytes": 524288
+    }
+  },
+  "replay": {
+    "source_bindings": {
+      "calibration_manifest_sha256": "ea72831fa221dd404bd39ae1266f833bff73befde77feac5ba7fffc8f8baf0f9",
+      "trace_sha256": "4b103e39d3efc6cfe7d7601160959ca06797c4f8e6f184f6212c7ed87a4057a8",
+      "conversion_receipt_sha256": "b8be14afeaf93e16258a191fe116f9a9710c9cc2b147f1c375bf12829ab58e56",
+      "benchmark_manifest_sha256": "4216d6b7d31844d63162fdf475574171649fde1235f89176ce047983e2f3a540",
+      "calibration_source_sha256": "4e74e0c88f702bcb537ac1c7afc5b42eca08a5872e834ac99fbd0ea50687c25d"
+    },
+    "rows": [
+      {
+        "capacity_bytes": 18000000000,
+        "phases": {
+          "prefill": {
+            "route_visits": 43776,
+            "requested_bytes": 866181120000,
+            "miss_bytes": 130946995200,
+            "missing_experts": 66195,
+            "byte_hit_fraction": 0.8488226166832175,
+            "missed_experts_per_layer_visit": 1.5121299342105263,
+            "missed_bytes_per_layer_visit": 2991296.49122807
+          },
+          "decode": {
+            "route_visits": 154833,
+            "requested_bytes": 3065092352000,
+            "miss_bytes": 194056038400,
+            "missing_experts": 97908,
+            "byte_hit_fraction": 0.9366883551572673,
+            "missed_experts_per_layer_visit": 0.6323458177520296,
+            "missed_bytes_per_layer_visit": 1253324.797685248
+          }
+        },
+        "decode_miss_bytes_per_48_layer_equivalent": 60159590.288891904,
+        "decode_expert_hit_fraction": 0.9367654182247971
+      },
+      {
+        "capacity_bytes": 19000000000,
+        "phases": {
+          "prefill": {
+            "route_visits": 43776,
+            "requested_bytes": 866181120000,
+            "miss_bytes": 123077248000,
+            "missing_experts": 62225,
+            "byte_hit_fraction": 0.8579081843760344,
+            "missed_experts_per_layer_visit": 1.4214409722222223,
+            "missed_bytes_per_layer_visit": 2811523.3918128656
+          },
+          "decode": {
+            "route_visits": 154833,
+            "requested_bytes": 3065092352000,
+            "miss_bytes": 171313408000,
+            "missing_experts": 86430,
+            "byte_hit_fraction": 0.9441082393852778,
+            "missed_experts_per_layer_visit": 0.5582143341535719,
+            "missed_bytes_per_layer_visit": 1106439.893304399
+          }
+        },
+        "decode_miss_bytes_per_48_layer_equivalent": 53109114.87861115,
+        "decode_expert_hit_fraction": 0.9441785665846428
+      },
+      {
+        "capacity_bytes": 20000000000,
+        "phases": {
+          "prefill": {
+            "route_visits": 43776,
+            "requested_bytes": 866181120000,
+            "miss_bytes": 115161804800,
+            "missing_experts": 58230,
+            "byte_hit_fraction": 0.8670465077788811,
+            "missed_experts_per_layer_visit": 1.3301809210526316,
+            "missed_bytes_per_layer_visit": 2630706.432748538
+          },
+          "decode": {
+            "route_visits": 154833,
+            "requested_bytes": 3065092352000,
+            "miss_bytes": 155002444800,
+            "missing_experts": 78195,
+            "byte_hit_fraction": 0.9494297636092891,
+            "missed_experts_per_layer_visit": 0.5050279979074228,
+            "missed_bytes_per_layer_visit": 1001094.3713549437
+          }
+        },
+        "decode_miss_bytes_per_48_layer_equivalent": 48052529.8250373,
+        "decode_expert_hit_fraction": 0.9494972002092578
+      },
+      {
+        "capacity_bytes": 21000000000,
+        "phases": {
+          "prefill": {
+            "route_visits": 43776,
+            "requested_bytes": 866181120000,
+            "miss_bytes": 107740057600,
+            "missing_experts": 54482,
+            "byte_hit_fraction": 0.8756148626282688,
+            "missed_experts_per_layer_visit": 1.2445632309941521,
+            "missed_bytes_per_layer_visit": 2461167.2514619883
+          },
+          "decode": {
+            "route_visits": 154833,
+            "requested_bytes": 3065092352000,
+            "miss_bytes": 140346752000,
+            "missing_experts": 70803,
+            "byte_hit_fraction": 0.9542112485098785,
+            "missed_experts_per_layer_visit": 0.45728623743000524,
+            "missed_bytes_per_layer_visit": 906439.5316243953
+          }
+        },
+        "decode_miss_bytes_per_48_layer_equivalent": 43509097.51797097,
+        "decode_expert_hit_fraction": 0.9542713762569994
+      },
+      {
+        "capacity_bytes": 21552729600,
+        "phases": {
+          "prefill": {
+            "route_visits": 43776,
+            "requested_bytes": 866181120000,
+            "miss_bytes": 104051404800,
+            "missing_experts": 52620,
+            "byte_hit_fraction": 0.8798733862959285,
+            "missed_experts_per_layer_visit": 1.2020285087719298,
+            "missed_bytes_per_layer_visit": 2376905.263157895
+          },
+          "decode": {
+            "route_visits": 154833,
+            "requested_bytes": 3065092352000,
+            "miss_bytes": 133164774400,
+            "missing_experts": 67179,
+            "byte_hit_fraction": 0.9565544006159851,
+            "missed_experts_per_layer_visit": 0.4338803743388037,
+            "missed_bytes_per_layer_visit": 860054.2158325422
+          }
+        },
+        "decode_miss_bytes_per_48_layer_equivalent": 41282602.359962024,
+        "decode_expert_hit_fraction": 0.9566119625661196
+      }
+    ],
+    "caveats": [
+      "Two-rank speculative route visits, including rejected work; not one-card plain decode.",
+      "Publication after each route, not after the complete position.",
+      "Compact rows retain exact phase/layer/IDs for this byte-demand replay; they are not model-output evidence.",
+      "Empty cache persists across held-out prompts; no prompt/KV cache reuse.",
+      "48-layer equivalent is not an emitted-token measurement; preserve all rejected speculative visits.",
+      "Serial global-LRU proxy; async delayed publication may change hits."
+    ]
+  },
+  "projection": {
+    "measured_anchor_tok_s": 26.22859930943809,
+    "miss_byte_ratio": 0.6862181434700463,
+    "fill_dma_proxy_GB_s": 25,
+    "saved_ms_per_position": 0.8215633753679715,
+    "projected_tok_s": 26.821730636027166,
+    "projected_gain_fraction": 0.022613915428401965,
+    "per_prompt": [
+      {
+        "prompt_id": "incident-retrospective",
+        "measured_rate": 26.342510743811438,
+        "projected_rate": 26.97228665121111,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.8863619615507891
+      },
+      {
+        "prompt_id": "code-review",
+        "measured_rate": 26.51481993172996,
+        "projected_rate": 27.05593931785381,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.7542959831201043
+      },
+      {
+        "prompt_id": "customer-email",
+        "measured_rate": 25.620529814262422,
+        "projected_rate": 26.230693839137757,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.9079223629839079
+      },
+      {
+        "prompt_id": "sql-debugging",
+        "measured_rate": 25.33922940058364,
+        "projected_rate": 25.97216716759385,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.9617438498069412
+      },
+      {
+        "prompt_id": "release-plan",
+        "measured_rate": 25.455934558428027,
+        "projected_rate": 26.102944891073562,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.9737168019199586
+      },
+      {
+        "prompt_id": "benchmark-analysis",
+        "measured_rate": 28.228697140597262,
+        "projected_rate": 28.662254037950177,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.5358520845116346
+      },
+      {
+        "prompt_id": "architecture-tradeoff",
+        "measured_rate": 27.61334919342419,
+        "projected_rate": 28.114073746351664,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.6449945170561056
+      },
+      {
+        "prompt_id": "bug-report-synthesis",
+        "measured_rate": 27.418024584783694,
+        "projected_rate": 27.91566313957638,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.6501744659778664
+      },
+      {
+        "prompt_id": "technical-guide",
+        "measured_rate": 26.274209377970028,
+        "projected_rate": 26.885256039356758,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.8650287508598526
+      },
+      {
+        "prompt_id": "risk-register",
+        "measured_rate": 26.182989240906153,
+        "projected_rate": 26.758205232697573,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.8210219040991033
+      },
+      {
+        "prompt_id": "performance-hypotheses",
+        "measured_rate": 26.912764049152436,
+        "projected_rate": 27.440517300995317,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 0.7146284795350405
+      },
+      {
+        "prompt_id": "decision-memo",
+        "measured_rate": 24.34276527879669,
+        "projected_rate": 25.03946978542695,
+        "charged_intervals": 99,
+        "saved_ms_per_interval": 1.1430193429943545
+      }
+    ],
+    "measured": false,
+    "transfer_assumption": "Independent calibration miss ratio transfers to one-card serial fill payload; no zero-copy saving credited."
+  },
+  "proceed": true,
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet58aq-onecard-split/lineage/58ag-admission.json": "dc13ab6ef8c23a5c747616dafe32d88d7b946b9e32e0ea1c757e39eff5fa7f41"
+  },
+  "retained_evidence": {
+    "original_archive_member": "history/admission.json",
+    "original_sha256": "f5e47c9eab8b6a6b2d9f44208922758d653f9b178c02df5e689e7880d1b877a4",
+    "rerun_in_packet58xc": false
+  },
+  "provenance": "Unchanged numeric admission from hash-bound packet58ag snapshot; inherited measured metadata preserved locally"
+}
