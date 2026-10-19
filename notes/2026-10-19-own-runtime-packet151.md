@@ -72,3 +72,9 @@ are 240–600 seconds for smoke and 720–1200 for the bracket; both watchdogs a
 4800 seconds. Writes stay 240 MB per view. Historical retention/payload manifests
 are preserved in lineage-inputs/p151-first-build, rather than discarded or treated
 as current source pins. Final source-bound gate refresh and readiness seal follow.
+
+The inherited staged removal of generated build files from Git is completed
+without deleting the local files: the two generated build directories are
+moved aside only during the explicit-path commit, then restored unchanged.
+The binaries remain locally available and hash-bound; source, build commands,
+original constants, receipts and historical manifests remain tracked.
