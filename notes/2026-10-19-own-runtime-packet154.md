@@ -101,3 +101,37 @@ Entry HEAD matched origin/main at `651fb9c65a63a573d4e9f3c15cf3d254eaf4ea5a`
 after pull refused unrelated dirty files. The minimal readiness reseal is the
 last packet write, with `ready_for_device: true`; fresh storage and operational
 admission remain mandatory. Only packet154 and this note belong to this commit.
+
+## Packet154c — restore the unchanged 25 GB device storage floor
+
+The 01:55:16 UTC smoke refusal happened before device work. Both screen checks
+incorrectly used the CPU preparation stop line of 30 GB while their messages
+said 25 GB. Both now enforce 25 GB after planned writes. The packet-local
+storage helper uses the same floor; the private vendored helper called by the
+screen and worker also now enforces 25 GB instead of its inherited 8 GB.
+The two CPU preparation checks use the coordinator's new 27 GB stop line.
+
+Planned writes are unchanged: 145 MB for smoke and 725 MB for five views,
+within three times the measured 243 MB. The new CPU regression executes both
+actual screen admission expressions and both storage helpers. Smoke and bracket
+pass at 29.7 GB and at exactly 25 GB plus planned writes; one byte below the
+required amount refuses. The full bracket needs 25.725 GB free.
+
+This is a minimal source reseal with no native rebuild. Both native binary
+hashes and every native build input were verified unchanged. The build receipt
+explicitly records that only its driver's CPU admission check changed. The
+affected entry, limit and report checks were rerun; all pass. Both proposal
+outputs have fresh `device-p154c-split-` names. Each proposal passed the live
+planner on a temporary queue copy and the same shared entry/report rehearsal
+used for packet154b. All 23 pin-guard unit tests pass. Evidence and command logs
+are under `evidence/p154c-*`; `p154c-validation.json` links the checks.
+
+Work used nice 19, CPUs 8–15 and 24–31, Python `-B`, closed stdin, and less
+than 2 GB actual RAM. No GGUF reads, compiler, GPU, service, sudo, settings or
+live queue changes occurred. Other packets and shared tools stayed frozen.
+Pull refused unrelated dirty work; fetch confirmed entry HEAD and origin/main
+both at `3e275ea2c33cec553df353cc26bbcdb78a5ef5cf`.
+The readiness marker is written last with `ready_for_device: true`; the final
+marker and both proposals receive a read-only prelaunch pin replay. Device
+equality and attribution remain pending, with fresh coordinator admission
+still mandatory. The 58.798 tok/s record is unchanged.

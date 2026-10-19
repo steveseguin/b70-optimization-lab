@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "checks": {
+    "exec-limits": {
+      "passed": true,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/exec_gate.py"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/p154c-exec-limits.log",
+      "sha256": "c906dbc157ec30d428454931214d4d16db0f686d9bbafee4dde78a89408599ee"
+    },
+    "cpu-seal": {
+      "passed": true,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/cpu_seal.py",
+        "--seal"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/p154c-cpu-seal.log",
+      "sha256": "764a72bfee139e3b226c3eab6b60c50d7ab4664d617ec23f77b200fb2e8a2f89"
+    },
+    "entry": {
+      "passed": true,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/entry_gate.py"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/p154c-entry.log",
+      "sha256": "76923da71251cfe38e01308451223ea6fea861e24b5312b65507e3df9275dee3"
+    }
+  },
+  "max_child_rss_kib": 37804
+}

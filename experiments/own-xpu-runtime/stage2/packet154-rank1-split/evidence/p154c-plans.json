@@ -1,0 +1,63 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "checks": {
+    "smoke-plan": {
+      "passed": true,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/tmp/p154c-plan-g2_y2wr1"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/p154c-smoke-plan.log",
+      "sha256": "a9f83a444a7fffe8e5985e7cbf4e9981ce2c14aec7f5d4d1a15ac5eb8788836c"
+    },
+    "smoke-rehearsal": {
+      "passed": true,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/rehearse_entry.py",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/proposed-p154-smoke-B.txt",
+        "--report",
+        "--json"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/p154c-smoke-rehearsal.log",
+      "sha256": "27e2b0b61da5e94eb5eef15bf32bf747a27f018b57c31439efb8dd775d5c9404"
+    },
+    "bracket-plan": {
+      "passed": true,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/lanequeue.py",
+        "plan",
+        "--lane",
+        "B",
+        "--directory",
+        "/tmp/p154c-plan-k_4088js"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/p154c-bracket-plan.log",
+      "sha256": "419bb4730db695861910febb2b53c75e936c19579f4bf62484230b3a7ae3b87a"
+    },
+    "bracket-rehearsal": {
+      "passed": true,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/rehearse_entry.py",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/proposed-p154-split-B.txt",
+        "--report",
+        "--json"
+      ],
+      "path": "experiments/own-xpu-runtime/stage2/packet154-rank1-split/evidence/p154c-bracket-rehearsal.log",
+      "sha256": "65423ed475e57deafc3a102b9f41f6e8578195c17e35fd1e8a29a4b3be058f6e"
+    }
+  },
+  "max_child_rss_kib": 33432
+}

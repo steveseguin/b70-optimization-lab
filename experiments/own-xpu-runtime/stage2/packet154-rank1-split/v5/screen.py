@@ -166,7 +166,7 @@ def screen_main(argv=None, *, release=None):
             require(read(path).get('boot_id') != boot, 'lineage fault latch requires coordinator recovery')
     SUPPORT.storage(args.output, planned_writes)
     if args.bracket:
-        require(shutil.disk_usage('/').free - planned_writes >= 30_000_000_000,
+        require(shutil.disk_usage('/').free - planned_writes >= 25_000_000_000,
                 'bracket would breach 25 GB free-storage floor')
     memory_admit(args.profile)
     review, boot_log, fresh_log, cursor = fault_review.validate(args.fault_review)
@@ -209,7 +209,7 @@ def screen_main(argv=None, *, release=None):
             record['memory_fence'] = W.memory_fence()
             record['storage_admission'] = SUPPORT.storage(args.output, planned_writes)
             if args.bracket:
-                require(shutil.disk_usage('/').free - planned_writes >= 30_000_000_000,
+                require(shutil.disk_usage('/').free - planned_writes >= 25_000_000_000,
                         'bracket would breach 25 GB free-storage floor')
             record['command'] = cmd
             handlers = {s: signal.signal(s, lambda n, f: reasons.append('coordinator stop ' + str(n)))

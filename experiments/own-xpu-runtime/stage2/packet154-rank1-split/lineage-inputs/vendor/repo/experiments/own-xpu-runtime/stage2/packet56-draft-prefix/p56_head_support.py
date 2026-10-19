@@ -110,10 +110,10 @@ def storage(path, planned_write_bytes=64 * 1024**2):
     while not parent.exists():
         parent = parent.parent
     free = shutil.disk_usage(parent).free
-    require(free - planned_write_bytes >= 8_000_000_000,
-            'window would breach unchanged 8 GB free-storage floor')
+    require(free - planned_write_bytes >= 25_000_000_000,
+            'window would breach 25 GB free-storage floor')
     return dict(free_bytes=free, planned_write_bytes=planned_write_bytes,
-                min_free_bytes=8_000_000_000)
+                min_free_bytes=25_000_000_000)
 
 
 def identity(seal_path, environment, boot):

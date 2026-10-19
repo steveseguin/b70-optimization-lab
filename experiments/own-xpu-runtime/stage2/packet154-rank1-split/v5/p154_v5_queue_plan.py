@@ -3,7 +3,7 @@ import argparse,json,subprocess,sys,tempfile,shutil
 from p154_v5_build_engine import P,LOCAL,ROOT,sha,save,limits
 QUEUE=LOCAL.parents[1]/'ops/lane-queue'
 def proposal(kind):
- return dict(name='packet154-split-'+kind+'-B',lane='B',argv=['/usr/bin/python3','-B',str((P/'bracket_job.py').relative_to(ROOT)),'--variant','split','--kind',kind,'--lane','B','--output',str(P/'evidence'/('device-split-'+('smoke' if kind=='smoke' else 'v5')+'-B')),'--fault-review','{REVIEW}','--authorized-device-window'],env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)),plan=dict(entry_rehearsal=dict(binaries=[dict(path=str((P/'build'/m/'own-rt-iq3').relative_to(ROOT)),sha256=sha(P/'build'/m/'own-rt-iq3')) for m in ('device','gnu-host')]),host_required_available_bytes=97*1024**3+1200*1024**2,expected_seconds=[420,600],watchdog_seconds=2400))
+ return dict(name='packet154-split-'+kind+'-B',lane='B',argv=['/usr/bin/python3','-B',str((P/'bracket_job.py').relative_to(ROOT)),'--variant','split','--kind',kind,'--lane','B','--output',str(P/'evidence'/('device-p154c-split-'+('smoke' if kind=='smoke' else 'v5')+'-B')),'--fault-review','{REVIEW}','--authorized-device-window'],env_extra={},review=str((P/'fault_review.py').relative_to(ROOT)),plan=dict(entry_rehearsal=dict(binaries=[dict(path=str((P/'build'/m/'own-rt-iq3').relative_to(ROOT)),sha256=sha(P/'build'/m/'own-rt-iq3')) for m in ('device','gnu-host')]),host_required_available_bytes=97*1024**3+1200*1024**2,expected_seconds=[420,600],watchdog_seconds=2400))
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--stage',action='store_true');a=ap.parse_args()
  limits();snapshot=LOCAL/'lineage-inputs/queue';snapshot.mkdir(exist_ok=True)

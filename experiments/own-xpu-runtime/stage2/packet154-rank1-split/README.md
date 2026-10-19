@@ -32,7 +32,8 @@ Planned writes: 145 MB/view, 725 MB total, below 3 times packet150's measured
 243 MB. This stricter budget resolves the brief's incompatible approximate
 250 MB/view and <=3x total requirements. Expected 420–600 seconds, cooperative
 watchdog 2400 seconds. CPU subprocesses have no elapsed-wall timeout; CPU memory
-caps remain 4 GiB. Root floor 30 GB; build ceiling 300 MB.
+caps remain 4 GiB. CPU preparation stops below 27 GB; device storage floor is
+25 GB after planned writes; build ceiling 300 MB.
 
 Proposals are prepared for lane B only, never queued. Final handoff is
 `READY-FOR-DEVICE.json`, written last after validation (or with explicit blockers).
@@ -49,5 +50,5 @@ Reproduce preparation with `nice -n 19 taskset -c 8-15,24-31 python3 -B
 experiments/own-xpu-runtime/stage2/packet154-rank1-split/v5/qualify_cpu.py`, stdin
 from `/dev/null`. This compiles on CPU and never queues or opens a device.
 The final marker is separate and must be rewritten only after every check.
-Fresh runtime storage admission requires 30 GB plus the proposed writes;
+Fresh runtime storage admission requires 25 GB plus the proposed writes;
 CPU readiness does not waive that check or any live coordinator latch.

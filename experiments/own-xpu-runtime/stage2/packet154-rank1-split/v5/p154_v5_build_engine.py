@@ -12,7 +12,7 @@ def save(p,row):p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dum
 def limits():
  assert os.getpriority(os.PRIO_PROCESS,0)==19
  assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
- assert shutil.disk_usage('/').free>=30_000_000_000
+ assert shutil.disk_usage('/').free>=27_000_000_000,'CPU preparation: root free below 27 GB'
  size=sum(f.stat().st_size for f in LOCAL.rglob('*') if f.is_file() and not f.is_symlink() and 'build' in f.parts and not f.is_relative_to(P/'evidence'))
  assert size<=300_000_000,size
  return size

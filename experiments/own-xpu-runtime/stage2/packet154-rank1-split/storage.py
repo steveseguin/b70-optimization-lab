@@ -17,7 +17,7 @@ def packet_relative(path):
     if resolved.is_relative_to(B):return Path('build')/resolved.relative_to(B)
     raise ValueError('path outside packet storage: '+str(path))
 
-FREE_FLOOR = 30_000_000_000
+FREE_FLOOR = 25_000_000_000
 BUILD_BASE_BUDGET = 1_200_000_000
 CPU_BUILD_LIMIT = 250_000_000
 REGISTERED_CHAIN = json.loads((P / 'chain-registration.json').read_text())['output']
