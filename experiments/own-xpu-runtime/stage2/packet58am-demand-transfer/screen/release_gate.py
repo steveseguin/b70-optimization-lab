@@ -27,6 +27,9 @@ def demand_report(view,root):
     require(result.returncode==0,'full demand report failed: '+result.stderr[-2000:])
     return read(root.parent/'demand-summary.json')
 def verify_smoke():
+    from report_recovery import SMOKE, verified_smoke
+    if (SMOKE/'report-regeneration.json').exists():
+        return verified_smoke()
     import queue_runner as Q
     proposal=read(P/'proposals/smoke.json');root=Path(proposal['output'])
     for name in Q.ORDER:Q.verify_success(name,root,0,0)

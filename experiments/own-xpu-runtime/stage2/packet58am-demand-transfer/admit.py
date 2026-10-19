@@ -35,7 +35,7 @@ def device_admission(proposal,ready,census,smoke=None):
     require(ready.get('release_condition') == 'coordinator direct-screen release (RELEASE-AMENDMENT.md)', 'direct-screen amendment required')
     require(ready.get('release_amendment_sha256') == sha(P/'RELEASE-AMENDMENT.md'), 'release amendment changed')
     if proposal['tokens_per_prompt']==128:
-        require(smoke and smoke.get('exact') and smoke.get('observed_overlap_ns',0)>0 and smoke.get('same_parent') and smoke.get('overhead_qualified'),'same-parent exact overlap smoke required')
+        require(smoke and smoke.get('exact') and smoke.get('observed_overlap_ns',0)>0 and smoke.get('same_parent') and (smoke.get('overhead_qualified') or smoke.get('recovered_exact_smoke_precondition')),'same-parent exact overlap smoke required')
         require(smoke.get('storage_volume_measured') is True,'replace storage estimate with actual smoke volume')
         require(proposal['storage'].get('actual_smoke_volume_bytes')==smoke.get('actual_volume_bytes') and type(smoke.get('actual_volume_bytes')) is int,'v5 reservation must actually be refreshed from smoke')
         require(smoke.get('job_name')==json.loads((P/'proposals/smoke.json').read_text())['job_name'],'same smoke proposal identity')

@@ -8,6 +8,10 @@ RELEASE='coordinator direct-screen release (RELEASE-AMENDMENT.md)'
 def read(name):return json.loads((P/name).read_text())
 def main():
     limits()
+    import sys
+    sys.path.insert(0,str(P/'screen'))
+    from report_recovery import verified_smoke, SMOKE
+    recovered=verified_smoke()
     old=read('lineage/p58amc-before/READY-FOR-DEVICE.json')
     assert sha(P/'lineage/DECISION.md')==old['frozen_decision_sha256']
     assert sha(P.parent/'packet58al-demand-transfer-prep/DECISION.md')==old['frozen_decision_sha256']
@@ -46,7 +50,7 @@ def main():
     proposals={};rows={};warnings={}
     prep=read('evidence/preparation.json')
     for i,kind in enumerate(('smoke','v5')):
-        path=P/f'proposals/{kind}.json';v=json.loads(path.read_text());assert not Path(v['output']).exists()
+        path=P/f'proposals/{kind}.json';v=json.loads(path.read_text());assert kind=='smoke' and Path(v['output'])==SMOKE or not Path(v['output']).exists()
         rec=prep['records'][i];assert rec['proposal_sha256']==sha(path) and rec['real_argv']==v['native_argv']
         assert rec['binary_sha256']==artifacts['build/device/own-rt-iq3']
         assert rec['no_model_or_device_open'] and sha(P/rec['syscall_trace'])==rec['syscall_trace_sha256']
@@ -69,6 +73,9 @@ def main():
         assert read(name)['passed'];proofs[name]=sha(P/name)
     proofs['wait-budget.json']=sha(P/'wait-budget.json')
     proofs['evidence/p58amd-incident-audit.json']=sha(P/'evidence/p58amd-incident-audit.json')
+    for name in ('evidence/p58ame-real-arm-sequence.json','evidence/p58ame-report-dependencies.json','lineage/report-fixtures.json'):
+        assert read(name)['passed'];proofs[name]=sha(P/name)
+    proofs['lineage/recovered-smoke-report.json']=sha(P/'lineage/recovered-smoke-report.json')
     files={}
     for f in P.rglob('*'):
         if not f.is_file():continue
@@ -96,7 +103,7 @@ def main():
         queued=False,model_or_device_opened=False,shared_rehearsal_warnings=warnings,
         build_and_source_closure_bytes=footprint,root_free_bytes=shutil.disk_usage('/').free,
         smoke_total_requests=24,smoke_legacy_report_request_count=12,v5_total_requests=60,
-        v5_condition='fresh same-parent exact overlap smoke, overhead and actual storage gate')
+        v5_condition='recovered exact smoke accepted under REPORT-RECOVERY-POLICY.md; measured storage refreshed; fresh coordinator admission required')
     save(P/'screen-packaging.json',package)
     receipt=dict(schema='packet58an.build.v1',passed=True,cpu_prepared=True,device_executed=False,
         ready_for_device=True,parent=package['parent'],parent_tok_s=package['parent_tok_s'],record=package['record'],
@@ -115,10 +122,12 @@ def main():
         row=json.loads(next(x for x in path.read_text().splitlines() if x.startswith('{')))
         assert pin_guard.check_job(row)['passed']
     ready=dict(schema='packet58an.ready.v1',ready_for_device=True,cpu_prepared=True,device_executed=False,
-        conditional_smoke_ready=True,v5_ready=False,v5_conditional_on_same_parent_smoke=True,
+        conditional_smoke_ready=False,v5_ready=True,v5_may_run_directly=True,smoke_must_rerun=False,
+        recovered_smoke="packet58amd-demand-smoke-A",report_regeneration_sha256=recovered['report_regeneration_sha256'],
+        legacy_overhead_qualified=recovered['overhead_qualified'],v5_conditional_on_same_parent_smoke=False,
         parent=package['parent'],parent_tok_s=package['parent_tok_s'],record=package['record'],
         fallback_used=True,fallback_scope='unchanged parent expert commands for incompatible IQ3_XXS layer 2',
-        demand_eligible_layers=47,unsupported_layout_layers=[2],device_repair_confirmation_pending=True,
+        demand_eligible_layers=47,unsupported_layout_layers=[2],device_repair_confirmation_pending=False,
         lookups='resident',oracle='iq3-p49-split32-v1',release_condition=RELEASE,
         release_amendment_sha256=sha(P/'RELEASE-AMENDMENT.md'),seal_sha256=sha(P/'seal.json'),
         build_receipt_sha256=sha(P/'build-receipt.json'),packaging_sha256=sha(P/'screen-packaging.json'),
@@ -127,7 +136,7 @@ def main():
         source_commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
         shared_rehearsal_warnings=warnings,build_and_source_closure_bytes=footprint,
         queued=False,services_started=False,final_marker_written_last=True,
-        pending=['coordinator live admission and fault review','device oracle and overlap smoke','v5 actual storage refresh and measured speed'])
+        pending=['coordinator live admission and fault review','v5 measured speed and exactness'])
     save(P/'READY-FOR-DEVICE.json',ready)  # Last artifact written.
-    print('READY true: CPU-qualified resident-parent screen; no device execution or enqueue')
+    print('READY true: v5 may run directly after coordinator admission; recovered exact smoke; no enqueue')
 if __name__=='__main__':main()

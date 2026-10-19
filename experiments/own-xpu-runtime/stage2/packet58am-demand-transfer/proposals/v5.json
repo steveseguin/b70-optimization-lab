@@ -1,9 +1,9 @@
 {
   "schema": "packet58am.proposal.v1",
-  "job_name": "packet58amd-demand-v5-A",
+  "job_name": "packet58ame-demand-v5-A",
   "lane": "A",
   "card": 0,
-  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/screen/evidence/card0-demand-amd-fixed/v5",
+  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/screen/evidence/card0-demand-ame-recovered/v5",
   "native_argv": [
     "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/build/device/own-rt-iq3",
     "--authorized-device-window",
@@ -44,7 +44,7 @@
     "--dispatch",
     "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/inputs/dispatch.json",
     "--output",
-    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/screen/evidence/card0-demand-amd-fixed/v5/WSCREEN/run/run",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/screen/evidence/card0-demand-ame-recovered/v5/WSCREEN/run/run",
     "--hc",
     "p60fusion",
     "--hc-geometry",
@@ -70,7 +70,7 @@
     "--bracket-inputs",
     "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/inputs/v5-views.tsv",
     "--demand-identity",
-    "packet58amd-demand-v5-A",
+    "packet58ame-demand-v5-A",
     "--lookups",
     "resident"
   ],
@@ -83,7 +83,7 @@
   "expected_parent": "packet58aj resident lookup line; same resident copies in every view",
   "native_capability": "resident lookup port from packet58aj, compile authorized by packet58an",
   "entry": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/screen/queue_runner.py",
-  "unit": "screen-packet58amd-demand-v5-A",
+  "unit": "screen-packet58ame-demand-v5-A",
   "whole_host_hold": "coordinator holds PAUSE-B, drains both lanes and all other GPU owners",
   "coordinator_only": true,
   "queue_write_authorized": false,
@@ -110,7 +110,7 @@
         "--card",
         "0",
         "--output",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/screen/evidence/card0-demand-amd-fixed/v5/K1a/run",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/screen/evidence/card0-demand-ame-recovered/v5/K1a/run",
         "--iterations",
         "20",
         "--down-layout",
@@ -127,7 +127,7 @@
         "--card",
         "0",
         "--output",
-        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/screen/evidence/card0-demand-amd-fixed/v5/K1b/run",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/screen/evidence/card0-demand-ame-recovered/v5/K1b/run",
         "--iterations",
         "20",
         "--down-layout",
@@ -167,12 +167,15 @@
     "device_reserve_bytes": 1500000000
   },
   "storage": {
-    "matched_measured_volume_estimate_bytes": 84216905,
-    "planned_outstanding_write_bytes": 126325358,
+    "matched_measured_volume_estimate_bytes": 447654888,
+    "planned_outstanding_write_bytes": 671482332,
     "baseline_bytes": 84216905,
     "new_schema_diagnostic_bytes": 0,
     "positions": 11930,
-    "reservation_over_estimate": 1.5000000059370502,
-    "requires_actual_smoke_volume_refresh_before_admission": true
-  }
+    "reservation_over_estimate": 1.5,
+    "requires_actual_smoke_volume_refresh_before_admission": false,
+    "actual_smoke_volume_bytes": 179061955,
+    "measurement_source": "packet58amd-demand-smoke-A recovered report; 2 views scaled to 5; diagnostic bytes conservatively retained"
+  },
+  "smoke_precondition": "recovered exact S0/S1 under REPORT-RECOVERY-POLICY.md"
 }

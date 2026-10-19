@@ -229,3 +229,28 @@ and binary-help flag checks. READY grants CPU-qualified smoke admission only;
 the repaired binary has not run on a GPU. V5 still needs the successful smoke
 and actual storage refresh. See the
 [repair closeout](../experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/p58amd-closeout.md).
+
+## Packet58ame — recover the completed smoke report offline
+
+The amd smoke completed its device work and both exact oracle comparisons.
+Its outer report failed because the copied harness lacked the 58c supervisor
+fixture manifest. Seven fixture files now match packet58aj and packet58ah by
+hash. The regression test calls the real report functions on the saved smoke;
+it fails on the old tree and passes after the fix. The complete report-path
+open audit found no remaining missing lineage inputs.
+
+Offline recovery preserves every original receipt and records hashes of all
+inputs and new reports. **S0 and S1 are each 12/12 exact** against the unchanged
+`iq3-p49-split32-v1` oracle. The old cross-session overhead check still fails;
+it has not been relabeled. The owner's packet58ame instruction explicitly
+accepts recovered exact S0/S1 for the v5 smoke precondition, as recorded in the
+packet's recovery policy.
+
+The fresh inert row is `packet58ame-demand-v5-A`. It may run directly after
+fresh coordinator admission, with no smoke rerun. Its storage reservation now
+uses the measured 179,061,955-byte smoke output. CPU real-arm sequencing,
+17 Python tests, real native preparation, parent replay, executable-help checks,
+entry/report rehearsal and isolated lanequeue planning pass. READY is written
+last. No GPU, service, sudo, settings, model read or live queue change occurred.
+See the [recovery closeout](../experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/p58ame-closeout.md)
+for evidence paths, preserved failure, overhead caveat and exact next action.

@@ -24,3 +24,8 @@
   gate/up is IQ3_XXS (704,000 bytes/expert), not IQ2_S (524,800). Fixed-layout
   partitioning and staging must exclude it and retain the parent commands.
   Uniform IQ2_S synthetic byte fixtures cannot test mixed-checkpoint dispatch.
+
+- Packet58ame: real report gates must exercise `window.postload_observation`
+  against completed output. Import/help/argv tests miss lazily read fixture
+  manifests. Keep all three vendored fixture directories and their hash inventory.
+  Recovered exactness never changes the original failed overhead verdict.

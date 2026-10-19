@@ -11,7 +11,7 @@ if '--skip-tests' not in sys.argv:
 else:
  assert json.loads((E/'python-tests.json').read_text())['passed']
  records.append(dict(check='python-tests-already-completed',returncode=0))
-for kind in ('smoke','v5'):
+for kind in (('v5',) if '--v5-only' in sys.argv else ('smoke','v5')):
  with tempfile.TemporaryDirectory(prefix='p58an-plan-') as d:
   pathlib.Path(d,'queue-A.txt').write_text((Q/f'proposed-p58am-{kind}-A.txt').read_text())
   job=json.loads(next(line for line in (Q/f'proposed-p58am-{kind}-A.txt').read_text().splitlines() if line.startswith('{')))

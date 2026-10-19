@@ -1,3 +1,16 @@
+# Packet58ame: recovered exact smoke; fresh v5 proposal
+
+The completed `packet58amd-demand-smoke-A` is recovered offline: S0 and S1
+each match all 12 oracle requests. The missing report fixtures are now
+vendored by hash. Original device, driver, window and queue receipts remain
+unchanged. See [recovery closeout](p58ame-closeout.md).
+
+`packet58ame-demand-v5-A` may run directly after fresh coordinator admission;
+no smoke rerun is needed under the [owner recovery policy](REPORT-RECOVERY-POLICY.md).
+The old cross-session overhead check remains **failed**, and is not a speed
+claim. The measured smoke volume now backs the v5 storage reservation.
+The earlier preparation description below is historical where superseded.
+
 # Packet58an: resident-parent demand-transfer screen
 
 This packet now implements **packet58aj's 31.966820 tok/s resident lookup

@@ -1,0 +1,31 @@
+F
+======================================================================
+FAIL: test_completed_smoke_real_report (__main__.RealReport.test_completed_smoke_real_report)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/test_report_recovery.py", line 16, in test_completed_smoke_real_report
+    self.assertEqual(p.returncode, 0, p.stdout+p.stderr)
+AssertionError: 1 != 0 : Traceback (most recent call last):
+  File "<string>", line 4, in <module>
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/screen/report_recovery.py", line 34, in report_completed
+    observation = W.postload_observation(out, window['memory_admission']['plan'], window['memory_admission'])
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/screen/window.py", line 340, in postload_observation
+    return dict(peak_shadow_bytes=max(peak, after, M.seed_observation()['peak_shadow_bytes']),
+                                                   ^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/screen/legacy_memory_plan.py", line 107, in seed_observation
+    pins = json.loads((root / 'source-manifest.json').read_text())
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58am-demand-transfer/screen/lineage/fixtures/58c-supervisor/source-manifest.json'
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.185s
+
+FAILED (failures=1)
