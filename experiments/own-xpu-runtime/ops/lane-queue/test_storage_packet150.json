@@ -1,0 +1,103 @@
+{
+  "source": "done-B-reviewed-20261018T234515Z.txt; events-B.jsonl; unit journal 23:44:02..06 UTC",
+  "record": {
+    "ExecMainStatus": "1",
+    "Result": "exit-code",
+    "device_observation": {
+      "device_fds": [],
+      "errors": [
+        "fd observation unreadable: 1764582"
+      ],
+      "live_pids": [],
+      "pids": [
+        1764582,
+        1764583,
+        1764585
+      ],
+      "samples": 25
+    },
+    "duration_seconds": 2.735961378988577,
+    "end_unix": 1792367045.4767306,
+    "end_utc": "2026-10-18T23:44:05.476720Z",
+    "faults_end": 2,
+    "faults_start": 2,
+    "job": {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/bracket_job.py",
+        "--variant",
+        "split",
+        "--kind",
+        "bracket",
+        "--lane",
+        "B",
+        "--output",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B",
+        "--fault-review",
+        "{REVIEW}",
+        "--authorized-device-window"
+      ],
+      "env_extra": {},
+      "lane": "B",
+      "name": "packet150-split-bracket-B",
+      "plan": {
+        "entry_rehearsal": {
+          "binaries": [
+            {
+              "path": "experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/build/device/own-rt-iq3",
+              "sha256": "0a71ddd2e81628fd710dc35101762f42f8a156ef03d247002ff08d8a88313563"
+            },
+            {
+              "path": "experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/build/gnu-host/own-rt-iq3",
+              "sha256": "047bb302d172e23642aa62560f2199536ad40fd6919e8d26b9318e836c00ffc8"
+            }
+          ]
+        },
+        "expected_seconds": [
+          480,
+          900
+        ],
+        "host_required_available_bytes": 105411248128,
+        "watchdog_seconds": 900
+      },
+      "review": "experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/fault_review.py"
+    },
+    "log": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/packet150-split-bracket-B-d48fbdfe4b4f4e1ca7882b4a56f83150.log",
+    "outcome": "REFUSED-fast",
+    "predevice_rejection": "complete device-free PID observations unavailable",
+    "rc": 1,
+    "receipt": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue/packet150-split-bracket-B-d48fbdfe4b4f4e1ca7882b4a56f83150.exit.json",
+    "report_failure_rejection": "[Errno 2] No such file or directory: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B/window.json'",
+    "review": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/lanequeue-review-ebf46494521c4e069123a120907aa6e0.json",
+    "source": "systemctl-show",
+    "start_utc": "2026-10-18T23:44:02.740765Z"
+  },
+  "events": [
+    {
+      "event": "START",
+      "lane": "B",
+      "name": "packet150-split-bracket-B",
+      "utc": "2026-10-18T23:44:02.762101Z"
+    },
+    {
+      "Result": "exit-code",
+      "event": "REFUSED-fast",
+      "lane": "B",
+      "name": "packet150-split-bracket-B",
+      "rc": 1,
+      "utc": "2026-10-18T23:44:05.750329Z"
+    },
+    {
+      "event": "ALERT",
+      "lane": "B",
+      "reason": "lane stopped; no retry or next job",
+      "utc": "2026-10-18T23:44:05.756450Z"
+    }
+  ],
+  "journal": "Started screen-packet150-split-bracket-B.service - /usr/bin/taskset -c 4-7,20-23 /usr/bin/env -i PATH=/usr/bin:/bin OMP_NUM_THREADS=2 LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib /usr/bin/python3 -B experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/bracket_job.py --variant split --kind bracket --lane B --output /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/device-split-v5-B --fault-review /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/evidence/lanequeue-review-ebf46494521c4e069123a120907aa6e0.json --authorized-device-window.\nTraceback (most recent call last):\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/bracket_job.py\", line 25, in <module>\n    if __name__=='__main__':raise SystemExit(main())\n                                             ^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/bracket_job.py\", line 24, in main\n    return screen.main(args)\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/screen.py\", line 337, in main\n    return screen_main(argv, release=release)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/v5/screen.py\", line 169, in screen_main\n    require(shutil.disk_usage('/').free - planned_writes >= 25_000_000_000,\n  File \"/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet150-rank0-split/lineage-inputs/vendor/repo/experiments/own-xpu-runtime/stage2/packet34-replay-bench/window.py\", line 27, in require\n    raise ValueError(reason)\nValueError: bracket would breach 25 GB free-storage floor\nscreen-packet150-split-bracket-B.service: Main process exited, code=exited, status=1/FAILURE\nscreen-packet150-split-bracket-B.service: Failed with result 'exit-code'.\nscreen-packet150-split-bracket-B.service: Consumed 2.601s CPU time, 27.5M memory peak, 0B memory swap peak.\n",
+  "exit_receipt": {
+    "ExecMainStatus": "1",
+    "Result": "exit-code"
+  }
+}
