@@ -938,3 +938,20 @@ Also on record:
 - The 07:46 p58aq pin-guard refusal (`records[].pins = {passed: true}`) was fixed in 436389c0a. Briefs now forbid pin-guard map keys outside path → SHA256 maps.
 
 STOP DOING acknowledged: no READY decode row at window end; briefs whose gate needs a frozen path changed; pricing two-card levers from synthetic or failed-gate numbers; optional smokes before K1-opening diagnostics; publication rows ahead of decode rows; pin-guard key names in evidence JSON.
+
+## Review 43 — 2026-10-19 09:0x UTC — VERDICT: ACT
+
+The reviewer found 53% device-in-flight and 19.2% card-busy over 2 h, with all four cards idle since 08:51 and nothing queued. The packet58as record chain is waiting on chain orchestration. Two cards has had no lever for about 15 h.
+
+Actions taken (09:05–09:15):
+1. **p171 launched (09:06):** a one-card host-runtime parity audit vs bundle 8, by mechanism: host waits per token, publication drain under spin, ordered queue, reply-first, prepared submission, p105 controller/submit, p134–p138 submission/critical-path changes, token input, issue batching, profiling queues, remaining sleeps. The top missing item becomes a one-load v5 on the **spin line** (packet58as parent), no smoke, READY by the time the chain ends.
+2. **p168b is the last census-preparation job.** `fn-run/p168-continue.sh` queues its lane-B row (selective freeze) as soon as it is READY. There will be no p168c: if it ends not ready, its isolable classes plus the residual are what ship.
+3. **p172 (ops) launched:** `ops/onecard_chain_derive.py` turns winning v5 + parent orchestration + flags/binary into a sealed, `--check`-passing chain orchestration with the same gates, failing closed if a flag is not accepted in every window mode. The same job adds the `gpu_time_review.py` fix: lanequeue START/DONE as device evidence for micros without child clocks (packet166 B1 was under-credited).
+4. **Next chain wrapper:** `fn-run/onecard-chain-quiet3.sh` uses the selective freeze (`codex-freeze-heavy.sh`) from launch until WS128x, then a full freeze through WS128x/WS128. The current 58as chain keeps `onecard-chain-quiet2.sh` (full freeze from before K1a), per the reviewer.
+5. The accounting fix is folded into p172.
+
+Also on record:
+- **p58asc ended READY false.** The bracket binary selects spin only through the bracket table (`spin_enabled = (view.hc == "spin")`), which cannot express KD/W2m/WS; my brief had forbidden a rebuild.
+- **p58asd** (09:06) adds a process-wide `--wait-policy` option, defaulting to poll, does one rebuild with byte gates, and makes the chain READY. `fn-run/chain-58as2.sh` launches the quiet chain after `--check`.
+
+STOP DOING acknowledged: hand-copying chain orchestration for a one-flag change while cards idle; compute-only parity audits; a third preparation job for one diagnostic; letting two cards sit > 1 h with nothing READY; and (mine) "no rebuild" constraints in chain-handoff briefs when the winning option was only reachable through the bracket table.
