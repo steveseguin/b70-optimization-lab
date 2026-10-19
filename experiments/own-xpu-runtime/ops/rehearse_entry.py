@@ -3,7 +3,9 @@
 
 Reads JSONL proposals, reconstructs lanequeue.command (never executes it),
 and tests each declared native ELF with ldd and its help/argument parser.
-Default mode performs no packet import. --report imports the real entry and
+Both modes scan device/report source and replay safe storage helpers in isolated
+children, and run declared CPU preparation probes with the real rank argv.
+--report additionally imports the real entry and
 executes its unchanged post-device report source on temporary synthetic receipts.
 Packet58 queue runners use one-card WSCREEN or record-window report adapters.
 No --plan, model read, queue mutation, service or device entry.
@@ -16,8 +18,19 @@ an explicit unknown-option parser refusal). An empty inventory always fails.
 Script coordinators require a packet-specific rehearsal; they fail here rather
 than guessing their inner environment. This is only the loader/entry gate;
 the packet's real arm/state-machine CPU rehearsal remains separately required.
+
+plan.entry_rehearsal.prepare_probe declares a native command (argv list),
+rank_argv (the real device argv; arguments after argv[0] must match), binary
+sha256, contains (a first-decode preparation completion marker), optional small
+repository metadata paths and their hashes in sources, and output_env (default
+ENTRY_PREPARE_OUTPUT). The probe must redirect its writes to that temporary
+directory and replace weights/device execution with a CPU transport backend.
+It must be built with the device preparation defines. Missing probes WARN;
+declared probes that cannot run safely FAIL. timing_evidence lists small saved
+JSON receipts with load_seconds/load_ms or ttft_seconds/ttft_ms measurements.
 """
 import argparse
+import ast
 import hashlib
 import importlib.util
 import json
@@ -31,6 +44,519 @@ import launch_env
 
 OPS = Path(__file__).resolve().parent
 ROOT = OPS.parents[2]
+
+PACKAGING_CHECKS = ('storage_floor', 'wall_deadlines', 'preparation_path')
+STORAGE_FLOOR = 25_000_000_000
+COLD_TTFT = 60.0
+
+
+def check_result(findings=(), **extra):
+    return dict(status='FAIL' if findings else 'PASS', passed=not findings,
+                findings=list(findings), **extra)
+
+
+def source_path(node, values):
+    """Resolve only literal pathlib expressions; never evaluate packet code."""
+    if isinstance(node, ast.Name):
+        return values.get(node.id)
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return Path(node.value)
+    if isinstance(node, ast.Attribute) and node.attr == 'parent':
+        base = source_path(node.value, values)
+        return base.parent if base is not None else None
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+        a, b = source_path(node.left, values), source_path(node.right, values)
+        return a / b if a is not None and b is not None else None
+    if isinstance(node, ast.Call):
+        if isinstance(node.func, ast.Name) and node.func.id in ('Path', 'str') and len(node.args) == 1:
+            return source_path(node.args[0], values)
+        if isinstance(node.func, ast.Attribute):
+            base = source_path(node.func.value, values)
+            if base is not None:
+                if node.func.attr == 'resolve' and not node.args:
+                    return base.resolve()
+                if node.func.attr == 'with_name' and len(node.args) == 1:
+                    name = source_path(node.args[0], values)
+                    if name is not None and len(name.parts) == 1:
+                        return base.with_name(str(name))
+    return None
+
+
+def packet_sources(job):
+    """Follow local imports and literal worker/report filenames, without imports.
+
+    Frozen lineage, build tools and CPU tests are not device/report modules.
+    Unresolved dynamic imports are not claimed as scanned. No evidence/model
+    tree walk: only source files in the entry directory and packet root.
+    """
+    argv = job.get('argv', [])
+    if not argv or not Path(argv[0]).name.startswith('python'):
+        return None, {}
+    entry = report_entry(job)
+    packet = next((p for p in entry.parents if p.name.startswith('packet')), entry.parent)
+    pending, sources = [entry], {}
+    while pending:
+        path = pending.pop().resolve()
+        if path in sources or not path.is_file() or not path.is_relative_to(packet):
+            continue
+        if any(p.startswith('lineage') for p in path.relative_to(packet).parts):
+            continue
+        if re.search(r'(^test_|build|qualify|reseal|prepare_sources)', path.stem):
+            continue
+        tree = ast.parse(path.read_text())
+        sources[path] = tree
+        paths = dict(__file__=path, HERE=path.parent, P=path.parent, LOCAL=packet)
+        for node in tree.body:
+            if isinstance(node, ast.Assign):
+                value = source_path(node.value, paths)
+                if value is not None:
+                    paths.update({target.id: value for target in node.targets if isinstance(target, ast.Name)})
+        for node in ast.walk(tree):
+            names = []
+            if isinstance(node, (ast.Call, ast.BinOp)):
+                target = source_path(node, paths)
+                if target is not None and target.suffix == '.py' and target.is_absolute():
+                    if not re.search(r'(^test_|_gate\.py$)', target.name):
+                        pending.append(target)
+            if isinstance(node, ast.Import):
+                names = [n.name.replace('.', '/') + '.py' for n in node.names]
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                names = [node.module.replace('.', '/') + '.py']
+            elif isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value.endswith('.py'):
+                # Literal worker launches and spec_from_file_location imports.
+                if '/' not in node.value and not re.search(r'(^test_|_gate\.py$)', node.value):
+                    names = [node.value]
+            for name in names:
+                candidates = [path.parent / name, packet / name]
+                # Dynamic vendor paths must not resolve to an unrelated root copy.
+                if isinstance(node, ast.Constant):
+                    candidates = candidates[:1]
+                pending.extend(p for p in candidates[:1] if p.is_file())
+                if not candidates[0].is_file() and isinstance(node, (ast.Import, ast.ImportFrom)):
+                    pending.extend(p for p in candidates[1:] if p.is_file())
+    return packet, sources
+
+
+def number(node, constants):
+    """Evaluate numeric literals/constant arithmetic, never packet code."""
+    if isinstance(node, ast.Constant) and type(node.value) in (int, float):
+        return node.value
+    if isinstance(node, ast.Name):
+        return constants.get(node.id)
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
+        value = number(node.operand, constants)
+        if value is not None:
+            return -value if isinstance(node.op, ast.USub) else value
+    if isinstance(node, ast.BinOp):
+        a, b = number(node.left, constants), number(node.right, constants)
+        if a is None or b is None:
+            return None
+        if isinstance(node.op, ast.Mult):
+            return a * b
+        if isinstance(node.op, ast.Add):
+            return a + b
+        if isinstance(node.op, ast.Sub):
+            return a - b
+        if isinstance(node.op, ast.Pow) and abs(b) < 32:
+            return a ** b
+        if isinstance(node.op, ast.Div) and b:
+            return a / b
+    return None
+
+
+def constants_in(tree):
+    values = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            value = number(node.value, values)
+            if value is not None:
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        values[target.id] = value
+    return values
+
+
+def storage_scan(sources):
+    findings, admissions, functions = [], [], []
+    for path, tree in sources.items():
+        constants = constants_in(tree)
+        parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and re.search(r'storage|disk.*admi', node.name):
+                functions.append(dict(path=str(path), function=node.name))
+            if not isinstance(node, ast.Compare):
+                continue
+            text = ast.unparse(node)
+            if not re.search(r'free|disk_usage|storage', text, re.I):
+                continue
+            operands = [node.left, *node.comparators]
+            scale = 1024**3 if re.search(r'free_gib\b', text, re.I) else 10**9 if re.search(r'free_gb\b', text, re.I) else 1
+            floors = [number(n, constants) for n in operands]
+            floors = [n * scale for n in floors if n is not None and n * scale >= 1_000_000]
+            if not floors:
+                continue
+            row = dict(file=str(path), line=node.lineno, floor_bytes=floors[0])
+            parent = parents.get(node)
+            while parent is not None:
+                if isinstance(parent, (ast.Call, ast.Assert)):
+                    messages = [n.value for n in ast.walk(parent)
+                                if isinstance(n, ast.Constant) and isinstance(n.value, str)]
+                    for message in messages:
+                        match = re.search(r'(\d+(?:\.\d+)?)\s*(GiB|GB)\b', message)
+                        if match:
+                            stated = float(match[1]) * (1024**3 if match[2] == 'GiB' else 10**9)
+                            if stated != floors[0]:
+                                row['message_value_mismatch'] = True
+                if isinstance(parent, ast.stmt):
+                    break
+                parent = parents.get(parent)
+            # Replay the unchanged admission expression with only its free and
+            # write inputs substituted. Full importable functions run separately.
+            class Inputs(ast.NodeTransformer):
+                def visit_Attribute(self, n):
+                    if n.attr == 'free':
+                        return ast.copy_location(ast.Constant(25_500_000_000 + 240_000_000), n)
+                    return self.generic_visit(n)
+                def visit_Name(self, n):
+                    if re.search(r'free', n.id, re.I):
+                        return ast.copy_location(ast.Constant((25_500_000_000 + 240_000_000) / scale), n)
+                    if re.search(r'write|planned', n.id, re.I):
+                        return ast.copy_location(ast.Constant(240_000_000 / scale), n)
+                    if n.id in constants:
+                        return ast.copy_location(ast.Constant(constants[n.id]), n)
+                    return n
+            expression = Inputs().visit(ast.parse(text, mode='eval'))
+            if all(isinstance(n, (ast.Expression, ast.Compare, ast.Constant, ast.BinOp,
+                    ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.Load,
+                    ast.Gt, ast.GtE, ast.Lt, ast.LtE, ast.Eq, ast.NotEq)) for n in ast.walk(expression)):
+                row['passes_25_5gb_plus_writes'] = bool(eval(compile(expression, '<storage-admission>', 'eval'), {'__builtins__': {}}))
+            admissions.append(row)
+            if any(f != STORAGE_FLOOR for f in floors) or row.get('message_value_mismatch') or row.get('passes_25_5gb_plus_writes') is False:
+                findings.append(row)
+    return check_result(findings, admissions=admissions, functions=functions)
+
+
+def measured_phases(job):
+    """Only explicit small saved timing receipts, never planning estimates."""
+    phases = {'first_request': COLD_TTFT}
+    declaration = job.get('plan', {}).get('entry_rehearsal', {})
+    paths = list(declaration.get('timing_evidence', []))
+    argv = job.get('argv', [])
+    for flag in ('--output', '--output-root'):
+        if flag in argv:
+            output = resolve(argv[argv.index(flag) + 1])
+            paths.extend(str(output / n) for n in ('run/ranks/rank0/receipt.json',
+                'run/ranks/rank1/receipt.json', 'run/ranks/native-result.json',
+                'run/native-result.json', 'run/bracket-inputs.json', 'summary.json'))
+    def visit(value, context=''):
+        if isinstance(value, dict):
+            context += ' ' + str(value.get('phase', ''))
+            for key, child in value.items():
+                qualified = context + '_' + key
+                phase = ('load' if re.search(r'\b(?:model_)?load_(?:(?:wall|time|duration)_)?(?:seconds|s|ms)$', key)
+                         else 'first_request' if re.fullmatch(r'(?:cold_)?ttft_(?:seconds|s|ms)', key)
+                         else 'load' if re.search(r'\bload\s*_(?:duration_)?(?:seconds|s|ms)$', qualified) else None)
+                if phase and type(child) in (int, float) and 0 < child < 1e9:
+                    phases[phase] = max(phases.get(phase, 0), child / (1000 if key.endswith('_ms') else 1))
+                visit(child, key)
+        elif isinstance(value, list):
+            for child in value:
+                visit(child, context)
+    for name in paths:
+        path = resolve(name).resolve()
+        if path.is_relative_to(ROOT) and path.suffix == '.json' and path.is_file() and path.stat().st_size <= 1024**2:
+            visit(json.loads(path.read_text()))
+    return phases
+
+
+def deadline_scan(sources, phases):
+    findings, limits = [], []
+    for path, tree in sources.items():
+        constants = constants_in(tree)
+        parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
+        for node in ast.walk(tree):
+            bound = None
+            is_limit = False
+            text = ast.unparse(node)
+            if isinstance(node, ast.Compare) and re.search(r'seconds|elapsed|deadline|monotonic|time\(|ttft|duration', text, re.I):
+                # Only upper bounds, not minimum cooldowns/positive durations.
+                for a, op, b in zip([node.left, *node.comparators], node.ops, node.comparators):
+                    if isinstance(op, (ast.Lt, ast.LtE)):
+                        bound = number(b, constants)
+                        is_limit = bool(re.search(r'seconds|elapsed|deadline|monotonic|time\(|ttft|duration', ast.unparse(a), re.I))
+                    elif isinstance(op, (ast.Gt, ast.GtE)):
+                        bound = number(a, constants)
+                        is_limit = bool(re.search(r'seconds|elapsed|deadline|monotonic|time\(|ttft|duration', ast.unparse(b), re.I))
+            elif isinstance(node, ast.keyword) and node.arg == 'timeout':
+                bound = number(node.value, constants)
+                is_limit = True
+            elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+                parent = parents.get(node)
+                target = ' '.join(ast.unparse(n) for n in parent.targets) if isinstance(parent, ast.Assign) else ''
+                if re.search(r'monotonic\(|time\(|perf_counter\(', text) or 'deadline' in target:
+                    bound = number(node.right, constants)
+                    is_limit = True
+            if not is_limit:
+                continue
+            enclosing = node
+            while enclosing in parents and not isinstance(enclosing, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                enclosing = parents[enclosing]
+            function = getattr(enclosing, 'name', '')
+            # Match the timed phase, not every subprocess to model TTFT. In
+            # particular systemctl, coordination and teardown are not inference.
+            local = text + ' ' + function
+            parent = parents.get(node)
+            if isinstance(node, ast.keyword) and parent is not None:
+                local += ' ' + ast.unparse(parent)
+            proof = 'proof' in local.lower() or ('proof' in function and re.search(r'time|second|deadline', text))
+            phase = 'load' if re.search(r'load|startup', local, re.I) else 'first_request'
+            matched = proof or bool(re.search(r'request|ttft|prefill|decode|infer|generate|first_minute', local, re.I))
+            if phase == 'load':
+                matched = True
+            # A generic elapsed guard inside a request/proof function also counts.
+            row = dict(file=str(path), line=node.lineno, seconds=bound, phase=phase,
+                       measured_seconds=phases.get(phase), data_proof=proof)
+            if not matched:
+                continue
+            limits.append(row)
+            if proof or (bound is not None and phase in phases and bound < 2 * phases[phase]):
+                findings.append(row)
+    return check_result(findings, limits=limits, measured_seconds=phases)
+
+
+def storage_function_child():
+    """Import a storage helper under the report I/O guard, then call it unchanged."""
+    import inspect
+    import runpy
+    import shutil
+    from collections import namedtuple
+    from unittest.mock import patch
+    path, function, directory = sys.argv[2:]
+    scratch = Path(directory).resolve()
+    row = dict(file=path, function=function, status='WARN', message='storage helper not safely importable')
+    violations = report_guard(scratch, Path(path).parent)
+    try:
+        sys.path.insert(0, str(Path(path).parent))
+        namespace = runpy.run_path(path, run_name='_storage_rehearsal')
+        helper = namespace[function]
+        arguments = {}
+        for name, parameter in inspect.signature(helper).parameters.items():
+            if name in ('path', 'output', 'root'):
+                arguments[name] = scratch
+            elif re.search(r'write|planned', name):
+                arguments[name] = 240_000_000
+            elif parameter.default is inspect.Parameter.empty:
+                raise ValueError('unsupported storage signature')
+        row.update(status='FAIL', message='storage helper refused 25.5 GB plus planned writes')
+        usage = namedtuple('usage', 'total used free')(100_000_000_000, 0, 25_740_000_000)
+        with patch.object(shutil, 'disk_usage', return_value=usage):
+            result = helper(**arguments)
+        if result is False or (isinstance(result, dict) and result.get('passed') is False) or violations:
+            raise ValueError('storage refused or attempted forbidden I/O')
+        row.update(status='PASS', message='storage helper accepts 25.5 GB plus planned writes')
+    except Exception:
+        pass  # Never return packet exception text.
+    (scratch / 'storage-result.json').write_text(json.dumps(row))
+    return 0
+
+
+def replay_storage(functions, env):
+    import subprocess
+    import tempfile
+    rows = []
+    for spec in functions:
+        with tempfile.TemporaryDirectory(prefix='entry-storage-') as directory:
+            with tempfile.TemporaryFile() as output:
+                try:
+                    cp = subprocess.run([sys.executable, '-B', str(Path(__file__).resolve()),
+                        '--storage-probe', spec['path'], spec['function'], directory],
+                        env=env, cwd=ROOT, stdin=subprocess.DEVNULL, stdout=output, stderr=output,
+                        timeout=15, preexec_fn=report_limits)
+                    row = json.loads((Path(directory) / 'storage-result.json').read_text())
+                    if cp.returncode:
+                        row['status'] = 'FAIL'
+                except (OSError, ValueError, subprocess.SubprocessError):
+                    row = dict(status='FAIL', message='bounded storage helper failed', **spec)
+                rows.append(row)
+    return rows
+
+
+def prepare_restrict(binary, metadata, scratch):
+    """Landlock: libraries + exact metadata reads, temporary writes, no devices.
+
+    This is the entry sandbox policy with narrowly enumerated probe inputs and
+    scratch added. Never grant a packet directory, model directory or /dev.
+    """
+    import ctypes
+    libc = ctypes.CDLL(None, use_errno=True)
+    abi = libc.syscall(444, 0, 0, 1)
+    if abi < 3:
+        raise RuntimeError('preparation probe requires Landlock ABI 3')
+    handled = (1 << 15) - 1
+    ruleset = ctypes.c_uint64(handled)
+    fd = libc.syscall(444, ctypes.byref(ruleset), ctypes.sizeof(ruleset), 0)
+    if fd < 0:
+        raise RuntimeError('preparation sandbox unavailable')
+    class Rule(ctypes.Structure):
+        _pack_ = 1
+        _fields_ = [('access', ctypes.c_uint64), ('parent', ctypes.c_int32)]
+    paths = [Path('/usr'), Path('/opt/intel/oneapi'), Path('/etc/ld.so.cache'),
+             Path('/etc/ld.so.conf'), Path('/proc/self/maps'), Path('/dev/null'), binary,
+             *metadata, scratch]
+    paths.extend(binary.parent.glob('*.so*'))
+    try:
+        for path in paths:
+            if not path.exists():
+                continue
+            path = path.resolve()
+            access = (1 | 4 | 8) if path.is_dir() else (1 | 4)
+            if path == scratch:
+                access = handled & ~(16 | 64 | 128 | 2048 | 4096)  # No device/socket/FIFO creation.
+            elif path == Path('/dev/null'):
+                access = 2 | 4
+            parent = os.open(path, os.O_PATH | os.O_CLOEXEC)
+            try:
+                rule = Rule(access, parent)
+                if libc.syscall(445, fd, 1, ctypes.byref(rule), 0):
+                    raise RuntimeError('cannot grant preparation input')
+            finally:
+                os.close(parent)
+        if libc.prctl(38, 1, 0, 0, 0) or libc.syscall(446, fd, 0):
+            raise RuntimeError('cannot restrict preparation probe')
+    finally:
+        os.close(fd)
+
+
+def declared_preparation(job, packet):
+    declaration = job.get('plan', {}).get('entry_rehearsal', {})
+    if 'prepare_probe' in declaration:
+        return declaration['prepare_probe']
+    if packet is None:
+        return None
+    for receipt in (report_entry(job).parent / 'build-receipt.json', packet / 'build-receipt.json',
+                    report_entry(job).parent / 'evidence/build.json'):
+        if not receipt.is_file() or receipt.stat().st_size > 1024**2:
+            continue
+        build = json.loads(receipt.read_text())
+        if 'prepare_probe' in build:
+            return build['prepare_probe']
+        if isinstance(build.get('entry_rehearsal'), dict) and 'prepare_probe' in build['entry_rehearsal']:
+            return build['entry_rehearsal']['prepare_probe']
+        if build.get('host_build') and build.get('device_defines'):
+            raise ValueError('device-define host build must declare its safe real-argv preparation command')
+    # Existing packet151 declaration: saved real argv and compiler commands,
+    # with a transport-only host backend under the device compilation defines.
+    path = report_entry(job).parent / 'evidence/preparation.json'
+    if not path.is_file():
+        return None
+    saved = json.loads(path.read_text())
+    if not all(saved.get(k) is True for k in ('device_defines', 'real_shapes', 'transport_only')):
+        return None
+    commands = saved['commands']
+    binary = next((Path(c[c.index('-o') + 1]) for c in commands
+                   if '-o' in c and c[c.index('-o') + 1].endswith('/fixed/fixture')), None)
+    if binary is None:
+        raise ValueError('declared preparation build has no runnable fixture')
+    # This legacy adapter is deliberately exact; a new packet declares its
+    # command and hashes explicitly instead of executing a build/gate script.
+    fixture = report_entry(job).parent / 'native/preparation_fixture.cpp'
+    if 'P151_AUDIT_OUTPUT' not in fixture.read_text():
+        raise ValueError('unsupported legacy preparation output routing')
+    argv = saved['real_rank_argv']
+    launch = next(resolve(n) for n in saved['sources'] if n.endswith('/rank0-launch.json'))
+    if json.loads(launch.read_text())['argv'] != argv:
+        raise ValueError('preparation argv differs from saved real rank launch')
+    metadata = [argv[argv.index(flag) + 1] for flag in ('--plan', '--selection', '--dispatch')]
+    return dict(command=[str(binary), *argv[1:]], rank_argv=argv,
+                sha256=digest(binary), contains='PASS CPU device-branch preparation',
+                output_env='P151_AUDIT_OUTPUT', metadata=metadata,
+                sources=saved['sources'], legacy_receipt=str(path),
+                # This tracked source lookup table is sin/cos, not checkpoint
+                # weights. The frozen device object names its packet136 path.
+                rotary_source=str(packet.parent / 'packet136-record-bundle/rope.bf16'))
+
+
+def preparation_probe(job, packet, env, runner=entry_sandbox.run):
+    import tempfile
+    from unittest.mock import patch
+    spec = declared_preparation(job, packet)
+    if spec is None:
+        return dict(status='WARN', passed=False, message='no preparation-path probe declared', executed=False)
+    command, rank = spec['command'], spec['rank_argv']
+    if (not isinstance(command, list) or not isinstance(rank, list) or len(command) < 3 or
+            command[1:] != rank[1:] or '--rank' not in rank or
+            not all(isinstance(a, str) and '\x00' not in a for a in command)):
+        raise ValueError('preparation command must preserve real rank argv')
+    binary = resolve(command[0]).resolve(strict=True)
+    if binary.suffix or not os.access(binary, os.X_OK):
+        raise ValueError('preparation command must be a native executable')
+    with binary.open('rb') as stream:
+        elf = stream.read(4) == b'\x7fELF'
+    if not elf or digest(binary) != spec['sha256']:
+        raise ValueError('preparation binary identity differs')
+    for name, expected in spec.get('sources', {}).items():
+        source = resolve(name).resolve()
+        if (not source.is_relative_to(ROOT) or source.suffix not in ('.py', '.cpp', '.hpp', '.h', '.c', '.cc', '.json', '.tsv') or
+                source.stat().st_size > 2*1024**2 or digest(source) != expected):
+            raise ValueError('preparation sources changed')
+    metadata = []
+    if spec.get('legacy_receipt'):
+        rotary = resolve(spec['rotary_source']).resolve(strict=True)
+        if (rotary != ROOT / 'experiments/own-xpu-runtime/stage2/packet136-record-bundle/rope.bf16' or
+                rotary.stat().st_size != 4194304 or
+                digest(rotary) != '92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390'):
+            raise ValueError('frozen rotary source identity differs')
+        metadata.append(rotary)
+    for name in spec.get('metadata', []):
+        path = resolve(name).resolve(strict=True)
+        if not path.is_relative_to(ROOT) or path.suffix not in ('.json', '.tsv') or path.stat().st_size > 1024**2:
+            raise ValueError('preparation input must be small repository metadata')
+        metadata.append(path)
+    expected = spec['contains']
+    if not isinstance(expected, str) or not expected:
+        raise ValueError('preparation completion marker required')
+    with tempfile.TemporaryDirectory(prefix='entry-preparation-') as directory:
+        scratch = Path(directory).resolve()
+        key = spec.get('output_env', 'ENTRY_PREPARE_OUTPUT')
+        if not re.fullmatch(r'[A-Z][A-Z0-9_]*', key) or key in ('HOME', 'PATH', 'LD_LIBRARY_PATH'):
+            raise ValueError('invalid preparation output environment key')
+        # Reuse bounded CPU process management; substitute only Landlock's
+        # exact access grants in the forked child, never run unsandboxed.
+        with patch.object(entry_sandbox, 'restrict', side_effect=lambda b: prepare_restrict(Path(b), metadata, scratch)):
+            cp = runner(launch_env.env_command([f'{key}={scratch}', str(binary), *command[1:]], env),
+                        binary=binary, cwd=ROOT, timeout=45)
+    passed = cp.returncode == 0 and expected in cp.stdout
+    return dict(status='PASS' if passed else 'FAIL', passed=passed, executed=True,
+                returncode=cp.returncode, real_rank_argv=True, first_decode_required=True,
+                argv_sha256=hashlib.sha256(json.dumps(rank).encode()).hexdigest(),
+                binary_sha256=spec['sha256'], legacy_receipt=spec.get('legacy_receipt'),
+                preparation_bypassed='native operation bypassed preparation' in cp.stderr,
+                message='preparation-path probe completed' if passed else 'preparation-path probe failed')
+
+
+def packaging_checks(job, env, runner=entry_sandbox.run):
+    rows = {}
+    if not isinstance(job.get('plan', {}).get('entry_rehearsal', {}), dict):
+        return {key: dict(status='FAIL', passed=False, message='invalid entry rehearsal declaration') for key in PACKAGING_CHECKS}
+    try:
+        packet, sources = packet_sources(job)
+    except (OSError, ValueError, SyntaxError, IndexError):
+        return {key: dict(status='FAIL', passed=False, message='packet source discovery failed') for key in PACKAGING_CHECKS}
+    for key in PACKAGING_CHECKS:
+        try:
+            if key == 'storage_floor':
+                row = storage_scan(sources)
+                row['replays'] = replay_storage(row.pop('functions'), env)
+                if any(r['status'] == 'FAIL' for r in row['replays']):
+                    row.update(status='FAIL', passed=False)
+            elif key == 'wall_deadlines':
+                row = deadline_scan(sources, measured_phases(job))
+            else:
+                row = preparation_probe(job, packet, env, runner)
+            rows[key] = row
+        except (OSError, ValueError, KeyError, TypeError, RuntimeError, StopIteration):
+            rows[key] = dict(status='FAIL', passed=False, message='packaging check could not complete safely')
+    return rows
 
 
 def lanequeue():
@@ -118,10 +644,10 @@ def rehearse(job, queue, ldp, runner=entry_sandbox.run, *, report=False):
     name = job.get('name', '?')
     row = dict(job=name, unit='screen-' + name, passed=False, binaries=[],
                service_started=False, arm_sequence_tested=False)
+    row.update({key: dict(status='FAIL', passed=False, message='entry validation did not complete')
+                for key in PACKAGING_CHECKS})
     try:
         env = unit_environment(job, queue, ldp)
-        if report:
-            row['report'] = rehearse_report(job, env)
         row['shared_environment_matches'] = env == launch_env.environment()
         native_env = dict(env)
         # Some frozen wrappers replace LD_LIBRARY_PATH from this option. Test
@@ -133,6 +659,9 @@ def rehearse(job, queue, ldp, runner=entry_sandbox.run, *, report=False):
             elif arg.startswith('--library-path='):
                 native_env['LD_LIBRARY_PATH'] = arg.split('=', 1)[1]
         row['packet_library_override'] = native_env != env
+        row.update(packaging_checks(job, native_env, runner=runner))
+        if report:
+            row['report'] = rehearse_report(job, env)
         for spec in inventory(job):
             result = dict(passed=False)
             row['binaries'].append(result)
@@ -182,6 +711,7 @@ def rehearse(job, queue, ldp, runner=entry_sandbox.run, *, report=False):
             except (OSError, ValueError, KeyError, TypeError, RuntimeError):
                 result['error'] = 'native inventory, loader, or bounded entry check failed'
         row['passed'] = (bool(row['binaries']) and all(b['passed'] for b in row['binaries'])
+                         and all(row[k]['status'] != 'FAIL' for k in PACKAGING_CHECKS)
                          and (not report or row['report']['passed']))
     except (OSError, ValueError, KeyError, IndexError, TypeError, RuntimeError):
         # Do not echo arbitrary exceptions, argv, environments or binary output:
@@ -308,6 +838,7 @@ def synthetic_report(common, output, kind, lane):
         save(output / 'run/ranks' / f'rank{rank}' / 'class-layout.json', dict(
             class_layout_bank='synthetic', bytes=1, budget=600 * 1024**2, weights=[1]))
     views, selections = [], []
+    sibling_cost = common.HERE.parent.name == 'packet151-sibling-cost'
     count = 64 if kind == 'smoke' else 128
     choices = ['candidate'] if kind == 'smoke' else ['control', 'candidate', 'control', 'candidate', 'control']
     for i, choice in enumerate(choices):
@@ -328,6 +859,11 @@ def synthetic_report(common, output, kind, lane):
                          tok_s_1_100_intervals_after_ttft=50., hits=1, guesses=2,
                          acceptance=.5, output_tokens=count, requested_max_new=count)
                     for p in common.D.CHECK.PROMPT_IDS]
+        if sibling_cost:
+            # Real packet151 analysis requires matched proposals and complete
+            # half/sibling streams. Supply synthetic data, never mock analyze.
+            for request in requests:
+                request['guess_rows'] = [dict(position=1, guess=1, actual=1, hit=True)]
         for prompt in ['incident64', *common.D.CHECK.PROMPT_IDS]:
             save(dest / prompt / 'rank1/draft-rows.jsonl', dict(
                 draft_position=1, confirmed_token=1, guess=1, head='synthetic'))
@@ -336,6 +872,17 @@ def synthetic_report(common, output, kind, lane):
                 folder.mkdir(parents=True, exist_ok=True)
                 (folder / 'p105-transfers.jsonl').write_text('')
                 (folder / 'timings.jsonl').write_text('')
+            if sibling_cost:
+                candidate = choice == 'candidate'
+                save(dest / prompt / 'rank0/timings.jsonl', dict(
+                    speculative=True, corrected=False, position=1, fixture=1,
+                    p151_sibling=candidate, p151_device_ms=2. if candidate else 1.,
+                    half_completion_ms=3. if candidate else 2.,
+                    p151_sibling_prepare_ms=.1, cancelled=False))
+                if candidate:
+                    save(dest / prompt / 'rank0/sibling-rows.jsonl', dict(
+                        position=1, fixture=1, discarded=True,
+                        paired_half_device_ms=2., cancelled=False))
         views.append(dict(index=i, choice=choice, selection_sha256='synthetic', output=str(dest),
                           passed=True, started_utc_ns=100+i*10, finished_utc_ns=105+i*10,
                           boundary=[boundary, boundary], incident64=incident, requests=requests))
@@ -642,10 +1189,12 @@ def report_probe(job, kind, scratch, source_root):
         stack.enter_context(patch.object(screen, 'main', side_effect=finish))
         if kind == 'bracket':
             for node in ast.walk(tree):
-                if isinstance(node, ast.ImportFrom) and any(a.name == 'load' for a in node.names):
-                    module = importlib.import_module(node.module)
-                    stack.enter_context(patch.object(module, 'load', return_value=dict(
-                        kind='smoke', passed=True, request_count=12, max_new=64)))
+                if isinstance(node, ast.ImportFrom):
+                    for alias in node.names:
+                        if alias.name == 'load' or (node.module == 'smoke_precondition' and alias.name == 'checked_smoke'):
+                            module = importlib.import_module(node.module)
+                            stack.enter_context(patch.object(module, alias.name, return_value=dict(
+                                kind='smoke', passed=True, request_count=12, max_new=64)))
         try:
             runpy.run_path(str(path), run_name='__main__')
         except SystemExit as error:
@@ -728,6 +1277,12 @@ def main():
         except (ValueError, TypeError):
             row = dict(job='invalid-job', passed=False, error='invalid JSONL job')
         rows.append(row)
+        for check in PACKAGING_CHECKS:
+            result = row.get(check, {})
+            if result.get('status') in ('FAIL', 'WARN'):
+                print(f"{result['status']} screen-{row['job']}: {check}: "
+                      f"{result.get('message', 'packaging check failed')}",
+                      file=sys.stderr if args.json else sys.stdout)
         if not args.json:
             print(f'{"PASS" if row["passed"] else "FAIL"} screen-{row["job"]}: '
                   f'{sum(b["passed"] for b in row.get("binaries", []))}/'
@@ -740,4 +1295,5 @@ def main():
 
 
 if __name__ == '__main__':
-    raise SystemExit(report_child() if sys.argv[1:2] == ['--report-probe'] else main())
+    raise SystemExit(storage_function_child() if sys.argv[1:2] == ['--storage-probe'] else
+                     report_child() if sys.argv[1:2] == ['--report-probe'] else main())
