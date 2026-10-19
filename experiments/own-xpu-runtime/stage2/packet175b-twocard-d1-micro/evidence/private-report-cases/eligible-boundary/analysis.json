@@ -1,0 +1,73 @@
+{
+  "schema": "own-runtime.packet175b.d1-analysis.v1",
+  "device_measurement": true,
+  "variant": "d1-scale-multicast",
+  "samples_sha256": "405cebb0d2b206ae1ea25134a5a54e5f9ead8551e785693a40b5d3009ebf7ade",
+  "threshold_reduction": 0.030000000000000027,
+  "maximum_b_over_a": 0.97,
+  "weighted_b_over_a": 0.9700000000000001,
+  "spread": {
+    "worst_layer_paired_ratio_p90": 0.97,
+    "best_layer_paired_ratio_p10": 0.97
+  },
+  "dense_classes": [
+    "hc_low_inject",
+    "hc_gate_mix",
+    "projection",
+    "small_tuple",
+    "attention_projection",
+    "shared_down_mix"
+  ],
+  "changed_classes_info_only": [
+    "projection",
+    "attention_projection"
+  ],
+  "layer_weights": {
+    "0": 36,
+    "3": 12
+  },
+  "layers": {
+    "0": {
+      "repeats": 240,
+      "rows_per_pass": 2,
+      "dense_a_ms_per_row": 1.1033,
+      "dense_b_ms_per_row": 1.070201,
+      "b_over_a_of_medians": 0.97,
+      "paired_ratio_median": 0.97,
+      "paired_ratio_p10": 0.97,
+      "paired_ratio_p90": 0.97,
+      "paired_ratio_mean": 0.97,
+      "paired_ratio_stdev": 0.0,
+      "changed_sites_a_ms_per_row": 0.4012,
+      "changed_sites_b_ms_per_row": 0.389164,
+      "changed_sites_b_over_a": 0.97,
+      "layer_span_a_ms_per_row": 1.8243,
+      "layer_span_b_ms_per_row": 1.791201
+    },
+    "3": {
+      "repeats": 240,
+      "rows_per_pass": 2,
+      "dense_a_ms_per_row": 1.3039,
+      "dense_b_ms_per_row": 1.264783,
+      "b_over_a_of_medians": 0.97,
+      "paired_ratio_median": 0.97,
+      "paired_ratio_p10": 0.97,
+      "paired_ratio_p90": 0.97,
+      "paired_ratio_mean": 0.97,
+      "paired_ratio_stdev": 0.0,
+      "changed_sites_a_ms_per_row": 0.7021,
+      "changed_sites_b_ms_per_row": 0.681037,
+      "changed_sites_b_over_a": 0.97,
+      "layer_span_a_ms_per_row": 2.1799,
+      "layer_span_b_ms_per_row": 2.140783
+    }
+  },
+  "weighted_reduction": 0.029999999999999916,
+  "projected_census_saving_ms": 0.34595999999999905,
+  "census_dense_ms": 11.532,
+  "projected_token_gain_percent": 1.249852941176467,
+  "decision": "eligible for the combined bundle-9 candidate",
+  "eligible_combined_bundle9": true,
+  "combined_with": "packet153 static descriptors (+0.35%, exact, retained) and D2; D1 is never built alone",
+  "realism": "packet175 harness: real packet166 M1 launch order (HC, projections, GDN/QSA, routed experts, shared) per row, plus a 256 MiB stream-read interposer before each row pass (other layers of the token)"
+}

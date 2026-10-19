@@ -1,0 +1,73 @@
+{
+  "schema": "own-runtime.packet175b.d1-analysis.v1",
+  "device_measurement": true,
+  "variant": "d1-scale-multicast",
+  "samples_sha256": "16dd572923bc8f7c9745f5d94358c9ec6938489ae9be9056425b5d1670a75a75",
+  "threshold_reduction": 0.030000000000000027,
+  "maximum_b_over_a": 0.97,
+  "weighted_b_over_a": 0.9704999133035676,
+  "spread": {
+    "worst_layer_paired_ratio_p90": 0.9705002261420171,
+    "best_layer_paired_ratio_p10": 0.9704998086490624
+  },
+  "dense_classes": [
+    "hc_low_inject",
+    "hc_gate_mix",
+    "projection",
+    "small_tuple",
+    "attention_projection",
+    "shared_down_mix"
+  ],
+  "changed_classes_info_only": [
+    "projection",
+    "attention_projection"
+  ],
+  "layer_weights": {
+    "0": 36,
+    "3": 12
+  },
+  "layers": {
+    "0": {
+      "repeats": 240,
+      "rows_per_pass": 2,
+      "dense_a_ms_per_row": 1.1033,
+      "dense_b_ms_per_row": 1.0707525,
+      "b_over_a_of_medians": 0.9704998640442309,
+      "paired_ratio_median": 0.9704999545908637,
+      "paired_ratio_p10": 0.9704998189061934,
+      "paired_ratio_p90": 0.9705002261420171,
+      "paired_ratio_mean": 0.9704999932501338,
+      "paired_ratio_stdev": 1.4368079832119017e-07,
+      "changed_sites_a_ms_per_row": 0.4012,
+      "changed_sites_b_ms_per_row": 0.389364,
+      "changed_sites_b_over_a": 0.9704985044865404,
+      "layer_span_a_ms_per_row": 1.8243,
+      "layer_span_b_ms_per_row": 1.7917525
+    },
+    "3": {
+      "repeats": 240,
+      "rows_per_pass": 2,
+      "dense_a_ms_per_row": 1.3039,
+      "dense_b_ms_per_row": 1.265435,
+      "b_over_a_of_medians": 0.970500038346499,
+      "paired_ratio_median": 0.9705,
+      "paired_ratio_p10": 0.9704998086490624,
+      "paired_ratio_p90": 0.9705001535390757,
+      "paired_ratio_mean": 0.9704999832440487,
+      "paired_ratio_stdev": 1.1001090282118926e-07,
+      "changed_sites_a_ms_per_row": 0.7021,
+      "changed_sites_b_ms_per_row": 0.681387,
+      "changed_sites_b_over_a": 0.9704985044865404,
+      "layer_span_a_ms_per_row": 2.1799,
+      "layer_span_b_ms_per_row": 2.141435
+    }
+  },
+  "weighted_reduction": 0.029500086696432448,
+  "projected_census_saving_ms": 0.340194999783259,
+  "census_dense_ms": 11.532,
+  "projected_token_gain_percent": 1.228658087438452,
+  "decision": "close D1",
+  "eligible_combined_bundle9": false,
+  "combined_with": "packet153 static descriptors (+0.35%, exact, retained) and D2; D1 is never built alone",
+  "realism": "packet175 harness: real packet166 M1 launch order (HC, projections, GDN/QSA, routed experts, shared) per row, plus a 256 MiB stream-read interposer before each row pass (other layers of the token)"
+}

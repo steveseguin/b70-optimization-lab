@@ -1,0 +1,72 @@
+{
+  "schema": "packet175b.private-report.v1",
+  "passed": true,
+  "device_executed": false,
+  "actual_entry": "run_micro.report_completed -> micro_analyze.evaluate",
+  "proposal_sha256": {
+    "A": "ae00db322c5acb710037a1102fd99690b2b6e3c699c4c615fd0bcceed5d2cf15",
+    "B": "9ee9eca22bfd3b1660ccb93635617d36f718f9ccfefda8f6046820a46edc03f6"
+  },
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet175b-twocard-d1-micro/report_adapter.py": "060d9d9bd7c6c4b8f1be4f9c28b778e7cac728536c70786d073a5b59ea95ff70",
+    "experiments/own-xpu-runtime/stage2/packet175b-twocard-d1-micro/micro_analyze.py": "1b63ad4ed126854816b703625dd914638762bfe9c801a933505e56b3b4115426",
+    "experiments/own-xpu-runtime/stage2/packet175b-twocard-d1-micro/run_micro.py": "de45b5856d3cf8765239408fee89f088ba20cc6b017dac02c1fdad89a1bed9fc",
+    "experiments/own-xpu-runtime/stage2/packet175b-twocard-d1-micro/test_analyzer.py": "1ac9313867fcea8defb5b5605ac5b2f3628f340fbd577f7a1ded680f8a28a241",
+    "experiments/own-xpu-runtime/stage2/packet175b-twocard-d1-micro/evidence/oracle-inheritance.json": "a941a3519d9a18b0b249a85c81150a37b37e7d248f040614b28e0c5f83de7642",
+    "experiments/own-xpu-runtime/stage2/packet175b-twocard-d1-micro/evidence/real-oracle.tsv": "74f63299a8073155a36d4eb10f8d97c14928c95509f19375ff632be1bd0e8ae2",
+    "experiments/own-xpu-runtime/stage2/packet175b-twocard-d1-micro/evidence/private-report-cases/close-just-above/DO-NOT-REPEAT.md": "f68bab20ed79299e7088632553e519ecbe852676fe0ba6848c46b795049c6594",
+    "experiments/own-xpu-runtime/stage2/packet175b-twocard-d1-micro/evidence/private-report-cases/close-just-above/analysis.json": "35c69b164d48d2fff8bbbda7ba624a1f07d01cc6628101b6e75ec3e6af6ed6de",
+    "experiments/own-xpu-runtime/stage2/packet175b-twocard-d1-micro/evidence/private-report-cases/close-regression/DO-NOT-REPEAT.md": "f3f7c2a03d16f5065f65f27fb64375a35783ad75c7283af9dca7daec15bf61be",
+    "experiments/own-xpu-runtime/stage2/packet175b-twocard-d1-micro/evidence/private-report-cases/close-regression/analysis.json": "b854b383594ecf7fa926d117c50bae9fc029be90ae3357c9c54e04f118adb1f6",
+    "experiments/own-xpu-runtime/stage2/packet175b-twocard-d1-micro/evidence/private-report-cases/eligible-boundary/COMBINED-BUNDLE9-ELIGIBLE.md": "5c1b726b5a22950c5e9dc9f91638a9f1e5c4c1a12e70879059ee041f07c94fd8",
+    "experiments/own-xpu-runtime/stage2/packet175b-twocard-d1-micro/evidence/private-report-cases/eligible-boundary/DO-NOT-REPEAT.md": "e1325909edf68a46ea5b9de964a71a6a398515861508719e05f18529e0b9afe4",
+    "experiments/own-xpu-runtime/stage2/packet175b-twocard-d1-micro/evidence/private-report-cases/eligible-boundary/analysis.json": "a64dc6befa54028421107e5d3b15bee19fd30f2239589aec12a421376149471e"
+  },
+  "parents": [
+    {
+      "name": "packet166 lane-B device stream (refused as D1 evidence)",
+      "parent_relpath": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/samples.jsonl",
+      "parent_digest": "5fbfc71866374f1f6c20daad383931f7bc7b602ec50aaf71e8cd449b926a898d"
+    }
+  ],
+  "synthetic_cases": [
+    {
+      "name": "eligible-boundary",
+      "synthetic_fixture": true,
+      "device_measurement": false,
+      "b_over_a": 0.97,
+      "eligible": true,
+      "weighted_b_over_a": 0.9700000000000001,
+      "samples_digest": "405cebb0d2b206ae1ea25134a5a54e5f9ead8551e785693a40b5d3009ebf7ade"
+    },
+    {
+      "name": "close-just-above",
+      "synthetic_fixture": true,
+      "device_measurement": false,
+      "b_over_a": 0.9705,
+      "eligible": false,
+      "weighted_b_over_a": 0.9704999133035676,
+      "samples_digest": "16dd572923bc8f7c9745f5d94358c9ec6938489ae9be9056425b5d1670a75a75"
+    },
+    {
+      "name": "close-regression",
+      "synthetic_fixture": true,
+      "device_measurement": false,
+      "b_over_a": 1.25,
+      "eligible": false,
+      "weighted_b_over_a": 1.2499999999999998,
+      "samples_digest": "d9d74a1b4ae27b7b86563aa1d81e32f4aebd5b4caad08236c4d46ef68e32f974"
+    }
+  ],
+  "invalid_oracle_refused_without_tails": true,
+  "packet166_device_stream_rejected": {
+    "rejected": true,
+    "reason": "oracle gate or identity-matched D1 device summary failed"
+  },
+  "warm_ahead_stream_rejected": {
+    "rejected": true,
+    "reason": "not an identity-matched packet175b stream (classes; no warm-ahead in either arm)"
+  },
+  "maximum_b_over_a": 0.97,
+  "threshold_checks": true
+}

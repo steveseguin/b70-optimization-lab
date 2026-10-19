@@ -1,0 +1,317 @@
+"""Coordinator-owned single-card D1 scale-multicast micro on lane A (card 0) or B (card 2); --plan is CPU-only."""
+import argparse
+import fcntl
+import json
+import os
+from pathlib import Path
+import shutil
+import signal
+import subprocess
+import sys
+import time
+
+P = Path(__file__).resolve().parent
+ROOT = P.parents[3]
+sys.path.insert(0,str(P))
+import launch_env
+WRAPPER = P.parent / 'screen/v4-lanes'
+sys.path.insert(0, str(WRAPPER))
+from common import M, S, SUPPORT, W, read, require, save, sha, verify_map
+from conditions import cpu_gate, lane_gate
+from cpu_seal import verify as verify_wrapper
+from chain_devices import admit_clients, process_identity, private_home, xe_fds
+from devices import topology_admit
+from drain_gate import DEFAULT_DRAIN_ROOT, DrainPermit
+from lane_admission import Reservation, atomic_json
+from screen import unit_gate, unit_conditions
+import fault_review
+
+GIB = 1024**3
+CARDS = {'A': (0, '0000:23:00.0'), 'B': (2, '0000:43:00.0')}
+BINARY = P / 'build/d1-micro-device'
+BUILD = P / 'evidence/build.json'
+WATCHDOG = 7200
+REPEATS = 240
+PROPOSALS = {lane: P.parents[1] / ('ops/lane-queue/proposed-p175b-micro-' + lane + '.txt') for lane in CARDS}
+
+
+def output(lane):
+    return P / ('evidence/d1-micro-' + lane + '1')
+
+
+def mask(lane):
+    return dict(NEOReadDebugKeys='1', FilterBdfPath=CARDS[lane][1], ZE_ENABLE_PCI_ID_DEVICE_ORDER='1',
+                ZE_AFFINITY_MASK='0', ONEAPI_DEVICE_SELECTOR='level_zero:0')
+
+
+MASK = mask('B')
+PCI = CARDS['B'][1]
+
+
+def build_gate():
+    verify_wrapper()
+    row=read(BUILD)
+    require(row['passed'] is True,'native build missing')
+    require({r['mode'] for r in row['records']}=={'gnu-host','intel-host','device'},'all three builds required')
+    for r in row['records']:
+        verify_map(ROOT,r['sources'])
+        require(sha(ROOT/r['path'])==r['sha256'],'binary changed')
+    pins=read(P/'evidence/source-seal.json')
+    verify_map(ROOT,pins['sources'])
+    verify_map(ROOT,pins['assets'])
+    return dict(build_receipt_sha256=sha(BUILD),binary_sha256=sha(BINARY),source_seal_sha256=sha(P/'evidence/source-seal.json'))
+
+
+def execution_gate():
+    ready=read(P/'READY-FOR-DEVICE.json')
+    require(ready.get('ready_for_device') is True,'preparation is not ready')
+    verify_map(ROOT,ready['sources'])
+    gate=read(P/'evidence/cpu-synthetic-parity.json')
+    require(gate.get('passed') is True and gate.get('compiler_exactness') is True and gate.get('host_ab_byte_identical') is True,'GNU/Intel CPU A/B gate missing')
+    inherited=read(P/'evidence/oracle-inheritance.json')
+    require(inherited.get('passed') is True and sha(P/'evidence/real-oracle.tsv')==inherited['oracle_sha256'],'inherited CPU oracle changed')
+    for parent in inherited['parents']:
+        require(sha(ROOT/parent['parent_relpath'])==parent['parent_digest'],'oracle parent changed: '+parent['name'])
+    builds={r['mode']:r['sha256'] for r in read(BUILD)['records']}
+    require({r['compiler']:r['binary_sha256'] for r in gate['records']}=={k:builds[k] for k in ('gnu-host','intel-host')},'CPU parity belongs to another build')
+    prep=read(P/'evidence/preparation.json')
+    digests={lane:sha(path) for lane,path in PROPOSALS.items()}
+    require(prep.get('passed') is True and prep['native_sha256']==builds['device'] and prep['proposal_sha256']==digests,'preparation belongs to another native/proposal identity')
+    report_path=P/'evidence/private-report.json'
+    require(ready['private_report_sha256']==sha(report_path),'private report receipt changed')
+    rehearsal=read(report_path)
+    require(rehearsal.get('passed') is True and rehearsal['proposal_sha256']==digests,'private report adapter failed or stale')
+    verify_map(ROOT,rehearsal['sources'])
+    qualification=read(P/'evidence/private-rehearsal.json')
+    require(qualification.get('passed') is True and qualification['proposal_sha256']==digests,'private proposal qualification failed or stale')
+    verify_map(ROOT,qualification['sources'])
+
+
+def storage_admit():
+    free = shutil.disk_usage('/').free
+    require(free >= 25_000_000_000, 'root free below 25 GB')
+    return dict(root_free_bytes=free, minimum_root_free_bytes=25_000_000_000,
+                planned_write_bytes=32 * 1024**2)
+
+
+def memory_admit():
+    row = M.meminfo()
+    require(row['MemAvailable'] >= 12 * GIB, 'micro requires 12 GiB available: 8 GiB reserve plus 4 GiB scratch')
+    return dict(snapshot=row, required_bytes=12 * GIB, host_reserve_bytes=8 * GIB,
+                anonymous_budget_bytes=4 * GIB, device_bytes_upper_bound=2 * GIB)
+
+
+def fault_latch_gate(boot, lane):
+    directories = (WRAPPER, WRAPPER.parent / 'v3', WRAPPER.parent / 'v2',
+                   DEFAULT_DRAIN_ROOT, P, P / 'build')
+    require(not any(list(root.glob('fault-' + boot + '*.json')) for root in directories)
+            and not (WRAPPER.parent / ('fault-' + boot + '.json')).exists(),
+            'fault or uncertain owner latch; coordinator recovery required')
+    require(not (DEFAULT_DRAIN_ROOT / ('fault-' + boot + '-' + lane + '.json')).exists(), 'lane fault latch')
+    path = P / 'build/FAULT.json'
+    require(not path.exists() or read(path).get('boot_id') != boot,
+            'packet build fault latch requires coordinator recovery')
+
+
+def native_summary(path):
+    # In-window evidence gates: stream presence/format and exact oracle only.
+    rows=[json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+    require(rows and rows[-1].get('kind')=='summary','missing final native summary')
+    require(all(r.get('kind') in ('sample','bytes','oracle','summary') for r in rows),'unknown native stream row')
+    require(any(r.get('kind')=='sample' for r in rows) and any(r.get('kind')=='bytes' for r in rows),'native timing/byte stream absent')
+    for r in rows:
+        if r['kind']=='sample':
+            require(all(type(r.get(k)) is int for k in ('layer','position','repeat','arm','event','start_ns','end_ns')) and isinstance(r.get('class'),str),'native event format')
+        if r['kind']=='oracle':
+            require(r.get('passed') is True,'timed native oracle failed')
+        if r['kind']=='bytes':
+            require(r.get('different_bytes')==0,'native byte mismatch')
+    summary=rows[-1]
+    require(all(summary.get(k) is True for k in ('passed','drained','zero_errors','finite_outputs','cpu_oracle_match','ab_byte_identical')) and summary.get('identity')=='iq3-p49-split32-v1','native oracle failed or drain unproved')
+    return summary
+
+
+def report_completed(output):
+    # Called only after the shared drain and lane release.
+    import micro_analyze
+    return micro_analyze.evaluate(output)
+
+
+def parser():
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('--lane', choices=('A', 'B'), required=True)
+    ap.add_argument('--plan', action='store_true')
+    ap.add_argument('--run', action='store_true')
+    ap.add_argument('--fault-review', type=Path)
+    ap.add_argument('--authorized-device-window', action='store_true')
+    return ap
+
+
+def native_command():
+    return ['/usr/bin/ionice','-c3',str(BINARY),'--rank','0','--mode','device','--weights','real','--oracle',str(P/'evidence/real-oracle.tsv'),'--repeats',str(REPEATS),'--coordinator-admitted-device-window']
+
+
+def main(argv=None):
+    args = parser().parse_args(argv)
+    require(args.plan or args.run, 'choose --plan or --run')
+    lane = args.lane
+    card, PCI = CARDS[lane]
+    MASK = mask(lane)
+    OUTPUT = output(lane)
+    require(not any(output(x).exists() for x in CARDS), 'fresh micro output required; no retry or second-lane repeat')
+    if args.plan:
+        cpu_gate()
+    identity = build_gate()
+    command = native_command()
+    if args.plan:
+        print(json.dumps(dict(passed=True, device_executed=False, runnable=False, lane=lane,
+             command=command, identity=identity, physical_cards=[card], native_card=0, pci=PCI,
+             device_mask=MASK, output=str(OUTPUT), reservation_scope='lane-' + lane,
+             drain='shared DrainPermit held across entire autonomous native lifetime',
+             host_required_available_bytes=12*GIB, host_reserve_bytes=8*GIB,
+             maximum_host_scratch_bytes=4*GIB, device_bytes_upper_bound=2*GIB,
+             minimum_root_free_bytes=25_000_000_000, watchdog_seconds=WATCHDOG, retries=0, repeats_per_arm=REPEATS,
+             per_operation_wait_seconds=300, micro_qualification='D1 dense GEMV B/A <= 0.97 (in-kernel overhead included) -> eligible for the combined bundle-9 candidate (with packet153 and D2); else close D1; exact A/B and inherited oracle; no model-output speed claim'), indent=2))
+        return 0
+    execution_gate()
+    lane_gate(lane)
+    require(args.authorized_device_window and args.fault_review,
+            'coordinator authorization and fault review required')
+    cgroup = Path('/proc/self/cgroup').read_text()
+    unit_gate(cgroup)
+    props = unit_conditions(cgroup)
+    environment = dict(launch_env.environment(), **MASK)
+    boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+    fault_latch_gate(boot, lane)
+    storage_admit()
+    memory_admit()
+    review, initial, fresh, cursor = fault_review.validate(args.fault_review)
+    reasons, handlers = [], {}
+    child = None
+    completed = False
+    record = dict(schema='own-runtime.packet175b.d1-window.v1', passed=False,
+                  device_executed=False, drained=False, child_still_running=False,
+                  lane=lane, physical_cards=[card], native_card=0, pci=PCI, boot_id=boot,
+                  identity=identity, **identity, command=command, systemd_cgroup=cgroup,
+                  systemd_properties=props, started_utc_ns=time.time_ns(),
+                  model_lifetimes=0, watchdog_seconds=WATCHDOG, stop_reasons=reasons)
+    OUTPUT.mkdir(parents=True)
+    environment = private_home(environment, OUTPUT / 'native-home')
+    record['environment'] = environment
+    (OUTPUT / 'kernel-boot-before-review.jsonl').write_text(initial)
+    (OUTPUT / 'kernel-before.jsonl').write_text(fresh)
+    record['coordinator_fault_review'] = review
+    latch_path = DEFAULT_DRAIN_ROOT / ('fault-' + boot + '-' + lane + '.json')
+
+    def persist():
+        save(OUTPUT / 'window.json', record)
+
+    def latch(reason):
+        save(latch_path, dict(boot_id=boot, output=str(OUTPUT), reason=reason,
+                              pid=None if child is None else child.pid))
+
+    def check():
+        nonlocal cursor
+        require(not reasons and not (P / 'evidence/STOP').exists(), 'micro stopped')
+        lines, cursor = S.journal(cursor)
+        with (OUTPUT / 'kernel-before.jsonl').open('a') as log:
+            log.write(lines)
+        require(not fault_review.fault_lines(lines), 'fresh fault during micro admission')
+
+    handlers = {sig: signal.signal(sig, lambda number, frame: reasons.append('coordinator stop ' + str(number)))
+                for sig in (signal.SIGINT, signal.SIGTERM)}
+    persist()
+    try:
+        with Reservation(lane, window='screen', check=check) as lease:
+            with (DEFAULT_DRAIN_ROOT / ('lane-' + lane + '.lock')).open('a') as legacy:
+                fcntl.flock(legacy, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                with DrainPermit(OUTPUT, check=check, reservation=lease.record) as drain:
+                    check()
+                    record['device_topology'] = topology_admit(lane)
+                    require(any(node['pci'] == PCI for node in record['device_topology']['nodes']), 'physical card missing')
+                    record['clients_before'] = admit_clients('lane-' + lane)
+                    record['memory_fence'] = W.memory_fence()
+                    record['memory_admission'] = memory_admit()
+                    record['storage_admission'] = storage_admit()
+                    record['ldd'] = S.ldd_preflight(BINARY, environment)
+                    require(build_gate() == identity, 'micro identity changed during admission')
+                    fault_review.validate(args.fault_review)
+                    check()
+                    S.ANONYMOUS_LIMIT_BYTES = 4 * GIB
+                    S.ANONYMOUS_STOP_BYTES = 4 * GIB - 64 * 1024**2
+                    observed = set()
+
+                    def sensor(pid):
+                        sample = SUPPORT.process_tree_anon(pid)
+                        if not sample['root_seen'] and SUPPORT._exited_status(Path('/proc'), pid):
+                            sample.update(root_seen=True, root_pf_exiting_or_gone=True)
+                        require(M.meminfo()['MemAvailable'] >= 8 * GIB, 'host available below 8 GiB reserve')
+                        storage_admit()
+                        if process_identity(pid) is not None:
+                            current = process_identity(pid)
+                            require(current is None or current == record['process_start_ticks'], 'micro PID changed')
+                            try:
+                                fds = xe_fds(pid)
+                            except (FileNotFoundError, ProcessLookupError):
+                                require(process_identity(pid) is None, 'live micro fdinfo unavailable')
+                                fds = []
+                            actual = {row['pci'] for row in fds}
+                            require(all(row['driver'] == 'xe' for row in fds) and actual <= {PCI},
+                                    'micro opened foreign or unidentified device')
+                            observed.update(actual)
+                            record['device_isolation'] = dict(passed=observed == {PCI}, allowed_pci=[PCI],
+                                                              observed_pci=sorted(observed), latest_fds=fds)
+                        require(not (P / 'evidence/STOP').exists(), 'packet stop file')
+                        return sample
+
+                    persist()
+                    with (OUTPUT / 'samples.jsonl').open('x') as samples, (OUTPUT / 'native.stderr.log').open('x') as errorlog, (OUTPUT / 'kernel-window.jsonl').open('x') as kernel:
+                        child = subprocess.Popen(command, env=environment, cwd=ROOT,
+                                                 stdin=subprocess.DEVNULL, stdout=samples, stderr=errorlog)
+                        record.update(pid=child.pid, process_start_ticks=SUPPORT.process_start(child.pid), device_executed=True)
+                        persist()
+                        record.update(S.supervise(child, WATCHDOG, cursor, kernel, reasons, latch, persist,
+                            memory_sensor=sensor, observe_memory=record.update, drain_seconds=90, read_journal=S.journal))
+                    if record['child_still_running']:
+                        record['child_retained'] = True
+                        persist()
+                        return 75
+                    require(not reasons and child.returncode == 0, 'micro failed or interrupted; no retry')
+                    require(record.get('device_isolation', {}).get('passed') is True, 'single-card device ownership unproved')
+                    record['native_summary'] = native_summary(OUTPUT / 'samples.jsonl')
+                    require(process_identity(child.pid) != record['process_start_ticks'], 'micro still alive')
+                    record['clients_after_drain'] = admit_clients('lane-' + lane)
+                    check()
+                    drain.complete()
+                    record.update(drained=True, samples_sha256=sha(OUTPUT / 'samples.jsonl'))
+                lease.complete(drained=True)
+                record.update(lease_released=True, passed=True, finished_utc_ns=time.time_ns())
+                completed = True
+                atomic_json(OUTPUT / 'lane-coordination.json', dict(passed=True, reservation=lease.record,
+                            clients_after_drain=record['clients_after_drain'], released_before_report=True))
+                persist()
+        report_completed(OUTPUT)
+        return 0
+    except Exception as error:
+        if completed:
+            save(OUTPUT / 'report-failure.json', dict(passed=False, device_failure=False, error=str(error)))
+            return 1
+        reasons.append(str(error))
+        if child is not None and child.poll() is None:
+            child.send_signal(signal.SIGTERM)
+            record.update(child_still_running=True, child_retained=True)
+            latch('supervision failed; graceful stop requested; owner retained')
+        elif child is not None or fault_review.fault_lines(str(error)):
+            latch(str(error))
+        persist()
+        return 75 if record.get('child_still_running') else 1
+    finally:
+        for sig, previous in handlers.items():
+            signal.signal(sig, previous)
+
+
+if __name__ == '__main__':
+    try:
+        raise SystemExit(main())
+    except (ValueError, OSError, KeyError) as error:
+        raise SystemExit('REFUSED: ' + str(error))

@@ -1,0 +1,73 @@
+{
+  "schema": "own-runtime.packet175b.d1-analysis.v1",
+  "device_measurement": true,
+  "variant": "d1-scale-multicast",
+  "samples_sha256": "d9d74a1b4ae27b7b86563aa1d81e32f4aebd5b4caad08236c4d46ef68e32f974",
+  "threshold_reduction": 0.030000000000000027,
+  "maximum_b_over_a": 0.97,
+  "weighted_b_over_a": 1.2499999999999998,
+  "spread": {
+    "worst_layer_paired_ratio_p90": 1.25,
+    "best_layer_paired_ratio_p10": 1.25
+  },
+  "dense_classes": [
+    "hc_low_inject",
+    "hc_gate_mix",
+    "projection",
+    "small_tuple",
+    "attention_projection",
+    "shared_down_mix"
+  ],
+  "changed_classes_info_only": [
+    "projection",
+    "attention_projection"
+  ],
+  "layer_weights": {
+    "0": 36,
+    "3": 12
+  },
+  "layers": {
+    "0": {
+      "repeats": 240,
+      "rows_per_pass": 2,
+      "dense_a_ms_per_row": 1.1033,
+      "dense_b_ms_per_row": 1.379125,
+      "b_over_a_of_medians": 1.25,
+      "paired_ratio_median": 1.25,
+      "paired_ratio_p10": 1.25,
+      "paired_ratio_p90": 1.25,
+      "paired_ratio_mean": 1.25,
+      "paired_ratio_stdev": 0.0,
+      "changed_sites_a_ms_per_row": 0.4012,
+      "changed_sites_b_ms_per_row": 0.5015,
+      "changed_sites_b_over_a": 1.25,
+      "layer_span_a_ms_per_row": 1.8243,
+      "layer_span_b_ms_per_row": 2.100125
+    },
+    "3": {
+      "repeats": 240,
+      "rows_per_pass": 2,
+      "dense_a_ms_per_row": 1.3039,
+      "dense_b_ms_per_row": 1.629875,
+      "b_over_a_of_medians": 1.25,
+      "paired_ratio_median": 1.25,
+      "paired_ratio_p10": 1.25,
+      "paired_ratio_p90": 1.25,
+      "paired_ratio_mean": 1.25,
+      "paired_ratio_stdev": 0.0,
+      "changed_sites_a_ms_per_row": 0.7021,
+      "changed_sites_b_ms_per_row": 0.877625,
+      "changed_sites_b_over_a": 1.25,
+      "layer_span_a_ms_per_row": 2.1799,
+      "layer_span_b_ms_per_row": 2.505875
+    }
+  },
+  "weighted_reduction": -0.24999999999999978,
+  "projected_census_saving_ms": -2.8829999999999973,
+  "census_dense_ms": 11.532,
+  "projected_token_gain_percent": -10.29642857142856,
+  "decision": "close D1",
+  "eligible_combined_bundle9": false,
+  "combined_with": "packet153 static descriptors (+0.35%, exact, retained) and D2; D1 is never built alone",
+  "realism": "packet175 harness: real packet166 M1 launch order (HC, projections, GDN/QSA, routed experts, shared) per row, plus a 256 MiB stream-read interposer before each row pass (other layers of the token)"
+}
