@@ -30,7 +30,10 @@ def request_split(root,request,timed=True):
  for r in r1:
   if 'p157_segment' not in r:continue
   demand(all(math.isfinite(r[k]) for k in ('ms','start','end')) and r['end']>=r['start'] and r['ms']>=0,'invalid host interval')
-  demand(abs(1000*(r['end']-r['start'])-r['ms'])<.02,'host duration disagrees')
+  # The native stream prints its first ms value at six significant digits,
+  # before switching to precision 17 for timestamps. Allow that print rounding
+  # (10 ppm), retaining the 0.02 ms floor for short intervals/clock subtraction.
+  demand(abs(1000*(r['end']-r['start'])-r['ms'])<=max(.02,1e-5*r['ms']),'host duration disagrees')
   if r['p157_segment']=='draft_issue':
    key=(r['sequence'],r['position']);demand(key not in issues,'duplicate draft issue');issues[key]=r
  demand(issues,'empty draft issue stream')

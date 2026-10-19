@@ -1,8 +1,11 @@
 # Packet157: draft device-time decomposition
 
-CPU preparation passed. No device has run; no timing ranking or overhead
-has been measured. The 58.798 record is unchanged. Four proposals are prepared
-for both lanes, with lane A first; none has been queued.
+Packet157b CPU preparation passed. The original lane-A smoke completed device
+work but failed its first-request analyzer on rounded milliseconds. The analyzer
+now allows six-significant-digit print rounding; native binaries are unchanged.
+Full-suite device parity, timing ranking and overhead remain pending. The 58.798
+record is unchanged. Four fresh packet157b proposals are prepared for both lanes,
+with lane A first; none of these fresh proposals has been queued.
 
 This is a vendored packet136 bundle8 runtime with packet154's one-load harness
 and host clocks. Packet154's duplicate work is disabled. The only new runtime

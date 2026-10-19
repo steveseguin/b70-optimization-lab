@@ -17,6 +17,24 @@ def fixture(folder,timed=True):
  for rank,rows in ((0,r0),(1,r1)):(folder/f'rank{rank}/timings.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in rows))
  return dict(prompt_id=folder.name,token_timestamps=list(range(100,164)))
 class Tests(unittest.TestCase):
+ def test_print_rounded_cold_prefill_wait(self):
+  # Exact row from device-p157-smoke-A, incident64/rank1/timings.jsonl.
+  row={"p157_segment":"wait_rank0_command","position":0,"sequence":1,"op":1,"rank":1,"replay":False,"ms":28540.4,"start":221150.312789758,"end":221178.853210734}
+  self.assertGreater(abs(1000*(row['end']-row['start'])-row['ms']),.02)
+  for offset in (0.,1.,-1.):
+   with self.subTest(ms_offset=offset),tempfile.TemporaryDirectory() as d:
+    p=Path(d);req=fixture(p/'p');f=p/'p/rank1/timings.jsonl'
+    changed=dict(row,ms=row['ms']+offset)
+    f.write_text(json.dumps(changed)+'\n'+f.read_text())
+    if offset:
+     with self.assertRaisesRegex(ValueError,'host duration disagrees'):request_split(p,req)
+    else:self.assertEqual(request_split(p,req)['drafts'],63)
+ def test_short_host_duration_disagreement(self):
+  with tempfile.TemporaryDirectory() as d:
+   p=Path(d);req=fixture(p/'p');f=p/'p/rank1/timings.jsonl'
+   rows=[json.loads(x) for x in f.read_text().splitlines()];rows[0]['ms']+=.021
+   f.write_text(''.join(json.dumps(r)+'\n' for r in rows))
+   with self.assertRaisesRegex(ValueError,'host duration disagrees'):request_split(p,req)
  def test_sum_and_groups(self):
   with tempfile.TemporaryDirectory() as d:
    p=Path(d);r=request_split(p,fixture(p/'p'))
