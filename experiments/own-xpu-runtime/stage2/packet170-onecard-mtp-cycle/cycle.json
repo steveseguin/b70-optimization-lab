@@ -1,0 +1,2626 @@
+{
+  "acceptance": {
+    "historical_measured": 0.7874015748031495,
+    "historical_scope": "Same IQ3 arithmetic, 12-prompt suite, two-card packet77, depth-one 91,392-prefix draft; not one-card causal M2 acceptance.",
+    "label": "transferred",
+    "requested": 0.787,
+    "same_prompt_ids_and_token_hashes": true,
+    "source": {
+      "file_line": "experiments/own-xpu-runtime/stage2/packet85-critical-path/MODEL.md:49",
+      "json_pointer": null
+    }
+  },
+  "baseline": {
+    "label": "measured",
+    "measured_tps": 31.966819787781944,
+    "reciprocal_is_modeling_anchor_not_mean": true,
+    "reciprocal_ms": 31.28243597580241,
+    "rounded_tps": 31.96682,
+    "source": {
+      "file_line": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/summary.json:20",
+      "json_pointer": "/class_balanced_tok_s_1_100_intervals_after_ttft/median"
+    }
+  },
+  "build_gate_passed": false,
+  "cache": {
+    "capacity_delta_label": "measured",
+    "effective_capacity_price_ms_per_extra_miss": [
+      0.09490220817990393,
+      0.11449460982297231
+    ],
+    "effective_price_label": "assumed",
+    "missing_native_M2": true,
+    "native_capacity_period_deltas_ms": [
+      1.6959514080027773,
+      1.4601771188414645,
+      1.6415132478261398,
+      1.405738958664827
+    ],
+    "native_capacity_rates": [
+      23.10976311845652,
+      29.56864670549136,
+      28.156674297034428,
+      29.36393524811217,
+      28.199899033053484
+    ],
+    "normalization": "Native 18-vs-21.553GB period delta / replay 18.216-vs-21.553GB M1 extra misses. Cross-workload sensitivity, NOT measured sparse-miss latency or interpolated 18.216GB measurement. Includes exposed fills; no second fill charge.",
+    "observed_18GB_miss_bytes": 93402268.01346801,
+    "observed_18GB_miss_count": 47.11531986531987,
+    "replay": {
+      "current_M1": {
+        "denominator": "position",
+        "fill_bytes": 31633155.555555556,
+        "label": "transferred",
+        "logical_miss_bytes": 64717022.222222224,
+        "missing_expert_reads": 32.66493055555556,
+        "source": {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/analysis.json:719",
+          "json_pointer": "/replays/current_M1/per_token"
+        }
+      },
+      "resident_M1": {
+        "denominator": "position",
+        "fill_bytes": 45795244.44444445,
+        "label": "transferred",
+        "logical_miss_bytes": 94064755.55555555,
+        "missing_expert_reads": 47.47743055555556,
+        "source": {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/analysis.json:840",
+          "json_pointer": "/replays/resident_M1/per_token"
+        }
+      },
+      "resident_M2_two_reads": {
+        "denominator": "cycle",
+        "fill_bytes": 83048622.22222222,
+        "label": "transferred",
+        "logical_miss_bytes": 204458488.8888889,
+        "missing_expert_reads": 103.20833333333333,
+        "source": {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/analysis.json:1082",
+          "json_pointer": "/replays/resident_M2_two_reads/per_token"
+        }
+      },
+      "resident_M2_union": {
+        "denominator": "cycle",
+        "fill_bytes": 83218488.8888889,
+        "label": "transferred",
+        "logical_miss_bytes": 190497066.66666666,
+        "missing_expert_reads": 96.15972222222223,
+        "source": {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/analysis.json:961",
+          "json_pointer": "/replays/resident_M2_union/per_token"
+        }
+      },
+      "shared_no_draft_pollution_M1": {
+        "denominator": "position",
+        "fill_bytes": 32058755.555555556,
+        "label": "transferred",
+        "logical_miss_bytes": 65520311.11111111,
+        "missing_expert_reads": 33.07118055555556,
+        "source": {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/analysis.json:1203",
+          "json_pointer": "/replays/shared_no_draft_pollution_M1/per_token"
+        }
+      },
+      "shared_no_draft_pollution_M2_two_reads": {
+        "denominator": "cycle",
+        "fill_bytes": 58240000.0,
+        "label": "transferred",
+        "logical_miss_bytes": 143662400.0,
+        "missing_expert_reads": 72.51388888888889,
+        "source": {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/analysis.json:1445",
+          "json_pointer": "/replays/shared_no_draft_pollution_M2_two_reads/per_token"
+        }
+      },
+      "shared_no_draft_pollution_M2_union": {
+        "denominator": "cycle",
+        "fill_bytes": 58233155.55555555,
+        "label": "transferred",
+        "logical_miss_bytes": 134712355.55555555,
+        "missing_expert_reads": 67.99305555555556,
+        "source": {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/analysis.json:1324",
+          "json_pointer": "/replays/shared_no_draft_pollution_M2_union/per_token"
+        }
+      }
+    },
+    "replay_shrink_extra_misses": 14.8125,
+    "shared_draft_pollution_cost_ms": null,
+    "source": {
+      "file_line": "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/evidence/card0-capacity-d/max/WSCREEN/summary.json:2",
+      "json_pointer": "/rates"
+    },
+    "union138": {
+      "extra_logical_target_bytes_per_pair": 644065134.751773,
+      "mean_union": 16.778590425531913,
+      "pairs": 27072,
+      "per_layer": [
+        {
+          "layer": 0,
+          "max_union": 20,
+          "mean_union": 19.375886524822697,
+          "min_union": 14,
+          "pairs": 564
+        },
+        {
+          "layer": 1,
+          "max_union": 20,
+          "mean_union": 17.664893617021278,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 2,
+          "max_union": 20,
+          "mean_union": 17.50886524822695,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 3,
+          "max_union": 20,
+          "mean_union": 16.086879432624112,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 4,
+          "max_union": 20,
+          "mean_union": 17.108156028368793,
+          "min_union": 10,
+          "pairs": 564
+        },
+        {
+          "layer": 5,
+          "max_union": 20,
+          "mean_union": 17.109929078014183,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 6,
+          "max_union": 20,
+          "mean_union": 17.29432624113475,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 7,
+          "max_union": 20,
+          "mean_union": 17.25354609929078,
+          "min_union": 12,
+          "pairs": 564
+        },
+        {
+          "layer": 8,
+          "max_union": 20,
+          "mean_union": 15.812056737588652,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 9,
+          "max_union": 20,
+          "mean_union": 15.99468085106383,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 10,
+          "max_union": 20,
+          "mean_union": 16.579787234042552,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 11,
+          "max_union": 20,
+          "mean_union": 16.53723404255319,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 12,
+          "max_union": 20,
+          "mean_union": 17.46099290780142,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 13,
+          "max_union": 20,
+          "mean_union": 16.597517730496453,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 14,
+          "max_union": 20,
+          "mean_union": 16.872340425531913,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 15,
+          "max_union": 20,
+          "mean_union": 15.652482269503546,
+          "min_union": 10,
+          "pairs": 564
+        },
+        {
+          "layer": 16,
+          "max_union": 20,
+          "mean_union": 16.18971631205674,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 17,
+          "max_union": 20,
+          "mean_union": 16.94148936170213,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 18,
+          "max_union": 20,
+          "mean_union": 17.76063829787234,
+          "min_union": 10,
+          "pairs": 564
+        },
+        {
+          "layer": 19,
+          "max_union": 20,
+          "mean_union": 16.859929078014183,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 20,
+          "max_union": 20,
+          "mean_union": 16.930851063829788,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 21,
+          "max_union": 20,
+          "mean_union": 17.338652482269502,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 22,
+          "max_union": 20,
+          "mean_union": 18.49645390070922,
+          "min_union": 12,
+          "pairs": 564
+        },
+        {
+          "layer": 23,
+          "max_union": 20,
+          "mean_union": 16.22695035460993,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 24,
+          "max_union": 20,
+          "mean_union": 16.338652482269502,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 25,
+          "max_union": 20,
+          "mean_union": 16.30851063829787,
+          "min_union": 10,
+          "pairs": 564
+        },
+        {
+          "layer": 26,
+          "max_union": 20,
+          "mean_union": 16.93971631205674,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 27,
+          "max_union": 20,
+          "mean_union": 16.77304964539007,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 28,
+          "max_union": 20,
+          "mean_union": 17.170212765957448,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 29,
+          "max_union": 20,
+          "mean_union": 16.81737588652482,
+          "min_union": 12,
+          "pairs": 564
+        },
+        {
+          "layer": 30,
+          "max_union": 20,
+          "mean_union": 16.858156028368793,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 31,
+          "max_union": 20,
+          "mean_union": 15.71808510638298,
+          "min_union": 10,
+          "pairs": 564
+        },
+        {
+          "layer": 32,
+          "max_union": 20,
+          "mean_union": 16.180851063829788,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 33,
+          "max_union": 20,
+          "mean_union": 16.663120567375888,
+          "min_union": 10,
+          "pairs": 564
+        },
+        {
+          "layer": 34,
+          "max_union": 20,
+          "mean_union": 17.609929078014183,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 35,
+          "max_union": 20,
+          "mean_union": 16.49822695035461,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 36,
+          "max_union": 20,
+          "mean_union": 16.129432624113477,
+          "min_union": 10,
+          "pairs": 564
+        },
+        {
+          "layer": 37,
+          "max_union": 20,
+          "mean_union": 16.99645390070922,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 38,
+          "max_union": 20,
+          "mean_union": 18.25354609929078,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 39,
+          "max_union": 20,
+          "mean_union": 15.414893617021276,
+          "min_union": 10,
+          "pairs": 564
+        },
+        {
+          "layer": 40,
+          "max_union": 20,
+          "mean_union": 15.549645390070921,
+          "min_union": 10,
+          "pairs": 564
+        },
+        {
+          "layer": 41,
+          "max_union": 20,
+          "mean_union": 16.00177304964539,
+          "min_union": 10,
+          "pairs": 564
+        },
+        {
+          "layer": 42,
+          "max_union": 20,
+          "mean_union": 17.26595744680851,
+          "min_union": 11,
+          "pairs": 564
+        },
+        {
+          "layer": 43,
+          "max_union": 20,
+          "mean_union": 15.930851063829786,
+          "min_union": 10,
+          "pairs": 564
+        },
+        {
+          "layer": 44,
+          "max_union": 20,
+          "mean_union": 16.22695035460993,
+          "min_union": 10,
+          "pairs": 564
+        },
+        {
+          "layer": 45,
+          "max_union": 20,
+          "mean_union": 16.22872340425532,
+          "min_union": 10,
+          "pairs": 564
+        },
+        {
+          "layer": 46,
+          "max_union": 20,
+          "mean_union": 16.349290780141843,
+          "min_union": 10,
+          "pairs": 564
+        },
+        {
+          "layer": 47,
+          "max_union": 20,
+          "mean_union": 17.49468085106383,
+          "min_union": 11,
+          "pairs": 564
+        }
+      ]
+    },
+    "union55": {
+      "extra_logical_target_bytes_per_pair": 619246506.6666667,
+      "mean_union": 16.515053104575163,
+      "pairs": 146880,
+      "per_layer": [
+        {
+          "layer": 0,
+          "max_union": 20,
+          "mean_union": 19.29640522875817,
+          "min_union": 12,
+          "pairs": 3060
+        },
+        {
+          "layer": 1,
+          "max_union": 20,
+          "mean_union": 17.934313725490195,
+          "min_union": 11,
+          "pairs": 3060
+        },
+        {
+          "layer": 2,
+          "max_union": 20,
+          "mean_union": 17.834313725490198,
+          "min_union": 11,
+          "pairs": 3060
+        },
+        {
+          "layer": 3,
+          "max_union": 20,
+          "mean_union": 16.522549019607844,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 4,
+          "max_union": 20,
+          "mean_union": 17.427777777777777,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 5,
+          "max_union": 20,
+          "mean_union": 17.341503267973856,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 6,
+          "max_union": 20,
+          "mean_union": 17.280065359477124,
+          "min_union": 11,
+          "pairs": 3060
+        },
+        {
+          "layer": 7,
+          "max_union": 20,
+          "mean_union": 17.28464052287582,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 8,
+          "max_union": 20,
+          "mean_union": 15.844444444444445,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 9,
+          "max_union": 20,
+          "mean_union": 15.813071895424837,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 10,
+          "max_union": 20,
+          "mean_union": 16.51372549019608,
+          "min_union": 11,
+          "pairs": 3060
+        },
+        {
+          "layer": 11,
+          "max_union": 20,
+          "mean_union": 16.283006535947713,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 12,
+          "max_union": 20,
+          "mean_union": 17.497712418300654,
+          "min_union": 11,
+          "pairs": 3060
+        },
+        {
+          "layer": 13,
+          "max_union": 20,
+          "mean_union": 16.863071895424838,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 14,
+          "max_union": 20,
+          "mean_union": 16.758496732026146,
+          "min_union": 11,
+          "pairs": 3060
+        },
+        {
+          "layer": 15,
+          "max_union": 20,
+          "mean_union": 14.974509803921569,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 16,
+          "max_union": 20,
+          "mean_union": 15.593464052287581,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 17,
+          "max_union": 20,
+          "mean_union": 16.56732026143791,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 18,
+          "max_union": 20,
+          "mean_union": 17.669607843137253,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 19,
+          "max_union": 20,
+          "mean_union": 16.55686274509804,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 20,
+          "max_union": 20,
+          "mean_union": 16.563071895424837,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 21,
+          "max_union": 20,
+          "mean_union": 17.016666666666666,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 22,
+          "max_union": 20,
+          "mean_union": 18.223202614379083,
+          "min_union": 11,
+          "pairs": 3060
+        },
+        {
+          "layer": 23,
+          "max_union": 20,
+          "mean_union": 15.819607843137256,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 24,
+          "max_union": 20,
+          "mean_union": 16.29640522875817,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 25,
+          "max_union": 20,
+          "mean_union": 15.990849673202614,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 26,
+          "max_union": 20,
+          "mean_union": 16.78856209150327,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 27,
+          "max_union": 20,
+          "mean_union": 16.462745098039214,
+          "min_union": 11,
+          "pairs": 3060
+        },
+        {
+          "layer": 28,
+          "max_union": 20,
+          "mean_union": 17.28856209150327,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 29,
+          "max_union": 20,
+          "mean_union": 16.933333333333334,
+          "min_union": 11,
+          "pairs": 3060
+        },
+        {
+          "layer": 30,
+          "max_union": 20,
+          "mean_union": 16.616013071895424,
+          "min_union": 11,
+          "pairs": 3060
+        },
+        {
+          "layer": 31,
+          "max_union": 20,
+          "mean_union": 14.73235294117647,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 32,
+          "max_union": 20,
+          "mean_union": 15.404248366013071,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 33,
+          "max_union": 20,
+          "mean_union": 16.2781045751634,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 34,
+          "max_union": 20,
+          "mean_union": 17.355555555555554,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 35,
+          "max_union": 20,
+          "mean_union": 15.998039215686275,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 36,
+          "max_union": 20,
+          "mean_union": 15.586928104575163,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 37,
+          "max_union": 20,
+          "mean_union": 16.47516339869281,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 38,
+          "max_union": 20,
+          "mean_union": 17.897712418300653,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 39,
+          "max_union": 20,
+          "mean_union": 14.645098039215686,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 40,
+          "max_union": 20,
+          "mean_union": 14.86078431372549,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 41,
+          "max_union": 20,
+          "mean_union": 15.382352941176471,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 42,
+          "max_union": 20,
+          "mean_union": 16.708169934640523,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 43,
+          "max_union": 20,
+          "mean_union": 15.266993464052288,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 44,
+          "max_union": 20,
+          "mean_union": 15.610130718954249,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 45,
+          "max_union": 20,
+          "mean_union": 15.698366013071896,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 46,
+          "max_union": 20,
+          "mean_union": 15.938888888888888,
+          "min_union": 10,
+          "pairs": 3060
+        },
+        {
+          "layer": 47,
+          "max_union": 20,
+          "mean_union": 17.02777777777778,
+          "min_union": 10,
+          "pairs": 3060
+        }
+      ],
+      "selection_counts": {
+        "excluded_nonadjacent_or_rewind": 7377,
+        "second_row_speculative": 64831
+      }
+    }
+  },
+  "ceilings": [
+    {
+      "acceptance": 0.7,
+      "drain_amortization_credit_ms_per_verified_token": 0.4570588235294118,
+      "drain_amortization_credit_per_cycle": 0.777,
+      "drain_free_max_complete_cycle_ms": 49.79916617365446,
+      "label": "assumed",
+      "max_V2_plus_F_S_E_excluding_publication_ms": 48.43218080738427,
+      "max_complete_cycle_ms": 51.63120500860592
+    },
+    {
+      "acceptance": 0.787,
+      "drain_amortization_credit_ms_per_verified_token": 0.4888472299944041,
+      "drain_amortization_credit_per_cycle": 0.8735700000000001,
+      "drain_free_max_complete_cycle_ms": 52.347711736659136,
+      "label": "assumed",
+      "max_V2_plus_F_S_E_excluding_publication_ms": 51.15982395294234,
+      "max_complete_cycle_ms": 54.273507853163984
+    },
+    {
+      "acceptance": 0.85,
+      "drain_amortization_credit_ms_per_verified_token": 0.51,
+      "drain_amortization_credit_per_cycle": 0.9435,
+      "drain_free_max_complete_cycle_ms": 54.19321024780045,
+      "label": "assumed",
+      "max_V2_plus_F_S_E_excluding_publication_ms": 53.13501381696715,
+      "max_complete_cycle_ms": 56.1868995681888
+    }
+  ],
+  "cpu_miss_alternative": {
+    "M2_separate_miss_service_ms_at_0_5": 51.604166666666664,
+    "M2_union_miss_service_ms_at_0_5": 48.079861111111114,
+    "applies_to_current_zero_copy_path": false,
+    "prices": {
+      "12": {
+        "label": "measured",
+        "measured_ms_per_expert_max": 0.365164940146,
+        "measured_ms_per_expert_min": 0.348518274878,
+        "scope": "CPU exact synthetic experts, 4/6/10-miss batches; NOT GPU zero-copy latency",
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet55-feasibility/evidence-copy/cpu-bench-receipt.json:1199",
+            "json_pointer": "/results/3/cases"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet55-feasibility/evidence-copy/cpu-bench-receipt.json:1199",
+            "json_pointer": "/results/8/cases"
+          }
+        ]
+      },
+      "8": {
+        "label": "measured",
+        "measured_ms_per_expert_max": 0.534363573184,
+        "measured_ms_per_expert_min": 0.5144645246149999,
+        "scope": "CPU exact synthetic experts, 4/6/10-miss batches; NOT GPU zero-copy latency",
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet55-feasibility/evidence-copy/cpu-bench-receipt.json:826",
+            "json_pointer": "/results/2/cases"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet55-feasibility/evidence-copy/cpu-bench-receipt.json:826",
+            "json_pointer": "/results/7/cases"
+          }
+        ]
+      }
+    },
+    "reopened": false,
+    "requested_rounded_ms_per_expert": 0.5,
+    "resident_M1_shrink_extra_ms_at_0_5": 7.40625,
+    "round_value_label": "assumed"
+  },
+  "decision": "close-no-build",
+  "device_executed": false,
+  "measured_MTP_speed": false,
+  "memory": {
+    "canonical_plus_draft_workspace": 313323546,
+    "current_actual_device": 27841904372,
+    "current_host_required_available": 98990252032,
+    "current_spare_bytes": 240,
+    "declared_accounting_fits": true,
+    "deliberately_double_debited_floor": 108495970304,
+    "device_categories": {
+      "async_publication_staging": 1179648,
+      "control_transaction_bound": 1073741824,
+      "expert_cache_arena": 21552729600,
+      "expert_pointer_generation_tables": 2359296,
+      "target_4k_bf16_kv_index": 116391936,
+      "target_nonexpert": 5815529984,
+      "target_recurrent": 59019280,
+      "transfer_bound": 268435456,
+      "workspace_bound": 1073741824
+    },
+    "excluded_blocks": [
+      53,
+      54,
+      55,
+      56,
+      57
+    ],
+    "excluded_bytes": 10737418240,
+    "host_historical_floor": 119233388544,
+    "implementation_lifetime_proven": false,
+    "layouts": [
+      {
+        "actual_payload_projection": 28829335368,
+        "arena_bytes": 18216076800,
+        "device_margin": 240,
+        "device_reserve": 1500000000,
+        "driver_allowance": 536870912,
+        "extra_device_bound": 3336652800,
+        "extra_direct_host": 20492,
+        "extra_payload_backing": 4324083796,
+        "host_margin_after_all_five_blocks_debited": 5181613984,
+        "label": "transferred",
+        "layout": "resident_draft_experts",
+        "new_device_owned_bound": 29963128848,
+        "required_host_available": 103314356320,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/MEMORY.md:21",
+            "json_pointer": null
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:125",
+            "json_pointer": null
+          }
+        ],
+        "target_capacity_if_all_draft_resident": 18216076800
+      },
+      {
+        "actual_payload_projection": 28829310792,
+        "arena_bytes": 21361755648,
+        "device_margin": 240,
+        "device_reserve": 1500000000,
+        "driver_allowance": 536870912,
+        "extra_device_bound": 190973952,
+        "extra_direct_host": 3145773188,
+        "extra_payload_backing": 1178380372,
+        "host_margin_after_all_five_blocks_debited": 5181564712,
+        "label": "transferred",
+        "layout": "shared_cache_draft_experts",
+        "new_device_owned_bound": 29963128848,
+        "required_host_available": 103314405592,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/MEMORY.md:21",
+            "json_pointer": null
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:125",
+            "json_pointer": null
+          }
+        ],
+        "target_capacity_if_all_draft_resident": 18216027648
+      }
+    ],
+    "limitation": "Complete declared private-row layout fits existing allowances; no M2 implementation census proves scratch aliasing, extent/history metadata or staging lifetime.",
+    "live_admission": false,
+    "original_device_bound": 29963128848,
+    "private_transaction_bytes": 969719582,
+    "private_transaction_margin": 104022242,
+    "sources": [
+      {
+        "file_line": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/MEMORY.md:21",
+        "json_pointer": null
+      },
+      {
+        "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:91",
+        "json_pointer": null
+      },
+      {
+        "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:163",
+        "json_pointer": null
+      },
+      {
+        "file_line": "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/admission.json:29",
+        "json_pointer": null
+      }
+    ],
+    "target_mutable_row_bytes": 471023348,
+    "workspace_margin": 760418278
+  },
+  "missing_class_stream_proofs": [
+    {
+      "device_times": "zero placeholders",
+      "enqueue_class_times": null,
+      "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/incident-retrospective/timings.jsonl",
+      "rows": 128,
+      "source": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/incident-retrospective/timings.jsonl:1"
+    },
+    {
+      "device_times": "zero placeholders",
+      "enqueue_class_times": null,
+      "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/code-review/timings.jsonl",
+      "rows": 128,
+      "source": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/code-review/timings.jsonl:1"
+    },
+    {
+      "device_times": "zero placeholders",
+      "enqueue_class_times": null,
+      "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/customer-email/timings.jsonl",
+      "rows": 128,
+      "source": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/customer-email/timings.jsonl:1"
+    },
+    {
+      "device_times": "zero placeholders",
+      "enqueue_class_times": null,
+      "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/sql-debugging/timings.jsonl",
+      "rows": 128,
+      "source": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/sql-debugging/timings.jsonl:1"
+    },
+    {
+      "device_times": "zero placeholders",
+      "enqueue_class_times": null,
+      "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/release-plan/timings.jsonl",
+      "rows": 128,
+      "source": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/release-plan/timings.jsonl:1"
+    },
+    {
+      "device_times": "zero placeholders",
+      "enqueue_class_times": null,
+      "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/benchmark-analysis/timings.jsonl",
+      "rows": 128,
+      "source": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/benchmark-analysis/timings.jsonl:1"
+    },
+    {
+      "device_times": "zero placeholders",
+      "enqueue_class_times": null,
+      "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/architecture-tradeoff/timings.jsonl",
+      "rows": 128,
+      "source": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/architecture-tradeoff/timings.jsonl:1"
+    },
+    {
+      "device_times": "zero placeholders",
+      "enqueue_class_times": null,
+      "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/bug-report-synthesis/timings.jsonl",
+      "rows": 128,
+      "source": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/bug-report-synthesis/timings.jsonl:1"
+    },
+    {
+      "device_times": "zero placeholders",
+      "enqueue_class_times": null,
+      "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/technical-guide/timings.jsonl",
+      "rows": 128,
+      "source": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/technical-guide/timings.jsonl:1"
+    },
+    {
+      "device_times": "zero placeholders",
+      "enqueue_class_times": null,
+      "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/risk-register/timings.jsonl",
+      "rows": 128,
+      "source": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/risk-register/timings.jsonl:1"
+    },
+    {
+      "device_times": "zero placeholders",
+      "enqueue_class_times": null,
+      "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/performance-hypotheses/timings.jsonl",
+      "rows": 128,
+      "source": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/performance-hypotheses/timings.jsonl:1"
+    },
+    {
+      "device_times": "zero placeholders",
+      "enqueue_class_times": null,
+      "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/decision-memo/timings.jsonl",
+      "rows": 128,
+      "source": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/decision-memo/timings.jsonl:1"
+    }
+  ],
+  "primary": {
+    "V2_ms": null,
+    "class_rows": [
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "GDN",
+        "op": "hc_norm",
+        "ratio_label": "measured",
+        "ratio_max": 1.743408900083963,
+        "ratio_min": 1.7109483380500528,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:23",
+            "json_pointer": "/layers/0/ops/hc_norm"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:166",
+            "json_pointer": "/layers/1/ops/hc_norm"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:309",
+            "json_pointer": "/layers/2/ops/hc_norm"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "GDN",
+        "op": "hc_low_inject",
+        "ratio_label": "measured",
+        "ratio_max": 1.7098163584545825,
+        "ratio_min": 1.6921604898896472,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:31",
+            "json_pointer": "/layers/0/ops/hc_low_inject"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:174",
+            "json_pointer": "/layers/1/ops/hc_low_inject"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:317",
+            "json_pointer": "/layers/2/ops/hc_low_inject"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "GDN",
+        "op": "hc_gate_mix",
+        "ratio_label": "measured",
+        "ratio_max": 1.5833345528514773,
+        "ratio_min": 1.57143214659319,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:39",
+            "json_pointer": "/layers/0/ops/hc_gate_mix"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:182",
+            "json_pointer": "/layers/1/ops/hc_gate_mix"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:325",
+            "json_pointer": "/layers/2/ops/hc_gate_mix"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "GDN",
+        "op": "projection",
+        "ratio_label": "measured",
+        "ratio_max": 1.2913498673532529,
+        "ratio_min": 1.271969184264815,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:47",
+            "json_pointer": "/layers/0/ops/projection"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:190",
+            "json_pointer": "/layers/1/ops/projection"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:333",
+            "json_pointer": "/layers/2/ops/projection"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "GDN",
+        "op": "small_tuple",
+        "ratio_label": "measured",
+        "ratio_max": 1.442617866004963,
+        "ratio_min": 1.4333588722034938,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:55",
+            "json_pointer": "/layers/0/ops/small_tuple"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:198",
+            "json_pointer": "/layers/1/ops/small_tuple"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:341",
+            "json_pointer": "/layers/2/ops/small_tuple"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "GDN",
+        "op": "conv",
+        "ratio_label": "measured",
+        "ratio_max": 1.287415629218539,
+        "ratio_min": 1.2814440101172684,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:63",
+            "json_pointer": "/layers/0/ops/conv"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:206",
+            "json_pointer": "/layers/1/ops/conv"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:349",
+            "json_pointer": "/layers/2/ops/conv"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "GDN",
+        "op": "gdn_recurrence",
+        "ratio_label": "measured",
+        "ratio_max": 1.6790965916214424,
+        "ratio_min": 1.6737243521115546,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:71",
+            "json_pointer": "/layers/0/ops/gdn_recurrence"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:214",
+            "json_pointer": "/layers/1/ops/gdn_recurrence"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:357",
+            "json_pointer": "/layers/2/ops/gdn_recurrence"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "GDN",
+        "op": "gdn_norm_gate",
+        "ratio_label": "measured",
+        "ratio_max": 1.0376743343597175,
+        "ratio_min": 1.027655451823146,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:79",
+            "json_pointer": "/layers/0/ops/gdn_norm_gate"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:222",
+            "json_pointer": "/layers/1/ops/gdn_norm_gate"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:365",
+            "json_pointer": "/layers/2/ops/gdn_norm_gate"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "GDN",
+        "op": "attention_projection",
+        "ratio_label": "measured",
+        "ratio_max": 1.2400279642713472,
+        "ratio_min": 1.231130267086446,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:87",
+            "json_pointer": "/layers/0/ops/attention_projection"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:230",
+            "json_pointer": "/layers/1/ops/attention_projection"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:373",
+            "json_pointer": "/layers/2/ops/attention_projection"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "GDN",
+        "op": "route_shared_activation",
+        "ratio_label": "measured",
+        "ratio_max": 1.0594172354453877,
+        "ratio_min": 1.0542609698694871,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:95",
+            "json_pointer": "/layers/0/ops/route_shared_activation"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:238",
+            "json_pointer": "/layers/1/ops/route_shared_activation"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:381",
+            "json_pointer": "/layers/2/ops/route_shared_activation"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "GDN",
+        "op": "expert_gate_up",
+        "ratio_label": "measured",
+        "ratio_max": 2.8116687097762796,
+        "ratio_min": 2.6456029021844043,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:103",
+            "json_pointer": "/layers/0/ops/expert_gate_up"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:246",
+            "json_pointer": "/layers/1/ops/expert_gate_up"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:389",
+            "json_pointer": "/layers/2/ops/expert_gate_up"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "GDN",
+        "op": "expert_activation",
+        "ratio_label": "measured",
+        "ratio_max": 1.0739555555555556,
+        "ratio_min": 1.0630459223384934,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:111",
+            "json_pointer": "/layers/0/ops/expert_activation"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:254",
+            "json_pointer": "/layers/1/ops/expert_activation"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:397",
+            "json_pointer": "/layers/2/ops/expert_activation"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "GDN",
+        "op": "expert_down",
+        "ratio_label": "measured",
+        "ratio_max": 2.076964127585459,
+        "ratio_min": 2.068521269718861,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:119",
+            "json_pointer": "/layers/0/ops/expert_down"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:262",
+            "json_pointer": "/layers/1/ops/expert_down"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:405",
+            "json_pointer": "/layers/2/ops/expert_down"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "GDN",
+        "op": "shared_down_mix",
+        "ratio_label": "measured",
+        "ratio_max": 1.3811322021381938,
+        "ratio_min": 1.3333229775071456,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:127",
+            "json_pointer": "/layers/0/ops/shared_down_mix"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:270",
+            "json_pointer": "/layers/1/ops/shared_down_mix"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:413",
+            "json_pointer": "/layers/2/ops/shared_down_mix"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "GDN",
+        "op": "combine",
+        "ratio_label": "measured",
+        "ratio_max": 0.875007500750075,
+        "ratio_min": 0.8147445774564419,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:135",
+            "json_pointer": "/layers/0/ops/combine"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:278",
+            "json_pointer": "/layers/1/ops/combine"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:421",
+            "json_pointer": "/layers/2/ops/combine"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "hc_norm",
+        "ratio_label": "measured",
+        "ratio_max": 1.7522180861485068,
+        "ratio_min": 1.7521655774640004,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:452",
+            "json_pointer": "/layers/3/ops/hc_norm"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:603",
+            "json_pointer": "/layers/4/ops/hc_norm"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:754",
+            "json_pointer": "/layers/5/ops/hc_norm"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "hc_low_inject",
+        "ratio_label": "measured",
+        "ratio_max": 1.8053033539841914,
+        "ratio_min": 1.800274289975101,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:460",
+            "json_pointer": "/layers/3/ops/hc_low_inject"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:611",
+            "json_pointer": "/layers/4/ops/hc_low_inject"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:762",
+            "json_pointer": "/layers/5/ops/hc_low_inject"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "hc_gate_mix",
+        "ratio_label": "measured",
+        "ratio_max": 1.6470524962756203,
+        "ratio_min": 1.6402406976370014,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:468",
+            "json_pointer": "/layers/3/ops/hc_gate_mix"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:619",
+            "json_pointer": "/layers/4/ops/hc_gate_mix"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:770",
+            "json_pointer": "/layers/5/ops/hc_gate_mix"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "projection",
+        "ratio_label": "measured",
+        "ratio_max": 1.3189237271056726,
+        "ratio_min": 1.3178995534363376,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:476",
+            "json_pointer": "/layers/3/ops/projection"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:627",
+            "json_pointer": "/layers/4/ops/projection"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:778",
+            "json_pointer": "/layers/5/ops/projection"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "qsa_prepare",
+        "ratio_label": "measured",
+        "ratio_max": 1.1030728883170864,
+        "ratio_min": 1.0974793225679402,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:484",
+            "json_pointer": "/layers/3/ops/qsa_prepare"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:635",
+            "json_pointer": "/layers/4/ops/qsa_prepare"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:786",
+            "json_pointer": "/layers/5/ops/qsa_prepare"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "qsa_pool",
+        "ratio_label": "measured",
+        "ratio_max": 1.3426423200859292,
+        "ratio_min": 1.2602406469853376,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:492",
+            "json_pointer": "/layers/3/ops/qsa_pool"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:643",
+            "json_pointer": "/layers/4/ops/qsa_pool"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:794",
+            "json_pointer": "/layers/5/ops/qsa_pool"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "qsa_select",
+        "ratio_label": "measured",
+        "ratio_max": 1.2727481512103256,
+        "ratio_min": 0.9605849462365591,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:500",
+            "json_pointer": "/layers/3/ops/qsa_select"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:651",
+            "json_pointer": "/layers/4/ops/qsa_select"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:802",
+            "json_pointer": "/layers/5/ops/qsa_select"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "qsa_attention",
+        "ratio_label": "measured",
+        "ratio_max": 1.340982486305371,
+        "ratio_min": 1.1070196893726305,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:508",
+            "json_pointer": "/layers/3/ops/qsa_attention"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:659",
+            "json_pointer": "/layers/4/ops/qsa_attention"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:810",
+            "json_pointer": "/layers/5/ops/qsa_attention"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "attention_projection",
+        "ratio_label": "measured",
+        "ratio_max": 1.3308263039449597,
+        "ratio_min": 1.3292629349675007,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:516",
+            "json_pointer": "/layers/3/ops/attention_projection"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:667",
+            "json_pointer": "/layers/4/ops/attention_projection"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:818",
+            "json_pointer": "/layers/5/ops/attention_projection"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "small_tuple",
+        "ratio_label": "measured",
+        "ratio_max": 1.6695847077729848,
+        "ratio_min": 1.65934561653298,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:524",
+            "json_pointer": "/layers/3/ops/small_tuple"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:675",
+            "json_pointer": "/layers/4/ops/small_tuple"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:826",
+            "json_pointer": "/layers/5/ops/small_tuple"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "route_shared_activation",
+        "ratio_label": "measured",
+        "ratio_max": 1.0554979705315366,
+        "ratio_min": 1.0554877458103264,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:532",
+            "json_pointer": "/layers/3/ops/route_shared_activation"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:683",
+            "json_pointer": "/layers/4/ops/route_shared_activation"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:834",
+            "json_pointer": "/layers/5/ops/route_shared_activation"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "expert_gate_up",
+        "ratio_label": "measured",
+        "ratio_max": 2.876977588728795,
+        "ratio_min": 2.779481826905271,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:540",
+            "json_pointer": "/layers/3/ops/expert_gate_up"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:691",
+            "json_pointer": "/layers/4/ops/expert_gate_up"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:842",
+            "json_pointer": "/layers/5/ops/expert_gate_up"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "expert_activation",
+        "ratio_label": "measured",
+        "ratio_max": 1.17470525187567,
+        "ratio_min": 1.1154289934001016,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:548",
+            "json_pointer": "/layers/3/ops/expert_activation"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:699",
+            "json_pointer": "/layers/4/ops/expert_activation"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:850",
+            "json_pointer": "/layers/5/ops/expert_activation"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "expert_down",
+        "ratio_label": "measured",
+        "ratio_max": 2.0294578887488086,
+        "ratio_min": 2.0256164417238245,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:556",
+            "json_pointer": "/layers/3/ops/expert_down"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:707",
+            "json_pointer": "/layers/4/ops/expert_down"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:858",
+            "json_pointer": "/layers/5/ops/expert_down"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "shared_down_mix",
+        "ratio_label": "measured",
+        "ratio_max": 1.491334184192516,
+        "ratio_min": 1.4365876811204843,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:564",
+            "json_pointer": "/layers/3/ops/shared_down_mix"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:715",
+            "json_pointer": "/layers/4/ops/shared_down_mix"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:866",
+            "json_pointer": "/layers/5/ops/shared_down_mix"
+          }
+        ]
+      },
+      {
+        "current_M1_ms": null,
+        "current_M1_share": null,
+        "current_V2_ms": null,
+        "family": "QSA",
+        "op": "combine",
+        "ratio_label": "measured",
+        "ratio_max": 0.9798750867453158,
+        "ratio_min": 0.9759619076875816,
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:572",
+            "json_pointer": "/layers/3/ops/combine"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:723",
+            "json_pointer": "/layers/4/ops/combine"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json:874",
+            "json_pointer": "/layers/5/ops/combine"
+          }
+        ]
+      }
+    ],
+    "cycle_ms": null,
+    "formula": "C=V2_layers+embedding_PLE+head+exposed_issue+target_misses+D+F+S+(1-a)*R+P+E",
+    "gain_percent": null,
+    "missing_inputs": [
+      "packet58aj per-class M1 shares",
+      "non-layer embedding/PLE and full head M2 times",
+      "exposed host issue",
+      "native causal M2 cache misses including wrong proposals",
+      "one-card draft/feedback cost and frequency",
+      "target snapshot/selection lifetime and time"
+    ],
+    "supported_conservative_gain_at_least_3_percent": false,
+    "terms": {
+      "D": {
+        "label": "transferred",
+        "limitation": "Resident historical 91,392-prefix command on rank1, now serialized with all 48 target layers. No rank overlap.",
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:171",
+            "json_pointer": null
+          }
+        ],
+        "unit": "ms/cycle",
+        "value": 1.7947473012216457
+      },
+      "E_extra_fill_and_cache": {
+        "label": "assumed",
+        "limitation": "Native capacity normalization below includes exposed fill cost; add zero separate fill in that sensitivity to avoid double charge. Actual M2 scheduling unknown.",
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/evidence/card0-capacity-d/max/WSCREEN/summary.json:2",
+            "json_pointer": "/rates"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/ANALYSIS.md:160",
+            "json_pointer": null
+          }
+        ],
+        "unit": "ms/cycle",
+        "value": null
+      },
+      "F_feedback_repair": {
+        "label": "transferred",
+        "limitation": "Historical feedback 1.603610977 ms when required; frequency and one-card repair unmeasured. Charged sensitivity pays one per cycle.",
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet85-critical-path/MODEL.md:260",
+            "json_pointer": null
+          }
+        ],
+        "unit": "ms/cycle",
+        "value": null
+      },
+      "P_publication_and_drain": {
+        "label": "transferred",
+        "limitation": "Rounded 1.11 ms once per pair, conditional on preserved dependency/staging lifetime. Measured differences 1.107661/1.111002; drain alone ~1.071 ms.",
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58aq-onecard-split/screen/evidence/card0-58aq-split-a/resident/WSCREEN/run/summary.json:1259",
+            "json_pointer": "/paired_differences/device_publication_and_drain"
+          }
+        ],
+        "unit": "ms/cycle",
+        "value": 1.11
+      },
+      "R_rejected_row": {
+        "label": "transferred",
+        "limitation": "Charge (1-a)*R. Proxy includes rollback, not the target re-evaluation (already in V2).",
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:214",
+            "json_pointer": null
+          }
+        ],
+        "unit": "ms/rejection",
+        "value": 0.980923
+      },
+      "S_target_state_selection": {
+        "label": "assumed",
+        "limitation": "Snapshot/init/select before releasing private rows; charged sensitivity assigns one R per cycle, not a proven bound.",
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:84",
+            "json_pointer": null
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:214",
+            "json_pointer": null
+          }
+        ],
+        "unit": "ms/cycle",
+        "value": null
+      },
+      "V2_layer_compute": {
+        "label": "transferred",
+        "limitation": "Per-op micro ratios measured; packet58aj M1 shares absent. IQ3 layer2 unmeasured in micro.",
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:82",
+            "json_pointer": null
+          }
+        ],
+        "unit": "ms/cycle",
+        "value": null
+      },
+      "draft_cache_pollution": {
+        "label": "assumed",
+        "limitation": "Only resident-draft option: draft experts never enter target LRU; target cache capacity already reduced. Shared-cache cost is unknown, not zero.",
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/ANALYSIS.md:160",
+            "json_pointer": null
+          }
+        ],
+        "unit": "ms/cycle",
+        "value": 0
+      },
+      "embedding_PLE": {
+        "label": "assumed",
+        "limitation": "Two causal row preparations, provisional PLE/history private; use 2*E1 in charged sensitivity, E1 unknown.",
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:82",
+            "json_pointer": null
+          }
+        ],
+        "unit": "ms/cycle",
+        "value": null
+      },
+      "exposed_host_issue": {
+        "label": "assumed",
+        "limitation": "5.053453 ms enqueue and 0.206020 prepare are overlapping spans, not exclusive additive costs. I2 unknown; no graph/replay savings.",
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:82",
+            "json_pointer": null
+          }
+        ],
+        "unit": "ms/cycle",
+        "value": null
+      },
+      "head_final_norm_argmax": {
+        "label": "assumed",
+        "limitation": "Two full target decisions, unchanged reduction/ties. Use 2*H1; no measured full-head M2 ratio.",
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+            "json_pointer": null
+          }
+        ],
+        "unit": "ms/cycle",
+        "value": null
+      },
+      "target_cache_miss_service": {
+        "label": "transferred",
+        "limitation": "Actual causal M2 cost and rejected-route misses absent; do not multiply union twice.",
+        "sources": [
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/evidence/card0-capacity-d/max/WSCREEN/summary.json:2",
+            "json_pointer": "/rates"
+          },
+          {
+            "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/ANALYSIS.md:160",
+            "json_pointer": null
+          }
+        ],
+        "unit": "ms/cycle",
+        "value": null
+      }
+    }
+  },
+  "proxy_M1_body_ms": 22.244767454545457,
+  "proxy_V2_body_ms": {
+    "high": 37.72347343641179,
+    "low": 34.31123463816665
+  },
+  "proxy_nonlayer_residual_ms": 7.927668521256954,
+  "proxy_per_class": [
+    {
+      "V2_high_ms": 9.281619517692473,
+      "V2_low_ms": 8.586306629151279,
+      "doubled_historical_M1_ms": 6.9743282727272735,
+      "label": "transferred",
+      "mapped_ops": [
+        "projection",
+        "attention_projection"
+      ],
+      "op_class": "dense_attention",
+      "ratio_max": 1.3308263039449597,
+      "ratio_min": 1.231130267086446,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        }
+      ]
+    },
+    {
+      "V2_high_ms": 8.30281408245984,
+      "V2_low_ms": 7.635078256747575,
+      "doubled_historical_M1_ms": 2.885950212121212,
+      "label": "transferred",
+      "mapped_ops": [
+        "expert_gate_up"
+      ],
+      "op_class": "gate_up",
+      "ratio_max": 2.876977588728795,
+      "ratio_min": 2.6456029021844043,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        }
+      ]
+    },
+    {
+      "V2_high_ms": 3.4937006535996797,
+      "V2_low_ms": 3.3332960121517896,
+      "doubled_historical_M1_ms": 2.1211835454545453,
+      "label": "transferred",
+      "mapped_ops": [
+        "hc_gate_mix"
+      ],
+      "op_class": "hc_gate",
+      "ratio_max": 1.6470524962756203,
+      "ratio_min": 1.57143214659319,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        }
+      ]
+    },
+    {
+      "V2_high_ms": 3.9044707023288527,
+      "V2_low_ms": 3.8079425377754244,
+      "doubled_historical_M1_ms": 1.8798931818181819,
+      "label": "transferred",
+      "mapped_ops": [
+        "expert_down"
+      ],
+      "op_class": "down",
+      "ratio_max": 2.076964127585459,
+      "ratio_min": 2.0256164417238245,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        }
+      ]
+    },
+    {
+      "V2_high_ms": 1.8810207336523128,
+      "V2_low_ms": 1.1414443146170727,
+      "doubled_historical_M1_ms": 1.4009842424242425,
+      "label": "transferred",
+      "mapped_ops": [
+        "expert_activation",
+        "combine",
+        "conv",
+        "gdn_norm_gate",
+        "qsa_prepare",
+        "qsa_pool"
+      ],
+      "op_class": "small_remaining",
+      "ratio_max": 1.3426423200859292,
+      "ratio_min": 0.8147445774564419,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        }
+      ]
+    },
+    {
+      "V2_high_ms": 2.044802829317259,
+      "V2_low_ms": 1.9166499357290452,
+      "doubled_historical_M1_ms": 1.1326643939393939,
+      "label": "transferred",
+      "mapped_ops": [
+        "hc_low_inject"
+      ],
+      "op_class": "hc_low",
+      "ratio_max": 1.8053033539841914,
+      "ratio_min": 1.6921604898896472,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        }
+      ]
+    },
+    {
+      "V2_high_ms": 1.1495288898294809,
+      "V2_low_ms": 1.143934043866229,
+      "doubled_historical_M1_ms": 1.0850577575757576,
+      "label": "transferred",
+      "mapped_ops": [
+        "route_shared_activation"
+      ],
+      "op_class": "route",
+      "ratio_max": 1.0594172354453877,
+      "ratio_min": 1.0542609698694871,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        }
+      ]
+    },
+    {
+      "V2_high_ms": 1.7599618576785359,
+      "V2_low_ms": 1.5109487597117355,
+      "doubled_historical_M1_ms": 1.054131515151515,
+      "label": "transferred",
+      "mapped_ops": [
+        "small_tuple"
+      ],
+      "op_class": "router_tuple",
+      "ratio_max": 1.6695847077729848,
+      "ratio_min": 1.4333588722034938,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        }
+      ]
+    },
+    {
+      "V2_high_ms": 1.5093796648278497,
+      "V2_low_ms": 1.5045504315894098,
+      "doubled_historical_M1_ms": 0.8989236666666667,
+      "label": "transferred",
+      "mapped_ops": [
+        "gdn_recurrence"
+      ],
+      "op_class": "recurrence",
+      "ratio_max": 1.6790965916214424,
+      "ratio_min": 1.6737243521115546,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        }
+      ]
+    },
+    {
+      "V2_high_ms": 1.3352189604997895,
+      "V2_low_ms": 1.30377073462442,
+      "doubled_historical_M1_ms": 0.7620164242424244,
+      "label": "transferred",
+      "mapped_ops": [
+        "hc_norm"
+      ],
+      "op_class": "hc_norm",
+      "ratio_max": 1.7522180861485068,
+      "ratio_min": 1.7109483380500528,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        }
+      ]
+    },
+    {
+      "V2_high_ms": 0.9604876456994639,
+      "V2_low_ms": 0.688025371641577,
+      "doubled_historical_M1_ms": 0.7162566666666665,
+      "label": "transferred",
+      "mapped_ops": [
+        "qsa_attention",
+        "qsa_select"
+      ],
+      "op_class": "qsa_attention_select",
+      "ratio_max": 1.340982486305371,
+      "ratio_min": 0.9605849462365591,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        }
+      ]
+    },
+    {
+      "V2_high_ms": 1.051828103075032,
+      "V2_low_ms": 0.9403838476196664,
+      "doubled_historical_M1_ms": 0.7052933636363637,
+      "label": "transferred",
+      "mapped_ops": [
+        "shared_down_mix"
+      ],
+      "op_class": "shared_fused",
+      "ratio_max": 1.491334184192516,
+      "ratio_min": 1.3333229775071456,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        }
+      ]
+    },
+    {
+      "V2_high_ms": 1.0486397957512195,
+      "V2_low_ms": 0.7989037629414273,
+      "doubled_historical_M1_ms": 0.6280842121212121,
+      "label": "transferred",
+      "mapped_ops": [
+        "projection",
+        "small_tuple"
+      ],
+      "op_class": "small_dense",
+      "ratio_max": 1.6695847077729848,
+      "ratio_min": 1.271969184264815,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        }
+      ]
+    }
+  ],
+  "proxy_warning": "Doubled p128b rank1 diagnostic, instrumentation gate failed, no one-card shares. Min/max class mapping and residual once/twice are sensitivities, not confidence bounds or measurements.",
+  "runtime_changed": false,
+  "scenarios": [
+    {
+      "MTP_with_drain_vs_drain_free_baseline_percent": -0.33146093585944003,
+      "acceptance": 0.7,
+      "aggregate_anchor_tps": 33.03297723262133,
+      "aggregate_gain_percent": 3.3351995369615306,
+      "cache_and_exposed_fill_delta_ms": 6.0257959370896295,
+      "cache_miss_delta_count": 63.49479166666667,
+      "complete_supported_bound": false,
+      "cycle_ms": 51.46372329773488,
+      "draft_ms": 1.7947473012216457,
+      "drain_free_MTP_tps": 33.7611578382819,
+      "drain_free_baseline_tps": 33.14283277631202,
+      "drain_free_gain_percent": 1.8656373344520416,
+      "feedback_ms": 0.0,
+      "label": "assumed",
+      "layer_V2_ms": 34.31123463816665,
+      "name": "favorable_missing_costs",
+      "per_prompt_class_balanced_tps": 33.02476071981138,
+      "publication_ms": 1.11,
+      "rejection_ms": 0.29427690000000006,
+      "residual_multiplicity": 1,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/evidence/card0-capacity-d/max/WSCREEN/summary.json:2",
+          "json_pointer": "/rates"
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/ANALYSIS.md:160",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:171",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet85-critical-path/MODEL.md:260",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:214",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aq-onecard-split/screen/evidence/card0-58aq-split-a/resident/WSCREEN/run/summary.json:1259",
+          "json_pointer": "/paired_differences/device_publication_and_drain"
+        }
+      ],
+      "state_selection_ms": 0.0,
+      "unpartitioned_nonlayer_ms": 7.927668521256954
+    },
+    {
+      "MTP_with_drain_vs_drain_free_baseline_percent": 4.943246447023109,
+      "acceptance": 0.787,
+      "aggregate_anchor_tps": 34.781164679969876,
+      "aggregate_gain_percent": 8.80395572649979,
+      "cache_and_exposed_fill_delta_ms": 6.0257959370896295,
+      "cache_miss_delta_count": 63.49479166666667,
+      "complete_supported_bound": false,
+      "cycle_ms": 51.37838299673488,
+      "draft_ms": 1.7947473012216457,
+      "drain_free_MTP_tps": 35.54918406896184,
+      "drain_free_baseline_tps": 33.14283277631202,
+      "drain_free_gain_percent": 7.260548031276626,
+      "feedback_ms": 0.0,
+      "label": "assumed",
+      "layer_V2_ms": 34.31123463816665,
+      "name": "favorable_missing_costs",
+      "per_prompt_class_balanced_tps": 34.77252156523917,
+      "publication_ms": 1.11,
+      "rejection_ms": 0.20893659899999997,
+      "residual_multiplicity": 1,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/evidence/card0-capacity-d/max/WSCREEN/summary.json:2",
+          "json_pointer": "/rates"
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/ANALYSIS.md:160",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:171",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet85-critical-path/MODEL.md:260",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:214",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aq-onecard-split/screen/evidence/card0-58aq-split-a/resident/WSCREEN/run/summary.json:1259",
+          "json_pointer": "/paired_differences/device_publication_and_drain"
+        }
+      ],
+      "state_selection_ms": 0.0,
+      "unpartitioned_nonlayer_ms": 7.927668521256954
+    },
+    {
+      "MTP_with_drain_vs_drain_free_baseline_percent": 8.77381400352153,
+      "acceptance": 0.85,
+      "aggregate_anchor_tps": 36.05072327960381,
+      "aggregate_gain_percent": 12.77544428755757,
+      "cache_and_exposed_fill_delta_ms": 6.0257959370896295,
+      "cache_miss_delta_count": 63.49479166666667,
+      "complete_supported_bound": false,
+      "cycle_ms": 51.31658484773488,
+      "draft_ms": 1.7947473012216457,
+      "drain_free_MTP_tps": 36.84775623776498,
+      "drain_free_baseline_tps": 33.14283277631202,
+      "drain_free_gain_percent": 11.178656593593782,
+      "feedback_ms": 0.0,
+      "label": "assumed",
+      "layer_V2_ms": 34.31123463816665,
+      "name": "favorable_missing_costs",
+      "per_prompt_class_balanced_tps": 36.04177092714714,
+      "publication_ms": 1.11,
+      "rejection_ms": 0.14713845000000003,
+      "residual_multiplicity": 1,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/evidence/card0-capacity-d/max/WSCREEN/summary.json:2",
+          "json_pointer": "/rates"
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/ANALYSIS.md:160",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:171",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet85-critical-path/MODEL.md:260",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:214",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aq-onecard-split/screen/evidence/card0-58aq-split-a/resident/WSCREEN/run/summary.json:1259",
+          "json_pointer": "/paired_differences/device_publication_and_drain"
+        }
+      ],
+      "state_selection_ms": 0.0,
+      "unpartitioned_nonlayer_ms": 7.927668521256954
+    },
+    {
+      "MTP_with_drain_vs_drain_free_baseline_percent": -19.47606680196603,
+      "acceptance": 0.7,
+      "aggregate_anchor_tps": 26.687912524733598,
+      "aggregate_gain_percent": -16.513708511720594,
+      "cache_and_exposed_fill_delta_ms": 4.336880897773628,
+      "cache_miss_delta_count": 37.878472222222214,
+      "complete_supported_bound": false,
+      "cycle_ms": 63.699249554437365,
+      "draft_ms": 1.7947473012216457,
+      "drain_free_MTP_tps": 27.161213980068815,
+      "drain_free_baseline_tps": 33.14283277631202,
+      "drain_free_gain_percent": -18.04800101613043,
+      "feedback_ms": 1.603610976516397,
+      "label": "assumed",
+      "layer_V2_ms": 37.72347343641179,
+      "name": "charged_sensitivity",
+      "per_prompt_class_balanced_tps": 26.687431255807933,
+      "publication_ms": 1.11,
+      "rejection_ms": 0.29427690000000006,
+      "residual_multiplicity": 2,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/evidence/card0-capacity-d/max/WSCREEN/summary.json:2",
+          "json_pointer": "/rates"
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/ANALYSIS.md:160",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:171",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet85-critical-path/MODEL.md:260",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:214",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aq-onecard-split/screen/evidence/card0-58aq-split-a/resident/WSCREEN/run/summary.json:1259",
+          "json_pointer": "/paired_differences/device_publication_and_drain"
+        }
+      ],
+      "state_selection_ms": 0.980923,
+      "unpartitioned_nonlayer_ms": 15.855337042513908
+    },
+    {
+      "MTP_with_drain_vs_drain_free_baseline_percent": -15.241582035228484,
+      "acceptance": 0.787,
+      "aggregate_anchor_tps": 28.091340729911828,
+      "aggregate_gain_percent": -12.123443214208262,
+      "cache_and_exposed_fill_delta_ms": 4.336880897773628,
+      "cache_miss_delta_count": 37.878472222222214,
+      "complete_supported_bound": false,
+      "cycle_ms": 63.61390925343736,
+      "draft_ms": 1.7947473012216457,
+      "drain_free_MTP_tps": 28.59021173786382,
+      "drain_free_baseline_tps": 33.14283277631202,
+      "drain_free_gain_percent": -13.736366680466928,
+      "feedback_ms": 1.603610976516397,
+      "label": "assumed",
+      "layer_V2_ms": 37.72347343641179,
+      "name": "charged_sensitivity",
+      "per_prompt_class_balanced_tps": 28.090871011691924,
+      "publication_ms": 1.11,
+      "rejection_ms": 0.20893659899999997,
+      "residual_multiplicity": 2,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/evidence/card0-capacity-d/max/WSCREEN/summary.json:2",
+          "json_pointer": "/rates"
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/ANALYSIS.md:160",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:171",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet85-critical-path/MODEL.md:260",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:214",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aq-onecard-split/screen/evidence/card0-58aq-split-a/resident/WSCREEN/run/summary.json:1259",
+          "json_pointer": "/paired_differences/device_publication_and_drain"
+        }
+      ],
+      "state_selection_ms": 0.980923,
+      "unpartitioned_nonlayer_ms": 15.855337042513908
+    },
+    {
+      "MTP_with_drain_vs_drain_free_baseline_percent": -12.168131655760162,
+      "acceptance": 0.85,
+      "aggregate_anchor_tps": 29.109969249641942,
+      "aggregate_gain_percent": -8.936925069049895,
+      "cache_and_exposed_fill_delta_ms": 4.336880897773628,
+      "cache_miss_delta_count": 37.878472222222214,
+      "complete_supported_bound": false,
+      "cycle_ms": 63.552111104437365,
+      "draft_ms": 1.7947473012216457,
+      "drain_free_MTP_tps": 29.627441597959237,
+      "drain_free_baseline_tps": 33.14283277631202,
+      "drain_free_gain_percent": -10.606791525874993,
+      "feedback_ms": 1.603610976516397,
+      "label": "assumed",
+      "layer_V2_ms": 37.72347343641179,
+      "name": "charged_sensitivity",
+      "per_prompt_class_balanced_tps": 29.109510284933094,
+      "publication_ms": 1.11,
+      "rejection_ms": 0.14713845000000003,
+      "residual_multiplicity": 2,
+      "sources": [
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md:93",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/evidence/card0-capacity-d/max/WSCREEN/summary.json:2",
+          "json_pointer": "/rates"
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/ANALYSIS.md:160",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:171",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet85-critical-path/MODEL.md:260",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:214",
+          "json_pointer": null
+        },
+        {
+          "file_line": "experiments/own-xpu-runtime/stage2/packet58aq-onecard-split/screen/evidence/card0-58aq-split-a/resident/WSCREEN/run/summary.json:1259",
+          "json_pointer": "/paired_differences/device_publication_and_drain"
+        }
+      ],
+      "state_selection_ms": 0.980923,
+      "unpartitioned_nonlayer_ms": 15.855337042513908
+    }
+  ],
+  "schema": "packet170.complete-cycle-accounting.v1",
+  "sources_sha256": {
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/layer-micro-B1/analysis.json": "78d00adcbb5fae286fa6b9d60c921c1fe8bdaed1d844270f8113f4204ac88207",
+    "experiments/own-xpu-runtime/stage2/packet170-onecard-mtp-cycle/inputs.json": "07833e64e30f7bb0aa52fcfccdfc758dd55303bc9f1f599838c0594816b36024",
+    "experiments/own-xpu-runtime/stage2/packet55-feasibility/evidence-copy/cpu-bench-receipt.json": "10084caaa4024948b8efaca61976b43bf7850eb85ff6ab98e8938f652e2429dc",
+    "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/ANALYSIS.md": "80d94c354ed255229df287b0c1d2b7ac2d605f624b4ed95f770837fd3412091b",
+    "experiments/own-xpu-runtime/stage2/packet58aa-onecard-mtp-recheck/analysis.json": "580cf625a6c1f9dbdb4c102b27eea76b3c2f302b5f9843a3811ab1bb32fa32ea",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/MEMORY.md": "4ce7d383f747891e8fbd8904bed5b0ce346083f23bf7098384a40d78a544b7e8",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/architecture-tradeoff/timings.jsonl": "6e27b61f2e85b3eca5da63fc19136f93ec40329e2e01119b27a9dcb56c4cc449",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/benchmark-analysis/timings.jsonl": "b0f01c6dd17628d8b2e4780835547939535eacdaa486dae182864cd591cee52d",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/bug-report-synthesis/timings.jsonl": "e8ec5c8abdcb04d54f3e66b95b9adc50ef33e36492b1cd807f77991d28775899",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/census.json": "d63afbf961fbf8aadd76cad0dafd83f1a27d7571670448960e63541dd03513cc",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/code-review/timings.jsonl": "df3e42fe46416313681e5dce0990d7970550981997b10320bb3015a87bd43460",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/customer-email/timings.jsonl": "820488ecacb9022f6b5247ba2e8e95a47c5ef25477d3b986af3f57b2d1ffdbf6",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/decision-memo/timings.jsonl": "011fce0e0a78ef3c9e37bebbd81ee569e9ebe144f3e664dde6b44d274f59d03c",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/incident-retrospective/timings.jsonl": "f4be3fd11374a0c798bc4362b86320975d9ad3ff90e376a5b77593cddb394ae0",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/performance-hypotheses/timings.jsonl": "f1877dc79450b7993d0d088162478a17e29a297437b095296b934a0d7dee031d",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/release-plan/timings.jsonl": "1d2c603a8e4b5146019ae680b01dc1ffbeee9077b5552952b5660d308ca5c2ce",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/risk-register/timings.jsonl": "ee45737074c4dad2e57faa6508dff1a1f98ce3390fbbceb95d1b26b166ffd1bf",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/sql-debugging/timings.jsonl": "dc6768caaf057db166c2114dd7d3bcffb7ac62c8b7229a5d5deea565fbdd71d0",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/run/run/technical-guide/timings.jsonl": "17918993cdd93d4ba24bf53e9a0d978375fe59d056f8734b15db5a6096e07310",
+    "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/card0-58aj-a/WS128/summary.json": "690774f8611125ad0d4879e8c05b45b1271bafce69491227883edd4df89b7073",
+    "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/README.md": "4b01fecff58afd471886fb595a95b8c0eb6f4d862971644e143bd9c2628e700f",
+    "experiments/own-xpu-runtime/stage2/packet58ao-onecard-next/analysis.json": "970243d4a2c77b4bb1159db789d4b6383e40274275ce3be21948af44d1bc10e3",
+    "experiments/own-xpu-runtime/stage2/packet58aq-onecard-split/screen/evidence/card0-58aq-split-a/resident/WSCREEN/run/summary.json": "f0c2c1e2ada313b6cbfacdec8c6d35d0bf67a2a5c266c92b18ad6d3b957f40e2",
+    "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md": "c005d7fd428220fa0ac6d9c98a7d6c631a7cced280577477880d263e17ffaec4",
+    "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/feasibility.json": "458d7cf76b697adb7e894bae96d45efd6f247c1c5d9a55a22456277e0cbce180",
+    "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/admission.json": "a647c20f69a21a8e20494c4d2dc55f8f9332ab4d0ef92dafb327668b43f9996a",
+    "experiments/own-xpu-runtime/stage2/packet58x-cache-capacity/evidence/card0-capacity-d/max/WSCREEN/summary.json": "99d4a08881a01d69f1d0b77bf45a914700b186fe5e43637a4c2a882d042ff8c3",
+    "experiments/own-xpu-runtime/stage2/packet85-critical-path/MODEL.md": "0269b4a8e13b2f986ff89ed1167e7401a966cf8b866bf1219b9a8790404cf9c4",
+    "experiments/own-xpu-runtime/stage2/packet85-critical-path/model.json": "8fe6d61b6b92b2800a0d99f3ba3661b87cc4f81c4201c9e08d047fc529eb8daa",
+    "experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/packet77-attribution-B-a/run/summary.json": "d50fa7bf02051cdf65b36967127807404d20a1f968370b7e1ecc64cb8884d46b"
+  },
+  "strict512": false,
+  "target_arithmetic": "iq3-p49-split32-v1"
+}
