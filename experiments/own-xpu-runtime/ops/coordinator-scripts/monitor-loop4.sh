@@ -1,0 +1,18 @@
+#!/bin/bash
+L=/home/steve/llm-optimizations/experiments/own-xpu-runtime/ops/lane-queue; C=/home/steve/own-xpu-runtime-results/coordination/chain-lanes-v1; V3=/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v3; FN=/tmp/claude-1000/-home-steve/fn-run; for h in p118-chain.log p58k.log; do touch $FN/$h; done
+declare -A seen; FILES="$L/events-A.jsonl $L/events-B.jsonl $FN/p118-chain.log $FN/p58k.log"; for f in $FILES; do seen[$f]=$(wc -l < $f); done
+cd /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage1/packet4-prep/driver
+base=2; warned=""; codexn=$(systemctl --user list-units --state=active --no-legend 'codex-*' | wc -l); declare -A empt; chains=$(systemctl --user list-units --all --no-legend 'packet1*-chain-*' 'packet58*-onecard-*' 2>/dev/null | sed 's/●//' | awk '{print $1":"$4}' | sort | tr '\n' ' ')
+while :; do
+  for f in $FILES; do n=$(wc -l < $f); if [ "$n" -gt "${seen[$f]}" ]; then sed -n "$((${seen[$f]}+1)),${n}p" $f | cut -c1-260 | grep -v '^\s*["{}\[\]0-9.,-]'; seen[$f]=$n; fi; done
+  cu=$(systemctl --user list-units --all --no-legend 'packet1*-chain-*' 'packet58*-onecard-*' 2>/dev/null | sed 's/●//' | awk '{print $1":"$4}' | sort | tr '\n' ' '); if [ "$cu" != "$chains" ]; then echo "chain units: $cu at $(date -u +%T)"; chains=$cu; fi
+  for lane in A B; do q=$L/queue-$lane.txt; if [ ! -e $L/PAUSE-$lane ] && [ ! -s $q ] && [ ! -e $L/inflight-$lane.json ]; then if [ -z "${empt[$lane]}" ]; then empt[$lane]=$(date +%s); elif [ "${empt[$lane]}" != done ] && [ $(( $(date +%s) - ${empt[$lane]} )) -ge 300 ]; then echo "EMPTY QUEUE: lane $lane unpaused and idle for 5 min at $(date -u +%T)"; empt[$lane]=done; fi; else empt[$lane]=""; fi; done
+  for lane in A B; do m=$C/active-lane-$lane.json; if [ -f $m ]; then p=$(python3 -c "import json;print(json.load(open('$m'))['pid'])" 2>/dev/null); if [ -n "$p" ] && [ ! -d /proc/$p ] && [[ "$warned" != *"m$lane$p"* ]]; then sleep 5; [ -f $m ] && { echo "STALE active-lane-$lane.json pid $p at $(date +%T)"; warned="$warned m$lane$p"; }; fi; fi; done
+  h=$C/hold-lane-B; if [ -f $h ]; then hp=$(python3 -c "import json;print(json.load(open('$h'))['pid'])" 2>/dev/null); if [ -n "$hp" ] && [ ! -d /proc/$hp ] && [[ "$warned" != *"h$hp"* ]]; then sleep 5; [ -f $h ] && { echo "STALE hold-lane-B pid $hp at $(date +%T)"; warned="$warned h$hp"; }; fi; fi
+  for x in $(find /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2 -maxdepth 2 -name "fault-$(cat /proc/sys/kernel/random/boot_id).json" -mmin -180 2>/dev/null); do [[ "$warned" != *"$x"* ]] && { echo "PACKET LATCH: $x at $(date +%T)"; warned="$warned $x"; }; done
+  for x in $V3/fault-*.json; do [ -f "$x" ] && [[ "$warned" != *"$x"* ]] && { echo "SCREEN LATCH: $x at $(date +%T)"; warned="$warned $x"; }; done
+  t=$(python3 -c "import json;d=json.load(open('$V3/teardown-state.json'));print('' if d.get('drained') else d.get('pid'))" 2>/dev/null); if [ -n "$t" ] && [ ! -d /proc/$t ] && [[ "$warned" != *"t$t"* ]]; then echo "TEARDOWN UNDRAINED pid $t at $(date +%T)"; warned="$warned t$t"; fi
+  fc=$(python3 -B -c "import subprocess,window_driver as w;L=subprocess.run(['journalctl','-k','-b','--no-pager'],capture_output=True,text=True).stdout.splitlines();print(sum(1 for x in L if w.FAULT.search(x) and not w.DELETED.search(x)))" 2>/dev/null); if [ -n "$fc" ] && [ "$fc" -gt "$base" ]; then echo "GPU FAULT LINES $fc (base $base) at $(date +%T)"; base=$fc; fi
+  cn=$(systemctl --user list-units --state=active --no-legend 'codex-*' | wc -l); if [ "$cn" != "$codexn" ]; then echo "codex units active: $cn (was $codexn) at $(date +%T)"; codexn=$cn; fi
+  sleep 20
+done

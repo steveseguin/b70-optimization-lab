@@ -853,3 +853,26 @@ STOP DOING acknowledged:
 - one two-card study at a time while lane B idles;
 - levers picked from packet57's old outside-layer numbers;
 - hard-coded names/lanes in gates.
+
+## Review 39 — 2026-10-19 ~05:05 UTC — VERDICT: ACT
+
+**Finding:** 13.1% of card-minutes were busy over 2 h. Both lanes had been idle since 04:36. Three census smokes were lost to harness code. Five two-card ≥ 3% studies closed in ~5 h. The two-card record has been flat ~11 h.
+
+**Actions (coordinator, 05:05–05:12 UTC):**
+1. **Bundle-9 chain** `packet155-chain-a` launched at 05:05:19 (`fn-run/chain-p155.sh`: verify_ready, both lanes held, drain spacing, Codex frozen from WS). It runs under the idle-lane rule; a submission needs WS128 > 58.798109 and exact.
+2. **p58am unblocked.** p58amc was stopped: the binary lacks `--lookups`. Codex **p58an** (compile allowed) ports `--lookups resident`, reruns the byte gates and builds real lanequeue rows, with a fallback to a same-parent screen.
+3. **Zero-gap hand-off.** `fn-run/hold-p58am.sh` waits for the chain to end clean and for the p58an READY, then runs p58am smoke → v5 (all Codex frozen). The monitor is now `monitor-loop4.sh`, with a 5-min EMPTY-QUEUE alert.
+4. **Brief-template rules** added and applied to the p58an/p58ao briefs and the heartbeat:
+   - real lanequeue rows;
+   - check every flag against `--help` before no-compile requirements;
+   - audit inherited in-run checks;
+   - push gate supersessions promptly.
+5. **Effort moves to the one-card line.** Codex **p58ao** prepares the next one-card lever on the compute-tail bucket behind p58am. There will be no new two-card ≥ 3% single-lever studies on bundle 8. Disk is watched: root 29.5 GB before the chain.
+
+STOP DOING acknowledged:
+- leaving ready device work unqueued;
+- no-compile briefs needing native changes;
+- raw-argv proposals;
+- re-running diagnostics after a second packaging failure when a direct measurement supersedes them;
+- in-run consistency analyzers (inherited ones too);
+- new two-card single-lever ≥ 3% studies on bundle 8.
