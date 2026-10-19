@@ -43,7 +43,7 @@ def main():
         'runtime-selection.json', 'readiness-policy.json', 'submission-policy.json',
         'record-threshold.snapshot', 'WINDOW.md', 'MEMORY.md',
         'evidence/plan-check.json', 'evidence/queue-plans.json',
-        'evidence/packet58ajb-diagnosis.json', 'evidence/packet58ajb-preparation.json')]
+        'evidence/packet58ajb-preparation.json')]
     proposals = [R / 'experiments/own-xpu-runtime/ops/lane-queue' / f'proposed-p58aj-{tag}-A.txt' for tag in ('smoke', 'v5')]
     common = dict(
         schema='packet58aj.ready-for-device.v1', packet=P.name,
@@ -59,6 +59,9 @@ def main():
         files_sha256={str(f.relative_to(R)): sha(f) for f in files + proposals},
         final_checks_content_digest=sha(O / 'final-checks.json'),
         finalizer_content_digest=sha(Path(__file__)),
+        # Historical window receipts carry old relative build paths. Bind the
+        # diagnosis bytes without admitting that incident as a live pin closure.
+        diagnosis_content_digest=sha(P / 'evidence/packet58ajb-diagnosis.json'),
         orchestration_provenance_only=str(O.relative_to(R)),
         work_note_provenance_only='notes/2026-10-19-own-runtime-packet58aj.md',
         lane='A', card=0, scope='whole-host',

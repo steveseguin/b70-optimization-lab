@@ -203,3 +203,10 @@ queue, host setting or external submission was changed.
 Evidence: [diagnosis](../experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/packet58ajb-diagnosis.json),
 [CPU preparation](../experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/evidence/packet58ajb-preparation.json),
 [final checks](../experiments/own-xpu-runtime/ops/packet58aj-orchestration/final-checks.json).
+
+The post-marker pin check caught one additional metadata issue: recursively
+pinning the historical diagnosis caused the shared guard to interpret old
+window-relative build paths as current inputs. The finalizer now binds that
+diagnosis with a content digest, keeping the incident out of the live build
+closure. The failed first marker attempt was removed before this correction;
+the corrected two markers are regenerated last and checked before their push.
