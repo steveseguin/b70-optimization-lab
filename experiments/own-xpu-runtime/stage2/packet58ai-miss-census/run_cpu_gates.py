@@ -1,36 +1,36 @@
-#!/usr/bin/env python3
-"""Run only passive/mocked Python tests, capture their source-bound receipt."""
-import hashlib
-import json
-import os
+"""Bounded tests and real entry/loader/report rehearsals; no device/model reads."""
+import json,os,re,resource,subprocess,sys
 from pathlib import Path
-import re
-import resource
-import subprocess
-P=Path(__file__).resolve().parent
-ROOT=P.parents[3]
+from build_engine import P,ROOT,sha,save,limits
 
-def sha(p):
-    with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
+def run(args,log):
+    with log.open('w') as f:
+        cp=subprocess.run(args,stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,timeout=120)
+    if cp.returncode:raise RuntimeError('CPU check failed: '+str(log))
+    return cp
 
 def main():
-    assert os.getpriority(os.PRIO_PROCESS,0)==19
-    assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
-    inputs=[*P.glob('*.py'),P/'views.json',*list((P/'selections').glob('*.json')),
-            P/'evidence/postload-census.json',P/'evidence/58c-kd/run/progress.jsonl']
-    sources={str(f.relative_to(ROOT)):sha(f) for f in inputs}
-    command=['/usr/bin/python3','-B','-m','unittest','discover','-s',str(P),'-v']
-    result=subprocess.run(command,stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
-    log=P/'evidence/python-cpu-gates.log';log.write_text(result.stdout)
-    unchanged=all(sha(ROOT/n)==h for n,h in sources.items())
-    count=re.search(r'Ran (\d+) tests',result.stdout)
-    row=dict(passed=result.returncode==0 and unchanged and bool(count),device_executed=False,
-        tests=int(count.group(1)) if count else 0,source_unchanged=unchanged,
-        sources=sources,log_sha256=sha(log),command=command,
-        native_binaries_executed=False,services_started=False,live_queue_changed=False)
-    row['peak_child_rss_bytes']=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024
-    row['passed']=row['passed'] and row['peak_child_rss_bytes'] < 4*1024**3
-    (P/'evidence/python-cpu-gates.json').write_text(json.dumps(row,indent=2,sort_keys=True)+'\n')
-    print(json.dumps({k:row[k] for k in ('passed','device_executed','tests','source_unchanged')}))
-    return 0 if row['passed'] else 1
-if __name__=='__main__':raise SystemExit(main())
+    limits()
+    # Argument probes intentionally inherit unchanged unlimited AS; they do
+    # not load weights or execute native code, and retain measured peak RSS.
+    run([sys.executable,'-B','-m','unittest','discover','-s',str(P),'-p','test_*.py'],P/'evidence/python-tests.log')
+    tests=int(re.search(r'Ran (\d+) tests', (P/'evidence/python-tests.log').read_text()).group(1))
+    save(P/'evidence/python-tests.json',dict(passed=True,device_executed=False,tests=tests,log_sha256=sha(P/'evidence/python-tests.log')))
+    run([sys.executable,'-B',str(P/'argument_gate.py')],P/'evidence/arguments.log')
+    proposal=P.parents[1]/'ops/lane-queue/proposed-p58ai-census-A.txt'
+    ops=P.parents[1]/'ops'
+    report=P/'evidence/shared-entry-report.json'
+    run([sys.executable,'-B',str(ops/'rehearse_entry.py'),str(proposal),'--report','--json'],report)
+    checked=json.loads(report.read_text())
+    assert checked['passed'] is True
+    save(P/'evidence/shared-entry.json',dict(passed=True,device_executed=False,
+        report='evidence/shared-entry-report.json',report_sha256=sha(report),
+        scope='shared sandbox native entry/parser probes and synthetic report adapters; no model or device work'))
+    binaries=[str(P/'build/device'/n) for n in ['own-rt-iq3','p58-cache-fixtures']]
+    run([sys.executable,'-B',str(ops/'launch_env.py'),*binaries],P/'evidence/loader.log')
+    save(P/'evidence/loader.json',dict(passed=True,device_executed=False,log_sha256=sha(P/'evidence/loader.log'),
+        binaries={str(Path(x).relative_to(P)):sha(x) for x in binaries}))
+    assert resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024<4*1024**3
+    save(P/'evidence/cpu-resource-use.json',dict(passed=True,device_executed=False,max_child_rss_bytes=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024))
+    print(f'{tests} tests, 3 native launch paths, 2 loaders and 2 report kinds PASS')
+if __name__=='__main__':main()

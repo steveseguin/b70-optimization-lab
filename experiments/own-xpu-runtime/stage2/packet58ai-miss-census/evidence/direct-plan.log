@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/queue_runner.py", line 154, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/queue_runner.py", line 93, in main
+    metadata=plan(output,view)
+             ^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/queue_runner.py", line 52, in plan
+    W.build_gate()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/window.py", line 123, in build_gate
+    require(gate.get('passed') is True and gate.get('device_executed') is False, 'CPU gate failed: ' + name)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/supervision.py", line 27, in require
+    raise ValueError(reason)
+ValueError: CPU gate failed: evidence/shared-entry.json

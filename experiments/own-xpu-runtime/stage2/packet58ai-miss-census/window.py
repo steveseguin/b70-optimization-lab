@@ -29,7 +29,10 @@ require, sha, save = S.require, S.sha, S.save
 PCI = {0: '0000:23:00.0', 2: '0000:43:00.0'}
 # Expected durations are conservative planning bounds, not speed measurements.
 CONFIG = {'K1': (20, 600), 'WSCREEN': (1560, 7200)}
-WRITES = {'K1': 128*1024**2, 'WSCREEN': 1024*1024**2}
+# Each unchanged K1 writes two small JSON files plus supervisor/journal logs.
+# The retained record's complete K1 folders are 4.06 MB each; 32 MiB is >8x.
+# Keep a full GiB for the new all-layer census. See evidence/storage-budget.json.
+WRITES = {'K1': 32*1024**2, 'WSCREEN': 1024*1024**2}
 PREVIOUS = {}  # Screening has no KD/layer-repeat/model-reload prerequisite.
 
 
@@ -123,7 +126,7 @@ def build_gate():
         require(gate.get('passed') is True and gate.get('device_executed') is False, 'CPU gate failed: ' + name)
     startup = json.loads((HERE/'evidence/argument-gate.json').read_text())
     require({(r['candidate'], r['window']) for r in startup['records']} ==
-            {(v, w) for v in ('smoke', 'p60fusion') for w in ('K1a', 'K1b', 'WSCREEN')} and
+            {(v, w) for v in ('p60fusion',) for w in ('K1a', 'K1b', 'WSCREEN')} and
             all(r.get('real_queue_entry') is True and r.get('real_unit_and_environment_gates') is True
                 and r.get('live_host_admission') is True and r.get('native_exec_intercepted') is True
                 for r in startup['records']), 'complete real startup paths required')

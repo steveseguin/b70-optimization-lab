@@ -174,7 +174,7 @@ def native_command(args, manifest, table):
         '--plan',str(bundle/'plan.tsv'),'--identity',str(bundle/'identity.tsv'),'--model-dir',str(model),
         '--selection',str(selection('tile16')),'--selection-sha256',digest('tile16'),
         '--dispatch',str(HERE/'dispatch-speed6.json'),'--output',str(args.output/'run'),
-        '--cache-bytes',str(MAX_BYTES),'--cache-cap','max',
+        '--hc','p60fusion','--cache-bytes',str(MAX_BYTES),'--cache-cap','max',
         '--cache-maintenance',getattr(args,'cache_maintenance',DEFAULT_MAINTENANCE),
         '--seconds','7200','--bracket-inputs',str(args.output/'bracket-inputs.tsv')]
 

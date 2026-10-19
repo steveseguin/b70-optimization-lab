@@ -1,0 +1,47 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "synthetic_only": true,
+  "records": [
+    {
+      "compiler": "gnu",
+      "passed": true,
+      "cases": 24,
+      "repeats": 2,
+      "binary_sha256": "6f0fa40cccb077325652d8fc14fc75da18dba21a33bccfbc450a8538b8e270ed",
+      "command": [
+        "/usr/bin/g++",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-Wno-unknown-pragmas",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/native/partition_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/build/partition-gnu"
+      ]
+    },
+    {
+      "compiler": "intel",
+      "passed": true,
+      "cases": 24,
+      "repeats": 2,
+      "binary_sha256": "aac0825a75d401783cf844f106b7475a57ce55c3f612f2eab93004985e5ad6c5",
+      "command": [
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=c++20",
+        "-O2",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-Wno-unknown-pragmas",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/native/partition_cpu.cpp",
+        "-o",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/build/partition-intel"
+      ]
+    }
+  ],
+  "cross_compiler_exact": true,
+  "peak_rss_bytes": 257335296
+}

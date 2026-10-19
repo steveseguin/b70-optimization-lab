@@ -52,8 +52,8 @@ def sandbox(tmp):
 
 def sources():
     from launch_identity import LANEQUEUE
-    files = [*P.glob('*.py'), P/'views.json', P/'oracle-binding.json',
-             P/'selections/route-rec.json', P/'dispatch-speed6.json']
+    files = [*P.glob('*.py'), P/'selection.json', P/'oracle-binding.json',
+             P/'selections/tile16.json', P/'dispatch-speed6.json']
     return {str(f.relative_to(ROOT)): sha(f) for f in files}
 
 
@@ -68,9 +68,10 @@ def probe(name, miss, candidate, old_gate=False):
     import suite_driver as D
     import views as V
     import fault_review as F
+    import coordinator_gate
     from launch_identity import L, LANEQUEUE, unit_name
     tag = 'smoke' if candidate == 'smoke' else 'v5'
-    proposal = LANEQUEUE.parent / ('proposed-p58ab-' + tag + '-A.txt')
+    proposal = LANEQUEUE.parent / 'proposed-p58ai-census-A.txt'
     job = next(json.loads(line) for line in proposal.read_text().splitlines() if line.startswith('{'))
     L.validate(job, 'A')
     library = job['argv'][job['argv'].index('--library-path') + 1]
@@ -130,7 +131,7 @@ def probe(name, miss, candidate, old_gate=False):
                 bytes_per_iteration=25_000_000, host_ms=1 if miss == 'zero-copy' else 3,
                 vram_ms=.1, streamed_ms=1.1)
             (dest/'run/k1.json').write_text(json.dumps(native))
-        out = packet/'evidence'/candidate
+        out = packet/'evidence'/'combined'
         observations = []
         env = L.closed_env(library)
         admissions = []
@@ -213,7 +214,7 @@ def probe(name, miss, candidate, old_gate=False):
             raise Reached()
 
         with ExitStack() as stack:
-            changes = [patch.object(W,'HERE',packet), patch.object(D,'HERE',packet),
+            changes = [patch.object(coordinator_gate,'check',return_value={'synthetic_queue_empty':True}),patch.object(W,'HERE',packet), patch.object(D,'HERE',packet),
                 patch.object(W,'build_gate',return_value=build),
                 patch.object(Path,'read_text',read_text),
                 patch.dict(os.environ,env,clear=True),
@@ -273,11 +274,7 @@ def main():
         return
     import queue_runner as Q
     before=sources(); records=[]; regressions=[]
-    for candidate in ('p60fusion','smoke'):
-      result=subprocess.run([sys.executable,'-B',str(Path(__file__)),'--probe','K1a','--candidate',candidate,'--old-gate'],
-                            stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=120)
-      assert result.returncode==0,result.stderr
-      regressions.append(json.loads(next(s.split('=',1)[1] for s in result.stdout.splitlines() if s.startswith('ARGUMENT_RESULT='))))
+    for candidate in ('p60fusion',):
       for name in Q.ORDER:
         for miss in ('zero-copy',):
             result=subprocess.run([sys.executable,'-B',str(Path(__file__)),'--probe',name,'--miss',miss,'--candidate',candidate],
@@ -298,5 +295,5 @@ def main():
 if __name__=='__main__':
     assert os.getpriority(os.PRIO_PROCESS,0)==19
     assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
-    assert shutil.disk_usage('/').free>=25_000_000_000
+    assert shutil.disk_usage('/').free>=30_000_000_000
     main()

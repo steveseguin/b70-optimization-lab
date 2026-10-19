@@ -62,6 +62,8 @@ def plan(output, view):
         host_reserve_bytes=W.M.HOST_RESERVE,
         pinned_expert_bytes=W.M.plan()['census']['pinned_expert_bytes'],
         host_peak_bound_bytes=W.M.window_plan('WSCREEN')['host_required_available_bytes']-W.M.HOST_RESERVE,
+        planned_write_bytes=sum(W.WRITES['K1' if n.startswith('K1') else n] for n in ORDER),
+        root_stop_floor_bytes=30_000_000_000,
         request_count=12 if view=='smoke' else 60, prompts_per_view=12, requested_max_new=64 if view=='smoke' else 128, oracle='packet49-integrate',
         timing_claim_eligible=False, submission_eligible=False, output=str(output))
 
@@ -93,6 +95,8 @@ def main(argv=None):
     metadata=plan(output,view)
     if args.plan:
         print(json.dumps(metadata,indent=2)); return 0
+    import coordinator_gate
+    coordinator_gate.check()
     W.require(args.authorized_device_window and args.fault_review, 'coordinator authorization and fresh fault review required')
     W.user_unit_gate(Path('/proc/self/cgroup').read_text())
     W.require(os.getpriority(os.PRIO_PROCESS,0)==0 and set(os.sched_getaffinity(0))=={0,1,2,3,16,17,18,19}, 'nice0 lane-A timing placement required')
@@ -135,8 +139,12 @@ def main(argv=None):
                     W.require(not W.S.FAULT.search(fresh),'new GPU fault during gap')
                     time.sleep(min(1,max(0,end-time.monotonic())))
         state['passed']=True;save()
+        import analyze
+        report=analyze.analyze(output)
+        W.save(output/'census-analysis.json',report)
+        W.require(report['passed'],'census analysis failed')
         decision=json.loads((output/'WSCREEN/run/summary.json').read_text())
-        state['qualifies_for_fresh_screen']=decision['candidate_beats_all_controls'];save()
+        state['qualifies_for_fresh_screen']=False;save()
         return 0
     except Exception as error:
         state.update(passed=False,error=str(error),child_still_running=child is not None and child.poll() is None)

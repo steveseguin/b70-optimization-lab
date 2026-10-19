@@ -44,3 +44,23 @@ archives/receipts over 1 MiB. lineage/58ad-copy.json identifies their original
 bytes and commit; restore the tracked copy from Git. New build outputs are
 ignored, rebuildable from build_engine.py, and capped at 300 MB. Preparation
 uses nice19, helper cores, closed stdin, Python -B and at most 4 GiB.
+
+CPU evidence: [build](evidence/build.json), [partition exactness](evidence/partition-cpu.json),
+[miniature parent/reset comparison](evidence/reset-gate.json),
+[tests](evidence/python-tests.json), [entry/admission](evidence/argument-gate.json),
+[shared entry/report rehearsal](evidence/shared-entry-report.json),
+[loader](evidence/loader.json), [temporary queue plan](evidence/queue-plan.json),
+and [immutable input admission](evidence/pin-admission.json).
+The [proposal](../../ops/lane-queue/proposed-p58ai-census-A.txt) remains outside
+the live queues. Its model watchdog is 7200 seconds against an expected job
+duration of at most 1800 seconds. Queue and in-flight checks refuse other work.
+
+After a coordinator run, `analyze.py evidence/card0-census-a/combined`
+reads the sealed native receipts and checks the complete log closure, all
+48 layers at each position, oracle/record tokens, control drift and overhead.
+It writes no speed claim. The [plan](PLAN.md) defines both thresholds and the
+meaning of the conservative ceiling. A future run rechecks memory, storage,
+device ownership, fault review, unit identity and the closed environment.
+The total write allowance is 1088 MiB while preserving 30 GB root free;
+[storage evidence](evidence/storage-budget.json) explains the unchanged K1
+allowance. These are admission requirements, not promises about future free space.

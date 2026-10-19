@@ -39,7 +39,8 @@ def main():
             elif mode=='device' and x.endswith('/single_device.o'):link[i]=str(dest/'single_device.o')
             elif x.endswith('.o'):
                 assert Path(x).is_file(),x
-                inputs[str(Path(x).relative_to(ROOT))]=sha(x)
+                inputs[str(Path(x).resolve().relative_to(ROOT))]=sha(x)
+                link[i]=str(Path(x).resolve())
         jobs.append(('own-rt-iq3',link))
         for name,cmd in jobs:
             limits();start=time.monotonic()

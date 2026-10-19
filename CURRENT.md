@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 19, packet58ai miss census prepared on CPU:** The private packet58ad
+copy keeps the 30.396 tok/s record configuration. It counts actual routed cache
+misses and measures original expert events plus a separate resident/miss
+partition diagnostic. Both builds, exact CPU checks, launch paths and shared
+report checks pass. Device equality, overhead and the saving ceiling remain
+unmeasured. One proposal is prepared, not queued; the coordinator must wait
+until both two-card queues are empty. The final packet readiness marker is the
+handoff authority. [Work note](notes/2026-10-19-own-runtime-packet58ai.md).
+
 **October 18, packet58ah full-composition record chain prepared ahead on CPU:**
 The seven-window packet58ad copy binds packet58ag's finished engine by hash
 and selects all four new refinements explicitly. All 134 policy tests, seven

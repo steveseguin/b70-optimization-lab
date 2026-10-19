@@ -7,7 +7,7 @@ import types
 import unittest
 
 P=Path(__file__).resolve().parent
-O=P/'screen-reader'
+O=P/'lineage/packet58ad/screen-reader'
 
 def load(path, old=False):
     # The negative control changes only the clamp in an in-memory source copy.
