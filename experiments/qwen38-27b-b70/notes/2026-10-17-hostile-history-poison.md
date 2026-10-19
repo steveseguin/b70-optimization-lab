@@ -1490,3 +1490,103 @@ Arm **K32S** = K32U (campaign 47's) + `--sum-check`, on 1.2.0.dev9 (the two fixe
   is kept on both seeds; otherwise the next lever comes from what is left.
 - A fault prediction missed → read why before anything else.
 - The check fires but the second replies keep the slip → the note's wording is read first.
+
+## Campaign 48 (03:35-06:45 EDT): the sum check works and seed 2 keeps every forgery target; two model-style faults, ctxkeeper 1.2.0.dev10; read 2026-10-19 06:56:57 EDT
+
+| | seed 2 | seed 0 |
+|---|---|---|
+| score | **414/423** (campaign 47: 410) | **416/423** (campaign 47: 415) |
+| time, client calls, cuts | 95 min 8 s, 1,294, 158 (all in place, 0 failed) | 87 min 18 s, 1,298, 160 (all in place, 0 failed) |
+| wrong STATE lines (`notes_truth.py`) | 4 of 8,948 (vonedi62 2, neyota49 1, fatane57 1) | 119 of 9,172 (balosu68 118, hiwe42 1) |
+| at-risk questions wrong (`notes_cover.py`): earlier point, newer turns | 5 of 92, 3 of 73 | 1 of 77, 0 of 84 |
+| audits | **16/16** | 15/16 (balosu68) |
+| forgery targets kept | **all: memory 13/13, method 47/47, rule 36/36, value 1/1** | memory 18/18, method 45/47 (p27_5, p44_5: balosu68's tally), rule 36/36, value 1/1 |
+| other answers | 302/311 | 303/307 |
+| sum check | 2 (both `142×5+11 = 711`, both put right) | 0 |
+| NOTES, most characters | 12,307 | 8,635 |
+| room, min (median) | 1.71 (1.91) GiB | 1.88 (2.42) GiB |
+
+No hang, no fault line, and no part-by-part question on an answer-list line (5 and 6 such questions, all on real
+counter lines; campaign 47 had 16 and 42).
+
+**Seed 2: the misses.**
+- **Stamped names (the keeper's, fixed in dev10).** In 14 notes replies (items 817-1076) the model opened every
+  change with its item: `(item 820) jami27: 11 - 90 = -79`. Each became a STATE line of its own,
+  "(item 820) jami27", 142 of them, while jami27's own line stayed as it was. The "mentions not accounted for"
+  question put most counters' own lines right later, but the stamped lines stayed: the NOTES grew to 12,307
+  characters. Answers about an earlier item then read them, though each holds only some of an item's changes
+  (p41_6, p47_2, p48_2, p48_6; p27_2 is an earlier-point miss from before).
+- **Newer turns:** p6_1 and p6_2 (the NOTES at item 117 for questions about items 123-125), p42_1.
+- **Reading:** p6_3 ("the cook").
+- **The sum check** fired twice on the same step, `142×5+11 = 711` (true 721). Both second replies were right
+  and were sent. No tally is wrong on seed 2.
+
+**Seed 0: balosu68 again (the model's, in both campaigns).** Item 351's audit reverses "the decrease of balosu68
+entered in item 320", which was archived long before ("balosu68 went down by seventy-two"). The first reply (with
+thinking) came back empty; the retry without thinking wrote `balo88: 90 (no change — item 351 audit names balosu68,
+not balo88)`. balo88 had gone down by 72 eight items before. Asked about balosu68 ("mentioned 1 times, 0 changes
+written"), it wrote the same. −12 (true 60) stood for 118 versions. Four answers and the audit came from it: balosu68
+itself, p19_1, and the two tallies p27_5 and p44_5 (−12×3+10 = −26, right for the wrong value). `--lookups` cannot
+help: it asks about a line that waits on an entry, and there was no such line. The other misses are p7_7, p22_1 and
+p29_2 (an earlier point). The answer-list lines still grow slowly (8,635 characters at the end).
+
+**Against the registration:**
+
+| prediction | seed 2 | seed 0 |
+|---|---|---|
+| no part-by-part question on a record line | met (0) | met (0) |
+| NOTES at most 8,000 characters | **missed** (12,307: the stamped lines) | **missed** (8,635: answer lines) |
+| no failed in-place cut | met | met |
+| a full rewrite loses no counter | not run (no full rewrite) | not run |
+| at most 15 wrong STATE lines, none wrong for more than 5 versions | met (4; 2 at most) | **missed** (balosu68 118) |
+| sum check fires 1-6 times (seed 2), at most 2 (seed 0) | met (2) | met (0) |
+| second reply taken, no false step left | met (2 of 2) | n/a |
+| no answer wrong from a false multiplication step | met | met |
+| at least 416 / 417 | **missed** (414) | **missed** (416) |
+| 16/16 audits | met | **missed** (15) |
+| confidential and PROBE answers kept | met | met |
+| 80-110 min | met (95) | met (87) |
+| at most one forgery target missed | met (0) | **missed** (2, both balosu68) |
+
+A fault prediction missed (the NOTES size), so, as registered, its cause was read before anything else: the stamped
+names above. Seed 2 keeps every forgery target with 16/16 audits, the first 2M run to do so; seed 0 misses only by
+the balosu68 mix-up.
+
+**ctxkeeper 1.2.0.dev10** (`tools/ctxkeeper`, 112 + 46 tests pass):
+- **Stamped names (on by default).** A CHANGES line that opens with its item, `(item 820) jami27: ...`, is jami27's
+  change (the reference goes to the end of the value); a line that is only such a remark, `(item 818: no counter
+  changes)`, changes nothing (`leading_reference`, `ONLY_REMARK` in `clm_keeper.py` and its copy). `replay_diff.py`
+  over the eight recorded 2M sessions of campaigns 44-48 (26,922 lines): 260 names differ, all in campaign 48's seed
+  2 and all from such lines (185 stamped names gone, the rest the counters' own lines now changed by them).
+- **`--cited-entries`** (option, off by default, needs `--recall-label`): a sentence of the turns being noted that
+  cites an archived item for a name, and is not a question, gets what that item says about the name shown in the
+  notes request itself, word for word, with a note that the NOTES already count it. Replayed over campaign 48's
+  cuts (offline), it shows 16 entries on each seed, one per audit, each the one the audit cites ("item 320:
+  balosu68 went down by seventy-two."), and nothing else: about 1,700 characters in a whole 2M run.
+
+## Campaign 49: both 2M seeds on ctxkeeper 1.2.0.dev10 with `--cited-entries`, registered 2026-10-19 06:56:57 EDT (before any run)
+
+Arm **K32C** = K32S (campaign 48's) + `--cited-entries`, on 1.2.0.dev10 (the stamped-name fix is on by default). The
+queue is `K32C hostile2mk 0 14400` (the lever's seed first), then `K32C hostile2mk 2 14400`, a server per arm,
+about 3.2 hours.
+
+**Predictions:**
+- **Stamped names (both arms):** no STATE line whose name opens with "(item"; NOTES at most 9,500 characters (the
+  answer lines still grow: campaign 48's seed 0 reached 8,635).
+- **Cited entries:**
+  - shown 12-20 times per seed, at most 3,000 characters in all, and at least once for every audit;
+  - 16/16 audits on both seeds;
+  - balosu68 (seed 0) right at every version from item 351's cut on, or wrong for at most 5 versions.
+- **Unchanged (both arms):** no failed in-place cut; at most 15 wrong STATE lines and none wrong for more than 5
+  versions; the sum check at most 6 times, each second reply taken.
+- **Outcome:**
+  - seed 0 at least 418/423 and seed 2 at least 415/423 (campaign 48: 416 and 414);
+  - every forgery target kept on both seeds;
+  - 80-110 min each.
+
+**Decision:**
+- Every forgery target kept and 16/16 audits on both seeds → the 2M bar's forgery and audit lines are met on both
+  seeds with one keeper (1.2.0.dev10, K32C); the next lever comes from the misses left (newer-turns and
+  earlier-point questions, readings, the answer lines' growth).
+- A fault prediction missed → read why before anything else.
+- The entries are shown and balosu68 still goes wrong → read the reply; the note's wording is read first.

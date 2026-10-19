@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Campaign 49 (2026-10-19, notes/2026-10-17-hostile-history-poison.md, registered before any run): arm K32C is K32S
+# with ctxkeeper 1.2.0.dev10's --cited-entries (a sentence of the turns being noted that cites an archived item for a
+# counter gets what that item says about the counter shown in the notes request). The tools/ctxkeeper check also
+# requires --cited-entries. Earlier header follows.
 # Campaign 48 (2026-10-19, notes/2026-10-17-hostile-history-poison.md, registered before any run): arm K32S is K32U
 # with ctxkeeper 1.2.0.dev9's --sum-check (a reply whose working has a false multiplication step is asked for once
 # more, with a note naming the step and its value). The tools/ctxkeeper check also requires --sum-check. Earlier
@@ -123,14 +127,14 @@ mline() {
 arm_window() {  # arm -> "budget inplace_tokens"
   case $1 in
     K06) echo "6144 2800" ;;   K08) echo "8192 3750" ;;   K12 | R12) echo "12288 5600" ;;
-    K16 | R16) echo "16384 7500" ;;   K12f) echo "12288 5600" ;;   K08f) echo "8192 3750" ;;   K24) echo "24576 11250" ;;   K32 | K32L | K32R | K32H | K32U | K32S | A32d | A32dp | M32dp) echo "32768 15000" ;;
+    K16 | R16) echo "16384 7500" ;;   K12f) echo "12288 5600" ;;   K08f) echo "8192 3750" ;;   K24) echo "24576 11250" ;;   K32 | K32L | K32R | K32H | K32U | K32S | K32C | A32d | A32dp | M32dp) echo "32768 15000" ;;
     K48 | R48) echo "49152 22500" ;;   K64) echo "65536 30000" ;;   S08) echo "8192 3000" ;;   S16) echo "16384 5000" ;;
     *) return 1 ;;
   esac
 }
 arm_async() {  # arm -> background-notes options
   case $1 in A32d) echo "--notes-async defer" ;; A32dp | M32dp | S08 | S16) echo "--notes-async defer --prewarm" ;;
-    K12f | K08f) echo "--inplace-fit" ;; K32L | K32R | K32H | K32U | K32S) echo "--lookups" ;; *) echo "" ;; esac
+    K12f | K08f) echo "--inplace-fit" ;; K32L | K32R | K32H | K32U | K32S | K32C) echo "--lookups" ;; *) echo "" ;; esac
 }
 start_proxy() {  # tag arm kind
   local tag=$1 arm=$2 kind=$3 w b i fl=()
@@ -144,8 +148,9 @@ start_proxy() {  # tag arm kind
                     --recite-when "$RECITE_RE_REPAIR" --notes-mode inplace --notes-checks off --max-recalls 16) ;;
     smoke)      fl=(--recipe qwen) ;;
   esac
-  local rs=(); [[ $arm == K32R || $arm == K32H || $arm == K32U || $arm == K32S ]] && rs=(--rule-scan "$RULE_RE"); [[ $arm == K32H || $arm == K32U || $arm == K32S ]] && rs+=(--hold-open)
-  [[ $arm == K32U || $arm == K32S ]] && rs+=(--notes-upto); [[ $arm == K32S ]] && rs+=(--sum-check)
+  local rs=(); [[ $arm == K32R || $arm == K32H || $arm == K32U || $arm == K32S || $arm == K32C ]] && rs=(--rule-scan "$RULE_RE"); [[ $arm == K32H || $arm == K32U || $arm == K32S || $arm == K32C ]] && rs+=(--hold-open)
+  [[ $arm == K32U || $arm == K32S || $arm == K32C ]] && rs+=(--notes-upto); [[ $arm == K32S || $arm == K32C ]] && rs+=(--sum-check)
+  [[ $arm == K32C ]] && rs+=(--cited-entries)
   systemctl --user reset-failed ctx-keeper-proxy 2>/dev/null
   # shellcheck disable=SC2046
   systemd-run --user --unit=ctx-keeper-proxy --collect -p WorkingDirectory=$LAB python3 tools/ctxkeeper/ctxkeeper.py \
@@ -331,6 +336,7 @@ python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --rule-scan || {
 python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --hold-open || { say "ABORT: tools/ctxkeeper has no --hold-open"; exit 2; }
 python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --notes-upto || { say "ABORT: tools/ctxkeeper has no --notes-upto"; exit 2; }
 python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --sum-check || { say "ABORT: tools/ctxkeeper has no --sum-check"; exit 2; }
+python3 "$LAB/tools/ctxkeeper/ctxkeeper.py" --help | grep -q -- --cited-entries || { say "ABORT: tools/ctxkeeper has no --cited-entries"; exit 2; }
 cd "$CTX" || exit 2
 while read -r arm kind seed cap; do
   [[ -z $arm || $arm == \#* ]] && continue

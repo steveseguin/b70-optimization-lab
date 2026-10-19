@@ -53,7 +53,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.2.0.dev9"
+__version__ = "1.2.0.dev10"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -245,6 +245,12 @@ RULE_SCAN_SHOWN = 8                                  # at most this many sentenc
 # --lookups: an amount left as a gap after a sign, `447 + (item 85 decrease reversed)` once the item numbers are out
 AMOUNT_GAP = re.compile(r"[+\-\u2212]\s*(?:\([^()\d]*\)|\?)")
 LOOKUP_CHARS = 4000                                  # at most this much archived text in one such question
+# --cited-entries: what the archived entries that the turns being noted cite say, shown in the notes request itself
+# (see cited())
+CITED_NOTE = ("\n\nSome sentences of those turns cite earlier {unit}s, which are in the archive and no longer in view. "
+              "Here is what those {unit}s say about each name, word for word:\n{entries}\nThe value the NOTES hold already "
+              "counts these entries: they were noted when they came in. Use them only for what those turns say about "
+              "them (an amount to undo, for one), with the working (`name: 250 + 15 = 265`).")
 RECALL_CUT_NOTE = "\n[cut here: no more room in this turn; narrow the search with `before` / `after` / `last`]"
 CARRY_HEAD = ("[[Message from the context keeper, not part of the task. Your last turn ended without a command. These "
               "are the archive searches you made in it and what they returned; they were not saved anywhere else, "
@@ -790,7 +796,7 @@ class Keeper:
                  notes_async: str | None = None, prewarm: bool = False, log_calls: bool = False,
                  inplace_fit: bool = False, notes_extra: dict | None = None, notes_prefill: bool = False,
                  lookups: bool = False, rule_scan: str | None = None, hold_open: bool = False,
-                 notes_upto: bool = False, sum_check: bool = False) -> None:
+                 notes_upto: bool = False, sum_check: bool = False, cited_entries: bool = False) -> None:
         self.ask, self.root = ask, Path(state_dir)
         # ask_notes: a separate keeper model's server for the notes calls (--notes-upstream), with notes_model as its
         # model name, notes_system as its system message (default KEEPER_SYSTEM), notes_kwargs as its
@@ -866,6 +872,8 @@ class Keeper:
         self.recall_tool = recall_tool(self.recall_unit) if recall_label else RECALL_TOOL
         # lookups (needs recall_label): see waiting()
         self.lookups = bool(lookups) and self.recall_label is not None
+        # cited_entries (needs recall_label; in-place notes): see cited()
+        self.cited_entries = bool(cited_entries) and self.recall_label is not None
         # rule_scan (in-place notes): see unruled()
         self.rule_scan = re.compile(rule_scan) if rule_scan else None
         # hold_open: while a question is open (from the message that asks it, a user message or one matching
@@ -1243,6 +1251,15 @@ class Keeper:
         spelt: dict[str, str] = {}                   # misspelled names of this cut and what was meant (notesdelta.respell)
         why, new, info, near = "no reply", "", {}, None
         delta: dict | None = None
+        shown = self.cited(s, texts) if self.cited_entries else []
+        if shown:
+            found = "\n".join(t for _, _, t in shown)[:LOOKUP_CHARS]
+            looked.append(found)                     # for the checks, what these say counts as stated
+            counts["cited_shown"] = len(shown)
+            log({"event": "in-place notes: cited archived entries shown", "names": [n for n, _, _ in shown],
+                 "units": sorted({k for _, ks, _ in shown for k in ks}), "entries": found})
+            req = req[:-1] + [dict(req[-1], content=str(req[-1].get("content") or "")
+                                   + CITED_NOTE.format(unit=self.recall_unit, entries=found))]
         for attempt in (1, 2, 3, 4, 5, 6):        # the sixth for the retry without thinking (campaign 44)
             out: dict[str, Any] = {"model": self.notes_model or model, "messages": req,
                                    "max_tokens": self.notes_max_tokens, "temperature": 0}
@@ -1446,7 +1463,7 @@ class Keeper:
         amount as a gap, `447 + (item 85 decrease reversed, item 473)`: no waiting word and no number after the
         sign, so none was asked, the line stayed in the NOTES as it was and the final answer left the gap out. A sign
         followed by a parenthesis with no number in it (or by `?`) counts as working an amount out."""
-        unit = re.compile(rf"\b{re.escape(self.recall_unit)}s?[\s#-]*\d+(?:\s*(?:/|,|&|and|or|to|-|\u2013|\u2014)\s*\d+)*", re.I)
+        unit = self.unit_ref()
         rows = [r for r in s.archive.labelled(self.recall_label) if r["role"] in ("tool", "user")]
         here = "\n".join(texts)
         out = []
@@ -1456,17 +1473,55 @@ class Keeper:
             if not WAITS.search(value) and i not in doubtful and not works:
                 continue
             numbers = sorted({int(x) for m in unit.finditer(value) for x in re.findall(r"\d+", m.group(0))})[:4]
-            said = []
-            for k in numbers:
-                for r in (r for r in rows if r["k"] == k):
-                    parts = [x.strip() for x in re.split(r"(?<=[.!?])\s+|\n+", r["text"]) if x.strip()]
-                    for j, x in enumerate(parts):
-                        if re.search(rf"(?<![\w-]){re.escape(name)}(?![\w-])", x, re.I):
-                            got = " ".join(parts[j:j + 2])[:400]
-                            if got not in here:
-                                said.append(f"{self.recall_unit} {k}: {got}")
+            said = [x for k in numbers for x in self.said_in(rows, k, name, here)]
             if said:
                 out.append((name, numbers, "\n".join(dict.fromkeys(said))))
+        return out[:8]
+
+    def unit_ref(self) -> re.Pattern:
+        """A reference to one or more units (recall_unit): `item 32`, `items 3 and 5`."""
+        return re.compile(rf"\b{re.escape(self.recall_unit)}s?[\s#-]*\d+(?:\s*(?:/|,|&|and|or|to|-|\u2013|\u2014)\s*\d+)*", re.I)
+
+    def said_in(self, rows: list[dict[str, Any]], k: int, name: str, here: str) -> list[str]:
+        """What archived unit k (rows: Archive.labelled) says about `name`: every sentence that names it, with the
+        sentence after it (where a pronoun may carry the amount), leaving out what `here` (the turns) has already."""
+        said = []
+        for r in (r for r in rows if r["k"] == k):
+            parts = [x.strip() for x in re.split(r"(?<=[.!?])\s+|\n+", r["text"]) if x.strip()]
+            for j, x in enumerate(parts):
+                if re.search(rf"(?<![\w-]){re.escape(name)}(?![\w-])", x, re.I):
+                    got = " ".join(parts[j:j + 2])[:400]
+                    if got not in here:
+                        said.append(f"{self.recall_unit} {k}: {got}")
+        return said
+
+    def cited(self, s: Session, texts: list[str]) -> list[tuple[str, list[int], str]]:
+        """--cited-entries: the names (identifier-like: with a digit or `_`) of each sentence of the turns being noted
+        that cites an archived unit and is not a question, each with the units it cites and what those say about the
+        name (as waiting() gathers it). Shown in the notes request up front, they let a change that undoes or refers
+        to an old entry be written with its amount. Campaigns 47 and 48 (2M, seed 0): "An audit found that the
+        decrease of balosu68 entered in item 320 was a mistake, and it has now been reversed." came in when item 320
+        ("balosu68 went down by seventy-two.") was long archived; the reply wrote `balo88: 90 (no change — item 351
+        audit names balosu68, not balo88)` (balo88 had gone down by 72 eight items before) and no balosu68 line, asked
+        again about balosu68 it wrote the same, and balosu68 stayed 72 off for 118 versions of the NOTES."""
+        unit = self.unit_ref()
+        rows = [r for r in s.archive.labelled(self.recall_label) if r["role"] in ("tool", "user")]
+        here = "\n".join(texts)
+        out, done = [], set()
+        for t in texts:
+            for x in re.split(r"(?<=[.!?])\s+|\n+", t):
+                x = self.recall_label.sub(" ", x).strip()   # the label of the unit itself is no citation
+                if not x or x.endswith("?") or not unit.search(x):
+                    continue
+                numbers = sorted({int(n) for m in unit.finditer(x) for n in re.findall(r"\d+", m.group(0))})[:4]
+                bare = unit.sub(" ", x)
+                for name in dict.fromkeys(w for w in re.findall(r"(?<![\w-])[A-Za-z_][\w-]*(?![\w-])", bare) if re.search(r"[\d_]", w)):
+                    if name in done:
+                        continue
+                    said = [y for k in numbers for y in self.said_in(rows, k, name, here)]
+                    if said:
+                        done.add(name)
+                        out.append((name, numbers, "\n".join(dict.fromkeys(said))))
         return out[:8]
 
     def inplace_settle(self, s: Session, res: dict[str, Any], extra: dict[str, Any] | None = None) -> None:
@@ -1977,6 +2032,10 @@ def main() -> None:
                     help="with --notes-mode inplace and --recall-label: a CHANGES line that says it waits on an archived "
                          "entry ('amount not yet known, must recall item 32') is asked again once, with what that entry "
                          "says about the name (off by default)")
+    ap.add_argument("--cited-entries", action="store_true",
+                    help="with --notes-mode inplace and --recall-label: a sentence of the turns being noted that cites an "
+                         "archived entry for a name ('the decrease of balo68 entered in item 320 ... reversed') gets what "
+                         "that entry says about the name shown in the notes request itself (off by default)")
     ap.add_argument("--notes-scan", help="with --notes-checks count or near: read only the tool results and user messages "
                                          "matching this regular expression for mentions and stated numbers")
     ap.add_argument("--think-cap", type=int, default=0, metavar="TOKENS",
@@ -2060,7 +2119,7 @@ def main() -> None:
                     notes_extra=json.loads(a.notes_extra) if a.notes_extra else None, notes_prefill=a.notes_prefill,
                     notes_async=a.notes_async, prewarm=a.prewarm, log_calls=a.log_calls, inplace_fit=a.inplace_fit,
                     lookups=a.lookups, rule_scan=a.rule_scan, hold_open=a.hold_open,
-                    notes_upto=a.notes_upto, sum_check=a.sum_check)
+                    notes_upto=a.notes_upto, sum_check=a.sum_check, cited_entries=a.cited_entries)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper {__version__}" + (f" (recipe {a.recipe})" if a.recipe else "")
           + f": http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"

@@ -207,6 +207,53 @@ class InPlace(unittest.TestCase):
         self.assertNotIn("not yet known", s.state["notes"])
         self.assertIn("an empty reply asked again without thinking", self.events(keeper))
 
+    def test_cited_entries_show_what_the_archived_entry_a_turn_cites_says(self):
+        """Campaigns 47 and 48 (2M, seed 0): an audit reversed the decrease of balosu68 entered in item 320, long
+        archived; the reply put it on balo88, wrote no balosu68 line, and asked about balosu68 wrote the same. With
+        --cited-entries the notes request shows what item 320 says about balosu68 up front; a question is no citation."""
+        audit = "An audit found that the change of abcd03 entered in item 3 was a mistake, and it has now been reversed."
+        question = "ASK p1_1: what was abcd05 at the end of item 5?"
+
+        def talk(n):
+            msgs = conversation(n)
+            for m in msgs:
+                if m.get("role") == "tool" and m["content"].startswith("ITEM 12:"):
+                    m["content"] = m["content"].replace("ITEM 12: ", f"ITEM 12: {audit} {question} ", 1)
+            return msgs
+
+        class Auditor(LedgerModel):
+            def __call__(self, body):
+                out = super().__call__(body)
+                last = str(body["messages"][-1].get("content") or "")
+                text = out["choices"][0]["message"]["content"]
+                moved = [m for m in body["messages"] if m.get("role") == "tool" and audit in str(m.get("content"))]
+                if moved and last.startswith("[[Message from the context keeper") and "CHANGES\n" in text:
+                    shown = "item 3: ITEM 3: the clerk moved counter abcd03 to 21." in last
+                    out["choices"][0]["message"]["content"] = text.replace(
+                        "CHANGES\n", "CHANGES\n" + ("abcd03: 21 - 21 = 0\n" if shown else "abcd03: 21 (no change)\n"), 1)
+                return out
+
+        def run(**kw):
+            model = Auditor()
+            keeper = self.keeper(model, recall_label=r"(?m)^ITEM (\d+):", recall_unit="item", notes_checks="near", **kw)
+            for n in range(1, 25):
+                keeper.complete({"model": "m", "messages": talk(n)})
+            return model, keeper, next(iter(keeper.sessions.values()))
+
+        model, keeper, s = run(cited_entries=True)
+        shown = [r for r in model.notes_requests if "Some sentences of those turns cite" in str(r["messages"][-1].get("content"))]
+        self.assertEqual(len(shown), 1)
+        self.assertTrue(shown[0]["messages"][-1]["content"].startswith("[[Message from the context keeper"))
+        self.assertIn("item 3: ITEM 3: the clerk moved counter abcd03 to 21.", shown[0]["messages"][-1]["content"])
+        self.assertIn("abcd03: 0", s.state["notes"])
+        self.assertEqual(s.state["cited_shown"], 1)
+        events = [json.loads(l) for l in (s.dir / "events.jsonl").read_text().splitlines()]
+        cited = [e for e in events if e.get("event") == "in-place notes: cited archived entries shown"]
+        self.assertEqual([(e["names"], e["units"]) for e in cited], [(["abcd03"], [3])])
+        model, keeper, s = run()                                                   # off by default
+        self.assertFalse([r for r in model.notes_requests if "Some sentences of those turns cite" in str(r["messages"][-1].get("content"))])
+        self.assertNotIn("abcd03: 0", s.state["notes"])
+
     def test_lookups_show_the_archived_entry_a_doubted_line_cites(self):
         """Campaign 33b (quiet audits, seed 1): a reversal was written from memory with a wrong amount, `217 + 10 = 227
         (... the decrease of 10 entered in item 34)` for a decrease of 28; asked to read the item again, the model

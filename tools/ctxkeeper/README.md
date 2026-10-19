@@ -195,6 +195,7 @@ the notes no longer had room to be written in place. Bigger windows are slower: 
 | `--notes-checks near` | extra checks for ledger-like state with names such as `abcd12` (the lab's memory streams); leave it off for ordinary agent work |
 | `--recall-label REGEX` | let `recall` use your content's own numbering (e.g. `'(?m)^ITEM (\d+)/'`) instead of message numbers |
 | `--lookups` | with `--recall-label`: a notes line that cites an archived item and waits on it, is doubted, or works an amount out is asked again with what that item says (off by default) |
+| `--cited-entries` | with `--recall-label`: when the turns being noted cite an archived item for a name ("the decrease of balosu68 entered in item 320 ... reversed"), the notes request shows what that item says about the name (off by default) |
 | `--state-dir DIR` | where archives and notes are kept |
 | `--no-memory-note` | do not add the short paragraph that tells the model about its notes and `recall` |
 
@@ -360,6 +361,25 @@ Also in 1.2.0.dev9, two fixes from lab campaign 47 (2M, seed 2, 410/423), on by 
   ("write a STATE line for each of them: its value now"). Other lines (a list of answers, notes in words) may still be
   dropped: that is how NOTES that have grown are written shorter. On campaign 47's seed-2 rewrite this puts back 46
   lines, asks about 14, and leaves out the 148 answer lines. RULES lines lost in a rewrite were already put back.
+
+1.2.0.dev10 (2026-10-19), from lab campaign 48 (2M, seed 2, 414/423), on by default: a CHANGES line that opens with
+the item it is from, `(item 820) jami27: 11 - 90 = -79`, is jami27's change: the reference goes to the end of the
+value, as one written after it always did. A line that is only such a remark, `(item 818: no counter changes)`,
+changes nothing. The model wrote every change of 14 notes replies that way. Each became a STATE line of its own
+("(item 820) jami27"), 142 of them. The counters' own lines were put right only by the question that follows a reply
+leaving mentions unaccounted for, and the stamped lines stayed. Five answers about an earlier item then read them,
+though they hold only some of an item's changes. A replay of 26,922 saved lines from eight 2M sessions changes 260
+names, all in that run and all from such lines.
+
+Also in 1.2.0.dev10, from lab campaigns 47 and 48 (2M, seed 0), a new option, off by default: `--cited-entries`
+(with `--recall-label`). A sentence of the turns being noted that cites an archived item for a name, and is not a
+question, gets what that item says about the name shown in the notes request itself, word for word. An audit,
+"the decrease of balosu68 entered in item 320 was a mistake, and it has now been reversed", came in long after item
+320 ("balosu68 went down by seventy-two") was archived. The reply put it on balo88, which had gone down by 72 eight
+items before, wrote no balosu68 line, and asked about balosu68 wrote the same; balosu68 stayed 72 off for 118
+versions of the NOTES, in both campaigns. `--lookups` could not help: it asks about a line that waits on an entry,
+and there was no such line. On the two campaign-48 runs the option would show 16 entries per run, one for each
+audit and each the one the audit cites, about 1,700 characters in all.
 
 Also unreleased (1.1.1.dev1, 2026-10-17): a NOTES line whose new value states no number of its own (only item or
 ticket numbers, as in `audit reversal of the entry in item 4, amount not yet known, must recall items 4/5`) no longer

@@ -31,6 +31,21 @@ class Records(unittest.TestCase):
         self.assertFalse(nd.is_record("opened at 117, set to -190 (item 5: up)"))
 
 
+class Stamped(unittest.TestCase):
+    def test_a_change_that_opens_with_its_item_is_the_change_of_the_name_after_it(self):
+        reply = ("NEW RULES\n(none)\nCHANGES\n(item 820) jami27: 11 - 90 = -79\n(item 818: no counter changes)\n"
+                 "- (items 821-822) cone77: removed\n(item 823) note on the weather\nOPEN\n(none)")
+        d = nd.parse_delta(reply)
+        self.assertEqual(d["changes"], [("jami27", "11 - 90 = -79 (item 820)"), ("cone77", "removed (items 821-822)"),
+                                        ("(item", "823) note on the weather")])   # no name: as before
+        new, info = nd.apply_delta("RULES\n- r\nSTATE\njami27: 11\ncone77: 4", d, {90}, strict=True, near={"jami27": {90}})
+        self.assertIn("jami27: -79", new)
+        self.assertIn("cone77: removed", new)
+        self.assertNotIn("(item 820)", new.split("STATE")[1].split("\n")[1])
+        self.assertEqual(nd.leading_reference("(item 5) abc1: 3"), "abc1: 3 (item 5)")
+        self.assertEqual(nd.leading_reference("abc1: 3 (item 5)"), "abc1: 3 (item 5)")
+
+
 class Delta(unittest.TestCase):
     NOTES = "RULES\n- A is secret: answer protected.\nSTATE\n- abcd12 = 75 (60, gained 15 in item 6)\nefgh34: removed\nOPEN\n- nothing"
 

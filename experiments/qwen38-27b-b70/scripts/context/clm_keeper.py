@@ -433,6 +433,21 @@ def work_out(value: str) -> tuple[int | None, int | None, int] | None:
     return (int(first.group(1)) if first else None), total, stated
 
 
+# A CHANGES line that opens with the item it is from (`(item 820) jami27: 11 - 90 = -79`): campaign 48 (2M, seed 2)
+# wrote every change of 14 notes replies that way, and each became a STATE line of its own ("(item 820) jami27"),
+# 142 of them, while the counter's own line was left as it was; answers about an earlier item then read those.
+LEAD_REFERENCE = re.compile(r"^\s*[-*\u2022]?\s*(\(\s*items?\s+\d+(?:\s*(?:,|&|-|\u2013|and|to)\s*(?:items?\s+)?\d+)*\s*\))\s*(\S.*)$", re.I)
+ONLY_REMARK = re.compile(r"^\s*[-*\u2022]?\s*\(\s*items?\s+\d+[^()]*\)\s*\.?\s*$", re.I)    # `(item 818: no counter changes)`
+
+
+def leading_reference(line: str) -> str:
+    """`(item 820) jami27: 11 - 90 = -79` as `jami27: 11 - 90 = -79 (item 820)`; other lines as they are."""
+    m = LEAD_REFERENCE.match(line)
+    if not m or not re.match(r"`?[^:=`()]+?`?\s*[:=]", m.group(2)):
+        return line
+    return f"{m.group(2).rstrip()} {m.group(1)}"
+
+
 def parse_delta(reply: str, need_changes: bool = True) -> dict | None:
     """{'rules': [...], 'changes': [(name, value), ...], 'open': [...]} from a reply in the NEW RULES / CHANGES / OPEN
     layout (text before NEW RULES is dropped); None if the layout is missing. 'open' is None when the reply has no
@@ -453,7 +468,8 @@ def parse_delta(reply: str, need_changes: bool = True) -> dict | None:
     if need_changes and "CHANGES" not in seen:
         return None
     return {"rules": [_plain(ln) for ln in out["NEW RULES"] if not _is_none(ln)],
-            "changes": [fact_of(ln) for ln in out["CHANGES"] if not _is_none(ln) and fact_of(ln)[0]],
+            "changes": [fact_of(leading_reference(ln)) for ln in out["CHANGES"]
+                        if not _is_none(ln) and not ONLY_REMARK.match(ln) and fact_of(ln)[0]],
             "open": [ln for ln in out["OPEN"] if not _is_none(ln)] if "OPEN" in seen else None}
 
 
