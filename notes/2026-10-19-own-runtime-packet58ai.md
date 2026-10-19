@@ -206,3 +206,19 @@ setting but measure peak RAM below 2 GiB; other preparation children have a
 2 GiB address-space cap. No model payload, GPU, service, sudo, setting, live
 queue, other packet tree or shared ops source was changed. Only the two p58ai
 proposal files were edited under ops. The old smoke evidence is preserved.
+
+## Coordinator decision, 04:40 UTC: census superseded by the direct p58am screen
+
+Three device attempts of the packet58ai census smoke failed after K1a/K1b passed:
+
+| Smoke | Window | Failure |
+| --- | --- | --- |
+| census-b | — | refused: hard-coded job name |
+| census-c | WSCREEN | missing `device_memory` import |
+| census-d | WSCREEN | in-run analyzer error "duplicate event" (04:30–04:36) |
+
+In census-d the first request's result was `passed: true`; the stop came from analysis code, not the model. No GPU faults (count 2).
+
+The census was preregistered (packet58al DECISION.md) to decide whether the demand-transfer build is worth making. Codex p58am is already building it (`bcs-demand-retained32x2`). That build's own smoke plus one-load v5 bracket measures the real speed effect, which is a stronger test than the census bound.
+
+The coordinator therefore supersedes the census gate with the direct screen. This is disclosed here and will be disclosed in any result. packet58ai is parked, not closed: its miss census stays useful as attribution if p58am is not a win. The in-run "duplicate event" check repeats the pattern hourly review 37 banned (in-run numeric/consistency checks stopping exact runs).
