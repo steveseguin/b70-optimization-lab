@@ -1133,3 +1133,13 @@ removal occurred.
 `HEAD == origin/main == 9e547e4d9343ef996a9ab3e3bc4515cfcc757e0b` initially
 and again before publication. Only this cleanup log is committed using
 `git commit --only -- <this path>` and pushed immediately afterwards.
+
+## Coordinator follow-up 2 (2026-10-19 ~02:20 UTC)
+
+disk10 freed 27 MB and disk11 freed 0 B, because everything else was protected or referenced. Outside the repo, the coordinator:
+- archived `/var/crash/_usr_bin_python3.12.0.crash` (750 MB, a python crash from 2026-10-10) to `/mnt/raid-models/own-xpu-runtime-archive/host-crash-2026-10-19/` (sha256 verified), then removed it;
+- removed stale `/tmp` items from closed packets (packet58xd kernel debs, vmlinux and modules; two packet103x launch temp dirs; all unused);
+- deleted the superseded Codex app-server daemon release 0.162.1 (the daemon runs 0.163.0; the CLI is the separate npm install);
+- archived the 2026-10-16/17 Codex session logs to `codex-sessions-20261018/codex-sessions-2026-10-16-17.tar` (`tar -df` verified).
+
+Root free went from 29.29 to **31.21 GB**. No packet tree, evidence, model or host setting was touched.
