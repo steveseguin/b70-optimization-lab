@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline packet58ah evidence replay and one-card payload preparation.
+"""Offline packet58aj evidence replay and one-card payload preparation.
 
 Adapted from packet91's packet56_submission.py and packet58ah's CPU validators.
 No runtime imports, subprocesses, network, keys, or device access. Binary fixtures
@@ -19,7 +19,7 @@ import statistics
 import sys
 
 import suite_metrics as M
-from composition import check as check_composition, check_census
+from composition import check as check_composition, check_census, check_lookups
 
 ROOT = Path(__file__).resolve().parents[4]
 HERE = Path(__file__).resolve().parent
@@ -45,10 +45,10 @@ GATES = ('varied_task_quality_passed', 'exact_or_target_oracle_passed',
          'target_model_unchanged', 'no_quality_loss')
 FAULT = re.compile(r'Fault response|CAT error|engine.*reset|reset.*engine|devcoredump|device coredump|GPU.*coredump|GuC.*(?:hang|lockup)|timed.out.*(?:job|fence)|job.*timed.out', re.I)
 SCOPE = POLICY['scope']
-CHAIN_ATTEMPT = 'b'
-RERUN_DISCLOSURE = ('Chain a: WS128 30.050 tok/s, not submitted; 3,736 major faults vs 124 in WS128x. '
-                    'One preregistered quiet-host rerun: CPU work may have disturbed host paging (unproven). '
-                    'Chain b WS128 is final; no third run or choosing between attempts.')
+CHAIN_ATTEMPT = 'a'
+RERUN_DISCLOSURE = ('58ah a: 30.050 tok/s, not submitted, 3,736 major faults vs 124 in WS128x. '
+ '58ah quiet-host b final: 31.662719 tok/s, submitted cmvekebvh00a0rf01q3v2c3cz; 24 faults vs 2,079 in WS128x. '
+ 'Paging cause unproven; no third run. 58aj changes backing, not arithmetic.')
 
 
 def require(condition, message):
@@ -321,6 +321,7 @@ def check_requests(e, name, manifest, expected, prompts, fixtures):
             and summary['oracle_completion_sha256'] == sha(e.raw('oracle/completion.json'))
             and summary['timing_claim_eligible'] is (name == 'WS128')
             and summary['lane_scope'] == 'whole-host' and summary.get('cache_maintenance') == 'overlap', 'suite scope identity')
+    check_lookups(e.read(name + '/run/run/receipt.json'))
     driver = e.read(name + '/run/receipt.json')
     command=driver['command']
     check_composition(command)
@@ -453,12 +454,12 @@ def derive(e):
                 value=row[key];require(type(value) is int and value>=0,'invalid fault counter');faults[short]+=value
             faults['tokens']+=1
     w = windows['WS128']
-    return dict(schema='lab.packet58ah.realistic-suite-result.v1', packet='packet58aj-onecard-resident',
+    return dict(schema='lab.packet58aj.realistic-suite-result.v1', packet='packet58aj-onecard-resident',
                 model=MODEL, gpu_count=1, decode_mode='plain', miss_path=w['miss_path'],
                 chain_attempt=CHAIN_ATTEMPT, rerun_disclosure=RERUN_DISCLOSURE,
-                label='qwen38-flash-next-unsloth-iq3xxs-ownrt-tp1-packet58ah-chain-b-realistic-20261019',
+                label='qwen38-flash-next-unsloth-iq3xxs-ownrt-tp1-packet58aj-chain-a-realistic-20261019',
                 promotionIdentity=dict(model_revision=MODEL_REVISION, runtime_revision=seal['runtime_revision'],
-                    optimization_identity='packet58ah-tile16-overlap-tp1-plain-lru21.55gb-c4096-' + w['miss_path'] + '-seal-' + SEAL_SHA,
+                    optimization_identity='packet58aj-resident-tile16-overlap-tp1-plain-lru21.55gb-c4096-' + w['miss_path'] + '-seal-' + SEAL_SHA,
                     arithmetic=ARITHMETIC, suite_sha256=SUITE_SHA),
                 build_receipt_sha256=SEAL_SHA, artifacts_sha256=seal['artifacts'], boot_id=w['boot_id'],
                 primary_metric=dict(name=M.PRIMARY, value_tok_s=speed, class_medians=classes,
@@ -480,7 +481,7 @@ def derive(e):
 def submission_notes(result):
     fault=result['fault_counters'];previous=result['comparison']
     text=(MODEL+'. Quantized compressed version, separate from FP8. Lab own Intel Xe runtime; one Arc Pro B70. '
-          'Target-only greedy; no draft/MTP. Host-pinned experts; 21.55 GB device expert cache (21,552,729,600 bytes); zero-copy misses; '
+          'Target-only greedy; no draft/MTP. 29.32 GB exact resident lookup copies; host-pinned experts; 21.55 GB device expert cache (21,552,729,600 bytes); zero-copy misses; '
           'tile16; HC fusion + HC-wide, wide64+exact half-scale cache, other-fusion, ordered foreground retirement; overlapped cache maintenance. BF16 KV at context 4096. '
           '12 cold prompts / 1536 exact tokens against packet49 CPU oracle iq3-p49-split32-v1; '
           'fresh WS/WS128x/WS128 exactness repeats. cached_tokens=0; no prompt/KV/response reuse. '
@@ -537,7 +538,7 @@ def bound_file(ref, repo):
 
 def replay_result(result, repo=ROOT):
     bundle = json.loads(gzip.decompress(bound_file(result['evidence_bundle'], repo)))
-    require(bundle['schema'] == 'lab.packet58ah.evidence-bundle.v1', 'unknown evidence bundle')
+    require(bundle['schema'] == 'lab.packet58aj.evidence-bundle.v1', 'unknown evidence bundle')
     derived = derive(Evidence(bundle['members']))
     require(result == dict(derived, evidence_bundle=result['evidence_bundle']), 'computed result differs from original evidence')
     return derived
@@ -569,7 +570,7 @@ def scope_problems(item, repo=ROOT):
         require(json.loads(bound_file(att_ref, repo)) == attestation(result, result_ref), 'attestation differs')
         require(item == payload_for(result, result_ref, att_ref), 'payload differs from verified result')
     except (KeyError, TypeError, ValueError, OSError, OverflowError, EOFError) as error:
-        return ['invalid packet58ah evidence: ' + str(error)]
+        return ['invalid packet58aj evidence: ' + str(error)]
     return []
 
 
@@ -577,7 +578,7 @@ def write_prepared(e, output, repo=ROOT):
     result = derive(e)  # Refuse before creating any output.
     require((repo / THRESHOLD).read_bytes() == e.raw('record-threshold.json'), 'threshold changed during preparation')
     output = Path(output).resolve()
-    require(output.is_relative_to((repo / OUTPUT).resolve()) and not output.exists(), 'fresh packet58ah submission output required')
+    require(output.is_relative_to((repo / OUTPUT).resolve()) and not output.exists(), 'fresh packet58aj submission output required')
     # Check notes before writing the bundle too.
     submission_notes(result)
     output.mkdir(parents=True)
@@ -586,12 +587,12 @@ def write_prepared(e, output, repo=ROOT):
         (output / leaf).write_bytes(raw)
         return dict(path=str((output / leaf).relative_to(repo)), sha256=sha(raw))
 
-    result['evidence_bundle'] = save('evidence.json.gz', gzip.compress(encoded(dict(schema='lab.packet58ah.evidence-bundle.v1', members=e.members)), mtime=0))
+    result['evidence_bundle'] = save('evidence.json.gz', gzip.compress(encoded(dict(schema='lab.packet58aj.evidence-bundle.v1', members=e.members)), mtime=0))
     ref = save('result.json', encoded(result))
     att_ref = save('promotion-attestation.json', encoded(attestation(result, ref)))
     item = payload_for(result, ref, att_ref)
     require(not scope_problems(item, repo), 'prepared scope replay failed')
-    save('result-packet.md', ('# Packet58ah one-card scoped measurement\n\n' + submission_notes(result) +
+    save('result-packet.md', ('# Packet58aj one-card scoped measurement\n\n' + submission_notes(result) +
          '\n\nMeasured WS128: ' + str(result['primary_metric']['value_tok_s']) + ' tok/s. See result.json for all prompt/class statistics.\n'
          '\nPreparation only; no submission performed. Strict final gate and fresh timing confirmation remain false.\n').encode())
     save('payload-queue.json', encoded([item]))  # Queue LAST; no partial eligible output.

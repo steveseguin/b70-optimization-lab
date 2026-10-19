@@ -7,31 +7,21 @@ from unittest.mock import patch
 import queue_runner as Q
 import verify_ready as R
 
-def rows(rates=(25,25.5,25,25.5,25)):
-    return [dict(label=label,view='p60fusion' if i%2 else 'production',passed=True,
+def rows(rates=(25,25,25,25,25)):
+    return [dict(label=label,view='resident' if i%2 else 'mapped',passed=True,
                  **{R.METRIC:dict(median=rate)},requests=[dict(prompt_id=f'p{j}',prompt_token_sha256=f'h{j}',tokens=list(range(128)),passed=True,exact_oracle=True,cached_tokens=0) for j in range(12)])
             for i,(label,rate) in enumerate(zip(('A0','B0','A1','B1','A2'),rates))]
 class ReadyTests(unittest.TestCase):
     def test_inclusive_gain(self):self.assertTrue(R.evaluate(rows())['passed'])
     def test_each_candidate_and_each_control(self):
-        for i in range(1,5):
-            rates=[25,25.125,25,25.125,25];rates[i]=25.124 if i%2 else 25.001
-            with self.subTest(index=i),self.assertRaisesRegex(ValueError,'EVERY'):R.evaluate(rows(rates))
-    def test_drift(self):
-        self.assertTrue(R.evaluate(rows((25,27,25.75,27,25)))['passed'])
-        with self.assertRaisesRegex(ValueError,'drift'):R.evaluate(rows((25,27,25.75001,27,25)))
-    def test_record_gain_boundary(self):
-        result=R.evaluate(rows((20,25.5,25,25.5,25)))
-        self.assertTrue(result['passed'])
-        self.assertEqual(result['projected_record_tok_s'],31.00392)
-        with self.assertRaisesRegex(ValueError,'2%'):
-            R.evaluate(rows((20,25.499,25,25.5,25)))
-    def test_overlap_below_warm_control_by_point_one_percent(self):
+        for rate in (24.875,25,25.125):self.assertTrue(R.evaluate(rows((10,rate,25,rate,25)))['passed'])
         for i in (1,3):
-            rates=[22,27,26,27,26];rates[i]=25.974
-            with self.subTest(view=i),self.assertRaisesRegex(ValueError,'EVERY'):R.evaluate(rows(rates))
-    def test_warm_controls_three_point_five_percent_drift(self):
-        with self.assertRaisesRegex(ValueError,'drift'):R.evaluate(rows((22,28,26,28,26.91)))
+            for rate in (24.87499,25.12501):
+                rates=[10,25,25,25,25];rates[i]=rate
+                with self.subTest(i=i,rate=rate),self.assertRaisesRegex(ValueError,'EVERY'):R.evaluate(rows(rates))
+    def test_warm_controls_not_cold_a0(self):
+        self.assertTrue(R.evaluate(rows((1,25,25,25,25)))['passed'])
+        with self.assertRaises(ValueError):R.evaluate(rows((1,25,24.8,25,25)))
     def test_nonexact_first_view_refuses(self):
         data=rows((22,27,26,27,26));data[0]['requests'][0]['exact_oracle']=False
         with self.assertRaisesRegex(ValueError,'exact'):R.evaluate(data)

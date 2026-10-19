@@ -137,7 +137,7 @@ def replay(capacity):
 
 
 def main():
-    assert shutil.disk_usage('/').free>=25_000_000_000
+    assert shutil.disk_usage('/').free>=27_000_000_000
     admission = derive()
     replayed = replay(admission['cache_bytes'])
     measurement = read(STAGE/'packet58v-async-cache/evidence/measurement.json')

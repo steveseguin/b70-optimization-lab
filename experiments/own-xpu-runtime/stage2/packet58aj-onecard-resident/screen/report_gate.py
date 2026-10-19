@@ -11,7 +11,7 @@ from build_engine import P,sha,save
 
 def main():
     T.SummaryTests.setUpClass();fixture=T.SummaryTests();rows=[]
-    for candidate,tag in [('smoke','smoke'),('p60fusion','v5')]:
+    for candidate,tag in [('smoke','smoke'),('resident','v5')]:
         with tempfile.TemporaryDirectory(prefix='p58ag-report-') as d:
             out=Path(d);fixture.fixture(out,candidate)
             summary=T.D.summarize_bracket(out,candidate,fixture.manifest)

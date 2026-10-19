@@ -113,6 +113,7 @@ def synthetic():
                           arithmetic=S.ARITHMETIC, profiling=False, selection_sha256=selection_hash,
                           cpu_affinity=[0, 1, 2, 3, 16, 17, 18, 19], observed_nice=0, native_nice=0,
                           teardown=[dict(safe_to_exit=True, idle_marker_complete=True, exit_code=0, live_bytes=0, in_flight=0)])
+            native['lookup_residency']=json.loads((S.HERE/'lineage/synthetic-lookup-receipt.json').read_text())
             native_hash = put(e, name + '/run/run/receipt.json', native)
             put(e, name + '/run/suite-manifest.snapshot.json', manifest)
             rows = []
@@ -151,7 +152,7 @@ def synthetic():
                            lane_scope=scope, native_receipt_sha256=native_hash,cache_maintenance='overlap',view='down-tile16',selection_sha256=selection_hash)
             summary_hash = put(e, name + '/run/summary.json', summary)
             put(e, name + '/summary.json', summary)
-            put(e, name + '/run/receipt.json', dict(passed=True, safe_to_exit=True, window=name, summary_sha256=summary_hash,command=['--hc-geometry','hc-wide','--experts','wide64+halfcache','--other-fusion','fused','--retirement','ordered-foreground','--hc','p60fusion','--cache-maintenance','overlap','--miss-path','zero-copy','--cache-cap','max','--cache-bytes','21552729600']))
+            put(e, name + '/run/receipt.json', dict(passed=True, safe_to_exit=True, window=name, summary_sha256=summary_hash,command=['--lookups','resident','--hc-geometry','hc-wide','--experts','wide64+halfcache','--other-fusion','fused','--retirement','ordered-foreground','--hc','p60fusion','--cache-maintenance','overlap','--miss-path','zero-copy','--cache-cap','max','--cache-bytes','21552729600']))
             put(e, name + '/host-memory.jsonl', b'{}\n')
         files = {key[len(name) + 1:]: member['sha256'] for key, member in e.members.items()
                  if key.startswith(name + '/') and key != name + '/host-memory.jsonl'}
@@ -211,7 +212,7 @@ class SubmissionTests(unittest.TestCase):
 
     def test_overlap_argv_required(self):
         key='WS128/run/receipt.json'
-        digest=changed(self.e,key,lambda r:r.update(command=['--hc-geometry','hc-wide','--experts','wide64+halfcache','--other-fusion','fused','--retirement','ordered-foreground','--hc','p60fusion','--cache-maintenance','serial','--miss-path','zero-copy']))
+        digest=changed(self.e,key,lambda r:r.update(command=['--lookups','resident','--hc-geometry','hc-wide','--experts','wide64+halfcache','--other-fusion','fused','--retirement','ordered-foreground','--hc','p60fusion','--cache-maintenance','serial','--miss-path','zero-copy']))
         changed(self.e,'WS128/window.json',lambda r:r['native_files'].__setitem__('run/receipt.json',digest))
         with self.assertRaisesRegex(ValueError,'overlapped cache argv'):S.derive(self.e)
 
@@ -252,7 +253,7 @@ class SubmissionTests(unittest.TestCase):
         self.assertEqual(r['rerun_disclosure'], S.RERUN_DISCLOSURE)
         for text in ('30.050', 'not submitted', '3,736', '124', 'quiet-host', 'unproven', 'no third run'):
             self.assertIn(text, notes)
-        self.assertEqual(r['chain_attempt'],'b')
+        self.assertEqual(r['chain_attempt'],'a')
 
     def test_chain_a_refused_before_reading_evidence(self):
         with patch.object(S.Evidence, 'add', side_effect=AssertionError('must refuse before read')):
@@ -388,7 +389,7 @@ class SubmissionTests(unittest.TestCase):
             self.assertEqual(row['threshold_tok_s'], item['payload']['tokSOut'])
             self.assertEqual(row['readiness_amendment'],S.POLICY['readiness_amendment'])
             self.assertEqual(row['rerun_disclosure'],S.RERUN_DISCLOSURE)
-            self.assertEqual(row['chain_attempt'],'b')
+            self.assertEqual(row['chain_attempt'],'a')
             with self.assertRaisesRegex(ValueError, 'improve threshold'):
                 S.update_record(result_path, 'another-id', repo)
             self.assertTrue(S.scope_problems(item, repo))

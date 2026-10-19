@@ -5,8 +5,8 @@ from build_engine import P,ROOT,sha,save
 def main():
     records=[]
     for tag in ('smoke','v5'):
-        proposal=P.parents[1]/'ops/lane-queue'/('proposed-p58aj-'+tag+'-A.txt')
-        cmd=[sys.executable,'-B',str(P.parents[1]/'ops/rehearse_entry.py'),str(proposal),'--report','--json']
+        proposal=P.parents[2]/'ops/lane-queue'/('proposed-p58aj-'+tag+'-A.txt')
+        cmd=[sys.executable,'-B',str(P.parents[2]/'ops/rehearse_entry.py'),str(proposal),'--report','--json']
         cp=subprocess.run(cmd,stdin=subprocess.DEVNULL,capture_output=True,text=True)
         row=json.loads(cp.stdout);save(P/'evidence'/('ops-entry-report-'+tag+'.json'),row)
         assert cp.returncode==0 and row['passed'] and len(row['jobs'])==1,row

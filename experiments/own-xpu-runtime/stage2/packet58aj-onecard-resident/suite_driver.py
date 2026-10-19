@@ -147,7 +147,7 @@ def native_command(args, manifest, table):
         '--plan',str(bundle/'plan.tsv'),'--identity',str(bundle/'identity.tsv'),'--model-dir',str(model),
         '--selection',str(selection(getattr(args,'view','down-tile16'))),'--selection-sha256',digest(getattr(args,'view','down-tile16')),
         '--dispatch',str(HERE/'dispatch-speed6.json'),'--output',str(args.output/'run'),
-        '--hc','p60fusion','--hc-geometry','hc-wide','--experts','wide64+halfcache','--other-fusion','fused','--retirement','ordered-foreground','--seconds','3600','--cache-maintenance','overlap','--cache-cap','max','--cache-bytes','21552729600']
+        '--lookups','resident','--hc','p60fusion','--hc-geometry','hc-wide','--experts','wide64+halfcache','--other-fusion','fused','--retirement','ordered-foreground','--seconds','3600','--cache-maintenance','overlap','--cache-cap','max','--cache-bytes','21552729600']
 
 def main(argv=None):
     ap=argparse.ArgumentParser(description=__doc__)
@@ -189,6 +189,8 @@ def main(argv=None):
             status=child.wait()
         row['safe_to_exit']=True
         require(status==0 and not stopping,'native failed or coordinator stopped')
+        from composition import check_lookups
+        check_lookups(read(args.output/'run/receipt.json'))
         summary=summarize(args.output,args.window,manifest)
         require(read(args.output/'run/receipt.json').get('selection_sha256')==digest(args.view),'native selection differs')
         from composition import DIMENSIONS

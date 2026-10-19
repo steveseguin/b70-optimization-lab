@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**October 19, packet58aj preparation resumed on CPU:** The resident lookup
+copy and byte checks are retained. Entry, report and submission checks pass
+after updating the disk stop to 27 GB. Final seals and the small compiler
+check remain pending. Nothing was queued or launched.
+[Work note](notes/2026-10-19-own-runtime-packet58aj.md).
+
 **October 19, packet155 preparation stopped at the disk floor:** The private
 bundle9 source and native snapshots are retained, but root free space fell to
 29.812 GB before the CPU fixtures ran. The requested 30 GB stop rule applies.

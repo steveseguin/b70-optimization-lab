@@ -31,7 +31,7 @@ class QueueTests(unittest.TestCase):
             with ExitStack() as stack:
                 for obj,key,value in [(Q,'P',packet),(Q,'GAP_SECONDS',0),(Q.W,'user_unit_gate',lambda x:None),
                     (Q.W,'closed_environment',lambda:{}),(Q.W,'build_gate',lambda:{}),
-                    (Q.W.SUPPORT,'storage',lambda *a:{}),(Q.W.S,'journal',lambda *a,**k:('',None)),
+                    (Q.W,'storage',lambda *a:{}),(Q.W.S,'journal',lambda *a,**k:('',None)),
                     (Q.os,'getpriority',lambda *a:0),(Q.os,'sched_getaffinity',lambda *a:{0,1,2,3,16,17,18,19}),
                     (Q.subprocess,'Popen',spawn),
                     (R,'verify',lambda:dict(boot_id='fixture')),

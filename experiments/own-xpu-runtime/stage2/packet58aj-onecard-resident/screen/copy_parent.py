@@ -5,7 +5,7 @@ P=Path(__file__).resolve().parent
 from frozen_inputs import FROZEN
 SOURCE=FROZEN/'experiments/own-xpu-runtime/stage2/packet58v-async-cache'
 def main():
-    assert shutil.disk_usage('/').free>=25_000_000_000
+    assert shutil.disk_usage('/').free>=27_000_000_000
     assert not (P/'native').exists()
     rows=[]
     def copy(source,dest):

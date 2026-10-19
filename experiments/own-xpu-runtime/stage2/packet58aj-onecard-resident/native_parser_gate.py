@@ -9,8 +9,8 @@ R=P.parents[3]
 def main():
     assert os.getpriority(os.PRIO_PROCESS,0)==19
     assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
-    binary=P/'build/gnu-host/own-rt-iq3';binding=json.loads((P/'parent-binding.json').read_text())
-    assert sha(binary)==binding['native_artifacts']['build/gnu-host/own-rt-iq3']
+    binary=P/'build/gnu-host/own-rt-iq3';binding=json.loads((P/'evidence/build.json').read_text())
+    assert sha(binary)==binding['artifacts']['build/gnu-host/own-rt-iq3']
     manifest=D.oracle_inputs();rows=[]
     with tempfile.TemporaryDirectory(prefix='parse-',dir=P/'build') as tmp:
         for name in ('KD','W2m','WS','WS128x','WS128'):
@@ -41,6 +41,6 @@ def main():
         binary_sha256=sha(binary),peak_child_rss_bytes=rss,
         sources={str(f.relative_to(R)):sha(f) for f in (P/'native_parser_gate.py',P/'suite_driver.py',P/'views.py',P/'selection.json',P/'runtime-selection.json')})
     (P/'evidence/native-parser.json').write_text(json.dumps(row,indent=2)+'\n')
-    print('5 real CPU native parsers pass; 25 invalid composition flags refused; no model read')
+    print('5 real CPU native parsers pass;',sum(len(r['invalid_composition_flags_refused']) for r in rows),'invalid composition flags refused; no model read')
 if __name__=='__main__':
     resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()

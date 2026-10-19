@@ -175,6 +175,9 @@ class AdmissionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);run=root/'run/run';run.mkdir(parents=True)
             rows=json.loads((W.HERE/'evidence/postload-census.json').read_text())
+            for allocation in rows['allocations']:
+                if allocation['label']=='card0:immutable-expert-cache':allocation['bytes']=M.CACHE_BYTES
+            rows['allocations'].append(dict(label='card0:exact-half-decode-table',category='weights',memory='device',bytes=262144,live=True))
             # Full metadata extents, including the KV preceding cache setup.
             rows['allocations'].append(dict(label='card0:KV',category='KV',memory='device',bytes=116391936,live=True))
             (run/'census.json').write_text(json.dumps([rows]))

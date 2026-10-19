@@ -65,7 +65,7 @@ class SensorTests(unittest.TestCase):
     def test_combined_total_stops_even_with_legal_shadow_and_old_anon_limit(self):
         pinned = self.budget['census']['pinned_expert_bytes']
         host = self.budget['host_categories']
-        anon_bound = host['measured_process_overhead_allowance']+host['capacity_backing_metadata_staging']+host['new_observed_peak_increment']
+        anon_bound = host['resident_lookup_bytes']+host['measured_process_overhead_allowance']+host['capacity_backing_metadata_staging']+host['new_observed_peak_increment']
         self.account(growth=pinned+host['gpuactive_shadow_bound'], pinned=pinned, anon=anon_bound)
         with self.assertRaisesRegex(ValueError, 'combined host memory'):
             self.account(growth=pinned+host['gpuactive_shadow_bound'], pinned=pinned, anon=anon_bound+1)

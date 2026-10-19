@@ -176,7 +176,7 @@ class FullWindowTests(unittest.TestCase):
                     (W,'closed_environment',lambda:closed),(W,'build_gate',lambda:dict(artifacts={})),
                     (W,'memory_fence',lambda:{}),(W,'selected_clients',lambda c:{}),
                     (W,'prerequisite',lambda *a:{}),(W,'selected_miss_path',lambda *a:'zero-copy'),
-                    (W.SUPPORT,'storage',lambda *a:{}),(W.SUPPORT,'process_start',lambda pid:123),
+                    (W,'storage',lambda *a:{}),(W.SUPPORT,'process_start',lambda pid:123),
                     (W.S,'journal',lambda *a,**k:('',None)),(W.S,'supervise',supervise),
                     (W.M,'meminfo',lambda:{'MemAvailable':200*1024**3,'GPUActive':0}),
                     (A,'Admission',make_admission),(D,'onecard_topology',lambda:{}),

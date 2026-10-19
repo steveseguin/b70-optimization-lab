@@ -1,18 +1,8 @@
 {
-  "schema": "packet58ah.readiness-policy.v1",
-  "minimum_gain_each_control": 0.005,
+  "readiness_policy": "packet58aj neutral resident lookups",
+  "minimum_relative_rate": 0.995,
+  "maximum_relative_rate": 1.005,
   "maximum_control_drift": 0.03,
-  "minimum_record_gain": 0.02,
-  "record_anchor_tok_s": 30.396,
-  "exact_prompts_per_arm": 12,
-  "tokens_per_prompt": 128,
-  "smoke_required": true,
-  "views": [
-    "production",
-    "p60fusion",
-    "production",
-    "p60fusion",
-    "production"
-  ],
-  "readiness_policy": "packet58ah: packet58wb warm-up rule; packet58ag full composition strict gain >=2%"
+  "first_view_warmup": true,
+  "full_exact_suite_required": true
 }

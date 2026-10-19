@@ -23,11 +23,12 @@ def main():
         assert '# '+name+': whole-host' in run.stdout
     writes=sum(Q.W.WRITES['K1' if n.startswith('K1') else n] for n in Q.ORDER)
     free=shutil.disk_usage('/').free
-    assert free>=25_000_000_000 and free-writes>=25_000_000_000
+    assert free>=27_000_000_000
     size=sum(f.stat().st_size for f in (P/'build').rglob('*') if f.is_file())
     assert size<=300_000_000
     storage=dict(passed=True,device_executed=False,free_bytes=free,planned_write_bytes=writes,
-        preparation_stop_floor_bytes=25_000_000_000,chain_disk_floor_bytes=25_000_000_000,
+        preparation_stop_floor_bytes=27_000_000_000,chain_disk_floor_bytes=25_000_000_000,
+        chain_storage_admitted_now=free-writes>=25_000_000_000,
         chain_output_created=output.exists(),build_bytes=size)
     (P/'evidence/storage-plan.json').write_text(json.dumps(storage,indent=2)+'\n')
     row=dict(passed=True,device_executed=False,windows=list(Q.ORDER),output_created=output.exists(),

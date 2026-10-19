@@ -53,7 +53,7 @@ def sandbox(tmp):
 def sources():
     from launch_identity import LANEQUEUE
     files = [*P.glob('*.py'), P/'views.json', P/'oracle-binding.json',
-             P/'selections/route-rec.json', P/'dispatch-speed6.json']
+             P/'selections/tile16.json', P/'dispatch-speed6.json']
     return {str(f.relative_to(ROOT)): sha(f) for f in files}
 
 
@@ -222,7 +222,7 @@ def probe(name, miss, candidate, old_gate=False):
                 patch.object(Q,'verify_success',return_value={'synthetic_prerequisite':True}),
                 patch.object(F,'validate',return_value=({'through_us':1767225600000000,'through':'2026-01-01T00:00:00Z'},'', '', None)),
                 patch.object(W,'prerequisite',side_effect=predecessor),
-                patch.object(W.SUPPORT,'storage',return_value={'synthetic':True}),
+                patch.object(W,'storage',return_value={'synthetic':True}),
                 patch.object(W,'memory_fence',return_value={'synthetic':True}),
                 patch.object(W,'selected_clients',return_value={'synthetic':True}),
                 patch.object(W.S,'journal',return_value=('',None)),
@@ -298,5 +298,5 @@ def main():
 if __name__=='__main__':
     assert os.getpriority(os.PRIO_PROCESS,0)==19
     assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
-    assert shutil.disk_usage('/').free>=25_000_000_000
+    assert shutil.disk_usage('/').free>=27_000_000_000
     main()

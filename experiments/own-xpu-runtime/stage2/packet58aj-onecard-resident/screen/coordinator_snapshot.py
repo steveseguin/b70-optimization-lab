@@ -1,8 +1,8 @@
 """Owned command/validation functions; no service execution or queue operations."""
 import os,re,shutil
 from pathlib import Path
-HERE=Path(__file__).resolve().parents[2]/"ops/lane-queue"
-ROOT=HERE.parents[4]
+HERE=Path(__file__).resolve().parents[3]/"ops/lane-queue"
+ROOT=HERE.parents[3]
 AFFINITY={"A":"0-3,16-19","B":"4-7,20-23"}
 
 def require(ok, message):

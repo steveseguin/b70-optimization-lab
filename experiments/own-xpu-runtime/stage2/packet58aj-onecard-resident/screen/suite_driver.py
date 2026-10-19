@@ -135,14 +135,24 @@ def summarize(out, window, manifest, view_label=None, cap=128):
         cold_fill='empty content-independent cache; first request and per-position cache costs included',
         native_receipt_sha256=sha(out/'run/receipt.json'))
 
+def verify_lookup_views(out,candidate):
+    from resident_receipt import check_lookups
+    receipt=read(out/'run/receipt.json');check_lookups(receipt)
+    for label,view in bracket(candidate):
+        boundary=read(out/'run'/label/'boundary.json')
+        require(boundary.get('hc')=='p60fusion' and boundary.get('lookups')==view,'lookup/composition boundary differs')
+        backing=read(out/'run'/label/'lookup-backing.json')
+        require(backing.get('resident') is (view=='resident'),'lookup path differs')
+        check_lookups(dict(lookup_residency=backing['copies']))
+        require(backing['copies']==receipt['lookup_residency'],'one-load copy identity changed')
+    return True
+
 def summarize_bracket(out,candidate,manifest,maintenance=DEFAULT_MAINTENANCE):
     views=[];arenas=set();weights=set();signature=None
     for label,view in bracket(candidate):
         boundary=read(out/'run'/label/'boundary.json')
-        backing=read(out/'run'/label/'lookup-backing.json')
-        require(backing.get('resident') is (view=='resident') and backing['copies']['enabled'] is True and backing['copies']['bytes']==29321610240 and all(t['source_sha256']==t['resident_sha256'] for t in backing['copies']['tensors']), 'resident copy identity differs')
         require(boundary.get('passed') is True and boundary.get('selection_sha256')==digest(view)
-                and boundary.get('cache_maintenance')==maintenance and boundary.get('cache_cap')=='max' and boundary.get('hc')=='p60fusion' and boundary.get('lookups')==view
+                and boundary.get('cache_maintenance')==maintenance and boundary.get('cache_cap')=='max'
                 and boundary.get('cache_allocation_bytes')==MAX_BYTES and boundary.get('cache_started_empty') is True
                 and boundary.get('allocation_ids_preserved') is True and boundary.get('weight_uploads_during_switch')==0
                 and boundary.get('model_loads')==1 and boundary.get('context_extent')==32, 'native view boundary differs')
@@ -227,14 +237,18 @@ def main(argv=None):
                 from analyze import partial
                 # First check reads this invocation's receipt immediately;
                 # subsequent checks validate real rows as soon as they arrive.
+                save(args.output/'first-minute-analysis.json',partial(args.output,manifest))
                 while True:
-                    save(args.output/'first-minute-analysis.json',partial(args.output,manifest))
+                    analysis=partial(args.output,manifest)
+                    save(args.output/'live-analysis.json',analysis)
+                    if analysis['complete_exact_requests'] and not (args.output/'first-result-analysis.json').exists():save(args.output/'first-result-analysis.json',analysis)
                     status=child.poll()
                     if status is not None:break
                     time.sleep(.5)
             else:status=child.wait()
         row['safe_to_exit']=True
         require(status==0 and not stopping,'native failed or coordinator stopped')
+        verify_lookup_views(args.output,args.view)
         summary=summarize_bracket(args.output,args.view,manifest,args.cache_maintenance)
         save(args.output/'summary.json',summary)
         row.update(passed=True,summary_sha256=sha(args.output/'summary.json'))

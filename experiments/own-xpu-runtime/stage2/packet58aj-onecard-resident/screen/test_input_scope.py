@@ -7,7 +7,7 @@ from input_scope import P, ROOT, check_pins, allowed_inputs
 
 class InputScope(unittest.TestCase):
     def test_local(self):
-        check_pins(ROOT, {str((P/'compare_bracket.py').relative_to(ROOT)): '0'*64})
+        check_pins(ROOT, {str((P/'screen/compare_bracket.py').relative_to(ROOT)): '0'*64})
 
     def test_sibling_mutable_even_with_valid_hash(self):
         for name in ('packet58w-onecard-record/verify_ready.py', 'packet58v-async-cache/window.py'):

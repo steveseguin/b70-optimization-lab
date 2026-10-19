@@ -1,105 +1,54 @@
-# Packet58ah: one-card full-composition record chain
+# Packet58aj: full one-card composition with resident lookup copies
 
-Prepared ahead of packet58ag's bracket. This is a symlink-preserving vendored
-copy of packet58ad's seven-window chain, with packet58ag's five finished
-binaries copied and checked by SHA-256. No rebuild, device job, queue edit,
-service or submission is performed during preparation. Existing packets stay frozen.
+This is a private, symlink-preserving copy of packet58ah. Its native source
+and bracket harness are vendored from the exact packet58ag engine used by
+58ah. Packet58t supplies the complete packed-tensor copy implementation.
+Existing packets remain frozen. Preparation does not queue or launch anything.
 
-Every model window selects HC fusion, HC-wide, wide64+halfcache, other-fusion
-and ordered foreground retirement explicitly. The sealed tile16 dispatch
-selection remains unchanged (rows4-shared recurrence). Cache allocation and
-usage remain 21,552,729,600 bytes, maintenance overlaps, misses use zero-copy,
-KV is BF16, context is 4096, and decoding is target-only greedy. Outputs must
-match the registered `iq3-p49-split32-v1` CPU oracle exactly.
+The experiment addresses fresh-window paging. Both complete lookup tensors
+are copied at load, SHA256-checked and made read-only: Q6_K `token_embd.weight`
+(521,472,000 bytes) and IQ4_NL `per_layer_token_embd.weight` (28,800,138,240).
+`--lookups mapped|resident` changes only where those unchanged bytes are read.
+All rows are copied; allocation/copy failure refuses the candidate. No page
+advice, pre-read, mlock, sparse fallback, swap or host settings are introduced.
 
-The pinned ledger's predecessor is **30.395630964654867 tok/s**,
-`cmvefq3ep009orf0186k21lba`. This preparation claims no new measured speed.
+Every view keeps HC fusion, HC-wide, wide64+halfcache, other-fusion, ordered
+foreground retirement, tile16, overlapped maintenance, zero-copy misses and
+the 21,552,729,600-byte device cache. KV stays BF16 at context4096. The oracle
+is unchanged `iq3-p49-split32-v1`; this is the quantized compressed version.
 
-## Readiness
+The smoke analyzes its own output immediately and checks real output as it
+appears, then checks all twelve 64-token responses. The one-load v5 order is
+mapped/resident/mapped/resident/mapped, twelve 128-token responses per view.
+A0 is exact and reported as warm-up. Both resident views must be within
+inclusive ±0.5% of both warm mapped controls. Neutrality is sufficient because
+the purpose is stability across fresh loads. Copies are retained in mapped
+views too, and loading them warms source pages; this is not a cold-disk test.
 
-`verify_ready.py` replays the completed smoke and v5 evidence through a private
-copy of packet58ag's reader. Parent READY, build, source snapshots, selection,
-CPU proofs and native artifacts are hash-bound in `parent-binding.json`.
-Device evidence is hashed before reading and verified again afterwards;
-finished queues, windows, native evidence, exact output and current boot must
-agree. There are no imports from the running parent packet.
+[WINDOW.md](WINDOW.md) is the coordinator contract. [MEMORY.md](MEMORY.md)
+shows the production allocation accounting. The seven-window chain uses
+`lookups=resident`, freezes Codex from WS, and requires its own smoke and v5
+before launch. Only its fresh WS128 can supply a new timing. The predecessor
+is now 58ah chain b, 31.66271941826957 tok/s, submitted as
+`cmvekebvh00a0rf01q3v2c3cz`. Both prior attempts remain disclosed.
 
-The smoke requires twelve exact 64-token responses. Each bracket view requires
-twelve exact uncached 128-token responses. A0 stays reported and exact, but is
-excluded from speed and drift. B0 and B1 must each reach 1.005 times both warm
-packet58ad-line controls A1 and A2; max/min control drift must be at most 3%.
-Strict gain is `min(B0,B1)/max(A1,A2)-1` and must reach 2%. Applied to the
-preregistered **30.396** anchor, the boundary is **31.00392 tok/s projected**.
-This is a launch gate, never a measurement or a replacement for fresh WS128.
+CPU proof checks bounded synthetic packed bytes using actual production row
+widths (2,560 Q6_K and 160 IQ4_NL values), both compilers, repeats, actual
+engine resets and exact equality to 58ah's host engine. The full 29.32 GB
+production copy is a future device-window allocation; CPU preparation does
+not allocate it or read model payload. New device equality and performance
+remain pending. No synthetic timing is a measurement or record.
 
-Missing, incomplete, changed or failing parent evidence refuses launch.
-`ready_for_device` records the gate at preparation time; the coordinator must
-recompute it after v5, even when a saved marker says true. The marker also
-separately records whether CPU preparation passed.
+Build with `build_engine.py` after the two-card preparations; every compiler
+turn passes through `ops/compile_turn.py`. `native/generated` retains the exact
+entry source snapshot; `lineage/58ag-build-commands.json` records the parent
+commands. The two-card priority, 4 GiB RSS limit, 300 MB build cap and 27 GB
+root stop floor apply. Python subprocess wrappers have no wall timeouts that
+would count frozen time. Historical snapshot scripts are evidence only.
 
-## Coordinator handoff
+[Work note](../../../../notes/2026-10-19-own-runtime-packet58aj.md).
+Final readiness markers are written only after all requested checks and pushes.
 
-See [WINDOW.md](WINDOW.md). The preregistered chain-b rerun requires one
-uninterrupted quiet whole-host hold, both drained lanes and all 90-second gaps.
-Run K1a → K1b → KD → W2m → WS → WS128x → WS128, each once. Freeze all Codex units and
-block compiles from before K1a through WS128 completion. Use the exact environment-
-embedded `chain_command` in `ready.json`, unit `packet58-onecard-58ah-b`,
-fresh output `evidence/card0-58ah-b`, and a fresh
-`evidence/fault-review-58ah-b.json`. No launch is performed by preparation.
+## Retained lookup fixture
 
-## Validation and submission
-
-All preparation uses nice19, helper cores 8–15/24–31, Python `-B`, closed stdin
-and less than 4 GiB RAM. Native/model full-shape proofs are inherited by hash,
-not rerun. Entry tests intercept native execution; native parser tests never
-load weights. The post-load census and offline submission replay require the
-262,144-byte device half-decode table in addition to existing cache/KV checks.
-
-The submission CLI resolves the repository from its final packet location,
-without overriding the root during rehearsal. `rehearse_submission.py` copies
-packet58ad chain-a's portable bundle into private memory and preserves all
-original timings, tokens and fault counters. Its chain identity, flags and
-half-table allocation substitutions are explicitly synthetic and confined to
-that rehearsal. A separate synthetic above-record fixture exercises the real
-CLI's local dry-run with temporary artifacts, removed afterwards. Network is
-forbidden throughout. No old timing is relabeled as packet58ah evidence.
-
-Notes stay below 2,000 characters and name the pinned predecessor and full
-composition. They disclose the 128-token scope, strict512=false, missing second
-fresh timing, and unmeasured standard 512-token prefill/natural completion.
-Only a future fresh chain can prepare a real submission.
-
-## Retention
-
-`lineage/template-58ad-files.json` records the original template hashes;
-older copied lineage remains historical. `lineage/58ag-*` retains the exact
-parent receipts and source snapshots. `restore_build.py` restores the five
-ignored native binaries from frozen packet58ag, checking every hash without
-compiling. Their combined size is 73,442,424 bytes. K1's CPU proof references
-the same local fixture binary, avoiding a duplicate. The 58ad rehearsal bundle
-is copied in memory to keep the total new files below 100 MB. Original evidence
-is never removed. Admission's exact original parent snapshot is retained;
-no host setting changes are needed.
-
-[Validation](../../ops/packet58ah-orchestration/validation.json),
-[final marker](../../ops/packet58ah-orchestration/READY-FOR-DEVICE.json),
-[work note](../../../../notes/2026-10-18-own-runtime-packet58ah.md).
-
-## Packet58ahb: final quiet-host rerun
-
-Chain a passed all seven exact windows, but WS128 was 30.050 tok/s, below
-30.395631, and was not submitted. WS128 incurred 3,736 major faults versus
-124 in WS128x. CPU work may have disturbed paging; this is not measured proof.
-The coordinator preregistered exactly one rerun. Chain b WS128 is final,
-whichever way it lands: no third run and no choosing between attempts.
-The submission tool refuses chain a before reading evidence and discloses
-its result, faults and rerun reason in notes, result and ledger entries.
-
-Chain-a seal, submission pins, readiness snapshot and original marker bytes
-are retained under `lineage/58ah-chain-a-*`. The active orchestration marker
-is replaced only after the chain-b preparation is committed and pushed.
-The old evidence and fault review remain untouched. The command changes only
-unit/output identity plus the required fresh chain-b fault-review path.
-Selection, native bytes, oracle, seven windows, 90-second gaps, admission,
-pinned record and readiness policy remain unchanged. Only passive/mocked
-tests and intercepted entry probes run; no native or full-shape gates rerun.
+The private `frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/rope.bf16` is 4,194,304 bytes. It is retained because the inherited loader/entry contract needs these exact rotary-table bytes; this is a small runtime table, not model weights or a generated cache. SHA256: `92a8f39204b5b8b1969ee2e5d3caac2310ced502bfeb9f51380b537d451ef390`. Restore it from this packet's tracked Git blob; do not regenerate arithmetic or borrow a mutable sibling table. Native executables and object files remain ignored, with `restore-inputs.json`, `restore_build.py` and build commands retaining their hash-bound local restore path. This research packet is not a publicly reproducible release.

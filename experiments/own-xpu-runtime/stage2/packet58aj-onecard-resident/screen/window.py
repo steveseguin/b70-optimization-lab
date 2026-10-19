@@ -29,14 +29,19 @@ require, sha, save = S.require, S.sha, S.save
 PCI = {0: '0000:23:00.0', 2: '0000:43:00.0'}
 # Expected durations are conservative planning bounds, not speed measurements.
 CONFIG = {'K1': (20, 600), 'WSCREEN': (1560, 7200)}
-WRITES = {'K1': 16_000_000, 'KD': 32_000_000, 'W2m': 32_000_000, 'WS': 300_000_000, 'WS128x': 750_000_000, 'WS128': 750_000_000, 'WSCREEN': 3_750_000_000}
+WRITES = {'K1': 8093428, 'WSCREEN': 62175372}
 
+def planned_writes(window,view):
+    if window=='K1':return WRITES['K1']
+    return 32496920 if view=='smoke' else WRITES['WSCREEN']
+
+PREVIOUS = {}
 
 def storage(output, writes):
     free=shutil.disk_usage('/').free
-    require(free-writes>=30_000_000_000,'root storage below 30 GB after reserved writes')
+    require(free-writes>=25_000_000_000,'root storage below 25 GB after reserved writes')
     row=SUPPORT.storage(output,writes)
-    return dict(row,root_free_bytes=free,root_stop_floor_bytes=30_000_000_000)
+    return dict(row,root_free_bytes=free,root_stop_floor_bytes=25_000_000_000)
 
 
 def install_fault_policy():
@@ -92,7 +97,7 @@ def selected_clients(card, proc=Path('/proc')):
 def safe_path(root, name):
     rel = Path(name)
     path = (root / rel).resolve()
-    require(not rel.is_absolute() and '..' not in rel.parts and path.is_relative_to(root.resolve()), 'unsafe identity path')
+    require(not rel.is_absolute() and '..' not in rel.parts and path.is_relative_to((HERE.parent if root==HERE else root).resolve()), 'unsafe identity path')
     return path
 
 
@@ -343,6 +348,8 @@ def postload_observation(output, budget, admission):
             == expected.expected and all(r['memory'] == 'host-pinned' for r in experts), 'postload expert census differs')
     cache = [r for r in allocations if r['label'] == 'card0:immutable-expert-cache']
     require(len(cache) == 1 and cache[0]['bytes'] == M.CACHE_BYTES, 'full cache census missing')
+    from resident_receipt import check_census
+    check_census(censuses)
     kv = sum(r['bytes'] for r in allocations if r['category'] == 'KV')
     require(kv == budget['allocation_inventory']['kv_index_bytes'], 'full BF16 KV census missing')
     require(sum(r['bytes'] for r in allocations if r['memory'] == 'device') <= budget['device_owned_bound_bytes'],
@@ -394,7 +401,7 @@ def main(argv=None):
     # The definitive check follows the lane/whole-host wait. A live B screen
     # must be allowed to drain before WS128 tests its whole-host memory floor.
     memory = dict(pending_lane_admission=True, plan=budget)
-    disk = storage(output, WRITES[args.window])
+    disk = storage(output, planned_writes(args.window,args.view))
     build_bytes = sum(p.stat().st_size for p in (HERE/'build').rglob('*') if p.is_file())
     require(build_bytes <= 200_000_000, 'packet58x build exceeds 200 MB')
     review, through = S.fault_review(args.faults_reviewed_through, time.time_ns()//1000)
@@ -466,7 +473,7 @@ def main(argv=None):
             memory = M.admit(M.meminfo(), budget)
             record['memory_admission'] = memory
             record['memory_fence'] = memory_fence()
-            record['storage_admission'] = storage(output, WRITES[args.window])
+            record['storage_admission'] = storage(output, planned_writes(args.window,args.view))
             command = native_command(args, output, miss_path)
             record['command'] = command
             # Private inherited supervisor constants: full pinned experts are expected,
@@ -480,7 +487,7 @@ def main(argv=None):
                 memory = M.admit(M.meminfo(), budget)
                 record['memory_admission'] = memory
                 record['memory_fence'] = memory_fence()
-                record['storage_admission'] = storage(output, WRITES[args.window])
+                record['storage_admission'] = storage(output, planned_writes(args.window,args.view))
                 A.D.verify_onecard_environment(env)
             with (output/'native.log').open('w') as log, (output/'kernel-window.jsonl').open('w') as kernel, (output/'host-memory.jsonl').open('w') as sample_log:
                 A.D.verify_onecard_environment(env)

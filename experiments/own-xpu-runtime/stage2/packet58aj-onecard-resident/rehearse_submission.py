@@ -11,7 +11,7 @@ P=Path(__file__).resolve().parent
 ROOT=P.parents[3]
 SOURCE=P.parent/'packet58ad-onecard-record/submission/prepared-a/evidence.json.gz'
 def main():
-    assert shutil.disk_usage('/').free-SOURCE.stat().st_size>=25_000_000_000
+    assert shutil.disk_usage('/').free-SOURCE.stat().st_size>=27_000_000_000
     # Independent in-memory copy of the frozen portable bundle: no disk duplicate.
     copied=io.BytesIO()
     with SOURCE.open('rb') as source:shutil.copyfileobj(source,copied)
@@ -59,8 +59,13 @@ def main():
             w['postload_memory']['sources'][census_key]=census_hash
             w['postload_memory']['exact_half_decode_table_bytes']=262144
             driver=e.read(name+'/run/receipt.json')
-            driver['command']+=['--hc-geometry','hc-wide','--experts','wide64+halfcache','--other-fusion','fused','--retirement','ordered-foreground']
+            driver['command']+=['--lookups','resident','--hc-geometry','hc-wide','--experts','wide64+halfcache','--other-fusion','fused','--retirement','ordered-foreground']
             w['native_files']['run/receipt.json']=put(name+'/run/receipt.json',driver)
+            native=e.read(name+'/run/run/receipt.json');native['lookup_residency']=json.loads((P/'lineage/synthetic-lookup-receipt.json').read_text())
+            h=put(name+'/run/run/receipt.json',native);w['native_files']['run/run/receipt.json']=h
+            summary=e.read(name+'/run/summary.json');summary['native_receipt_sha256']=h
+            for leaf in ('run/summary.json','summary.json'):w['native_files'][leaf]=put(name+'/'+leaf,summary)
+            driver['summary_sha256']=put(name+'/run/summary.json',summary);w['native_files']['run/receipt.json']=put(name+'/run/receipt.json',driver)
             for ref,key in [(w['previous'],S.ORDER[i-1]+'/window.json'),*[(r,n+'/window.json') for r,n in zip(w['k1_refs'],S.ORDER[:2])]]:
                 ref['sha256']=e.members[key]['sha256']
                 ref['path']=str(ROOT/S.CHAIN/key)

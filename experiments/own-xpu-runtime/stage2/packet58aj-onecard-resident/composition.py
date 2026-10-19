@@ -16,3 +16,18 @@ def check_census(censuses):
     if len(rows)!=1 or rows[0].get('bytes')!=262144 or rows[0].get('memory')!='device' or rows[0].get('category')!='weights':
         raise ValueError('exact half-decode-table census differs')
     return 262144
+
+def check_lookups(receipt):
+    import re
+    row=receipt.get('lookup_residency',{})
+    expected={'token_embd.weight':521472000,'per_layer_token_embd.weight':28800138240}
+    if row.get('enabled') is not True or row.get('bytes')!=sum(expected.values()):
+        raise ValueError('complete resident lookup copies required')
+    tensors=row.get('tensors',[])
+    if len(tensors)!=2 or {t.get('name'):t.get('bytes') for t in tensors}!=expected:
+        raise ValueError('resident lookup production census differs')
+    for tensor in tensors:
+        h=tensor.get('source_sha256','')
+        if not re.fullmatch('[0-9a-f]{64}',h) or tensor.get('resident_sha256')!=h:
+            raise ValueError('resident lookup byte identity differs')
+    return sum(expected.values())

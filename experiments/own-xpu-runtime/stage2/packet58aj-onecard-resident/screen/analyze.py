@@ -18,8 +18,8 @@ def partial(out,manifest):
                     D.require(type(row[name]) in (int,float) and math.isfinite(row[name]) and row[name]>=0,'invalid lookup timing '+name)
                 D.require(row['resident_lookups'] is True,'smoke did not use resident copies')
                 counts+=1
-        if (request/'result.json').exists():
-            # Native saves result atomically only after the complete request.
+        if (request/'lookup-request-complete.json').exists():
+            # Marker is opened only after result and request receipt have closed.
             D.compare_request(request,D.ORACLE/'results'/entry['prompt_id'],entry,64,'none');complete+=1
     return dict(passed=True,device_result_pending=counts==0,driver_schema_checked=True,timing_rows_checked=counts,complete_exact_requests=complete,
                 source='current smoke output, never a saved fixture',first_minute_startup_check=True)

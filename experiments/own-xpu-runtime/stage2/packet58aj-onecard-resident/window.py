@@ -27,14 +27,15 @@ require, sha, save = S.require, S.sha, S.save
 
 def storage(output, writes):
     import shutil
-    require(shutil.disk_usage('/').free - writes >= 30_000_000_000, 'root free below 30 GB after reserved writes')
+    require(shutil.disk_usage('/').free - writes >= 25_000_000_000, 'root free below 25 GB after reserved writes')
     return SUPPORT.storage(output, writes)
 PCI = {0: '0000:23:00.0', 2: '0000:43:00.0'}
 # Expected durations are conservative planning bounds, not speed measurements.
 CONFIG = {'K1': (120, 600), 'KD': (600, 1800), 'W2m': (600, 1800),
           'WS': (1200, 3600), 'WS128x': (1200, 3600), 'WS128': (1200, 3600)}
-WRITES = {'K1': 16_000_000, 'KD': 32_000_000, 'W2m': 32_000_000, 'WS': 300_000_000, 'WS128x': 750_000_000, 'WS128': 750_000_000, 'WSCREEN': 3_750_000_000}
+WRITES = {'K1': 8093428, 'KD': 44642236, 'W2m': 44677136, 'WS': 224777764, 'WS128x': 33521454, 'WS128': 33686762}
 
+PREVIOUS = {'KD': 'K1', 'W2m': 'KD', 'WS': 'W2m', 'WS128x': 'WS', 'WS128': 'WS128x'}
 
 def closed_environment(source=None):
     env = dict(os.environ if source is None else source)

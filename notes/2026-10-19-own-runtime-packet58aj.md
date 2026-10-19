@@ -48,3 +48,33 @@ and restorable from pinned inputs plus the retained build commands.
 
 Milestone 1: source integration and production memory arithmetic prepared.
 Builds, new exactness gates, seals and final readiness remain pending.
+
+## Resume p58ajr — October 19, 01:41 UTC
+
+The owner lowered the preparation stop from 30 to 27 GB. The device floor is
+25 GB after declared writes. The first free-space check was 30.140 GB; no
+cleanup was performed here. Pull refused the unrelated dirty tree; fetch
+confirmed HEAD equalled origin/main. The previous source commit f850e4c4e and
+its unfinished edits were retained. No existing packet or live queue changed.
+
+The earlier GNU, Intel and device builds remain hash-exact (94,364,720 bytes
+of build files). New lookup copy/dequantization and complete miniature-engine
+checks already passed under GNU and Intel twice, including equality to the
+frozen 58ah engine, actual bracket resets, and wrong-oracle refusal. The
+production-size metadata and inherited unchanged full-shape probes were
+retained; no model payload or full-shape allocation was needed on resume.
+
+The resumed seven-window intercepted entries and all 28 unit/environment
+refusals pass, as do 134 passive chain tests, six screen entries, shared
+loader/parser/report checks on both proposals, and the offline submission
+rehearsal. A fresh frozen-path audit passed with 60,254 paths and no owned
+path in the frozen union. A parallel read-only audit found no blocker in the
+resident integration, byte evidence, accounting or warm-neutral comparison.
+The remaining screen test's small parser compile waits for the two-card
+preparation markers and the shared compiler turn. Seals and final markers
+are still pending at this milestone.
+
+The predecessor is now 58ah chain b: 31.66271941826957 tok/s, submitted as
+cmvekebvh00a0rf01q3v2c3cz. Both 58ah attempts and their paging counts are
+disclosed by the submission tool. Its successful replay uses explicitly
+labeled synthetic substitutions over old 58ad evidence, never a new result.

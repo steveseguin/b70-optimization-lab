@@ -86,7 +86,7 @@ def probe(name, miss, negative=None, entry="queue"):
         return real_read_text(path,*args,**kwargs)
     assert snapshot()==before
     V.validate('down-tile16')
-    native_hashes={str(f.relative_to(P)):sha(f) for f in (P/'build/device').glob('*') if f.is_file()}
+    native_hashes={str(f.relative_to(P)):sha(f) for f in (P/'build/device').glob('*') if f.name in ('own-rt-iq3','p58-cache-fixtures')}
     assert len(native_hashes)==2
     model = not name.startswith('K1')
     mode = name if model else 'K1'
@@ -215,7 +215,7 @@ def probe(name, miss, negative=None, entry="queue"):
                 patch.object(Q,'verify_success',return_value={'synthetic_prerequisite':True}),
                 patch.object(F,'validate',return_value=({'through_us':1767225600000000,'through':'2026-01-01T00:00:00Z','boot_id':'cpu-fixture'},'', '', None)),
                 patch.object(W,'prerequisite',side_effect=predecessor),
-                patch.object(W.SUPPORT,'storage',return_value={'synthetic':True}),
+                patch.object(W,'storage',return_value={'synthetic':True}),
                 patch.object(W,'memory_fence',return_value={'synthetic':True}),
                 patch.object(W,'selected_clients',return_value={'synthetic':True}),
                 patch.object(W.S,'journal',return_value=('',None)),
@@ -286,5 +286,5 @@ def main():
 if __name__=='__main__':
     assert os.getpriority(os.PRIO_PROCESS,0)==19
     assert set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32))
-    assert shutil.disk_usage('/').free>=25_000_000_000
+    assert shutil.disk_usage('/').free>=27_000_000_000
     main()

@@ -103,7 +103,7 @@ def main(argv=None):
     reviewed, _, _, _ = F.validate(args.fault_review)
     boundary = F.window_boundary(reviewed)
     cmds=commands(output,0,boundary,args.library_path,view,args.cache_maintenance)
-    W.storage(output,sum(W.WRITES['K1' if n.startswith('K1') else n] for n in ORDER))
+    W.storage(output,sum(W.planned_writes('K1' if n.startswith('K1') else n,view) for n in ORDER))
     output.mkdir(parents=True)
     state=dict(schema='packet58x.arm.v1', passed=False, device_executed=False,
                view=view, arm=args.arm, commands=cmds, completed=[], plan=metadata,
