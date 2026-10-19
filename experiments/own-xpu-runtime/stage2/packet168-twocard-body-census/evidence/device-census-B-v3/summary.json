@@ -1,0 +1,203 @@
+{
+  "passed": true,
+  "diagnostic_only": true,
+  "submission_eligible": false,
+  "control_drift": 0.0010138848465011119,
+  "per_prompt_control_drift_max": 0.008342502325587642,
+  "control_means_ms": {
+    "C0": 17.13409087570321,
+    "C1": 17.122860089998948,
+    "C2": 17.140220698372957
+  },
+  "ranked": [
+    {
+      "kernel_class": "dense_hc",
+      "measured_marginal_ms_per_body_pass": 11.53183,
+      "diagnostic_only": true,
+      "causally_isolated": true,
+      "isolated_body_probe": true,
+      "per_prompt_marginals_ms": {
+        "incident-retrospective": 11.539629999999999,
+        "code-review": 11.53079,
+        "customer-email": 11.52308,
+        "sql-debugging": 11.53445,
+        "release-plan": 11.532869999999999,
+        "benchmark-analysis": 11.53471,
+        "architecture-tradeoff": 11.49206,
+        "bug-report-synthesis": 11.524270000000001,
+        "technical-guide": 11.50816,
+        "risk-register": 11.548300000000001,
+        "performance-hypotheses": 11.529999999999998,
+        "decision-memo": 11.532879999999999
+      },
+      "prompt_spread_ms": 0.056240000000000734,
+      "conservative_marginal_ms": 11.5233775,
+      "share_of_17ms_percent": 67.83429411764706,
+      "route_identity_changed_probes": 72,
+      "route_identity_note": "expert count/shapes fixed; changed expert identities are recorded, not hidden",
+      "closed_levers": "p140: replaces assumed transfer pricing only after complete matched census"
+    },
+    {
+      "kernel_class": "routed_experts",
+      "measured_marginal_ms_per_body_pass": 5.53478,
+      "diagnostic_only": true,
+      "causally_isolated": true,
+      "isolated_body_probe": true,
+      "per_prompt_marginals_ms": {
+        "incident-retrospective": 5.5264700000000015,
+        "code-review": 5.556940000000001,
+        "customer-email": 5.551029999999999,
+        "sql-debugging": 5.53223,
+        "release-plan": 5.51332,
+        "benchmark-analysis": 5.5126300000000015,
+        "architecture-tradeoff": 5.5333000000000006,
+        "bug-report-synthesis": 5.547159999999998,
+        "technical-guide": 5.53233,
+        "risk-register": 5.5482499999999995,
+        "performance-hypotheses": 5.550529999999998,
+        "decision-memo": 5.536259999999999
+      },
+      "prompt_spread_ms": 0.044309999999999405,
+      "conservative_marginal_ms": 5.52791,
+      "share_of_17ms_percent": 32.557529411764705,
+      "route_identity_changed_probes": 72,
+      "route_identity_note": "expert count/shapes fixed; changed expert identities are recorded, not hidden",
+      "closed_levers": "p81/p95/p102/p162: fewer loads are not measured end-to-end savings"
+    },
+    {
+      "kernel_class": "router_shared_expert",
+      "measured_marginal_ms_per_body_pass": 3.3412200000000007,
+      "diagnostic_only": true,
+      "causally_isolated": true,
+      "isolated_body_probe": true,
+      "per_prompt_marginals_ms": {
+        "incident-retrospective": 3.349210000000001,
+        "code-review": 3.3196700000000003,
+        "customer-email": 3.3185400000000005,
+        "sql-debugging": 3.3387899999999995,
+        "release-plan": 3.3459200000000013,
+        "benchmark-analysis": 3.3417399999999997,
+        "architecture-tradeoff": 3.379670000000001,
+        "bug-report-synthesis": 3.340700000000002,
+        "technical-guide": 3.3119699999999987,
+        "risk-register": 3.363009999999999,
+        "performance-hypotheses": 3.354090000000001,
+        "decision-memo": 3.326979999999999
+      },
+      "prompt_spread_ms": 0.06770000000000209,
+      "conservative_marginal_ms": 3.3214975,
+      "share_of_17ms_percent": 19.65423529411765,
+      "route_identity_changed_probes": 72,
+      "route_identity_note": "expert count/shapes fixed; changed expert identities are recorded, not hidden",
+      "closed_levers": "p109/p112/p164: route/shared activation and shared-down/mixture stay fused; exact routes/ties required"
+    },
+    {
+      "kernel_class": "gdn",
+      "measured_marginal_ms_per_body_pass": 2.049900000000001,
+      "diagnostic_only": true,
+      "causally_isolated": true,
+      "isolated_body_probe": true,
+      "per_prompt_marginals_ms": {
+        "incident-retrospective": 2.0821000000000005,
+        "code-review": 2.046000000000001,
+        "customer-email": 2.0516000000000005,
+        "sql-debugging": 2.103200000000001,
+        "release-plan": 2.0574000000000012,
+        "benchmark-analysis": 2.0269999999999992,
+        "architecture-tradeoff": 2.0337000000000014,
+        "bug-report-synthesis": 2.0482000000000014,
+        "technical-guide": 2.0382,
+        "risk-register": 2.0668999999999986,
+        "performance-hypotheses": 2.053600000000001,
+        "decision-memo": 2.0306999999999995
+      },
+      "prompt_spread_ms": 0.07620000000000182,
+      "conservative_marginal_ms": 2.034825000000001,
+      "share_of_17ms_percent": 12.058235294117653,
+      "route_identity_changed_probes": 72,
+      "route_identity_note": "expert count/shapes fixed; changed expert identities are recorded, not hidden",
+      "closed_levers": "p113/p107: unchanged recurrence order; no nonfinite arithmetic waiver"
+    },
+    {
+      "kernel_class": "norms_glue",
+      "measured_marginal_ms_per_body_pass": 1.8347000000000007,
+      "diagnostic_only": true,
+      "causally_isolated": true,
+      "isolated_body_probe": true,
+      "per_prompt_marginals_ms": {
+        "incident-retrospective": 1.8408999999999995,
+        "code-review": 1.8242000000000012,
+        "customer-email": 1.8506,
+        "sql-debugging": 1.8330000000000002,
+        "release-plan": 1.8262999999999998,
+        "benchmark-analysis": 1.8402999999999992,
+        "architecture-tradeoff": 1.8196999999999992,
+        "bug-report-synthesis": 1.8266999999999989,
+        "technical-guide": 1.8364000000000011,
+        "risk-register": 1.8399,
+        "performance-hypotheses": 1.8467999999999982,
+        "decision-memo": 1.8157999999999994
+      },
+      "prompt_spread_ms": 0.03480000000000061,
+      "conservative_marginal_ms": 1.8247250000000008,
+      "share_of_17ms_percent": 10.792352941176475,
+      "route_identity_changed_probes": 72,
+      "route_identity_note": "expert count/shapes fixed; changed expert identities are recorded, not hidden",
+      "closed_levers": "p78/p94/p107: full rounded producer/consumer boundary remains required"
+    }
+  ],
+  "residual": {
+    "kernel_class": "residual",
+    "diagnostic_only": true,
+    "causally_isolated": false,
+    "residual_ms_per_token": -7.158339124296791,
+    "paired_control_residual_ms": {
+      "C0": -7.158339124296791,
+      "C1": -7.169569910001055,
+      "C2": -7.152209301627046
+    },
+    "definition": "exact native control ms/token minus sum of five isolated body-pass class marginals; not causally isolated",
+    "includes": [
+      "attention (qsa_*; no arm since v3)",
+      "cross-card transfer",
+      "split head/argmax/merge",
+      "controller/mailbox",
+      "overlap and any passes-per-token difference"
+    ],
+    "negative_values_retained": true
+  },
+  "measured_sum_ms": 24.292430000000003,
+  "report_classes": [
+    "gdn",
+    "routed_experts",
+    "router_shared_expert",
+    "dense_hc",
+    "norms_glue",
+    "residual"
+  ],
+  "top_two_conditional_ceilings": [
+    {
+      "kernel_class": "dense_hc",
+      "conditional_ceiling_tok_s": {
+        "0.3": 73.8389557975459,
+        "0.5": 88.98134050167013
+      },
+      "assumption": "30%/50% of lower-quartile marginal removed; no replacement overhead; 17ms reference; not measured optimized speed"
+    },
+    {
+      "kernel_class": "routed_experts",
+      "conditional_ceiling_tok_s": {
+        "0.3": 65.18213485440626,
+        "0.5": 70.24422864636912
+      },
+      "assumption": "30%/50% of lower-quartile marginal removed; no replacement overhead; 17ms reference; not measured optimized speed"
+    }
+  ],
+  "units": "class marginals: ms per isolated body pass, rank0+rank1 summed; controls: ms per emitted token",
+  "kind": "census",
+  "lane": "B",
+  "device_executed": true,
+  "scope": "lane-B",
+  "report_after_device_release": true,
+  "no_speed_claim": true
+}

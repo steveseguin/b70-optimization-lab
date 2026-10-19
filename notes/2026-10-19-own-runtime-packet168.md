@@ -197,3 +197,35 @@ attention arm.
 `packet168-body-census-B-v3`) and the lane-A twin `-A-v3`. Not queued. The v2
 proposal and lineage files are unchanged. `READY-FOR-DEVICE.json` is written
 last by `finalize.py`, in a separate commit.
+
+## Device result v3 (coordinator, 2026-10-19 10:43–10:55 UTC)
+
+`packet168-body-census-B-v3` ran on lane B (cards 2+3) and finished DONE. Control drift is 0.101% (largest single prompt 0.834%), and every control is exact. The fault count stayed 2.
+
+Measured marginals (ms per body pass, summed across both ranks):
+
+| Class | ms | rank0 / rank1 |
+| --- | ---: | --- |
+| dense_hc | **11.532** | 5.574 / 5.955 |
+| routed_experts | 5.535 | 2.564 / 2.973 |
+| router_shared_expert | 3.341 | 1.462 / 1.873 |
+| gdn | 2.050 | 0.837 / 1.208 |
+| norms_glue | 1.835 | 0.729 / 1.105 |
+| residual (not isolated: transfer, split head, attention, overlap) | −7.158 | |
+
+The negative residual means the marginals overlap: skipping a class also removes waits that other work otherwise hides.
+
+packet173 `rank_levers.py --census` (base 58.798109):
+
+| Rank | Lever | Class | low / mid / high % | Verdict |
+| ---: | --- | --- | --- | --- |
+| 1 | **D2** dense-weight L2 warm-ahead | dense_hc | 0.85 / 1.71 / 3.03 | kill-test only |
+| 2 | N3 producer-written RMS partials | norms_glue | 0.00 / 0.75 / 1.89 | |
+| 3 | D1 dense_lane scale-word sharing | dense_hc | 0.00 / 0.68 / 1.71 | |
+| 4 | G1 | gdn | 0.00 / 0.41 / 0.82 | |
+| 5 | R1 | router_shared_expert | 0.00 / 0.39 / 0.78 | |
+| 6 | E1n2 | routed_experts | 0.00 / 0.25 / 0.62 | |
+
+No lever clears +2% at mid. Dense/HC is two-thirds of the token.
+
+**Next:** packet175, a D2 device **micro** first (one card, lane B, real bundle-8 dense shapes; warm-ahead vs none, with overhead included). The full integration (~4 h) follows only if the micro removes ≥ 4.8% of the dense GEMV time (0.55 ms census units ≈ +2%).
