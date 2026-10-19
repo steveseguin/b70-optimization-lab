@@ -735,3 +735,32 @@ STOP DOING acknowledged:
 - the Codex prep queue at 0–1 jobs when GPU work ends within 1 h;
 - CPU-only closures without a 15–20 min device test;
 - more class-layout/cold-gap micro levers.
+
+## Review 34 — 2026-10-19 ~00:08 UTC — VERDICT: ACT
+
+**Finding:** in the last 2 h, a device unit was running 56% of wall time, but only 16.5% of available card-minutes were busy. Lane B did ~12 min of real work and spent 55.6 min held for one-card runs. Over 6 h: ~48 min of lane-B device work against 140 min of one-card holds. The two-card record has not moved since 17:50 (58.798). The fault count is still 2.
+
+**Actions (coordinator, 00:09–00:13 UTC):**
+1. **packet150 ran before the packet58ah chain.**
+   - Root was raised to 32.16 GB before release (HF models archived to RAID and verified, disabled snap revisions and old Codex daemon releases removed; commit 935e79717).
+   - `packet150-split-bracket-B` started at 00:09:47 when the p58ag hold released.
+   - The packet58ah chain waiter (launched 00:09:58, ready True) holds both lanes but waits for lane B to drain, so p150 finishes first.
+2. **Disk over-reservation.**
+   - Codex `opsdisk`: lanequeue storage admission before START, storage-floor refusals classed REFUSED-PREDEVICE so the lane continues, and a disk line in `gpu_time_review.py`.
+   - New briefs size planned writes at ≤ 3× measured (~250 MB/view); the 25 GB floor is unchanged.
+3. **packet151 re-scoped.**
+   - The draft-confidence census brief reopened packet132 (closed in its DO-NOT-REPEAT) without meeting its reopen condition. The Codex job was stopped at 00:11.
+   - It was relaunched as `p151b`: a packet149-style one-load v5 that computes and discards a second rank-0 sibling row (output-neutral) to measure the extra cost directly.
+   - Preregistered: ≤ 1.952 ms reopens packet132 (calibration only on packet114's independent text); > 1.952 ms closes it.
+4. **Codex `p152`:** one design per packet150 segment (token_prep, capture_snapshot, suffix_head, merge_handoff_waits, draft_wait), plus ready-to-launch build briefs for the two likeliest, mapped to each possible verdict.
+5. **First-minute data proof** is now required in p151b's smoke. packet58ai (already in progress) gets it as a follow-up before it is queued.
+
+**Also this hour:** packet58ag one-card ports **passed** (B 31.63/31.62 vs controls 30.59/30.51, +3.38% min gain, drift 0.24%, 60/60 exact). The packet58ah record chain is armed.
+
+STOP DOING acknowledged:
+- one-card whole-host holds while a two-card job is device-ready;
+- briefing levers closed in a DO-NOT-REPEAT without their reopen condition;
+- benchmark-tuned gate thresholds;
+- Codex cleanup as the disk fix while reservations are 14× real writes;
+- diagnostics without a first-window analyzer-input check;
+- queuing into a lane with no live driver.
