@@ -14,3 +14,13 @@ no final speed-based closure is asserted. Rows below preserve the earlier study.
 | 2026-10-19 | Recast packet99/95/102/104/104b/53, selected E1 or packet140 N2 as new | Excluded; [source-linked inventory](README.md#existing-closures-carried-forward). | A different mechanism, not renamed scheduling or table placement. |
 
 [Closeout](CLOSEOUT.md). No READY, live queue, device proposal or runtime adoption.
+
+## Packet162b final device decision
+
+| Date | Arm | Result | Revisit |
+| --- | --- | --- | --- |
+| 2026-10-19 | Packet162b 11-bit device decoder | Final closure: at least one complete finite stratum exceeds 0.85× production device time; NaN repair has no qualifying speed case. Evidence: `evidence/enum11-diagnostic-B1/analysis.json` | Do not repeat this decoder. |
+
+| Date | Attempt | Measured outcome | Revisit only when |
+| --- | --- | --- | --- |
+| 2026-10-19 | Exact 11-bit IQ2 grid decoder for the routed-expert gate/up path (packet162 enum11; +629 MB/rank) as the last two-card in-layer pool priced above 3% | Device micro `packet162b-enum11-diagnostic-B` (lane B, card 2, 04:54 UTC): bytes equal on device for finite **and** NaN/invalid fixtures, but the candidate is **4.79–4.83× slower** than production on both real shapes (layer0: 232.6 vs 48.3 µs; layer24 similar). The gate was ≤ 0.85×. | Closed. Only a fundamentally different decoder with a device micro ≤ 0.85× first; no further CPU work on this encoding. |

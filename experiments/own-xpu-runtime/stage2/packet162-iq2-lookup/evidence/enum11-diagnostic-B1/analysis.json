@@ -1,0 +1,76 @@
+{
+  "diagnostic_only": true,
+  "model_output_claim": false,
+  "finite_bytes_equal": true,
+  "nan_input_behavior": [
+    {
+      "kind": "bytes",
+      "shape": "layer0",
+      "fixture": 2,
+      "invalid": 0,
+      "different_bytes": 0,
+      "bytes_equal": true
+    },
+    {
+      "kind": "bytes",
+      "shape": "layer0",
+      "fixture": 2,
+      "invalid": 1,
+      "different_bytes": 0,
+      "bytes_equal": true
+    },
+    {
+      "kind": "bytes",
+      "shape": "layer24",
+      "fixture": 2,
+      "invalid": 0,
+      "different_bytes": 0,
+      "bytes_equal": true
+    },
+    {
+      "kind": "bytes",
+      "shape": "layer24",
+      "fixture": 2,
+      "invalid": 1,
+      "different_bytes": 0,
+      "bytes_equal": true
+    }
+  ],
+  "shapes": [
+    {
+      "shape": "layer0",
+      "fixture": 0,
+      "production_median_ns": 48334.0,
+      "candidate_median_ns": 232604.0,
+      "median_device_time_ratio": 4.812430173376919,
+      "paired_ratio_median": 4.825757124611902
+    },
+    {
+      "shape": "layer0",
+      "fixture": 1,
+      "production_median_ns": 48333.0,
+      "candidate_median_ns": 231666.5,
+      "median_device_time_ratio": 4.793133056090042,
+      "paired_ratio_median": 4.797621534093947
+    },
+    {
+      "shape": "layer24",
+      "fixture": 0,
+      "production_median_ns": 47917.0,
+      "candidate_median_ns": 231459.0,
+      "median_device_time_ratio": 4.830415092764572,
+      "paired_ratio_median": 4.829465469843576
+    },
+    {
+      "shape": "layer24",
+      "fixture": 1,
+      "production_median_ns": 47917.0,
+      "candidate_median_ns": 231146.0,
+      "median_device_time_ratio": 4.823882964292422,
+      "paired_ratio_median": 4.820618387752614
+    }
+  ],
+  "decision": "close: device speed > 0.85",
+  "full_build_authorized": false,
+  "samples_sha256": "da1d41370fe90d1368bc3925816583e2ebee77c1e45df457fe91e69ad2811fce"
+}

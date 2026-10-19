@@ -1,0 +1,226 @@
+{
+  "schema": "own-runtime.packet162b.micro-window.v1",
+  "passed": true,
+  "device_executed": true,
+  "drained": true,
+  "child_still_running": false,
+  "lane": "B",
+  "physical_cards": [
+    2
+  ],
+  "native_card": 0,
+  "pci": "0000:43:00.0",
+  "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "identity": {
+    "build_receipt_sha256": "97a3ca0a96d24ea16b165ad558787e1a022243dc0f6e3eade3ca7a1a7aeb856e",
+    "binary_sha256": "58451ef85510bad06fa19e6a7235fb5fad7398ed7e63b33f458cb7769e92b5d9",
+    "inputs_sha256": "4d8d92220a9f7b3b9ad2bafeb970cff36dbb8c21d1729e49f6b332bb5b7da30d"
+  },
+  "build_receipt_sha256": "97a3ca0a96d24ea16b165ad558787e1a022243dc0f6e3eade3ca7a1a7aeb856e",
+  "binary_sha256": "58451ef85510bad06fa19e6a7235fb5fad7398ed7e63b33f458cb7769e92b5d9",
+  "inputs_sha256": "4d8d92220a9f7b3b9ad2bafeb970cff36dbb8c21d1729e49f6b332bb5b7da30d",
+  "command": [
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-device",
+    "--rank",
+    "0",
+    "--rows-file",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/build/micro-inputs",
+    "--shape",
+    "all",
+    "--repeats",
+    "200",
+    "--coordinator-admitted-device-window"
+  ],
+  "systemd_cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet162b-enum11-diagnostic-B.service\n",
+  "systemd_properties": {
+    "ExitType": "cgroup",
+    "Restart": "no",
+    "TimeoutStopUSec": "infinity",
+    "KillMode": "process",
+    "SendSIGKILL": "no"
+  },
+  "started_utc_ns": 1792385686889352417,
+  "model_lifetimes": 0,
+  "watchdog_seconds": 1200,
+  "stop_reasons": [],
+  "environment": {
+    "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+    "OMP_NUM_THREADS": "2",
+    "PATH": "/usr/bin:/bin",
+    "NEOReadDebugKeys": "1",
+    "FilterBdfPath": "0000:43:00.0",
+    "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+    "ZE_AFFINITY_MASK": "0",
+    "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+    "HOME": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/evidence/enum11-diagnostic-B1/native-home"
+  },
+  "coordinator_fault_review": {
+    "schema": "own-runtime.screen.fault-review.v3",
+    "boot_id": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+    "fault_count": 2,
+    "faults": [
+      {
+        "PRIORITY": "6",
+        "_HOSTNAME": "steve-b70s",
+        "_RUNTIME_SCOPE": "system",
+        "__CURSOR": "s=e3d94d04f38747dcbe36a4ef06874902;i=20dbcf8;b=2cba7160054a4ffeb4c4e252eb956f5f;m=9cb374e62;t=65dfeedfec2c6;x=433472837baa3e90",
+        "_KERNEL_SUBSYSTEM": "pci",
+        "_UDEV_SYSNAME": "0000:47:00.0",
+        "__SEQNUM_ID": "e3d94d04f38747dcbe36a4ef06874902",
+        "__SEQNUM": "34454776",
+        "MESSAGE": "xe 0000:47:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+        "__MONOTONIC_TIMESTAMP": "42064105058",
+        "_MACHINE_ID": "9c3959da4143428eb2e83dbae3e4a0f7",
+        "SYSLOG_FACILITY": "0",
+        "_TRANSPORT": "kernel",
+        "__REALTIME_TIMESTAMP": "1792199356236486",
+        "_KERNEL_DEVICE": "+pci:0000:47:00.0",
+        "_BOOT_ID": "2cba7160054a4ffeb4c4e252eb956f5f",
+        "_SOURCE_MONOTONIC_TIMESTAMP": "42063964780",
+        "SYSLOG_IDENTIFIER": "kernel"
+      },
+      {
+        "_SOURCE_MONOTONIC_TIMESTAMP": "42063964790",
+        "_KERNEL_SUBSYSTEM": "pci",
+        "_BOOT_ID": "2cba7160054a4ffeb4c4e252eb956f5f",
+        "_TRANSPORT": "kernel",
+        "SYSLOG_IDENTIFIER": "kernel",
+        "__SEQNUM": "34454777",
+        "_UDEV_SYSNAME": "0000:47:00.0",
+        "SYSLOG_FACILITY": "0",
+        "__CURSOR": "s=e3d94d04f38747dcbe36a4ef06874902;i=20dbcf9;b=2cba7160054a4ffeb4c4e252eb956f5f;m=9cb374f53;t=65dfeedfec3b8;x=7f42b4c9291f9442",
+        "_MACHINE_ID": "9c3959da4143428eb2e83dbae3e4a0f7",
+        "MESSAGE": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=36, state=0x289",
+        "__MONOTONIC_TIMESTAMP": "42064105299",
+        "__REALTIME_TIMESTAMP": "1792199356236728",
+        "_HOSTNAME": "steve-b70s",
+        "_RUNTIME_SCOPE": "system",
+        "__SEQNUM_ID": "e3d94d04f38747dcbe36a4ef06874902",
+        "PRIORITY": "6",
+        "_KERNEL_DEVICE": "+pci:0000:47:00.0"
+      }
+    ],
+    "cursor": "s=e3d94d04f38747dcbe36a4ef06874902;i=20de4a9;b=2cba7160054a4ffeb4c4e252eb956f5f;m=3469be98c4;t=65e298c860d29;x=d9c68e128198bbd4",
+    "through": "2026-10-19T04:00:04.529449Z",
+    "through_us": 1792382404529449,
+    "driver_sha256": "41a57d623b87d5de4726bfa739d4bacf97d41dabf2759d1aa381ed90b14d14c8",
+    "journal_sha256": "d398c79995e6bb7cd644b22deefd25c67eb93871db9ccec98841a095dc0ec9d5",
+    "kernel_capture": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/screen/v4-lanes/evidence/lanequeue-review-daa5293dab254b3bbe91941982ad63db.kernel.jsonl.gz"
+  },
+  "device_topology": {
+    "lane": "B",
+    "filter": "0000:4",
+    "native_indices": [
+      0,
+      1
+    ],
+    "nodes": [
+      {
+        "pci": "0000:43:00.0",
+        "path": "/dev/dri/by-path/pci-0000:43:00.0-render",
+        "node": "/dev/dri/renderD128",
+        "driver": "xe"
+      },
+      {
+        "pci": "0000:47:00.0",
+        "path": "/dev/dri/by-path/pci-0000:47:00.0-render",
+        "node": "/dev/dri/renderD129",
+        "driver": "xe"
+      }
+    ],
+    "device_nodes_opened": false
+  },
+  "clients_before": {
+    "scope": "lane-B",
+    "blocked": [],
+    "other": [],
+    "inaccessible_processes": 486,
+    "hidden_clients_require_coordinator_ownership": true,
+    "device_nodes_opened": false
+  },
+  "memory_fence": {
+    "53": "offline",
+    "54": "offline",
+    "55": "offline",
+    "56": "offline",
+    "57": "online"
+  },
+  "memory_admission": {
+    "snapshot": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 120879022080,
+      "SwapTotal": 8589930496,
+      "SwapFree": 8162295808,
+      "GPUActive": 114688
+    },
+    "required_bytes": 10737418240,
+    "host_reserve_bytes": 8589934592,
+    "anonymous_budget_bytes": 2147483648,
+    "device_bytes_upper_bound": 2147483648
+  },
+  "storage_admission": {
+    "root_free_bytes": 29513453568,
+    "minimum_root_free_bytes": 25000000000,
+    "planned_write_bytes": 33554432
+  },
+  "ldd": {
+    "returncode": 0,
+    "stdout": "\tlinux-vdso.so.1 (0x00007b85f6ae9000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007b85f6800000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007b85f6717000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007b85f6a9f000)\n\tlibsycl.so.9 => /opt/intel/oneapi/compiler/2026.0/lib/libsycl.so.9 (0x00007b85f6200000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007b85f5e00000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007b85f6aeb000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007b85f6a98000)\n\tlibur_loader.so.0 => /opt/intel/oneapi/compiler/2026.0/lib/libur_loader.so.0 (0x00007b85f5000000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007b85f6a93000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007b85f6a8e000)\n\tlibimf.so => /opt/intel/oneapi/compiler/2026.0/lib/libimf.so (0x00007b85f4a00000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007b85f66fb000)\n\tlibsvml.so => /opt/intel/oneapi/compiler/2026.0/lib/libsvml.so (0x00007b85f3200000)\n\tlibirng.so => /opt/intel/oneapi/compiler/2026.0/lib/libirng.so (0x00007b85f6602000)\n\tlibintlc.so.5 => /opt/intel/oneapi/compiler/2026.0/lib/libintlc.so.5 (0x00007b85f619d000)\n",
+    "stderr": ""
+  },
+  "pid": 2136051,
+  "process_start_ticks": 22839523,
+  "device_isolation": {
+    "passed": true,
+    "allowed_pci": [
+      "0000:43:00.0"
+    ],
+    "observed_pci": [
+      "0000:43:00.0"
+    ],
+    "latest_fds": [
+      {
+        "pid": 2136051,
+        "fd": "3",
+        "driver": "xe",
+        "pci": "0000:43:00.0",
+        "client_id": "14693"
+      }
+    ]
+  },
+  "anonymous_peak_bytes": 143601664,
+  "anonymous_limit_bytes": 2147483648,
+  "anonymous_stop_bytes": 2080374784,
+  "memory_last_sample": {
+    "anonymous_bytes": 143601664,
+    "root_seen": true,
+    "processes": [
+      {
+        "pid": 2136051,
+        "rss_anon_bytes": 143601664
+      }
+    ]
+  },
+  "returncode": 0,
+  "sigterm_sent": false,
+  "elapsed_seconds": 6.074557215004461,
+  "native_summary": {
+    "kind": "summary",
+    "passed": true,
+    "drained": true,
+    "rows": 640,
+    "columns": 2560,
+    "diagnostic_only": true
+  },
+  "clients_after_drain": {
+    "scope": "lane-B",
+    "blocked": [],
+    "other": [],
+    "inaccessible_processes": 490,
+    "hidden_clients_require_coordinator_ownership": true,
+    "device_nodes_opened": false
+  },
+  "samples_sha256": "da1d41370fe90d1368bc3925816583e2ebee77c1e45df457fe91e69ad2811fce",
+  "lease_released": true,
+  "finished_utc_ns": 1792385693534915446
+}
