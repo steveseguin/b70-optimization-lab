@@ -340,6 +340,74 @@ class ReportRehearsalTest(unittest.TestCase):
         self.assertFalse(result['passed'])
 
 
+class MicroReportTest(unittest.TestCase):
+    PACKET = entry.ROOT / 'experiments/own-xpu-runtime/stage2/packet162-iq2-lookup'
+
+    def job(self):
+        return json.loads((entry.OPS / 'lane-queue/proposed-p162-micro-B.txt').read_text())
+
+    def source_copy(self, directory, name='run_micro.py'):
+        packet = Path(directory)
+        for source, target in (('run_micro.py', name), ('micro_analyze.py', 'micro_analyze.py')):
+            (packet / target).write_bytes((self.PACKET / source).read_bytes())
+        job = self.job()
+        job['argv'][2] = str(packet / name)
+        return job
+
+    def test_packet162_report_and_all_entry_gates(self):
+        before = {name: entry.digest(self.PACKET / name)
+                  for name in ('DO-NOT-REPEAT.md', 'READY-FOR-DEVICE.json')}
+        result = entry.rehearse(self.job(), entry.lanequeue(), launch_env.library_path(), report=True)
+        self.assertTrue(result['passed'], result)
+        self.assertTrue(all(result[k]['passed'] for k in entry.PACKAGING_CHECKS))
+        micro, = result['report']['kinds']
+        self.assertEqual(micro['kind'], 'micro')
+        self.assertEqual(micro['cases'], ['reopen', 'close'])
+        self.assertTrue(micro['report_completed'] and micro['negative_result_tested'])
+        self.assertTrue(micro['synthetic_evidence'])
+        self.assertFalse(micro['device_executed'] or micro['admission_executed'])
+        self.assertEqual(before, {name: entry.digest(self.PACKET / name) for name in before})
+
+    def test_declared_micro_with_different_filename(self):
+        with tempfile.TemporaryDirectory(dir=self.PACKET.parent, prefix='packet-micro-test-') as directory:
+            job = self.source_copy(directory, 'entry.py')
+            job['plan']['entry_rehearsal']['kind'] = 'micro'
+            self.assertEqual(entry.report_kinds(job), ('micro',))
+            result = entry.rehearse_report(job, launch_env.environment())
+            self.assertTrue(result['passed'], result)
+
+    def test_broken_real_micro_report_fails_without_leaking_exception(self):
+        with tempfile.TemporaryDirectory(dir=self.PACKET.parent, prefix='packet-micro-test-') as directory:
+            job = self.source_copy(directory)
+            script = Path(job['argv'][2])
+            source = script.read_text()
+            for statement in ("raise AttributeError('secret-error-text')", 'return {}'):
+                with self.subTest(statement=statement):
+                    script.write_text(source.replace('def report_completed(output):',
+                        'def report_completed(output):\n    ' + statement))
+                    result = entry.rehearse_report(job, launch_env.environment())
+                    self.assertFalse(result['passed'], result)
+                    self.assertNotIn('secret-error-text', json.dumps(result))
+
+    def test_micro_report_io_guard_and_sticky_violation(self):
+        with tempfile.TemporaryDirectory(dir=self.PACKET.parent, prefix='packet-micro-test-') as directory:
+            job = self.source_copy(directory)
+            script = Path(job['argv'][2])
+            source = script.read_text()
+            for statement in ("open('/mnt/model.safetensors', 'rb')",
+                              "open('/dev/dri/renderD128', 'rb')",
+                              "__import__('subprocess').run(['/usr/bin/true'])",
+                              "open('/tmp/packet162c-forbidden-write', 'w')"):
+                with self.subTest(statement=statement):
+                    # Catching the denial must not erase the guard's failure.
+                    script.write_text(source.replace('def report_completed(output):',
+                        'def report_completed(output):\n    try:\n        ' + statement +
+                        '\n    except PermissionError:\n        pass'))
+                    result = entry.rehearse_report(job, launch_env.environment())
+                    self.assertFalse(result['passed'], result)
+                    self.assertTrue(result['kinds'][0]['report_completed'], result)
+
+
 class OnecardReportTest(unittest.TestCase):
     PACKET = Path('experiments/own-xpu-runtime/stage2/packet58ab-onecard-hcfusion')
 

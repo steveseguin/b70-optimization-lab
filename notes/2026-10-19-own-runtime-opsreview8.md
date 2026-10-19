@@ -65,3 +65,63 @@ The initial fast-forward pull refused because another local commit and the
 remote had diverged; concurrent repository synchronization subsequently brought
 HEAD and origin/main to the same commit, verified before installation. No
 unrelated working-tree changes were staged or discarded.
+
+## Packet162c — standalone-micro report adapter
+
+Added a report adapter selected by `plan.entry_rehearsal.kind == "micro"`
+or the entry filename `run_micro.py`. It imports the actual entry with the
+existing report I/O guard already installed, uses the real argument parser,
+and invokes its unchanged `report_completed(output)` function. Main and
+device admission are not executed. Other report paths retain their behavior;
+storage, deadline, preparation and identity gates remain mandatory.
+
+The supported report contract is the packet162 event-stream schema and
+`micro_analyze.P` data root. Unknown schemas fail closed. Two invented complete
+streams exercise the 0.85 reopen boundary and a 0.86 negative result. Only the
+analyzer's writable data root is redirected to scratch. The adapter checks
+the returned/persisted report, input hash, diagnostic/quality labels and the
+negative index's evidence link. Its receipt explicitly marks synthetic evidence,
+no device execution and parser/report-only execution.
+
+Validation: **47 tests pass in 32.357 seconds**, including all 43 existing
+tests and four new micro tests. The new tests cover packet162's complete entry
+checks, explicit micro selection under a different filename, raising/no-op
+broken report functions, and sticky I/O denials for model/device reads, child
+execution and outside writes. No exception text is leaked.
+
+The checker, tests and unchanged helper copies were tested in the private
+`.packet162c-bxv4k5b2` sibling directory, with a read-only-use link to lanequeue.
+After all tests passed and the live originals' hashes still matched, the checker
+and tests were each installed once with atomic rename. The suite can be repeated:
+
+```sh
+nice -n 19 taskset -c 8-15,24-31 bash -c 'ulimit -v 2097152; python3 -B -m unittest discover -s experiments/own-xpu-runtime/ops -p test_rehearse_entry.py -v' </dev/null
+```
+
+Packet162's own seal then repeated the live entry/report, seven analyzer tests,
+prepared artifact checks and temporary queue plan successfully; READY is true.
+Its existing `analyze.limits()` requests 4 GiB, so the invocation clamped only
+`resource.setrlimit(RLIMIT_AS, ...)` requests to the already enforced 2 GiB cap.
+No packet source or qualification function was patched. The exact invocation
+was the following Python body under `nice -n 19 taskset -c 8-15,24-31 python3 -B -c`,
+with `ulimit -v 2097152` and stdin `/dev/null`:
+
+```python
+import pathlib, resource, runpy, sys
+from unittest.mock import patch
+path = pathlib.Path("experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/seal_micro.py").resolve()
+sys.path.insert(0, str(path.parent))
+sys.argv = [str(path)]
+original = resource.setrlimit
+cap = 2 * 1024**3
+def bounded(kind, limits):
+    if kind == resource.RLIMIT_AS:
+        limits = tuple(cap if v == resource.RLIM_INFINITY else min(v, cap) for v in limits)
+    return original(kind, limits)
+with patch.object(resource, "setrlimit", bounded):
+    runpy.run_path(str(path), run_name="__main__")
+```
+
+[Packet162c result and retained receipts](2026-10-19-own-runtime-packet162.md#packet162c--shared-micro-report-adapter-installed-and-micro-resealed).
+No GPU, service, sudo, settings, live queue or model-file access. Unrelated
+working-tree changes were preserved.

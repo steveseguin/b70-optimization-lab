@@ -11,6 +11,8 @@ uses WARN without importing or executing packet gates.
 --report additionally imports the real entry and
 executes its unchanged post-device report source on temporary synthetic receipts.
 Packet58 queue runners use one-card WSCREEN or record-window report adapters.
+Standalone run_micro.py entries (or plan.entry_rehearsal.kind="micro") use
+the micro event-stream adapter and their real report_completed(output) function.
 No --plan, model read, queue mutation, service or device entry.
 
 Default binary inventory comes from the packet's build-receipt.json artifacts
@@ -1243,10 +1245,94 @@ def onecard_report_probe(job, kind, scratch, source_root):
                 comparison_controls=summary.get('comparison_controls'))
 
 
+def is_micro_report(job, path):
+    return (job.get('plan', {}).get('entry_rehearsal', {}).get('kind') == 'micro'
+            or path.name == 'run_micro.py')
+
+
+def synthetic_micro(output, candidate_ns):
+    """Invented packet162 event schema; never native output or speed evidence."""
+    rows = []
+    for shape in ('layer0', 'layer24'):
+        for fixture in range(3):
+            for invalid in range(2):
+                rows.append(dict(kind='bytes', shape=shape, fixture=fixture,
+                                 invalid=invalid, different_bytes=0, bytes_equal=True))
+            if fixture == 2:
+                continue
+            for repeat in range(200):
+                for arm in range(2):
+                    rows.append(dict(kind='sample', shape=shape, fixture=fixture,
+                                     repeat=repeat, arm=arm, start_ns=1_000_000,
+                                     end_ns=1_000_000 + (candidate_ns if arm else 10_000)))
+    rows.append(dict(kind='summary', passed=True, drained=True, rows=640,
+                     columns=2560, diagnostic_only=True))
+    (output / 'samples.jsonl').write_text(''.join(json.dumps(r) + '\n' for r in rows))
+
+
+def micro_report_probe(job, kind, scratch, source_root):
+    """Run the actual micro report, redirecting only its writable data root.
+
+    The supported contract is report_completed(output), micro_analyze.P and
+    the packet162 samples/analysis schema. Other schemas fail closed. Both
+    the reopen and negative-result tails run; no admission or main is called.
+    """
+    import importlib
+    import runpy
+    from unittest.mock import patch
+    path = report_entry(job)
+    if kind != 'micro':
+        raise ValueError('unsupported micro report kind')
+    violations = report_guard(scratch, source_root)
+    sys.path[0] = str(path.parent)
+    sys.argv = [str(path), *job['argv'][3:]]
+    for name in ('launch_env', 'entry_sandbox'):
+        sys.modules.pop(name, None)
+    entry = runpy.run_path(str(path), run_name='_micro_entry')
+    args = entry['parser']().parse_args(job['argv'][3:])
+    if args.lane != job.get('lane', 'B'):
+        raise ValueError('micro report lane differs')
+    analyzer = importlib.import_module('micro_analyze')
+    negative = scratch / 'DO-NOT-REPEAT.md'
+    negative.write_text('Synthetic rehearsal only\n')
+    cases = []
+    for label, duration, decision in (
+            ('reopen', 8500, 'reopen: NaN parity + full build'),
+            ('close', 8600, 'close: device speed > 0.85')):
+        output = scratch / label
+        output.mkdir()
+        synthetic_micro(output, duration)
+        # Only the data root changes. Report functions, imports and analyzer
+        # code remain the real entry's, including its negative-index write.
+        with patch.object(analyzer, 'P', scratch):
+            result = entry['report_completed'](output)
+        published = json.loads((output / 'analysis.json').read_text())
+        if (published != result or result.get('decision') != decision
+                or result.get('diagnostic_only') is not True
+                or result.get('model_output_claim') is not False
+                or result.get('full_build_authorized') is not False
+                or result.get('finite_bytes_equal') is not True
+                or result.get('samples_sha256') != digest(output / 'samples.jsonl')):
+            raise ValueError('incomplete micro report')
+        cases.append(label)
+        if label == 'reopen' and negative.read_text() != 'Synthetic rehearsal only\n':
+            raise ValueError('reopen report wrote a final closure')
+    if 'close/analysis.json' not in negative.read_text():
+        raise ValueError('negative micro report did not record its evidence')
+    collisions = duplicate_modules(path.parent, sys.path)
+    return dict(passed=not collisions and not violations, kind=kind,
+                collisions=collisions, report_completed=True, synthetic_evidence=True,
+                device_executed=False, admission_executed=False, real_entry_main=False,
+                entry_execution='parser-and-report-only', report_lineage='standalone-micro',
+                cases=cases, negative_result_tested=True)
+
+
 def report_kinds(job):
     """Record chains have window reports, not fictitious smoke/bracket stages."""
     import ast
     path = report_entry(job)
+    if is_micro_report(job, path):
+        return ('micro',)
     if path.name == 'queue_runner.py':
         for node in ast.parse(path.read_text()).body:
             if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'ORDER' for t in node.targets):
@@ -1262,6 +1348,8 @@ def report_probe(job, kind, scratch, source_root):
     import runpy
     from unittest.mock import patch
     path = report_entry(job)
+    if is_micro_report(job, path):
+        return micro_report_probe(job, kind, scratch, source_root)
     tree = ast.parse(path.read_text())
     if path.name == 'queue_runner.py' and any(
             isinstance(n, ast.Import) and any(a.name == 'window' and a.asname == 'W' for a in n.names)
@@ -1407,7 +1495,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('proposal', type=Path)
     ap.add_argument('--json', action='store_true')
-    ap.add_argument('--report', action='store_true', help='also rehearse screen or one-card window reports on synthetic evidence')
+    ap.add_argument('--report', action='store_true', help='also rehearse screen, one-card window or standalone micro reports on synthetic evidence')
     args = ap.parse_args()
     queue = lanequeue()
     # Read only the one non-secret P49_LDP assignment; never source/print file.

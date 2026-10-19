@@ -78,3 +78,41 @@ adapter is the remaining handoff requirement. Nothing was queued or run on
 a GPU. No speed verdict or final DO-NOT-REPEAT row was invented.
 
 [Micro contract, receipts and reproduction](../experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/MICRO162B.md).
+
+## Packet162c — shared micro report adapter installed and micro resealed
+
+The missing shared report adapter is fixed. Packet162 now passes the shared
+entry/report rehearsal and temporary-copy queue plan, and its own final
+`seal_micro.py` wrote **READY true**, with no blockers and `queued=false`.
+The seven packet analyzer/report tests also pass. This is diagnostic readiness
+only: device speed and device output equality remain unmeasured; the earlier
+NaN-chain failures remain unresolved and no full build is authorized.
+
+The adapter imports the real entry and calls its unchanged
+`report_completed(output)` under the existing I/O guard. Invented event streams
+exercise both the reopen decision and the negative-result write, entirely in a
+temporary directory. No synthetic result becomes packet performance evidence.
+Storage, deadlines, preparation and gate identity still contribute to admission.
+The existing identity warning remains: zero refusals, one intentional packet58
+unit glob in the CPU read guard.
+
+All 47 shared rehearsal tests passed before replacing the live checker once,
+by atomic rename after checking its original hash. The tests include packet162's
+complete entry gates, a declared micro under another filename, deliberately
+broken reports and sticky rejection of model/device reads, process launches and
+outside writes. Existing model-screen and one-card tests pass unchanged.
+
+Only `seal_micro.py` changed packet162 artifacts. It retained the earlier false
+readiness marker in
+[`attempts/readiness-190a2d39181ba489e940970222dcee89db9472edbbce9764dc2dd0d614ec8358.json`](../experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/evidence/micro-prep/attempts/readiness-190a2d39181ba489e940970222dcee89db9472edbbce9764dc2dd0d614ec8358.json).
+[Current readiness](../experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/READY-FOR-DEVICE.json),
+[entry/report receipt](../experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/evidence/micro-prep/entry-report.json),
+[validation](../experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/evidence/micro-prep/validation.json).
+
+CPU only, nice 19, cores 8–15/24–31, Python `-B`, stdin `/dev/null`,
+2 GiB address-space hard cap. The seal's inherited request for 4 GiB was clamped
+to 2 GiB in its invoking process; packet source and gates were unchanged.
+No model files, GPU, services, sudo, settings or live queues were used or changed.
+The seal verified the existing small prepared row artifacts. Main was fetched
+and pulled successfully, with HEAD == origin/main at `cd79be8cf` before work.
+[Adapter implementation and validation note](2026-10-19-own-runtime-opsreview8.md#packet162c--standalone-micro-report-adapter).

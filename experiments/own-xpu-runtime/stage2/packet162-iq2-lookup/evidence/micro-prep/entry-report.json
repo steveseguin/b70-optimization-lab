@@ -1,10 +1,10 @@
 {
-  "passed": false,
+  "passed": true,
   "jobs": [
     {
       "job": "packet162b-enum11-diagnostic-B",
       "unit": "screen-packet162b-enum11-diagnostic-B",
-      "passed": false,
+      "passed": true,
       "binaries": [
         {
           "passed": true,
@@ -87,39 +87,24 @@
       "shared_environment_matches": true,
       "packet_library_override": false,
       "report": {
-        "passed": false,
+        "passed": true,
         "kinds": [
           {
-            "passed": false,
-            "kind": "smoke",
-            "error_type": "ValueError",
-            "locations": [
-              {
-                "file": "rehearse_entry.py",
-                "line": 1394
-              },
-              {
-                "file": "rehearse_entry.py",
-                "line": 1271
-              }
+            "passed": true,
+            "kind": "micro",
+            "collisions": [],
+            "report_completed": true,
+            "synthetic_evidence": true,
+            "device_executed": false,
+            "admission_executed": false,
+            "real_entry_main": false,
+            "entry_execution": "parser-and-report-only",
+            "report_lineage": "standalone-micro",
+            "cases": [
+              "reopen",
+              "close"
             ],
-            "error": "entry import, report schema, or CPU isolation failed"
-          },
-          {
-            "passed": false,
-            "kind": "bracket",
-            "error_type": "ValueError",
-            "locations": [
-              {
-                "file": "rehearse_entry.py",
-                "line": 1394
-              },
-              {
-                "file": "rehearse_entry.py",
-                "line": 1271
-              }
-            ],
-            "error": "entry import, report schema, or CPU isolation failed"
+            "negative_result_tested": true
           }
         ],
         "synthetic_evidence": true,
