@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "wrapper_help": "usage: entry.py [-h] --lane {A,B} [--kind {full512,smoke,bracket}] --output\n                OUTPUT [--reference REFERENCE] [--fault-review FAULT_REVIEW]\n                [--authorized-device-window] [--plan]\n\nOne fresh model load: 512-input prefill, then every fixed realistic prompt.\n\noptions:\n  -h, --help            show this help message and exit\n  --lane {A,B}\n  --kind {full512,smoke,bracket}\n                        smoke/bracket accepted only by offline report\n                        compatibility tests\n  --output OUTPUT\n  --reference REFERENCE\n  --fault-review FAULT_REVIEW\n  --authorized-device-window\n  --plan\n",
+  "rows": [
+    {
+      "name": "packet163-one-card-full512-A-a",
+      "flags": [
+        "--lane",
+        "--kind",
+        "--output",
+        "--fault-review",
+        "--authorized-device-window"
+      ]
+    },
+    {
+      "name": "packet163-one-card-full512-A-b",
+      "flags": [
+        "--lane",
+        "--kind",
+        "--output",
+        "--fault-review",
+        "--authorized-device-window",
+        "--reference"
+      ]
+    }
+  ],
+  "native_probe_sha256": "41cb1feffff444dfd0fb354b2eb3d75b1e736c48747917810e1dbdabddb979ae",
+  "native_flag_source": "actual Transport command builder or one-card native_command; built executable --help"
+}

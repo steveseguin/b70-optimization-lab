@@ -1,0 +1,81 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "model_payload_read": false,
+  "tokenizer": "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8/tokenizer.json",
+  "tokenizer_sha256": "0997f410c57a1f4e53b09e4be8f4a172d90edd9564368fb0847030937229b9f3",
+  "tokenizer_verified_against_all12_registered_inputs": [
+    {
+      "prompt_id": "decision-memo",
+      "tokens": 60,
+      "passed": true
+    },
+    {
+      "prompt_id": "risk-register",
+      "tokens": 61,
+      "passed": true
+    },
+    {
+      "prompt_id": "technical-guide",
+      "tokens": 69,
+      "passed": true
+    },
+    {
+      "prompt_id": "performance-hypotheses",
+      "tokens": 64,
+      "passed": true
+    },
+    {
+      "prompt_id": "architecture-tradeoff",
+      "tokens": 67,
+      "passed": true
+    },
+    {
+      "prompt_id": "code-review",
+      "tokens": 90,
+      "passed": true
+    },
+    {
+      "prompt_id": "customer-email",
+      "tokens": 77,
+      "passed": true
+    },
+    {
+      "prompt_id": "incident-retrospective",
+      "tokens": 87,
+      "passed": true
+    },
+    {
+      "prompt_id": "benchmark-analysis",
+      "tokens": 65,
+      "passed": true
+    },
+    {
+      "prompt_id": "release-plan",
+      "tokens": 68,
+      "passed": true
+    },
+    {
+      "prompt_id": "sql-debugging",
+      "tokens": 83,
+      "passed": true
+    },
+    {
+      "prompt_id": "bug-report-synthesis",
+      "tokens": 71,
+      "passed": true
+    }
+  ],
+  "corpus": "experiments/qwen38-27b-b70/data/2026-09-13-prefill-followup-corpus.json",
+  "corpus_sha256": "af4d46a25671a7318afb3e169990e0960b81bf1fa7bf43358c41d4b969dfb1e8",
+  "corpus_label": "prose",
+  "source_path": "docs/model-optimization-guide.md",
+  "source_repetition": false,
+  "source_text_sha256": "891c157eb4c79cf4c42b147cb80edba4e5e1f6e621e78f2ebf3b3b7e4b23bcc1",
+  "construction": "first exactly512 numeric token IDs, no special tokens, unrepeated contiguous source excerpt",
+  "method": "experiments/qwen38-27b-b70/scripts/bench-prefill-followup.py:123-137",
+  "timing": "native prompt loop start through first generated token;512/seconds; separate request TTFT",
+  "oracle_coverage": false,
+  "decoded_prefix": "## 0. Operating Principles\n\nDo not start by changing flags or code. Start by making the lane measurable.\n\nThe strongest optimization work in this repo came from this loop:\n\n1. Define the quality lane and benchmark identity.\n2. Establish a valid baseline.\n3. Create a repeatable harness.\n4. Use cheap screens to reject bad ideas.\n5. Use realistic cold-suite gates before promotion.\n6. Record every meaningful result, including failures.\n7. Promote only clean, reproducible, quality-preserving wins.\n\nThe weakest work came from:\n\n- comparing runs with different model/runtime identity;\n- treating synthetic or warmed prompts as real throughput;\n- changing too many flags at once;\n- losing patches and logs;\n- pushing huge model artifacts or secrets;\n- declaring victory from a smoke test when the bug was intermittent.\n\n## 1. Start With The Workspace\n\nUse the active checkout:\n\n```bash\ncd /home/steve/llm-optimizations\ngit status --short --branch\ngit log -1 --oneline\n```\n\nExpected policy:\n\n- active workspace: `/home/steve/llm-optimizations`;\n- branch: `main`;\n- no secondary worktree or non-`main` branch;\n- stage explicit files only, not broad `git add -A`;\n- commit focused work regularly;\n- push once useful state is captured.\n\nBefore running or editing anything, read:\n\n```text\nAGENTS.md\nAGENT_HANDOFF.md\nCURRENT.md\ndocs/model-effort-index.md\ndocs/research-workflow-playbook.md\ndocs/localmaxxing.md\ndocs/local-ops.md\n```\n\nIf the repo is dirty:\n\n1. Identify tracked changes, staged changes, and untracked files.\n2. Decide whether each untracked file is valuable evidence, transient output,\n   a secret, a model artifact, or a build artifact.\n3. Track valuable compact artifacts.\n4. Add ignore rules for transient output, secrets, weights, and logs that are\n   too large or not useful.\n5. Do not delete another agent's work unless it is clearly transient and\n   already captured elsewhere.\n\n## 2. Create A Model Lane Packet\n\nEvery serious model effort should have a packet under:\n\n```text\nresults/<model>-<quant>-<hardware>/\n```\n\nStart with these files:\n\n```text\nresults/<",
+  "input_tokens": 512
+}

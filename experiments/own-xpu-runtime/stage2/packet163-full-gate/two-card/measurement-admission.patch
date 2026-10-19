@@ -1,0 +1,22 @@
+--- a/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/main.cpp
++++ b/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/main.cpp
+@@ -156,6 +156,10 @@
+   fs::path inputs, output, model, plan, auth, oracle;
+ };
+ static Options parse(int argc, char **argv) {
++  // PACKET163_HELP_BEGIN: metadata only; before device or model access.
++  if(argc==2 && std::string(argv[1])=="--help") { std::cout << "Options: --argument-audit --audit-prepare-each --authorized-device-window --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --first-layer --gemv --host-path --identity --input --max-new --memory --mini --model-dir --native-nice --nongemv --oracle --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --seconds --selection --selection-sha256 --shared --stage --stop-fd --target-split --timing --tokens --wait-seconds\nResponse cap:1..512; full16-bit KV; unchanged engine arithmetic.\n";std::exit(0); }
++  // PACKET163_HELP_END
++
+   Options a;
+   bool seconds_supplied = false;
+   for (int i = 1; i < argc; ++i) {
+@@ -242,7 +246,7 @@
+   require(a.draft_head=="full","draft shortlist head not qualified; use full");
+   require(a.cards >= 1 && a.cards <= 2 && a.card >= 0 && a.card + a.cards <= 4,
+           "card range");
+-  require(a.tokens > 0 && a.tokens <= 128 && a.context >= 8 &&
++  require(a.tokens > 0 && a.tokens <= 512 && a.context >= 8 &&
+               a.context <= 32768 && a.seconds > 0 && a.seconds <= 172800,
+           "bounded generation/context/deadline");
+   require(a.timing=="token" || a.timing=="launch" || a.timing=="class" || a.timing=="attribution","timing mode");
