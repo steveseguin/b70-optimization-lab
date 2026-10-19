@@ -80,3 +80,41 @@ broader all-tracked documentation check still reports 458 broken links outside
 packet165; this task leaves those unrelated files untouched.
 The whitespace check flags preserved parent prompt/source bytes and required
 blank context lines in the generated patch; those identity bytes were kept.
+
+## Packet165b — repair READY pin paths and retain their files
+
+The missing analyzer file was a path error: both reports already lived under
+`evidence/`, while READY named them relative to the topology directory.
+Rerunning `test_measurement.py one-card` and `test_measurement.py two-card`
+reproduced the original hashes exactly (`f4d1772b…` and `8c1f2acd…`).
+The reports were already tracked. The READY writer now emits actual paths for
+every check, the seals, and the two child READY files.
+
+Following those corrected paths exposed 193 native-test source pins into the
+older packet163 tree. `repair165b.py` checks their original hashes and retains
+exact private copies under each topology's `lineage/packet165b-sources/`.
+The original native receipts are preserved byte for byte in lineage; current
+receipts point at the retained source bytes. Commands, outcomes and native
+arithmetic did not change. This was retention, not a new native test run.
+
+All three proposals passed `lanequeue.py plan --lane A/B --directory TEMP`
+and `ops/rehearse_entry.py TEMP/queue-A/B.txt --report --json`, using separate
+temporary copies. The six passing logs are in the packet's
+`evidence/packet165b/` directory and are pinned by the final READY files.
+The shared preparation-adapter and conditional gate warnings remain disclosed;
+the overall report rehearsals pass. An initial rehearsal failed because a
+decimal 2 GB address-space hard limit prevented the shared sandbox from setting
+its fixed 2 GiB limit; the failed report is retained. Repeating with that
+existing 2 GiB sandbox limit passed, without changing shared code or settings.
+
+Every current pin is checked and retained in Git, including the previously
+ignored native fixture sources and two already-built device binaries (about
+40 MiB combined). Those larger artifacts are deliberately retained because
+the existing seals require their exact bytes and this repair forbids compiling.
+Restore them from this commit; do not replace them with a fresh build under
+the old hashes. READY is written last, after evidence and this note.
+
+CPU only: nice19, cores 8–15 and 24–31, Python `-B`, stdin `/dev/null`.
+No GPU, model read, compile, service, sudo, setting, live queue or frozen tree
+changed. Proposal contents are unchanged. The pre-existing dirty workspace
+is preserved; this commit includes only packet165 and this note.

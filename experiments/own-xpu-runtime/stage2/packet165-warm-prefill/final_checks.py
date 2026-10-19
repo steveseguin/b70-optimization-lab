@@ -7,17 +7,17 @@ assert subprocess.check_output(['git','branch','--show-current'],text=True).stri
 read=lambda f:json.loads(f.read_text())
 root_checks={}
 for leaf in ('packet163-replay.json',):
-    f=P/'evidence'/leaf;assert read(f)['passed'];root_checks[leaf]=sha(f)
+    f=P/'evidence'/leaf;assert read(f)['passed'];root_checks[str(f.relative_to(P))]=sha(f)
 f=P/'evidence/prefill-ceiling.json'
 assert read(f)['measured'] is False and read(f)['promotion_eligible'] is False
-root_checks['design-sensitivity']=sha(f)
+root_checks[str(f.relative_to(P))]=sha(f)
 ready=[]
 for name,lanes in [('one-card','A'),('two-card','AB')]:
     p=P/name;checks={}
     for leaf in ('build.json','identity-check.json','delta-check.json','analyzer-tests.json','report512-test.json',
                  'real-arm-sequence.json','native-sequence.json','preparation-probe.json','device-path-imports.json','flags.json'):
         f=p/'evidence'/leaf;r=read(f);assert r['passed'] and r['device_executed'] is False,(name,leaf)
-        checks[leaf]=sha(f)
+        checks[str(f.relative_to(p))]=sha(f)
     native=read(p/'evidence/native-sequence.json')
     assert native['target_resets_per_native_owner']==14 and native['sensor_streams_per_reset']==4
     assert native['peak_child_rss_bytes']<4*1024**3
@@ -26,14 +26,14 @@ for name,lanes in [('one-card','A'),('two-card','AB')]:
         assert result['returncode']==0 and len(result['sensor_checks'])==56
     for lane in lanes:
         stem=('one' if name=='one-card' else 'two')+'-'+lane
-        report=P/'evidence'/('rehearse-'+stem+'.json');r=read(report)
+        report=P/'evidence/packet165b'/f'rehearse-{name}-{lane}.json';r=read(report)
         assert r['passed'] and len(r['jobs'])==2
         assert all(j['passed'] and j['report']['passed'] and not j['service_started'] for j in r['jobs'])
-        checks['shared-report-'+lane]=sha(report)
-        log=P/'evidence'/('plan-'+stem+'.log')
+        checks[str(report.relative_to(ROOT))]=sha(report)
+        log=P/'evidence/packet165b'/f'plan-{name}-{lane}.log'
         rows=[json.loads(line) for line in log.read_text().splitlines() if line.startswith('{')]
         assert len(rows)==2 and all(r['plan']=='passed' for r in rows)
-        checks['lanequeue-plan-'+lane]=sha(log)
+        checks[str(log.relative_to(ROOT))]=sha(log)
         for attempt in ('a','b'):assert not (p/'evidence'/f'device-warm512-{lane}-{attempt}').exists()
     seal=read(p/'seal.json')
     for leaf,h in seal['files'].items():assert sha(p/leaf)==h,(name,leaf)
@@ -42,6 +42,7 @@ for name,lanes in [('one-card','A'),('two-card','AB')]:
     for rel,h in read(p/'inherited-native.json')['embedded_readonly_dependencies'].items():
         assert (ROOT/rel).is_relative_to(p) and sha(ROOT/rel)==h
     budget=read(p/'budget.json');assert budget['device_floor_bytes']==25_000_000_000 and budget['cpu_stop_bytes']==27_000_000_000
+    checks['seal.json']=sha(p/'seal.json')
     ready.append((p,dict(ready=True,device_executed=False,queued=False,created_utc_ns=time.time_ns(),
         seal_sha256=sha(p/'seal.json'),checks=checks,scope='CPU preparation passed; warm512 speed and full-output quality remain unmeasured',
         oracle_cap=128,full_output_oracle_exact=False,execution_order='incident-retrospective once, reset, prefill512, remaining11 once',
@@ -57,7 +58,7 @@ for name,lane in [('one-card','A'),('two-card','A'),('two-card','B')]:
 if args.ready:
     for p,value in ready:save(p/'READY-FOR-DEVICE.json',value)
     save(P/'READY-FOR-DEVICE.json',dict(ready=True,device_executed=False,queued=False,created_utc_ns=time.time_ns(),
-        packets={p.name:sha(p/'READY-FOR-DEVICE.json') for p,_ in ready},proposals=proposal_rows,checks=root_checks,
+        packets={str((p/'READY-FOR-DEVICE.json').relative_to(P)):sha(p/'READY-FOR-DEVICE.json') for p,_ in ready},proposals=proposal_rows,checks=root_checks,
         warm512_measured=False,batched_prefill_implemented=False,full_output_oracle_exact=False,
         scope='CPU preparation only; select A or B two-card proposal; one-card A whole-host; no queue action'))
     print('READY written last; no GPU run or queue action')
