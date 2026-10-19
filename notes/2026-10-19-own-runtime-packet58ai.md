@@ -114,3 +114,40 @@ plan pass. Pin admission checks 630 pins before the final readiness marker.
 Compiler peak RSS was 726484 KiB; CPU-check peak RSS was 40656896 bytes,
 both below 2 GiB. The proposal was copied back from the successful temporary
 plan. Shared rehearsal warnings are disclosed above; there are no FAIL lines.
+
+## Packet58aic — proposal-derived coordinator identity
+
+The 03:34:35 UTC smoke refusal happened before device work: the gate compared
+the running row with an obsolete literal job name. It now reads this packet's
+current proposal and matches the exact name, lane, runner and `--output`.
+Foreign queued or in-flight work on either lane still refuses admission.
+The runner and reseal guard also derive their output root from that proposal;
+the unit test uses the coordinator's actual unit-name builder. The literal
+audit found no remaining attempt-specific names in active Python sources.
+Historical snapshots and receipts retain their original identities.
+
+All 37 Python tests pass, including the original b-smoke proposal and the
+fresh c-smoke proposal, with foreign name/output/entry rejection on both
+lanes. Three intercepted smoke launch paths pass with fresh host admission;
+their maximum child RSS was 35,028,992 bytes. No native build was needed.
+The first shared rehearsal caught a proposal read during passive import;
+the preserved failure led to moving that read into entry execution. The final
+native loader/parser and both synthetic report checks pass. The existing
+missing preparation-probe and storage-helper warnings remain disclosed.
+
+The fresh proposal is `packet58ai-census-c-smoke-A`, with output
+`evidence/card0-census-c/smoke`. Its temporary-copy queue plan and immutable
+pin admission pass. The old build/readiness receipts and initial rehearsal
+are retained under `evidence/p58aic-*`; the final readiness marker is written
+last, binding the refreshed proposal, seal and checks. This remains a
+CPU-prepared diagnostic, conditional on fresh coordinator admission and
+device quality checks. No job was queued, no GPU/service/settings were used,
+and no live queue, other packet, shared ops or native source was changed.
+
+Validation used `nice -n 19`, helper cores `8-15,24-31`, `python3 -B` and
+closed stdin. Passive tests, rehearsal, sealing and planning used a 2 GiB
+address-space cap; the intercepted argument probes retain the future launch
+limits and report their measured RSS above. No GGUF was read. Evidence:
+`evidence/p58aic-python-tests.log`, `evidence/p58aic-arguments.log`,
+`evidence/p58aic-rehearse.json`, `evidence/p58aic-queue-plan.log`, and
+`evidence/pin-admission.json` in the packet.

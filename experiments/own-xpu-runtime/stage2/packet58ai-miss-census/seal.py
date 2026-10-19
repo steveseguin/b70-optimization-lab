@@ -17,7 +17,8 @@ def verify():
 
 def create():
     limits()
-    if (P/'evidence/card0-census-b').exists():raise ValueError('never reseal started census')
+    from coordinator_gate import output_root
+    if output_root().exists():raise ValueError('never reseal started census')
     build=json.loads((P/'evidence/build.json').read_text())
     assert build['passed'] and not build['device_executed']
     gates={}

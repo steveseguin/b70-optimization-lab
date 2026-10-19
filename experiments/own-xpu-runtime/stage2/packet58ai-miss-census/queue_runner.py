@@ -10,12 +10,13 @@ import time
 import window as W
 from views import digest, bracket, DEFAULT_MAINTENANCE
 from exec_limits import check as check_exec_limits
+from coordinator_gate import output_root
 
 P = Path(__file__).resolve().parent
 ORDER = ('K1a', 'K1b', 'WSCREEN')
 GAP_SECONDS = 90
 STAGES = (('combined','p60fusion'),('smoke','smoke'))
-ROOT = P / 'evidence/card0-census-b'
+ROOT = None  # Resolve the current proposal at entry, not during passive imports.
 
 
 def commands(output, card, review, library, view='p60fusion', maintenance=DEFAULT_MAINTENANCE):
@@ -70,7 +71,7 @@ def plan(output, view):
 
 def verify_smoke(maintenance=DEFAULT_MAINTENANCE):
     import suite_driver as D
-    root=ROOT/'smoke'
+    root=(ROOT or output_root())/'smoke'
     receipt=verify_success('WSCREEN',root,0,0)
     summary=D.summarize_bracket(root/'WSCREEN/run','smoke',D.oracle_inputs(),maintenance)
     W.require(summary.get('smoke_passed') is True,'first async device smoke required')
@@ -91,7 +92,8 @@ def main(argv=None):
     recorded=json.loads((P/'library-path.json').read_text())['LD_LIBRARY_PATH']
     W.require(args.library_path==recorded,'recorded oneAPI library path required')
     view=dict(STAGES)[args.arm]; output=args.output.resolve()
-    W.require(output == ROOT/args.arm and not output.exists(), 'fixed fresh arm output required')
+    root=ROOT or output_root()
+    W.require(output == root/args.arm and not output.exists(), 'proposed fresh arm output required')
     metadata=plan(output,view)
     if args.plan:
         print(json.dumps(metadata,indent=2)); return 0
@@ -122,7 +124,7 @@ def main(argv=None):
     try:
         save(); _,cursor=W.S.journal()
         for i,name in enumerate(ORDER):
-            W.require(not stopped and not (output/'STOP').exists() and not (ROOT/'STOP').exists(), 'screen stopped')
+            W.require(not stopped and not (output/'STOP').exists() and not (root/'STOP').exists(), 'screen stopped')
             fresh,cursor=W.S.journal(cursor)
             W.require(not W.S.FAULT.search(fresh),'new GPU fault; no launch')
             with (output/(name+'.log')).open('x') as log:
@@ -134,7 +136,7 @@ def main(argv=None):
             if i+1<len(ORDER):
                 end=time.monotonic()+GAP_SECONDS
                 while time.monotonic()<end:
-                    W.require(not stopped and not (output/'STOP').exists() and not (ROOT/'STOP').exists(),'stopped during drain gap')
+                    W.require(not stopped and not (output/'STOP').exists() and not (root/'STOP').exists(),'stopped during drain gap')
                     fresh,cursor=W.S.journal(cursor)
                     W.require(not W.S.FAULT.search(fresh),'new GPU fault during gap')
                     time.sleep(min(1,max(0,end-time.monotonic())))
