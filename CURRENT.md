@@ -1,5 +1,7 @@
 # Current Workspace State
 
+**October 19, 10:05 UTC — 1-card IQ3 record 34.57 tok/s on one Arc Pro B70, submitted and approved (`cmvf31py400furf01tv54rxo7`).** Packet58as = the packet58aj line with a bounded spin host wait replacing the 1 ms sleep poll (+8.15%; bracket +8.58%, 60/60 exact; chain WS128 34.573, WS128x 34.308, all windows exact). See `notes/2026-10-19-own-runtime-packet58as-result.md` and `results/localmaxxing-submissions.md`.
+
 **October 19, packet58am demand-transfer candidate built on CPU:** The new
 one-card candidate keeps packet58ah's full 31.663 tok/s composition. Both
 compilers pass the byte checks, and the actual device binary passes the CPU
