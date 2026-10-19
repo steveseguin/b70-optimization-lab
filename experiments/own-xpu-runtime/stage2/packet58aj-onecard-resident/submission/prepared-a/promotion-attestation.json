@@ -1,0 +1,47 @@
+{
+  "schema": "neural.download.promotion-attestation.v1",
+  "identity": {
+    "model_revision": "766911a6b7369840a91dbcd95f9f997acaab6cd6",
+    "runtime_revision": "a0420fc55605f38d01234a29fc859d7dffd75f3a",
+    "optimization_identity": "packet58aj-resident-tile16-overlap-tp1-plain-lru21.55gb-c4096-zero-copy-seal-f50f72ef2fb6df76ffa1fd70ae3c437180fe65feb8728b1ce829cc3706090723",
+    "arithmetic": "iq3-p49-split32-v1",
+    "suite_sha256": "0ad543d1c1f379a0b6cee88e06236e495c45eee7ba12cfcef062b6e03303e812"
+  },
+  "performance_evidence": {
+    "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/submission/prepared-a/result.json",
+    "sha256": "d80483447751f2fc78101ae4b68d44a4429284f9cd970123068bfc49cef3a10b"
+  },
+  "quality_evidence": [
+    {
+      "path": "experiments/own-xpu-runtime/stage2/packet58aj-onecard-resident/submission/prepared-a/evidence.json.gz",
+      "sha256": "271cec3c1f325bea5cef3ae9bac1da6e2c700bd7b1bb3d53e9f295ae518d8a4f",
+      "supports": [
+        "varied_task_quality_passed",
+        "exact_or_target_oracle_passed",
+        "deterministic_repeats_passed",
+        "fresh_server_repeat_passed",
+        "target_model_unchanged",
+        "no_quality_loss"
+      ]
+    }
+  ],
+  "gates": {
+    "varied_task_quality_passed": true,
+    "exact_or_target_oracle_passed": true,
+    "deterministic_repeats_passed": true,
+    "fresh_server_repeat_passed": true,
+    "target_model_unchanged": true,
+    "no_quality_loss": true,
+    "strict_512_token_final_gate_passed": false,
+    "fresh_timing_repeat_passed": false
+  },
+  "submission_scope": {
+    "rule": "packet58aj.onecard-128-preparation.2026-10-19",
+    "date": "2026-10-19",
+    "requested_max_new": 128,
+    "strict_512_gate_passed": false,
+    "authority": "Owner packet58aj brief; preparation only; coordinator submits.",
+    "preparation_only": true,
+    "fresh_timing_repeat_passed": false
+  }
+}
