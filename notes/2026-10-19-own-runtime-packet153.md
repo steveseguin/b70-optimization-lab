@@ -32,3 +32,22 @@ was started; no model payload/full-shape read or privileged operation occurred.
 
 Initial source milestone: implementation and CPU test sources prepared;
 qualification and final readiness are still pending. No proposal is queued.
+
+At 00:42 UTC the record chain's freeze ended. A CPU fixture that had been frozen
+hit its wall-clock timeout on resumption; its failed-attempt log is retained and
+is not evidence. I stopped only the replacement CPU fixture and its own Python
+parent to preregister a two-worker run that fits the time box: each worker has a
+1.25 GiB address-space cap. The state fixture retains twelve boundary positions,
+forced hits/misses/cancellations, all four abandoned-redo cases, a 98-step mixed
+sequence, six bank-role pairs, all three corruption negatives and immutable-table
+checks across resets. Every compiler/choice runs twice from a fresh process.
+The real-size transport fixture separately tests 984 extents at nine positions,
+including 4095, using synthetic bytes and the actual static kernel tile body.
+
+By 00:49 UTC both native builds, GNU/Intel real-size copy checks, controller
+checks, admission, drain/limits, strict timing-data analysis and loader checks
+passed. The packet's own `prepare_submission` replayed a copied packet136 bundle
+at its original 58.798108759182306 rate and refused to label it packet153.
+Historical pins in that rehearsal live only in temporary scratch. No submission
+payload is retained, sent or used as a new measurement. The longer byte-state
+matrix is still running before final sealing.

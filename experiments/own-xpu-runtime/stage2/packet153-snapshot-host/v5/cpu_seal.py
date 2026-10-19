@@ -2,7 +2,7 @@
 import argparse,json,subprocess,sys
 from pathlib import Path
 from p153_v5_build_engine import P,LOCAL,ROOT,sha,save
-GATES=('build','retained-report-regression','split-cpu','controller','safety','exec-limits')
+GATES=('build','state','real-shape','admission','analysis','submission-rehearsal','controller','safety','exec-limits','loader')
 def check_sources(rows):
  for name,digest in rows.items():
   assert (ROOT/name).is_file() and sha(ROOT/name)==digest,'source changed: '+name
@@ -15,7 +15,9 @@ def seal():
  check_sources(rows['build']['artifacts'])
  paths=set(P.glob('*.py'))|set(P.glob('native/*'))|set(P.glob('native-src/*'))|set(P.glob('configs/*.json'))|set((LOCAL/'proposals').glob('*.txt'))
  paths.update(P/'lineage'/mode/n for mode in ('production','static') for n in ('selection.json','dispatch-speed6.json','memory-plan.json'))
- paths.update(LOCAL/n for n in ('shared_oracle.py','oracle-binding.json','storage.py','kernel_guard.hpp','chain-registration.json'))
+ paths.update(LOCAL/n for n in ('shared_oracle.py','oracle-binding.json','storage.py','kernel_guard.hpp','chain-registration.json','packet56_submission.py','selection-template.json','bundle_selection.py','kd_reference.py','kd_projection_replay.py','receipt_replay.py','build_engine.py'))
+ for folder in ('submission-vendor','submission-templates','timing-fixture'):
+  paths.update((LOCAL/'lineage-inputs'/folder).glob('*'))
  for folder in (LOCAL/'native-base',LOCAL/'lineage-inputs/vendor/repo'):
   paths.update(f for f in folder.rglob('*') if f.is_file() and not f.is_symlink() and 'build' not in f.relative_to(folder).parts)
  # Evidence root paths are historical regression data, not external dependencies.
@@ -23,7 +25,7 @@ def seal():
  sources={str(f.relative_to(ROOT)):sha(f) for f in sorted(paths)}
  sources.update(rows['build']['sources']);sources.update(rows['build']['artifacts'])
  subprocess.run([sys.executable,'-B',str(LOCAL/'shared_oracle.py'),'--require-complete'],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,check=True,timeout=180)
- row=dict(schema='packet150.cpu-composition.v1',passed=True,device_executed=False,device_quality_pending=True,arithmetic='iq3-p49-split32-v1',sources=sources,variants=['production','static'],gates=list(GATES),binary_sha256=sha(P/'build/device/own-rt-iq3'))
+ row=dict(schema='packet153.cpu-composition.v1',passed=True,device_executed=False,device_quality_pending=True,arithmetic='iq3-p49-split32-v1',sources=sources,variants=['production','static'],gates=list(GATES),binary_sha256=sha(P/'build/device/own-rt-iq3'))
  save(P/'cpu-seal.json',row)
  for mode in ('production','static'):save(P/'lineage'/mode/'screen-seal.json',row)
  save(P/'placement-validation/wrapper-seal.json',row)

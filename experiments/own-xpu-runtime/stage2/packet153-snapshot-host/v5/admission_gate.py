@@ -1,34 +1,24 @@
-"""Bind real full-shape censuses, class coverage and copied alias closure."""
-import json,tarfile
-from pathlib import Path
+"""Inherited allocation ledger plus exact static metadata delta, no full-shape read."""
+import csv,json,resource
 from p153_v5_build_engine import P,LOCAL,ROOT,sha,save,limits
 
 def main():
- limits();shape=P/'evidence/full-shape.json';proof=json.loads(shape.read_text());assert proof['passed'] and not proof['device_executed']
+ limits();csv_path=LOCAL/'lineage-inputs/capture-extents.csv'
+ entries=list(csv.DictReader(csv_path.open()))
+ active=[r for r in entries if int(r['candidate_copy_bytes'])]
+ assert len(active)==984 and sum(int(r['candidate_copy_bytes']) for r in active)==19025640
+ table_bytes=sum((int(r['candidate_copy_bytes'])+128*1024**2-1)//(128*1024**2) for r in active)*48
+ assert table_bytes==47232 and table_bytes<65536
  rows=[]
- for run in proof['runs']:
-  if run['fresh']:continue
-  archive=ROOT/run['artifact']['path'];assert sha(archive)==run['artifact']['sha256']
-  with tarfile.open(archive) as t:bank=json.loads(t.extractfile('class-layout.json').read())
-  m=run['memory'];assert m['passed'] and 0<bank['bytes']<=600*1024**2
-  maximum=m['planned_maximum_bytes'];actual=m['device_allocation_bytes'];ceiling=30*1024**3
-  assert actual<=maximum<ceiling and m['planned_free_bytes']>=m['minimum_free_bytes']
-  rows.append(dict(variant=bank['class_layout_bank'],rank=run['rank'],copied_weight_bytes=bank['bytes'],copied_weights=bank['weights'],actual_device_allocation_bytes=actual,planned_maximum_bytes=maximum,arena_ceiling_bytes=ceiling,arena_headroom_bytes=ceiling-actual,conservative_arena_headroom_bytes=ceiling-maximum,physical_capacity_bytes=m['capacity_bytes'],planned_physical_free_bytes=m['planned_free_bytes'],minimum_physical_free_bytes=m['minimum_free_bytes'],driver_residency_unmeasured=True))
- assert len(rows)==4
- aliases=json.loads((LOCAL/'lineage-inputs/current-aliases.json').read_text());original=json.loads((LOCAL/'lineage-inputs/vendor-origin.json').read_text())['symlinks']
- assert set(aliases)==set(original)
- for name,target in aliases.items():assert (LOCAL/name).is_symlink() and str((LOCAL/name).readlink())==target and (LOCAL/name).exists(),name
- binaries=json.loads((LOCAL/'lineage-inputs/packet136-history/copy142.json').read_text())['immutable_binaries'];binaries.update(json.loads((LOCAL/'immutable-binaries.json').read_text()));checked=set();oracle=0
- for f in LOCAL.rglob('*'):
-  if not f.is_symlink():continue
-  target=f.resolve();assert target.exists(),str(f)
-  if target.is_relative_to(LOCAL):continue
-  if target==LOCAL.parent/'packet49-integrate/oracle':oracle+=1;continue
-  assert str(target) in binaries,'external non-allowlisted alias: '+str(f)
-  if target not in checked:assert sha(target)==binaries[str(target)];checked.add(target)
- sources={str(f.relative_to(ROOT)):sha(f) for f in (P/'admission_gate.py',shape,LOCAL/'immutable-binaries.json',LOCAL/'lineage-inputs/current-aliases.json',LOCAL/'lineage-inputs/packet136-history/copy142.json')}
- save(P/'evidence/admission.json',dict(passed=True,device_executed=False,rows=rows,host_required_available_bytes=97*1024**3+1200*1024**2,original_symlink_objects_preserved=len(aliases),external_binary_hashes_verified=len(checked),oracle_authority_aliases=oracle,sources=sources))
- print('Four rank/class admissions and all preserved aliases PASS')
-if __name__=='__main__':
- import resource
- resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+ from common import P56,module
+ gate=module('p153_memory_admission',P56/'memory_gate.py')
+ for mode in ('production','static'):
+  path=P/'lineage'/mode/'memory-plan.json';ledger=json.loads(path.read_text());config=gate.configuration(ledger,4096,1,0)
+  for rank in config['ranks']:
+   assert rank['free_with_mtp_bytes']>=ledger['minimum_free_bytes']
+   assert rank['arena_device_bytes']<ledger['arena_limit_bytes']
+   rows.append(dict(mode=mode,rank=rank['rank'],modeled_device_bytes=rank['arena_device_bytes'],arena_headroom_bytes=ledger['arena_limit_bytes']-rank['arena_device_bytes'],physical_free_bytes=rank['free_with_mtp_bytes'],minimum_free_bytes=ledger['minimum_free_bytes'],additional_table_bytes=table_bytes if rank['rank']==0 else 0,additional_reserve_bytes=65536 if rank['rank']==0 else 0))
+ sources={str(f.relative_to(ROOT)):sha(f) for f in (P/'admission_gate.py',csv_path,*(P/'lineage'/v/'memory-plan.json' for v in ('production','static')))}
+ save(P/'evidence/admission.json',dict(passed=True,device_executed=False,full_shape_read=False,actual_new_full_shape_census=False,inherited_ledger=True,driver_residency_unmeasured=True,rows=rows,static_table_bytes=table_bytes,extent_count=984,copied_bytes=19025640,sources=sources))
+ print('Static table 47232 bytes; both selections/ranks admitted from inherited ledger +64KiB reserve')
+if __name__=='__main__':resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()

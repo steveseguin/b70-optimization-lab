@@ -91,7 +91,7 @@ struct SnapshotStatic final:ownrt::SyclOperation {
   if(lo==omitted)return;
   const auto row=rows[lo];size_t start=lo?rows[lo-1].end_tile:0;
   size_t off=(tile_id-start)*SnapshotFlat::tile+lane*16;
-  auto source=row.source+(size_t(position)/row.divisor)*row.stride;
+  auto source=row.source+(row.divisor==4?size_t(position>>2):size_t(position))*row.stride;
   auto dst=restore?source:row.backup;auto src=restore?row.backup:source;
   for(size_t j=0;j<16&&off+j<row.bytes;++j)dst[off+j]=src[off+j];
  }

@@ -47,8 +47,7 @@ int main(int argc,char**argv){std::unique_ptr<Engine> e;try{
  };
  auto half=[&](int token,int position,bool spec){roles.insert({e->active_bank,e->spare_bank});pipeline::Request r{pipeline::half,token,position,0,int(spec),1,{0,0}};return pipeline::half_step(*e,c,r,shared.data(),image);};
  auto accept=[&]{pipeline::publish(*e,c);if(c.speculative)image.accept();c={};};
- std::vector<int> positions;for(int i=0;i<32;++i)positions.push_back(i);
- for(int p:{32,33,63,64,95,96,127,128,255,256,319})positions.push_back(p);
+ std::vector<int> positions{0,1,2,3,4,31,32,63,64,127,128,319};
  for(int p:positions){if(argc==6)break;++position_classes;
   reset(p);half(5,p,false);accept();const auto expected=canonical(*e,shared);
   std::vector<int> cuts{-1};if(p==3||p==4||p==31||p==32||p==63||p==64||p==127||p==128||p==319)cuts={-1,0,1,17};

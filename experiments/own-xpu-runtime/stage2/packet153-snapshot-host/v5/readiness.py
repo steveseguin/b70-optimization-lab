@@ -8,7 +8,8 @@ def verify_ready(preplan=False,variant=None,kind=None,lane=None):
  if preplan:return row
  assert lane=='B' and variant=='static','registered lane-B probe only'
  marker=json.loads((P.parent/'READY-FOR-DEVICE.json').read_text())
- assert marker['passed'] and marker['queued'] is False
+ assert marker['passed'] and marker['ready_for_device'] and marker['queued'] is False
+ for path,digest in marker['proposal_sha256s'].items():assert sha(ROOT/path)==digest,'proposal changed'
  assert marker['cpu_seal_sha256']==sha(P/'cpu-seal.json'),'final composition changed'
  for name in GATES:
   path=P/'evidence'/(name+'.json');proof=json.loads(path.read_text())

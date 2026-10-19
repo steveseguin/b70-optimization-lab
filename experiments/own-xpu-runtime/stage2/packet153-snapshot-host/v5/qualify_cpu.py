@@ -1,16 +1,14 @@
-"""Reproducible serial CPU qualification. Stops at the first refusal."""
-import argparse,subprocess,sys,resource
-from p153_v5_build_engine import P,LOCAL,ROOT,limits
-STEPS=[('build',P/'p153_v5_build_engine.py',[]),('shape',P/'p153_v5_full_shape.py',[]),('bytes',P/'byte_gate.py',[]),('limits',P/'exec_gate.py',[]),('safety',P/'safety_gate.py',[]),('admission',P/'admission_gate.py',[]),('stage-proposals',P/'p153_v5_queue_plan.py',['--stage']),('seal',P/'cpu_seal.py',['--seal']),('entry',P/'entry_gate.py',[]),('launch-limits',P/'launch_limit_gate.py',[]),('worker',P/'worker_gate.py',[]),('report',P/'report_gate.py',[]),('queue',P/'p153_v5_queue_plan.py',[]),('pins',P/'pin_gate.py',[])]
+"""Serial CPU preparation driver. Never launches devices or edits live queues."""
+import resource,subprocess,sys
+from p153_v5_build_engine import P,ROOT,limits
+STEPS=[('build','p153_v5_build_engine.py',[]),('state','state_gate.py',[]),('real-shape','real_shape_gate.py',[]),('controller','controller_gate.py',[]),('admission','admission_gate.py',[]),('analysis','analysis_gate.py',[]),('submission','submission_rehearsal.py',[]),('safety','safety_gate.py',[]),('limits','exec_gate.py',[]),('stage-proposals','p153_v5_queue_plan.py',['--stage']),('seal','cpu_seal.py',['--seal']),('entry','entry_gate.py',[]),('launch-limits','launch_limit_gate.py',[]),('worker','worker_gate.py',[]),('report','report_gate.py',[]),('queue','p153_v5_queue_plan.py',[]),('pins','pin_gate.py',[])]
 def main():
+ import argparse
  assert resource.getrlimit(resource.RLIMIT_AS)==(-1,-1)
- ap=argparse.ArgumentParser();ap.add_argument('--start',choices=[r[0] for r in STEPS],default='build');a=ap.parse_args()
- for name,path,args in STEPS[next(i for i,r in enumerate(STEPS) if r[0]==a.start):]:
+ ap=argparse.ArgumentParser();ap.add_argument('--start',choices=[x[0] for x in STEPS],default='build');a=ap.parse_args()
+ for name,leaf,args in STEPS[next(i for i,x in enumerate(STEPS) if x[0]==a.start):]:
   limits();print('START',name,flush=True)
-  with (P/'evidence'/('qualify-'+name+'.log')).open('w') as log:
-   r=subprocess.run([sys.executable,'-B',str(path),*args],stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,timeout=4500,cwd=ROOT)
-  if r.returncode:raise SystemExit(r.returncode)
-  if name=='build':
-   for mode in ('gnu-host','device'):(P/'build'/mode/'entry-main.o').unlink(missing_ok=True)
+  with (P/'evidence'/('qualify-'+name+'.log')).open('w') as log:r=subprocess.run([sys.executable,'-B',str(P/leaf),*args],cwd=ROOT,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,timeout=3000)
+  assert r.returncode==0,name
   print('PASS',name,flush=True)
 if __name__=='__main__':main()

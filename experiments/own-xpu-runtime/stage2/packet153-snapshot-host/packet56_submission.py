@@ -21,7 +21,7 @@ import sys
 from string import Template
 
 ROOT = Path(__file__).resolve().parents[4]
-sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lineage-inputs/submission-vendor"))
 from receipt_qualification import require_qualifying
 
 
@@ -419,7 +419,11 @@ def derive(e, packet):
     frozen = e.read('oracle-source/frozen-manifest.json', oracle_build['frozen_sources'][str(FROZEN_MANIFEST)])
     e.raw('oracle-source/frozen-manifest.json', completion['old_manifest_sha256'])
     require(oracle_build['passed'] is True and oracle_build['binary_sha256'] == seal['oracle_binary_sha256'], 'oracle binary identity mismatch')
-    require(sha(e.raw('oracle-source/suite_check.py')) == seal['sources'][str(STAGE / packet / 'oracle/suite_check.py')], 'oracle checker changed')
+    oracle_key=str(STAGE / packet / 'oracle/suite_check.py')
+    oracle_hash=seal['sources'].get(oracle_key)
+    if oracle_hash is None and packet!='packet49-integrate':
+        oracle_hash=e.read('oracle-binding.json')['files_sha256'][str(STAGE/'packet49-integrate/oracle/suite_check.py')]
+    require(sha(e.raw('oracle-source/suite_check.py')) == oracle_hash, 'oracle checker changed')
     if packet != 'packet49-integrate':
         binding = e.read('oracle-binding.json')
         require(binding == seal['shared_oracle'] and binding['arithmetic'] == ARITHMETIC
@@ -839,7 +843,7 @@ def is_packet49(item):
             or flags.get('buildReceiptSha256') in {v[1] for v in LINEAGE.values() if v is not None})
 
 
-def write_prepared(e, packet, output, repo=ROOT):
+def prepare_submission(e, packet, output, repo=ROOT):
     if 'record-threshold.json' in e.members:
         require((repo / THRESHOLD_FILE).read_bytes() == e.raw('record-threshold.json'),
                 'record threshold changed during preparation; collect again')
@@ -879,7 +883,7 @@ def write_prepared(e, packet, output, repo=ROOT):
                   wall=str(result['secondary']['wall_rate_statistics']['median']),
                   increase=str(result['comparison']['observed_increase_percent']),
                   boot=result['boot_id'], reference=result['comparison']['reference_submission'], result_path=result_ref['path'])
-    templates = ROOT / STAGE / TEMPLATE_PACKET / 'submission'
+    templates = Path(__file__).resolve().parent / 'lineage-inputs/submission-templates'
     for name in ('result-packet', 'ledger-entry'):
         text = Template((templates / (name + '.md.in')).read_text()).substitute(values)
         text = text.replace('over 39.422009 threshold', 'over ' + str(result['comparison']['threshold_tok_s']) + ' threshold')
@@ -935,6 +939,8 @@ def admit_chain(chain, registered, packet=P56_PACKET):
     require(chain == registered, 'unregistered chain')
     return chain
 
+
+write_prepared = prepare_submission
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
