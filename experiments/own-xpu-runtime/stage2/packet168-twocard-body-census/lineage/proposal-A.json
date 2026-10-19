@@ -1,0 +1,44 @@
+{
+  "name": "packet168-body-census-A-v1",
+  "lane": "A",
+  "argv": [
+    "/usr/bin/python3",
+    "-B",
+    "experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/entry.py",
+    "--lane",
+    "A",
+    "--kind",
+    "census",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/evidence/device-census-A-v1",
+    "--fault-review",
+    "{REVIEW}",
+    "--authorized-device-window"
+  ],
+  "env_extra": {},
+  "review": "experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/fault_review.py",
+  "planned_write_bytes": 634761100,
+  "plan": {
+    "host_required_available_bytes": 105411248128,
+    "expected_seconds": [
+      600,
+      900
+    ],
+    "watchdog_seconds": 7200,
+    "qualification": "BLOCKED: READY false; proposal retained for review, not runnable",
+    "entry_rehearsal": {
+      "binaries": [
+        {
+          "path": "experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/build/device/own-rt-iq3",
+          "sha256": "97929221c7957bad983748b0b390b91be92368ffaccf3b9f5da6f9c163453d45",
+          "args": [
+            "--help"
+          ],
+          "returncode": 0,
+          "contains": "Options:"
+        }
+      ],
+      "preparation_probe_note": "Partial native lifecycle only. Complete requested arm sequence is not qualified."
+    }
+  }
+}

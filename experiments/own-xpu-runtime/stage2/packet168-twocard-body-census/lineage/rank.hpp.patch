@@ -1,0 +1,27 @@
+--- a/rank.hpp
++++ b/rank.hpp
+@@ -236,6 +236,7 @@
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/native-source/repo/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/rank_canary.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/native-source/repo/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/request_reset.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/native-source/repo/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/checked/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/native_controller.hpp"
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/native_probe.hpp"
+ static int run_rank(const Options& a) {
+  using namespace pipeline;
+  std::unique_ptr<Weights> weights;std::unique_ptr<Engine> engine;std::unique_ptr<mtp36::DraftRuntime> provider;
+@@ -259,7 +260,7 @@
+    engine->head_publish=[&](){head_runtime->publish_hidden(head_box);};
+    engine->head_merge=[&](int seq,int pos,int fixture){head_runtime->merge_target(head_box,uint32_t(seq),pos,fixture,pipeline_cancel_check);};
+   }
+-  SpeculativeImage image(*engine);
++  SpeculativeImage image(*engine,a.census_probe);
+ #ifndef OWN_RT_HOST_ONLY
+   if(a.rank==0)weights->warm_lookups();
+ #endif
+@@ -313,6 +314,7 @@
+     undo(*engine,c,image,redo,r.position,r.token);
+    }
+    else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();state_dump(*engine,r.position);if(r.position==2147483647)request_state_inventory(*engine);}
++   else if(r.op==20){require(!c.pending&&!async_half_ready,"packet168 probe boundary");p168::probe(*engine,image,r,static_cast<uint8_t*>(mapping));}
+    else if(r.op==11){image.boundary();request_reset(*engine,c,provider.get(),a.output/("reset-"+std::to_string(r.sequence)+".txt"),accepted);accepted=0;}
+    #ifdef OWN_RT_HOST_ONLY
+    else if(r.op==12){require(a.rank==0&&c.pending&&c.speculative,"negative control ownership");image.corrupt_protected_for_gate(r.token);}

@@ -1,0 +1,22 @@
+--- a/strict_snapshot.hpp
++++ b/strict_snapshot.hpp
+@@ -251,8 +251,8 @@
+   out<<"],\"capture_bytes\":"<<total<<",\"extents\":"<<extents<<",\"bank_bytes_avoided\":"<<omitted<<",\"capture_submissions\":2}";save(path,out.str());
+  }
+ #endif
+- explicit SpeculativeImage(Engine& owner):e(owner) {
+-  if(e.a.rank!=0)return;
++ explicit SpeculativeImage(Engine& owner,bool diagnostic=false):e(owner) {
++  if(e.a.rank!=0&&!diagnostic)return;
+   std::set<std::string> outputs{"token","position","token_history"},kv;
+   std::set<Allocation> represented;
+   for(const auto& site:e.p.launches){outputs.insert(site.outputs.begin(),site.outputs.end());if(site.op=="qsa_append_pool")kv.insert(site.outputs.begin(),site.outputs.end());}
+@@ -286,7 +286,7 @@
+   zero_private();
+  }
+  void begin(uint8_t* shared) {
+-  require(e.a.rank==0&&backup&&!valid&&!redo_pending,"snapshot begin ownership");e.drain();
++  require((e.a.rank==0||e.a.census_probe)&&backup&&!valid&&!redo_pending,"snapshot begin ownership");e.drain();
+   require(!e.poisoned&&!e.integer(0,"error"),"snapshot cannot erase target failure");
+   // Host layer streaming releases its weights at every completed half. Restoring
+   // metadata never revives an allocation freed by a later layer transition.

@@ -1,0 +1,27 @@
+--- a/main.cpp
++++ b/main.cpp
+@@ -133,6 +133,7 @@
+   }
+ };
+ struct Options {
++  bool census_probe=false;
+   RetainSteps retain_steps;
+   int cancel_launch=-1;
+   int draft_rank=0,target_split=0; bool mtp=false; fs::path draft_capture;
+@@ -157,7 +158,7 @@
+ };
+ static Options parse(int argc, char **argv) {
+   // PACKET163_HELP_BEGIN: metadata only; before device or model access.
+-  if(argc==2 && std::string(argv[1])=="--help") { std::cout << "Options: --argument-audit --audit-prepare-each --authorized-device-window --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --first-layer --gemv --host-path --identity --input --max-new --memory --mini --model-dir --native-nice --nongemv --oracle --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --seconds --selection --selection-sha256 --shared --stage --stop-fd --target-split --timing --tokens --wait-seconds\nResponse cap:1..512; full16-bit KV; unchanged engine arithmetic.\n";std::exit(0); }
++  if(argc==2 && std::string(argv[1])=="--help") { std::cout << "Options: --census-probe --argument-audit --audit-prepare-each --authorized-device-window --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --first-layer --gemv --host-path --identity --input --max-new --memory --mini --model-dir --native-nice --nongemv --oracle --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --seconds --selection --selection-sha256 --shared --stage --stop-fd --target-split --timing --tokens --wait-seconds\nResponse cap:1..512; full16-bit KV; unchanged engine arithmetic.\n";std::exit(0); }
+   // PACKET163_HELP_END
+ 
+   Options a;
+@@ -175,6 +176,7 @@
+     else if (k == "--draft-mtp") a.mtp=true;
+     else if (k == "--draft-head") a.draft_head=value();
+     else if (k == "--draft-fault") a.draft_fault=value();
++    else if (k == "--census-probe") a.census_probe=true;
+     else if (k == "--draft-capture") a.draft_capture=value();
+     else if (k == "--draft-manifest") a.draft_manifest=value();
+     else if (k == "--draft-model") a.draft_model=value();
