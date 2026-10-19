@@ -983,3 +983,15 @@ Actions taken (11:05–11:15):
 Also on record: the p174 plan refusal at 11:01:47 (README edited after the build-receipt seal) was fixed in b2b9772bf by restoring the sealed README and moving the text to CPU-GATES.md. Briefs now say "no edits after the seal".
 
 STOP DOING acknowledged: QUIET on two-card diagnostics; preparation started only after already-ranked results; editing after READY; unprepared chain paths; sub-1% two-card levers one at a time.
+
+## Review 45 — 2026-10-19 12:1x UTC — VERDICT: ACT (owner pause in effect)
+
+The owner paused the campaign at 12:02 UTC for an inference setup. Over 2 h: 51% device-in-flight, 17.2% card-busy. p176 won +3.87%, and its chain 176-a started 7 min after the bracket ended (generator payoff). D2 (1.44×) and D1 (1.066×) were closed in about 2 min of device time each. 58asb failed twice on packaging, and the generator now has pre-device, closure and post-native checks.
+
+Actions:
+1. 176-a finishes through its normal path (no SIGTERM while loading). QUIET and the host lock release via `chain-176a.sh`. The lane drivers are then stopped gracefully, and no xpu-smi polling runs while the owner's server starts.
+2. 176-a close-out: CPU/API only. Submit if WS128 is exact and > 34.573038; no rerun during the pause.
+3. The resume queue is written into CURRENT.md: p178 S1 micro, the p176c fill lever, two-card plan B (two-sequence profile, multi-user label), and the review-tool accounting fix.
+4. The review-tool fix is deferred to un-pause (recorded in the resume queue).
+
+STOP DOING acknowledged: using launches to test new chain tooling; confirmation chains of submitted records; next-lever prep only after the bracket ends; leaving runners or waiters armed while the owner uses the cards.
