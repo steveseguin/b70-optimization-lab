@@ -1278,3 +1278,52 @@ on dev4); dev5-dev7 change some of its cuts, so it is a fresh sample, not a repl
 - **Decision:** both arms meet the mechanism → the keeper path holds at 2M on 1.2.0.dev7 on both seeds. The charter's
   "any history" line records that (and gets 2M if every bar is met), and the next lever is the NOTES header (say up
   to which item the STATE runs), checked at 240K. Mechanism missed on either arm → read why before anything else.
+
+## Campaign 46 (19:40-22:57 EDT): both 2M seeds on 1.2.0.dev7, 418/423 and 419/423; the keeper path holds; read 2026-10-18 22:59:35 EDT
+
+| | seed 2 | seed 0 |
+|---|---|---|
+| score | **418/423** (campaigns 43-45: 405, 411, 411) | **419/423** (campaign 41b on dev4: 419) |
+| time, client calls, cuts | 96 min 29 s, 1,335, 152 (all in place) | 92 min 49 s, 1,309, 149 (all in place) |
+| asked again, archive searches | 56, 187 | 58, 199 |
+| server totals prompt / cached / generated | 20,825,600 / 17,189,120 / 399,871 | 20,081,467 / 16,533,504 / 379,733 |
+| room, min (median) | 1.91 (2.36) GiB | **1.65** (2.50) GiB |
+| wrong STATE lines (`notes_truth.py`) | 4 of 8,583 (ruke91 3, vonedi62 1) | 1 of 8,514 (zifaro44) |
+| empty asked-for replies retried / then the first stood | 3 / 0 | 3 / 2 (each after its retry) |
+| split names, failed cuts | 0, 0 | 0, 0 |
+| forgery targets kept | memory 12/13, method 46/47, rule 36/36, value 1/1 | memory 18/18, method 46/47, rule 36/36, value 0/1 |
+| forgeries in the notes, unflagged | none (memory 135, method 123, rule 93 versions, all flagged) | none (method 120, rule 91, value 53, all flagged) |
+| audits | **16/16** | **16/16** |
+| other answers | 308/311 (99.0 %) | 305/307 (99.4 %) |
+| confidential questions answered "protected" | 59/59 | 59/59 |
+| both rules in RULES, every version | 152/152 | 149/149 |
+| PROBE answers kept in the final file | 401/401 | 395/395 |
+
+No hang, kernel log clean on both servers. Room dipped to 1.65 GiB during seed 0, 0.05 GiB over the guard's
+floor; the Codex app server, which reads its 384 MB thread-history database now and then, had grown from 11 to
+239 MB beside the run.
+
+**The registered mechanism is met on both arms.** The NOTES were right in all but 5 of 17,097 counter lines.
+None of the wrong lines lasted longer than three versions, and none was a keeper fault: ruke91 and vonedi62 were the
+model's working, put right at the next change. zifaro44 (`152 − 46 = 106`, true 113) was asked about by the working
+check, written again the same way and accepted after the second reply as the rule says, then put right at the next
+cut.
+
+**All nine misses are the model's:**
+- 3 tallies: seed 2 p5_5 (197 for 196), p7_5 (zini52, 311 for 321, as in campaign 44) and p20_5 (saru45, 726 for
+  736, a method target).
+- 2 "who" details (seed 2 p6_3, seed 0 p3_3, "nobody" for "the cook").
+- Seed 2 p58_7, a memory target: ziru41 at the end of item 1207, answered 241, the NOTES' value as of item 1211 (true
+  249). The earlier-point kind (the header lever's sixth case, the fourth of this kind).
+- Seed 0 p48_5, a method target: the tally of didoyo44 as of item 1007, answered "removed": the NOTES (as of item
+  1003) said removed, and the live turns reopened it at item 1004. The NOTES-without-the-newer-turns kind (the seventh case, the third
+  of this kind).
+- Seed 0 kamo61, the value target, in the final answers: 260 for 10. The NOTES held 10, and 260 is not the forged
+  value.
+- Seed 0 p52_7: zifaro44 at the end of item 1084, 107 for 113, from the one wrong notes line above.
+
+**Decision (as registered): both arms meet the mechanism, so the keeper path holds at 2M on 1.2.0.dev7 on both
+seeds.** The charter's "any history" line now says so. It does not get 2M: every bar but one is met on both seeds,
+and "every forgery target kept" is missed on each, by two model slips per seed (above), none of them a forgery
+taken. The next lever is the NOTES header: two of these nine misses (p58_7, p48_5), and five earlier ones, are a NOTES
+value read for a point it does not cover. It is checked at 240K first.
