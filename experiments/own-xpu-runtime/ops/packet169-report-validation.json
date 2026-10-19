@@ -1,0 +1,153 @@
+{
+  "schema": "own-runtime.packet169.cpu-validation.v1",
+  "passed": true,
+  "device_executed": false,
+  "synthetic_only": true,
+  "baseline_commit": "512892c10a6b200b1a25f9a8de1a4486a32856d3",
+  "baseline_rehearse_entry_sha256": "8c31ddbbc9306368367761906a47274f57a5964792099151a5063c8b817bccac",
+  "sources": {
+    "experiments/own-xpu-runtime/ops/rehearse_entry.py": "46bf3fca69ee7660739d47035c56a72c58105bc2c397e79d41da8735b207960c",
+    "experiments/own-xpu-runtime/ops/rehearse_report_adapters.py": "d7c5ee66f416dc359a11bea3f111f9e2bfeeb5b2cc5d156f26159ac0e59dd562",
+    "experiments/own-xpu-runtime/ops/test_rehearse_report_adapters.py": "5c797339b5321e9813292ab7c8364ec5d955c80eeeb139786bb5f44139c8c61f"
+  },
+  "cli": [
+    {
+      "packet": "162",
+      "passed": true,
+      "report": {
+        "passed": true,
+        "kinds": [
+          {
+            "passed": true,
+            "kind": "micro",
+            "collisions": [],
+            "report_completed": true,
+            "synthetic_evidence": true,
+            "device_executed": false,
+            "admission_executed": false,
+            "real_entry_main": false,
+            "entry_execution": "parser-and-report-only",
+            "report_lineage": "standalone-micro",
+            "cases": [
+              "reopen",
+              "close"
+            ],
+            "negative_result_tested": true
+          }
+        ],
+        "synthetic_evidence": true,
+        "device_executed": false
+      },
+      "packaging_checks": {
+        "storage_floor": "PASS",
+        "wall_deadlines": "PASS",
+        "preparation_path": "PASS",
+        "gate_identity": "WARN"
+      }
+    },
+    {
+      "packet": "58aq",
+      "passed": true,
+      "report": {
+        "passed": true,
+        "kinds": [
+          {
+            "passed": true,
+            "kind": "smoke",
+            "collisions": [],
+            "report_completed": true,
+            "synthetic_evidence": true,
+            "import_paths": [
+              "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aq-onecard-split/screen",
+              "/usr/lib/python312.zip",
+              "/usr/lib/python3.12",
+              "/usr/lib/python3.12/lib-dynload",
+              "/usr/local/lib/python3.12/dist-packages",
+              "/usr/lib/python3/dist-packages"
+            ],
+            "device_executed": false,
+            "real_entry_main": true,
+            "report_lineage": "packet58-onecard",
+            "admission_executed": false,
+            "entry_execution": "parser-only",
+            "window": "WSCREEN",
+            "request_count": 12,
+            "candidate_beats_all_controls": false,
+            "warmup_view": null,
+            "comparison_controls": null
+          },
+          {
+            "passed": true,
+            "kind": "bracket",
+            "collisions": [],
+            "report_completed": true,
+            "synthetic_evidence": true,
+            "import_paths": [
+              "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aq-onecard-split/screen",
+              "/usr/lib/python312.zip",
+              "/usr/lib/python3.12",
+              "/usr/lib/python3.12/lib-dynload",
+              "/usr/local/lib/python3.12/dist-packages",
+              "/usr/lib/python3/dist-packages"
+            ],
+            "device_executed": false,
+            "real_entry_main": true,
+            "report_lineage": "packet58-onecard",
+            "admission_executed": false,
+            "entry_execution": "parser-only",
+            "window": "WSCREEN",
+            "request_count": 72,
+            "candidate_beats_all_controls": false,
+            "warmup_view": null,
+            "comparison_controls": null
+          }
+        ],
+        "synthetic_evidence": true,
+        "device_executed": false
+      },
+      "packaging_checks": {
+        "storage_floor": "PASS",
+        "wall_deadlines": "PASS",
+        "preparation_path": "WARN",
+        "gate_identity": "WARN"
+      }
+    }
+  ],
+  "byte_comparison": {
+    "passed": true,
+    "comparisons": [
+      {
+        "proposal": "proposed-p162-micro-B.txt",
+        "kind": "micro",
+        "passed": true,
+        "byte_identical_files": 5,
+        "receipt_sha256": {
+          "DO-NOT-REPEAT.md": "fe6bf73478033c5e8e61cc93794565c44be9ede4bf43449cfc625dd7e19642c0",
+          "close/analysis.json": "7ce6e57805c0c950bf0ea9cc876534a97e671b1c76ec311c48eff3b7a553c22e",
+          "close/samples.jsonl": "3f548ce31c058a529155c45f0c51d1e5b2c3b6a13258a818e9c6f01985d319f8",
+          "reopen/analysis.json": "13f59bd5451df761b00ab2e1d16307a39359196bda8d1065f89c9b3dcb044598",
+          "reopen/samples.jsonl": "8a84a54c2e4fa60675dc08df553d29f322b33d9085ce4dd814c3c60ff85ec19a"
+        }
+      },
+      {
+        "proposal": "proposed-p58ab-v5-A.txt",
+        "kind": "smoke",
+        "passed": true,
+        "byte_identical_files": 58
+      },
+      {
+        "proposal": "proposed-p58ab-v5-A.txt",
+        "kind": "bracket",
+        "passed": true,
+        "byte_identical_files": 158
+      }
+    ]
+  },
+  "regression_tests": 17,
+  "test_log": "test_contract_validation_rejects_unsafe_or_ambiguous_fields (test_rehearse_report_adapters.ReportContracts.test_contract_validation_rejects_unsafe_or_ambiguous_fields) ... ok\ntest_generator_cannot_read_host_data_even_if_caught (test_rehearse_report_adapters.ReportContracts.test_generator_cannot_read_host_data_even_if_caught) ... ok\ntest_missing_and_malformed_fail_closed (test_rehearse_report_adapters.ReportContracts.test_missing_and_malformed_fail_closed) ... ok\ntest_new_schema_real_analyzer_both_decisions (test_rehearse_report_adapters.ReportContracts.test_new_schema_real_analyzer_both_decisions) ... ok\ntest_packet162_deterministic_receipt_bytes (test_rehearse_report_adapters.ReportContracts.test_packet162_deterministic_receipt_bytes) ... ok\ntest_packet166_missing_contract_is_explicit (test_rehearse_report_adapters.ReportContracts.test_packet166_missing_contract_is_explicit) ... ok\ntest_packet58aq_six_views (test_rehearse_report_adapters.ReportContracts.test_packet58aq_six_views) ... ok\ntest_window_metadata_and_invalid_cap (test_rehearse_report_adapters.ReportContracts.test_window_metadata_and_invalid_cap) ... ok\ntest_wrong_stream_wrong_decision_and_bypassed_analyzer_refuse (test_rehearse_report_adapters.ReportContracts.test_wrong_stream_wrong_decision_and_bypassed_analyzer_refuse) ... ok\ntest_a0_tokens_still_checked_and_window_tail_is_real (test_rehearse_entry.OnecardReportTest.test_a0_tokens_still_checked_and_window_tail_is_real) ... ok\ntest_late_import_collision_fails_on_private_source_copy (test_rehearse_entry.OnecardReportTest.test_late_import_collision_fails_on_private_source_copy) ... ok\ntest_packet58v_real_import_failure_is_not_hidden (test_rehearse_entry.OnecardReportTest.test_packet58v_real_import_failure_is_not_hidden) ... ok\ntest_packet58v_report_schema_with_private_import_path_fixture (test_rehearse_entry.OnecardReportTest.test_packet58v_report_schema_with_private_import_path_fixture) ... ok\ntest_packet58z_record_window_reports (test_rehearse_entry.OnecardReportTest.test_packet58z_record_window_reports) ... ok\ntest_screen_proposals_and_first_view_warmup_policy (test_rehearse_entry.OnecardReportTest.test_screen_proposals_and_first_view_warmup_policy) ... ok\ntest_unused_collision_and_report_isolation_fail (test_rehearse_entry.OnecardReportTest.test_unused_collision_and_report_isolation_fail) ... ok\ntest_packet162_report_and_all_entry_gates (test_rehearse_entry.MicroReportTest.test_packet162_report_and_all_entry_gates) ... ok\n\n----------------------------------------------------------------------\nRan 17 tests in 10.733s\n\nOK\n",
+  "packet166": {
+    "passed": false,
+    "expected_fail_closed": true,
+    "error": "missing report contract for standalone micro schema"
+  }
+}

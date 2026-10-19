@@ -12,7 +12,8 @@ uses WARN without importing or executing packet gates.
 executes its unchanged post-device report source on temporary synthetic receipts.
 Packet58 queue runners use one-card WSCREEN or record-window report adapters.
 Standalone run_micro.py entries (or plan.entry_rehearsal.kind="micro") use
-the micro event-stream adapter and their real report_completed(output) function.
+a packet report-contract.json and their real report_completed(output) function.
+The original packet162 analyzer retains its existing fixture without a contract.
 No --plan, model read, queue mutation, service or device entry.
 
 Default binary inventory comes from the packet's build-receipt.json artifacts
@@ -46,6 +47,7 @@ import sys
 
 import entry_sandbox
 import launch_env
+import rehearse_report_adapters as report_adapters
 
 OPS = Path(__file__).resolve().parent
 ROOT = OPS.parents[2]
@@ -1113,7 +1115,7 @@ def parse_entry(main, argv):
     return result[0]
 
 
-def synthetic_onecard(driver, views, output, kind, candidate, maintenance):
+def synthetic_onecard(driver, views, output, kind, candidate, maintenance, *, max_new=None):
     """Small invented token/timing receipts, consumed by unchanged packet code."""
     def save(path, value):
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -1132,10 +1134,10 @@ def synthetic_onecard(driver, views, output, kind, candidate, maintenance):
         save(output / 'inputs' / prompt / 'input.json', dict(tokens=[2, 3, 4, 5]))
         save(driver['ORACLE'] / 'results' / prompt / 'result.json', dict(
             schema='iq3-runtime-cpu-oracle.v1', status='token-cap',
-            arithmetic=driver['ARITHMETIC'], tokens=[1] * 128))
+            arithmetic=driver['ARITHMETIC'], tokens=[1] * max(128, max_new or 128)))
     screen = kind in ('smoke', 'bracket')
     rows = views.bracket(candidate) if screen else [(None, candidate)]
-    cap = 64 if kind == 'smoke' else 128
+    cap = max_new if max_new is not None else 64 if kind == 'smoke' else 128
     native = dict(passed=True, safe_to_exit=True, device_executed=True, owner_cards=1,
                   cpu_affinity=[0, 1, 2, 3, 16, 17, 18, 19], observed_nice=0, native_nice=0,
                   selection_sha256=views.digest(candidate), teardown=[dict(
@@ -1161,6 +1163,9 @@ def synthetic_onecard(driver, views, output, kind, candidate, maintenance):
                 requested_max_new=cap, prompt_tokens=4, request_start_monotonic=0.,
                 request_end_monotonic=1 + cap / rate,
                 timing_rows=[dict(completed_monotonic=1 + i / rate) for i in range(cap)]))
+    if kind == 'bracket' and [v for _, v in rows] == [
+            'control', 'no-upload', 'no-scatter', 'drain-only', 'wait-split', 'control']:
+        report_adapters.publication_split_fixture(output, rows, prompts, cap)
     return dict(prompts=prompts)
 
 
@@ -1170,6 +1175,7 @@ def onecard_report_probe(job, kind, scratch, source_root):
     from types import SimpleNamespace
     path = report_entry(job)
     packet = path.parent
+    shape = report_adapters.window_shape(job, packet, kind)
     # These two small declarative files are read at import by this lineage.
     # No evidence, seal, model input or device file is admitted.
     metadata = {(packet / name).resolve() for name in ('views.json', 'admission.json')}
@@ -1209,14 +1215,20 @@ def onecard_report_probe(job, kind, scratch, source_root):
     # runpy's returned globals are a copy; functions retain the executing dict.
     driver = driver['main'].__globals__
     oracle_import_prelude(SimpleNamespace(oracle_inputs=driver['oracle_inputs']))
-    manifest = synthetic_onecard(driver, views, driver_output, kind, candidate, maintenance)
+    actual_views = views.bracket(candidate) if screen else [(None, candidate)]
+    if 'arm_order' in shape and shape['arm_order'] != [v for _, v in actual_views]:
+        raise report_adapters.ContractError('window arm order differs from packet')
+    manifest = synthetic_onecard(driver, views, driver_output, kind, candidate, maintenance,
+                                 max_new=shape.get('max_new'))
     driver_args = SimpleNamespace(output=driver_output, view=candidate, window=window_name,
                                   cache_maintenance=maintenance)
     namespace = dict(driver, args=driver_args, manifest=manifest, row={})
     exec(source_block(driver_path, 'summary = summarize', 'row.update('), namespace)
     summary = json.loads((driver_output / 'summary.json').read_text())
-    if summary.get('passed') is not True or summary.get('request_count') != (60 if kind == 'bracket' else 12):
+    if summary.get('passed') is not True or summary.get('request_count') != len(actual_views) * len(manifest['prompts']):
         raise ValueError('incomplete one-card report')
+    if 'max_new' in shape and summary.get('requested_max_new') != shape['max_new']:
+        raise report_adapters.ContractError('window report token cap differs')
     # Run the window's unchanged publication tail after its memory/teardown
     # gates. Device admission and postload observations are outside this gate.
     namespace = dict(window.__dict__, output=window_output,
@@ -1273,9 +1285,9 @@ def synthetic_micro(output, candidate_ns):
 def micro_report_probe(job, kind, scratch, source_root):
     """Run the actual micro report, redirecting only its writable data root.
 
-    The supported contract is report_completed(output), micro_analyze.P and
-    the packet162 samples/analysis schema. Other schemas fail closed. Both
-    the reopen and negative-result tails run; no admission or main is called.
+    Packet contracts declare schema, analyzer, fixture generator and decisions.
+    The exact packet162 analyzer keeps its legacy reopen/close fixtures.
+    Unknown schemas without a contract fail closed; no admission/main is called.
     """
     import importlib
     import runpy
@@ -1283,6 +1295,21 @@ def micro_report_probe(job, kind, scratch, source_root):
     path = report_entry(job)
     if kind != 'micro':
         raise ValueError('unsupported micro report kind')
+    declared = job.get('plan', {}).get('entry_rehearsal', {}).get('report_contract', 'report-contract.json')
+    if not isinstance(declared, str) or Path(declared).is_absolute() or '..' in Path(declared).parts:
+        raise report_adapters.ContractError('invalid report contract path')
+    contract_path = path.parent / declared
+    if not contract_path.resolve().is_relative_to(path.parent) or contract_path.suffix != '.json':
+        raise report_adapters.ContractError('invalid report contract path')
+    contract = report_adapters.read_contract(contract_path) if contract_path.exists() else None
+    # Exact legacy analyzer schema remains supported, including source-copy
+    # isolation tests. Unknown schemas require an explicit packet contract.
+    legacy = path.parent / 'micro_analyze.py'
+    if contract is None and (not legacy.is_file() or legacy.is_symlink() or digest(legacy) !=
+            '9b25fa2bc8479c889cf5d530736114eb6fd7d657cade15a98d7ab01bafa87023'):
+        raise report_adapters.ContractError('missing report contract for standalone micro schema')
+    if contract is None and declared != 'report-contract.json':
+        raise report_adapters.ContractError('missing declared report contract')
     violations = report_guard(scratch, source_root)
     sys.path[0] = str(path.parent)
     sys.argv = [str(path), *job['argv'][3:]]
@@ -1292,6 +1319,14 @@ def micro_report_probe(job, kind, scratch, source_root):
     args = entry['parser']().parse_args(job['argv'][3:])
     if args.lane != job.get('lane', 'B'):
         raise ValueError('micro report lane differs')
+    if contract is not None:
+        cases = report_adapters.micro_contract_probe(entry, contract, path.parent, scratch, digest)
+        collisions = duplicate_modules(path.parent, sys.path)
+        return dict(passed=not collisions and not violations, kind=kind, collisions=collisions,
+                    report_completed=True, synthetic_evidence=True, device_executed=False,
+                    admission_executed=False, real_entry_main=False,
+                    entry_execution='parser-and-report-only', report_lineage='standalone-micro',
+                    report_contract=contract['schema'], cases=cases)
     analyzer = importlib.import_module('micro_analyze')
     negative = scratch / 'DO-NOT-REPEAT.md'
     negative.write_text('Synthetic rehearsal only\n')
@@ -1487,6 +1522,8 @@ def report_child():
                       locations=[dict(file=Path(f.filename).name, line=f.lineno)
                                  for f in traceback.extract_tb(error.__traceback__)],
                       error='entry import, report schema, or CPU isolation failed')
+        if isinstance(error, report_adapters.ContractError):
+            result['error'] = str(error)
     (scratch / 'rehearsal-result.json').write_text(json.dumps(result))
     return 0 if result['passed'] else 1
 
