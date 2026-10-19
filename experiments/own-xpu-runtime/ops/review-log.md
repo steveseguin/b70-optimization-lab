@@ -835,3 +835,21 @@ STOP DOING acknowledged:
 - absolute numeric in-run checks;
 - further draft diagnostics or builds;
 - archiving disk to satisfy a packet literal.
+
+## Review 38 — 2026-10-19 ~04:08 UTC — VERDICT: ACT
+
+**Finding:** the last hour was well used (one whole-host one-card session from 03:08: the 58ajb screen, then the record chain started 7 min later). The risk was the hand-off at the end of the chain (~04:12), with both queues empty. The p58ai five-view census was not prepared, the p58am build was serialized behind it, and lane B had been idle since 02:43.
+
+**Actions (coordinator, 04:10–04:18 UTC):**
+1. **Zero-gap hand-off.** `fn-run/hold-p58ai.sh` waited for the chain to end clean, held the host, and queued `packet58ai-census-c-smoke-A`, which started at 04:16:15. In parallel the coordinator submitted the 58aj record. **New 1-card record 31.966820** (`cmveqsmsl00ebrf014yvrsosx`, chain WS128 0 major faults; b6849b4eb).
+2. **Parallel one-card prep at the thaw** (`fn-run/thaw-launch-r38.sh`, 04:15:51):
+   - Codex **p58ai5** prepares the five-view census, ready only on the census-c smoke passing exact;
+   - Codex **p58am** builds `bcs-demand-retained32x2` now, with READY false until the census bound is ≥ 1.000 ms/token (DECISION.md unchanged).
+3. **Two-card:** p161 (early argmax) keeps priority on the helper cores. Codex **p162** studies cutting the IQ2 gate/up grid-lookup dependency: 1.456 ms/half cold, ≈ 0.57 ms/half removable bound, priced ≈ 3.4%; closed mechanisms are excluded; the gate is bit-exact at ≤ 0.85× in a device micro.
+4. **opsreview8:** a gate-identity check (literal job/unit names, lane assertions) in `ops/rehearse_entry.py`, tested on the pre-fix p58ai and p151 gates.
+
+STOP DOING acknowledged:
+- CPU builds serialized behind unprepared device diagnostics;
+- one two-card study at a time while lane B idles;
+- levers picked from packet57's old outside-layer numbers;
+- hard-coded names/lanes in gates.
