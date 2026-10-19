@@ -1181,6 +1181,60 @@ class Policy(unittest.TestCase):
         self.assertNotIn("tools", seen[0])                                        # and nothing but the effort was added
         self.assertEqual(seen[0]["messages"], conversation(2))
 
+    def test_a_false_multiplication_step_in_the_working_is_asked_for_again(self):
+        seen = []
+
+        def writes(value, working):
+            r = reply(None, [{"id": "w", "type": "function", "function": {"name": "bash", "arguments": json.dumps(
+                {"command": f"echo '{{\"p20_5\": {value}}}' > answers.json"})}}])
+            r["choices"][0]["message"]["reasoning_content"] = working
+            return r
+
+        def model(body):
+            seen.append(body)
+            if "A check of your last reply" in str(body["messages"][-1].get("content")):
+                return writes(736, "Ah: 145×5 = 725, +11 = 736.")
+            return writes(726, "p20_5: saru45 = 145 → tally = 145×5+11 = 726")
+
+        k = ck.Keeper(model, Path(self.dir.name) / "s", budget=100000, sum_check=True)
+        resp = k.complete({"model": "m", "messages": conversation(2)})
+        self.assertIn("736", resp["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"])
+        self.assertEqual(len(seen), 2)
+        self.assertEqual(seen[1]["messages"][:-1], seen[0]["messages"])          # the same request, and the note
+        self.assertEqual(seen[1]["messages"][-1], {"role": "user", "content": ck.SUM_NOTE.format(steps="145×5+11 is 736, not 726")})
+        s = next(iter(k.sessions.values()))
+        self.assertEqual(s.state["sum_checks"], 1)
+        events = [json.loads(l) for l in (s.dir / "events.jsonl").read_text().splitlines()]
+        self.assertIn({"event": "a false step in the working: asked again", "steps": [["145×5+11", 726, 736]],
+                       "taken": True, "still": []}, [{k2: e[k2] for k2 in e if k2 not in ("t", "at")} for e in events])
+        seen.clear()
+        off = ck.Keeper(model, Path(self.dir.name) / "o", budget=100000)
+        resp = off.complete({"model": "m", "messages": conversation(2)})
+        self.assertEqual(len(seen), 1)                                            # off by default: the reply goes as it is
+        self.assertIn("726", resp["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"])
+
+    def test_a_right_step_is_left_alone_and_a_search_in_reply_to_the_note_leaves_the_first(self):
+        seen, second = [], []
+
+        def model(body):
+            seen.append(body)
+            if "A check of your last reply" in str(body["messages"][-1].get("content")):
+                return second[0]
+            r = reply("tally = 145×5+11 = 736" if not second else "tally = 145×5+11 = 726")
+            return r
+
+        k = ck.Keeper(model, Path(self.dir.name) / "r", budget=100000, sum_check=True)
+        k.complete({"model": "m", "messages": conversation(2)})
+        self.assertEqual(len(seen), 1)                                            # nothing false: one call
+        second.append(reply(None, [{"id": "c", "type": "function", "function": {"name": "recall", "arguments": "{}"}}]))
+        seen.clear()
+        resp = k.complete({"model": "m", "messages": conversation(2)})
+        self.assertEqual(len(seen), 2)
+        self.assertEqual(resp["choices"][0]["message"]["content"], "tally = 145×5+11 = 726")
+        self.assertNotIn("tool_calls", resp["choices"][0]["message"])             # the client never sees a `recall`
+        s = next(iter(k.sessions.values()))
+        self.assertEqual((s.state["sum_checks"], s.state["sum_checks_first_stood"]), (1, 1))
+
     def test_a_thinking_reply_gets_a_short_leash_first(self):
         seen = []
 
@@ -1418,6 +1472,51 @@ class Loops(unittest.TestCase):
 
 
 class Pure(unittest.TestCase):
+    def test_false_steps_finds_a_wrong_multiplication_and_leaves_shorthand_alone(self):
+        cases = {"p20_5: saru45 tally = 145×5+11 = 726 ✓": [("145×5+11", 726, 736)],
+                 "zini52 = 62 → tally 62*5+11 = 311.": [("62*5+11", 311, 321)],
+                 "- p31_5: 142×5+11 = 711\n- p31_6: -45": [("142×5+11", 711, 721)],
+                 "−142×5 + 11 = −710 + 11 = −699": [], "142×5 = 710 + 11 = 721": [],
+                 "As of item 1154 = 404×3+10 = 1222": [], "p20_5 = 145×5+11 = 736.": [],
+                 "→ 580: −67−24+41+82 = 186": [], "152 − 46 = 106": [], "version 3.5×2 = 7": [],
+                 "751 × 113797 = 85,461,547": [], "sumprod = -3*(-20) + 1*0 = 60": [],
+                 "n//2 * 2 = 15*2 = 30": [], "num_full = L - 0*2 = 2": [],
+                 "8556*8190 = 69, 8556*8190 = 70,073,640": [], "- p22_5: -7*3+15 = 4\n": [("-7*3+15", 4, -6)]}
+        for text, want in cases.items():
+            self.assertEqual(ck.false_steps(text), want, text)
+
+    def test_a_rewrite_gets_back_the_state_lines_it_lost_for_names_the_turns_do_not_mention(self):
+        old = ("RULES\n- answer in French\nSTATE\n- abcd01: 7\n- abcd02: 14\n- zz9: removed (item 3)\n- a1: 1 | b2: 2\n"
+               "- /app/answers.json p1_1: 544\n- weather: rain\nOPEN\n- none")
+        new = "RULES\n- answer in French\nSTATE\n- abcd02: 20\n\nOPEN\n- none"
+        out, back, asked = ck.keep_state(old, new, "ITEM 4: the clerk moved counter ABCD02 to 20.")
+        self.assertEqual((back, asked), (["- abcd01: 7", "- zz9: removed (item 3)"], []))   # a1 | b2 packs two; a log
+        self.assertEqual(out, "RULES\n- answer in French\nSTATE\n- abcd02: 20\n- abcd01: 7\n- zz9: removed (item 3)\n\nOPEN\n- none")
+        out, back, asked = ck.keep_state(old, new, "ITEM 4: abcd01 went up, abcd02 to 20, zz9 again.")   # line and words may go
+        self.assertEqual((out, back, asked), (new, [], ["abcd01", "zz9"]))
+        self.assertEqual(ck.keep_state("RULES\nSTATE\n- x1: 3", "RULES\nSTATE\n- x1: 4", ""), ("RULES\nSTATE\n- x1: 4", [], []))
+
+    def test_a_rewrite_that_leaves_out_what_the_turns_change_is_asked_once(self):
+        seen = []
+
+        def model(body):
+            seen.append(body)
+            last = str(body["messages"][-1].get("content"))
+            if "leave out the STATE lines" in last:
+                return reply("RULES\n- r\nSTATE\n- abcd01: 9\nOPEN\n- none")
+            if "TURNS BEING MOVED OUT" in last:
+                return reply("RULES\n- r\nSTATE\n- (nothing)\nOPEN\n- none")
+            return reply("ok")
+
+        k = ck.Keeper(model, Path(tempfile.mkdtemp()), budget=2400, reply_reserve=400, headroom=100, target_ratio=0.5,
+                      notes_cap=400, memory_note=False)
+        s = k.session({"model": "m", "messages": conversation(1)}, None)
+        s.state["notes"] = "RULES\n- r\nSTATE\n- abcd01: 7\n- zzzz99: 5\nOPEN\n- none"
+        gone = [{"role": "tool", "content": "ITEM 1: the clerk moved counter abcd01 to 9."}]
+        k.notes_call(s, "m", [], gone, upto=3)
+        self.assertIn("abcd01", seen[-1]["messages"][-1]["content"])                  # asked about what the turns change
+        self.assertEqual(s.state["notes"], "RULES\n- r\nSTATE\n- abcd01: 9\n- zzzz99: 5\nOPEN\n- none")   # and zzzz99 put back
+
     def test_leading_system_messages_reach_the_server_as_one(self):
         two = [{"role": "system", "content": "You are Forge."}, {"role": "system", "content": "<os>linux</os>"},
                {"role": "user", "content": "fix it"}]

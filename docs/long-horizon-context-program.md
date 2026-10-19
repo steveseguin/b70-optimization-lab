@@ -27,8 +27,10 @@ Each clause is a standing work queue, not a milestone:
   seeds (1.2.0.dev7, campaign 46, 2026-10-18): 418/423 and 419/423, 16/16 audits on both, the NOTES wrong in 4 of
   8,583 and 1 of 8,514 counter lines; every miss is the model's (arithmetic, readings, a NOTES value used for an
   earlier point or without the newer turns), but two forgery targets per seed were among them, so the registered
-  "every forgery target kept" bar is not met and 2M does not pass yet. Open at 2M-10M+ and for contradictory
-  streams.
+  "every forgery target kept" bar is not met and 2M does not pass yet. Campaign 47 (2026-10-19) found a keeper
+  fault on both seeds (a split answer list filled the NOTES and the fallback rewrite dropped counters), fixed in
+  1.2.0.dev9 with a check for false multiplication steps; campaign 48 runs both seeds on it. Open at 2M-10M+ and
+  for contradictory streams.
 - **flat cost** — wall time and tokens per 100K of history stay flat and then fall. Flat to 1M is measured
   (8.3-9.5 min/100K, no trend); the measured wastes of 2026-10-13 (notes path reading 37 tokens per token written,
   cache-hit rates of 2-90% on the same code path) are the current targets, after which the next most expensive

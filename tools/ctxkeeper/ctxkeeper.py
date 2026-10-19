@@ -53,7 +53,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import notesdelta as nd  # noqa: E402  (same folder: the pure part of changes-only notes)
 
-__version__ = "1.2.0.dev8"
+__version__ = "1.2.0.dev9"
 
 # --recipe: settings that were measured together, on Qwen3.8-27B FP8 behind vLLM with a 32K live window (lab note,
 # campaigns 13-17: a real 40-ticket code-repair task, 40/40 fixed and clean with every rule kept). An option given on
@@ -76,6 +76,13 @@ PIN_HEAD = "[[NOTES kept by the context keeper: {n} earlier messages are in the 
 UPTO_NOTE = (" The STATE below is as of the end of {unit} {k}. What the turns below say after that is newer; a value at an "
              "earlier {unit} is not the one the STATE shows (search the archive with `recall`, or see the NOTES of that "
              "time with `notes_at`).")
+# --sum-check: a reply whose working has a false multiplication step is asked for again with this note
+SUM_NOTE = ("[[A check of your last reply found a wrong step in its working: {steps}. That reply was not sent. Work it "
+            "out again and give your reply once more.]]")
+_SUM_NUM = r"[-−]?\d+"
+_SUM_EXPR = rf"{_SUM_NUM}(?:\s*[-+*×−]\s*{_SUM_NUM})*"
+SUM_CHAIN = re.compile(rf"(?<![\w.]){_SUM_EXPR}(?:\s*=\s*{_SUM_EXPR})+(?!\w|\.\d)")   # `142×5+11 = 710+11 = 721`
+SUM_OPERATOR = set("+-*/×−÷()%^")
 RECITE_HEAD = "[[RULES in force (from NOTES); apply every one that covers this before you answer]]"
 MEMORY_NOTE = """
 
@@ -250,11 +257,49 @@ RECALL_MARGIN = 600                                # tokens kept free beside the
 CARRY_CHARS = 24000                                  # the searches of an unfinished turn that are shown again, at most
 REPEAT_NOTE = ("[[You have made the same tool call {n} times in a row with the same result. Calling it again will not "
                "change anything: use the result you have and decide the next step.]]")
+STATE_RETRY = ("Your NOTES leave out the STATE lines of {names}, which the turns being moved out mention. Write the "
+               "NOTES again, in full, with a STATE line for each of them: its value now (or `removed`).")
 LAYOUT_RETRY = ("Your reply did not use the layout. Reply with the NOTES only: first line RULES, then the rules, "
                 "then a line STATE, then the state, then a line OPEN.")
 
 
 # ------------------------------------------------------------------ notes (pure)
+def sum_value(expr: str) -> int | None:
+    e = expr.replace("×", "*").replace("−", "-")
+    if not re.fullmatch(r"[-+*\d\s]+", e) or re.search(r"\d{7}", e):
+        return None
+    try:
+        return int(eval(e, {"__builtins__": {}}))    # digits, + - * and spaces only (checked above)
+    except Exception:
+        return None
+
+
+def false_steps(text: str) -> list[tuple[str, int, int]]:
+    """The multiplication steps in a reply's working that are false, as (step, value written, true value). Only a
+    step with a multiplication on its left is checked: a sum written with a leading sign is often a list of changes to
+    a value named before it (`→ 580: −67−24+41+82 = 186`), not arithmetic to check. `142×5 = 710 + 11 = 721` is a
+    carried-on line (its next part starts with 142×5's value), and a chain that is a piece of a longer expression on
+    its line (`-3*(-20) + 1*0 = 60`, `n//2 * 2 = 15*2`), ends in a number with commas (85,461,547) or in one two or more
+    digits shorter than the true value (`8556*8190 = 69, ...`, a number cut short) is left alone."""
+    out = []
+    for m in SUM_CHAIN.finditer(text):
+        before, after = text[:m.start()].rstrip(" \t")[-1:], text[m.end():].lstrip(" \t")
+        if (before in SUM_OPERATOR or after[:1] in SUM_OPERATOR or re.match(r",\d", text[m.end():])
+                or re.search(r"\d,$", text[:m.start()])):
+            continue
+        parts = [p.strip() for p in m.group(0).split("=")]
+        for a, b in zip(parts, parts[1:]):
+            if not re.search(r"[*×]", a):
+                continue
+            va, vb = sum_value(a), sum_value(b)
+            first = re.match(_SUM_NUM, b)
+            if (va is None or vb is None or va == vb or (first and sum_value(first.group(0)) == va)
+                    or len(str(abs(va))) - len(str(abs(vb))) >= 2):  # `8556*8190 = 69, ...`: a number cut short
+                continue
+            out.append((a, vb, va))
+    return out
+
+
 def section_of(line: str) -> str:
     """RULES, STATE or OPEN if the line is that heading (plain, with a colon, or as a markdown heading), else ''."""
     head = line.strip().strip("#*_ ").rstrip(":").strip("*_ ").upper()
@@ -295,6 +340,47 @@ def rule_lines(notes: str) -> list[str]:
         elif on and s:
             lines.append(s.lstrip("-* ").strip())
     return [ln for ln in lines if ln and ln.lower().strip("().") != "none"]
+
+
+def state_facts(notes: str) -> list[tuple[str, str]]:
+    """(name, line) of each STATE line that holds one fact (`name: value`); lines that pack several (`a: 1 | b: 2`)
+    are left out."""
+    out, on = [], False
+    for ln in notes.splitlines():
+        head = section_of(ln)
+        if head:
+            on = head == "STATE"
+        elif on and ln.strip() and " | " not in ln:
+            name = nd.fact_of(ln)[0]
+            if name and name not in ("(none)", "none"):
+                out.append((name, ln))
+    return out
+
+
+def keep_state(old: str, new: str, turns: str) -> tuple[str, list[str], list[str]]:
+    """A full rewrite's check against the STATE it replaces, for the names of things (one word with a digit or an
+    underscore in it: `saru45`, `build_3`). Returns `new` with every such line of `old` that it lost put back, as it
+    was, at the end of its STATE section, when `turns` (the turns moved out) do not mention the name: its value cannot
+    have changed in them. Also returns the names it lost that the turns do mention (asked about by notes_call: the
+    rewrite may have meant to drop them, or forgot a change). Other lines (`/app/answers.json p1_1: 544`, `probe p29_1:
+    -9`, notes in words) may be dropped by a rewrite: it is how NOTES that have grown are written shorter.
+    Campaign 47 (2M, seed 2): an in-place cut failed, and the full rewrite of the ordinary cut kept 1 of 60 STATE
+    lines."""
+    have = {n for n, _ in state_facts(new)}
+    said = turns.lower()
+    named = [(n, ln) for n, ln in state_facts(old) if n not in have and re.fullmatch(r"[^\s:`]+", n) and re.search(r"[\d_]", n)]
+    mentioned = lambda n: re.search(r"(?<![\w])" + re.escape(n) + r"(?![\w])", said)
+    lost = [ln for n, ln in named if not mentioned(n)]
+    asked = [n for n, ln in named if mentioned(n)]
+    if not lost:
+        return new, [], asked
+    lines = new.splitlines()
+    at = next(i for i, ln in enumerate(lines) if section_of(ln) == "STATE")
+    end = next((i for i in range(at + 1, len(lines)) if section_of(lines[i])), len(lines))
+    while end > at + 1 and not lines[end - 1].strip():
+        end -= 1
+    lines[end:end] = lost
+    return "\n".join(lines), lost, asked
 
 
 def same_rule(a: str, b: str) -> bool:
@@ -704,7 +790,7 @@ class Keeper:
                  notes_async: str | None = None, prewarm: bool = False, log_calls: bool = False,
                  inplace_fit: bool = False, notes_extra: dict | None = None, notes_prefill: bool = False,
                  lookups: bool = False, rule_scan: str | None = None, hold_open: bool = False,
-                 notes_upto: bool = False) -> None:
+                 notes_upto: bool = False, sum_check: bool = False) -> None:
         self.ask, self.root = ask, Path(state_dir)
         # ask_notes: a separate keeper model's server for the notes calls (--notes-upstream), with notes_model as its
         # model name, notes_system as its system message (default KEEPER_SYSTEM), notes_kwargs as its
@@ -797,6 +883,12 @@ class Keeper:
         if notes_upto and self.recall_label is None:
             raise ValueError("--notes-upto needs --recall-label")
         self.notes_upto = bool(notes_upto)
+        # sum_check: a reply for the client whose working has a false multiplication step (`145×5+11 = 726`) is not
+        # passed on: the same request goes again with SUM_NOTE naming the step and its value, and the second reply is
+        # passed on as it is (unless it is empty or a search: then the first). Campaigns 43-46 (2M, seed 2): 11 of 25
+        # wrong tallies came from such a step. Across 183 recorded keeper sessions (1,426 multiplication chains in the
+        # model's replies, coding and agent sessions among them) the check finds 18 steps, each a real slip, and no other.
+        self.sum_check = bool(sum_check)
         self.sessions: dict[str, Session] = {}
         self.clock = threading.local()                 # per request thread: seconds spent in the model server
         self.lock = threading.Lock()
@@ -978,6 +1070,18 @@ class Keeper:
             if not why:
                 text, lost = keep_rules(s.state["notes"], text)
                 s.state["rules_put_back"] += len(lost)
+                full, back, missing = keep_state(s.state["notes"], text, render_turns(gone))
+                if missing and attempt == 1:
+                    # the rewrite left out things these turns mention: asked once more, with its own reply; the
+                    # second reply stands (with the lines of things the turns do not mention put back, as here)
+                    s.log_event({"event": "notes rewrite: STATE lines left out asked about", "names": missing[:40], "n": len(missing)})
+                    req = req + [{"role": "assistant", "content": text},
+                                 {"role": "user", "content": STATE_RETRY.format(names=", ".join(missing[:40]))}]
+                    continue
+                text = full
+                if back:
+                    s.state["state_put_back"] = s.state.get("state_put_back", 0) + len(back)
+                    s.log_event({"event": "notes rewrite: STATE lines it lost put back", "lines": back[:40], "n": len(back)})
                 s.state["notes"] = text
                 s.log_notes(upto)
                 return
@@ -1654,6 +1758,23 @@ class Keeper:
                     rounds.append("recall(" + ", ".join(f"{k}={v!r}" for k, v in args.items()) + ") returned:\n" + text)
                 full = full or room < RECALL_MARGIN
                 out = dict(out, messages=out["messages"] + [msg] + results)
+            steps = false_steps(text_of(msg)) if self.sum_check else []
+            if steps and (msg.get("tool_calls") or str(msg.get("content") or "").strip()):
+                s.state["sum_checks"] = s.state.get("sum_checks", 0) + 1
+                note = SUM_NOTE.format(steps="; ".join(f"{a} is {v}, not {w}" for a, w, v in steps))
+                again = dict(out, messages=out["messages"] + [{"role": "user", "content": note}])
+                second = self.upstream(again, s)
+                self.learn(s, again["messages"], second)
+                m2 = ((second.get("choices") or [{}])[0].get("message") or {})
+                calls2 = m2.get("tool_calls") or []
+                taken = bool(calls2 or str(m2.get("content") or "").strip()) and not any(
+                    ((c.get("function") or {}).get("name")) == "recall" for c in calls2)
+                s.log_event({"event": "a false step in the working: asked again", "steps": [list(x) for x in steps],
+                             "taken": taken, "still": [list(x) for x in false_steps(text_of(m2))] if taken else None})
+                if taken:
+                    resp, msg = second, m2
+                else:
+                    s.state["sum_checks_first_stood"] = s.state.get("sum_checks_first_stood", 0) + 1
             # What the searches found stays for the next request only if this turn gave the client nothing to act on
             empty = not msg.get("tool_calls") and not str(msg.get("content") or "").strip()
             if (empty or held) and (rounds or carried):
@@ -1822,6 +1943,9 @@ def main() -> None:
     ap.add_argument("--notes-upto", action="store_true",
                     help="with --recall-label: the NOTES heading says up to which --recall-unit the STATE runs, that "
                          "the turns after it are newer, and that a value at an earlier one is not the STATE's")
+    ap.add_argument("--sum-check", action="store_true",
+                    help="a reply whose working has a false multiplication step (`145×5+11 = 726`) is asked for "
+                         "once more, with a note naming the step and its value, and that second reply is passed on")
     ap.add_argument("--hold-open", action="store_true",
                     help="with --recite-when and --think-until: while a question is open (from the message that asks it "
                          "until one matching --think-until), every request gets the RULES recital and the archive "
@@ -1936,7 +2060,7 @@ def main() -> None:
                     notes_extra=json.loads(a.notes_extra) if a.notes_extra else None, notes_prefill=a.notes_prefill,
                     notes_async=a.notes_async, prewarm=a.prewarm, log_calls=a.log_calls, inplace_fit=a.inplace_fit,
                     lookups=a.lookups, rule_scan=a.rule_scan, hold_open=a.hold_open,
-                    notes_upto=a.notes_upto)
+                    notes_upto=a.notes_upto, sum_check=a.sum_check)
     server = ThreadingHTTPServer((a.host, a.port), make_handler(keeper, upstream, a.timeout))
     print(f"ctxkeeper {__version__}" + (f" (recipe {a.recipe})" if a.recipe else "")
           + f": http://{a.host}:{a.port}/v1 -> {upstream}/v1, live window {a.budget} tokens, notes {a.notes_mode}"

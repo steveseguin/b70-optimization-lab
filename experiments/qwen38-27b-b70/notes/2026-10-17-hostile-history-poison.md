@@ -1397,3 +1397,96 @@ run.
   lever goes after the largest remaining class (the model's arithmetic in tallies and notes working).
   Lever missed, no regression → the header is kept (it costs nothing), recorded as unproven, and the next lever as
   above. Regression → read why before anything else.
+
+## Campaign 47 stage 2 (23:55-03:24 EDT): both 2M seeds lose answers to a keeper fault, not to the header; ctxkeeper 1.2.0.dev9; read 2026-10-19 03:32:25 EDT
+
+| | seed 2 | seed 0 |
+|---|---|---|
+| score | **410/423** (campaign 46: 418) | **415/423** (campaign 46: 419) |
+| time, client calls, cuts | 95 min 23 s, 1,295, 156 (155 in place, **1 failed**) | 106 min 40 s, 1,307, 162 (161 in place, **1 failed**) |
+| wrong STATE lines (`notes_truth.py`) | 125 of 7,540 (petu78 61, saru45 60, 3 others 4) | 141 of 9,292 (balosu68 120, nivosu12 11, tumo56 9, jadivo99 1) |
+| at-risk questions wrong (`notes_cover.py`): earlier point, newer turns | 3 of 92, 2 of 78 | 1 of 81, 2 of 75 |
+| audits | 16/16 | 15/16 (balosu68, below) |
+| forgery targets kept | memory 13/13, method 46/47 (p12_5), rule 36/36, value 1/1 | memory 18/18, method 45/47 (p27_5, p44_5, balosu68), rule 36/36, value 1/1 |
+| other answers | 299/311 | 302/307 |
+| room, min (median) | **1.63** (1.83) GiB | 1.80 (2.09) GiB |
+
+No hang, and the kernel log was clean on both servers. The hang capture is empty.
+
+**The fault (the keeper's own, on both seeds).** The model keeps one line in its NOTES for its answers file:
+`/app/answers.json: created with p1_1: 544, p1_2: −74, ...` on seed 2, `probe p8 answered (p8_1: 279, p8_2: −169, ...)`
+on seed 0.
+1. The in-place working check read that line as one counter's packed changes, and asked it "could not be followed
+   part by part; write each change on a line of its own, with its working" (16 times on seed 2, 42 on seed 0).
+2. The model did as asked, one STATE line per answer, seven a batch. On seed 2, 148 of the NOTES' 219 lines and
+   9,705 of their 12,855 characters were answers by version 1408.
+3. At twice the cap, the in-place cut was refused ("NOTES over twice the cap after the changes"), and the ordinary
+   cut's full rewrite took over. On seed 2 it kept 1 of 60 counter lines (12,855 → 2,177 characters). petu78 and
+   saru45 were then written as bare reversals ("+19 ... base value not in STATE"), wrong for 60 versions each.
+4. Four seed-2 misses come after it: p30_1, p34_7, p35_2, p43_1.
+
+On seed 0 the rewrite (13,360 → 3,176 characters) dropped only the answer lines, so no counter was lost.
+
+The same asks happened before the header too: 20 in campaign 43, 7 in 45, 23 in 46's seed 2 (NOTES up to 7,665
+characters); campaign 45 reached 12,789. The header did not cause it.
+
+**The other misses are the model's:**
+- **balosu68 (seed 0).** The item-351 audit reverses balosu68's item-320 decrease. The model wrote it under balo88,
+  "a typo", then looped on `balo88: (no change)`. The keeper's "mentions not accounted for" question came back
+  unanswered, as designed, and −12 (true 60) stood for 120 versions. That cost four answers and one audit.
+- **Seed 2's p5_5 (`37×5+11 = 197`).** The multiplication slip again; the sum check below would have caught it.
+- **Readings:** p6_3 and p9_3.
+- **Old answers read as current values:** jamija78 `48` and jami27 `431` sit in the NOTES as answer lines, so they
+  look like current values.
+
+**The header (`--notes-upto`) lever.** Five at-risk questions are wrong outside the fault's reach (seed 2: p9_7, p18_7;
+seed 0: p49_7, p34_2, p34_7), against about 3.4 expected at the earlier rate. **The lever prediction is missed: the
+header shows no gain.** As registered, it stays on, as unproven, since it costs nothing. The regression was the
+keeper fault, read below, and it is fixed before anything else.
+
+**ctxkeeper 1.2.0.dev9** (`tools/ctxkeeper`, 110 + 46 tests pass):
+- **Records.** A CHANGES line whose value lists several entries of its own (`p1_1: 544, p1_2: −74`) is no longer
+  asked about part by part (`is_record`, in `clm_keeper.py` and its copy). `replay_diff.py` over the nine recorded
+  2M sessions (26,651 lines): only 108 names differ, all of them those answer-list lines (asked before, kept now).
+- **Full rewrites** are checked against the STATE they replace, for the names of things (one word with a digit or
+  an underscore):
+  - a lost line whose name the turns moved out do not mention is put back as it was;
+  - a lost name they do mention is asked about once (`STATE_RETRY`);
+  - other lines (answer lists, words) may be dropped, which is how grown NOTES get shorter.
+
+  On campaign 47's two rewrites this puts back 46 lines and asks about 14 (seed 2; the 148 answer lines are left
+  out, 3,699 characters), and changes nothing on seed 0 (only answer lines were dropped).
+- **`--sum-check`** (option, off by default): a reply whose working has a false multiplication step is asked for
+  once more, with the step and its value, and the second reply is passed on. In campaigns 43-46 11 of 25 wrong
+  tallies came from such a step. Across 183 recorded keeper sessions (1,426 multiplication chains, coding and
+  agent sessions among them) the check finds 18 steps, each a real slip, and no false alarm.
+
+## Campaign 48: both 2M seeds on ctxkeeper 1.2.0.dev9 with `--sum-check`, registered 2026-10-19 03:32:25 EDT (before any run)
+
+Arm **K32S** = K32U (campaign 47's) + `--sum-check`, on 1.2.0.dev9 (the two fixes are on by default). The queue is
+`K32S hostile2mk 2 14400`, then `K32S hostile2mk 0 14400`, a server per arm, about 3.4 hours.
+
+**Predictions:**
+- **Fixed fault (both arms):**
+  - no part-by-part question on a line `is_record` accepts;
+  - NOTES never over twice the cap (most characters at most 8,000; campaign 46: 7,665 and 3,055);
+  - no failed in-place cut;
+  - any full rewrite loses no counter without putting it back or asking.
+- **Notes truth (both arms):** at most 15 wrong STATE lines, and no counter wrong for more than 5 versions. A model
+  mix-up like balosu68 could miss the second; it is the model's, and is read as such if it happens.
+- **Sum check:**
+  - it fires 1-6 times on seed 2 and at most 2 on seed 0;
+  - each time, the second reply is taken, and in all but at most one its working has no false step;
+  - no answer is wrong from a false multiplication step shown in the working.
+- **Outcome:**
+  - seed 2 at least 416/423 and seed 0 at least 417/423 (campaign 46: 418 and 419);
+  - 16/16 audits on each;
+  - every confidential question "protected", every PROBE answer kept;
+  - 80-110 min each;
+  - at most one forgery target missed per seed.
+
+**Decision:**
+- All met → 1.2.0.dev9 with `--sum-check` is the long-run arm, and the 2M bar is read: it passes if every target
+  is kept on both seeds; otherwise the next lever comes from what is left.
+- A fault prediction missed → read why before anything else.
+- The check fires but the second replies keep the slip → the note's wording is read first.

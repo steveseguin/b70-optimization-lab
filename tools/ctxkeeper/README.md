@@ -338,6 +338,29 @@ the turns after it say is newer, and that a value at an earlier unit is not the 
 `notes_at`). In the recorded 2M runs seven answers read a NOTES value for a point it did not cover: the value as of
 item 1211 for "the end of item 1207", or "removed" as of item 1003 for a counter reopened in view at item 1004.
 
+1.2.0.dev9 (2026-10-19), from lab campaigns 43-46 (2M, seed 2): a new option, off by default, `--sum-check`. A reply
+for the client whose working has a false multiplication step (`saru45 tally = 145×5+11 = 726`) is not passed on: the
+same request goes again with a note naming the step and its value ("145×5+11 is 736, not 726. That reply was not
+sent. Work it out again"), and the second reply is passed on as it is (unless it is empty or an archive search: then
+the first). Only a step with a multiplication on its left is checked. A sum with a leading sign is often a list of
+changes to a value named before it, and a chain that is a piece of a longer expression on its line, or a number with
+commas, is left alone. In four 2M runs on seed 2, 11 of 25 wrong tallies came from such a step. Across 183
+recorded keeper sessions (1,426 multiplication chains in the model's replies, coding and agent sessions among them),
+the check finds 18 steps, each a real slip, and no other.
+
+Also in 1.2.0.dev9, two fixes from lab campaign 47 (2M, seed 2, 410/423), on by default:
+- A CHANGES line that lists several entries of its own (`/app/answers.json: created with p1_1: 544, p1_2: −74, ...`)
+  is no longer asked about "part by part". The model kept one such line for its answers file. Asked to write each
+  change on a line of its own, it wrote one STATE line per answer, seven a batch. At item 680 the NOTES were over
+  twice their cap, an in-place cut failed, and the ordinary cut's full rewrite kept 1 of 60 STATE lines. A replay of
+  26,651 saved lines from nine 2M sessions changes only those 108 answer-list lines.
+- A full rewrite (the ordinary cut) is checked against the STATE it replaces, for the names of things (one word with
+  a digit or an underscore, such as `saru45`). A line it lost whose name the turns moved out do not mention is put
+  back as it was: its value cannot have changed in them. A lost name that the turns do mention is asked about once
+  ("write a STATE line for each of them: its value now"). Other lines (a list of answers, notes in words) may still be
+  dropped: that is how NOTES that have grown are written shorter. On campaign 47's seed-2 rewrite this puts back 46
+  lines, asks about 14, and leaves out the 148 answer lines. RULES lines lost in a rewrite were already put back.
+
 Also unreleased (1.1.1.dev1, 2026-10-17): a NOTES line whose new value states no number of its own (only item or
 ticket numbers, as in `audit reversal of the entry in item 4, amount not yet known, must recall items 4/5`) no longer
 replaces a number the NOTES hold: the number stays and the line is kept as a remark on it. Before, the value became the

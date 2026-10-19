@@ -358,6 +358,18 @@ def amounts_ok(working: str, amounts: set[int] | None, start: int | None = None)
 PARTS = re.compile(r",(?!\d{3}\b)|;|(?i:\bthen\b)")   # what separates the changes packed onto one line (also `. Then`)
 
 
+RECORD_ENTRY = re.compile(r"(?<![\w.])[A-Za-z_][\w.]*\s*[:=]\s*[^\s=]")      # `p1_1: 544`, `p1_3 = "ferryman"`
+
+
+def is_record(value: str) -> bool:
+    """A value that lists several entries of its own (`created with p1_1: 544, p1_2: -74, p1_3: "ferryman"`): what a
+    file or a list holds, not one thing's changes, so it is not followed part by part. Campaign 47 (2M, seed 2): the
+    model kept one such line for its answers file; asked to write "each change on a line of its own", it wrote one
+    STATE line per answer, 7 a batch, until the NOTES were over twice their cap and an in-place cut failed."""
+    parts = [x for x in PARTS.split(value) if x.strip()]
+    return len(parts) >= 2 and sum(bool(RECORD_ENTRY.search(x)) for x in parts) >= 2
+
+
 def one_sign(expr: str, result: int) -> bool:
     """A sum of additions and subtractions that does not give `result` as written but does with the sign of one
     amount turned round (`-87 - 71 = -16`: the model meant plus 71 and wrote the result of that). A miscount that
@@ -601,6 +613,7 @@ def apply_delta(notes: str, delta: dict, seen: set[int] | None = None, strict: b
         set_question = (f"{name}: `{value}` has a sum whose remark says the value was set, and its result is not a number the turns state; "
                         "write `set to N` on a line of its own, then the changes after it")
         several = sum(bool(x.strip()) for x in re.split(PARTS.pattern + r"|\u2192|->|=>", flat)) > 1 or flat.count("=") > 1
+        several = several and not is_record(flat)
         if strict and seen is not None:
             # several changes on one line: followed part by part; a line that can be followed is right as it stands
             redone: list[str] = []

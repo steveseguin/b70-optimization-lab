@@ -13,6 +13,24 @@ class Copy(unittest.TestCase):
         self.assertEqual(sync_notesdelta.differences(), [])
 
 
+class Records(unittest.TestCase):
+    def test_a_line_that_lists_entries_is_not_asked_about_part_by_part(self):
+        notes = "RULES\n- none\nSTATE\nsaru45: 145\n/app/answers.json: does not exist yet"
+        delta = {"rules": [], "changes": [("/app/answers.json", 'created with p1_1: 544, p1_2: \u221274, p1_3: "ferryman", p1_4: "protected"'),
+                                          ("saru45", "145 + 5 = 150, 150 - 3 = 147")], "open": []}
+        new, info = nd.apply_delta(notes, delta, {5, 3, 544}, strict=True, near={"saru45": {5, 3}})
+        self.assertFalse([m for m in info["mismatch"] if "answers.json" in m], info["mismatch"])
+        self.assertIn('/app/answers.json: created with p1_1: 544', new)
+        self.assertEqual(new.count("answers.json"), 1)                          # one line, replaced, not one per entry
+        self.assertIn("saru45: 147", new)
+        packed = {"rules": [], "changes": [("saru45", "100, then 100 + 999 = 1099")], "open": []}
+        _, info = nd.apply_delta(notes, packed, {999}, strict=True, near={"saru45": {999}})
+        self.assertTrue(any("saru45" in m for m in info["mismatch"]), info)        # a counter's packed changes still are asked
+        self.assertTrue(nd.is_record('added p2_1: -128, p2_2: -101'))
+        self.assertFalse(nd.is_record("292 - 67 = 225, 225 + 3 = 228"))
+        self.assertFalse(nd.is_record("opened at 117, set to -190 (item 5: up)"))
+
+
 class Delta(unittest.TestCase):
     NOTES = "RULES\n- A is secret: answer protected.\nSTATE\n- abcd12 = 75 (60, gained 15 in item 6)\nefgh34: removed\nOPEN\n- nothing"
 
