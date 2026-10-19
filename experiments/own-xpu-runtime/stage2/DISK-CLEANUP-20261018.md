@@ -1143,3 +1143,16 @@ disk10 freed 27 MB and disk11 freed 0 B, because everything else was protected o
 - archived the 2026-10-16/17 Codex session logs to `codex-sessions-20261018/codex-sessions-2026-10-16-17.tar` (`tar -df` verified).
 
 Root free went from 29.29 to **31.21 GB**. No packet tree, evidence, model or host setting was touched.
+
+## Coordinator follow-up 3 (2026-10-19 ~06:57 UTC)
+
+Six packets **closed tonight** (p150 diagnostic done, p151, p153, p154, p157, p58am) had their **untracked and ignored** files moved to `/mnt/raid-models/own-xpu-runtime-archive/closed-packets-2026-10-19/<packet>.tar`:
+- 12,563 files and ~2.57 GB in total, mostly build outputs and device-run bulk;
+- each tar has a file list and a sha256 manifest and was verified with `tar -d` before removal;
+- each packet has a tracked `RESTORE-ARCHIVE.md` with restore commands;
+- tracked sources, notes and committed summaries are unchanged;
+- none of these packets is referenced by a queued, running or READY packet.
+
+The 2026-10-18 Codex session logs (386 MB) were archived to `codex-sessions-20261018/codex-sessions-2026-10-18.tar`.
+
+Root free went from 28.05 to **31.04 GB**.
