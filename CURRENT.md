@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 19, packet58ahb final quiet-host rerun prepared on CPU:** Chain a
+passed exactness but its 30.050 tok/s timing missed the 30.395631 record; it
+was not submitted. Its evidence and original pins are preserved. Chain b is
+the single preregistered rerun and its WS128 is final either way. All 134
+passive tests, seven intercepted launch paths, submission rehearsal, seals
+and readiness replay pass. Nothing was launched or queued. The coordinator
+must freeze every Codex unit before K1a through completion; the generic
+waiter's WS-only freeze is too late for this rerun. The final orchestration
+marker is the handoff authority. [Work note](notes/2026-10-19-own-runtime-packet58ah-chain-a-result.md#packet58ahb--final-quiet-host-chain-b-handoff).
+
 **October 19, packet58ai miss census prepared on CPU:** The private packet58ad
 copy keeps the 30.396 tok/s record configuration. It counts actual routed cache
 misses and measures original expert events plus a separate resident/miss

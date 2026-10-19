@@ -12,7 +12,7 @@ P=Path(__file__).resolve().parent
 
 def main():
     import queue_runner as Q
-    output=P/'evidence/card0-58ah-a'
+    output=P/'evidence/card0-58ah-b'
     assert not output.exists()
     command=[sys.executable,'-B',str(P/'queue_runner.py'),'--plan','--card','0','--view','down-tile16',
         '--output-root',str(output),'--faults-reviewed-through','2026-01-01T00:00:00Z']

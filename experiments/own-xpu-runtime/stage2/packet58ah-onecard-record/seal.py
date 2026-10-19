@@ -18,7 +18,7 @@ def create():
     require(os.getpriority(os.PRIO_PROCESS,0)==19,'nice19 required')
     require(set(os.sched_getaffinity(0))<=set(range(8,16))|set(range(24,32)),'helper cores required')
     require(shutil.disk_usage('/').free>=25_000_000_000,'root below 25 GB')
-    require(not (P/'evidence/card0-58ah-a').exists(),'never reseal started chain')
+    require(not (P/'evidence/card0-58ah-b').exists(),'never reseal started chain')
     artifacts=read(P/'copy-manifest.json')['native_artifacts'];verify_files(P,artifacts)
     parent=read(P/'lineage/58ag-build-receipt.json')
     require(all(parent['artifacts'][n]==h for n,h in artifacts.items()),'58ag artifact differs')

@@ -249,12 +249,15 @@ class SubmissionTests(unittest.TestCase):
         self.assertIn('realistic_final_gate.passed=false',notes)
         self.assertIn(S.POLICY['readiness_amendment'],notes)
         self.assertIn(S.RERUN_DISCLOSURE,notes)
-        self.assertEqual(r['chain_attempt'],'a')
+        self.assertEqual(r['rerun_disclosure'], S.RERUN_DISCLOSURE)
+        for text in ('30.050', 'not submitted', '3,736', '124', 'quiet-host', 'unproven', 'no third run'):
+            self.assertIn(text, notes)
+        self.assertEqual(r['chain_attempt'],'b')
 
     def test_chain_a_refused_before_reading_evidence(self):
         with patch.object(S.Evidence, 'add', side_effect=AssertionError('must refuse before read')):
-            with self.assertRaisesRegex(ValueError, 'only the registered card0-58ah-a'):
-                S.collect(S.ROOT / S.PACKET / 'evidence/card0-58w-a')
+            with self.assertRaisesRegex(ValueError, 'only the registered card0-58ah-b'):
+                S.collect(S.ROOT / S.PACKET / 'evidence/card0-58ah-a')
 
     def test_missing_fault_counter_refuses(self):
         key='WS128/run/run/code-review/timings.jsonl'
@@ -385,6 +388,7 @@ class SubmissionTests(unittest.TestCase):
             self.assertEqual(row['threshold_tok_s'], item['payload']['tokSOut'])
             self.assertEqual(row['readiness_amendment'],S.POLICY['readiness_amendment'])
             self.assertEqual(row['rerun_disclosure'],S.RERUN_DISCLOSURE)
+            self.assertEqual(row['chain_attempt'],'b')
             with self.assertRaisesRegex(ValueError, 'improve threshold'):
                 S.update_record(result_path, 'another-id', repo)
             self.assertTrue(S.scope_problems(item, repo))

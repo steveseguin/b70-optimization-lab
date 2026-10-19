@@ -37,3 +37,65 @@ The bracket that qualified the composition (packet58ag, one load, 23:56–00:08)
 - A submission discloses chain a (WS128 30.050, not submitted), its major-fault count and the reason for the rerun.
 
 Evidence: `experiments/own-xpu-runtime/stage2/packet58ah-onecard-record/evidence/card0-58ah-a/` (window.json/summary.json per window; per-token faults in `WS128*/run/run/*/timings.jsonl`).
+
+## Packet58ahb — final quiet-host chain-b handoff
+
+CPU-only preparation on October 19. The frozen-path tool passed (58,240 paths);
+an ownership check of all 36 other active/ready packets found no pins into
+packet58ah. The handoff is therefore resealed in place. Chain a's original
+seal, submission pins, coordinator readiness snapshot and marker bytes are
+retained under `lineage/58ah-chain-a-*`. Its evidence, fault review and original
+marker bytes remain unchanged; the active orchestration marker becomes the
+chain-b handoff only as the final content write.
+
+The unit is `packet58-onecard-58ah-b`, output `evidence/card0-58ah-b`, and fresh
+review `evidence/fault-review-58ah-b.json`. The exact command changes only the
+unit and output names plus that required fresh fault-review path. Selection,
+all five native binaries, oracle, seven windows, 90-second gaps, admission,
+pinned 30.395630964654867 record and readiness policy are unchanged. Binary
+bytes were hashed only. Outputs must still match `iq3-p49-split32-v1` exactly.
+
+The submission tool admits only chain b and refuses chain a before reading
+its evidence. Notes, result and ledger entries always disclose chain a's
+**30.050 tok/s**, **not submitted**, **3,736 major faults versus 124 in WS128x**,
+and the suspected host-paging disturbance as the reason for the preregistered
+quiet-host rerun. That cause remains unproven. Chain b's WS128 is final
+whichever way it lands; no third run and no choosing between attempts.
+
+All **134 passive/mocked tests**, **seven actual queue-to-native entry probes**
+and **28 wrong-unit/environment refusals** passed. Entry probes used the real
+chain-b environment and unit gate, with native execution intercepted. The
+specific old chain-a unit and submission-path refusals passed. The submission
+rehearsal passed from the final location with no repository-root override or
+network; notes are 1,711 characters. Its inherited packet58ad timing remains
+labeled rehearsal evidence, never a chain-b measurement.
+
+The minimal 287-source seal verifies. The passive seven-window plan passes,
+and `verify_ready.py` now returns true on the completed packet58ag smoke and
+five-view receipts under the unchanged policy. Peak observed test/probe/
+rehearsal memory was 158,302,208 bytes, below the 2 GB budget. The inherited
+optional literal helper exposed a pre-existing missing `template_symlinks`
+manifest key; it wrote no receipt. A focused passive check verified the new
+live chain identities and the absence of symlinks instead. No native parser,
+full-shape proof, model/GGUF read, compilation, GPU job, service, sudo, setting
+change, live queue edit or submission was performed.
+
+[Light checks](../experiments/own-xpu-runtime/ops/packet58ah-orchestration/58ahb-light-gates.json)
+include the unchanged identity hashes and command comparison;
+[readiness replay](../experiments/own-xpu-runtime/ops/packet58ah-orchestration/58ahb-readiness.log)
+retains the parent gate. Command SHA-256 (UTF-8, no trailing newline):
+`d36bd16bd9335bebcb8d01d9bc177285a908b53ac0d38f87fcb3e9e096c2268f`.
+
+The coordinator must pause/drain both lanes, capture the fresh review and
+freeze **every Codex unit before K1a through completion**, excluding other
+model-reading CPU work and compiles throughout. No cache drops, settings or
+pre-touch reads. The generic `onecard-chain.sh --check` can validate this
+handoff; its normal watcher freezes only at WS, so the coordinator must
+arrange the earlier freeze separately. This preparation starts nothing.
+
+Pull refused the unrelated dirty tree; fetch confirmed HEAD == origin/main.
+Preparation uses explicit-path `git commit --only` and an immediate push.
+Then [READY-FOR-DEVICE.json](../experiments/own-xpu-runtime/ops/packet58ah-orchestration/READY-FOR-DEVICE.json)
+is the last content write, binding that pushed preparation commit. The
+requested waiter `--check` runs read-only after it, and the marker is committed
+and pushed separately. No chain-b evidence directory has been created.

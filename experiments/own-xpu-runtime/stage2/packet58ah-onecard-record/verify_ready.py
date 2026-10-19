@@ -37,7 +37,7 @@ def evaluate(rows,policy=None):
 def command_argv():
     from launch_env import library_path
     lib=library_path()
-    return ['systemd-run','--user','--unit=packet58-onecard-58ah-a','--property=Restart=no','--property=SendSIGKILL=no','--property=TimeoutStopSec=infinity','--property=Nice=0','--working-directory='+str(ROOT),'/usr/bin/taskset','-c','0-3,16-19','/usr/bin/env','-i','PATH=/usr/bin:/bin','LD_LIBRARY_PATH='+lib,'OMP_NUM_THREADS=2','/usr/bin/python3','-B',str(P/'queue_runner.py'),'--authorized-device-window','--card','0','--view','down-tile16','--output-root',str(P/'evidence/card0-58ah-a'),'--fault-review',str(P/'evidence/fault-review-58ah-a.json')]
+    return ['systemd-run','--user','--unit=packet58-onecard-58ah-b','--property=Restart=no','--property=SendSIGKILL=no','--property=TimeoutStopSec=infinity','--property=Nice=0','--working-directory='+str(ROOT),'/usr/bin/taskset','-c','0-3,16-19','/usr/bin/env','-i','PATH=/usr/bin:/bin','LD_LIBRARY_PATH='+lib,'OMP_NUM_THREADS=2','/usr/bin/python3','-B',str(P/'queue_runner.py'),'--authorized-device-window','--card','0','--view','down-tile16','--output-root',str(P/'evidence/card0-58ah-b'),'--fault-review',str(P/'evidence/fault-review-58ah-b.json')]
 def chain_command():return shlex.join(command_argv())+' < /dev/null'
 def verify():
     import window as W
@@ -48,7 +48,7 @@ def verify():
     pins=json.loads((P/'submission-pins.json').read_text())
     require(pins['build_receipt_sha256']==W.sha(P/'build-receipt.json'),'submission pins stale')
     W.verify_files(ROOT,pins['sources'])
-    require(not (P/'evidence/card0-58ah-a').exists(),'fresh chain output required; no retry')
+    require(not (P/'evidence/card0-58ah-b').exists(),'fresh chain output required; no retry')
     run=subprocess.run(['/usr/bin/python3','-B',str(P/'screen_gate.py')],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=180)
     require(run.returncode==0,'58ag smoke/v5 pending or invalid: '+run.stderr.strip()[-1800:])
     screen=json.loads(run.stdout)

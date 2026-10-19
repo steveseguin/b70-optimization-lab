@@ -39,13 +39,13 @@ separately records whether CPU preparation passed.
 
 ## Coordinator handoff
 
-See [WINDOW.md](WINDOW.md). Retain the same uninterrupted whole-host hold as
-packet58ag smoke/v5, including both drained lanes and all 90-second gaps.
-Run K1a → K1b → KD → W2m → WS → WS128x → WS128, each once. Freeze Codex and
-block compiles from WS through WS128 completion. Use the exact environment-
-embedded `chain_command` in `ready.json`, unit `packet58-onecard-58ah-a`,
-fresh output `evidence/card0-58ah-a`, and a fresh
-`evidence/fault-review-58ah-a.json`. No launch is performed by preparation.
+See [WINDOW.md](WINDOW.md). The preregistered chain-b rerun requires one
+uninterrupted quiet whole-host hold, both drained lanes and all 90-second gaps.
+Run K1a → K1b → KD → W2m → WS → WS128x → WS128, each once. Freeze all Codex units and
+block compiles from before K1a through WS128 completion. Use the exact environment-
+embedded `chain_command` in `ready.json`, unit `packet58-onecard-58ah-b`,
+fresh output `evidence/card0-58ah-b`, and a fresh
+`evidence/fault-review-58ah-b.json`. No launch is performed by preparation.
 
 ## Validation and submission
 
@@ -84,3 +84,22 @@ no host setting changes are needed.
 [Validation](../../ops/packet58ah-orchestration/validation.json),
 [final marker](../../ops/packet58ah-orchestration/READY-FOR-DEVICE.json),
 [work note](../../../../notes/2026-10-18-own-runtime-packet58ah.md).
+
+## Packet58ahb: final quiet-host rerun
+
+Chain a passed all seven exact windows, but WS128 was 30.050 tok/s, below
+30.395631, and was not submitted. WS128 incurred 3,736 major faults versus
+124 in WS128x. CPU work may have disturbed paging; this is not measured proof.
+The coordinator preregistered exactly one rerun. Chain b WS128 is final,
+whichever way it lands: no third run and no choosing between attempts.
+The submission tool refuses chain a before reading evidence and discloses
+its result, faults and rerun reason in notes, result and ledger entries.
+
+Chain-a seal, submission pins, readiness snapshot and original marker bytes
+are retained under `lineage/58ah-chain-a-*`. The active orchestration marker
+is replaced only after the chain-b preparation is committed and pushed.
+The old evidence and fault review remain untouched. The command changes only
+unit/output identity plus the required fresh chain-b fault-review path.
+Selection, native bytes, oracle, seven windows, 90-second gaps, admission,
+pinned record and readiness policy remain unchanged. Only passive/mocked
+tests and intercepted entry probes run; no native or full-shape gates rerun.

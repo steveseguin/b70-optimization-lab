@@ -115,7 +115,7 @@ def probe(name, miss, negative=None, entry="queue"):
                 bytes_per_iteration=25_000_000, host_ms=1 if miss == 'zero-copy' else 3,
                 vram_ms=.1, streamed_ms=1.1)
             (dest/'run/k1.json').write_text(json.dumps(native))
-        out = packet/'evidence/card0-58ah-a'
+        out = packet/'evidence/card0-58ah-b'
         observations = []
         env = command_environment(command)
         if negative=='env':env['PACKET58_EXTRA']='forbidden'
