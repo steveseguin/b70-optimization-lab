@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "tests": 4,
+  "log_sha256": "3709a2e661431c9fb7d79d40f7b9e4e877e6b9dcec4d766f7b253af00df0d127",
+  "test_source_sha256": "aee99f234482d25148e271a0ed9beb4e94bbb5f12952f5d85063af1019003d71",
+  "fails_on_parent_source": true,
+  "checks": [
+    "candidate source has the option, view switch, tail store kernel after the last launch, stamp check, head staging and load kernel without host wait, copy tail kept for A only, kernel route log, readout fields, sticky error check",
+    "kernel_io.hpp issues no copy command, barrier or copy/maintenance queue use",
+    "the same checks fail on lineage/p176-parent-native (packet58as)",
+    "single_device.cpp (backend: fill, copy, wait, maintenance queue) byte-identical to the parent; cache boundary/plan/capacity/publication, upload, readback, drain and prepare_token bodies identical",
+    "delta touches only main.cpp, bracket_table.hpp, preparation_probe.cpp and the new kernel_io.hpp"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schema": "own-runtime.teardown-on-error.templates.v1",
+  "integrations": {
+    "chain": {
+      "reference": "packet124b-record-bundle",
+      "patch": "chain-integration.patch",
+      "template_paths": {
+        "window_adapter.py": {
+          "before_sha256": "bc1c7c72936dbce9de9ef91acfedab12da6596b021ce00bcfa1a48fe9ace3b0b",
+          "after_sha256": "541230af3e6d1b25faae1e0fba2a7ef537a446af51b2f6ca02d1b110955e969c"
+        },
+        "window.py": {
+          "before_sha256": "2409a4b91830965809ae79b23bd50125938b31ea25ac3eb3870065bdafd323db",
+          "after_sha256": "0b32e4cc274e0ca4d9ae95511e02ee663d1909e84646da27bea66d691cafb12a"
+        }
+      }
+    },
+    "screen": {
+      "reference": "screen/v4-lanes",
+      "patch": "screen-integration.patch",
+      "template_paths": {
+        "screen.py": {
+          "before_sha256": "af035df830c82948dd84561ee19b1956d318747b0bf8f9bace7dc0765d35f436",
+          "after_sha256": "1e614f819df6202585a2a81b6f17721e8f626959b74f9aab0026058870e0df3a"
+        },
+        "conditions.py": {
+          "before_sha256": "2e0309da37d5b18e3cec5f870cd018280dd812b6ebe4b0ca87b466240e3bc4a5",
+          "after_sha256": "8c030be3aa190c2c43770c597886ec3a4de17c7f67fb207117efce2d0a693418"
+        },
+        "tp2_worker.py": {
+          "before_sha256": "47ee765b9e4d38ecc480e244571bcf278dd4544efd4cb60ae80e6a31eee604d9",
+          "after_sha256": "59121e000e838d31d6b89af5e192965bc6aa084d1f1bea6ac1d2c2453510cdb8"
+        }
+      }
+    }
+  },
+  "helper_sha256": "b8a07707672784b856ffedb87cdf5661df4754900d3b5082a55c8479efa72d5c"
+}
