@@ -2,11 +2,12 @@
 import argparse,subprocess,sys,resource
 from p157_v5_build_engine import P,LOCAL,ROOT,limits
 STEPS=[('build',P/'p157_v5_build_engine.py',[]),
- ('split',P/'split_cpu.py',[]),('controller',P/'controller_gate.py',[]),
+ ('split',P/'split_cpu.py',[]),('draft-bytes',P/'draft_bytes.py',[]),('controller',P/'controller_gate.py',[]),
  ('preparation',P/'preparation_probe.py',[]),('limits',P/'exec_gate.py',[]),
  ('safety',P/'safety_gate.py',[]),('admission',P/'admission_gate.py',[]),
  ('stage-proposals',P/'p157_v5_queue_plan.py',['--stage']),('seal',P/'cpu_seal.py',['--seal']),
- ('entry',P/'entry_gate.py',[]),('launch-limits',P/'launch_limit_gate.py',[]),
+ ('entry',P/'entry_gate.py',[]),('preparation-actual',P/'preparation_probe.py',[]),
+ ('reseal',P/'cpu_seal.py',['--seal']),('entry-final',P/'entry_gate.py',[]),('launch-limits',P/'launch_limit_gate.py',[]),
  ('worker',P/'worker_gate.py',[]),('report',P/'report_gate.py',[]),
  ('queue',P/'p157_v5_queue_plan.py',[]),('pins',P/'pin_gate.py',[])]
 
@@ -18,7 +19,5 @@ def main():
   with (P/'evidence'/('qualify-'+name+'.log')).open('w') as log:
    r=subprocess.run([sys.executable,'-B',str(path),*args],stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,cwd=ROOT)
   if r.returncode:raise SystemExit(r.returncode)
-  if name=='build':
-   for mode in ('gnu-host','device'):(P/'build'/mode/'entry-main.o').unlink(missing_ok=True)
   print('PASS',name,flush=True)
 if __name__=='__main__':main()

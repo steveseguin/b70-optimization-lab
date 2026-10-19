@@ -40,21 +40,23 @@ def request_split(root,request,timed=True):
  if timed:demand(events and host,'empty draft device/group stream')
  selected={k:r for k,r in issues.items() if ts[0]<=r['start']<=r['end']<=ts[-1]}
  demand(selected,'no complete decode draft issues')
- cycles={k:dict(sequence=k[0],position=k[1],draft_issue_ms=r['ms'],groups={g:dict(device_ms=0.,host_issue_ms=0.,events=0) for g in GROUPS}) for k,r in selected.items()}
+ cycles={k:dict(sequence=k[0],position=k[1],draft_issue_ms=r['ms'],groups={g:dict(device_ms=0.,host_issue_ms=0.,events=0,host_sites=0) for g in GROUPS}) for k,r in selected.items()}
  seen=set();intervals=defaultdict(list)
  for e in events:
   key=(e['sequence'],e['position']);demand(key in issues,'unmatched device draft')
-  demand(e['group'] in GROUPS and type(e['start_ns']) is int and type(e['end_ns']) is int and 0<e['start_ns']<=e['end_ns'],'invalid device interval')
+  demand(e['group'] in GROUPS and type(e['start_ns']) is int and type(e['end_ns']) is int and 0<e['start_ns']<e['end_ns'],'invalid device interval')
   ek=(key,e['event']);demand(ek not in seen,'duplicate device event');seen.add(ek)
   if key in cycles:
    g=cycles[key]['groups'][e['group']];g['device_ms']+=(e['end_ns']-e['start_ns'])/1e6;g['events']+=1
    intervals[key].append((e['start_ns'],e['end_ns']))
  for r in host:
   key=(r['sequence'],r['position']);demand(key in issues,'unmatched host group')
-  if key in cycles:cycles[key]['groups'][r['p157_segment']]['host_issue_ms']+=r['ms']
+  if key in cycles:
+   cycles[key]['groups'][r['p157_segment']]['host_issue_ms']+=r['ms']
+   cycles[key]['groups'][r['p157_segment']]['host_sites']+=1
  for k,c in cycles.items():
   if timed:
-   demand(all(g['events']>0 for g in c['groups'].values()),'incomplete per-draft device group census')
+   demand(all(g['events']>0 and g['host_sites']>0 for g in c['groups'].values()),'incomplete per-draft device group census')
    ordered=sorted(intervals[k]);demand(all(a[1]<=b[0] for a,b in zip(ordered,ordered[1:])),'overlapping in-order device events')
    c['device_span_ms']=(ordered[-1][1]-ordered[0][0])/1e6
   c['device_sum_ms']=sum(x['device_ms'] for x in c['groups'].values()) if timed else None
@@ -66,6 +68,7 @@ def request_split(root,request,timed=True):
  mean=lambda key:statistics.mean(c[key] for c in rows)
  groups={g:{metric:statistics.mean(c['groups'][g][metric] for c in rows) for metric in ('device_ms','host_issue_ms','events')} for g in GROUPS} if timed else {}
  return dict(prompt_id=request['prompt_id'],timed=timed,drafts=n,groups=groups,cycles=rows,
+             mean_decode_interval_ms=1000*(ts[-1]-ts[0])/63,
              draft_issue_ms=mean('draft_issue_ms'),device_sum_ms=mean('device_sum_ms') if timed else None,
              host_group_sum_ms=mean('host_group_sum_ms') if timed else None,
              host_unassigned_ms=mean('host_unassigned_ms') if timed else None)
@@ -86,7 +89,8 @@ def analyze(views,synthetic=False,smoke=False):
    for j,r in enumerate(rows[index]['requests']):
     before=rows[index-1]['requests'][j];after=rows[index+1]['requests'][j]
     base=(before['draft_issue_ms']+after['draft_issue_ms'])/2
-    overhead.append(dict(view=index,prompt_id=r['prompt_id'],control_draft_issue_ms=base,timed_draft_issue_ms=r['draft_issue_ms'],added_host_ms=r['draft_issue_ms']-base,added_percent=100*(r['draft_issue_ms']/base-1)))
+    interval=(before['mean_decode_interval_ms']+after['mean_decode_interval_ms'])/2
+    overhead.append(dict(view=index,prompt_id=r['prompt_id'],control_draft_issue_ms=base,timed_draft_issue_ms=r['draft_issue_ms'],added_host_ms=r['draft_issue_ms']-base,added_percent=100*(r['draft_issue_ms']/base-1),control_mean_decode_interval_ms=interval,timed_mean_decode_interval_ms=r['mean_decode_interval_ms'],added_decode_interval_ms=r['mean_decode_interval_ms']-interval,added_decode_interval_percent=100*(r['mean_decode_interval_ms']/interval-1)))
  return dict(schema='packet157.draft-device-decomposition.v1',device_evidence=not synthetic,
   speed_evidence_eligible=False,views=rows,ranked_groups=groups,
   top_two_levers=[dict(group=r['group'],next_lever=LEVERS[r['group']]) for r in groups[:2]],

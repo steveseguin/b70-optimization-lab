@@ -28,7 +28,7 @@ class Tests(unittest.TestCase):
     p=Path(d)/str(i);views.append(dict(index=i,choice=c,output=str(p),requests=[fixture(p/str(j),c=='candidate') for j in range(12)]))
    r=analyze(views);self.assertEqual(r['top_two_levers'][0]['group'],'argmax_publication');self.assertAlmostEqual(r['overhead'][0]['added_host_ms'],.1)
  def test_missing_empty_group_unmatched_duplicate_and_overlap(self):
-  for mode in ('missing','empty','group','unmatched','duplicate','overlap','nan','hostsum'):
+  for mode in ('missing','empty','group','hostgroup','unmatched','duplicate','overlap','nan','hostsum'):
    with self.subTest(mode=mode),tempfile.TemporaryDirectory() as d:
     p=Path(d);req=fixture(p/'p');f=p/'p/rank1/timings.jsonl';rows=[json.loads(x) for x in f.read_text().splitlines()]
     if mode=='missing':f.unlink()
@@ -36,6 +36,7 @@ class Tests(unittest.TestCase):
     else:
      dev=next(x for x in rows if x.get('p157_device'))
      if mode=='group':rows=[x for x in rows if x.get('group')!=GROUPS[0]]
+     if mode=='hostgroup':rows=[x for x in rows if x.get('p157_segment')!=GROUPS[0]]
      if mode=='unmatched':dev['sequence']=999
      if mode=='duplicate':rows.append(dict(dev))
      if mode=='overlap':dev['end_ns']+=1000000

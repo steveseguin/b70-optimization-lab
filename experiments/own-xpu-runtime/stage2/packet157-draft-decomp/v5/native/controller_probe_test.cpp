@@ -20,6 +20,7 @@ struct Request {int32_t op,token,position,fixture,speculative,sequence,reserved[
 struct Reply {int32_t status,token,error,bytes,sequence,rank,reserved[2];double busy_ms,gpu_ms,redo_ms,reserved_ms;};
 }
 #include <iomanip>
+namespace ownrt { inline std::string quote(const std::string& x){return "\""+x+"\"";} } // constant group names only
 #include "split_timing.hpp"
 #include <limits>
 #include "../../p105_common.hpp"

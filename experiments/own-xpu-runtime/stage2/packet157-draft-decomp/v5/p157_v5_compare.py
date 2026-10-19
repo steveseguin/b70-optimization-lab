@@ -110,9 +110,9 @@ def finish_bracket(output, window, identity, coordination):
         timing['replay_correction_delta_ms']=timing.pop('exchange_cost_per_miss_ms')
         timing.pop('probe')
     result['candidate_qualified']=False
-    result['purpose']='rank1 split diagnostic only; no speed promotion'
+    result['purpose']='draft device-time decomposition only; no speed promotion'
     from analyze import analyze
-    result['rank1_split']=analyze(views, synthetic=isolation.get('synthetic_cpu_fixture',False))
+    result['draft_decomposition']=analyze(views, synthetic=isolation.get('synthetic_cpu_fixture',False))
     save(output / 'bracket-summary.json', result)
     require(result['passed'], 'A/A timing drift exceeds preregistered 3% control bound')
     return result
@@ -146,7 +146,7 @@ def finish_smoke(output,window,identity,proof,isolation,oracle):
     rates=[(len(r['tokens'])-1)/(r['token_timestamps'][-1]-r['token_timestamps'][0]) for r in v['requests']]
     result['probe_view']=dict(probe='split',miss_count=timing['miss_count'],corrected_half=timing['corrected_half'],median_full_decode_tok_s=statistics.median(rates),rate_definition='63 intervals across 64 generated tokens, per-prompt median')
     from analyze import analyze
-    result['rank1_split']=analyze(proof['views'],synthetic=isolation.get('synthetic_cpu_fixture',False),smoke=True)
+    result['draft_decomposition']=analyze(proof['views'],synthetic=isolation.get('synthetic_cpu_fixture',False),smoke=True)
     save(output/'bracket-summary.json',result);return result
 
 def load(output):

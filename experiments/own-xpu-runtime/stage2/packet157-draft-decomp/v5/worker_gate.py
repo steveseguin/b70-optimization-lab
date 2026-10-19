@@ -56,6 +56,7 @@ def probe(kind,variant="split"):
    return dict(passed=True,tokens=tokens,cached_tokens=0,token_timestamps=list(range(100,164)),output_token_sha256=D.token_hash(tokens))
   with patch.object(pipeline,'Transport',Transport),patch.object(suite,'reset',reset),patch.object(suite,'run_request',request),patch.object(bracket,'switch_reset',switch),patch.object(worker,'DeviceMonitor',Monitor),patch.object(worker,'masked_environment',return_value={}),patch.object(worker,'Teardown',side_effect=lambda *a,**k:contextlib.nullcontext()):
    code=worker.run(row,tmp/'positive',900)
+   if code:raise AssertionError((tmp/'positive/failure.json').read_text())
    n=1 if kind=='smoke' else 5;assert code==0 and trace.count('load')==1 and sum(x.startswith('request:') for x in trace)==13*n and trace[-1]=='close-success',trace
    proof=json.loads((tmp/'positive/bracket-inputs.json').read_text());assert len(proof['views'])==n
    for v in proof['views']:
