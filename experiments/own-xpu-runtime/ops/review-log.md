@@ -764,3 +764,27 @@ STOP DOING acknowledged:
 - Codex cleanup as the disk fix while reservations are 14× real writes;
 - diagnostics without a first-window analyzer-input check;
 - queuing into a lane with no live driver.
+
+## Review 35 — 2026-10-19 ~01:10 UTC — VERDICT: ACT
+
+**Finding:** 18.4% of card-minutes were busy over 2 h. Lane B did ~19 min of real work and held the host for one-card runs for 50.5 min. The one-card chains (58ah a and b) blocked both two-card prep jobs for ~50 of 60 min. The two-card record has not moved since 17:50. GPU fault count is 2.
+
+**Actions (coordinator, 01:06–01:12 UTC):**
+1. **Ordering.** p58ai (one-card miss census) is not dispatched until p153 and p151 have each had their lane-B smoke and v5. After that it is batched into the next one-card hold.
+2. **p151 as an upper bound.** `fn-run/post-58ahb-launch.sh` stops p151b at the chain-b thaw and launches **p151c**. p151c finishes the current partial M=2 build (dense/expert batched; HC, small tuples and shared-down serial) as a labelled upper bound:
+   - ≤ 1.952 ms reopens packet132;
+   - above that is inconclusive, not a closure.
+   - It also fixes the empty-timing report fixture and uses freeze-safe limits.
+3. **One-card paging fixed in the engine.** Codex **p58aj**, launched at the thaw: packet58ah + packet58t resident lookup copies (29.3 GB anonymous, every row, no cache advice or mlock), admitted through packet58u accounting. Smoke + v5 + chain handoff, prepared and not queued. Chain b of 58ah stays the preregistered last rerun; **no third rerun** of 58ah.
+4. **Freeze-safe limits and waiter deadlines.**
+   - The deadline path in `fn-run/onecard-chain.sh` and the new `fn-run/onecard-chain-quiet2.sh` now thaws Codex and keeps PAUSE-A/B. The running quiet waiter was not edited (editing a running bash script corrupts it).
+   - New briefs forbid wall-clock timeouts that count frozen time.
+   - p153 is checked for false timeouts at the thaw.
+5. **Third two-card candidate.** Codex **p154**, launched at the thaw: a rank-1 split, i.e. a vendored packet150 harness with rank-1 scopes to attribute the 1.54 ms `remote_reply_wait`. It chooses between p152's draft and merge briefs and is queued behind p153.
+
+STOP DOING acknowledged:
+- quiet-host reruns as a paging fix (no best-of-N);
+- one-card diagnostics while a two-card candidate is < 45 min from READY;
+- growing a measurement's scope when a one-sided bound decides;
+- wall-clock limits in freezable Codex units;
+- waiter deadlines that leave Codex frozen.
