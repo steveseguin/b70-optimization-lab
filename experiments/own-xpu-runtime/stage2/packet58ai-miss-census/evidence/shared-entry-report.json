@@ -2,8 +2,8 @@
   "passed": true,
   "jobs": [
     {
-      "job": "packet58ai-census-b-smoke-A",
-      "unit": "screen-packet58ai-census-b-smoke-A",
+      "job": "packet58ai-census-d-smoke-A",
+      "unit": "screen-packet58ai-census-d-smoke-A",
       "passed": true,
       "binaries": [
         {
@@ -92,6 +92,85 @@
         "passed": false,
         "message": "no preparation-path probe declared",
         "executed": false
+      },
+      "gate_identity": {
+        "status": "WARN",
+        "passed": true,
+        "findings": [],
+        "warnings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/coordinator_gate.py",
+            "line": 23,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/coordinator_gate.py",
+            "line": 44,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/coordinator_snapshot.py",
+            "line": 63,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/drain_cpu_gate.py",
+            "line": 19,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lane_admission.py",
+            "line": 62,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lane_admission.py",
+            "line": 65,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lane_admission.py",
+            "line": 112,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lane_admission.py",
+            "line": 114,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/screen_gate.py",
+            "line": 7,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/test_drain_fix.py",
+            "line": 10,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/host-admission/derive.py",
+            "line": 14,
+            "reason": "unclassified identity literal"
+          }
+        ],
+        "files_scanned": 69,
+        "message": "0 identity refusals; 14 unclassified uses"
       },
       "shared_environment_matches": true,
       "packet_library_override": false,

@@ -71,7 +71,7 @@ def probe(name, miss, candidate, old_gate=False):
     import coordinator_gate
     from launch_identity import L, LANEQUEUE, unit_name
     tag = 'smoke' if candidate == 'smoke' else 'v5'
-    proposal = LANEQUEUE.parent / 'proposed-p58ai-census-A.txt'
+    proposal = coordinator_gate.proposal_for('smoke' if candidate=='smoke' else 'combined')
     job = next(json.loads(line) for line in proposal.read_text().splitlines() if line.startswith('{'))
     L.validate(job, 'A')
     library = job['argv'][job['argv'].index('--library-path') + 1]
@@ -198,6 +198,7 @@ def probe(name, miss, candidate, old_gate=False):
                 assert cmd[cmd.index('--cache-bytes')+1] == str(V.MAX_BYTES)
                 assert cmd[cmd.index('--cache-maintenance')+1] == V.DEFAULT_MAINTENANCE
                 assert cmd[cmd.index('--max-new')+1] == ('64' if candidate=='smoke' else '128')
+                assert cmd[cmd.index('--wait-seconds')+1] == '600'
                 assert cmd[cmd.index('--retain-steps')+1] == ('1-8' if mode in ('KD','W2m','WS') else 'none')
                 bt=Path(cmd[cmd.index('--bracket-inputs')+1]).read_text().splitlines()
                 assert [x.split()[0] for x in bt]==[x[0] for x in V.bracket(candidate)]
@@ -274,7 +275,7 @@ def main():
         return
     import queue_runner as Q
     before=sources(); records=[]; regressions=[]
-    for candidate in ('smoke',):
+    for candidate in ('smoke','p60fusion'):
       for name in Q.ORDER:
         for miss in ('zero-copy',):
             result=subprocess.run([sys.executable,'-B',str(Path(__file__)),'--probe',name,'--miss',miss,'--candidate',candidate],

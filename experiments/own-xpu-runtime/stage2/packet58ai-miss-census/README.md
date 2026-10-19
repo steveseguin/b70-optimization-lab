@@ -71,3 +71,39 @@ analyzer requires nonempty counts, both kernel event partitions and router
 events for overlap. It reads that request only, without a wall-clock deadline.
 The five-view census remains a later separate proposal; smoke is diagnostic.
 CPU preparation stops below 27 GB; device admission reserves writes above 25 GB.
+
+Packet58aid repairs the WSCREEN sensor import with a byte-identical private
+copy of packet58aj's `screen/device_memory.py`; `device-memory-provenance.json`
+records its hash. `device_import_gate.py` runs through `window.py` with Python
+`-B`, the repository cwd and the real closed environment for K1a, K1b,
+WSCREEN smoke and census. It imports the dependency closure, executes the
+sensor with synthetic process observations, forbids device/model access and
+rejects the missing-module regression. The two excluded missing imports are
+unused standalone helpers (`launch_env.check_binary` and
+`supervision.finalize_r1`), not window call paths.
+
+The fresh smoke proposal is `packet58ai-census-d-smoke-A`, writing
+`evidence/card0-census-d/smoke`. The separate
+[conditional five-view proposal](../../ops/lane-queue/proposed-p58ai-census5-A.txt)
+is `packet58ai-census-d-five-A`, writing `evidence/card0-census-d/combined`.
+`verify_ready.py` recomputes the smoke's exact outputs, clean window receipts,
+build identity, complete file hashes and all twelve real census streams before
+that proposal can launch K1a. No stored readiness boolean is sufficient.
+The failed c-smoke remains historical evidence; it contains no completed model
+request and cannot provide positive device validation for the analyzer.
+
+Native operation waits now explicitly use the existing `--wait-seconds 600`
+option. This exceeds four times the recorded parent's longest cold first-token
+phase; the five-view admission rechecks the same ratio against the new smoke.
+There is no in-run wall-clock data-proof deadline. The 7200-second whole-window
+watchdog and graceful ownership/cleanup rules remain. No native rebuild or
+arithmetic change was made. Shared entry rehearsal reports the missing native
+preparation harness and unclassified identity uses as warnings; the local
+six-path launch and four-path import probes supplement, but do not relabel,
+that missing full-shape device-define preparation proof.
+
+`prepare_handoff.py` repeats CPU checks, both proposal rehearsals/plans and
+pin admission, then writes `READY-FOR-DEVICE.json` last. It runs at nice 19 on
+helper cores with closed stdin and checks peak RAM below 2 GiB. The marker's
+smoke-ready status is preparation only; census5 stays conditional until the
+fresh smoke and analyzer pass on actual device data. No queue is changed.

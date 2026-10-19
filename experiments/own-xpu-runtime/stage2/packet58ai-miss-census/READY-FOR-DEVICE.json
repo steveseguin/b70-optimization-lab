@@ -1,73 +1,255 @@
 {
   "schema": "own-runtime.packet58ai.prepared.v1",
-  "commit": "a0420fc55605f38d01234a29fc859d7dffd75f3a",
+  "utc": "2026-10-19T04:28:09.715564+00:00",
+  "prepared_against_commit": "0fe405f4a53151d2a8b05e8b2e85b70270c85ef2",
   "ready_for_device": true,
-  "readiness_scope": "CPU-prepared first device smoke; fresh live coordinator admission required; five-view census is a later separate run",
-  "utc": "2026-10-19T03:38:46.094502+00:00",
+  "smoke_ready": true,
+  "census5_ready": false,
+  "census5_conditional": true,
+  "readiness_scope": "CPU-prepared fresh smoke; census5 requires exact d-smoke and real analyzer validation via verify_ready.py",
+  "job": "packet58ai-census-d-smoke-A",
+  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/evidence/card0-census-d/smoke",
   "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58ai-census-A.txt",
-  "proposal_sha256": "bca1de47374de90d777ce4e18a3db59b1e3342eed428337d63596110bc237866",
-  "build_receipt": "build-receipt.json",
-  "build_receipt_sha256": "bcc716348302710d7882561cffe4725ab9b884992f04586e75cd674055cef06d",
-  "evidence_pins": {
-    "evidence/queue-plan.json": "072be47426e7c8bdda44873b3d46bea2b2c9ed5b7fae1c2059187d220ec86de3",
-    "evidence/pin-admission.json": "9601bf80b4118077373bd2a08fd3d515df6f8ddedfdcbdc8e17eaceb16d9c04f",
-    "evidence/storage-budget.json": "e0578b8d42055562715f16990a8548b92afe1919c23a8df6950f42c573093cde",
-    "evidence/cpu-resource-use.json": "58ff0596dbb98aae1490fdcca8efa8af06d7d6208e94291a33c83ecc1368fa4e",
-    "evidence/first-request-data-gate.json": "f94fa53f7f8acba150ec4231ec486b75c957798c734b0c32487b6efd5dd3fa7b",
-    "evidence/shared-entry-report.json": "9ab4e68734fd85ed5cd9e829666e170123fbb86757b4c3e72345aa920c4403d9",
-    "evidence/python-tests.json": "c76165c6ea944a93940205af26a4f3f04e64daf7a541ac7034446556de52d8c6",
-    "evidence/reset-gate.json": "3b56511dcfd069b21dc8b694d963f589bba72d87ea1514c71ea05cd35d1dfa6b",
-    "evidence/argument-gate.json": "4415e7cf6a0efd0fc65e6fa196b85408981c92d48ebaeee5b3c9019b833fc6c7",
-    "evidence/shared-entry.json": "e71aaa0ae6bfb7e174a9f08b35dcfe79a44166a36d86318782b1fd041b879248",
-    "evidence/p58aic-rehearse.json": "69a32ab2c401ae060c053b33da3a57cdb5cc282a1505afe8d640b508e69fd2c7",
-    "evidence/p58aic-python-tests.log": "c1e3b2a0994a5a775cb2334df076a9271b78a0c51037d1a59f6062641cc1e492",
-    "evidence/p58aic-identity.json": "af2c400353250d4db65f7307a4b8517de24bc510f47caffc66b8dd999cbe4734"
+  "proposal_sha256": "77e5032dbcc2e9f143d7679cd9ade622cb9a13d192de0b7624897c0c894513db",
+  "census5": {
+    "job": "packet58ai-census-d-five-A",
+    "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58ai-census5-A.txt",
+    "proposal_sha256": "63dcbc3f100c81d2cb8dc1e189c2858d27e074fb734566f66b329c56cee23d1f",
+    "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/evidence/card0-census-d/combined",
+    "ready": false,
+    "conditional": true,
+    "prerequisite": "verify_ready.py recomputes exact current-build d-smoke, clean drain and all 12 real census streams"
   },
+  "build_receipt": "build-receipt.json",
+  "build_receipt_sha256": "7722ebce564fe34af9fbed1bde87972bf54e8023545f92fab7860a87794953e1",
+  "evidence_pins": {
+    "evidence/device-import-gate.json": "454d76c500463076ee4978d44e3ad0b2a6688a420a8c6e3a98364896dbdcce6b",
+    "evidence/argument-gate.json": "4fb140aababe082961c4948e4e174be0416531fd7c8370fd8f15a45d5aab072d",
+    "evidence/python-tests.json": "acf66b28d76ddd2a19b5fdb8f17123f4d54cb43beab44954c4f67de2acd6c5c8",
+    "evidence/shared-entry-report.json": "15e0dbb1aa58e2bfb5a83702cabae8a847d72ba65779503292985efd29c67b8c",
+    "evidence/p58aid-census5-rehearse.json": "e3b9b96878bacbfd12b6e6dbc740ac5abd9ba622fc4ea9ada4f00e9536230e43",
+    "evidence/p58aid-wait-policy.json": "47cdd00b94d7ae360ea52a9d824f2025e392e1e23051b974395b9036332bc8b1",
+    "evidence/p58aid-real-device-analyzer.json": "8fac355a2bb418458532c0fdbdd20059310b477bb03a8db8d9a89215835f6f33",
+    "evidence/p58aid-pin-admission.json": "43d0876603c2ecbb48082d9b2966e8773a8050dedcb137ab9a897a276d4a02ed",
+    "evidence/p58aid-queue-plans.json": "b607c9dce291b0de17af5a5689d5326d7d8eda6ed0c736c6e13bbb34616983ef",
+    "evidence/p58aid-census5-conditional.json": "b9606c044b04f304d9aca2b5ab57db67a209edfeda63c599983d6f832a2585db",
+    "evidence/p58aid-resources.json": "671a716e658ae593f873e4769f5a1ff89139def653d58dc36cb35e0b0a59bcc8",
+    "evidence/first-request-data-gate.json": "b78125e24584ae3fd480561f76403ee7f0fcc4a5a4cab0a0056105cdced3d1fc"
+  },
+  "shared_rehearsal_warnings": [
+    {
+      "job": "packet58ai-census-d-smoke-A",
+      "check": "preparation_path",
+      "detail": {
+        "status": "WARN",
+        "passed": false,
+        "message": "no preparation-path probe declared",
+        "executed": false
+      }
+    },
+    {
+      "job": "packet58ai-census-d-smoke-A",
+      "check": "gate_identity",
+      "detail": {
+        "status": "WARN",
+        "passed": true,
+        "findings": [],
+        "warnings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/coordinator_gate.py",
+            "line": 23,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/coordinator_gate.py",
+            "line": 44,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/coordinator_snapshot.py",
+            "line": 63,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/drain_cpu_gate.py",
+            "line": 19,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lane_admission.py",
+            "line": 62,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lane_admission.py",
+            "line": 65,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lane_admission.py",
+            "line": 112,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lane_admission.py",
+            "line": 114,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/screen_gate.py",
+            "line": 7,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/test_drain_fix.py",
+            "line": 10,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/host-admission/derive.py",
+            "line": 14,
+            "reason": "unclassified identity literal"
+          }
+        ],
+        "files_scanned": 69,
+        "message": "0 identity refusals; 14 unclassified uses"
+      }
+    },
+    {
+      "job": "packet58ai-census-d-five-A",
+      "check": "preparation_path",
+      "detail": {
+        "status": "WARN",
+        "passed": false,
+        "message": "no preparation-path probe declared",
+        "executed": false
+      }
+    },
+    {
+      "job": "packet58ai-census-d-five-A",
+      "check": "gate_identity",
+      "detail": {
+        "status": "WARN",
+        "passed": true,
+        "findings": [],
+        "warnings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/coordinator_gate.py",
+            "line": 23,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/coordinator_gate.py",
+            "line": 44,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/coordinator_snapshot.py",
+            "line": 63,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/drain_cpu_gate.py",
+            "line": 19,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lane_admission.py",
+            "line": 62,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lane_admission.py",
+            "line": 65,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lane_admission.py",
+            "line": 112,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lane_admission.py",
+            "line": 114,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/screen_gate.py",
+            "line": 7,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/test_drain_fix.py",
+            "line": 10,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/host-admission/derive.py",
+            "line": 14,
+            "reason": "unclassified identity literal"
+          }
+        ],
+        "files_scanned": 69,
+        "message": "0 identity refusals; 14 unclassified uses"
+      }
+    }
+  ],
   "device_executed": false,
   "queued": false,
   "services_started": false,
   "live_queue_written": false,
+  "require_fresh_live_admission": true,
   "required_empty_queues": [
     "A",
     "B"
   ],
   "require_no_other_inflight": true,
-  "require_fresh_live_admission": true,
-  "last_live_admission": "Three current-proposal smoke paths passed fresh host admission with native execution intercepted",
-  "last_live_admission_receipt": "evidence/argument-gate.json",
-  "last_live_admission_receipt_sha256": "4415e7cf6a0efd0fc65e6fa196b85408981c92d48ebaeee5b3c9019b833fc6c7",
-  "model_lifetimes": 1,
+  "arithmetic": "iq3-p49-split32-v1",
+  "kv_dtype": "BF16",
+  "record_tok_s": 30.396,
+  "output_identity_on_device": "pending fresh smoke",
+  "diagnostic_only": true,
+  "promotable": false,
   "views": [
     "S0"
   ],
   "prompts_per_view": 12,
   "requested_max_new": 64,
-  "expected_seconds": 900,
-  "watchdog_seconds": 7200,
-  "gpu_count": 1,
-  "lane": "A",
-  "arithmetic": "iq3-p49-split32-v1",
-  "record_tok_s": 30.396,
-  "output_identity_on_device": "pending",
-  "acceptance_identity_on_device": "pending",
-  "instrumentation_overhead": "pending device census",
-  "miss_cost_ms_per_token": null,
-  "overlap_available_ms": null,
-  "upper_bound_ms_per_token": null,
-  "decision": null,
-  "diagnostic_only": true,
-  "promotable": false,
-  "preparation_tests": 37,
-  "retained_build_bytes": 66354569,
-  "root_stop_floor_bytes": 25000000000,
-  "planned_write_bytes": 1140850688,
-  "final_write": true,
-  "preparation_stop_floor_bytes": 27000000000,
-  "first_request_data_gate": "evidence/first-request-data-gate.json",
+  "per_operation_wait_seconds": 600,
   "first_request_wall_deadline_seconds": null,
-  "preparation_path_probe": "WARN: no safe real-rank-argv native harness for this one-card entry; not claimed",
-  "native_rebuild_scope": "Changed entry-main only, GNU and Intel; relinked using existing unchanged objects",
-  "job": "packet58ai-census-c-smoke-A",
-  "output": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/evidence/card0-census-c/smoke",
-  "reseal_scope": "packet58aic CPU-only coordinator identity repair; unchanged native binaries"
+  "watchdog_seconds": 7200,
+  "preparation_tests": 41,
+  "native_rebuild_scope": "none; unchanged binaries; existing wait flag set to 600 seconds",
+  "reseal_scope": "packet58aid sensor dependency and smoke-gated five-view proposal",
+  "final_write": true
 }

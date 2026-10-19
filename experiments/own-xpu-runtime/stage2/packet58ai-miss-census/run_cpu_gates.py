@@ -12,6 +12,7 @@ def run(args,log):
 
 def main():
     limits()
+    run([sys.executable,'-B',str(P/'device_import_gate.py')],P/'evidence/device-import-gate.log')
     # Argument probes intentionally inherit unchanged unlimited AS; they do
     # not load weights or execute native code, and retain measured peak RSS.
     run([sys.executable,'-B','-m','unittest','discover','-s',str(P),'-p','test_*.py'],P/'evidence/python-tests.log')
@@ -33,5 +34,5 @@ def main():
         binaries={str(Path(x).relative_to(P)):sha(x) for x in binaries}))
     assert resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024<2*1024**3
     save(P/'evidence/cpu-resource-use.json',dict(passed=True,device_executed=False,max_child_rss_bytes=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024))
-    print(f'{tests} tests, 3 native launch paths, 2 loaders and 2 report kinds PASS')
+    print(f'{tests} tests, 6 native launch paths, 4 import/sensor paths, 2 loaders and 2 report kinds PASS')
 if __name__=='__main__':main()

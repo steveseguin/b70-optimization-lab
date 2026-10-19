@@ -151,3 +151,58 @@ limits and report their measured RSS above. No GGUF was read. Evidence:
 `evidence/p58aic-python-tests.log`, `evidence/p58aic-arguments.log`,
 `evidence/p58aic-rehearse.json`, `evidence/p58aic-queue-plan.log`, and
 `evidence/pin-admission.json` in the packet.
+
+## Packet58aid — missing sensor repaired; five-view census gated on fresh smoke
+
+The c-smoke reached both K1 windows, then stopped because the model window
+could not import `device_memory`. Its failure files remain under
+`evidence/card0-census-c/smoke`; the coordinator owns stale operational cleanup.
+There were no unfinished tracked edits from the stopped p58ai5 job to salvage.
+The repair copies packet58aj's sensor byte for byte and records its source hash.
+No native binary, model arithmetic, oracle or cache precision changed.
+
+The CPU import gate now uses the actual window entry, Python -B, repository
+working directory, packet-first import path and closed launch environment.
+It scans and imports the window dependency closure for K1a, K1b, WSCREEN and
+census, and exercises the sensor with synthetic process observations. Device
+and GGUF opens are forbidden. Removing the sensor from import resolution
+reproduces the original failure. Two other missing names belong only to the
+unused standalone loader and old generic R1 reporter; their exclusions are
+explicit in the retained import audit. The six intercepted launch paths cover
+both the smoke and five-view proposals and their actual coordinator unit names.
+
+The fresh smoke is `packet58ai-census-d-smoke-A`, output
+`evidence/card0-census-d/smoke`. A separate proposal,
+`proposed-p58ai-census5-A.txt`, prepares `packet58ai-census-d-five-A` at
+`evidence/card0-census-d/combined`. Its runner now actually invokes the smoke
+prerequisite. `verify_ready.py` rechecks all 12 exact requests, clean drains,
+current build, native-file hashes and all real census streams before any
+five-view window starts. Tests cover missing smoke, a wrong proposal arm,
+an empty last-request stream and an insufficient operation wait. The analyzer
+rejects the retained real failed c-smoke. That run has no completed model
+request: positive analyzer validation on device data remains mandatory in the
+new smoke, and is not claimed from the synthetic CPU fixtures.
+
+The inherited native operation-wait default was only 60 seconds. The launch
+now passes the already supported `--wait-seconds 600`; no rebuild is needed.
+The retained wait-policy receipt binds the parent's actual cold first-token
+measurements and checks the four-times margin. Census admission checks it
+again against the new smoke. In-run stream checks have no wall-clock proof
+limit. Existing whole-window watchdogs and cooperative cleanup remain.
+
+Shared `rehearse_entry.py --report` is run for both proposals, including its
+storage, deadlines, preparation and identity checks. Storage and deadline
+checks pass. It still warns that no native real-rank preparation harness is
+declared and that some identity uses are unclassified; the actual six-path
+unit/argv tests supplement those warnings, not a claim of full-shape proof.
+Both native loaders and report adapters pass. Final repeat receipts, both
+isolated queue plans, immutable pin admission and peak RAM are saved under
+`evidence/p58aid-*`. `prepare_handoff.py` writes the final marker only after
+these checks; smoke is CPU-ready and census5 is explicitly conditional.
+
+All work is CPU-only at nice 19 on cores 8–15,24–31, using Python -B and closed
+stdin. Argument probes preserve the future launch's unlimited address-space
+setting but measure peak RAM below 2 GiB; other preparation children have a
+2 GiB address-space cap. No model payload, GPU, service, sudo, setting, live
+queue, other packet tree or shared ops source was changed. Only the two p58ai
+proposal files were edited under ops. The old smoke evidence is preserved.

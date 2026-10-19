@@ -176,7 +176,7 @@ def native_command(args, manifest, table):
         '--dispatch',str(HERE/'dispatch-speed6.json'),'--output',str(args.output/'run'),
         '--hc','p60fusion','--cache-bytes',str(MAX_BYTES),'--cache-cap','max',
         '--cache-maintenance',getattr(args,'cache_maintenance',DEFAULT_MAINTENANCE),
-        '--seconds','7200','--bracket-inputs',str(args.output/'bracket-inputs.tsv')]
+        '--seconds','7200','--wait-seconds','600','--bracket-inputs',str(args.output/'bracket-inputs.tsv')]
 
 def main(argv=None):
     ap=argparse.ArgumentParser(description=__doc__)

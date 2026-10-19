@@ -4,6 +4,11 @@ from pathlib import Path
 P=Path(__file__).resolve().parent
 QUEUE=P.parents[1]/'ops/lane-queue'
 PROPOSAL=QUEUE/'proposed-p58ai-census-A.txt'
+CENSUS_PROPOSAL=QUEUE/'proposed-p58ai-census5-A.txt'
+
+def proposal_for(arm):
+    if arm not in ('smoke','combined'):raise ValueError('unknown census arm')
+    return PROPOSAL if arm=='smoke' else CENSUS_PROPOSAL
 
 def proposal_jobs(proposal=PROPOSAL):
     jobs=[json.loads(line) for line in Path(proposal).read_text().splitlines()
@@ -16,7 +21,7 @@ def proposal_jobs(proposal=PROPOSAL):
 def identity(job):
     argv=job.get('argv',[])
     if (not job.get('name') or job.get('lane')!='A'
-            or argv.count('--output')!=1
+            or argv.count('--output')!=1 or argv.count('--arm')!=1
             or len(argv)<3 or Path(argv[2]).name!='queue_runner.py'):
         raise ValueError('invalid census job identity')
     repo=P.parents[3]
@@ -26,7 +31,7 @@ def identity(job):
     except IndexError:raise ValueError('missing census output') from None
     if not output.is_relative_to(P/'evidence'):
         raise ValueError('foreign census output')
-    return job['name'],job['lane'],str(output)
+    return job['name'],job['lane'],str(output),argv[argv.index('--arm')+1]
 
 def output_root(proposal=PROPOSAL):
     roots={Path(identity(job)[2]).parent for job in proposal_jobs(proposal)}

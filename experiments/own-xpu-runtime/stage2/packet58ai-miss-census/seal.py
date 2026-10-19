@@ -2,7 +2,7 @@
 import argparse,json,os,shutil,subprocess
 from pathlib import Path
 from build_engine import P,ROOT,sha,save,limits
-GATES=('evidence/first-request-data-gate.json','evidence/fullshape-submit-cpu.json','evidence/postload-allocation-cpu.json',
+GATES=('evidence/device-import-gate.json','evidence/first-request-data-gate.json','evidence/fullshape-submit-cpu.json','evidence/postload-allocation-cpu.json',
        'evidence/argument-gate.json','evidence/partition-cpu.json','evidence/reset-gate.json',
        'evidence/python-tests.json','evidence/shared-entry.json','evidence/loader.json')
 
@@ -58,4 +58,4 @@ def main():
     row=verify() if a.verify else create();print(json.dumps(dict(passed=True,device_executed=False,sources=len(row['sources']),build_bytes=row['retained_build_bytes'])))
 if __name__=='__main__':
     import resource
-    resource.setrlimit(resource.RLIMIT_AS,(4*1024**3,4*1024**3));main()
+    resource.setrlimit(resource.RLIMIT_AS,(2*1024**3,2*1024**3));main()

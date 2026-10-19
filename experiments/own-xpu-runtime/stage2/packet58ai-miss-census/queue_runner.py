@@ -70,13 +70,9 @@ def plan(output, view):
 
 
 def verify_smoke(maintenance=DEFAULT_MAINTENANCE):
-    import suite_driver as D
-    root=(ROOT or output_root())/'smoke'
-    receipt=verify_success('WSCREEN',root,0,0)
-    summary=D.summarize_bracket(root/'WSCREEN/run','smoke',D.oracle_inputs(),maintenance)
-    W.require(summary.get('smoke_passed') is True,'first async device smoke required')
-    W.require(receipt['build_receipt_sha256']==W.sha(P/'build-receipt.json'),'smoke build differs')
-    return summary
+    W.require(maintenance == DEFAULT_MAINTENANCE, 'smoke maintenance differs')
+    import verify_ready
+    return verify_ready.verify()
 
 
 def main(argv=None):
@@ -92,13 +88,15 @@ def main(argv=None):
     recorded=json.loads((P/'library-path.json').read_text())['LD_LIBRARY_PATH']
     W.require(args.library_path==recorded,'recorded oneAPI library path required')
     view=dict(STAGES)[args.arm]; output=args.output.resolve()
-    root=ROOT or output_root()
+    from coordinator_gate import proposal_for
+    proposal=proposal_for(args.arm)
+    root=ROOT or output_root(proposal)
     W.require(output == root/args.arm and not output.exists(), 'proposed fresh arm output required')
     metadata=plan(output,view)
     if args.plan:
         print(json.dumps(metadata,indent=2)); return 0
     import coordinator_gate
-    coordinator_gate.check()
+    coordinator_gate.check(proposal=proposal)
     W.require(args.authorized_device_window and args.fault_review, 'coordinator authorization and fresh fault review required')
     W.user_unit_gate(Path('/proc/self/cgroup').read_text())
     W.require(os.getpriority(os.PRIO_PROCESS,0)==0 and set(os.sched_getaffinity(0))=={0,1,2,3,16,17,18,19}, 'nice0 lane-A timing placement required')
@@ -108,6 +106,8 @@ def main(argv=None):
     boundary = F.window_boundary(reviewed)
     cmds=commands(output,0,boundary,args.library_path,view,args.cache_maintenance)
     W.storage(output,sum(W.WRITES['K1' if n.startswith('K1') else n] for n in ORDER))
+    if args.arm == 'combined':
+        verify_smoke(args.cache_maintenance)
     output.mkdir(parents=True)
     state=dict(schema='packet58x.arm.v1', passed=False, device_executed=False,
                view=view, arm=args.arm, commands=cmds, completed=[], plan=metadata,

@@ -59,3 +59,15 @@ by hash because the instrumented path allocates no additional device buffers;
 the new 16 MiB host log buffer fits the existing 32 MiB metadata allowance.
 Small native partition and reset tests cover the new code. The inherited
 allocation proof is not represented as a newly executed full-shape test.
+
+Packet58aid admission amendment: run the fresh d-smoke before the separate
+five-view proposal. Both share this unchanged binary and final seal. The
+five-view runner calls `verify_ready.verify()` before creating its output or
+starting K1a. This recomputes the whole 12-prompt smoke, native-file closure,
+exact oracle, clean drain, build hashes and every real request's census stream.
+The failed c-smoke is retained, rejected by the real analyzer and never used
+as positive validation. Positive real-stream validation is a mandatory
+conditional gate, not a CPU preparation claim. Per-operation native waits use
+600 seconds, at least four times the measured parent cold phase; admission
+also requires that ratio against the new smoke. Presence, format and exactness
+are the in-run data checks, without elapsed-time proof limits.

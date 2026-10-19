@@ -126,7 +126,7 @@ def build_gate():
         require(gate.get('passed') is True and gate.get('device_executed') is False, 'CPU gate failed: ' + name)
     startup = json.loads((HERE/'evidence/argument-gate.json').read_text())
     require({(r['candidate'], r['window']) for r in startup['records']} ==
-            {(v, w) for v in ('smoke',) for w in ('K1a', 'K1b', 'WSCREEN')} and
+            {(v, w) for v in ('smoke','p60fusion') for w in ('K1a', 'K1b', 'WSCREEN')} and
             all(r.get('real_queue_entry') is True and r.get('real_unit_and_environment_gates') is True
                 and r.get('live_host_admission') is True and r.get('native_exec_intercepted') is True
                 for r in startup['records']), 'complete real startup paths required')
@@ -542,4 +542,9 @@ def main(argv=None):
             signal.signal(sig, handler)
 
 if __name__ == '__main__':
+    import sys
+    if sys.argv[1:2] == ['--cpu-import-check']:
+        from device_import_gate import probe
+        print(json.dumps(probe(sys.argv[2], 'device_memory' if '--simulate-missing-device-memory' in sys.argv else None)))
+        raise SystemExit(0)
     raise SystemExit(main())

@@ -1,7 +1,7 @@
 {
   "passed": true,
   "device_executed": false,
-  "checks": 3,
+  "checks": 6,
   "records": [
     {
       "window": "K1a",
@@ -24,11 +24,11 @@
       "observations": [
         {
           "argv": [
-            "/tmp/packet58ab-arguments-zr2plmw2/packet/build/device/p58-cache-fixtures",
+            "/tmp/packet58ab-arguments-3z1bbvc0/packet/build/device/p58-cache-fixtures",
             "--card",
             "0",
             "--output",
-            "/tmp/packet58ab-arguments-zr2plmw2/packet/evidence/smoke/K1a/run",
+            "/tmp/packet58ab-arguments-3z1bbvc0/packet/evidence/smoke/K1a/run",
             "--iterations",
             "20",
             "--down-layout",
@@ -99,9 +99,9 @@
           }
         }
       ],
-      "job": "packet58ai-census-c-smoke-A",
-      "unit": "screen-packet58ai-census-c-smoke-A.service",
-      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-c-smoke-A.service\n",
+      "job": "packet58ai-census-d-smoke-A",
+      "unit": "screen-packet58ai-census-d-smoke-A.service",
+      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-d-smoke-A.service\n",
       "real_queue_entry": true,
       "real_unit_and_environment_gates": true,
       "topology": [
@@ -131,7 +131,7 @@
         {
           "passed": true,
           "snapshot": {
-            "MemAvailable": 120733839360,
+            "MemAvailable": 120739012608,
             "GPUActive": 114688
           },
           "window": "K1",
@@ -142,7 +142,7 @@
         {
           "passed": true,
           "snapshot": {
-            "MemAvailable": 120733839360,
+            "MemAvailable": 120739012608,
             "GPUActive": 114688
           },
           "window": "K1",
@@ -152,7 +152,7 @@
         }
       ],
       "live_host_admission": true,
-      "proposal_sha256": "bca1de47374de90d777ce4e18a3db59b1e3342eed428337d63596110bc237866",
+      "proposal_sha256": "77e5032dbcc2e9f143d7679cd9ade622cb9a13d192de0b7624897c0c894513db",
       "synthetic_boundaries": [
         "build envelope (verified separately)",
         "prior K1/smoke receipts",
@@ -187,11 +187,11 @@
       "observations": [
         {
           "argv": [
-            "/tmp/packet58ab-arguments-aibypdci/packet/build/device/p58-cache-fixtures",
+            "/tmp/packet58ab-arguments-6guds67o/packet/build/device/p58-cache-fixtures",
             "--card",
             "0",
             "--output",
-            "/tmp/packet58ab-arguments-aibypdci/packet/evidence/smoke/K1b/run",
+            "/tmp/packet58ab-arguments-6guds67o/packet/evidence/smoke/K1b/run",
             "--iterations",
             "20",
             "--down-layout",
@@ -262,9 +262,9 @@
           }
         }
       ],
-      "job": "packet58ai-census-c-smoke-A",
-      "unit": "screen-packet58ai-census-c-smoke-A.service",
-      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-c-smoke-A.service\n",
+      "job": "packet58ai-census-d-smoke-A",
+      "unit": "screen-packet58ai-census-d-smoke-A.service",
+      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-d-smoke-A.service\n",
       "real_queue_entry": true,
       "real_unit_and_environment_gates": true,
       "topology": [
@@ -294,7 +294,7 @@
         {
           "passed": true,
           "snapshot": {
-            "MemAvailable": 120733843456,
+            "MemAvailable": 120728743936,
             "GPUActive": 114688
           },
           "window": "K1",
@@ -305,7 +305,7 @@
         {
           "passed": true,
           "snapshot": {
-            "MemAvailable": 120733843456,
+            "MemAvailable": 120728756224,
             "GPUActive": 114688
           },
           "window": "K1",
@@ -315,7 +315,7 @@
         }
       ],
       "live_host_admission": true,
-      "proposal_sha256": "bca1de47374de90d777ce4e18a3db59b1e3342eed428337d63596110bc237866",
+      "proposal_sha256": "77e5032dbcc2e9f143d7679cd9ade622cb9a13d192de0b7624897c0c894513db",
       "synthetic_boundaries": [
         "build envelope (verified separately)",
         "prior K1/smoke receipts",
@@ -352,7 +352,7 @@
           "argv": [
             "/usr/bin/python3",
             "-B",
-            "/tmp/packet58ab-arguments-z3tvxevu/packet/suite_driver.py",
+            "/tmp/packet58ab-arguments-v96yrjyg/packet/suite_driver.py",
             "--window",
             "WSCREEN",
             "--view",
@@ -362,7 +362,7 @@
             "--card",
             "0",
             "--output",
-            "/tmp/packet58ab-arguments-z3tvxevu/packet/evidence/smoke/WSCREEN/run",
+            "/tmp/packet58ab-arguments-v96yrjyg/packet/evidence/smoke/WSCREEN/run",
             "--miss-mode",
             "zerocopy",
             "--authorized-device-window"
@@ -434,7 +434,7 @@
           "argv": [
             "ionice",
             "-c3",
-            "/tmp/packet58ab-arguments-z3tvxevu/packet/build/device/own-rt-iq3",
+            "/tmp/packet58ab-arguments-v96yrjyg/packet/build/device/own-rt-iq3",
             "--authorized-device-window",
             "--card",
             "0",
@@ -457,7 +457,7 @@
             "--retain-steps",
             "none",
             "--suite-inputs",
-            "/tmp/packet58ab-arguments-z3tvxevu/packet/evidence/smoke/WSCREEN/run/suite-inputs.tsv",
+            "/tmp/packet58ab-arguments-v96yrjyg/packet/evidence/smoke/WSCREEN/run/suite-inputs.tsv",
             "--input",
             "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/incident-retrospective/tokens.txt",
             "--plan",
@@ -471,9 +471,9 @@
             "--selection-sha256",
             "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
             "--dispatch",
-            "/tmp/packet58ab-arguments-z3tvxevu/packet/dispatch-speed6.json",
+            "/tmp/packet58ab-arguments-v96yrjyg/packet/dispatch-speed6.json",
             "--output",
-            "/tmp/packet58ab-arguments-z3tvxevu/packet/evidence/smoke/WSCREEN/run/run",
+            "/tmp/packet58ab-arguments-v96yrjyg/packet/evidence/smoke/WSCREEN/run/run",
             "--hc",
             "p60fusion",
             "--cache-bytes",
@@ -484,8 +484,10 @@
             "overlap",
             "--seconds",
             "7200",
+            "--wait-seconds",
+            "600",
             "--bracket-inputs",
-            "/tmp/packet58ab-arguments-z3tvxevu/packet/evidence/smoke/WSCREEN/run/bracket-inputs.tsv"
+            "/tmp/packet58ab-arguments-v96yrjyg/packet/evidence/smoke/WSCREEN/run/bracket-inputs.tsv"
           ],
           "limits": {
             "0": [
@@ -551,9 +553,9 @@
           }
         }
       ],
-      "job": "packet58ai-census-c-smoke-A",
-      "unit": "screen-packet58ai-census-c-smoke-A.service",
-      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-c-smoke-A.service\n",
+      "job": "packet58ai-census-d-smoke-A",
+      "unit": "screen-packet58ai-census-d-smoke-A.service",
+      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-d-smoke-A.service\n",
       "real_queue_entry": true,
       "real_unit_and_environment_gates": true,
       "topology": [
@@ -583,7 +585,7 @@
         {
           "passed": true,
           "snapshot": {
-            "MemAvailable": 120733401088,
+            "MemAvailable": 120735789056,
             "GPUActive": 114688
           },
           "window": "WSCREEN",
@@ -594,7 +596,7 @@
         {
           "passed": true,
           "snapshot": {
-            "MemAvailable": 120733917184,
+            "MemAvailable": 120735789056,
             "GPUActive": 114688
           },
           "window": "WSCREEN",
@@ -604,7 +606,624 @@
         }
       ],
       "live_host_admission": true,
-      "proposal_sha256": "bca1de47374de90d777ce4e18a3db59b1e3342eed428337d63596110bc237866",
+      "proposal_sha256": "77e5032dbcc2e9f143d7679cd9ade622cb9a13d192de0b7624897c0c894513db",
+      "synthetic_boundaries": [
+        "build envelope (verified separately)",
+        "prior K1/smoke receipts",
+        "coordination locks",
+        "journal review",
+        "placement observations",
+        "ldd",
+        "device client ownership",
+        "memory fence"
+      ],
+      "resource_limits_unchanged": true,
+      "finite_address_space_limit": false
+    },
+    {
+      "window": "K1a",
+      "miss_path": "zero-copy",
+      "passed": true,
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "operational_state_synthetic": true,
+      "selection": {
+        "schema": "packet49d.selection.v1",
+        "choices": {
+          "route": "route-exp32-rank4",
+          "recurrence": "rows4-shared",
+          "hc": "production",
+          "down": "down-tile16"
+        },
+        "decision": null
+      },
+      "candidate": "p60fusion",
+      "observations": [
+        {
+          "argv": [
+            "/tmp/packet58ab-arguments-s2mr9t6c/packet/build/device/p58-cache-fixtures",
+            "--card",
+            "0",
+            "--output",
+            "/tmp/packet58ab-arguments-s2mr9t6c/packet/evidence/combined/K1a/run",
+            "--iterations",
+            "20",
+            "--down-layout",
+            "down-tile16",
+            "--authorized-device-window"
+          ],
+          "limits": {
+            "0": [
+              -1,
+              -1
+            ],
+            "1": [
+              -1,
+              -1
+            ],
+            "2": [
+              -1,
+              -1
+            ],
+            "3": [
+              8388608,
+              -1
+            ],
+            "4": [
+              0,
+              -1
+            ],
+            "5": [
+              -1,
+              -1
+            ],
+            "6": [
+              477915,
+              477915
+            ],
+            "7": [
+              1048576,
+              1048576
+            ],
+            "8": [
+              16864567296,
+              16864567296
+            ],
+            "9": [
+              -1,
+              -1
+            ],
+            "11": [
+              477915,
+              477915
+            ],
+            "12": [
+              819200,
+              819200
+            ],
+            "13": [
+              0,
+              0
+            ],
+            "14": [
+              0,
+              0
+            ],
+            "15": [
+              -1,
+              -1
+            ]
+          }
+        }
+      ],
+      "job": "packet58ai-census-d-five-A",
+      "unit": "screen-packet58ai-census-d-five-A.service",
+      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-d-five-A.service\n",
+      "real_queue_entry": true,
+      "real_unit_and_environment_gates": true,
+      "topology": [
+        {
+          "mask": {
+            "NEOReadDebugKeys": "1",
+            "FilterBdfPath": "0000:23:00.0",
+            "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+            "ZE_AFFINITY_MASK": "0",
+            "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+          },
+          "native_indices": [
+            0
+          ],
+          "nodes": [
+            {
+              "pci": "0000:23:00.0",
+              "node": "/dev/dri/renderD130",
+              "path": "/dev/dri/by-path/pci-0000:23:00.0-render",
+              "driver": "xe"
+            }
+          ],
+          "device_nodes_opened": false
+        }
+      ],
+      "host_admission": [
+        {
+          "passed": true,
+          "snapshot": {
+            "MemAvailable": 120738041856,
+            "GPUActive": 114688
+          },
+          "window": "K1",
+          "required_available_bytes": 12884901888,
+          "reserve_bytes": 8589934592,
+          "plan_sha256": "2e6c29460041f663d527b77bb4824336a2d4020c8fb812ffc3b3aa140f00f725"
+        },
+        {
+          "passed": true,
+          "snapshot": {
+            "MemAvailable": 120738041856,
+            "GPUActive": 114688
+          },
+          "window": "K1",
+          "required_available_bytes": 12884901888,
+          "reserve_bytes": 8589934592,
+          "plan_sha256": "2e6c29460041f663d527b77bb4824336a2d4020c8fb812ffc3b3aa140f00f725"
+        }
+      ],
+      "live_host_admission": true,
+      "proposal_sha256": "63dcbc3f100c81d2cb8dc1e189c2858d27e074fb734566f66b329c56cee23d1f",
+      "synthetic_boundaries": [
+        "build envelope (verified separately)",
+        "prior K1/smoke receipts",
+        "coordination locks",
+        "journal review",
+        "placement observations",
+        "ldd",
+        "device client ownership",
+        "memory fence"
+      ],
+      "resource_limits_unchanged": true,
+      "finite_address_space_limit": false
+    },
+    {
+      "window": "K1b",
+      "miss_path": "zero-copy",
+      "passed": true,
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "operational_state_synthetic": true,
+      "selection": {
+        "schema": "packet49d.selection.v1",
+        "choices": {
+          "route": "route-exp32-rank4",
+          "recurrence": "rows4-shared",
+          "hc": "production",
+          "down": "down-tile16"
+        },
+        "decision": null
+      },
+      "candidate": "p60fusion",
+      "observations": [
+        {
+          "argv": [
+            "/tmp/packet58ab-arguments-b0qonmz4/packet/build/device/p58-cache-fixtures",
+            "--card",
+            "0",
+            "--output",
+            "/tmp/packet58ab-arguments-b0qonmz4/packet/evidence/combined/K1b/run",
+            "--iterations",
+            "20",
+            "--down-layout",
+            "down-tile16",
+            "--authorized-device-window"
+          ],
+          "limits": {
+            "0": [
+              -1,
+              -1
+            ],
+            "1": [
+              -1,
+              -1
+            ],
+            "2": [
+              -1,
+              -1
+            ],
+            "3": [
+              8388608,
+              -1
+            ],
+            "4": [
+              0,
+              -1
+            ],
+            "5": [
+              -1,
+              -1
+            ],
+            "6": [
+              477915,
+              477915
+            ],
+            "7": [
+              1048576,
+              1048576
+            ],
+            "8": [
+              16864567296,
+              16864567296
+            ],
+            "9": [
+              -1,
+              -1
+            ],
+            "11": [
+              477915,
+              477915
+            ],
+            "12": [
+              819200,
+              819200
+            ],
+            "13": [
+              0,
+              0
+            ],
+            "14": [
+              0,
+              0
+            ],
+            "15": [
+              -1,
+              -1
+            ]
+          }
+        }
+      ],
+      "job": "packet58ai-census-d-five-A",
+      "unit": "screen-packet58ai-census-d-five-A.service",
+      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-d-five-A.service\n",
+      "real_queue_entry": true,
+      "real_unit_and_environment_gates": true,
+      "topology": [
+        {
+          "mask": {
+            "NEOReadDebugKeys": "1",
+            "FilterBdfPath": "0000:23:00.0",
+            "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+            "ZE_AFFINITY_MASK": "0",
+            "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+          },
+          "native_indices": [
+            0
+          ],
+          "nodes": [
+            {
+              "pci": "0000:23:00.0",
+              "node": "/dev/dri/renderD130",
+              "path": "/dev/dri/by-path/pci-0000:23:00.0-render",
+              "driver": "xe"
+            }
+          ],
+          "device_nodes_opened": false
+        }
+      ],
+      "host_admission": [
+        {
+          "passed": true,
+          "snapshot": {
+            "MemAvailable": 120740810752,
+            "GPUActive": 114688
+          },
+          "window": "K1",
+          "required_available_bytes": 12884901888,
+          "reserve_bytes": 8589934592,
+          "plan_sha256": "2e6c29460041f663d527b77bb4824336a2d4020c8fb812ffc3b3aa140f00f725"
+        },
+        {
+          "passed": true,
+          "snapshot": {
+            "MemAvailable": 120740810752,
+            "GPUActive": 114688
+          },
+          "window": "K1",
+          "required_available_bytes": 12884901888,
+          "reserve_bytes": 8589934592,
+          "plan_sha256": "2e6c29460041f663d527b77bb4824336a2d4020c8fb812ffc3b3aa140f00f725"
+        }
+      ],
+      "live_host_admission": true,
+      "proposal_sha256": "63dcbc3f100c81d2cb8dc1e189c2858d27e074fb734566f66b329c56cee23d1f",
+      "synthetic_boundaries": [
+        "build envelope (verified separately)",
+        "prior K1/smoke receipts",
+        "coordination locks",
+        "journal review",
+        "placement observations",
+        "ldd",
+        "device client ownership",
+        "memory fence"
+      ],
+      "resource_limits_unchanged": true,
+      "finite_address_space_limit": false
+    },
+    {
+      "window": "WSCREEN",
+      "miss_path": "zero-copy",
+      "passed": true,
+      "device_executed": false,
+      "native_exec_intercepted": true,
+      "operational_state_synthetic": true,
+      "selection": {
+        "schema": "packet49d.selection.v1",
+        "choices": {
+          "route": "route-exp32-rank4",
+          "recurrence": "rows4-shared",
+          "hc": "production",
+          "down": "down-tile16"
+        },
+        "decision": null
+      },
+      "candidate": "p60fusion",
+      "observations": [
+        {
+          "argv": [
+            "/usr/bin/python3",
+            "-B",
+            "/tmp/packet58ab-arguments-d114ryam/packet/suite_driver.py",
+            "--window",
+            "WSCREEN",
+            "--view",
+            "p60fusion",
+            "--cache-maintenance",
+            "overlap",
+            "--card",
+            "0",
+            "--output",
+            "/tmp/packet58ab-arguments-d114ryam/packet/evidence/combined/WSCREEN/run",
+            "--miss-mode",
+            "zerocopy",
+            "--authorized-device-window"
+          ],
+          "limits": {
+            "0": [
+              -1,
+              -1
+            ],
+            "1": [
+              -1,
+              -1
+            ],
+            "2": [
+              -1,
+              -1
+            ],
+            "3": [
+              8388608,
+              -1
+            ],
+            "4": [
+              0,
+              -1
+            ],
+            "5": [
+              -1,
+              -1
+            ],
+            "6": [
+              477915,
+              477915
+            ],
+            "7": [
+              1048576,
+              1048576
+            ],
+            "8": [
+              16864567296,
+              16864567296
+            ],
+            "9": [
+              -1,
+              -1
+            ],
+            "11": [
+              477915,
+              477915
+            ],
+            "12": [
+              819200,
+              819200
+            ],
+            "13": [
+              0,
+              0
+            ],
+            "14": [
+              0,
+              0
+            ],
+            "15": [
+              -1,
+              -1
+            ]
+          }
+        },
+        {
+          "argv": [
+            "ionice",
+            "-c3",
+            "/tmp/packet58ab-arguments-d114ryam/packet/build/device/own-rt-iq3",
+            "--authorized-device-window",
+            "--card",
+            "0",
+            "--cards",
+            "1",
+            "--context",
+            "4096",
+            "--max-new",
+            "128",
+            "--stage",
+            "decode",
+            "--memory",
+            "resident",
+            "--miss-path",
+            "zero-copy",
+            "--native-nice",
+            "0",
+            "--timing",
+            "token",
+            "--retain-steps",
+            "none",
+            "--suite-inputs",
+            "/tmp/packet58ab-arguments-d114ryam/packet/evidence/combined/WSCREEN/run/suite-inputs.tsv",
+            "--input",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/incident-retrospective/tokens.txt",
+            "--plan",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/incident-retrospective/plan.tsv",
+            "--identity",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/suite-inputs-20261012/incident-retrospective/identity.tsv",
+            "--model-dir",
+            "/mnt/usb-models/llm-models/unsloth-Qwen3.8-Flash-Next-GGUF-766911a6/UD-IQ3_XXS",
+            "--selection",
+            "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ai-miss-census/selections/tile16.json",
+            "--selection-sha256",
+            "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+            "--dispatch",
+            "/tmp/packet58ab-arguments-d114ryam/packet/dispatch-speed6.json",
+            "--output",
+            "/tmp/packet58ab-arguments-d114ryam/packet/evidence/combined/WSCREEN/run/run",
+            "--hc",
+            "p60fusion",
+            "--cache-bytes",
+            "21552729600",
+            "--cache-cap",
+            "max",
+            "--cache-maintenance",
+            "overlap",
+            "--seconds",
+            "7200",
+            "--wait-seconds",
+            "600",
+            "--bracket-inputs",
+            "/tmp/packet58ab-arguments-d114ryam/packet/evidence/combined/WSCREEN/run/bracket-inputs.tsv"
+          ],
+          "limits": {
+            "0": [
+              -1,
+              -1
+            ],
+            "1": [
+              -1,
+              -1
+            ],
+            "2": [
+              -1,
+              -1
+            ],
+            "3": [
+              8388608,
+              -1
+            ],
+            "4": [
+              0,
+              -1
+            ],
+            "5": [
+              -1,
+              -1
+            ],
+            "6": [
+              477915,
+              477915
+            ],
+            "7": [
+              1048576,
+              1048576
+            ],
+            "8": [
+              16864567296,
+              16864567296
+            ],
+            "9": [
+              -1,
+              -1
+            ],
+            "11": [
+              477915,
+              477915
+            ],
+            "12": [
+              819200,
+              819200
+            ],
+            "13": [
+              0,
+              0
+            ],
+            "14": [
+              0,
+              0
+            ],
+            "15": [
+              -1,
+              -1
+            ]
+          }
+        }
+      ],
+      "job": "packet58ai-census-d-five-A",
+      "unit": "screen-packet58ai-census-d-five-A.service",
+      "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/screen-packet58ai-census-d-five-A.service\n",
+      "real_queue_entry": true,
+      "real_unit_and_environment_gates": true,
+      "topology": [
+        {
+          "mask": {
+            "NEOReadDebugKeys": "1",
+            "FilterBdfPath": "0000:23:00.0",
+            "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+            "ZE_AFFINITY_MASK": "0",
+            "ONEAPI_DEVICE_SELECTOR": "level_zero:0"
+          },
+          "native_indices": [
+            0
+          ],
+          "nodes": [
+            {
+              "pci": "0000:23:00.0",
+              "node": "/dev/dri/renderD130",
+              "path": "/dev/dri/by-path/pci-0000:23:00.0-render",
+              "driver": "xe"
+            }
+          ],
+          "device_nodes_opened": false
+        }
+      ],
+      "host_admission": [
+        {
+          "passed": true,
+          "snapshot": {
+            "MemAvailable": 120740876288,
+            "GPUActive": 114688
+          },
+          "window": "WSCREEN",
+          "required_available_bytes": 98989727744,
+          "reserve_bytes": 8589934592,
+          "plan_sha256": "694aa7e40c2c1ee3d9d0bb3421bf24f2678450337396a7e80e6d698ccc6948e9"
+        },
+        {
+          "passed": true,
+          "snapshot": {
+            "MemAvailable": 120740876288,
+            "GPUActive": 114688
+          },
+          "window": "WSCREEN",
+          "required_available_bytes": 98989727744,
+          "reserve_bytes": 8589934592,
+          "plan_sha256": "694aa7e40c2c1ee3d9d0bb3421bf24f2678450337396a7e80e6d698ccc6948e9"
+        }
+      ],
+      "live_host_admission": true,
+      "proposal_sha256": "63dcbc3f100c81d2cb8dc1e189c2858d27e074fb734566f66b329c56cee23d1f",
       "synthetic_boundaries": [
         "build envelope (verified separately)",
         "prior K1/smoke receipts",
@@ -622,33 +1241,35 @@
   "sources": {
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/restore_build.py": "914367917be13d250c5c3d73c3396d086ff0754a48aca030cd0f87e05a5048fd",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/screen.py": "f0748bf7b5114304462bbcfae7cd705a6c3a6e236378f9983b6f67f197863e29",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/coordinator_gate.py": "717bd02d1fadb98ff5ca5f755928be1bfd69b181994f5fa0251a889c8d1903bf",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/coordinator_gate.py": "94cb547319bdc2def96db7b30fa39a1d4035d1c4c006d5dee946490436c33062",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/fullshape_submit_gate.py": "492a99449f5b150feec9b897ec5d4329990414c6178d71f676f30cb2bbd2e5c5",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/shared_submission_cli.py": "558c5f9981943c58b45668b3c4bf0c877c398f801a2bab145f09fa1c8838f5d0",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/rebuild_smoke.py": "d4dbfa7c94f290aa698dd8ce418606a592e6e89e35b1b826b0f11e95299535c8",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/packet58_submission.py": "381c9d1660b133585a4ca647c2b3913315657db9fbb480641f98346447193be3",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/screen_gate.py": "424cbb46d45d5a692f0b842d2dab1fb250159c5caffc0698c0fb6865940bad56",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/prepare_handoff.py": "a97a576e78ece3caaa3cb5c2de54737618127ab42b722d10143d0e8294f42b6a",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/rehearse_submission.py": "1fad3003467ae99d696a8ea2a0b71fbd16eb1235e8adc053aa1a2ef65056aa98",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/verify_ready.py": "6584c167816089612125a19ade09316cdb0983ae37793f011e16b59fdddd878f",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/verify_ready.py": "63d55ef9a633888e40134a3b14f7dc4f1a463f3f0c9168ee33b5dd45bd583e1c",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/plan_gate.py": "aff948d4bdc11ce9c2b668cbf7bed4ddfcb14e571df2766954df6d9c9f1f3ed7",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/shared_oracle.py": "d6d6049e2d068af54b2198df9f42e30e3ea22f94035ea07a905a1839b48083c9",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/startup_gate.py": "492a99449f5b150feec9b897ec5d4329990414c6178d71f676f30cb2bbd2e5c5",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/suite_driver.py": "ec0a908462e61b9ead3dbc20f604155d56d1e0a65d7d494c53a748ef06a6cd7f",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/suite_driver.py": "2aeb389515abb69d46f7b9e59b0c01d6cb506aa7eefc58022a1bd8dfbc31cf91",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/miniature_gate.py": "aa0a77a485841a2ade5b1ac60ad9cf501460c3ae7f42ec7c8a00df5ffea54224",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/native_cpu_gates.py": "1b518133de0f9a3525c122478c0e82d5b684c2304ef071730fc378b7e04441ae",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/compare_bracket.py": "dc31cb064348a32fe981c8481b466e115cde2a61411ed14908869389fddf93a2",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/input_scope.py": "7254916a0ef7bbf2320e52ba117f204a80a25ef5dc5e2f2bbbc9331472d3d4b4",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/teardown_on_error.py": "b8a07707672784b856ffedb87cdf5661df4754900d3b5082a55c8479efa72d5c",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/common.py": "1b95d6e07db1443f4a7f3d917018190bbe64a59a5cdd4c3a31b9c9ca061e3e09",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/test_census_ready.py": "ef8c620beb67e240f62e892d3379506cd3b7bf5d8131f9a67ca4c36282aeb6ad",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/test_analyze.py": "371792a478979a009587fe39fdcae03f4e08a4086021a52cdbb56fe36f5c916e",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/native_parser_gate.py": "a3c8d2383e27669109f0c85c8f09f632153985d4164189f9bbd341ad022f37e8",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/coordinator_snapshot.py": "ad74939fbeaca4a1fc67852e7b83b8b8182a5470ca599e331f37f47916f0a5ed",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/owner_teardown.py": "9986f367c29780b3a236edf6f864b5e1e0c976b5b9cb4875f00299c84d6f6560",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/build_engine.py": "2e78befe06c2791ccaeafff5f9bf787b555b91da3356e4fb509e3f27ab9a2057",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/run_cpu_gates.py": "a20bf1b2b5cffb75b2c2738288939506124fdb5e4e89c5fbb86bd4beb1c31bbc",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/run_cpu_gates.py": "69d587fc4a701dd7b7dd0e451f1092b9e07974684d51f266df1da115c0514364",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/supervision.py": "20426ac90dd439953fbb4857fa2afca05f233fd6b08e326eb1abb48c03d10017",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/test_first_request.py": "098250b3f388407aa51f311e69863016d8eb558e6f2ca61f7bdaf74213c9bf44",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/window.py": "511c25f80f6152560fcb589ae3e80ed32884c93ec64734380150451ed1965768",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/window.py": "7e58a322cb8d327108745a89e3656e9018ff59c7416f45a46d02e14b2061133c",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/chain_devices.py": "c409060588c0e36d77af6caa0b6368c5b1653cd8f00cf37e240762b13487c9df",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/memory_plan.py": "b787c1b19153d98ad42844a579d63e1d7cf34e78bca60595409f28acd5407f5c",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/fault_review.py": "f27e10c9e2f990309578fdd1b1a535327202ff14728014c9a7c69753962677f8",
@@ -662,13 +1283,15 @@
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/literal_audit.py": "85d72e7c451ad6b52b3a5efe713ade196f88d1f0891412fda54f70b4ae73117b",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/suite_metrics.py": "4eef50d1272c759904b64947297c865b71b683a52c5590fb822301bcdc7f04aa",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/entry.py": "f03a02a554396ceecb2ff79064d7c103739b4faa4a1a9d8bfc6599a6bb692385",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/device_memory.py": "eb30d666422928f1ec658ef0e2c19aca6c2e21059394302c24063537dea58b04",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/device_import_gate.py": "d4e330f81b33ed5c4d818f50c73bfb4a2f7ab4cf01897ef6a8beac2559726d77",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/launch_env.py": "a55f31e6052e33d5b4702b01eddd4e5af5c4029fda6fc452dd8f564f3dfdc364",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/test_census_policy.py": "4b39fae818c203928a687857d62901ed7df8f8346f8fec533d6dadd33ddad2c9",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/budget_gate.py": "7d52551c7f91c3bd5e13ba808a7bdc93701529eed527777701ea0bdc5e63b1cf",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/first_request_gate.py": "e99d9490329011aad531673a8cf9ac2b28e076ee89d183ebd35f8457bdef35fb",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/fault_driver_snapshot.py": "41a57d623b87d5de4726bfa739d4bacf97d41dabf2759d1aa381ed90b14d14c8",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/seal.py": "3720f369e8f06ecea9f30ba2e13e862b621e3bb922ac513d0ddcc8c112c08e91",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/argument_gate.py": "2f4977be4017d6169da299ff6212cf8de72ec02d3eaaccb6a175349c703d762d",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/seal.py": "547efa34bd8f47286f9c8ba769e15edb0b856739156165b77627afbd33a29522",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/argument_gate.py": "bb269783111c59032637fc799db2892fd3b5527a98138d4ded1dd29ab25314ee",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/partition_gate.py": "2b2d2ba2bef3864ed76a8e58a4bc02bfc5a71aeaf3c5114786cc165aaa290e68",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/test_fault_boundary.py": "f704a566357b96a0ed3e818fb7e23336363fdd4b3096848be3a5c6fe0f261d86",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/analyze.py": "08db0e1dea67788f3da9a12026af9d196e48af14ae99ef85f12dc27107893fe7",
@@ -676,7 +1299,7 @@
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/drain_cpu_gate.py": "3747ba83d53a9e76b9d4c7dacd2aa7dd8789948e0ecd4ddeaf4efd96463f4ef3",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/launch_identity.py": "4e18965832be288095b0e0582ef2d2d4d7f72033b72b607bebad5c2ce0d58c58",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/views.py": "bea9a5cbc963b16662250815da91d17391b2f8a3c2e9e8bec0a5f9bb8256ded0",
-    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/queue_runner.py": "cf7915144a32f5eb8ef2e698ac0e8aa56e9131152d86e200202a96d903a135c1",
+    "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/queue_runner.py": "163624198531ecae3b534694a3ead83a10ac391a22e85e8580d639aaa82c6195",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/legacy_memory_plan.py": "73f745ae22078f92ba05cfcd10d3e9d3b97abdc5c41a0d802f482a41d06ba128",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/lane_admission.py": "08b8d50b94ac3e86de0a8ced7e6b0abfad4b44693d769e6899bb840c37d5868f",
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/receipt_qualification.py": "1ed8f5bc44817c2dab4f975816d24f4957ea93a3a0a7a25eeec720c039d7a8e6",
@@ -687,7 +1310,7 @@
     "experiments/own-xpu-runtime/stage2/packet58ai-miss-census/dispatch-speed6.json": "477f62ec5cea61624047267ff69d74580c153ef40afe8558822dedb544018612"
   },
   "old_code_regressions": [],
-  "peak_child_rss_bytes": 35028992,
+  "peak_child_rss_bytes": 35229696,
   "model_payload_reads": false,
   "services_started": false,
   "seal_validation": "separate seal verification; construction envelope synthetic to avoid circular gate dependency"
