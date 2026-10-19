@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "command": [
+    "g++",
+    "-std=c++17",
+    "-O2",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ap-onecard-chain/native/k1_cli.cpp",
+    "-o",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58ap-onecard-chain/build/device/p58-cache-fixtures"
+  ],
+  "source_sha256": "02a4f72f31d714d48d0a03294c25124a66c1d6404ed5adc19c1cc7362af2bbb3",
+  "binary_sha256": "2da16803b2f4575f3fde9f845c86ebf7fad0639f8f32adfdc1cc5b06fbcba955",
+  "reason": "Unchanged K1 core has no help/CPU preparation switch; adapter exposes both using the original native parser and GNU CPU fixture. No model runtime compiled."
+}
