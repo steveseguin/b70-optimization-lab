@@ -1,0 +1,69 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "records": [
+    {
+      "compiler": "GNU",
+      "repeat": 0,
+      "binary_sha256": "b7ecd7445ce8beda10a6893ea43bb510a7c19887aa29d90648939e2f7c953bb0",
+      "passed": true,
+      "device_executed": false,
+      "bytes_equal": 512,
+      "production_queries": 1024,
+      "ordered_queries": 2,
+      "both_pending_foreground_queues_refused": true,
+      "maintenance_ownership_preserved": true,
+      "quiescent_switch_refused_while_busy": true
+    },
+    {
+      "compiler": "GNU",
+      "repeat": 1,
+      "binary_sha256": "b7ecd7445ce8beda10a6893ea43bb510a7c19887aa29d90648939e2f7c953bb0",
+      "passed": true,
+      "device_executed": false,
+      "bytes_equal": 512,
+      "production_queries": 1024,
+      "ordered_queries": 2,
+      "both_pending_foreground_queues_refused": true,
+      "maintenance_ownership_preserved": true,
+      "quiescent_switch_refused_while_busy": true
+    },
+    {
+      "compiler": "Intel",
+      "repeat": 0,
+      "binary_sha256": "7c4fcd1d14d236d22f51bcd1466bee0df417b6eb4000d549b72ef4f6bb4ffa00",
+      "passed": true,
+      "device_executed": false,
+      "bytes_equal": 512,
+      "production_queries": 1024,
+      "ordered_queries": 2,
+      "both_pending_foreground_queues_refused": true,
+      "maintenance_ownership_preserved": true,
+      "quiescent_switch_refused_while_busy": true
+    },
+    {
+      "compiler": "Intel",
+      "repeat": 1,
+      "binary_sha256": "7c4fcd1d14d236d22f51bcd1466bee0df417b6eb4000d549b72ef4f6bb4ffa00",
+      "passed": true,
+      "device_executed": false,
+      "bytes_equal": 512,
+      "production_queries": 1024,
+      "ordered_queries": 2,
+      "both_pending_foreground_queues_refused": true,
+      "maintenance_ownership_preserved": true,
+      "quiescent_switch_refused_while_busy": true
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/retirement_gate.py": "c49ef9636fdb6371c9cc2ad81805a56bb24ef2977bfc6912e8c5d00e11f1f63e",
+    "experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/ordered_test.cpp": "496f4bbc434081bd34bdb8780b4ab81854f1392d8b610e0beafd53a311236721",
+    "experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/ordered_retirement.hpp": "6a9cccde2061e80536626c67485aa095c37716f32be8438059ec86d2b97153f4",
+    "experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/native/engine_bracket.hpp": "d7737549f00f28c44ca1f719643d1e0104d6daebab12740c87560bfdf79774fa",
+    "experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/sources/single_device.cpp": "54b2f13b1eb225804b0d5fc125b8240dd1aa4e7879f29e037dc3ca5b77f7600a",
+    "experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/sources/main.cpp": "4fa8fb0353ef59c061bd2c5b7f18e48349a158bdae24ab0c19f64ca7743a5ce2",
+    "experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/sources/owner.cpp": "fbfc992ad8e9d5de70be2b8d2998e5ffe52adddfd3e120aea7116e6c165974cd",
+    "experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/sources/owner_retire.cpp": "058c41962b301db4968419fa4cec4f5910f23777dc68dee63b82539ca2a75de8"
+  },
+  "scope": "Two in-order foreground queues; separate maintenance queue remains owned through shutdown. Device arithmetic/speed pending."
+}

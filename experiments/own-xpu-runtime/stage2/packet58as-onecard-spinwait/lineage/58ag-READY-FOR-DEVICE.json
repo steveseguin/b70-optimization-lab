@@ -1,0 +1,64 @@
+{
+  "schema": "own-runtime.packet58ag.ready.v1",
+  "created_utc": "2026-10-18T23:47:48.682552+00:00",
+  "implementation_commit": "c65c1c4146ebe3cebad88f24e6f8259d39d277f8",
+  "passed": true,
+  "ready_for_device": true,
+  "cpu_preparation_passed": true,
+  "device_executed": false,
+  "services_started": false,
+  "queued": false,
+  "live_queue_changed": false,
+  "last_content_write": true,
+  "build_receipt_sha256": "418e782e51f8daea3d569d34f150724093e551777b7c8c4739ea1ff8c80bb470",
+  "proposals": [
+    {
+      "proposal": "experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/proposals/proposed-p58ag-smoke-A.txt",
+      "proposal_sha256": "535fe685b8b0dfde3a17cd9db162a2afd82c413807ba6128d234ea829c7ec61b",
+      "coordinator_path": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58ag-smoke-A.txt"
+    },
+    {
+      "proposal": "experiments/own-xpu-runtime/stage2/packet58ag-onecard-ports/proposals/proposed-p58ag-v5-A.txt",
+      "proposal_sha256": "53e8b0beeb57bb3d8921f665c7e40796332ea1a00926647febf5276e2418ae42",
+      "coordinator_path": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58ag-v5-A.txt"
+    }
+  ],
+  "cpu_gates": {
+    "passed": true,
+    "checks": 111,
+    "hc_byte_proofs": "GNU and Intel, production shapes, repeats, exceptional values, real capture and request reset",
+    "ports_byte_proofs": "GNU and Intel: four independent choices and full composition, each repeated; all intermediate/output/status bytes match",
+    "native_loader_and_parser_passed": true,
+    "real_entry_paths": 6,
+    "one_card_reports_passed": true
+  },
+  "required_shared_report_gate": {
+    "passed": true,
+    "retained_reports": [
+      "evidence/ops-entry-report-smoke.json",
+      "evidence/ops-entry-report-v5.json"
+    ]
+  },
+  "dimensions": [
+    "hc-wide",
+    "wide64",
+    "wide64+halfcache",
+    "other-fusion",
+    "ordered-foreground"
+  ],
+  "hc_fusion_always_on": true,
+  "excluded_selection_paths": [
+    "packet105b two-card target head split",
+    "draft and speculative rollback paths"
+  ],
+  "retirement_adaptation": "One terminal on each of the two in-order foreground queues; independent maintenance ownership retained",
+  "halfcache_adaptation": "Exhaustive 65536-entry FP32 table; original 820-byte expert rows unchanged",
+  "storage": {
+    "build_bytes": 114696681,
+    "stop_floor_bytes": 25000000000,
+    "build_cap_bytes": 300000000
+  },
+  "qualification": "CPU proofs and temporary plans only. No device equality, physical fit, speed or record claim.",
+  "queue_plans_sha256": "429b13ae91d5693ce735d0606ecee61e465e6d7fe34b3d34b049cfa97e4519f0",
+  "temporary_plans_passed": true
+}
