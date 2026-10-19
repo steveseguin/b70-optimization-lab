@@ -263,6 +263,7 @@ def wait_cause(row):
 def queue_events(now, notes, holds=None, cards=None, waits=None, causes=None, observed=(), begin=None):
     """Split job lifetimes into admission waiting and device-backed occupancy."""
     starts, intervals, lanes = {}, [], {}
+    completed_events = set()
     if holds is None:
         holds = []
     if cards is None:
@@ -347,6 +348,8 @@ def queue_events(now, notes, holds=None, cards=None, waits=None, causes=None, ob
                       or kind.startswith(('REFUSED', 'FAILED'))) and unit in starts:
                     start, _, _ = starts.pop(unit)
                     add(start, stamp, name, lane, kind)
+                    if kind == 'DONE' and row.get('rc') == 0 and row.get('Result') == 'success':
+                        completed_events.add((start, stamp, unit))
             except (ValueError, KeyError, TypeError, AttributeError):
                 notes.add(f'Lane {lane}: malformed queue event skipped.')
     for unit, (start, name, lane) in starts.items():
@@ -367,6 +370,14 @@ def queue_events(now, notes, holds=None, cards=None, waits=None, causes=None, ob
                     and job.get('name') == name and s <= start <= e),
                    jobs.get(name, {'name': name}))
         first = first_device(job, start, end, observed)
+        if (first is None and (start, end, unit) in completed_events
+                and not causes.get(unit)):
+            # Standalone micros have no child/window clocks. A successful
+            # queue completion is durable occupancy evidence, not a hardware
+            # utilization measurement. Refusals, failures and open STARTs do
+            # not qualify; a known admission wait must never become busy time.
+            first = start
+            kind = 'lanequeue START/DONE device evidence (no child clock)'
         wait_end = first if first is not None else end
         if wait_end > start:
             waits.append((start, wait_end, unit, lanes[unit]))

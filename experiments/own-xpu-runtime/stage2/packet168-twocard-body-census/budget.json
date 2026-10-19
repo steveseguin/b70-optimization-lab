@@ -1,0 +1,36 @@
+{
+  "measured_parent_peak_bytes": 317380550,
+  "measured_parent": "packet136 WS128 retained bytes plus largest raw state snapshot",
+  "projected_census_bytes": 846605450,
+  "projection": "98 resets x parent retained bytes per request + one raw state snapshot",
+  "planned_write_bytes": 1693210900,
+  "planning_multiplier": 2,
+  "device_floor_bytes": 25000000000,
+  "cpu_stop_bytes": 27000000000,
+  "host_required_available_bytes": 105411248128,
+  "expected_seconds": [
+    900,
+    2400
+  ],
+  "wait_seconds": 600,
+  "controller_wait_seconds": 1200,
+  "cold_phase_reference_seconds": 60,
+  "cold_phase_note": "parent measured cold-phase floor 60 s; native wait 600 s = 10x, controller wait 1200 s = 20x",
+  "watchdog_seconds": 7200,
+  "wall_clock_data_proof_limit": null,
+  "diagnostic_snapshot_memory": {
+    "rank0_image_bytes_always_present": 344064536,
+    "rank1_backing_bytes": 373887468,
+    "rank1_planned_total_with_mtp_bytes": 31801101510,
+    "rank1_planned_free_bytes": 2441196346,
+    "rank1_arena_headroom_bytes": 411153210,
+    "device_validation": {
+      "name": "census.json",
+      "parent_relpath": "stage2/packet165-warm-prefill/two-card/evidence/device-warm512-B-a/run/ranks/rank0/census.json",
+      "parent_digest": "f4b2b68ac0537211bf2d7d95c6cdd64e44675f7d232d6647be43bea4f14ef4f7",
+      "device_rank0_image_bytes": 344064536,
+      "fixture_rank0_image_bytes": 344064536
+    },
+    "source": "CPU fixture production-arena census (diagnostic labels only); rank0 image equals real device rank0 image; device residency unmeasured"
+  }
+}

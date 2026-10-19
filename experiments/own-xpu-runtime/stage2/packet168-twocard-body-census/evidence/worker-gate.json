@@ -1,0 +1,64 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "scope": "actual worker/suite.reset/NativeController/analyzer over host transport; probe rows are real native CPU lifecycle rows",
+  "good": {
+    "mutate": null,
+    "refused": false,
+    "report_passed": true,
+    "observations": 96,
+    "probe_commands": 120,
+    "resets": 196,
+    "native_requests": 97,
+    "ranked": [
+      "dense_hc",
+      "norms_glue",
+      "router_shared_expert",
+      "gdn",
+      "routed_experts"
+    ],
+    "residual_present": true
+  },
+  "refusals": [
+    {
+      "mutate": "wrong-token",
+      "refused": true,
+      "error": "control/setup oracle mismatch: norms_glue/sql-debugging"
+    },
+    {
+      "mutate": "bad-repair",
+      "refused": true,
+      "error": "probe restore/repair/format"
+    }
+  ],
+  "source_digests": [
+    {
+      "name": "census_worker.py",
+      "sha256": "2d67c809d8823066939967748326c015bef0cc1a365c0a170e17863f9eff3d33"
+    },
+    {
+      "name": "worker_gate.py",
+      "sha256": "c0842a1c55a9cb6848cab496e3fe573e98fb545c1a5b4faba59c6a4cf607a23d"
+    },
+    {
+      "name": "analyze.py",
+      "sha256": "9269773e7756acec5cace6e980372678f298ab1ac0b3633c3a55a1742c376d7f"
+    },
+    {
+      "name": "census_contract.py",
+      "sha256": "be7dd9f70fbba93fcd679e1698e1c5b5c6855c9f11ead1e367369935468584e4"
+    },
+    {
+      "name": "suite.py",
+      "sha256": "295d015db1b268e4394a46baa4f319073a201758a733b9eac4b81a89ed3f2a9a"
+    },
+    {
+      "name": "pipeline.py",
+      "sha256": "e1ebf8dc63a6b93ea44ccb4475ca22ed4d5a0b678a051eeea884bb21c84b2416"
+    },
+    {
+      "name": "evidence/native-lifecycle.json",
+      "sha256": "b322dfd7fe3e451c828ac6dd8e74ad7cc22c6b8c74ba4906f4465afa8224f9fa"
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+resident K1a zero-copy PASS
+resident K1b zero-copy PASS
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/argument_gate.py", line 302, in <module>
+    main()
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/argument_gate.py", line 286, in main
+    assert result.returncode==0, name+': '+result.stderr[-4000:]
+           ^^^^^^^^^^^^^^^^^^^^
+AssertionError: WSCREEN: /oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+      "/usr/bin/python3",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/window.py",
+      "--authorized-device-window",
+      "--window",
+      "K1",
+      "--card",
+      "0",
+      "--output",
+      "/tmp/packet58aj-arguments-i7b0k92w/packet/evidence/resident/K1b",
+      "--faults-reviewed-through",
+      "2025-12-31T23:59:58Z",
+      "--view",
+      "resident",
+      "--cache-maintenance",
+      "overlap"
+    ],
+    "WSCREEN": [
+      "/usr/bin/taskset",
+      "-c",
+      "0-3,16-19",
+      "/usr/bin/env",
+      "-i",
+      "PATH=/usr/bin:/bin",
+      "OMP_NUM_THREADS=2",
+      "LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+      "/usr/bin/python3",
+      "-B",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/window.py",
+      "--authorized-device-window",
+      "--window",
+      "WSCREEN",
+      "--card",
+      "0",
+      "--output",
+      "/tmp/packet58aj-arguments-i7b0k92w/packet/evidence/resident/WSCREEN",
+      "--faults-reviewed-through",
+      "2025-12-31T23:59:58Z",
+      "--view",
+      "resident",
+      "--cache-maintenance",
+      "overlap",
+      "--k1",
+      "/tmp/packet58aj-arguments-i7b0k92w/packet/evidence/resident/K1a/window.json",
+      "--k1",
+      "/tmp/packet58aj-arguments-i7b0k92w/packet/evidence/resident/K1b/window.json"
+    ]
+  },
+  "completed": [
+    "K1a",
+    "K1b"
+  ],
+  "plan": {
+    "schema": "packet58x.plan.v1",
+    "device_executed": false,
+    "view": "resident",
+    "selection_sha256": "98f8c251ef02e3d6d4cb1d6957669538f0a915408b47b33251a0d9b15600f31b",
+    "card": 0,
+    "lane": "A",
+    "scope": "whole-host",
+    "model_lifetimes": 1,
+    "k1_fixture_launches": 2,
+    "windows": [
+      "K1a",
+      "K1b",
+      "WSCREEN"
+    ],
+    "planned_arm_seconds": [
+      1200,
+      1800
+    ],
+    "planned_bracket_seconds": [
+      1200,
+      1800
+    ],
+    "watchdog_seconds": 7200,
+    "view_order": [
+      [
+        "A0",
+        "poll"
+      ],
+      [
+        "B0",
+        "spin"
+      ],
+      [
+        "A1",
+        "poll"
+      ],
+      [
+        "B1",
+        "spin"
+      ],
+      [
+        "A2",
+        "poll"
+      ]
+    ],
+    "bracket_model_seconds": 1560,
+    "internal_gap_seconds": 90,
+    "inter_arm_gap_seconds": 90,
+    "host_required_available_bytes": 98990252032,
+    "host_reserve_bytes": 8589934592,
+    "pinned_expert_bytes": 48627712000,
+    "host_peak_bound_bytes": 90400317440,
+    "request_count": 60,
+    "prompts_per_view": 12,
+    "requested_max_new": 128,
+    "oracle": "packet49-integrate",
+    "timing_claim_eligible": false,
+    "submission_eligible": false,
+    "output": "/tmp/packet58aj-arguments-i7b0k92w/packet/evidence/resident"
+  },
+  "fault_review_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "faults_reviewed_through": "2025-12-31T23:59:58Z",
+  "reviewed_capture_through_us": 1767225600000000,
+  "journal_overlap_us": 2000000,
+  "running": null,
+  "error": "[Errno 2] No such file or directory: '/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/lineage/fixtures/58c-supervisor/source-manifest.json'",
+  "child_still_running": false
+}
+
+

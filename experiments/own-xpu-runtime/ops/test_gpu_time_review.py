@@ -32,6 +32,35 @@ def journal(n, message):
 
 
 class ReviewTest(unittest.TestCase):
+    def test_packet166_b1_real_completed_interval_without_child_clock(self):
+        # Exact events retained in events-B.jsonl; result commit 387a97e4f.
+        name = 'packet166-causal-m2-layer-micro-B1'
+        start = review.timestamp('2026-10-19T08:25:15.932407Z')
+        end = review.timestamp('2026-10-19T08:28:59.893229Z')
+        rows = [dict(event='START', lane='B', name=name, utc=start.isoformat()),
+                dict(event='DONE', lane='B', name=name, utc=end.isoformat(),
+                     rc=0, Result='success')]
+        path = self.root / 'lane-queue/events-B.jsonl'
+        path.write_text(''.join(json.dumps(r)+'\n' for r in rows))
+        waits = []
+        with patch.object(review, 'first_device', return_value=None):
+            spans, lanes = review.queue_events(end, set(), waits=waits)
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0][:2], (start, end))
+        self.assertIn('lanequeue START/DONE device evidence', spans[0][3])
+        self.assertAlmostEqual((end-start).total_seconds(), 223.960822)
+        self.assertEqual(lanes[spans[0][2]], 'B')
+        self.assertEqual(waits, [])
+        # The fallback must not erase a known wait or credit a failed micro.
+        for change in ({'event': 'FAILED'}, {'rc': 1}, {'Result': 'exit-code'},
+                       {'admission_cause': 'hold-lane-B'}):
+            rows[1] = dict(event='DONE', lane='B', name=name, utc=end.isoformat(),
+                           rc=0, Result='success', **{})
+            rows[1].update(change)
+            path.write_text(''.join(json.dumps(r)+'\n' for r in rows))
+            with patch.object(review, 'first_device', return_value=None):
+                self.assertEqual(review.queue_events(end, set())[0], [])
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

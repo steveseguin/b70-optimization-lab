@@ -1,0 +1,79 @@
+{
+  "schema": "packet166.private-report.v1",
+  "passed": true,
+  "device_executed": false,
+  "actual_entry": "run_micro.report_completed -> micro_analyze.evaluate",
+  "proposal_sha256": "ec89d8b684408ad529e93710a7c7464ffccd1271418e06bb46cabeea9ca0e8e4",
+  "sources": {
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/report_adapter.py": "d3fd235eb109421ba1af23c95281edf073558bbf2d4731fb843b4a74d0d396ce",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/micro_analyze.py": "18b1282edec489d2e2325e8938c4dbe18145b2786de7a872895037b6c42520be",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/run_micro.py": "f59014e97989b7afa6ba47d33027e26bf563f6cd17fd7bdc0390806dd8f1acec",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/test_reports.py": "ab5d6525c0f1ce57c917f1fbb0c510f827f71fdd99ac4626465757b31555cc53",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/cpu-real-parity.json": "c109828b01024eb9ce387c5e1107526d7bd541e580dfb1c38949fb405d3f288d",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/real-oracle.tsv": "2fdbe1d3a01a1466045b8633291d1460a51f5ad30d5527f427e0a0148fedd857",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/lineage/packet147-PLAN.md": "4a44678ea8338c9042c347c465599f51e1fb798cacf55c0ab84f0a37113dcbb4",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/lineage/packet58h-FEASIBILITY.md": "c005d7fd428220fa0ac6d9c98a7d6c631a7cced280577477880d263e17ffaec4",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/cpu-real-1792396182327849846/gnu-host.jsonl": "8d71d81da9b35cbda759dd1452a4a6603115653caab0bf3a3566beb813b6ea1d",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/cpu-real-1792396182327849846/intel-host.jsonl": "8d71d81da9b35cbda759dd1452a4a6603115653caab0bf3a3566beb813b6ea1d",
+    "experiments/own-xpu-runtime/stage2/packet162-iq2-lookup/evidence/enum11-diagnostic-B1/samples.jsonl": "da1d41370fe90d1368bc3925816583e2ebee77c1e45df457fe91e69ad2811fce",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/private-report-cases/both-briefs/BUILD-BRIEF.md": "04fc44f9374fa1d27d7208a45bc64b64c71d0f185158e1faf23eeeb01c9a05ca",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/private-report-cases/both-briefs/DO-NOT-REPEAT.md": "e1325909edf68a46ea5b9de964a71a6a398515861508719e05f18529e0b9afe4",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/private-report-cases/both-briefs/MTP-VERIFY-BRIEF.md": "3dfab541116af76361944dcea6f11cd26f6d914e68bb21aabc6d06629fc82f70",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/private-report-cases/both-briefs/analysis.json": "776f66ed629d8333bac57fbfde5354842528d88927528bed584ca8516b886866",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/private-report-cases/close-both/DO-NOT-REPEAT.md": "d7167069985cf40fa74e3c63af7a23f1ee576a7960c426d746dba11a27fa1f24",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/private-report-cases/close-both/analysis.json": "52b884e37904ec6e2d42c73d5b6fb33dc8573c7f32632fb5bfbe0aa747b8f5e8",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/private-report-cases/mtp-only/DO-NOT-REPEAT.md": "c9996b1f3b81080e6469ede9d153c9c137c95ad4f579489c4fe4311af3cffa7c",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/private-report-cases/mtp-only/MTP-VERIFY-BRIEF.md": "3dfab541116af76361944dcea6f11cd26f6d914e68bb21aabc6d06629fc82f70",
+    "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/private-report-cases/mtp-only/analysis.json": "fd8606beca1ffb19d8e91b74611008737b9b58e53269c273fca314b6a28f8205"
+  },
+  "synthetic_cases": [
+    {
+      "name": "both-briefs",
+      "synthetic_fixture": true,
+      "device_measurement": false,
+      "ratio": 1.5,
+      "prefill_brief": true,
+      "mtp_brief": true,
+      "serialized_stream_bytes": 13465254,
+      "samples_digest": "841413fa39fb14100031df49c466899979ff4496356e2ca10574e8e089ed45cb"
+    },
+    {
+      "name": "mtp-only",
+      "synthetic_fixture": true,
+      "device_measurement": false,
+      "ratio": 1.6,
+      "prefill_brief": false,
+      "mtp_brief": true,
+      "serialized_stream_bytes": 13465254,
+      "samples_digest": "209f7c7fa5f0b5ff4cadaa46632fd41797e465df6820dea8950025d52f3edf32"
+    },
+    {
+      "name": "close-both",
+      "synthetic_fixture": true,
+      "device_measurement": false,
+      "ratio": 1.7,
+      "prefill_brief": false,
+      "mtp_brief": false,
+      "serialized_stream_bytes": 13465254,
+      "samples_digest": "97b67cdb890fad9f2cbe8045ca3df9bc3218c81a83019e93f005db3b53abde80"
+    }
+  ],
+  "invalid_oracle_refused_without_tails": true,
+  "actual_parent_replay": {
+    "sample_counts": [
+      200,
+      200
+    ],
+    "median_event_ns": [
+      48334.0,
+      232604.0
+    ],
+    "rejected": true,
+    "reason": "not a complete identity-matched layer micro"
+  },
+  "actual_packet166_streams": [],
+  "scope": "No packet166 device stream available",
+  "threshold_checks": true,
+  "mtp_ratio_for_2_percent": 1.6883156749087675,
+  "mtp_v2_plus_feedback_budget_ms": 52.81462700727716
+}

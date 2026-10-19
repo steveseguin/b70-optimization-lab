@@ -1,0 +1,44 @@
+{
+  "name": "packet168-body-census-A-v2",
+  "lane": "A",
+  "argv": [
+    "/usr/bin/python3",
+    "-B",
+    "experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/entry.py",
+    "--lane",
+    "A",
+    "--kind",
+    "census",
+    "--output",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/evidence/device-census-A-v2",
+    "--fault-review",
+    "{REVIEW}",
+    "--authorized-device-window"
+  ],
+  "env_extra": {},
+  "review": "experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/fault_review.py",
+  "planned_write_bytes": 1844418014,
+  "plan": {
+    "host_required_available_bytes": 105411248128,
+    "expected_seconds": [
+      900,
+      2400
+    ],
+    "watchdog_seconds": 7200,
+    "qualification": "diagnostic census; arms never reported as speed; READY-FOR-DEVICE.json binds the seal",
+    "entry_rehearsal": {
+      "binaries": [
+        {
+          "path": "experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/build/device/own-rt-iq3",
+          "sha256": "eb08726930e7155d078ff724f3d19d1fc87a7eeb5426112bac6c40737f843175",
+          "args": [
+            "--help"
+          ],
+          "returncode": 0,
+          "contains": "Options:"
+        }
+      ],
+      "preparation_probe_note": "Native CPU fixture: six-class arm sequence x12 prompts x3 repeats on both ranks with real snapshot copies; worker_gate.py drives the real worker sequence."
+    }
+  }
+}

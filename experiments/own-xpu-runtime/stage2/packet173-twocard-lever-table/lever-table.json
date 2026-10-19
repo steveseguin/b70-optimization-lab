@@ -1,0 +1,53 @@
+{
+  "schema": "packet173.lever-table.v1",
+  "parent": "packet136 bundle8, 58.798108759182306 tok/s, iq3-p49-split32-v1, 24/24, rank1 MTP, draft prefix 80,128",
+  "census": "packet168b (evidence/device-census-*/census-report.json and run/census-input.json)",
+  "units": "census marginals are ms per isolated body pass, rank0+rank1 SUMMED; savings below are ms per target half (one rank's body) unless named dm_summed",
+  "thresholds": {
+    "source": "packet160 evidence/record-intervals.csv replay (1,188 intervals; reproduces 58.798108759 exactly); thresholds.json",
+    "symmetric_ms_per_half": {"+0.5%": 0.0698, "+1%": 0.1389, "+2%": 0.2752, "+3%": 0.4087, "+3.5%": 0.4745},
+    "symmetric_dm_summed_census_ms": {"+0.5%": 0.140, "+1%": 0.278, "+2%": 0.550, "+3%": 0.817, "+3.5%": 0.949},
+    "rank1_only_ms_per_half": {"+0.5%": 0.0846, "+1%": 0.1684, "+2%": 0.3334, "+3%": 0.4957, "+3.5%": 0.5838, "cap": "+3.85% (B-A gap 0.606 ms mean, 0.544 p10)"},
+    "rank0_only_ms_per_half": {"+0.5%": 0.3993, "+1%": 0.7947, "+2%": 1.5738},
+    "kill_gate": "+0.5% over every warm control",
+    "worth_building": "expected symmetric net saving >= 0.275 ms/half (+2%, dm_summed >= 0.55 ms)",
+    "owner_reference": "0.6 ms/token at 17.0 ms/token = +3.5% = 0.475 ms/half symmetric = 0.95 ms summed census reduction"
+  },
+  "levers": [
+    {"id": "D2", "class": "dense_hc", "also_touches": ["router_shared_expert"], "name": "dense-weight L2 warm-ahead from latency-bound predecessors",
+     "mechanism": "The preceding latency-bound kernel (HC/stage-0 norm, GDN recurrence, route) issues L2-only prefetches of the next route-independent dense GEMV's weight bytes. It makes no arithmetic change and writes nothing.",
+     "f_net_prior": {"low": 0.02, "mid": 0.04, "high": 0.07}, "eligible_basis": "p141 cold-minus-warm dense excess ~0.78 ms/half rank1 (attn proj 0.363, gdn.z 0.165, gdn.qkv 0.147, hc gates 0.10)",
+     "flag": "--warm-ahead off|dense", "default": "off", "est_hours": 4.0, "exactness": "trivial (prefetch has no value effect); full 60/60 still required",
+     "not_closed_by": ["p119 (warming DURING bandwidth-bound gate/up: 1.079x, closed)", "p138/p125 (route-PREDICTED expert prefetch)", "p142/p145 (layout/order600 null)", "p144 (warming during correction)"]},
+    {"id": "D1", "class": "dense_hc", "name": "N1 same-bit scale multicast in p33::dense_lane",
+     "mechanism": "One lane loads the Q6 (pair) / Q8 (quad) FP32 scale word and broadcasts it with a subgroup shuffle within the same row. Products, chains and the split32 tree stay unchanged.",
+     "f_net_prior": {"low": 0.0, "mid": 0.016, "high": 0.04}, "flag": "--dense-scale off|multicast", "default": "off", "est_hours": 3.0,
+     "not_closed_by": ["p140 N1 was closed only at its +3% admission (+1.305% at 20% transfer); never built", "p81 is analogous negative evidence (load-count cut, neutral)"]},
+    {"id": "N3", "class": "norms_glue", "name": "producer-emitted RMS leaf partials (p140 N3)",
+     "mechanism": "The stream-writing combine epilogue emits the original aligned 32-leaf RMS partials after BF16 rounding. The next norm keeps the padded upper tree.",
+     "f_net_prior": {"low": 0.0, "mid": 0.10, "high": 0.25}, "flag": "--norm-leaves off|producer", "default": "off", "est_hours": 5.0,
+     "not_closed_by": ["p94 (consumer duplication)", "p46 (four-WG upper tree)", "p140 closed it only at +3%"]},
+    {"id": "G1", "class": "gdn", "name": "gdn_norm_gate folded into recurrence epilogue (novelty check first)",
+     "mechanism": "Fold the gated per-head norm into the recurrence workgroup that owns the head output. p82b_recurrence.hpp:111 already has Kernel<SplitNorm>, so first confirm that gdn_norm_gate launches still exist in the bundle8 plan.",
+     "f_net_prior": {"low": 0.0, "mid": 0.05, "high": 0.10}, "flag": "--gdn-epilogue off|norm", "default": "off", "est_hours": 4.0,
+     "not_closed_by": ["p67/p82/p82b (head prepass, barriers)", "p113 (row schedule)", "p107 (nonfinite)"]},
+    {"id": "R1", "class": "router_shared_expert", "name": "router-GEMV last-group route election (p164 DESIGN)",
+     "mechanism": "The router GEMV's last finishing workgroup runs the unchanged route-fast top-k and normalisation, which removes one launch and dependency per layer.",
+     "f_net_prior": {"low": 0.0, "mid": 0.03, "high": 0.06}, "flag": "--route-epilogue off|election", "default": "off", "est_hours": 6.0,
+     "not_closed_by": ["p164 closed the CPU latency selection only (visible gaps 0.003 ms/half); the producer-to-epilogue mechanism is open"]},
+    {"id": "E1n2", "class": "routed_experts", "name": "N2 40-bit IQ2 metadata cell, same 840-byte E1 row (p140 N2)",
+     "mechanism": "Invertible re-encoding of index/sign/scale fields. Grid words, products and split32 accumulation are unchanged.",
+     "f_net_prior": {"low": 0.0, "mid": 0.012, "high": 0.03}, "flag": "--iq2-cell off|n2", "default": "off", "est_hours": 7.0,
+     "not_closed_by": ["p95 E2/E3", "p99 SLM", "p162 enum11 (4.8x slower)", "p119 warm", "p104 tile16", "p81 packed loads"]},
+    {"id": "none-attention", "class": "attention", "name": "no admissible mechanism", "f_net_prior": {"low": 0, "mid": 0, "high": 0},
+     "closures": ["p116 scheduling/scoring groups", "p107 local sharing", "p44/p49 accepted", "p72 wide64", "p142 order600 null"]},
+    {"id": "none-residual", "class": "residual", "name": "no build; attribution only if residual > +1 ms", "f_net_prior": {"low": 0, "mid": 0, "high": 0},
+     "closures": ["p127 head re-split -1.95%", "p160 head donation <= +2.235%", "p161 early argmax", "p93x head transpose", "p149/p160 80 us exchange", "p141 transfer gap", "draft line closed (p156/p158)", "p34 graph replay neutral", "p153 descriptor upload +0.35%"]}
+  ],
+  "prior_scenarios_dm_summed_ms": {
+    "proxy": {"dense_hc": 10.86, "routed_experts": 5.04, "router_shared_expert": 3.38, "gdn": 1.37, "norms_glue": 0.78, "attention": 0.82},
+    "cold_weighted": {"dense_hc": 12.4, "routed_experts": 5.6, "router_shared_expert": 4.1, "gdn": 1.6, "norms_glue": 0.8, "attention": 0.9},
+    "expert_heavy": {"dense_hc": 10.0, "routed_experts": 7.0, "router_shared_expert": 3.4, "gdn": 1.4, "norms_glue": 0.8, "attention": 0.8},
+    "basis": "proxy = 2 x packet140 rank1 per-half proxy (packet128b, failed-overhead diagnostic) mapped to packet168 classify(); cold_weighted applies packet141 cold/warm ratios; these are priors, never measurements"
+  }
+}

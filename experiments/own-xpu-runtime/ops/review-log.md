@@ -919,3 +919,52 @@ STOP DOING acknowledged:
 - pre-sealing chains without device speed evidence;
 - appending rows while a dead-owner marker is unarchived;
 - packaging-repair loops of more than two jobs before a first speed number.
+
+## Review 42 — 2026-10-19 08:0x UTC — VERDICT: ACT
+
+The reviewer found 62% device-in-flight and 23.2% card-busy over 2 h, up from 41% / 14.7%. When the p58aq split ends (~08:12) the decode pipeline would drain again: no READY decode row on either lane, two cards flat at 58.798 for about 14 h, and p166/p167 frozen since 07:58.
+
+Actions taken (08:05–08:15):
+1. **Briefs ready before the thaw.**
+   - Launch: `fn-run/after-p58aq-codex.sh` starts Codex **p168** and **p169** as soon as run-p58aq thaws Codex, then **p166b** when p166 exits.
+   - One-card follow-up: `p58ar` (build the exact replacement p58aq's analyzer qualifies, then a one-load kill-test v5, no smoke) is pre-written for the ≥ 0.67 ms/token outcome. Otherwise p58aq closes on its own DO-NOT-REPEAT, and the next one-card lever comes from p166b's MTP projection.
+2. **p168: measured two-card body census on bundle 8** (lane B, one load). It uses skip/zero-input differencing arms with snapshot restore + repair, mirroring p58aq U0/S0, with exact controls at start/middle/end. Output: a ranked class → ms/token table, replacing CPU pricing from packet110 synthetic numbers or an assumed 20% transfer.
+3. **p166b:** qualify p166 with a packet-private report adapter and keep the failed shared receipt (the p58aq precedent). It also adds the one-card MTP decode projection (packet147 §5: cycle = D + V2 + (1−a)R, a = 0.787, D = 1.79 ms) to the analyzer's decision rule. **p169 (ops):** generalize the shared standalone-micro / one-card window report rehearsal, with a seal-safety check first; if any READY packet pins `rehearse_entry.py` bytes, a new module is used instead.
+4. **No optional smokes** before diagnostics that open with K1a/K1b plus an exact control (written into the p168 and p58ar briefs).
+5. **Selective Codex freeze:** `fn-run/codex-freeze-heavy.sh <stop-file>` freezes only units that read model files, compile, or exceed 4 GB, re-checking every 20 s. It is for device-bound screens. Record chains and host-wait diagnostics (p58aq) keep the full freeze.
+
+Also on record:
+- p167 closed on CPU: the two-card bundle-8 streams show no recurring lookup-table major faults, so there is nothing to port from p58aj.
+- The 07:46 p58aq pin-guard refusal (`records[].pins = {passed: true}`) was fixed in 436389c0a. Briefs now forbid pin-guard map keys outside path → SHA256 maps.
+
+STOP DOING acknowledged: no READY decode row at window end; briefs whose gate needs a frozen path changed; pricing two-card levers from synthetic or failed-gate numbers; optional smokes before K1-opening diagnostics; publication rows ahead of decode rows; pin-guard key names in evidence JSON.
+
+## Review 43 — 2026-10-19 09:0x UTC — VERDICT: ACT
+
+The reviewer found 53% device-in-flight and 19.2% card-busy over 2 h, with all four cards idle since 08:51 and nothing queued. The packet58as record chain is waiting on chain orchestration. Two cards has had no lever for about 15 h.
+
+Actions taken (09:05–09:15):
+1. **p171 launched (09:06):** a one-card host-runtime parity audit vs bundle 8, by mechanism: host waits per token, publication drain under spin, ordered queue, reply-first, prepared submission, p105 controller/submit, p134–p138 submission/critical-path changes, token input, issue batching, profiling queues, remaining sleeps. The top missing item becomes a one-load v5 on the **spin line** (packet58as parent), no smoke, READY by the time the chain ends.
+2. **p168b is the last census-preparation job.** `fn-run/p168-continue.sh` queues its lane-B row (selective freeze) as soon as it is READY. There will be no p168c: if it ends not ready, its isolable classes plus the residual are what ship.
+3. **p172 (ops) launched:** `ops/onecard_chain_derive.py` turns winning v5 + parent orchestration + flags/binary into a sealed, `--check`-passing chain orchestration with the same gates, failing closed if a flag is not accepted in every window mode. The same job adds the `gpu_time_review.py` fix: lanequeue START/DONE as device evidence for micros without child clocks (packet166 B1 was under-credited).
+4. **Next chain wrapper:** `fn-run/onecard-chain-quiet3.sh` uses the selective freeze (`codex-freeze-heavy.sh`) from launch until WS128x, then a full freeze through WS128x/WS128. The current 58as chain keeps `onecard-chain-quiet2.sh` (full freeze from before K1a), per the reviewer.
+5. The accounting fix is folded into p172.
+
+Also on record:
+- **p58asc ended READY false.** The bracket binary selects spin only through the bracket table (`spin_enabled = (view.hc == "spin")`), which cannot express KD/W2m/WS; my brief had forbidden a rebuild.
+- **p58asd** (09:06) adds a process-wide `--wait-policy` option, defaulting to poll, does one rebuild with byte gates, and makes the chain READY. `fn-run/chain-58as2.sh` launches the quiet chain after `--check`.
+
+STOP DOING acknowledged: hand-copying chain orchestration for a one-flag change while cards idle; compute-only parity audits; a third preparation job for one diagnostic; letting two cards sit > 1 h with nothing READY; and (mine) "no rebuild" constraints in chain-handoff briefs when the winning option was only reachable through the bracket table.
+
+## Review 43b — 2026-10-19 10:05 UTC — VERDICT: ACT
+
+The reviewer found 44% device-in-flight and 11.7% card-busy over 2 h, with all cards idle from 09:57. Codex hit its usage limit at 09:09 (until Oct 26). The one-card record went 31.97 → 34.573 (cmvf31py400furf01tv54rxo7) about 1.5 h after the v5 win. Two cards has been flat for about 16 h.
+
+Actions taken (10:05–10:15):
+1. **Process-wide switch:** the p171b subagent was asked to add `--foreground-copies compute|copy`, because `apply_cqcopy_delta.py:87` made the mechanism reachable only through the bracket. p171b's READY had already been picked up, and its v5 started at 10:07:36, so the request was **withdrawn for the running tree**. The subagent was told not to touch packet171b and to put the flag in a new `packet171c` copy (no READY, no proposal) as the chain-binary candidate.
+2. **QUIET for every one-card timing window:** `fn-run/ready-run.sh` (a READY-mtime waiter that replaces the Codex-unit waiters) writes `fn-run/QUIET` from queueing through `hold-single` completion. Every subagent brief carries the QUIET poll.
+3. **One hand-off for both pending jobs:** `ready-run.sh` instances for p171b (one-card, whole host) and p168b (lane B) both fired at 10:07:30. p171b runs first; p168's `packet168-body-census-B-v2` waits behind PAUSE-B and runs when the hold releases.
+4. **Two-card lever ready before the census lands:** subagent **p173** writes the census-to-lever table (threshold per class, open mechanisms checked against DO-NOT-REPEAT, kill-test design, file:line) and pre-stages a bundle-8 copy, documenting the process-wide flag pattern.
+5. **Codex outage recorded:** CURRENT.md (coordinator line only), memory `codex-usage-limit-until-2026-10-26`, heartbeat. Codex-unit tooling is inert until the reset; monitor-loop4's codex count reads 0 and is harmless.
+
+STOP DOING acknowledged: bracket-only kill-test switches; relying on codex-* freezes; lane B without its own READY row for over 1 h; any p168c; counting one-card records as two-card progress.

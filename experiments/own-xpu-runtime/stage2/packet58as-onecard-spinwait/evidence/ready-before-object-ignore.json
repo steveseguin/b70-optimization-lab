@@ -1,0 +1,79 @@
+{
+  "schema": "own-runtime.packet58as.ready.v1",
+  "ready_for_device": true,
+  "passed": true,
+  "device_executed": false,
+  "lane": "A",
+  "scope": "whole-host",
+  "gpu_count": 1,
+  "card": 0,
+  "model_loads": 1,
+  "windows": [
+    "K1a",
+    "K1b",
+    "WSCREEN"
+  ],
+  "separate_smoke_required": false,
+  "opening_contract": "No separate smoke: bracket opens with K1a/K1b and exact A0 control.",
+  "arm_order": [
+    "poll",
+    "spin",
+    "poll",
+    "spin",
+    "poll"
+  ],
+  "labels": [
+    "A0",
+    "B0",
+    "A1",
+    "B1",
+    "A2"
+  ],
+  "warmup": "A0 exact, excluded only from speed and drift",
+  "prompts_per_view": 12,
+  "max_new": 128,
+  "required_exact_requests": 60,
+  "oracle": "iq3-p49-split32-v1",
+  "kv_dtype": "BF16",
+  "resident_lookups_all_views": true,
+  "winner_minimum_gain_over_every_warm_control": 0.005,
+  "maximum_control_drift_fraction": 0.03,
+  "per_operation_wait_seconds": 600,
+  "spin_budget_microseconds": 250,
+  "sleep_after_spin_microseconds": 20,
+  "yield_every_iterations": 256,
+  "device_disk_floor_bytes": 25000000000,
+  "cpu_disk_stop_bytes": 27000000000,
+  "host_required_available_bytes": 98990252032,
+  "owner_thread_cpu_utilization": "Measured per request by CLOCK_THREAD_CPUTIME_ID; reported per view as percent of one core; pending device run",
+  "no_wall_clock_data_proof_limits": true,
+  "live_checks": "stream presence/format and exactness only",
+  "native_readers": "ionice -c3",
+  "build_receipt_sha256": "177b20f6df6ee186bfc7a439c8af554358ba85ce4dd95e1929e25faad0e07c6d",
+  "checks": {
+    "evidence/cpu-exactness.json": "8b3648b283b142c73a1287c3e83ff1b8ba7ea4025e36479634f5ecffbc55b843",
+    "evidence/wait-tests.json": "b6ad87b2f6d4ac2d93a5cf6c300996145f1aa366c680b1632179f6dee094bc70",
+    "evidence/preparation.json": "5ad188bc5681d497f55e9b2b714d87622d26a9dc2a94b6d7de3a9643fe845760",
+    "evidence/analyzer-real-parent.json": "b6bd1b0900952ad937262c4993dc69f5630a9fb1a4811a768d166f46e808d9fe",
+    "evidence/source-delta.json": "216d8663f1e3b9be0fc9dadcc595b2fee128ca9301e4a630442e90a07dc82a83",
+    "evidence/flags.json": "c3f203d93ab9e3404122a99cde31e0ccefcb612c3eed0c842cc604e5883d3c04",
+    "evidence/queue-plans.json": "5e852f5ec5ae7c78ab6e9b99222f540f7e61ad931550c181cfc91431349dc2cf",
+    "evidence/shared-entry-report-final.json": "45860d76a86e7ddb1c86f64b3ab7d39a17ff6739e1e7c90cf49133a92ffb2ded",
+    "evidence/closure-audit.json": "23f227293434979d4c23369e3c0617a069f5427e75ecfe333fe775ff7f6589b0"
+  },
+  "proposals": {
+    "experiments/own-xpu-runtime/ops/lane-queue/proposed-p58as-v5-A.txt": "d70e05df0f2adf81beb95cf60825898cc93bf59bd9c0e1a79fe120fd1a910ea1"
+  },
+  "shared_tool_limitations": [
+    "Shared --report passes. Its generic smoke report is synthetic only; no separate smoke row exists.",
+    "Shared preparation adapter has no unranked one-card CPU transport probe. Private preparation_gate.py exercised real device argv/plan and all reset paths; synthetic transport/weights, no GPU."
+  ],
+  "device_exactness": "pending",
+  "device_speed": "pending",
+  "fresh_process_repeat": false,
+  "strict512": false,
+  "submission_eligible": false,
+  "compile_turns": 1,
+  "coordinator_requirements": "Whole-host lane A; lane B drained/excluded; fresh fault review; no retry; graceful drain; leave cards empty",
+  "preparation_base_commit": "387a97e4fcdd06645494991d77c745bf6df5cbfa"
+}

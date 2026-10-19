@@ -1,0 +1,136 @@
+{
+  "schema": "packet171b.v5-result.v1",
+  "device_executed": true,
+  "job": "packet171b-v5-A",
+  "window_utc": "2026-10-19T10:07:31Z..10:21Z",
+  "labels": [
+    "A0",
+    "B0",
+    "A1",
+    "B1",
+    "A2"
+  ],
+  "arms": [
+    "spin",
+    "spin-cq",
+    "spin",
+    "spin-cq",
+    "spin"
+  ],
+  "exact_requests": 60,
+  "rates": [
+    34.548097090599754,
+    34.74038637619328,
+    34.56348805645695,
+    34.761156480788,
+    34.60209340221594
+  ],
+  "control_drift_fraction": 0.0011169400986361959,
+  "control_drift_passed": true,
+  "candidate_beats_all_controls": false,
+  "minimum_gain_vs_best_control": 0.003996664952314233,
+  "maximum_gain_vs_slowest_control": 0.005718995259048305,
+  "warmup_view": {
+    "label": "A0",
+    "rate": 34.548097090599754,
+    "exact": true,
+    "excluded_from_drift_and_comparison": true
+  },
+  "comparison_controls": [
+    "A1",
+    "A2"
+  ],
+  "required_gain_fraction": 0.005,
+  "maximum_control_drift_fraction": 0.03,
+  "request_count": 60,
+  "mechanism_readout": {
+    "schema": "packet171b.mechanism.v1",
+    "definitions": {
+      "slow_readback_ms": 1.0,
+      "fill_token_other_ms": 1.8,
+      "tokens": "generated_index >= 2"
+    },
+    "views": {
+      "A0": {
+        "tokens": 1524,
+        "wall_ms": 28.8217,
+        "wait_ms": 20.6538,
+        "transfer_wall_ms": 1.1828,
+        "median_transfer_wall_ms": 0.1678,
+        "slow_readback_fraction": 0.4016,
+        "slow_transfer_wall_ms": 2.6359,
+        "fast_transfer_wall_ms": 0.2077,
+        "slow_token_wait_excess_ms": 2.3224,
+        "p_slow_readback_after_fill_token": 0.9225,
+        "p_slow_readback_on_fill_token": 0.0449,
+        "fill_tokens": 535
+      },
+      "B0": {
+        "tokens": 1524,
+        "wall_ms": 28.6582,
+        "wait_ms": 20.6241,
+        "transfer_wall_ms": 1.1691,
+        "median_transfer_wall_ms": 0.1333,
+        "slow_readback_fraction": 0.4029,
+        "slow_transfer_wall_ms": 2.6161,
+        "fast_transfer_wall_ms": 0.1928,
+        "slow_token_wait_excess_ms": 2.3416,
+        "p_slow_readback_after_fill_token": 0.9481,
+        "p_slow_readback_on_fill_token": 0.0348,
+        "fill_tokens": 488
+      },
+      "A1": {
+        "tokens": 1524,
+        "wall_ms": 28.8086,
+        "wait_ms": 20.6927,
+        "transfer_wall_ms": 1.1823,
+        "median_transfer_wall_ms": 0.1665,
+        "slow_readback_fraction": 0.4009,
+        "slow_transfer_wall_ms": 2.6394,
+        "fast_transfer_wall_ms": 0.2072,
+        "slow_token_wait_excess_ms": 2.3803,
+        "p_slow_readback_after_fill_token": 0.9255,
+        "p_slow_readback_on_fill_token": 0.0442,
+        "fill_tokens": 543
+      },
+      "B1": {
+        "tokens": 1524,
+        "wall_ms": 28.637,
+        "wait_ms": 20.7603,
+        "transfer_wall_ms": 1.1688,
+        "median_transfer_wall_ms": 0.1406,
+        "slow_readback_fraction": 0.4035,
+        "slow_transfer_wall_ms": 2.6185,
+        "fast_transfer_wall_ms": 0.188,
+        "slow_token_wait_excess_ms": 2.3323,
+        "p_slow_readback_after_fill_token": 0.9577,
+        "p_slow_readback_on_fill_token": 0.0293,
+        "fill_tokens": 478
+      },
+      "A2": {
+        "tokens": 1524,
+        "wall_ms": 28.7917,
+        "wait_ms": 20.7518,
+        "transfer_wall_ms": 1.1812,
+        "median_transfer_wall_ms": 0.1687,
+        "slow_readback_fraction": 0.4042,
+        "slow_transfer_wall_ms": 2.6293,
+        "fast_transfer_wall_ms": 0.1988,
+        "slow_token_wait_excess_ms": 2.2909,
+        "p_slow_readback_after_fill_token": 0.9362,
+        "p_slow_readback_on_fill_token": 0.0421,
+        "fill_tokens": 523
+      }
+    },
+    "slow_mode_collapsed": false,
+    "collapse_rule": "max B slow fraction <= 0.5 x min warm A slow fraction",
+    "candidate_wins": false,
+    "verdict": "close row 1: slow mode persists; attribute the ~2.6 ms readback to fill/PCIe contention"
+  },
+  "decision": "CLOSED: B neutral (min gain +0.40% < +0.5%) and the slow readback mode persists (B0 0.4029 vs A0 0.4016; P(slow after fill) 0.92-0.96). Attribute the ~2.6 ms slow mode to fill-traffic contention, not foreground-copy queue ordering.",
+  "summary": {
+    "name": "summary.json",
+    "parent_relpath": "experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/screen/evidence/card0-171b-v5-a/resident/WSCREEN/summary.json",
+    "parent_digest": "04209bf8979974493fdf73f618b1b0cfd64262f7f51ad47fcbae96831f549fb2"
+  }
+}

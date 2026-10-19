@@ -32,11 +32,11 @@ existing code; real host sensors surround both reset paths.
 
 `screen/split_analyze.py` reports host construction, host submission, drain and
 repair in milliseconds per generated token, plus separately labeled prefill
-scopes. U0 and S0 are paired against **both** controls, without interpolation
+scopes. U0, S0 and the combined device-publication/drain removal in D0 are paired against **both** controls, without interpolation
 or dropping A0. It reports publication counts and control drift. Different
 publication cadence makes a causal difference inconclusive; it cannot produce
 a saving or a negative closure. The host-wait arm records monotonic nanosecond
-begin/call/end stamps, operation, phase and normal/probe/repair scope. The
+begin/call/end stamps, operation, phase and normal/probe/repair scope, with grouped per-operation totals. The
 blocking call envelope includes device readiness, the inherited 1 ms poll
 sleep and scheduler delay; it is **not GPU execution time**. Host scopes and
 wait/publication scopes overlap and must not be added.
@@ -47,7 +47,7 @@ an exact replacement, replacement-overhead accounting, the unchanged oracle
 and fresh-process repeats. Named host work above 0.67 ms/token writes
 `HOST-WORK.md`; the lookup residual remains explicitly an upper bound. If
 neither qualifies, the analyzer writes a `DO-NOT-REPEAT.md` row beside the
-complete summary. Missing streams, invalid clocks or oracle mismatches refuse
+complete summary. Every timing row must match the complete exact output, and prefill streams must be complete. Missing streams, invalid clocks or oracle mismatches refuse
 the result; they never become a negative finding.
 
 The opening control is the integrated smoke. The separate fresh smoke proposal

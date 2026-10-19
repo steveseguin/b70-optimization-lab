@@ -1,0 +1,83 @@
+--- packet58aj/single_device.cpp
++++ packet58as/single_device.cpp
+@@ -1,3 +1,4 @@
++#include "$PACKET/native/spin_wait.hpp"
+ #include "$PACKET/native/ordered_retirement.hpp"
+ #include "$PACKET/native/async_backend.hpp"
+ #include "$PACKET/frozen-inputs/repo/experiments/own-xpu-runtime/stage2/packet58j-onecard-port/kernel_guard.hpp"
+@@ -158,6 +159,7 @@
+     return event(e).get_info<sycl::info::event::command_execution_status>()==sycl::info::event_command_status::complete;
+   }
+   bool wait(Event e,Deadline deadline) override {
++    if(p58as::spin_enabled)return p58as::wait([&]{return complete(e);},[&]{check_error();},[&]{event(e).wait_and_throw();},deadline);
+     while(!complete(e)) {
+       check_error(); if(std::chrono::steady_clock::now()>=deadline) return false;
+       std::this_thread::sleep_for(std::chrono::milliseconds(1));
+--- packet58aj/main.cpp
++++ packet58as/main.cpp
+@@ -1,3 +1,4 @@
++#include "$PACKET/native/spin_wait.hpp"
+ #include "$PACKET/native/resident_lookup.hpp"
+ #include "$PACKET/native/drm_size.hpp"
+ #include "$PACKET/native/async_backend.hpp"
+@@ -1799,6 +1800,7 @@
+ 
+ // Reset request state in place. Immutable experts, pointer tables and cache survive.
+ static void p58_reset_request(Engine& e,const fs::path& destination) {
++  fs::create_directories(destination);record_host_memory(destination,"before_reset");
+   e.drain();require(!e.poisoned && !e.integer(0,"error"),"reset cannot clear failure");
+   require(!e.bank_parity,"plain target must use primary state bank");
+   std::vector<uint8_t> zero(4*1024*1024,0);size_t bytes=0,allocations=0;
+@@ -1829,6 +1831,7 @@
+   };
+   reopen(e.timings,"timings.jsonl");reopen(e.prefill_timings,"prefill-timings.jsonl");
+   reopen(e.site_timings,"sites.jsonl");reopen(e.progress,"progress.jsonl");
++  record_host_memory(destination,"after_reset");
+   save(destination/"reset.json","{\"passed\":true,\"cached_tokens\":0,\"allocation_ids_preserved\":true,\"allocations\":"+
+        std::to_string(allocations)+",\"bytes\":"+std::to_string(bytes)+"}\n");
+ }
+@@ -1840,6 +1843,7 @@
+ 
+ #include "$PACKET/native/bracket_table.hpp"
+ int main(int argc, char **argv) {
++  if(argc==2&&std::string(argv[1])=="--help"){std::cout<<"--argument-audit --audit-prepare-each --authorized-device-window --bracket-inputs --cache-bytes --cache-cap --cache-maintenance --canary --cancel-launch --card --cards --channel --checked --context --dispatch --draft-capture --draft-fault --draft-head --draft-manifest --draft-model --draft-mtp --draft-rank --experts --first-layer --gemv --hc --hc-geometry --host-path --identity --input --lookups --max-new --memory --mini --miss-path --model-dir --native-nice --nongemv --oracle --other-fusion --output --pipeline-canary --pipeline-mini --plan --priority-probe --prompt-tokens --rank --record --retain-steps --retirement --seconds --selection --selection-sha256 --shared --stage --stop-fd --suite-inputs --target-split --timing --tokens --wait-seconds --p58r-parse-test --help\n";return 0;}
+ #ifdef OWN_RT_HOST_ONLY
+   if(argc>2&&std::string(argv[1])=="--p58r-parse-test") {
+     try {
+@@ -1955,14 +1959,15 @@
+     if(!a.bracket_inputs.empty())save(root_output/"loaded-arena-descriptors.txt",e->bracket_arena_descriptors());
+     for(const auto& view:bracket_views) {
+     w->use_resident_lookups=view.resident;
++    p58as::spin_enabled=view.hc=="spin";
+     const auto view_output=view.label.empty()?root_output:root_output/view.label;
+     if(!view.label.empty()) {
+-      fs::create_directories(view_output);e->bracket_select(view.selection,view.digest,"p60fusion","hc-wide","wide64+halfcache","fused","ordered-foreground");e->cache_mode(view.maintenance);e->cache_capacity(view.capacity);
++      fs::create_directories(view_output);record_host_memory(view_output,"before_view_reset");e->bracket_select(view.selection,view.digest,"p60fusion","hc-wide","wide64+halfcache","fused","ordered-foreground");e->cache_mode(view.maintenance);e->cache_capacity(view.capacity);record_host_memory(view_output,"after_view_reset");
+       require(loaded_arena==e->bracket_arena_hash()&&loaded_weights==e->bracket_arena_hash(true),"bracket loaded identity changed");
+       save(view_output/"lookup-backing.json","{\"resident\":"+std::string(view.resident?"true":"false")+",\"copies\":"+w->residency+"}\n");
+       save(view_output/"boundary.json","{\"passed\":true,\"selection_sha256\":"+ownrt::quote(view.digest)+
+         ",\"cache_maintenance\":"+ownrt::quote(view.maintenance)+
+-        ",\"hc\":\"p60fusion\",\"lookups\":"+ownrt::quote(view.resident?"resident":"mapped")+
++        ",\"hc\":\"p60fusion\",\"lookups\":"+ownrt::quote(view.resident?"resident":"mapped")+",\"wait_policy\":"+ownrt::quote(view.hc)+
+         ",\"cache_cap\":"+ownrt::quote(view.capacity)+",\"cache_allocation_bytes\":21552729600,\"cache_started_empty\":true"+
+         ",\"arena_descriptors_sha256\":"+ownrt::quote(loaded_arena)+",\"weight_descriptors_sha256\":"+ownrt::quote(loaded_weights)+
+         ",\"allocation_ids_preserved\":true,\"weight_uploads_during_switch\":0,\"cache_fill_bytes_total\":"+std::to_string(e->cache_fill_bytes)+
+@@ -1973,6 +1978,7 @@
+     auto monotonic=[](){return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();};
+     const double request_start_seconds=monotonic();
+     p58_reset_request(*e,output);
++    timespec owner_cpu_start{},owner_cpu_end{};clock_gettime(CLOCK_THREAD_CPUTIME_ID,&owner_cpu_start);auto owner_wall_start=std::chrono::steady_clock::now();
+     e->request_diagnostics=output;e->request_token_index=0;e->last_site=nullptr;
+     generated.clear();text.clear();
+     std::vector<int> input;
+@@ -2118,6 +2124,10 @@
+     rr<<"]}";save(output/"result.json",rr.str());
+     if(!request_id.empty())save(output/"receipt.json",rr.str());
+     save(output/"lookup-request-complete.json","{\"passed\":true}\n");
++    clock_gettime(CLOCK_THREAD_CPUTIME_ID,&owner_cpu_end);
++    const double cpu_seconds=owner_cpu_end.tv_sec-owner_cpu_start.tv_sec+(owner_cpu_end.tv_nsec-owner_cpu_start.tv_nsec)*1e-9;
++    const double wall_seconds=std::chrono::duration<double>(std::chrono::steady_clock::now()-owner_wall_start).count();
++    save(output/"owner-cpu.json","{\"cpu_seconds\":"+std::to_string(cpu_seconds)+",\"wall_seconds\":"+std::to_string(wall_seconds)+",\"one_core_percent\":"+std::to_string(100*cpu_seconds/wall_seconds)+"}\n");
+     }
+     } // bracket views; weights and owner stay resident
+     output=root_output;

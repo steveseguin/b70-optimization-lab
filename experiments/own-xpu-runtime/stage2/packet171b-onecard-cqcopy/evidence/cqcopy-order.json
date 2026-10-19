@@ -1,0 +1,60 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "records": [
+    {
+      "compiler": "gnu",
+      "candidate_binary_sha256": "9e6db1788eecbe074f2054229da69ca710b8d3ad313c162413e43101f3007e1c",
+      "candidate_passed": true,
+      "parent_routing_binary_sha256": "b2bd7e37d15494155f29f466e5a6d333aba5716a76e37e40470fc6f579c1d665",
+      "parent_routing_returncode": 1,
+      "parent_routing_failures": [
+        "FAIL: B: a foreground copy reached the BCS foreground list",
+        "FAIL: B: a compute-queue barrier was submitted",
+        "FAIL: B: expected 50 foreground copies on the in-order compute queue",
+        "FAIL: B: token/error readback not ordered after the compute tail on the in-order queue",
+        "FAIL: B: foreground_sync waited on an idle copy list",
+        "FAIL: B: readback not recorded as the compute tail",
+        "FAIL: switch: idle copy list waited after drain",
+        "FAIL: B: barrier path reached in compute-queue mode"
+      ]
+    },
+    {
+      "compiler": "intel",
+      "candidate_binary_sha256": "efeae743d572fa11b259d2a47eb3df2de20c253c7b7d21341c3c6029bd678764",
+      "candidate_passed": true,
+      "parent_routing_binary_sha256": "f2afc74544710dccdbfe9118ef2b6d6cfb4629ed25e7c293015e79ea85a1768a",
+      "parent_routing_returncode": 1,
+      "parent_routing_failures": [
+        "FAIL: B: a foreground copy reached the BCS foreground list",
+        "FAIL: B: a compute-queue barrier was submitted",
+        "FAIL: B: expected 50 foreground copies on the in-order compute queue",
+        "FAIL: B: token/error readback not ordered after the compute tail on the in-order queue",
+        "FAIL: B: foreground_sync waited on an idle copy list",
+        "FAIL: B: readback not recorded as the compute tail",
+        "FAIL: switch: idle copy list waited after drain",
+        "FAIL: B: barrier path reached in compute-queue mode"
+      ]
+    }
+  ],
+  "candidate_checks": [
+    "no BCS foreground copy",
+    "no compute-queue barrier",
+    "50 foreground copies on the in-order compute queue",
+    "readback ordered after the compute tail",
+    "readback recorded as the compute tail",
+    "fills reach the maintenance list",
+    "sync skips an idle copy list",
+    "pending copy-list work drained at the switch",
+    "barrier recovery only in copy-queue mode",
+    "A views keep BCS copy + barrier and two-queue sync"
+  ],
+  "fails_on_old_code": true,
+  "old_code": "P171_PARENT_ROUTING build: packet58as BCS copy + per-copy barrier + two-queue sync",
+  "source_delta_only": true,
+  "base_commit": "dabfc958b7d3322dda3eeada3689b4d6011b7cc1",
+  "fill_source_identical": true,
+  "wait_spin_compute_prepare_identical": true,
+  "mock_backend": true,
+  "sycl_instantiation": "native/generated/single_device.cpp (device build)"
+}

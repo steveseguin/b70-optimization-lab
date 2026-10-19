@@ -1,0 +1,361 @@
+{
+ "schema": "packet171.onecard-host-parity-audit.v1",
+ "device_executed": false,
+ "model_reads": false,
+ "repository_head_at_audit": "6643c3e206117ead12fd140047582855df645287",
+ "onecard_line": "packet58as-onecard-spinwait (HEAD)",
+ "two_card_line": "packet136-record-bundle (bundle 8)",
+ "spin_line_ms_per_token": 28.8013,
+ "threshold_ms_per_token": 0.6,
+ "measured_token_anatomy_spin": {
+  "wall_ms": 28.8044,
+  "enqueue_loop_ms": 5.1306,
+  "wait_ms": 20.5232,
+  "transfer_wall_ms": 1.185,
+  "median_transfer_wall_ms": 0.1626,
+  "other_ms": 1.8871,
+  "median_other_ms": 1.2506,
+  "host_waits": 6,
+  "kernel_submissions": 1118,
+  "voluntary_context_switches": 274.7395,
+  "slow_readback_fraction": 0.4042,
+  "slow_tokens": {
+   "wall_ms": 30.8882,
+   "wait_ms": 21.9091,
+   "transfer_wall_ms": 2.634,
+   "other_ms": 1.1272
+  },
+  "fast_tokens": {
+   "wall_ms": 27.3906,
+   "wait_ms": 19.583,
+   "transfer_wall_ms": 0.2019,
+   "other_ms": 2.4027
+  },
+  "p_slow_readback_given_same_token_high_other": 0.0419,
+  "p_slow_readback_given_previous_token_high_other": 0.9404
+ },
+ "derived": {
+  "spin_publication_total_ms_per_token": 0.2006,
+  "poll_era_publication_drain_ms_per_token_58aq": 1.0716,
+  "construction_plus_submission_ms_58aq": 0.1831,
+  "spin_publication_drain_ms_per_token_upper": 0.0175,
+  "spin_readback_excess_ms_per_token": 0.9863,
+  "spin_slow_token_wait_excess_ms_per_token": 0.9499,
+  "spin_wall_ms_per_token": 28.8013,
+  "spin_sleep_cycle_us_estimate": 74.7
+ },
+ "mechanisms": [
+  {
+   "rank": 1,
+   "mechanism": "foreground-copies-on-single-in-order-compute-queue",
+   "bundle8": "present: queue_->memcpy single_device.cpp:83-84,101; one queue sync :122",
+   "onecard": "missing: BCS immediate list + compute barrier per copy sd:108-113; foreground_sync waits both queues sd:187-188; fills on second BCS list sd:88,169-175",
+   "two_card_measured_gain": {
+    "value": null,
+    "label": "not-isolated",
+    "note": "two-card line never had split foreground copy queue or cache fills"
+   },
+   "onecard_price_ms_per_token": {
+    "low": 0.9863,
+    "high": 1.9362,
+    "label": "measured excess; causal attribution to shared copy ordinal assumed"
+   },
+   "status": "MISSING-top-item",
+   "evidence": "measured.json views.B0/B1 slow_tokens, p_slow_readback_given_previous_token_high_other; corroboration_58v (readback 0.46 serial -> 2.13-2.18 overlap)"
+  },
+  {
+   "rank": 2,
+   "mechanism": "non-blocking-token-input",
+   "bundle8": "partial: default blocking put rank.hpp:133; MTP queue_half_inputs async mtp.hpp:281-287; p137 smoke exact, no speed number",
+   "onecard": "missing: synchronous put main:2006 (upload main:888-902)",
+   "two_card_measured_gain": {
+    "value": null,
+    "label": "none",
+    "note": "p137 never bracketed"
+   },
+   "onecard_price_ms_per_token": {
+    "low": 0.05,
+    "high": 0.3,
+    "label": "assumed"
+   },
+   "status": "MISSING",
+   "evidence": "notes/2026-10-18-own-runtime-packet137.md"
+  },
+  {
+   "rank": 3,
+   "mechanism": "reply-first",
+   "bundle8": "present-but-disabled: reply_first.hpp; bundle 8 runs ordered",
+   "onecard": "missing: token emitted after cache_after_position main:2046 and timing rows main:2074-2107",
+   "two_card_measured_gain": {
+    "value": -0.004,
+    "unit": "percent",
+    "label": "measured",
+    "note": "p92 lane A v4"
+   },
+   "onecard_price_ms_per_token": {
+    "low": 0.0,
+    "high": 0.3,
+    "label": "assumed"
+   },
+   "status": "MISSING-transfers-zero",
+   "evidence": "notes/2026-10-18-own-runtime-p92-p94-results.md"
+  },
+  {
+   "rank": 4,
+   "mechanism": "pure-spin-sleep20-off",
+   "bundle8": "present: host_spin.hpp:28 with P56X_SLEEP20=0",
+   "onecard": "partial: 250 us spin then 20 us sleeps spin_wait.hpp:29-30",
+   "two_card_measured_gain": {
+    "value": null,
+    "label": "not-isolated",
+    "note": "56x no device result; 61x +8.67% is spin vs 1 ms poll plus HC fusion"
+   },
+   "onecard_price_ms_per_token": {
+    "low": 0.05,
+    "high": 0.08,
+    "label": "assumed latency model on measured context-switch counts"
+   },
+   "status": "PARTIAL",
+   "evidence": "measured.json derived.spin_sleep_cycle_us_estimate"
+  },
+  {
+   "rank": 5,
+   "mechanism": "ordered-cache-publication",
+   "bundle8": "not-applicable: no expert cache",
+   "onecard": "missing: publish_cache_table drains main:977",
+   "two_card_measured_gain": {
+    "value": null,
+    "label": "not-applicable"
+   },
+   "onecard_price_ms_per_token": {
+    "low": 0.0,
+    "high": 0.0175,
+    "label": "measured-derived (spin publication total minus 58aq construction+submission)"
+   },
+   "status": "DEAD-under-spin",
+   "evidence": "measured.json publication.B0/B1, derived.spin_publication_drain_ms_per_token_upper"
+  },
+  {
+   "rank": null,
+   "mechanism": "ordered-retirement",
+   "bundle8": "present",
+   "onecard": "present",
+   "two_card_measured_gain": {
+    "value": [
+     1.053,
+     0.409
+    ],
+    "unit": "percent",
+    "label": "measured",
+    "note": "packet85 MODEL.md:207-218"
+   },
+   "onecard_price_ms_per_token": {
+    "low": null,
+    "high": null,
+    "label": null
+   },
+   "status": "PARITY",
+   "evidence": ""
+  },
+  {
+   "rank": null,
+   "mechanism": "prepared-submission-argument-blocks",
+   "bundle8": "present",
+   "onecard": "present",
+   "two_card_measured_gain": {
+    "value": null,
+    "label": "not-measured"
+   },
+   "onecard_price_ms_per_token": {
+    "low": null,
+    "high": null,
+    "label": null
+   },
+   "status": "PARITY",
+   "evidence": ""
+  },
+  {
+   "rank": null,
+   "mechanism": "controller-mailbox-p105-head-split",
+   "bundle8": "present",
+   "onecard": "unreachable rank==-1 main:270",
+   "two_card_measured_gain": {
+    "value": [
+     0.36,
+     0.38
+    ],
+    "unit": "percent",
+    "label": "measured",
+    "note": "p105b lanes B/A"
+   },
+   "onecard_price_ms_per_token": {
+    "low": null,
+    "high": null,
+    "label": null
+   },
+   "status": "TWO-CARD-SPECIFIC",
+   "evidence": ""
+  },
+  {
+   "rank": null,
+   "mechanism": "p134-p135-p138-submission-stall-critical-path",
+   "bundle8": "attribution only",
+   "onecard": "n/a",
+   "two_card_measured_gain": {
+    "value": null,
+    "label": "projection-only"
+   },
+   "onecard_price_ms_per_token": {
+    "low": null,
+    "high": null,
+    "label": null
+   },
+   "status": "NO-MECHANISM",
+   "evidence": ""
+  },
+  {
+   "rank": null,
+   "mechanism": "host-issue-batching-graph-replay",
+   "bundle8": "missing (p105 suffix replay only)",
+   "onecard": "missing",
+   "two_card_measured_gain": {
+    "value": null,
+    "label": "projection-only"
+   },
+   "onecard_price_ms_per_token": {
+    "low": null,
+    "high": null,
+    "label": null
+   },
+   "status": "SHARED-GAP",
+   "evidence": ""
+  },
+  {
+   "rank": null,
+   "mechanism": "profiling-queues-hot-path",
+   "bundle8": "rank0 profiling on",
+   "onecard": "off in record runs (timing token, profiling false)",
+   "two_card_measured_gain": {
+    "value": null,
+    "label": "not-isolated"
+   },
+   "onecard_price_ms_per_token": {
+    "low": 0,
+    "high": 0,
+    "label": "measured"
+   },
+   "status": "PARITY",
+   "evidence": ""
+  },
+  {
+   "rank": null,
+   "mechanism": "remaining-sleeps-yields-cv",
+   "bundle8": "fault-only cv",
+   "onecard": "1 ms sleep only on barrier-failure path sd:120; poll only in A controls sd:165",
+   "two_card_measured_gain": {
+    "value": null,
+    "label": "n/a"
+   },
+   "onecard_price_ms_per_token": {
+    "low": 0,
+    "high": 0,
+    "label": "measured"
+   },
+   "status": "PARITY",
+   "evidence": ""
+  }
+ ],
+ "top_item": "foreground-copies-on-single-in-order-compute-queue",
+ "top_item_clears_threshold": true,
+ "packaged_ready": false,
+ "superseded_partials": [
+  {
+   "path": "experiments/own-xpu-runtime/stage2/packet171-onecard-ordered-publication",
+   "state": "untracked path-rewritten copy of packet58as HEAD; no mechanism change; ordered publication dead under spin"
+  },
+  {
+   "path": "experiments/own-xpu-runtime/stage2/packet58ar-ordered-publication",
+   "state": "untracked poll-parent candidate; do not rebase onto spin"
+  }
+ ],
+ "inputs": [
+  {
+   "name": "cache.jsonl",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/evidence/card0-58as-v5-a/resident/WSCREEN/run/run/cache.jsonl",
+   "parent_digest": "504af9269eee2a39e47c8888e605ac4463778b78be806898f74e07927d608ba1"
+  },
+  {
+   "name": "summary.json",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/evidence/card0-58as-v5-a/resident/WSCREEN/run/summary.json",
+   "parent_digest": "b5e83641dda129fdf165af874292cda7b8aa83b44b97e66f83f793df502015e1"
+  },
+  {
+   "name": "summary.json",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58aq-onecard-split/screen/evidence/card0-58aq-split-a/resident/WSCREEN/run/summary.json",
+   "parent_digest": "f0c2c1e2ada313b6cbfacdec8c6d35d0bf67a2a5c266c92b18ad6d3b957f40e2"
+  },
+  {
+   "name": "summary.json",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/evidence/card0-58as-v5-a/resident/WSCREEN/summary.json",
+   "parent_digest": "b5e83641dda129fdf165af874292cda7b8aa83b44b97e66f83f793df502015e1"
+  },
+  {
+   "name": "onecard-main.cpp@HEAD",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/native/generated/main.cpp",
+   "parent_digest": "e36a9894ed337f04b75713258d554a37303b76c6948155ae49d9872c7e5c98c4"
+  },
+  {
+   "name": "onecard-single_device.cpp@HEAD",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/native/generated/single_device.cpp",
+   "parent_digest": "14bae35428ae1e35ad73af6e05f4ceb8b63b71bc2700e9e625c37237bfd2bd04"
+  },
+  {
+   "name": "onecard-spin_wait.hpp@HEAD",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/native/spin_wait.hpp",
+   "parent_digest": "7d20a148eb1dcb1df4ba5a598c75ec4395a936543c92d68f3c6753c0b366035c"
+  },
+  {
+   "name": "bundle8-single_device.cpp",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet136-record-bundle/single_device.cpp",
+   "parent_digest": "ae77dcbd92f1863c3a572813195ac61f70746856ae3411eacbb158640c69f7a4"
+  },
+  {
+   "name": "bundle8-host_spin.hpp",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet136-record-bundle/host_spin.hpp",
+   "parent_digest": "5f56024f2678d7ab90eb5b1818c34d2241066b4c7dff74fb7a5a4ccc388b799e"
+  },
+  {
+   "name": "cache.jsonl(58v-overlap-bracket)",
+   "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58v-async-cache/evidence/card0-async-a/overlap/WSCREEN/run/run/cache.jsonl",
+   "parent_digest": "0f9f7659db1f86012d23a2afc6c308c0db879d8850cffffa681ffc7aa5142088"
+  }
+ ],
+ "corroboration_58v": {
+  "description": "poll-era serial vs overlap maintenance bracket; token/error readback mean ms/token",
+  "serial_warm_A1_A2": [
+   0.461,
+   0.461
+  ],
+  "overlap_B0_B1": [
+   2.129,
+   2.177
+  ],
+  "overlap_p90_ms": [
+   4.933,
+   5.452
+  ],
+  "serial_p90_ms": [
+   1.201,
+   1.207
+  ],
+  "wall_ms_serial_warm": [
+   37.989,
+   37.921
+  ],
+  "wall_ms_overlap": [
+   35.31,
+   35.242
+  ],
+  "label": "measured"
+ }
+}

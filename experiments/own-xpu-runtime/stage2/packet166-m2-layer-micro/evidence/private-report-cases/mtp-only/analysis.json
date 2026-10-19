@@ -1,0 +1,1010 @@
+{
+  "schema": "packet166.layer-micro.analysis.v2",
+  "diagnostic_only": true,
+  "model_output_claim": false,
+  "full_build_authorized": false,
+  "samples_sha256": "209f7c7fa5f0b5ff4cadaa46632fd41797e465df6820dea8950025d52f3edf32",
+  "finite_bytes_equal": true,
+  "cpu_oracle_match": true,
+  "zero_errors": true,
+  "decision": "close: measured layer M2/M1 > 1.5",
+  "prefill_build_brief": false,
+  "mtp_verify_brief": true,
+  "mtp_decision": "verify brief: projected one-card MTP >= +5%",
+  "threshold": 1.5,
+  "mtp_gain_threshold_percent": 5,
+  "ratio_definition": "2*M2/(M1_row0+M1_row1)",
+  "layers": [
+    {
+      "layer": 0,
+      "family": "GDN",
+      "position": 2,
+      "ops": {
+        "hc_norm": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "hc_low_inject": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "hc_gate_mix": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "projection": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "small_tuple": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "attention_projection": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "combine": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "route_shared_activation": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_gate_up": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_activation": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_down": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "shared_down_mix": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "conv": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "gdn_recurrence": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "gdn_norm_gate": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "layer_device_sum": {
+          "two_m1_ns": 420000.0,
+          "m1_mean_ns": 210000.0,
+          "m2_ns": 336000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "layer_device_span": {
+          "two_m1_ns": 420410.0,
+          "m1_mean_ns": 210205.0,
+          "m2_ns": 336200.0,
+          "m2_over_m1": 1.5993910706215362,
+          "paired_over_two_serial": 0.7996955353107681,
+          "repeats_per_arm": 200
+        }
+      }
+    },
+    {
+      "layer": 0,
+      "family": "GDN",
+      "position": 3,
+      "ops": {
+        "hc_norm": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "hc_low_inject": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "hc_gate_mix": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "projection": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "small_tuple": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "attention_projection": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "combine": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "route_shared_activation": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_gate_up": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_activation": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_down": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "shared_down_mix": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "conv": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "gdn_recurrence": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "gdn_norm_gate": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "layer_device_sum": {
+          "two_m1_ns": 420000.0,
+          "m1_mean_ns": 210000.0,
+          "m2_ns": 336000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "layer_device_span": {
+          "two_m1_ns": 420410.0,
+          "m1_mean_ns": 210205.0,
+          "m2_ns": 336200.0,
+          "m2_over_m1": 1.5993910706215362,
+          "paired_over_two_serial": 0.7996955353107681,
+          "repeats_per_arm": 200
+        }
+      }
+    },
+    {
+      "layer": 0,
+      "family": "GDN",
+      "position": 31,
+      "ops": {
+        "hc_norm": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "hc_low_inject": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "hc_gate_mix": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "projection": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "small_tuple": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "attention_projection": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "combine": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "route_shared_activation": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_gate_up": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_activation": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_down": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "shared_down_mix": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "conv": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "gdn_recurrence": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "gdn_norm_gate": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "layer_device_sum": {
+          "two_m1_ns": 420000.0,
+          "m1_mean_ns": 210000.0,
+          "m2_ns": 336000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "layer_device_span": {
+          "two_m1_ns": 420410.0,
+          "m1_mean_ns": 210205.0,
+          "m2_ns": 336200.0,
+          "m2_over_m1": 1.5993910706215362,
+          "paired_over_two_serial": 0.7996955353107681,
+          "repeats_per_arm": 200
+        }
+      }
+    },
+    {
+      "layer": 3,
+      "family": "QSA",
+      "position": 2,
+      "ops": {
+        "hc_norm": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "hc_low_inject": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "hc_gate_mix": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "projection": {
+          "two_m1_ns": 120000.0,
+          "m1_mean_ns": 60000.0,
+          "m2_ns": 96000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "small_tuple": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "attention_projection": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "combine": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "route_shared_activation": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_gate_up": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_activation": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_down": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "shared_down_mix": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "qsa_prepare": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "qsa_pool": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "qsa_select": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "qsa_attention": {
+          "two_m1_ns": 60000.0,
+          "m1_mean_ns": 30000.0,
+          "m2_ns": 48000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "layer_device_sum": {
+          "two_m1_ns": 560000.0,
+          "m1_mean_ns": 280000.0,
+          "m2_ns": 448000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "layer_device_span": {
+          "two_m1_ns": 560550.0,
+          "m1_mean_ns": 280275.0,
+          "m2_ns": 448270.0,
+          "m2_over_m1": 1.5993934528587994,
+          "paired_over_two_serial": 0.7996967264293997,
+          "repeats_per_arm": 200
+        }
+      }
+    },
+    {
+      "layer": 3,
+      "family": "QSA",
+      "position": 3,
+      "ops": {
+        "hc_norm": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "hc_low_inject": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "hc_gate_mix": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "projection": {
+          "two_m1_ns": 120000.0,
+          "m1_mean_ns": 60000.0,
+          "m2_ns": 96000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "small_tuple": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "attention_projection": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "combine": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "route_shared_activation": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_gate_up": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_activation": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_down": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "shared_down_mix": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "qsa_prepare": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "qsa_pool": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "qsa_select": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "qsa_attention": {
+          "two_m1_ns": 60000.0,
+          "m1_mean_ns": 30000.0,
+          "m2_ns": 48000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "layer_device_sum": {
+          "two_m1_ns": 560000.0,
+          "m1_mean_ns": 280000.0,
+          "m2_ns": 448000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "layer_device_span": {
+          "two_m1_ns": 560550.0,
+          "m1_mean_ns": 280275.0,
+          "m2_ns": 448270.0,
+          "m2_over_m1": 1.5993934528587994,
+          "paired_over_two_serial": 0.7996967264293997,
+          "repeats_per_arm": 200
+        }
+      }
+    },
+    {
+      "layer": 3,
+      "family": "QSA",
+      "position": 31,
+      "ops": {
+        "hc_norm": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "hc_low_inject": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "hc_gate_mix": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "projection": {
+          "two_m1_ns": 120000.0,
+          "m1_mean_ns": 60000.0,
+          "m2_ns": 96000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "small_tuple": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "attention_projection": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "combine": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "route_shared_activation": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_gate_up": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_activation": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "expert_down": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "shared_down_mix": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "qsa_prepare": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "qsa_pool": {
+          "two_m1_ns": 20000.0,
+          "m1_mean_ns": 10000.0,
+          "m2_ns": 16000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "qsa_select": {
+          "two_m1_ns": 40000.0,
+          "m1_mean_ns": 20000.0,
+          "m2_ns": 32000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "qsa_attention": {
+          "two_m1_ns": 60000.0,
+          "m1_mean_ns": 30000.0,
+          "m2_ns": 48000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "layer_device_sum": {
+          "two_m1_ns": 560000.0,
+          "m1_mean_ns": 280000.0,
+          "m2_ns": 448000.0,
+          "m2_over_m1": 1.6,
+          "paired_over_two_serial": 0.8,
+          "repeats_per_arm": 200
+        },
+        "layer_device_span": {
+          "two_m1_ns": 560550.0,
+          "m1_mean_ns": 280275.0,
+          "m2_ns": 448270.0,
+          "m2_over_m1": 1.5993934528587994,
+          "paired_over_two_serial": 0.7996967264293997,
+          "repeats_per_arm": 200
+        }
+      }
+    }
+  ],
+  "projections": [
+    {
+      "position": 2,
+      "weighted_m2_over_m1": 1.6,
+      "representative_48_layer_m1_device_ms": 10.92,
+      "representative_m2_verifier_device_ms": 17.472,
+      "implied_extra_verifier_device_ms": 6.552,
+      "implied_prefill_speedup": 1.25,
+      "implied_prefill_tps": 112.5,
+      "scope": "projection from one layer of each family; excludes embeddings, PLE, head, transfers, host scheduling and draft",
+      "one_card_mtp_decode": {
+        "projected_not_measured": true,
+        "measured_layer_ratio": 1.6,
+        "record_tps": 31.96682,
+        "record_scope": "one-card WS128; strict512 false",
+        "acceptance_assumption": 0.787401575,
+        "draft_ms_assumption": 1.794747301,
+        "restore_ms_assumption": 0.980923,
+        "baseline_m1_ms": 31.28243597580241,
+        "projected_v2_ms": 50.05189756128386,
+        "cycle_ms": 52.05518754713013,
+        "projected_tps": 34.336665743096376,
+        "gain_percent": 7.41345477309403,
+        "v2_plus_feedback_budget_ms_for_2_percent": 52.81462700727716,
+        "maximum_m2_over_m1_for_2_percent": 1.6883156749087675,
+        "maximum_m2_over_m1_for_5_percent": 1.6382484039003642,
+        "historical_packet147_budget_ms": 57.886273,
+        "historical_packet147_baseline_tps": 29.259764,
+        "formula": "V2=measured_layer_ratio*(1000/31.966820); cycle=D+V2+(1-a)*R; rate=1000*(1+a)/cycle",
+        "assumption": "Transfer weighted layer device ratio to full one-card M1 wall time; new feedback/cache cost assumed zero, unmeasured and must be charged by verify brief",
+        "citations": [
+          "experiments/own-xpu-runtime/stage2/packet147-lever-synthesis/PLAN.md:320-338",
+          "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:169-216"
+        ]
+      }
+    },
+    {
+      "position": 3,
+      "weighted_m2_over_m1": 1.6,
+      "representative_48_layer_m1_device_ms": 10.92,
+      "representative_m2_verifier_device_ms": 17.472,
+      "implied_extra_verifier_device_ms": 6.552,
+      "implied_prefill_speedup": 1.25,
+      "implied_prefill_tps": 112.5,
+      "scope": "projection from one layer of each family; excludes embeddings, PLE, head, transfers, host scheduling and draft",
+      "one_card_mtp_decode": {
+        "projected_not_measured": true,
+        "measured_layer_ratio": 1.6,
+        "record_tps": 31.96682,
+        "record_scope": "one-card WS128; strict512 false",
+        "acceptance_assumption": 0.787401575,
+        "draft_ms_assumption": 1.794747301,
+        "restore_ms_assumption": 0.980923,
+        "baseline_m1_ms": 31.28243597580241,
+        "projected_v2_ms": 50.05189756128386,
+        "cycle_ms": 52.05518754713013,
+        "projected_tps": 34.336665743096376,
+        "gain_percent": 7.41345477309403,
+        "v2_plus_feedback_budget_ms_for_2_percent": 52.81462700727716,
+        "maximum_m2_over_m1_for_2_percent": 1.6883156749087675,
+        "maximum_m2_over_m1_for_5_percent": 1.6382484039003642,
+        "historical_packet147_budget_ms": 57.886273,
+        "historical_packet147_baseline_tps": 29.259764,
+        "formula": "V2=measured_layer_ratio*(1000/31.966820); cycle=D+V2+(1-a)*R; rate=1000*(1+a)/cycle",
+        "assumption": "Transfer weighted layer device ratio to full one-card M1 wall time; new feedback/cache cost assumed zero, unmeasured and must be charged by verify brief",
+        "citations": [
+          "experiments/own-xpu-runtime/stage2/packet147-lever-synthesis/PLAN.md:320-338",
+          "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:169-216"
+        ]
+      }
+    },
+    {
+      "position": 31,
+      "weighted_m2_over_m1": 1.6,
+      "representative_48_layer_m1_device_ms": 10.92,
+      "representative_m2_verifier_device_ms": 17.472,
+      "implied_extra_verifier_device_ms": 6.552,
+      "implied_prefill_speedup": 1.25,
+      "implied_prefill_tps": 112.5,
+      "scope": "projection from one layer of each family; excludes embeddings, PLE, head, transfers, host scheduling and draft",
+      "one_card_mtp_decode": {
+        "projected_not_measured": true,
+        "measured_layer_ratio": 1.6,
+        "record_tps": 31.96682,
+        "record_scope": "one-card WS128; strict512 false",
+        "acceptance_assumption": 0.787401575,
+        "draft_ms_assumption": 1.794747301,
+        "restore_ms_assumption": 0.980923,
+        "baseline_m1_ms": 31.28243597580241,
+        "projected_v2_ms": 50.05189756128386,
+        "cycle_ms": 52.05518754713013,
+        "projected_tps": 34.336665743096376,
+        "gain_percent": 7.41345477309403,
+        "v2_plus_feedback_budget_ms_for_2_percent": 52.81462700727716,
+        "maximum_m2_over_m1_for_2_percent": 1.6883156749087675,
+        "maximum_m2_over_m1_for_5_percent": 1.6382484039003642,
+        "historical_packet147_budget_ms": 57.886273,
+        "historical_packet147_baseline_tps": 29.259764,
+        "formula": "V2=measured_layer_ratio*(1000/31.966820); cycle=D+V2+(1-a)*R; rate=1000*(1+a)/cycle",
+        "assumption": "Transfer weighted layer device ratio to full one-card M1 wall time; new feedback/cache cost assumed zero, unmeasured and must be charged by verify brief",
+        "citations": [
+          "experiments/own-xpu-runtime/stage2/packet147-lever-synthesis/PLAN.md:320-338",
+          "experiments/own-xpu-runtime/stage2/packet58h-onecard-mtp/FEASIBILITY.md:169-216"
+        ]
+      }
+    }
+  ],
+  "baseline_prefill_tps": 90.0,
+  "baseline_is_provisional": true
+}

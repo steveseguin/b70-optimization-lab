@@ -1,0 +1,63 @@
+{
+  "schema": "packet174.copy-scope.v1",
+  "source": "git archive 244c77853d014e09f62eb5387d1cc013285d0fd1 experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait",
+  "parent": {
+    "name": "packet58as-onecard-spinwait",
+    "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait",
+    "parent_commit": "244c77853d014e09f62eb5387d1cc013285d0fd1"
+  },
+  "working_tree_used": false,
+  "native_identical_to": "dabfc958b7d3322dda3eeada3689b4d6011b7cc1 (git diff dabfc958b..HEAD touches only submission/chain-a)",
+  "path_rewrite": "packet58as-onecard-spinwait -> packet174-onecard-fillkick in 110 text files outside lineage/ and chain-interface.patch",
+  "renamed_literals": "card0-58as-v5-a -> card0-174-v5-a; card0-58as-a -> card0-174-a; packet58-onecard-58as-a -> packet58-onecard-174-a; 'packet58as-' -> 'packet174-'; proposed-p58as- -> proposed-p174-; packet58as-smoke-A / packet58as-v5-A -> packet174-* in .py files",
+  "not_copied": [
+    "READY-FOR-DEVICE.json",
+    "ready.json",
+    "build-receipt.json",
+    "submission-pins.json",
+    "WINDOW.md",
+    "screen/build-receipt.json",
+    "screen/evidence/",
+    "screen/proposals/proposed-p58as-v5-A.txt",
+    "submission/",
+    "queue.lock",
+    "window.lock",
+    "evidence/ (except evidence/58c-kd)"
+  ],
+  "ported_from_packet171b": [
+    "screen/mechanism.py (rewritten: same-token fill-byte law)",
+    "screen/views.py",
+    "screen/compare_bracket.py",
+    "screen/suite_driver.py",
+    "cpu_gate.py",
+    "analyzer_gate.py (rewritten)",
+    "plan_queue.py",
+    "seal.py",
+    "finalize.py (rewritten)",
+    "proposal_gates.py"
+  ],
+  "chain_tooling": "Same removal set as packet171b. The engine chain windows stay reachable through suite_driver.native_command; fill_kick_gate.py proves --fill-kick parsing on each (KD, W2m, WS, WS128x, WS128). No chain is proposed or READY in this packet.",
+  "parent_native_copies": "lineage/p174-parent-native/ (main.cpp, single_device.cpp, bracket_table.hpp before the delta)",
+  "removed_chain_tooling": [
+    "queue_runner.py",
+    "verify_ready.py",
+    "test_ready.py",
+    "plan_gate.py",
+    "rebuild_wait_policy.py",
+    "wait_policy_gate.py",
+    "test_queue58g.py",
+    "screen_gate.py",
+    "native_parser_gate.py",
+    "chain-interface.patch",
+    "packet58_submission.py",
+    "submission_cli.py",
+    "shared_submission_cli.py",
+    "rehearse_submission.py",
+    "test_submission.py",
+    "test_composition.py",
+    "literal_audit.py",
+    "submission-policy.json",
+    "record-threshold.snapshot",
+    "argument_gate.py"
+  ]
+}

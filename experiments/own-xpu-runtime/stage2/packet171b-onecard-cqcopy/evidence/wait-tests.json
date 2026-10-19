@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "device_executed": false,
+  "records": [
+    {
+      "compiler": "gnu",
+      "binary_digest": "787c7d976e5fa29b75cd739a38bca121a489b4d3eb5ba1a9bd157689840e2c03",
+      "passed": true
+    },
+    {
+      "compiler": "intel",
+      "binary_digest": "c9cf0a89531dffb7c67c8dff69f148a88dd004142b73de4412fe83b231a9c6dd",
+      "passed": true
+    }
+  ],
+  "source": "native/wait_test.cpp (unchanged packet58as spin wait; built and run in the one compile turn)",
+  "cases": [
+    "immediate completion",
+    "completion during spin",
+    "expired deadline",
+    "single spin budget",
+    "periodic yield",
+    "20us sleeps and final 3us deadline cap",
+    "async error on complete event",
+    "async error on pending event",
+    "wait_and_throw error"
+  ]
+}

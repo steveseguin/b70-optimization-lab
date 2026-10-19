@@ -1,0 +1,160 @@
+--- a/native/generated/single_device.cpp
++++ b/native/generated/single_device.cpp
+@@ -1,3 +1,4 @@
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/native/cq_copy.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/native/spin_wait.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/native/ordered_retirement.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/native/async_backend.hpp"
+@@ -26,7 +27,7 @@
+   return out;
+ }
+ class SyclDevice final : public Backend, public p58v::AsyncBackend, public ForegroundPrefix {
+-  ForegroundTails foreground_tails_;
++  ForegroundTails foreground_tails_;p171::CopyQueueWork copy_work_;
+   std::unique_ptr<sycl::queue> maintenance_queue_;
+   ze_command_list_handle_t maintenance_native_=nullptr;
+   sycl::event fill_tail_;Event fill_ticket_=0;
+@@ -107,20 +108,21 @@
+   }
+   Event copy(void* dst,const void* src,std::size_t n,std::span<const Event> deps) override {
+     check_error();capacity();std::vector<sycl::event> after;for(auto e:deps)after.push_back(event(e));
+-    auto copied=copy_queue_->memcpy(dst,src,n,after);
+-    // The compute queue must observe copy completion even for prepared kernels.
+-    // The returned owned copy event also protects pinned-source lifetime.
+-    try {queue_->ext_oneapi_submit_barrier({copied});return record(copied,true);}
+-    catch(...) {
+-      // DMA was submitted before the dependency barrier failed. It is not yet
+-      // in Device's event ledger: prove completion before rethrowing, otherwise
+-      // retain this owner and both allocations for the coordinator.
++    // p171b: in compute-queue views one in-order compute memcpy is recorded as
++    // the compute tail, with no barrier; its owned event and the existing drains
++    // still prove pinned-source lifetime. Copy-queue views are packet58as:
++    // the compute queue must observe copy completion even for prepared kernels.
++    return p171::foreground_copy(*queue_,*copy_queue_,copy_work_,dst,src,n,after,
++      [this](sycl::event e,bool is_copy){return record(std::move(e),is_copy);},
++      [this](sycl::event& copied){
++      // Copy-queue mode only. DMA was submitted before the dependency barrier
++      // failed. It is not yet in Device's event ledger: prove completion before
++      // rethrowing, otherwise retain this owner and both allocations.
+       auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(60);
+       try {while(copied.get_info<sycl::info::event::command_execution_status>()!=sycl::info::event_command_status::complete){
+         if(std::chrono::steady_clock::now()>=deadline)hold_for_supervisor();std::this_thread::sleep_for(std::chrono::milliseconds(1));
+       }copied.wait();}catch(...){hold_for_supervisor();}
+-      throw;
+-    }
++    });
+   }
+   Event marker(std::span<const Event> deps) override {
+     check_error();capacity();dependencies(deps);return record(queue_->submit([&](sycl::handler& h){h.single_task<class IdleMarker>(packet26::checked([]{}));}));
+@@ -185,7 +187,8 @@
+     maintenance_queue_->throw_asynchronous();check_error();
+   }
+   void foreground_sync() override {
+-    try {copy_queue_->wait();queue_->wait();}catch(...){hold_for_supervisor();}
++    // p171b: the copy list is waited only if it owns work issued in this view.
++    try {p171::foreground_sync(*queue_,*copy_queue_,copy_work_);}catch(...){hold_for_supervisor();}
+     copy_queue_->throw_asynchronous();queue_->throw_asynchronous();check_error();
+   }
+   void synchronize() override {
+@@ -193,6 +196,7 @@
+     // Drain both queues before propagating an asynchronous error; short-circuit
+     // wait_and_throw could otherwise skip the second queue and its barriers.
+     try {copy_queue_->wait();queue_->wait();}catch(...){hold_for_supervisor();}
++    copy_work_.pending=false;
+     copy_queue_->throw_asynchronous();queue_->throw_asynchronous();check_error();
+   }
+   void clear_events() override {events_.clear();foreground_tails_.clear();}
+--- a/native/generated/main.cpp
++++ b/native/generated/main.cpp
+@@ -1,3 +1,4 @@
++#include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/native/cq_copy.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/native/spin_wait.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/native/resident_lookup.hpp"
+ #include "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet171b-onecard-cqcopy/native/drm_size.hpp"
+@@ -1962,7 +1963,10 @@
+     if(!a.bracket_inputs.empty())save(root_output/"loaded-arena-descriptors.txt",e->bracket_arena_descriptors());
+     for(const auto& view:bracket_views) {
+     w->use_resident_lookups=view.resident;
+-    p58as::spin_enabled=a.bracket_inputs.empty()?a.wait_policy=="spin":view.hc=="spin";
++    p58as::spin_enabled=a.bracket_inputs.empty()?a.wait_policy=="spin":(view.hc=="spin"||view.hc=="spin-cq");
++    // p171b: owner-thread foreground-copy queue, switched with the wait policy at the
++    // already drained view boundary; single-view runs keep packet58as copy-queue copies.
++    p171::compute_queue_copies=!a.bracket_inputs.empty()&&view.hc=="spin-cq";
+     const auto view_output=view.label.empty()?root_output:root_output/view.label;
+     if(!view.label.empty()) {
+       fs::create_directories(view_output);record_host_memory(view_output,"before_view_reset");e->bracket_select(view.selection,view.digest,"p60fusion","hc-wide","wide64+halfcache","fused","ordered-foreground");e->cache_mode(view.maintenance);e->cache_capacity(view.capacity);record_host_memory(view_output,"after_view_reset");
+@@ -1970,7 +1974,8 @@
+       save(view_output/"lookup-backing.json","{\"resident\":"+std::string(view.resident?"true":"false")+",\"copies\":"+w->residency+"}\n");
+       save(view_output/"boundary.json","{\"passed\":true,\"selection_sha256\":"+ownrt::quote(view.digest)+
+         ",\"cache_maintenance\":"+ownrt::quote(view.maintenance)+
+-        ",\"hc\":\"p60fusion\",\"lookups\":"+ownrt::quote(view.resident?"resident":"mapped")+",\"wait_policy\":"+ownrt::quote(view.hc)+
++        ",\"hc\":\"p60fusion\",\"lookups\":"+ownrt::quote(view.resident?"resident":"mapped")+",\"wait_policy\":"+ownrt::quote(view.hc=="spin-cq"?std::string("spin"):view.hc)+",\"bracket_arm\":"+ownrt::quote(view.hc)+
++        ",\"foreground_copies\":"+ownrt::quote(std::string(p171::compute_queue_copies?"compute-queue":"copy-queue"))+
+         ",\"cache_cap\":"+ownrt::quote(view.capacity)+",\"cache_allocation_bytes\":21552729600,\"cache_started_empty\":true"+
+         ",\"arena_descriptors_sha256\":"+ownrt::quote(loaded_arena)+",\"weight_descriptors_sha256\":"+ownrt::quote(loaded_weights)+
+         ",\"allocation_ids_preserved\":true,\"weight_uploads_during_switch\":0,\"cache_fill_bytes_total\":"+std::to_string(e->cache_fill_bytes)+
+--- a/native/bracket_table.hpp
++++ b/native/bracket_table.hpp
+@@ -13,17 +13,17 @@
+     require(v.digest==a.selection_sha256&&v.selection==a.selection,"immutable tile16 identity");
+     require(v.maintenance==a.cache_maintenance,"maintenance fixed throughout capacity bracket");
+     require(v.capacity=="max","fixed maximum cache");
+-    require(v.hc=="poll"||v.hc=="spin","lookup dimension");v.resident=true;
+-    require(!a.wait_policy_supplied||a.wait_policy==v.hc,"wait policy conflicts with bracket view");
++    require(v.hc=="spin"||v.hc=="spin-cq","foreground copy dimension");v.resident=true;
++    require(!a.wait_policy_supplied||a.wait_policy=="spin","wait policy conflicts with bracket view");
+     views.push_back(v);
+   }
+   require(f.eof()&&(views.size()==1||views.size()==5),"complete smoke or five-view bracket required");
+   if(views.size()==1) {
+-    require((a.mini||a.tokens==64)&&views[0].label=="S0"&&views[0].capacity=="max"&&views[0].hc=="spin","fixed maximum smoke");
++    require((a.mini||a.tokens==64)&&views[0].label=="S0"&&views[0].capacity=="max"&&views[0].hc=="spin-cq","fixed maximum smoke");
+   } else {
+     require(a.mini||a.tokens==128,"128-token bracket required");
+     const char* labels[]={"A0","B0","A1","B1","A2"};
+-    for(size_t i=0;i<5;++i)require(views[i].label==labels[i]&&views[i].hc==(i%2?"spin":"poll"),"production/p60fusion bracket order");
++    for(size_t i=0;i<5;++i)require(views[i].label==labels[i]&&views[i].hc==(i%2?"spin-cq":"spin"),"production/p60fusion bracket order");
+   }
+   return views;
+ }
+--- a/native/cq_copy.hpp
++++ b/native/cq_copy.hpp
+@@ -0,0 +1,38 @@
++#pragma once
++#include <cstddef>
++#include <utility>
++#include <vector>
++// Packet171b: queue placement of FOREGROUND copies only (token/error readback,
++// token upload, route logs). Owner-thread policy, switched only at an already
++// drained view boundary, in the same pattern as p58as::spin_enabled.
++// Maintenance fills never pass through this header: they keep their own BCS
++// immediate list (SyclDevice::fill, unchanged).
++namespace p171 {
++inline thread_local bool compute_queue_copies=false;
++// True while the dedicated BCS foreground list owns work issued since its last
++// host drain. Compute-queue copies never set it.
++struct CopyQueueWork {bool pending=false;};
++// Parent (packet58as): copy on the BCS list, then a compute-queue barrier so
++// prepared kernels observe it; on barrier failure prove the DMA finished first.
++// Candidate: one in-order compute-queue memcpy, owned event, no barrier.
++// Returns the owned event and whether it is a copy-queue (BCS) tail.
++template<class Queue,class Ev,class Record,class Recover>
++auto foreground_copy(Queue& compute,Queue& copy,CopyQueueWork& work,void* dst,const void* src,std::size_t n,
++                     const std::vector<Ev>& after,Record record,Recover recover) {
++#ifndef P171_PARENT_ROUTING
++  if(compute_queue_copies)return record(compute.memcpy(dst,src,n,after),false);
++#endif
++  auto copied=copy.memcpy(dst,src,n,after);work.pending=true;
++  try {compute.ext_oneapi_submit_barrier(std::vector<Ev>{copied});return record(copied,true);}
++  catch(...) {recover(copied);throw;}
++}
++// Parent: wait on the copy list, then the compute queue. Candidate: the compute
++// queue only, unless the copy list owns work issued earlier in this view.
++template<class Queue>
++void foreground_sync(Queue& compute,Queue& copy,CopyQueueWork& work) {
++#ifndef P171_PARENT_ROUTING
++  if(compute_queue_copies&&!work.pending){compute.wait();return;}
++#endif
++  copy.wait();compute.wait();work.pending=false;
++}
++}

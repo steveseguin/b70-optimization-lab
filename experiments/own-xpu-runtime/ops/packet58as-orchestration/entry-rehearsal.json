@@ -1,0 +1,364 @@
+{
+  "passed": false,
+  "jobs": [
+    {
+      "job": "packet58asc-chain-A",
+      "unit": "screen-packet58asc-chain-A",
+      "passed": false,
+      "binaries": [
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/build/device/own-rt-iq3",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 0,
+          "entry_kind": "help-or-parser",
+          "entry_timed_out": false
+        },
+        {
+          "passed": true,
+          "phase": "entry",
+          "binary": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/build/device/p58-cache-fixtures",
+          "unit_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "native_ldd": {
+            "passed": true,
+            "returncode": 0,
+            "missing": []
+          },
+          "entry_returncode": 0,
+          "entry_kind": "explicit",
+          "entry_timed_out": false
+        }
+      ],
+      "service_started": false,
+      "arm_sequence_tested": false,
+      "storage_floor": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "admissions": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/window.py",
+            "line": 30,
+            "floor_bytes": 25000000000,
+            "passes_25_5gb_plus_writes": true
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/p56_head_support.py",
+            "line": 113,
+            "floor_bytes": 8000000000,
+            "passes_25_5gb_plus_writes": true
+          }
+        ],
+        "replays": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/window.py",
+            "function": "storage",
+            "status": "WARN",
+            "message": "storage helper not safely importable"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/p56_head_support.py",
+            "function": "storage",
+            "status": "PASS",
+            "message": "storage helper accepts 25.5 GB plus planned writes"
+          }
+        ]
+      },
+      "wall_deadlines": {
+        "status": "PASS",
+        "passed": true,
+        "findings": [],
+        "limits": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/fault_driver_snapshot.py",
+            "line": 661,
+            "seconds": null,
+            "phase": "load",
+            "measured_seconds": null,
+            "data_proof": false
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/fault_driver_snapshot.py",
+            "line": 630,
+            "seconds": 3600,
+            "phase": "load",
+            "measured_seconds": null,
+            "data_proof": false
+          }
+        ],
+        "measured_seconds": {
+          "first_request": 60.0
+        }
+      },
+      "preparation_path": {
+        "status": "WARN",
+        "passed": false,
+        "message": "no preparation-path probe declared",
+        "executed": false
+      },
+      "gate_identity": {
+        "status": "FAIL",
+        "passed": false,
+        "findings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/window.py",
+            "line": 198,
+            "reason": "foreign unit literal"
+          }
+        ],
+        "warnings": [
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/analyzer_gate.py",
+            "line": 12,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/argument_gate.py",
+            "line": 82,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/lane_admission.py",
+            "line": 62,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/lane_admission.py",
+            "line": 65,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/lane_admission.py",
+            "line": 112,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/lane_admission.py",
+            "line": 114,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen_gate.py",
+            "line": 12,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen_gate.py",
+            "line": 13,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/test_ready.py",
+            "line": 62,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/test_ready.py",
+            "line": 74,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/test_window.py",
+            "line": 71,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/test_window.py",
+            "line": 72,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/verify_ready.py",
+            "line": 23,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/window.py",
+            "line": 199,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/host-admission/derive.py",
+            "line": 14,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/coordinator_snapshot.py",
+            "line": 65,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/drain_gate.py",
+            "line": 105,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/drain_gate.py",
+            "line": 110,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/drain_gate.py",
+            "line": 117,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/lane_admission.py",
+            "line": 62,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/lane_admission.py",
+            "line": 65,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/lane_admission.py",
+            "line": 112,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/lane_admission.py",
+            "line": 114,
+            "reason": "conditional or unclassified lane check"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/run_cpu_gates.py",
+            "line": 9,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/run_cpu_gates.py",
+            "line": 10,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/test_launch_unit.py",
+            "line": 13,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/test_launch_unit.py",
+            "line": 13,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/test_launch_unit.py",
+            "line": 20,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/test_launch_unit.py",
+            "line": 20,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/test_launch_unit.py",
+            "line": 21,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/test_launch_unit.py",
+            "line": 21,
+            "reason": "unclassified identity literal"
+          },
+          {
+            "file": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait/screen/test_launch_unit.py",
+            "line": 26,
+            "reason": "unclassified identity literal"
+          }
+        ],
+        "files_scanned": 145,
+        "message": "1 identity refusals; 35 unclassified uses"
+      },
+      "shared_environment_matches": true,
+      "packet_library_override": false,
+      "report": {
+        "passed": true,
+        "kinds": [
+          {
+            "passed": true,
+            "kind": "WS128x",
+            "collisions": [],
+            "report_completed": true,
+            "synthetic_evidence": true,
+            "import_paths": [
+              "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait",
+              "/usr/lib/python312.zip",
+              "/usr/lib/python3.12",
+              "/usr/lib/python3.12/lib-dynload",
+              "/usr/local/lib/python3.12/dist-packages",
+              "/usr/lib/python3/dist-packages"
+            ],
+            "device_executed": false,
+            "real_entry_main": true,
+            "report_lineage": "packet58-onecard",
+            "admission_executed": false,
+            "entry_execution": "parser-only",
+            "window": "WS128x",
+            "request_count": 12,
+            "candidate_beats_all_controls": null,
+            "warmup_view": null,
+            "comparison_controls": null
+          },
+          {
+            "passed": true,
+            "kind": "WS128",
+            "collisions": [],
+            "report_completed": true,
+            "synthetic_evidence": true,
+            "import_paths": [
+              "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait",
+              "/usr/lib/python312.zip",
+              "/usr/lib/python3.12",
+              "/usr/lib/python3.12/lib-dynload",
+              "/usr/local/lib/python3.12/dist-packages",
+              "/usr/lib/python3/dist-packages"
+            ],
+            "device_executed": false,
+            "real_entry_main": true,
+            "report_lineage": "packet58-onecard",
+            "admission_executed": false,
+            "entry_execution": "parser-only",
+            "window": "WS128",
+            "request_count": 12,
+            "candidate_beats_all_controls": null,
+            "warmup_view": null,
+            "comparison_controls": null
+          }
+        ],
+        "synthetic_evidence": true,
+        "device_executed": false
+      }
+    }
+  ]
+}

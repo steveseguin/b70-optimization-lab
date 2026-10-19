@@ -1,0 +1,31 @@
+{
+  "schema": "packet174.candidate-pricing.v1",
+  "device_executed": false,
+  "base_ms_per_token": {"value": 28.80, "label": "measured", "source": "packet58as v5 B0/B1 and packet171b A views"},
+  "measured_law": {
+    "statement": "On the spin line the slow token/error readback occurs only on the token whose position-start boundary submitted fills; its excess is linear in that token's fill bytes with ~zero intercept, i.e. the whole fill drains at ~28.6 GB/s after compute and before the readback completes.",
+    "readback_ms_per_fill_mb": {"value": 0.0350, "label": "measured", "range": [0.0348, 0.0352], "runs": ["packet58as v5 B0/B1", "packet171b v5 A0-B1-A2"]},
+    "readback_intercept_ms_vs_neighbours": {"value": 0.01, "label": "measured"},
+    "p_slow_given_fill_submission_token_spin": {"value": 0.81, "label": "measured"},
+    "p_slow_given_no_fill_token_spin": {"value": 0.0, "label": "measured"},
+    "fill_mb_per_generated_token": {"value": 30.63, "label": "measured", "note": "identical in every view of both runs (content-deterministic schedule)"},
+    "fill_token_wall_ms_per_mb_vs_neighbours": {"value": 0.041, "label": "measured", "note": "includes readback 0.035 plus wait 0.016 minus other -0.010; wait part partly miss-rate confounded"},
+    "readback_excess_ms_per_token": {"value": 1.07, "label": "measured", "derivation": "0.0350 ms/MB x 30.63 MB/token"}
+  },
+  "candidates": [
+    {"id": "a", "name": "fill pacing (bounded chunks over N tokens / bytes-in-flight cap)", "price_ms_per_token": [-0.1, 0.0],
+     "labels": "measured-derived (linear law, zero absorption: total bytes unchanged) + assumed admission delay cost", "packaged": false},
+    {"id": "b", "name": "fill timing (submit after the tail readbacks / after the last zero-copy expert)", "price_ms_per_token": [0.0, 0.2],
+     "labels": "assumed host-gap absorption 0.2-0.4 ms per fill token; measured zero absorption even in the existing CCS-idle put/prepare window argues for ~0", "packaged": false},
+    {"id": "c", "name": "second-touch admission, W=256 positions, fixed before the replay", "price_ms_per_token": [-0.1, 0.1], "point_ms_per_token": 0.0,
+     "labels": "transferred replay (packet55 two-card target routes, parent overlap cadence, 21.55 GB LRU): fills -43%, misses +21%; scaled x2.12 to the measured one-card fill rate: -13.2 MB/token x 0.041 ms/MB (measured) = -0.54 ms; +6.9 misses/token x 0.077 ms/miss (transferred from packet58x capacity result 1.55 ms/token for -13.5 misses and -12.4 MB fills) = +0.53 ms",
+     "insight": "A serialized 2 MB fill costs about what the zero-copy miss it prevents costs; admission tuning cannot win while fills are serialized.", "packaged": false,
+     "evidence": "pricing/replay-admission.json"},
+    {"id": "d1", "name": "fill kick: one non-blocking zeCommandListHostSynchronize(maintenance list, 0) after each fill batch", "price_ms_per_token": [0.0, 1.07], "if_mechanism_holds_ms_per_token": [0.57, 1.07],
+     "labels": "measured ceiling (readback excess); assumed mechanism (fills held until a host synchronization; supported by zero absorption even while the CCS is idle); assumed 0-0.5 ms/token compute contention once a ~61 MB fill overlaps compute", "packaged": true,
+     "exactness": "same plans, fills, evictions and publication boundaries; tables per position identical by construction"},
+    {"id": "d2", "name": "kernel-store tail readback (CCS writes token/error and route logs into pinned host memory; no copy engine on the token tail)", "price_ms_per_token": [0.0, 1.07],
+     "labels": "measured ceiling; assumed transfer of the fill remainder to the next copy-engine user; packet171b DO-NOT-REPEAT family (171b's compute-queue memcpy likely stayed copy-engine work under UR v2 copy offload, assumed)", "packaged": false}
+  ],
+  "chosen": "d1"
+}

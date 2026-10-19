@@ -41,11 +41,13 @@ def main():
     command=[str(work/'prepare-probe'),*argv[1:]]
     from launch_env import environment
     env=environment();env['ENTRY_PREPARE_OUTPUT']=str(output)
-    cp=subprocess.run(['ionice','-c3',*command],stdin=subprocess.DEVNULL,capture_output=True,text=True,env=env)
+    # Full-shape CPU transport work also honors the coordinator's timing hold.
+    with compiler_turn():
+        cp=subprocess.run(['ionice','-c3',*command],stdin=subprocess.DEVNULL,capture_output=True,text=True,env=env)
     (P/'evidence/preparation-sequence.log').write_text(cp.stdout+cp.stderr)
     assert cp.returncode==0,cp.stderr[-2500:]
     row=json.loads((output/'preparation.json').read_text())
-    row.update(command=command,real_device_argv=argv,build_commands=commands,binary_sha256=sha(work/'prepare-probe'),
+    row.update(command=command,real_device_argv=argv,build_commands=commands,binary_sha256=sha(work/'prepare-probe'),target_binary_sha256=sha(P/'build/device/own-rt-iq3'),native_source_sha256=sha(P/'native/generated/main.cpp'),probe_source_sha256=sha(P/'native/preparation_probe.cpp'),
         peak_child_rss_bytes=resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss*1024,
         substitutions=['CPU transport; no SYCL device creation','opaque large allocations; actual small controls/staging','synthetic embedding bytes and 272 PLE rows with production packed widths','nice19 observation in parser; original nice0 argv retained','output redirected through ENTRY_PREPARE_OUTPUT'],
         shared_probe_unavailable='rehearse_entry requires --rank in argv, but this one-card real argv has no --rank; sandbox also cannot admit the private 4 MiB RoPE table. Do not fabricate rank argv or bypass the sandbox.')

@@ -9,6 +9,7 @@ from pathlib import Path
 P=Path(__file__).resolve().parent;ROOT=P.parents[3];OPS=P.parents[1]/'ops'
 sys.path.insert(0,str(OPS))
 spec=importlib.util.spec_from_file_location('frozen_entry',OPS/'rehearse_entry.py');R=importlib.util.module_from_spec(spec);spec.loader.exec_module(R)
+CASE=sys.argv[5] if len(sys.argv)>5 else "build-brief"
 _original=R.synthetic_onecard
 
 def synthetic(driver,views,output,kind,candidate,maintenance):
@@ -21,6 +22,13 @@ def synthetic(driver,views,output,kind,candidate,maintenance):
             for i in range(32):
                 waits=[dict(kind='compute-or-copy-tail',phase='decode-compute-drain',scope='normal',begin_ns=1000,call_ns=2000,end_ns=2000000)] if arm=='wait-split' else []
                 rows.append(dict(generated_index=i+1,token_id=1,wall_ms=33.,wait_ms=21.,prepare_ms=.1,enqueue_loop_ms=.2,publication_split=dict(arm=arm,diagnostic_only=True,calls=1,construction_ms=.04,submit_ms=.02,drain_ms=0. if arm=='drain-only' else .1 if arm=='no-upload' else .5 if arm=='no-scatter' else 1.,repair_ms=1.,retire_host_ms=.01,waits=waits)))
+            if CASE in ('close','name-host-work','inconclusive-cadence'):
+                for r in rows:r['publication_split']['drain_ms']=0. if arm=='drain-only' else .1
+            if CASE=='name-host-work' and arm=='wait-split':
+                for r in rows:r['publication_split']['waits'][0]['call_ns']=1000000
+            if CASE=='inconclusive-cadence' and arm=='no-upload':
+                for r in rows:r['publication_split']['calls']=2
+            if CASE=='truncated-stream' and label=='A1':rows=rows[:-1]
             (root/'timings.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in rows))
             (root/'prefill-timings.jsonl').write_text(''.join(json.dumps(dict(r,generated_index=0))+'\n' for r in rows[:3]))
     return manifest
@@ -32,18 +40,31 @@ exec(compile(source,'<six-view-cardinality-adapter>','exec'),R.__dict__)
 def main():
  if len(sys.argv)>1 and sys.argv[1]=='--child':
     job=json.loads(Path(sys.argv[2]).read_text());scratch=Path(sys.argv[4]);kind=sys.argv[3]
-    result=R.report_probe(job,kind,scratch,ROOT)
+    if CASE=='truncated-stream':
+        try:R.report_probe(job,kind,scratch,ROOT)
+        except ValueError as error:
+            assert 'timing stream does not cover exact output' in str(error)
+            result=dict(passed=True,device_executed=False,case=CASE,truncated_stream_refused=True)
+        else:raise AssertionError('truncated valid stream accepted')
+    else:
+        result=R.report_probe(job,kind,scratch,ROOT)
+        if kind=='bracket':
+            report=json.loads((scratch/'WSCREEN/run/summary.json').read_text())
+            assert report['decision']==CASE,(report['decision'],CASE)
+            leaf={'build-brief':'BUILD-BRIEF.md','close':'DO-NOT-REPEAT.md','name-host-work':'HOST-WORK.md','inconclusive-cadence':'CADENCE.md'}[CASE]
+            assert (scratch/'WSCREEN/run'/leaf).is_file()
+        result['case']=CASE
     (scratch/'adapter-result.json').write_text(json.dumps(result));return
  job=json.loads(next(x for x in (OPS/'lane-queue/proposed-p58aq-split-A.txt').read_text().splitlines() if x.startswith('{')))
  rows=[]
- for kind in ('smoke','bracket'):
+ for kind,case in [('smoke','smoke'),('bracket','build-brief'),('bracket','close'),('bracket','name-host-work'),('bracket','inconclusive-cadence'),('bracket','truncated-stream')]:
     with tempfile.TemporaryDirectory(prefix='p58aq-report-') as directory:
         d=Path(directory);request=d/'job.json';request.write_text(json.dumps(job))
         from launch_env import environment
-        cp=subprocess.run([sys.executable,'-B',str(Path(__file__)),'--child',str(request),kind,str(d)],env=environment(),stdin=subprocess.DEVNULL,capture_output=True,text=True)
-        (P/'evidence'/('report-'+kind+'.log')).write_text(cp.stdout+cp.stderr)
+        cp=subprocess.run([sys.executable,'-B',str(Path(__file__)),'--child',str(request),kind,str(d),case],env=environment(),stdin=subprocess.DEVNULL,capture_output=True,text=True)
+        (P/'evidence'/('report-'+case+'.log')).write_text(cp.stdout+cp.stderr)
         if cp.returncode:raise AssertionError(cp.stderr[-3000:])
         row=json.loads((d/'adapter-result.json').read_text());assert row['passed'];rows.append(row)
- (P/'evidence/report-adapter.json').write_text(json.dumps(dict(passed=True,device_executed=False,synthetic_only=True,records=rows,frozen_ops_sha256=R.digest(OPS/'rehearse_entry.py'),adaptations=['synthetic 32-token streams and split timings','six-view request count 72']),indent=2)+'\n')
+ (P/'evidence/report-adapter.json').write_text(json.dumps(dict(passed=True,device_executed=False,synthetic_only=True,records=rows,frozen_ops_sha256=R.digest(OPS/'rehearse_entry.py'),source_hashes={str(f.relative_to(ROOT)):R.digest(f) for f in (Path(__file__),P/'screen/split_analyze.py',P/'screen/suite_driver.py',P/'screen/window.py',P/'screen/queue_runner.py')},adaptations=['synthetic 32-token streams and split timings','six-view request count 72']),indent=2)+'\n')
  print('PASS real smoke and six-view entry/driver/analyzer/window/queue reports')
 if __name__=='__main__':main()

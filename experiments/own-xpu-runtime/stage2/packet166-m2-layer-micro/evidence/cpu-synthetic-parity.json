@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "real_weights": false,
+  "device_executed": false,
+  "compiler_exactness": true,
+  "compared_buffers": 414,
+  "records": [
+    {
+      "compiler": "gnu-host",
+      "argv": [
+        "/usr/bin/ionice",
+        "-c3",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/build/micro-gnu-host",
+        "--rank",
+        "0",
+        "--mode",
+        "cpu",
+        "--weights",
+        "synthetic",
+        "--repeats",
+        "200"
+      ],
+      "returncode": 0,
+      "binary_sha256": "ba608fad0ce36f85995f74ef70c4354582055f0791d1724ac77eca2ad6ed0c52",
+      "stdout": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/cpu-synthetic-1792396020511618266/gnu-host.jsonl",
+      "stdout_sha256": "7b28b21a3a5b9c60e8b60e34409384a8cc5d67d0d8524b1b475e5b01c829982a"
+    },
+    {
+      "compiler": "intel-host",
+      "argv": [
+        "/usr/bin/ionice",
+        "-c3",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/build/micro-intel-host",
+        "--rank",
+        "0",
+        "--mode",
+        "cpu",
+        "--weights",
+        "synthetic",
+        "--repeats",
+        "200"
+      ],
+      "returncode": 0,
+      "binary_sha256": "cdf7080f5b9d98e29af205d0ee15c9f98c356e64c06b7b994ca7b8e973754303",
+      "stdout": "experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/cpu-synthetic-1792396020511618266/intel-host.jsonl",
+      "stdout_sha256": "7b28b21a3a5b9c60e8b60e34409384a8cc5d67d0d8524b1b475e5b01c829982a"
+    }
+  ],
+  "peak_rss_bytes": 1169575936
+}

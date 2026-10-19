@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/run_cpu_gates.py", line 53, in <module>
+    if __name__=='__main__':raise SystemExit(main())
+                                             ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/run_cpu_gates.py", line 43, in main
+    (out/'failure.json').write_text(json.dumps(dict(passed=False,records=records),indent=2)+'\n');raise RuntimeError('native CPU gate failed; see '+str(stderr))
+                                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: native CPU gate failed; see /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet166-m2-layer-micro/evidence/cpu-real-1792396078967435483/intel-host.stderr

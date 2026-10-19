@@ -1,0 +1,263 @@
+## 0. Operating Principles
+
+Do not start by changing flags or code. Start by making the lane measurable.
+
+The strongest optimization work in this repo came from this loop:
+
+1. Define the quality lane and benchmark identity.
+2. Establish a valid baseline.
+3. Create a repeatable harness.
+4. Use cheap screens to reject bad ideas.
+5. Use realistic cold-suite gates before promotion.
+6. Record every meaningful result, including failures.
+7. Promote only clean, reproducible, quality-preserving wins.
+
+The weakest work came from:
+
+- comparing runs with different model/runtime identity;
+- treating synthetic or warmed prompts as real throughput;
+- changing too many flags at once;
+- losing patches and logs;
+- pushing huge model artifacts or secrets;
+- declaring victory from a smoke test when the bug was intermittent.
+
+## 1. Start With The Workspace
+
+Use the active checkout:
+
+```bash
+cd /home/steve/llm-optimizations
+git status --short --branch
+git log -1 --oneline
+```
+
+Expected policy:
+
+- active workspace: `/home/steve/llm-optimizations`;
+- branch: `main`;
+- no secondary worktree or non-`main` branch;
+- stage explicit files only, not broad `git add -A`;
+- commit focused work regularly;
+- push once useful state is captured.
+
+Before running or editing anything, read:
+
+```text
+AGENTS.md
+AGENT_HANDOFF.md
+CURRENT.md
+docs/model-effort-index.md
+docs/research-workflow-playbook.md
+docs/localmaxxing.md
+docs/local-ops.md
+```
+
+If the repo is dirty:
+
+1. Identify tracked changes, staged changes, and untracked files.
+2. Decide whether each untracked file is valuable evidence, transient output,
+   a secret, a model artifact, or a build artifact.
+3. Track valuable compact artifacts.
+4. Add ignore rules for transient output, secrets, weights, and logs that are
+   too large or not useful.
+5. Do not delete another agent's work unless it is clearly transient and
+   already captured elsewhere.
+
+## 2. Create A Model Lane Packet
+
+Every serious model effort should have a packet under:
+
+```text
+results/<model>-<quant>-<hardware>/
+```
+
+Start with these files:
+
+```text
+results/<model>-<quant>-<hardware>/README.md
+results/<model>-<quant>-<hardware>/reproduce.md
+results/<model>-<quant>-<hardware>/validity-gates.md
+results/<model>-<quant>-<hardware>/runtime-plan.md
+results/<model>-<quant>-<hardware>/model-options.md
+results/<model>-<quant>-<hardware>/bugs-failed-paths.md
+results/<model>-<quant>-<hardware>/localmaxxing-and-targets.md
+```
+
+Use `experiments/<model>-.../` for active research lanes. Use `repro/<model>-.../`
+only when a result is promoted enough to deserve a standalone runnable recipe.
+
+The packet should answer these questions:
+
+- What exact model is being optimized?
+- What quantization and quality lane are allowed?
+- What hardware shape is in scope?
+- What runtime is being tested?
+- What is the current valid baseline?
+- What is the fastest invalid or diagnostic result?
+- What counts as promotion?
+- What is explicitly forbidden?
+- Which previous model lanes offer useful carryover ideas?
+- Where are logs, patches, data, and scripts?
+
+## 3. Lock The Quality Lane
+
+Decide the quality promise before chasing speed.
+
+Examples:
+
+- "Q8/INT8-equivalent target/verifier; lower precision drafts allowed only if
+  the Q8 target verifies accepted tokens."
+- "FP16/BF16 baseline quality; FP8 KV is separate and must be labeled."
+- "INT4 AutoRound is a side lane, not the default quality lane."
+
+Record:
+
+- exact model repo and revision;
+- local model path;
+- file size and checksum if practical;
+- target quantization;
+- draft model quantization, if any;
+- KV cache type;
+- context limit;
+- whether multimodal support matters;
+- whether the benchmark is text-only, vision+text, structured output, or service.
+
+Do not silently switch quality lanes. The Gemma 26B work was almost derailed by
+confusion between `UD-Q8_K_XL` and `Q8_0`. If the target quality changes,
+create a labeled side lane.
+
+## 4. Define Validity Before Benchmarking
+
+Each model needs validity gates. At minimum, define:
+
+- deterministic canary prompts;
+- semantic task checks;
+- arithmetic or structured checks where relevant;
+- long-context checks if context is part of the claim;
+- exact response or hash checks for repeated canary rows;
+- required prompt/output lengths;
+- whether streaming token timing is trusted;
+- required `cached_tokens` behavior;
+- how speculative decoding is verified.
+
+For fresh-response headline throughput, use this rule:
+
+- each prompt is sent once as a cold response;
+- `cached_tokens=0` for every request;
+- no prompt cache, KV reuse, context checkpoints, response reuse, warmed
+  continuations, n-gram history populated from prior identical outputs, or
+  service-side replay;
+- speculative decoding is allowed only when accepted tokens are verified by the
+  declared target model;
+- primary metric is the median conventional rate across the 99 inter-token
+  intervals between timestamps 1 and 100 after TTFT across a fixed realistic
+  prompt suite;
+- also report p10, mean, TTFT, wall-clock full-output throughput, full output
+  after-TTFT throughput, hashes, runtime identity, flags, logs, and server
+  artifacts.
+
+Synthetic prompts are allowed for diagnostics. They are not headline throughput
+unless they pass the same fresh-response policy and are representative of the
+claimed workload.
+
+## 5. Establish The Baseline
+
+Before optimizing, run the simplest credible baseline.
+
+For a llama.cpp lane:
+
+- build or locate a known working SYCL binary;
+- launch one model replica on one GPU;
+- run canaries;
+- run the fixed realistic suite;
+- record prompt processing and decode metrics;
+- record server logs and launcher identity.
+
+For a vLLM lane:
+
+- verify model load;
+- verify graph/eager mode identity;
+- record quantization, TP/PP/DP, scheduler, graph flags, max model len, memory
+  utilization, fallback paths, and async scheduling;
+- run canaries and the fixed realistic suite;
+- preserve resolved engine config from the log.
+
+Baseline notes should include:
+
+- command line;
+- environment variables;
+- model paths and revisions;
+- GPU selection;
+- compile/runtime commits;
+- output JSON path;
+- server log path;
+- whether result is valid, invalid, diagnostic, or inconclusive.
+
+If the baseline is too slow, do not skip validity. A slow valid baseline is the
+anchor that prevents false wins.
+
+## 6. Build The Harness Before The Optimization
+
+A good harness should:
+
+- start the server;
+- wait for readiness;
+- run canaries;
+- run the relevant benchmark;
+- stop the server cleanly;
+- write `summary.json`;
+- write raw per-prompt results;
+- record launcher identity;
+- record server log path;
+- expose GPU/port/label overrides;
+- avoid relying on an existing warmed service state.
+
+Use consistent folders:
+
+```text
+scripts/      shared reusable tools
+repro/        promoted runnable recipes
+data/         compact structured run outputs
+notes/        chronological notes
+patches/      source/config diffs
+experiments/  active non-promoted research
+results/      promoted or closed model packets
+```
+
+Every run label should include model, relevant mode, GPU, and timestamp.
+
+Good label examples:
+
+```text
+gemma4-q8-gpu0-125repro-20260702T231635Z
+qwen36-tp4-piecewise-forcedcomm-deepgate-20260615
+minimax-m27-tp4-moefullforward-strict-20260519
+```
+
+## 7. Run Four GPUs As A Research Multiplier
+
+On the current host, prefer one full replica per B70 when the model fits.
+
+Use four GPUs for:
+
+- four independent config screens;
+- paired A/B comparisons;
+- cross-over designs;
+- control/candidate/control/candidate lanes;
+- temperature or frequency checks;
+- long-context ladder parallelism.
+
+Do not use four-GPU screens alone to promote near-record wins. They are good
+for rejecting bad ideas and finding promising candidates. Promotion should use a
+clean solo run or a balanced same-window A/B that can survive variance.
+
+Example lane layout:
+
+```text
+GPU0: control A
+GPU1: candidate A
+GPU2: candidate B
+GPU3: control B
+```
+
+Then swap candidates and controls in the next wave if the result i

@@ -1,0 +1,10 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/native-source/repo/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/build/entry-main.cpp:2:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/native-source/repo/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/main.cpp:1658:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/native-source/repo/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/rank.hpp:237:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/native_probe.hpp:27:26: error: no matching function for call to 'record_host_memory'
+   27 |  pipeline_cancel_check();record_host_memory(e.a.output,"packet168-"+phase);
+      |                          ^~~~~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet168-twocard-body-census/native-source/repo/experiments/own-xpu-runtime/stage2/packet131-snapshot-banks/main.cpp:1644:13: note: candidate function not viable: no known conversion from 'basic_string<char, std::char_traits<char>, std::allocator<char>>' to 'const char *' for 2nd argument
+ 1644 | static void record_host_memory(const fs::path& output,const char* phase) {
+      |             ^                                         ~~~~~~~~~~~~~~~~~
+1 error generated.

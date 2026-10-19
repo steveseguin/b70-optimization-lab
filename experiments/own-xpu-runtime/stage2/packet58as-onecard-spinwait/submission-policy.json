@@ -1,0 +1,25 @@
+{
+  "schema": "packet58as.submission-policy.v1",
+  "readiness_amendment": "58as v5 A0/B0/A1/B1/A2: 31.901/34.577/31.838/34.568/31.807 tok/s; A0 warm-up excluded; 60/60 exact, drift 0.096%, minimum gain +8.58%; readiness only.",
+  "ledger_path": "scripts/packet58_onecard_record_threshold.json",
+  "ledger_sha256": "94335c55066802dd5ac6e011efddbfddf7e82955592a6de4ea5e9903e966d57d",
+  "supersedes": {
+    "reference_submission": "cmveqsmsl00ebrf014yvrsosx",
+    "threshold_tok_s": 31.966819787781944
+  },
+  "public_record_check": {
+    "status": "stale-public-check-not-revalidated",
+    "disclosure": "Pinned local ledger only; public check stale, no global-record claim."
+  },
+  "scope": {
+    "rule": "packet58as.onecard-128-preparation.2026-10-19",
+    "date": "2026-10-19",
+    "requested_max_new": 128,
+    "strict_512_gate_passed": false,
+    "authority": "Owner packet58asc brief; preparation only; coordinator submits.",
+    "preparation_only": true,
+    "fresh_timing_repeat_passed": false
+  },
+  "wait_disclosure": "Bounded spin: host CPU policy, owner-thread CPU ~33% vs ~25% poll (one core); 250 us spin then <=20 us sleeps; no setting or governor change; arithmetic unchanged. Chain own-rt-iq3 4f957f34ae11011fa9a2caba6a79e981559e9f9fa0fa3958e20a90460d1b745e = bracket 83abf236dcfe73bc9da6309fdc1a0c523aab104faa3adcabee3d5589f0b0b1d2 rebuilt with only CLI --wait-policy (default poll, chain spin); diff 57ba0ba08651da94630c7888a3bd435d5e7d3cfde4ecb32c6d5331c187c46b73.",
+  "diagnostic_disclosure": "58aq diagnostic: publication/drain 1.108 ms/token plus other 1 ms poll waits; diagnostic only."
+}

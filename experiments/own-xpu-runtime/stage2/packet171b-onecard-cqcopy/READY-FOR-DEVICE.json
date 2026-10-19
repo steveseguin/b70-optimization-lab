@@ -1,0 +1,101 @@
+{
+  "schema": "own-runtime.packet171b.ready.v1",
+  "ready_for_device": true,
+  "passed": true,
+  "device_executed": false,
+  "packet": "packet171b-onecard-cqcopy",
+  "job": "packet171b-v5-A",
+  "proposal": "experiments/own-xpu-runtime/ops/lane-queue/proposed-p171b-v5-A.txt",
+  "proposal_sha256": "9ba37fdf1bacd733ae4b44ec094194741b8fd9dda17ebc8a3ab6a3dd97179127",
+  "lane": "A",
+  "scope": "whole-host",
+  "gpu_count": 1,
+  "card": 0,
+  "model_loads": 1,
+  "windows": [
+    "K1a",
+    "K1b",
+    "WSCREEN"
+  ],
+  "separate_smoke_required": false,
+  "opening_contract": "No separate smoke: bracket opens with K1a/K1b and exact A0 control.",
+  "arm_order": [
+    "spin",
+    "spin-cq",
+    "spin",
+    "spin-cq",
+    "spin"
+  ],
+  "labels": [
+    "A0",
+    "B0",
+    "A1",
+    "B1",
+    "A2"
+  ],
+  "arms": {
+    "A": "packet58as spin parent: foreground copies on the BCS immediate list plus a compute barrier per copy, two-queue sync",
+    "B": "spin plus compute-queue foreground copies (in-order queue_->memcpy, compute tail, no barrier; copy list waited only if it owns work)"
+  },
+  "warmup": "A0 exact, excluded only from speed and drift",
+  "prompts_per_view": 12,
+  "max_new": 128,
+  "required_exact_requests": 60,
+  "oracle": "iq3-p49-split32-v1",
+  "kv_dtype": "BF16",
+  "resident_lookups_all_views": true,
+  "winner_minimum_gain_over_every_warm_control": 0.005,
+  "maximum_control_drift_fraction": 0.03,
+  "mechanism_readout": "per-view readback bimodality, slow-after-fill probability and slow-token wait excess in summary.json mechanism_readout; kept on every outcome",
+  "decision_rule": "B wins and slow mode collapses: hypothesis confirmed. B neutral and slow mode persists: close AUDIT row 1, attribute the ~2.6 ms readback to fill/PCIe contention.",
+  "unchanged": [
+    "maintenance fills",
+    "publication",
+    "kernels",
+    "arithmetic",
+    "selection",
+    "cache policy",
+    "spin policy",
+    "resident lookups"
+  ],
+  "per_operation_wait_seconds": 600,
+  "spin_budget_microseconds": 250,
+  "sleep_after_spin_microseconds": 20,
+  "yield_every_iterations": 256,
+  "device_disk_floor_bytes": 25000000000,
+  "cpu_disk_stop_bytes": 27000000000,
+  "host_required_available_bytes": 98990252032,
+  "no_wall_clock_data_proof_limits": true,
+  "live_checks": "stream presence/format and exactness only",
+  "native_readers": "ionice -c3",
+  "build_receipt_sha256": "985a4f7f9a2ea615d309cc1053e5ad97ec132a307750cdcf3a1b02dd4a02e7b1",
+  "checks": {
+    "evidence/cqcopy-order.json": "d0e42a64f45b45bf4f03e8f67713cbcb6cb57cff5be867702d763f943537d59b",
+    "evidence/cpu-exactness.json": "d1ae8049ad3ecfc2bb3c8241e9e5d4fc866d3c2457028983542c498f960e1728",
+    "evidence/wait-tests.json": "52e98b58c4f9a209838ed891aaf24ed4c761732d7ed18aa2e64d8d0f03db384b",
+    "evidence/preparation.json": "3b9e9d9330ab720247bd266e657e0f4bffe8f27c8a3141547207133ebdc7d949",
+    "evidence/analyzer-real-parent.json": "f3772495df42b2c320e1fff302ab344ba5b188c90dda1721a8733dc9fe3095fa",
+    "evidence/flags.json": "1ea4b2049fd23ba04ed31c2459fc08e8408080ecc551dba62ea631b21c315a79",
+    "evidence/entry-imports.json": "5056d37c925ce6c59c7acdb7df3149e8c978fdf1ca4d24364945bc3b6417700a",
+    "evidence/queue-plans.json": "00de67abc8c2c5dbd5b0c602407ccc2b67a4e777eaa94b532c7f84f28fa462a9",
+    "evidence/shared-entry-report-final.json": "5abec491d73b32a480a5684dcc62d0eb23b2e586c8b1f96b504992f5de02e833",
+    "evidence/pin-guard.json": "ffbb6cfe0c54e16e552007535e4beefdc0d89e50c474484c1ee97ab5d6473b1a"
+  },
+  "shared_tool_limitations": [
+    "Shared --report passes. Its generic report rehearsal is synthetic only; no separate smoke row exists.",
+    "Shared preparation adapter has no unranked one-card CPU transport probe. Private preparation_gate.py exercised the real device argv/plan and all reset paths (evidence/preparation.json); synthetic transport/weights, no GPU."
+  ],
+  "device_exactness": "pending",
+  "device_speed": "pending",
+  "fresh_process_repeat": false,
+  "strict512": false,
+  "submission_eligible": false,
+  "compile_turns": 1,
+  "coordinator_requirements": "Whole-host lane A; lane B drained/excluded; fresh fault review; no retry; graceful drain; leave cards empty",
+  "parent": {
+    "name": "packet58as-onecard-spinwait",
+    "parent_relpath": "experiments/own-xpu-runtime/stage2/packet58as-onecard-spinwait",
+    "parent_commit": "dabfc958b7d3322dda3eeada3689b4d6011b7cc1"
+  },
+  "preparation_head_commit": "737330c3ae54e88d5bd175c35d98347073ee1eea"
+}

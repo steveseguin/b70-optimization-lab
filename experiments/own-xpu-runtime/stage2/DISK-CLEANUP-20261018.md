@@ -1156,3 +1156,17 @@ Six packets **closed tonight** (p150 diagnostic done, p151, p153, p154, p157, p5
 The 2026-10-18 Codex session logs (386 MB) were archived to `codex-sessions-20261018/codex-sessions-2026-10-18.tar`.
 
 Root free went from 28.05 to **31.04 GB**.
+
+## Follow-up 4 (2026-10-19 08:25 UTC, coordinator)
+
+Root had 29 GB free with five Codex jobs about to build (p58ar, p58as, p168, p166b, p169). Archived the untracked and ignored files of three closed packets with no symlinks or path references from any active line (packet136, 58ah/58ad/58aj/58aq, 163/165/166) to `/mnt/raid-models/own-xpu-runtime-archive/closed-packets-2026-10-19/`. Each has a sha256 manifest and was verified with `tar -d` before removal; tracked files stay.
+
+| Packet | Files | Archived bytes |
+| --- | ---: | ---: |
+| packet69-rank1-head | 6,072 | 1,601,843,200 |
+| packet145-router-gdnz-layout | 4,088 | 1,008,916,480 |
+| packet142-class-layout | 2,242 | 629,360,640 |
+
+Root went from 29 to 32 GB free. `RESTORE-ARCHIVE.md` in each packet gives the restore command.
+
+Not archived, because active record lines still reference them by path: packet55, packet65, packet73, packet74.

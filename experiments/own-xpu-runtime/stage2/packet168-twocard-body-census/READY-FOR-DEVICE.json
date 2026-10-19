@@ -1,0 +1,76 @@
+{
+  "schema": "packet168.readiness.v2",
+  "ready": true,
+  "ready_for_device": true,
+  "device_executed": false,
+  "model_loads_planned": 1,
+  "measured_ranked_table_available": false,
+  "seal_sha256": "1f2df81e41eaef155cd73e5b890c574083adaa34f51ab3514ef39b49bee769e5",
+  "evidence_sha256": {
+    "evidence/analyzer-tests.json": "69ff527f6b12c6ea28802d14e1fa6c78a2c7364c44ed2cbf28ee5fe72c7deef4",
+    "evidence/build.json": "249bf9fe112a9bc75c6bd9d224ffbb9fdb5fae174aac691f5b62575da039436b",
+    "evidence/cpu-builder-origin.json": "becdcbc4401b4fecbf6965fc9c3e1fc3add360aa235f4ff430648f45c6f0fd2a",
+    "evidence/cpu-builder-status.json": "58cd6b20cb90bb92b807cc20c1197c6df2c04e3950ff1479a60c67f99b756687",
+    "evidence/final-audit.json": "f354f4d14d0c545fc717f5a5fc4f44f2a58c5d1229683326390944549fb36e47",
+    "evidence/lanequeue-review-93b31f9c0f6c44e1aa3c9a0f891e36b8.json": "231e7d378a1b8be3a215460c9454b39b0d66e2e7865daa762b6d06bc3bcc6c88",
+    "evidence/lanequeue-review-a8a56eb9aeb84cc0b6a33db2b7a48ca3.json": "f05d362f436dbf4ac4fd00b1b2349fc91227f9eadda13b22ea60e14f5434bff6",
+    "evidence/launch-checks.json": "6a98384682fb700064e938e81c041a3f2d7358ebd4d2d4ae70d97c1e5d2ecac2",
+    "evidence/native-delta.json": "3424ffc2a028f55129ff0421f2bf6c3611bfa6f9740ffa6f91f1980b7550e602",
+    "evidence/native-lifecycle.json": "b322dfd7fe3e451c828ac6dd8e74ad7cc22c6b8c74ba4906f4465afa8224f9fa",
+    "evidence/native-marker-failure.json": "403e3bebbc1572c392ac3d73872f43853bc4a27062d61ea49690876f2b8c9bbc",
+    "evidence/packet168-original.json": "0c10806c4f346507288d8814c18a79e27aae7af7569fad814d912f5a7e730e6b",
+    "evidence/preparation-build.json": "1eafeda12447cb2d2f5e1cd29d109945e9b8e67a381470577a004c3a661624c0",
+    "evidence/real-parent-replay.json": "299684aed32f8679ab07ff66fed164f3264d87e31dc14f42de82441fb1a276a5",
+    "evidence/report-adapter.json": "8035692780b0ce695a55133e6c3f33b8fdf0c8cdf282e6cdae42758d5168d28b",
+    "evidence/shared-packaging.json": "c94d1f6624513c91f33c1f0354fb601a3f50d07a496c70844dd72714207d1a66",
+    "evidence/whitespace-review.json": "c0113a65e03b0e30caffef3d0a2f98445b809cc65bca620dcc30147e903abce8",
+    "evidence/worker-gate.json": "f9caa55454d856d6009945624a178984cef895435495d8925feed0a8609e4cf4"
+  },
+  "blockers": [],
+  "lane": "B",
+  "cards": [
+    2,
+    3
+  ],
+  "alternative_lane": "A",
+  "proposals": [
+    "proposed-p168-body-census-B-v3.txt",
+    "proposed-p168-body-census-A-v3.txt"
+  ],
+  "jobs": [
+    "packet168-body-census-B-v3",
+    "packet168-body-census-A-v3"
+  ],
+  "supersedes": {
+    "job": "packet168-body-census-B-v2",
+    "evidence": "evidence/device-census-B-v2",
+    "root_cause": "control-pass sticky error: probe ran at unadmitted position 128 (benchmark-analysis) with qsa launch extent 128"
+  },
+  "measured_classes": [
+    "gdn",
+    "routed_experts",
+    "router_shared_expert",
+    "dense_hc",
+    "norms_glue"
+  ],
+  "residual": {
+    "definition": "exact native control ms/token minus sum of five measured class marginals",
+    "includes": [
+      "attention (no arm since v3)",
+      "cross-card transfer",
+      "split head/argmax/merge",
+      "controller/mailbox",
+      "overlap"
+    ],
+    "causally_isolated": false
+  },
+  "shared_tool_limitations": [
+    "Shared ops/rehearse_entry.py --report cannot run this custom census report (receipts evidence/shared-rehearse-*-v3.*.log retained); qualified instead by the packet-private report adapter (evidence/report-adapter.json: real entry/parser/analyzer/report, 11 cases) and the worker gate (evidence/worker-gate.json), as accepted for packet58aq.",
+    "Shared rehearsal also WARNs that no preparation-path probe is declared: the census uses the parent-proven packet165 Transport start path unchanged except --census-probe; the native CPU fixture (evidence/native-lifecycle.json) runs the real parser, allocation and probe lifecycle with the device argv on both ranks."
+  ],
+  "optional_smoke": false,
+  "opening_checks": "No optional smoke: the single load opens with a distinct excluded warm-up and then the exact C0 control on all 12 prompts (oracle-prefix checked in-run; any mismatch stops before a probe). Chain-only K1a/K1b windows do not apply to this one-window screen.",
+  "arms_reported_as_speed": false,
+  "no_performance_claim": true,
+  "submission_eligible": false
+}
