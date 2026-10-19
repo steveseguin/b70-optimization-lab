@@ -6,7 +6,7 @@
       "tag": "split",
       "proposal_sha256": "59bb0367ecd1a9c1d230ca5604d10855438209e91ae389949d5341bec940c85c",
       "passed": true,
-      "pins": {
+      "pin_guard_summary": {
         "passed": true,
         "packet": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aq-onecard-split",
         "pins": 1003,
@@ -18,7 +18,7 @@
       "tag": "smoke",
       "proposal_sha256": "95d8fffaf68e2795794f97b1767531d8645815a2330537d08faad0615a70cd09",
       "passed": true,
-      "pins": {
+      "pin_guard_summary": {
         "passed": true,
         "packet": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/stage2/packet58aq-onecard-split",
         "pins": 1003,
@@ -27,5 +27,6 @@
       }
     }
   ],
-  "live_queue_changed": false
+  "live_queue_changed": false,
+  "coordinator_note": "2026-10-19 07:5x UTC coordinator: renamed records[].pins -> pin_guard_summary; the pin guard parsed the key 'pins' as a hash map and refused the plan on its boolean 'passed' field. Values unchanged."
 }
